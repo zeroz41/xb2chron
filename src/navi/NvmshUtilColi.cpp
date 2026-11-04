@@ -512,15 +512,16 @@ bool NvmshUtilSeach::seachAStar(NvmshAStarResult* result) {
 const int NvmshUtil::NAVI_UTIL_OFFX[4] = {1, 0, -1, 0};
 const int NvmshUtil::NAVI_UTIL_OFFY[4] = {0, 1, 0, -1};
 
-// Proposed names, not the original's: the symbols leave them unnamed (lbl_71009D5058, lbl_71009D5061,
-// lbl_71009D5071, lbl_71009D508A). NAVI_UTIL_ADJTBL's four entries point at them.
-static const unsigned char s_adjTbl3[3 * 3] = {0, 0, 1, 0, 0, 2, 1, 2, 0};
-static const unsigned char s_adjTbl4[4 * 4] = {0, 0, 1, 2, 0, 0, 3, 4, 1, 3, 0, 5, 2, 4, 5, 0};
-static const unsigned char s_adjTbl5[5 * 5] = {0, 0, 1, 2, 3, 0, 0, 4, 5, 6, 1, 4, 0, 7, 8,
-                                               2, 5, 7, 0, 9, 3, 6, 8, 9, 0};
-static const unsigned char s_adjTbl6[6 * 6] = {0, 0, 1, 2,  3,  4,  0, 0,  5,  6,  7,  8,  1,  5, 0,  9,  10, 11,
-                                               2, 6, 9, 0, 12, 13, 3, 7, 10, 12, 0, 14, 4, 8, 11, 13, 14, 0};
+// 2.0.0's symbols name them; NAVI_UTIL_ADJTBL's four entries point at them.
+const unsigned char NvmshUtil::NAVI_UTIL_ADJTBL3[3 * 3] = {0, 0, 1, 0, 0, 2, 1, 2, 0};
+const unsigned char NvmshUtil::NAVI_UTIL_ADJTBL4[4 * 4] = {0, 0, 1, 2, 0, 0, 3, 4, 1, 3, 0, 5, 2, 4, 5, 0};
+const unsigned char NvmshUtil::NAVI_UTIL_ADJTBL5[5 * 5] = {0, 0, 1, 2, 3, 0, 0, 4, 5, 6, 1, 4, 0,
+                                                            7, 8, 2, 5, 7, 0, 9, 3, 6, 8, 9, 0};
+const unsigned char NvmshUtil::NAVI_UTIL_ADJTBL6[6 * 6] = {0, 0,  1,  2,  3,  4, 0,  0,  5,  6, 7, 8,
+                                                            1, 5,  0,  9,  10, 11, 2, 6,  9,  0,  12, 13,
+                                                            3, 7,  10, 12, 0,  14, 4, 8,  11, 13, 14, 0};
 
-const unsigned char* NvmshUtil::NAVI_UTIL_ADJTBL[4] = {s_adjTbl3, s_adjTbl4, s_adjTbl5, s_adjTbl6};
+const unsigned char* NvmshUtil::NAVI_UTIL_ADJTBL[4] = {NAVI_UTIL_ADJTBL3, NAVI_UTIL_ADJTBL4, NAVI_UTIL_ADJTBL5,
+                                                       NAVI_UTIL_ADJTBL6};
 
 }  // namespace navi

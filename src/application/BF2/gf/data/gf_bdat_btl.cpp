@@ -3792,9 +3792,9 @@ void initBTL_DifSettingNormal(const CBdatWrapper& bdat) {
     s_memberBTL_DifSettingNormal = bdat.getMember("Normal");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_DifSetting getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_DifSetting getters holds it.
 // What it does: reads the Normal column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E11BC(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_DifSettingNormal(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_DifSettingNormal != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_DifSettingNormal, id, 2);
@@ -3806,9 +3806,9 @@ void initBTL_DifSettingEasy(const CBdatWrapper& bdat) {
     s_memberBTL_DifSettingEasy = bdat.getMember("Easy");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_DifSetting getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_DifSetting getters holds it.
 // What it does: reads the Easy column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1244(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_DifSettingEasy(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_DifSettingEasy != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_DifSettingEasy, id, 2);
@@ -3820,9 +3820,9 @@ void initBTL_DifSettingHard(const CBdatWrapper& bdat) {
     s_memberBTL_DifSettingHard = bdat.getMember("Hard");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_DifSetting getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_DifSetting getters holds it.
 // What it does: reads the Hard column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E12CC(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_DifSettingHard(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_DifSettingHard != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_DifSettingHard, id, 2);
@@ -3834,9 +3834,9 @@ void initBTL_DifSettingUlt(const CBdatWrapper& bdat) {
     s_memberBTL_DifSettingUlt = bdat.getMember("Ult");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_DifSetting getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_DifSetting getters holds it.
 // What it does: reads the Ult column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1354(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_DifSettingUlt(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_DifSettingUlt != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_DifSettingUlt, id, 2);
@@ -4154,9 +4154,9 @@ void initBTL_ChBtlDriver1(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlDriver1 = bdat.getMember("Driver1");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtl getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtl getters holds it.
 // What it does: reads the Driver1 column (unsigned char) of a row, as the init function above found it.
-unsigned int fn_71001E13DC(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlDriver1(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlDriver1 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned char)bdat.getValCheck(s_memberBTL_ChBtlDriver1, id, 1);
@@ -4168,9 +4168,9 @@ void initBTL_ChBtlDriver2(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlDriver2 = bdat.getMember("Driver2");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtl getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtl getters holds it.
 // What it does: reads the Driver2 column (unsigned char) of a row, as the init function above found it.
-unsigned int fn_71001E1464(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlDriver2(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlDriver2 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned char)bdat.getValCheck(s_memberBTL_ChBtlDriver2, id, 1);
@@ -4182,9 +4182,9 @@ void initBTL_ChBtlDriver3(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlDriver3 = bdat.getMember("Driver3");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtl getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtl getters holds it.
 // What it does: reads the Driver3 column (unsigned char) of a row, as the init function above found it.
-unsigned int fn_71001E14EC(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlDriver3(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlDriver3 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned char)bdat.getValCheck(s_memberBTL_ChBtlDriver3, id, 1);
@@ -4293,9 +4293,9 @@ void initBTL_ChBtlTresureNeed1(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlTresureNeed1 = bdat.getMember("TresureNeed1");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtl getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtl getters holds it.
 // What it does: reads the TresureNeed1 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1574(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlTresureNeed1(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlTresureNeed1 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlTresureNeed1, id, 2);
@@ -4307,9 +4307,9 @@ void initBTL_ChBtlTresureNeed2(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlTresureNeed2 = bdat.getMember("TresureNeed2");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtl getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtl getters holds it.
 // What it does: reads the TresureNeed2 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E15FC(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlTresureNeed2(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlTresureNeed2 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlTresureNeed2, id, 2);
@@ -4321,9 +4321,9 @@ void initBTL_ChBtlTresureNeed3(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlTresureNeed3 = bdat.getMember("TresureNeed3");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtl getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtl getters holds it.
 // What it does: reads the TresureNeed3 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1684(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlTresureNeed3(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlTresureNeed3 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlTresureNeed3, id, 2);
@@ -4371,9 +4371,9 @@ void initBTL_ChBtlWpnRevWpnDmg1(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg1 = bdat.getMember("WpnDmg1");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg1 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E170C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg1(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg1 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg1, id, 2);
@@ -4385,9 +4385,9 @@ void initBTL_ChBtlWpnRevWpnDmg2(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg2 = bdat.getMember("WpnDmg2");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg2 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1794(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg2(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg2 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg2, id, 2);
@@ -4399,9 +4399,9 @@ void initBTL_ChBtlWpnRevWpnDmg3(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg3 = bdat.getMember("WpnDmg3");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg3 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E181C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg3(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg3 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg3, id, 2);
@@ -4413,9 +4413,9 @@ void initBTL_ChBtlWpnRevWpnDmg4(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg4 = bdat.getMember("WpnDmg4");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg4 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E18A4(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg4(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg4 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg4, id, 2);
@@ -4427,9 +4427,9 @@ void initBTL_ChBtlWpnRevWpnDmg5(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg5 = bdat.getMember("WpnDmg5");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg5 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E192C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg5(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg5 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg5, id, 2);
@@ -4441,9 +4441,9 @@ void initBTL_ChBtlWpnRevWpnDmg6(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg6 = bdat.getMember("WpnDmg6");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg6 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E19B4(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg6(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg6 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg6, id, 2);
@@ -4455,9 +4455,9 @@ void initBTL_ChBtlWpnRevWpnDmg7(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg7 = bdat.getMember("WpnDmg7");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg7 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1A3C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg7(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg7 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg7, id, 2);
@@ -4469,9 +4469,9 @@ void initBTL_ChBtlWpnRevWpnDmg8(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg8 = bdat.getMember("WpnDmg8");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg8 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1AC4(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg8(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg8 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg8, id, 2);
@@ -4483,9 +4483,9 @@ void initBTL_ChBtlWpnRevWpnDmg9(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg9 = bdat.getMember("WpnDmg9");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg9 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1B4C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg9(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg9 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg9, id, 2);
@@ -4497,9 +4497,9 @@ void initBTL_ChBtlWpnRevWpnDmg10(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg10 = bdat.getMember("WpnDmg10");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg10 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1BD4(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg10(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg10 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg10, id, 2);
@@ -4511,9 +4511,9 @@ void initBTL_ChBtlWpnRevWpnDmg11(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg11 = bdat.getMember("WpnDmg11");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg11 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1C5C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg11(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg11 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg11, id, 2);
@@ -4525,9 +4525,9 @@ void initBTL_ChBtlWpnRevWpnDmg12(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg12 = bdat.getMember("WpnDmg12");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg12 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1CE4(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg12(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg12 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg12, id, 2);
@@ -4539,9 +4539,9 @@ void initBTL_ChBtlWpnRevWpnDmg13(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg13 = bdat.getMember("WpnDmg13");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg13 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1D6C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg13(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg13 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg13, id, 2);
@@ -4553,9 +4553,9 @@ void initBTL_ChBtlWpnRevWpnDmg14(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg14 = bdat.getMember("WpnDmg14");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg14 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1DF4(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg14(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg14 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg14, id, 2);
@@ -4567,9 +4567,9 @@ void initBTL_ChBtlWpnRevWpnDmg15(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg15 = bdat.getMember("WpnDmg15");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg15 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1E7C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg15(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg15 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg15, id, 2);
@@ -4581,9 +4581,9 @@ void initBTL_ChBtlWpnRevWpnDmg16(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg16 = bdat.getMember("WpnDmg16");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg16 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1F04(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg16(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg16 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg16, id, 2);
@@ -4595,9 +4595,9 @@ void initBTL_ChBtlWpnRevWpnDmg17(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg17 = bdat.getMember("WpnDmg17");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg17 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E1F8C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg17(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg17 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg17, id, 2);
@@ -4609,9 +4609,9 @@ void initBTL_ChBtlWpnRevWpnDmg18(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg18 = bdat.getMember("WpnDmg18");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg18 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E2014(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg18(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg18 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg18, id, 2);
@@ -4623,9 +4623,9 @@ void initBTL_ChBtlWpnRevWpnDmg19(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg19 = bdat.getMember("WpnDmg19");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg19 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E209C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg19(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg19 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg19, id, 2);
@@ -4637,9 +4637,9 @@ void initBTL_ChBtlWpnRevWpnDmg20(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg20 = bdat.getMember("WpnDmg20");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg20 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E2124(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg20(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg20 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg20, id, 2);
@@ -4651,9 +4651,9 @@ void initBTL_ChBtlWpnRevWpnDmg21(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg21 = bdat.getMember("WpnDmg21");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg21 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E21AC(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg21(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg21 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg21, id, 2);
@@ -4665,9 +4665,9 @@ void initBTL_ChBtlWpnRevWpnDmg22(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg22 = bdat.getMember("WpnDmg22");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg22 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E2234(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg22(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg22 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg22, id, 2);
@@ -4679,9 +4679,9 @@ void initBTL_ChBtlWpnRevWpnDmg23(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg23 = bdat.getMember("WpnDmg23");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg23 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E22BC(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg23(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg23 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg23, id, 2);
@@ -4693,9 +4693,9 @@ void initBTL_ChBtlWpnRevWpnDmg24(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg24 = bdat.getMember("WpnDmg24");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg24 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E2344(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg24(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg24 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg24, id, 2);
@@ -4707,9 +4707,9 @@ void initBTL_ChBtlWpnRevWpnDmg25(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg25 = bdat.getMember("WpnDmg25");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg25 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E23CC(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg25(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg25 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg25, id, 2);
@@ -4721,9 +4721,9 @@ void initBTL_ChBtlWpnRevWpnDmg26(const CBdatWrapper& bdat) {
     s_memberBTL_ChBtlWpnRevWpnDmg26 = bdat.getMember("WpnDmg26");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_ChBtlWpnRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_ChBtlWpnRev getters holds it.
 // What it does: reads the WpnDmg26 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001E2454(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_ChBtlWpnRevWpnDmg26(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_ChBtlWpnRevWpnDmg26 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberBTL_ChBtlWpnRevWpnDmg26, id, 2);
@@ -4735,9 +4735,9 @@ void initBTL_IrGroupRevGroupRev1(const CBdatWrapper& bdat) {
     s_memberBTL_IrGroupRevGroupRev1 = bdat.getMember("GroupRev1");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_IrGroupRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_IrGroupRev getters holds it.
 // What it does: reads the GroupRev1 column (unsigned char) of a row, as the init function above found it.
-unsigned int fn_71001E24DC(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_IrGroupRevGroupRev1(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_IrGroupRevGroupRev1 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned char)bdat.getValCheck(s_memberBTL_IrGroupRevGroupRev1, id, 1);
@@ -4749,9 +4749,9 @@ void initBTL_IrGroupRevGroupRev2(const CBdatWrapper& bdat) {
     s_memberBTL_IrGroupRevGroupRev2 = bdat.getMember("GroupRev2");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_IrGroupRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_IrGroupRev getters holds it.
 // What it does: reads the GroupRev2 column (unsigned char) of a row, as the init function above found it.
-unsigned int fn_71001E2564(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_IrGroupRevGroupRev2(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_IrGroupRevGroupRev2 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned char)bdat.getValCheck(s_memberBTL_IrGroupRevGroupRev2, id, 1);
@@ -4763,9 +4763,9 @@ void initBTL_IrGroupRevGroupRev3(const CBdatWrapper& bdat) {
     s_memberBTL_IrGroupRevGroupRev3 = bdat.getMember("GroupRev3");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a slot table of BTL_IrGroupRev getters holds it.
+// 2.0.0's symbols name it; a slot table of BTL_IrGroupRev getters holds it.
 // What it does: reads the GroupRev3 column (unsigned char) of a row, as the init function above found it.
-unsigned int fn_71001E25EC(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getBTL_IrGroupRevGroupRev3(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberBTL_IrGroupRevGroupRev3 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned char)bdat.getValCheck(s_memberBTL_IrGroupRevGroupRev3, id, 1);
@@ -6124,10 +6124,10 @@ bool GfBdatBtl::isBTL_DifSettingFlagIra(unsigned int id) const {
 unsigned int GfBdatBtl::getBTL_DifSettingDiff(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
-        _gfbbt::fn_71001E11BC,
-        _gfbbt::fn_71001E1244,
-        _gfbbt::fn_71001E12CC,
-        _gfbbt::fn_71001E1354,
+        _gfbbt::getBTL_DifSettingNormal,
+        _gfbbt::getBTL_DifSettingEasy,
+        _gfbbt::getBTL_DifSettingHard,
+        _gfbbt::getBTL_DifSettingUlt,
     };
     return _gfbbt::getSlot(s_getters, slot)(*m_fpBTL_DifSetting, id);
 }
@@ -6221,15 +6221,15 @@ bool GfBdatBtl::isBTL_ChBtlFlagHide(unsigned int id) const {
 }
 
 unsigned int GfBdatBtl::getBTL_ChBtlTresureNeed1(unsigned int id) const {
-    return _gfbbt::fn_71001E1574(*m_fpBTL_ChBtl, id);
+    return _gfbbt::getBTL_ChBtlTresureNeed1(*m_fpBTL_ChBtl, id);
 }
 
 unsigned int GfBdatBtl::getBTL_ChBtlTresureNeed2(unsigned int id) const {
-    return _gfbbt::fn_71001E15FC(*m_fpBTL_ChBtl, id);
+    return _gfbbt::getBTL_ChBtlTresureNeed2(*m_fpBTL_ChBtl, id);
 }
 
 unsigned int GfBdatBtl::getBTL_ChBtlTresureNeed3(unsigned int id) const {
-    return _gfbbt::fn_71001E1684(*m_fpBTL_ChBtl, id);
+    return _gfbbt::getBTL_ChBtlTresureNeed3(*m_fpBTL_ChBtl, id);
 }
 
 unsigned int GfBdatBtl::getBTL_ChBtlClearReward(unsigned int id) const {
@@ -6243,9 +6243,9 @@ unsigned int GfBdatBtl::getBTL_ChBtlEvent(unsigned int id) const {
 unsigned int GfBdatBtl::getBTL_ChBtlDriver(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
-        _gfbbt::fn_71001E13DC,
-        _gfbbt::fn_71001E1464,
-        _gfbbt::fn_71001E14EC,
+        _gfbbt::getBTL_ChBtlDriver1,
+        _gfbbt::getBTL_ChBtlDriver2,
+        _gfbbt::getBTL_ChBtlDriver3,
     };
     return _gfbbt::getSlot(s_getters, slot)(*m_fpBTL_ChBtl, id);
 }
@@ -6253,9 +6253,9 @@ unsigned int GfBdatBtl::getBTL_ChBtlDriver(unsigned int id, unsigned int slot) c
 unsigned int GfBdatBtl::getBTL_ChBtlTresureNeed(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
-        _gfbbt::fn_71001E1574,
-        _gfbbt::fn_71001E15FC,
-        _gfbbt::fn_71001E1684,
+        _gfbbt::getBTL_ChBtlTresureNeed1,
+        _gfbbt::getBTL_ChBtlTresureNeed2,
+        _gfbbt::getBTL_ChBtlTresureNeed3,
     };
     return _gfbbt::getSlot(s_getters, slot)(*m_fpBTL_ChBtl, id);
 }
@@ -6264,55 +6264,55 @@ unsigned int GfBdatBtl::getBTL_ChBtlWpnRevWpnDmg(unsigned int id, unsigned int s
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
         nullptr,
-        _gfbbt::fn_71001E170C,
-        _gfbbt::fn_71001E1794,
-        _gfbbt::fn_71001E181C,
-        _gfbbt::fn_71001E18A4,
-        _gfbbt::fn_71001E192C,
-        _gfbbt::fn_71001E19B4,
-        _gfbbt::fn_71001E1A3C,
-        _gfbbt::fn_71001E1AC4,
-        _gfbbt::fn_71001E1B4C,
-        _gfbbt::fn_71001E1BD4,
-        _gfbbt::fn_71001E1C5C,
-        _gfbbt::fn_71001E1CE4,
-        _gfbbt::fn_71001E1D6C,
-        _gfbbt::fn_71001E1DF4,
-        _gfbbt::fn_71001E1E7C,
-        _gfbbt::fn_71001E1F04,
-        _gfbbt::fn_71001E1F8C,
-        _gfbbt::fn_71001E2014,
-        _gfbbt::fn_71001E209C,
-        _gfbbt::fn_71001E2124,
-        _gfbbt::fn_71001E21AC,
-        _gfbbt::fn_71001E2234,
-        _gfbbt::fn_71001E22BC,
-        _gfbbt::fn_71001E2344,
-        _gfbbt::fn_71001E23CC,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
-        _gfbbt::fn_71001E2454,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg1,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg2,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg3,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg4,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg5,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg6,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg7,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg8,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg9,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg10,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg11,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg12,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg13,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg14,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg15,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg16,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg17,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg18,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg19,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg20,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg21,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg22,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg23,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg24,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg25,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
+        _gfbbt::getBTL_ChBtlWpnRevWpnDmg26,
     };
     return _gfbbt::getSlot(s_getters, slot)(*m_fpBTL_ChBtlWpnRev, id);
 }
@@ -6320,9 +6320,9 @@ unsigned int GfBdatBtl::getBTL_ChBtlWpnRevWpnDmg(unsigned int id, unsigned int s
 unsigned int GfBdatBtl::getBTL_IrGroupRevGroupRev(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
-        _gfbbt::fn_71001E24DC,
-        _gfbbt::fn_71001E2564,
-        _gfbbt::fn_71001E25EC,
+        _gfbbt::getBTL_IrGroupRevGroupRev1,
+        _gfbbt::getBTL_IrGroupRevGroupRev2,
+        _gfbbt::getBTL_IrGroupRevGroupRev3,
     };
     return _gfbbt::getSlot(s_getters, slot)(*m_fpBTL_IrGroupRev, id);
 }

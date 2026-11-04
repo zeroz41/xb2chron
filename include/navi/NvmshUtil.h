@@ -43,6 +43,11 @@ public:
     // the connection priority tables for 3, 4, 5 and 6 connections (num x num bytes each, symmetric; calcAStar
     // and NvmshAcObjBase::calcConectOptimization read it)
     static const unsigned char* NAVI_UTIL_ADJTBL[4];
+    // the tables NAVI_UTIL_ADJTBL points at, one per connection count
+    static const unsigned char NAVI_UTIL_ADJTBL3[3 * 3];
+    static const unsigned char NAVI_UTIL_ADJTBL4[4 * 4];
+    static const unsigned char NAVI_UTIL_ADJTBL5[5 * 5];
+    static const unsigned char NAVI_UTIL_ADJTBL6[6 * 6];
 };
 
 // a mesh query's input and result (0xB0 bytes, NvmshAcObjBase::seachNaviMesh fills one on the stack; only the

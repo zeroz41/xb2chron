@@ -1152,9 +1152,9 @@ void initRscEnExtraParts5(const CBdatWrapper& bdat) {
     s_memberRscEnExtraParts5 = bdat.getMember("ExtraParts5");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RscEn getters holds it.
+// 2.0.0's symbols name it; the table of RscEn getters holds it.
 // What it does: reads the ExtraParts5 column (unsigned int) of a row, as the init function above found it.
-unsigned int fn_710020D650(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getRscEnExtraParts5(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRscEnExtraParts5 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned char)bdat.getValCheck(s_memberRscEnExtraParts5, id, 1);
@@ -1167,9 +1167,9 @@ void initRscEnExtraParts6(const CBdatWrapper& bdat) {
     s_memberRscEnExtraParts6 = bdat.getMember("ExtraParts6");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RscEn getters holds it.
+// 2.0.0's symbols name it; the table of RscEn getters holds it.
 // What it does: reads the ExtraParts6 column (unsigned int) of a row, as the init function above found it.
-unsigned int fn_710020D6D8(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getRscEnExtraParts6(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRscEnExtraParts6 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned char)bdat.getValCheck(s_memberRscEnExtraParts6, id, 1);
@@ -2889,7 +2889,7 @@ void initRSC_PcWpnMountWpn28rIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn28rIn column (const char*) of a row, as the init function above found it.
-const char* fn_71002105F8(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn28rIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn28rIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn28rIn, id, 7);
@@ -2904,7 +2904,7 @@ void initRSC_PcWpnMountWpn28rOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn28rOut column (const char*) of a row, as the init function above found it.
-const char* fn_710021067C(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn28rOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn28rOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn28rOut, id, 7);
@@ -2919,7 +2919,7 @@ void initRSC_PcWpnMountWpn28lIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn28lIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100210700(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn28lIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn28lIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn28lIn, id, 7);
@@ -2934,7 +2934,7 @@ void initRSC_PcWpnMountWpn28lOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn28lOut column (const char*) of a row, as the init function above found it.
-const char* fn_7100210784(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn28lOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn28lOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn28lOut, id, 7);
@@ -2949,7 +2949,7 @@ void initRSC_PcWpnMountWpn29rIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn29rIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100210808(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn29rIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn29rIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn29rIn, id, 7);
@@ -2964,7 +2964,7 @@ void initRSC_PcWpnMountWpn29rOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn29rOut column (const char*) of a row, as the init function above found it.
-const char* fn_710021088C(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn29rOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn29rOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn29rOut, id, 7);
@@ -2979,7 +2979,7 @@ void initRSC_PcWpnMountWpn29lIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn29lIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100210910(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn29lIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn29lIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn29lIn, id, 7);
@@ -2994,7 +2994,7 @@ void initRSC_PcWpnMountWpn29lOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn29lOut column (const char*) of a row, as the init function above found it.
-const char* fn_7100210994(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn29lOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn29lOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn29lOut, id, 7);
@@ -3009,7 +3009,7 @@ void initRSC_PcWpnMountWpn30rIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn30rIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100210A18(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn30rIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn30rIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn30rIn, id, 7);
@@ -3024,7 +3024,7 @@ void initRSC_PcWpnMountWpn30rOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn30rOut column (const char*) of a row, as the init function above found it.
-const char* fn_7100210A9C(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn30rOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn30rOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn30rOut, id, 7);
@@ -3039,7 +3039,7 @@ void initRSC_PcWpnMountWpn30lIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn30lIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100210B20(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn30lIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn30lIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn30lIn, id, 7);
@@ -3054,7 +3054,7 @@ void initRSC_PcWpnMountWpn30lOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn30lOut column (const char*) of a row, as the init function above found it.
-const char* fn_7100210BA4(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn30lOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn30lOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn30lOut, id, 7);
@@ -3069,7 +3069,7 @@ void initRSC_PcWpnMountWpn31rIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn31rIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100210C28(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn31rIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn31rIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn31rIn, id, 7);
@@ -3084,7 +3084,7 @@ void initRSC_PcWpnMountWpn31rOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn31rOut column (const char*) of a row, as the init function above found it.
-const char* fn_7100210CAC(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn31rOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn31rOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn31rOut, id, 7);
@@ -3099,7 +3099,7 @@ void initRSC_PcWpnMountWpn31lIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn31lIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100210D30(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn31lIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn31lIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn31lIn, id, 7);
@@ -3114,7 +3114,7 @@ void initRSC_PcWpnMountWpn31lOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn31lOut column (const char*) of a row, as the init function above found it.
-const char* fn_7100210DB4(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn31lOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn31lOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn31lOut, id, 7);
@@ -3129,7 +3129,7 @@ void initRSC_PcWpnMountWpn32rIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn32rIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100210E38(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn32rIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn32rIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn32rIn, id, 7);
@@ -3144,7 +3144,7 @@ void initRSC_PcWpnMountWpn32rOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn32rOut column (const char*) of a row, as the init function above found it.
-const char* fn_7100210EBC(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn32rOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn32rOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn32rOut, id, 7);
@@ -3159,7 +3159,7 @@ void initRSC_PcWpnMountWpn32lIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn32lIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100210F40(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn32lIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn32lIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn32lIn, id, 7);
@@ -3174,7 +3174,7 @@ void initRSC_PcWpnMountWpn32lOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn32lOut column (const char*) of a row, as the init function above found it.
-const char* fn_7100210FC4(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn32lOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn32lOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn32lOut, id, 7);
@@ -3189,7 +3189,7 @@ void initRSC_PcWpnMountWpn33rIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn33rIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100211048(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn33rIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn33rIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn33rIn, id, 7);
@@ -3204,7 +3204,7 @@ void initRSC_PcWpnMountWpn33rOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn33rOut column (const char*) of a row, as the init function above found it.
-const char* fn_71002110CC(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn33rOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn33rOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn33rOut, id, 7);
@@ -3219,7 +3219,7 @@ void initRSC_PcWpnMountWpn33lIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn33lIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100211150(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn33lIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn33lIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn33lIn, id, 7);
@@ -3234,7 +3234,7 @@ void initRSC_PcWpnMountWpn33lOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn33lOut column (const char*) of a row, as the init function above found it.
-const char* fn_71002111D4(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn33lOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn33lOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn33lOut, id, 7);
@@ -3249,7 +3249,7 @@ void initRSC_PcWpnMountWpn34rIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn34rIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100211258(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn34rIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn34rIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn34rIn, id, 7);
@@ -3264,7 +3264,7 @@ void initRSC_PcWpnMountWpn34rOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn34rOut column (const char*) of a row, as the init function above found it.
-const char* fn_71002112DC(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn34rOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn34rOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn34rOut, id, 7);
@@ -3279,7 +3279,7 @@ void initRSC_PcWpnMountWpn34lIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn34lIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100211360(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn34lIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn34lIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn34lIn, id, 7);
@@ -3294,7 +3294,7 @@ void initRSC_PcWpnMountWpn34lOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn34lOut column (const char*) of a row, as the init function above found it.
-const char* fn_71002113E4(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn34lOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn34lOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn34lOut, id, 7);
@@ -3309,7 +3309,7 @@ void initRSC_PcWpnMountWpn35rIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn35rIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100211468(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn35rIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn35rIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn35rIn, id, 7);
@@ -3324,7 +3324,7 @@ void initRSC_PcWpnMountWpn35rOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn35rOut column (const char*) of a row, as the init function above found it.
-const char* fn_71002114EC(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn35rOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn35rOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn35rOut, id, 7);
@@ -3339,7 +3339,7 @@ void initRSC_PcWpnMountWpn35lIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn35lIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100211570(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn35lIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn35lIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn35lIn, id, 7);
@@ -3354,7 +3354,7 @@ void initRSC_PcWpnMountWpn35lOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn35lOut column (const char*) of a row, as the init function above found it.
-const char* fn_71002115F4(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn35lOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn35lOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn35lOut, id, 7);
@@ -3369,7 +3369,7 @@ void initRSC_PcWpnMountWpn36rIn(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn36rIn column (const char*) of a row, as the init function above found it.
-const char* fn_7100211678(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn36rIn(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn36rIn != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn36rIn, id, 7);
@@ -3384,7 +3384,7 @@ void initRSC_PcWpnMountWpn36rOut(const CBdatWrapper& bdat) {
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of RSC_PcWpnMount getters holds it.
 // What it does: reads the Wpn36rOut column (const char*) of a row, as the init function above found it.
-const char* fn_71002116FC(const CBdatWrapper& bdat, unsigned int id) {
+const char* getRSC_PcWpnMountWpn36rOut(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberRSC_PcWpnMountWpn36rOut != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberRSC_PcWpnMountWpn36rOut, id, 7);
@@ -5659,11 +5659,11 @@ unsigned int GfBdatRsc::getRscEnRotEffScale(unsigned int id) const {
 }
 
 unsigned int GfBdatRsc::getRscEnExtraParts5(unsigned int id) const {
-    return _gfbrs::fn_710020D650(*m_fpRscEn, id);
+    return _gfbrs::getRscEnExtraParts5(*m_fpRscEn, id);
 }
 
 unsigned int GfBdatRsc::getRscEnExtraParts6(unsigned int id) const {
-    return _gfbrs::fn_710020D6D8(*m_fpRscEn, id);
+    return _gfbrs::getRscEnExtraParts6(*m_fpRscEn, id);
 }
 
 unsigned int GfBdatRsc::getRscEnDeadSeNum(unsigned int id) const {
@@ -5689,8 +5689,8 @@ unsigned int GfBdatRsc::getRscEnExtraParts(unsigned int id, unsigned int slot) c
         _gfbrs::getRscEnExtraParts2,
         _gfbrs::getRscEnExtraParts3,
         _gfbrs::getRscEnExtraParts4,
-        _gfbrs::fn_710020D650,
-        _gfbrs::fn_710020D6D8,
+        _gfbrs::getRscEnExtraParts5,
+        _gfbrs::getRscEnExtraParts6,
     };
     return _gfbrs::getSlot(s_getters, slot)(*m_fpRscEn, id);
 }
@@ -5932,15 +5932,15 @@ const char* GfBdatRsc::getRSC_PcWpnMountWpnInR(unsigned int id, unsigned int slo
         _gfbrs::getRSC_PcWpnMountWpn25rIn,
         _gfbrs::getRSC_PcWpnMountWpn26rIn,
         _gfbrs::getRSC_PcWpnMountWpn26rIn,
-        _gfbrs::fn_71002105F8,
-        _gfbrs::fn_7100210808,
-        _gfbrs::fn_7100210A18,
-        _gfbrs::fn_7100210C28,
-        _gfbrs::fn_7100210E38,
-        _gfbrs::fn_7100211048,
-        _gfbrs::fn_7100211258,
-        _gfbrs::fn_7100211468,
-        _gfbrs::fn_7100211678,
+        _gfbrs::getRSC_PcWpnMountWpn28rIn,
+        _gfbrs::getRSC_PcWpnMountWpn29rIn,
+        _gfbrs::getRSC_PcWpnMountWpn30rIn,
+        _gfbrs::getRSC_PcWpnMountWpn31rIn,
+        _gfbrs::getRSC_PcWpnMountWpn32rIn,
+        _gfbrs::getRSC_PcWpnMountWpn33rIn,
+        _gfbrs::getRSC_PcWpnMountWpn34rIn,
+        _gfbrs::getRSC_PcWpnMountWpn35rIn,
+        _gfbrs::getRSC_PcWpnMountWpn36rIn,
         _gfbrs::getRSC_PcWpnMountWpn26rIn,
         _gfbrs::getRSC_PcWpnMountWpn26rIn,
         _gfbrs::getRSC_PcWpnMountWpn26rIn,
@@ -5993,14 +5993,14 @@ const char* GfBdatRsc::getRSC_PcWpnMountWpnInL(unsigned int id, unsigned int slo
         _gfbrs::getRSC_PcWpnMountWpn25lIn,
         _gfbrs::getRSC_PcWpnMountWpn26lIn,
         nullptr,
-        _gfbrs::fn_7100210700,
-        _gfbrs::fn_7100210910,
-        _gfbrs::fn_7100210B20,
-        _gfbrs::fn_7100210D30,
-        _gfbrs::fn_7100210F40,
-        _gfbrs::fn_7100211150,
-        _gfbrs::fn_7100211360,
-        _gfbrs::fn_7100211570,
+        _gfbrs::getRSC_PcWpnMountWpn28lIn,
+        _gfbrs::getRSC_PcWpnMountWpn29lIn,
+        _gfbrs::getRSC_PcWpnMountWpn30lIn,
+        _gfbrs::getRSC_PcWpnMountWpn31lIn,
+        _gfbrs::getRSC_PcWpnMountWpn32lIn,
+        _gfbrs::getRSC_PcWpnMountWpn33lIn,
+        _gfbrs::getRSC_PcWpnMountWpn34lIn,
+        _gfbrs::getRSC_PcWpnMountWpn35lIn,
         _gfbrs::getRSC_PcWpnMountWpn26lIn,
         _gfbrs::getRSC_PcWpnMountWpn26lIn,
         _gfbrs::getRSC_PcWpnMountWpn26lIn,
@@ -6054,15 +6054,15 @@ const char* GfBdatRsc::getRSC_PcWpnMountWpnOutR(unsigned int id, unsigned int sl
         _gfbrs::getRSC_PcWpnMountWpn25rOut,
         _gfbrs::getRSC_PcWpnMountWpn26rOut,
         _gfbrs::getRSC_PcWpnMountWpn26rOut,
-        _gfbrs::fn_710021067C,
-        _gfbrs::fn_710021088C,
-        _gfbrs::fn_7100210A9C,
-        _gfbrs::fn_7100210CAC,
-        _gfbrs::fn_7100210EBC,
-        _gfbrs::fn_71002110CC,
-        _gfbrs::fn_71002112DC,
-        _gfbrs::fn_71002114EC,
-        _gfbrs::fn_71002116FC,
+        _gfbrs::getRSC_PcWpnMountWpn28rOut,
+        _gfbrs::getRSC_PcWpnMountWpn29rOut,
+        _gfbrs::getRSC_PcWpnMountWpn30rOut,
+        _gfbrs::getRSC_PcWpnMountWpn31rOut,
+        _gfbrs::getRSC_PcWpnMountWpn32rOut,
+        _gfbrs::getRSC_PcWpnMountWpn33rOut,
+        _gfbrs::getRSC_PcWpnMountWpn34rOut,
+        _gfbrs::getRSC_PcWpnMountWpn35rOut,
+        _gfbrs::getRSC_PcWpnMountWpn36rOut,
         _gfbrs::getRSC_PcWpnMountWpn26rOut,
         _gfbrs::getRSC_PcWpnMountWpn26rOut,
         _gfbrs::getRSC_PcWpnMountWpn26rOut,
@@ -6115,14 +6115,14 @@ const char* GfBdatRsc::getRSC_PcWpnMountWpnOutL(unsigned int id, unsigned int sl
         _gfbrs::getRSC_PcWpnMountWpn25lOut,
         _gfbrs::getRSC_PcWpnMountWpn26lOut,
         nullptr,
-        _gfbrs::fn_7100210784,
-        _gfbrs::fn_7100210994,
-        _gfbrs::fn_7100210BA4,
-        _gfbrs::fn_7100210DB4,
-        _gfbrs::fn_7100210FC4,
-        _gfbrs::fn_71002111D4,
-        _gfbrs::fn_71002113E4,
-        _gfbrs::fn_71002115F4,
+        _gfbrs::getRSC_PcWpnMountWpn28lOut,
+        _gfbrs::getRSC_PcWpnMountWpn29lOut,
+        _gfbrs::getRSC_PcWpnMountWpn30lOut,
+        _gfbrs::getRSC_PcWpnMountWpn31lOut,
+        _gfbrs::getRSC_PcWpnMountWpn32lOut,
+        _gfbrs::getRSC_PcWpnMountWpn33lOut,
+        _gfbrs::getRSC_PcWpnMountWpn34lOut,
+        _gfbrs::getRSC_PcWpnMountWpn35lOut,
         _gfbrs::getRSC_PcWpnMountWpn26lOut,
         _gfbrs::getRSC_PcWpnMountWpn26lOut,
         _gfbrs::getRSC_PcWpnMountWpn26lOut,

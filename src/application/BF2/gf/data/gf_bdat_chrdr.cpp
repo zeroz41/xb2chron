@@ -909,10 +909,10 @@ void initIraPartydriver11(const CBdatWrapper& bdat) {
     s_memberIraPartydriver11 = bdat.getMember("driver11");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no IRA_Party table accessors). In _gfbcd
+// 2.0.0's symbols name it (1.0.0 has no IRA_Party table accessors). In _gfbcd
 // because it sits with this file's other column helpers and in a GfBdatChrDr slot table. What it does: returns row id's
 // "driver11" column of IRA_Party (16 bits; 0 when the handle is null or id is out of range).
-unsigned int fn_71001EEB28(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getIRA_Partydriver11(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberIraPartydriver11 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberIraPartydriver11, id, 2);
@@ -925,10 +925,10 @@ void initIraPartyblade11(const CBdatWrapper& bdat) {
     s_memberIraPartyblade11 = bdat.getMember("blade11");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no IRA_Party table accessors). In _gfbcd
+// 2.0.0's symbols name it (1.0.0 has no IRA_Party table accessors). In _gfbcd
 // because it sits with this file's other column helpers and in a GfBdatChrDr slot table. What it does: returns row id's
 // "blade11" column of IRA_Party (16 bits; 0 when the handle is null or id is out of range).
-unsigned int fn_71001EEBB0(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getIRA_Partyblade11(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberIraPartyblade11 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberIraPartyblade11, id, 2);
@@ -941,10 +941,10 @@ void initIraPartyblade12(const CBdatWrapper& bdat) {
     s_memberIraPartyblade12 = bdat.getMember("blade12");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no IRA_Party table accessors). In _gfbcd
+// 2.0.0's symbols name it (1.0.0 has no IRA_Party table accessors). In _gfbcd
 // because it sits with this file's other column helpers and in a GfBdatChrDr slot table. What it does: returns row id's
 // "blade12" column of IRA_Party (16 bits; 0 when the handle is null or id is out of range).
-unsigned int fn_71001EEC38(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getIRA_Partyblade12(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberIraPartyblade12 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberIraPartyblade12, id, 2);
@@ -957,10 +957,10 @@ void initIraPartydriver21(const CBdatWrapper& bdat) {
     s_memberIraPartydriver21 = bdat.getMember("driver21");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no IRA_Party table accessors). In _gfbcd
+// 2.0.0's symbols name it (1.0.0 has no IRA_Party table accessors). In _gfbcd
 // because it sits with this file's other column helpers and in a GfBdatChrDr slot table. What it does: returns row id's
 // "driver21" column of IRA_Party (16 bits; 0 when the handle is null or id is out of range).
-unsigned int fn_71001EECC0(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getIRA_Partydriver21(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberIraPartydriver21 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberIraPartydriver21, id, 2);
@@ -973,10 +973,10 @@ void initIraPartyblade21(const CBdatWrapper& bdat) {
     s_memberIraPartyblade21 = bdat.getMember("blade21");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no IRA_Party table accessors). In _gfbcd
+// 2.0.0's symbols name it (1.0.0 has no IRA_Party table accessors). In _gfbcd
 // because it sits with this file's other column helpers and in a GfBdatChrDr slot table. What it does: returns row id's
 // "blade21" column of IRA_Party (16 bits; 0 when the handle is null or id is out of range).
-unsigned int fn_71001EED48(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getIRA_Partyblade21(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberIraPartyblade21 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberIraPartyblade21, id, 2);
@@ -989,10 +989,10 @@ void initIraPartyblade22(const CBdatWrapper& bdat) {
     s_memberIraPartyblade22 = bdat.getMember("blade22");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no IRA_Party table accessors). In _gfbcd
+// 2.0.0's symbols name it (1.0.0 has no IRA_Party table accessors). In _gfbcd
 // because it sits with this file's other column helpers and in a GfBdatChrDr slot table. What it does: returns row id's
 // "blade22" column of IRA_Party (16 bits; 0 when the handle is null or id is out of range).
-unsigned int fn_71001EEDD0(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getIRA_Partyblade22(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberIraPartyblade22 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberIraPartyblade22, id, 2);
@@ -1005,10 +1005,10 @@ void initIraPartydriver31(const CBdatWrapper& bdat) {
     s_memberIraPartydriver31 = bdat.getMember("driver31");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no IRA_Party table accessors). In _gfbcd
+// 2.0.0's symbols name it (1.0.0 has no IRA_Party table accessors). In _gfbcd
 // because it sits with this file's other column helpers and in a GfBdatChrDr slot table. What it does: returns row id's
 // "driver31" column of IRA_Party (16 bits; 0 when the handle is null or id is out of range).
-unsigned int fn_71001EEE58(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getIRA_Partydriver31(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberIraPartydriver31 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberIraPartydriver31, id, 2);
@@ -1021,10 +1021,10 @@ void initIraPartyblade31(const CBdatWrapper& bdat) {
     s_memberIraPartyblade31 = bdat.getMember("blade31");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no IRA_Party table accessors). In _gfbcd
+// 2.0.0's symbols name it (1.0.0 has no IRA_Party table accessors). In _gfbcd
 // because it sits with this file's other column helpers and in a GfBdatChrDr slot table. What it does: returns row id's
 // "blade31" column of IRA_Party (16 bits; 0 when the handle is null or id is out of range).
-unsigned int fn_71001EEEE0(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getIRA_Partyblade31(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberIraPartyblade31 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberIraPartyblade31, id, 2);
@@ -1037,10 +1037,10 @@ void initIraPartyblade32(const CBdatWrapper& bdat) {
     s_memberIraPartyblade32 = bdat.getMember("blade32");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no IRA_Party table accessors). In _gfbcd
+// 2.0.0's symbols name it (1.0.0 has no IRA_Party table accessors). In _gfbcd
 // because it sits with this file's other column helpers and in a GfBdatChrDr slot table. What it does: returns row id's
 // "blade32" column of IRA_Party (16 bits; 0 when the handle is null or id is out of range).
-unsigned int fn_71001EEF68(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getIRA_Partyblade32(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberIraPartyblade32 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberIraPartyblade32, id, 2);
@@ -1499,9 +1499,9 @@ unsigned int GfBdatChrDr::getIRA_PartyGuest2(unsigned int id) const {
 unsigned int GfBdatChrDr::getIRA_PartyDriver(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
-        _gfbcd::fn_71001EEB28,
-        _gfbcd::fn_71001EECC0,
-        _gfbcd::fn_71001EEE58,
+        _gfbcd::getIRA_Partydriver11,
+        _gfbcd::getIRA_Partydriver21,
+        _gfbcd::getIRA_Partydriver31,
     };
     return _gfbcd::getSlot(s_getters, slot)(*m_fpIraParty, id);
 }
@@ -1509,9 +1509,9 @@ unsigned int GfBdatChrDr::getIRA_PartyDriver(unsigned int id, unsigned int slot)
 unsigned int GfBdatChrDr::getIRA_PartyBlade1(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
-        _gfbcd::fn_71001EEBB0,
-        _gfbcd::fn_71001EED48,
-        _gfbcd::fn_71001EEEE0,
+        _gfbcd::getIRA_Partyblade11,
+        _gfbcd::getIRA_Partyblade21,
+        _gfbcd::getIRA_Partyblade31,
     };
     return _gfbcd::getSlot(s_getters, slot)(*m_fpIraParty, id);
 }
@@ -1519,9 +1519,9 @@ unsigned int GfBdatChrDr::getIRA_PartyBlade1(unsigned int id, unsigned int slot)
 unsigned int GfBdatChrDr::getIRA_PartyBlade2(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
-        _gfbcd::fn_71001EEC38,
-        _gfbcd::fn_71001EEDD0,
-        _gfbcd::fn_71001EEF68,
+        _gfbcd::getIRA_Partyblade12,
+        _gfbcd::getIRA_Partyblade22,
+        _gfbcd::getIRA_Partyblade32,
     };
     return _gfbcd::getSlot(s_getters, slot)(*m_fpIraParty, id);
 }

@@ -61,9 +61,9 @@ public:
     int getRscEnRotateZ(unsigned int id) const;
     int getRscEnRotateDeg(unsigned int id) const;
     unsigned int getRscEnRotEffScale(unsigned int id) const;
-    // 2.0.0's symbols name it. What it does: returns fn_710020D650(*m_fpRscEn, id).
+    // 2.0.0's symbols name it. What it does: returns _gfbrs::getRscEnExtraParts5(*m_fpRscEn, id).
     unsigned int getRscEnExtraParts5(unsigned int id) const;
-    // 2.0.0's symbols name it. What it does: returns fn_710020D6D8(*m_fpRscEn, id).
+    // 2.0.0's symbols name it. What it does: returns _gfbrs::getRscEnExtraParts6(*m_fpRscEn, id).
     unsigned int getRscEnExtraParts6(unsigned int id) const;
     unsigned int getRscEnDeadSeNum(unsigned int id) const;
     unsigned int getRscEnWeaponNum(unsigned int id, unsigned int slot) const;

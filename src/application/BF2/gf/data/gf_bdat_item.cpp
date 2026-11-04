@@ -1995,9 +1995,9 @@ void initPcWpnChipCreateWpn17(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn17 = bdat.getMember("CreateWpn17");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn17 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn17 column). What it does: the
 // row's CreateWpn17 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FC474(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn17(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn17 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn17, id, 2);
@@ -2009,9 +2009,9 @@ void initPcWpnChipCreateWpn18(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn18 = bdat.getMember("CreateWpn18");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn18 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn18 column). What it does: the
 // row's CreateWpn18 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FC4FC(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn18(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn18 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn18, id, 2);
@@ -2023,9 +2023,9 @@ void initPcWpnChipCreateWpn19(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn19 = bdat.getMember("CreateWpn19");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn19 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn19 column). What it does: the
 // row's CreateWpn19 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FC584(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn19(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn19 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn19, id, 2);
@@ -2037,9 +2037,9 @@ void initPcWpnChipCreateWpn20(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn20 = bdat.getMember("CreateWpn20");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn20 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn20 column). What it does: the
 // row's CreateWpn20 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FC60C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn20(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn20 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn20, id, 2);
@@ -2051,9 +2051,9 @@ void initPcWpnChipCreateWpn21(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn21 = bdat.getMember("CreateWpn21");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn21 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn21 column). What it does: the
 // row's CreateWpn21 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FC694(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn21(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn21 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn21, id, 2);
@@ -2065,9 +2065,9 @@ void initPcWpnChipCreateWpn22(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn22 = bdat.getMember("CreateWpn22");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn22 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn22 column). What it does: the
 // row's CreateWpn22 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FC71C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn22(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn22 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn22, id, 2);
@@ -2079,9 +2079,9 @@ void initPcWpnChipCreateWpn23(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn23 = bdat.getMember("CreateWpn23");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn23 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn23 column). What it does: the
 // row's CreateWpn23 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FC7A4(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn23(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn23 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn23, id, 2);
@@ -2093,9 +2093,9 @@ void initPcWpnChipCreateWpn24(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn24 = bdat.getMember("CreateWpn24");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn24 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn24 column). What it does: the
 // row's CreateWpn24 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FC82C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn24(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn24 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn24, id, 2);
@@ -2107,9 +2107,9 @@ void initPcWpnChipCreateWpn25(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn25 = bdat.getMember("CreateWpn25");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn25 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn25 column). What it does: the
 // row's CreateWpn25 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FC8B4(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn25(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn25 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn25, id, 2);
@@ -2121,9 +2121,9 @@ void initPcWpnChipCreateWpn26(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn26 = bdat.getMember("CreateWpn26");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn26 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn26 column). What it does: the
 // row's CreateWpn26 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FC93C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn26(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn26 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn26, id, 2);
@@ -2135,9 +2135,9 @@ void initPcWpnChipCreateWpn27(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn27 = bdat.getMember("CreateWpn27");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn27 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn27 column). What it does: the
 // row's CreateWpn27 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FC9C4(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn27(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn27 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn27, id, 2);
@@ -2149,9 +2149,9 @@ void initPcWpnChipCreateWpn28(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn28 = bdat.getMember("CreateWpn28");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn28 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn28 column). What it does: the
 // row's CreateWpn28 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FCA4C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn28(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn28 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn28, id, 2);
@@ -2163,9 +2163,9 @@ void initPcWpnChipCreateWpn29(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn29 = bdat.getMember("CreateWpn29");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn29 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn29 column). What it does: the
 // row's CreateWpn29 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FCAD4(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn29(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn29 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn29, id, 2);
@@ -2177,9 +2177,9 @@ void initPcWpnChipCreateWpn30(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn30 = bdat.getMember("CreateWpn30");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn30 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn30 column). What it does: the
 // row's CreateWpn30 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FCB5C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn30(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn30 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn30, id, 2);
@@ -2191,9 +2191,9 @@ void initPcWpnChipCreateWpn31(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn31 = bdat.getMember("CreateWpn31");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn31 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn31 column). What it does: the
 // row's CreateWpn31 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FCBE4(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn31(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn31 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn31, id, 2);
@@ -2205,9 +2205,9 @@ void initPcWpnChipCreateWpn32(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn32 = bdat.getMember("CreateWpn32");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn32 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn32 column). What it does: the
 // row's CreateWpn32 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FCC6C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn32(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn32 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn32, id, 2);
@@ -2219,9 +2219,9 @@ void initPcWpnChipCreateWpn33(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn33 = bdat.getMember("CreateWpn33");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn33 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn33 column). What it does: the
 // row's CreateWpn33 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FCCF4(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn33(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn33 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn33, id, 2);
@@ -2233,9 +2233,9 @@ void initPcWpnChipCreateWpn34(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn34 = bdat.getMember("CreateWpn34");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn34 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn34 column). What it does: the
 // row's CreateWpn34 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FCD7C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn34(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn34 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn34, id, 2);
@@ -2247,9 +2247,9 @@ void initPcWpnChipCreateWpn35(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn35 = bdat.getMember("CreateWpn35");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn35 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn35 column). What it does: the
 // row's CreateWpn35 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FCE04(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn35(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn35 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn35, id, 2);
@@ -2261,9 +2261,9 @@ void initPcWpnChipCreateWpn36(const CBdatWrapper& bdat) {
     s_memberPcWpnChipCreateWpn36 = bdat.getMember("CreateWpn36");
 }
 
-// Placeholder name: new in 3.0.1 (the CreateWpn36 column), nothing in 1.0.0's place names it. What it does: the
+// 2.0.0's symbols name it (the CreateWpn36 column). What it does: the
 // row's CreateWpn36 value, a slot of getPcWpnChipCreateWpn's table.
-unsigned int fn_71001FCE8C(const CBdatWrapper& bdat, unsigned int id) {
+unsigned int getPcWpnChipCreateWpn36(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberPcWpnChipCreateWpn36 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberPcWpnChipCreateWpn36, id, 2);
@@ -5335,26 +5335,26 @@ unsigned int GfBdatItem::getPcWpnChipCreateWpn(unsigned int id, unsigned int slo
         _gfbit::getPcWpnChipCreateWpn14,
         _gfbit::getPcWpnChipCreateWpn15,
         _gfbit::getPcWpnChipCreateWpn16,
-        _gfbit::fn_71001FC474,
-        _gfbit::fn_71001FC4FC,
-        _gfbit::fn_71001FC584,
-        _gfbit::fn_71001FC60C,
-        _gfbit::fn_71001FC694,
-        _gfbit::fn_71001FC71C,
-        _gfbit::fn_71001FC7A4,
-        _gfbit::fn_71001FC82C,
-        _gfbit::fn_71001FC8B4,
-        _gfbit::fn_71001FC93C,
-        _gfbit::fn_71001FC9C4,
-        _gfbit::fn_71001FCA4C,
-        _gfbit::fn_71001FCAD4,
-        _gfbit::fn_71001FCB5C,
-        _gfbit::fn_71001FCBE4,
-        _gfbit::fn_71001FCC6C,
-        _gfbit::fn_71001FCCF4,
-        _gfbit::fn_71001FCD7C,
-        _gfbit::fn_71001FCE04,
-        _gfbit::fn_71001FCE8C,
+        _gfbit::getPcWpnChipCreateWpn17,
+        _gfbit::getPcWpnChipCreateWpn18,
+        _gfbit::getPcWpnChipCreateWpn19,
+        _gfbit::getPcWpnChipCreateWpn20,
+        _gfbit::getPcWpnChipCreateWpn21,
+        _gfbit::getPcWpnChipCreateWpn22,
+        _gfbit::getPcWpnChipCreateWpn23,
+        _gfbit::getPcWpnChipCreateWpn24,
+        _gfbit::getPcWpnChipCreateWpn25,
+        _gfbit::getPcWpnChipCreateWpn26,
+        _gfbit::getPcWpnChipCreateWpn27,
+        _gfbit::getPcWpnChipCreateWpn28,
+        _gfbit::getPcWpnChipCreateWpn29,
+        _gfbit::getPcWpnChipCreateWpn30,
+        _gfbit::getPcWpnChipCreateWpn31,
+        _gfbit::getPcWpnChipCreateWpn32,
+        _gfbit::getPcWpnChipCreateWpn33,
+        _gfbit::getPcWpnChipCreateWpn34,
+        _gfbit::getPcWpnChipCreateWpn35,
+        _gfbit::getPcWpnChipCreateWpn36,
         _gfbit::getPcWpnChipCreateWpn1,
         _gfbit::getPcWpnChipCreateWpn1,
         _gfbit::getPcWpnChipCreateWpn1,
