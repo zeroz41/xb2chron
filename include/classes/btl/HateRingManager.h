@@ -30,14 +30,12 @@ public:
     static void PreUpdate(const fw::UpdateInfo& info);
     static void Update(const fw::UpdateInfo& info);
     void UpdateProc(const fw::UpdateInfo& info);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // bytes at 0x112C from `this`. What it does: answers the byte at 0x112C + index (BattleCharacter's
-    // IsEnableArts and AI_PickupHealPot call it).
-    unsigned char fn_71000A1DB8(int index) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // bytes at 0x112C from `this`. What it does: packs the three bytes at 0x112C into one word, 10 bits apart
+    // 2.0.0's symbols name it. What it does: answers the byte at 0x112C + index (BattleCharacter's IsEnableArts and
+    // AI_PickupHealPot call it).
+    unsigned char GetHateEnemyNum(int index) const;
+    // 2.0.0's symbols name it. What it does: packs the three bytes at 0x112C into one word, 10 bits apart
     // (UIManager::UpdateMenuData calls it).
-    unsigned int fn_71000A1DC8() const;
+    unsigned int GetHateEnemyNumAll() const;
 
     // 1.0.0's name: the driver handle of the party member the ring on `handle` targets (-1 when no ring is on it).
     // 3.0.1's symbol spells it GetTarget(GF_OBJ_HANDLE*): its body and its caller (BattleCharacter::UpdateTarget)
@@ -58,7 +56,7 @@ public:
     unsigned char pad_8[8];
     RING_DATA m_rings[90];
     unsigned char pad_10F0[0x3C];
-    // read by fn_71000A1DB8 and fn_71000A1DC8; meaning unknown
+    // read by GetHateEnemyNum and GetHateEnemyNumAll; meaning unknown
     unsigned char pad_112C[3];
     unsigned char pad_112F;  // Create allocates 0x1130 bytes
 };

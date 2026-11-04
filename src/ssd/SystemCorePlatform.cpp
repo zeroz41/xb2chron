@@ -20,7 +20,7 @@ void SystemCorePlatform::InitPlatform(const SoundCore::InitParam& param) {
     tickFrequency_ = nn::os::GetSystemTickFrequency();
 }
 
-int SystemCorePlatform::fn_710089E218() {
+int SystemCorePlatform::GetSdkVoiceCountMax() {
     return 0x400;
 }
 

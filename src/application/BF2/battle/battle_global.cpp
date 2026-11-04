@@ -28,7 +28,7 @@
 #include "classes/gf/GfComDynamics.h"
 #include "classes/btl/ShakeCameraElementRandom.h"
 #include "classes/btl/ShakeCameraElementCameraAxis.h"
-#include "classes/gf/TUnk_B64F08.h"
+#include "classes/gf/GfMenuObjVision.h"
 #include "classes/fw/CameraManager.h"
 
 namespace btl {
@@ -63,7 +63,7 @@ float ARTS_DATA::GetHitWeightRate(int hit) const {
     return rate;
 }
 
-int ARTS_DATA::fn_7100003910(int index) const {
+int ARTS_DATA::CheckHealArts(int index) const {
     if (m_kind == 3) {
         return 1;
     }
@@ -157,7 +157,7 @@ void ARTS_PALETTE_DATA::ResetArtsRecast(bool initial) {
     }
 }
 
-unsigned int ARTS_PALETTE_DATA::fn_7100003EF4(float recast, int first, int last) const {
+unsigned int ARTS_PALETTE_DATA::GetFightComboFlag(float recast, int first, int last) const {
     if (recast <= 0.0f && first == 0 && last == 18) {
         return m_fightComboMask;
     }
@@ -288,14 +288,14 @@ bool BattleGlobal::IsJustDistanceAttack(unsigned int id) const {
     return false;
 }
 
-void BattleGlobal::fn_710000B4D0(unsigned int id) {
+void BattleGlobal::SetTalentMinochiAttack(unsigned int id) {
     AttackDamageData* data = findAttackData(id);
     if (data != nullptr) {
         data->pad_bit11 = true;
     }
 }
 
-bool BattleGlobal::fn_710000B52C(unsigned int id) const {
+bool BattleGlobal::IsTalentMinochiAttack(unsigned int id) const {
     AttackDamageData* data = findAttackData(id);
     if (data != nullptr) {
         return data->pad_bit11;
@@ -310,7 +310,7 @@ void BattleGlobal::SetCriticalRecastEnhanceEnd(unsigned int id) {
     }
 }
 
-bool BattleGlobal::fn_710000B5F4(unsigned int id) const {
+bool BattleGlobal::IsAngryArtsAttack(unsigned int id) const {
     AttackDamageData* data = findAttackData(id);
     if (data != nullptr) {
         return data->criticalRecastEnhanceEnd;
@@ -318,14 +318,14 @@ bool BattleGlobal::fn_710000B5F4(unsigned int id) const {
     return false;
 }
 
-void BattleGlobal::fn_710000B664(unsigned int id, bool on) {
+void BattleGlobal::SetAchieveBackAttack(unsigned int id, bool on) {
     AttackDamageData* data = findAttackData(id);
     if (data != nullptr) {
         data->pad_bit10 = on;
     }
 }
 
-bool BattleGlobal::fn_710000B6C0(unsigned int id) const {
+bool BattleGlobal::IsAchieveBackAttack(unsigned int id) const {
     AttackDamageData* data = findAttackData(id);
     if (data != nullptr) {
         return data->pad_bit10;
@@ -360,7 +360,7 @@ bool BattleGlobal::IsEnableResistantBreakDamage(unsigned int id) const {
     return data != nullptr && !data->resistantBreakDamageEnd;
 }
 
-bool BattleGlobal::fn_710000B8CC(unsigned int id) const {
+bool BattleGlobal::IsChainAttackDamage(unsigned int id) const {
     AttackDamageData* data = findAttackData(id);
     if (data != nullptr) {
         return data->chainAttack;
@@ -383,7 +383,7 @@ bool BattleGlobal::IsPermitArts(unsigned int id) const {
     return false;
 }
 
-void BattleGlobal::fn_710000BA08(unsigned int id, bool on) {
+void BattleGlobal::SetFutureViewCalc(unsigned int id, bool on) {
     AttackDamageData* data = findAttackData(id);
     if (data != nullptr) {
         data->pad_bit8 = false;
@@ -395,7 +395,7 @@ void BattleGlobal::fn_710000BA08(unsigned int id, bool on) {
     }
 }
 
-int BattleGlobal::fn_710000BA74(unsigned int id) const {
+int BattleGlobal::GetFutureViewResult(unsigned int id) const {
     AttackDamageData* data = findAttackData(id);
     if (data != nullptr) {
         if (data->pad_bit8) {
@@ -420,7 +420,7 @@ void BattleGlobal::fn_710000BAE0(int id, int result) {
             break;
         }
         if (pad_5d6e) {
-            gf::TUnk_B64F08::fn_71004947C4(data->pad_bit8 ? 1 : 2, nullptr);
+            gf::GfMenuObjVision::close(data->pad_bit8 ? 1 : 2, nullptr);
             pad_5d6e = 0;
         }
     }
@@ -543,7 +543,7 @@ int BattleGlobal::GetNormalAttackArtsID(int chara, int weapon, int step) const {
     return id;
 }
 
-void BattleGlobal::fn_7100004C10() {
+void BattleGlobal::InitializeIraTalentArtsID() {
     for (int i = 0; i < 9; i++) {
         pad_8374[i] = 0;
     }
@@ -572,7 +572,7 @@ unsigned short BattleGlobal::fn_71000053C4(int id) const {
     return pad_8374[static_cast<int>(id - 17u)];
 }
 
-const BattleGlobal::ELEMENTAL_COMBO_FLOW_DATA& BattleGlobal::fn_71000053F8(int id) const {
+const BattleGlobal::ELEMENTAL_COMBO_FLOW_DATA& BattleGlobal::GetElementalComboFlowDataFast(int id) const {
     return m_elementalComboFlow[id];
 }
 
@@ -619,7 +619,7 @@ void BattleGlobal::UpdateMapRev() {
     }
 }
 
-bool BattleGlobal::fn_7100007554() const {
+bool BattleGlobal::IsFutureView() const {
     return pad_5d54 != 0;
 }
 
@@ -630,7 +630,7 @@ bool BattleGlobal::IsGameOver() const {
     return gf::GfGameManager::isPlayerDeadSequence();
 }
 
-void BattleGlobal::fn_710000903C() {
+void BattleGlobal::ResetBGM() {
     pad_83b2 = 0;
     pad_83b4 = 0xFF;
 }
@@ -645,7 +645,7 @@ void BattleGlobal::fn_710000AC7C(int index) {
     pad_83b8[byte] &= ~(1 << bit);
 }
 
-void BattleGlobal::fn_710000ACA4(int index) {
+void BattleGlobal::SetTutorialBattleFlag(int index) {
     int byte = index >> 3;
     int bit = index & 7;
     pad_83bc[byte] |= 1 << bit;
@@ -692,22 +692,22 @@ bool BattleGlobal::fn_710000C440(int index) {
     return true;
 }
 
-bool BattleGlobal::fn_710000C610() const {
+bool BattleGlobal::IsEndFutureViewCoolTime() const {
     return pad_5d60 <= 0.0f;
 }
 
-bool BattleGlobal::fn_710000C624(gf::GF_OBJ_HANDLE* handle) const {
+bool BattleGlobal::IsFutureViewEnemy(gf::GF_OBJ_HANDLE* handle) const {
     if (pad_5d54 == 0) {
         return false;
     }
     return pad_5d48 == handle;
 }
 
-bool BattleGlobal::fn_710000C648() const {
+bool BattleGlobal::IsFutureViewFilter() const {
     return static_cast<unsigned int>(pad_5d54 - 3) < 5;
 }
 
-void BattleGlobal::fn_710000C660(ARTS_DATA& data) const {
+void BattleGlobal::GetFutureViewArtsData(ARTS_DATA& data) const {
     DataManager::sys()->GetArtsData(static_cast<ARTS_DATA::DATA_TYPE>(pad_5d68 & 7), pad_5d68 >> 3, data);
 }
 
@@ -722,11 +722,11 @@ const BattleGlobal::MapRev* BattleGlobal::fn_710000CE5C(int chara, bool apply) c
     return &m_mapRev[chara - 1];
 }
 
-bool BattleGlobal::fn_710000CEF4() const {
+bool BattleGlobal::IsKakuseiFinished() const {
     return pad_bit18;
 }
 
-bool BattleGlobal::fn_710000CF04() const {
+bool BattleGlobal::IsMindEyeFinished() const {
     return pad_bit21;
 }
 
@@ -750,7 +750,7 @@ void BattleGlobal::RegisterElementalComboCamera(::mm::mtl::IntrusivePtr<fw::Came
     m_elementalCombo.m_camera = camera;
 }
 
-void BattleGlobal::fn_710000DE04(bool side, int add) {
+void BattleGlobal::AddPartyPerfectAvoidNum(bool side, int add) {
     unsigned char& count = pad_83c0[!side];
     int value = count + add;
     count = value < 0 ? 0 : (value > 0xFF ? 0xFF : value);
@@ -781,7 +781,7 @@ bool BattleGlobal::IsSlowProc(unsigned int id) const {
     return GetSlowProcDataConst(id) != nullptr;
 }
 
-void BattleGlobal::fn_710000A6DC() {
+void BattleGlobal::SwitchPlayerAutoOperate() {
     if (pad_bit49) {
         pad_bit50 = !pad_bit50;
     }
@@ -791,7 +791,7 @@ bool BattleGlobal::fn_710000A724() {
     return (pad_bit49 && pad_bit50) || pad_bit35;
 }
 
-void BattleGlobal::fn_710000A764() {
+void BattleGlobal::NotifyShiftNone() {
     pad_bit40 = false;
     pad_bit41 = false;
 }
@@ -802,14 +802,14 @@ void BattleGlobal::NotifyShiftTimeOver() {
     }
 }
 
-bool BattleGlobal::fn_710000DA48() const {
+bool BattleGlobal::IsOCG() const {
     if (m_challengeAnySuccess) {
         return false;
     }
     return pad_5d9c != 0;
 }
 
-void BattleGlobal::fn_710000DA8C() {
+void BattleGlobal::ResultOCG() {
     if (m_challengeAnySuccess) {
         return;
     }
@@ -818,14 +818,14 @@ void BattleGlobal::fn_710000DA8C() {
     }
 }
 
-bool BattleGlobal::fn_710000DAD8() const {
+bool BattleGlobal::IsOCGResult() const {
     if (m_challengeAnySuccess) {
         return false;
     }
     return pad_5d9c > 2;
 }
 
-void BattleGlobal::fn_710000DD4C(int index, unsigned int add) {
+void BattleGlobal::AddOCGDamage(int index, unsigned int add) {
     if (m_challengeAnySuccess) {
         return;
     }
@@ -835,7 +835,7 @@ void BattleGlobal::fn_710000DD4C(int index, unsigned int add) {
     }
 }
 
-bool BattleGlobal::fn_710000DDB0(bool check) const {
+bool BattleGlobal::IsOCGOrder(bool check) const {
     if (pad_bit22) {
         return true;
     }
@@ -845,7 +845,7 @@ bool BattleGlobal::fn_710000DDB0(bool check) const {
     return false;
 }
 
-void BattleGlobal::fn_71000063EC() {
+void BattleGlobal::SetupLeaderAndControlCharacterHandle() {
     m_leaderHandle = m_controlHandle = gf::GfGameManager::getPartyLeaderDriver();
     if (ChainAttackManager::sys()->IsProc(false)) {
         int group = ChainAttackManager::sys()->GetGroupIndex();
@@ -855,7 +855,7 @@ void BattleGlobal::fn_71000063EC() {
     }
 }
 
-bool BattleGlobal::fn_710000D468(bool check) const {
+bool BattleGlobal::IsKakuseiOrder(bool check) const {
     if (pad_bit16) {
         return true;
     }
@@ -865,7 +865,7 @@ bool BattleGlobal::fn_710000D468(bool check) const {
     return false;
 }
 
-bool BattleGlobal::fn_710000D4BC(bool check) const {
+bool BattleGlobal::IsMindEyeOrder(bool check) const {
     if (pad_bit20) {
         return true;
     }
@@ -917,7 +917,7 @@ const ARTS_SLOT_DATA* ARTS_PALETTE_DATA::GetSupportSlotDataConst(int slot) const
     return &m_supportSlots[slot];
 }
 
-bool BattleGlobal::fn_7100009618(unsigned int id) {
+bool BattleGlobal::SetBGM(unsigned int id) {
     bool taken = false;
     if (id != 0) {
         unsigned char priority = static_cast<unsigned char>(
@@ -961,7 +961,7 @@ void BattleGlobal::NotifyLinkJoinBattle(gf::GF_OBJ_HANDLE* handle) {
         return;
     }
     const CharacterParameter* param = chr->GetCharacterParameterConst(true);
-    if (param == nullptr || param->fn_7100085314(true)) {
+    if (param == nullptr || param->IsBlade(true)) {
         return;
     }
     int level = param->GetLevel();

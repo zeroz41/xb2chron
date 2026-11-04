@@ -19,9 +19,9 @@ public:
         unsigned int m_kind : 4;       // whose result it is: 0 an attack, 1 a chain attack turn, 2 an enemy's, 3
                                        // BattleGlobal's; 4 none (IsProc)
         unsigned int : 0;
-        unsigned int m_flag : 16;       // fn_710001C990 passes it (as a bool) to BattleCharacter::fn_710006760C
-        unsigned int m_stat : 16;       // fn_710001C990's damage base: 1 the strength, 2 the ether power
-        int m_target;                  // the character fn_710001C990 damages
+        unsigned int m_flag : 16;       // ResultProc passes it (as a bool) to BattleCharacter::fn_710006760C
+        unsigned int m_stat : 16;       // ResultProc's damage base: 1 the strength, 2 the ether power
+        int m_target;                  // the character ResultProc damages
         unsigned char m_character;     // the character that challenges (CharacterManager::GetCharacterConst(int))
         unsigned char m_priority;      // a challenge in progress gives way only to an equal or higher one (Start)
     };
@@ -36,18 +36,14 @@ public:
     void Update(const fw::UpdateInfo& info);
     bool IsEnemyChallengeSuccess();
 
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's OpenButtonChallenge(int, int) at 0x71000171F4 does its
-    // create/reset and open part, with other arguments; 1.0.0's Start inlines it). A
-    // member because Start passes its this. What it does: opens GfMenuObjButtonChallenge2 (its sequence for menu
-    // type 0xF9) on a new or reset m_context, unless BattleGlobal::fn_710000A724 holds (and, for a kind other
-    // than 0, BattleGlobal::fn_71000068F8 too): then it drops m_context and marks the challenge skipped.
-    void fn_710001C6A8(const BUTTON_CHALLENGE_PARAM& param);
-    // Placeholder name: 1.0.0's ResultProc(int) sits at the same call sites (Start, Update,
-    // BattleCharacter::AttackTimingProc) with the same body, but 3.0.1 added the bool, so the arguments differ. A
-    // member: its callers pass their this. What it does: plays the result's pad vibration, applies the result by the
-    // challenge's kind (damage, the chain attack turn, the enemy's success, BattleGlobal's), plays the narration voice
-    // when the bool is set, and marks the challenge done.
-    void fn_710001C990(int result, bool narrate);
+    // 2.0.0's symbols name it. What it does: opens GfMenuObjButtonChallenge2 (its sequence for menu type 0xF9) on a new
+    // or reset m_context, unless BattleGlobal::fn_710000A724 holds (and, for a kind other than 0,
+    // BattleGlobal::fn_71000068F8 too): then it drops m_context and marks the challenge skipped.
+    void OpenButtonChallenge(const BUTTON_CHALLENGE_PARAM& param);
+    // 2.0.0's symbols name it. What it does: plays the result's pad vibration, applies the result by the challenge's
+    // kind (damage, the chain attack turn, the enemy's success, BattleGlobal's), plays the narration voice when the
+    // bool is set, and marks the challenge done.
+    void ResultProc(int result, bool narrate);
     // 1.0.0's CancelProc() (0x7100017850): 3.0.1 inlines it everywhere (Start, Cancel). Closes the menu (only an open
     // one, in 3.0.1), keeps its context for the close and clears the challenge.
     void CancelProc() {
@@ -70,11 +66,9 @@ public:
         m_isSkipped = false;
         m_enemySuccess = false;
     }
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's BattleCharacter::AttackTimingProc
-    // and ChainAttackManager::UpdateProc do this inline). A member: its callers pass a ButtonChallenge. What it
-    // does: for a skipped challenge with this id not yet done, gives fn_710001C990(2, false), drops m_context,
-    // clears the challenge, deletes its slow and lifts BattleGlobal's pause 4.
-    void fn_710001D2F0(unsigned int id);
+    // 2.0.0's symbols name it. What it does: for a skipped challenge with this id not yet done, gives ResultProc(2,
+    // false), drops m_context, clears the challenge, deletes its slow and lifts BattleGlobal's pause 4.
+    void AutoSuccessTimingCallback(unsigned int id);
 
     gf::GfMenuCallContext* m_context;      // GfMenuObjButtonChallenge2's while it is open
     gf::GfMenuCallContext* m_prevContext;  // the one being closed (Cancel, Start)
@@ -82,11 +76,11 @@ public:
     int m_nextId;                          // the id the next Start returns (never -1's successor 0)
     int m_id;                              // the challenge in progress, 0 for none
     unsigned int m_slowId;                 // BattleGlobal::DeleteSlow's
-    unsigned char m_successCount;          // fn_710001C990 counts its results of 3, picks the narration by it
-    bool m_isOpen;                         // GfMenuObjButtonChallenge2 is open (fn_710001C6A8)
-    bool m_isDone;                         // fn_710001C990 ran for the challenge
-    bool m_isSkipped;                      // fn_710001C6A8 did not open the menu
-    bool m_enemySuccess;                   // fn_710001C990's for kind 2, IsEnemyChallengeSuccess takes it
+    unsigned char m_successCount;          // ResultProc counts its results of 3, picks the narration by it
+    bool m_isOpen;                         // GfMenuObjButtonChallenge2 is open (OpenButtonChallenge)
+    bool m_isDone;                         // ResultProc ran for the challenge
+    bool m_isSkipped;                      // OpenButtonChallenge did not open the menu
+    bool m_enemySuccess;                   // ResultProc's for kind 2, IsEnemyChallengeSuccess takes it
 };
 }  // namespace btl
 

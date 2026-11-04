@@ -42,7 +42,7 @@ public:
     GfComPropertyPc* GetProperty();
     const GfPropertyBattle* GetBattlePropertyConst() const;
     // a death the PC's battle character was told of: a controlled character's dead kinds 3 and 4 set the battle's
-    // flag; relayed to the buddy while the character is a blade (fn_710002F1F8)
+    // flag; relayed to the buddy while the character is a blade (IsForward)
     void procMsgObjectNotifyDead(gf::GfComBehaviorPc* behavior, fw::MessageObject* from, gf::MsgObjectNotifyDead& msg);
 
     // Every battle state is 0x28 bytes (registerBattleStates' sizes)

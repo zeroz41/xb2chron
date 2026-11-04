@@ -50,13 +50,11 @@ public:
     // 1.0.0's createCommonSound (the symbol at the same place, called from the same place: initialize, with the
     // same body); 3.0.1 adds the DLC flag, which it stores in s_isDlc before picking the pack name
     void createCommonSound(bool isDlc);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member of GfFieldSound
-    // because its unit is gf_field_sound and it reads that unit's flag s_isDlc (which createCommonSound stores and
-    // createMapSound reads); it takes no object. What it does: returns _gffsn::s_szDlcCommonName when s_isDlc is
-    // set, else _gffsn::s_szCommonName ("dlc_fld_allmap" / "se_fld_allmap"; 1.0.0's GfFobjSeManager::create passes
-    // the literal "se_fld_allmap" to SoundManager::findPack where 3.0.1 calls this); GfFobjSeManager::create and
-    // fn_7100282EA8 pass it to SoundManager::findPack.
-    static const char* fn_710027C7D4();
+    // 2.0.0's symbols name it. What it does: returns _gffsn::s_szDlcCommonName when s_isDlc is set, else
+    // _gffsn::s_szCommonName ("dlc_fld_allmap" / "se_fld_allmap"; 1.0.0's GfFobjSeManager::create passes the literal
+    // "se_fld_allmap" to SoundManager::findPack where 3.0.1 calls this); GfFobjSeManager::create and rebuildForGameType
+    // pass it to SoundManager::findPack.
+    static const char* getSePackName();
     void destroyCommonSound();
     void clear();
     void update(const fw::UpdateInfo& info);
@@ -76,10 +74,9 @@ public:
     // the sound packs its +0x28 and +0x38 hold (GfFieldMapGimmick picks one by a row's "flag" bit)
     fw::SoundPack* getCommonPack();
     fw::SoundPack* getMapPack();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because fn_71002EE5A0 calls it
-    // on GfFieldSound's instance and it reads this+0x110. What it does: the DLC battle SE pack (m_dlcSound's) when
-    // it holds a source of that name (SoundPack::findSource), else null.
-    fw::SoundPack* fn_710027CE60(const char* name);
+    // 2.0.0's symbols name it. What it does: the DLC battle SE pack (m_dlcSound's) when it holds a source of that name
+    // (SoundPack::findSource), else null.
+    fw::SoundPack* getDlcSePack(const char* name);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because fn_71002EE5C0 calls it
     // on GfFieldSound's instance (it then ignores this). What it does: maps "btl_spskill_001".."btl_spskill_004" to
     // "dlc_se_btl_bl40040116".."dlc_se_btl_bl40040119", null for any other name.

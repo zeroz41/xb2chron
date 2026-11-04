@@ -25,7 +25,7 @@ public:
     unsigned int m_itemBdat;
     int m_itemId;
     unsigned int m_gold;  // GfFobjDropitem::emitDropgold's amount (the name is not the original's)
-    // fn_7100287E30's amount; GfFobjDropitem::applyGetItem hands it to btl::Utility::fn_7100010900 (the name is not
+    // emitDropEtherCube's amount; GfFobjDropitem::applyGetItem hands it to btl::Utility::fn_7100010900 (the name is not
     // the original's)
     unsigned int m_amount;
     // the field object row (GfInitParamFobj's m_objId); GfFobjDropitem::initialize reads its "dropSE" (the name is

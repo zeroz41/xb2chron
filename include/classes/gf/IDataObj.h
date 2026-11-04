@@ -56,7 +56,7 @@ public:
     virtual unsigned int getAttribute(bool, int) const { return 0; }  // slot 40
     virtual bool isDispInitExtraParts(unsigned int) const { return false; }  // slot 41
     // new in 3.0.1 (1.0.0's table has no slot here); nothing names it
-    virtual bool fn_710022BD80(unsigned int) const { return false; }  // slot 42
+    virtual bool isHideInitExtraParts(unsigned int) const { return false; }  // slot 42
     virtual bool isScenarioMask() const { return false; }  // slot 43
     virtual unsigned int getRole() const { return 1; }  // slot 44
     virtual const char* getVoiceStr() const { return nullptr; }  // slot 45
@@ -69,7 +69,7 @@ public:
     virtual void setVirtualEquipOrb(unsigned int, unsigned int) {}  // slot 51
     // new in 3.0.1 (1.0.0's table has no slot here); nothing names it
     // takes an item (DataObjDriver's override asks GfDataItem::getItemType of it; DataParamAcc's forwards one)
-    virtual void fn_710022BDB8(unsigned int) {}  // slot 52
+    virtual void setVirtualEquipWpnAcce(unsigned int) {}  // slot 52
     virtual bool isVirtualSetting() const { return false; }  // slot 53
     virtual bool isEnbaleTarget() const { return true; }  // slot 54
     virtual int getMenuOffset() const { return 0; }  // slot 55

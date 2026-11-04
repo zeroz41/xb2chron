@@ -49,7 +49,7 @@ public:
     GfMenuSequence<GfMenuObjPartyForm3, 8> m_seq;  // 0x80
     GfMenuCallContext* m_announceContext;          // 0x310: seqAnnounceChange's common text (text 13)
     // 0x318: the remove/add operation allowed: cleared without game condition 0xA70, with a one-driver list or
-    // (with GfMenuObjUtil::fn_710048FD30(3)) without menu condition 0x2F
+    // (with GfMenuObjUtil::isValidExpansion(3)) without menu condition 0x2F
     bool m_canRemoveAdd;
     bool pad_319;  // zeroed by the constructor; DriverSelectListener clears and reads it
 };

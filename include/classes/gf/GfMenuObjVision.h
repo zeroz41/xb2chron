@@ -1,0 +1,83 @@
+#ifndef CLASSES_GF_TUNK_B64F08_H
+#define CLASSES_GF_TUNK_B64F08_H
+
+#include "classes/gf/GfMenuObject.h"
+#include "classes/ui/UIObjectListener.h"
+#include "gf/GfMenuSequence.h"
+
+namespace gf { class GfMenuCallContext; }
+namespace gf { class GfMenuDriverList; }
+namespace ui { struct EventData; }
+
+namespace gf {
+// table 0x7100B64F08: the menu object of gf_menu_obj_vision.cpp (new in 3.0.1; nothing names the class yet). It
+// works only while GfMenuObjUtil::isValidExpansion(1) holds; its sequence shows LAY_en, LAY_arts, LAY_char and
+// LAY_time one after another
+class GfMenuObjVision : public ::gf::GfMenuObject {
+public:
+    // what open passes on as its open event's parameters (the names are not the original's)
+    struct OpenParam {
+        unsigned char pad_0[4];
+        unsigned int m_driver;   // the event's first parameter: the listener shows that driver (0: the set one)
+        unsigned short m_flag;   // its second: with m_target, the listener uses m_target
+        unsigned char pad_A[6];
+        unsigned long m_target;  // its last pair
+    };
+    GfMenuObjVision(unsigned int handle);
+    virtual ~GfMenuObjVision();  // slot 0
+    virtual void initialize();  // slot 2
+    virtual void finalize();  // slot 3
+    virtual void update();  // slot 4
+    // 2.0.0's symbols name open; the fn_ names are placeholders. open: with the context started, event 0x21 with param
+    // to the attached object (without isValidExpansion(1) it aborts the context as GfMenuCallContext::abort does).
+    // fn_71004944B8 (GfMenuObjCharSelect::CharListener asks it): false for blade 0x412, else true once the game is
+    // cleared or GfDataBlade::fn_7100231884() is past 2000
+    static bool fn_71004944B8(int blade);
+    static void open(GfMenuCallContext* context, const OpenParam& param);
+    // close: event 0x100 with value to the attached object, starting the context first when there is one
+    // (without isValidExpansion(1) it aborts the context)
+    static void close(unsigned int value, GfMenuCallContext* context);
+    // The sequence's jobs: seqStart shows LAY_main and hides its parts, then queues seqEnFadeIn;
+    // seqFadeInEnd ends the call context and waits for a result (seqWait: 1 queues seqSuccess, others
+    // seqFailed); seqFailed fades LAY_main out and queues seqCtrlWait (the fade's end) and seqEnd
+    // (the close event); seqSuccess2 hides the parts and plays se_btl_bl_shulk19; seqAnimWait waits for
+    // m_animHandle's animation.
+    // seqEnFadeIn, seqArtsFadeIn and seqCharFadeIn fade LAY_en, LAY_arts and LAY_char in one after another (each
+    // queues a 3-frame wait and the next); seqSuccess shows IMG_eff's start animation and queues a 9-frame wait,
+    // seqSuccess2, seqAnimWait and seqEnd
+    bool seqStart();
+    bool seqEnFadeIn();
+    bool seqArtsFadeIn();
+    bool seqCharFadeIn();
+    bool seqFadeInEnd();
+    bool seqSuccess();
+    bool seqWait();
+    bool seqFailed();
+    bool seqSuccess2();
+    bool seqAnimWait();
+    bool seqEnd();
+    bool seqCtrlWait();
+    unsigned char pad_24[4];
+    GfMenuSequence<GfMenuObjVision, 16> m_seq;
+    int m_ctrl;                   // the fade-out's control slot, -1 for none (the name is not the original's)
+    unsigned int m_animHandle;    // the object whose animation seqAnimWait waits for (the name is not the original's)
+    int m_result;                 // what seqWait waits for, 0 for none yet (the name is not the original's)
+    GfMenuDriverList* m_drivers;  // the driver shown, as a list for the adapter (the name is not the original's)
+};
+
+// table 0x7100B64F50: GfMenuObjVision's listener (nothing names the class yet)
+class TUnk_B64F50 : public ::ui::UIObjectListener {
+public:
+    // its code zeroes 0xC-0x1B after storing its table: its own fields, as other menus' listeners use theirs
+    TUnk_B64F50(GfMenuObjVision* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~TUnk_B64F50() {}  // slot 0: its D1 slot is the base's destructor
+    // slot 2. 0x21 (open's open): shows the driver (0: the set one) and the art's name in TXT_arts (the
+    // event's message, else the target enemy's) and restarts the sequence at seqStart; 1 hides the object;
+    // 0x22 ends the call context, clears the sequence and hides the parts; 0x100: 3 closes, others are m_result
+    virtual void reciveEvent(ui::EventData const&, unsigned int);
+    unsigned char pad_0C[0x10];
+    GfMenuObjVision* m_owner;  // what initialize makes it for
+};
+}  // namespace gf
+
+#endif

@@ -10,7 +10,7 @@ public:
     static unsigned char* getCaptionFP();  // the table of the arts' captions
     static unsigned int getNameID(unsigned int arts);
     static unsigned int getCaptionID(unsigned int arts);
-    // getIconID and getDebugName tail-call GfBdatBtl::fn_71001E6BDC and fn_71001E6B54 (BTL_Arts_Dr TalentCap and
+    // getIconID and getDebugName tail-call GfBdatBtl::getArtsDrUI and getArtsDrDebugName (BTL_Arts_Dr TalentCap and
     // CondCap, 16-bit columns the callee masks), so they return the callee's unsigned int
     static unsigned int getIconID(unsigned int arts);
     static unsigned int getDebugName(unsigned int arts);
@@ -37,7 +37,7 @@ public:
     static void addWp(unsigned int driver, unsigned int wpnType, int point);
     static unsigned int getWpnType(unsigned int arts);
     // the symbols' name (its code is in GfDataBlade_710029064C's range; 0 for arts 0 or one outside the table).
-    // TUnk_B535D0::fn_7100290D40 (message type 13) and TUnk_B53370 test it against 0
+    // GfGameArena::fn_7100290D40 (message type 13) and StateArenaEvent test it against 0
     static unsigned int getRangeType(unsigned int arts);
 };
 

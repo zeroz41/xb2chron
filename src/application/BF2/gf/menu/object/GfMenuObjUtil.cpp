@@ -483,20 +483,20 @@ bool GfMenuObjUtil::isExitDriver(unsigned int index) {
     return GfGameParty::getHandleDriver(index, 0) != reinterpret_cast<GF_OBJ_HANDLE*>(-1);
 }
 
-bool GfMenuObjUtil::fn_710048FCF8() {
-    return ui::UIUtil::fn_7100696970(3) && GfGameManager::fn_71002A9E68() && !fn_71002EB3C0();
+bool GfMenuObjUtil::isIraSinMaskOff() {
+    return ui::UIUtil::isEnableExpType(3) && GfGameManager::isGameTypeIra() && !fn_71002EB3C0();
 }
 
-bool GfMenuObjUtil::fn_710048FD30(unsigned int layer) {
-    if (ui::UIUtil::fn_7100696970(layer)) {
+bool GfMenuObjUtil::isValidExpansion(unsigned int layer) {
+    if (ui::UIUtil::isEnableExpType(layer)) {
         if (layer == 1) {
-            if (GfGameManager::fn_71002AC598()) {
+            if (GfGameManager::isInstalledBattleArenaContents()) {
                 return true;
             }
         } else if (layer == 2) {
             return true;
         } else if (layer == 3) {
-            if (GfGameManager::fn_71002A9E68()) {
+            if (GfGameManager::isGameTypeIra()) {
                 return true;
             }
         }
@@ -592,11 +592,11 @@ bool GfMenuObjUtil::isValidBlade(unsigned int blade) {
     return blade != 0 && !GfDataBlade::isDummyBlade(blade);
 }
 
-bool GfMenuObjUtil::fn_71004903E4(unsigned int blade) {
+bool GfMenuObjUtil::isBladeHana(unsigned int blade) {
     return blade - 1005 < 3;
 }
 
-bool GfMenuObjUtil::fn_71004903F4() {
+bool GfMenuObjUtil::isBladeHanaInMercenary() {
     if (!GfGameManager::isClearGame()) {
         return false;
     }
@@ -606,7 +606,7 @@ bool GfMenuObjUtil::fn_71004903F4() {
     return GfDataBlade::fn_71002383C8(1007);
 }
 
-unsigned int GfMenuObjUtil::fn_7100490440() {
+unsigned int GfMenuObjUtil::getBladeHanaInMercenary() {
     if (!GfGameManager::isClearGame()) {
         return 0;
     }
@@ -619,7 +619,7 @@ unsigned int GfMenuObjUtil::fn_7100490440() {
     return GfDataBlade::fn_71002383C8(1007) ? 1007 : 0;
 }
 
-bool GfMenuObjUtil::fn_71004904A0() {
+bool GfMenuObjUtil::canBladeHanaInMercenary() {
     if (!GfGameManager::isClearGame() || GfDataDriver::isActivateUnuse(4)) {
         return false;
     }
@@ -636,7 +636,7 @@ bool GfMenuObjUtil::fn_71004904A0() {
 }
 
 bool GfMenuObjUtil::isBladeEnableOffset(unsigned int driver, int offset) {
-    if (ui::UIUtil::fn_7100696970(3) && GfGameManager::fn_71002A9E68()) {
+    if (ui::UIUtil::isEnableExpType(3) && GfGameManager::isGameTypeIra()) {
         return true;
     }
     unsigned int blade = GfDataDriver::getBlade(GfDataParty::getDriver(0, 0), -1);
@@ -743,7 +743,7 @@ unsigned short GfMenuObjUtil::getBladeRareIconID(unsigned int blade) {
     return icon;
 }
 
-bool GfMenuObjUtil::fn_7100490CE0(unsigned int blade) {
+bool GfMenuObjUtil::isIraDummyBlade(unsigned int blade) {
     return blade - 1124 < 9;
 }
 
@@ -887,7 +887,7 @@ unsigned int GfMenuObjUtil::getBladeRarity(unsigned int blade) {
     return GfDataBlade::isRareBlade(blade);
 }
 
-bool GfMenuObjUtil::fn_7100491990(unsigned int blade) {
+bool GfMenuObjUtil::isBladeNoBuildWeapon(unsigned int blade) {
     return blade - 1043 < 7;
 }
 
@@ -936,15 +936,15 @@ bool GfMenuObjUtil::isBladeAchivementReleased(unsigned int blade) {
     return false;
 }
 
-void GfMenuObjUtil::fn_71004922BC(unsigned int blade, bool flag) {
-    GfDataBlade::fn_7100239934(blade, flag);
+void GfMenuObjUtil::setBladeFavorite(unsigned int blade, bool flag) {
+    GfDataBlade::setBladeLock(blade, flag);
     if (blade - 1001 < 2) {
-        GfDataBlade::fn_7100239934(1001, flag);
-        GfDataBlade::fn_7100239934(1002, flag);
+        GfDataBlade::setBladeLock(1001, flag);
+        GfDataBlade::setBladeLock(1002, flag);
     } else if (blade - 1005 < 3) {
-        GfDataBlade::fn_7100239934(1005, flag);
-        GfDataBlade::fn_7100239934(1006, flag);
-        GfDataBlade::fn_7100239934(1007, flag);
+        GfDataBlade::setBladeLock(1005, flag);
+        GfDataBlade::setBladeLock(1006, flag);
+        GfDataBlade::setBladeLock(1007, flag);
     }
 }
 
@@ -1049,18 +1049,18 @@ SoundHandle GfMenuObjUtil::playJingle(unsigned int jingle) {
     return GfMenuSoundManager::playJingle(jingle);
 }
 
-bool GfMenuObjUtil::fn_7100492C88() {
+bool GfMenuObjUtil::isVoiceSkip() {
     if ((ui::UIUtil::getPadData()->m_down & 4) != 0) {
         return true;
     }
     return (ui::UIUtil::getPadData()->m_down & 2) != 0;
 }
 
-bool GfMenuObjUtil::fn_7100492CBC() {
-    if (!ui::UIUtil::fn_7100696970(1)) {
+bool GfMenuObjUtil::isInChallengeBattleMap() {
+    if (!ui::UIUtil::isEnableExpType(1)) {
         return false;
     }
-    if (!GfGameManager::fn_71002AC598()) {
+    if (!GfGameManager::isInstalledBattleArenaContents()) {
         return false;
     }
     return GfGameManager::getMapID() == 0x3A;

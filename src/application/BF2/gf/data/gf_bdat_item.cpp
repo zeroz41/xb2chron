@@ -4963,11 +4963,11 @@ bool GfBdatItem::isEquipOrbFlagNoSell(unsigned int id) const {
     return _gfbit::isEquipOrbFlagNoSell(*m_fpEquipOrb, id);
 }
 
-const char* GfBdatItem::fn_7100200F60(unsigned int id) const {
+const char* GfBdatItem::getEquipOrbModel(unsigned int id) const {
     return _gfbit::getEquipOrbModel(*m_fpEquipOrb, id);
 }
 
-unsigned int GfBdatItem::fn_7100200FE4(unsigned int id) const {
+unsigned int GfBdatItem::getEquipOrbBlade(unsigned int id) const {
     return _gfbit::getEquipOrbBlade(*m_fpEquipOrb, id);
 }
 
@@ -5015,39 +5015,39 @@ unsigned int GfBdatItem::getPreciousNoMultiple(unsigned int id) const {
     return _gfbit::getPreciousNoMultiple(*m_fpPrecious, id);
 }
 
-unsigned int GfBdatItem::fn_71002014B4() const {
+unsigned int GfBdatItem::getPreciousIraEnd() const {
     return Bdat::getIdTop(m_fpPreciousIra->m_fp) + Bdat::getIdCount(m_fpPreciousIra->m_fp);
 }
 
-unsigned int GfBdatItem::fn_71002014F0(unsigned int id) const {
+unsigned int GfBdatItem::getPreciousIraName(unsigned int id) const {
     return _gfbit::getPreciousIraName(*m_fpPreciousIra, id);
 }
 
-unsigned int GfBdatItem::fn_7100201578(unsigned int id) const {
+unsigned int GfBdatItem::getPreciousIraCaption(unsigned int id) const {
     return _gfbit::getPreciousIraCaption(*m_fpPreciousIra, id);
 }
 
-unsigned int GfBdatItem::fn_7100201600(unsigned int id) const {
+unsigned int GfBdatItem::getPreciousIraCategory(unsigned int id) const {
     return _gfbit::getPreciousIraCategory(*m_fpPreciousIra, id);
 }
 
-unsigned int GfBdatItem::fn_7100201688(unsigned int id) const {
+unsigned int GfBdatItem::getPreciousIraType(unsigned int id) const {
     return _gfbit::getPreciousIraType(*m_fpPreciousIra, id);
 }
 
-unsigned int GfBdatItem::fn_7100201710(unsigned int id) const {
+unsigned int GfBdatItem::getPreciousIraPrice(unsigned int id) const {
     return _gfbit::getPreciousIraPrice(*m_fpPreciousIra, id);
 }
 
-unsigned int GfBdatItem::fn_7100201794(unsigned int id) const {
+unsigned int GfBdatItem::getPreciousIraValueMax(unsigned int id) const {
     return _gfbit::getPreciousIraValueMax(*m_fpPreciousIra, id);
 }
 
-unsigned int GfBdatItem::fn_710020181C(unsigned int id) const {
+unsigned int GfBdatItem::getPreciousIraClearNewGame(unsigned int id) const {
     return _gfbit::getPreciousIraClearNewGame(*m_fpPreciousIra, id);
 }
 
-unsigned int GfBdatItem::fn_71002018A4(unsigned int id) const {
+unsigned int GfBdatItem::getPreciousIraNoMultiple(unsigned int id) const {
     return _gfbit::getPreciousIraNoMultiple(*m_fpPreciousIra, id);
 }
 
@@ -5299,7 +5299,7 @@ unsigned int GfBdatItem::getPcWpnChipPrice(unsigned int id) const {
     return _gfbit::getPcWpnChipPrice(*m_fpPcWpnChip, id);
 }
 
-unsigned int GfBdatItem::fn_7100202820(unsigned int id) const {
+unsigned int GfBdatItem::getPcWpnChipPriceIra(unsigned int id) const {
     return _gfbit::getPcWpnChipPriceIra(*m_fpPcWpnChip, id);
 }
 
@@ -5428,7 +5428,7 @@ unsigned int GfBdatItem::getPcEquipEnhance1(unsigned int id) const {
     return _gfbit::getPcEquipEnhance1(*m_fpPcEquip, id);
 }
 
-unsigned int GfBdatItem::fn_7100202C3C(unsigned int id) const {
+unsigned int GfBdatItem::getPcEquipAddAtr(unsigned int id) const {
     return _gfbit::getPcEquipAddAtr(*m_fpPcEquip, id);
 }
 
@@ -5480,15 +5480,15 @@ bool GfBdatItem::isPcEquipFlagEqPC09(unsigned int id) const {
     return _gfbit::isPcEquipFlagEqPC09(*m_fpPcEquip, id);
 }
 
-bool GfBdatItem::fn_71002033C0(unsigned int id) const {
+bool GfBdatItem::isPcEquipFlagEqPC10(unsigned int id) const {
     return _gfbit::isPcEquipFlagEqPC10(*m_fpPcEquip, id);
 }
 
-bool GfBdatItem::fn_7100203458(unsigned int id) const {
+bool GfBdatItem::isPcEquipFlagEqPC11(unsigned int id) const {
     return _gfbit::isPcEquipFlagEqPC11(*m_fpPcEquip, id);
 }
 
-bool GfBdatItem::fn_71002034F0(unsigned int id) const {
+bool GfBdatItem::isPcEquipFlagEqPC12(unsigned int id) const {
     return _gfbit::isPcEquipFlagEqPC12(*m_fpPcEquip, id);
 }
 
@@ -5496,11 +5496,11 @@ unsigned int GfBdatItem::getPcEquipIcon(unsigned int id) const {
     return _gfbit::getPcEquipIcon(*m_fpPcEquip, id);
 }
 
-unsigned int GfBdatItem::fn_7100203610(unsigned int id) const {
+unsigned int GfBdatItem::getPcEquipDriver(unsigned int id) const {
     return _gfbit::getPcEquipDriver(*m_fpPcEquip, id);
 }
 
-const char* GfBdatItem::fn_7100203698(unsigned int id) const {
+const char* GfBdatItem::getPcEquipModel(unsigned int id) const {
     return _gfbit::getPcEquipModel(*m_fpPcEquip, id);
 }
 
@@ -5996,43 +5996,43 @@ unsigned int GfBdatItem::getITM_HanaAssistCondition(unsigned int id) const {
     return _gfbit::getITM_HanaAssistCondition(*m_fpITM_HanaAssist, id);
 }
 
-unsigned int GfBdatItem::fn_7100206788(unsigned int id) const {
+unsigned int GfBdatItem::getITM_HanaAssistBlade(unsigned int id) const {
     return _gfbit::getITM_HanaAssistBlade(*m_fpITM_HanaAssist, id);
 }
 
-const char* GfBdatItem::fn_7100206810(unsigned int id) const {
+const char* GfBdatItem::getITM_HanaAssistModel(unsigned int id) const {
     return _gfbit::getITM_HanaAssistModel(*m_fpITM_HanaAssist, id);
 }
 
-unsigned int GfBdatItem::fn_7100206894(unsigned int id) const {
+unsigned int GfBdatItem::getITM_PcWpnIrAtkLv1(unsigned int id) const {
     return _gfbit::getPcWpnIrAtkLv1(*m_fpPcWpnIr, id);
 }
 
-unsigned int GfBdatItem::fn_710020691C(unsigned int id) const {
+unsigned int GfBdatItem::getITM_PcWpnIrAtkLv99(unsigned int id) const {
     return _gfbit::getPcWpnIrAtkLv99(*m_fpPcWpnIr, id);
 }
 
-unsigned int GfBdatItem::fn_71002069A4(unsigned int id) const {
+unsigned int GfBdatItem::getITM_PcWpnIrStbLv1(unsigned int id) const {
     return _gfbit::getPcWpnIrStbLv1(*m_fpPcWpnIr, id);
 }
 
-unsigned int GfBdatItem::fn_7100206A2C(unsigned int id) const {
+unsigned int GfBdatItem::getITM_PcWpnIrStbLv99(unsigned int id) const {
     return _gfbit::getPcWpnIrStbLv99(*m_fpPcWpnIr, id);
 }
 
-unsigned int GfBdatItem::fn_7100206AB4(unsigned int id) const {
+unsigned int GfBdatItem::getITM_PcWpnIrCriRateLv1(unsigned int id) const {
     return _gfbit::getPcWpnIrCriRateLv1(*m_fpPcWpnIr, id);
 }
 
-unsigned int GfBdatItem::fn_7100206B3C(unsigned int id) const {
+unsigned int GfBdatItem::getITM_PcWpnIrCriRateLv99(unsigned int id) const {
     return _gfbit::getPcWpnIrCriRateLv99(*m_fpPcWpnIr, id);
 }
 
-unsigned int GfBdatItem::fn_7100206BC4(unsigned int id) const {
+unsigned int GfBdatItem::getITM_PcWpnIrGuardRateLv1(unsigned int id) const {
     return _gfbit::getPcWpnIrGuardRateLv1(*m_fpPcWpnIr, id);
 }
 
-unsigned int GfBdatItem::fn_7100206C4C(unsigned int id) const {
+unsigned int GfBdatItem::getITM_PcWpnIrGuardRateLv99(unsigned int id) const {
     return _gfbit::getPcWpnIrGuardRateLv99(*m_fpPcWpnIr, id);
 }
 

@@ -37,7 +37,7 @@ void WaterInPlugin::onDeactivate() {
 }
 
 // onEvent (0x710051DB04) is not banked yet: its candidate is identical but for two relocations, the splash table's
-// guard (an unnamed .bss label) and fn_7100552DF4, which needs a name
+// guard (an unnamed .bss label) and isIra, which needs a name
 
 void WaterInPlugin::update(gf::GfComBehaviorPc& behavior, const fw::UpdateInfo&) {
     if (m_eventDone) {

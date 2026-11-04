@@ -47,17 +47,16 @@ public:
     bool seqDepartureEnd();
     bool seqPresetEnd();
     bool seqRevertBladeSet();
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: their code reads the form's
-    // lists and sequence state and sits among the class's functions.
-    // whether the blade is already in the team list (m_unitBlades), or both it and a member are one of
-    // GfMenuObjUtil::fn_71004903E4's blades; caller fn_710043A138
-    bool fn_7100439FCC(unsigned int blade);
+    // 2.0.0's symbols name them. Their code reads the form's lists and sequence state and sits among the class's
+    // functions. whether the blade is already in the team list (m_unitBlades), or both it and a member are one of
+    // GfMenuObjUtil::isBladeHana's blades; caller seqConfirmHana
+    bool chkUnitBladeList(unsigned int blade);
     // m_seq job (ListListener adds it): asks common window 0x10F and, on yes, adds the blade list's selected blade
-    // to the team list (with its creator) unless fn_7100439FCC holds, then reopens LAY_form_list_bl
-    bool fn_710043A138();
-    // m_seq job (ListListener adds it): asks common window 199 (0x10F for fn_71004903E4's blades) and, on yes,
-    // puts the blade list's selected blade into m_bladeIds (once) and then into the team list as fn_710043A138 does
-    bool fn_710043A2E0();
+    // to the team list (with its creator) unless chkUnitBladeList holds, then reopens LAY_form_list_bl
+    bool seqConfirmHana();
+    // m_seq job (ListListener adds it): asks common window 199 (0x10F for isBladeHana's blades) and, on yes,
+    // puts the blade list's selected blade into m_bladeIds (once) and then into the team list as seqConfirmHana does
+    bool seqConfirmRemoveBladeSet();
     void setDetailBladePos(unsigned int index);
     void updateBladeCount(bool, bool);
     void refreshBladeList();
@@ -92,7 +91,7 @@ public:
     GfMenuSequence<GfMenuObjMercenaryForm, 10> m_seq;    // 0x108
     bool m_seqStep;                           // 0x430: a job's first step done (seqRevertBladeSet: the window is open)
     GfMenuSequence<GfMenuObjMercenaryForm, 4> m_subSeq;  // 0x438
-    // 0x598: refreshBladeList searches it, fn_710043A2E0 adds to it (its push_back's capacity check is 422, as
+    // 0x598: refreshBladeList searches it, seqConfirmRemoveBladeSet adds to it (its push_back's capacity check is 422, as
     // GfMenuBladeList's FixedVector<unsigned short, 422> lists)
     mm::mtl::FixedVector<unsigned short, 422> m_bladeIds;
     bool pad_8F0;

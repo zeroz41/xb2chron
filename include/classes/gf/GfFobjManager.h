@@ -30,16 +30,14 @@ public:
     static void destroy();
     void finalize();
     static void update(const fw::UpdateInfo& info);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's update has no such call). A member
-    // because update calls it on the instance. What it does: sets m_leaderBonus from the party leader's driver: 0 for
-    // none; driver 12: the table 0x7B member 0 row 0x5D float; else the sum of "Param1" over the driver's equipment
-    // enhances (GfDataDriver::fn_7100247580) whose "EnhanceEffect" (table 0x2C) is 0xFB, times 0.01.
-    void fn_7100289504();
+    // 2.0.0's symbols name it. What it does: sets m_leaderBonus from the party leader's driver: 0 for none; driver 12:
+    // the table 0x7B member 0 row 0x5D float; else the sum of "Param1" over the driver's equipment enhances
+    // (GfDataDriver::fn_7100247580) whose "EnhanceEffect" (table 0x2C) is 0xFB, times 0.01.
+    void updateEnhanceEffect();
     static GfDropitemParams* getDropitemParams();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this + 0x90D0 (its
-    // m_seManager). What it does: m_seManager.fn_7100282EA8() (looks the sound pack up again); GfFieldManager's
-    // fn_7100277784 calls it.
-    void fn_7100289668();
+    // 2.0.0's symbols name it. What it does: m_seManager.rebuildForGameType() (looks the sound pack up again);
+    // GfFieldManager's rebuildForGameType calls it.
+    void rebuildForGameType();
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 2
     void leaveGameField(GF_OBJ_HANDLE* handle);
     static void registFiledObj(GfFobjDropitem* item);
@@ -63,7 +61,7 @@ public:
     bool m_waitEvent;  // set while execWaitEvent ramps m_waitEventValue (the name is not the original's)
     GfFobjGottenEffectManager m_gottenEffect;  // the name is not the original's
     GfFobjSeManager m_seManager;                // the name is not the original's
-    float m_leaderBonus;  // fn_7100289504's (the name is not the original's)
+    float m_leaderBonus;  // updateEnhanceEffect's (the name is not the original's)
     float m_settingValue;  // the table 0x7B member 0 row 0x49 float (the name is not the original's)
 };
 }  // namespace gf

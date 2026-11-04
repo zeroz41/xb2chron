@@ -37,12 +37,11 @@ public:
                                                             IConverter* converter, bool changed);
     static GfMenuWorldMapAdapter* createFromList(unsigned int handle, unsigned int type, GfMenuIDList* list,
                                                  int index, bool onPage, bool changed);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it fills this unit
-    // between createFromList and createFromReference and returns create's adapter. What it does: createFromList
-    // with GfMenuMissionAdapter::MissionListConverter (table 0x7100B5E1A8) in place of ListConverter: the map is
-    // the second id (MenuID::m_subId) of the GfMenuIDList entry at the index (-1: the selected one; onPage: an
-    // index of the page shown), which it references. No caller in 3.0.1 (nothing references it).
-    static GfMenuWorldMapAdapter* fn_710034D118(unsigned int handle, unsigned int type, GfMenuIDList* list,
+    // 2.0.0's symbols name it. What it does: createFromList with GfMenuMissionAdapter::MissionListConverter (table
+    // 0x7100B5E1A8) in place of ListConverter: the map is the second id (MenuID::m_subId) of the GfMenuIDList entry at
+    // the index (-1: the selected one; onPage: an index of the page shown), which it references. No caller in 3.0.1
+    // (nothing references it).
+    static GfMenuWorldMapAdapter* createFromListWork(unsigned int handle, unsigned int type, GfMenuIDList* list,
                                                 int index, bool onPage, bool changed);
     static GfMenuWorldMapAdapter* createFromReference(unsigned int handle, unsigned int type, bool changed);
     // the zone a map belongs to, 0 for a map with none; inline: 1.0.0 has it out of line, 3.0.1 none

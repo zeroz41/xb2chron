@@ -146,7 +146,7 @@ void GfAchievStats::checkBladeActivate(unsigned int blade) {
 
 void GfAchievStats::fn_710028AF64(BladeCounts& counts, unsigned int blade) {
     mm::mtl::FixedVector<unsigned short, 422> blades;
-    GfDataBlade::fn_71002376E8(blades);
+    GfDataBlade::getListParty(blades);
     GfDataBlade::getListReserver(blades);
     GfDataBlade::removeSameBlade(blades);
     unsigned long i = 0;
@@ -162,7 +162,7 @@ void GfAchievStats::fn_710028AF64(BladeCounts& counts, unsigned int blade) {
     counts.m_num = blades.size();
     for (mm::mtl::FixedVector<unsigned short, 422>::iterator b = blades.begin(), e = blades.end(); b != e; ++b) {
         unsigned int id = *b;
-        switch (GfDataBlade::fn_710023982C(id)) {
+        switch (GfDataBlade::getGender(id)) {
         case 1:
             counts.m_gender1++;
             break;
@@ -204,7 +204,7 @@ void GfAchievStats::getAchievementAddCount(unsigned int& add, unsigned int& tota
     total = 0;
     add = 0;
     unsigned int count;
-    if (GfDataAchievement::fn_710024B4D0(stats) >= 0 || GfDataAchievement::getAchievementTotalFlgIndex(stats) >= 0) {
+    if (GfDataAchievement::getAchievementTotalFlgIndex8(stats) >= 0 || GfDataAchievement::getAchievementTotalFlgIndex(stats) >= 0) {
         count = GfDataAchievement::getTotalCount(stats);
     } else {
         switch (stats) {
@@ -251,7 +251,7 @@ void GfAchievStats::getAchievementAddCount(unsigned int& add, unsigned int& tota
 int GfAchievStats::getAchievementTotalCount(const AchievQuest& quest) {
     BladeCounts counts = {};
     fn_710028AF64(counts, quest.m_blade);
-    if (GfDataAchievement::fn_710024B4D0(quest.m_stats) >= 0 ||
+    if (GfDataAchievement::getAchievementTotalFlgIndex8(quest.m_stats) >= 0 ||
         GfDataAchievement::getAchievementTotalFlgIndex(quest.m_stats) >= 0) {
         return GfDataAchievement::getTotalCount(quest.m_stats);
     }

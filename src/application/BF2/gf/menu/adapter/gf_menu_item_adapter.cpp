@@ -33,7 +33,7 @@ static GfMenuItemAdapter::TypeSetup s_typeSetups[] = {
     {&GfMenuItemAdapter::update_Icon, {1, 0, 0}},
     {&GfMenuItemAdapter::update_IconAll, {1, 0, 0}},
     {&GfMenuItemAdapter::update_Count, {0, 0, 999}},
-    {&GfMenuItemAdapter::fn_710034220C, {0, 0, 999}},
+    {&GfMenuItemAdapter::update_CountMax, {0, 0, 999}},
     {&GfMenuItemAdapter::update_Price, {0, 0, 999999999}},
     {&GfMenuItemAdapter::update_SellPrice, {0, 0, 999999999}},
     {&GfMenuItemAdapter::update_RareIcon, {1, 0, 0}},
@@ -53,7 +53,7 @@ static GfMenuItemAdapter::TypeSetup s_typeSetups[] = {
     {&GfMenuItemAdapter::update_dispRevise, {3, 0, 0}},
     {&GfMenuItemAdapter::update_roleText, {2, 0, 0}},
     {&GfMenuItemAdapter::update_canStack, {3, 0, 0}},
-    {&GfMenuItemAdapter::fn_7100342FA8, {1, 0, 0}},
+    {&GfMenuItemAdapter::update_IconElem, {1, 0, 0}},
 };
 
 GfMenuItemAdapter::~GfMenuItemAdapter() {
@@ -105,12 +105,12 @@ bool GfMenuItemAdapter::update_Count(const MenuItemInfo& item) {
     return true;
 }
 
-bool GfMenuItemAdapter::fn_710034220C(const MenuItemInfo& item) {
+bool GfMenuItemAdapter::update_CountMax(const MenuItemInfo& item) {
     if (m_item.m_id == 0 || m_item.m_type == 0) {
         setNumber(0);
     } else {
         setNumber(GfItemUtil::getEnableStock(item.m_id));
-        if (GfMenuObjUtil::fn_710048FD30(3) && item.m_id == 0x62D9) {
+        if (GfMenuObjUtil::isValidExpansion(3) && item.m_id == 0x62D9) {
             setNumber(3);
         }
     }
@@ -283,9 +283,9 @@ bool GfMenuItemAdapter::update_canStack(const MenuItemInfo& item) {
     return GfMenuItemUtil::canCountStack(item.m_type);
 }
 
-bool GfMenuItemAdapter::fn_7100342FA8(const MenuItemInfo& item) {
-    if (GfMenuObjUtil::fn_710048FD30(3) && item.m_type == 2) {
-        unsigned short icon = GfBdatItem::get()->fn_7100202C3C(item.m_id) + 0x9E;
+bool GfMenuItemAdapter::update_IconElem(const MenuItemInfo& item) {
+    if (GfMenuObjUtil::isValidExpansion(3) && item.m_type == 2) {
+        unsigned short icon = GfBdatItem::get()->getPcEquipAddAtr(item.m_id) + 0x9E;
         setNumber(GfMenuBdat::getIconImageIndex(icon));
         return true;
     }
@@ -449,8 +449,8 @@ void GfMenuItemAdapter::ReferenceDriverEquipConverter::getItemInfo(MenuItemInfo&
     }
     item.m_type = 2;
     if (m_slot <= 2) {
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
-            if (GfDataDriver::fn_7100237A94(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0)) {
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            if (GfDataDriver::isIraFront(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0)) {
                 if (m_slot == 0) {
                     item.m_id = GfItemUtil::fn_71002FCD64(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0);
                 } else {

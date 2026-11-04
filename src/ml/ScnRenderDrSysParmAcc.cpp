@@ -1585,7 +1585,7 @@ void ScnRenderDrSysParmAcc::setWeather(int weather) { m_postParm->m_weather = we
 
 void ScnRenderDrSysParmAcc::setWeatherFrame(float frame) { m_postParm->setWeatherFrame(frame); }
 
-void ScnRenderDrSysParmAcc::getWeatherFrame() const { m_drMan->fn_710071E620(); }
+void ScnRenderDrSysParmAcc::getWeatherFrame() const { m_drMan->weatherFrmEnd(); }
 
 void ScnRenderDrSysParmAcc::setSeamMapAddPosMode(bool enable) { m_drMan->m_seamMapAddPosMode = enable; }
 
@@ -1678,7 +1678,7 @@ void ScnRenderDrSysParmAcc::setCaptureMode(bool enable) {
     }
 }
 
-void ScnRenderDrSysParmAcc::fn_710070A2F4(bool flag) {
+void ScnRenderDrSysParmAcc::setRenderTexMode(bool flag) {
     DrMan* drMan = DrMan::get();
     drMan->m_commonFlag = flag;
 }

@@ -35,11 +35,11 @@ bool BtlSystemBalanceAccess::IsSpBenkeiWeapondEnemy(unsigned int enemyId) const 
     return m_spBenkeiWeapondEnemy == enemyId;
 }
 
-bool BtlSystemBalanceAccess::fn_710001C404(unsigned int enemyId) const {
+bool BtlSystemBalanceAccess::IsSpPlayerZombieEnemy(unsigned int enemyId) const {
     return pad_CC == enemyId;
 }
 
-bool BtlSystemBalanceAccess::fn_710001C414(unsigned int enemyId) const {
+bool BtlSystemBalanceAccess::IsExWeaponAlphaProcEnemy(unsigned int enemyId) const {
     for (int i = 0; i < 4; i++) {
         if (pad_CE[i] == enemyId) {
             return true;
@@ -48,7 +48,7 @@ bool BtlSystemBalanceAccess::fn_710001C414(unsigned int enemyId) const {
     return false;
 }
 
-float BtlSystemBalanceAccess::fn_710001C450(float rate) const {
+float BtlSystemBalanceAccess::GetTemporaryDamageChangeRate(float rate) const {
     int index = static_cast<int>(rate * 10.0f);
     if (index > 8) {
         return 2.0f;

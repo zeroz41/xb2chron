@@ -199,9 +199,9 @@ void GfMenuObjDrEquip2::MainListener::reciveEvent(const ui::EventData& event, un
     }
 }
 
-void GfMenuObjDrEquip2::fn_71003F1CD8() {
+void GfMenuObjDrEquip2::refreshExpandOperation() {
     bool enable = GfGameManager::isClearGame() &&
-                  !GfEquipUtil::fn_71002FC38C(GfMenuReference::getReferenceDriverID(m_driver)) &&
+                  !GfEquipUtil::isEnableExtendDriverAcce(GfMenuReference::getReferenceDriverID(m_driver)) &&
                   GfItemUtil::getItemBoxCount(0x636A) != 0;
     ui::UIObjectAcc acc(m_handle, "LAY_equip_slot");
     GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 10, enable);

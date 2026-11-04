@@ -36,7 +36,7 @@ ButtonChallenge::~ButtonChallenge() {
     }
 }
 
-void ButtonChallenge::fn_710001C6A8(const BUTTON_CHALLENGE_PARAM& param) {
+void ButtonChallenge::OpenButtonChallenge(const BUTTON_CHALLENGE_PARAM& param) {
     if (!BattleGlobal::sys()->fn_710000A724() || (param.m_kind != 0 && !BattleGlobal::sys()->fn_71000068F8())) {
         if (m_context != nullptr) {
             m_context->reset();
@@ -65,14 +65,14 @@ int ButtonChallenge::Start(const BUTTON_CHALLENGE_PARAM& param) {
             return 0;
         }
         if (!m_isDone && m_param.m_kind == 0) {
-            fn_710001C990(3, false);
+            ResultProc(3, false);
         }
         CancelProc();
     } else if (m_id != 0) {
         CancelProc();
     }
     m_param = param;
-    fn_710001C6A8(param);
+    OpenButtonChallenge(param);
     if (m_slowId != 0) {
         BattleGlobal::sys()->DeleteSlow(m_slowId);
         m_slowId = 0;
@@ -103,9 +103,9 @@ bool ButtonChallenge::IsProc() const {
     return m_isOpen || m_param.m_kind != 4;
 }
 
-void ButtonChallenge::fn_710001D2F0(unsigned int id) {
+void ButtonChallenge::AutoSuccessTimingCallback(unsigned int id) {
     if (m_id == id && m_isSkipped && !m_isDone) {
-        fn_710001C990(2, false);
+        ResultProc(2, false);
         m_isOpen = false;
         m_isSkipped = false;
         if (m_context != nullptr) {

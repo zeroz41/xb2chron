@@ -35,7 +35,7 @@ public:
     // the HP the UI shows (GfGameUtil::getMaxHpForUi / getNowHpForUi read them); the names are not the original's
     unsigned int m_uiMaxHp;
     unsigned int m_uiHp;
-    // added to the UI HP (GfGameUtil::getNowHpForUi) by GfMenuGfObjAdapter::fn_7100340154
+    // added to the UI HP (GfGameUtil::getNowHpForUi) by GfMenuGfObjAdapter::update_IRA_TemporaryHp
     int pad_8;
     unsigned char pad_C[0x2];
     mm::mtl::Array<Buff> m_buffs;  // 0x10

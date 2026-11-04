@@ -20,7 +20,7 @@ public:
     virtual void BattleEndInitialize();  // slot 6
     virtual void PreUpdate(fw::UpdateInfo const&);  // slot 7
     virtual void Update(fw::UpdateInfo const&, bool);  // slot 8
-    virtual void fn_7100085B24();  // slot 10
+    virtual void UpdateBuddy();  // slot 10
     virtual int GetBladeIndex() const;  // slot 12
     virtual unsigned int GetWeaponID(int) const;  // slot 13
     virtual int GetEquipAccessory() const;  // slot 14
@@ -31,22 +31,22 @@ public:
     virtual void WritebackRecast(btl::GROUP_DATA*);  // slot 19
     virtual bool InitializeEnhance() const;  // slot 21
     virtual bool IsPlayerParameter() const;  // slot 23
-    virtual void fn_7100088F48();  // slot 43
-    virtual void fn_7100088F4C(bool);  // slot 44 (placeholder name: see CharacterParameter)
-    virtual float fn_7100084F30() const;  // slot 45 (placeholder names: see CharacterParameter)
-    virtual float fn_7100084FD8() const;  // slot 46
-    virtual float fn_7100085080() const;  // slot 47
-    virtual float fn_7100085128() const;  // slot 48
+    virtual void StartMindEye();  // slot 43
+    virtual void EndMindEye(bool);  // slot 44 (placeholder name: see CharacterParameter)
+    virtual float GetMindEyeArtsSpeedRate() const;  // slot 45 (placeholder names: see CharacterParameter)
+    virtual float GetMindEyeMoveSpeedRate() const;  // slot 46
+    virtual float GetMindEyeAttackRate() const;  // slot 47
+    virtual float GetMindEyeHateRate() const;  // slot 48
     virtual float GetUseWeaponRate(int) const;  // slot 49
-    virtual bool fn_71000851B4() const;  // slot 50
-    virtual void fn_7100088F58();  // slot 51 (placeholder name: see CharacterParameter)
-    virtual void fn_7100088F5C();  // slot 52
-    virtual int fn_7100088F60() const;  // slot 53
-    virtual int fn_7100088F68() const;  // slot 54
+    virtual bool IsMindEye() const;  // slot 50
+    virtual void ResetHanaBusterRebootTimer();  // slot 51 (placeholder name: see CharacterParameter)
+    virtual void SetHanaBusterRebootTimer();  // slot 52
+    virtual int IsHanaBusterReboot() const;  // slot 53
+    virtual int GetIraDummyBladeID() const;  // slot 54
     virtual int GetBladeChangeType() const;  // slot 63
-    virtual bool fn_710008527C(bool) const;  // slot 64
-    virtual bool fn_7100085314(bool) const;  // slot 65 (placeholder name: see CharacterParameter)
-    virtual bool fn_7100088FF4() const;  // slot 75 (placeholder name: see CharacterParameter)
+    virtual bool IsDriver(bool) const;  // slot 64
+    virtual bool IsBlade(bool) const;  // slot 65 (placeholder name: see CharacterParameter)
+    virtual bool IsApplyMapRev() const;  // slot 75 (placeholder name: see CharacterParameter)
     virtual void InitializeAttackParam();  // slot 79
     virtual unsigned int CalcDamageArmorEx(unsigned int);  // slot 80
     virtual ~PlayerParameter();  // slot 81
@@ -67,7 +67,7 @@ public:
     unsigned char m_artsPaletteNum;  // GetArtsPaletteNum (the name is not the original's)
     unsigned char m_bladeChangeType;  // GetBladeChangeType (the name is not the original's)
     unsigned char pad_642;  // whether the 0x634 timer runs (slots 43, 44; read as a byte); meaning unknown
-    bool pad_643;  // returned by slot 75 (fn_7100088FF4); true after construction; meaning unknown
+    bool pad_643;  // returned by slot 75 (IsApplyMapRev); true after construction; meaning unknown
 };
 }  // namespace btl
 

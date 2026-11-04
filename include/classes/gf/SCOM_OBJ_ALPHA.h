@@ -19,10 +19,9 @@ public:
     static unsigned long create(gf::GF_OBJ_HANDLE* handle, float time, float alpha);
     // the same for each object mounted on handle (GfMountManager::getAppendHandles, attach 0)
     static void createWeapon(gf::GF_OBJ_HANDLE* handle, float time, float alpha);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (no callers). A member because it builds
-    // a SCOM_OBJ_ALPHA (line 1442, between create and createWeapon). What it does: create's request with
-    // m_isPauseStop set (the request waits while GfPause::isPause(0x80)).
-    static unsigned long fn_710055D40C(gf::GF_OBJ_HANDLE* handle, float time, float alpha);
+    // 2.0.0's symbols name it. What it does: create's request with m_isPauseStop set (the request waits while
+    // GfPause::isPause(0x80)).
+    static unsigned long createEventPause(gf::GF_OBJ_HANDLE* handle, float time, float alpha);
 
     // the names below are not the original's
     GF_OBJ_HANDLE* m_obj;

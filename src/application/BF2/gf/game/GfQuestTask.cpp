@@ -264,7 +264,7 @@ bool GfQuestTask::getTaskCount(const QuestTaskParam& param, unsigned int& limit,
             limit = flagLimit;
             return true;
         case 16:
-            if (!GfGameManager::fn_71002A9E68()) {
+            if (!GfGameManager::isGameTypeIra()) {
                 return false;
             }
             count = GfGameFlag::getLocal(16, flag);

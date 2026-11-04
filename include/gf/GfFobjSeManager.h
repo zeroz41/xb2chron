@@ -31,10 +31,9 @@ public:
     void dispose();
     void update(float deltaTime);
     void createSe(unsigned short se);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because GfFobjManager::
-    // fn_7100289668 passes its GfFobjSeManager (this + 0x90D0). What it does: looks the drop items' sound pack up again
-    // (fw::SoundManager::findPack of fn_710027C7D4's name, as create does) into m_pack.
-    void fn_7100282EA8();
+    // 2.0.0's symbols name it. What it does: looks the drop items' sound pack up again (fw::SoundManager::findPack of
+    // getSePackName's name, as create does) into m_pack.
+    void rebuildForGameType();
 
     CreateInfo m_info;  // create's copy (the name is not the original's)
     fw::SoundPack* m_pack;  // SoundManager::findPack's (the name is not the original's)

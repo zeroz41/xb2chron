@@ -183,7 +183,7 @@ public:
     // (1.0.0's symbols name it)
     GfAssetResource* getResource(GfFileIdx file) const;
     // the resource whose asset name is `name` (the name is not the original's; defined inline in
-    // gf_asset_pack.cpp: this build has no copy of it; AssetPackInfo::fn_71001B1B30 asks each pack)
+    // gf_asset_pack.cpp: this build has no copy of it; AssetPackInfo::getResource asks each pack)
     GfAssetResource* getResource(const char* name) const;
     bool isLoaded(mm::mtl::FixStr<128>* name) const;
     // each wimdo file's resource sets up its stream object (1.0.0's symbols name it; defined inline in

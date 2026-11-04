@@ -105,11 +105,10 @@ public:
     unsigned int es_create(void* efb, const SendParam* param, bool flag);
     // drops a caster's send (fw::EffectManager::remove passes the EffectCasterSend of its caster, null for none)
     void es_remove_cas(void* cas);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because fw::EffectManager::fn_7100179D30
-    // calls it on getPtr()'s manager and its code sits in effect_update_manager's unit. What it does: hands the flag on to
-    // ptlib::ParticleManager::get()'s manager; GfMapManager (through fw::EffectManager::fn_7100179D30) passes false before
-    // building a map's data, true before destroying it.
-    void fn_710083FF24(bool flag);
+    // 2.0.0's symbols name it. What it does: hands the flag on to ptlib::ParticleManager::get()'s manager; GfMapManager
+    // (through fw::EffectManager::setDisableCollision) passes false before building a map's data, true before
+    // destroying it.
+    void setDisableCollision(bool flag);
     // the instance handle's effect fades out over `frames` (fw::EffectManager::kill passes 1, remove -1, dead 0)
     void es_fade_core(void* instance, unsigned int handle, int frames);
     void es_set_disp(unsigned int handle, int disp);

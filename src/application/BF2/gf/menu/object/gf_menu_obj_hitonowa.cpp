@@ -1,7 +1,7 @@
-#include "classes/gf/TUnk_B62AA0.h"
+#include "classes/gf/GfMenuObjHitonowa.h"
 #include "classes/gf/GfReqSmallCom.h"
 #include "gf/GfMenuObjUtil.h"
-#include "classes/gf/TUnk_B62AA0.h"
+#include "classes/gf/GfMenuObjHitonowa.h"
 #include "classes/gf/GfGameVoice.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfMenuLocation.h"
@@ -24,35 +24,35 @@
 
 namespace gf {
 
-unsigned int TUnk_B62AA0::s_gameValue;
+unsigned int GfMenuObjHitonowa::s_gameValue;
 
-void TUnk_B62AA0::fn_710041D238() {
+void GfMenuObjHitonowa::setBootFromEvent() {
     GfMenuTypes::Param param;
     param.m_menuId = 1;
     GfMenuFullScreen::registLayerParam(0x12F, param);
 }
 
-void TUnk_B62AA0::fn_710041D268(ui::UIObjectAcc& image, unsigned int id) {
-    image.fn_710069201C();
+void GfMenuObjHitonowa::setFaceStream(ui::UIObjectAcc& image, unsigned int id) {
+    image.resetStreamImageEx();
     int value = 0;
     int kind = fn_710041D2C8(id, &value);
     if (kind == 1) {
         image.setStreamImage2nd();
     } else if (kind == 2) {
-        image.fn_7100691FD0();
+        image.setStreamImage3rd();
     }
 }
 
-void TUnk_B62AA0::fn_710041D544() {
-    s_gameValue = GfGameManager::fn_71002AC8E0();
-    GfMenuLocation::fn_7100356980(0);
+void GfMenuObjHitonowa::setupGame() {
+    s_gameValue = GfGameManager::getHitonowaLevel();
+    GfMenuLocation::startNpcNavigate(0);
 }
 
-void TUnk_B62AA0::finalize() {
+void GfMenuObjHitonowa::finalize() {
     GfMenuObject::finalize();
 }
 
-unsigned int TUnk_B62AA0::fn_710041E870(unsigned int id) {
+unsigned int GfMenuObjHitonowa::fn_710041E870(unsigned int id) {
     unsigned char* fp = GfDataBdat::getFP(0xA8);
     unsigned short cond = Bdat::getVal(fp, "Condition2", id);
     if (cond != 0 && GfGameCond::isGameCond(cond)) {
@@ -65,13 +65,13 @@ unsigned int TUnk_B62AA0::fn_710041E870(unsigned int id) {
     return static_cast<unsigned short>(Bdat::getVal(fp, "AreaNumber1", id));
 }
 
-void TUnk_B62AA0::update() {
+void GfMenuObjHitonowa::update() {
     m_seq.update();
     m_seq2.update();
     GfMenuObject::update();
 }
 
-void TUnk_B62AA0::fn_710041F864() {
+void GfMenuObjHitonowa::dispLevel() {
     ui::UIObjectAcc level(m_handle, "LAY_level");
     level.setDisp(true);
     GfMenuObjUtil::CtrlParam param;
@@ -86,10 +86,10 @@ void TUnk_B62AA0::fn_710041F864() {
     ui::UIObjectAcc(level.m_handle, "TXT_level_max").setAlpha(max ? 1.0f : 0.0f);
 }
 
-// the list kinds fn_710042113C and fn_7100420B00 walk (lbl_71009C1D58; the name is not the original's)
+// the list kinds refreshNew and fn_7100420B00 walk (lbl_71009C1D58; the name is not the original's)
 static const unsigned int s_newIconKinds[] = {1, 2, 3};
 
-void TUnk_B62AA0::fn_710042113C() {
+void GfMenuObjHitonowa::refreshNew() {
     for (int i = 0; i < 3; i++) {
         unsigned int kind = s_newIconKinds[i];
         GfMenuIDList* ids = m_idLists[kind];
@@ -101,12 +101,12 @@ void TUnk_B62AA0::fn_710042113C() {
     }
 }
 
-bool TUnk_B62AA0::fn_71004238EC() {
-    m_seq.addJob(&TUnk_B62AA0::fn_7100426B44);
+bool GfMenuObjHitonowa::seqStartEntry() {
+    m_seq.addJob(&GfMenuObjHitonowa::seqMoveEntry);
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100423AE0() {
+bool GfMenuObjHitonowa::seqDialogEnd() {
     ui::UIObjectAcc acc(m_handle, "LAY_main");
     ui::EventData event;
     event.m_type = 0x102;
@@ -114,7 +114,7 @@ bool TUnk_B62AA0::fn_7100423AE0() {
     return true;
 }
 
-void TUnk_B62AA0::TUnk_B62B10::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjHitonowa::ConfirmListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     if (event.m_type == 8) {
         if (event.m_param1 == 1) {
@@ -127,7 +127,7 @@ void TUnk_B62AA0::TUnk_B62B10::reciveEvent(const ui::EventData& event, unsigned 
     }
 }
 
-bool TUnk_B62AA0::fn_7100424978() {
+bool GfMenuObjHitonowa::seqWaitStreamingImg() {
     ui::UIObjectAcc image(m_handle, "IMG_image@01");
     if (image.isStreaming()) {
         return false;
@@ -141,7 +141,7 @@ bool TUnk_B62AA0::fn_7100424978() {
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100424A40() {
+bool GfMenuObjHitonowa::seqCtrlWait() {
     if (m_busyCtrl != -1) {
         if (GfMenuObjUtil::isBusyCtrl(m_busyCtrl)) {
             return false;
@@ -151,7 +151,7 @@ bool TUnk_B62AA0::fn_7100424A40() {
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100424A84() {
+bool GfMenuObjHitonowa::seqStartImage() {
     ui::UIObjectAcc acc(m_handle, "LAY_image");
     ui::EventData event;
     event.m_type = 0x101;
@@ -159,7 +159,7 @@ bool TUnk_B62AA0::fn_7100424A84() {
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100424AD8() {
+bool GfMenuObjHitonowa::seqWaitStreamingImgFirst() {
     ui::UIObjectAcc image(m_handle, "IMG_image@01");
     if (image.isStreaming()) {
         return false;
@@ -175,27 +175,27 @@ bool TUnk_B62AA0::fn_7100424AD8() {
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100424BB4() {
+bool GfMenuObjHitonowa::seqImageVoiceA() {
     m_voice = GfGameVoice::playVoice("702870101");
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100424BE4() {
+bool GfMenuObjHitonowa::seqImageVoiceB() {
     m_voice = GfGameVoice::playVoice("703750201");
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100424C14() {
+bool GfMenuObjHitonowa::seqImageVoiceC() {
     m_voice = GfGameVoice::playVoice("704670105");
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100424C44() {
+bool GfMenuObjHitonowa::seqImageVoiceD() {
     m_voice = GfGameVoice::playVoice("701580101");
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100424C74() {
+bool GfMenuObjHitonowa::seqVoiceWait() {
     if (m_voice != nullptr) {
         if (GfGameVoice::getResult(m_voice) < 3) {
             return false;
@@ -205,7 +205,7 @@ bool TUnk_B62AA0::fn_7100424C74() {
     return true;
 }
 
-void TUnk_B62AA0::TUnk_B62B88::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjHitonowa::BgListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:
@@ -225,7 +225,7 @@ void TUnk_B62AA0::TUnk_B62B88::reciveEvent(const ui::EventData& event, unsigned 
     }
 }
 
-bool TUnk_B62AA0::fn_7100424D68() {
+bool GfMenuObjHitonowa::seqCloseTelop() {
     int ctrl;
     {
         ui::UIObjectAcc telop(m_handle, "LAY_telop");
@@ -238,10 +238,10 @@ bool TUnk_B62AA0::fn_7100424D68() {
     return true;
 }
 
-bool TUnk_B62AA0::fn_710042537C() {
+bool GfMenuObjHitonowa::seqDispResult() {
     ui::UIObjectAcc object(m_list->getObject(m_cursor));
     unsigned int id = m_ids[m_cursor];
-    fn_710041F998(object.m_handle, id);
+    dispResult(object.m_handle, id);
     ui::UIObjectAcc result(m_handle, "LAY_result");
     GfMenuObject::enableInput(result.m_handle);
     GfMenuObjOperationInfo::add(result.m_handle, 0, 0, 0);
@@ -250,7 +250,7 @@ bool TUnk_B62AA0::fn_710042537C() {
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100425440() {
+bool GfMenuObjHitonowa::seqConfirmGet() {
     if (!m_resultDone) {
         return false;
     }
@@ -269,16 +269,16 @@ bool TUnk_B62AA0::fn_7100425440() {
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100425E60() {
+bool GfMenuObjHitonowa::seqStartLevelMax() {
     m_busyCtrl = fn_710041FBC8(3);
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100425E8C() {
+bool GfMenuObjHitonowa::seqLevelMaxFadeIn() {
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100425E94() {
+bool GfMenuObjHitonowa::seqAnimWait() {
     if (m_animObject == 0) {
         return true;
     }
@@ -290,29 +290,29 @@ bool TUnk_B62AA0::fn_7100425E94() {
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100425EF8() {
+bool GfMenuObjHitonowa::seqOpenImage() {
     m_resultDone = false;
     ui::UIObjectAcc acc(m_handle, "LAY_image");
     GfMenuObject::sendOpenEvent(acc.m_handle, 1, 0.0f);
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100425F44() {
+bool GfMenuObjHitonowa::seqWaitImage() {
     return m_resultDone;
 }
 
-bool TUnk_B62AA0::fn_7100425F4C() {
+bool GfMenuObjHitonowa::seqStartLevelUp() {
     m_busyCtrl = fn_710041FBC8(2);
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100425F78() {
-    m_seq.addJob(&TUnk_B62AA0::fn_710042603C);
-    m_seq.addJob(&TUnk_B62AA0::fn_710042621C);
+bool GfMenuObjHitonowa::seqReturn() {
+    m_seq.addJob(&GfMenuObjHitonowa::seqWaitStreaming2);
+    m_seq.addJob(&GfMenuObjHitonowa::seqReturnMain);
     return true;
 }
 
-bool TUnk_B62AA0::fn_710042621C() {
+bool GfMenuObjHitonowa::seqReturnMain() {
     ui::UIObjectAcc acc(m_handle, "LAY_main");
     ui::EventData event;
     event.m_type = 0x100;
@@ -320,28 +320,28 @@ bool TUnk_B62AA0::fn_710042621C() {
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100426A30() {
+bool GfMenuObjHitonowa::seqNextLost() {
     fn_710041F0A8(0, m_ids[m_cursor]);
-    fn_710041EB48();
+    refreshComplete();
     if (++m_cursor < m_list->getSize()) {
-        m_seq.addJob(&TUnk_B62AA0::fn_7100426270);
+        m_seq.addJob(&GfMenuObjHitonowa::seqMoveLost);
     } else {
-        m_seq.addJob(&TUnk_B62AA0::fn_7100425F78);
+        m_seq.addJob(&GfMenuObjHitonowa::seqReturn);
     }
     return true;
 }
 
-bool TUnk_B62AA0::fn_7100427230() {
+bool GfMenuObjHitonowa::seqNextEntry() {
     if (++m_cursor < m_list->getSize()) {
-        m_seq.addJob(&TUnk_B62AA0::fn_7100426B44);
+        m_seq.addJob(&GfMenuObjHitonowa::seqMoveEntry);
     } else {
-        m_seq.addJob(&TUnk_B62AA0::fn_7100425F78);
+        m_seq.addJob(&GfMenuObjHitonowa::seqReturn);
     }
     return true;
 }
 }  // namespace gf
 
-// instantiated for gf::TUnk_B62AA0::fn_710041F0A8 (not written yet)
+// instantiated for gf::GfMenuObjHitonowa::fn_710041F0A8 (not written yet)
 template mm::mtl::Vector<fw::AssetCsvb*>::iterator mm::mtl::Vector<fw::AssetCsvb*>::erase(fw::AssetCsvb**);
 
 namespace gf {

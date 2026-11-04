@@ -23,12 +23,11 @@ public:
     unsigned int getContentsNum(unsigned int contents);  // the contents' number of images
     // streams the menu image file into a new image object of that name under the parent's object, at that index
     void createImage(const mm::mtl::FixStr<32>& name, unsigned int parent, const char* file, unsigned int index);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its code is in this
-    // class's unit next to createImage and takes the same arguments. What it does: createImage's work (the menu
-    // image file name, a render resource request, the stream entry), and it also looks the name up among the
-    // parent layout's children and, for an image object (RTTI isKindOf), uses that one. Its one caller is
-    // GfMenuObjMinimap2::MapListener::reciveEvent, when GfMenuObjUtil::fn_710048FD30(3) holds.
-    void fn_710068A034(const mm::mtl::FixStr<32>& name, unsigned int parent, const char* file, unsigned int index);
+    // 2.0.0's symbols name it. What it does: createImage's work (the menu image file name, a render resource request,
+    // the stream entry), and it also looks the name up among the parent layout's children and, for an image object
+    // (RTTI isKindOf), uses that one. Its one caller is GfMenuObjMinimap2::MapListener::reciveEvent, when
+    // GfMenuObjUtil::isValidExpansion(3) holds.
+    void createImage2(const mm::mtl::FixStr<32>& name, unsigned int parent, const char* file, unsigned int index);
     // drops the image of that name streamed under the parent's object (GfMenuObjWorldMap::MainListener's floor map)
     void deleteImage(const mm::mtl::FixStr<32>& name, unsigned int parent);
 

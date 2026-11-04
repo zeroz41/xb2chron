@@ -179,12 +179,12 @@ SoundSsdDriver::SoundSsdDriver(mm::mtl::IAllocator* allocator, unsigned int hand
     m_players.setRange(1, 0xFFFFFF, 0xFFFFFF);
 #line 1529 SOUND_SSD_DRV_PATH
     m_bgmVolumes = new (FrameworkMemory::getAllocator(5), 16, __FILE__, __LINE__) csvb::CCsvbData();
-    fn_71001A39C8(-1);
+    reloadBgmVolume(-1);
     pad_1b64 = 1;
     m_initialized = true;
 }
 
-void SoundSsdDriver::fn_71001A39C8(int dlc) {
+void SoundSsdDriver::reloadBgmVolume(int dlc) {
     SoundManager* manager = SoundManager::sys();
     if (dlc < 0) {
         dlc = manager->m_dlc;

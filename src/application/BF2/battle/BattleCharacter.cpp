@@ -164,7 +164,7 @@ bool BattleCharacter::IsInputButton(gf::pc::InputID id) const {
          !ChainAttackManager::sys()->IsSelectAction()) ||
         BattleGlobal::sys()->m_uniteComboCamera || BattleGlobal::sys()->pad_bit12 ||
         BattleGlobal::sys()->m_elementalCombo.m_camera || SpAttackManager::sys()->m_camera ||
-        TUnk_B3BD68::sys()->fn_71000A6DFC() || UIManager::sys()->pad_bit17 || BattleGlobal::sys()->fn_7100007554()) {
+        SirenBattleManager::sys()->IsCameraProc() || UIManager::sys()->pad_bit17 || BattleGlobal::sys()->IsFutureView()) {
         switch (id) {
         case 14:
         case 15:
@@ -278,7 +278,7 @@ const char* BattleCharacter::GetAnimationStateName(ANIM_ID id, int no, int subNo
     if (!BattleGlobal::sys()->m_challengeAnySuccess) {
         bool weapon;
         const CharacterParameter* param = GetCharacterParameterConst(false);
-        if (param != nullptr && param->fn_710008527C(false) && (m_isPlayer || m_driverType == 0)) {
+        if (param != nullptr && param->IsDriver(false) && (m_isPlayer || m_driverType == 0)) {
             weapon = ((1UL << static_cast<unsigned char>(id)) & COMMON_ANIMS) == 0;
         } else {
             weapon = ((1UL << static_cast<unsigned char>(id)) & WEAPON_ANIMS) != 0;
@@ -345,7 +345,7 @@ int BattleCharacter::GetAlphaSetID(ALPHA_PROC_ID id) {
 
 void BattleCharacter::DispBladeLine(bool disp, float time) {
     const CharacterParameter* param = GetCharacterParameterConst(false);
-    if (param == nullptr || !param->fn_7100085314(false)) {
+    if (param == nullptr || !param->IsBlade(false)) {
         return;
     }
     if (!disp && !m_dispBladeLine) {
@@ -496,11 +496,11 @@ gf::GF_OBJ_HANDLE* BattleCharacter::GetRescueTarget() const {
 }
 
 
-bool BattleCharacter::fn_710002F118() const {
+bool BattleCharacter::IsEnableBackHome() const {
     return m_state == 1;
 }
 
-bool BattleCharacter::fn_710002F368() const {
+bool BattleCharacter::IsEnableRescueTarget() const {
     return !m_isBattle || m_isBattleIgnore;
 }
 
@@ -516,12 +516,12 @@ const GROUP_DATA* BattleCharacter::GetGroupDataConst() const {
 bool BattleCharacter::GetWeaponEffectCaster() {
     if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_challengeAnySuccess && !m_isPlayer && m_isBattle &&
         !IsDead(0)) {
-        return GetCharacterParameter(false)->fn_7100088FEC();
+        return GetCharacterParameter(false)->IsSeriousBattleEnemy();
     }
     return false;
 }
 
-bool BattleCharacter::fn_710002FC0C(int id) {
+bool BattleCharacter::PlayCustomVoice(int id) {
     if (BattleGlobal::sys()->m_challengeAnySuccess) {
         const CharacterParameter* param = GetCharacterParameterConst(false);
         if (param != nullptr && param->m_isNotBlade) {
@@ -554,7 +554,7 @@ bool BattleCharacter::fn_710002FC0C(int id) {
 }
 
 void BattleCharacter::PlaySystemSE(BTL_SE se, int no, bool flag0, bool flag1) {
-    bool hidden = gf::GfMenuManager::fn_710035DE04();
+    bool hidden = gf::GfMenuManager::isHideAll();
     if (no == 0 || hidden) {
         return;
     }
@@ -580,7 +580,7 @@ bool BattleCharacter::PlaySE(BTL_SE se, int no, const mm::Vec3* pos, bool follow
             attr = param->GetAttribute();
         }
     }
-    bool hidden = gf::GfMenuManager::fn_710035DE04();
+    bool hidden = gf::GfMenuManager::isHideAll();
     if (se == 0 || no == 0 || hidden) {
         return false;
     }
@@ -640,11 +640,11 @@ void BattleCharacter::SetPosition(const mm::Vec3& pos, bool flag) {
     }
     gf::GF_OBJ_HANDLE* driver = param->m_driverHandle;
     if (BattleCharacter* chr = mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(driver)) {
-        chr->fn_71000301D4();
+        chr->NotifyBuddyWarp();
     }
 }
 
-void BattleCharacter::fn_71000301D4() {
+void BattleCharacter::NotifyBuddyWarp() {
     const CharacterParameter* param = GetCharacterParameterConst(false);
     if (param == nullptr || param->m_isNotBlade) {
         return;
@@ -653,11 +653,11 @@ void BattleCharacter::fn_71000301D4() {
         if (pad_F09_3) {
             return;
         }
-        if (TUnk_B3BC20::sys()->fn_710009EB70(m_handle)) {
+        if (FormationChangeManager::sys()->IsRegister(m_handle)) {
             return;
         }
         param = GetCharacterParameterConst(false);
-        if (TUnk_B3BC20::sys()->fn_710009EB70(param->m_driverHandle)) {
+        if (FormationChangeManager::sys()->IsRegister(param->m_driverHandle)) {
             return;
         }
     }
@@ -784,7 +784,7 @@ void BattleCharacter::fn_710003D114(bool flag0, int slot, bool flag1, float valu
     fn_710005F554(~(slot < 0 ? 16 : slot), flag0, flag1, value);
 }
 
-void BattleCharacter::fn_710003D478() {
+void BattleCharacter::ForceDeleteEffect() {
     gf::GfComEffectCaster* caster = GetEffectCaster();
     if (caster != nullptr) {
         const gf::GfComProperty* prop = GetComPropertyConst();
@@ -797,12 +797,12 @@ void BattleCharacter::fn_710003D478() {
     pad_F04_1 = 0;
 }
 
-bool BattleCharacter::fn_7100041728() const {
+bool BattleCharacter::IsAutoHeal() const {
     return m_isPlayer && !m_isBattle;
 }
 
 bool BattleCharacter::fn_710004232C() {
-    return fn_710002FC0C(7);
+    return PlayCustomVoice(7);
 }
 
 void BattleCharacter::ResetRequestPermit() {
@@ -826,9 +826,9 @@ void BattleCharacter::ActionCommandEndRun() {
 float BattleCharacter::GetKizunaMoveSpeedRate() const {
     if (!m_isPlayer) {
         const CharacterParameter* param = GetCharacterParameterConst(false);
-        if (param == nullptr || !param->fn_710008527C(false)) {
+        if (param == nullptr || !param->IsDriver(false)) {
             param = GetCharacterParameterConst(false);
-            if (param == nullptr || !param->fn_7100085314(false)) {
+            if (param == nullptr || !param->IsBlade(false)) {
                 return 1.0f;
             }
         }
@@ -851,20 +851,20 @@ bool BattleCharacter::fn_7100059314() {
     return pad_1076_13;
 }
 
-bool BattleCharacter::fn_7100059D0C() const {
+bool BattleCharacter::IsSirenIdle() const {
     return m_actionID == 4;
 }
 
-bool BattleCharacter::fn_7100059D1C() const {
+bool BattleCharacter::IsSirenSpAttackEnd() const {
     return m_actionID == 9;
 }
 
-void BattleCharacter::fn_7100059D2C(int param) {
+void BattleCharacter::StartSirenLoop(int param) {
     m_actionParam = param;
     m_actionID = 5;
 }
 
-void BattleCharacter::fn_7100059D3C(bool flag, int param) {
+void BattleCharacter::StartSirenSpAttack(bool flag, int param) {
     m_actionParam = flag ? param : -param;
     m_actionID = 7;
 }
@@ -875,12 +875,12 @@ void BattleCharacter::fn_7100059D54(int param, float value) {
     m_actionID = 10;
 }
 
-void BattleCharacter::fn_7100059D68(int param) {
+void BattleCharacter::StartSirenAttack(int param) {
     m_actionParam = param;
     m_actionID = 0xF;
 }
 
-void BattleCharacter::fn_710006C39C(int type) {
+void BattleCharacter::DropEtherCubeByScoreID(int type) {
     DropItem(static_cast<DROP_ITEM_TYPE>(type + 5), false);
 }
 
@@ -939,7 +939,7 @@ bool BattleCharacter::StartBladeSupport(int param) {
     return false;
 }
 
-void BattleCharacter::fn_71000550B8(int value) {
+void BattleCharacter::StartFullBurst(int value) {
     pad_102C = 0xFFFF;
     pad_1030 = 0.0f;
     const CharacterParameter* param = GetCharacterParameterConst(false);
@@ -962,7 +962,7 @@ void BattleCharacter::fn_71000550B8(int value) {
 bool BattleCharacter::fn_71000561E4(unsigned int id) {
     if (!mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_challengeAnySuccess) {
         const CharacterParameter* param = GetCharacterParameterConst(false);
-        if (param == nullptr || !param->fn_710008527C(false)) {
+        if (param == nullptr || !param->IsDriver(false)) {
             return false;
         }
     }
@@ -976,7 +976,7 @@ bool BattleCharacter::fn_71000561E4(unsigned int id) {
     float rate = param->GetBuffEffect(3) * 0.01f + 1.0f;
     mm::mtl::PtrSingleton<BattleGlobal>::sys()->MulDamageRate(id, rate, false);
     if (param->IsBuffInfinite(3)) {
-        param->fn_7100080130(3, false, true);
+        param->ClearBuff(3, false, true);
     }
     return true;
 }
@@ -989,16 +989,16 @@ bool BattleCharacter::CheckPowerCharge(unsigned int id) {
     if (param->m_isNotBlade && param->IsBuff(0x20)) {
         float rate = param->GetBuffEffect(0x20) * 0.01f;
         mm::mtl::PtrSingleton<BattleGlobal>::sys()->AddDamageRate(id, rate, false);
-        mm::mtl::PtrSingleton<BattleGlobal>::sys()->fn_710000B4D0(id);
+        mm::mtl::PtrSingleton<BattleGlobal>::sys()->SetTalentMinochiAttack(id);
         if (param->IsBuffInfinite(0x20)) {
-            param->fn_7100080130(0x20, false, true);
+            param->ClearBuff(0x20, false, true);
         }
         return true;
     }
     return false;
 }
 
-bool BattleCharacter::fn_7100056404(unsigned int id) {
+bool BattleCharacter::CheckAngryArts(unsigned int id) {
     CharacterParameter* param = GetCharacterParameter(false);
     if (param == nullptr) {
         return false;
@@ -1009,7 +1009,7 @@ bool BattleCharacter::fn_7100056404(unsigned int id) {
     float rate = param->GetBuffEffect(0x23) * 0.01f;
     mm::mtl::PtrSingleton<BattleGlobal>::sys()->AddDamageRate(id, rate, false);
     mm::mtl::PtrSingleton<BattleGlobal>::sys()->SetCriticalRecastEnhanceEnd(id);
-    param->fn_7100080130(0x23, false, true);
+    param->ClearBuff(0x23, false, true);
     return true;
 }
 
@@ -1093,12 +1093,12 @@ void BattleCharacter::ReviveHeal(BattleCharacter* rescuer) {
     NotifyDirectDamage(data);
 }
 
-void BattleCharacter::fn_7100041E4C(int, bool flag) {
+void BattleCharacter::NotifyGetHateTarget(int, bool flag) {
     if (IsControlCharacter() && mm::mtl::PtrSingleton<BattleGlobal>::sys()->fn_710000C440(0)) {
         PlaySystemSE(static_cast<BTL_SE>(1), 0x32, true, false);
     }
     if (!flag) {
-        fn_710002FC0C(4);
+        PlayCustomVoice(4);
     }
 }
 
@@ -1122,7 +1122,7 @@ void BattleCharacter::NotifyLostHateTarget(int) {
     if (gf::GfDataBlade::getRole(m_bdatID) != 1) {
         return;
     }
-    fn_710002FC0C(5);
+    PlayCustomVoice(5);
 }
 
 void BattleCharacter::CreateElementalEffect(int id) {
@@ -1155,7 +1155,7 @@ void BattleCharacter::ResetAllEffect() {
         memset(combo.pad_2, 0, sizeof(combo.pad_2));
         param->SetAngry(false, -1.0f);
         param->ResetSpecialEnhanceRate(true);
-        param->fn_7100088F4C(false);
+        param->EndMindEye(false);
     }
     m_elementalCombo.Reset(false);
     if (pad_106C != 0) {
@@ -1166,7 +1166,7 @@ void BattleCharacter::ResetAllEffect() {
     pad_1030 = 0.0f;
 }
 
-void BattleCharacter::fn_710006AEE8(unsigned int damage, int type, BattleCharacter* attacker) {
+void BattleCharacter::HealDirect(unsigned int damage, int type, BattleCharacter* attacker) {
     DIRECT_DAMAGE_DATA data;
     data.m_attacker = attacker;
     data.m_type = type;
@@ -1247,7 +1247,7 @@ bool BattleCharacter::SetAngry(bool angry, float time) {
 }
 
 
-bool BattleCharacter::fn_710002F1F8() const {
+bool BattleCharacter::IsForward() const {
     if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
         return param->m_isNotBlade;
     }
@@ -1326,9 +1326,9 @@ void BattleCharacter::WriteBackChrCollisionFlag() {
     pad_F03_5 = false;
 }
 
-bool BattleCharacter::fn_7100041CA4() const {
+bool BattleCharacter::IsElementalAwake() const {
     if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
-        return param->fn_7100088F40();
+        return param->IsElementalAwake();
     }
     return false;
 }
@@ -1346,19 +1346,19 @@ void BattleCharacter::ResetAlphaAnimation() {
 
 bool BattleCharacter::fn_7100028D0C(bool flag) {
     if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
-        return param->fn_7100085314(flag);
+        return param->IsBlade(flag);
     }
     return false;
 }
 
 bool BattleCharacter::fn_71000290BC(bool flag) {
     if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
-        return param->fn_710008527C(flag);
+        return param->IsDriver(flag);
     }
     return false;
 }
 
-void BattleCharacter::fn_7100042C30(gf::GF_OBJ_HANDLE*, int value) {
+void BattleCharacter::NotifyBuddyFightCombo(gf::GF_OBJ_HANDLE*, int value) {
     if (BattleGlobal::sys()->m_challengeAnySuccess) {
         const CharacterParameter* param = GetCharacterParameterConst(false);
         if (param != nullptr && param->m_isNotBlade) {
@@ -1385,7 +1385,7 @@ void BattleCharacter::fn_7100042C30(gf::GF_OBJ_HANDLE*, int value) {
     if (entry->m_value != 0 && entry->m_value != value) {
         return;
     }
-    fn_710002FC0C(11);
+    PlayCustomVoice(11);
 }
 
 void BattleCharacter::NotifyBuddySufferFightCombo(int, int value) {
@@ -1415,22 +1415,22 @@ void BattleCharacter::NotifyBuddySufferFightCombo(int, int value) {
     if (entry->m_value != 0 && entry->m_value != value) {
         return;
     }
-    fn_710002FC0C(12);
+    PlayCustomVoice(12);
 }
 
 void BattleCharacter::fn_7100042E30() {
     if (IsBlade()) {
-        fn_710002FC0C(13);
+        PlayCustomVoice(13);
     }
 }
 
 void BattleCharacter::fn_7100042E90() {
     if (IsBlade()) {
-        fn_710002FC0C(14);
+        PlayCustomVoice(14);
     }
 }
 
-bool BattleCharacter::fn_7100042F70(int value) {
+bool BattleCharacter::NotifyBuddyAvoid(int value) {
     if (BattleGlobal::sys()->m_challengeAnySuccess) {
         const CharacterParameter* param = GetCharacterParameterConst(false);
         if (param != nullptr && param->m_isNotBlade) {
@@ -1457,10 +1457,10 @@ bool BattleCharacter::fn_7100042F70(int value) {
     if (entry->m_value > value) {
         return false;
     }
-    return fn_710002FC0C(6);
+    return PlayCustomVoice(6);
 }
 
-void BattleCharacter::fn_7100043070(int buff, bool playSe) {
+void BattleCharacter::NotifyBuffStart(int buff, bool playSe) {
     if (buff == 0x1E) {
         fn_710004315C(1, 1, nullptr, false, nullptr, nullptr, false);
     }
@@ -1498,11 +1498,11 @@ void BattleCharacter::UpdateBuffEffect(int id) {
         if (param != nullptr) {
             scale *= param->m_distanceScale;
         }
-        fn_710003B0F4(0xE, nullptr, scale, nullptr, nullptr);
+        UpdateEffectPositionScale(0xE, nullptr, scale, nullptr, nullptr);
         break;
     }
     default:
-        fn_710003B0F4(id, nullptr, -1.0f, nullptr, nullptr);
+        UpdateEffectPositionScale(id, nullptr, -1.0f, nullptr, nullptr);
         break;
     }
 }
@@ -1542,7 +1542,7 @@ void BattleCharacter::NotifyAngryStart() {
     if (param != nullptr) {
         scale *= param->m_distanceScale;
     }
-    fn_710003B0F4(6, nullptr, scale, nullptr, nullptr);
+    UpdateEffectPositionScale(6, nullptr, scale, nullptr, nullptr);
 }
 
 void BattleCharacter::NotifyAngryEnd() {
@@ -1556,7 +1556,7 @@ void BattleCharacter::NotifyAngryEnd() {
     }
 }
 
-void BattleCharacter::fn_7100042460() {
+void BattleCharacter::NotifyElementalAwakeEnd() {
     if (m_effects[7] != 0) {
         if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_removeEffect) {
             mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effects[7]);
@@ -1595,7 +1595,7 @@ void BattleCharacter::ActionRun() {
 
 bool BattleCharacter::IsBladeArtsEnd() const {
     if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
-        if (param->fn_710008527C(false)) {
+        if (param->IsDriver(false)) {
             return m_bladeArtsState != 1;
         }
     }
@@ -1649,12 +1649,12 @@ void BattleCharacter::AddKizunaStage(int add) {
 
 bool BattleCharacter::IsEnableCancelReaction() const {
     const CharacterParameter* param = GetCharacterParameterConst(false);
-    if (param != nullptr && param->fn_7100085314(true)) {
+    if (param != nullptr && param->IsBlade(true)) {
         return false;
     }
     if (!m_isPlayer) {
         param = GetCharacterParameterConst(false);
-        if (param == nullptr || !param->fn_710008527C(false) || m_driverType != 0) {
+        if (param == nullptr || !param->IsDriver(false) || m_driverType != 0) {
             return false;
         }
     }
@@ -1710,7 +1710,7 @@ bool BattleCharacter::CheckAttackAction(ACTION_ID id, bool flag) const {
     case ACTION_BLADE_CHANGE: {
         bool result = false;
         if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
-            result = param->fn_7100085314(0);
+            result = param->IsBlade(0);
         }
         return result || flag;
     }
@@ -1724,7 +1724,7 @@ int BattleCharacter::GetDriverType() const {
         return 4;
     }
     if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
-        if (param->fn_7100085314(0) && !param->m_flags622_6) {
+        if (param->IsBlade(0) && !param->m_flags622_6) {
             if (const BattleCharacter* driver =
                     mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(param->m_driverHandle)) {
                 return driver->m_driverType;
@@ -1870,29 +1870,29 @@ void BattleCharacter::ActionCommandRescue(const ActionCommand*, ActionCommand::C
 
 void BattleCharacter::ActionCommandEndRescue() {}
 
-void BattleCharacter::fn_7100048D28(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
+void BattleCharacter::ActionCommandIraSpArts(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
 
-void BattleCharacter::fn_7100048D2C() {}
+void BattleCharacter::ActionCommandEndIraSpArts() {}
 
-void BattleCharacter::fn_710004BFD8(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
+void BattleCharacter::ActionCommandIraBladeChange(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
 
-void BattleCharacter::fn_710004BFDC() {}
+void BattleCharacter::ActionCommandEndIraBladeChange() {}
 
-void BattleCharacter::fn_7100051E78(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
+void BattleCharacter::ActionCommandMindEye(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
 
-void BattleCharacter::fn_7100051E7C() {}
+void BattleCharacter::ActionCommandEndMindEye() {}
 
-void BattleCharacter::fn_7100052154(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
+void BattleCharacter::ActionCommandOCG(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
 
-void BattleCharacter::fn_7100052158() {}
+void BattleCharacter::ActionCommandEndOCG() {}
 
-void BattleCharacter::fn_7100052364(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
+void BattleCharacter::ActionCommandHanaBusterReboot(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
 
-void BattleCharacter::fn_7100052368() {}
+void BattleCharacter::ActionCommandEndHanaBusterReboot() {}
 
-void BattleCharacter::fn_7100052CD8(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
+void BattleCharacter::ActionCommandFormationChange(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
 
-void BattleCharacter::fn_7100052CDC() {}
+void BattleCharacter::ActionCommandEndFormationChange() {}
 
 void BattleCharacter::LandingCallback() {}
 

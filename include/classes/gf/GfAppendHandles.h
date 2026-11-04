@@ -28,9 +28,9 @@ public:
     void setAlpha(float alpha);
     // every object of both sets destroyed and cleared
     void destroy();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads both sets and
-    // m_useSecond. What it does: true when handle is in the set not in use (GfObjFactory::createComponent asks).
-    bool fn_71004A38F4(gf::GF_OBJ_HANDLE* handle) const;
+    // 2.0.0's symbols name it. What it does: true when handle is in the set not in use (GfObjFactory::createComponent
+    // asks).
+    bool isHideModel(gf::GF_OBJ_HANDLE* handle) const;
     void destroy(mm::mtl::FixedArray<gf::GF_OBJ_HANDLE*, 10>& handles);
     // the objects: one of the two sets of ten, by m_useSecond (inline: the name is not the original's;
     // GfTrinityAttack::isLoading waits for each that is set)

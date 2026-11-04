@@ -50,13 +50,10 @@ public:
     void update(const fw::UpdateInfo& info);
     void createRootObject(OrderInfo& info);
     void registPreloadResource(unsigned int type, const char* name);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's registPreloadResource is
-    // followed by releasePreloadResource(const char*), which takes a name). A member because `this` is the
-    // factory (UIManager::fn_710068F958 passes PtrSingleton<UIObjFactory>'s instance) and its address follows
-    // registPreloadResource in ui_obj_factory's unit. What it does: for every preloaded resource entry (0x10
-    // bytes from 0x30, count at 0xB0) deletes the object of its first word and drops a reference of the
-    // ref-counted resource of its second ("m_RefCount > 0"), then empties the list.
-    void fn_71006757FC();
+    // 2.0.0's symbols name it. What it does: for every preloaded resource entry (0x10 bytes from 0x30, count at 0xB0)
+    // deletes the object of its first word and drops a reference of the ref-counted resource of its second ("m_RefCount
+    // > 0"), then empties the list.
+    void clearPreloadResource();
     void order(const OrderParam& param);
     // the factory's `this` is not used: createRootObject leaves x0 unset before the calls
     void setupChildObject(unsigned int handle, const OrderInfo& info);

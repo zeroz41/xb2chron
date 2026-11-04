@@ -34,7 +34,7 @@ public:
     }
     // a job that is a member of another class, run on the sequence's object: GfMenuObjPopup's gift sequence is a
     // GfMenuSequence<GfMenuObjShop, 8> (1.0.0's and 3.0.1's symbols of its addAnimJob and wait_anim), yet its jobs
-    // are GfMenuObjPopup's members, called on the sequence's object (fn_710045C9E4 builds the delegate from the
+    // are GfMenuObjPopup's members, called on the sequence's object (seqGiftOut builds the delegate from the
     // owner at 0x278 with memberFuncInvoker<GfMenuObjPopup>)
     template <typename U>
     void addJob(bool (U::*job)()) {

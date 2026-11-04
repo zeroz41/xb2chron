@@ -19,17 +19,14 @@ public:
     static unsigned long createWarp(unsigned int id, float time);
     static unsigned long createSalvage(unsigned int id, float time);
     static unsigned long createTresure(unsigned int id, float time);
-    // Placeholder names, members for the same reason as fn_710055F594 below (the create shape, between createTresure
-    // and it): fn_710055F284 queues gimmick type 58 (caller GmkElevator's fn_71005B4368), fn_710055F40C type 62
-    // (caller fn_71005B9928, reached from a table in GmkElevator).
-    static unsigned long fn_710055F284(unsigned int id, float time);
-    static unsigned long fn_710055F40C(unsigned int id, float time);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among the other
-    // create functions in gf_req_scom and has their shape. What it does: like createTresure, for gimmick type 0x1C
-    // (a collection point, GmkCollection::TYPE): with a positive time it calls GfPlayFactory::
-    // createGimmickTaskComplete(0x1C, id, time), else it queues a SCOM_QUEST_GIMMICK request; GfFieldCollect's
-    // seqWaitUIEnd, seqDo and seqWaitDrop call it with the collection point's bdat id.
-    static unsigned long fn_710055F594(unsigned int id, float time);
+    // 2.0.0's symbols name them.
+    static unsigned long createEnemyWave(unsigned int id, float time);
+    static unsigned long createCamp(unsigned int id, float time);
+    // 2.0.0's symbols name it. What it does: like createTresure, for gimmick type 0x1C (a collection point,
+    // GmkCollection::TYPE): with a positive time it calls GfPlayFactory:: createGimmickTaskComplete(0x1C, id, time),
+    // else it queues a SCOM_QUEST_GIMMICK request; GfFieldCollect's seqWaitUIEnd, seqDo and seqWaitDrop call it with
+    // the collection point's bdat id.
+    static unsigned long createCollection(unsigned int id, float time);
 
     // the names are not the original's: what the create functions store (their arguments, in order)
     gmk::GmkType m_value;

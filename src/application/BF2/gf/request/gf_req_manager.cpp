@@ -193,7 +193,7 @@ void RQ_SETUP_PARTY::replaceActBlade() {
         }
     }
     for (Driver& driver : m_drivers) {
-        if (GfDataDriver::fn_710023F9A8(driver.m_driver)) {
+        if (GfDataDriver::isIra(driver.m_driver)) {
             memset(driver.m_blades, 0, sizeof(driver.m_blades));
             driver.m_blades[0] = mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->getChrDrDefBlade1(driver.m_driver);
             driver.m_activeIndex = 0;

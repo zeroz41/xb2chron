@@ -80,13 +80,13 @@ void TitleStateMainScreen::playTitleEvent(TitleMain* title) {
     gf::SCOM_FADE::create(1, 0, mm::Col4::black);
     gf::SCOM_FADE::create(2, 0, mm::Col4::black);
     unsigned short event;
-    if (gf::GfManager::fn_710032A1DC()) {
+    if (gf::GfManager::isGameTypeIra()) {
         event = title->fn_710014FC5C() ? 0x29D6 : 0x29D5;
     } else if (gf::GfDataBlade::fn_71002320C8(title->fn_710014FB00()->m_game)) {
         unsigned int index = ml::mtRand(3);
         event = s_randomTitleEvents[index > 2 ? 2 : index];
     } else if (title->fn_710014FC5C()) {
-        event = gf::GfDataBlade::fn_7100235F94(title->fn_710014FB00()->m_game) ? 0x296E : 0x296D;
+        event = gf::GfDataBlade::isHomuriNameHikari(title->fn_710014FB00()->m_game) ? 0x296E : 0x296D;
     } else {
         unsigned int chapter = title->getChapterIdFromSaveData();
         event = s_chapterTitleEvents[chapter > 11 ? 11 : chapter];
@@ -199,7 +199,7 @@ void TitleStateToTitle::update(TitleMain* title, const fw::UpdateInfo& info) {
 void fn_7100154638() {
     gf::SDataOption* option = gf::GfDataManager::getDataOption();
     gf::SDataOption* titleOption = &TitleMain::sys()->getOptionBuffer();
-    if (!gf::GfGameManager::fn_71002A9E68() && !gf::GfGameUtilSaveData::fn_71002EDC78()) {
+    if (!gf::GfGameManager::isGameTypeIra() && !gf::GfGameUtilSaveData::fn_71002EDC78()) {
         option->m_soundUi.m_flagA = 0;
         option->m_soundUi.m_flagB = 0;
         option->m_soundUi.m_flagC = 0;
@@ -207,7 +207,7 @@ void fn_7100154638() {
         titleOption->m_soundUi.m_flagB = 0;
         titleOption->m_soundUi.m_flagC = 0;
     }
-    bool clear = gf::GfGameManager::fn_71002A9E68() ? gf::GfGameManager::isClearGame()
+    bool clear = gf::GfGameManager::isGameTypeIra() ? gf::GfGameManager::isClearGame()
                                                      : gf::GfGameUtilSaveData::fn_71002EDCEC();
     if (!clear) {
         if (option->m_soundUi.m_keyD > 1) {
@@ -232,7 +232,7 @@ bool TitleStateSelectEvent::eventMenuResult(TitleMain* title) {
             title->m_eventRequest = request;
             return false;
         }
-        if (menu.fn_7100153350()) {
+        if (menu.isExitEventTheater()) {
             menu.exitEventTheater();
             title->m_reqReturnTitle = false;
             title->m_eventRequest = TitleMain::EventRequest();
@@ -292,7 +292,7 @@ void TitleStateSelectOption::update(TitleMain* title, const fw::UpdateInfo& info
         TitleMain::sleep(1);
     }
     title->m_menu.setupOption();
-    while (!title->m_menu.fn_71001533B8()) {
+    while (!title->m_menu.isExitOption()) {
         TitleMain::sleep(1);
     }
     title->m_menu.exitOption();
@@ -318,9 +318,9 @@ inline void setLodAnimReverse(unsigned short lodId) {
 
 void TitleStatePlayEvent::gevPlayEvent(gf::GEV gev, unsigned int arg) {
     if (gev == static_cast<gf::GEV>(0xE)) {
-        TitleMain::sys()->fn_710014F5FC(1.0f, 0.0f);
-        TitleMain::sys()->fn_710014F70C(1.0f);
-        gf::GfGameManager::fn_71002AB894(gf::GfInfo::m_camPos);
+        TitleMain::sys()->setMaskVolumeFade(1.0f, 0.0f);
+        TitleMain::sys()->setMaskVolumeGameSe(1.0f);
+        gf::GfGameManager::setControlMoverPositionForNoPlayer(gf::GfInfo::m_camPos);
         if (arg == 0x272A) {
             setLodAnimReverse(0x193);
             setLodAnimReverse(0x19A);
@@ -331,16 +331,16 @@ void TitleStatePlayEvent::gevPlayEvent(gf::GEV gev, unsigned int arg) {
         if (arg != 0) {
             m_endArg = true;
         }
-        gf::GfGameManager::fn_71002AB894(mm::Vec3::zero);
+        gf::GfGameManager::setControlMoverPositionForNoPlayer(mm::Vec3::zero);
     }
 }
 
-void TitleStateWarning::fn_71001565A0(TitleMain* title, ai::State* prev) {
-    gf::GfMenuManager::fn_710035A388(10);
+void TitleStateWarning::enter(TitleMain* title, ai::State* prev) {
+    gf::GfMenuManager::startBtlchTutorial(10);
 }
 
-void TitleStateWarning::fn_71001565A8(TitleMain* title, const fw::UpdateInfo& info) {
-    if (gf::GfMenuManager::fn_710035A524()) {
+void TitleStateWarning::update(TitleMain* title, const fw::UpdateInfo& info) {
+    if (gf::GfMenuManager::isOpenBtlchTutorial()) {
         return;
     }
     title->m_menu.m_request = 0;
@@ -353,7 +353,7 @@ inline const char* TitleStateMainScreen::getName() const {
 }
 inline void TitleStateMainScreen::onEnter(void* owner, ai::State* prev) {
     gf::GfEvent::addEventCallback(this);
-        static_cast<TitleMain*>(owner)->fn_710014F70C(0.0f);
+        static_cast<TitleMain*>(owner)->setMaskVolumeGameSe(0.0f);
 }
 inline void TitleStateMainScreen::onLeave(void* owner, ai::State* next) {
     gf::GfEvent::removeEventCallback(this);
@@ -392,7 +392,7 @@ inline void TitleStatePlayEvent::onEnter(void* owner, ai::State* prev) {
 }
 inline void TitleStatePlayEvent::onLeave(void* owner, ai::State* next) {
     if (m_openBtlModelView) {
-        gf::GfMenuObjEvTheater::fn_71003FEE10(false);
+        gf::GfMenuObjEvTheater::dispOffScreen(false);
         gf::GfMenuManager::closeBtlModelView();
     }
     gf::GfEvent::removeEventCallback(this);
@@ -415,7 +415,7 @@ void fn_710015678C(gf::RQ_SETUP_PARTY& party, unsigned int driver, unsigned int 
         if (entry.m_driver == 0) {
             entry.m_driver = driver;
             if (blade == 0) {
-                blade = gf::GfDataDriver::fn_7100241640(driver, 0);
+                blade = gf::GfDataDriver::getDefaultBlade(driver, 0);
             }
             entry.m_blades[0] = blade;
             entry.m_activeIndex = 0;

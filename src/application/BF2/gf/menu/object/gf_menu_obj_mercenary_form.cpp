@@ -112,7 +112,7 @@ void GfMenuObjMercenaryForm::finalize() {
 
 void GfMenuObjMercenaryForm::update() {
     if (!m_seq.m_jobs.empty()) {
-        if (m_leaveRequest && GfMenuObjUtil::fn_7100492C88()) {
+        if (m_leaveRequest && GfMenuObjUtil::isVoiceSkip()) {
             m_seqStep = false;
             m_seq.clear();
             m_seq.addJob(&GfMenuObjMercenaryForm::seqLeaveBlade);
@@ -159,7 +159,7 @@ bool GfMenuObjMercenaryForm::seqLeaveBlade() {
         m_seqStep = true;
         m_leaveRequest = false;
     } else {
-        if (m_leaveVoice != -1 && GfMenuObjUtil::fn_7100492C88()) {
+        if (m_leaveVoice != -1 && GfMenuObjUtil::isVoiceSkip()) {
             GfGameVoice::fn_71002F1F64(m_leaveVoice);
             m_leaveVoice = -1;
         }
@@ -306,19 +306,19 @@ void GfMenuObjMercenaryForm::refreshBladeList() {
 
 // ListListener is not here yet
 
-bool GfMenuObjMercenaryForm::fn_7100439FCC(unsigned int blade) {
+bool GfMenuObjMercenaryForm::chkUnitBladeList(unsigned int blade) {
     for (unsigned int i = 0; i < m_unitBlades->getSize(); i++) {
         if (m_unitBlades->getContents(i).m_blade == blade) {
             return true;
         }
-        if (GfMenuObjUtil::fn_71004903E4(blade) && GfMenuObjUtil::fn_71004903E4(m_unitBlades->getContents(i).m_blade)) {
+        if (GfMenuObjUtil::isBladeHana(blade) && GfMenuObjUtil::isBladeHana(m_unitBlades->getContents(i).m_blade)) {
             return true;
         }
     }
     return false;
 }
 
-bool GfMenuObjMercenaryForm::fn_710043A138() {
+bool GfMenuObjMercenaryForm::seqConfirmHana() {
     ui::UIObjectAcc acc(m_handle, "LAY_main");
     bool done;
     if (!m_seqStep) {
@@ -331,7 +331,7 @@ bool GfMenuObjMercenaryForm::fn_710043A138() {
         short result = GfMenuManager::getCommonWindowResult();
         if (result == 0) {
             unsigned int blade = m_listBlades->getContents(m_listBlades->getIndex(false)).m_blade;
-            if (!fn_7100439FCC(blade)) {
+            if (!chkUnitBladeList(blade)) {
                 MenuBladeInfo info;
                 info.m_blade = blade;
                 info.m_creator = GfDataBlade::getCreator(blade);
@@ -347,12 +347,12 @@ bool GfMenuObjMercenaryForm::fn_710043A138() {
     return done;
 }
 
-bool GfMenuObjMercenaryForm::fn_710043A2E0() {
+bool GfMenuObjMercenaryForm::seqConfirmRemoveBladeSet() {
     ui::UIObjectAcc acc(m_handle, "LAY_main");
     bool done;
     if (!m_seqStep) {
         unsigned int blade = m_listBlades->getContents(m_listBlades->getIndex(false)).m_blade;
-        if (GfMenuObjUtil::fn_71004903E4(blade)) {
+        if (GfMenuObjUtil::isBladeHana(blade)) {
             GfMenuManager::openCommonWindow(0x10F);
         } else {
             GfMenuManager::openCommonWindow(199);
@@ -370,7 +370,7 @@ bool GfMenuObjMercenaryForm::fn_710043A2E0() {
                 m_bladeIds.push_back(leave);
             }
             unsigned int blade = m_listBlades->getContents(m_listBlades->getIndex(false)).m_blade;
-            if (!fn_7100439FCC(blade)) {
+            if (!chkUnitBladeList(blade)) {
                 MenuBladeInfo info;
                 info.m_blade = blade;
                 info.m_creator = GfDataBlade::getCreator(blade);
@@ -625,7 +625,7 @@ bool GfMenuObjMercenaryForm::seqDepartureStart() {
 
 bool GfMenuObjMercenaryForm::seqApperBlade() {
     if (m_voice != nullptr) {
-        if (GfMenuObjUtil::fn_7100492C88()) {
+        if (GfMenuObjUtil::isVoiceSkip()) {
             GfGameVoice::playStop(m_voice);
             m_voice = nullptr;
             m_voiceStopped = true;

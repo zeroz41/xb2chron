@@ -12,7 +12,7 @@ namespace gf { enum SAVESLOT : int; class SDataOption; }
 
 namespace gf {
 // data a save writes, compressed on a thread named "CompressThread" (fn_71002C131C) when
-// GfGameManager::fn_71002A9E68 says so (the name and the member names are not the original's)
+// GfGameManager::isGameTypeIra says so (the name and the member names are not the original's)
 struct GfGameSaveCompress {
     GfGameSaveCompress() : m_src(nullptr), m_srcSize(0), m_out(nullptr), m_outSize(0) {}
     ~GfGameSaveCompress() {

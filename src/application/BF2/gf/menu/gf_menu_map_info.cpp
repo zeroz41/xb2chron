@@ -165,7 +165,7 @@ const GfMenuMapInfo::MapAreaInfo* GfMenuMapInfo::getMapAreaFromName(int index, c
     return nullptr;
 }
 
-unsigned int GfMenuMapInfo::fn_7100361DC0() {
+unsigned int GfMenuMapInfo::getCurMapInfoID() {
     GfMenuMapInfo* info = get();
     if (info != nullptr) {
         int area = info->m_curAreaIndex;

@@ -3,36 +3,36 @@
 #include "ui/UIUtil.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UICtrlObject.h"
-#include "classes/ui/TUnk_B74610.h"
+#include "classes/ui/UICtrlRoll.h"
 #include "classes/mm/mtl/IAllocator.h"
 #include "fw/UpdateInfo.h"
 
 namespace ui {
 
-TUnk_B74610::~TUnk_B74610() {
+UICtrlRoll::~UICtrlRoll() {
     if (m_entries.capacity() != 0) {
         m_entries.destroy();
     }
 }
 
-TUnk_B74610* TUnk_B74610::fn_7100672020(unsigned int handle, const Setting& setting) {
+UICtrlRoll* UICtrlRoll::fn_7100672020(unsigned int handle, const Setting& setting) {
 #line 46
-    TUnk_B74610* ctrl = new (UIUtil::getProgAllocator(), 16, __FILE__, __LINE__) TUnk_B74610(handle);
+    UICtrlRoll* ctrl = new (UIUtil::getProgAllocator(), 16, __FILE__, __LINE__) UICtrlRoll(handle);
     if (ctrl == nullptr) {
         return nullptr;
     }
     ctrl->m_setting = setting;
     ctrl->m_entries.setAllocator(setting.m_allocator);
     ctrl->m_entries.reserve(setting.m_count);
-    ctrl->fn_7100672160();
+    ctrl->reset();
     return ctrl;
 }
 
-void TUnk_B74610::fn_7100672160() {
+void UICtrlRoll::reset() {
     m_entries.clear();
 }
 
-void TUnk_B74610::fn_710067237C(unsigned int handle) {
+void UICtrlRoll::delObject(unsigned int handle) {
     if (m_entries.size() == m_entries.capacity()) {
         return;
     }
@@ -44,11 +44,11 @@ void TUnk_B74610::fn_710067237C(unsigned int handle) {
     }
 }
 
-void TUnk_B74610::fn_710067256C(bool paused) {
+void UICtrlRoll::pause(bool paused) {
     m_paused = paused;
 }
 
-void TUnk_B74610::update(const fw::UpdateInfo&) {
+void UICtrlRoll::update(const fw::UpdateInfo&) {
     if (m_entries.size() == 0 || m_paused) {
         return;
     }

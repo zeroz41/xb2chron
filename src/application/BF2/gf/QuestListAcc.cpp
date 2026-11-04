@@ -3196,7 +3196,7 @@ unsigned int QuestListAcc::getBattleEnemySpeciesID(unsigned int id) const {
     return _gfbqa::getBattleEnemySpeciesID(*GfBdatQuest::get()->m_fpBattle, id);
 }
 
-unsigned int QuestListAcc::fn_710025ABB8(unsigned int id) const {
+unsigned int QuestListAcc::getBattleEnemyRaceID(unsigned int id) const {
     return _gfbqa::getBattleEnemyRaceID(*GfBdatQuest::get()->m_fpBattle, id);
 }
 
@@ -3224,7 +3224,7 @@ unsigned int QuestListAcc::getBattleReducePCHP(unsigned int id) const {
     return _gfbqa::getBattleReducePCHP(*GfBdatQuest::get()->m_fpBattle, id);
 }
 
-unsigned int QuestListAcc::fn_710025AFC4(unsigned int id) const {
+unsigned int QuestListAcc::getBattleTargetOff(unsigned int id) const {
     return _gfbqa::getBattleTargetOff(*GfBdatQuest::get()->m_fpBattle, id);
 }
 
@@ -3272,7 +3272,7 @@ unsigned int QuestListAcc::getCollectNpcID(unsigned int id) const {
     return _gfbqa::getCollectNpcID(*GfBdatQuest::get()->m_fpCollect, id);
 }
 
-unsigned int QuestListAcc::fn_710025B5CC(unsigned int id) const {
+unsigned int QuestListAcc::getCollectCollectionID(unsigned int id) const {
     return _gfbqa::getCollectCollectionID(*GfBdatQuest::get()->m_fpCollect, id);
 }
 
@@ -3372,15 +3372,15 @@ unsigned int QuestListAcc::getGimmickTboxPopID(unsigned int id) const {
     return _gfbqa::getGimmickTboxPopID(*GfBdatQuest::get()->m_fpGimmick, id);
 }
 
-unsigned int QuestListAcc::fn_710025C23C(unsigned int id) const {
+unsigned int QuestListAcc::getGimmickEnemyWaveID(unsigned int id) const {
     return _gfbqa::getGimmickEnemyWaveID(*GfBdatQuest::get()->m_fpGimmick, id);
 }
 
-unsigned int QuestListAcc::fn_710025C2D0(unsigned int id) const {
+unsigned int QuestListAcc::getGimmickCampPopID(unsigned int id) const {
     return _gfbqa::getGimmickCampPopID(*GfBdatQuest::get()->m_fpGimmick, id);
 }
 
-unsigned int QuestListAcc::fn_710025C364(unsigned int id) const {
+unsigned int QuestListAcc::getGimmickCollectionPopID(unsigned int id) const {
     return _gfbqa::getGimmickCollectionPopID(*GfBdatQuest::get()->m_fpGimmick, id);
 }
 

@@ -480,7 +480,7 @@ void GfGameSalvage::setPartyDisp(bool disp) {
     }
 }
 
-void GfGameSalvage::fn_7100315A84(bool flag) {
+void GfGameSalvage::setPartyNpcMove(bool flag) {
     GF_OBJ_HANDLE* mover = GfGameManager::getControlMover();
     bool stop = !flag;
     for (unsigned int i = 0; i < 3; i++) {

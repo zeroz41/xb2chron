@@ -29,7 +29,7 @@ void GfGamePlayerUniqueScheduler::destroy() {
 
 void GfGamePlayerUniqueScheduler::update(const fw::UpdateInfo& info) {
     GfGamePlayerUniqueScheduler* scheduler = get();
-    if (scheduler != nullptr && !GfGameManager::fn_71002AC70C()) {
+    if (scheduler != nullptr && !GfGameManager::isDisableUnieqIdle()) {
         scheduler->executeRequest(info);
         scheduler->judge(info);
     }
@@ -180,7 +180,7 @@ inline void GfGamePlayerUniqueScheduler::setMember(Member& member, GF_OBJ_HANDLE
 
 void GfGamePlayerUniqueScheduler::gevPartyMemberOK(bool ok) {
     if (ok) {
-        if (GfGameManager::fn_71002A9E68()) {
+        if (GfGameManager::isGameTypeIra()) {
             // three drivers for each of the first three (getHandleDriver's second argument 0 to 2)
             for (unsigned int i = 0; i < 3; i++) {
                 for (unsigned int j = 0; j < 3; j++) {

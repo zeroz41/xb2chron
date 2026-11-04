@@ -38,7 +38,7 @@ void AccessPlugin::onDeactivate() {
 }
 
 // update (0x7100516C54) is not matched yet: its last step keeps two stores of the target where the candidate
-// compiles one select; isActiveRange (0x7100516DBC) calls GfObjAcc's fn_710052478C, which has no name yet;
+// compiles one select; isActiveRange (0x7100516DBC) calls GfObjAcc's getTargetSearchOffset, which has no name yet;
 // drawDebug (0x7100516FD4) stores the matrix's [2][2] and [2][3] as one word
 
 void AccessPlugin::onActivate() {}

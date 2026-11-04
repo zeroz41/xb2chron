@@ -32,7 +32,7 @@ public:
     GfAppend pad_98;
     GF_OBJ_HANDLE* pad_120;
     unsigned int pad_128;
-    // a blade id: GfGameEvent::fn_71002A1FFC gives blade 1011 its default weapon (GfBdatChrBl::getChrBlDefWeapon)
+    // a blade id: GfGameEvent::createWeapon gives blade 1011 its default weapon (GfBdatChrBl::getChrBlDefWeapon)
     // in event 10345
     unsigned int pad_12c;
     GfAppendHandles pad_130;

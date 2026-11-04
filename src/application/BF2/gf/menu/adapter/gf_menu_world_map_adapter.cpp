@@ -123,7 +123,7 @@ GfMenuWorldMapAdapter* GfMenuWorldMapAdapter::createFromList(unsigned int handle
     return createFromCoverter(handle, type, converter, changed);
 }
 
-GfMenuWorldMapAdapter* GfMenuWorldMapAdapter::fn_710034D118(unsigned int handle, unsigned int type,
+GfMenuWorldMapAdapter* GfMenuWorldMapAdapter::createFromListWork(unsigned int handle, unsigned int type,
                                                             GfMenuIDList* list, int index, bool onPage,
                                                             bool changed) {
     if (handle == 0) {

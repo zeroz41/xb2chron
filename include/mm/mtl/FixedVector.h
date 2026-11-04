@@ -68,7 +68,7 @@ struct FixedVectorStorage {
 // For a T whose size is a power of two the room is an array of words (an unsigned integer as wide as the element's
 // alignment, up to eight bytes) and element() addresses it in words: an element's byte offset divided by the word's
 // size (MemManager::clear: its `and #0x1ffffffffffffffc; lsl #3` of the 32-byte HandleRegion's offset in 8-byte
-// words). Other sizes keep the byte units: gmk::TUnk_B6D418::create reads its 24-byte Entry's field at +0x14 from the
+// words). Other sizes keep the byte units: gmk::GmkEnemyWave::create reads its 24-byte Entry's field at +0x14 from the
 // object ([this, #0x15c]), which a word room cannot express (the field stays on begin(), kept in a register).
 // The size rule is measured on the matched functions, not known from the original header.
 template <typename T, unsigned long N, bool Arithmetic = __is_arithmetic(T),

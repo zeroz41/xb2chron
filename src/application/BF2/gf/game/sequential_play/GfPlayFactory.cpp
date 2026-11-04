@@ -55,7 +55,7 @@ bool GfPlayFactory::createOpenMenu(unsigned int menu, GfSequentialPlaySignal* si
     GfSequentialPlay::addWaitBattleEnd(0);
     GfSequentialPlay::pushPause(0x59);
     GfSequentialPlay::endSignal(signal);
-    if (GfMenuObjUtil::fn_710048FD30(3) && menu == 0x24) {
+    if (GfMenuObjUtil::isValidExpansion(3) && menu == 0x24) {
         GfSequentialPlay::addOpenMenu2(1, MAINMENU(3));
     } else {
         GfSequentialPlay::addOpenMenu(menu);
@@ -316,7 +316,7 @@ bool GfPlayFactory::createTalk(const GfSetupPfTalk& talk) {
     GfSequentialPlay::popState();
     GfSequentialPlay::addEventFade();
     GfSequentialPlay::addCallbackEventSequence(talk.m_eventId, false);
-    GfSequentialPlay::fn_71003227E4();
+    GfSequentialPlay::addIraCampSaveForEvent();
     GfSequentialPlay::addWait(0.5f);
     GfSequentialPlay::addEventPlayerStop(false);
     GfSequentialPlay::play();
@@ -395,7 +395,7 @@ bool GfPlayFactory::createQuestUIComplete(QuestID id, QuestID next, QSTATE state
     GfSequentialPlay::pushPause(0x11);
     GfSequentialPlay::pushState(GF_STATE(6));
     GfSequentialPlay::addQuestUIComplete(id, next, state);
-    GfSequentialPlay::fn_71003227E4();
+    GfSequentialPlay::addIraCampSaveForEvent();
     GfSequentialPlay::popState();
     GfSequentialPlay::popPause();
     GfSequentialPlay::play();
@@ -670,7 +670,7 @@ bool GfPlayFactory::createResetBladeForBladeSwitch(unsigned int slot, int setId)
     return true;
 }
 
-bool GfPlayFactory::fn_7100321258() {
+bool GfPlayFactory::createPartySwitchForIra() {
     if (!GfGameCond::isGameCond(
             static_cast<unsigned short>(Bdat::getValCheck(GfDataBdat::getFP(0x17E), "cond", 0x2F, 2)))) {
         return false;
@@ -699,7 +699,7 @@ bool GfPlayFactory::fn_7100321258() {
     return true;
 }
 
-bool GfPlayFactory::fn_7100321328() {
+bool GfPlayFactory::createBladeSwitch() {
     if (GfSequentialPlay::isInnerState(GF_STATE(0x14))) {
         return false;
     }
@@ -729,7 +729,7 @@ bool GfPlayFactory::createMoverSwitch() {
     return true;
 }
 
-bool GfPlayFactory::fn_71003213F4() {
+bool GfPlayFactory::createBladeSwitchBR() {
     if (GfSequentialPlay::isInnerState(GF_STATE(0x14))) {
         return false;
     }

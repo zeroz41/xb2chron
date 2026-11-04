@@ -27,16 +27,14 @@ public:
     static void loadStaticRes(const char* path);
     // the loaded resource of that path (fw::CommonResource::search in GfStaticRes's memory), none if not loaded
     static fw::CommonResource* search(const char* path);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reloads GfStaticRes's
-    // resources (s_hMem, s_aResource). What it does: fn_710032C088 with the camera parameters' files, the DLC's
-    // ("/camera/params_dlc.gca") replacing "/camera/params.gca" when its argument is set, the other way round when
-    // not. Its one caller is fn_7100156288.
-    static void fn_710032C04C(bool dlcCamera);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's reloadRequestForDebug(const char*)
-    // differs). A member because it works on s_hMem and s_aResource. What it does: searches oldPath in GfStaticRes's
-    // memory; none loaded, it block-requests newPath and keeps it in s_aResource; one loaded, it releases that entry's
-    // resource and block-requests newPath into the same entry.
-    static void fn_710032C088(const char* oldPath, const char* newPath);
+    // 2.0.0's symbols name it. What it does: replaceLoad with the camera parameters' files, the DLC's
+    // ("/camera/params_dlc.gca") replacing "/camera/params.gca" when its argument is set, the other way round when not.
+    // Its one caller is update.
+    static void setupGameType(bool dlcCamera);
+    // 2.0.0's symbols name it. What it does: searches oldPath in GfStaticRes's memory; none loaded, it block-requests
+    // newPath and keeps it in s_aResource; one loaded, it releases that entry's resource and block-requests newPath
+    // into the same entry.
+    static void replaceLoad(const char* oldPath, const char* newPath);
 
     // the camera parameters' files, the DLC's second (new in 3.0.1: the names are not the original's)
     static const char* s_cameraParam;

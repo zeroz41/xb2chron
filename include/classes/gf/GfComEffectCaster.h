@@ -115,14 +115,12 @@ public:
     void setCaster(unsigned int handle);
     bool setSpeed(unsigned int id, float speed);
     bool startTimer(unsigned int id);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in this class's
-    // code and reads m_caster from `this`. What it does: hands the matrix to the caster's fn_71004B3B78 when there
-    // is a caster; gf_game_scene's fn_71002C7DC0 calls it.
-    void fn_71004B3B68(const mm::Mat44& mtx);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads pad_48 and m_packs
-    // from `this` (btl::EffectManager::CreateBullet calls it on a component). What it does: clears packs, adds pad_48
-    // when set, then every entry's pack of m_packs when GfGameManager::fn_71002A9E68() holds; true if any was added.
-    bool fn_71004B39DC(mm::mtl::FixedVector<fw::EffectPack*, 8>& packs);
+    // 2.0.0's symbols name it. What it does: hands the matrix to the caster's flushDirectMatrix when there is a caster;
+    // gf_game_scene's fn_71002C7DC0 calls it.
+    void applyEffpointByMatrix(const mm::Mat44& mtx);
+    // 2.0.0's symbols name it. What it does: clears packs, adds pad_48 when set, then every entry's pack of m_packs
+    // when GfGameManager::isGameTypeIra() holds; true if any was added.
+    bool getEffectPack(mm::mtl::FixedVector<fw::EffectPack*, 8>& packs);
     // clears packs and adds the pack of every entry of m_packs with that id; true if any was added
     // (the parameter names are not the original's; the second int is unused)
     bool getWeaponEffectPack(mm::mtl::FixedVector<fw::EffectPack*, 8>& packs, int id, int);
@@ -130,7 +128,7 @@ public:
     // (the parameter name is not the original's)
     bool removeMountEffectEv(unsigned int id);
     // the pack holding the named efb: an m_packs entry of the owner's weapon effect type (any entry when
-    // GfGameManager::fn_71002A9E68() holds), else pad_48, or for pad_117ac kinds 3 and 4 with a parent a pack made
+    // GfGameManager::isGameTypeIra() holds), else pad_48, or for pad_117ac kinds 3 and 4 with a parent a pack made
     // from the owner's efb resource; null for "cmn" names (the parameter name is not the original's)
     fw::EffectPack* getWeaponEffectPack(const char* name);
     // an effect of the named file placed at the matrix (GfEffectGround's foot step and splashdown effects)
@@ -149,7 +147,7 @@ public:
     unsigned char pad_2c[0x14];
     // the effect annotations (procMsgFxForceCancel ends the effects they started; the name is not the original's)
     fw::EffectResData* m_resData;
-    // fn_71004B39DC puts it first in the packs it gathers when it is set; what it holds is unknown
+    // getEffectPack puts it first in the packs it gathers when it is set; what it holds is unknown
     fw::EffectPack* pad_48;
     mm::mtl::FixedVector<PackEntry, 100> m_packs;  // (the name is not the original's)
     EffectCaster* m_caster;  // setupCaster's (the name is not the original's)

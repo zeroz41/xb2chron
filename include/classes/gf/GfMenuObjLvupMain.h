@@ -33,16 +33,12 @@ public:
     bool seqClose();
     bool seqClose2();
     bool seqClose3();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because MainListener::reciveEvent
-    // adds it to m_seq as a GfMenuObjLvupMain job (Delegate memberFuncInvoker<GfMenuObjLvupMain>). What it does:
-    // waits (false) while GfMenuManager::isFading, then true.
-    bool fn_710042CB7C();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because MainListener::reciveEvent
-    // adds it to m_seq right after fn_710042CB7C (the first time after the game is cleared, GfMenuFlag 0x53 unset).
-    // What it does: once (m_textOpened), resets m_textContext and opens GfMenuObjCommonText text 0x132 (with
-    // GfMenuObjUtil::fn_710048FD30(3)) or 0x103 on it; false while that context is active, then sends the open
-    // event to "LAY_lv_driverset" of "LAY_main" and returns true.
-    bool fn_710042CB98();
+    // 2.0.0's symbols name it. What it does: waits (false) while GfMenuManager::isFading, then true.
+    bool seqANG_WaitFade();
+    // 2.0.0's symbols name it. What it does: once (m_textOpened), resets m_textContext and opens GfMenuObjCommonText
+    // text 0x132 (with GfMenuObjUtil::isValidExpansion(3)) or 0x103 on it; false while that context is active, then
+    // sends the open event to "LAY_lv_driverset" of "LAY_main" and returns true.
+    bool seqANG_Notice();
 
     ui::UISelectObjList* m_modeList;  // 0x28: "LAY_mode_sltag@%02d" of "LAY_mode_menu"
     GfMenuDriverList* m_drivers;  // 0x30: the party's drivers (setupFromParty, type 0)
@@ -51,7 +47,7 @@ public:
     // 0x48: the mode menu's choice (MenuListener's case 8 stores it; 2 while the driver list has the input)
     int m_mode;
     GfMenuSequence<GfMenuObjLvupMain, 8> m_seq;  // 0x50
-    bool m_textOpened;  // 0x2E0: fn_710042CB98 has opened its text
+    bool m_textOpened;  // 0x2E0: seqANG_Notice has opened its text
     int pad_2E4;  // the constructor clears it
     unsigned char pad_2E8[8];
     GfMenuCallContext* m_textContext;  // 0x2F0: GfMenuObjCommonText's

@@ -22,10 +22,9 @@ public:
     // 1.0.0 symbol (GfMenuManager::gevBattleEnd passes 0 in 1.0.0 and 3.0.1); 3.0.1's copy still carries a
     // placeholder name (fn_71003670E4)
     static void setChainNum(unsigned int num);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its address lies in
-    // gf_menu_reference's unit, between GfMenuReference's functions. What it does: GfMenuManager::gevBattleEnd
-    // tail-calls it, without arguments, after GfMenuObjPartyGauge::close when GfMenuObjUtil::fn_710048FD30(3) holds.
-    static void fn_7100367D1C();
+    // 2.0.0's symbols name it. What it does: GfMenuManager::gevBattleEnd tail-calls it, without arguments, after
+    // GfMenuObjPartyGauge::close when GfMenuObjUtil::isValidExpansion(3) holds.
+    static void resetIraCharRecast();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its address lies in
     // gf_menu_reference's unit and it reads PtrSingleton<GfMenuReference>::sys() only. What it does: copies four
     // values into the four 12-byte records at 0x4CF70 of the instance (each record: the value, 1, a cleared byte);
@@ -67,9 +66,9 @@ public:
     static const ui::UIStr& getReferenceString(unsigned short index);
     static unsigned int getReferenceDriverID(unsigned int index);
     static unsigned int getReferenceBladeID(unsigned int index);
-    // what fn_7100367C78 answers: the 8 bytes after a record's driver word (+4 and +8 of the 0x10-byte records at
-    // 0x4CF28; the names are not the original's). GfMenuCharDataAdapter::fn_7100339574 shows m_rate times 100 in
-    // battle and, outside battle, maps m_type 2 / 1 to fn_7100368418(1) / fn_7100368418(0).
+    // what getIraCharProperty answers: the 8 bytes after a record's driver word (+4 and +8 of the 0x10-byte records at
+    // 0x4CF28; the names are not the original's). GfMenuCharDataAdapter::update_IRA_ChangeRecast shows m_rate times 100 in
+    // battle and, outside battle, maps m_type 2 / 1 to isIraFlag(1) / isIraFlag(0).
     struct DriverGauge {
         int m_type;
         float m_rate;
@@ -77,44 +76,38 @@ public:
         // known
         ::mm::mtl::Bitflag<32> m_flags;
     };
-    // a 0x10-byte record of the three at 0x4CF28 of the instance: a driver, then the gauge fn_7100367C78 answers
+    // a 0x10-byte record of the three at 0x4CF28 of the instance: a driver, then the gauge getIraCharProperty answers
     // (the names are not the original's; GfMenuCharDataAdapter::ReferenceBladeOwnerDriverConverter shows the
-    // driver; fn_7100367BD8 compares the gauge's first word, which it calls a blade, with its argument;
-    // fn_7100367D1C clears every m_rate)
+    // driver; getIraCharInfoFromFromID compares the gauge's first word, which it calls a blade, with its argument;
+    // resetIraCharRecast clears every m_rate)
     struct BladeOwner {
         unsigned int m_driver;
         DriverGauge m_gauge;
     };
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's
-    // ReferenceBladeOwnerDriverConverter::getCharData read GfDataBlade::getSetDriver(getReferenceBladeID(index)) there).
-    // A member because it sits among GfMenuReference's accessors and reads its singleton. What it does: when
-    // GfMenuObjUtil::fn_710048FD30(3) holds and the singleton exists, the first of the three records at 0x4CF28
-    // (0x10 apart) whose blade (+4) is the argument, else nullptr.
-    static const BladeOwner* fn_7100367BD8(unsigned int blade);
+    // 2.0.0's symbols name it. What it does: when GfMenuObjUtil::isValidExpansion(3) holds and the singleton exists,
+    // the first of the three records at 0x4CF28 (0x10 apart) whose blade (+4) is the argument, else nullptr.
+    static const BladeOwner* getIraCharInfoFromFromID(unsigned int blade);
+    // 2.0.0's symbols name it. What it does: nullptr unless GfMenuObjUtil::isValidExpansion(3) holds and the singleton
+    // exists; else the address of the +4 word of the first of the three records at 0x4CF28 (0x10 apart) whose +0 word
+    // is the argument (a driver id from GfMenuCharDataAdapter::update_IRA_ChangeRecast), nullptr when none is.
+    static const DriverGauge* getIraCharProperty(unsigned int driver);
+    // 2.0.0's symbols name it. What it does: -1 unless GfMenuObjUtil::isValidExpansion(3) holds and the singleton
+    // exists; else the +4 word of the first of the three records at 0x4CF28 (0x10 apart) whose +0 word is the argument,
+    // 0xFF when none is. GfMenuCharDataAdapter's update_IRA_IsFrontBtl / update_IRA_IsBackBtl /
+    // update_IRA_NotReserveBtl pass it a driver id and compare the answer with 0, 1 and 2.
+    static int getIraCharForm(unsigned int driver);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
-    // GfMenuReference's accessors (between fn_7100367BD8 and fn_7100367D1C) and reads its singleton. What it does:
-    // nullptr unless GfMenuObjUtil::fn_710048FD30(3) holds and the singleton exists; else the address of the +4 word
-    // of the first of the three records at 0x4CF28 (0x10 apart) whose +0 word is the argument (a driver id from
-    // GfMenuCharDataAdapter::fn_7100339574), nullptr when none is.
-    static const DriverGauge* fn_7100367C78(unsigned int driver);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
-    // GfMenuReference's accessors (after fn_7100367BD8) and reads its singleton. What it does: -1 unless
-    // GfMenuObjUtil::fn_710048FD30(3) holds and the singleton exists; else the +4 word of the first of the three
-    // records at 0x4CF28 (0x10 apart) whose +0 word is the argument, 0xFF when none is. GfMenuCharDataAdapter's
-    // fn_71003391AC / fn_7100339224 / fn_710033929C pass it a driver id and compare the answer with 0, 1 and 2.
-    static int fn_7100367EF4(unsigned int driver);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
-    // GfMenuReference's accessors (before fn_7100367BD8) and reads its singleton. What it does: false unless
-    // GfMenuObjUtil::fn_710048FD30(3) holds, slot < 3 and the singleton exists; else whether the record at
+    // GfMenuReference's accessors (before getIraCharInfoFromFromID) and reads its singleton. What it does: false unless
+    // GfMenuObjUtil::isValidExpansion(3) holds, slot < 3 and the singleton exists; else whether the record at
     // 0x4CF28 + slot * 0x10 differs from the argument in its first two words, then copies the argument into it.
     // Its one caller, GfMenuManager::gevChangeParty, passes slots 0-2 with {driver of party slot, slot} or
     // {0, 0xFF} when the slot has no driver.
     static bool fn_7100367ADC(unsigned int slot, const BladeOwner& owner);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its address lies in
-    // gf_menu_reference's unit (after fn_7100367D1C) and it reads and writes its singleton's fields. What it does:
-    // while GfMenuObjUtil::fn_710048FD30(3) holds, copies the gauge into the record of that driver; a gauge type
+    // gf_menu_reference's unit (after resetIraCharRecast) and it reads and writes its singleton's fields. What it does:
+    // while GfMenuObjUtil::isValidExpansion(3) holds, copies the gauge into the record of that driver; a gauge type
     // whose bit (1 << type) is new in m_gaugeTypeBits and differs from the record's sets it, then
-    // TUnk_B60E28::fn_71003C3470 when bits 0 and 1 are both set, fn_71003C34E0 when bit 2 is. Its one caller is
+    // GfMenuObjCharChange::changeFormation when bits 0 and 1 are both set, changeBlade when bit 2 is. Its one caller is
     // btl::UIManager::UpdateMenuData.
     static void fn_7100367D6C(unsigned int driver, const DriverGauge& gauge);
     // GfMenuFieldSkill::start sets slot 5 to 0 (the parameter names are not the original's)
@@ -165,20 +158,17 @@ public:
     // or slot (1.0.0 symbol; the parameter names are not the original's)
     static int getBladeSetIDFromParty(unsigned int party, unsigned int slot);
     static void postReset();  // clears state 2 of every slot's reverse palette button
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfMenuObjItemList2::refreshItemList
-    // has no call where 3.0.1's calls it). A member because its unit is gf_menu_reference and it reads this class's
-    // singleton. What it does: the item type the menu references (an ItemType::Type, valid from 1 to 20: the
-    // singleton's word at 0x4CCB8), 0 without the singleton; GfMenuGameAdapter's types 18 to 20, GfMenuObjItemList2's
-    // and GfMenuObjHanaPartsMake's refreshItemList read it.
-    static unsigned int fn_710036934C();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its unit is
-    // gf_menu_reference and it reads this class's singleton. What it does: the singleton's word at 0x4CCB4 (0 without
-    // the singleton); gf_menu_btlch_adapter's callbacks pass it to GfGameManager::fn_71002AC60C as the record's mode
-    // and its adapter's update marks itself changed when it changes.
-    static unsigned int fn_7100369304();
+    // 2.0.0's symbols name it. What it does: the item type the menu references (an ItemType::Type, valid from 1 to 20:
+    // the singleton's word at 0x4CCB8), 0 without the singleton; GfMenuGameAdapter's types 18 to 20,
+    // GfMenuObjItemList2's and GfMenuObjHanaPartsMake's refreshItemList read it.
+    static unsigned int getReferenceItemType();
+    // 2.0.0's symbols name it. What it does: the singleton's word at 0x4CCB4 (0 without the singleton);
+    // gf_menu_btlch_adapter's callbacks pass it to GfGameManager::fn_71002AC60C as the record's mode and its adapter's
+    // update marks itself changed when it changes.
+    static unsigned int getReferenceBtlchDifficulty();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among this
-    // class's accessors and writes its singleton. What it does: stores the word fn_7100369304 reads (0x4CCB4);
-    // callers fn_71003ADAD0, fn_71003AE838, fn_7100445830, fn_7100445F58.
+    // class's accessors and writes its singleton. What it does: stores the word getReferenceBtlchDifficulty reads (0x4CCB4);
+    // callers fn_71003ADAD0, refreshDifficulty, fn_7100445830, updateNamedIDList.
     static void fn_71003692E4(unsigned int mode);
     // the battle's Homura/Hikari mode the menu shows (1.0.0's enum; its values are not known)
     enum HOMURA_MODE {};
@@ -235,7 +225,7 @@ public:
     static void setReferenceShopID(unsigned int shop);
     static void setReferenceWorldMapID(unsigned int map);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits between this
-    // class's accessors and writes the word fn_710036934C reads. What it does: stores the item type (0x4CCB8).
+    // class's accessors and writes the word getReferenceItemType reads. What it does: stores the item type (0x4CCB8).
     static void fn_710036932C(unsigned int type);
     static void setDriverVirtualLevel(unsigned int level);
     static unsigned int getDriverVirtualLevel();
@@ -259,30 +249,28 @@ public:
     static void setBladeVirtualEquipOrbSlot(unsigned int slot);
     static unsigned int getBladeVirtualEquipOrbSlot();
     static void clearPartyStatusLock();
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0 goes from
-    // getChainAttackBurstCount to setElemComboRootInfo). Members because they sit between this class's accessors
-    // and read or write its singleton's fields. What they do: fn_7100367360 stores m_chainAttackExtraNumber
-    // (btl::UIManager::UpdateMenuData passes ChainAttackManager's halfword at 0x19FE), fn_7100367380 returns it
-    // (0 without the singleton; GfMenuBattleAdapter::fn_71003331F8 shows it); fn_71003673A8 stores m_timeSeconds
-    // (fn_71000255A8, fn_710002568C, fn_710002579C, fn_71000B233C), fn_71003673C8 returns it
-    // (GfMenuBattleAdapter::fn_71003333D0); fn_71003673F0 stores m_challengeRatio clamped to 0..1
-    // (GfMenuObjButtonChallenge2::seqRunningV2, seqMovePush, seqWaitMashingV2), fn_710036742C returns it
-    // (GfMenuBattleAdapter::fn_710033355C).
-    static void fn_7100367360(unsigned int number);
-    static unsigned int fn_7100367380();
-    static void fn_71003673A8(float seconds);
-    static float fn_71003673C8();
-    static void fn_71003673F0(float ratio);
-    static float fn_710036742C();
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Static members: their addresses lie
-    // among this class's accessors (after fn_710036742C) and they read or write its singleton's word at 0x4CB84
-    // (m_bladeChangeValue). fn_7100367454 stores it and, when it changed, calls GfMenuObjBladeChange::fn_7100391CDC
-    // (event 0x105 to the blade change object); fn_71003674A0 returns it (callers BladeListener::reciveEvent,
+    // 2.0.0's symbols name them. What they do: setChainAttackOverkillBonus stores m_chainAttackExtraNumber
+    // (btl::UIManager::UpdateMenuData passes ChainAttackManager's halfword at 0x19FE), getChainAttackOverkillBonus
+    // returns it (0 without the singleton; GfMenuBattleAdapter::update_ChainAttackOverkillBonus shows it);
+    // setBattleTime stores m_timeSeconds (Start, End, Retry, UpdateBattleTime), getBattleTime returns it
+    // (GfMenuBattleAdapter::update_BattleTime); setVisionTimeRatio stores m_challengeRatio clamped to 0..1
+    // (GfMenuObjButtonChallenge2::seqRunningV2, seqMovePush, seqWaitMashingV2), getVisionTimeRatio returns it
+    // (GfMenuBattleAdapter::update_VisionTimeRatio).
+    static void setChainAttackOverkillBonus(unsigned int number);
+    static unsigned int getChainAttackOverkillBonus();
+    static void setBattleTime(float seconds);
+    static float getBattleTime();
+    static void setVisionTimeRatio(float ratio);
+    static float getVisionTimeRatio();
+    // 2.0.0's symbols name getBattleMode; the fn_ names are placeholders. Static members: their addresses lie among
+    // this class's accessors (after getVisionTimeRatio) and they read or write its singleton's word at 0x4CB84
+    // (m_bladeChangeValue). fn_7100367454 stores it and, when it changed, calls GfMenuObjBladeChange::refreshBattleMode
+    // (event 0x105 to the blade change object); getBattleMode returns it (callers BladeListener::reciveEvent,
     // fn_7100391EF0, fn_71003C56C0).
     static void fn_7100367454(unsigned int value);
-    static unsigned int fn_71003674A0();
+    static unsigned int getBattleMode();
     // Records the layer-3 battle menu reads (the names and their fields' names are not the original's).
-    // fn_7100366074's and fn_71003680AC's: four 12-byte records at 0x4CF70 of the instance (the names are not the
+    // fn_7100366074's and getIraOperationBtnCommand's: four 12-byte records at 0x4CF70 of the instance (the names are not the
     // original's): a value, 4 flags (fn_710036816C sets, fn_71003682D8 tests; fn_7100366074 starts them at 1) and a
     // byte fn_7100366074 clears
     struct LayerCommand {
@@ -291,73 +279,71 @@ public:
         unsigned char m_state;
         unsigned char pad_9[0x3];
     };
-    // fn_71003686A0's: two 8-byte records at 0x4CFA4 of the instance (a zeroed static one when the index is 2 or
+    // getIraSirenInfo's: two 8-byte records at 0x4CFA4 of the instance (a zeroed static one when the index is 2 or
     // more, there is no instance or menu layer 3 is not up).
     struct LayerGauge {
         LayerGauge() : m_ratio(), m_count(), m_stateA(), m_stateB() {}
-        float m_ratio;          // GfMenuBattleAdapter::fn_71003336A0 shows it in percent
-        unsigned char m_count;  // GfMenuBattleAdapter::fn_7100333700/fn_7100333750 show it (0..5)
-        // fn_7100368570's and fn_7100368600's flags: changing them sends the party gauge's "LAY_siren" (record 0)
-        // or "LAY_gauge" (record 1) events (GfMenuObjPartyGauge::fn_7100456EA0 etc.); the names are not the original's
+        float m_ratio;          // GfMenuBattleAdapter::update_IraSirenGaugeEN shows it in percent
+        unsigned char m_count;  // GfMenuBattleAdapter::update_IraSirenLvPT/update_IraSirenLvEN show it (0..5)
+        // setIraSirenInfoDown's and setIraSirenInfoCompete's flags: changing them sends the party gauge's "LAY_siren" (record 0)
+        // or "LAY_gauge" (record 1) events (GfMenuObjPartyGauge::setLockSirenEN etc.); the names are not the original's
         bool m_stateA;
         bool m_stateB;
-        // no explicit tail member: fn_71003686A0's guarded dummy zeroes 7 bytes and is not merged with the file's
+        // no explicit tail member: getIraSirenInfo's guarded dummy zeroes 7 bytes and is not merged with the file's
         // other statics, as the original's (an explicit pad byte here lets GlobalMerge take it)
     };
-    // fn_71003687B0's: three 8-byte records at 0x4CFB4 of the instance (a zeroed static one otherwise)
+    // getIraChainInfo's: three 8-byte records at 0x4CFB4 of the instance (a zeroed static one otherwise)
     struct LayerGimmick {
         LayerGimmick() : m_gimmickId(), m_ratio() {}
         unsigned int m_gimmickId;  // a type-3 DataParamAcc's id (face icon, name, attribute icon)
-        float m_ratio;             // GfMenuBattleAdapter::fn_710033383C shows it in percent
+        float m_ratio;             // GfMenuBattleAdapter::update_IraChainRecast shows it in percent
     };
-    // fn_7100368B40's: the record at 0x4CFE4 of the instance (a zeroed static one without the instance)
+    // getOCGInfo's: the record at 0x4CFE4 of the instance (a zeroed static one without the instance)
     struct LayerResult {
         LayerResult() : m_number(), m_ratio(), m_numbers() {}
-        unsigned int m_number;      // GfMenuBattleAdapter::fn_71003339D0 (0..999)
-        float m_ratio;              // GfMenuBattleAdapter::fn_7100333A00, in percent
-        unsigned int m_numbers[3];  // GfMenuBattleAdapter::fn_7100333A40, by m_index
+        unsigned int m_number;      // GfMenuBattleAdapter::update_OCGGearCount (0..999)
+        float m_ratio;              // GfMenuBattleAdapter::update_OCGTimeRatio, in percent
+        unsigned int m_numbers[3];  // GfMenuBattleAdapter::update_OCGBonus, by m_index
     };
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because they sit among this
-    // class's accessors in gf_menu_reference and read its singleton's fields (all but fn_7100368B40 only while
-    // GfMenuObjUtil::fn_710048FD30(3), menu layer 3, holds). What they do: fn_7100367FDC returns the float at
-    // 0x4CF64 (0 otherwise; GfMenuBattleAdapter::fn_71003335AC shows it in percent); fn_710036805C returns the int
-    // at 0x4CF68 (0 otherwise; GfMenuBattleAdapter::fn_7100333630 shows it, fn_71003335AC compares m_index with
-    // it); fn_7100368418 tests bit `bit` (asserting bit < 32) of the word at 0x4CFA0 (GfMenuBattleAdapter
-    // fn_7100333674 asks bit 3, fn_71003336A0/fn_7100333700/fn_7100333750 bit 4); fn_71003686A0, fn_71003687B0 and
-    // fn_7100368B40 return the records above.
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because they sit among this
-    // class's accessors in gf_menu_reference and write its singleton's fields, only while
-    // GfMenuObjUtil::fn_710048FD30(3) holds. What they do (btl::UIManager::UpdateMenuData calls each):
-    // fn_7100367F98 stores the float at 0x4CF64 (fn_7100367FDC reads it); fn_7100368018 the int at 0x4CF68
-    // (fn_710036805C reads it); fn_710036810C the flag at 0x4CF6C, calling TUnk_B60E28::fn_71003C3550(flag) when
-    // it changes (also from fn_7100358F74); fn_7100368380 sets or clears bit `bit` (< 32) of the word at 0x4CFA0
-    // (also from GfMenuManager::gevPlayerControl, GfMenuObjMainMenu2::seqExecTerm); fn_7100368498 stores record
-    // `index`'s (< 2) ratio at 0x4CFA4 clamped to 0..1; fn_710036851C its count byte (+4).
-    // fn_71003680AC returns record `index`'s (< 4) value at 0x4CF70 (0 otherwise) and fn_71003682D8 tests its flag
-    // `flag` (both from fn_71003C662C).
-    static void fn_7100367F98(float ratio);
+    // 2.0.0's symbols name setIraSpecialArtsRecast, setIraOperationDisp, setIraFlag, setIraSirenInfoLv; the fn_ names
+    // are placeholders. What they do: getIraSpecialArtsRecast returns the float at 0x4CF64 (0 otherwise;
+    // GfMenuBattleAdapter::update_IraSpecialRecast shows it in percent); getIraSpecialArtsLv returns the int at 0x4CF68
+    // (0 otherwise; GfMenuBattleAdapter::update_IraSpecialLv shows it, update_IraSpecialRecast compares m_index with
+    // it); isIraFlag tests bit `bit` (asserting bit < 32) of the word at 0x4CFA0 (GfMenuBattleAdapter
+    // update_IraTalentArtsEnable asks bit 3, update_IraSirenGaugeEN/update_IraSirenLvPT/update_IraSirenLvEN bit 4);
+    // getIraSirenInfo, getIraChainInfo and getOCGInfo return the records above. Placeholder names: new in 3.0.1,
+    // nothing in 1.0.0's place names them. Members because they sit among this class's accessors in gf_menu_reference
+    // and write its singleton's fields, only while GfMenuObjUtil::isValidExpansion(3) holds. What they do
+    // (btl::UIManager::UpdateMenuData calls each): setIraSpecialArtsRecast stores the float at 0x4CF64
+    // (getIraSpecialArtsRecast reads it); fn_7100368018 the int at 0x4CF68 (getIraSpecialArtsLv reads it);
+    // setIraOperationDisp the flag at 0x4CF6C, calling GfMenuObjCharChange::reverse(flag) when it changes (also from
+    // fn_7100358F74); setIraFlag sets or clears bit `bit` (< 32) of the word at 0x4CFA0 (also from
+    // GfMenuManager::gevPlayerControl, GfMenuObjMainMenu2::seqExecTerm); fn_7100368498 stores record `index`'s (< 2)
+    // ratio at 0x4CFA4 clamped to 0..1; setIraSirenInfoLv its count byte (+4). getIraOperationBtnCommand returns record
+    // `index`'s (< 4) value at 0x4CF70 (0 otherwise) and fn_71003682D8 tests its flag `flag` (both from fn_71003C662C).
+    static void setIraSpecialArtsRecast(float ratio);
     static void fn_7100368018(int index);
-    static void fn_710036810C(bool flag);
-    static void fn_7100368380(unsigned int bit, bool on);
+    static void setIraOperationDisp(bool flag);
+    static void setIraFlag(unsigned int bit, bool on);
     static void fn_7100368498(float ratio, unsigned int index);
-    static void fn_710036851C(unsigned int index, unsigned char count);
-    // fn_7100368744 stores record `index`'s (< 3) gimmick id and ratio at 0x4CFB4; fn_7100368570 / fn_7100368600
+    static void setIraSirenInfoLv(unsigned int index, unsigned char count);
+    // setIraChainInfo stores record `index`'s (< 3) gimmick id and ratio at 0x4CFB4; setIraSirenInfoDown / setIraSirenInfoCompete
     // store record `index`'s (< 2) m_stateA / m_stateB, calling GfMenuObjPartyGauge's event senders when it changes.
-    static void fn_7100368744(unsigned int index, unsigned int gimmickId, float ratio);
-    static void fn_7100368570(unsigned int index, bool on);
-    static void fn_7100368600(unsigned int index, bool on);
-    static unsigned int fn_71003680AC(unsigned int index);
+    static void setIraChainInfo(unsigned int index, unsigned int gimmickId, float ratio);
+    static void setIraSirenInfoDown(unsigned int index, bool on);
+    static void setIraSirenInfoCompete(unsigned int index, bool on);
+    static unsigned int getIraOperationBtnCommand(unsigned int index);
     static bool fn_71003682D8(unsigned int index, unsigned int flag);
-    static float fn_7100367FDC();
-    static int fn_710036805C();
-    static bool fn_7100368418(unsigned int bit);
-    static const LayerGauge* fn_71003686A0(unsigned int index);
-    static const LayerGimmick* fn_71003687B0(unsigned int index);
-    static const LayerResult* fn_7100368B40();
+    static float getIraSpecialArtsRecast();
+    static int getIraSpecialArtsLv();
+    static bool isIraFlag(unsigned int bit);
+    static const LayerGauge* getIraSirenInfo(unsigned int index);
+    static const LayerGimmick* getIraChainInfo(unsigned int index);
+    static const LayerResult* getOCGInfo();
     // a 0x10-byte record at 0x4CFD4 of the instance (the names are not the original's): three words and two bytes
     // the combo route display (gf_menu_obj_combo_route_simple, fn_71003DC6FC) reads through fn_71003689C0.
     // fn_71003688E0 copies one in (an assignment copies its 14 data bytes), fn_7100368830 clears it; both refresh
-    // the display (TUnk_B61408::fn_71003DC56C) when it changed.
+    // the display (GfMenuObjComboRouteSimple::refresh) when it changed.
     struct ComboRouteState {
         ComboRouteState() : m_values(), m_stateA(), m_stateB() {}
         bool operator==(const ComboRouteState& other) const {
@@ -368,7 +354,7 @@ public:
         unsigned char m_stateA;
         unsigned char m_stateB;
     };
-    // the two words fn_7100368BAC forwards to TUnk_B63AE0::fn_7100448F44 (event 0x21 to LAY_result; the names are
+    // the two words fn_7100368BAC forwards to GfMenuObjOCG::openResult (event 0x21 to LAY_result; the names are
     // not the original's)
     struct ResultPair {
         unsigned int m_first;
@@ -379,26 +365,26 @@ public:
     // the reference feeds.
     // fn_7100368830: clears m_comboRoute (fn_71003688E0 with an empty record); caller btl::UIManager::UpdateMenuData.
     static void fn_7100368830();
-    // fn_71003688E0: when fn_710048FD30(3) holds, copies state into m_comboRoute and, if it changed, tail-calls
-    // TUnk_B61408::fn_71003DC56C (event 0x100 to attached object 0x8E); caller btl::UIManager::UpdateMenuData.
+    // fn_71003688E0: when isValidExpansion(3) holds, copies state into m_comboRoute and, if it changed, tail-calls
+    // GfMenuObjComboRouteSimple::refresh (event 0x100 to attached object 0x8E); caller btl::UIManager::UpdateMenuData.
     static void fn_71003688E0(const ComboRouteState& state);
-    // fn_71003689C0: m_comboRoute when fn_710048FD30(3) holds and the singleton exists, else a zeroed static dummy;
+    // fn_71003689C0: m_comboRoute when isValidExpansion(3) holds and the singleton exists, else a zeroed static dummy;
     // caller fn_71003DC6FC (gf_menu_obj_combo_route_simple).
     static const ComboRouteState* fn_71003689C0();
-    // fn_7100368A44 / fn_7100368A48: tail-call TUnk_B63AE0::fn_7100448E58 (open LAY_special of object 0x90) /
-    // fn_7100448ED4 (close it); caller fn_7100008554 (A48 also fn_7100009484).
-    static void fn_7100368A44();
-    static void fn_7100368A48();
+    // openOCG / closeOCG: tail-call GfMenuObjOCG::openGear (open LAY_special of object 0x90) /
+    // closeGear (close it); caller fn_7100008554 (A48 also fn_7100009484).
+    static void openOCG();
+    static void closeOCG();
     // fn_7100368A4C: copies result into m_layerResult, clamps its numbers to 999 and its ratio to 1.0 and, when
-    // the ratio rose, tail-calls TUnk_B63AE0::fn_7100448FFC (event 0x102 to LAY_special); caller
+    // the ratio rose, tail-calls GfMenuObjOCG::noticeExtend (event 0x102 to LAY_special); caller
     // btl::UIManager::UpdateMenuData.
     static void fn_7100368A4C(const LayerResult& result);
-    // fn_7100368BAC: tail-calls TUnk_B63AE0::fn_7100448F44(context, pair's two words); caller fn_7100008554.
+    // fn_7100368BAC: tail-calls GfMenuObjOCG::openResult(context, pair's two words); caller fn_7100008554.
     static void fn_7100368BAC(GfMenuCallContext* context, const ResultPair& pair);
-    // fn_7100368E98: with the singleton, zeroes the reference driver/blade ids, the team/zone/mission/shop/world
+    // resetReferenceParam: with the singleton, zeroes the reference driver/blade ids, the team/zone/mission/shop/world
     // map ids, the challenge battle mode, the item type, and the driver and blade virtual records (resetDriverVirtual
     // and resetBladeVirtual's stores); caller fn_71003597B0 (gf_menu_manager).
-    static void fn_7100368E98();
+    static void resetReferenceParam();
 
     unsigned char pad_8[0x4C590];
     // a list of REFLISTs (the name is not the original's): postUpdate walks it with the list at 0x4C7D8 and calls
@@ -419,7 +405,7 @@ public:
     float m_chainAttackExpRatio;
     unsigned int m_chainAttackTotalDamage;
     unsigned int m_chainAttackBurstCount;
-    // fn_7100367360/fn_7100367380's number (the name is not the original's): btl::UIManager::UpdateMenuData sets
+    // setChainAttackOverkillBonus/getChainAttackOverkillBonus's number (the name is not the original's): btl::UIManager::UpdateMenuData sets
     // it from ChainAttackManager's halfword at 0x19FE after setChainAttackBurstCount; GfMenuBattleAdapter's entry
     // 17, between the chain attack ratios, shows it
     unsigned int m_chainAttackExtraNumber;
@@ -427,8 +413,8 @@ public:
     unsigned short m_chainNum;
     unsigned char pad_4CB72[0xE];
     HOMURA_MODE m_homuraModeInBattle;
-    // fn_7100367454 stores it, refreshing GfMenuObjBladeChange's display (fn_7100391CDC) when it changes;
-    // fn_71003674A0 returns it (0 without the singleton; GfMenuObjBladeChange::BladeListener::reciveEvent reads it).
+    // fn_7100367454 stores it, refreshing GfMenuObjBladeChange's display (refreshBattleMode) when it changes;
+    // getBattleMode returns it (0 without the singleton; GfMenuObjBladeChange::BladeListener::reciveEvent reads it).
     // The name is not the original's.
     unsigned int m_bladeChangeValue;
     bool m_paletteModeReverse;  // 1.0.0's isPaletteModeReverse reads it
@@ -449,8 +435,8 @@ public:
     unsigned int m_referenceMissionID;
     unsigned int m_referenceShopID;
     unsigned int m_referenceWorldMapID;
-    unsigned int m_challengeBattleMode;  // fn_71003692E4/fn_7100369304 (the name is not the original's)
-    unsigned int m_referenceItemType;  // fn_710036934C's item type (the name is not the original's)
+    unsigned int m_challengeBattleMode;  // fn_71003692E4/getReferenceBtlchDifficulty (the name is not the original's)
+    unsigned int m_referenceItemType;  // getReferenceItemType's item type (the name is not the original's)
     unsigned int m_driverVirtualLevel;
     unsigned int m_driverVirtualBladeID;
     unsigned int m_driverVirtualBladeSlot;
@@ -467,29 +453,29 @@ public:
     ArtsPaletteSlot m_artsPaletteEx[6];  // slots 3..8
     unsigned int m_partyStatusLock;  // setPartyStatusLock's locks; clearPartyStatusLock clears them
     unsigned char pad_4CF1C[0x4];
-    // fn_71003673A8/fn_71003673C8's seconds (the name is not the original's): GfMenuBattleAdapter::fn_71003333D0
+    // setBattleTime/getBattleTime's seconds (the name is not the original's): GfMenuBattleAdapter::update_BattleTime
     // shows them as minutes and seconds
     float m_timeSeconds;
-    // fn_71003673F0/fn_710036742C's ratio, kept within 0..1 (the name is not the original's): set by
-    // GfMenuObjButtonChallenge2's sequences, shown in percent by GfMenuBattleAdapter::fn_710033355C
+    // setVisionTimeRatio/getVisionTimeRatio's ratio, kept within 0..1 (the name is not the original's): set by
+    // GfMenuObjButtonChallenge2's sequences, shown in percent by GfMenuBattleAdapter::update_VisionTimeRatio
     float m_challengeRatio;
     // the layer-3 battle menu's state (btl::UIManager::UpdateMenuData sets it through the accessors above; the
     // names are not the original's)
-    BladeOwner m_bladeOwner[3];  // fn_7100367BD8, fn_7100367C78, fn_7100367EF4, fn_7100367D1C
+    BladeOwner m_bladeOwner[3];  // getIraCharInfoFromFromID, getIraCharProperty, getIraCharForm, resetIraCharRecast
     unsigned char pad_4CF58[0xC];
-    float m_layerRatio;  // fn_7100367F98/fn_7100367FDC
-    int m_layerIndex;    // fn_7100368018/fn_710036805C
-    bool m_layerFlag;    // fn_710036810C
+    float m_layerRatio;  // setIraSpecialArtsRecast/getIraSpecialArtsRecast
+    int m_layerIndex;    // fn_7100368018/getIraSpecialArtsLv
+    bool m_layerFlag;    // setIraOperationDisp
     unsigned char pad_4CF6D[0x3];
     LayerCommand m_layerCommand[4];
-    ::mm::mtl::Bitflag<32> m_layerBits;  // fn_7100368380/fn_7100368418
-    LayerGauge m_layerGauge[2];          // fn_7100368498, fn_710036851C, fn_71003686A0
-    LayerGimmick m_layerGimmick[3];      // fn_71003687B0
+    ::mm::mtl::Bitflag<32> m_layerBits;  // setIraFlag/isIraFlag
+    LayerGauge m_layerGauge[2];          // fn_7100368498, setIraSirenInfoLv, getIraSirenInfo
+    LayerGimmick m_layerGimmick[3];      // getIraChainInfo
     // the gauge types fn_7100367D6C has seen, a bit each (the name is not the original's)
     unsigned int m_gaugeTypeBits;
     unsigned char pad_4CFD0[0x4];
     ComboRouteState m_comboRoute;  // fn_7100368830, fn_71003688E0, fn_71003689C0
-    LayerResult m_layerResult;  // fn_7100368B40
+    LayerResult m_layerResult;  // getOCGInfo
 };
 }  // namespace gf
 

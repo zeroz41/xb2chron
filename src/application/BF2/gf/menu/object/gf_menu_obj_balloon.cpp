@@ -51,7 +51,7 @@ void GfMenuObjBalloon::update() {
 }
 
 bool GfMenuObjBalloon::seqSave() {
-    m_saveRequest = GfReqCommand::fn_7100554234(SAVESLOT(0x16));
+    m_saveRequest = GfReqCommand::reqSaveForLastGame(SAVESLOT(0x16));
     GfMenuObjFade::dispSaving(true, 0);
     return true;
 }
@@ -66,7 +66,7 @@ bool GfMenuObjBalloon::seqSaveWait() {
     return true;
 }
 
-bool GfMenuObjBalloon::fn_710038A458() {
+bool GfMenuObjBalloon::canGetExpReward() {
     if (m_moneyType != 0) {
         unsigned char* bdat = GfDataBdat::getFP(0xDD);
         unsigned int row = m_moneyType;

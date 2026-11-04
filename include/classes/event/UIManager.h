@@ -59,11 +59,10 @@ public:
     bool openMinigame();
     // returns false while the new game's wait goes on (the frame stays paused)
     bool startNewGameWait();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no openHitonowa entry). A member
-    // because ScriptPlayText's evt_ui openHitonowa calls it on Singleton<UIManager>. What it does: opens the
-    // "Hitonowa" UI for the given ids (the script entry's 1st, 4th and 5th arguments, those above 0), with the
-    // entry's 2nd argument and its 3rd as a bool; returns false while the script has to wait.
-    bool fn_7100105B40(const mm::mtl::FixedVector<int, 3>& ids, int param, bool flag);
+    // 2.0.0's symbols name it. What it does: opens the "Hitonowa" UI for the given ids (the script entry's 1st, 4th and
+    // 5th arguments, those above 0), with the entry's 2nd argument and its 3rd as a bool; returns false while the
+    // script has to wait.
+    bool openHitonowaUI(const mm::mtl::FixedVector<int, 3>& ids, int param, bool flag);
     void update();
     // 1.0.0's UIManager::logout (0x71000F02E8); 3.0.1 inlines it into OnEventProc
     void logout() {

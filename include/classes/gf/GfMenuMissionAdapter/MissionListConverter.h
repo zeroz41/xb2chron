@@ -8,7 +8,7 @@
 
 namespace gf {
 // table 0x7100B5E1A8 (in gf_menu_world_map_adapter's .data; 1.0.0's is gf_menu_mission_adapter's, over a
-// GfMenuMissionList). In 3.0.1 it is a world map adapter's converter (GfMenuWorldMapAdapter::fn_710034D118 makes
+// GfMenuMissionList). In 3.0.1 it is a world map adapter's converter (GfMenuWorldMapAdapter::createFromListWork makes
 // it, update calls its slot 2 through IConverter): the map (MenuID::m_subId) a GfMenuIDList has at an index (-1:
 // its selected one). Its members are inline (the world map file emits them after its own functions)
 class GfMenuMissionAdapter::MissionListConverter : public ::gf::GfMenuWorldMapAdapter::IConverter {

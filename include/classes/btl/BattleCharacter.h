@@ -44,7 +44,7 @@ public:
     // a hit that skips the attack's own calculation (ButtonChallenge's result damages the challenge's target with
     // one; the field names are not the original's)
     struct DIRECT_DAMAGE_DATA {
-        // HealHpRate and fn_710006AEE8 build one on the stack: 0x10-0x14 zeroed (one word and a byte), then
+        // HealHpRate and HealDirect build one on the stack: 0x10-0x14 zeroed (one word and a byte), then
         // pad_10 set to 1
         DIRECT_DAMAGE_DATA()
             : pad_10(0), pad_11(0), pad_12(0), pad_14(false) {}
@@ -89,15 +89,14 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
     // functions and reads its parameter. What it does: as CheckPowerCharge for buff 3, multiplying BattleGlobal's
     // damage rate of the id by 1 + its effect / 100; unless BattleGlobal's m_challengeAnySuccess is set it needs the
-    // parameter's slot 64 (fn_710008527C(false)) to hold first. Answers whether the buff was on.
+    // parameter's slot 64 (IsDriver(false)) to hold first. Answers whether the buff was on.
     bool fn_71000561E4(unsigned int id);
     bool CheckPowerCharge(unsigned int id);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
-    // functions and reads its parameter. What it does: as CheckPowerCharge for buff 0x23: while the buff is on, adds
-    // its effect / 100 to BattleGlobal's damage rate of the id, marks the id's critical recast enhance as ended
+    // 2.0.0's symbols name it. What it does: as CheckPowerCharge for buff 0x23: while the buff is on, adds its effect /
+    // 100 to BattleGlobal's damage rate of the id, marks the id's critical recast enhance as ended
     // (SetCriticalRecastEnhanceEnd) and clears the buff; answers whether the buff was on. Callers: ActionArts,
     // ActionBladeArts, ActionSpAttack.
-    bool fn_7100056404(unsigned int id);
+    bool CheckAngryArts(unsigned int id);
     // sends the effect caster a MsgFxRimBloom for the one-shot rim blooms 23-30
     void SetOneShotRimBloom(int id);
     // sets the collision object's and the object info's priority, keeping the first values they replace
@@ -117,10 +116,9 @@ public:
     void ReviveHeal(BattleCharacter* rescuer);
     // sets or clears pad_F03_7 by the arts' gravity window against the stage and the animation frame
     void ArtsGravityProc(const ARTS_DATA& arts, int stage);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its x0 flows as this into
-    // NotifyDirectDamage. What it does: NotifyDirectDamage of a DIRECT_DAMAGE_DATA {attacker, type, damage} with
+    // 2.0.0's symbols name it. What it does: NotifyDirectDamage of a DIRECT_DAMAGE_DATA {attacker, type, damage} with
     // pad_10 = 1, as HealHpRate builds it; only caller fn_7100011390.
-    void fn_710006AEE8(unsigned int damage, int type, BattleCharacter* attacker);
+    void HealDirect(unsigned int damage, int type, BattleCharacter* attacker);
     void AddBladeArtsRecast(int, float);
     void FluctuateKizuna(int, float);
     void AddPartyGauge(float);
@@ -139,10 +137,9 @@ public:
     int IsActBladeArts(int, bool) const;
     // CharacterManager::Register gives the character its handle and its slot index
     void Initialize(gf::GF_OBJ_HANDLE* handle, int index);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: CharacterManager::fn_710007C1E0
-    // calls it on every enemy slot in use. What it does: while BattleGlobal's flags allow and the character lives,
-    // looks m_bdatID up in BDAT table 0x100 (GfDataBdat::getFP) and updates the character from it.
-    void fn_710002B868();
+    // 2.0.0's symbols name it. What it does: while BattleGlobal's flags allow and the character lives, looks m_bdatID
+    // up in BDAT table 0x100 (GfDataBdat::getFP) and updates the character from it.
+    void CheckTutorialEnemy();
     gf::GF_OBJ_HANDLE* GetRescueTarget() const;
     // the id the AI scripts know the character by: its index for a player character, 100 more for an enemy (the
     // Utility::AI_ getters compute it so; the name is not the original's)
@@ -172,12 +169,11 @@ public:
     // A member: called on CharacterManager::GetCharacterConst's character. What it does: ButtonChallenge asks it
     // with true; when it holds, the challenge's character is a blade and its driver (the parameter's handle) acts.
     bool fn_7100028D0C(bool);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: PlayerParameter's slot 44
-    // (fn_7100088F4C) calls it on CharacterManager::GetCharacterConst's character for its m_charaIndex. What it
-    // does: with true, unless CheckResistReaction(2, nullptr, true) resists, blows the character back (strength from
-    // BDAT table 0x3A's "PowLv%d_%s" row), sets its action 0x10 and notifies TalkManager trigger 0x31; then fades out
-    // (or, with BattleGlobal's flag bit 0, removes) the effect whose id it keeps at 0x15C and clears the id.
-    void fn_71000424D8(bool);
+    // 2.0.0's symbols name it. What it does: with true, unless CheckResistReaction(2, nullptr, true) resists, blows the
+    // character back (strength from BDAT table 0x3A's "PowLv%d_%s" row), sets its action 0x10 and notifies TalkManager
+    // trigger 0x31; then fades out (or, with BattleGlobal's flag bit 0, removes) the effect whose id it keeps at 0x15C
+    // and clears the id.
+    void NotifyMindEyeEnd(bool);
     // Placeholder name: 1.0.0's ResultProc calls GetWeaponAttack(bool, bool) const in its place, with one argument
     // fewer. A member: as fn_7100028D0C. What it does: gives the attack ButtonChallenge adds to the stat for its
     // damage; ButtonChallenge passes its param's flag, false, false.
@@ -273,10 +269,9 @@ public:
     void NotifyAngryEnd();
     void ActionRun();
     bool IsBladeArtsEnd() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: EnemyParameter's fn_7100088B6C
-    // calls it on CharacterManager::GetCharacterConst's character. What it does: as NotifyAngryEnd for the effect at
-    // 0x154 (m_subEffect): removed at once while BattleGlobal::m_removeEffect is set, else faded out over 5.
-    void fn_7100042460();
+    // 2.0.0's symbols name it. What it does: as NotifyAngryEnd for the effect at 0x154 (m_subEffect): removed at once
+    // while BattleGlobal::m_removeEffect is set, else faded out over 5.
+    void NotifyElementalAwakeEnd();
     bool IsMove() const;
     bool IsScout() const;
     void GetMoveDataPerSec(mm::Vec3& move) const;
@@ -341,60 +336,56 @@ public:
     void ActionCommandRescue(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
     void ActionCommandEndRescue();
 
-    // Placeholder names (all below): new in 3.0.1, nothing in 1.0.0's place names them.
-    // Members: second and third slots of the six m_aActionFuncList triples 3.0.1 added (member-pointer table of
-    // (Action<X>, ActionCommand<X>, ActionCommandEnd<X>)); what they do: nothing (bare ret).
-    void fn_7100048D28(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
-    void fn_7100048D2C();
-    void fn_710004BFD8(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
-    void fn_710004BFDC();
-    void fn_7100051E78(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
-    void fn_7100051E7C();
-    void fn_7100052154(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
-    void fn_7100052158();
-    void fn_7100052364(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
-    void fn_7100052368();
-    void fn_7100052CD8(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
-    void fn_7100052CDC();
+    // 2.0.0's symbols name them. Second and third slots of the six m_aActionFuncList triples 3.0.1 added
+    // (member-pointer table of (Action<X>, ActionCommand<X>, ActionCommandEnd<X>)); what they do: nothing (bare ret).
+    void ActionCommandIraSpArts(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
+    void ActionCommandEndIraSpArts();
+    void ActionCommandIraBladeChange(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
+    void ActionCommandEndIraBladeChange();
+    void ActionCommandMindEye(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
+    void ActionCommandEndMindEye();
+    void ActionCommandOCG(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
+    void ActionCommandEndOCG();
+    void ActionCommandHanaBusterReboot(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
+    void ActionCommandEndHanaBusterReboot();
+    void ActionCommandFormationChange(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
+    void ActionCommandEndFormationChange();
     // Members: they read or write this object's fields only (this in x0), inside this unit.
     // What they do: m_state == 1.
-    bool fn_710002F118() const;
+    bool IsEnableBackHome() const;
     // !m_isBattle || m_isBattleIgnore (run bit 73: 0xF07 bit 1).
-    bool fn_710002F368() const;
+    bool IsEnableRescueTarget() const;
     // m_isPlayer && !m_isBattle.
-    bool fn_7100041728() const;
+    bool IsAutoHeal() const;
     void NotifyDead(const gf::MsgObjectNotifyDead& msg);
     // m_actionID == 4 / m_actionID == 9.
-    bool fn_7100059D0C() const;
-    bool fn_7100059D1C() const;
+    bool IsSirenIdle() const;
+    bool IsSirenSpAttackEnd() const;
     // m_actionParam = param, then m_actionID = 5 / 0xF.
-    void fn_7100059D2C(int param);
-    void fn_7100059D68(int param);
+    void StartSirenLoop(int param);
+    void StartSirenAttack(int param);
     // m_actionParam = flag ? param : -param, then m_actionID = 7.
-    void fn_7100059D3C(bool flag, int param);
+    void StartSirenSpAttack(bool flag, int param);
     // m_actionParam = param, m_actionValue = value, then m_actionID = 10.
     void fn_7100059D54(int param, float value);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: Utility's AI_StartAction*/
-    // AI_StartMove* ask it of the character a handle names. What it does: the parameter's m_isNotBlade (false
-    // without a parameter).
-    bool fn_710002F1F8() const;
-    // Placeholder name: as fn_710002F1F8; caller Utility::AI_CheckState. What it does: the parameter's slot 42
-    // (false without a parameter).
-    bool fn_7100041CA4() const;
-    // Placeholder name: as fn_710002F1F8; callers Utility::AI_AddBladeArtsRecast and ten others. What it does:
+    // 2.0.0's symbols name it. What it does: the parameter's m_isNotBlade (false without a parameter).
+    bool IsForward() const;
+    // 2.0.0's symbols name it. What it does: the parameter's slot 42 (false without a parameter).
+    bool IsElementalAwake() const;
+    // Placeholder name: as IsForward; callers Utility::AI_AddBladeArtsRecast and ten others. What it does:
     // the parameter's slot 64 with the flag (false without a parameter).
     bool fn_71000290BC(bool);
-    // Placeholder names: new in 3.0.1. Members: they call fn_710002FC0C. What they do: for a blade (IsBlade),
-    // fn_710002FC0C(13) / fn_710002FC0C(14).
+    // Placeholder names: new in 3.0.1. Members: they call PlayCustomVoice. What they do: for a blade (IsBlade),
+    // PlayCustomVoice(13) / PlayCustomVoice(14).
     void fn_7100042E30();
     void fn_7100042E90();
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: they call fn_710002FC0C.
-    // What they do: fn_710002FC0C's own checks for id 11 / id 6, then the talk trigger entry (pad_ED4) whose id
-    // matches; fn_7100042C30 notifies fn_710002FC0C(11) when the entry's value is 0 or equals the int (the handle
-    // is not read; caller CharacterParameter::SetFightCombo), fn_7100042F70 returns fn_710002FC0C(6) when the
-    // entry's value is at most the int (else false; caller NotifyDamage).
-    void fn_7100042C30(gf::GF_OBJ_HANDLE*, int value);
-    bool fn_7100042F70(int value);
+    // 2.0.0's symbols name them. They call PlayCustomVoice. What they do: PlayCustomVoice's own checks for id 11 / id
+    // 6, then the talk trigger entry (pad_ED4) whose id matches; NotifyBuddyFightCombo notifies PlayCustomVoice(11)
+    // when the entry's value is 0 or equals the int (the handle is not read; caller CharacterParameter::SetFightCombo),
+    // NotifyBuddyAvoid returns PlayCustomVoice(6) when the entry's value is at most the int (else false; caller
+    // NotifyDamage).
+    void NotifyBuddyFightCombo(gf::GF_OBJ_HANDLE*, int value);
+    bool NotifyBuddyAvoid(int value);
     // combo (the sixth argument of fn_710004315C) points at the three words CharacterParameter::SetFightCombo(int, int,
     // unsigned int) is called with (id, character, flags); the original's type for it is unknown
     // Placeholder name. A reaction (blow/down/etc. id, level) from an attacker: CheckResistReaction (its result
@@ -402,40 +393,39 @@ public:
     // DispReactionUI. Answers whether it was not resisted. Body not written yet.
     bool fn_710004315C(int reaction, int level, BattleCharacter* attacker, bool, int* result,
                        const unsigned int* combo, bool disp);
-    // Placeholder name. Caller CharacterParameter::SetBuff: CreateBuffEffect, then (when the flag is set and the
-    // buff has an effect) its BDAT 0x11 "SE" flag plays SE 0x35 (with the "Buff" flag) or 0x36; buff 0x1E first
-    // applies reaction 1 (fn_710004315C(1, 1, ...))
-    void fn_7100043070(int buff, bool playSe);
+    // 2.0.0's symbols name it. Caller CharacterParameter::SetBuff: CreateBuffEffect, then (when the flag is set and the
+    // buff has an effect) its BDAT 0x11 "SE" flag plays SE 0x35 (with the "Buff" flag) or 0x36; buff 0x1E first applies
+    // reaction 1 (fn_710004315C(1, 1, ...))
+    void NotifyBuffStart(int buff, bool playSe);
     // the chance of an enhance's condition (the bool is passed false by CheckRandSatisfyEnhanceCondition)
     float SatisfyEnhanceCondition(int type, int, float, void*, bool);
     // rolls SatisfyEnhanceCondition's chance; on success shows m_enhanceNameId's name above the character
     bool CheckRandSatisfyEnhanceCondition(int type, int, float, void*);
     void CreateBuffEffect(int buff, bool);
     int GetBuffEffectIndex(int buff) const;
-    // as fn_7100042C30 for id 12 (the first int is not read)
+    // as NotifyBuddyFightCombo for id 12 (the first int is not read)
     void NotifyBuddySufferFightCombo(int, int value);
     // Talk trigger: when the BattleGlobal flag (+0x83CA bit 3) allows, and the id bit (1 << id) is set in the
     // word at 0xECC and clear in 0xED0, notifies TalkManager::NotifyTrigger with trigger 0x29/0x2A/0x2B by which
     // byte of 0xED4/0xED6/0xED8 equals id, and on success sets the bit in 0xED0. Returns whether it notified.
     // Callers: NotifyDirectDamage, AfterUpdate, NotifyLostHateTarget, DeadProc, AttackProc, DropHeadPot, others.
-    bool fn_710002FC0C(int id);
-    // the argument is not read: as fn_710002FC0C's own checks for id 5, then a blade of role 1 (GfDataBlade::getRole)
-    // with a parameter whose m_isNotBlade is clear notifies fn_710002FC0C(5)
+    bool PlayCustomVoice(int id);
+    // the argument is not read: as PlayCustomVoice's own checks for id 5, then a blade of role 1 (GfDataBlade::getRole)
+    // with a parameter whose m_isNotBlade is clear notifies PlayCustomVoice(5)
     void NotifyLostHateTarget(int);
-    // Placeholder name: new in 3.0.1. A member: it sits among BattleCharacter's functions and calls its members.
-    // What it does: for the controlled character plays system SE (1, 0x32) when BattleGlobal::fn_710000C440(0)
-    // allows; unless the flag is set, notifies fn_710002FC0C(4). The int is not read. Caller: HateRingManager::SetData.
-    void fn_7100041E4C(int, bool flag);
+    // 2.0.0's symbols name it. What it does: for the controlled character plays system SE (1, 0x32) when
+    // BattleGlobal::fn_710000C440(0) allows; unless the flag is set, notifies PlayCustomVoice(4). The int is not read.
+    // Caller: HateRingManager::SetData.
+    void NotifyGetHateTarget(int, bool flag);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
     // functions and reads its fields. What it does: false when dead (IsDead(0), unless the flag is set), while
     // m_reactionID is non-zero or while pad_F09_2 is set; else true. Callers: TalkManager, Utility.
     bool fn_710002FD3C(bool flag);
-    // Placeholder name: new in 3.0.1. A member: it sits among BattleCharacter's functions and writes its fields.
-    // What it does: for a character whose parameter's m_isNotBlade is clear, sets pad_F01_0 unless, with the
-    // BattleGlobal flag (+0x83CA bit 3) set, pad_F09_3 is set or TUnk_B3BC20::fn_710009EB70 answers true for the
-    // character's object or its parameter's m_driverHandle. Caller: SetPosition, on its
+    // 2.0.0's symbols name it. What it does: for a character whose parameter's m_isNotBlade is clear, sets pad_F01_0
+    // unless, with the BattleGlobal flag (+0x83CA bit 3) set, pad_F09_3 is set or FormationChangeManager::IsRegister
+    // answers true for the character's object or its parameter's m_driverHandle. Caller: SetPosition, on its
     // parameter's driver character.
-    void fn_71000301D4();
+    void NotifyBuddyWarp();
     void SetPosition(const mm::Vec3& pos, bool flag);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
     // functions and writes its fields. What it does: sets pad_F09_3 to the argument; when set, or when it was set
@@ -444,29 +434,27 @@ public:
     // mm::Vec3::zero and pad_E0 to 1. Callers: ChainAttackManager::UpdateProc, formation_change_manager's
     // fn_710009E008.
     void fn_710002B4D8(bool on);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
-    // functions and writes its fields. What it does: sets pad_102C to -1 and pad_1030 to 0; then, when the
-    // parameter's m_flags622_6 is set, or its m_driverHandle's character is in battle (or there is none and
-    // BattleGlobal's m_challengeAnySuccess is set), sets pad_102C to 0, pad_102E to the argument and pad_1030 to
-    // the argument * 8. Caller: ChainAttackManager::UpdateProc.
-    void fn_71000550B8(int value);
+    // 2.0.0's symbols name it. What it does: sets pad_102C to -1 and pad_1030 to 0; then, when the parameter's
+    // m_flags622_6 is set, or its m_driverHandle's character is in battle (or there is none and BattleGlobal's
+    // m_challengeAnySuccess is set), sets pad_102C to 0, pad_102E to the argument and pad_1030 to the argument * 8.
+    // Caller: ChainAttackManager::UpdateProc.
+    void StartFullBurst(int value);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
     // functions and counts in pad_1073. What it does: true while pad_1076_12 is clear, while BattleGlobal's
     // m_challengeAnySuccess is clear or once pad_1073 reached 150; else counts pad_1073 up and answers pad_1076_13.
     bool fn_7100059314();
-    // fn_710002FC0C(7).
+    // PlayCustomVoice(7).
     bool fn_710004232C();
     // DropItem((DROP_ITEM_TYPE)(type + 5), false).
-    void fn_710006C39C(int type);
+    void DropEtherCubeByScoreID(int type);
     // Blade arts recast: called by fn_710003D114 (and so by Utility::AI_AddBladeArtsRecast) with a slot code
     // (~slot, ~16 for a negative slot), two flags and a float; 0x3B0 bytes, not written yet.
     void fn_710005F554(int slot, bool, bool, float value);
     // fn_710005F554(~(slot < 0 ? 16 : slot), flag0, flag1, value). Caller: Utility::AI_AddBladeArtsRecast.
     void fn_710003D114(bool flag0, int slot, bool flag1, float value);
-    // Placeholder name: new in 3.0.1. A member: it sits among BattleCharacter's functions and writes its fields.
-    // What it does: sends message 0x100004C (second word 0x80) to the effect caster, from the property's owner
-    // object, then clears pad_F04_1. Callers: SetAction, BeforeUpdate, ActionDead, fn_7100052CE0.
-    void fn_710003D478();
+    // 2.0.0's symbols name it. What it does: sends message 0x100004C (second word 0x80) to the effect caster, from the
+    // property's owner object, then clears pad_F04_1. Callers: SetAction, BeforeUpdate, ActionDead, fn_7100052CE0.
+    void ForceDeleteEffect();
     void ResetAllEffect();
     void SetWarpPostureByDir(const mm::Vec3& dir);
     float GetAnimationMoveLength(float, float, bool);
@@ -491,10 +479,8 @@ public:
     void UpdateBuffEffect(int id);
     void UpdateBladeGuardEffect(const mm::Vec3* pos);
     void UpdateTargetLockArrow();
-    // Placeholder name: 1.0.0's UpdateEffectPositionScale(int, const char*, float) has its callers and body, but
-    // 3.0.1's takes two more pointers (each read as three floats when given), so its signature is not 1.0.0's.
-    // The node name falls back to the 0xC50 string when null; the two vectors are optional.
-    void fn_710003B0F4(int id, const char* node, float scale, const mm::Vec3*, const mm::Vec3*);
+    // 2.0.0's symbols name it. The node name falls back to the 0xC50 string when null; the two vectors are optional.
+    void UpdateEffectPositionScale(int id, const char* node, float scale, const mm::Vec3*, const mm::Vec3*);
 
     unsigned char pad_8[0x8];
     // where the character stands: EnemyParameter::AngryInfection measures from it (the name is not the original's)
@@ -524,7 +510,7 @@ public:
     unsigned char pad_130[0x8];
     // the character's effect handles: the destructor removes every non-zero one (index 1 through
     // DeleteKizunaLinkEffect). [1] the kizuna line effect DeleteKizunaLinkEffect destroys, [6] the angry aura's
-    // effect NotifyAngryEnd ends, [7] the effect fn_7100042460 ends the same way (the name is not the original's)
+    // effect NotifyAngryEnd ends, [7] the effect NotifyElementalAwakeEnd ends the same way (the name is not the original's)
     unsigned int m_effects[17];
     unsigned char pad_17C[0x4];
     // GetCharacterParameter's cache of DataManager's parameter for m_chrID (the name is not the original's)
@@ -571,11 +557,11 @@ public:
     float m_alphaRate[3];
     unsigned char pad_EB8[0x10];
     float pad_EC8;  // see pad_CE0
-    // fn_710002FC0C's talk trigger ids: allowed (bit 1 << id) and already notified (meaning unknown)
+    // PlayCustomVoice's talk trigger ids: allowed (bit 1 << id) and already notified (meaning unknown)
     unsigned int pad_ECC;
     unsigned int pad_ED0;
-    // fn_710002FC0C's three talk triggers: the id it compares with (for triggers 0x29/0x2A/0x2B) and a value
-    // fn_7100042C30 / fn_7100042F70 compare their argument with (the type and field names are not the original's)
+    // PlayCustomVoice's three talk triggers: the id it compares with (for triggers 0x29/0x2A/0x2B) and a value
+    // NotifyBuddyFightCombo / NotifyBuddyAvoid compare their argument with (the type and field names are not the original's)
     struct TalkTriggerEntry {
         unsigned char m_id;
         unsigned char m_value;
@@ -648,7 +634,7 @@ public:
     // CharacterManager::IsExistBattlePlayer passes over a player in battle while it is set (run bit 19; meaning
     // unknown)
     unsigned int pad_F00_3 : 1;
-    // CharacterManager::fn_710007C43C counts only enemies with it set while GfGameInsideBattleLock holds a lock
+    // CharacterManager::IsExistChallengeBattleEnemy counts only enemies with it set while GfGameInsideBattleLock holds a lock
     // (run bit 20; meaning unknown)
     unsigned int pad_F00_4 : 1;
     // SetPosition sets pad_F00_5 and stores its bool argument in pad_F00_6 (run bits 21 and 22; meaning unknown)
@@ -656,7 +642,7 @@ public:
     unsigned int pad_F00_6 : 1;
     // SetWarpPostureByDir sets it with pad_A0 (run bit 23; meaning unknown)
     unsigned int pad_F00_7 : 1;
-    // fn_71000301D4 sets it (run bit 24; meaning unknown)
+    // NotifyBuddyWarp sets it (run bit 24; meaning unknown)
     unsigned int pad_F01_0 : 1;
     unsigned int pad_F01_1 : 1;
     // ActionRun sets it when it draws the weapon of a character the player does not control and that does not fly
@@ -681,7 +667,7 @@ public:
     unsigned int pad_F03_6 : 1;
     unsigned int pad_F03_7 : 1;
     unsigned int pad_F04_0 : 1;
-    // fn_710003D478 clears it (run bit 49; meaning unknown)
+    // ForceDeleteEffect clears it (run bit 49; meaning unknown)
     unsigned int pad_F04_1 : 1;
     unsigned int pad_F04_2 : 2;
     // ActionCommandEndBladeArts clears both when it ends the action (meaning unknown)
@@ -693,13 +679,13 @@ public:
     // DeleteAnimSpecialProc fades alpha set 6 back in and remounts only while it is set (run bit 60; meaning unknown)
     unsigned int pad_F05_4 : 1;
     unsigned int pad_F05_5 : 4;
-    // CharacterManager::fn_710007D594 sets it on every dead enemy that does not have it yet (run bit 65; meaning
+    // CharacterManager::NotifyChallengeNextWave sets it on every dead enemy that does not have it yet (run bit 65; meaning
     // unknown)
     unsigned int pad_F06_1 : 1;
     unsigned int pad_F06_2 : 6;
     // while set, ManagerUpdate_Attack counts its timers down by 0 (run bit 72; meaning unknown)
     unsigned int pad_F07_0 : 1;
-    // the name is not the original's: fn_710002F368 treats the character as out of battle while it is set
+    // the name is not the original's: IsEnableRescueTarget treats the character as out of battle while it is set
     unsigned int m_isBattleIgnore : 1;
     unsigned int pad_F07_2 : 6;
     unsigned int pad_F08 : 2;
@@ -711,7 +697,7 @@ public:
     unsigned int pad_F08_5 : 5;
     unsigned int pad_F09_2 : 1;  // fn_710002FD3C answers false while it is set (meaning unknown)
     unsigned int pad_F09_3 : 1;  // fn_710002B4D8's argument (meaning unknown)
-    // Utility::fn_7100014958 answers false unless it is set and pad_F09_3 is clear (meaning unknown)
+    // Utility::AI_IsEnableTalentArts answers false unless it is set and pad_F09_3 is clear (meaning unknown)
     unsigned int pad_F09_4 : 1;
     unsigned int pad_F09_5 : 19;
     unsigned int pad_F0C : 16;
@@ -734,7 +720,7 @@ public:
     // the name is not the original's: SetAction's float argument
     float m_actionValue;
     unsigned char pad_1010[0x1C];
-    // fn_71000550B8 sets them: -1 and 0 first, then 0, its argument and the argument * 8 (meaning unknown)
+    // StartFullBurst sets them: -1 and 0 first, then 0, its argument and the argument * 8 (meaning unknown)
     unsigned short pad_102C;
     unsigned char pad_102E;
     unsigned char pad_102F;

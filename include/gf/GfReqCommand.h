@@ -26,10 +26,9 @@ public:
     // GfManager::finalize's: the game framework's teardown; returns the request's handle (then stops the queue)
     static unsigned int reqDestroyGf();
     static unsigned int reqSaveOption();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits between reqSave
-    // and reqSaveOption in the unit and queues the same request as reqSave. What it does: queues the save request
-    // for the slot with the request's second flag set (reqSave leaves both clear); GfMenuObjBalloon::seqSave calls it.
-    static unsigned int fn_7100554234(SAVESLOT slot);
+    // 2.0.0's symbols name it. What it does: queues the save request for the slot with the request's second flag set
+    // (reqSave leaves both clear); GfMenuObjBalloon::seqSave calls it.
+    static unsigned int reqSaveForLastGame(SAVESLOT slot);
     // Placeholder name: new in 3.0.1. A member because it sits between reqChangeParty and reqChangeBladeWithSetId
     // and queues execChangeParty. What it does: queues a party change built from GfGameParty::getCurrentPartyInfo,
     // passed through fn_710055509C first.

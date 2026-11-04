@@ -276,7 +276,7 @@ void GfMenuObjChainAttack::changeCharacter(unsigned int character) {
     GfMenuObjUtil::playSE(0x34);
 }
 
-void GfMenuObjChainAttack::fn_71003BF974(GfMenuCallContext* context) {
+void GfMenuObjChainAttack::openOverkill(GfMenuCallContext* context) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x54));
     ui::UIObjectAcc start(acc.searchChild("LAY_ovk_start"));
     ui::EventData event;

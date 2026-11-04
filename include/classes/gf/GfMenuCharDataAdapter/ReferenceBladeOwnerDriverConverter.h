@@ -10,7 +10,7 @@ class GfMenuCharDataAdapter::ReferenceBladeOwnerDriverConverter : public ::gf::G
 public:
     ReferenceBladeOwnerDriverConverter(unsigned int blade) : m_blade(blade) {}
     virtual void getCharData(unsigned char& objType, unsigned int& objId);  // slot 0
-    unsigned int m_blade;  // GfMenuReference::fn_7100367BD8's (the name is not the original's)
+    unsigned int m_blade;  // GfMenuReference::getIraCharInfoFromFromID's (the name is not the original's)
 };
 }  // namespace gf
 

@@ -19,10 +19,9 @@ public:
     virtual void bdatRefresh();  // slot 2
     void destroyFP();
     void createFP();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it writes m_useIra and calls
-    // this class's bdatRefresh through the table. What it does: sets m_useIra to its argument, then sets the tables up
-    // again (bdatRefresh). No caller or data reference in the original.
-    void fn_710020D134(bool useIra);
+    // 2.0.0's symbols name it. What it does: sets m_useIra to its argument, then sets the tables up again
+    // (bdatRefresh). No caller or data reference in the original.
+    void setupGameType(bool useIra);
     // size 0x160 from GfDataBdat::initialize's allocation
     // the quest tables, by GfDataBdat id (s_aszGfBdatName), created in this order by createFP's lines. The names
     // are not the original's: each is the table's name without FLD_Quest (QuestListAcc's accessors read them; the

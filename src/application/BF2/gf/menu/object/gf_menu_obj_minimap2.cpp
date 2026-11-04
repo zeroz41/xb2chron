@@ -170,7 +170,7 @@ void GfMenuObjMinimap2::createIconTable(ui::UIObjectAcc& acc, mm::mtl::FixedVect
     }
 }
 
-void GfMenuObjMinimap2::fn_7100444B88(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 256>& table) {
+void GfMenuObjMinimap2::createIconTable2(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 256>& table) {
     ui::UIObjectAcc layout(acc.searchChild("LAY_icon2"));
     ui::UIObjectAcc mask(acc.searchChild("IMG_map_mask"));
     if (layout.m_object != nullptr) {
@@ -197,11 +197,11 @@ void GfMenuObjMinimap2::MapListener::reciveEvent(const ui::EventData& event, uns
     case 0x100: {
         mm::mtl::FixStr<32> name;
         mm::mtl::FixStr<64> image;
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(3)) {
             for (unsigned int i = 0; i < 9; i++) {
                 name.format("IMG_map_image@%02d", i + 1);
                 if (GfMenuMapInfo::getMapSegImageName(i % 3, i / 3, image)) {
-                    ui::UIStreamManager::get()->fn_710068A034(name, acc.searchChild("LAY_map_image"), image.m_str, 0);
+                    ui::UIStreamManager::get()->createImage2(name, acc.searchChild("LAY_map_image"), image.m_str, 0);
                 }
             }
             m_owner->update();

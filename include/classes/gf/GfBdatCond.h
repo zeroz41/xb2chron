@@ -52,14 +52,12 @@ public:
     unsigned int getConditionAchievementValue(unsigned int id) const;
     unsigned int getConditionFieldSkiiLevelFieldSkillID(unsigned int id) const;
     unsigned int getConditionFieldSkiiLevelLevel(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpConditionMapGimmick.
-    // What it does: row id's FLD_ConditionMapGimmick "MapGimmickID" value (16 bits), 0 when the handle is null or id is out of range
-    // (callers fn_71002A48D4; 1.0.0 has no such table).
-    unsigned int fn_71001FB224(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpConditionNamed.
-    // What it does: row id's FLD_ConditionNamed "Named" value (16 bits), 0 when the handle is null or id is out of range
-    // (callers fn_7100290BAC, fn_71002A48D4; 1.0.0 has no such table).
-    unsigned int fn_71001FB2AC(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: row id's FLD_ConditionMapGimmick "MapGimmickID" value (16 bits), 0 when
+    // the handle is null or id is out of range (callers fn_71002A48D4; 1.0.0 has no such table).
+    unsigned int getConditionMapGimmickMapGimmickID(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: row id's FLD_ConditionNamed "Named" value (16 bits), 0 when the handle is
+    // null or id is out of range (callers fn_7100290BAC, fn_71002A48D4; 1.0.0 has no such table).
+    unsigned int getConditionNamedNamed(unsigned int id) const;
     CBdatWrapper* m_fpConditionList;  // 0x10, FLD_ConditionList (the name is not the original's)
     CBdatWrapper* m_fpConditionScenario;  // 0x18, FLD_ConditionScenario (the name is not the original's)
     CBdatWrapper* m_fpConditionQuest;  // 0x20, FLD_ConditionQuest (the name is not the original's)

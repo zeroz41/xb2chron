@@ -81,7 +81,7 @@ GfMenuObjHanaPartsMake::~GfMenuObjHanaPartsMake() {
     m_price = nullptr;
 }
 
-void GfMenuObjHanaPartsMake::fn_71004181A8() {
+void GfMenuObjHanaPartsMake::updateItemList() {
     s_itemCountDirty = true;
 }
 

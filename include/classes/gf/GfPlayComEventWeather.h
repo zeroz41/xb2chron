@@ -10,11 +10,9 @@ namespace gf {
 class GfPlayComEventWeather : public GfPlayCom {
 public:
     explicit GfPlayComEventWeather(WEATYPE weather) : GfPlayCom(46, false), m_weather(weather) {}
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (the symbols spell it
-    // GfPlayComEvent::create(unsigned int, unsigned int, unsigned int, bool), but it builds this class: table
-    // 0x7100B58360, kind 46). A static member: it allocates this class. What it does: news a 0x18-byte
-    // GfPlayComEventWeather holding the weather (no callers in the code; nothing reads its other arguments).
-    static GfPlayComEventWeather* fn_7100318730(WEATYPE weather);
+    // 2.0.0's symbols name it. What it does: news a 0x18-byte GfPlayComEventWeather holding the weather (no callers in
+    // the code; nothing reads its other arguments).
+    static GfPlayComEventWeather* create(WEATYPE weather);
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual const char* getFuncName() const {  // slot 3
         static const char* func = "PlayComEventWeather";

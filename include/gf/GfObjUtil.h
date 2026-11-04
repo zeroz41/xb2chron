@@ -83,10 +83,9 @@ public:
     static gf::GfObjSetup* getObjSetup(gf::GF_OBJ_HANDLE* handle);
     static unsigned int getHp(gf::GF_OBJ_HANDLE* handle);  // the object's current HP (DataObjEnemy::getHp)
     // whether the object plays the DLC versions of its sounds (WaterInPlugin::onEvent prefixes their names with
-    // "dlc_"): a blade-type object (DataParamAcc's type 3) whose bdat id GfDataBlade's fn_710023F9A8 accepts.
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (an earlier header called it isDlcSound, an
-    // inferred name). A member because it sits in this unit's GfObjUtil functions.
-    static bool fn_7100552DF4(gf::GF_OBJ_HANDLE* handle);
+    // "dlc_"): a blade-type object (DataParamAcc's type 3) whose bdat id GfDataBlade's isIra accepts.
+    // 2.0.0's symbols name it.
+    static bool isIra(gf::GF_OBJ_HANDLE* handle);
     // the object's motion resource name (its data's), none without one
     static const char* getMotionResourceName(gf::GF_OBJ_HANDLE* handle);
     // reads a fade annotation's text into info: false when it is not one
@@ -106,10 +105,8 @@ public:
     static gf::GF_ASSET_HANDLE* getAssetHandle(gf::GF_OBJ_HANDLE* handle);
     // the first layer of the section of three a layer is in (0; 1-3, 4-6, 7-9, 10-12), 4 for any other
     static unsigned int getLayerSection(unsigned int layer);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits between
-    // GfObjUtil's getExtraMountObject and fn_710054FCDC, takes a handle and reads its GfObjManager info like
-    // the getters around it. What it does: returns the info's m_subHandle (+0x88), -1 without an info.
-    static gf::GF_OBJ_HANDLE* fn_710054FCB4(gf::GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name it. What it does: returns the info's m_subHandle (+0x88), -1 without an info.
+    static gf::GF_OBJ_HANDLE* getMaster(gf::GF_OBJ_HANDLE* handle);
     static bool isLoading(gf::GF_OBJ_HANDLE* handle);
     static gf::GF_OBJ_HANDLE* getOwner(gf::GF_OBJ_HANDLE* handle);
     // whether the object's asset has a state machine resource (its extend resource 0's, a GfExtendPacking)
@@ -161,19 +158,16 @@ public:
     // the list's objects of type 5 (DataParamAcc::getObjType) whose BDAT id (0 for an invalid one) is arrangeId;
     // getSetupObjNumberByEnArrangeId passes GfObjManager's loading and destroy lists.
     static int fn_7100552C18(const mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 4096>& list, unsigned int arrangeId);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in this unit's
-    // GfObjUtil functions. What it does: true unless the object is displayed for both GfObjAcc::isDisp 0x40 and
-    // 2 (GfComSound, GfComEffectCaster and FootStepPlugin call it).
-    static bool fn_7100552E7C(gf::GF_OBJ_HANDLE* handle);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in this unit's
-    // GfObjUtil functions. What it does: true when the object is of type 11 and has no asset handle (-1); no
-    // caller in 3.0.1.
-    static bool fn_7100552ED0(gf::GF_OBJ_HANDLE* handle);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in this unit's
-    // GfObjUtil functions after fn_710054FCB4. What it does: for a type 10 object, repeats on the handle at its
-    // GfObjManager info's +0x88; for a type 3 (driver) returns fn_710024198C of its GfObjAcc::getDriverId (the
-    // party index; GfGameParty's listenerGfObj compares it with 2).
-    static unsigned int fn_710054FCDC(gf::GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name it. What it does: true unless the object is displayed for both GfObjAcc::isDisp 0x40 and 2
+    // (GfComSound, GfComEffectCaster and FootStepPlugin call it).
+    static bool isGhost(gf::GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name it. What it does: true when the object is of type 11 and has no asset handle (-1); no caller
+    // in 3.0.1.
+    static bool isDummyMover(gf::GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name it. What it does: for a type 10 object, repeats on the handle at its GfObjManager info's
+    // +0x88; for a type 3 (driver) returns getPartyPos of its GfObjAcc::getDriverId (the party index; GfGameParty's
+    // listenerGfObj compares it with 2).
+    static unsigned int getPartyPos(gf::GF_OBJ_HANDLE* handle);
     static void applyExecUpdate(gf::GF_OBJ_HANDLE* handle);
     // fills slots with the asset's slot handles for a type 7 object (GfAssetManager::getSlotHandle); whether any
     static bool getMobSlotHandle(mm::mtl::FixedVector<gf::GF_SLOT_HANDLE*, 88>& slots, gf::GF_OBJ_HANDLE* handle);

@@ -70,7 +70,7 @@
 #include "classes/fw/EffectManager.h"
 #include "effect/SendParam.h"
 #include "classes/gf/GfGameEvent.h"
-#include "classes/gf/TUnk_B535D0.h"
+#include "classes/gf/GfGameArena.h"
 #include "classes/gf/GfSequentialPlay.h"
 #include "classes/gf/GfPlayComQuestCompleteUI.h"
 #include "classes/gf/GfPlayComGmkTutorialSeq.h"
@@ -128,19 +128,19 @@ void GfGameScene::BattleAchievement::addDamage(GF_OBJ_HANDLE* handle, const MsgO
         if (party != 0xFFFFFFFF) {
             GF_OBJ_HANDLE* blade = GfGameParty::getHandleBlade(party, -1);
             if (blade != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
-                SCOM_ACHIEV_INC::fn_7100564DC0(blade, msg.m_damage->m_damage);
+                SCOM_ACHIEV_INC::createDamageMax(blade, msg.m_damage->m_damage);
             }
         }
-        SCOM_ACHIEV_INC::fn_7100564FE8(msg.m_handle, msg.m_damage->m_damage);
+        SCOM_ACHIEV_INC::createDamageAdd(msg.m_handle, msg.m_damage->m_damage);
         if (msg.m_damage->m_attackFlags & 2) {
-            SCOM_ACHIEV_INC::fn_71005653A4(msg.m_handle);
+            SCOM_ACHIEV_INC::createCriticalHit(msg.m_handle);
         }
         break;
     }
     case 3:
-        SCOM_ACHIEV_INC::fn_7100565210(handle, msg.m_damage->m_damage);
+        SCOM_ACHIEV_INC::createDamageGet(handle, msg.m_damage->m_damage);
         if (msg.m_damage->m_attackFlags & 2) {
-            SCOM_ACHIEV_INC::fn_7100565534(handle);
+            SCOM_ACHIEV_INC::createCriticalGet(handle);
         }
         break;
     default:
@@ -199,7 +199,7 @@ void GfGameScene::setResetBladePlayerStop(bool stop) {
     m_resetBladePlayerStop.setPlayerStop(stop);
 }
 
-void GfGameScene::fn_71002C345C(bool stop) {
+void GfGameScene::setArenaPlayerStop(bool stop) {
     m_gimmickPlayerStop.setPlayerStop(stop);
 }
 
@@ -248,7 +248,7 @@ bool GfGameScene::isEnableFieldBladeChange() const {
 }
 
 void GfGameScene::checkFieldBladeChange() {
-    if (GfManager::isDestroyNow() || GfGameManager::isBattle() || GfGameManager::fn_71002AAA0C() ||
+    if (GfManager::isDestroyNow() || GfGameManager::isBattle() || GfGameManager::isGameOver() ||
         GfGameManager::isPlayerDeadSequence()) {
         return;
     }
@@ -552,14 +552,14 @@ bool GfGameScene::isResetBladePlay() const {
     return GfPlayComResetBlade::isPlaying(0) || GfPlayComResetBlade::isPlaying(1) || GfPlayComResetBlade::isPlaying(2);
 }
 
-void GfGameScene::fn_71002C4B80(const char* name) {
+void GfGameScene::eventAfterScriptEvent(const char* name) {
     if (strstr(name, "aoc_tut24") != nullptr || strstr(name, "aoc_tut04") != nullptr ||
         strstr(name, "aoc_tut10") != nullptr) {
         m_tutorialPlayerControl = true;
     }
 }
 
-void GfGameScene::fn_71002C4BE4() {
+void GfGameScene::eventTutorialSequence() {
     if (m_tutorialPlayerControl) {
         m_tutorialPlayerControl = false;
         GfEvent::callPlayerControl(GEV(15));
@@ -621,7 +621,7 @@ void GfGameScene::gevChangeParty() {
     GfSelectBlade::resetStartBattleSetId(2);
 }
 
-void GfGameScene::fn_71002C5994() {
+void GfGameScene::gevChangeGameDifficult() {
     mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>& list = *GfGameObj::getList(5);
     for (mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>::iterator it = list.begin(); it != list.end(); ++it) {
         fn_71002E0F28(*it);
@@ -648,7 +648,7 @@ void GfGameScene::gevDriverActivate(unsigned int driver, ActivateType from, Acti
         }
     } else if (from == 0 && to != 0) {
         GfGameUtil::execEquipDriverDefaultAcce(driver);
-        GfGameUtil::fn_71002EB4B8(driver);
+        GfGameUtil::execEquipIraDefaultWpnAcce(driver);
     }
 }
 
@@ -783,9 +783,9 @@ void GfGameScene::playEventSequenceEnd(unsigned int id) {
     if (GfGameEvent::getPlayEventId() == 21671) {
         m_flag6A1 = false;
     }
-    GfGameManager::fn_71002AC6F0();
+    GfGameManager::reqestCraftPopupForIra();
     pad_8BC = 0;
-    GfGameManager::fn_71002AB894(mm::Vec3::zero);
+    GfGameManager::setControlMoverPositionForNoPlayer(mm::Vec3::zero);
 }
 
 void GfGameScene::gevPlayEvent(GEV gev, unsigned int id) {
@@ -814,7 +814,7 @@ void GfGameScene::gevPlayEvent(GEV gev, unsigned int id) {
         playEventSequenceEnd(id);
         break;
     case 14:
-        fn_71002C6D48(id);
+        playEventStartFrame(id);
         break;
     default:
         break;
@@ -853,8 +853,8 @@ void GfGameScene::createSepiaFilter() {
     manager->setParam(m_value68C, &param);
 }
 
-void GfGameScene::fn_71002C7C44() {
-    if (GfGameManager::fn_71002A9E68()) {
+void GfGameScene::gevOpenMainMenu() {
+    if (GfGameManager::isGameTypeIra()) {
         return;
     }
     if (GfDataBlade::fn_7100231884() >= 8003 && GfGameFlag::getLocal(1, 52962) == 0) {
@@ -1000,7 +1000,7 @@ void GfGameScene::updatePartyBattle(const fw::UpdateInfo&) {
 }
 
 void GfGameScene::updateHikariLv4Room(const fw::UpdateInfo&) {
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         return;
     }
     m_enableRoomForHikariLv4 = false;
@@ -1035,7 +1035,7 @@ void GfGameScene::updateControlFreeEvent(const fw::UpdateInfo&) {
     // whether the player has free control (written as a lambda: the original's early returns are threaded into the
     // branches; the helper's name, if it had one, is not known)
     bool controlFree = [] {
-        if (TUnk_B535D0::get() != nullptr && TUnk_B535D0::get()->fn_71002920F0()) {
+        if (GfGameArena::get() != nullptr && GfGameArena::get()->fn_71002920F0()) {
             return false;
         }
         if (GfPlayComQuestCompleteUI::s_active > 0) {

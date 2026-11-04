@@ -45,7 +45,7 @@ GfMasterVolume::GfMasterVolume()
       m_gameBgmVolume(0.6f), m_gameEnvVolume(0.4f), m_gameWeatherVolume(0.4f), m_gameSeVolume(0.6f),
       m_playerVoiceVolume(0.8f), m_enemyVoiceVolume(0.8f), m_nareVoiceVolume(0.8f), m_systemVolume(0.5f),
       m_menuBgmVolume(0.5f) {
-    if (GfManager::fn_710032A1DC()) {
+    if (GfManager::isGameTypeIra()) {
         m_eventVoiceVolume = 0.75f;
         m_eventBgmVolume = 0.8f;
         m_gameBgmVolume = 0.8f;
@@ -245,7 +245,7 @@ void GfSound::setPause(SoundHandle handle, bool pause, float time) {
     setPauseType(handle, pause, time, 1);
 }
 
-void GfSound::fn_7100570158(SoundHandle handle, bool pause, float time) {
+void GfSound::setPauseForBgmSuspend(SoundHandle handle, bool pause, float time) {
     setPauseType(handle, pause, time, 8);
 }
 

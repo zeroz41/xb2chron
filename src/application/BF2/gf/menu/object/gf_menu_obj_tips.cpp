@@ -1,4 +1,4 @@
-#include "classes/gf/TUnk_B64C98.h"
+#include "classes/gf/GfMenuObjTips.h"
 #include "gf/gf_menu_obj_tips.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataBdat.h"
@@ -21,9 +21,9 @@
 namespace gf {
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB930)
-bool TUnk_B64C98::s_exists;
+bool GfMenuObjTips::s_exists;
 
-TUnk_B64C98::TUnk_B64C98(unsigned int handle)
+GfMenuObjTips::GfMenuObjTips(unsigned int handle)
     : GfMenuObject(handle), m_seq(this), m_mainSeq(this), m_context(nullptr), m_reserved(nullptr), m_idList(nullptr),
       m_fromLayer(false), m_regionJP(false) {
     m_context = GfMenuCallContext::create();
@@ -31,7 +31,7 @@ TUnk_B64C98::TUnk_B64C98(unsigned int handle)
     s_exists = true;
 }
 
-TUnk_B64C98::~TUnk_B64C98() {
+GfMenuObjTips::~GfMenuObjTips() {
     if (m_idList != nullptr) {
         m_idList->release();
         m_idList = nullptr;
@@ -43,13 +43,13 @@ TUnk_B64C98::~TUnk_B64C98() {
     s_exists = false;
 }
 
-void TUnk_B64C98::fn_71004879F0(unsigned int menuId) {
+void GfMenuObjTips::registStartTutorialID(unsigned int menuId) {
     GfMenuTypes::Param param;
     param.m_menuId = menuId;
     GfMenuFullScreen::registLayerParam(0x12E, param);
 }
 
-void TUnk_B64C98::fn_7100487A1C(int param) {
+void GfMenuObjTips::fn_7100487A1C(int param) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x89));
     if (acc.m_object != nullptr) {
         ui::UIObjectAcc tutorial(acc.m_handle, "LAY_tutorial");
@@ -83,7 +83,7 @@ void fn_7100487B08(unsigned int id) {
     GfGameFlag::setLocal(2, index, GfGameFlag::getLocal(2, index) & 0xFFFD);
 }
 
-void TUnk_B64C98::initialize() {
+void GfMenuObjTips::initialize() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     GfMenuObject::attachExternalCall(0x89, main.m_handle);
     if (GfMenuObjUtil::getMenuCondition(0x3A)) {
@@ -155,7 +155,7 @@ void TUnk_B64C98::initialize() {
         ui::UIObjectAcc list(main.m_handle, "LAY_list");
         GfMenuObject::sendOpenEvent(list.m_handle, index, 0.0f);
         if (GfMenuManager::isClearCheck()) {
-            m_regionJP = GfMenuObjUtil::fn_710048FD30(3) && GfMenuManager::isRegionJP();
+            m_regionJP = GfMenuObjUtil::isValidExpansion(3) && GfMenuManager::isRegionJP();
             if (m_regionJP) {
                 unsigned char* fp = GfDataBdat::getFP(0x10C);
                 unsigned char* message = GfDataBdat::getFP(0x13B);
@@ -169,11 +169,11 @@ void TUnk_B64C98::initialize() {
     GfMenuObject::initialize();
 }
 
-void TUnk_B64C98::finalize() {
+void GfMenuObjTips::finalize() {
     GfMenuObject::finalize();
 }
 
-void TUnk_B64C98::update() {
+void GfMenuObjTips::update() {
     m_mainSeq.update();
     m_seq.update();
     GfMenuObject::update();
@@ -193,7 +193,7 @@ static inline bool isTipsUnread(unsigned int id) {
     return (GfGameFlag::getLocal(2, id - Bdat::getIdTop(fp) + 0xEF05) & 2) == 0;
 }
 
-void TUnk_B64C98::fn_71004881B8(int) {
+void GfMenuObjTips::fn_71004881B8(int) {
     ui::UIObjectAcc list(m_handle, "LAY_list");
     mm::mtl::FixStr<32> name;
     unsigned char* fp = GfDataBdat::getFP(0x102);
@@ -230,7 +230,7 @@ void TUnk_B64C98::fn_71004881B8(int) {
 
 // TUnk_B64CE0::reciveEvent (0x710048845C) and TUnk_B64D08::reciveEvent (0x7100488958) are not here yet (see the notes)
 
-bool TUnk_B64C98::fn_71004888AC(unsigned int id) {
+bool GfMenuObjTips::isUnlockTipsID(unsigned int id) {
     unsigned char* fp = GfDataBdat::getFP(0x102);
     if (fp == nullptr || id < Bdat::getIdTop(fp)) {
         return false;
@@ -245,9 +245,9 @@ bool TUnk_B64C98::fn_71004888AC(unsigned int id) {
     return GfGameFlag::getLocal(2, id - Bdat::getIdTop(fp) + 0xEF05) & 1;
 }
 
-void TUnk_B64C98::fn_71004892F4(unsigned int id) {
+void GfMenuObjTips::setViewTipsID(unsigned int id) {
     unsigned char* fp = GfDataBdat::getFP(0x102);
-    if (fp == nullptr || id < Bdat::getIdTop(fp) || !fn_71004888AC(id)) {
+    if (fp == nullptr || id < Bdat::getIdTop(fp) || !isUnlockTipsID(id)) {
         return;
     }
     fp = GfDataBdat::getFP(0x102);

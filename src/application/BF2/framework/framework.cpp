@@ -244,16 +244,16 @@ void Framework::postUpdate() {
     PadManager::get()->debugDraw(0x80, 0x80);
 }
 
-void Framework::fn_710018369C(const fw::UpdateInfo& info) {
+void Framework::startThreadPostUpdate(const fw::UpdateInfo& info) {
     m_postUpdateThread.m_threadEvent.setSignal(true);
 }
 
-void Framework::fn_71001836A8() {
+void Framework::waitThreadPostUpdate() {
     while (m_postUpdateThread.m_threadEvent.isSignal()) {
     }
 }
 
-void Framework::fn_71001836D0(bool flag) {
+void Framework::setupThreadPostUpdate(bool flag) {
     m_postUpdateThread.m_threadFlag = flag;
 }
 

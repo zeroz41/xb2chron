@@ -63,7 +63,7 @@ public:
     // 1.0.0's name: 3.0.1's BattleManager::gevMapjump calls it where 1.0.0's calls BladeChangeManager::NotifyMapChange
     // (the same code). Its symbol still spells fn_71000166CC.
     void NotifyMapChange();
-    // 1.0.0's name: 3.0.1's BattleManager::update calls it between BladeArtsManager::PreUpdateProc and TUnk_B3BC20's,
+    // 1.0.0's name: 3.0.1's BattleManager::update calls it between BladeArtsManager::PreUpdateProc and FormationChangeManager's,
     // where 1.0.0's calls BladeChangeManager::PreUpdate. Its symbol still spells fn_710001671C.
     static void PreUpdate(const fw::UpdateInfo& info);
     static void Update(const fw::UpdateInfo& info);
@@ -79,16 +79,12 @@ public:
     int GetBladeChangeType(gf::GF_OBJ_HANDLE* handle) const;
     bool IsRegister(gf::GF_OBJ_HANDLE* handle) const;
     bool IsReceiveLater(gf::GF_OBJ_HANDLE* handle) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
-    // blade_change_manager's unit, its walk is IsRegister's and Utility::IsEnableEventStart,
-    // ChainAttackManager::ChainAttackStartDirectionProc and BattleCharacter::CheckForceExit call it on the singleton.
-    // What it does: true when an entry whose driver or blade is the handle (any entry for a handle of -1) has
-    // m_isNotHomura clear, i.e. a Homura change (type 3-5) of that character is running.
-    bool fn_710001903C(gf::GF_OBJ_HANDLE* handle) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
-    // blade_change_manager's unit and its walk is IsProcHomuriEnd's. What it does: true when an entry has type 1,
-    // change blade index 4 and m_isNewBladeDone clear.
-    bool fn_71000190E0() const;
+    // 2.0.0's symbols name it. What it does: true when an entry whose driver or blade is the handle (any entry for a
+    // handle of -1) has m_isNotHomura clear, i.e. a Homura change (type 3-5) of that character is running.
+    bool IsProcDisableCancel(gf::GF_OBJ_HANDLE* handle) const;
+    // 2.0.0's symbols name it. What it does: true when an entry has type 1, change blade index 4 and m_isNewBladeDone
+    // clear.
+    bool IsProcKakusei() const;
     bool IsProcHomuriEnd() const;
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's StateField::onDead has no such call).
     // A member because its address is in blade_change_manager's unit and StateField::onDead calls it on

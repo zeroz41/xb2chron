@@ -348,7 +348,7 @@ static int fn_7100667F80(VMThread* pThread) {
     if (id2 > 0) {
         ids.push_back(id2);
     }
-    if (!mm::mtl::Singleton<event::UIManager>::getPtr()->fn_7100105B40(ids, param, flag != 0)) {
+    if (!mm::mtl::Singleton<event::UIManager>::getPtr()->openHitonowaUI(ids, param, flag != 0)) {
         vmWaitModeSet(pThread);
     }
     return 0;
@@ -737,7 +737,7 @@ static int fn_7100669718(VMThread* pThread) {
     bool before = gf::GfDataBlade::fn_710024DE6C(id);
     gf::GfDataBlade::fn_710024DDDC(id, true);
     if (before != gf::GfDataBlade::fn_710024DE6C(id)) {
-        gf::GfMenuManager::fn_710035A764(id);
+        gf::GfMenuManager::requestNpcEntry(id);
     }
     return 0;
 }
@@ -784,7 +784,7 @@ static int fn_710066978C(VMThread* pThread) {
 
 // gmk.openPortal
 static int fn_71006697CC(VMThread* pThread) {
-    gf::GfEvent::fn_7100328774();
+    gf::GfEvent::callOpenPortal();
     if (!gmk::GmkElevator::fn_71005B928C()) {
         vmWaitModeSet(pThread);
     }
@@ -934,7 +934,7 @@ static int fn_7100669E34(VMThread* pThread) {
 
 // pt.changeKubira
 static int fn_7100669E4C(VMThread* pThread) {
-    gf::GfGameUtil::fn_71002EBC90();
+    gf::GfGameUtil::changeKubira();
     return 0;
 }
 
@@ -953,7 +953,7 @@ static int fn_7100669E64(VMThread* pThread) {
 // pt.setIraParty
 static int fn_7100669ED8(VMThread* pThread) {
     int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
-    gf::SCOM_PARTY_ADD::fn_7100562048(id);
+    gf::SCOM_PARTY_ADD::setIraParty(id);
     return 0;
 }
 
@@ -1024,7 +1024,7 @@ static int fn_710066A014(VMThread* pThread) {
 
 // sys.getGameType
 static int fn_710066A080(VMThread* pThread) {
-    vmRetIntSet(pThread, gf::GfGameManager::fn_71002A9E68());
+    vmRetIntSet(pThread, gf::GfGameManager::isGameTypeIra());
     return 1;
 }
 
@@ -1036,7 +1036,7 @@ static int fn_710066A0C8(VMThread* pThread) {
 
 // sys.autoSave
 static int fn_710066A10C(VMThread* pThread) {
-    gf::GfGameManager::fn_71002AC6A8();
+    gf::GfGameManager::reqestEventAutoSave();
     return 0;
 }
 
@@ -1052,7 +1052,7 @@ static int fn_710066A160(VMThread* pThread) {
     const char* name = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
     if (!gf::GfManager::isExecModeThater()) {
-        gf::GfPlayFactory::fn_7100321924(name, id);
+        gf::GfPlayFactory::createTutorialScript(name, id);
     }
     return 0;
 }
@@ -1183,7 +1183,7 @@ static int fn_710066A508(VMThread* pThread) {
 
 // ui.waitCloseFullScreen
 static int fn_710066A57C(VMThread* pThread) {
-    if (gf::GfMenuObjUtil::fn_710048FD30(3)) {
+    if (gf::GfMenuObjUtil::isValidExpansion(3)) {
         gf::GfSequentialPlay* play = mm::mtl::PtrSingleton<gf::GfSequentialPlay>::sys();
         if (play != nullptr && play->fn_7100323420(0x24, 0)) {
             vmWaitModeSet(pThread);
@@ -1328,7 +1328,7 @@ static int fn_710066A9B0(VMThread* pThread) {
         }
     }
     if (gf::GfGameScene* scene = mm::mtl::PtrSingleton<gf::GfGameScene>::sys()) {
-        scene->fn_71002C4BE4();
+        scene->eventTutorialSequence();
     }
     return 0;
 }
@@ -1359,7 +1359,7 @@ static int fn_710066AA64(VMThread* pThread) {
 
 // ui.getTutorialStartID
 static int fn_710066AA7C(VMThread* pThread) {
-    vmRetIntSet(pThread, gf::GfMenuManager::fn_710035A364());
+    vmRetIntSet(pThread, gf::GfMenuManager::getTutotialStartID());
     return 1;
 }
 

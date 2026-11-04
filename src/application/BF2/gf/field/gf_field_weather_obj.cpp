@@ -309,7 +309,7 @@ bool WeatherInfo::isTimeup() const {
     return m_time == m_timeMax;
 }
 
-void WeatherInfo::fn_7100281FD8(float time) {
+void WeatherInfo::fadeoutEnv(float time) {
     m_eff->fadeout(time);
     m_snd->fadeout(time);
     m_fadeTime = time;

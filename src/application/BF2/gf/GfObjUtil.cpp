@@ -332,7 +332,7 @@ GfAppendInfo* GfObjUtil::getAppendInfo(GF_OBJ_HANDLE* handle, GFATTACH attach) {
     return acc.m_info == nullptr ? nullptr : &acc.m_mount->m_appendInfo;
 }
 
-GF_OBJ_HANDLE* GfObjUtil::fn_710054FCB4(GF_OBJ_HANDLE* handle) {
+GF_OBJ_HANDLE* GfObjUtil::getMaster(GF_OBJ_HANDLE* handle) {
     GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
     if (info == nullptr) {
         return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
@@ -340,7 +340,7 @@ GF_OBJ_HANDLE* GfObjUtil::fn_710054FCB4(GF_OBJ_HANDLE* handle) {
     return info->m_subHandle;
 }
 
-unsigned int GfObjUtil::fn_710054FCDC(GF_OBJ_HANDLE* handle) {
+unsigned int GfObjUtil::getPartyPos(GF_OBJ_HANDLE* handle) {
     GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
     if (info == nullptr || info->m_setup == nullptr || info->m_setup->m_partyId == static_cast<unsigned int>(-1)) {
         return 0;
@@ -348,9 +348,9 @@ unsigned int GfObjUtil::fn_710054FCDC(GF_OBJ_HANDLE* handle) {
     GfObjAcc acc(handle);
     switch (acc.getType()) {
     case 3:
-        return GfDataDriver::fn_710024198C(acc.getDriverId());
+        return GfDataDriver::getPartyPos(acc.getDriverId());
     case 10:
-        return fn_710054FCDC(fn_710054FCB4(handle));
+        return getPartyPos(getMaster(handle));
     }
     return 0;
 }
@@ -769,21 +769,21 @@ int GfObjUtil::fn_7100552C18(const GfObjManager::HandleList& list, unsigned int 
     return count;
 }
 
-bool GfObjUtil::fn_7100552DF4(GF_OBJ_HANDLE* handle) {
+bool GfObjUtil::isIra(GF_OBJ_HANDLE* handle) {
     DataParamAcc acc(handle);
     if (acc.getObjType() == 3) {
         unsigned int id = acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0;
-        return GfDataDriver::fn_710023F9A8(id);
+        return GfDataDriver::isIra(id);
     }
     return false;
 }
 
-bool GfObjUtil::fn_7100552E7C(GF_OBJ_HANDLE* handle) {
+bool GfObjUtil::isGhost(GF_OBJ_HANDLE* handle) {
     GfObjAcc acc(handle);
     return !acc.isDisp(OBJDISP(0x40)) || !acc.isDisp(OBJDISP(2));
 }
 
-bool GfObjUtil::fn_7100552ED0(GF_OBJ_HANDLE* handle) {
+bool GfObjUtil::isDummyMover(GF_OBJ_HANDLE* handle) {
     GfObj* obj = getObj(handle);
     if (obj != nullptr && obj->m_type == 11) {
         return getAssetHandle(handle) == reinterpret_cast<GF_ASSET_HANDLE*>(-1);

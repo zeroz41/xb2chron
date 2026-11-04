@@ -51,7 +51,7 @@ public:
         bool m_useOtherArea;          // getMapSegImageName then reads m_otherArea's segment image instead
         unsigned char pad_b[5];
         int m_otherArea;
-        unsigned int m_floorId;       // fn_7100361DC0 returns the current area's (GfMenuObjWorldMap reads it)
+        unsigned int m_floorId;       // getCurMapInfoID returns the current area's (GfMenuObjWorldMap reads it)
     };
     // a segment image resource's asset: the segment grid (getMapSegImageName, fn_71003620FC read it); the names are
     // not the original's
@@ -92,10 +92,9 @@ public:
     // the file name of the current map's segment image at that column and row (GfMenuObjMinimap2's map listener
     // streams the 3x3 segments by it); false when there is none
     static bool getMapSegImageName(unsigned int column, unsigned int row, mm::mtl::FixStr<64>& name);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads the menu's
-    // singleton's segment infos. What it does: the current area's segment info's value at 0x14, 0 when the area
-    // has none; GfMenuObjWorldMap::initialize, setupZoneList and its zone list listener call it.
-    static unsigned int fn_7100361DC0();
+    // 2.0.0's symbols name it. What it does: the current area's segment info's value at 0x14, 0 when the area has none;
+    // GfMenuObjWorldMap::initialize, setupZoneList and its zone list listener call it.
+    static unsigned int getCurMapInfoID();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads the menu's
     // singleton. What it does: when the current area's segment image has loaded, fills rect with the segment
     // offset (0x6c, 0x70) and the image's first two values; returns false either way (GfMenuObjMinimap2::update).

@@ -1,4 +1,4 @@
-#include "classes/gf/TUnk_B5F9E8.h"
+#include "classes/gf/GfMenuObjAnnounce.h"
 #include "classes/gf/GfMenuFullScreen.h"
 #include "classes/gf/GfMenuIDList.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
@@ -25,13 +25,13 @@ namespace {
 const float s_scheduleAlpha[5] = {0.125f, 0.25f, 1.0f, 0.25f, 0.125f};
 }  // namespace
 
-TUnk_B5F9E8::TUnk_B5F9E8(unsigned int handle)
+GfMenuObjAnnounce::GfMenuObjAnnounce(unsigned int handle)
     : GfMenuObject(handle), pad_24(0), pad_28(0), m_imageIndex(0), m_seq(this), m_mainSeq(this), m_selectList(nullptr),
       m_cursor(nullptr), m_idList(nullptr), pad_308(0), pad_30C(false), pad_310(0) {
     m_idList = GfMenuIDList::create();
 }
 
-TUnk_B5F9E8::~TUnk_B5F9E8() {
+GfMenuObjAnnounce::~GfMenuObjAnnounce() {
     if (m_idList != nullptr) {
         m_idList->release();
         m_idList = nullptr;
@@ -46,24 +46,24 @@ TUnk_B5F9E8::~TUnk_B5F9E8() {
     }
 }
 
-void TUnk_B5F9E8::fn_710038289C() {
+void GfMenuObjAnnounce::setCloseToDlcGift() {
     GfMenuTypes::Param param;
     param.m_menuId = 1;
     GfMenuFullScreen::registLayerParam(0x47, param);
 }
 
-void TUnk_B5F9E8::finalize() {
+void GfMenuObjAnnounce::finalize() {
     GfMenuObjOperationInfo::setDisp(true);
     GfMenuObject::finalize();
 }
 
-void TUnk_B5F9E8::update() {
+void GfMenuObjAnnounce::update() {
     m_seq.update();
     m_mainSeq.update();
     GfMenuObject::update();
 }
 
-bool TUnk_B5F9E8::fn_7100383844() {
+bool GfMenuObjAnnounce::seqCloseImage2() {
     ui::UIObjectAcc img(m_handle, "LAY_contents_img");
     float alpha;
     img.getAlpha(alpha);
@@ -76,7 +76,7 @@ bool TUnk_B5F9E8::fn_7100383844() {
     return true;
 }
 
-bool TUnk_B5F9E8::fn_7100383EE8() {
+bool GfMenuObjAnnounce::seqCloseImage() {
     ui::UIObjectAcc img(m_handle, "LAY_contents_img");
     float alpha;
     img.getAlpha(alpha);
@@ -85,11 +85,11 @@ bool TUnk_B5F9E8::fn_7100383EE8() {
         param.m_methods = 2;
         param.m_time = 0.25f;
         GfMenuObjUtil::startCtrl(img.m_handle, param, nullptr);
-        m_seq.addJob(&TUnk_B5F9E8::fn_7100385508);
+        m_seq.addJob(&GfMenuObjAnnounce::seqWaitImage);
     } else {
         ui::UIObjectAcc image(img.m_handle, "IMG_contents_img");
         image.setImageIndex(m_imageIndex);
-        m_seq.addJob(&TUnk_B5F9E8::fn_7100385460);
+        m_seq.addJob(&GfMenuObjAnnounce::seqOpenImage);
     }
     return true;
 }
@@ -103,7 +103,7 @@ void TUnk_B5FA80::reciveEvent(const ui::EventData& event, unsigned int handle) {
         break;
     case 3:
         if (event.m_param0 == 1 && !m_owner->pad_30C) {
-            if (GfMenuObjUtil::fn_710048FD30(3)) {
+            if (GfMenuObjUtil::isValidExpansion(3)) {
                 GfMenuObjMainMenu2::setSystemKeyEnable(true);
             } else {
                 GfMenuObject::enableInput(acc.m_handle);
@@ -112,7 +112,7 @@ void TUnk_B5FA80::reciveEvent(const ui::EventData& event, unsigned int handle) {
         }
         break;
     case 0x102:
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(3)) {
             GfMenuObjMainMenu2::setSystemKeyEnable(true);
         } else {
             GfMenuObject::enableInput(acc.m_handle);
@@ -131,11 +131,11 @@ void TUnk_B5FA80::reciveEvent(const ui::EventData& event, unsigned int handle) {
     case 0x21: {
         unsigned int page = m_owner->pad_24;
         unsigned char* fp = GfDataBdat::getFP(0x10B);
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(3)) {
             fp = GfDataBdat::getFP(0x10C);
             m_owner->m_imageIndex = 1;
             m_owner->m_seq.clear();
-            m_owner->m_seq.addJob(&TUnk_B5F9E8::fn_7100383EE8);
+            m_owner->m_seq.addJob(&GfMenuObjAnnounce::seqCloseImage);
         }
         unsigned char* text = GfDataBdat::getFP(0x13B);
         unsigned short title = Bdat::getVal(fp, "title", page + 1);
@@ -190,18 +190,18 @@ void TUnk_B5FAA8::reciveEvent(const ui::EventData& event, unsigned int handle) {
             } else if (m_owner->pad_308 == 0) {
                 int ctrl;
                 if (index > prev) {
-                    ctrl = m_owner->fn_7100384C20();
+                    ctrl = m_owner->ctrlScheduleUp();
                 } else {
-                    ctrl = m_owner->fn_7100384E1C();
+                    ctrl = m_owner->ctrlScheduleDown();
                 }
                 if (ctrl != -1) {
-                    m_owner->fn_7100385024();
+                    m_owner->closeScheduleBody();
                     GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
                 }
                 m_owner->m_idList->setIndex(index);
             } else {
                 m_owner->pad_308 = 0;
-                m_owner->fn_710038521C();
+                m_owner->stopScheduleMove();
                 m_owner->m_idList->setIndex(index);
                 m_owner->fn_710038471C(0);
             }
@@ -250,7 +250,7 @@ void TUnk_B5FAA8::reciveEvent(const ui::EventData& event, unsigned int handle) {
     }
 }
 
-void TUnk_B5F9E8::fn_7100385024() {
+void GfMenuObjAnnounce::closeScheduleBody() {
     ui::UIObjectAcc schedule(m_handle, "LAY_schedule");
     unsigned char* fp = GfDataBdat::getFP(0x10D);
     unsigned int index = m_idList->getIndex(false);
@@ -274,7 +274,7 @@ void TUnk_B5F9E8::fn_7100385024() {
     }
 }
 
-void TUnk_B5F9E8::fn_710038521C() {
+void GfMenuObjAnnounce::stopScheduleMove() {
     ui::UIObjectAcc schedule(m_handle, "LAY_schedule");
     mm::mtl::FixStr<32> name;
     for (unsigned int i = 0; i < m_idList->getPageRowSize(); i++) {
@@ -327,7 +327,7 @@ void TUnk_B5FAD0::reciveEvent(const ui::EventData& event, unsigned int handle) {
     }
 }
 
-bool TUnk_B5F9E8::fn_7100385460() {
+bool GfMenuObjAnnounce::seqOpenImage() {
     ui::UIObjectAcc img(m_handle, "LAY_contents_img");
     bool ready;
     if (img.isStreaming()) {
@@ -343,7 +343,7 @@ bool TUnk_B5F9E8::fn_7100385460() {
     return ready;
 }
 
-bool TUnk_B5F9E8::fn_7100385508() {
+bool GfMenuObjAnnounce::seqWaitImage() {
     ui::UIObjectAcc img(m_handle, "LAY_contents_img");
     int ctrl = GfMenuObjUtil::getCtrlID(img.m_handle);
     if (ctrl != -1 && GfMenuObjUtil::isBusyCtrl(ctrl)) {
@@ -353,7 +353,7 @@ bool TUnk_B5F9E8::fn_7100385508() {
         ui::UIObjectAcc image(img.m_handle, "IMG_contents_img");
         image.setImageIndex(m_imageIndex);
     }
-    m_seq.addJob(&TUnk_B5F9E8::fn_7100385460);
+    m_seq.addJob(&GfMenuObjAnnounce::seqOpenImage);
     return true;
 }
 

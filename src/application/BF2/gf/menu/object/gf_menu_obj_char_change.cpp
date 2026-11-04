@@ -1,4 +1,4 @@
-#include "classes/gf/TUnk_B60E28.h"
+#include "classes/gf/GfMenuObjCharChange.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfMenuArtsList.h"
 #include "classes/gf/GfMenuObject.h"
@@ -13,7 +13,7 @@
 
 namespace gf {
 
-TUnk_B60E28::TUnk_B60E28(unsigned int handle)
+GfMenuObjCharChange::GfMenuObjCharChange(unsigned int handle)
     : GfMenuObject(handle), pad_24(-1), pad_28(false), pad_29(false), pad_2A(true), m_seq(this), m_charFlags(),
       m_chainFlags(), pad_1A8(), pad_1AC(), pad_1B0(), pad_1B8(-1), m_artsList(nullptr) {
     pad_1C0 = false;
@@ -27,7 +27,7 @@ TUnk_B60E28::TUnk_B60E28(unsigned int handle)
     m_artsList->setup(getAllocator(ALLOCATOR(0)), param);
 }
 
-TUnk_B60E28::~TUnk_B60E28() {
+GfMenuObjCharChange::~GfMenuObjCharChange() {
     if (m_artsList != nullptr) {
         m_artsList->release();
         m_artsList = nullptr;
@@ -35,8 +35,8 @@ TUnk_B60E28::~TUnk_B60E28() {
 }
 
 
-void TUnk_B60E28::fn_71003C32F8() {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuObjCharChange::open() {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x3C));
         if (acc.m_object != nullptr && !acc.isTerm()) {
             ui::EventData event;
@@ -46,8 +46,8 @@ void TUnk_B60E28::fn_71003C32F8() {
     }
 }
 
-void TUnk_B60E28::fn_71003C3368() {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuObjCharChange::close() {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x3C));
         if (acc.m_object != nullptr && !acc.isTerm()) {
             ui::EventData event;
@@ -57,7 +57,7 @@ void TUnk_B60E28::fn_71003C3368() {
     }
 }
 
-void TUnk_B60E28::fn_71003C33D8(bool disp) {
+void GfMenuObjCharChange::disp(bool disp) {
     unsigned int handle = GfMenuObject::getAttachedObject(0x3C);
     if (ui::UIObjectAcc(handle).m_object != nullptr) {
         if (!ui::UIObjectAcc(handle).isTerm()) {
@@ -67,8 +67,8 @@ void TUnk_B60E28::fn_71003C33D8(bool disp) {
 }
 
 
-void TUnk_B60E28::fn_71003C3470() {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuObjCharChange::changeFormation() {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x3C));
         if (acc.m_object != nullptr && !acc.isTerm()) {
             ui::EventData event;
@@ -78,8 +78,8 @@ void TUnk_B60E28::fn_71003C3470() {
     }
 }
 
-void TUnk_B60E28::fn_71003C34E0() {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuObjCharChange::changeBlade() {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x3C));
         if (acc.m_object != nullptr && !acc.isTerm()) {
             ui::EventData event;
@@ -89,8 +89,8 @@ void TUnk_B60E28::fn_71003C34E0() {
     }
 }
 
-void TUnk_B60E28::fn_71003C3550(bool flag) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuObjCharChange::reverse(bool flag) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x3C));
         if (acc.m_object != nullptr) {
             ui::EventData event;
@@ -101,8 +101,8 @@ void TUnk_B60E28::fn_71003C3550(bool flag) {
     }
 }
 
-void TUnk_B60E28::fn_71003C35C8(unsigned int value) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuObjCharChange::fn_71003C35C8(unsigned int value) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x3C));
         if (acc.m_object != nullptr) {
             ui::EventData event;
@@ -113,7 +113,7 @@ void TUnk_B60E28::fn_71003C35C8(unsigned int value) {
     }
 }
 
-void TUnk_B60E28::fn_71003C3648(bool disp) {
+void GfMenuObjCharChange::dispInfo(bool disp) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x3C));
     if (acc.m_object != nullptr && !acc.isTerm()) {
         ui::EventData event;
@@ -123,7 +123,7 @@ void TUnk_B60E28::fn_71003C3648(bool disp) {
     }
 }
 
-void TUnk_B60E28::fn_71003C4DFC(unsigned int index) {
+void GfMenuObjCharChange::updateRecast(unsigned int index) {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     mm::mtl::FixStr<32> name;
     name.format("IMG_char2_recast@%02d", index + 1);
@@ -184,7 +184,7 @@ void TUnk_B60E28::fn_71003C4DFC(unsigned int index) {
     }
 }
 
-void TUnk_B60E28::fn_71003C5164(unsigned int index) {
+void GfMenuObjCharChange::fn_71003C5164(unsigned int index) {
     ui::UIObjectAcc chain(m_handle, "LAY_chain");
     unsigned int count = chain.countChild("LAY_chain@%02d", 1);
     mm::mtl::FixStr<32> name;
@@ -207,7 +207,7 @@ void TUnk_B60E28::fn_71003C5164(unsigned int index) {
     }
 }
 
-void TUnk_B60E28::fn_71003C5278() {
+void GfMenuObjCharChange::startFormationChange() {
     ui::UIObjectAcc char2(m_handle, "LAY_char2");
     int distance;
     {
@@ -217,7 +217,7 @@ void TUnk_B60E28::fn_71003C5278() {
         char2.getLayoutRect("active_down", down);
         distance = down.y - up.y;
     }
-    fn_71003C4450(false);
+    updateFace(false);
     if (!pad_1C0) {
         {
             ui::UIObjectAcc first(char2.m_handle, "LAY_char2@01");
@@ -244,17 +244,17 @@ void TUnk_B60E28::fn_71003C5278() {
     }
 }
 
-void TUnk_B60E28::fn_71003C5408() {
+void GfMenuObjCharChange::startBladeChange() {
     ui::UIObjectAcc char2(m_handle, "LAY_char2");
-    fn_71003C4450(true);
+    updateFace(true);
     GfMenuObjUtil::CtrlParam param;
     param.m_methods = 0x10;
     param.m_curve = 1;
     param.m_distance = 0x20;
     param.m_time = 0.25f;
     for (unsigned int i = 0; i < 2; i++) {
-        const GfMenuReference::BladeOwner* owner = GfMenuReference::fn_7100367BD8(i);
-        if (owner != nullptr && !GfDataDriver::fn_7100237A94(owner->m_driver) && pad_1B0 != 0) {
+        const GfMenuReference::BladeOwner* owner = GfMenuReference::getIraCharInfoFromFromID(i);
+        if (owner != nullptr && !GfDataDriver::isIraFront(owner->m_driver) && pad_1B0 != 0) {
             mm::mtl::FixStr<32> name;
             name.format("LAY_char2_active@%02d", i + 1);
             {
@@ -269,7 +269,7 @@ void TUnk_B60E28::fn_71003C5408() {
     }
 }
 
-void TUnk_B60E28::fn_71003C55E0(bool disp) {
+void GfMenuObjCharChange::dispInfoLocal(bool disp) {
     ui::UIObjectAcc acc(m_handle, "LAY_main");
     acc.setDispChild(disp, "LAY_info");
     acc.setDispChild(disp, "LAY_char2_reserve_elem_root@01");
@@ -280,7 +280,7 @@ void TUnk_B60E28::fn_71003C55E0(bool disp) {
     chain.setDispChild(disp, "LAY_chain_info");
 }
 
-void TUnk_B60E28::finalize() {
+void GfMenuObjCharChange::finalize() {
     GfMenuObject::finalize();
 }
 

@@ -50,22 +50,20 @@ public:
     static void Create();
     static void Destroy();
     void NotifyMapChange();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its address lies between
-    // UIManager's functions and it stores into pad_38, which Create sets to -1 like the other object handles.
-    // What it does: pad_38 = its argument; nothing in the module calls it directly.
-    void fn_71000AFA48(gf::GF_OBJ_HANDLE* obj);
+    // 2.0.0's symbols name it. What it does: pad_38 = its argument; nothing in the module calls it directly.
+    void NotifyRecordUpdate(gf::GF_OBJ_HANDLE* obj);
     static void PreUpdate(const fw::UpdateInfo& info);
     static void Update(const fw::UpdateInfo& info);
     void UpdateProc(const fw::UpdateInfo& info);
     void UpdateMenuData(const fw::UpdateInfo& info);
     void UpdateRescueUI();
-    // Placeholder name: new in 3.0.1. A member: UpdateProc calls it with this after UpdateRescueUI.
-    void fn_71000B2238();
-    // Placeholder name: new in 3.0.1. A member: UpdateProc calls it with this; it updates pad_40/pad_41.
-    void fn_71000B233C();
-    // Placeholder name: new in 3.0.1. A member: UpdateProc tail-calls it with this and its UpdateInfo; it shows
-    // the tutorials RegisterTutorial queued in m_tutorials.
-    void fn_71000B25C4(const fw::UpdateInfo& info);
+    // 2.0.0's symbols name it. UpdateProc calls it with this after UpdateRescueUI.
+    void UpdatePartyGauge();
+    // 2.0.0's symbols name it. UpdateProc calls it with this; it updates pad_40/pad_41.
+    void UpdateBattleTime();
+    // 2.0.0's symbols name it. UpdateProc tail-calls it with this and its UpdateInfo; it shows the tutorials
+    // RegisterTutorial queued in m_tutorials.
+    void UpdateTutorial(const fw::UpdateInfo& info);
     bool RegisterTutorial(unsigned int id, float time, bool force);
     unsigned int StartElementalComboDirectionUI(int combo);
     void ExitElementalComboDirectionUI(unsigned int id);
@@ -110,7 +108,7 @@ public:
     gf::GF_OBJ_HANDLE* m_rescueObj;
     bool m_rescueOpen;
     gf::GF_OBJ_HANDLE* pad_30;
-    gf::GF_OBJ_HANDLE* pad_38;  // fn_71000AFA48 sets it
+    gf::GF_OBJ_HANDLE* pad_38;  // NotifyRecordUpdate sets it
     unsigned char pad_40;
     unsigned char pad_41;
     mm::mtl::FixedVector<TutorialInfo, 36> m_tutorials;  // RegisterTutorial queues (the name is not the original's)

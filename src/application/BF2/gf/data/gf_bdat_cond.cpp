@@ -1161,11 +1161,11 @@ unsigned int GfBdatCond::getConditionFieldSkiiLevelLevel(unsigned int id) const 
     return _gfbdb::getConditionFieldSkiiLevelLevel(*m_fpConditionFieldSkiiLevel, id);
 }
 
-unsigned int GfBdatCond::fn_71001FB224(unsigned int id) const {
+unsigned int GfBdatCond::getConditionMapGimmickMapGimmickID(unsigned int id) const {
     return _gfbdb::getConditionMapGimmickMapGimmickID(*m_fpConditionMapGimmick, id);
 }
 
-unsigned int GfBdatCond::fn_71001FB2AC(unsigned int id) const {
+unsigned int GfBdatCond::getConditionNamedNamed(unsigned int id) const {
     return _gfbdb::getConditionNamedNamed(*m_fpConditionNamed, id);
 }
 

@@ -48,7 +48,7 @@ private:
 public:
     // (public: ModelObj::setupModel reads it)
     // a blade id per driver id 1..15: ModelObj::setupModel gives an event's driver this blade when its OPTION
-    // names none (outside fn_71002A9E68's mode)
+    // names none (outside isGameTypeIra's mode)
     unsigned int pad_228[16];
 };
 }  // namespace event

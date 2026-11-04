@@ -58,7 +58,7 @@ void GfMenuObjShop::update() {
         m_refreshItemList = false;
     }
     if (m_stockNumDirty) {
-        fn_710047688C();
+        refreshStock();
         m_stockNumDirty = false;
     }
     GfMenuObject::update();
@@ -70,7 +70,7 @@ void GfMenuObjShop::open(GfMenuCallContext* context, const OpenParam& param) {
         ui::EventData event;
         event.m_type = 0x21;
         event.m_param0Short = param.m_shopId;
-        if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuManager::fn_710035DC94()) {
+        if (GfMenuObjUtil::isValidExpansion(3) && GfMenuManager::isOpenCampMenu()) {
             event.m_paramShort[2] = param.m_option;
         }
         GfMenuObject::sendEvent(acc.m_handle, event, 0.0f);
@@ -101,8 +101,8 @@ void GfMenuObjShop::dispBlade(bool disp) {
     }
 }
 
-void GfMenuObjShop::fn_7100477960() {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuObjShop::changeCraft() {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x77));
         if (acc.m_object != nullptr) {
             ui::EventData event;
@@ -211,9 +211,9 @@ bool GfMenuObjShop::seqWaitEndBlWeapon() {
     return true;
 }
 
-void GfMenuObjShop::fn_710047688C() {
+void GfMenuObjShop::refreshStock() {
     ui::UIObjectAcc stock(m_handle, "LAY_stock_num");
-    unsigned int type = GfMenuReference::fn_710036934C();
+    unsigned int type = GfMenuReference::getReferenceItemType();
     bool disp = false;
     if (m_mode == 0) {
         if (type != 0 && m_useFilterItemType && m_filterIndex != 0) {
@@ -539,7 +539,7 @@ bool GfMenuObjShop::seqItemGet() {
     return true;
 }
 
-bool GfMenuObjShop::fn_71004802F8(unsigned int task, mm::mtl::FixedVector<unsigned short, 4>& items) {
+bool GfMenuObjShop::getExcTaskRewardItem(unsigned int task, mm::mtl::FixedVector<unsigned short, 4>& items) {
     unsigned char* bdat = GfDataBdat::getFP(0xF2);
     if (bdat == nullptr || !GfMenuBdat::isValidBdatID(bdat, task)) {
         return false;

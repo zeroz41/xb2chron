@@ -200,7 +200,7 @@ public:
     void updatePoolMemory();
     // loads m_bgmVolumes: sound/ira_vol.csvb when the argument (SoundManager's m_dlc when negative) is set, else
     // sound/bgm_vol.csvb (the constructor's tail inlines it with a negative argument)
-    void fn_71001A39C8(int dlc);
+    void reloadBgmVolume(int dlc);
 
     // field names are not the original's
     ssd::SoundCore* m_core;  // 0x10 (ssd::SoundCore::NewInstance(&m_allocator))

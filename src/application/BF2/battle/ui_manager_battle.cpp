@@ -40,7 +40,7 @@ void UIManager::NotifyMapChange() {
     pad_bit19 = false;
 }
 
-void UIManager::fn_71000AFA48(gf::GF_OBJ_HANDLE* obj) {
+void UIManager::NotifyRecordUpdate(gf::GF_OBJ_HANDLE* obj) {
     pad_38 = obj;
 }
 
@@ -58,9 +58,9 @@ void UIManager::UpdateProc(const fw::UpdateInfo& info) {
         }
     }
     UpdateRescueUI();
-    fn_71000B2238();
-    fn_71000B233C();
-    fn_71000B25C4(info);
+    UpdatePartyGauge();
+    UpdateBattleTime();
+    UpdateTutorial(info);
 }
 
 void UIManager::UpdateRescueUI() {

@@ -64,45 +64,62 @@ public:
     unsigned int getChrDrCollisionId(unsigned int id) const;
     const char* getChrDrCenterBone(unsigned int id) const;
     const char* getChrDrCamBone(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrDr. What it does: returns row id's "IraParam" column of CHR_Dr (16 bits; 0 when the handle is null or id is out of range).
-    unsigned int fn_71001F13E0(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns row id's "IraParam" column of CHR_Dr (16 bits; 0 when the handle
+    // is null or id is out of range).
+    unsigned int getChrDrIraParam(unsigned int id) const;
     unsigned int getChrDrWpnType(unsigned int id, unsigned int index) const;
     unsigned int getChrDrWpRate(unsigned int id, unsigned int index) const;
     unsigned int getChrDrDefBlade(unsigned int id, unsigned int slot) const;
     unsigned int getChrDrFavoriteCategory(unsigned int id, unsigned int slot) const;
     unsigned int getChrDrFavoriteItem(unsigned int id, unsigned int slot) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrIr. What it does: returns CHR_Ir's first row id (Bdat::getIdTop), as getChrDrStart does for CHR_Dr.
-    unsigned int fn_71001F15D4() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrIr. What it does: returns CHR_Ir's first row id plus its row count (Bdat::getIdTop + getIdCount), as getChrDrEnd does for CHR_Dr.
-    unsigned int fn_71001F15E0() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrIr. What it does: returns row id's "driverID" column of CHR_Ir (16 bits; 0 when the handle is null or id is out of range).
-    unsigned int fn_71001F161C(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrIr. What it does: returns row id's "Type" column of CHR_Ir (8 bits; 0 when the handle is null or id is out of range).
-    unsigned int fn_71001F16A4(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrIr. What it does: returns row id's "GroupID" column of CHR_Ir (8 bits; 0 when the handle is null or id is out of range).
-    unsigned int fn_71001F172C(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrIr. What it does: returns row id's "DefWpnAcce" column of CHR_Ir (16 bits; 0 when the handle is null or id is out of range).
-    unsigned int fn_71001F17B4(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrIr. What it does: returns whether row id has the "WpnInNonView" bit of CHR_Ir's "Flag" column set (false when either handle is null or id is out of range).
-    bool fn_71001F183C(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrIr. What it does: returns row id's "SeDriver" column of CHR_Ir (a string; null when the handle is null or id is out of range).
-    const char* fn_71001F18D4(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrIr. What it does: returns row id's "SeBlade" column of CHR_Ir (a string; null when the handle is null or id is out of range).
-    const char* fn_71001F1958(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrIr. What it does: returns row id's "KizunaReward1" column of CHR_Ir (16 bits; 0 when the handle is null or id is out of range).
-    unsigned int fn_71001F19DC(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrIr. What it does: returns row id's "KizunaReward2" column of CHR_Ir (16 bits; 0 when the handle is null or id is out of range).
-    unsigned int fn_71001F1A64(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpIraParty. What it does: returns row id's "Guest1" column of IRA_Party (8 bits; 0 when the handle is null or id is out of range).
-    unsigned int fn_71001F1AEC(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpIraParty. What it does: returns row id's "Guest2" column of IRA_Party (8 bits; 0 when the handle is null or id is out of range).
-    unsigned int fn_71001F1B74(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpIraParty. What it does: returns row id's value of the slot-th column of {"driver11", "driver21", "driver31"} (IRA_Party; slot table 0x7100B46980).
-    unsigned int fn_71001F1BFC(unsigned int id, unsigned int slot) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpIraParty. What it does: returns row id's value of the slot-th column of {"blade11", "blade21", "blade31"} (IRA_Party; slot table 0x7100B46998).
-    unsigned int fn_71001F1C10(unsigned int id, unsigned int slot) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpIraParty. What it does: returns row id's value of the slot-th column of {"blade12", "blade22", "blade32"} (IRA_Party; slot table 0x7100B469B0).
-    unsigned int fn_71001F1C24(unsigned int id, unsigned int slot) const;
+    // 2.0.0's symbols name it. What it does: returns CHR_Ir's first row id (Bdat::getIdTop), as getChrDrStart does for
+    // CHR_Dr.
+    unsigned int getChrIrStart() const;
+    // 2.0.0's symbols name it. What it does: returns CHR_Ir's first row id plus its row count (Bdat::getIdTop +
+    // getIdCount), as getChrDrEnd does for CHR_Dr.
+    unsigned int getChrIrEnd() const;
+    // 2.0.0's symbols name it. What it does: returns row id's "driverID" column of CHR_Ir (16 bits; 0 when the handle
+    // is null or id is out of range).
+    unsigned int getChrIrdriverID(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns row id's "Type" column of CHR_Ir (8 bits; 0 when the handle is
+    // null or id is out of range).
+    unsigned int getChrIrType(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns row id's "GroupID" column of CHR_Ir (8 bits; 0 when the handle is
+    // null or id is out of range).
+    unsigned int getChrIrGroupID(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns row id's "DefWpnAcce" column of CHR_Ir (16 bits; 0 when the handle
+    // is null or id is out of range).
+    unsigned int getChrIrDefWpnAcce(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns whether row id has the "WpnInNonView" bit of CHR_Ir's "Flag"
+    // column set (false when either handle is null or id is out of range).
+    bool isChrIrFlagWpnInNonView(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns row id's "SeDriver" column of CHR_Ir (a string; null when the
+    // handle is null or id is out of range).
+    const char* getChrIrSeDriver(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns row id's "SeBlade" column of CHR_Ir (a string; null when the
+    // handle is null or id is out of range).
+    const char* getChrIrSeBlade(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns row id's "KizunaReward1" column of CHR_Ir (16 bits; 0 when the
+    // handle is null or id is out of range).
+    unsigned int getChrIrKizunaReward1(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns row id's "KizunaReward2" column of CHR_Ir (16 bits; 0 when the
+    // handle is null or id is out of range).
+    unsigned int getChrIrKizunaReward2(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns row id's "Guest1" column of IRA_Party (8 bits; 0 when the handle
+    // is null or id is out of range).
+    unsigned int getIRA_PartyGuest1(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns row id's "Guest2" column of IRA_Party (8 bits; 0 when the handle
+    // is null or id is out of range).
+    unsigned int getIRA_PartyGuest2(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns row id's value of the slot-th column of {"driver11", "driver21",
+    // "driver31"} (IRA_Party; slot table 0x7100B46980).
+    unsigned int getIRA_PartyDriver(unsigned int id, unsigned int slot) const;
+    // 2.0.0's symbols name it. What it does: returns row id's value of the slot-th column of {"blade11", "blade21",
+    // "blade31"} (IRA_Party; slot table 0x7100B46998).
+    unsigned int getIRA_PartyBlade1(unsigned int id, unsigned int slot) const;
+    // 2.0.0's symbols name it. What it does: returns row id's value of the slot-th column of {"blade12", "blade22",
+    // "blade32"} (IRA_Party; slot table 0x7100B469B0).
+    unsigned int getIRA_PartyBlade2(unsigned int id, unsigned int slot) const;
     CBdatWrapper* m_fpChrDr;  // 0x10, GfDataBdat table 0x88 (CHR_Dr)
     CBdatWrapper* m_fpChrIr;  // 0x18, GfDataBdat table 0x89 (CHR_Ir; new in 3.0.1, the name is not the original's)
     CBdatWrapper* m_fpIraParty;  // 0x20, GfDataBdat table 0x91 (IRA_Party; new in 3.0.1, the name is not the original's)

@@ -1,7 +1,7 @@
 #include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfMenuObjSalvage.h"
 #include "classes/gf/GfMenuObjSalvage/ResultListener.h"
-#include "classes/gf/GfMenuObjSalvage/TUnk_B646A0.h"
+#include "classes/gf/GfMenuObjSalvage/RecordListener.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfMenuAdapterManager.h"
@@ -14,7 +14,7 @@
 #include "mm/mtl/FixStr.h"
 #include "ui/EventData.h"
 #include "classes/gf/GfMenuReference.h"
-#include "classes/gf/TUnk_B5A648.h"
+#include "classes/gf/GfMenuBtlchAdapter.h"
 #include "mm/Rect.h"
 #include "mm/Pnt.h"
 #include "gf/GfMenuSequence.h"
@@ -46,7 +46,7 @@ GfMenuObjSalvage::~GfMenuObjSalvage() {
 void GfMenuObjSalvage::openResult(GfMenuCallContext* context, const ResultParam& param) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x53));
     if (GfMenuObjUtil::checkCCStart(context)) {
-        if (param.m_unk2 == 1 && !GfMenuObjUtil::fn_710048FD30(1)) {
+        if (param.m_unk2 == 1 && !GfMenuObjUtil::isValidExpansion(1)) {
             if (context != nullptr) {
                 context->abort();
             }
@@ -65,8 +65,8 @@ void GfMenuObjSalvage::openResult(GfMenuCallContext* context, const ResultParam&
     }
 }
 
-void GfMenuObjSalvage::fn_710046F628(GfMenuCallContext* context) {
-    if (GfMenuObjUtil::fn_710048FD30(1) && GfGameManager::fn_71002AC580()) {
+void GfMenuObjSalvage::openBtlchRecord(GfMenuCallContext* context) {
+    if (GfMenuObjUtil::isValidExpansion(1) && GfGameManager::isBattleArenaActive()) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x53));
         if (GfMenuObjUtil::checkCCStart(context)) {
             ui::UIObjectAcc record(acc.searchChild("LAY_record"));
@@ -80,8 +80,8 @@ void GfMenuObjSalvage::fn_710046F628(GfMenuCallContext* context) {
     }
 }
 
-void GfMenuObjSalvage::fn_710046F6F4(bool flag) {
-    if (GfMenuObjUtil::fn_710048FD30(1)) {
+void GfMenuObjSalvage::setBtlchNewRecord(bool flag) {
+    if (GfMenuObjUtil::isValidExpansion(1)) {
         s_recordFlag = flag;
     }
 }
@@ -105,7 +105,7 @@ void GfMenuObjSalvage::initialize() {
             ui::UIObjectAcc record(main.m_handle, "LAY_record");
             {
 #line 179
-                TUnk_B646A0* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B646A0(this);
+                RecordListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) RecordListener(this);
                 listener->m_RefCount = 1;
                 ui::UIEventManager::get()->registObjectListener(record.m_handle, listener);
                 if (listener != nullptr) {
@@ -114,8 +114,8 @@ void GfMenuObjSalvage::initialize() {
             }
             {
                 ui::UIObjectAcc time(m_handle, "LAY_result@01");
-                TUnk_B5A648::fn_7100334B10(time.searchChild("TXT_time"), 0xE, m_time, true);
-                TUnk_B5A648::fn_7100334B10(time.searchChild("TXT_time_shadow"), 0xE, m_time, true);
+                GfMenuBtlchAdapter::createFromReference(time.searchChild("TXT_time"), 0xE, m_time, true);
+                GfMenuBtlchAdapter::createFromReference(time.searchChild("TXT_time_shadow"), 0xE, m_time, true);
             }
             {
                 ui::UIObjectAcc ether(m_handle, "LAY_result@02");
@@ -194,7 +194,7 @@ bool GfMenuObjSalvage::seqResultAppear() {
     return true;
 }
 
-void GfMenuObjSalvage::TUnk_B646A0::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjSalvage::RecordListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:
@@ -254,7 +254,7 @@ void GfMenuObjSalvage::TUnk_B646A0::reciveEvent(const ui::EventData& event, unsi
     }
     case 0x21:
         m_owner->m_seq.clear();
-        m_owner->m_seq.addJob(&GfMenuObjSalvage::fn_7100470314);
+        m_owner->m_seq.addJob(&GfMenuObjSalvage::seqRecordInfoOpen);
         m_owner->m_appeared = false;
         break;
     default:
@@ -288,7 +288,7 @@ bool GfMenuObjSalvage::seqResultEnd() {
     return true;
 }
 
-bool GfMenuObjSalvage::fn_7100470BBC() {
+bool GfMenuObjSalvage::seqCtrlWait() {
     if (m_ctrlSlot != -1) {
         if (GfMenuObjUtil::isBusyCtrl(m_ctrlSlot)) {
             return false;
@@ -298,7 +298,7 @@ bool GfMenuObjSalvage::fn_7100470BBC() {
     return true;
 }
 
-bool GfMenuObjSalvage::fn_7100470C00() {
+bool GfMenuObjSalvage::seqNewRecordFadeIn() {
     mm::mtl::FixStr<32> name;
     for (int i = 0; i < 3; i++) {
         if (m_newRecords & (1 << i)) {
@@ -326,12 +326,12 @@ bool GfMenuObjSalvage::fn_7100470C00() {
     return true;
 }
 
-bool GfMenuObjSalvage::fn_7100470D98() {
+bool GfMenuObjSalvage::seqNewRecordSE() {
     GfMenuObjUtil::playSE("dlc_se_btl_chbtl004");
     return true;
 }
 
-bool GfMenuObjSalvage::fn_7100470DB8() {
+bool GfMenuObjSalvage::seqNewRecordWait() {
     mm::mtl::FixStr<32> name;
     if (m_newRecords & 1) {
         name.format("IMG_%s_new_record_eff", "time");
@@ -357,7 +357,7 @@ bool GfMenuObjSalvage::fn_7100470DB8() {
     return true;
 }
 
-bool GfMenuObjSalvage::fn_7100470ED8() {
+bool GfMenuObjSalvage::seqRecordStartConfirm() {
     ui::UIObjectAcc record(m_handle, "LAY_record");
     GfMenuObject::enableInput(record.m_handle);
     GfMenuObjOperationInfo::open(record.m_handle, 0, 0, 0);
@@ -365,11 +365,11 @@ bool GfMenuObjSalvage::fn_7100470ED8() {
     return true;
 }
 
-bool GfMenuObjSalvage::fn_7100470F34() {
+bool GfMenuObjSalvage::seqRecordWaitConfirm() {
     return m_inputClosed;
 }
 
-bool GfMenuObjSalvage::fn_71004710CC() {
+bool GfMenuObjSalvage::seqRecordFadeout() {
     ui::UIObjectAcc record(m_handle, "LAY_record");
     record.setDisp(true);
     GfMenuObjUtil::CtrlParam param;
@@ -380,12 +380,12 @@ bool GfMenuObjSalvage::fn_71004710CC() {
     param.m_setDefault = true;
     m_ctrlSlot = GfMenuObjUtil::startCtrl(record.m_handle, param, nullptr);
     GfMenuObjUtil::playSECommonDecide();
-    m_seq.addJob(&GfMenuObjSalvage::fn_7100470BBC);
-    m_seq.addJob(&GfMenuObjSalvage::fn_710047122C);
+    m_seq.addJob(&GfMenuObjSalvage::seqCtrlWait);
+    m_seq.addJob(&GfMenuObjSalvage::seqRecordEnd);
     return true;
 }
 
-bool GfMenuObjSalvage::fn_710047122C() {
+bool GfMenuObjSalvage::seqRecordEnd() {
     ui::UIObjectAcc record(m_handle, "LAY_record");
     mm::mtl::FixStr<32> name;
     for (int i = 1; i < 4; i++) {

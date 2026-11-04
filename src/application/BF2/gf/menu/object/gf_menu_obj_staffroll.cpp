@@ -48,7 +48,7 @@ void GfMenuObjStaffroll::initialize() {
     GfMenuObject::attachExternalCall(0x85, acc.m_handle);
     mm::mtl::FixStr<128> path;
     const char* file;
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         if (fw::LangUtil::getLangType() == 0 || fw::LangUtil::getLangType() == 6 || fw::LangUtil::getLangType() == 11) {
             file = "dlc3_endroll.crt";
         } else {
@@ -57,7 +57,7 @@ void GfMenuObjStaffroll::initialize() {
     } else {
         file = GfMenuManager::isRegionUS() ? "endroll_us.crt" : "endroll.crt";
     }
-    path.format("%s/credit/%s", ui::UIUtil::fn_7100696940(), file);
+    path.format("%s/credit/%s", ui::UIUtil::getRootFolder(), file);
     m_resource = fw::CommonResource::request(ui::UIUtil::getResourceAllocator(), path.m_str, 10, false);
     GfMenuObject::initialize();
 }
@@ -123,7 +123,7 @@ void GfMenuObjStaffroll::update() {
             m_end = false;
         }
     } else if (m_state == 2) {
-        if (GfMenuManager::fn_710035A738()) {
+        if (GfMenuManager::isTheaterNonTelop()) {
             return;
         }
         m_scroll += m_scrollSpeed;
@@ -183,7 +183,7 @@ void GfMenuObjStaffroll::update() {
                         text.getPos(pos);
                         pos.y = y;
                         text.setPos(pos);
-                        if (GfMenuObjUtil::fn_710048FD30(3)) {
+                        if (GfMenuObjUtil::isValidExpansion(3)) {
                             if (!(y >= 550)) {
                                 if (y >= 530) {
                                     text.setAlpha((550 - y) / 20.0f);
@@ -249,7 +249,7 @@ unsigned int GfMenuObjStaffroll::createText(unsigned int index, const CreditRead
         text.setBorderWeight(1.0f);
         text.setAddColor("white");
     }
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         text.setBorderWeight(1.0f);
     }
     text.setText(ui::UIStr(column.m_text, false));
@@ -291,7 +291,7 @@ void GfMenuObjStaffroll::MainListener::reciveEvent(const ui::EventData& event, u
         mm::Pnt<short> pos(x, 0);
         acc.setPos(pos);
         acc.setDisp(true);
-        bool disp = !GfMenuObjUtil::fn_710048FD30(3);
+        bool disp = !GfMenuObjUtil::isValidExpansion(3);
         ui::UIObjectAcc grade(acc.searchSibiling("LAY_grade"));
         grade.setDisp(disp);
         break;

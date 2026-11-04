@@ -77,9 +77,8 @@ public:
     void pause(unsigned int handle, bool pause, float fade);
     void stopBgmAll();
     void stopSeAll();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in SoundManager's unit and
-    // GfManager::fn_710032A1FC calls it on PtrSingleton<fw::SoundManager>'s instance. What it does: stores its bool at 0x44C8
-    void fn_71001A0EF8(bool flag);
+    // 2.0.0's symbols name it. What it does: stores its bool at 0x44C8
+    void setupGameType(bool flag);
     void registPack(SoundPack* pack);
     void removePack(SoundPack* pack);
     bool isCommonLoaded() const;

@@ -38,7 +38,7 @@ public:
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its only caller,
 // TitleStatePlayEvent::enter, hands it the RQ_SETUP_PARTY it builds on its stack (then passed to
 // GfGameParty::setupRequestData) and nothing else. What it does: unless the driver is 0 or already in the party,
-// puts it in the first empty driver slot with its blade (GfDataDriver::fn_7100241640(driver, 0) when 0 is
+// puts it in the first empty driver slot with its blade (GfDataDriver::getDefaultBlade(driver, 0) when 0 is
 // passed) in blade slot 0 and the engaged index 0; does nothing when all ten slots are taken.
 void fn_710015678C(gf::RQ_SETUP_PARTY& party, unsigned int driver, unsigned int blade);
 }  // namespace tl

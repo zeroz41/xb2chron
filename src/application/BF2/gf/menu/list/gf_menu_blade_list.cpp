@@ -61,22 +61,22 @@ void GfMenuBladeList::sort(unsigned int type, bool descending) {
         compare = descending ? sortAttrAscending : sortAttrDescending;
         break;
     case 6:
-        compare = descending ? fn_710036DCE8 : fn_710036DDCC;
+        compare = descending ? sortCreatorAscending : sortCreatorDescending;
         break;
     case 11:
         compare = descending ? sortGenderDescending : sortGenderAscending;
         break;
     case 18:
-        compare = fn_710036DF68;
+        compare = sortFavoriteDescending;
         break;
     case 19:
-        compare = fn_710036DFF0;
+        compare = sortFavoriteAscending;
         break;
     case 22:
-        compare = fn_710036E10C;
+        compare = sortTrustDescending;
         break;
     case 23:
-        compare = fn_710036E078;
+        compare = sortTrustAscending;
         break;
     default:
         if (type > 100) {
@@ -232,7 +232,7 @@ static inline unsigned int getCreatorSortOrder(unsigned int creator) {
     }
 }
 
-bool GfMenuBladeList::fn_710036DCE8(const MenuBladeInfo& a, const MenuBladeInfo& b) {
+bool GfMenuBladeList::sortCreatorAscending(const MenuBladeInfo& a, const MenuBladeInfo& b) {
     unsigned int orderA = getCreatorSortOrder(a.m_creator);
     unsigned int orderB = getCreatorSortOrder(b.m_creator);
     if (orderA == orderB) {
@@ -256,7 +256,7 @@ bool GfMenuBladeList::fn_710036DCE8(const MenuBladeInfo& a, const MenuBladeInfo&
     return orderA < orderB;
 }
 
-bool GfMenuBladeList::fn_710036DDCC(const MenuBladeInfo& a, const MenuBladeInfo& b) {
+bool GfMenuBladeList::sortCreatorDescending(const MenuBladeInfo& a, const MenuBladeInfo& b) {
     unsigned int orderA = getCreatorSortOrder(a.m_creator);
     unsigned int orderB = getCreatorSortOrder(b.m_creator);
     if (orderA == orderB) {
@@ -301,7 +301,7 @@ bool GfMenuBladeList::sortGenderAscending(const MenuBladeInfo& a, const MenuBlad
 
 
 
-bool GfMenuBladeList::fn_710036DF68(const MenuBladeInfo& a, const MenuBladeInfo& b) {
+bool GfMenuBladeList::sortFavoriteDescending(const MenuBladeInfo& a, const MenuBladeInfo& b) {
     bool activeA = GfDataBlade::isActivateMercenaryTeam(a.m_blade);
     bool activeB = GfDataBlade::isActivateMercenaryTeam(b.m_blade);
     if (activeA != activeB) {
@@ -315,7 +315,7 @@ bool GfMenuBladeList::fn_710036DF68(const MenuBladeInfo& a, const MenuBladeInfo&
     return timeA > timeB;
 }
 
-bool GfMenuBladeList::fn_710036DFF0(const MenuBladeInfo& a, const MenuBladeInfo& b) {
+bool GfMenuBladeList::sortFavoriteAscending(const MenuBladeInfo& a, const MenuBladeInfo& b) {
     bool activeA = GfDataBlade::isActivateMercenaryTeam(a.m_blade);
     bool activeB = GfDataBlade::isActivateMercenaryTeam(b.m_blade);
     if (activeA != activeB) {
@@ -329,7 +329,7 @@ bool GfMenuBladeList::fn_710036DFF0(const MenuBladeInfo& a, const MenuBladeInfo&
     return timeA > timeB;
 }
 
-bool GfMenuBladeList::fn_710036E078(const MenuBladeInfo& a, const MenuBladeInfo& b) {
+bool GfMenuBladeList::sortTrustAscending(const MenuBladeInfo& a, const MenuBladeInfo& b) {
     unsigned int trustA = GfDataBlade::getTrustRank(a.m_blade);
     unsigned int trustB = GfDataBlade::getTrustRank(b.m_blade);
     if (trustA == trustB) {
@@ -348,7 +348,7 @@ bool GfMenuBladeList::fn_710036E078(const MenuBladeInfo& a, const MenuBladeInfo&
     return trustA < trustB;
 }
 
-bool GfMenuBladeList::fn_710036E10C(const MenuBladeInfo& a, const MenuBladeInfo& b) {
+bool GfMenuBladeList::sortTrustDescending(const MenuBladeInfo& a, const MenuBladeInfo& b) {
     unsigned int trustA = GfDataBlade::getTrustRank(a.m_blade);
     unsigned int trustB = GfDataBlade::getTrustRank(b.m_blade);
     if (trustA == trustB) {

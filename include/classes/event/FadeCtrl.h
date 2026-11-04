@@ -57,7 +57,7 @@ public:
         // FadeCtrl::update's per-layer step (the name is not the original's)
         void update() {
             if (pad_4) {
-                gf::SCOM_FADE::fn_710055C704(pad_0, pad_8, pad_5 ? (pad_c ? pad_10 : mm::Col4::black) : mm::Col4::zero);
+                gf::SCOM_FADE::createEvent(pad_0, pad_8, pad_5 ? (pad_c ? pad_10 : mm::Col4::black) : mm::Col4::zero);
                 pad_4 = false;
                 pad_c = false;
             }

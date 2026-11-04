@@ -34,11 +34,9 @@ public:
     void finalize();
     static void clear();
     static void setupGame();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's setupGame is followed directly by
-    // setSuspendGame). A member because it lies among GfFieldManager's functions in their unit. What it does: calls
-    // GfFobjManager::fn_7100289668 on GfFobjManager's instance when there is one; tl::TitleStateChangeGameType's
-    // fn_7100156288 calls it.
-    static void fn_7100277784();
+    // 2.0.0's symbols name it. What it does: calls GfFobjManager::rebuildForGameType on GfFobjManager's instance when
+    // there is one; tl::TitleStateChangeGameType's update calls it.
+    static void rebuildForGameType();
     void setSuspendGame(bool suspend);
     static bool isExistObj();
     // SCOM_DESTROY_FIELD_OBJ's request

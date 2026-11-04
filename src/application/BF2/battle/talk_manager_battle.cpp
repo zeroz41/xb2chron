@@ -48,7 +48,7 @@ bool TalkManager::IsTalk(int chr) const {
                        [chr](const CHR_VOICE_DATA& data) { return data.m_chrIndex == chr; });
 }
 
-bool TalkManager::fn_71000AA39C() const {
+bool TalkManager::IsTalkSirenSp() const {
     return std::any_of(m_voices.begin(), m_voices.end(), [](const CHR_VOICE_DATA& data) { return data.pad_bit5; });
 }
 

@@ -314,7 +314,7 @@ static inline bool getBladeShopName(unsigned char*& bdat, unsigned int& id, GF_O
     if (obj.getType() != 6) {
         return false;
     }
-    if (!GfDataBlade::fn_710024D8C4(bdat, id, obj.fn_7100523B74())) {
+    if (!GfDataBlade::fn_710024D8C4(bdat, id, obj.getNpcRscId())) {
         bdat = nullptr;
         id = 0;
         return false;
@@ -343,7 +343,7 @@ void GfMenuObjTargetInfo::openOther(GfMenuCallContext* context, const OpenOtherP
         symbol.m_obj = param.m_obj;
         symbol.m_offset = param.m_offset;
         symbol.m_icon = param.m_shopId;
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(3)) {
             symbol.m_collect = param.m_collect;
         }
         openSymbol(context, symbol);
@@ -398,7 +398,7 @@ void GfMenuObjTargetInfo::openOther(GfMenuCallContext* context, const OpenOtherP
                 access.setMulColor(s_accessMulColor);
                 access.setAddColor(s_accessAddColor);
             }
-            bool layer3 = GfMenuObjUtil::fn_710048FD30(3);
+            bool layer3 = GfMenuObjUtil::isValidExpansion(3);
             if (!layer3) {
                 if (param.m_shopId != 0) {
                     ui::UIObjectAcc shop(main.m_handle, "TXT_other_shop_name");
@@ -514,7 +514,7 @@ void GfMenuObjTargetInfo::openSymbol(GfMenuCallContext* context, const OpenSymbo
                     eff.startAnimationFromID(1, false);
                 }
             }
-            if (GfMenuObjUtil::fn_710048FD30(3) && param.m_icon == 2 && param.m_collect != 0) {
+            if (GfMenuObjUtil::isValidExpansion(3) && param.m_icon == 2 && param.m_collect != 0) {
                 unsigned char* bdat = GfDataBdat::getFP(0x1E0);
                 if (GfMenuBdat::isValidBdatID(bdat, param.m_collect)) {
                     unsigned short item = Bdat::getVal(bdat, "itm1ID", param.m_collect);

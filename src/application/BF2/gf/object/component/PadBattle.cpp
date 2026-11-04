@@ -114,17 +114,17 @@ void PadBattle::setup(int padNo, GfComPropertyPc& property) {
     m_relay0.bindAction("battle_rescue", this, &PadBattle::battlRescue);
     m_relay0.bindAction("change_camera_mode", this, &PadBattle::changeCameraMode);
     m_relay0.bindAction("tactics", this, &PadBattle::orderRally);
-    m_relay0.bindAction("auto_switch", this, &PadBattle::fn_71004E2BC4);
-    m_relay0.bindAction("mind_eye", this, &PadBattle::fn_71004E2C78);
-    m_relay0.bindAction("ira_formation_change", this, &PadBattle::fn_71004E2D2C);
-    m_relay0.bindAction("ira_formation_change2", this, &PadBattle::fn_71004E2D2C);
-    m_relay0.bindAction("ira_blade_change", this, &PadBattle::fn_71004E2DE0);
-    m_relay0.bindAction("ira_tactics_00", this, &PadBattle::fn_71004E2E94);
-    m_relay0.bindAction("ira_tactics_01", this, &PadBattle::fn_71004E2F48);
-    m_relay0.bindAction("ira_tactics_02", this, &PadBattle::fn_71004E2FFC);
-    m_relay0.bindAction("ira_tactics_03", this, &PadBattle::fn_71004E30B0);
-    m_relay0.bindAction("ira_talent_arts", this, &PadBattle::fn_71004E3164);
-    m_relay0.bindAction("spskill", this, &PadBattle::fn_71004E3218);
+    m_relay0.bindAction("auto_switch", this, &PadBattle::switchAuto);
+    m_relay0.bindAction("mind_eye", this, &PadBattle::mindEye);
+    m_relay0.bindAction("ira_formation_change", this, &PadBattle::iraFormationChange);
+    m_relay0.bindAction("ira_formation_change2", this, &PadBattle::iraFormationChange);
+    m_relay0.bindAction("ira_blade_change", this, &PadBattle::iraBladeChange);
+    m_relay0.bindAction("ira_tactics_00", this, &PadBattle::iraTactics00);
+    m_relay0.bindAction("ira_tactics_01", this, &PadBattle::iraTactics01);
+    m_relay0.bindAction("ira_tactics_02", this, &PadBattle::iraTactics02);
+    m_relay0.bindAction("ira_tactics_03", this, &PadBattle::iraTactics03);
+    m_relay0.bindAction("ira_talent_arts", this, &PadBattle::iraTalentArts);
+    m_relay0.bindAction("spskill", this, &PadBattle::ocg);
     m_relay0.bindAxis("move_front", this, &PadBattle::moveFront);
     m_relay0.bindAxis("move_side", this, &PadBattle::moveSide);
     m_relay1.bind(padNo, 3, getAllocator(ALLOCATOR(0)));
@@ -148,7 +148,7 @@ inline void PadBattle::setInput(InputID id) const {
 }
 
 void PadBattle::battleStart() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -158,7 +158,7 @@ void PadBattle::battleStart() const {
 }
 
 void PadBattle::battleEnd() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -168,7 +168,7 @@ void PadBattle::battleEnd() const {
 }
 
 void PadBattle::art01() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -178,7 +178,7 @@ void PadBattle::art01() const {
 }
 
 void PadBattle::art02() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -188,7 +188,7 @@ void PadBattle::art02() const {
 }
 
 void PadBattle::art03() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -198,7 +198,7 @@ void PadBattle::art03() const {
 }
 
 void PadBattle::bladeChange00() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -208,7 +208,7 @@ void PadBattle::bladeChange00() const {
 }
 
 void PadBattle::bladeChange01() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -218,7 +218,7 @@ void PadBattle::bladeChange01() const {
 }
 
 void PadBattle::bladeChange02() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -228,7 +228,7 @@ void PadBattle::bladeChange02() const {
 }
 
 void PadBattle::kakusei() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -238,7 +238,7 @@ void PadBattle::kakusei() const {
 }
 
 void PadBattle::requestPermit01() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -248,7 +248,7 @@ void PadBattle::requestPermit01() const {
 }
 
 void PadBattle::requestPermit02() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -258,7 +258,7 @@ void PadBattle::requestPermit02() const {
 }
 
 void PadBattle::spAttack() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -268,7 +268,7 @@ void PadBattle::spAttack() const {
 }
 
 void PadBattle::chainAttack() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -278,7 +278,7 @@ void PadBattle::chainAttack() const {
 }
 
 void PadBattle::battlRescue() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -288,7 +288,7 @@ void PadBattle::battlRescue() const {
 }
 
 void PadBattle::changeCameraMode() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -298,7 +298,7 @@ void PadBattle::changeCameraMode() const {
 }
 
 void PadBattle::orderRally() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -307,8 +307,8 @@ void PadBattle::orderRally() const {
     setInput(InputID(20));
 }
 
-void PadBattle::fn_71004E2BC4() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+void PadBattle::switchAuto() const {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -317,8 +317,8 @@ void PadBattle::fn_71004E2BC4() const {
     setInput(InputID(23));
 }
 
-void PadBattle::fn_71004E2C78() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+void PadBattle::mindEye() const {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -327,8 +327,8 @@ void PadBattle::fn_71004E2C78() const {
     setInput(InputID(24));
 }
 
-void PadBattle::fn_71004E2D2C() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+void PadBattle::iraFormationChange() const {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -337,8 +337,8 @@ void PadBattle::fn_71004E2D2C() const {
     setInput(InputID(25));
 }
 
-void PadBattle::fn_71004E2DE0() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+void PadBattle::iraBladeChange() const {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -347,8 +347,8 @@ void PadBattle::fn_71004E2DE0() const {
     setInput(InputID(26));
 }
 
-void PadBattle::fn_71004E2E94() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+void PadBattle::iraTactics00() const {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -357,8 +357,8 @@ void PadBattle::fn_71004E2E94() const {
     setInput(InputID(27));
 }
 
-void PadBattle::fn_71004E2F48() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+void PadBattle::iraTactics01() const {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -367,8 +367,8 @@ void PadBattle::fn_71004E2F48() const {
     setInput(InputID(28));
 }
 
-void PadBattle::fn_71004E2FFC() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+void PadBattle::iraTactics02() const {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -377,8 +377,8 @@ void PadBattle::fn_71004E2FFC() const {
     setInput(InputID(29));
 }
 
-void PadBattle::fn_71004E30B0() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+void PadBattle::iraTactics03() const {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -387,8 +387,8 @@ void PadBattle::fn_71004E30B0() const {
     setInput(InputID(30));
 }
 
-void PadBattle::fn_71004E3164() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+void PadBattle::iraTalentArts() const {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -397,8 +397,8 @@ void PadBattle::fn_71004E3164() const {
     setInput(InputID(31));
 }
 
-void PadBattle::fn_71004E3218() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+void PadBattle::ocg() const {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -420,7 +420,7 @@ void PadBattle::moveSide(float value) {
 }
 
 void PadBattle::changeTargetR() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {
@@ -430,7 +430,7 @@ void PadBattle::changeTargetR() const {
 }
 
 void PadBattle::changeTargetL() const {
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A58()) {
+    if (btl::ChallengeBattleManager::sys()->IsExit()) {
         return;
     }
     if (!isInputEnable()) {

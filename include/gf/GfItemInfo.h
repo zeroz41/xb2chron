@@ -27,7 +27,7 @@ struct GfItemInfo {
 
     unsigned int m_id : 13;
     unsigned int m_type : 6;
-    unsigned int m_count : 10;  // the stack count (GfItemBoxBase::fn_71002F9DD4 sums it)
+    unsigned int m_count : 10;  // the stack count (GfItemBoxBase::countItemCategory sums it)
     unsigned int pad_0_29 : 1;
     unsigned int m_equip : 1;  // setEquipFlag
     unsigned int pad_0_31 : 1;

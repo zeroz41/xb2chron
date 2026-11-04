@@ -34,14 +34,10 @@ public:
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
     bool seqLogTaskComplete();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it is a job of this class's
-    // sequences: OrderListener::reciveEvent queues it through Delegate<bool()>::memberFuncInvoker<GfMenuObjQuestLog>,
-    // and it sits between that listener and seqOrderStart. What it does: GfMenuObjUtil::playJingle(6), returns true.
-    bool fn_710046CDFC();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it is a job of this class's
-    // sequences: seqTitleStart queues it twice, and it sits between seqCompleteStart and seqTitleFadeInText. What it
-    // does: GfMenuObjUtil::playJingle(7), returns true.
-    bool fn_710046D648();
+    // 2.0.0's symbols name it. What it does: GfMenuObjUtil::playJingle(6), returns true.
+    bool seqOrderJingle();
+    // 2.0.0's symbols name it. What it does: GfMenuObjUtil::playJingle(7), returns true.
+    bool seqCompleteJingle();
     bool seqTitleStart();  // TitleListener queues it
     bool seqTitleEndWait();
     bool seqLogStart();

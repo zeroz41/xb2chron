@@ -36,22 +36,18 @@ public:
     // and m_time (in s0).
     static void fn_71002A0CDC(unsigned int id, unsigned int, unsigned int, const mm::Vec3* pos, float time);
     static void gevPause(unsigned int, unsigned int);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its unit is gf_game_event and
-    // it reads GfGameEvent's instance. What it does: returns the int at +0x1914 (pad_1914), 0 without an instance
-    // (the same shape as getPlayBladeId one field later); gf::fn_71002DF39C, fn_71002DF624 and fn_71002E1E9C call it.
-    static int fn_71002A0FEC();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its unit is gf_game_event,
-    // next to setMapLodDisp's family. What it does: GfFieldLod::findBdatIdByLodId(lodId), then (when found)
+    // 2.0.0's symbols name it. What it does: returns the int at +0x1914 (pad_1914), 0 without an instance (the same
+    // shape as getPlayBladeId one field later); gf::fn_71002DF39C, fn_71002DF624 and fn_71002E1E9C call it.
+    static int getStartEventId();
+    // 2.0.0's symbols name it. What it does: GfFieldLod::findBdatIdByLodId(lodId), then (when found)
     // GfFieldLod::setLodSwitchId(bdatId, switchId); event::LodManager::OnEventProc calls it.
-    static void fn_71002A16EC(unsigned int lodId, unsigned int switchId);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its unit is gf_game_event,
-    // next to setMapLodDisp's family. What it does: GfFieldLod::findBdatIdByLodId(lodId), then (when found) returns
+    static void setMapLodSwitch(unsigned int lodId, unsigned int switchId);
+    // 2.0.0's symbols name it. What it does: GfFieldLod::findBdatIdByLodId(lodId), then (when found) returns
     // GfFieldLod::fn_71002768BC(bdatId) (the model's switch id), else -1; event::LodManager::playAnm calls it.
-    static int fn_71002A1740(unsigned int lodId);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its unit is gf_game_event,
-    // between gevPause and playBgm. What it does: GfEvtBgm::get()->clear() when the instance exists;
+    static int getMapLodSwitch(unsigned int lodId);
+    // 2.0.0's symbols name it. What it does: GfEvtBgm::get()->clear() when the instance exists;
     // GfPlayComEventFade::update calls it.
-    static void fn_71002A19D4();
+    static void destroyPlayingBgm();
     static float getPlayBgmTime();
     static float getPlayBgmTotalTime();
     // an event's color filter request (priority 2) to GfGameEnv; false drops it
@@ -60,10 +56,9 @@ public:
     static class GfEvtModelBlade* createBlade(class GfInitParamBlade& param);
     static class GfEvtModelNpc* createNpc(class GfInitParamNpc& param);
     static class GfEvtModelEnemy* createEnemy(class GfInitParamEnemy& param);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its unit is gf_game_event,
-    // between createEnemy and createEventObj. What it does: GfEvtModelWeapon::create(param), first giving blade 1011
-    // (param+0x12c) its GfBdatChrBl::getChrBlDefWeapon(1011) as m_objId while event 10345 (m_playEventId) plays.
-    static class GfEvtModelWeapon* fn_71002A1FFC(class GfInitParamWeapon& param);
+    // 2.0.0's symbols name it. What it does: GfEvtModelWeapon::create(param), first giving blade 1011 (param+0x12c) its
+    // GfBdatChrBl::getChrBlDefWeapon(1011) as m_objId while event 10345 (m_playEventId) plays.
+    static class GfEvtModelWeapon* createWeapon(class GfInitParamWeapon& param);
     static class GfEvtModelEvent* createEventObj(class GfInitParamEventObj& param);
     static void setMapWeather(WEATHERID weather);
     static void setWeaType(WEATYPE type);

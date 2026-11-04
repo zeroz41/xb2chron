@@ -399,7 +399,7 @@ bool GfMenuObjBladeCreate::seqSaveWait() {
     return true;
 }
 
-bool GfMenuObjBladeCreate::fn_71003983C4() {
+bool GfMenuObjBladeCreate::seqCreateSkip() {
     if (GfMenuManager::isFading()) {
         return false;
     }
@@ -426,7 +426,7 @@ bool GfMenuObjBladeCreate::fn_71003983C4() {
     }
     GfMenuFade::setFade(2, 30, mm::Col4(0.0f, 0.0f, 0.0f, 0.0f));
     pad_1128.clear();
-    m_seq.addJob(&GfMenuObjBladeCreate::fn_7100399180);
+    m_seq.addJob(&GfMenuObjBladeCreate::seqCreateSkipToReslt);
     return true;
 }
 
@@ -592,7 +592,7 @@ void GfMenuObjBladeCreate::BoosterNumListener::reciveEvent(const ui::EventData& 
     }
 }
 
-bool GfMenuObjBladeCreate::fn_7100399180() {
+bool GfMenuObjBladeCreate::seqCreateSkipToReslt() {
     if (GfMenuManager::isFading()) {
         return false;
     }

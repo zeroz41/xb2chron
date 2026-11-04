@@ -51,18 +51,15 @@ public:
     static void addDriver(unsigned int driver, unsigned int param);
     static void removeDriver(unsigned int driver, bool flag);
     static void setCurrentBlade(unsigned int blade);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
-    // SCOM_PARTY_ADD's functions and it walks SCOM_PARTY_ADD::s_info. What it does: in s_info's ring of 16 0x14-byte
-    // requests finds the first of kind 3 with value 4 and sets its byte 0xF; pt setDriverEnable calls it last.
-    static void fn_7100561FDC();
-    // Placeholder name: new in 3.0.1 (1.0.0's pt has no setIraParty). A member because its address lies among
-    // SCOM_PARTY_ADD's functions and it creates PtrSingleton<SCOM_PARTY_ADD>. What it does: unless a cleared
-    // scenario game runs, stores its argument (.bss 0x7100EB6CE8) and creates the request; pt setIraParty passes
-    // its script argument.
-    static void fn_7100562048(unsigned int party);
+    // 2.0.0's symbols name it. What it does: in s_info's ring of 16 0x14-byte requests finds the first of kind 3 with
+    // value 4 and sets its byte 0xF; pt setDriverEnable calls it last.
+    static void setToraBladeFollow();
+    // 2.0.0's symbols name it. What it does: unless a cleared scenario game runs, stores its argument (.bss
+    // 0x7100EB6CE8) and creates the request; pt setIraParty passes its script argument.
+    static void setIraParty(unsigned int party);
 
     static mm::mtl::FixedQueue<Info, 16> s_info;
-    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EB6CE8). fn_7100562048 stores its
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EB6CE8). setIraParty stores its
     // argument here before create(); GfReqSmallCom's constructor zeroes it; fn_7100560390 reads it.
     static unsigned int s_party;
 

@@ -293,7 +293,7 @@ void ElementalComboManager::Update(float dt) {
     }
 }
 
-unsigned char ElementalComboManager::fn_710008D814(int stage) const {
+unsigned char ElementalComboManager::GetStageElementalComboID(int stage) const {
     if (stage > m_comboStage) {
         return 0;
     }

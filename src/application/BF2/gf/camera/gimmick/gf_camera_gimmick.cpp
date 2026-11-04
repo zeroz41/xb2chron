@@ -25,7 +25,7 @@ mm::mtl::IntrusivePtr<GimmickCamera> GimmickCamera::create(const char* name) {
 
 void GimmickCamera::setReadFile(const char* name) {
     fw::CommonResource* res =
-        GfStaticRes::search(GfGameManager::fn_71002A9E68() ? "/camera/params_dlc.gca" : "/camera/params.gca");
+        GfStaticRes::search(GfGameManager::isGameTypeIra() ? "/camera/params_dlc.gca" : "/camera/params.gca");
     if (res == nullptr) {
         return;
     }

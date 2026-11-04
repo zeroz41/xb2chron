@@ -1,5 +1,5 @@
-#include "classes/gf/TUnk_B607D8.h"
-#include "classes/gf/TUnk_B60848.h"
+#include "classes/gf/GfMenuObjBtlchTelop.h"
+#include "classes/gf/GfMenuObjBtlchTutorial.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfGameCond.h"
@@ -22,9 +22,9 @@
 namespace gf {
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAA1C8)
-bool TUnk_B60848::s_exists;
+bool GfMenuObjBtlchTutorial::s_exists;
 
-TUnk_B60848::TUnk_B60848(unsigned int handle)
+GfMenuObjBtlchTutorial::GfMenuObjBtlchTutorial(unsigned int handle)
     : GfMenuObject(handle), m_seq(this), m_mainSeq(this), m_context(nullptr), m_telopParam(), m_idList(nullptr),
       m_fromLayer(false) {
     m_context = GfMenuCallContext::create();
@@ -32,7 +32,7 @@ TUnk_B60848::TUnk_B60848(unsigned int handle)
     s_exists = true;
 }
 
-TUnk_B60848::~TUnk_B60848() {
+GfMenuObjBtlchTutorial::~GfMenuObjBtlchTutorial() {
     if (m_idList != nullptr) {
         m_idList->release();
         m_idList = nullptr;
@@ -44,13 +44,13 @@ TUnk_B60848::~TUnk_B60848() {
     s_exists = false;
 }
 
-void TUnk_B60848::fn_71003B2A90(unsigned int menuId) {
+void GfMenuObjBtlchTutorial::registStartTutorialID(unsigned int menuId) {
     GfMenuTypes::Param param;
     param.m_menuId = menuId;
     GfMenuFullScreen::registLayerParam(0x67, param);
 }
 
-void TUnk_B60848::fn_71003B2ABC(int param) {
+void GfMenuObjBtlchTutorial::fn_71003B2ABC(int param) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x89));
     if (acc.m_object != nullptr) {
         ui::UIObjectAcc tutorial(acc.m_handle, "LAY_tutorial");
@@ -58,11 +58,11 @@ void TUnk_B60848::fn_71003B2ABC(int param) {
     }
 }
 
-bool TUnk_B60848::fn_71003B2B30() {
+bool GfMenuObjBtlchTutorial::isOpen() {
     return s_exists;
 }
 
-void TUnk_B60848::initialize() {
+void GfMenuObjBtlchTutorial::initialize() {
     {
         ui::UIObjectAcc acc(m_handle);
         acc.setDispPriority(ui::UIUtil::getGroupPriority(0));
@@ -72,7 +72,7 @@ void TUnk_B60848::initialize() {
     {
         ui::UIObjectAcc tutorial(main.m_handle, "LAY_tutorial");
 #line 111
-        TUnk_B608B8* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B608B8(this);
+        TutorialListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TutorialListener(this);
         listener->m_RefCount = 1;
         ui::UIEventManager::get()->registObjectListener(tutorial.m_handle, listener);
         if (listener != nullptr) {
@@ -91,7 +91,7 @@ void TUnk_B60848::initialize() {
         GfMenuObjUtil::createVScrollBarPlugin(list.searchChild("IMG_list_scroll_bar"), m_idList, "IMG_list_scroll_base",
                                               true);
 #line 145
-        TUnk_B60890* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B60890(this);
+        ListListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ListListener(this);
         listener->m_RefCount = 1;
         ui::UIEventManager::get()->registObjectListener(list.m_handle, listener);
         if (listener != nullptr) {
@@ -117,17 +117,17 @@ void TUnk_B60848::initialize() {
     GfMenuObject::initialize();
 }
 
-void TUnk_B60848::finalize() {
+void GfMenuObjBtlchTutorial::finalize() {
     GfMenuObject::finalize();
 }
 
-void TUnk_B60848::update() {
+void GfMenuObjBtlchTutorial::update() {
     m_mainSeq.update();
     m_seq.update();
     GfMenuObject::update();
 }
 
-void TUnk_B60848::fn_71003B2F98() {
+void GfMenuObjBtlchTutorial::refreshList() {
     ui::UIObjectAcc list(m_handle, "LAY_list");
     mm::mtl::FixStr<32> name;
     for (unsigned int i = 0; i < m_idList->getPageRowSize(); i++) {
@@ -155,25 +155,25 @@ void TUnk_B60848::fn_71003B2F98() {
     }
 }
 
-// TUnk_B60890::reciveEvent (0x71003B31C8) is not here yet: block placement differs (see the notes)
+// ListListener::reciveEvent (0x71003B31C8) is not here yet: block placement differs (see the notes)
 
-bool TUnk_B60848::fn_71003B3EF4() {
+bool GfMenuObjBtlchTutorial::seqStartTelop() {
     m_context->reset();
-    TUnk_B607D8::fn_71003B0CE4(m_context, m_telopParam);
-    m_mainSeq.addJob(&TUnk_B60848::fn_71003B3F7C);
+    GfMenuObjBtlchTelop::open(m_context, m_telopParam);
+    m_mainSeq.addJob(&GfMenuObjBtlchTutorial::seqWaitTelop);
     return true;
 }
 
-bool TUnk_B60848::fn_71003B3F7C() {
+bool GfMenuObjBtlchTutorial::seqWaitTelop() {
     if (!m_context->isTerm()) {
         return false;
     }
     m_mainSeq.addWait(4);
-    m_mainSeq.addJob(&TUnk_B60848::fn_71003B3EF4);
+    m_mainSeq.addJob(&GfMenuObjBtlchTutorial::seqStartTelop);
     return true;
 }
 
-bool TUnk_B60848::fn_71003B3ECC() {
+bool GfMenuObjBtlchTutorial::seqWaitLoading() {
     return !ui::UIManager::get()->isLoading();
 }
 

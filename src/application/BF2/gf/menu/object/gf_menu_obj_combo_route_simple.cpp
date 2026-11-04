@@ -1,4 +1,4 @@
-#include "classes/gf/TUnk_B61408.h"
+#include "classes/gf/GfMenuObjComboRouteSimple.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfMenuObject.h"
 #include "classes/gf/GfMenuReference.h"
@@ -12,13 +12,13 @@
 
 namespace gf {
 
-TUnk_B61408::TUnk_B61408(unsigned int handle) : GfMenuObject(handle) {}
+GfMenuObjComboRouteSimple::GfMenuObjComboRouteSimple(unsigned int handle) : GfMenuObject(handle) {}
 
-TUnk_B61408::~TUnk_B61408() {
+GfMenuObjComboRouteSimple::~GfMenuObjComboRouteSimple() {
     ;  // the original body has a statement the build compiles away; an empty one would drop the table store
 }
 
-void TUnk_B61408::fn_71003DC3AC() {
+void GfMenuObjComboRouteSimple::open() {
     unsigned int handle = GfMenuObject::getAttachedObject(0x8E);
     if (ui::UIObjectAcc(handle).m_object != nullptr) {
         if (!ui::UIObjectAcc(handle).isTerm()) {
@@ -29,7 +29,7 @@ void TUnk_B61408::fn_71003DC3AC() {
     }
 }
 
-void TUnk_B61408::fn_71003DC440() {
+void GfMenuObjComboRouteSimple::close() {
     unsigned int handle = GfMenuObject::getAttachedObject(0x8E);
     if (ui::UIObjectAcc(handle).m_object != nullptr) {
         if (!ui::UIObjectAcc(handle).isTerm()) {
@@ -40,7 +40,7 @@ void TUnk_B61408::fn_71003DC440() {
     }
 }
 
-void TUnk_B61408::fn_71003DC4D4(bool disp) {
+void GfMenuObjComboRouteSimple::disp(bool disp) {
     unsigned int handle = GfMenuObject::getAttachedObject(0x8E);
     if (ui::UIObjectAcc(handle).m_object != nullptr) {
         if (!ui::UIObjectAcc(handle).isTerm()) {
@@ -49,7 +49,7 @@ void TUnk_B61408::fn_71003DC4D4(bool disp) {
     }
 }
 
-void TUnk_B61408::fn_71003DC56C() {
+void GfMenuObjComboRouteSimple::refresh() {
     unsigned int handle = GfMenuObject::getAttachedObject(0x8E);
     if (ui::UIObjectAcc(handle).m_object != nullptr) {
         if (!ui::UIObjectAcc(handle).isTerm()) {
@@ -60,7 +60,7 @@ void TUnk_B61408::fn_71003DC56C() {
     }
 }
 
-void TUnk_B61408::initialize() {
+void GfMenuObjComboRouteSimple::initialize() {
     ui::UIObjectAcc acc(m_handle, "LAY_main");
     GfMenuObject::attachExternalCall(0x8E, acc.m_handle);
 #line 115
@@ -73,11 +73,11 @@ void TUnk_B61408::initialize() {
     GfMenuObject::initialize();
 }
 
-void TUnk_B61408::finalize() {
+void GfMenuObjComboRouteSimple::finalize() {
     GfMenuObject::finalize();
 }
 
-void TUnk_B61408::update() {
+void GfMenuObjComboRouteSimple::update() {
     GfMenuObject::update();
 }
 

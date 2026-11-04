@@ -47,7 +47,7 @@ struct ItemProperty {
     unsigned char pad_44[0x1];
     unsigned char m_boosterKey;     // type 12 (sortTypeBooster*)
     unsigned char pad_46[0x4];
-    // type 2: a second BTL_Enhance row (the enhance sorts GfMenuItemList::fn_710037749C / fn_7100377614 order by
+    // type 2: a second BTL_Enhance row (the enhance sorts GfMenuItemList::sortTypeWpnAccesoryAscending / sortTypeWpnAccesoryDescending order by
     // its effect and params); the name is not the original's
     unsigned short m_enhance2;
     unsigned char m_coreKey;        // types 3 and 9 (sortTypeAsCoreEquip*, sortTypeAsCore* of the item m_enhance names)
@@ -72,7 +72,7 @@ struct ItemProperty {
     // the game condition (GfGameCond::isGameCond) the item needs; 0: none (GfMenuHanaAdapter::isMakeParts; the name
     // is not the original's)
     unsigned short m_condition;
-    // type 19: what GfMenuItemList::fn_7100377F28 sorts by (the name is not the original's)
+    // type 19: what GfMenuItemList::sortFromBuff sorts by (the name is not the original's)
     unsigned short m_partsSortKey;
     unsigned char pad_74[0x1];
     unsigned char m_role;    // update_roleText: the FP text row (0: none)
@@ -93,7 +93,7 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's addItemBox, 168 bytes, did this
     // inline). A member because addItemBox and addItemBoxWithSilent of this unit call it. What it does: refuses a
     // positive count of an item GfDataItem::isNoMultiple marks; adds (GfItemBox::addItem) or removes
-    // (GfItemBox::decItem) the count, or with a non-zero handle sets that entry (fn_71002FA2B0); marks a gained
+    // (GfItemBox::decItem) the count, or with a non-zero handle sets that entry (decItem); marks a gained
     // item with GfDataItem::setNoMultiple; unless silent, calls GfEvent::callItemAdd.
     static bool fn_71002FA968(unsigned int item, int count, bool silent, GfItemHandle handle);
     // count of the item into the party's box without the event call
@@ -118,14 +118,14 @@ public:
     static void setEquipFlag(unsigned int item, GfItemHandle handle, bool equip);
     static GfItemHandle getNoEquipItemHandle(unsigned int item);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies among GfItemUtil's
-    // functions (its unit). What it does: forwards to fn_7100247474, which for a DLC driver (0x11-0x19) gives the
-    // 16-bit item id at +0x5A4 of its row of GfDataManager::fn_7100224A10's driver table, else 0.
+    // functions (its unit). What it does: forwards to getEquipWpnAcce, which for a DLC driver (0x11-0x19) gives the
+    // 16-bit item id at +0x5A4 of its row of GfDataManager::getDataGameIra's driver table, else 0.
     // GfMenuItemAdapter::ReferenceDriverEquipConverter shows it as slot 0's accessory of such a driver on menu layer 3.
     static unsigned int fn_71002FCD64(unsigned int driver);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies among GfItemUtil's
     // functions right after fn_71002FCD64 and takes no object. What it does: puts the item on the driver's DLC
-    // accessory slot (GfDataDriver::fn_71002474F4 / fn_7100247534 with the handle), returning the old accessory to
-    // the item box (or selling it when the box is full); returns true. GfGameUtil::fn_71002EB4B8 and
+    // accessory slot (GfDataDriver::fn_71002474F4 / setEquipWpnAcceHandle with the handle), returning the old accessory to
+    // the item box (or selling it when the box is full); returns true. GfGameUtil::execEquipIraDefaultWpnAcce and
     // GfMenuObjDrEquip2's removeItem / ItemListListener::reciveEvent call it.
     static bool fn_71002FCD68(unsigned int driver, unsigned int item, GfItemHandle handle);
 };
@@ -133,7 +133,7 @@ public:
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfItemUtil's unit (no this). What it does: for a nonzero blade, walks its GfDataBlade::getAchievInfo entries 0..9
 // (stops at one whose first short is 0) and runs GfQuestTask::refreshTaskParam on GfDataQuest::getListNextQuestA of
-// each of the entry's five quest IDs. TUnk_28D7B8::fn_710028DA24 calls it after GfDataBlade::setActivateReserver.
+// each of the entry's five quest IDs. GfArenaParty::addFieldBlade calls it after GfDataBlade::setActivateReserver.
 void fn_71002FE418(unsigned int blade);
 
 }  // namespace gf

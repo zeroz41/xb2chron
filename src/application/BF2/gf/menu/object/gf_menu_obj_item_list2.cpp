@@ -162,7 +162,7 @@ void GfMenuObjItemList2::refreshItemList(ui::UIObjectAcc& acc, GfMenuItemList* l
             }
             GfMenuReference::fn_710036932C(type);
         }
-        unsigned int type = GfMenuReference::fn_710036934C();
+        unsigned int type = GfMenuReference::getReferenceItemType();
         acc.setDispChild(type == 2 || type == 3, "LAY_stock");
     }
 }

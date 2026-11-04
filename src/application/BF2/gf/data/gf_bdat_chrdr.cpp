@@ -1404,7 +1404,7 @@ const char* GfBdatChrDr::getChrDrCamBone(unsigned int id) const {
     return _gfbcd::getChrDrCamBone(*m_fpChrDr, id);
 }
 
-unsigned int GfBdatChrDr::fn_71001F13E0(unsigned int id) const {
+unsigned int GfBdatChrDr::getChrDrIraParam(unsigned int id) const {
     return _gfbcd::getChrDrIraParam(*m_fpChrDr, id);
 }
 
@@ -1444,59 +1444,59 @@ unsigned int GfBdatChrDr::getChrDrFavoriteItem(unsigned int id, unsigned int slo
     return _gfbcd::getSlot(s_getters, slot)(*m_fpChrDr, id);
 }
 
-unsigned int GfBdatChrDr::fn_71001F15D4() const {
+unsigned int GfBdatChrDr::getChrIrStart() const {
     return Bdat::getIdTop(m_fpChrIr->m_fp);
 }
 
-unsigned int GfBdatChrDr::fn_71001F15E0() const {
+unsigned int GfBdatChrDr::getChrIrEnd() const {
     return Bdat::getIdTop(m_fpChrIr->m_fp) + Bdat::getIdCount(m_fpChrIr->m_fp);
 }
 
-unsigned int GfBdatChrDr::fn_71001F161C(unsigned int id) const {
+unsigned int GfBdatChrDr::getChrIrdriverID(unsigned int id) const {
     return _gfbcd::getChrIrdriverID(*m_fpChrIr, id);
 }
 
-unsigned int GfBdatChrDr::fn_71001F16A4(unsigned int id) const {
+unsigned int GfBdatChrDr::getChrIrType(unsigned int id) const {
     return _gfbcd::getChrIrType(*m_fpChrIr, id);
 }
 
-unsigned int GfBdatChrDr::fn_71001F172C(unsigned int id) const {
+unsigned int GfBdatChrDr::getChrIrGroupID(unsigned int id) const {
     return _gfbcd::getChrIrGroupID(*m_fpChrIr, id);
 }
 
-unsigned int GfBdatChrDr::fn_71001F17B4(unsigned int id) const {
+unsigned int GfBdatChrDr::getChrIrDefWpnAcce(unsigned int id) const {
     return _gfbcd::getChrIrDefWpnAcce(*m_fpChrIr, id);
 }
 
-bool GfBdatChrDr::fn_71001F183C(unsigned int id) const {
+bool GfBdatChrDr::isChrIrFlagWpnInNonView(unsigned int id) const {
     return _gfbcd::isChrIrFlagWpnInNonView(*m_fpChrIr, id);
 }
 
-const char* GfBdatChrDr::fn_71001F18D4(unsigned int id) const {
+const char* GfBdatChrDr::getChrIrSeDriver(unsigned int id) const {
     return _gfbcd::getChrIrSeDriver(*m_fpChrIr, id);
 }
 
-const char* GfBdatChrDr::fn_71001F1958(unsigned int id) const {
+const char* GfBdatChrDr::getChrIrSeBlade(unsigned int id) const {
     return _gfbcd::getChrIrSeBlade(*m_fpChrIr, id);
 }
 
-unsigned int GfBdatChrDr::fn_71001F19DC(unsigned int id) const {
+unsigned int GfBdatChrDr::getChrIrKizunaReward1(unsigned int id) const {
     return _gfbcd::getChrIrKizunaReward1(*m_fpChrIr, id);
 }
 
-unsigned int GfBdatChrDr::fn_71001F1A64(unsigned int id) const {
+unsigned int GfBdatChrDr::getChrIrKizunaReward2(unsigned int id) const {
     return _gfbcd::getChrIrKizunaReward2(*m_fpChrIr, id);
 }
 
-unsigned int GfBdatChrDr::fn_71001F1AEC(unsigned int id) const {
+unsigned int GfBdatChrDr::getIRA_PartyGuest1(unsigned int id) const {
     return _gfbcd::getIraPartyGuest1(*m_fpIraParty, id);
 }
 
-unsigned int GfBdatChrDr::fn_71001F1B74(unsigned int id) const {
+unsigned int GfBdatChrDr::getIRA_PartyGuest2(unsigned int id) const {
     return _gfbcd::getIraPartyGuest2(*m_fpIraParty, id);
 }
 
-unsigned int GfBdatChrDr::fn_71001F1BFC(unsigned int id, unsigned int slot) const {
+unsigned int GfBdatChrDr::getIRA_PartyDriver(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
         _gfbcd::fn_71001EEB28,
@@ -1506,7 +1506,7 @@ unsigned int GfBdatChrDr::fn_71001F1BFC(unsigned int id, unsigned int slot) cons
     return _gfbcd::getSlot(s_getters, slot)(*m_fpIraParty, id);
 }
 
-unsigned int GfBdatChrDr::fn_71001F1C10(unsigned int id, unsigned int slot) const {
+unsigned int GfBdatChrDr::getIRA_PartyBlade1(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
         _gfbcd::fn_71001EEBB0,
@@ -1516,7 +1516,7 @@ unsigned int GfBdatChrDr::fn_71001F1C10(unsigned int id, unsigned int slot) cons
     return _gfbcd::getSlot(s_getters, slot)(*m_fpIraParty, id);
 }
 
-unsigned int GfBdatChrDr::fn_71001F1C24(unsigned int id, unsigned int slot) const {
+unsigned int GfBdatChrDr::getIRA_PartyBlade2(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
         _gfbcd::fn_71001EEC38,

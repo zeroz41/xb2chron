@@ -36,19 +36,17 @@ public:
     static bool isEnableNewGameAdv();
     void moveCursor(unsigned int handle, int index);
     bool seqConfirmNewGame();
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because they are m_seq jobs of
-    // this class (they read m_confirmOpen, m_handle, m_seq). What they do:
-    // fn_710048AAD8: a job the confirm jobs below queue on a 0 window result (not written yet).
-    // fn_710048AF50: opens common window 0xE1 once, then on result 0 queues fn_710048AAD8, else sends event 0x101
-    // to LAY_main; queued by ListListener::reciveEvent.
-    // fn_710048B878: opens common window 0x116 once, then on result 0 sends LAY_ang_info's close event and queues
-    // fn_710048AAD8, else enables LAY_ang_info's input; queued by fn_710048B048.
-    // fn_710048BF38: opens common window 0x10A once, then hands m_index to LAY_main's call context as the result;
-    // queued by fn_710048AAD8.
-    bool fn_710048AAD8();
+    // 2.0.0's symbols name seqSelectDifficulity, seqConfirmAdvancedNewGame, seqTipsDifficulity; the fn_ names are
+    // placeholders. What they do: seqSelectDifficulity: a job the confirm jobs below queue on a 0 window result (not
+    // written yet). fn_710048AF50: opens common window 0xE1 once, then on result 0 queues seqSelectDifficulity, else
+    // sends event 0x101 to LAY_main; queued by ListListener::reciveEvent. seqConfirmAdvancedNewGame: opens common
+    // window 0x116 once, then on result 0 sends LAY_ang_info's close event and queues seqSelectDifficulity, else
+    // enables LAY_ang_info's input; queued by fn_710048B048. seqTipsDifficulity: opens common window 0x10A once, then
+    // hands m_index to LAY_main's call context as the result; queued by seqSelectDifficulity.
+    bool seqSelectDifficulity();
     bool fn_710048AF50();
-    bool fn_710048B878();
-    bool fn_710048BF38();
+    bool seqConfirmAdvancedNewGame();
+    bool seqTipsDifficulity();
 
     static bool s_NoSaveData;  // initialize: the save data's version is not 0x3A15B
 

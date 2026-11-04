@@ -13,9 +13,9 @@
 
 namespace btl {
 
-TUnk_B3BD68::~TUnk_B3BD68() {}
+SirenBattleManager::~SirenBattleManager() {}
 
-void TUnk_B3BD68::fn_71000A53C4() {
+void SirenBattleManager::Initialize() {
     unsigned char* fp = gf::GfDataBdat::getFP(0x3C);
     int top = Bdat::getIdTop(fp);
     int count = Bdat::getIdCount(fp);
@@ -55,38 +55,38 @@ void TUnk_B3BD68::fn_71000A53C4() {
 }
 
 void fn_71000A571C() {
-    TUnk_B3BD68* manager = TUnk_B3BD68::get();
-    manager->fn_71000A5764();
+    SirenBattleManager* manager = SirenBattleManager::get();
+    manager->Finalize();
     delete manager;
 }
 
-void TUnk_B3BD68::fn_71000A586C() {
-    fn_71000A5764();
+void SirenBattleManager::NotifyMapChange() {
+    Finalize();
 }
 
-void TUnk_B3BD68::fn_71000A5B20(bool flag) {
+void SirenBattleManager::NotifyDownEnd(bool flag) {
     m_sides[!flag].pad_12_0 = 0;
 }
 
-void TUnk_B3BD68::fn_71000A6050(const fw::UpdateInfo& info) {}
+void SirenBattleManager::PreUpdate(const fw::UpdateInfo& info) {}
 
-void TUnk_B3BD68::fn_71000A6054(const fw::UpdateInfo& info) {
-    get()->fn_71000A606C(info);
+void SirenBattleManager::Update(const fw::UpdateInfo& info) {
+    get()->UpdateProc(info);
 }
 
-const char* TUnk_B3BD68::fn_71000A6C20(int situation) const {
+const char* SirenBattleManager::GetSituationCameraName(int situation) const {
     return m_cameraNames[situation];
 }
 
-bool TUnk_B3BD68::fn_71000A6C2C(bool flag) const {
+bool SirenBattleManager::GetShootBulletNum(bool flag) const {
     return m_sides[!flag].pad_d;
 }
 
-float TUnk_B3BD68::fn_71000A6C44(bool flag) const {
+float SirenBattleManager::GetShootBulletIntrevalSec(bool flag) const {
     return m_params[!flag].m_shotFrame * (1.0f / 30.0f);
 }
 
-void TUnk_B3BD68::fn_71000A6C68(BattleCharacter* character) {
+void SirenBattleManager::fn_71000A6C68(BattleCharacter* character) {
     if (pad_1cb) {
         return;
     }
@@ -107,12 +107,12 @@ void TUnk_B3BD68::fn_71000A6C68(BattleCharacter* character) {
     }
 }
 
-bool TUnk_B3BD68::fn_71000A6CCC() const {
+bool SirenBattleManager::IsRegisterSiren() const {
     return m_sides[0].m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) ||
            m_sides[1].m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
 }
 
-void TUnk_B3BD68::fn_71000A6CF0(::mm::mtl::IntrusivePtr<fw::Camera>& camera) {
+void SirenBattleManager::fn_71000A6CF0(::mm::mtl::IntrusivePtr<fw::Camera>& camera) {
     if (m_camera) {
         fw::CameraManager::get()->m_layers[0].pop(m_camera, 0.0f);
         m_camera = nullptr;
@@ -122,7 +122,7 @@ void TUnk_B3BD68::fn_71000A6CF0(::mm::mtl::IntrusivePtr<fw::Camera>& camera) {
     pad_c0 = 0;
 }
 
-bool TUnk_B3BD68::fn_71000A6DFC() const {
+bool SirenBattleManager::IsCameraProc() const {
     if (pad_1cb) {
         if (m_camera) {
             return true;
@@ -130,14 +130,14 @@ bool TUnk_B3BD68::fn_71000A6DFC() const {
         if (pad_d0 >= 12 && pad_d0 <= 18) {
             return true;
         }
-        if (TalkManager::get()->fn_71000AA39C()) {
+        if (TalkManager::get()->IsTalkSirenSp()) {
             return true;
         }
     }
     return false;
 }
 
-float TUnk_B3BD68::fn_71000A6EBC(bool flag) const {
+float SirenBattleManager::GetDamageBonus(bool flag) const {
     float rate = 0.0f;
     if (pad_1cb && !m_sides[!flag].pad_12_0) {
         Param param = m_params[!flag];
@@ -146,7 +146,7 @@ float TUnk_B3BD68::fn_71000A6EBC(bool flag) const {
     return rate;
 }
 
-float TUnk_B3BD68::fn_71000A6F34(bool flag) const {
+float SirenBattleManager::GetGaugeRate(bool flag) const {
     float rate = 1.0f;
     if (pad_1cb && !pad_1cc) {
         const Side& side = m_sides[!flag];

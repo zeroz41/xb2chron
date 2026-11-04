@@ -723,7 +723,7 @@ inline void StateFieldWaterDeadIdle::onLeave(void* owner, ai::State* next) {
 }
 
 inline void StateFieldWaterDeadIdle::onStep(void* owner, const void* arg) {
-    fn_7100507984(static_cast<GfComBehaviorPc*>(owner), *static_cast<const fw::UpdateInfo*>(arg));
+    update(static_cast<GfComBehaviorPc*>(owner), *static_cast<const fw::UpdateInfo*>(arg));
 }
 
 inline const char* StateFieldWall::getName() const {

@@ -23,14 +23,12 @@ public:
     static void closeLeft();
     static void openRight(unsigned int image);
     static void closeRight();
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because they follow
-    // openRight/closeRight in the unit and do what they do for positions 3 (LAY_right_half) and 4 (LAY_left_half),
-    // only while GfMenuObjUtil::fn_710048FD30(3) holds. What they do: event 0x21 with m_param0 3/4 and m_param1 the
-    // image (fn_710044AB10, fn_710044AC04), event 0x22 with m_param0 3/4 (fn_710044AB90, fn_710044AC84).
-    static void fn_710044AB10(unsigned int image);
-    static void fn_710044AB90();
-    static void fn_710044AC04(unsigned int image);
-    static void fn_710044AC84();
+    // 2.0.0's symbols name them. What they do: event 0x21 with m_param0 3/4 and m_param1 the image (openRightHalf,
+    // openLeftHalf), event 0x22 with m_param0 3/4 (closeRightHalf, closeLeftHalf).
+    static void openRightHalf(unsigned int image);
+    static void closeRightHalf();
+    static void openLeftHalf(unsigned int image);
+    static void closeLeftHalf();
     // a half-second fade in or out of the handle's object, its end event carrying eventId: startCtrl's slot. 1.0.0
     // has them out of line; 3.0.1 has no copy (inline in its unit)
     static int ctrlFadeIn(unsigned int handle, unsigned int eventId);

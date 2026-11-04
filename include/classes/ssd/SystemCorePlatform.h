@@ -69,10 +69,9 @@ public:
     Result InitDelayEffect(unsigned char bus, SoundDelayEffecter* effect);
     Result InitI3dl2ReverbEffect(unsigned char bus, SoundI3dl2ReverbEffecter* effect);
     void DeleteEffect(EffectBusInfo& bus);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because SystemCore::Init, which
-    // runs SystemCorePlatform's InitPlatform and InitAudioDevice, calls it between them and it sits in this
-    // unit's code. What it does: returns 0x400 (1024, InitAudioDevice's voice-count ceiling); reads nothing.
-    int fn_710089E218();
+    // 2.0.0's symbols name it. What it does: returns 0x400 (1024, InitAudioDevice's voice-count ceiling); reads
+    // nothing.
+    int GetSdkVoiceCountMax();
     void InitAudioDevice(const SoundCore::InitParam& param);
     void QuitAudioDevice();
     void UpdateDevice();

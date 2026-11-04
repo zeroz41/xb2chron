@@ -20,7 +20,7 @@ public:
 
 // a save: 0x137B10 bytes (createSaveBuffer allocates them). 1.0.0's was the system and the game only (0x1176A0);
 // 3.0.1 adds the DLC drivers and a block after them, the same two GfDataStore keeps after its SDataOption
-// (fn_710022D440 returns GfDataStore's DLC drivers; GfDataStore::GfDataStore builds both as SDataSave() does).
+// (getDataGameIra returns GfDataStore's DLC drivers; GfDataStore::GfDataStore builds both as SDataSave() does).
 // The member names are not the original's.
 class SDataSave {
 public:

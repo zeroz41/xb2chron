@@ -445,7 +445,7 @@ void StateUtil::setLipSpeed(GfComBehaviorPc& behavior, float speed) {
 
 void StateUtil::playVibration(GfComBehaviorPc& behavior, fw::VibrationID id) {
     GfComPropertyPc* property = behavior.m_owner->findComponent<GfComPropertyPc>(5);
-    if ((property->m_stateFlags & 0x400) && !GfGameManager::fn_71002AC6D8()) {
+    if ((property->m_stateFlags & 0x400) && !GfGameManager::isVibrationDisable()) {
         fw::PadManager::playVibration(ml::PadVibrationInfo(id));
     }
 }

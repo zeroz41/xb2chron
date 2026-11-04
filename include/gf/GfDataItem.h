@@ -32,7 +32,7 @@ public:
     static float getFavoriteItemTime(unsigned int item);  // GfBdatItem::getFavoriteTime in seconds (x 60)
     // the item type of an item category: 11 below 4, 7 below 12, 10 below 24, 8 below 28, 6 below 30, else 0
     static unsigned int getTypeByItemCategory(unsigned int category);
-    // SDataGame::m_favoriteItemType. No parameter: its body reads none and its one caller (GfItemBox::fn_71002FA0F4)
+    // SDataGame::m_favoriteItemType. No parameter: its body reads none and its one caller (GfItemBox::initialize)
     // passes none (1.0.0's getFavoriteItemType(unsigned int) is a different function: a GfBdatItem lookup).
     static ItemBox* getFavoriteItemType();
     static SDataGame::ItemBoxEx* getItemBox();  // SDataGame::m_itemBox

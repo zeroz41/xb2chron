@@ -28,9 +28,8 @@ public:
     // fw::Applet::preUpdate, postUpdate and tail, tl::TitleApplet::update and postUpdate
     virtual void preUpdate(const UpdateInfo& info) {}  // slot 13
     virtual void update(const UpdateInfo& info) = 0;  // slot 14 (empty in the base table)
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (the base table's empty slot 15 at
-    // 0x710014E704). tl::TitleApplet's (fn_710014E6CC) passes the update info to GfManager::fn_710032A958
-    virtual void fn_710014E704(const UpdateInfo& info) {}  // slot 15
+    // 2.0.0's symbols name it. tl::TitleApplet's (fn_710014E6CC) passes the update info to GfManager::updateAfterLayer
+    virtual void updateAfterLayer(const UpdateInfo& info) {}  // slot 15
     virtual void postUpdate(const UpdateInfo& info) {}  // slot 16
     virtual void tail(const UpdateInfo& info) {}  // slot 17
 

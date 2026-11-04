@@ -111,10 +111,10 @@ void GfMenuObjLvupMain::initialize() {
             setup.m_param.m_pageRowSize = m_driverObjs->getSize();
             m_drivers->setupFromParty(setup);
         }
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(3)) {
             for (unsigned int i = 0; i < static_cast<unsigned int>(m_drivers->getSize()); i++) {
                 MenuDriverInfo& info = m_drivers->getContents(i);
-                info.m_driver = GfDataDriver::fn_71002417DC(info.m_driver);
+                info.m_driver = GfDataDriver::getIraFront(info.m_driver);
             }
         }
         {
@@ -124,7 +124,7 @@ void GfMenuObjLvupMain::initialize() {
             m_cursor = ui::UICtrlCursorSelect::create(set.searchChild("IMG_lv_drcursor"), setting, m_driverObjs);
         }
         for (unsigned int i = 0; i < static_cast<unsigned int>(m_driverObjs->getSize()); i++) {
-            if (!GfMenuObjUtil::fn_710048FD30(3)) {
+            if (!GfMenuObjUtil::isValidExpansion(3)) {
                 name.format("TXT_lv_drname@%02d", i + 1);
                 GfMenuCharDataAdapter* adapter =
                     GfMenuCharDataAdapter::createFromDriverList(set.searchChild(name.m_str), 2, m_drivers, i, false);
@@ -339,7 +339,7 @@ bool GfMenuObjLvupMain::seqClose3() {
     GfSound* sound = GfSound::get();
     if (sound != nullptr) {
         if (sound->isPlaying(m_jingle)) {
-            if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuObjUtil::fn_7100492C88()) {
+            if (GfMenuObjUtil::isValidExpansion(3) && GfMenuObjUtil::isVoiceSkip()) {
                 sound->stopBgm(m_jingle, 0.5f);
                 m_jingle = SoundHandle(0);
             }
@@ -348,7 +348,7 @@ bool GfMenuObjLvupMain::seqClose3() {
     }
     GfMenuSoundManager::fadeInFieldBgm(2.0f);
     GfMenuObjOperationInfo::close();
-    if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuManager::fn_710035DC94()) {
+    if (GfMenuObjUtil::isValidExpansion(3) && GfMenuManager::isOpenCampMenu()) {
         GfMenuObject::closeFSLayer(m_handle, false, true);
     } else {
         GfMenuObject::closeFSLayer(m_handle, true, true);
@@ -366,7 +366,7 @@ void GfMenuObjLvupMain::MainListener::reciveEvent(ui::EventData const& event, un
         param.m_out = 0;
         param.m_eventId = 1;
         GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
-        if (GfMenuObjUtil::fn_710048FD30(3) && !GfMenuManager::fn_710035DC94()) {
+        if (GfMenuObjUtil::isValidExpansion(3) && !GfMenuManager::isOpenCampMenu()) {
             ui::UIObjectAcc main(m_owner->m_handle, "LAY_main");
             main.setDispChild(false, "IMG_lv_fadebg");
             main.setDispChild(true, "IMG_lv_fadebg_inn");
@@ -382,8 +382,8 @@ void GfMenuObjLvupMain::MainListener::reciveEvent(ui::EventData const& event, un
                 } else {
                     m_owner->m_textOpened = false;
                     m_owner->m_seq.clear();
-                    m_owner->m_seq.addJob(&GfMenuObjLvupMain::fn_710042CB7C);
-                    m_owner->m_seq.addJob(&GfMenuObjLvupMain::fn_710042CB98);
+                    m_owner->m_seq.addJob(&GfMenuObjLvupMain::seqANG_WaitFade);
+                    m_owner->m_seq.addJob(&GfMenuObjLvupMain::seqANG_Notice);
                     GfMenuFlag::set1(0x53, 1);
                 }
             } else {
@@ -446,7 +446,7 @@ void GfMenuObjLvupMain::SelectListener::reciveEvent(ui::EventData const& event, 
     case 1: {
         acc.setDispChild(false, "IMG_lv_drcursor");
         GfMenuObjOperationInfo::open(acc.m_handle, 0, 0, 0);
-        bool alt = GfMenuObjUtil::fn_710048FD30(3);
+        bool alt = GfMenuObjUtil::isValidExpansion(3);
         bool clear = GfGameManager::isClearGame();
         if (!alt) {
             if (!clear) {
@@ -528,15 +528,15 @@ void GfMenuObjLvupMain::SelectListener::reciveEvent(ui::EventData const& event, 
     }
 }
 
-bool GfMenuObjLvupMain::fn_710042CB7C() {
+bool GfMenuObjLvupMain::seqANG_WaitFade() {
     return !GfMenuManager::isFading();
 }
 
-bool GfMenuObjLvupMain::fn_710042CB98() {
+bool GfMenuObjLvupMain::seqANG_Notice() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     if (!m_textOpened) {
         m_textContext->reset();
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(3)) {
             GfMenuObjCommonText::open(m_textContext, 0x132, 0);
         } else {
             GfMenuObjCommonText::open(m_textContext, 0x103, 0);

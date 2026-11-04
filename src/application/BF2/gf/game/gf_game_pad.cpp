@@ -48,8 +48,8 @@ void GfGamePad::changePadInputMode() {
             m_padRelay.bindAction("boot_mainmenu", this, &GfGamePad::eventInGameOpenMainMenu);
             m_padRelay.bindAction("call_system", this, &GfGamePad::eventInGameOpenSystemMenu);
             m_padRelay.bindAction("call_skiptravel", this, &GfGamePad::eventInGameOpenSkipTravelMenu);
-            if (GfGameManager::fn_71002A9E68()) {
-                m_padRelay.bindAction("call_party", this, &GfGamePad::fn_71002B6440);
+            if (GfGameManager::isGameTypeIra()) {
+                m_padRelay.bindAction("call_party", this, &GfGamePad::eventInGameParty);
             }
         }
     } else if (GfManager::isExecModeThater()) {
@@ -82,7 +82,7 @@ void GfGamePad::checkEmergencyEscape() {
     }
     m_escapeCount = 0;
     bool cond;
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         cond = GfGameCond::isGameCond(3877);
     } else {
         cond = GfGameCond::isGameCond(2654);
@@ -112,7 +112,7 @@ void GfGamePad::eventInGameEventPause() {
 
 void GfGamePad::eventInGameOpenMainMenu() {
     if (GfGameManager::isEnableOpenMainMenu() && GfGameManager::isEnableOpenMainMenuSequence()) {
-        GfEvent::fn_7100328568();
+        GfEvent::callOpenMeinMenu();
         GfMenuObjUtil::playSE(3);
         GfPlayFactory::createOpenMenu2(1, static_cast<MAINMENU>(0), nullptr);
     } else {
@@ -122,7 +122,7 @@ void GfGamePad::eventInGameOpenMainMenu() {
 
 void GfGamePad::eventInGameOpenSystemMenu() {
     if (GfGameManager::isEnableOpenMainMenu() && GfGameManager::isEnableOpenMainMenuSequence()) {
-        GfEvent::fn_7100328568();
+        GfEvent::callOpenMeinMenu();
         GfMenuObjUtil::playSE(3);
         GfPlayFactory::createOpenMenu2(1, static_cast<MAINMENU>(1), nullptr);
     } else {
@@ -132,8 +132,8 @@ void GfGamePad::eventInGameOpenSystemMenu() {
 
 void GfGamePad::eventInGameOpenSkipTravelMenu() {
     if (GfGameManager::isEnableOpenMainMenu() && GfGameManager::isEnableOpenMainMenuSequence() &&
-        GfMenuManager::fn_710035A6CC() && GfMenuManager::fn_710035A6F8() && !GfMenuObjUtil::fn_7100492CBC()) {
-        GfEvent::fn_7100328568();
+        GfMenuManager::canPlayerControl() && GfMenuManager::isEnableMinimap() && !GfMenuObjUtil::isInChallengeBattleMap()) {
+        GfEvent::callOpenMeinMenu();
         GfMenuObjUtil::playSE(3);
         GfPlayFactory::createOpenMenu2(1, static_cast<MAINMENU>(2), nullptr);
     } else {
@@ -141,9 +141,9 @@ void GfGamePad::eventInGameOpenSkipTravelMenu() {
     }
 }
 
-void GfGamePad::fn_71002B6440() {
+void GfGamePad::eventInGameParty() {
     if (!GfGameManager::isEnableOpenMainMenu() || !GfGameManager::isEnableOpenMainMenuSequence() ||
-        !GfMenuManager::fn_710035A6CC() || !GfMenuManager::fn_710035A6F8()) {
+        !GfMenuManager::canPlayerControl() || !GfMenuManager::isEnableMinimap()) {
         return;
     }
     GfObjAcc acc(GfGameManager::getControlMover());
@@ -157,7 +157,7 @@ void GfGamePad::fn_71002B6440() {
         }
     }
     if (count >= 2) {
-        GfPlayFactory::fn_7100321258();
+        GfPlayFactory::createPartySwitchForIra();
     }
 }
 

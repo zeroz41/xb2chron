@@ -108,7 +108,7 @@ void TitleMain::update(const fw::UpdateInfo& info) {
     if (title->m_isTitleBgm) {
         gf::GfSound* sound = gf::GfSound::sys();
         if (sound != nullptr && !sound->isPlaying(title->m_titleBgm)) {
-            if (gf::GfManager::fn_710032A1DC()) {
+            if (gf::GfManager::isGameTypeIra()) {
                 title->m_titleBgm = sound->playBgm("stream/bgm/m204.wav", 1.0f, false, -1, static_cast<fw::SoundCategory>(3));
             } else {
                 title->m_titleBgm = sound->playBgm("stream/bgm/m02.wav", 1.0f, false, -1, static_cast<fw::SoundCategory>(3));
@@ -131,11 +131,11 @@ void TitleMain::returnTitle(gf::SAVESLOT slot) {
         title->m_reqReturnTitle = true;
         break;
     }
-    title->fn_710014F5FC(0.0f, gf::GfManager::isExecModeThater() ? 0.0f : 2.0f);
-    title->fn_710014F70C(0.0f);
+    title->setMaskVolumeFade(0.0f, gf::GfManager::isExecModeThater() ? 0.0f : 2.0f);
+    title->setMaskVolumeGameSe(0.0f);
 }
 
-void TitleMain::fn_710014F5FC(float volume, float time) {
+void TitleMain::setMaskVolumeFade(float volume, float time) {
     gf::GfSound* sound = gf::GfSound::sys();
     if (sound == nullptr) {
         return;
@@ -155,7 +155,7 @@ void TitleMain::fn_710014F5FC(float volume, float time) {
     sound->setCategoryVolume(m_seCategory, static_cast<fw::SoundCategory>(8), volume, time);
 }
 
-void TitleMain::fn_710014F70C(float volume) {
+void TitleMain::setMaskVolumeGameSe(float volume) {
     gf::GfSound* sound = gf::GfSound::sys();
     if (sound == nullptr) {
         return;
@@ -275,7 +275,7 @@ unsigned int TitleMain::getPlayTitleEvent() {
     return m_playTitleEvent;
 }
 
-void TitleMain::fn_710014FBAC() {
+void TitleMain::getGameClearFlagFromSaveData() {
     m_newGameAdv = false;
     if (m_saveBuffer->m_system.m_version != 0x3A15B) {
         return;
@@ -333,8 +333,8 @@ bool TitleMain::fn_710014FD74() {
     return !gf::GfDataBlade::fn_71002325AC(save->m_game);
 }
 
-void TitleMain::fn_710014FDB8(bool flag) {
-    gf::GfManager::fn_710032A1FC(flag);
+void TitleMain::resetGameType(bool flag) {
+    gf::GfManager::resetGameType(flag);
     m_isClear = false;
     m_newGameAdv = false;
 }
@@ -354,7 +354,7 @@ inline const char* TitleStateSaveData::getName() const {
 inline void TitleStateSaveData::onEnter(void* owner, ai::State* prev) {}
 inline void TitleStateSaveData::onLeave(void* owner, ai::State* next) {}
 inline void TitleStateSaveData::onStep(void* owner, const void* arg) {
-    fn_710015359C(static_cast<TitleMain*>(owner), *static_cast<const fw::UpdateInfo*>(arg));
+    update(static_cast<TitleMain*>(owner), *static_cast<const fw::UpdateInfo*>(arg));
 }
 
 inline const char* TitleStateToTitle::getName() const {
@@ -401,18 +401,18 @@ inline const char* TitleStateChangeGameType::getName() const {
 inline void TitleStateChangeGameType::onEnter(void* owner, ai::State* prev) {}
 inline void TitleStateChangeGameType::onLeave(void* owner, ai::State* next) {}
 inline void TitleStateChangeGameType::onStep(void* owner, const void* arg) {
-    fn_7100156288(static_cast<TitleMain*>(owner), *static_cast<const fw::UpdateInfo*>(arg));
+    update(static_cast<TitleMain*>(owner), *static_cast<const fw::UpdateInfo*>(arg));
 }
 
 inline const char* TitleStateWarning::getName() const {
     return "TitleStateWarning";
 }
 inline void TitleStateWarning::onEnter(void* owner, ai::State* prev) {
-    fn_71001565A0(static_cast<TitleMain*>(owner), prev);
+    enter(static_cast<TitleMain*>(owner), prev);
 }
 inline void TitleStateWarning::onLeave(void* owner, ai::State* next) {}
 inline void TitleStateWarning::onStep(void* owner, const void* arg) {
-    fn_71001565A8(static_cast<TitleMain*>(owner), *static_cast<const fw::UpdateInfo*>(arg));
+    update(static_cast<TitleMain*>(owner), *static_cast<const fw::UpdateInfo*>(arg));
 }
 
 }  // namespace tl

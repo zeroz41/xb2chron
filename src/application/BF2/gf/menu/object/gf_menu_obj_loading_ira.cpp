@@ -1,4 +1,4 @@
-#include "classes/gf/TUnk_B62D58.h"
+#include "classes/gf/GfMenuObjLoadingIra.h"
 #include "ui/EventData.h"
 #include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfMenuObject.h"
@@ -8,13 +8,13 @@
 
 namespace gf {
 
-TUnk_B62D58::TUnk_B62D58(unsigned int handle) : GfMenuObject(handle), m_dispCount(0) {}
+GfMenuObjLoadingIra::GfMenuObjLoadingIra(unsigned int handle) : GfMenuObject(handle), m_dispCount(0) {}
 
-TUnk_B62D58::~TUnk_B62D58() {
+GfMenuObjLoadingIra::~GfMenuObjLoadingIra() {
     ;  // the original body has a statement the build compiles away; an empty one would drop the table store
 }
 
-void TUnk_B62D58::initialize() {
+void GfMenuObjLoadingIra::initialize() {
     {
         ui::UIObjectAcc acc(m_handle, "LAY_loading");
 #line 53
@@ -40,11 +40,11 @@ void TUnk_B62D58::initialize() {
     GfMenuObject::initialize();
 }
 
-void TUnk_B62D58::finalize() {
+void GfMenuObjLoadingIra::finalize() {
     GfMenuObject::finalize();
 }
 
-void TUnk_B62D58::update() {
+void GfMenuObjLoadingIra::update() {
     GfMenuObject::update();
 }
 
@@ -91,7 +91,7 @@ void TUnk_B62DA0::reciveEvent(const ui::EventData& event, unsigned int handle) {
     }
 }
 
-void TUnk_B62D58::fn_710042AE80(bool open, unsigned short frames) {
+void GfMenuObjLoadingIra::dispLoading(bool open, unsigned short frames) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x8f));
     if (acc.m_object != nullptr && !acc.isTerm()) {
         ui::EventData event;
@@ -101,7 +101,7 @@ void TUnk_B62D58::fn_710042AE80(bool open, unsigned short frames) {
     }
 }
 
-void TUnk_B62D58::fn_710042AF14(bool open, unsigned short frames) {
+void GfMenuObjLoadingIra::dispSaving(bool open, unsigned short frames) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x8f));
     if (acc.m_object != nullptr && !acc.isTerm()) {
         ui::EventData event;

@@ -2,7 +2,7 @@
 #define GF_SDATAGAME_H
 
 #include "classes/gf/GfFieldTime.h"
-#include "classes/gf/TUnk_B535D0.h"
+#include "classes/gf/GfGameArena.h"
 #include "gf/GameFlag.h"
 #include "gf/SDataBlade.h"
 #include "gf/SDataDriver.h"
@@ -99,7 +99,7 @@ public:
     SDataBlade m_blades[422];
     SDataParty m_party;  // 0xE9884: GfDataParty::getSDataParty (the name is not the original's)
     unsigned char pad_E98D4[0x4];  // (m_party is 0x50 bytes: m_leader aligns it to 4)
-    // 0xE98D8: GfDataItem::getFavoriteItemType returns it; GfItemBox::fn_71002FA0F4 keeps it at +0x308 and clears its
+    // 0xE98D8: GfDataItem::getFavoriteItemType returns it; GfItemBox::initialize keeps it at +0x308 and clears its
     // 0x122EC bytes (the type is 1.0.0's, see ItemBox; named after its accessor, the name is not the original's)
     ItemBox m_favoriteItemType;
     GameFlag m_gameFlag;  // GfGameFlag's (the name is not the original's)
@@ -168,16 +168,16 @@ public:
     unsigned int m_savedEventCount;
     unsigned char pad_1171D8[0x194];
     // 0x11736C: the add-on ids + 1 the game was saved with (GfDataBlade::fn_7100232518 stores
-    // TUnk_B4C840::fn_71002229C0(n) + 1, fn_71002325AC compares; the name is not the original's)
+    // GfDataAoc::fn_71002229C0(n) + 1, fn_71002325AC compares; the name is not the original's)
     int m_aocIds[5];
     unsigned char pad_117380[0x30C];
-    // 0x11768C: the 16 drivers' arts records past the ones their data keeps (GfDataDriver::fn_7100247804 and
-    // fn_7100245478 index it like getSDataDriver's m_drivers; the name is not the original's)
+    // 0x11768C: the 16 drivers' arts records past the ones their data keeps (GfDataDriver::getDriverWeaponType and
+    // getDriverArtsLevel index it like getSDataDriver's m_drivers; the name is not the original's)
     SDataDriverArtsEx m_driverArtsEx[16];
-    // 0x11A8CC: the challenge battle rule table (TUnk_B535D0::fn_7100291CF4 returns it, fn_7100291D14 a rule of
-    // it, fn_7100291CC0 / fn_7100291E40 read and mark its rows; the constructor runs its fn_71001528A0; the name is
+    // 0x11A8CC: the challenge battle rule table (GfGameArena::fn_7100291CF4 returns it, fn_7100291D14 a rule of
+    // it, setupGame / fn_7100291E40 read and mark its rows; the constructor runs its fn_71001528A0; the name is
     // not the original's)
-    TUnk_B535D0::RuleTable m_ruleTable;
+    GfGameArena::RuleTable m_ruleTable;
     // 0x11B4CC: one record per row of GfBdatChrEnArrange's named-enemy range (gf::fn_71002ED4F0 gives the row, 0 for
     // none): four times (the columns of modes 0, 1, 2 and 4: gf::fn_71002ED608 / fn_71002ED6B8) and a flag byte with
     // one bit per mode (gf::fn_71002ED5B0). The type and names are not the original's.
@@ -191,7 +191,7 @@ public:
     // (below 1500 the count is a 16-bit local flag; GfGameUtil::incEnemySuppress reads it through fn_7100234940). The
     // name is not the original's.
     unsigned short m_enemySuppressCount[800];
-    // 0x11D27C: GfDataItem::getItemBox returns it; GfItemBox::fn_71002FA0F4 keeps it at +0x310 and clears its 0x1B04
+    // 0x11D27C: GfDataItem::getItemBox returns it; GfItemBox::initialize keeps it at +0x310 and clears its 0x1B04
     // bytes (named after its accessor; the type and name are not the original's)
     ItemBoxEx m_itemBox;
     unsigned char pad_11ED80[0x8000];

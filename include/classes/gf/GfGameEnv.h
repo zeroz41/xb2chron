@@ -98,34 +98,32 @@ namespace gf {
 // gf_game_env.cpp's fn_71002A752C creates it (0x10 bytes, line 1258) from GfGameManager::initialize. What it does:
 // keeps the add-on content state: its functions refresh the local flags 0xD781-0xD787 from GfDataAoc's counts
 // (fn_71002229C0(1..3)), answer whether an encoded add-on item is owned (fn_71002A75DC) and hold the mode int that
-// GfGameManager::fn_71002A9E68 tests for 1.
-class TUnk_B54858 : public ::mm::mtl::PtrSingleton< ::gf::TUnk_B54858> {
+// GfGameManager::isGameTypeIra tests for 1.
+class GfGameAoc : public ::mm::mtl::PtrSingleton< ::gf::GfGameAoc> {
 public:
-    virtual ~TUnk_B54858() {}  // slot 0 (its table's D2 slot holds the base's)
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: GfGameManager::fn_71002AC558
+    virtual ~GfGameAoc() {}  // slot 0 (its table's D2 slot holds the base's)
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: GfGameManager::resetGameType
     // passes the instance. What it does: sets GfDataGame's bit 0 of 0xFD6D0 to (mode == 1), stores mode at 0x8 and
-    // refreshes the add-on flags 0xD781-0xD787 (as fn_71002A7468).
+    // refreshes the add-on flags 0xD781-0xD787 (as refreshAocFlag).
     void fn_71002A7430(int mode);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: GfGameManager::fn_71002AC598
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: GfGameManager::isInstalledBattleArenaContents
     // passes the instance. What it does: decodes id (kind = bits 16-19, needed count = bits 8-15), true when
-    // GfDataAoc's count of that kind reaches it; kind 4 (0x401xx/0x402xx) also asks GfBdatShop::fn_710021E7CC.
+    // GfDataAoc's count of that kind reaches it; kind 4 (0x401xx/0x402xx) also asks GfBdatShop::getMNU_DlcGiftgetflag.
     bool fn_71002A75DC(unsigned int id);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: GfGameManager's IGfEvent slot 46
-    // override passes the instance. What it does: for id >= 35353 refreshes the add-on flags (fn_71002A7468).
-    void fn_71002A7734(unsigned int id);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: fn_71002A7430 and fn_71002A7734
-    // inline it. What it does: sets local flags 0xD781-0xD784 (type 1) to whether GfDataAoc's count 1
+    // 2.0.0's symbols name it. What it does: for id >= 35353 refreshes the add-on flags (refreshAocFlag).
+    void gevChangeAocFlag(unsigned int id);
+    // 2.0.0's symbols name it. What it does: sets local flags 0xD781-0xD784 (type 1) to whether GfDataAoc's count 1
     // (fn_71002229C0(1)) is above 0..3, 0xD785 to count 3 > 0, 0xD786 to 1 and 0xD787 to count 2 > 0.
-    void fn_71002A7468();
+    void refreshAocFlag();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it builds the instance
     // (0x10 bytes, gf_game_env.cpp line 1258, m_mode 0) as build does for the other singletons of the file.
     static void fn_71002A752C();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it deletes the instance when
-    // there is one, as destroy does for the other singletons of the file.
-    static void fn_71002A75BC();
-    TUnk_B54858() : m_mode(0) {}
+    // 2.0.0's symbols name it. It deletes the instance when there is one, as destroy does for the other singletons of
+    // the file.
+    static void destroy();
+    GfGameAoc() : m_mode(0) {}
 
-    int m_mode;  // 0x8 (the name is not the original's) 1 in the mode GfGameManager::fn_71002A9E68 tests
+    int m_mode;  // 0x8 (the name is not the original's) 1 in the mode GfGameManager::isGameTypeIra tests
 };
 }  // namespace gf
 

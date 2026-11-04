@@ -50,7 +50,7 @@ public:
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's getMdlFile calls nothing like it).
 // A free function next to GfAssetSetupEnemy because its only callers are GfAssetSetupEnemy::getMdlFile and
 // GfAssetSetupEnemyBlade::getMdlFile and it takes no this. What it does: when the model name is a party driver's
-// (drivers 1..6 for which GfDataDriver::fn_7100249170 holds, CHR_Dr model compared with strcmp) it returns
+// (drivers 1..6 for which GfDataDriver::isAttachedParty holds, CHR_Dr model compared with strcmp) it returns
 // fn_71002DF39C(driver, false, createType3); else when it is an attached party blade's CHR_Bl model it returns
 // GfGameUtil::getBladeModel(blade, false); else the name itself. Callers pass m_enemyParam->m_createType == 3.
 const char* fn_71001BD044(const char* name, bool createType3);

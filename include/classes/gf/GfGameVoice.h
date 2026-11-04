@@ -157,16 +157,12 @@ public:
     static GAME_VOICE_HANDLE* playVoice(const ParamObj& obj, const char* name, CV_PRIO prio, bool waitForOthers);
     static GAME_VOICE_HANDLE* playVoice(GF_OBJ_HANDLE* handle, const char* name, CV_PRIO prio);
     static GAME_VOICE_HANDLE* playVoice(unsigned int type, unsigned int id, const char* name, CV_PRIO prio);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
-    // GfGameVoice's playVoice overloads and only calls playVoice. What it does: plays a voice for the object of a
-    // kind and an ID (ParamObj(type, id)) that waits while another object's voice plays (playVoice's
-    // waitForOthers true); its one caller is fn_7100569264.
-    static GAME_VOICE_HANDLE* fn_71002F1D20(unsigned int type, unsigned int id, const char* name, CV_PRIO prio);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
-    // GfGameVoice's playVoice overloads and walks GfGameVoice's playing list. What it does: plays a voice for an
-    // object (playVoice(ParamObj(handle), name, prio, false)), then sets waitForOthers on the slot that plays it;
-    // its one caller is fn_7100568E1C.
-    static GAME_VOICE_HANDLE* fn_71002F1D5C(GF_OBJ_HANDLE* handle, const char* name, CV_PRIO prio);
+    // 2.0.0's symbols name it. What it does: plays a voice for the object of a kind and an ID (ParamObj(type, id)) that
+    // waits while another object's voice plays (playVoice's waitForOthers true); its one caller is fn_7100569264.
+    static GAME_VOICE_HANDLE* playVoiceParty(unsigned int type, unsigned int id, const char* name, CV_PRIO prio);
+    // 2.0.0's symbols name it. What it does: plays a voice for an object (playVoice(ParamObj(handle), name, prio,
+    // false)), then sets waitForOthers on the slot that plays it; its one caller is createInPartyForIra.
+    static GAME_VOICE_HANDLE* playVoiceParty(GF_OBJ_HANDLE* handle, const char* name, CV_PRIO prio);
     // plays the named voice ("702870101"), handing back its handle for getResult
     static GAME_VOICE_HANDLE* playVoice(const char* name);
     static CV_RESULT getResult(GAME_VOICE_HANDLE* voice);

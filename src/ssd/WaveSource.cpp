@@ -133,10 +133,10 @@ void CommandManager::Init(int capacity) {
         lists_[i].entries = SoundMemory::allocator_->NewInstance<CommandEntry>(capacity);
         lists_[i].count = 0;
     }
-    fn_71008A22D0();
+    SwitchBuffer();
 }
 
-void CommandManager::fn_71008A22D0() {
+void CommandManager::SwitchBuffer() {
     List* written = write_;
     List* executed = &lists_[written != &lists_[0]];
     write_ = &lists_[written == &lists_[0]];

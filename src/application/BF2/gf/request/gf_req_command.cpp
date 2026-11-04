@@ -24,12 +24,12 @@ namespace gf {
 // The requests' data (each new'd for GfReqManager::addCommand, which deletes it once the request ran). Every name
 // below is inferred, not the original's.
 
-// a save: reqSave, fn_7100554234, reqSoloParty and reqSaveOption fill it
+// a save: reqSave, reqSaveForLastGame, reqSoloParty and reqSaveOption fill it
 struct ReqSaveParam : public GfReqParam {
     ReqSaveParam() : m_soloParty(false), m_flag(false) {}
     unsigned int m_slot;  // a SAVESLOT, or reqSoloParty's party; reqSaveOption's -1
     bool m_soloParty;     // reqSoloParty's
-    bool m_flag;          // fn_7100554234's
+    bool m_flag;          // reqSaveForLastGame's
 };
 
 struct ReqWaitEventParam : public GfReqParam {
@@ -76,7 +76,7 @@ unsigned int GfReqCommand::reqSave(SAVESLOT slot) {
     return GfReqManager::addCommand(param, execSave);
 }
 
-unsigned int GfReqCommand::fn_7100554234(SAVESLOT slot) {
+unsigned int GfReqCommand::reqSaveForLastGame(SAVESLOT slot) {
 #line 147
     ReqSaveParam* param = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ReqSaveParam;
     param->m_slot = slot;

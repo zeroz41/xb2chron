@@ -101,7 +101,7 @@ void GfMenuObjArtsPalette::initialize() {
             }
             GfMenuObject::attachExternalCall(0x27, main.m_handle);
             mm::mtl::FixStr<32> name;
-            if (GfMenuObjUtil::fn_710048FD30(3)) {
+            if (GfMenuObjUtil::isValidExpansion(3)) {
                 GfMenuCharDataAdapter* icon =
                     GfMenuCharDataAdapter::createFromPartyDriver(main.searchChild("IMG_elem_icon"), 0x2A, 0, true);
                 if (icon != nullptr) {

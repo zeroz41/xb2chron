@@ -63,13 +63,12 @@ public:
     static void getOwnerBonus(OwnerBonus& bonus);  // GfGameScene::updateParam refreshes its owner bonus with it
     // hands a driver its default accessory once (CHR_Dr's DefAcce) and equips it in slot 0
     static void execEquipDriverDefaultAcce(unsigned int driver);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies between
-    // execEquipDriverDefaultAcce and execDriverDead among GfGameUtil's functions. What it does: when
-    // GfDataDriver::fn_7100237A94(driver) holds and fn_7100247474(driver) is 0, takes the accessory GfBdatChrDr's
-    // fn_71001F17B4(fn_71001F13E0(driver)) names, adds it to the item box silently (if there is room) and hands it
-    // to GfItemUtil's unit's fn_71002FCD68 with an empty handle. Its one caller, GfGameScene::gevDriverActivate,
-    // calls it right after execEquipDriverDefaultAcce when a driver becomes active.
-    static void fn_71002EB4B8(unsigned int driver);
+    // 2.0.0's symbols name it. What it does: when GfDataDriver::isIraFront(driver) holds and getEquipWpnAcce(driver) is
+    // 0, takes the accessory GfBdatChrDr's getChrIrDefWpnAcce(getChrDrIraParam(driver)) names, adds it to the item box
+    // silently (if there is room) and hands it to GfItemUtil's unit's fn_71002FCD68 with an empty handle. Its one
+    // caller, GfGameScene::gevDriverActivate, calls it right after execEquipDriverDefaultAcce when a driver becomes
+    // active.
+    static void execEquipIraDefaultWpnAcce(unsigned int driver);
     // SCOM_POPUP::createAchievement passes its blade, line and level; when it returns true no popup is queued
     static bool setupSaveAchievementPopup(unsigned int, unsigned int, unsigned int);
     static bool isCondDriverModel(unsigned int);
@@ -87,7 +86,7 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
     // GfGameUtil's (right after getBladeModel, its only caller found). What it does: unless the blade is a Hana
     // (GfDataHana::isValid), the model name a GfBdatItem row of one of the blade's equipped orbs gives
-    // (GfDataBlade::getEquipOrb by slot, fn_7100200F60 the name, fn_7100200FE4 the blade it is for, which must be
+    // (GfDataBlade::getEquipOrb by slot, getEquipOrbModel the name, getEquipOrbBlade the blade it is for, which must be
     // this blade); nullptr for none. getBladeModel falls back to SDataBlade::m_modelName.
     static const char* fn_71002DEFBC(unsigned int blade);
     static const char* getSalvageDriverModel(unsigned int driver);  // the salvage setup passes its object id
@@ -99,7 +98,7 @@ public:
     static void addCoin(int coin);
     // SCOM_ADD_ETHER::create forwards its value
     static void addEther(int ether);
-    // SCOM_ADD_TRUST::exec: (blade or driver, value); the debug setter in the Torna mode (GfGameManager::fn_71002A9E68)
+    // SCOM_ADD_TRUST::exec: (blade or driver, value); the debug setter in the Torna mode (GfGameManager::isGameTypeIra)
     static void addTrustPoint(unsigned int id, unsigned int point);
     static void setTrustPointForDebug(unsigned int driver, unsigned int point);
     // SCOM_CHAR_DEAD::exec passes the dead enemy's arrange id
@@ -108,23 +107,21 @@ public:
     static void addExpInn(unsigned int exp);
     static void addExpBattle(unsigned int driver, unsigned int exp);
     // SCOM_ADD_SP::exec: (driver, value)
-    // 0x71002DBA88 (3.0.1's addSP): fn_71002DB9D4 unless GfGameManager::fn_71002A9E68 holds; then fn_71002DBB58 on
-    // the ChrDr fn_71001F172C value of the driver (of each of the ten party drivers for driver 0)
+    // 0x71002DBA88 (3.0.1's addSP): addSp unless GfGameManager::isGameTypeIra holds; then fn_71002DBB58 on
+    // the ChrDr getChrIrGroupID value of the driver (of each of the ten party drivers for driver 0)
     static void addSP(unsigned int driver, int sp);
     // Placeholder name: new in 3.0.1 (1.0.0's setFormationParam, 0x20C bytes, holds this loop itself), nothing names
     // it. A member because its only caller is GfGameUtil::setFormationParam, right before it. What it does: -1 for a
     // trinity blade; else the index (0-8) of the first GfGamePlayerFormation player whose object setup has the
-    // handle's party id (GfGameParty::getPartyId) and whose GfObjUtil::getObjType and fn_710054FCDC equal the
+    // handle's party id (GfGameParty::getPartyId) and whose GfObjUtil::getObjType and getPartyPos equal the
     // handle's; -1 when none does.
     static int fn_71002DE83C(GF_OBJ_HANDLE* handle);
-    // Placeholder name: 1.0.0's GfGameUtil::addSP has this body (same callees, recursive over
-    // GfPartySelect::getDriverList(2) for driver 0); in 3.0.1 addSP wraps it, so 1.0.0's name is taken. A member
-    // for that reason (its own unit, between addWpForObject and addSP). What it does: for a driver whose
-    // DataParamAcc is not scenario-masked, adds sp to its skill points (GfDataDriver::fn_7100247E88).
-    static void fn_71002DB9D4(unsigned int driver, int sp);
+    // 2.0.0's symbols name it. What it does: for a driver whose DataParamAcc is not scenario-masked, adds sp to its
+    // skill points (GfDataDriver::addSkillPoint).
+    static void addSp(unsigned int driver, int sp);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because addSP (its unit, right
     // before it) tail-calls it with its sp. What it does: for the DLC driver rows 0x11 to 0x19 whose GfBdatChrDr
-    // fn_71001F172C (of fn_71001F13E0) equals id and that are not GfDataDriver::isActivateUnuse, adds sp.
+    // getChrIrGroupID (of getChrDrIraParam) equals id and that are not GfDataDriver::isActivateUnuse, adds sp.
     static void fn_71002DBB58(unsigned int id, int sp);
     // SCOM_ADD_IDEA::exec: (driver, its third value, value)
     static void addIdeaPoint(unsigned int driver, unsigned int type, int point);
@@ -164,7 +161,7 @@ public:
     static void startWire(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* target, float time);
     static void startWireWithClose(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* target, float time, float, float);
     static void endWire(gf::GF_OBJ_HANDLE* handle, float time);
-    // stops or resumes the object's update layer (GfGameSalvage::fn_7100315A84 stops the party's members with it)
+    // stops or resumes the object's update layer (GfGameSalvage::setPartyNpcMove stops the party's members with it)
     static void changeStopLayer(gf::GF_OBJ_HANDLE* handle, bool stop);
     // the objects of an enemy arrange id: live ones plus ones still set up
     static int getObjNumberByEnArrangeId(unsigned int arrangeId);
@@ -173,47 +170,43 @@ public:
     static void setPartyChange10020();  // (symbols; the pt plugin's setPartyChange10020)
     // 3.0.1's takes a third argument (it tests bit 0 of w2; the symbols' Ejj is 1.0.0's two-argument signature);
     // ScriptPlayText's pt setDriverEnable passes (0, 1011, false). The third's name and type are inferred.
-    // returns whether it went ahead (GfDataBlade::fn_71002383C8 held): fn_71002E16F4 tail-calls it and returns 0
+    // returns whether it went ahead (GfDataBlade::fn_71002383C8 held): equipDriverBladeForce tail-calls it and returns 0
     // otherwise
     static bool execEquipMercenariesBlade(unsigned int driver, unsigned int blade, bool flag);
     // named by the symbols: adds a rare blade (GfDataBlade::addRareBlade) and, when that gives one, copies blade
     // 0x3FE's creator to 1050, marks its m_createEvent watched (setWatchedEvent) and calls GfEvent::callBladeActivate
     // from its previous activate type to 1; returns the new blade (0 for none)
     static unsigned int execAddRareBlade(const SDataBlade& data);
-    // Placeholder name: 1.0.0 has GfGameUtil::execAddCommonBlade(const SDataBlade&) in its place (same caller
-    // GfMenuObjBladeCreate::CreationListener::reciveEvent, same tail), but 3.0.1's takes a second argument, so the
-    // mangled name is not proven. A member for that reason. What it does: when GfDataBlade::fn_7100231FF8 holds and
-    // data's blade is GfDataBlade::getStartCommonBlade, re-activates it (setActivateReserver) and returns it; else
-    // sets data's blade to getStartCommonBlade for item 45010 (0 otherwise), adds it (GfDataBlade::addCommonBlade)
-    // and does execAddRareBlade's watched-event and callBladeActivate(blade, 0, 1) steps; returns the new blade.
-    static unsigned int fn_71002E1B64(SDataBlade& data, unsigned int item);
+    // 2.0.0's symbols name it. What it does: when GfDataBlade::fn_7100231FF8 holds and data's blade is
+    // GfDataBlade::getStartCommonBlade, re-activates it (setActivateReserver) and returns it; else sets data's blade to
+    // getStartCommonBlade for item 45010 (0 otherwise), adds it (GfDataBlade::addCommonBlade) and does
+    // execAddRareBlade's watched-event and callBladeActivate(blade, 0, 1) steps; returns the new blade.
+    static unsigned int execAddCommonBlade(SDataBlade& data, unsigned int item);
     static void setWatchedEvent(unsigned int event);  // (symbols)
     static void addTrusuPointByLastKizunaTalk();  // (symbols)
     // named by the symbols: raises the blade's trust rank by one up to 6 (GfDataBlade::setTrustRank), tells
     // GfEvent::callDebugChangeIdea(4, blade) and shows SCOM_POPUP::createAffinity for its driver (its set driver, else
-    // its creator; with GfGameManager::fn_71002A9E68 GfDataDriver::fn_71002417DC of GfDataBlade::fn_7100236518)
+    // its creator; with GfGameManager::isGameTypeIra GfDataDriver::getIraFront of GfDataBlade::getIraDriver)
     static void addTrustRankForKizunaRing(unsigned int blade);
     static void setSaikaLensOff(gf::GF_OBJ_HANDLE* handle);
     static void setSaikaLensOff();
     // named by the symbols: DataParamAcc::setBladeSet(select) on the object and, when it has a GfObj, sends it a
     // MsgUnk_1000045 with its attribute after and before the change
     static void setBladeSelect(gf::GF_OBJ_HANDLE* handle, int select);
-    // Placeholder name: new in 3.0.1's shape, its address lies between GfGameUtil::execActivateMercenaryTeamForBlade
-    // and execEquipMercenariesBlade (so a GfGameUtil member). What it does: 1.0.0's pt setDriverEnable calls
-    // GfDataDriver::equipDriverBladeFromReserverBlade(driver) at the same place; 3.0.1's calls this with driver 2
-    // when blade 1011 is not activate-unuse, and it calls execEquipMercenariesBlade.
-    // It returns false when GfDataDriver::fn_7100241DD4(driver) holds or the driver is not 1, 2, 3 or 6, else
-    // execEquipMercenariesBlade's answer for the driver's blade (1: GfDataBlade::getStartCommonBlade, 2: 1004,
-    // 3: 1010, 6: 1009).
-    static bool fn_71002E16F4(unsigned int driver);
+    // 2.0.0's symbols name it. What it does: 1.0.0's pt setDriverEnable calls
+    // GfDataDriver::equipDriverBladeFromReserverBlade(driver) at the same place; 3.0.1's calls this with driver 2 when
+    // blade 1011 is not activate-unuse, and it calls execEquipMercenariesBlade. It returns false when
+    // GfDataDriver::equipDriverBladeFromReserverBlade(driver) holds or the driver is not 1, 2, 3 or 6, else
+    // execEquipMercenariesBlade's answer for the driver's blade (1: GfDataBlade::getStartCommonBlade, 2: 1004, 3: 1010,
+    // 6: 1009).
+    static bool equipDriverBladeForce(unsigned int driver);
     // (symbols) GfGameScene::gevDriverActivate calls it: takes off the driver's three accessories
     // (GfEquipUtil::equipDriverAcce with item 0) and unsets each blade the driver has engaged, last slot first
     static void execDriverDead(unsigned int driver);
-    // Placeholder name: new in 3.0.1 (1.0.0's pt has no changeKubira). A GfGameUtil member because its address
-    // follows setPartyChange10020's. What it does: ScriptPlayText's pt changeKubira calls it with nothing; it
-    // reworks blades' drivers, orbs, weapons and engage flags (GfDataBlade/GfEquipUtil) and calls
-    // SCOM_PARTY_ADD::removeBlade and SCOM_CURRENT_BLADE::create.
-    static void fn_71002EBC90();
+    // 2.0.0's symbols name it. What it does: ScriptPlayText's pt changeKubira calls it with nothing; it reworks blades'
+    // drivers, orbs, weapons and engage flags (GfDataBlade/GfEquipUtil) and calls SCOM_PARTY_ADD::removeBlade and
+    // SCOM_CURRENT_BLADE::create.
+    static void changeKubira();
     static int getAntiBladeAreaBdatId();
     // the blade joins its mercenary team (false when it already is on one)
     static bool execActivateMercenaryTeamForBlade(unsigned int blade);
@@ -261,12 +254,11 @@ public:
     static void execSaveAchievementPopup(unsigned int blade);
     // a driver's level raised to that level (GfMenuObjLvupSelect::seqExecLevelUp)
     static void execLevelUp(unsigned int driver, unsigned int level);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies right after
-    // GfGameUtil::execLevelUp in its unit and takes the same arguments. What it does: when the driver's level
-    // (GfDataDriver::getLevel) is above the level, lowers it there (GfDataDriver::fn_7100245EFC, fn_7100245EA8,
-    // fn_7100245F50 and the placeholders fn_710024487C/fn_71002448D8/fn_7100244988, the 999999999 experience cap).
-    // GfMenuObjLvupSelect::seqExecLevelUp calls it instead of execLevelUp when the chosen level is lower.
-    static void fn_71002DB338(unsigned int driver, unsigned int level);
+    // 2.0.0's symbols name it. What it does: when the driver's level (GfDataDriver::getLevel) is above the level,
+    // lowers it there (GfDataDriver::getBattleExp, getExp, getBattleExpNextLevel and the placeholders
+    // setLevel/setExp/setBattleExp, the 999999999 experience cap). GfMenuObjLvupSelect::seqExecLevelUp calls it instead
+    // of execLevelUp when the chosen level is lower.
+    static void execLevelDown(unsigned int driver, unsigned int level);
     // raises the driver's level of the arts toward level (at most 5) while its weapon type's points cover
     // GfBdatBtl::getArtsDrNeedWP, spending them
     static void execDriverArtsLevelUp(unsigned int driver, unsigned int arts, unsigned int level);
@@ -278,8 +270,8 @@ public:
     static unsigned int getMaxHp(gf::GF_OBJ_HANDLE* handle, unsigned int type, unsigned int id);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
     // GfGameUtil's (right after getMaxHp) and its only callers are getNowHp, getMaxHp, getNowHpForUi and
-    // getMaxHpForUi. What it does: for a valid driver object whose driver row GfDataDriver::fn_710023F9A8 accepts,
-    // collects GfDataDriver::fn_71002417DC(driver) and GfDataDriver::fn_71002416B4's list of driver ids and replaces
+    // getMaxHpForUi. What it does: for a valid driver object whose driver row GfDataDriver::isIra accepts,
+    // collects GfDataDriver::getIraFront(driver) and GfDataDriver::getIraBack's list of driver ids and replaces
     // the handle with the first one GfGameParty::getHandleDriverByBdatID gives a valid object for.
     static void fn_71002DF8B0(gf::GF_OBJ_HANDLE*& handle);
     // whether the object is near enough for its name / info icon to show

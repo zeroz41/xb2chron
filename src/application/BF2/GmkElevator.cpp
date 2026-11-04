@@ -53,20 +53,20 @@
 #include "classes/gf/GfMenuObjFieldIcon.h"
 #include "gf/GfItemUtil.h"
 #include "classes/gmk/GmkTutorial.h"
-#include "classes/gmk/TUnk_B6D590.h"
-#include "classes/gmk/TUnk_B6D5F8.h"
-#include "classes/gmk/TUnk_B6D660.h"
-#include "classes/gmk/TUnk_B6D6C8.h"
+#include "classes/gmk/GmkBattleChallengeReward.h"
+#include "classes/gmk/GmkBattleChallengePortal.h"
+#include "classes/gmk/GmkCamp.h"
+#include "classes/gmk/GmkSealedStone.h"
 #include "classes/gmk/GmkNpcList.h"
 #include "classes/gmk/GmkRoutedEnemyList.h"
 #include "classes/gmk/GmkRoutedNpcList.h"
 #include "classes/gmk/GmkSalvageList.h"
-#include "classes/gmk/TUnk_B6E340.h"
-#include "classes/gmk/TUnk_B6ED38.h"
+#include "classes/gmk/GmkSealedStoneList.h"
+#include "classes/gmk/GmkBattleChallengeRewardList.h"
 #include "classes/gmk/GmkBdat.h"
 #include "classes/gmk/GmkLandmarkManager.h"
 #include "classes/gmk/GmkSquadManager.h"
-#include "classes/gmk/TUnk_B6EE88.h"
+#include "classes/gmk/GmkBattleChallengePortalList.h"
 #include "classes/gf/GfGameManager.h"
 #include "fw/NaviUtil.h"
 #include "classes/gf/GfFieldTime.h"
@@ -306,9 +306,9 @@ static inline const char* getGmkKindName(const char** names, unsigned int type) 
 
 namespace gmk {
 
-// ---- TUnk_B6D418's pop settings reader (placeholder symbol: see its header)
-void TUnk_B6D418::fn_7100581E54(const GmkEnemy& enemy, Entry::PopInfo& info) const {
-    if (gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68()) {
+// ---- GmkEnemyWave's pop settings reader (placeholder symbol: see its header)
+void GmkEnemyWave::fn_7100581E54(const GmkEnemy& enemy, Entry::PopInfo& info) const {
+    if (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) {
         unsigned char* fp = enemy.m_list->getBindedBdatFp();
         int row = enemy.m_createInfo.m_bdatId;
         info.m_partyFlag = Bdat::getValCheck(fp, "party_flag", row, 1);
@@ -319,12 +319,12 @@ void TUnk_B6D418::fn_7100581E54(const GmkEnemy& enemy, Entry::PopInfo& info) con
     }
 }
 
-// ---- TUnk_B6D480 (GmkEnemyList's list at 0x470; placeholder slot symbols: see its header)
-TUnk_B6D480::~TUnk_B6D480() { dispose(); }
+// ---- GmkEnemyWaveList (GmkEnemyList's list at 0x470; placeholder slot symbols: see its header)
+GmkEnemyWaveList::~GmkEnemyWaveList() { dispose(); }
 
-void TUnk_B6D480::create(const IGmkList::CreateInfo& info) { TGmkList::create(info); }
+void GmkEnemyWaveList::create(const IGmkList::CreateInfo& info) { TGmkList::create(info); }
 
-void TUnk_B6D480::dispose() {
+void GmkEnemyWaveList::dispose() {
     m_subList.dispose();
     const GmkSet* set = static_cast<const GmkSet*>(getCreateInfo().m_param);
     if (set != nullptr && !set->m_createInfo.m_flag) {
@@ -333,14 +333,14 @@ void TUnk_B6D480::dispose() {
     TGmkList::dispose();
 }
 
-void TUnk_B6D480::update(float dt) {
+void GmkEnemyWaveList::update(float dt) {
     TGmkList::update(dt);
     m_subList.update(dt);
 }
 
-bool TUnk_B6D480::updateImmediate() { return TGmkList::updateImmediate() && m_subList.updateImmediate(); }
+bool GmkEnemyWaveList::updateImmediate() { return TGmkList::updateImmediate() && m_subList.updateImmediate(); }
 
-void TUnk_B6D480::debugUpdateMmf() {
+void GmkEnemyWaveList::debugUpdateMmf() {
     TGmkList::debugUpdateMmf();
     m_subList.debugUpdateMmf();
 }
@@ -351,7 +351,7 @@ template void mm::mtl::Vector<std::pair<gf::GF_OBJ_HANDLE*, gmk::GmkRouteNavi> >
 
 namespace gmk {
 
-void TUnk_B6D480::debugDraw() const {
+void GmkEnemyWaveList::debugDraw() const {
     TGmkList::debugDraw();
     m_subList.debugDraw();
 }
@@ -663,7 +663,7 @@ void GmkEnemyList::setUpdateGmkNumPerFrame(unsigned int num) {
     TGmkList::setUpdateGmkNumPerFrame(num);
     m_triggerList.setUpdateGmkNumPerFrame(num);
     IGmkList* waveList = &m_waveList;
-    if (gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68()) {
+    if (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) {
         waveList->setUpdateGmkNumPerFrame(num);
     }
 }
@@ -678,7 +678,7 @@ void GmkEnemyList::create(const IGmkList::CreateInfo& info) {
 
 void GmkEnemyList::dispose() {
     m_triggerList.dispose();
-    if (gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68()) {
+    if (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) {
         m_waveList.dispose();
         pad_8d0 = nullptr;
     }
@@ -688,7 +688,7 @@ void GmkEnemyList::dispose() {
 void GmkEnemyList::debugUpdateMmf() {
     TGmkList::debugUpdateMmf();
     m_triggerList.debugUpdateMmf();
-    if (gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68()) {
+    if (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) {
         m_waveList.debugUpdateMmf();
     }
 }
@@ -696,7 +696,7 @@ void GmkEnemyList::debugUpdateMmf() {
 void GmkEnemyList::debugDraw() const {
     TGmkList::debugDraw();
     m_triggerList.debugDraw();
-    if (gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68()) {
+    if (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) {
         m_waveList.debugDraw();
     }
 }
@@ -963,12 +963,12 @@ void GmkSet::createGmkLists(int id) {
     m_gmkLists[57] = new (fw::FrameworkMemory::getMem(5), nullptr, 0, 4, false) GmkTutorialList(1);
     m_gmkLists[58] = nullptr;
     m_gmkLists[59] = nullptr;
-    m_gmkLists[60] = new (fw::FrameworkMemory::getMem(5), nullptr, 0, 4, false) TUnk_B6ED38(3);
-    m_gmkLists[61] = new (fw::FrameworkMemory::getMem(5), nullptr, 0, 4, false) TUnk_B6EE88(1);
-    m_gmkLists[62] = gf::GfGameManager::fn_71002A9E68() ? 
-        new (fw::FrameworkMemory::getMem(5), nullptr, 0, 4, false) TGmkList<TUnk_B6D660, TUnk_B6D660::BdatInfo, 1347240259u, 4u, TUnk_B6D660Gob>(1) : nullptr;
-    m_gmkLists[63] = gf::GfGameManager::fn_71002A9E68() ? 
-        new (fw::FrameworkMemory::getMem(5), nullptr, 0, 4, false) TUnk_B6E340(1) : nullptr;
+    m_gmkLists[60] = new (fw::FrameworkMemory::getMem(5), nullptr, 0, 4, false) GmkBattleChallengeRewardList(3);
+    m_gmkLists[61] = new (fw::FrameworkMemory::getMem(5), nullptr, 0, 4, false) GmkBattleChallengePortalList(1);
+    m_gmkLists[62] = gf::GfGameManager::isGameTypeIra() ? 
+        new (fw::FrameworkMemory::getMem(5), nullptr, 0, 4, false) TGmkList<GmkCamp, GmkCamp::BdatInfo, 1347240259u, 4u, GmkCampGob>(1) : nullptr;
+    m_gmkLists[63] = gf::GfGameManager::isGameTypeIra() ? 
+        new (fw::FrameworkMemory::getMem(5), nullptr, 0, 4, false) GmkSealedStoneList(1) : nullptr;
     for (int i = 0; i < GMK_LIST_NUM; ++i) {
         IGmkList* list = m_gmkLists[i];
         if (list == nullptr) {
@@ -1642,7 +1642,7 @@ static inline bool isOutsideInvisibleDist(const mm::Vec3& pos, const T* info) {
     return info->m_invisibleXZSq < xzSq;
 }
 
-bool GmkNpc::fn_710058EF4C() const {
+bool GmkNpc::isPopDistCondMatched() const {
     if (isValid()) {
         const GmkNpc::BdatInfo* info = static_cast<const GmkNpc::BdatInfo*>(m_createInfo.m_bdatInfo);
         return isInsideVisibleDist(*m_pos, info);
@@ -1650,7 +1650,7 @@ bool GmkNpc::fn_710058EF4C() const {
     return false;
 }
 
-bool GmkNpc::fn_710058F030() const {
+bool GmkNpc::isDepopDistCondMatched() const {
     if (isValid()) {
         const GmkNpc::BdatInfo* info = static_cast<const GmkNpc::BdatInfo*>(m_createInfo.m_bdatInfo);
         return isOutsideInvisibleDist(*m_pos, info);
@@ -1727,7 +1727,7 @@ bool GmkRoutedNpc::isDepopCondMatched() const {
     return false;
 }
 
-bool GmkRoutedNpc::fn_710058EF4C() const {
+bool GmkRoutedNpc::isPopDistCondMatched() const {
     if (isValid() && isPlayerExist()) {
         mm::Vec3 pos;
         if (getNearestPos(pos, getPlayerPos())) {
@@ -1738,7 +1738,7 @@ bool GmkRoutedNpc::fn_710058EF4C() const {
     return false;
 }
 
-bool GmkRoutedNpc::fn_710058F030() const {
+bool GmkRoutedNpc::isDepopDistCondMatched() const {
     if (isValid() && isPlayerExist()) {
         mm::Vec3 pos;
         if (getNearestPos(pos, getPlayerPos())) {
@@ -1929,7 +1929,7 @@ bool isInterestPosExist() {
     return scn->getCam(-1) != nullptr;
 }
 
-bool isPlayerExist() { return gf::GfGameManager::fn_71002AA074() != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1); }
+bool isPlayerExist() { return gf::GfGameManager::getControlMoverForGimmick() != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1); }
 
 const mm::Vec3& getInterestPos() {
     GmkManager* manager = GmkManager::sys();
@@ -1943,10 +1943,10 @@ const mm::Vec3& getInterestPos() {
 }
 
 const mm::Vec3& getPlayerPos() {
-    if (gf::GfGameManager::fn_71002A9E68()) {
+    if (gf::GfGameManager::isGameTypeIra()) {
         return gf::GfGameManager::getControlMoverPosition();
     }
-    gf::GfObj* obj = gf::GfObjUtil::getObj(gf::GfGameManager::fn_71002AA074());
+    gf::GfObj* obj = gf::GfObjUtil::getObj(gf::GfGameManager::getControlMoverForGimmick());
     return obj->getComponent<gf::GfComTransform>(0)->getPosition();
 }
 
@@ -2009,7 +2009,7 @@ void GmkTbox::debugDraw() const {
     isValid();
 }
 
-bool GmkMapObj::BdatInfo::fn_710059232C(const mm::Vec3& pos) const {
+bool GmkMapObj::BdatInfo::isPopCondMatched(const mm::Vec3& pos) const {
     if (!isInsideVisibleDist(pos, this)) {
         return false;
     }
@@ -2019,7 +2019,7 @@ bool GmkMapObj::BdatInfo::fn_710059232C(const mm::Vec3& pos) const {
     return true;
 }
 
-bool GmkMapObj::BdatInfo::fn_7100592408(const mm::Vec3& pos) const {
+bool GmkMapObj::BdatInfo::isDepopCondMatched(const mm::Vec3& pos) const {
     if (isOutsideInvisibleDist(pos, this)) {
         return true;
     }
@@ -2243,7 +2243,7 @@ bool GmkRoutedMapObj::canPopGobInst() const {
         const GmkMapObj::BdatInfo* info = static_cast<const GmkMapObj::BdatInfo*>(m_createInfo.m_bdatInfo);
         mm::Vec3 pos;
         if (getNearestPos(pos, getPlayerPos())) {
-            return info->fn_710059232C(pos);
+            return info->isPopCondMatched(pos);
         }
     }
     return false;
@@ -2254,7 +2254,7 @@ bool GmkRoutedMapObj::canDepopGobInst() const {
         const GmkMapObj::BdatInfo* info = static_cast<const GmkMapObj::BdatInfo*>(m_createInfo.m_bdatInfo);
         mm::Vec3 pos;
         if (getNearestPos(pos, getPlayerPos())) {
-            return info->fn_7100592408(pos);
+            return info->isDepopCondMatched(pos);
         }
     }
     return false;
@@ -2550,9 +2550,9 @@ void GmkSalvageLocator::onEnemyDead(gf::GF_OBJ_HANDLE*) { pad_f1 = 1; }
 
 void GmkSalvageLocator::onEnemyHomeToPlayerAccess(gf::GF_OBJ_HANDLE*) { pad_f2 = 1; }
 
-// ---- TUnk_B6D418 (GmkEnemyList's wave; placeholder slot symbols: see its header)
+// ---- GmkEnemyWave (GmkEnemyList's wave; placeholder slot symbols: see its header)
 unsigned int fn_71005B3814(const AGmkBase* gmk) {
-    const TUnk_B6D418::Data* data = static_cast<const TUnk_B6D418*>(gmk)->getData();
+    const GmkEnemyWave::Data* data = static_cast<const GmkEnemyWave*>(gmk)->getData();
     return data->m_enemyEnd - data->m_enemyBegin;
 }
 
@@ -2562,7 +2562,7 @@ GmkEnemy* fn_71005B3824(const AGmkBase* gmk, unsigned int index) {
     if (enemies == nullptr) {
         return nullptr;
     }
-    unsigned int enemyIndex = static_cast<const TUnk_B6D418*>(gmk)->getData()->m_enemyBegin + index;
+    unsigned int enemyIndex = static_cast<const GmkEnemyWave*>(gmk)->getData()->m_enemyBegin + index;
     if (enemies->getInstNum() <= enemyIndex) {
         return nullptr;
     }
@@ -2582,16 +2582,16 @@ static inline bool isGmkListLoading(const IGmkList* list) {
 // takes its enemies (sorted by pop priority, then index), the access to the gimmick its first enemy's battle lock
 // names, its phantom (on that gimmick when there is one) unless the gimmick set says otherwise, then runs its first
 // step
-void TUnk_B6D418::create(const CreateInfo& info) {
+void GmkEnemyWave::create(const CreateInfo& info) {
     AGmkBase::create(info);
     for (unsigned short i = 0; i < fn_71005B3814(this); i++) {
         GmkEnemy* enemy = fn_71005B3824(this, i);
         if (enemy->isValid()) {
-            if (gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68()) {
+            if (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) {
                 enemy->m_insts.m_waveFlags |= 2;
             }
-            if ((gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68()) &&
-                (gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68())) {
+            if ((gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) &&
+                (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra())) {
                 enemy->m_insts.m_waveFlags |= 1;
             }
             Entry::PopInfo popInfo;
@@ -2627,27 +2627,27 @@ void TUnk_B6D418::create(const CreateInfo& info) {
             m_phantom.create(*this, nullptr, false);
         }
     }
-    m_seq = &TUnk_B6D418::fn_71005B3D64;
-    fn_71005B3D64(0.0f);
+    m_seq = &GmkEnemyWave::seqWaitToValidLinkGmkList;
+    seqWaitToValidLinkGmkList(0.0f);
 }
 
 // the index-th sealed stone of the gimmick set's list (an inferred helper: the original reaches the element through a
 // pointer, not a reference, and re-reads the index; the name is not the original's)
-static inline TUnk_B6D6C8* getSealedStone(TUnk_B6E340* stones, unsigned int index) { return &stones->m_gmks[index]; }
+static inline GmkSealedStone* getSealedStone(GmkSealedStoneList* stones, unsigned int index) { return &stones->m_gmks[index]; }
 
 // waits for the gimmick set's enemy lists, takes the sealed stone and the map gimmick its row names, then goes on to
-// fn_71005B40D8
-void TUnk_B6D418::fn_71005B3D64(float dt) {
+// reset
+void GmkEnemyWave::seqWaitToValidLinkGmkList(float dt) {
     const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
     if (isGmkListLoading(set->m_gmkLists[GmkEnemy::TYPE]) || isGmkListLoading(set->m_gmkLists[GmkRoutedEnemy::TYPE])) {
         return;
     }
-    fn_71005B425C(false);
+    applyPopCondMatchedEnemies(false);
     const BdatInfo* bdat = getBdatInfo();
-    if (gf::GfGameManager::fn_71002A9E68()) {
+    if (gf::GfGameManager::isGameTypeIra()) {
         const GmkSet* gmkSet = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
         if (bdat->m_sealedStoneIndex != 0 && m_sealedStone == nullptr) {
-            TUnk_B6E340* stones = static_cast<TUnk_B6E340*>(gmkSet->m_gmkLists[63]);
+            GmkSealedStoneList* stones = static_cast<GmkSealedStoneList*>(gmkSet->m_gmkLists[63]);
             if (stones == nullptr || !stones->isValid()) {
                 return;
             }
@@ -2677,12 +2677,12 @@ void TUnk_B6D418::fn_71005B3D64(float dt) {
             gimmick->pad_a9 = false;
         }
     }
-    fn_71005B40D8();
+    reset();
 }
 
-void TUnk_B6D418::fn_71005B445C(float) {}
+void GmkEnemyWave::seqWaitAccessing(float) {}
 
-void TUnk_B6D418::debugDraw() const {}
+void GmkEnemyWave::debugDraw() const {}
 
 // a gimmick set row's BDAT table name for a kind given by name, as GmkManager::getSheetnameByType reads it (the
 // original inlines it with the literal kind name; the name is not the original's)
@@ -2693,10 +2693,10 @@ static inline const char* getSheetnameByKindName(const GmkManager* manager, int 
     return Bdat::getMember(setFp, column.m_str) != nullptr ? reinterpret_cast<const char*>(Bdat::getValCheck(setFp, column.m_str, id, 7)) : nullptr;
 }
 
-TUnk_B6D480::TUnk_B6D480(unsigned int updateGmkNumPerFrame) : TGmkList(updateGmkNumPerFrame), m_subList(-1) {}
+GmkEnemyWaveList::GmkEnemyWaveList(unsigned int updateGmkNumPerFrame) : TGmkList(updateGmkNumPerFrame), m_subList(-1) {}
 
 // the second list's BDAT table is the gimmick set's "battleChallenge_bdat" column
-void TUnk_B6D480::createGmk(void* data) {
+void GmkEnemyWaveList::createGmk(void* data) {
     TGmkList::createGmk(data);
     IGmkList::CreateInfo info = getCreateInfo();
     if (info.m_allocHandle.m_handle != 0 && info.m_path.length() != 0) {
@@ -2708,12 +2708,12 @@ void TUnk_B6D480::createGmk(void* data) {
     }
 }
 
-// ---- TUnk_B6D528 (GmkEnemyList's battle challenge; placeholder slot symbols: see its header)
-TUnk_B6D528* TUnk_B6D528::s_current;
-unsigned int TUnk_B6D528::s_battleId;
-TUnk_B6D528::State TUnk_B6D528::s_state;
+// ---- GmkBattleChallenge (GmkEnemyList's battle challenge; placeholder slot symbols: see its header)
+GmkBattleChallenge* GmkBattleChallenge::s_current;
+unsigned int GmkBattleChallenge::s_battleId;
+GmkBattleChallenge::State GmkBattleChallenge::s_state;
 
-inline TUnk_B6D418* TUnk_B6D528::getWave(unsigned int index) const {
+inline GmkEnemyWave* GmkBattleChallenge::getWave(unsigned int index) const {
     const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
     GmkEnemyList* enemies = static_cast<GmkEnemyList*>(set->m_gmkLists[GmkEnemy::TYPE]);
     if (enemies == nullptr) {
@@ -2728,11 +2728,11 @@ inline TUnk_B6D418* TUnk_B6D528::getWave(unsigned int index) const {
 
 // its phantom is made unless the gimmick set says otherwise (on the access's target when there is one); its waves'
 // phantoms are released
-void TUnk_B6D528::create(const CreateInfo& info) {
+void GmkBattleChallenge::create(const CreateInfo& info) {
     AGmkBase::create(info);
     const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
     if (set == nullptr || !set->m_createInfo.m_flag) {
-        AGmkBase* target = fn_71005B73E8();
+        AGmkBase* target = getBattleLock();
         if (target != nullptr) {
             m_phantom.create(*target, nullptr, false);
         } else {
@@ -2741,29 +2741,29 @@ void TUnk_B6D528::create(const CreateInfo& info) {
         m_isAccCounted = false;
     }
     for (unsigned int i = 0; i < getWaveNum(); i++) {
-        TUnk_B6D418* wave = getWave(i);
+        GmkEnemyWave* wave = getWave(i);
         wave->m_isChallenge = true;
         wave->m_phantom.dispose();
     }
-    m_seq = &TUnk_B6D528::fn_71005B7178;
+    m_seq = &GmkBattleChallenge::seqCheckCondition;
 }
 
-void TUnk_B6D528::dispose() {
+void GmkBattleChallenge::dispose() {
     m_seq = nullptr;
     m_phantom.dispose();
     if (s_current == this) {
-        fn_71005B7344();
+        terminate();
     }
     AGmkBase::dispose();
 }
 
-void TUnk_B6D528::fn_71005B7344() {
+void GmkBattleChallenge::terminate() {
     s_state.clear();
     s_battleId = 0;
     s_current = nullptr;
 }
 
-void TUnk_B6D528::update(float dt) {
+void GmkBattleChallenge::update(float dt) {
     AGmkBase::update(dt);
     if (!m_isPaused) {
         if (m_seq) {
@@ -2772,39 +2772,39 @@ void TUnk_B6D528::update(float dt) {
     }
 }
 
-void TUnk_B6D528::debugDraw() const {}
+void GmkBattleChallenge::debugDraw() const {}
 
-void TUnk_B6D528::fn_71005B7B7C(float dt) {
+void GmkBattleChallenge::seqWaitNextWave(float dt) {
     m_timer -= dt;
     if (m_timer < 0.0f) {
-        m_seq = &TUnk_B6D528::fn_71005B76B4;
+        m_seq = &GmkBattleChallenge::seqWaveStart;
     }
 }
 
-void TUnk_B6D528::fn_71005B7BA0(int) {}
+void GmkBattleChallenge::fn_71005B7BA0(int) {}
 
-void TUnk_B6D528::fn_71005B7BA4(bool flag) {
+void GmkBattleChallenge::suspend(bool flag) {
     if (s_current != nullptr) {
-        s_current->fn_71005B75AC(flag);
+        s_current->suspendAll(flag);
     }
 }
 
-// ---- TUnk_B6D590 (placeholder slot symbols: see its header)
-unsigned int TUnk_B6D590::fn_71005B7BC4() const {
+// ---- GmkBattleChallengeReward (placeholder slot symbols: see its header)
+unsigned int GmkBattleChallengeReward::getBdatId_RSC_TboxList() const {
     unsigned char* fp = gf::GfDataBdat::getFP(0x4D);
     mm::mtl::FixStr<32> column;
     column.format("TresureResource%d", m_index + 1);
     return Bdat::getValCheckU16(fp, column.m_str, m_bdatRow);
 }
 
-unsigned int TUnk_B6D590::fn_71005B7C2C() const {
+unsigned int GmkBattleChallengeReward::getBdatId_BTL_ChBtlRewardSet() const {
     unsigned char* fp = gf::GfDataBdat::getFP(0x4D);
     mm::mtl::FixStr<16> column;
     column.format("TresureSet%d", m_index + 1);
     return Bdat::getValCheckU16(fp, column.m_str, m_bdatRow);
 }
 
-void TUnk_B6D590::fn_71005B7C94(bool targetable) const {
+void GmkBattleChallengeReward::setTargetable(bool targetable) const {
     gf::GF_OBJ_HANDLE* gob = m_gob;
     if (gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         return;
@@ -2827,23 +2827,23 @@ void TUnk_B6D590::fn_71005B7C94(bool targetable) const {
     }
 }
 
-void TUnk_B6D590::fn_71005B7D44(float waitTime) {
+void GmkBattleChallengeReward::initWaitPopTime(float waitTime) {
     m_waitTime = waitTime;
     m_timer = 0.0f;
-    m_seq = &TUnk_B6D590::fn_71005B7D5C;
+    m_seq = &GmkBattleChallengeReward::seqWaitPop;
 }
 
-void TUnk_B6D590::fn_71005B7D5C(float dt) {
+void GmkBattleChallengeReward::seqWaitPop(float dt) {
     m_timer += dt;
     if (m_timer > m_waitTime) {
         if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
-            fn_71005B810C();
+            createTboxGobInst();
         }
-        m_seq = &TUnk_B6D590::fn_71005B8400;
+        m_seq = &GmkBattleChallengeReward::seqWait;
     }
 }
 
-void TUnk_B6D590::dispose() {
+void GmkBattleChallengeReward::dispose() {
     m_isAccessed = false;
     if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         gf::GfObjAcc acc(m_gob);
@@ -2856,14 +2856,14 @@ void TUnk_B6D590::dispose() {
     AGmkBase::dispose();
 }
 
-void TUnk_B6D590::update(float dt) {
+void GmkBattleChallengeReward::update(float dt) {
     AGmkBase::update(dt);
     if (m_seq) {
         (this->*m_seq)(dt);
     }
 }
 
-void TUnk_B6D590::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::GF_OBJ_HANDLE* handle) {
+void GmkBattleChallengeReward::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::GF_OBJ_HANDLE* handle) {
     if (event == gf::IGfObjListener::OBJEVT(3) && handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         gf::GfObjAcc acc(handle);
         if (acc.m_obj != nullptr) {
@@ -2880,14 +2880,14 @@ void TUnk_B6D590::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::GF_OBJ_HANDLE
     }
 }
 
-void TUnk_B6D590::fn_71005B8400(float) {
+void GmkBattleChallengeReward::seqWait(float) {
     if (m_isAccessed) {
         m_timer = 0.0f;
-        m_seq = &TUnk_B6D590::fn_71005B841C;
+        m_seq = &GmkBattleChallengeReward::seqDepopWait;
     }
 }
 
-void TUnk_B6D590::fn_71005B841C(float dt) {
+void GmkBattleChallengeReward::seqDepopWait(float dt) {
     unsigned char* fp = gf::GfDataBdat::getFP(0x7B);
     unsigned int value = Bdat::getValCheck(fp, 0, 0x52, 8);
     float waitTime = *reinterpret_cast<float*>(&value);
@@ -2904,18 +2904,18 @@ void TUnk_B6D590::fn_71005B841C(float dt) {
     }
 }
 
-TUnk_B6D590::~TUnk_B6D590() { dispose(); }
+GmkBattleChallengeReward::~GmkBattleChallengeReward() { dispose(); }
 
-gmk::GmkType TUnk_B6D590::getGmkType() const { return TYPE; }
+gmk::GmkType GmkBattleChallengeReward::getGmkType() const { return TYPE; }
 
-bool TUnk_B6D590::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkBattleChallengeReward::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
 
-void TUnk_B6D590::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {
+void GmkBattleChallengeReward::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {
     m_isAccessed = true;
 }
 
-// ---- TUnk_B6D5F8 (placeholder slot symbols: see its header)
-bool TUnk_B6D5F8::BdatInfo::fn_71005B869C() const {
+// ---- GmkBattleChallengePortal (placeholder slot symbols: see its header)
+bool GmkBattleChallengePortal::BdatInfo::fn_71005B869C() const {
     if (m_scenarioFlag.m_scenarioFlagMax != 0 && !m_scenarioFlag.isMatch()) {
         return false;
     }
@@ -2931,7 +2931,7 @@ bool TUnk_B6D5F8::BdatInfo::fn_71005B869C() const {
     return true;
 }
 
-void TUnk_B6D5F8::fn_71005B8764(float) {
+void GmkBattleChallengePortal::seqValidateResHandle(float) {
     fw::EffectPack* pack = gf::GfFieldManager::getEffectPack();
     if (pack == nullptr) {
         return;
@@ -2944,10 +2944,10 @@ void TUnk_B6D5F8::fn_71005B8764(float) {
     if (m_portalEffect1 == nullptr) {
         return;
     }
-    m_seq = &TUnk_B6D5F8::fn_71005B9084;
+    m_seq = &GmkBattleChallengePortal::seqUpdate;
 }
 
-void TUnk_B6D5F8::dispose() {
+void GmkBattleChallengePortal::dispose() {
     if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         gf::GfObjAcc acc(m_gob);
         if (acc.m_obj != nullptr) {
@@ -2963,7 +2963,7 @@ void TUnk_B6D5F8::dispose() {
     AGmkBase::dispose();
 }
 
-void TUnk_B6D5F8::update(float dt) {
+void GmkBattleChallengePortal::update(float dt) {
     if (isValid()) {
         AGmkBase::update(dt);
         if (m_seq) {
@@ -2972,14 +2972,14 @@ void TUnk_B6D5F8::update(float dt) {
     }
 }
 
-bool TUnk_B6D5F8::fn_71005B8B84() const {
+bool GmkBattleChallengePortal::isPopCondMatchedExceptDist() const {
     if (isValid()) {
         return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->fn_71005B869C();
     }
     return false;
 }
 
-bool TUnk_B6D5F8::fn_71005B8E18() {
+bool GmkBattleChallengePortal::fn_71005B8E18() {
     bool result = false;
     if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
@@ -2990,7 +2990,7 @@ bool TUnk_B6D5F8::fn_71005B8E18() {
     return result;
 }
 
-bool TUnk_B6D5F8::fn_71005B8FA0() {
+bool GmkBattleChallengePortal::fn_71005B8FA0() {
     if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
         if (!info->fn_71005B869C() || isOutsideInvisibleDist(*m_pos, info)) {
@@ -3000,17 +3000,17 @@ bool TUnk_B6D5F8::fn_71005B8FA0() {
     return false;
 }
 
-void TUnk_B6D5F8::fn_71005B9084(float) {
+void GmkBattleChallengePortal::seqUpdate(float) {
     if (fn_71005B8E18()) {
-        fn_71005B8BC4();
+        createGobInst();
     } else if (fn_71005B8FA0()) {
-        fn_71005B8870(true);
+        disposeGobInst(true);
     }
 }
 
-void TUnk_B6D5F8::fn_71005B919C(float) {}
+void GmkBattleChallengePortal::seqFinish(float) {}
 
-void TUnk_B6D5F8::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::GF_OBJ_HANDLE* handle) {
+void GmkBattleChallengePortal::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::GF_OBJ_HANDLE* handle) {
     if (event == gf::IGfObjListener::OBJEVT(3) && handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         gf::GfObjAcc acc(handle);
         if (acc.m_obj != nullptr) {
@@ -3031,28 +3031,28 @@ void TUnk_B6D5F8::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::GF_OBJ_HANDLE
     }
 }
 
-void TUnk_B6D5F8::fn_71005B9268(float dt) {
+void GmkBattleChallengePortal::seqWait(float dt) {
     m_timer -= dt;
     if (m_timer <= 0.0f) {
-        m_seq = &TUnk_B6D5F8::fn_71005B919C;
+        m_seq = &GmkBattleChallengePortal::seqFinish;
     }
 }
 
-TUnk_B6D5F8::~TUnk_B6D5F8() { dispose(); }
+GmkBattleChallengePortal::~GmkBattleChallengePortal() { dispose(); }
 
-gmk::GmkType TUnk_B6D5F8::getGmkType() const { return TYPE; }
+gmk::GmkType GmkBattleChallengePortal::getGmkType() const { return TYPE; }
 
-bool TUnk_B6D5F8::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkBattleChallengePortal::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
 
-// ---- TUnk_B6D660, TUnk_B6D6C8 (placeholder slot symbols: see their headers)
-bool TUnk_B6D660::BdatInfo::fn_71005B94AC() const {
+// ---- GmkCamp, GmkSealedStone (placeholder slot symbols: see their headers)
+bool GmkCamp::BdatInfo::isCondMatched() const {
     if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
         return false;
     }
     return true;
 }
 
-void TUnk_B6D660::create(const CreateInfo& info) {
+void GmkCamp::create(const CreateInfo& info) {
     AGmkBase::create(info);
     unsigned char* fp = gf::GfDataBdat::getFP(0x7B);
     unsigned int dist = Bdat::getValCheck(fp, 0, 0x58, 8);
@@ -3062,7 +3062,7 @@ void TUnk_B6D660::create(const CreateInfo& info) {
     pad_58 = *reinterpret_cast<float*>(&value);
 }
 
-void TUnk_B6D660::dispose() {
+void GmkCamp::dispose() {
     if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         gf::GfObjAcc acc(m_gob);
         if (acc.m_obj != nullptr) {
@@ -3074,36 +3074,36 @@ void TUnk_B6D660::dispose() {
     AGmkBase::dispose();
 }
 
-void TUnk_B6D660::debugDraw() const { AGmkBase::debugDraw(); }
+void GmkCamp::debugDraw() const { AGmkBase::debugDraw(); }
 
-bool TUnk_B6D660::fn_71005B98FC() const { return gf::GfGameFlag::getLocal(1, m_createInfo.m_bdatId + 0xD869) != 0; }
+bool GmkCamp::isFound() const { return gf::GfGameFlag::getLocal(1, m_createInfo.m_bdatId + 0xD869) != 0; }
 
-TUnk_B6D660::~TUnk_B6D660() { dispose(); }
+GmkCamp::~GmkCamp() { dispose(); }
 
-gmk::GmkType TUnk_B6D660::getGmkType() const { return TYPE; }
+gmk::GmkType GmkCamp::getGmkType() const { return TYPE; }
 
-void TUnk_B6D6C8::create(const CreateInfo& info) {
+void GmkSealedStone::create(const CreateInfo& info) {
     AGmkBase::create(info);
     gf::GfDataBdat::getFP(0x7B);
-    m_seq = &TUnk_B6D6C8::fn_71005B9BDC;
+    m_seq = &GmkSealedStone::seqValidateResHandle;
 }
 
-void TUnk_B6D6C8::fn_71005B9BDC(float) { m_seq = &TUnk_B6D6C8::fn_71005BA88C; }
+void GmkSealedStone::seqValidateResHandle(float) { m_seq = &GmkSealedStone::seqUpdate; }
 
-void TUnk_B6D6C8::dispose() {
+void GmkSealedStone::dispose() {
     if (m_effectHandle != 0) {
         mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effectHandle);
         m_effectHandle = 0;
     }
-    fn_71005B9C38(false);
+    disposeGobInst(false);
     AGmkBase::dispose();
 }
 
-void TUnk_B6D6C8::debugDraw() const { AGmkBase::debugDraw(); }
+void GmkSealedStone::debugDraw() const { AGmkBase::debugDraw(); }
 
-void TUnk_B6D6C8::fn_71005BA88C(float) {}
+void GmkSealedStone::seqUpdate(float) {}
 
-void TUnk_B6D6C8::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::GF_OBJ_HANDLE* handle) {
+void GmkSealedStone::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::GF_OBJ_HANDLE* handle) {
     if (event == gf::IGfObjListener::OBJEVT(3) && handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         gf::GfObjAcc acc(handle);
         if (acc.m_obj != nullptr) {
@@ -3111,23 +3111,23 @@ void TUnk_B6D6C8::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::GF_OBJ_HANDLE
         }
     }
     if (event == gf::IGfObjListener::OBJEVT(3)) {
-        fn_71005B9C38(false);
+        disposeGobInst(false);
     }
 }
 
-TUnk_B6D6C8::~TUnk_B6D6C8() { dispose(); }
+GmkSealedStone::~GmkSealedStone() { dispose(); }
 
-gmk::GmkType TUnk_B6D6C8::getGmkType() const { return TYPE; }
+gmk::GmkType GmkSealedStone::getGmkType() const { return TYPE; }
 
-// ---- TUnk_B6E340 (the list of kind 0x3F; placeholder slot symbols)
-void TUnk_B6E340::create(const IGmkList::CreateInfo& info) {
+// ---- GmkSealedStoneList (the list of kind 0x3F; placeholder slot symbols)
+void GmkSealedStoneList::create(const IGmkList::CreateInfo& info) {
     TGmkList::create(info);
 #line 641 "D:/Monolithsoft/BF2/prog/application/BF2\\gmk/gmk_sealed_stone/gmk_sealed_stone_impl.h"
     m_effects = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) EffectList();
     m_effects->fn_71005BAA98();
 }
 
-void TUnk_B6E340::dispose() {
+void GmkSealedStoneList::dispose() {
     if (m_effects != nullptr) {
         m_effects->fn_71005BAC78();
         if (m_effects != nullptr) {
@@ -3144,7 +3144,7 @@ void TUnk_B6E340::dispose() {
     TGmkList::dispose();
 }
 
-void TUnk_B6E340::EffectList::fn_71005BAC78() {
+void GmkSealedStoneList::EffectList::fn_71005BAC78() {
     if (m_entries.size() != 0) {
         for (Entry& entry : m_entries) {
             mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(entry.m_effectHandle);
@@ -3153,7 +3153,7 @@ void TUnk_B6E340::EffectList::fn_71005BAC78() {
     }
 }
 
-TUnk_B6E340::~TUnk_B6E340() { dispose(); }
+GmkSealedStoneList::~GmkSealedStoneList() { dispose(); }
 
 // ---- kinds holding one game object
 void GmkTbox::setTargetable(bool targetable) const {
@@ -3181,7 +3181,7 @@ void GmkTbox::setTargetable(bool targetable) const {
 
 void GmkTbox::create(const CreateInfo& info) {
     AGmkBase::create(info);
-    if (gf::GfGameManager::fn_71002A9E68() && getBdatInfo()->m_noponBarrel &&
+    if (gf::GfGameManager::isGameTypeIra() && getBdatInfo()->m_noponBarrel &&
         gf::GfGameFlag::getLocal(1, m_createInfo.m_bdatId + 54134) != 0) {
         gf::GfGameFlag::setLocal(2, m_createInfo.m_bdatId + 31765, 1);
     }
@@ -3841,7 +3841,7 @@ GmkLandmarkManager::~GmkLandmarkManager() {
 }
 
 void GmkLandmark::onLeavePhantom(const IGmkPhantomEventListener::OnLeaveInfo&) {
-    if (gf::GfGameManager::fn_71002A9E68() && gf::GfGameManager::fn_71002AA074() == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+    if (gf::GfGameManager::isGameTypeIra() && gf::GfGameManager::getControlMoverForGimmick() == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         return;
     }
     if (!pad_f1) {
@@ -3995,7 +3995,7 @@ void GmkJump::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* hand
 }
 
 void GmkJump::fn_71005A7770() {
-    if (gf::GfGameManager::fn_71002A9E68() && getBdatInfo()->m_type == 1) {
+    if (gf::GfGameManager::isGameTypeIra() && getBdatInfo()->m_type == 1) {
         fn_71005A748C();
     }
 }
@@ -4602,14 +4602,14 @@ void GmkDoor::createSe(bool mapPack, unsigned short se, unsigned char size) {
 void GmkDoor::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {
     const BdatInfo* info = getBdatInfo();
     if (info->m_responseType == 5) {
-        if (gf::GfGameManager::fn_71002AA074() == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        if (gf::GfGameManager::getControlMoverForGimmick() == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
             return;
         }
         const mm::Vec3* player;
-        if (gf::GfGameManager::fn_71002A9E68()) {
+        if (gf::GfGameManager::isGameTypeIra()) {
             player = &gf::GfGameManager::getControlMoverPosition();
         } else {
-            gf::GfObj* obj = gf::GfObjUtil::getObj(gf::GfGameManager::fn_71002AA074());
+            gf::GfObj* obj = gf::GfObjUtil::getObj(gf::GfGameManager::getControlMoverForGimmick());
             player = &obj->getComponent<gf::GfComTransform>(0)->getPosition();
         }
         mm::Vec3 diff;
@@ -4725,7 +4725,7 @@ void GmkMapGimmick::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase&
     m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", row, 2);
     m_nameRadius = (unsigned short)Bdat::getValCheck(bdat.m_fp, "nameRadius", row, 2);
     m_mapobjId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "mapobjID", row, 2);
-    m_effectId = gf::GfGameManager::fn_71002A9E68() ? (unsigned short)Bdat::getValCheck(bdat.m_fp, "effectID", row, 2) : 0;
+    m_effectId = gf::GfGameManager::isGameTypeIra() ? (unsigned short)Bdat::getValCheck(bdat.m_fp, "effectID", row, 2) : 0;
     m_msgRay = Bdat::getFlagVal(bdat.m_fp, "flag", row, "MSG_ray") != 0;
 }
 
@@ -5053,7 +5053,7 @@ void GmkCollection::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase&
     Bdat::uVal popDist;
     popDist.ulong = Bdat::getValCheck(gf::GfDataBdat::getFP(0x7B), 0, 1, 8);
     m_popDistSq = popDist.real * popDist.real;
-    if (gf::GfGameManager::fn_71002A9E68()) {
+    if (gf::GfGameManager::isGameTypeIra()) {
         m_rarity = (unsigned char)Bdat::getValCheck(bdat.m_fp, "rarity", row, 1);
         m_collectionTable = Bdat::getValCheckU16(bdat.m_fp, "CollectionTable", row);
         if (m_collectionTable != 0) {
@@ -5384,8 +5384,8 @@ bool GmkCollection::BdatInfo::isPopCondMatchedExceptDist() const {
     return true;
 }
 
-bool GmkCollection::fn_710059BF94() const {
-    if (gf::GfGameManager::fn_71002A9E68()) {
+bool GmkCollection::isFound() const {
+    if (gf::GfGameManager::isGameTypeIra()) {
         unsigned int id = m_createInfo.m_bdatId;
         if (id >= 4401 && id - 4401 < 500) {
             return gf::GfGameFlag::getLocal(1, id + 51429) != 0;
@@ -5394,11 +5394,11 @@ bool GmkCollection::fn_710059BF94() const {
     return true;
 }
 
-bool GmkCollection::fn_710059BFFC(unsigned short collectionId) const {
+bool GmkCollection::isSameTableID(unsigned short collectionId) const {
     return isValid() && getBdatInfo()->m_collectionTable == collectionId;
 }
 
-unsigned int GmkCollection::fn_710059C044() const {
+unsigned int GmkCollection::getCategoryName_fld_gmkname() const {
     if (isValid()) {
         const BdatInfo* info = getBdatInfo();
         if (info->m_collectionTable != 0) {
@@ -5436,7 +5436,7 @@ void GmkCollection::onPlayerAccessed(gf::GF_OBJ_HANDLE*) { setTargetable(false);
 
 void GmkPrecious::debugDraw() const {
     if (isValid()) {
-        fn_71005A4238();
+        isPopCondMatched();
     }
 }
 

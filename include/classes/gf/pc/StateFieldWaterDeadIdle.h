@@ -23,9 +23,8 @@ public:
     // the state's own functions; the slots above hand them the owner
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because StateFieldWaterDeadIdle::onStep, the
-    // slot that hands the state its update, tail-calls it with the owner and the step argument.
-    void fn_7100507984(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
+    // 2.0.0's symbols name it.
+    void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
 };
 }}  // namespace gf::pc
 

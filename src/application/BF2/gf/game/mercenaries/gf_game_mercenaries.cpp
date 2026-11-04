@@ -34,13 +34,13 @@ bool GfKizunaringUtil::getCompleteKizunaringReward(GfQuestReward& reward, unsign
     // it unnamed, lbl_71009BC0FC)
     static const unsigned short s_crownConfigRow[] = {0, 0x31, 0x35, 0x39, 0x3D, 0x41};
     unsigned int id;
-    if (GfDataBlade::fn_71002364B8(blade)) {
+    if (GfDataBlade::isIra(blade)) {
         GfBdatChrDr* chrDr = GfBdatChrDr::get();
-        unsigned int driver = GfDataBlade::fn_7100236518(blade);
+        unsigned int driver = GfDataBlade::getIraDriver(blade);
         if (driver == 0) {
             return false;
         }
-        id = chrDr->fn_71001F19DC(chrDr->fn_71001F13E0(driver));
+        id = chrDr->getChrIrKizunaReward1(chrDr->getChrDrIraParam(driver));
     } else {
         unsigned int row = s_crownConfigRow[GfDataBlade::getCrownPoint(blade)] + ml::mtRand(4);
         id = GfBdatBlade::get()->getCreateConfigValue(row);
@@ -55,11 +55,11 @@ bool GfKizunaringUtil::getCompleteKizunaringReward(GfQuestReward& reward, unsign
     return true;
 }
 
-bool GfKizunaringUtil::fn_71002FF4C4(GfQuestReward& reward, unsigned int driver, bool second) {
-    if (GfDataDriver::fn_710023F9A8(driver)) {
+bool GfKizunaringUtil::getCompleteKizunaringRewardForDriver(GfQuestReward& reward, unsigned int driver, bool second) {
+    if (GfDataDriver::isIra(driver)) {
         GfBdatChrDr* chrDr = GfBdatChrDr::get();
-        unsigned int row = chrDr->fn_71001F13E0(driver);
-        unsigned int id = second ? chrDr->fn_71001F1A64(row) : chrDr->fn_71001F19DC(row);
+        unsigned int row = chrDr->getChrDrIraParam(driver);
+        unsigned int id = second ? chrDr->getChrIrKizunaReward2(row) : chrDr->getChrIrKizunaReward1(row);
         if (id != 0 && GfQuestUtil::getReward(reward, id, false)) {
             return true;
         }
@@ -93,7 +93,7 @@ void GfGameMercenaries::rebuildAutoStartList() {
 }
 
 void GfGameMercenaries::update(const fw::UpdateInfo& info) {
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         return;
     }
     get()->updateMercenariesTeam(info);
@@ -194,7 +194,7 @@ void GfGameMercenaries::cancelMission(unsigned int mission) {
     GfDataMercenaries::Team* team = GfDataMercenaries::getTeamByMissionID(mission);
     unsigned int current = GfDataMercenaries::getMissionFlag(mission);
     if (team != nullptr && current == 3) {
-        SCOM_POPUP::fn_7100569D44(GfDataMercenaries::getMissionMapID(mission), team->m_teamId);
+        SCOM_POPUP::cancelMercenaryReturn(GfDataMercenaries::getMissionMapID(mission), team->m_teamId);
     }
     if (team != nullptr) {
         team->m_quest = QuestID();
@@ -212,7 +212,7 @@ void GfGameMercenaries::cancelMission(unsigned int mission) {
 }
 
 void GfGameMercenaries::qevOrderQuest(const QuestOrderParam& param) {
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         return;
     }
     unsigned int mission = GfDataMercenaries::getMissionByQuestID(param.m_questId);
@@ -345,8 +345,8 @@ bool GfGameMercenaries::getRewardItem(unsigned int& item, unsigned int& count, u
     return item != 0;
 }
 
-void GfGameMercenaries::fn_7100301C60() {
-    if (GfGameManager::fn_71002A9E68()) {
+void GfGameMercenaries::setupNewGameParam() {
+    if (GfGameManager::isGameTypeIra()) {
         return;
     }
     unsigned int start = GfDataMercenaries::getStartMissionID();

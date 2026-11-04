@@ -100,7 +100,7 @@
 #include "classes/gf/GfBdatMsg.h"
 #include "gf/QuestListAcc.h"
 #include "gf/QuestTaskParam.h"
-#include "classes/gf/TUnk_B4C840.h"
+#include "classes/gf/GfDataAoc.h"
 #include "gf/SDataOption.h"
 #include "gf/GfDataNpc.h"
 #include "gf/GfDataBladeArtsN.h"
@@ -238,15 +238,15 @@ unsigned int GfDataBlade::getBladeWeaponRank(unsigned int blade) {
     return GfBdatItem::get()->getPcWpnRank(weapon);
 }
 
-bool GfDataDriver::fn_71002416B4(mm::mtl::FixedVector<unsigned short, 32>& list, unsigned int driver) {
+bool GfDataDriver::getIraBack(mm::mtl::FixedVector<unsigned short, 32>& list, unsigned int driver) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        unsigned int group = bdat->fn_71001F172C(bdat->fn_71001F13E0(driver));
-        unsigned int row = bdat->fn_71001F15D4();
-        unsigned int end = bdat->fn_71001F15E0();
+        unsigned int group = bdat->getChrIrGroupID(bdat->getChrDrIraParam(driver));
+        unsigned int row = bdat->getChrIrStart();
+        unsigned int end = bdat->getChrIrEnd();
         for (; row < end; row++) {
-            if (bdat->fn_71001F16A4(row) == 1 && bdat->fn_71001F172C(row) == group) {
-                list.push_back(bdat->fn_71001F161C(row));
+            if (bdat->getChrIrType(row) == 1 && bdat->getChrIrGroupID(row) == group) {
+                list.push_back(bdat->getChrIrdriverID(row));
             }
         }
         return !list.empty();
@@ -254,17 +254,17 @@ bool GfDataDriver::fn_71002416B4(mm::mtl::FixedVector<unsigned short, 32>& list,
     return false;
 }
 
-unsigned int GfDataDriver::fn_71002417DC(unsigned int driver) {
+unsigned int GfDataDriver::getIraFront(unsigned int driver) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(driver)) != 0) {
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(driver)) != 0) {
             bdat = GfBdatChrDr::get();
-            unsigned int group = bdat->fn_71001F172C(bdat->fn_71001F13E0(driver));
-            unsigned int row = bdat->fn_71001F15D4();
-            unsigned int end = bdat->fn_71001F15E0();
+            unsigned int group = bdat->getChrIrGroupID(bdat->getChrDrIraParam(driver));
+            unsigned int row = bdat->getChrIrStart();
+            unsigned int end = bdat->getChrIrEnd();
             for (; row < end; row++) {
-                if (bdat->fn_71001F16A4(row) == 0 && bdat->fn_71001F172C(row) == group) {
-                    return bdat->fn_71001F161C(row);
+                if (bdat->getChrIrType(row) == 0 && bdat->getChrIrGroupID(row) == group) {
+                    return bdat->getChrIrdriverID(row);
                 }
             }
             return 0x11;
@@ -273,15 +273,15 @@ unsigned int GfDataDriver::fn_71002417DC(unsigned int driver) {
     return driver;
 }
 
-unsigned int GfDataDriver::fn_7100241C04(unsigned int driver) {
+unsigned int GfDataDriver::getChestHeight(unsigned int driver) {
     return GfBdatChrDr::get()->getChrDrChestHeight(driver);
 }
 
-unsigned int GfDataDriver::fn_7100241C1C(unsigned int driver) {
+unsigned int GfDataDriver::getLandingHeight(unsigned int driver) {
     return GfBdatChrDr::get()->getChrDrLandingHeight(driver);
 }
 
-unsigned int GfDataDriver::fn_7100241C34(unsigned int driver) {
+unsigned int GfDataDriver::getIconData(unsigned int driver) {
     return GfBdatChrDr::get()->getChrDrStill(driver);
 }
 
@@ -297,32 +297,32 @@ unsigned int GfDataDriver::getFootStepEffect(unsigned int driver) {
     return GfBdatChrDr::get()->getChrDrFootStepEffect(driver);
 }
 
-unsigned int GfDataDriver::fn_7100241C94(unsigned int driver) {
+unsigned int GfDataDriver::getGender(unsigned int driver) {
     return GfBdatChrDr::get()->getChrDrGender(driver);
 }
 
-int GfDataDriver::fn_7100241CAC(unsigned int driver) {
+int GfDataDriver::getMenuOffset(unsigned int driver) {
     return GfBdatChrDr::get()->getChrDrOffsetID(driver);
 }
 
-const char* GfDataDriver::fn_7100241CC4(unsigned int driver) {
+const char* GfDataDriver::getCenterBone(unsigned int driver) {
     return GfBdatChrDr::get()->getChrDrCenterBone(driver);
 }
 
-const char* GfDataDriver::fn_7100241CDC(unsigned int driver) {
+const char* GfDataDriver::getCamBone(unsigned int driver) {
     return GfBdatChrDr::get()->getChrDrCamBone(driver);
 }
 
-void GfDataDriver::fn_7100241CF4(unsigned int driver, bool flag) {
+void GfDataDriver::setKizunaringComplete(unsigned int driver, bool flag) {
     SDataDriver* data = getSDataDriver(driver);
     data->m_kizunaRingFlags |= flag ? 2 : 1;
 }
 
-bool GfDataDriver::fn_7100241D64(unsigned int driver, bool flag) {
+bool GfDataDriver::isKizunaringComplete(unsigned int driver, bool flag) {
     return (getSDataDriver(driver)->m_kizunaRingFlags & (flag ? 2 : 1)) != 0;
 }
 
-bool GfDataDriver::fn_7100241DD4(unsigned int driver) {
+bool GfDataDriver::equipDriverBladeFromReserverBlade(unsigned int driver) {
     mm::mtl::FixedVector<unsigned short, 424> list;
     return fn_7100241E10(driver, list);
 }
@@ -378,7 +378,7 @@ unsigned int GfDataDriver::getEyeRotControl(unsigned int driver) {
     return GfBdatChrDr::get()->getChrDrEyeRot(driver);
 }
 
-bool GfDataDriver::fn_7100249170(unsigned int driver) {
+bool GfDataDriver::isAttachedParty(unsigned int driver) {
     if (driver == 0) {
         return false;
     }
@@ -404,11 +404,11 @@ unsigned int GfDataDriverArts::getCaptionID(unsigned int arts) {
 }
 
 unsigned int GfDataDriverArts::getIconID(unsigned int arts) {
-    return GfBdatBtl::get()->fn_71001E6BDC(arts);
+    return GfBdatBtl::get()->getArtsDrUI(arts);
 }
 
 unsigned int GfDataDriverArts::getDebugName(unsigned int arts) {
-    return GfBdatBtl::get()->fn_71001E6B54(arts);
+    return GfBdatBtl::get()->getArtsDrDebugName(arts);
 }
 
 unsigned int GfDataDriverArts::getWpnType(unsigned int arts) {
@@ -435,8 +435,8 @@ bool GfDataBladeArts::getEnhanceCaption(unsigned char*& bdat, unsigned int& id, 
         return false;
     }
     id = GfBdatBtl::get()->getBTL_EnhanceCaption(enhance);
-    if (GfGameManager::fn_71002A9E68()) {
-        unsigned int caption = GfBdatBtl::get()->fn_71001E7F28(enhance);
+    if (GfGameManager::isGameTypeIra()) {
+        unsigned int caption = GfBdatBtl::get()->getBTL_EnhanceCaption2(enhance);
         if (caption != 0) {
             id = caption;
         }
@@ -455,8 +455,8 @@ bool GfDataBladeSkill::getEnhanceCaption(unsigned char*& bdat, unsigned int& id,
         return false;
     }
     id = GfBdatBtl::get()->getBTL_EnhanceCaption(enhance);
-    if (GfGameManager::fn_71002A9E68()) {
-        unsigned int caption = GfBdatBtl::get()->fn_71001E7F28(enhance);
+    if (GfGameManager::isGameTypeIra()) {
+        unsigned int caption = GfBdatBtl::get()->getBTL_EnhanceCaption2(enhance);
         if (caption != 0) {
             id = caption;
         }
@@ -567,51 +567,51 @@ int GfDataWeapon::getStability(unsigned int weapon) {
     return GfBdatItem::get()->getPcWpnStability(weapon);
 }
 
-unsigned int GfDataWeapon::fn_710024FA88(unsigned int driver) {
+unsigned int GfDataWeapon::getDamageForIra(unsigned int driver) {
     if (driver - 0x11 > 2) {
         return 0;
     }
     unsigned int row = driver - 0x10;
     unsigned int level = GfDataDriver::getLevel(driver) - 1;
     GfBdatItem* item = GfBdatItem::get();
-    unsigned int min = item->fn_7100206894(row);
-    unsigned int max = item->fn_710020691C(row);
+    unsigned int min = item->getITM_PcWpnIrAtkLv1(row);
+    unsigned int max = item->getITM_PcWpnIrAtkLv99(row);
     return min + (max - min) * level / 98;
 }
 
-unsigned int GfDataWeapon::fn_710024FB98(unsigned int driver) {
+unsigned int GfDataWeapon::getGuardRatioForIra(unsigned int driver) {
     if (driver - 0x11 > 2) {
         return 0;
     }
     unsigned int row = driver - 0x10;
     unsigned int level = GfDataDriver::getLevel(driver) - 1;
     GfBdatItem* item = GfBdatItem::get();
-    unsigned int min = item->fn_7100206BC4(row);
-    unsigned int max = item->fn_7100206C4C(row);
+    unsigned int min = item->getITM_PcWpnIrGuardRateLv1(row);
+    unsigned int max = item->getITM_PcWpnIrGuardRateLv99(row);
     return min + (max - min) * level / 98;
 }
 
-unsigned int GfDataWeapon::fn_710024FCA8(unsigned int driver) {
+unsigned int GfDataWeapon::getCriticalRatioForIra(unsigned int driver) {
     if (driver - 0x11 > 2) {
         return 0;
     }
     unsigned int row = driver - 0x10;
     unsigned int level = GfDataDriver::getLevel(driver) - 1;
     GfBdatItem* item = GfBdatItem::get();
-    unsigned int min = item->fn_7100206AB4(row);
-    unsigned int max = item->fn_7100206B3C(row);
+    unsigned int min = item->getITM_PcWpnIrCriRateLv1(row);
+    unsigned int max = item->getITM_PcWpnIrCriRateLv99(row);
     return min + (max - min) * level / 98;
 }
 
-unsigned int GfDataWeapon::fn_710024FDB8(unsigned int driver) {
+unsigned int GfDataWeapon::getStabilityForIra(unsigned int driver) {
     if (driver - 0x11 > 2) {
         return 0;
     }
     unsigned int row = driver - 0x10;
     unsigned int level = GfDataDriver::getLevel(driver) - 1;
     GfBdatItem* item = GfBdatItem::get();
-    unsigned int min = item->fn_71002069A4(row);
-    unsigned int max = item->fn_7100206A2C(row);
+    unsigned int min = item->getITM_PcWpnIrStbLv1(row);
+    unsigned int max = item->getITM_PcWpnIrStbLv99(row);
     return min + (max - min) * level / 98;
 }
 
@@ -1018,20 +1018,20 @@ ActivateType GfDataBlade::getBladeActivateType(unsigned int blade) {
     return getBladeActivateType(game->m_blades[index]);
 }
 
-bool GfDataBlade::fn_710023978C(unsigned int blade) {
+bool GfDataBlade::isFreeEngage(unsigned int blade) {
     GfBdatChrBl* bdat = GfBdatChrBl::get();
     if (blade >= bdat->getChrBlEnd()) {
         return false;
     }
-    return bdat->fn_71001ED49C(blade);
+    return bdat->isChrBlFlagFreeEngage(blade);
 }
 
-bool GfDataBlade::fn_71002397DC(unsigned int blade) {
+bool GfDataBlade::isNoMapRev(unsigned int blade) {
     GfBdatChrBl* bdat = GfBdatChrBl::get();
     if (blade >= bdat->getChrBlEnd()) {
         return false;
     }
-    return bdat->fn_71001ED52C(blade);
+    return bdat->isChrBlFlagNoMapRev(blade);
 }
 
 ActivateType GfDataBlade::getBladeActivateType(const SDataBlade& blade) {
@@ -1047,7 +1047,7 @@ ActivateType GfDataBlade::getBladeActivateType(const SDataBlade& blade) {
     return ActivateType(type);
 }
 
-unsigned int GfDataBlade::fn_710023982C(unsigned int blade) {
+unsigned int GfDataBlade::getGender(unsigned int blade) {
     if (blade == 0) {
         return 0;
     }
@@ -1099,10 +1099,10 @@ bool GfDataBlade::isValid(unsigned int blade) {
     return blade >= 1001 && blade < 1423;
 }
 
-bool GfDataDriver::fn_7100237A94(unsigned int driver) {
+bool GfDataDriver::isIraFront(unsigned int driver) {
     if (driver - 0x11 <= 8) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        return bdat->fn_71001F16A4(bdat->fn_71001F13E0(driver)) == 0;
+        return bdat->getChrIrType(bdat->getChrDrIraParam(driver)) == 0;
     }
     return true;
 }
@@ -1165,36 +1165,36 @@ bool GfDataBlade::isNeedChangeWeapon(unsigned int blade) {
     return (blade >= 1043 && blade < 1051) || blade == 1039;
 }
 
-unsigned int GfDataDriver::fn_7100241640(unsigned int driver, unsigned int slot) {
+unsigned int GfDataDriver::getDefaultBlade(unsigned int driver, unsigned int slot) {
     return GfBdatChrDr::get()->getChrDrDefBlade(driver, slot);
 }
 
-bool GfDataDriver::fn_7100241660(unsigned int driver) {
+bool GfDataDriver::isIraHideWeaponOnField(unsigned int driver) {
     GfBdatChrDr* bdat = GfBdatChrDr::get();
-    unsigned int row = bdat->fn_71001F13E0(driver);
+    unsigned int row = bdat->getChrDrIraParam(driver);
     if (row == 0) {
         return false;
     }
-    return bdat->fn_71001F183C(row);
+    return bdat->isChrIrFlagWpnInNonView(row);
 }
 
-unsigned int GfDataDriver::fn_710024198C(unsigned int driver) {
+unsigned int GfDataDriver::getPartyPos(unsigned int driver) {
     if (driver - 0x11 <= 8) {
-        return GfDataManager::fn_7100224A10()->m_drivers[driver - 0x11].m_partyIndex;
+        return GfDataManager::getDataGameIra()->m_drivers[driver - 0x11].m_partyIndex;
     }
     return 0;
 }
 
-unsigned int GfDataDriver::fn_71002419C8(unsigned int driver) {
+unsigned int GfDataDriver::getIraGroup(unsigned int driver) {
     GfBdatChrDr* bdat = GfBdatChrDr::get();
-    unsigned int row = bdat->fn_71001F13E0(driver);
+    unsigned int row = bdat->getChrDrIraParam(driver);
     if (row == 0) {
         return 0;
     }
-    return bdat->fn_71001F172C(row);
+    return bdat->getChrIrGroupID(row);
 }
 
-SDataDriverDlc* GfDataDriver::fn_7100241BB4(unsigned int driver) {
+SDataDriverDlc* GfDataDriver::getSDataIra(unsigned int driver) {
     driver = driver - 0x11 < 9 ? driver : 0x11;
     unsigned int index;
     if (driver - 0x11 < 9) {
@@ -1202,7 +1202,7 @@ SDataDriverDlc* GfDataDriver::fn_7100241BB4(unsigned int driver) {
     } else {
         index = driver - 1 < 16 ? driver - 1 : 1;
     }
-    return &GfDataManager::fn_7100224A10()->m_drivers[index];
+    return &GfDataManager::getDataGameIra()->m_drivers[index];
 }
 
 unsigned int GfDataBlade::getActBlade2CommonBlade(unsigned int blade) {
@@ -1216,7 +1216,7 @@ bool GfDataHana::isValid(unsigned int blade) {
     return blade >= 1005 && blade < 1008;
 }
 
-bool GfDataDriver::fn_7100248DB0(unsigned int driver, unsigned int index) {
+bool GfDataDriver::isActivateWeaponType(unsigned int driver, unsigned int index) {
     if (driver == 0) {
         return false;
     }
@@ -1228,7 +1228,7 @@ bool GfDataDriver::fn_7100248DB0(unsigned int driver, unsigned int index) {
     return data->m_flags.test(index);
 }
 
-void GfDataDriver::fn_7100248EB0(unsigned int driver, unsigned int index) {
+void GfDataDriver::setActivateWeaponType(unsigned int driver, unsigned int index) {
     if (driver == 0) {
         return;
     }
@@ -1271,10 +1271,10 @@ unsigned int GfDataDriver::getWeaponEfbFileIdx(int index) {
 }
 
 bool GfDataDriver::fn_7100247580(mm::mtl::FixedVector<unsigned short, 64>& enhances, int driver) {
-    return fn_71002475DC(enhances, *getSDataDriver(driver));
+    return getEquipAcceEnhance(enhances, *getSDataDriver(driver));
 }
 
-bool GfDataDriver::fn_71002475DC(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriver& data) {
+bool GfDataDriver::getEquipAcceEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriver& data) {
     GfBdatItem* bdat = GfBdatItem::get();
     for (int i = 0; i < 2; i++) {
         unsigned int item = data.m_equipAcce[i].m_item;
@@ -1294,7 +1294,7 @@ bool GfDataDriver::fn_71002475DC(mm::mtl::FixedVector<unsigned short, 64>& enhan
     }
     unsigned int dlc = data.m_id - 0x11;
     if (dlc < 9) {
-        unsigned int item = GfDataManager::fn_7100224A10()->m_drivers[dlc].m_item;
+        unsigned int item = GfDataManager::getDataGameIra()->m_drivers[dlc].m_item;
         if (item != 0) {
             unsigned int enhance = bdat->getPcEquipEnhance1(item);
             if (enhance != 0) {
@@ -1337,7 +1337,7 @@ bool GfDataEvent::isBladeCreateEvent(unsigned int event) {
     return event >= 19001 && event < 19062;
 }
 
-bool GfDataEvent::fn_710024F1B4(unsigned int event) {
+bool GfDataEvent::isBladeQuestEvent(unsigned int event) {
     if (event - 20707 < 504) {
         return true;
     }
@@ -1433,7 +1433,7 @@ bool GfDataAchievement::isWaitControllFreeStats(unsigned int stats) {
 }
 
 void GfDataAchievement::clearTotalCount(unsigned int type) {
-    int index = fn_710024B4D0(type);
+    int index = getAchievementTotalFlgIndex8(type);
     if (index >= 0) {
         GfGameFlag::setLocal(8, index, 0);
         return;
@@ -1448,9 +1448,9 @@ void GfDataAchievement::clearTotalCount(unsigned int type) {
 GfDataParty::PartyMember* GfDataParty::getPartyMember(unsigned int index, unsigned int party) {
     switch (party) {
     case 1:
-        return &GfDataManager::fn_7100224A10()->m_partyMembers[0][index];
+        return &GfDataManager::getDataGameIra()->m_partyMembers[0][index];
     case 2:
-        return &GfDataManager::fn_7100224A10()->m_partyMembers[1][index];
+        return &GfDataManager::getDataGameIra()->m_partyMembers[1][index];
     default:
         return &GfDataManager::getDataGame()->m_party.m_members[index];
     }
@@ -1550,7 +1550,7 @@ SDataIdea* GfDataBlade::getSDataIdea(unsigned int blade) {
 }
 
 const char* GfDataBlade::getName(unsigned int blade, unsigned int kind) {
-    if (fn_71002364B8(blade)) {
+    if (isIra(blade)) {
         unsigned int row = blade - 1107;
         unsigned int id = GfBdatChrDr::get()->getChrDrName(row);
         unsigned char* fp = GfBdatMsg::getFpChrDr();
@@ -2325,8 +2325,8 @@ bool GfDataDriverSkill::getEnhanceCaption(unsigned char*& bdat, unsigned int& id
         return false;
     }
     id = GfBdatBtl::get()->getBTL_EnhanceCaption(enhance);
-    if (GfGameManager::fn_71002A9E68()) {
-        unsigned int caption = GfBdatBtl::get()->fn_71001E7F28(enhance);
+    if (GfGameManager::isGameTypeIra()) {
+        unsigned int caption = GfBdatBtl::get()->getBTL_EnhanceCaption2(enhance);
         if (caption != 0) {
             id = caption;
         }
@@ -2432,7 +2432,7 @@ unsigned int GfDataDriverSkill::getSkill(unsigned int driver, unsigned int line,
     unsigned int id = data->m_id;
     if (id - 1 >= 6 && id - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(id)) != 0) {
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(id)) != 0) {
             return 0;
         }
     }
@@ -2646,7 +2646,7 @@ bool GfDataBlade::fn_710024D82C(unsigned int id) {
     if (id <= 2000) {
         return false;
     }
-    return GfBdatRsc::get()->fn_7100219574(id) != 0;
+    return GfBdatRsc::get()->getRscNpcListEvtRetarget(id) != 0;
 }
 
 void GfDataBlade::fn_710024D86C(unsigned int id, unsigned int value) {
@@ -2662,7 +2662,7 @@ bool GfDataBlade::fn_710024D8C4(unsigned char*& bdat, unsigned int& id, unsigned
         return false;
     }
     bdat = GfDataBdat::getFP(0x1C3);
-    id = GfBdatRsc::get()->fn_7100219BD0(blade);
+    id = GfBdatRsc::get()->getRscNpcListJob(blade);
     return id != 0;
 }
 
@@ -2670,13 +2670,13 @@ unsigned int GfDataBlade::fn_710024D92C(unsigned int id) {
     if (id <= 2000) {
         return 0;
     }
-    if (GfGameCond::isGameCond(static_cast<unsigned short>(GfBdatRsc::get()->fn_7100219DF0(id)))) {
-        return GfBdatRsc::get()->fn_7100219E78(id);
+    if (GfGameCond::isGameCond(static_cast<unsigned short>(GfBdatRsc::get()->getRscNpcListCondition1(id)))) {
+        return GfBdatRsc::get()->getRscNpcListMSGID2(id);
     }
-    if (GfGameCond::isGameCond(static_cast<unsigned short>(GfBdatRsc::get()->fn_7100219F00(id)))) {
-        return GfBdatRsc::get()->fn_7100219F88(id);
+    if (GfGameCond::isGameCond(static_cast<unsigned short>(GfBdatRsc::get()->getRscNpcListCondition2(id)))) {
+        return GfBdatRsc::get()->getRscNpcListMSGID3(id);
     }
-    return GfBdatRsc::get()->fn_7100219D68(id);
+    return GfBdatRsc::get()->getRscNpcListMSGID(id);
 }
 
 bool GfDataBlade::fn_710024D9C4(unsigned char*& bdat, unsigned int& id, unsigned int rsc) {
@@ -2693,7 +2693,7 @@ bool GfDataBlade::fn_710024DA20(unsigned char*& bdat, unsigned int& id, unsigned
         return false;
     }
     bdat = GfDataBdat::getFP(452);
-    id = GfBdatRsc::get()->fn_710021A010(rsc);
+    id = GfBdatRsc::get()->getRscNpcListresult(rsc);
     return id != 0;
 }
 
@@ -2701,14 +2701,14 @@ unsigned int GfDataBlade::fn_710024DA88(unsigned int id) {
     if (id <= 2000) {
         return 0;
     }
-    return GfBdatRsc::get()->fn_7100219C58(id);
+    return GfBdatRsc::get()->getRscNpcListHitonowaFlag(id);
 }
 
 unsigned int GfDataBlade::fn_710024DAB0(unsigned int id) {
     if (id <= 2000) {
         return 0;
     }
-    return GfBdatRsc::get()->fn_7100219CE0(id);
+    return GfBdatRsc::get()->getRscNpcListNpcMeetFlag(id);
 }
 
 float GfDataNpc::getScale(unsigned int npc) {
@@ -2928,7 +2928,7 @@ void GfDataBlade::setUnselect(unsigned int blade, bool unselect) {
 
 SDataDriver* GfDataDriver::getSDataDriver(unsigned int driver) {
     if (driver - 0x11 < 9) {
-        return &GfDataManager::fn_7100224A10()->m_drivers[driver - 0x11].m_driver;
+        return &GfDataManager::getDataGameIra()->m_drivers[driver - 0x11].m_driver;
     }
     unsigned int index = driver - 1;
     SDataGame* game = GfDataManager::getDataGame();
@@ -2937,7 +2937,7 @@ SDataDriver* GfDataDriver::getSDataDriver(unsigned int driver) {
 
 inline SDataDriverArtsEx* GfDataDriver::getSDataDriverArtsEx(unsigned int driver) {
     if (driver - 0x11 < 9) {
-        return &GfDataManager::fn_7100224A10()->m_driverArtsEx[driver - 0x11];
+        return &GfDataManager::getDataGameIra()->m_driverArtsEx[driver - 0x11];
     }
     unsigned int index = driver - 1;
     SDataGame* game = GfDataManager::getDataGame();
@@ -2948,8 +2948,8 @@ unsigned int GfDataDriver::getLevel(const SDataDriver& data) {
     unsigned int driver = data.m_id;
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
-            return getLevel(fn_71002417DC(data.m_id));
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
+            return getLevel(getIraFront(data.m_id));
         }
     }
     return data.m_level;
@@ -2963,8 +2963,8 @@ unsigned int GfDataDriver::getExp(const SDataDriver& data) {
     unsigned int driver = data.m_id;
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
-            return getExp(*getSDataDriver(fn_71002417DC(data.m_id)));
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
+            return getExp(*getSDataDriver(getIraFront(data.m_id)));
         }
     }
     return data.m_exp;
@@ -2974,8 +2974,8 @@ unsigned int GfDataDriver::getBattleExp(const SDataDriver& data) {
     unsigned int driver = data.m_id;
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
-            return getBattleExp(*getSDataDriver(fn_71002417DC(data.m_id)));
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
+            return getBattleExp(*getSDataDriver(getIraFront(data.m_id)));
         }
     }
     return data.m_battleExp;
@@ -2985,8 +2985,8 @@ unsigned int GfDataDriver::getBattleExpNextLevel(const SDataDriver& data) {
     unsigned int driver = data.m_id;
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
-            return getBattleExpNextLevel(*getSDataDriver(fn_71002417DC(data.m_id)));
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
+            return getBattleExpNextLevel(*getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int level = getLevel(data);
@@ -3005,8 +3005,8 @@ unsigned int GfDataDriver::getExpNextLevel(const SDataDriver& data) {
     unsigned int driver = data.m_id;
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
-            return getExpNextLevel(*getSDataDriver(fn_71002417DC(data.m_id)));
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
+            return getExpNextLevel(*getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int level = getLevel(data);
@@ -3024,8 +3024,8 @@ unsigned int GfDataDriver::getExpNextLevel(const SDataDriver& data) {
 unsigned int GfDataDriver::getExpUsed(unsigned int driver) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(driver)) != 0) {
-            return getExpUsed(fn_71002417DC(driver));
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(driver)) != 0) {
+            return getExpUsed(getIraFront(driver));
         }
     }
     unsigned int level = getLevel(*getSDataDriver(driver));
@@ -3036,18 +3036,18 @@ unsigned int GfDataDriver::getExpUsed(unsigned int driver) {
     return exp;
 }
 
-unsigned int GfDataDriver::fn_7100246694(const SDataDriver& data) {
+unsigned int GfDataDriver::getHpMaxRev(const SDataDriver& data) {
     unsigned int driver = data.m_id;
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
-            return fn_7100246694(*getSDataDriver(fn_71002417DC(data.m_id)));
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
+            return getHpMaxRev(*getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int rev = 0;
     bool set1002 = false;
     for (int i = 0; i < getMaxSetBladeNum(data); i++) {
-        unsigned int blade = fn_7100244E78(data, i);
+        unsigned int blade = getBlade(data, i);
         if (blade != 0) {
             rev += GfDataBlade::getHpMaxRev(blade);
             set1002 |= blade == 1002;
@@ -3063,13 +3063,13 @@ unsigned int GfDataDriver::getStrengthRev(const SDataDriver& data) {
     unsigned int driver = data.m_id;
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
-            return getStrengthRev(*getSDataDriver(fn_71002417DC(data.m_id)));
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
+            return getStrengthRev(*getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int rev = 0;
     for (int i = 0; i < getMaxSetBladeNum(data); i++) {
-        unsigned int blade = fn_7100244E78(data, i);
+        unsigned int blade = getBlade(data, i);
         if (blade != 0) {
             rev += GfDataBlade::getStrengthRev(blade);
         }
@@ -3081,13 +3081,13 @@ unsigned int GfDataDriver::getPowEtherRev(const SDataDriver& data) {
     unsigned int driver = data.m_id;
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
-            return getPowEtherRev(*getSDataDriver(fn_71002417DC(data.m_id)));
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
+            return getPowEtherRev(*getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int rev = 0;
     for (int i = 0; i < getMaxSetBladeNum(data); i++) {
-        unsigned int blade = fn_7100244E78(data, i);
+        unsigned int blade = getBlade(data, i);
         if (blade != 0) {
             rev += GfDataBlade::getPowerEtherRev(blade);
         }
@@ -3099,13 +3099,13 @@ unsigned int GfDataDriver::getDexRev(const SDataDriver& data) {
     unsigned int driver = data.m_id;
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
-            return getDexRev(*getSDataDriver(fn_71002417DC(data.m_id)));
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
+            return getDexRev(*getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int rev = 0;
     for (int i = 0; i < getMaxSetBladeNum(data); i++) {
-        unsigned int blade = fn_7100244E78(data, i);
+        unsigned int blade = getBlade(data, i);
         if (blade != 0) {
             rev += GfDataBlade::getDexRev(blade);
         }
@@ -3117,13 +3117,13 @@ unsigned int GfDataDriver::getAgilityRev(const SDataDriver& data) {
     unsigned int driver = data.m_id;
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
-            return getAgilityRev(*getSDataDriver(fn_71002417DC(data.m_id)));
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
+            return getAgilityRev(*getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int rev = 0;
     for (int i = 0; i < getMaxSetBladeNum(data); i++) {
-        unsigned int blade = fn_7100244E78(data, i);
+        unsigned int blade = getBlade(data, i);
         if (blade != 0) {
             rev += GfDataBlade::getAgilityRev(blade);
         }
@@ -3135,13 +3135,13 @@ unsigned int GfDataDriver::getLuckRev(const SDataDriver& data) {
     unsigned int driver = data.m_id;
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
-            return getLuckRev(*getSDataDriver(fn_71002417DC(data.m_id)));
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
+            return getLuckRev(*getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int rev = 0;
     for (int i = 0; i < getMaxSetBladeNum(data); i++) {
-        unsigned int blade = fn_7100244E78(data, i);
+        unsigned int blade = getBlade(data, i);
         if (blade != 0) {
             rev += GfDataBlade::getLuckRev(blade);
         }
@@ -3153,7 +3153,7 @@ unsigned int GfDataDriver::getSkillPoint(const SDataDriver& data) {
     return data.m_skillPoint;
 }
 
-void GfDataDriver::fn_7100247E88(unsigned int driver, int point) {
+void GfDataDriver::addSkillPoint(unsigned int driver, int point) {
     addSkillPoint(*getSDataDriver(driver), point);
 }
 
@@ -3194,7 +3194,7 @@ bool GfDataBlade::getListRegular(mm::mtl::FixedVector<unsigned short, 422>& list
     return !list.empty();
 }
 
-bool GfDataBlade::fn_71002390F0(mm::mtl::FixedVector<unsigned short, 422>& list) {
+bool GfDataBlade::getListRare(mm::mtl::FixedVector<unsigned short, 422>& list) {
     for (unsigned int blade = 1014; blade < 1051; blade++) {
         list.push_back(blade);
     }
@@ -3222,7 +3222,7 @@ unsigned int GfDataDriver::getEquipAcce(const SDataDriver& data, unsigned int sl
     return data.m_equipAcceEx & 0xFFFF;
 }
 
-unsigned int* GfDataDriver::fn_7100247804(unsigned int driver, unsigned int index) {
+unsigned int* GfDataDriver::getDriverWeaponType(unsigned int driver, unsigned int index) {
     if (index >= 0x1C) {
         SDataDriverArtsEx* ex = getSDataDriverArtsEx(driver);
         return ex->m_arts[index - 0x1C];
@@ -3231,24 +3231,24 @@ unsigned int* GfDataDriver::fn_7100247804(unsigned int driver, unsigned int inde
     return data->m_arts[index];
 }
 
-unsigned int* GfDataDriver::fn_71002478C8(unsigned int driver, unsigned int index) {
+unsigned int* GfDataDriver::getDriverWeaponTypeIraBack(unsigned int driver, unsigned int index) {
     unsigned int row = driver - 0x11 < 9 ? driver : 0x11;
     unsigned int dlc = row - 0x11;
     if (dlc >= 9) {
         unsigned int slot = row - 1;
         dlc = slot < 0x10 ? slot : 1;
     }
-    return GfDataManager::fn_7100224A10()->m_drivers[dlc].m_dlcArts[index];
+    return GfDataManager::getDataGameIra()->m_drivers[dlc].m_dlcArts[index];
 }
 
-unsigned int* GfDataDriver::fn_7100247928(unsigned int driver, unsigned int index) {
+unsigned int* GfDataDriver::getDriverWeaponTypeIraSwitch(unsigned int driver, unsigned int index) {
     unsigned int row = driver - 0x11 < 9 ? driver : 0x11;
     unsigned int dlc = row - 0x11;
     if (dlc >= 9) {
         unsigned int slot = row - 1;
         dlc = slot < 0x10 ? slot : 1;
     }
-    return GfDataManager::fn_7100224A10()->m_drivers[dlc].m_dlcArts2[index];
+    return GfDataManager::getDataGameIra()->m_drivers[dlc].m_dlcArts2[index];
 }
 
 GfItemHandle GfDataDriver::getEquipAcceHandle(unsigned int driver, unsigned int slot) {
@@ -3259,7 +3259,7 @@ GfItemHandle GfDataDriver::getEquipAcceHandle(unsigned int driver, unsigned int 
     return data->m_equipAcceHandleEx;
 }
 
-void GfDataDriver::fn_7100247A08(unsigned int driver, unsigned int slot, unsigned int accessory) {
+void GfDataDriver::setEquipAcce(unsigned int driver, unsigned int slot, unsigned int accessory) {
     if (driver == 0) {
         return;
     }
@@ -3286,7 +3286,7 @@ void GfDataDriver::fn_7100247ABC(unsigned int driver, unsigned int slot, const G
     }
 }
 
-void GfDataDriver::fn_7100247B40(unsigned int driver, bool flag) {
+void GfDataDriver::setEnableExtendEquipAcce(unsigned int driver, bool flag) {
     SDataDriver* data = getSDataDriver(getSDataDriver(driver)->m_id);
     if (flag) {
         data->m_equipAcceEx |= 0x80000000;
@@ -3295,7 +3295,7 @@ void GfDataDriver::fn_7100247B40(unsigned int driver, bool flag) {
     }
 }
 
-bool GfDataDriver::fn_7100247BF0(unsigned int driver) {
+bool GfDataDriver::isEnableExtendEquipAcce(unsigned int driver) {
     return getSDataDriver(getSDataDriver(driver)->m_id)->m_equipAcceEx >> 31;
 }
 
@@ -3320,8 +3320,8 @@ void GfDataDriver::addSkillPoint(SDataDriver& data, int point) {
     }
 }
 
-void GfDataDriver::fn_7100247F74(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver) {
-    fn_7100247FD0(enhances, *getSDataDriver(driver));
+void GfDataDriver::getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver) {
+    getValidEnhance(enhances, *getSDataDriver(driver));
 }
 
 bool GfDataDriver::fn_7100248668(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriverDlc& data) {
@@ -3439,7 +3439,7 @@ void GfDataDriver::setPouchData(unsigned int driver, unsigned int pouch, const S
     dst->remainTime = data.remainTime;
 }
 
-bool GfDataDriver::fn_710023F9A8(unsigned int driver) {
+bool GfDataDriver::isIra(unsigned int driver) {
     return driver - 0x11 < 9;
 }
 
@@ -3576,7 +3576,7 @@ static unsigned int getDifSettingValue(unsigned int id, unsigned int slot) {
     if (bdat == nullptr) {
         return 0;
     }
-    return bdat->fn_71001E9520(id, slot);
+    return bdat->getBTL_DifSettingDiff(id, slot);
 }
 
 // a BTL_DifSetting value as a level: (value - ParamMin) / Interval, 0 without GfBdatBtl or with Interval 0; every
@@ -3586,9 +3586,9 @@ static unsigned char getDifSettingLevel(unsigned int id, unsigned int value) {
     if (bdat == nullptr) {
         return 0;
     }
-    unsigned int min = bdat->fn_71001E91E8(id);
-    bdat->fn_71001E9270(id);
-    unsigned int interval = bdat->fn_71001E92F8(id);
+    unsigned int min = bdat->getBTL_DifSettingParamMin(id);
+    bdat->getBTL_DifSettingParamMax(id);
+    unsigned int interval = bdat->getBTL_DifSettingInterval(id);
     if (interval == 0) {
         return 0;
     }
@@ -3626,9 +3626,9 @@ unsigned int fn_7100254FDC(SSoundUiOption* option, unsigned int index) {
     } else {
         level = getDifSettingLevel(index, getDifSettingValue(index, option->m_keyD));
     }
-    unsigned int min = bdat->fn_71001E91E8(index);
-    bdat->fn_71001E9270(index);
-    unsigned int interval = bdat->fn_71001E92F8(index);
+    unsigned int min = bdat->getBTL_DifSettingParamMin(index);
+    bdat->getBTL_DifSettingParamMax(index);
+    unsigned int interval = bdat->getBTL_DifSettingInterval(index);
     return min + interval * level;
 }
 
@@ -3643,13 +3643,13 @@ unsigned char fn_71002550C0(const SSoundUiOption* option, unsigned int index) {
 // accessor every user inlines (no copy of its own), so the name is not the original's
 static mm::mtl::FixedVector<unsigned short, 256>& getHitonowaFlagNpcList();
 
-// the NPC's hitonowa flag value (GfBdatRsc::fn_7100219C58) for an id above 2000, else 0 (inlined: the name is not
+// the NPC's hitonowa flag value (GfBdatRsc::getRscNpcListHitonowaFlag) for an id above 2000, else 0 (inlined: the name is not
 // the original's)
 static unsigned int getHitonowaFlag(unsigned int id) {
     if (id <= 2000) {
         return 0;
     }
-    return GfBdatRsc::get()->fn_7100219C58(id);
+    return GfBdatRsc::get()->getRscNpcListHitonowaFlag(id);
 }
 
 void GfDataBlade::fn_71002550E8() {
@@ -3714,7 +3714,7 @@ int GfDataBlade::fn_7100255638() {
     mm::mtl::FixedVector<unsigned short, 256>& list = getHitonowaFlagNpcList();
     for (unsigned short id : list) {
         if (id > 2000) {
-            unsigned int flag = GfBdatRsc::get()->fn_7100219CE0(id);
+            unsigned int flag = GfBdatRsc::get()->getRscNpcListNpcMeetFlag(id);
             if (flag != 0 && GfGameFlag::getLocal(1, flag) != 0) {
                 count++;
             }
@@ -3740,7 +3740,7 @@ unsigned int GfDataBlade::fn_71002557C8(unsigned int id) {
     if (id <= 2000) {
         return 0;
     }
-    unsigned int rsc = GfBdatRsc::get()->fn_7100219C58(id);
+    unsigned int rsc = GfBdatRsc::get()->getRscNpcListHitonowaFlag(id);
     if (rsc == 0) {
         return 0;
     }
@@ -3756,7 +3756,7 @@ unsigned int GfDataBlade::fn_7100255848(unsigned int id) {
     if (id <= 2000) {
         return 0;
     }
-    unsigned int rsc = GfBdatRsc::get()->fn_7100219C58(id);
+    unsigned int rsc = GfBdatRsc::get()->getRscNpcListHitonowaFlag(id);
     if (rsc == 0) {
         return 0;
     }
@@ -3815,7 +3815,7 @@ const char* GfDataMap::getWeatherSndName(WEATYPE type) {
     }
     GfBdatMaplist* maplist = GfBdatMaplist::get();
     if (GfDataBlade::fn_71002324C8()) {
-        return maplist->fn_710020A2AC(type);
+        return maplist->getWeatherInfosnd_ira(type);
     }
     return maplist->getWeatherInfosnd(type);
 }
@@ -3949,7 +3949,7 @@ const char* GfDataEnemy::getResourceNameModel(unsigned int arrange) {
     return GfBdatRsc::get()->getRscEnModel(rsc);
 }
 
-bool GfDataEnemy::fn_7100235424(unsigned int rsc, unsigned int part) {
+bool GfDataEnemy::isHideExtraParts(unsigned int rsc, unsigned int part) {
     return GfBdatRsc::get()->getRscEnExtraParts(rsc, part) == 2;
 }
 
@@ -3971,7 +3971,7 @@ void GfDataBlade::fn_71002355AC() {
     GfGameFlag::setLocal(8, 0x874, count + 1);
 }
 
-bool GfDataBlade::fn_71002355E4(unsigned int blade) {
+bool GfDataBlade::isDisableHomuraHikari(unsigned int blade) {
     if (fn_71002356BC(1001) != fn_71002356BC(1002)) {
         return false;
     }
@@ -3993,8 +3993,8 @@ bool GfDataBlade::fn_71002356BC(unsigned int blade) {
     if (blade == 0) {
         return false;
     }
-    return GfDataParty::fn_710024BAE0(0, blade) || GfDataParty::fn_710024BAE0(1, blade) ||
-           GfDataParty::fn_710024BAE0(2, blade);
+    return GfDataParty::isExistBlade(0, blade) || GfDataParty::isExistBlade(1, blade) ||
+           GfDataParty::isExistBlade(2, blade);
 }
 
 bool GfDataBlade::isDummyBlade(unsigned int blade) {
@@ -4091,14 +4091,14 @@ bool GfDataHana::isEquipCondenserParts(unsigned int hana, unsigned int item) {
     return false;
 }
 
-unsigned char GfDataHana::fn_7100253BCC(unsigned int hana) {
+unsigned char GfDataHana::getMercenaryUnuse(unsigned int hana) {
     if (!isValid(hana)) {
         return 0;
     }
     return GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)].m_hanaTeamFlag;
 }
 
-void GfDataHana::fn_7100253C34(unsigned int hana, unsigned char flag) {
+void GfDataHana::setMercenaryUnuse(unsigned int hana, unsigned char flag) {
     if (isValid(hana)) {
         GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)].m_hanaTeamFlag = flag;
     }
@@ -4241,7 +4241,7 @@ unsigned int GfDataEnBook::getDefeatNum(unsigned int arrange) {
     return GfGameFlag::getLocal(0x20, book + 0x142);
 }
 
-unsigned int GfDataEnBook::fn_7100253EB4(const SDataGame& game, unsigned int arrange) {
+unsigned int GfDataEnBook::getDefeatNum(const SDataGame& game, unsigned int arrange) {
     if (arrange == 0) {
         return 0;
     }
@@ -4376,7 +4376,7 @@ unsigned int GfDataDriver::getDriverBySetBlade(unsigned int blade) {
     return GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(blade)].m_setDriver;
 }
 
-unsigned int GfDataDriver::fn_710023A9C8(unsigned int driver) {
+unsigned int GfDataDriver::getDummyBlade(unsigned int driver) {
     switch (driver) {
     case 1:
         return 0x3F4;
@@ -4402,7 +4402,7 @@ bool GfDataBlade::isActivateParty(unsigned int blade) {
     return static_cast<unsigned int>(GfDataParty::getDriverPartyID(driver)) < 3;
 }
 
-int GfDataDriver::fn_710023B6A8(unsigned int driver) {
+int GfDataDriver::getSetIdByDummyBlade(unsigned int driver) {
     SDataDriver* data = getSDataDriver(driver);
     for (int slot = 0; slot < 3; slot++) {
         if (GfDataBlade::isDummyBlade(data->m_blades[slot])) {
@@ -4458,18 +4458,18 @@ SDataIdea* GfDataDriver::getSDataIdea(unsigned int driver) {
 }
 
 bool GfDataDriver::isEnableLevelUp(unsigned int driver) {
-    return fn_7100245C98(*getSDataDriver(driver));
+    return isEnableLevelUp(*getSDataDriver(driver));
 }
 
-unsigned int GfDataDriver::fn_7100245EA8(unsigned int driver) {
+unsigned int GfDataDriver::getExp(unsigned int driver) {
     return getExp(*getSDataDriver(driver));
 }
 
-unsigned int GfDataDriver::fn_7100245EFC(unsigned int driver) {
+unsigned int GfDataDriver::getBattleExp(unsigned int driver) {
     return getBattleExp(*getSDataDriver(driver));
 }
 
-unsigned int GfDataDriver::fn_7100245F50(unsigned int driver) {
+unsigned int GfDataDriver::getBattleExpNextLevel(unsigned int driver) {
     return getBattleExpNextLevel(*getSDataDriver(driver));
 }
 
@@ -4574,7 +4574,7 @@ void GfDataDriver::openDriverArtsForLevelup(unsigned int driver) {
     fn_7100244A44(driver, 0, true);
 }
 
-unsigned int GfDataDriver::fn_7100244E78(const SDataDriver& data, int slot) {
+unsigned int GfDataDriver::getBlade(const SDataDriver& data, int slot) {
     if ((unsigned int)(data.m_id - 0x11) <= 8) {
         return GfBdatChrDr::get()->getChrDrDefBlade1(data.m_id);
     }
@@ -4744,7 +4744,7 @@ unsigned int GfDataDriverArts::getArtsLevel(unsigned int driver, unsigned int ar
     return data->m_artsLevels[arts];
 }
 
-unsigned int GfDataDriver::fn_7100245478(unsigned int driver, unsigned int arts) {
+unsigned int GfDataDriver::getDriverArtsLevel(unsigned int driver, unsigned int arts) {
     if (arts >= 0x280) {
         SDataDriverArtsEx* ex = getSDataDriverArtsEx(driver);
         return ex->m_artsLevels[arts - 0x280];
@@ -4753,7 +4753,7 @@ unsigned int GfDataDriver::fn_7100245478(unsigned int driver, unsigned int arts)
     return data->m_artsLevels[arts];
 }
 
-void GfDataDriver::fn_710024553C(unsigned int driver, unsigned int arts, unsigned int level) {
+void GfDataDriver::setDriverArtsLevel(unsigned int driver, unsigned int arts, unsigned int level) {
     if (arts >= 0x280) {
         SDataDriverArtsEx* ex = getSDataDriverArtsEx(driver);
         ex->m_artsLevels[arts - 0x280] = level;
@@ -4779,7 +4779,7 @@ mm::Vec3* GfDataParty::getSaveRot(unsigned int index, bool flag) {
     return &game->m_saveRot2[index];
 }
 
-bool GfDataParty::fn_710024BAE0(unsigned int index, unsigned int blade) {
+bool GfDataParty::isExistBlade(unsigned int index, unsigned int blade) {
     PartyMember& member = GfDataManager::getDataGame()->m_party.m_members[index];
     if (member.m_driver == 0) {
         return false;
@@ -4915,8 +4915,8 @@ bool GfDataEvent::isSaveScenarioEvent(unsigned int event) {
     return false;
 }
 
-void GfDataEvent::fn_710024F2B8(unsigned int event) {
-    fn_710024F2DC(*GfDataManager::getDataGame(), event);
+void GfDataEvent::setWatchedEventFlag(unsigned int event) {
+    setWatchedEventFlag(*GfDataManager::getDataGame(), event);
 }
 
 // the event theater row of event (0 when none; F2DC and F454 inline it)
@@ -4930,7 +4930,7 @@ static inline unsigned int findEventTheaterRow(unsigned int event) {
     return 0;
 }
 
-// true when event's event theater row has category 2 (fn_710024F2DC inlines it)
+// true when event's event theater row has category 2 (setWatchedEventFlag inlines it)
 static inline bool isEventTheaterCategory2(GfBdatShop* bdat, unsigned int event) {
     for (unsigned int i = bdat->getMNU_EventTheaterStart(), end = bdat->getMNU_EventTheaterEnd(); i < end; i++) {
         if (bdat->getMNU_EventTheaterevent_id(i) == event) {
@@ -4940,7 +4940,7 @@ static inline bool isEventTheaterCategory2(GfBdatShop* bdat, unsigned int event)
     return false;
 }
 
-void GfDataEvent::fn_710024F2DC(SDataGame& game, unsigned int event) {
+void GfDataEvent::setWatchedEventFlag(SDataGame& game, unsigned int event) {
     GfBdatShop* bdat = GfBdatShop::get();
     if (event == 0x5461) {
         event = 0x5462;
@@ -4964,11 +4964,11 @@ void GfDataEvent::fn_710024F2DC(SDataGame& game, unsigned int event) {
     GfGameFlag::setLocal(game.m_gameFlag, 1, index + base, 1);
 }
 
-bool GfDataEvent::fn_710024F430(unsigned int event) {
-    return fn_710024F454(*GfDataManager::getDataGame(), event);
+bool GfDataEvent::isWatchedEventFlag(unsigned int event) {
+    return isWatchedEventFlag(*GfDataManager::getDataGame(), event);
 }
 
-bool GfDataEvent::fn_710024F454(const SDataGame& game, unsigned int event) {
+bool GfDataEvent::isWatchedEventFlag(const SDataGame& game, unsigned int event) {
     GfBdatShop* bdat = GfBdatShop::get();
     unsigned int base;
     if (event - 0x50E3 < 0x1F8) {
@@ -5010,10 +5010,10 @@ bool GfDataEvent::isSavedEvent(unsigned int event, const SDataGame& game) {
 }
 
 int GfDataEvent::getBladeQuestDriver(unsigned int event) {
-    return GfDataBlade::getCreator(fn_710024F720(event));
+    return GfDataBlade::getCreator(getBladeQuestBlade(event));
 }
 
-unsigned int GfDataEvent::fn_710024F720(unsigned int event) {
+unsigned int GfDataEvent::getBladeQuestBlade(unsigned int event) {
     GfBdatShop* shop = GfBdatShop::get();
     unsigned int row = shop->getMNU_EventTheaterStart();
     unsigned int end = shop->getMNU_EventTheaterEnd();
@@ -5095,7 +5095,7 @@ unsigned int GfDataEvent::fn_710024F720(unsigned int event) {
     return 0;
 }
 
-unsigned int GfDataEvent::fn_710024F7CC(unsigned int event) {
+unsigned int GfDataEvent::getBladeIdByEnentId(unsigned int event) {
     GfBdatChrBl* bl = GfBdatChrBl::get();
     unsigned int row = bl->getChrBlStart();
     unsigned int end = bl->getChrBlEnd();
@@ -5108,7 +5108,7 @@ unsigned int GfDataEvent::fn_710024F7CC(unsigned int event) {
     return 0;
 }
 
-bool GfDataEvent::fn_710024F844(mm::Vec3& pos, float& angle, unsigned int event) {
+bool GfDataEvent::getMapJumpPosition(mm::Vec3& pos, float& angle, unsigned int event) {
     unsigned char* fp = GfDataBdat::getFP(fn_710024EBD8(event));
     if (fp == nullptr) {
         return false;
@@ -5125,7 +5125,7 @@ bool GfDataEvent::fn_710024F844(mm::Vec3& pos, float& angle, unsigned int event)
     return true;
 }
 
-bool GfDataEvent::fn_710024F910(unsigned int event) {
+bool GfDataEvent::isInvalidMelefRetarget(unsigned int event) {
     unsigned char* fp = GfDataBdat::getFP(fn_710024EBD8(event));
     if (fp == nullptr) {
         return false;
@@ -5208,7 +5208,7 @@ bool GfDataItem::isNoMultiple(unsigned int item) {
     case 6: {
         unsigned int index;
         if (item - 25501 < 499) {
-            index = GfBdatItem::get()->fn_71002018A4(item);
+            index = GfBdatItem::get()->getPreciousIraNoMultiple(item);
         } else {
             index = GfBdatItem::get()->getPreciousNoMultiple(item);
         }
@@ -5238,7 +5238,7 @@ void GfDataItem::setNoMultiple(unsigned int item, bool set) {
     case 6: {
         unsigned int index;
         if (item - 25501 < 499) {
-            index = GfBdatItem::get()->fn_71002018A4(item);
+            index = GfBdatItem::get()->getPreciousIraNoMultiple(item);
         } else {
             index = GfBdatItem::get()->getPreciousNoMultiple(item);
         }
@@ -5259,7 +5259,7 @@ unsigned int GfDataMercenaries::getReserverMax() {
     return level * 24 + (GfDataManager::getDataGame()->m_gameClearCount != 0 ? 48 : 0) + 24;
 }
 
-int GfDataBlade::fn_710023C478(const SDataGame& game, unsigned int blade) {
+int GfDataBlade::getCreator(const SDataGame& game, unsigned int blade) {
     if (blade == 0) {
         return 0;
     }
@@ -5400,7 +5400,7 @@ int GfDataAchievement::getAchievementTotalFlgIndex(unsigned short stats) {
     return -1;
 }
 
-int GfDataAchievement::fn_710024B4D0(unsigned short stats) {
+int GfDataAchievement::getAchievementTotalFlgIndex8(unsigned short stats) {
     if (stats >= 184 && stats < 214) {
         return stats + 3834;
     }
@@ -5433,7 +5433,7 @@ bool GfDataAchievement::isAddAchievementBonusCount(const AchievQuest& quest) {
 }
 
 unsigned int GfDataAchievement::getTotalCount(unsigned int stats) {
-    int index = fn_710024B4D0(stats);
+    int index = getAchievementTotalFlgIndex8(stats);
     if (index >= 0) {
         return GfGameFlag::getLocal(8, index);
     }
@@ -5445,7 +5445,7 @@ unsigned int GfDataAchievement::getTotalCount(unsigned int stats) {
 }
 
 void GfDataAchievement::addTotalCount(unsigned int type, unsigned int value) {
-    int index = fn_710024B4D0(type);
+    int index = getAchievementTotalFlgIndex8(type);
     if (index >= 0) {
         unsigned int count = GfGameFlag::getLocal(8, index) + value;
         GfGameFlag::setLocal(8, index, count > 255 ? 255 : count);
@@ -5460,8 +5460,8 @@ void GfDataAchievement::addTotalCount(unsigned int type, unsigned int value) {
     GfGameFlag::setLocal(32, index, total < count ? 0xFFFFFFFF : total);
 }
 
-void GfDataAchievement::fn_710024B71C(unsigned int type, unsigned int value) {
-    int index = fn_710024B4D0(type);
+void GfDataAchievement::setTotalCount(unsigned int type, unsigned int value) {
+    int index = getAchievementTotalFlgIndex8(type);
     if (index >= 0) {
         GfGameFlag::setLocal(8, index, value > 255 ? 255 : value);
         return;
@@ -5543,7 +5543,7 @@ bool GfDataBlade::isActivateMercenaryTeam(unsigned int blade) {
     return GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_activateMercenaryTeam != 0;
 }
 
-void GfDataBlade::fn_7100239934(unsigned int blade, bool flag) {
+void GfDataBlade::setBladeLock(unsigned int blade, bool flag) {
     unsigned int index = getBladeIndex(blade);
     SDataGame* game = GfDataManager::getDataGame();
     game->m_blades[index].m_activateMercenaryTeam = flag;
@@ -5638,7 +5638,7 @@ bool GfDataParty::empty() {
     return true;
 }
 
-unsigned int GfDataParty::fn_710024BC9C(unsigned int handle, unsigned int driver) {
+unsigned int GfDataParty::getFixedHandleForDriver(unsigned int handle, unsigned int driver) {
     if (driver - 0x11 < 9) {
         switch (fn_710024BCEC(driver)) {
         case 1:
@@ -5652,17 +5652,17 @@ unsigned int GfDataParty::fn_710024BC9C(unsigned int handle, unsigned int driver
 
 unsigned int GfDataParty::fn_710024BCEC(unsigned int driver) {
     GfBdatChrDr* bdat = GfBdatChrDr::get();
-    unsigned int ira = bdat->fn_71001F13E0(driver);
+    unsigned int ira = bdat->getChrDrIraParam(driver);
     if (ira != 0) {
-        unsigned int group = bdat->fn_71001F172C(ira);
-        unsigned int row = bdat->fn_71001F15D4();
-        unsigned int end = bdat->fn_71001F15E0();
+        unsigned int group = bdat->getChrIrGroupID(ira);
+        unsigned int row = bdat->getChrIrStart();
+        unsigned int end = bdat->getChrIrEnd();
         unsigned int count = 0;
         for (; row < end; row++) {
-            if (bdat->fn_71001F161C(row) == driver) {
+            if (bdat->getChrIrdriverID(row) == driver) {
                 return count;
             }
-            if (bdat->fn_71001F172C(row) == group) {
+            if (bdat->getChrIrGroupID(row) == group) {
                 count++;
             }
         }
@@ -5680,12 +5680,12 @@ bool GfDataDriver::isActivateUnuse(unsigned int driver) {
     return getSDataDriver(driver)->m_dataType == 0;
 }
 
-void GfDataDriver::fn_71002447AC(SDataDriver& data, unsigned int level) {
+void GfDataDriver::setLevel(SDataDriver& data, unsigned int level) {
     unsigned int driver = data.m_id;
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
-            fn_71002447AC(*getSDataDriver(fn_71002417DC(data.m_id)), level);
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
+            setLevel(*getSDataDriver(getIraFront(data.m_id)), level);
             return;
         }
     }
@@ -5693,26 +5693,26 @@ void GfDataDriver::fn_71002447AC(SDataDriver& data, unsigned int level) {
     calcDriverBaseParamByLevel(data);
 }
 
-void GfDataDriver::fn_710024487C(unsigned int driver, unsigned int level) {
-    fn_71002447AC(*getSDataDriver(driver), level);
+void GfDataDriver::setLevel(unsigned int driver, unsigned int level) {
+    setLevel(*getSDataDriver(driver), level);
 }
 
-void GfDataDriver::fn_71002448D8(unsigned int driver, unsigned int exp) {
+void GfDataDriver::setExp(unsigned int driver, unsigned int exp) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(driver)) != 0) {
-            fn_71002448D8(fn_71002417DC(driver), exp);
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(driver)) != 0) {
+            setExp(getIraFront(driver), exp);
             return;
         }
     }
     getSDataDriver(driver)->m_exp = exp;
 }
 
-void GfDataDriver::fn_7100244988(unsigned int driver, unsigned int exp) {
+void GfDataDriver::setBattleExp(unsigned int driver, unsigned int exp) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
-        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(driver)) != 0) {
-            fn_7100244988(fn_71002417DC(driver), exp);
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(driver)) != 0) {
+            setBattleExp(getIraFront(driver), exp);
             return;
         }
     }
@@ -5839,7 +5839,7 @@ unsigned int GfDataWeapon::getNewWeapon(unsigned int weapon, unsigned int chip) 
     return 0;
 }
 
-bool GfDataDriver::fn_71002491D4(unsigned int driver) {
+bool GfDataDriver::isEquipDefaultAcce(unsigned int driver) {
     if (driver == 0) {
         return false;
     }
@@ -5869,7 +5869,7 @@ bool GfDataBlade::fn_7100232244(const SDataGame& game) {
     return GfGameFlag::getLocal(game.m_gameFlag, 1, 0xD791) != 0;
 }
 
-bool GfDataBlade::fn_7100235F94(const SDataGame& game) {
+bool GfDataBlade::isHomuriNameHikari(const SDataGame& game) {
     return GfGameFlag::getLocal(game.m_gameFlag, 1, 0x89FB) != 0;
 }
 
@@ -5930,7 +5930,7 @@ void GfDataBlade::fn_710024DAD8(unsigned int id, unsigned int value) {
         GfGameFlag::setLocal(4, 652, rank);
     }
     if (old != value) {
-        GfEvent::fn_7100328604(id);
+        GfEvent::callHitonowaChanged(id);
     }
 }
 
@@ -6007,7 +6007,7 @@ unsigned int GfDataBlade::fn_710024DD88() {
 
 unsigned int GfDataBlade::fn_710024DD94(unsigned int id) {
     if (id > 2000) {
-        unsigned int flag = GfBdatRsc::get()->fn_7100219C58(id);
+        unsigned int flag = GfBdatRsc::get()->getRscNpcListHitonowaFlag(id);
         if (flag != 0) {
             return GfGameFlag::getLocal(2, flag);
         }
@@ -6019,7 +6019,7 @@ bool GfDataBlade::fn_710024DE6C(unsigned int id) {
     if (id <= 2000) {
         return false;
     }
-    unsigned int flag = GfBdatRsc::get()->fn_7100219CE0(id);
+    unsigned int flag = GfBdatRsc::get()->getRscNpcListNpcMeetFlag(id);
     if (flag == 0) {
         return false;
     }
@@ -6030,7 +6030,7 @@ bool GfDataBlade::fn_710024DED0(unsigned int id) {
     if (id <= 2000) {
         return false;
     }
-    unsigned int flag = GfBdatRsc::get()->fn_7100219C58(id);
+    unsigned int flag = GfBdatRsc::get()->getRscNpcListHitonowaFlag(id);
     if (flag == 0) {
         return false;
     }
@@ -6043,7 +6043,7 @@ void GfDataBlade::fn_710024DF38(unsigned int id, bool value) {
     if (id <= 2000) {
         flag = 0;
     } else {
-        flag = GfBdatRsc::get()->fn_7100219CE0(id);
+        flag = GfBdatRsc::get()->getRscNpcListNpcMeetFlag(id);
     }
     GfGameFlag::setLocal(1, flag + 2160, value);
 }
@@ -6053,7 +6053,7 @@ bool GfDataBlade::fn_710024DF88(unsigned int id) {
     if (id <= 2000) {
         flag = 0;
     } else {
-        flag = GfBdatRsc::get()->fn_7100219CE0(id);
+        flag = GfBdatRsc::get()->getRscNpcListNpcMeetFlag(id);
     }
     return GfGameFlag::getLocal(1, flag + 2160) != 0;
 }
@@ -6076,7 +6076,7 @@ unsigned int GfDataBlade::fn_710024EA10() {
     return count;
 }
 
-unsigned int GfDataEvent::fn_710024ED1C(unsigned int event) {
+unsigned int GfDataEvent::getEventScenario(unsigned int event) {
     unsigned char* fp = GfDataBdat::getFP(fn_710024EBD8(event));
     if (fp == nullptr) {
         return 0;
@@ -6102,11 +6102,11 @@ void GfDataBlade::fn_71002324FC(SDataGame* game, bool flag) {
 }
 
 void GfDataBlade::fn_7100232518(SDataGame& game) {
-    game.m_aocIds[0] = TUnk_B4C840::fn_71002229C0(0) + 1;
-    game.m_aocIds[1] = TUnk_B4C840::fn_71002229C0(1) + 1;
-    game.m_aocIds[2] = TUnk_B4C840::fn_71002229C0(2) + 1;
-    game.m_aocIds[3] = TUnk_B4C840::fn_71002229C0(3) + 1;
-    game.m_aocIds[4] = TUnk_B4C840::fn_71002229C0(4) + 1;
+    game.m_aocIds[0] = GfDataAoc::fn_71002229C0(0) + 1;
+    game.m_aocIds[1] = GfDataAoc::fn_71002229C0(1) + 1;
+    game.m_aocIds[2] = GfDataAoc::fn_71002229C0(2) + 1;
+    game.m_aocIds[3] = GfDataAoc::fn_71002229C0(3) + 1;
+    game.m_aocIds[4] = GfDataAoc::fn_71002229C0(4) + 1;
 }
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BA04C)
@@ -6130,7 +6130,7 @@ bool GfDataBlade::fn_7100232660(const DataParamAcc& acc) {
 unsigned int GfDataBlade::fn_71002326F0(unsigned int id) {
     GfBdatBtl* bdat = GfBdatBtl::get();
     if (fn_71002324C8()) {
-        return bdat->fn_71001E77DC(id);
+        return bdat->getGrowLevelExp2(id);
     }
     return bdat->getGrowLevelExp(id);
 }
@@ -6139,7 +6139,7 @@ bool GfDataBlade::fn_7100232754() {
     if (GfGameFlag::getLocal(1, 0xD788) != 0) {
         return true;
     }
-    if (TUnk_B4C840::sys() != nullptr && TUnk_B4C840::fn_71002229C0(3) > 0) {
+    if (GfDataAoc::sys() != nullptr && GfDataAoc::fn_71002229C0(3) > 0) {
         return true;
     }
     return false;
@@ -6153,11 +6153,11 @@ bool GfDataBlade::fn_710023182C() {
     return same && saved;
 }
 
-bool GfDataDriver::fn_7100238094(unsigned int driver) {
+bool GfDataDriver::isActivatePartyAll(unsigned int driver) {
     return driver != 0 && getSDataDriver(driver)->m_dataType == 1;
 }
 
-unsigned int GfDataDriver::fn_7100247E28(unsigned int driver) {
+unsigned int GfDataDriver::getSkillPoint(unsigned int driver) {
     return getSkillPoint(*getSDataDriver(driver));
 }
 
@@ -6208,11 +6208,11 @@ bool GfDataBlade::fn_71002327B0(unsigned int id) {
     return id - 25501 < 499;
 }
 
-bool GfDataBlade::fn_71002364B8(unsigned int blade) {
+bool GfDataBlade::isIra(unsigned int blade) {
     return blade - 1124 < 9;
 }
 
-unsigned int GfDataBlade::fn_7100236518(unsigned int blade) {
+unsigned int GfDataBlade::getIraDriver(unsigned int blade) {
     switch (blade) {
     case 1124:
         return 17;
@@ -6287,16 +6287,16 @@ unsigned int GfDataDriver::getDeathBlowEabFileIdx(DBSLOT slot, int index) {
     return idx + 0x498;
 }
 
-GfItemHandle GfDataDriver::fn_71002474B0(unsigned int driver) {
+GfItemHandle GfDataDriver::getEquipWpnAcceHandle(unsigned int driver) {
     if (driver - 0x11 < 9) {
-        return GfDataManager::fn_7100224A10()->m_drivers[driver - 0x11].m_handle;
+        return GfDataManager::getDataGameIra()->m_drivers[driver - 0x11].m_handle;
     }
     return GfItemHandle();
 }
 
 void GfDataDriver::fn_71002474F4(unsigned int driver, unsigned short item) {
     if (driver - 0x11 < 9) {
-        GfDataManager::fn_7100224A10()->m_drivers[driver - 0x11].m_item = item;
+        GfDataManager::getDataGameIra()->m_drivers[driver - 0x11].m_item = item;
     }
 }
 
@@ -6304,16 +6304,16 @@ void GfDataDriver::fn_710024752C(SDataDriverDlc& data, unsigned short item) {
     data.m_item = item;
 }
 
-void GfDataDriver::fn_7100247534(unsigned int driver, GfItemHandle handle) {
+void GfDataDriver::setEquipWpnAcceHandle(unsigned int driver, GfItemHandle handle) {
     if (driver - 0x11 < 9) {
-        SDataDriverDlc& data = GfDataManager::fn_7100224A10()->m_drivers[driver - 0x11];
+        SDataDriverDlc& data = GfDataManager::getDataGameIra()->m_drivers[driver - 0x11];
         data.m_handle.m_handle = handle.m_handle;
     }
 }
 
-unsigned int GfDataDriver::fn_7100247474(unsigned int driver) {
+unsigned int GfDataDriver::getEquipWpnAcce(unsigned int driver) {
     if (driver - 0x11 < 9) {
-        return GfDataManager::fn_7100224A10()->m_drivers[driver - 0x11].m_item;
+        return GfDataManager::getDataGameIra()->m_drivers[driver - 0x11].m_item;
     }
     return 0;
 }

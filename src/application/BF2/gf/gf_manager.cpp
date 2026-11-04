@@ -207,27 +207,27 @@ bool GfManager::isNewGame() {
     return false;
 }
 
-bool GfManager::fn_710032A1DC() {
-    return GfGameManager::fn_71002A9E68();
+bool GfManager::isGameTypeIra() {
+    return GfGameManager::isGameTypeIra();
 }
 
-void GfManager::fn_710032A1E0(bool flag) {
+void GfManager::setBusyForChangeGame(bool flag) {
     if (s_pThis) {
         s_pThis->m_stopUpdate = flag;
     }
 }
 
-void GfManager::fn_710032A1FC(bool flag) {
+void GfManager::resetGameType(bool flag) {
     if (fw::Framework* framework = fw::Framework::get()) {
-        framework->fn_71001836D0(flag);
+        framework->setupThreadPostUpdate(flag);
     }
     if (fw::EffectManager* effect = fw::EffectManager::get()) {
-        effect->fn_710017CB08(flag);
+        effect->setIra(flag);
     }
     if (fw::SoundManager* sound = mm::mtl::PtrSingleton<fw::SoundManager>::get()) {
-        sound->fn_71001A0EF8(flag);
+        sound->setupGameType(flag);
     }
-    GfGameManager::fn_71002AC558(flag);
+    GfGameManager::resetGameType(flag);
     fw::fn_71001996F0(flag);
 }
 
@@ -267,9 +267,9 @@ void GfManager::activate() {
     }
 }
 
-void GfManager::fn_710032A958(const fw::UpdateInfo& info) {
+void GfManager::updateAfterLayer(const fw::UpdateInfo& info) {
     if (GfGameManager* game = GfGameManager::get()) {
-        game->fn_71002AC9C0(info);
+        game->updateAfterLayer(info);
     }
 }
 
@@ -291,11 +291,11 @@ void GfManager::postUpdate(const fw::UpdateInfo& info) {
         game->postUpdate(info);
     }
     if (fw::Framework* framework = fw::Framework::get()) {
-        framework->fn_710018369C(info);
+        framework->startThreadPostUpdate(info);
         if (GfMenuManager* menu = GfMenuManager::get()) {
             menu->postUpdate(info);
         }
-        framework->fn_71001836A8();
+        framework->waitThreadPostUpdate();
     }
     if (GfObjManager* obj = GfObjManager::get()) {
         obj->postUpdate(info);

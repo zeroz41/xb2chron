@@ -26,16 +26,13 @@ public:
     void SetObject(gf::GF_OBJ_HANDLE* handle, mm::mtl::FixedVector<fw::EffectPack*, 8>& packs);
     void SetObject(mm::mtl::FixedVector<fw::EffectPack*, 8>& packs, const char* name, const mm::Vec3& pos,
                    const mm::Vec3* dir, const mm::Vec3* scale);
-    // Placeholder name: new in 3.0.1 (1.0.0's SetArtsData(int, int, bool, unsigned int) stood here with other
-    // fields). A member because it sits between SetObject and SetBulletData in this unit and writes this class's
-    // fields. What it does: copies the owner's (CharacterManager::GetCharacterConst(m_owner)) arts slot data
-    // (BattleCharacter::GetArtsSlotData(slot, !flag, -1)) with fn_710009B958; nothing without an owner.
+    // 2.0.0's symbols name it. What it does: copies the owner's (CharacterManager::GetCharacterConst(m_owner)) arts
+    // slot data (BattleCharacter::GetArtsSlotData(slot, !flag, -1)) with SetArtsData; nothing without an owner.
     // EffectManager::CreateBullet calls it.
-    void fn_710009B8C4(int slot, int artsKind, bool flag, unsigned int artsParam);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in this unit
-    // and writes this class's fields. What it does: copies an arts slot's data into m_artsSlot and stores the
-    // byte into m_artsKind, the word into m_artsParam. EffectManager::UpdateProc calls it.
-    void fn_710009B958(const ARTS_SLOT_DATA& slot, int artsKind, unsigned int artsParam);
+    void SetArtsData(int slot, int artsKind, bool flag, unsigned int artsParam);
+    // 2.0.0's symbols name it. What it does: copies an arts slot's data into m_artsSlot and stores the byte into
+    // m_artsKind, the word into m_artsParam. EffectManager::UpdateProc calls it.
+    void SetArtsData(const ARTS_SLOT_DATA& slot, int artsKind, unsigned int artsParam);
     void SetBulletData(int bulletId, int param);
     void SetIntervalHitData(float interval, float rate, bool flag0, float count, float maxHit, bool flag1,
                             bool flag2, bool flag3);

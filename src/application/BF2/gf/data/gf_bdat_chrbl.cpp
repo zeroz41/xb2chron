@@ -1642,15 +1642,15 @@ bool GfBdatChrBl::isChrBlFlagOnlyWpn(unsigned int id) const {
     return _gfbcb::isChrBlFlagOnlyWpn(*m_fpChrBl, id);
 }
 
-bool GfBdatChrBl::fn_71001ED40C(unsigned int id) const {
+bool GfBdatChrBl::isChrBlFlagOnlyChBtl(unsigned int id) const {
     return _gfbcb::isChrBlFlagOnlyChBtl(*m_fpChrBl, id);
 }
 
-bool GfBdatChrBl::fn_71001ED49C(unsigned int id) const {
+bool GfBdatChrBl::isChrBlFlagFreeEngage(unsigned int id) const {
     return _gfbcb::isChrBlFlagFreeEngage(*m_fpChrBl, id);
 }
 
-bool GfBdatChrBl::fn_71001ED52C(unsigned int id) const {
+bool GfBdatChrBl::isChrBlFlagNoMapRev(unsigned int id) const {
     return _gfbcb::isChrBlFlagNoMapRev(*m_fpChrBl, id);
 }
 

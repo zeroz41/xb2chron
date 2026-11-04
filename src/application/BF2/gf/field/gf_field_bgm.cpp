@@ -169,10 +169,9 @@ float bgmvolFadeDisableEventBgm(ExecFadeParam& param) {
                              fadeOut ? param.m_fade->m_fadeOutTime : param.m_fade->m_fadeInTime, fadeOut);
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no bgmvol check in its place). What it
-// does: a volume fade check like the others: fades out while the game data's local flag (GfDataBlade::fn_7100231884)
-// is 11091 or 11116 and GfPlayComEventFade::s_start is set, else fades in.
-float fn_7100261C30(ExecFadeParam& param) {
+// 2.0.0's symbols name it. What it does: a volume fade check like the others: fades out while the game data's local
+// flag (GfDataBlade::fn_7100231884) is 11091 or 11116 and GfPlayComEventFade::s_start is set, else fades in.
+float bgmvolFadeEnableEvent1763(ExecFadeParam& param) {
     bool fadeOut = (GfDataBlade::fn_7100231884() == 11091 || GfDataBlade::fn_7100231884() == 11116) &&
                    GfPlayComEventFade::s_start != 0;
     return bgmvolControlFade(*param.m_updateInfo,
@@ -334,7 +333,7 @@ BgmBattle::BgmBattle(GfFieldBgm* fieldBgm) : BgmTrack(fieldBgm, true) {
     addVolumeFade(_gffsn::bgmvolFadeDeadSequence, 2.0f, 99.0f, true);
     addVolumeFade(_gffsn::bgmvolFadeEnableEventBgm, 2.0f, 2.0f, true);
     m_keepBgmCondID = true;
-    fn_7100263490(m_fieldBgm->getRscBattleBgmID());
+    play(m_fieldBgm->getRscBattleBgmID());
 }
 
 BgmTrack::BgmTrack(GfFieldBgm* fieldBgm, bool battle)
@@ -346,7 +345,7 @@ BgmTrack::BgmTrack(GfFieldBgm* fieldBgm, bool battle)
     }
 }
 
-void BgmTrack::fn_7100263490(unsigned int id) {
+void BgmTrack::play(unsigned int id) {
     if (m_bgmCondID != 0) {
         for (unsigned long i = 0; i < 4; ++i) {
             if (!(m_conds[i].m_volume <= 0.0f)) {
@@ -360,7 +359,7 @@ void BgmTrack::fn_7100263490(unsigned int id) {
 
 void BgmBattle::update(const fw::UpdateInfo& info) {
     if (getBgmCondID() != m_fieldBgm->getRscBattleBgmID()) {
-        fn_7100263490(m_fieldBgm->getRscBattleBgmID());
+        play(m_fieldBgm->getRscBattleBgmID());
     }
     BgmTrack::update(info);
 }
@@ -374,7 +373,7 @@ BgmBattleBoss::BgmBattleBoss(GfFieldBgm* fieldBgm) : BgmTrack(fieldBgm, true) {
     addVolumeFade(_gffsn::bgmvolFadeLeaveGame, 1.0f, 1.0f, true);
     addVolumeFade(_gffsn::bgmvolFadeDeadSequence, 2.0f, 99.0f, true);
     addVolumeFade(_gffsn::bgmvolFadeEnableEventBgm, 2.0f, 2.0f, true);
-    fn_7100263490(m_fieldBgm->getRscBossBattleBgmID());
+    play(m_fieldBgm->getRscBossBattleBgmID());
 }
 
 void BgmTrack::stopBGM(float time) {
@@ -419,14 +418,14 @@ void BgmEvent::cancelOverTime() {
     m_overTime = 0.0f;
 }
 
-void BgmEvent::fn_7100265440() {
-    if (GfGameManager::fn_71002A9E68() && m_overTime < 0.0f) {
+void BgmEvent::setBgmClearByStopBgm() {
+    if (GfGameManager::isGameTypeIra() && m_overTime < 0.0f) {
         m_overTimeStop = true;
     }
 }
 
 void BgmEvent::update(const fw::UpdateInfo& info) {
-    fn_7100265120(info);
+    updateEventBgm(info);
     BgmTrack::update(info);
 }
 
@@ -496,7 +495,7 @@ BgmGimmick::BgmGimmick(GfFieldBgm* fieldBgm) : BgmTrack(fieldBgm, false) {
     addVolumeFade(_gffsn::bgmvolFadeEnableEventBgm, 2.0f, 2.0f, true);
     addVolumeFade(_gffsn::bgmvolIsBattleDead, 2.0f, 2.0f, true);
     addVolumeFade(_gffsn::bgmvolFadeBattleEvent, 2.0f, 2.0f, true);
-    addVolumeFade(_gffsn::fn_7100261C30, 2.0f, 2.0f, false);
+    addVolumeFade(_gffsn::bgmvolFadeEnableEvent1763, 2.0f, 2.0f, false);
 }
 
 void BgmGimmick::update(const fw::UpdateInfo& info) {

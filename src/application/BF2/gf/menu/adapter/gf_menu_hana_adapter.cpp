@@ -283,13 +283,13 @@ bool GfMenuHanaAdapter::isEquipParts(unsigned int hana, unsigned int partsId, un
     if (count == 0) {
         result = RESULT_HANA(8);
     }
-    if (GfMenuItemUtil::fn_71003547CC(item, hana)) {
+    if (GfMenuItemUtil::isModelChangeItem(item, hana)) {
         // the condenser slots: another one with a part bound to Hana gives 14
         static const unsigned int slots[] = {6, 7, 8, 12, 13, 14};
         for (unsigned int i = 0; i < sizeof(slots) / sizeof(slots[0]); i++) {
             if (slots[i] != partsId) {
                 unsigned int parts = getEquipParts(hana, slots[i]);
-                if (parts != 0 && GfMenuItemUtil::fn_71003547CC(parts, hana)) {
+                if (parts != 0 && GfMenuItemUtil::isModelChangeItem(parts, hana)) {
                     result = RESULT_HANA(14);
                 }
             }

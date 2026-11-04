@@ -1,8 +1,8 @@
-#include "classes/gf/TUnk_B535D0.h"
+#include "classes/gf/GfGameArena.h"
 
 namespace gf {
 
-bool TUnk_B535D0::RuleTable::fn_7100290CE0(unsigned int id) {
+bool GfGameArena::RuleTable::fn_7100290CE0(unsigned int id) {
     if (id == 0) {
         return false;
     }

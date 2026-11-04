@@ -88,7 +88,7 @@ public:
     // SelMoneyListener's check of the selected reward (inferred, the name is not known): whether the item box can
     // take the items of BDAT 0xDD's row m_moneyType (ItemID1-3, ItemNumber1-3) and m_money more ether stays
     // within 999999999
-    bool fn_710038A458();
+    bool canGetExpReward();
 
     // the field names are not the original's
     unsigned int pad_24;

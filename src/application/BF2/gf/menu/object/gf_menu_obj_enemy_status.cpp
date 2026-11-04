@@ -46,7 +46,7 @@ void GfMenuObjEnemyStatus::update() {
         m_target = target;
     }
     m_seq.update();
-    if (GfMenuObjUtil::fn_710048FD30(1)) {
+    if (GfMenuObjUtil::isValidExpansion(1)) {
         bool battle = GfMenuManager::isBattleState(8);
         ui::UIObjectAcc acc(m_handle, "LAY_arts_name");
         acc.setAlpha(battle ? 0.0f : 1.0f);

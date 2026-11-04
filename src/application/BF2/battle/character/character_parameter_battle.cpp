@@ -34,9 +34,9 @@ namespace {
 // the kizuna link of the character's blade (Initialize, BattleStart; an inferred helper: the name is not the
 // original's)
 inline void SetupKizunaLink(PlayerParameter& param) {
-    if (param.fn_7100085314(false)) {
+    if (param.IsBlade(false)) {
         param.pad_5da = gf::GfGameUtil::getKizunaLink(BattleGlobal::sys()->m_challengeAnySuccess
-                                                          ? param.fn_7100088F68()
+                                                          ? param.GetIraDummyBladeID()
                                                           : param.m_enArrangeID);
     }
 }
@@ -45,7 +45,7 @@ inline void SetupKizunaLink(PlayerParameter& param) {
 // row, else for the party group's other driver (an inferred helper: the name is not the original's)
 inline unsigned int GetChallengeValue(const PlayerParameter& param) {
     unsigned int id;
-    if (param.fn_7100085314(false)) {
+    if (param.IsBlade(false)) {
         id = param.m_enArrangeID;
     } else {
         unsigned int group = param.m_groupIndex;
@@ -102,11 +102,11 @@ void PlayerParameter::Initialize(gf::GF_OBJ_HANDLE* handle) {
     m_flags622_2 = isBlade;
     bool isNotBlade;
     if (!BattleGlobal::sys()->m_challengeAnySuccess) {
-        isNotBlade = !fn_7100085314(false);
+        isNotBlade = !IsBlade(false);
     } else if (IsEnemyParameter()) {
         isNotBlade = true;
     } else {
-        isNotBlade = Utility::fn_7100011EA0(m_handle);
+        isNotBlade = Utility::IsForward(m_handle);
     }
     m_isNotBlade = isNotBlade;
     SetupKizunaLink(*this);
@@ -126,9 +126,9 @@ void PlayerParameter::Initialize(gf::GF_OBJ_HANDLE* handle) {
     pad_634 = 0.0f;
     pad_642 = 0;
     pad_638 = 0.0f;
-    pad_643 = (challenge || objType != 4) ? true : !gf::GfDataBlade::fn_71002397DC(m_enArrangeID);
+    pad_643 = (challenge || objType != 4) ? true : !gf::GfDataBlade::isNoMapRev(m_enArrangeID);
     pad_630 = -1;
-    fn_710007E0E8(handle);
+    TailInitialize(handle);
 }
 
 void PlayerParameter::CheckChangeArtsPalette() {
@@ -137,7 +137,7 @@ void PlayerParameter::CheckChangeArtsPalette() {
     }
 }
 
-int PlayerParameter::fn_7100088F68() const {
+int PlayerParameter::GetIraDummyBladeID() const {
     if (pad_63c != 0) {
         return pad_63c;
     }
@@ -152,7 +152,7 @@ void PlayerParameter::BattleStart(int) {
     pad_63c = BattleGlobal::sys()->m_challengeAnySuccess ? GetChallengeValue(*this) : 0;
     InitializeArtsPalette(0);
     if (pad_20 != BattleGlobal::sys()->pad_a9c && !BladeChangeManager::sys()->IsRegister(m_handle) &&
-        !TUnk_B3BC20::sys()->fn_710009EB70(m_handle)) {
+        !FormationChangeManager::sys()->IsRegister(m_handle)) {
         ResetRecast();
     }
     pad_20 = BattleGlobal::sys()->pad_a9c;
@@ -180,12 +180,12 @@ void PlayerParameter::Update(const fw::UpdateInfo& info, bool) {
         party = m_groupIndex;
     }
     m_groupIndex = party;
-    fn_7100085B24();
+    UpdateBuddy();
     CharacterParameter::Update(info, false);
 }
 
 void PlayerParameter::WritebackRecast(GROUP_DATA* group) {
-    if (fn_7100085314(false) && m_hasHateTarget) {
+    if (IsBlade(false) && m_hasHateTarget) {
         int index = BattleGlobal::sys()->m_challengeAnySuccess ? 1 : -1;
         const ARTS_PALETTE_DATA* palette = GetArtsPaletteDataConst(index);
         for (int i = 0; i < 3; i++) {
@@ -201,7 +201,7 @@ const ARTS_PALETTE_DATA* PlayerParameter::GetArtsPaletteDataConst(int index) con
             index = 0;
         }
     } else if (index < 0) {
-        index = fn_7100085314(false) ? 0 : GetBladeIndex();
+        index = IsBlade(false) ? 0 : GetBladeIndex();
     }
     return &m_artsPaletteData[index];
 }
@@ -232,108 +232,108 @@ void PlayerParameter::ResetRecast() {
 }
 
 int PlayerParameter::GetBladeIndex() const {
-    gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
+    gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
     return acc.getBladeSet(false);
 }
 
 unsigned int PlayerParameter::GetWeaponID(int index) const {
-    gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
+    gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
     return acc.getEquipWeapon(index, false);
 }
 
 int PlayerParameter::GetEquipAccessory() const {
-    gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
+    gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
     return acc.getEquipAcce(0, false);
 }
 
 int PlayerParameter::GetIdeaLevel(int idea) const {
-    gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
+    gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
     gf::DataIdeaAcc ideaAcc(acc);
     return ideaAcc.getLevel(idea);
 }
 
-void PlayerParameter::fn_7100088F48() {
+void PlayerParameter::StartMindEye() {
     if (BattleGlobal::sys()->IsEnableBattle()) {
         pad_642 = 1;
         pad_634 = BtlSystemBalanceAccess::sys()->pad_10c;
     }
 }
 
-void PlayerParameter::fn_7100088F4C(bool flag) {
+void PlayerParameter::EndMindEye(bool flag) {
     unsigned char running = pad_642;
     pad_634 = 0.0f;
     pad_642 = 0;
     if (running) {
-        CharacterManager::sys()->GetCharacterConst(m_charaIndex)->fn_71000424D8(flag);
+        CharacterManager::sys()->GetCharacterConst(m_charaIndex)->NotifyMindEyeEnd(flag);
     }
 }
 
-float PlayerParameter::fn_7100084F30() const {
+float PlayerParameter::GetMindEyeArtsSpeedRate() const {
     float rate = 1.0f;
-    if (fn_710008527C(false) && pad_642) {
+    if (IsDriver(false) && pad_642) {
         rate = BtlSystemBalanceAccess::sys()->pad_110[0] * 0.01f;
     }
     return rate;
 }
 
-float CharacterParameter::fn_7100084F30() const {
+float CharacterParameter::GetMindEyeArtsSpeedRate() const {
     return 1.0f;
 }
 
-float PlayerParameter::fn_7100084FD8() const {
-    if (fn_71000851B4()) {
+float PlayerParameter::GetMindEyeMoveSpeedRate() const {
+    if (IsMindEye()) {
         if (m_isNotBlade) {
             return BtlSystemBalanceAccess::sys()->pad_110[1] * 0.01f;
         }
         gf::GF_OBJ_HANDLE* driver = m_driverHandle;
         if (const BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(driver)) {
             if (const CharacterParameter* param = chr->GetCharacterParameterConst(true)) {
-                return param->fn_7100084FD8();
+                return param->GetMindEyeMoveSpeedRate();
             }
         }
     }
     return 1.0f;
 }
 
-float CharacterParameter::fn_7100084FD8() const {
+float CharacterParameter::GetMindEyeMoveSpeedRate() const {
     return 1.0f;
 }
 
-float PlayerParameter::fn_7100085080() const {
-    if (fn_71000851B4()) {
+float PlayerParameter::GetMindEyeAttackRate() const {
+    if (IsMindEye()) {
         if (m_isNotBlade) {
             return BtlSystemBalanceAccess::sys()->pad_110[2] * 0.01f;
         }
         gf::GF_OBJ_HANDLE* driver = m_driverHandle;
         if (const BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(driver)) {
             if (const CharacterParameter* param = chr->GetCharacterParameterConst(true)) {
-                return param->fn_7100085080();
+                return param->GetMindEyeAttackRate();
             }
         }
     }
     return 1.0f;
 }
 
-float CharacterParameter::fn_7100085080() const {
+float CharacterParameter::GetMindEyeAttackRate() const {
     return 1.0f;
 }
 
-float PlayerParameter::fn_7100085128() const {
-    if (fn_71000851B4()) {
+float PlayerParameter::GetMindEyeHateRate() const {
+    if (IsMindEye()) {
         if (m_isNotBlade) {
             return BtlSystemBalanceAccess::sys()->pad_110[3] * 0.01f;
         }
         gf::GF_OBJ_HANDLE* driver = m_driverHandle;
         if (const BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(driver)) {
             if (const CharacterParameter* param = chr->GetCharacterParameterConst(true)) {
-                return param->fn_7100085128();
+                return param->GetMindEyeHateRate();
             }
         }
     }
     return 1.0f;
 }
 
-float CharacterParameter::fn_7100085128() const {
+float CharacterParameter::GetMindEyeHateRate() const {
     return 1.0f;
 }
 
@@ -344,14 +344,14 @@ float PlayerParameter::GetUseWeaponRate(int) const {
     return pad_634 / BtlSystemBalanceAccess::sys()->pad_10c;
 }
 
-bool PlayerParameter::fn_71000851B4() const {
+bool PlayerParameter::IsMindEye() const {
     if (!m_isNotBlade) {
         gf::GF_OBJ_HANDLE* driver = m_driverHandle;
         const BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(driver);
         if (chr != nullptr) {
             const CharacterParameter* param = chr->GetCharacterParameterConst(true);
             if (param != nullptr) {
-                return param->fn_71000851B4();
+                return param->IsMindEye();
             }
         }
         return false;
@@ -359,36 +359,36 @@ bool PlayerParameter::fn_71000851B4() const {
     return pad_642 != 0;
 }
 
-bool CharacterParameter::fn_71000851B4() const {
+bool CharacterParameter::IsMindEye() const {
     return false;
 }
 
-void PlayerParameter::fn_7100088F5C() {
+void PlayerParameter::SetHanaBusterRebootTimer() {
     pad_638 = BtlSystemBalanceAccess::sys()->pad_f4 * (1.0f / 30.0f);
 }
 
-int PlayerParameter::fn_7100088F60() const {
+int PlayerParameter::IsHanaBusterReboot() const {
     return pad_638 <= 0.0f;
 }
 
-bool PlayerParameter::fn_710008527C(bool flag) const {
+bool PlayerParameter::IsDriver(bool flag) const {
     if (flag && BattleGlobal::sys()->m_challengeAnySuccess) {
         return false;
     }
-    if (fn_7100085314(false)) {
+    if (IsBlade(false)) {
         return false;
     }
     return m_driverHandle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
 }
 
-bool CharacterParameter::fn_710008527C(bool flag) const {
-    if (fn_7100085314(flag)) {
+bool CharacterParameter::IsDriver(bool flag) const {
+    if (IsBlade(flag)) {
         return false;
     }
     return m_driverHandle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
 }
 
-bool PlayerParameter::fn_7100085314(bool flag) const {
+bool PlayerParameter::IsBlade(bool flag) const {
     if (!flag && BattleGlobal::sys()->m_challengeAnySuccess) {
         // the low byte of the object handle (meaning unknown)
         return (reinterpret_cast<unsigned long>(m_handle) & 0xFF) > 2;
@@ -396,7 +396,7 @@ bool PlayerParameter::fn_7100085314(bool flag) const {
     return m_flags622_2;
 }
 
-bool CharacterParameter::fn_7100085314(bool) const {
+bool CharacterParameter::IsBlade(bool) const {
     return m_flags622_2;
 }
 
@@ -426,15 +426,15 @@ void EnemyParameter::Initialize(gf::GF_OBJ_HANDLE* handle) {
             m_flags622_2 = true;
             isEnemyBlade = true;
         }
-        fn_7100085B24();
+        UpdateBuddy();
     }
     bool isNotBlade;
     if (!BattleGlobal::sys()->m_challengeAnySuccess) {
-        isNotBlade = !fn_7100085314(false);
+        isNotBlade = !IsBlade(false);
     } else if (IsEnemyParameter()) {
         isNotBlade = true;
     } else {
-        isNotBlade = Utility::fn_7100011EA0(m_handle);
+        isNotBlade = Utility::IsForward(m_handle);
     }
     m_isNotBlade = isNotBlade;
     const gf::SDataEnemy* data = GetEnemyData();
@@ -444,8 +444,8 @@ void EnemyParameter::Initialize(gf::GF_OBJ_HANDLE* handle) {
     m_enTypeFamily = rsc->getRscEnTypeFamily(rscId);
     m_enMaterial = rsc->getRscEnMaterial(rscId);
     gf::GfBdatChrEnArrange* arrange = gf::GfBdatChrEnArrange::sys();
-    pad_8aa = arrange->fn_71001F3260(arrangeID);
-    pad_8ac = arrange->fn_71001F32E8(arrangeID);
+    pad_8aa = arrange->getChrEnArrangeScore(arrangeID);
+    pad_8ac = arrange->getChrEnArrangeECube(arrangeID);
     m_isInvalidWarp = isEnemyBlade ? true : arrange->isChrEnArrangeFlagNoTarget(arrangeID);
     m_isInvalidHikariSp = arrange->isChrEnArrangeFlagHikariSP4(arrangeID);
     m_isAlwaysKakusei = arrange->isChrEnArrangeFlagHomuri(arrangeID);
@@ -453,9 +453,9 @@ void EnemyParameter::Initialize(gf::GF_OBJ_HANDLE* handle) {
     pad_bit9 = arrange->isChrEnArrangeFlagNoWarp(arrangeID);
     pad_bit10 = !arrange->isChrEnArrangeFlagIgnoreLevPow(arrangeID);
     m_isFallDeadDrop = !arrange->isChrEnArrangeFlagSalvage(arrangeID);
-    pad_bit13 = !arrange->fn_71001F3FB8(arrangeID);
-    pad_bit14 = challenge && arrange->fn_71001F3F28(arrangeID);
-    pad_bit15 = challenge && arrange->fn_71001F4048(arrangeID);
+    pad_bit13 = !arrange->isChrEnArrangeFlagNoChgBtl(arrangeID);
+    pad_bit14 = challenge && arrange->isChrEnArrangeFlagSerious(arrangeID);
+    pad_bit15 = challenge && arrange->isChrEnArrangeFlagNoKasumi(arrangeID);
     if (isEnemyBlade) {
         unsigned int bladeID = arrange->getChrEnArrangeBladeID(arrangeID);
         int set = (unsigned short)Bdat::getValCheck(gf::GfDataBdat::getFP(0x8A), "BKLSet", bladeID, 2);
@@ -479,7 +479,7 @@ void EnemyParameter::Initialize(gf::GF_OBJ_HANDLE* handle) {
     m_isEatTarget = rsc->isRscEnFlagBait(rscId);
     pad_8ae = 0;
     m_overwriteAttr = 9;
-    fn_710007E0E8(handle);
+    TailInitialize(handle);
 }
 
 const gf::SDataEnemy* EnemyParameter::GetEnemyData() const {
@@ -556,7 +556,7 @@ void EnemyParameter::AngryInfection(float range) {
 }
 
 unsigned int EnemyParameter::GetWeaponID(int) const {
-    gf::DataParamAcc acc(fn_7100085314(0) ? m_driverHandle : m_handle);
+    gf::DataParamAcc acc(IsBlade(0) ? m_driverHandle : m_handle);
     return acc.getEquipWeapon(0, false);
 }
 
@@ -618,7 +618,7 @@ void EnemyParameter::SetBuddy(gf::GF_OBJ_HANDLE* handle, bool flag) {
     if (index < 0) {
         gf::GF_OBJ_HANDLE* first = self;
         gf::GF_OBJ_HANDLE* second = handle;
-        if (fn_7100085314(0)) {
+        if (IsBlade(0)) {
             first = handle;
             second = self;
         }
@@ -647,13 +647,13 @@ void EnemyParameter::PreUpdate(fw::UpdateInfo const& info) {
     if (m_flags622_0) {
         CharacterParameter::PreUpdate(info);
         if (pad_bit1) {
-            fn_71000865AC();
+            SetupElementalAwakeParam();
         }
     }
 }
 
 int EnemyParameter::GetAngryAttr() const {
-    if (fn_7100085314(0)) {
+    if (IsBlade(0)) {
         CharacterParameter* param = GetDriverParameter(m_driverHandle);
         if (param != nullptr) {
             return param->GetAngryAttr();
@@ -662,21 +662,21 @@ int EnemyParameter::GetAngryAttr() const {
     return m_angryAttr;
 }
 
-bool EnemyParameter::fn_7100088F08() const {
-    if (fn_7100085314(0)) {
+bool EnemyParameter::IsAngryArts() const {
+    if (IsBlade(0)) {
         CharacterParameter* param = GetDriverParameter(m_driverHandle);
         if (param != nullptr) {
-            return param->fn_7100088F08();
+            return param->IsAngryArts();
         }
     }
     return pad_8b4 != 0;
 }
 
-void EnemyParameter::fn_7100088F10() {
-    if (fn_7100085314(0)) {
+void EnemyParameter::UseAngryArts() {
+    if (IsBlade(0)) {
         CharacterParameter* param = GetDriverParameter(m_driverHandle);
         if (param != nullptr) {
-            param->fn_7100088F10();
+            param->UseAngryArts();
             return;
         }
     }
@@ -686,7 +686,7 @@ void EnemyParameter::fn_7100088F10() {
 }
 
 bool EnemyParameter::IsAngry() const {
-    if (fn_7100085314(0)) {
+    if (IsBlade(0)) {
         CharacterParameter* param = GetDriverParameter(m_driverHandle);
         if (param != nullptr) {
             return param->IsAngry();
@@ -698,11 +698,11 @@ bool EnemyParameter::IsAngry() const {
 // slot 22's base body sits here, between EnemyParameter's own slot bodies (after 0x7100088A44's place)
 void CharacterParameter::fn_7100088B68() {}
 
-void EnemyParameter::fn_7100088F1C() {
+void EnemyParameter::EndElementalAwake() {
     if (pad_bit1) {
         BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(m_charaIndex);
         if (chr != nullptr) {
-            chr->fn_7100042460();
+            chr->NotifyElementalAwakeEnd();
         }
     }
     pad_bit1 = false;
@@ -712,42 +712,42 @@ void EnemyParameter::fn_7100088F1C() {
     pad_8a3_4 = 0;
 }
 
-int EnemyParameter::fn_7100088F20() const {
-    if (fn_7100085314(0)) {
+int EnemyParameter::GetElementalAwakeLevel() const {
+    if (IsBlade(0)) {
         CharacterParameter* param = GetDriverParameter(m_driverHandle);
-        return param != nullptr ? param->fn_7100088F20() : 0;
+        return param != nullptr ? param->GetElementalAwakeLevel() : 0;
     }
     return pad_8a3_0;
 }
 
-float EnemyParameter::fn_7100088F28() const {
-    if (fn_7100085314(0)) {
+float EnemyParameter::GetElementalAwakeAttackRate() const {
+    if (IsBlade(0)) {
         CharacterParameter* param = GetDriverParameter(m_driverHandle);
-        return param != nullptr ? param->fn_7100088F28() : 1.0f;
+        return param != nullptr ? param->GetElementalAwakeAttackRate() : 1.0f;
     }
     return pad_8a4 * 0.01f + 1.0f;
 }
 
-float EnemyParameter::fn_7100088F30() const {
-    if (fn_7100085314(0)) {
+float EnemyParameter::GetElementalAwakeRecastRate() const {
+    if (IsBlade(0)) {
         CharacterParameter* param = GetDriverParameter(m_driverHandle);
-        return param != nullptr ? param->fn_7100088F30() : 1.0f;
+        return param != nullptr ? param->GetElementalAwakeRecastRate() : 1.0f;
     }
     return pad_8a6 * 0.01f + 1.0f;
 }
 
-float EnemyParameter::fn_7100088F38() const {
-    if (fn_7100085314(0)) {
+float EnemyParameter::GetElementalAwakeReduceElmComboFrame() const {
+    if (IsBlade(0)) {
         CharacterParameter* param = GetDriverParameter(m_driverHandle);
-        return param != nullptr ? param->fn_7100088F38() : 0.0f;
+        return param != nullptr ? param->GetElementalAwakeReduceElmComboFrame() : 0.0f;
     }
     return pad_8a8;
 }
 
-bool EnemyParameter::fn_7100088F40() const {
-    if (fn_7100085314(0)) {
+bool EnemyParameter::IsElementalAwake() const {
+    if (IsBlade(0)) {
         CharacterParameter* param = GetDriverParameter(m_driverHandle);
-        return param != nullptr ? param->fn_7100088F40() : false;
+        return param != nullptr ? param->IsElementalAwake() : false;
     }
     return pad_bit1;
 }
@@ -789,9 +789,9 @@ bool CharacterParameter::IsInvalidWarp() const {
     return !m_isNotBlade;
 }
 
-void CharacterParameter::fn_7100088ECC() {}
+void CharacterParameter::UpdateLadyTarget() {}
 
-bool CharacterParameter::fn_7100088ED0() const {
+bool CharacterParameter::IsLadyTarget() const {
     return false;
 }
 
@@ -799,7 +799,7 @@ bool CharacterParameter::fn_7100088ED8() const {
     return false;
 }
 
-bool CharacterParameter::fn_7100088EE0() const {
+bool CharacterParameter::IsLevelDiffDamageCorrect() const {
     return false;
 }
 
@@ -819,63 +819,63 @@ int CharacterParameter::GetAngryAttr() const {
     return 0;
 }
 
-bool CharacterParameter::fn_7100088F08() const {
+bool CharacterParameter::IsAngryArts() const {
     return false;
 }
 
-void CharacterParameter::fn_7100088F10() {}
+void CharacterParameter::UseAngryArts() {}
 
 bool CharacterParameter::IsAngry() const {
     return false;
 }
 
-void CharacterParameter::fn_7100088F1C() {}
+void CharacterParameter::EndElementalAwake() {}
 
-int CharacterParameter::fn_7100088F20() const {
+int CharacterParameter::GetElementalAwakeLevel() const {
     return 0;
 }
 
-float CharacterParameter::fn_7100088F28() const {
+float CharacterParameter::GetElementalAwakeAttackRate() const {
     return 1.0f;
 }
 
-float CharacterParameter::fn_7100088F30() const {
+float CharacterParameter::GetElementalAwakeRecastRate() const {
     return 1.0f;
 }
 
-float CharacterParameter::fn_7100088F38() const {
+float CharacterParameter::GetElementalAwakeReduceElmComboFrame() const {
     return 0.0f;
 }
 
-bool CharacterParameter::fn_7100088F40() const {
+bool CharacterParameter::IsElementalAwake() const {
     return false;
 }
 
-void CharacterParameter::fn_7100088F48() {}
+void CharacterParameter::StartMindEye() {}
 
-void CharacterParameter::fn_7100088F4C(bool) {}
+void CharacterParameter::EndMindEye(bool) {}
 
 float CharacterParameter::GetUseWeaponRate(int) const {
     return 0.0f;
 }
 
-void CharacterParameter::fn_7100088F58() {}
+void CharacterParameter::ResetHanaBusterRebootTimer() {}
 
-void CharacterParameter::fn_7100088F5C() {}
+void CharacterParameter::SetHanaBusterRebootTimer() {}
 
-int CharacterParameter::fn_7100088F60() const {
+int CharacterParameter::IsHanaBusterReboot() const {
     return 0;
 }
 
-int CharacterParameter::fn_7100088F68() const {
+int CharacterParameter::GetIraDummyBladeID() const {
     return 0;
 }
 
-int CharacterParameter::fn_7100088F70() const {
+int CharacterParameter::GetChallengeScore() const {
     return 0;
 }
 
-int CharacterParameter::fn_7100088F78() const {
+int CharacterParameter::GetChallengeEtherCube() const {
     return 0;
 }
 
@@ -892,14 +892,14 @@ int CharacterParameter::GetDeadSEID() const {
 }  // namespace btl
 
 namespace btl {
-void EnemyParameter::fn_7100085B24() {
+void EnemyParameter::UpdateBuddy() {
     gf::GF_OBJ_HANDLE* handle = m_handle;
     gf::GF_OBJ_HANDLE* mount = gf::GfMountManager::getHandle(handle, static_cast<gf::GFATTACH>(0),
-                                                             static_cast<gf::OPTMNT>(fn_7100085314(0) ? 1 : 3));
+                                                             static_cast<gf::OPTMNT>(IsBlade(0) ? 1 : 3));
     bool dummy = true;
     if (mount != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         dummy = false;
-        if (fn_710008527C(false)) {
+        if (IsDriver(false)) {
             dummy = gf::GfDataBlade::isDummyBlade(gf::GfBdatChrEnArrange::sys()->getChrEnArrangeBladeID(m_enArrangeID));
         }
     }

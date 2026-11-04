@@ -26,7 +26,7 @@ public:
 
 // table 0x7100B63FC8: initialize makes it for "LAY_siren". Unnamed class (TUnk_<table low address>): the symbols
 // leave it unnamed (no RTTI in 3.0.1, nothing in 1.0.0).
-class GfMenuObjPartyGauge::TUnk_B63FC8 : public ::ui::UIObjectListener {
+class GfMenuObjPartyGauge::SirenListener : public ::ui::UIObjectListener {
 public:
     // its state, as GaugeListener's (the names are not the original's)
     struct State {
@@ -35,8 +35,8 @@ public:
         int m_gaugeCtrl;  // the slot of the colour control on "IMG_siren_en_gauge" (-1 for none)
         int m_hold;       // close with parameter 1 sets it: open fades in only after an open with parameter 1
     };
-    TUnk_B63FC8(GfMenuObjPartyGauge* owner) : m_state(), m_owner(owner) {}
-    virtual ~TUnk_B63FC8() {}  // slot 0: weak in the original, and its D1 slot is the base's destructor
+    SirenListener(GfMenuObjPartyGauge* owner) : m_state(), m_owner(owner) {}
+    virtual ~SirenListener() {}  // slot 0: weak in the original, and its D1 slot is the base's destructor
     // slot 2 (the symbols spell it fn_71004574D4)
     virtual void reciveEvent(const ui::EventData& event, unsigned int handle);
     State m_state;

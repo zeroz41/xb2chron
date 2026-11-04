@@ -36,7 +36,7 @@ GfMenuObjOpeningTelop::~GfMenuObjOpeningTelop() {
 
 void GfMenuObjOpeningTelop::openCenter(unsigned int image) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x82));
-    if (acc.m_object != nullptr && !GfMenuManager::fn_710035A738()) {
+    if (acc.m_object != nullptr && !GfMenuManager::isTheaterNonTelop()) {
         ui::EventData event;
         event.m_type = 0x21;
         event.m_param0 = 0;
@@ -47,7 +47,7 @@ void GfMenuObjOpeningTelop::openCenter(unsigned int image) {
 
 void GfMenuObjOpeningTelop::closeCenter() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x82));
-    if (acc.m_object != nullptr && !GfMenuManager::fn_710035A738()) {
+    if (acc.m_object != nullptr && !GfMenuManager::isTheaterNonTelop()) {
         ui::EventData event;
         event.m_type = 0x22;
         GfMenuObject::sendEvent(acc.m_handle, event, 0.0f);
@@ -56,7 +56,7 @@ void GfMenuObjOpeningTelop::closeCenter() {
 
 void GfMenuObjOpeningTelop::openLeft(unsigned int image) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x82));
-    if (acc.m_object != nullptr && !GfMenuManager::fn_710035A738()) {
+    if (acc.m_object != nullptr && !GfMenuManager::isTheaterNonTelop()) {
         ui::EventData event;
         event.m_type = 0x21;
         event.m_param0 = 1;
@@ -67,7 +67,7 @@ void GfMenuObjOpeningTelop::openLeft(unsigned int image) {
 
 void GfMenuObjOpeningTelop::closeLeft() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x82));
-    if (acc.m_object != nullptr && !GfMenuManager::fn_710035A738()) {
+    if (acc.m_object != nullptr && !GfMenuManager::isTheaterNonTelop()) {
         ui::EventData event;
         event.m_type = 0x22;
         event.m_param0 = 1;
@@ -77,7 +77,7 @@ void GfMenuObjOpeningTelop::closeLeft() {
 
 void GfMenuObjOpeningTelop::openRight(unsigned int image) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x82));
-    if (acc.m_object != nullptr && !GfMenuManager::fn_710035A738()) {
+    if (acc.m_object != nullptr && !GfMenuManager::isTheaterNonTelop()) {
         ui::EventData event;
         event.m_type = 0x21;
         event.m_param0 = 2;
@@ -88,7 +88,7 @@ void GfMenuObjOpeningTelop::openRight(unsigned int image) {
 
 void GfMenuObjOpeningTelop::closeRight() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x82));
-    if (acc.m_object != nullptr && !GfMenuManager::fn_710035A738()) {
+    if (acc.m_object != nullptr && !GfMenuManager::isTheaterNonTelop()) {
         ui::EventData event;
         event.m_type = 0x22;
         event.m_param0 = 2;
@@ -96,10 +96,10 @@ void GfMenuObjOpeningTelop::closeRight() {
     }
 }
 
-void GfMenuObjOpeningTelop::fn_710044AB10(unsigned int image) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuObjOpeningTelop::openRightHalf(unsigned int image) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x82));
-        if (acc.m_object != nullptr && !GfMenuManager::fn_710035A738()) {
+        if (acc.m_object != nullptr && !GfMenuManager::isTheaterNonTelop()) {
             ui::EventData event;
             event.m_type = 0x21;
             event.m_param0 = 3;
@@ -109,10 +109,10 @@ void GfMenuObjOpeningTelop::fn_710044AB10(unsigned int image) {
     }
 }
 
-void GfMenuObjOpeningTelop::fn_710044AB90() {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuObjOpeningTelop::closeRightHalf() {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x82));
-        if (acc.m_object != nullptr && !GfMenuManager::fn_710035A738()) {
+        if (acc.m_object != nullptr && !GfMenuManager::isTheaterNonTelop()) {
             ui::EventData event;
             event.m_type = 0x22;
             event.m_param0 = 3;
@@ -121,10 +121,10 @@ void GfMenuObjOpeningTelop::fn_710044AB90() {
     }
 }
 
-void GfMenuObjOpeningTelop::fn_710044AC04(unsigned int image) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuObjOpeningTelop::openLeftHalf(unsigned int image) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x82));
-        if (acc.m_object != nullptr && !GfMenuManager::fn_710035A738()) {
+        if (acc.m_object != nullptr && !GfMenuManager::isTheaterNonTelop()) {
             ui::EventData event;
             event.m_type = 0x21;
             event.m_param0 = 4;
@@ -134,10 +134,10 @@ void GfMenuObjOpeningTelop::fn_710044AC04(unsigned int image) {
     }
 }
 
-void GfMenuObjOpeningTelop::fn_710044AC84() {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuObjOpeningTelop::closeLeftHalf() {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x82));
-        if (acc.m_object != nullptr && !GfMenuManager::fn_710035A738()) {
+        if (acc.m_object != nullptr && !GfMenuManager::isTheaterNonTelop()) {
             ui::EventData event;
             event.m_type = 0x22;
             event.m_param0 = 4;

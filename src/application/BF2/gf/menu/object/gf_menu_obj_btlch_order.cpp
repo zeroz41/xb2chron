@@ -1,4 +1,4 @@
-#include "classes/gf/TUnk_B606F0.h"
+#include "classes/gf/GfMenuObjBtlchOrder.h"
 #include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataBdat.h"
@@ -14,7 +14,7 @@
 #include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/gf/GfMenuObjOption.h"
 #include "classes/gf/GfMenuReference.h"
-#include "classes/gf/TUnk_B5A648.h"
+#include "classes/gf/GfMenuBtlchAdapter.h"
 #include "classes/ui/UICtrlCursorSelect.h"
 #include "classes/ui/UIEventManager.h"
 #include "classes/ui/UIManager.h"
@@ -28,7 +28,7 @@
 
 namespace gf {
 
-TUnk_B606F0::TUnk_B606F0(unsigned int handle)
+GfMenuObjBtlchOrder::GfMenuObjBtlchOrder(unsigned int handle)
     : GfMenuObject(handle), m_idList(nullptr), m_driverList(nullptr), m_cursor(nullptr), m_context(nullptr), pad_48(0),
       m_difficulty(0), m_difficultyCount(0), m_limitDrivers(nullptr), m_limitBlades(nullptr), m_voice(nullptr),
       m_seq(this) {
@@ -40,8 +40,8 @@ TUnk_B606F0::TUnk_B606F0(unsigned int handle)
         m_driverList->setup(getAllocator(ALLOCATOR(0)), param);
     }
     m_difficulty = GfMenuObjOption::fn_7100452ADC(GfGameUtilSaveData::getValidOptionData()->m_soundUi.m_keyD);
-    m_difficultyCount = GfMenuObjOption::fn_7100452B84();
-    GfMenuReference::fn_71003692E4(GfMenuObjOption::fn_7100452BC0(m_difficulty));
+    m_difficultyCount = GfMenuObjOption::getDifficultyMax();
+    GfMenuReference::fn_71003692E4(GfMenuObjOption::getDifficultyFromIndex(m_difficulty));
     m_context = GfMenuCallContext::create();
     m_limitDrivers = GfMenuDriverList::create();
     {
@@ -60,7 +60,7 @@ TUnk_B606F0::TUnk_B606F0(unsigned int handle)
     m_seq.clear();
 }
 
-TUnk_B606F0::~TUnk_B606F0() {
+GfMenuObjBtlchOrder::~GfMenuObjBtlchOrder() {
     if (m_context != nullptr) {
         m_context->release();
         m_context = nullptr;
@@ -79,11 +79,11 @@ TUnk_B606F0::~TUnk_B606F0() {
     }
 }
 
-void TUnk_B606F0::finalize() {
+void GfMenuObjBtlchOrder::finalize() {
     GfMenuObject::finalize();
 }
 
-void TUnk_B606F0::update() {
+void GfMenuObjBtlchOrder::update() {
     m_seq.update();
     GfMenuObject::update();
 }
@@ -100,8 +100,8 @@ inline const char* getEntry(const char* (&table)[N], Index index) {
     return table[index];
 }
 
-void TUnk_B606F0::fn_71003AE838() {
-    int value = GfMenuObjOption::fn_7100452BC0(m_difficulty);
+void GfMenuObjBtlchOrder::refreshDifficulty() {
+    int value = GfMenuObjOption::getDifficultyFromIndex(m_difficulty);
     {
         ui::UIObjectAcc text(m_handle, "TXT_difficulty_index");
         if (GfDataBdat::getFP(0x169) == nullptr) {
@@ -127,8 +127,8 @@ void TUnk_B606F0::fn_71003AE838() {
     GfMenuReference::fn_71003692E4(value);
 }
 
-bool TUnk_B606F0::fn_71003AF8A0() {
-    if (GfMenuObjUtil::fn_7100492C88()) {
+bool GfMenuObjBtlchOrder::seqWaitVoice() {
+    if (GfMenuObjUtil::isVoiceSkip()) {
         GfGameVoice::playStop(m_voice);
         m_voice = nullptr;
         return true;
@@ -142,16 +142,16 @@ bool TUnk_B606F0::fn_71003AF8A0() {
     return false;
 }
 
-bool TUnk_B606F0::fn_71003AF8F4() {
+bool GfMenuObjBtlchOrder::seqClose() {
     ui::UIManager::get()->terminateLayer(m_fsLayer, true);
     return true;
 }
 
-bool TUnk_B606F0::fn_71003AF924() {
-    return !GfMenuManager::fn_710035A524();
+bool GfMenuObjBtlchOrder::seqWaitTutorial() {
+    return !GfMenuManager::isOpenBtlchTutorial();
 }
 
-bool TUnk_B606F0::fn_71003AF940() {
+bool GfMenuObjBtlchOrder::seqReturn() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     GfMenuObjUtil::setCommonFadeIn(main.searchChild("LAY_header"), 1, 1);
     GfMenuObjUtil::setCommonFadeIn(main.searchChild("LAY_list"), 1, 1);
@@ -159,7 +159,7 @@ bool TUnk_B606F0::fn_71003AF940() {
     return true;
 }
 
-void TUnk_B606F0::TUnk_B60780::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjBtlchOrder::LimitListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:
@@ -187,11 +187,11 @@ void TUnk_B606F0::TUnk_B60780::reciveEvent(const ui::EventData& event, unsigned 
         break;
     case 0x21:
         if (m_owner->m_limitDrivers->getSize() != 0) {
-            GfMenuObjUtil::fn_7100493D2C(acc.m_handle, "LAY_limit_dr@%02d", m_owner->m_limitDrivers->getSize(),
+            GfMenuObjUtil::placeObjectHFromLayout(acc.m_handle, "LAY_limit_dr@%02d", m_owner->m_limitDrivers->getSize(),
                                          "limit_driver");
         }
         if (m_owner->m_limitBlades->getSize() != 0) {
-            GfMenuObjUtil::fn_7100493D2C(acc.m_handle, "LAY_limit_bl@%02d", m_owner->m_limitBlades->getSize(),
+            GfMenuObjUtil::placeObjectHFromLayout(acc.m_handle, "LAY_limit_bl@%02d", m_owner->m_limitBlades->getSize(),
                                          "limit_blade");
         }
         GfMenuObjUtil::setCommonFadeIn(acc.m_handle, 1, 1);

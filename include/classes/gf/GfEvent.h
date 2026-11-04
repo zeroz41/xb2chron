@@ -25,11 +25,9 @@ public:
     static void build(const GfSetupParam& param);
     static void destroy();
     static void callTargetAccess(GF_OBJ_HANDLE*);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits in
-    // gf_event's unit among GfEvent's call* functions and it reads PtrSingleton<GfEvent>'s instance as they do.
-    // What it does: calls slot 5 (+0x28) of every listener in the instance's 32-entry ring (count at +0x108, start
-    // at +0x110), taking no argument; GfGameSave::execOptionSaveWithMicroThread calls it first.
-    static void fn_71003274A8();
+    // 2.0.0's symbols name it. What it does: calls slot 5 (+0x28) of every listener in the instance's 32-entry ring
+    // (count at +0x108, start at +0x110), taking no argument; GfGameSave::execOptionSaveWithMicroThread calls it first.
+    static void callChangeGameDifficult();
     static void callGameObjEnter(GF_OBJ_HANDLE* handle);  // GfGameObj::flushEvent: an object entered the game
     static void callGameObjLeave(GF_OBJ_HANDLE* handle);  // GfGameObj::flushEvent: an object left the game
     static void callItemAdd(unsigned int item, int count);  // count of the item gained (or lost)
@@ -38,17 +36,15 @@ public:
     // (GfGameParty::gevGameObjEnter and gevGameObjLeave; 1.0.0's symbol)
     static void callPartyDriver(GF_OBJ_HANDLE* handle, unsigned int partyId, bool enter);
     static void callPartyMemberOK(bool ok);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
-    // gf_event's unit and it works on PtrSingleton<GfEvent>. What it does: calls virtual slot 3 (+0x18,
-    // IGfEvent::fn_710000FA18) of every entry of the GfEvent's ring of up to 32 listeners (count at 0x108, start
-    // index at 0x110, "index < N"). Callers: GfGamePad's eventInGameOpenMainMenu, eventInGameOpenSystemMenu and
-    // eventInGameOpenSkipTravelMenu, before they open the menu (no arguments).
-    static void fn_7100328568();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
-    // gf_event's unit and it works on PtrSingleton<GfEvent>. What it does: calls virtual slot 4 (+0x20) of every
-    // entry of the GfEvent's ring of up to 32 listeners (count at 0x108, start index at 0x110, "index < N").
-    // Caller: the gmk plugin's openPortal (no arguments).
-    static void fn_7100328774();  // GfGameParty::update: the party's objects are ready (or not any more)
+    // 2.0.0's symbols name it. What it does: calls virtual slot 3 (+0x18, IGfEvent::gevOpenMainMenu) of every entry of
+    // the GfEvent's ring of up to 32 listeners (count at 0x108, start index at 0x110, "index < N"). Callers:
+    // GfGamePad's eventInGameOpenMainMenu, eventInGameOpenSystemMenu and eventInGameOpenSkipTravelMenu, before they
+    // open the menu (no arguments).
+    static void callOpenMeinMenu();
+    // 2.0.0's symbols name it. What it does: calls virtual slot 4 (+0x20) of every entry of the GfEvent's ring of up to
+    // 32 listeners (count at 0x108, start index at 0x110, "index < N"). Caller: the gmk plugin's openPortal (no
+    // arguments).
+    static void callOpenPortal();  // GfGameParty::update: the party's objects are ready (or not any more)
     static void callChangeTimeRange(unsigned int range);  // GfFieldTime::update: the time of day's range changed
     static void callChangeLeader(GF_OBJ_HANDLE* leader);  // GfGameParty::update: the party leader changed
     static void callPartyIDMemberOK(bool ok, unsigned int partyId);
@@ -74,17 +70,14 @@ public:
     static void callBladeUnselect(unsigned int blade, bool unselect);  // GfDataBlade::setUnselect
     // GfDataBlade::setTrustPoint passes 4, the blade, 0, 0
     static void callDebugChangeIdea(unsigned int, unsigned int, unsigned int, unsigned int);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
-    // gf_event's unit and it works on PtrSingleton<GfEvent>. What it does: calls virtual slot 23 (+0xB8) of every entry
-    // of the GfEvent's ring of up to 32 listeners (count at 0x108, start index at 0x110, "index < N") with its three
-    // arguments. Callers: GfGameUtilHana::execEquipCondenserParts (false) and execEquipExtendCondenserParts (true),
-    // after Hana's equipment is stored, with Hana's id and the slot.
-    static void fn_71003286B0(unsigned int hana, bool extend, unsigned int slot);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits in
-    // gf_event's unit among GfEvent's call* functions and it walks PtrSingleton<GfEvent>'s listener ring as they do.
-    // What it does: calls IGfEvent slot 46 (fn_710000FAB8) of every listener with its arguments.
-    // Caller: GfGameFlag::setLocal.
-    static void fn_7100326D4C(unsigned int);
+    // 2.0.0's symbols name it. What it does: calls virtual slot 23 (+0xB8) of every entry of the GfEvent's ring of up
+    // to 32 listeners (count at 0x108, start index at 0x110, "index < N") with its three arguments. Callers:
+    // GfGameUtilHana::execEquipCondenserParts (false) and execEquipExtendCondenserParts (true), after Hana's equipment
+    // is stored, with Hana's id and the slot.
+    static void callHanaCondenser(unsigned int hana, bool extend, unsigned int slot);
+    // 2.0.0's symbols name it. What it does: calls IGfEvent slot 46 (gevChangeAocFlag) of every listener with its
+    // arguments. Caller: GfGameFlag::setLocal.
+    static void callChangeAocFlag(unsigned int);
     static void callBattleStart();  // each listener's gevBattleStart
     static void callBattleEnd();  // each listener's gevBattleEnd
     static void callPartyChange();  // each listener's gevChangeParty
@@ -93,24 +86,18 @@ public:
     static void callBladeEnable(unsigned int);  // each listener's gevBladeEnable
     static void callDriverLevel(unsigned int, unsigned int, unsigned int);  // each listener's gevDriverLevel
     static void callMercenariesTeam(unsigned int);  // each listener's gevMercenariesTeam
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits in
-    // gf_event's unit among GfEvent's call* functions and it walks PtrSingleton<GfEvent>'s listener ring as they do.
-    // What it does: calls IGfEvent slot 21 (fn_710000FA60) of every listener with its arguments.
+    // 2.0.0's symbols name it. What it does: calls IGfEvent slot 21 (gevOrbParam) of every listener with its arguments.
     // Caller: GfEquipUtil::equipBladeOrb.
-    static void fn_7100327DC4(unsigned int, unsigned int);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits in
-    // gf_event's unit among GfEvent's call* functions and it walks PtrSingleton<GfEvent>'s listener ring as they do.
-    // What it does: calls IGfEvent slot 22 (fn_710000FA64) of every listener with its arguments.
-    // Caller: GfEquipUtil::equipDriverAcce.
-    static void fn_7100327E78(unsigned int, unsigned int);
+    static void callOrbParam(unsigned int, unsigned int);
+    // 2.0.0's symbols name it. What it does: calls IGfEvent slot 22 (gevAcceParam) of every listener with its
+    // arguments. Caller: GfEquipUtil::equipDriverAcce.
+    static void callAcceParam(unsigned int, unsigned int);
     static void callPartyReturnFieldState(unsigned int);  // each listener's gevPartyReturnFieldState
     static void callPlayerControl(GEV);  // each listener's gevPlayerControl
     static void callPartyMover(GF_OBJ_HANDLE*, bool);  // each listener's gevPartyMover
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits in
-    // gf_event's unit among GfEvent's call* functions and it walks PtrSingleton<GfEvent>'s listener ring as they do.
-    // What it does: calls IGfEvent slot 2 (fn_710000FA14) of every listener with its arguments.
-    // Caller: fn_710024DAD8.
-    static void fn_7100328604(unsigned int);
+    // 2.0.0's symbols name it. What it does: calls IGfEvent slot 2 (gevHitonowaChanged) of every listener with its
+    // arguments. Caller: fn_710024DAD8.
+    static void callHitonowaChanged(unsigned int);
     static void callExecBuy(unsigned int, unsigned int, unsigned int);  // each listener's gevExecBuy
     static void callGetArts(unsigned int, unsigned int, bool);  // each listener's gevGetArts
     static void callChangeWeather(unsigned int, unsigned int);  // each listener's gevChangeWeather

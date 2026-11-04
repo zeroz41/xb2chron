@@ -29,10 +29,9 @@ public:
     };
 
     void Init(int capacity);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because Init inlines it on
-    // its own this. What it does: makes the list other than the one write_ points to the written one (write_),
-    // the other the executed one (execute_), and empties the newly written list.
-    void fn_71008A22D0();
+    // 2.0.0's symbols name it. What it does: makes the list other than the one write_ points to the written one
+    // (write_), the other the executed one (execute_), and empties the newly written list.
+    void SwitchBuffer();
     void Quit();
     void ExecuteCommands();
 

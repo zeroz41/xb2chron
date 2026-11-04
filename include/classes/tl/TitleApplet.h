@@ -16,8 +16,8 @@ public:
     virtual void initialize(const fw::Framework& framework);  // slot 9
     virtual void finalize(const fw::Framework& framework);  // slot 10
     virtual void update(const fw::UpdateInfo& info);  // slot 14
-    // Placeholder name (fw::Applet's slot 15): see fw::Applet. Passes the update info to gf::GfManager::fn_710032A958
-    virtual void fn_710014E704(const fw::UpdateInfo& info);  // slot 15
+    // 2.0.0's symbols name it. Passes the update info to gf::GfManager::updateAfterLayer
+    virtual void updateAfterLayer(const fw::UpdateInfo& info);  // slot 15
     virtual void postUpdate(const fw::UpdateInfo& info);  // slot 16
 };
 }  // namespace tl

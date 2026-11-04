@@ -79,7 +79,7 @@ void UIStreamManager::start(unsigned int contents, unsigned int handle, unsigned
                 file = name;
             }
         }
-        if (acc.fn_7100690ED4() && Bdat::getMember(bdat, "filename_3rd") != nullptr) {
+        if (acc.isStreamImage3rd() && Bdat::getMember(bdat, "filename_3rd") != nullptr) {
             const char* name = reinterpret_cast<const char*>(Bdat::getVal(bdat, "filename_3rd", index));
             if (name != nullptr && *name != '\0') {
                 file = name;

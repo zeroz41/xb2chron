@@ -45,15 +45,11 @@ enum EF_CATEGORY : int;
 // ScnRenderDrSys::releaseCallBack; its secondary table's slots are IDrDrawCallback's begin..finalRender)
 class EffectManager : public ::mm::mtl::PtrSingleton< ::fw::EffectManager>, public ::fw::ManagerObject, public ::ml::IDrDrawCallback, public ::ml::IScnRender {
 public:
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in effect_manager's unit and
-    // GfManager::fn_710032A1FC calls it on PtrSingleton<fw::EffectManager>'s instance. What it does: stores its bool at 0x2FD8
-    void fn_710017CB08(bool flag);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfMapManager::buildMapData and
-    // destroyMapData have no call there). A member: its code is in effect_manager's unit and GfMapManager calls it on
-    // PtrSingleton<fw::EffectManager>'s instance. What it does: hands the flag to fn_710083FF24 on
-    // effect::SystemManager::getPtr()'s system; GfMapManager passes false before building a map's data, true before
-    // destroying it (then waits a frame).
-    void fn_7100179D30(bool flag);
+    // 2.0.0's symbols name it. What it does: stores its bool at 0x2FD8
+    void setIra(bool flag);
+    // 2.0.0's symbols name it. What it does: hands the flag to setDisableCollision on effect::SystemManager::getPtr()'s
+    // system; GfMapManager passes false before building a map's data, true before destroying it (then waits a frame).
+    void setDisableCollision(bool flag);
     // the casters' sends of one layer
     class CasterGroup : public ::mm::mtl::IntrusiveList<EffectCasterSend> {};
     virtual ~EffectManager();  // slot 0
@@ -61,16 +57,14 @@ public:
     bool isCommonLoaded();
     bool commonLoaded();
     // slot 3 (a primary slot of its own: it overrides a secondary base's, ManagerObject's); it hands on to
-    // fn_71001765E8, whose body the -8 thunk reaches directly once finalize is inlined into it
+    // commonDestryed, whose body the -8 thunk reaches directly once finalize is inlined into it
     virtual bool finalize();  // slot 3
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's finalize, slot 3, held this body
-    // itself). A member: finalize and update call it on this. What it does: sets m_inactive, clears the effect
-    // system (es_clearall), the caster groups, the texture buffers and the common packs; true once done.
-    bool fn_71001765E8();
-    // Placeholder name: new in 3.0.1 (a plain fn_ symbol), nothing in 1.0.0's place names it. A member: commonLoaded
-    // calls it on this and it reads m_gfManagerFlag. What it does: sets path to the common effect folder,
-    // "effect/common" with "_dlc" appended while m_gfManagerFlag is set, then "/"; true.
-    bool fn_7100177028(mm::mtl::FixStr<32>& path);
+    // 2.0.0's symbols name it. What it does: sets m_inactive, clears the effect system (es_clearall), the caster
+    // groups, the texture buffers and the common packs; true once done.
+    bool commonDestryed();
+    // 2.0.0's symbols name it. What it does: sets path to the common effect folder, "effect/common" with "_dlc"
+    // appended while m_gfManagerFlag is set, then "/"; true.
+    bool getCommonFilePath(mm::mtl::FixStr<32>& path);
     virtual void update(fw::UpdateInfo const&);  // slot 4
     virtual void updateLayer(fw::UpdateInfo const&, unsigned int);  // slot 5
     virtual void updateLayerPost(fw::UpdateInfo const&, unsigned int);  // slot 6
@@ -83,14 +77,12 @@ public:
     virtual void lastRender(ml::IDrDrawWorkInfo const*);  // slot 13
     virtual void blurRender(ml::IDrDrawWorkInfo const*);  // slot 14
     virtual void finalRender(ml::IDrDrawWorkInfo const*);  // slot 15
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0 has commonLoaded then finalize there)
-    // and nothing calls them. Members because they sit among EffectManager's functions and read only its flag bytes.
-    // What they do: fn_710017658C sets pad_2fdb and pad_2fd7 to 1 and pad_2fda to 0; fn_71001765AC is true while
-    // pad_2fdb is 0; fn_71001765C0 sets pad_2fdc to 1; fn_71001765D0 is true while pad_2fdc is 0.
-    void fn_710017658C();
-    bool fn_71001765AC();
-    void fn_71001765C0();
-    bool fn_71001765D0();
+    // 2.0.0's symbols name them. What they do: requestDestroy sets pad_2fdb and pad_2fd7 to 1 and pad_2fda to 0;
+    // isDestryed is true while pad_2fdb is 0; requestLoad sets pad_2fdc to 1; isLoaded is true while pad_2fdc is 0.
+    void requestDestroy();
+    bool isDestryed();
+    void requestLoad();
+    bool isLoaded();
     // the pack map's: files a pack under its name, takes it out, the one filed under a name (null for none)
     void addPack(EffectPack* pack);
     void removePack(EffectPack* pack);
@@ -295,14 +287,14 @@ public:
     // set when finalize starts, cleared once update's pending commonLoaded succeeds; update and the renders skip
     // while it is set (the name is not the original's)
     bool m_inactive;
-    unsigned char pad_2fd7;  // fn_710017658C sets it (byte loads: not a bool)
-    // stored by fn_710017CB08 (GfManager::fn_710032A1FC hands it on), cleared by the constructor; nothing in this
+    unsigned char pad_2fd7;  // requestDestroy sets it (byte loads: not a bool)
+    // stored by setIra (GfManager::resetGameType hands it on), cleared by the constructor; nothing in this
     // unit reads it (the name is not the original's)
     bool m_gfManagerFlag;
     unsigned char m_tailFlip;  // tail flips it between 0 and 1 every frame (the name is not the original's)
-    unsigned char pad_2fda;  // fn_710017658C clears it
-    unsigned char pad_2fdb;  // fn_710017658C sets it, fn_71001765AC tests it
-    unsigned char pad_2fdc;  // fn_71001765C0 sets it, fn_71001765D0 tests it
+    unsigned char pad_2fda;  // requestDestroy clears it
+    unsigned char pad_2fdb;  // requestDestroy sets it, isDestryed tests it
+    unsigned char pad_2fdc;  // requestLoad sets it, isLoaded tests it
     unsigned char pad_2fdd[0x3];
     // the volume fade (vanish) parameters by gf::VFEFF, each from its effect/common/vanish/<VolumeName>.dprm
     // (BTL_VolumeFade's rows; gf::GfVolumeFade reads them)

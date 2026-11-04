@@ -31,12 +31,14 @@ public:
     unsigned int getShopChangeAddCondition(unsigned int id, unsigned int slot) const;
     unsigned int getShopChangeTaskStart() const;
     unsigned int getShopChangeTaskEnd() const;
-    // Placeholder name: the symbols call it getShopChangeTaskSetItem1 (1.0.0's name at the same handle offset), but 3.0.1 reads its ShopChangeTask "Name" column (a 3.0.1 column, 1.0.0 has no reader of it). A member because it reads m_fpShopChangeTask. What it does: returns row id's "Name" value (2-byte), 0 when the handle is null or id is out of range.
-    unsigned int fn_710021E294(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns row id's "Name" value (2-byte), 0 when the handle is null or id is
+    // out of range.
+    unsigned int getShopChangeTaskName(unsigned int id) const;
     unsigned int getShopChangeTaskReward(unsigned int id) const;
     unsigned int getShopChangeTaskAddFlagValue(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpShopChangeTask. What it does: returns row id's ShopChangeTask "IraCraftIndex" value (2-byte), 0 when the handle is null or id is out of range.
-    unsigned int fn_710021E42C(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns row id's ShopChangeTask "IraCraftIndex" value (2-byte), 0 when the
+    // handle is null or id is out of range.
+    unsigned int getShopChangeTaskIraCraftIndex(unsigned int id) const;
     unsigned int getShopChangeTaskSetItem(unsigned int id, unsigned int slot) const;
     unsigned int getShopChangeTaskSetNumber(unsigned int id, unsigned int slot) const;
     unsigned int getMNU_EventTheaterStart() const;
@@ -46,8 +48,9 @@ public:
     unsigned int getMNU_EventTheatermaincast(unsigned int id) const;
     unsigned int getMNU_EventTheaterblade_id(unsigned int id) const;
     unsigned int getMNU_EventTheaterflag_index(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpMNU_DlcGift. What it does: returns row id's MNU_DlcGift "getflag" value (2-byte), 0 when the handle is null or id is out of range.
-    unsigned int fn_710021E7CC(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns row id's MNU_DlcGift "getflag" value (2-byte), 0 when the handle
+    // is null or id is out of range.
+    unsigned int getMNU_DlcGiftgetflag(unsigned int id) const;
     // the tables, by GfDataBdat id (s_aszGfBdatName); names follow 1.0.0's accessors (getShopList.., getMNU_EventTheater..).
     // m_fpShopCategoryName and m_fpMNU_DlcGift have no 1.0.0 accessor: named the same way (the names are not the original's).
     CBdatWrapper* m_fpShopList;  // 0x10, MNU_ShopList

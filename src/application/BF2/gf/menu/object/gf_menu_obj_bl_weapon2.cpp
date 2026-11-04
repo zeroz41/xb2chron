@@ -262,7 +262,7 @@ void GfMenuObjBlWeapon2::openCharChange() {
     }
 }
 
-void GfMenuObjBlWeapon2::fn_71003AC544(ui::UIObjectAcc& acc, GfMenuItemList* items, ui::UISelectObjList* select,
+void GfMenuObjBlWeapon2::refreshItemList(ui::UIObjectAcc& acc, GfMenuItemList* items, ui::UISelectObjList* select,
                                        unsigned int openType, unsigned int shop) {
     mm::mtl::FixStr<32> name;
     for (unsigned int i = 0; i < select->getSize();) {

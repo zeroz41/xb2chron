@@ -116,12 +116,12 @@ void GfFieldManager::setupGame() {
         GfFieldTime::get()->setupGame();
     }
     GfFieldWeather::setupGame();
-    SCOM_SCRIPT::create(0, GfGameManager::fn_71002A9E68() ? "aoc_field" : "field", false);
+    SCOM_SCRIPT::create(0, GfGameManager::isGameTypeIra() ? "aoc_field" : "field", false);
 }
 
-void GfFieldManager::fn_7100277784() {
+void GfFieldManager::rebuildForGameType() {
     if (GfFobjManager::get() != nullptr) {
-        GfFobjManager::get()->fn_7100289668();
+        GfFobjManager::get()->rebuildForGameType();
     }
 }
 
@@ -279,7 +279,7 @@ void GfFieldManager::postUpdate(const fw::UpdateInfo& info) {
     if (GfFieldSound::get() != nullptr) {
         GfFieldSound::get()->postUpdate(info);
     }
-    GfFieldGimmick::fn_710026B74C(info);
+    GfFieldGimmick::postUpdate(info);
 }
 
 void GfFieldManager::update(const fw::UpdateInfo& info) {

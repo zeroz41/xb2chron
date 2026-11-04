@@ -25,10 +25,9 @@ public:
     static void setupSDataEnemy(SDataEnemy& data, unsigned int arrange, unsigned int arg);
     // the enemy's game parameters set up again for another level (GfGameUtil::levelupForEnemy)
     static void setupGameParamForLevel(SDataEnemy& data, unsigned int level);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
-    // GfDataEnemy's functions and, like getExtraParts, it takes an enemy's GfBdatRsc row. What it does: true when
-    // GfBdatRsc::getRscEnExtraParts(rsc, part) is 2. DataObjEnemy's new table slot 42 returns it for its part.
-    static bool fn_7100235424(unsigned int rsc, unsigned int part);
+    // 2.0.0's symbols name it. What it does: true when GfBdatRsc::getRscEnExtraParts(rsc, part) is 2. DataObjEnemy's
+    // new table slot 42 returns it for its part.
+    static bool isHideExtraParts(unsigned int rsc, unsigned int part);
     static const char* getSePack(unsigned int arrange);
     // the BTL_Enhance rows of the enemy's blade's valid enhances (DataObjEnemy's stat helper reads them)
     static void getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int arrange);

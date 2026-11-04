@@ -15,11 +15,11 @@ gf::GF_OBJ_HANDLE* HateRingManager::GetTargetHandle(gf::GF_OBJ_HANDLE* handle) c
     return gf::GfGameParty::getHandleDriver(GetTarget(handle), 0);
 }
 
-unsigned char HateRingManager::fn_71000A1DB8(int index) const {
+unsigned char HateRingManager::GetHateEnemyNum(int index) const {
     return pad_112C[index];
 }
 
-unsigned int HateRingManager::fn_71000A1DC8() const {
+unsigned int HateRingManager::GetHateEnemyNumAll() const {
     unsigned int packed = 0;
     for (int i = 0; i < 3; i++) {
         packed |= pad_112C[i] << (i * 10);

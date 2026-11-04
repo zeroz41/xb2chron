@@ -42,12 +42,10 @@ public:
     static void openRoundExtend();
     static void closeRoundExtend();
     static void changeCharacter(unsigned int character);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's changeCharacter is followed by
-    // StartListener::reciveEvent). A static member because it sits among the class's open/close functions and works
-    // on the same attached object (0x54). What it does: sends LAY_ovk_start the open event (0x21), then, given a
-    // context that has not started (GfMenuObjUtil::checkCCStart), starts it on object 0x54 with LAY_ovk_start's
-    // handle. No code or data reference to it in the module.
-    static void fn_71003BF974(GfMenuCallContext* context);
+    // 2.0.0's symbols name it. What it does: sends LAY_ovk_start the open event (0x21), then, given a context that has
+    // not started (GfMenuObjUtil::checkCCStart), starts it on object 0x54 with LAY_ovk_start's handle. No code or data
+    // reference to it in the module.
+    static void openOverkill(GfMenuCallContext* context);
 
     // StatusListener's copy of the target's per-element levels (GfObjPropertyEnemy::m_resAttrs[i].m_level, by
     // element 0..8): the open event (0x21) copies them and then sets each to 3; event 0xD's element damage lowers

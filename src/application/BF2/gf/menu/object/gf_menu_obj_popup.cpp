@@ -118,14 +118,14 @@ inline void GfMenuObjPopup::sendOpen(unsigned int handle, const PopupInfo& info)
     ui::UIManager::get()->requestObjectEvent(handle, event, 0.0f);
 }
 
-bool GfMenuObjPopup::fn_710045C9E4() {
+bool GfMenuObjPopup::seqGiftOut() {
     ui::UIObjectAcc icon(m_handle, "IMG_gift_icon");
     m_giftSeq.addAnimJob(icon.m_handle, "out");
-    m_giftSeq.addJob(&GfMenuObjPopup::fn_710045DA2C);
+    m_giftSeq.addJob(&GfMenuObjPopup::seqGiftEnd);
     return true;
 }
 
-bool GfMenuObjPopup::fn_710045CB7C() {
+bool GfMenuObjPopup::seqGiftIn() {
     if (GfMenuManager::isFading()) {
         return false;
     }
@@ -133,7 +133,7 @@ bool GfMenuObjPopup::fn_710045CB7C() {
     GfMenuObjUtil::playSE(0x22);
     m_giftSeq.addAnimJob(icon.m_handle, "in");
     m_giftSeq.addAnimJob(icon.m_handle, "out");
-    m_giftSeq.addJob(&GfMenuObjPopup::fn_710045DA2C);
+    m_giftSeq.addJob(&GfMenuObjPopup::seqGiftEnd);
     icon.setDisp(true);
     return true;
 }
@@ -142,7 +142,7 @@ unsigned int GfMenuObjPopup::open(const OpenParam& param) {
     if (GfMenuObjUtil::isMenuObjectFull()) {
         return 0;
     }
-    if (param.m_type == 11 && !GfMenuObjUtil::fn_710048FD30(3)) {
+    if (param.m_type == 11 && !GfMenuObjUtil::isValidExpansion(3)) {
         return 0;
     }
     unsigned int root = GfMenuObject::getAttachedObject(0x76);
@@ -230,7 +230,7 @@ inline bool GfMenuObjPopup::getParam(unsigned int index, OpenParam& param) {
     return false;
 }
 
-bool GfMenuObjPopup::fn_710045D48C(const OpenParam& param) {
+bool GfMenuObjPopup::remove(const OpenParam& param) {
     unsigned int root = GfMenuObject::getAttachedObject(0x76);
     if (ui::UIObjectAcc(root).m_object == nullptr) {
         return false;
@@ -248,7 +248,7 @@ bool GfMenuObjPopup::fn_710045D48C(const OpenParam& param) {
     return false;
 }
 
-bool GfMenuObjPopup::fn_710045D754(unsigned int value) {
+bool GfMenuObjPopup::removeBlade(unsigned int value) {
     unsigned int root = GfMenuObject::getAttachedObject(0x76);
     if (ui::UIObjectAcc(root).m_object == nullptr) {
         return false;
@@ -270,7 +270,7 @@ bool GfMenuObjPopup::fn_710045D754(unsigned int value) {
     return false;
 }
 
-bool GfMenuObjPopup::fn_710045DA2C() {
+bool GfMenuObjPopup::seqGiftEnd() {
     m_giftWait = false;
     return true;
 }

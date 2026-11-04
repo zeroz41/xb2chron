@@ -59,7 +59,7 @@ bool GfMenuItemUtil::canBuyItem(unsigned int item, unsigned int shop) {
         return false;
     }
     if (GfDataItem::getItemType(item) == 2) {
-        unsigned int count = GfItemBox::sys()->fn_71002F9DD4(static_cast<ItemType::Type>(2));
+        unsigned int count = GfItemBox::sys()->countItemCategory(static_cast<ItemType::Type>(2));
         if (count >= GfItemUtil::getEnableStock(item)) {
             return false;
         }
@@ -121,7 +121,7 @@ unsigned short GfMenuItemUtil::searchEquipAcc(unsigned int item, GfItemHandle ha
         if (driver == 0) {
             continue;
         }
-        unsigned int slotCount = GfEquipUtil::fn_71002FC38C(driver) ? 3 : 2;
+        unsigned int slotCount = GfEquipUtil::isEnableExtendDriverAcce(driver) ? 3 : 2;
         for (unsigned int j = 0; j < slotCount; j++) {
             unsigned int acce = GfEquipUtil::getEquipDriverAcce(driver, j);
             GfItemHandle equipped;
@@ -129,7 +129,7 @@ unsigned short GfMenuItemUtil::searchEquipAcc(unsigned int item, GfItemHandle ha
                 (equipped = GfDataDriver::getEquipAcceHandle(driver, j)).m_handle == handle.m_handle) {
                 if (slot != nullptr) {
                     *slot = j;
-                    if (GfMenuObjUtil::fn_710048FD30(3)) {
+                    if (GfMenuObjUtil::isValidExpansion(3)) {
                         (*slot)++;
                     }
                 }
@@ -137,16 +137,16 @@ unsigned short GfMenuItemUtil::searchEquipAcc(unsigned int item, GfItemHandle ha
             }
         }
     }
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         for (unsigned int i = 0; i < drivers.size(); i++) {
             unsigned short driver = *(drivers.begin() + i);
             if (driver == 0) {
                 continue;
             }
-            unsigned int acce = GfDataDriver::fn_7100247474(driver);
+            unsigned int acce = GfDataDriver::getEquipWpnAcce(driver);
             GfItemHandle equipped;
             if (acce != 0 && acce == item &&
-                (equipped = GfDataDriver::fn_71002474B0(driver)).m_handle == handle.m_handle) {
+                (equipped = GfDataDriver::getEquipWpnAcceHandle(driver)).m_handle == handle.m_handle) {
                 if (slot != nullptr) {
                     *slot = 0;
                 }
@@ -157,24 +157,24 @@ unsigned short GfMenuItemUtil::searchEquipAcc(unsigned int item, GfItemHandle ha
     return 0;
 }
 
-bool GfMenuItemUtil::fn_71003547CC(unsigned int item, unsigned int blade) {
+bool GfMenuItemUtil::isModelChangeItem(unsigned int item, unsigned int blade) {
     bool result = false;
     unsigned int value;
     switch (GfDataItem::getItemType(item)) {
     case 3:
-        value = GfBdatItem::sys()->fn_7100200FE4(item);
+        value = GfBdatItem::sys()->getEquipOrbBlade(item);
         if (value != 0 && value == blade) {
             result = true;
         }
         break;
     case 2:
-        value = GfBdatItem::sys()->fn_7100203610(item);
+        value = GfBdatItem::sys()->getPcEquipDriver(item);
         if (value != 0 && value == blade) {
             result = true;
         }
         break;
     case 20:
-        value = GfBdatItem::sys()->fn_7100206788(item);
+        value = GfBdatItem::sys()->getITM_HanaAssistBlade(item);
         if (value != 0 && value == blade) {
             result = true;
         }

@@ -102,7 +102,7 @@ void GfFieldGimmick::update(const fw::UpdateInfo& info) {
     }
 }
 
-void GfFieldGimmick::fn_710026B74C(const fw::UpdateInfo& info) {}
+void GfFieldGimmick::postUpdate(const fw::UpdateInfo& info) {}
 
 bool GfFieldGimmick::createGmkSet(int mapId) {
     if (!get()->m_gmkMgr.isValid()) {

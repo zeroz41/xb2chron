@@ -55,24 +55,19 @@ public:
     void playTitleBGM();
     void playTitleEvent(unsigned int eventID);
     unsigned int getPlayTitleEvent();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because returnTitle and
-    // TitleStateMainScreen::onEnter call it with the title (x0) and a float (s0). What it does: makes the title's
-    // SE category handle (this+0x210) with gf::GfSound::createCategoryHandle when it has none, then sets that
-    // category's volume (gf::GfSound::setCategoryVolume) to the float for the sound categories 0xD, 0xE and 0.
-    void fn_710014F70C(float volume);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because returnTitle,
-    // TitleStatePlayGame::enter, TitleStatePlayEvent::enter and TitleStatePlayEvent::gevPlayEvent call it with the
-    // title (x0) and two floats (s0, s1). What it does: makes the title's sound category handle (this+0x208) with
-    // gf::GfSound::createCategoryHandle when it has none, then gf::GfSound::setCategoryVolume(handle, category,
-    // volume, time) for the categories 1, 0xD, 0xE, 5, 7, 6 and 8. gevPlayEvent passes (1.0, 0.0).
-    void fn_710014F5FC(float volume, float time);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because
-    // TitleStateMainScreen::loadSaveDataForTitle calls it with the title and it works on the title's save buffer
-    // and flags. What it does: clears m_newGameAdv; when the save buffer's version is 0x3A15B and
-    // GfDataBlade::fn_710023217C holds for its game, makes the game's clear count at least 1 and sets m_newGameAdv
-    // when GfDataBlade::fn_7100231EB8 (local flag 1, type 16) is 10032 or more; then sets m_isClear when the clear
-    // count is not 0 and clears m_newGameAdv again when GfDataBlade::fn_7100232244 holds.
-    void fn_710014FBAC();
+    // 2.0.0's symbols name it. What it does: makes the title's SE category handle (this+0x210) with
+    // gf::GfSound::createCategoryHandle when it has none, then sets that category's volume
+    // (gf::GfSound::setCategoryVolume) to the float for the sound categories 0xD, 0xE and 0.
+    void setMaskVolumeGameSe(float volume);
+    // 2.0.0's symbols name it. What it does: makes the title's sound category handle (this+0x208) with
+    // gf::GfSound::createCategoryHandle when it has none, then gf::GfSound::setCategoryVolume(handle, category, volume,
+    // time) for the categories 1, 0xD, 0xE, 5, 7, 6 and 8. gevPlayEvent passes (1.0, 0.0).
+    void setMaskVolumeFade(float volume, float time);
+    // 2.0.0's symbols name it. What it does: clears m_newGameAdv; when the save buffer's version is 0x3A15B and
+    // GfDataBlade::fn_710023217C holds for its game, makes the game's clear count at least 1 and sets m_newGameAdv when
+    // GfDataBlade::fn_7100231EB8 (local flag 1, type 16) is 10032 or more; then sets m_isClear when the clear count is
+    // not 0 and clears m_newGameAdv again when GfDataBlade::fn_7100232244 holds.
+    void getGameClearFlagFromSaveData();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because
     // TitleStateMainScreen::playTitleEvent calls it with the title and it reads the title's save buffer and
     // m_newGameAdv. What it does: true when the save buffer's version is 0x3A15B, GfDataBlade::fn_710023217C holds
@@ -91,10 +86,9 @@ public:
     // buffer. What it does: true when the save buffer's version is not 0x3A15B, else whether
     // GfDataBlade::fn_71002325AC does not hold for its game.
     bool fn_710014FD74();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because
-    // TitleStateChangeGameType::fn_7100156288 calls it with the title and it clears the title's flags. What it does:
-    // passes the bool to GfManager::fn_710032A1FC, then clears m_isClear and m_newGameAdv.
-    void fn_710014FDB8(bool flag);
+    // 2.0.0's symbols name it. What it does: passes the bool to GfManager::resetGameType, then clears m_isClear and
+    // m_newGameAdv.
+    void resetGameType(bool flag);
 
     // an event to play from the title: 0x54 bytes (the constructor's stores; eventMenuResult copies the first 16 bytes
     // as two words and the string with FixStr's assignment). The type and member names are not the original's.
@@ -142,9 +136,9 @@ public:
     unsigned char pad_1FC[0x4];
     unsigned int m_playTitleEvent;  // playTitleEvent's (the name is not the original's)
     unsigned char pad_204[0x4];
-    // fn_710014F5FC's sound category handle, made on first use; the constructor sets -1 (the name is not the original's)
+    // setMaskVolumeFade's sound category handle, made on first use; the constructor sets -1 (the name is not the original's)
     gf::GF_SE_CATEGORY_HANDLE* m_seCategory;
-    // fn_710014F70C's sound category handle, made on first use (the name is not the original's)
+    // setMaskVolumeGameSe's sound category handle, made on first use (the name is not the original's)
     gf::GF_SE_CATEGORY_HANDLE* m_seCategorySub;
     bool m_isClear;  // GfMenuManager::isClearCheck returns it (the name is not the original's)
     // GfMenuObjTitle::isEnableNewGameAdv answers it when there is save data (the name is not the original's)
@@ -152,7 +146,7 @@ public:
     // TitleStateMainScreen::checkMenuResult takes and clears it as the title menu's result 6 (TitleStateChangeGameType)
     // (the name is not the original's)
     bool m_reqChangeGameType;
-    bool m_flag21B;  // GfGameManager::fn_71002AC908 answers it (the name is not the original's)
+    bool m_flag21B;  // GfGameManager::isCompleteBothGame answers it (the name is not the original's)
     unsigned char pad_21C[0x4];
 };
 }  // namespace tl

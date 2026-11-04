@@ -28,11 +28,10 @@ public:
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
 
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_driver and
-    // m_handle and SlotListener::reciveEvent calls it on its owner. What it does: enables action 10 of the
-    // operation guide on "LAY_equip_slot" (GfMenuObjOperationInfo::setActionEnable) when the game is cleared, the
-    // reference driver m_driver's GfEquipUtil::fn_71002FC38C does not hold and the party has item 0x636A.
-    void fn_71003F1CD8();
+    // 2.0.0's symbols name it. What it does: enables action 10 of the operation guide on "LAY_equip_slot"
+    // (GfMenuObjOperationInfo::setActionEnable) when the game is cleared, the reference driver m_driver's
+    // GfEquipUtil::isEnableExtendDriverAcce does not hold and the party has item 0x636A.
+    void refreshExpandOperation();
     // 1.0.0's setupEquipItem (0x71004569D8: same place after EquipItemListener::reciveEvent, the same arguments
     // and its first three createFromList calls); the symbols spell fn_71003F33C8
     static GfMenuItemAdapter* setupEquipItem(ui::UIObjectAcc& acc, GfMenuItemList* items);

@@ -146,7 +146,7 @@ bool BladeChangeManager::IsReceiveLater(gf::GF_OBJ_HANDLE* handle) const {
     return found & later;
 }
 
-bool BladeChangeManager::fn_710001903C(gf::GF_OBJ_HANDLE* handle) const {
+bool BladeChangeManager::IsProcDisableCancel(gf::GF_OBJ_HANDLE* handle) const {
     for (int i = 0; i < m_procNum; i++) {
         if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) || m_procs[i].m_driver == handle ||
             m_procs[i].m_blade == handle) {
@@ -158,7 +158,7 @@ bool BladeChangeManager::fn_710001903C(gf::GF_OBJ_HANDLE* handle) const {
     return false;
 }
 
-bool BladeChangeManager::fn_71000190E0() const {
+bool BladeChangeManager::IsProcKakusei() const {
     for (int i = 0; i < m_procNum; i++) {
         if (m_procs[i].m_type == 1 && m_procs[i].m_changeBladeIndex == 4 && !m_procs[i].m_isNewBladeDone) {
             return true;

@@ -29,7 +29,7 @@ void pluginRegist() {
     pluginEvtVolRegist();
     pluginEvtRandRegist();
     pluginEvtPayRegist();
-    fn_710066162C();
+    pluginEvtExRegist();
     pluginEvtEnvRegist();
     pluginEvtMovRegist();
     pluginEvtMapRegist();

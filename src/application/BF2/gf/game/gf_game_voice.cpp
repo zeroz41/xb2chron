@@ -99,11 +99,11 @@ GAME_VOICE_HANDLE* GfGameVoice::playVoice(unsigned int type, unsigned int id, co
     return playVoice(ParamObj(type, id), name, prio, false);
 }
 
-GAME_VOICE_HANDLE* GfGameVoice::fn_71002F1D20(unsigned int type, unsigned int id, const char* name, CV_PRIO prio) {
+GAME_VOICE_HANDLE* GfGameVoice::playVoiceParty(unsigned int type, unsigned int id, const char* name, CV_PRIO prio) {
     return playVoice(ParamObj(type, id), name, prio, true);
 }
 
-GAME_VOICE_HANDLE* GfGameVoice::fn_71002F1D5C(GF_OBJ_HANDLE* handle, const char* name, CV_PRIO prio) {
+GAME_VOICE_HANDLE* GfGameVoice::playVoiceParty(GF_OBJ_HANDLE* handle, const char* name, CV_PRIO prio) {
     GAME_VOICE_HANDLE* voice = playVoice(ParamObj(handle), name, prio, false);
     if (voice != nullptr) {
         GfGameVoice* self = sys();

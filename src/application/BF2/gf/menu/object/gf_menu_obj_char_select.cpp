@@ -189,7 +189,7 @@ bool GfMenuObjCharSelect::seqStreamWaitStatBl() {
     return true;
 }
 
-bool GfMenuObjCharSelect::fn_71003CBC84() {
+bool GfMenuObjCharSelect::seqConfSpecialSelect() {
     if (!pad_6C0) {
         if (pad_748 != 4) {
             return true;
@@ -210,7 +210,7 @@ bool GfMenuObjCharSelect::fn_71003CBC84() {
     GfMenuObjMainMenu2::setCloseKeyEnable(true);
     if (index != -1) {
         m_itemList->setIndex(index);
-        m_seq.addJob(&GfMenuObjCharSelect::fn_71003D0B9C);
+        m_seq.addJob(&GfMenuObjCharSelect::seqConfirmItem);
         pad_6C0 = false;
         return true;
     }

@@ -8,7 +8,7 @@
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfAllocator.h"
-#include "classes/gf/TUnk_B62D58.h"
+#include "classes/gf/GfMenuObjLoadingIra.h"
 #include "mm/Col3.h"
 #include "mm/Col4.h"
 #include "mm/mtl/FixStr.h"
@@ -216,9 +216,9 @@ void GfMenuObjFade::dispLoading(bool disp, unsigned short frames) {
         event.m_param0 = frames;
         GfMenuObject::sendEvent(acc.searchChild("LAY_loading"), event, 0.0f);
         ui::UIObjectAcc image(acc.m_handle, "IMG_loading");
-        if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuObject::existAttachedObject(0x8F)) {
+        if (GfMenuObjUtil::isValidExpansion(3) && GfMenuObject::existAttachedObject(0x8F)) {
             image.setAlpha(0.0f);
-            TUnk_B62D58::fn_710042AE80(disp, frames);
+            GfMenuObjLoadingIra::dispLoading(disp, frames);
         } else {
             image.setAlpha(1.0f);
         }
@@ -233,9 +233,9 @@ void GfMenuObjFade::dispSaving(bool disp, unsigned short frames) {
         event.m_param0 = frames;
         GfMenuObject::sendEvent(acc.searchChild("LAY_saving"), event, 0.0f);
         ui::UIObjectAcc image(acc.m_handle, "IMG_saving");
-        if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuObject::existAttachedObject(0x8F)) {
+        if (GfMenuObjUtil::isValidExpansion(3) && GfMenuObject::existAttachedObject(0x8F)) {
             image.setAlpha(0.0f);
-            TUnk_B62D58::fn_710042AF14(disp, frames);
+            GfMenuObjLoadingIra::dispSaving(disp, frames);
         } else {
             image.setAlpha(1.0f);
         }

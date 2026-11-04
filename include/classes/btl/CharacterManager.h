@@ -64,25 +64,22 @@ public:
     // the character index of an AI script's character id (Utility::AI_GetCharacterHandle passes the id less 100
     // and false for an enemy)
     int GetCharacterIDByAiChrID(int id, bool isPlayer) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it walks the enemy slots. What
-    // it does: calls BattleCharacter::fn_710002B868 on every enemy in use (BattleGlobal::PreUpdateProc calls it).
-    void fn_710007C1E0();
+    // 2.0.0's symbols name it. What it does: calls BattleCharacter::CheckTutorialEnemy on every enemy in use
+    // (BattleGlobal::PreUpdateProc calls it).
+    void CheckTutorialEnemy();
     int GetAliveBossNum() const;
     bool IsCharacterDead(gf::GF_OBJ_HANDLE* handle) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it walks the enemy slots. What it
-    // does: false unless BattleGlobal's m_challengeAnySuccess is set; then whether an enemy in use answers
-    // BattleCharacter::GetWeaponEffectCaster (BattleGlobal::BattleStartInitialize calls it).
-    bool fn_710007C240() const;
+    // 2.0.0's symbols name it. What it does: false unless BattleGlobal's m_challengeAnySuccess is set; then whether an
+    // enemy in use answers BattleCharacter::GetWeaponEffectCaster (BattleGlobal::BattleStartInitialize calls it).
+    bool IsExistSeriousBattleEnemy() const;
     bool IsExistAlivePlayer() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it walks the enemy slots. What it
-    // does: whether an enemy in use that is no blade is alive (IsDead(0) false), with battleOnly only one in battle
-    // (IsBattle) (BattleGlobal::PreUpdateProc and BattleCharacter::DeadProc call it).
-    bool fn_710007C36C(bool battleOnly) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it walks the enemy slots. What it
-    // does: whether an enemy in use (while GfGameInsideBattleLock holds a lock only one with pad_F00_4 set) has a
-    // parameter that answers slot 73 (fn_7100088FE4) or is in battle (IsBattle), is no blade (m_isNotBlade) and is
-    // alive (IsDead(0) false) (TUnk_B3A9C8::fn_7100025920 calls it).
-    bool fn_710007C43C() const;
+    // 2.0.0's symbols name it. What it does: whether an enemy in use that is no blade is alive (IsDead(0) false), with
+    // battleOnly only one in battle (IsBattle) (BattleGlobal::PreUpdateProc and BattleCharacter::DeadProc call it).
+    bool IsExistAliveEnemy(bool battleOnly) const;
+    // 2.0.0's symbols name it. What it does: whether an enemy in use (while GfGameInsideBattleLock holds a lock only
+    // one with pad_F00_4 set) has a parameter that answers slot 73 (IsChallengeTarget) or is in battle (IsBattle), is
+    // no blade (m_isNotBlade) and is alive (IsDead(0) false) (ChallengeBattleManager::UpdateProc calls it).
+    bool IsExistChallengeBattleEnemy() const;
     void BattleEndInitialize();
     bool IsExistBattlePlayer() const;
     bool IsExistBattleEnemy(bool* result, gf::GF_OBJ_HANDLE* handle, bool flag) const;
@@ -93,15 +90,14 @@ public:
     // the highest level of an enemy in use with m_hasHateTarget set and alive, +15 for a named one with addNamed
     int GetBattleEnemyMaxLevel(bool addNamed) const;
     void PlayEnemyWinVoice();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it walks the enemy slots. What it
-    // does: calls CharacterParameter::SetupBGM on every alive enemy in use (in battle with battleOnly), calling
-    // BattleGlobal::fn_710000903C before the first; when none was found and includeDead is set, the same over the
-    // dead ones too (BattleGlobal::UpdateProc, UpdateJingle, StopJingle and TUnk_B3A9C8::fn_7100025920 call it).
-    void fn_710007D348(bool battleOnly, bool includeDead);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it walks the enemy slots. What it
-    // does: sets BattleCharacter::pad_F06_1 on every dead enemy in use (IsDead(0)) that does not have it yet
-    // (fn_7100025870 calls it).
-    void fn_710007D594();
+    // 2.0.0's symbols name it. What it does: calls CharacterParameter::SetupBGM on every alive enemy in use (in battle
+    // with battleOnly), calling BattleGlobal::ResetBGM before the first; when none was found and includeDead is set,
+    // the same over the dead ones too (BattleGlobal::UpdateProc, UpdateJingle, StopJingle and
+    // ChallengeBattleManager::UpdateProc call it).
+    void SetupBGM(bool battleOnly, bool includeDead);
+    // 2.0.0's symbols name it. What it does: sets BattleCharacter::pad_F06_1 on every dead enemy in use (IsDead(0))
+    // that does not have it yet (fn_7100025870 calls it).
+    void NotifyChallengeNextWave();
 
     CHARACTER_SLOT m_slots[CHARACTER_NUM];
     // the indices of the slots in use, sorted by their character's handle (SearchCharacter's binary search; the

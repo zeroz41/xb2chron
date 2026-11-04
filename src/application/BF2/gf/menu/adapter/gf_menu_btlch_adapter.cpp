@@ -1,5 +1,5 @@
-#include "classes/gf/TUnk_B5A648.h"
-#include "classes/gf/TUnk_B5A648/IConverter.h"
+#include "classes/gf/GfMenuBtlchAdapter.h"
+#include "classes/gf/GfMenuBtlchAdapter/IConverter.h"
 #include "classes/gf/TUnk_B5A850.h"
 #include "classes/gf/TUnk_B5A878.h"
 #include "classes/gf/GfMenuIDList.h"
@@ -17,33 +17,33 @@
 namespace gf {
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B5A670). The display callback and plugin
-// settings for each adapter type, in fn_7100333BF4's index order.
-static TUnk_B5A648::TypeSetup s_typeSetups[] = {
-    {&TUnk_B5A648::fn_7100333D34, {2, 0, 0}},
-    {&TUnk_B5A648::fn_7100333E14, {3, 0, 0}},
-    {&TUnk_B5A648::fn_7100333EC4, {0, 0, 9}},
-    {&TUnk_B5A648::fn_7100333F94, {2, 0, 0}},
-    {&TUnk_B5A648::fn_7100334074, {2, 0, 0}},
-    {&TUnk_B5A648::fn_710033417C, {7, 4, 0}},
-    {&TUnk_B5A648::fn_7100334274, {0, 0, 99}},
-    {&TUnk_B5A648::fn_7100334340, {3, 0, 0}},
-    {&TUnk_B5A648::fn_7100334404, {3, 0, 0}},
-    {&TUnk_B5A648::fn_71003344C0, {3, 0, 0}},
-    {&TUnk_B5A648::fn_7100334594, {0, 0, 99}},
-    {&TUnk_B5A648::fn_71003345D0, {7, 4, 0}},
-    {&TUnk_B5A648::fn_71003346C8, {0, 0, 99999}},
-    {&TUnk_B5A648::fn_710033478C, {0, 0, 99999}},
-    {&TUnk_B5A648::fn_71003348D0, {7, 4, 0}},
+// settings for each adapter type, in create's index order.
+static GfMenuBtlchAdapter::TypeSetup s_typeSetups[] = {
+    {&GfMenuBtlchAdapter::update_TextTitle, {2, 0, 0}},
+    {&GfMenuBtlchAdapter::update_DispComplete, {3, 0, 0}},
+    {&GfMenuBtlchAdapter::update_NumDifficulty, {0, 0, 9}},
+    {&GfMenuBtlchAdapter::update_TextSummary, {2, 0, 0}},
+    {&GfMenuBtlchAdapter::update_TextNotAvailable, {2, 0, 0}},
+    {&GfMenuBtlchAdapter::update_TimeLimit, {7, 4, 0}},
+    {&GfMenuBtlchAdapter::update_NumLimitLv, {0, 0, 99}},
+    {&GfMenuBtlchAdapter::update_DispLimitLv, {3, 0, 0}},
+    {&GfMenuBtlchAdapter::update_DispWpnLimit, {3, 0, 0}},
+    {&GfMenuBtlchAdapter::update_DispPartyLimit, {3, 0, 0}},
+    {&GfMenuBtlchAdapter::update_NumWaveCount, {0, 0, 99}},
+    {&GfMenuBtlchAdapter::update_TimeRecord, {7, 4, 0}},
+    {&GfMenuBtlchAdapter::update_NumRecordEcube, {0, 0, 99999}},
+    {&GfMenuBtlchAdapter::update_NumRecordScore, {0, 0, 99999}},
+    {&GfMenuBtlchAdapter::update_TimeClear, {7, 4, 0}},
 };
 
-TUnk_B5A648::~TUnk_B5A648() {
+GfMenuBtlchAdapter::~GfMenuBtlchAdapter() {
     if (m_converter != nullptr) {
         delete m_converter;
         m_converter = nullptr;
     }
 }
 
-TUnk_B5A648* TUnk_B5A648::fn_7100333BF4(unsigned int handle, unsigned int type, unsigned int id, bool changed) {
+GfMenuBtlchAdapter* GfMenuBtlchAdapter::create(unsigned int handle, unsigned int type, unsigned int id, bool changed) {
     ui::UIObjectAcc acc(handle);
     if (acc.m_object == nullptr) {
         return nullptr;
@@ -54,16 +54,16 @@ TUnk_B5A648* TUnk_B5A648::fn_7100333BF4(unsigned int handle, unsigned int type, 
         return nullptr;
     }
 #line 157
-    TUnk_B5A648* adapter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5A648(plugin, changed);
+    GfMenuBtlchAdapter* adapter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfMenuBtlchAdapter(plugin, changed);
     adapter->m_update.set(adapter, setup.func);
     adapter->m_id = id;
     plugin->release();
     return adapter;
 }
 
-bool TUnk_B5A648::fn_7100333D34(unsigned int id) {
+bool GfMenuBtlchAdapter::update_TextTitle(unsigned int id) {
     GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304())) {
+    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
         return false;
     }
     ui::UIStr text(GfDataBdat::getFP(0x1A1), record.m_valueE);
@@ -71,17 +71,17 @@ bool TUnk_B5A648::fn_7100333D34(unsigned int id) {
     return true;
 }
 
-bool TUnk_B5A648::fn_7100333E14(unsigned int id) {
+bool GfMenuBtlchAdapter::update_DispComplete(unsigned int id) {
     GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304())) {
+    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
         return false;
     }
     return record.m_rule.m_value0 != 0;
 }
 
-bool TUnk_B5A648::fn_7100333EC4(unsigned int id) {
+bool GfMenuBtlchAdapter::update_NumDifficulty(unsigned int id) {
     GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304())) {
+    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
         return false;
     }
     if (record.m_valueC == 0) {
@@ -91,9 +91,9 @@ bool TUnk_B5A648::fn_7100333EC4(unsigned int id) {
     return true;
 }
 
-bool TUnk_B5A648::fn_7100333F94(unsigned int id) {
+bool GfMenuBtlchAdapter::update_TextSummary(unsigned int id) {
     GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304())) {
+    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
         return false;
     }
     ui::UIStr text(GfDataBdat::getFP(0x1A1), record.m_value10);
@@ -101,9 +101,9 @@ bool TUnk_B5A648::fn_7100333F94(unsigned int id) {
     return true;
 }
 
-bool TUnk_B5A648::fn_7100334074(unsigned int id) {
+bool GfMenuBtlchAdapter::update_TextNotAvailable(unsigned int id) {
     GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304())) {
+    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
         return false;
     }
     GfGameManager::BattleChallengeRecord::Text text14 = record.getText14();
@@ -121,9 +121,9 @@ bool TUnk_B5A648::fn_7100334074(unsigned int id) {
     return true;
 }
 
-bool TUnk_B5A648::fn_710033417C(unsigned int id) {
+bool GfMenuBtlchAdapter::update_TimeLimit(unsigned int id) {
     GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304())) {
+    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
         return false;
     }
     unsigned int seconds = record.m_value4;
@@ -137,9 +137,9 @@ bool TUnk_B5A648::fn_710033417C(unsigned int id) {
     return true;
 }
 
-bool TUnk_B5A648::fn_7100334274(unsigned int id) {
+bool GfMenuBtlchAdapter::update_NumLimitLv(unsigned int id) {
     GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304())) {
+    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
         return false;
     }
     if (record.m_value8 == 0) {
@@ -149,9 +149,9 @@ bool TUnk_B5A648::fn_7100334274(unsigned int id) {
     return true;
 }
 
-bool TUnk_B5A648::fn_7100334340(unsigned int id) {
+bool GfMenuBtlchAdapter::update_DispLimitLv(unsigned int id) {
     GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304())) {
+    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
         return false;
     }
     if (record.m_kind == 3) {
@@ -160,9 +160,9 @@ bool TUnk_B5A648::fn_7100334340(unsigned int id) {
     return record.m_value8 != 0;
 }
 
-bool TUnk_B5A648::fn_7100334404(unsigned int id) {
+bool GfMenuBtlchAdapter::update_DispWpnLimit(unsigned int id) {
     GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304())) {
+    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
         return false;
     }
     if (record.m_kind == 3) {
@@ -171,9 +171,9 @@ bool TUnk_B5A648::fn_7100334404(unsigned int id) {
     return !record.m_lists.m_listE0.empty();
 }
 
-bool TUnk_B5A648::fn_71003344C0(unsigned int id) {
+bool GfMenuBtlchAdapter::update_DispPartyLimit(unsigned int id) {
     GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304())) {
+    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
         return false;
     }
     if (record.m_valueA < 3) {
@@ -187,14 +187,14 @@ bool TUnk_B5A648::fn_71003344C0(unsigned int id) {
     return false;
 }
 
-bool TUnk_B5A648::fn_7100334594(unsigned int id) {
-    setNumber(GfBdatBtl::sys()->fn_71001E968C(id));
+bool GfMenuBtlchAdapter::update_NumWaveCount(unsigned int id) {
+    setNumber(GfBdatBtl::sys()->getBTL_ChBtlWave(id));
     return true;
 }
 
-bool TUnk_B5A648::fn_71003345D0(unsigned int id) {
+bool GfMenuBtlchAdapter::update_TimeRecord(unsigned int id) {
     GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304())) {
+    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
         return false;
     }
     unsigned int seconds = record.m_rule.m_value0;
@@ -208,36 +208,36 @@ bool TUnk_B5A648::fn_71003345D0(unsigned int id) {
     return true;
 }
 
-bool TUnk_B5A648::fn_71003346C8(unsigned int id) {
+bool GfMenuBtlchAdapter::update_NumRecordEcube(unsigned int id) {
     GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304())) {
+    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
         return false;
     }
     setNumber(record.getRule().m_value8);
     return true;
 }
 
-bool TUnk_B5A648::fn_710033478C(unsigned int id) {
+bool GfMenuBtlchAdapter::update_NumRecordScore(unsigned int id) {
     bool found;
     {
         GfGameManager::BattleChallengeRecord record;
-        found = GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304()) && record.m_kind != 0;
+        found = GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty()) && record.m_kind != 0;
     }
     if (!found) {
         return false;
     }
     GfGameManager::BattleChallengeRecord record;
-    GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304());
+    GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty());
     setNumber(record.m_rule.m_value4);
     return true;
 }
 
-bool TUnk_B5A648::fn_71003348D0(unsigned int id) {
+bool GfMenuBtlchAdapter::update_TimeClear(unsigned int id) {
     GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304()) || !record.m_flagAEC) {
+    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty()) || !record.m_flagAEC) {
         return false;
     }
-    unsigned int seconds = GfGameManager::fn_71002AC5D8()->m_value30;
+    unsigned int seconds = GfGameManager::getBattleArenaMenuInfo()->m_value30;
     ui::uiDateTime time = {};
     time.minute = seconds / 60;
     time.sec = seconds % 60;
@@ -245,38 +245,38 @@ bool TUnk_B5A648::fn_71003348D0(unsigned int id) {
     return true;
 }
 
-TUnk_B5A648* TUnk_B5A648::createFromCoverter(unsigned int handle, unsigned int type, IConverter* converter,
+GfMenuBtlchAdapter* GfMenuBtlchAdapter::createFromCoverter(unsigned int handle, unsigned int type, IConverter* converter,
                                              bool changed) {
-    TUnk_B5A648* adapter = fn_7100333BF4(handle, type, converter->fn_7100334D68(), changed);
+    GfMenuBtlchAdapter* adapter = create(handle, type, converter->fn_7100334D68(), changed);
     if (adapter != nullptr) {
         adapter->m_converter = converter;
     }
     return adapter;
 }
 
-TUnk_B5A648* TUnk_B5A648::fn_71003349CC(unsigned int handle, unsigned int type, GfMenuIDList* list, int index,
+GfMenuBtlchAdapter* GfMenuBtlchAdapter::createFromList(unsigned int handle, unsigned int type, GfMenuIDList* list, int index,
                                         bool changed) {
 #line 173
     IConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5A850(list, index);
     return createFromCoverter(handle, type, converter, changed);
 }
 
-TUnk_B5A648* TUnk_B5A648::fn_7100334B10(unsigned int handle, unsigned int type,
+GfMenuBtlchAdapter* GfMenuBtlchAdapter::createFromReference(unsigned int handle, unsigned int type,
                                         mm::mtl::IntrusivePtr<GfMenuReferenceNumber> reference, bool changed) {
 #line 182
     IConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5A878(reference);
     return createFromCoverter(handle, type, converter, changed);
 }
 
-unsigned short TUnk_B5A648::fn_7100334C1C(unsigned int id) {
+unsigned short GfMenuBtlchAdapter::getScoreType(unsigned int id) {
     GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::fn_7100369304())) {
+    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
         return 0;
     }
     return record.m_kind;
 }
 
-void TUnk_B5A648::update(const fw::UpdateInfo& info) {
+void GfMenuBtlchAdapter::update(const fw::UpdateInfo& info) {
     if (m_converter != nullptr) {
         unsigned int id = m_converter->fn_7100334D68();
         if (m_id != id) {
@@ -284,8 +284,8 @@ void TUnk_B5A648::update(const fw::UpdateInfo& info) {
             setChange();
         }
     }
-    if (m_mode != GfMenuReference::fn_7100369304()) {
-        m_mode = GfMenuReference::fn_7100369304();
+    if (m_mode != GfMenuReference::getReferenceBtlchDifficulty()) {
+        m_mode = GfMenuReference::getReferenceBtlchDifficulty();
         setChange();
     }
     if (m_update.isValid() && (m_flags & 3) != 0) {

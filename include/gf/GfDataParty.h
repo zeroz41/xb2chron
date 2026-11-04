@@ -21,7 +21,7 @@ public:
     // parties' kept elsewhere (3.0.1 added the second parameter; its name is not the original's)
     static PartyMember* getPartyMember(unsigned int index, unsigned int party);
     // the driver of the member at an index of a party (0: the game data's party at 0xE9884, 1 and 2 the other two
-    // parties GfDataManager::fn_7100224A10 keeps at 0x10D04 and 0x10D40). The symbols spell it fn_7100238EC8: 1.0.0's
+    // parties GfDataManager::getDataGameIra keeps at 0x10D04 and 0x10D40). The symbols spell it fn_7100238EC8: 1.0.0's
     // GfDataParty::getDriver(unsigned int) has the same body for party 0, sits next to GfDataDriver::getBlade as this
     // does, and 1.0.0's GfMenuObjUtil::isBladeEnableOffset calls it where 3.0.1's calls fn_7100238EC8 (3.0.1 added the
     // second parameter, as for getPartyMember; its name is not the original's)
@@ -44,25 +44,22 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's isPartyMember tail-calls an unnamed
     // fn_71002AE6D4 too). A member because its only callers are isPartyMember and isPartyBattleMember, in this unit.
     // What it does: false for character 0; with mode 0 it looks the character up in the game data (drivers 1-16 at
-    // 0x2C + (n - 1) * 0x5A0, 17-25 in GfDataManager::fn_7100224A10's 0xDAC-byte records, blades 1001-1013 against
+    // 0x2C + (n - 1) * 0x5A0, 17-25 in GfDataManager::getDataGameIra's 0xDAC-byte records, blades 1001-1013 against
     // GfBdatChrBl::getChrBlEnd) and tests the record's +0x20 short == 1 and fn_710023B1D8(chara); callers pass 10 and 3.
     static bool fn_710024BF60(unsigned int chara, unsigned int mode);
     static bool isLeader(unsigned int chara);  // false for 0
     static mm::Vec3* getSavePos(unsigned int index, bool flag);
     static mm::Vec3* getSaveRot(unsigned int index, bool flag);
     static bool empty();  // no driver in the first three members
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
-    // unit among GfDataParty's functions (after getSaveRot). What it does: whether the driver of the game data's
-    // party member at index (SDataParty::m_members) has blade in one of its getMaxSetBladeNum slots
-    // (GfDataDriver::getBlade). Callers: GfAssetSetupBlade::setup, GfDataBlade::fn_71002356BC and fn_71002376E8.
-    static bool fn_710024BAE0(unsigned int index, unsigned int blade);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
-    // unit among GfDataParty's functions (after empty, before getFixedHandleForBlade) and calls fn_710024BCEC.
-    // What it does: handle unchanged unless driver is a DLC driver (0x11..0x19); then fn_710024BCEC(driver) 1 or 2
-    // gives getFixedHandleForBlade(handle, 0 or 1). Caller: GfObjFactory::createDriver.
-    static unsigned int fn_710024BC9C(unsigned int handle, unsigned int driver);
+    // 2.0.0's symbols name it. What it does: whether the driver of the game data's party member at index
+    // (SDataParty::m_members) has blade in one of its getMaxSetBladeNum slots (GfDataDriver::getBlade). Callers:
+    // GfAssetSetupBlade::setup, GfDataBlade::fn_71002356BC and getListParty.
+    static bool isExistBlade(unsigned int index, unsigned int blade);
+    // 2.0.0's symbols name it. What it does: handle unchanged unless driver is a DLC driver (0x11..0x19); then
+    // fn_710024BCEC(driver) 1 or 2 gives getFixedHandleForBlade(handle, 0 or 1). Caller: GfObjFactory::createDriver.
+    static unsigned int getFixedHandleForDriver(unsigned int handle, unsigned int driver);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason as
-    // fn_710024BC9C (its only caller). What it does: takes the driver's CHR_Ir row (GfBdatChrDr::fn_71001F13E0) and
+    // getFixedHandleForDriver (its only caller). What it does: takes the driver's CHR_Ir row (GfBdatChrDr::getChrDrIraParam) and
     // its GroupID, then counts the CHR_Ir rows of that group before the row whose driverID is the driver
     // (0 for no row or no match).
     static unsigned int fn_710024BCEC(unsigned int driver);

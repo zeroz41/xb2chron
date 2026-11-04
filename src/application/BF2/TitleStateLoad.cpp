@@ -143,7 +143,7 @@ bool TitleMenu::hasResultEventTheater() const {
     return !m_context->m_results.empty();
 }
 
-bool TitleMenu::fn_7100153350() const {
+bool TitleMenu::isExitEventTheater() const {
     if (m_context == nullptr) {
         return false;
     }
@@ -165,7 +165,7 @@ void TitleMenu::setupOption() {
     gf::GfMenuObjOption::attach(m_context);
 }
 
-bool TitleMenu::fn_71001533B8() const {
+bool TitleMenu::isExitOption() const {
     if (m_context == nullptr) {
         return false;
     }
@@ -200,8 +200,8 @@ void TitleStateLoad::update(TitleMain* title, const fw::UpdateInfo& info) {
     title->m_returnSlot = static_cast<gf::SAVESLOT>(-1);
 }
 
-void TitleStateSaveData::fn_710015359C(TitleMain* title, const fw::UpdateInfo& info) {
-    if (gf::GfGameManager::fn_71002A9E68()) {
+void TitleStateSaveData::update(TitleMain* title, const fw::UpdateInfo& info) {
+    if (gf::GfGameManager::isGameTypeIra()) {
         gf::GfGameLoad load(static_cast<gf::SAVESLOT>(0x16));
         title->getSaveBuffer()->fn_7100153694();
         load.execGameLoadWithMicroThread(*title->getSaveBuffer());

@@ -276,7 +276,7 @@ void SoundManager::stopSeAll() {
     }
 }
 
-void SoundManager::fn_71001A0EF8(bool flag) {
+void SoundManager::setupGameType(bool flag) {
     m_dlc = flag;
 }
 

@@ -20,7 +20,7 @@ public:
     virtual void PreUpdate(fw::UpdateInfo const&);  // slot 7
     virtual void Update(fw::UpdateInfo const&, bool);  // slot 8
     virtual void PostUpdate(fw::UpdateInfo const&);  // slot 9
-    virtual void fn_7100085B24();  // slot 10
+    virtual void UpdateBuddy();  // slot 10
     virtual int GetAttribute() const;  // slot 11
     virtual unsigned int GetWeaponID(int) const;  // slot 13
     virtual const ARTS_PALETTE_DATA* GetArtsPaletteDataConst(int) const;  // slot 16
@@ -28,27 +28,27 @@ public:
     virtual void fn_7100088B68();  // slot 22
     virtual bool IsEnemyParameter() const;  // slot 24
     virtual bool IsInvalidWarp() const;  // slot 25
-    virtual void fn_7100088ECC();  // slot 26
-    virtual bool fn_7100088ED0() const;  // slot 27 (placeholder name: see CharacterParameter)
+    virtual void UpdateLadyTarget();  // slot 26
+    virtual bool IsLadyTarget() const;  // slot 27 (placeholder name: see CharacterParameter)
     virtual bool fn_7100088ED8() const;  // slot 28 (placeholder name: see CharacterParameter)
-    virtual bool fn_7100088EE0() const;  // slot 29 (placeholder name: see CharacterParameter)
+    virtual bool IsLevelDiffDamageCorrect() const;  // slot 29 (placeholder name: see CharacterParameter)
     virtual bool IsFallDeadDrop() const;  // slot 30
     virtual bool SetAngry(bool, float);  // slot 31 (returns bool like the base: BattleCharacter::SetAngry returns its result)
     virtual int GetAngryAuraID() const;  // slot 32
     // 1.0.0 had GetAngryAttr here; 3.0.1's GetAttribute calls this slot where 1.0.0's read the angry attribute
     virtual int GetAngryAttr() const;  // slot 33
-    virtual bool fn_7100088F08() const;  // slot 34
-    virtual void fn_7100088F10();  // slot 35
+    virtual bool IsAngryArts() const;  // slot 34
+    virtual void UseAngryArts();  // slot 35
     // 1.0.0 had IsAngry here; 3.0.1's GetAttribute calls this slot where 1.0.0's called IsAngry
     virtual bool IsAngry() const;  // slot 36
-    virtual void fn_7100088F1C();  // slot 37
-    virtual int fn_7100088F20() const;  // slot 38
-    virtual float fn_7100088F28() const;  // slot 39
-    virtual float fn_7100088F30() const;  // slot 40
-    virtual float fn_7100088F38() const;  // slot 41
-    virtual bool fn_7100088F40() const;  // slot 42
-    virtual int fn_7100088F70() const;  // slot 55 (placeholder name: see CharacterParameter)
-    virtual int fn_7100088F78() const;  // slot 56 (placeholder name: see CharacterParameter)
+    virtual void EndElementalAwake();  // slot 37
+    virtual int GetElementalAwakeLevel() const;  // slot 38
+    virtual float GetElementalAwakeAttackRate() const;  // slot 39
+    virtual float GetElementalAwakeRecastRate() const;  // slot 40
+    virtual float GetElementalAwakeReduceElmComboFrame() const;  // slot 41
+    virtual bool IsElementalAwake() const;  // slot 42
+    virtual int GetChallengeScore() const;  // slot 55 (placeholder name: see CharacterParameter)
+    virtual int GetChallengeEtherCube() const;  // slot 56 (placeholder name: see CharacterParameter)
     virtual int GetBGMID() const;  // slot 57
     virtual void SetupBGM();  // slot 58
     virtual int GetDeadSEID() const;  // slot 59
@@ -62,9 +62,9 @@ public:
     virtual bool IsChild() const;  // slot 70
     virtual bool IsInvalidHikariSp() const;  // slot 71
     virtual bool IsAlwaysKakusei() const;  // slot 72
-    virtual bool fn_7100088FE4() const;  // slot 73 (placeholder name: see CharacterParameter)
-    virtual bool fn_7100088FEC() const;  // slot 74 (placeholder name: see CharacterParameter)
-    virtual bool fn_7100088FFC() const;  // slot 76 (placeholder name: see CharacterParameter)
+    virtual bool IsChallengeTarget() const;  // slot 73 (placeholder name: see CharacterParameter)
+    virtual bool IsSeriousBattleEnemy() const;  // slot 74 (placeholder name: see CharacterParameter)
+    virtual bool IsInvalidTalentKasumi() const;  // slot 76 (placeholder name: see CharacterParameter)
     virtual void SetBuddy(gf::GF_OBJ_HANDLE*, bool);  // slot 77
     virtual int ApplyStatusEnhance(int, int, int) const;  // slot 78
     virtual void InitializeAttackParam();  // slot 79
@@ -104,9 +104,8 @@ public:
     void AddHate(int index, int kind, float add);
     void CheckChangeAttr();
     void AngryInfection(float range);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because PreUpdate tail-calls it
-    // with its own this while pad_bit1 is set. What it does: see EnemyParameter.cpp.
-    void fn_71000865AC();
+    // 2.0.0's symbols name it. What it does: see EnemyParameter.cpp.
+    void SetupElementalAwakeParam();
 
     unsigned char pad_624[0x4];
     ARTS_PALETTE_DATA m_artsPaletteData;  // GetArtsPaletteDataConst (the name is not the original's)
@@ -117,25 +116,25 @@ public:
     int pad_89c;  // 0 after construction; meaning unknown
     unsigned short m_angryAuraID;  // GetAngryAuraID (the name is not the original's)
     unsigned char m_angryAttr;  // GetAngryAttr answers it without a driver to ask (the name is not the original's)
-    unsigned char pad_8a3_0 : 4;  // slot 38 (fn_7100088F20) answers it; meaning unknown
-    unsigned char pad_8a3_4 : 4;  // slot 37 (fn_7100088F1C) clears it with pad_8a4..pad_8a8; meaning unknown
-    unsigned short pad_8a4;  // slot 39 (fn_7100088F28) answers 1 + it / 100; meaning unknown
-    unsigned short pad_8a6;  // slot 40 (fn_7100088F30) answers 1 + it / 100; meaning unknown
-    unsigned short pad_8a8;  // slot 41 (fn_7100088F38) answers it as a float; meaning unknown
-    unsigned short pad_8aa;  // returned by slot 55 (fn_7100088F70); meaning unknown
-    unsigned short pad_8ac;  // returned by slot 56 (fn_7100088F78); meaning unknown
+    unsigned char pad_8a3_0 : 4;  // slot 38 (GetElementalAwakeLevel) answers it; meaning unknown
+    unsigned char pad_8a3_4 : 4;  // slot 37 (EndElementalAwake) clears it with pad_8a4..pad_8a8; meaning unknown
+    unsigned short pad_8a4;  // slot 39 (GetElementalAwakeAttackRate) answers 1 + it / 100; meaning unknown
+    unsigned short pad_8a6;  // slot 40 (GetElementalAwakeRecastRate) answers 1 + it / 100; meaning unknown
+    unsigned short pad_8a8;  // slot 41 (GetElementalAwakeReduceElmComboFrame) answers it as a float; meaning unknown
+    unsigned short pad_8aa;  // returned by slot 55 (GetChallengeScore); meaning unknown
+    unsigned short pad_8ac;  // returned by slot 56 (GetChallengeEtherCube); meaning unknown
     unsigned short pad_8ae;  // BattleEndInitialize clears it; meaning unknown
     unsigned char m_deadSEID;  // GetDeadSEID (the name is not the original's)
     unsigned char m_overwriteAttr;  // set by the slot 1.0.0 named SetOverwriteAttr; above 8 when not overwritten
     // the attribute CheckChangeAttr last told the characters about; 9 when none (the name is not the original's)
     unsigned char m_notifiedAttr;
     unsigned char m_eatNum;  // GetEatNum, IncEatNum stops at 0xFF (the name is not the original's)
-    // slot 34 (fn_7100088F08) answers whether it is set, slot 35 (fn_7100088F10) counts it down; meaning unknown
+    // slot 34 (IsAngryArts) answers whether it is set, slot 35 (UseAngryArts) counts it down; meaning unknown
     unsigned char pad_8b4;
     unsigned char pad_8b5;
     // IsAngry answers it for an enemy without a driver to ask (the name is not the original's)
     unsigned short m_isAngry : 1;
-    bool pad_bit1 : 1;  // PreUpdate calls fn_71000865AC while it is set; slot 37 clears it, slot 42 answers it
+    bool pad_bit1 : 1;  // PreUpdate calls SetupElementalAwakeParam while it is set; slot 37 clears it, slot 42 answers it
     bool pad_bit2 : 1;  // ResetHate(-1, true) clears it
     unsigned short pad_bit3 : 1;
     bool m_isEatTarget : 1;
@@ -145,12 +144,12 @@ public:
     // read by the slot getters below (the names are not the original's)
     bool m_isInvalidWarp : 1;  // IsInvalidWarp
     bool pad_bit9 : 1;  // slot 28 (fn_7100088ED8)
-    bool pad_bit10 : 1;  // slot 29 (fn_7100088EE0)
+    bool pad_bit10 : 1;  // slot 29 (IsLevelDiffDamageCorrect)
     bool m_isFallDeadDrop : 1;  // IsFallDeadDrop
-    bool pad_bit12 : 1;  // slot 27 (fn_7100088ED0)
-    bool pad_bit13 : 1;  // slot 73 (fn_7100088FE4)
-    bool pad_bit14 : 1;  // slot 74 (fn_7100088FEC)
-    bool pad_bit15 : 1;  // slot 76 (fn_7100088FFC)
+    bool pad_bit12 : 1;  // slot 27 (IsLadyTarget)
+    bool pad_bit13 : 1;  // slot 73 (IsChallengeTarget)
+    bool pad_bit14 : 1;  // slot 74 (IsSeriousBattleEnemy)
+    bool pad_bit15 : 1;  // slot 76 (IsInvalidTalentKasumi)
 };
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function in btl because it takes no

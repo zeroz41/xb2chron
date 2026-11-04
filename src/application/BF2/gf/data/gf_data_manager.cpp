@@ -79,7 +79,7 @@ inline void GfDataManager::initialize(const GfSetupParam& param) {
     GfDataBdat::build(param);
     GfGameFlag::build(param);
     GfDataStore::build(param);
-    TUnk_B4C840::fn_7100222908(param);
+    GfDataAoc::build(param);
     GfDataBlade::fn_71002550E8();
     GfEvent::addEventCallback(this);
     m_initialized = true;
@@ -91,7 +91,7 @@ inline void GfDataManager::finalize() {
     GfDataStore::destroy();
     GfGameFlag::destroy();
     GfDataBdat::destroy();
-    TUnk_B4C840::fn_710022299C();
+    GfDataAoc::destroy();
     m_initialized = false;
 }
 
@@ -137,8 +137,8 @@ SDataGame* GfDataManager::getDataGame() {
     return &GfDataStore::getDataGame();
 }
 
-SDataDlc* GfDataManager::fn_7100224A10() {
-    return &GfDataStore::fn_710022D440();
+SDataDlc* GfDataManager::getDataGameIra() {
+    return &GfDataStore::getDataGameIra();
 }
 
 SDataOption* GfDataManager::getDataOption() {

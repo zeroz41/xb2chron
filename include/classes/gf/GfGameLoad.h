@@ -15,7 +15,7 @@ class GfGameLoad : public ::ml::IWorkEvent {
 public:
     virtual ~GfGameLoad();  // slot 0
     virtual bool OnFileEvent(ml::EventFileTh* event);  // slot 7
-    // named by 1.0.0 (same table store, the slot at 0xC); 3.0.1's also stores fn_71002A9E68's answer at 8
+    // named by 1.0.0 (same table store, the slot at 0xC); 3.0.1's also stores isGameTypeIra's answer at 8
     GfGameLoad(SAVESLOT slot);
     void getGameFileNameBin(mm::mtl::FixStr<256>& out);
     void getOptionFileNameBin(mm::mtl::FixStr<256>& out);
@@ -24,7 +24,7 @@ public:
     void execGameLoadWithMicroThread(SDataSave& save);
 
     // (the field names are not the original's)
-    bool m_ira;            // GfGameManager::fn_71002A9E68 as it was made: the Torna ("ira") files' names are used
+    bool m_ira;            // GfGameManager::isGameTypeIra as it was made: the Torna ("ira") files' names are used
     SAVESLOT m_slot;
     mm::mtl::FixStr<256> m_fileName;  // a file to load instead of the slot's
     SDataSave* m_saveData;      // 0x118: from allocator 0 (execGameLoadWithMicroThread), freed by phaseBinData

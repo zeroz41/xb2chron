@@ -19,7 +19,7 @@
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfMenuAdapterManager.h"
-#include "classes/gf/TUnk_B63860.h"
+#include "classes/gf/GfMenuObjNamedDialog.h"
 #include "classes/ui/UIInputManager.h"
 #include "ui/UIUtil.h"
 #include "classes/ui/UICtrlCursorSelect.h"
@@ -682,7 +682,7 @@ void GfMenuObjCommonText::MainListener::reciveEvent(const ui::EventData& event, 
         m_kind = 0xFF;
         GfMenuAdapterManager::delActiveCategory(3);
         if (GfMenuObjCommonText::s_isNamedDialogOpen) {
-            TUnk_B63860::fn_7100445258();
+            GfMenuObjNamedDialog::close();
             GfMenuObjCommonText::s_isNamedDialogOpen = false;
         }
     }
@@ -772,8 +772,8 @@ void GfMenuObjCommonText::DrChangeListener::reciveEvent(const ui::EventData& eve
 
 void GfMenuObjCommonText::fn_71003E1F60(GfMenuCallContext* context, unsigned int text, unsigned short row) {
     open(context, text, 0);
-    if (GfGameManager::fn_71002AC64C()) {
-        TUnk_B63860::fn_71004451D0(row);
+    if (GfGameManager::isEnableNamedRecord()) {
+        GfMenuObjNamedDialog::fn_71004451D0(row);
         s_isNamedDialogOpen = true;
     }
 }

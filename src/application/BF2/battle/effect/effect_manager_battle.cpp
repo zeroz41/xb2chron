@@ -69,7 +69,7 @@ bool EffectManager::IsExistChrHitEffect(gf::GF_OBJ_HANDLE* handle) const {
     return false;
 }
 
-float EffectManager::fn_7100099748(int index) const {
+float EffectManager::GetCircleDamageBonusRate(int index) const {
     return m_rates[index] * 0.01f;
 }
 }  // namespace btl

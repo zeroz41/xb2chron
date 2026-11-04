@@ -97,7 +97,7 @@ public:
     // a vehicle gets off and hands msg to its buddies; else a rider (m_stateFlags bit 9) gets off and the states
     // get msg unless bit 11 is set (kind 4 always); for the party leader the battle global's controlled-character
     // death flag is set (kind 4, or kind 3 from a MsgObjectDamage of at least the maximum HP), or the party gauge
-    // reset outside battle; then btl::Utility::fn_71000100A8
+    // reset outside battle; then btl::Utility::NotifyDead
     void procMsgObjectNotifyDead(fw::MessageObject* sender, gf::MsgObjectNotifyDead& msg);
     void calcHeadColiPos(float height, const fw::Transform& transform, mm::Vec3* pos);
     // switch the PC's agent's field and battle AI (StateUtil hands them on)

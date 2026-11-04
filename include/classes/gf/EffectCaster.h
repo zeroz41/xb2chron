@@ -25,11 +25,9 @@ public:
     // slot 2 holds EffectCasterBase's destructor: inline, nothing to destroy
     virtual ~EffectCaster() {}
 
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in EffectCaster's
-    // code (between EffectCaster::update and GfComEffectCaster's getRTTI) and GfComEffectCaster::fn_71004B3B68 calls
-    // it on its caster. What it does: copies the matrix to 0x60 (asserting its alignment), then walks the effect
+    // 2.0.0's symbols name it. What it does: copies the matrix to 0x60 (asserting its alignment), then walks the effect
     // point's transforms (getPointCount/getPointName/getPointTransform, "root"), setEfpMat for each and setDirty.
-    void fn_71004B3B78(const mm::Mat44& mtx);
+    void flushDirectMatrix(const mm::Mat44& mtx);
 
     unsigned int pad_44;  // zeroed by the constructor
     unsigned int pad_48;
@@ -37,7 +35,7 @@ public:
     unsigned int pad_50;
     unsigned char pad_54[0x4];
     GfComEffectCaster* m_pOwner;  // setupCaster's component (the name is not the original's)
-    mm::Mat44 m_mtx;  // identity at construction, fn_71004B3B78 copies its matrix in (the name is not the original's)
+    mm::Mat44 m_mtx;  // identity at construction, flushDirectMatrix copies its matrix in (the name is not the original's)
     // set for the party leader's first caster (setupCaster; the name is not the original's)
     bool m_isLeader;
     unsigned char pad_a1[0xF];

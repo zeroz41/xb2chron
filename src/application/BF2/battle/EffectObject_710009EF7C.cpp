@@ -144,7 +144,7 @@ void GROUP_DATA::ProgressCoolTime(float time) {
     }
 }
 
-void GROUP_DATA::fn_71000A107C(float value) {
+void GROUP_DATA::SetTemporaryDamage(float value) {
     float amount = 0.0f;
     if (value > 0.0f) {
         BattleCharacter* character = mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(m_handle);
@@ -174,7 +174,7 @@ void GROUP_DATA::FinishCoolTime() {
     m_coolTime = m_coolTimeMax;
 }
 
-float GROUP_DATA::fn_71000A11D4() const {
+float GROUP_DATA::GetFormationChangeCoolTimeRate() const {
     float max = m_coolTimeMax;
     float ratio = m_coolTime / max;
     if (ratio < 0.0f) {
@@ -186,13 +186,13 @@ float GROUP_DATA::fn_71000A11D4() const {
     return ratio;
 }
 
-bool GROUP_DATA::fn_71000A11F8() const {
+bool GROUP_DATA::IsEndFormationChangeCoolTime() const {
     float max = m_coolTimeMax;
     return m_coolTime >= max;
 }
 
-void GROUP_DATA::fn_71000A120C(float value) {
-    fn_71000A107C(pad_108 + value);
+void GROUP_DATA::AddTemporaryDamage(float value) {
+    SetTemporaryDamage(pad_108 + value);
 }
 
 void GROUP_DATA::SynchroHomnuraData(int from, int to) {

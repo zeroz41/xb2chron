@@ -260,26 +260,26 @@ WEATHERID GfGameEnv::getTempWeather() {
     return WEATHERID(0);
 }
 
-void TUnk_B54858::fn_71002A7430(int mode) {
+void GfGameAoc::fn_71002A7430(int mode) {
     GfDataBlade::fn_71002324FC(GfDataManager::getDataGame(), mode == 1);
     m_mode = mode;
-    fn_71002A7468();
+    refreshAocFlag();
 }
 
-void TUnk_B54858::fn_71002A752C() {
+void GfGameAoc::fn_71002A752C() {
 #line 1258
-    new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) TUnk_B54858();
+    new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfGameAoc();
 }
 
-void TUnk_B54858::fn_71002A75BC() {
+void GfGameAoc::destroy() {
     delete get();
 }
 
-void TUnk_B54858::fn_71002A7734(unsigned int id) {
+void GfGameAoc::gevChangeAocFlag(unsigned int id) {
     if (id < 35353) {
         return;
     }
-    fn_71002A7468();
+    refreshAocFlag();
 }
 
 }  // namespace gf

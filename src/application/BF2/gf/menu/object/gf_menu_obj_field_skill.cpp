@@ -264,7 +264,7 @@ void GfMenuObjFieldSkill::finalize() {
 
 void GfMenuObjFieldSkill::update() {
     if (m_voice != nullptr) {
-        if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuObjUtil::fn_7100492C88()) {
+        if (GfMenuObjUtil::isValidExpansion(3) && GfMenuObjUtil::isVoiceSkip()) {
             GfGameVoice::playStop(m_voice);
             m_voice = nullptr;
             return;
@@ -660,7 +660,7 @@ void GfMenuObjFieldSkill::ResultListener::reciveEvent(const ui::EventData& event
                 m_owner->m_mainHandle = acc.m_handle;
                 GfMenuObject::sendEvent(acc.searchSibiling("LAY_base"), special, 0.0f);
                 if (event.m_param2 != 0) {
-                    SCOM_FIELD_VOICE::fn_7100568D34(event.m_param2);
+                    SCOM_FIELD_VOICE::createFieldSkillClear(event.m_param2);
                 }
                 GfMenuObjUtil::playJingle(0x13);
                 GfMenuObjUtil::playVibration(static_cast<fw::VibrationID>(3), 1.0f);

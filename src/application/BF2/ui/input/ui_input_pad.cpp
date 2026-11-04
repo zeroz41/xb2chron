@@ -95,7 +95,7 @@ void UIInputPad::setLineSelectionMax(unsigned int max) {
 }
 
 // setLineSelectionMax without the one-line check (3.0.1's; no evidence names it)
-void UIInputPad::fn_7100679FC4(unsigned int max) {
+void UIInputPad::setLineSelectionMaxForce(unsigned int max) {
     if (m_padLineNext != 0 && m_padLinePrev != 0) {
         m_lineSelectionMax = max;
         unsigned int num = m_selectMax / max;
@@ -121,7 +121,7 @@ void UIInputPad::setLoop(bool loop) {
 }
 
 // the setup's select text, none while looping (3.0.1's; no evidence names it)
-unsigned short UIInputPad::fn_710067A02C() const {
+unsigned short UIInputPad::getSelectTextID() const {
     if (m_loop) {
         return 0;
     }

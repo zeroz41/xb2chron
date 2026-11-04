@@ -20,17 +20,17 @@ public:
     unsigned int getArtsDrEnd() const;
     unsigned int getArtsDrName(unsigned int id) const;
     unsigned int getArtsDrCaption(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpArtsDr.
-    // What it does: a row's CondCap column of BTL_Arts_Dr (value type 2); carried as getArtsDrDebugName before, refuted: that is not the column it reads.
-    unsigned int fn_71001E6B54(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpArtsDr.
-    // What it does: a row's TalentCap column of BTL_Arts_Dr (value type 2); carried as getArtsDrUI before, refuted: that is not the column it reads.
-    unsigned int fn_71001E6BDC(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's CondCap column of BTL_Arts_Dr (value type 2); carried as
+    // getArtsDrDebugName before, refuted: that is not the column it reads.
+    unsigned int getArtsDrDebugName(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's TalentCap column of BTL_Arts_Dr (value type 2); carried as
+    // getArtsDrUI before, refuted: that is not the column it reads.
+    unsigned int getArtsDrUI(unsigned int id) const;
     unsigned int getArtsDrDriver(unsigned int id) const;
     unsigned int getArtsDrWpnType(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpArtsDr.
-    // What it does: a row's IrType column of BTL_Arts_Dr (value type 1); carried as getArtsDrActNo before, refuted: that is not the column it reads.
-    unsigned int fn_71001E6D74(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's IrType column of BTL_Arts_Dr (value type 1); carried as
+    // getArtsDrActNo before, refuted: that is not the column it reads.
+    unsigned int getArtsDrIrType(unsigned int id) const;
     unsigned int getArtsDrArtsType(unsigned int id) const;
     bool isArtsDrFlagNormal(unsigned int id) const;
     unsigned int getArtsDrReleaseLv1(unsigned int id) const;
@@ -59,9 +59,8 @@ public:
     unsigned int getGrowStart() const;
     unsigned int getGrowEnd() const;
     unsigned int getGrowLevelExp(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpGrow.
-    // What it does: a row's LevelExp2 column of BTL_Grow (value type 3).
-    unsigned int fn_71001E77DC(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's LevelExp2 column of BTL_Grow (value type 3).
+    unsigned int getGrowLevelExp2(unsigned int id) const;
     unsigned int getGrowEnemyExp(unsigned int id) const;
     unsigned int getGrowEnemyWP(unsigned int id) const;
     unsigned int getGrowEnemySP(unsigned int id) const;
@@ -77,14 +76,13 @@ public:
     float getBTL_EnhanceParam1(unsigned int id) const;
     float getBTL_EnhanceParam2(unsigned int id) const;
     unsigned int getBTL_EnhanceCaption(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_Enhance.
-    // What it does: a row's Caption2 column of BTL_Enhance (value type 2); carried as getBTL_EnhanceEffCategory before, refuted: that is not the column it reads.
-    unsigned int fn_71001E7F28(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's Caption2 column of BTL_Enhance (value type 2); carried as
+    // getBTL_EnhanceEffCategory before, refuted: that is not the column it reads.
+    unsigned int getBTL_EnhanceCaption2(unsigned int id) const;
     unsigned int getBTL_EnhanceEffCategory(unsigned int id) const;
     bool isBTL_EnhanceEffFlagCondition(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_EnhanceEff.
-    // What it does: a row's SortCat column of BTL_EnhanceEff (value type 1).
-    unsigned int fn_71001E80D0(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's SortCat column of BTL_EnhanceEff (value type 1).
+    unsigned int getBTL_EnhanceEffSortCat(unsigned int id) const;
     unsigned int getBTL_Skill_BlStart() const;
     unsigned int getBTL_Skill_BlEnd() const;
     unsigned int getBTL_Skill_BlName(unsigned int id) const;
@@ -129,122 +127,90 @@ public:
     const char* getVo_Field_FilterTargetFile(unsigned int id) const;
     unsigned int getVo_Field_FilterCondition(unsigned int id) const;
     const char* getVo_Field_FilterChangeFile(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_DifSetting.
-    // What it does: a row's ParamMin column of BTL_DifSetting (value type 1).
-    unsigned int fn_71001E91E8(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_DifSetting.
-    // What it does: a row's ParamMax column of BTL_DifSetting (value type 2).
-    unsigned int fn_71001E9270(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_DifSetting.
-    // What it does: a row's Interval column of BTL_DifSetting (value type 1).
-    unsigned int fn_71001E92F8(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_DifSetting.
-    // What it does: a row's ConditionOri column of BTL_DifSetting (value type 2).
-    unsigned int fn_71001E9380(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_DifSetting.
-    // What it does: a row's ConditionIra column of BTL_DifSetting (value type 2).
-    unsigned int fn_71001E9408(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_DifSetting.
-    // What it does: true when row id's "Ira" bit of the BTL_DifSetting "Flag" column is set, false when either handle
-    // is null or id is out of range.
-    bool fn_71001E9490(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_DifSetting.
-    // What it does: a row's value of slot `slot` (0-3) of the BTL_DifSetting columns Normal.., through its slot table.
-    unsigned int fn_71001E9520(unsigned int id, unsigned int slot) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: the BTL_ChBtl table's first id (getIdTop).
-    unsigned int fn_71001E9534() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: the BTL_ChBtl table's one-past-last id (getIdTop + getIdCount).
-    unsigned int fn_71001E9540() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's Name column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001E957C(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's Difficult column of BTL_ChBtl (value type 1).
-    unsigned int fn_71001E9604(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's Wave column of BTL_ChBtl (value type 1).
-    unsigned int fn_71001E968C(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's Caption column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001E9714(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's MapJump column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001E979C(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's Weather column of BTL_ChBtl (value type 1).
-    unsigned int fn_71001E9824(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's Type column of BTL_ChBtl (value type 1).
-    unsigned int fn_71001E98AC(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's NeedDefeat column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001E9934(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's MaxLevel column of BTL_ChBtl (value type 1).
-    unsigned int fn_71001E99BC(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's MaxWpnRank column of BTL_ChBtl (value type 1).
-    unsigned int fn_71001E9A44(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's WpnRevTable column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001E9ACC(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's TimeLimit column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001E9B54(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's JoinNumber column of BTL_ChBtl (value type 1).
-    unsigned int fn_71001E9BDC(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's NeedItem column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001E9C64(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's Condition column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001E9CEC(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's ConditionCap column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001E9D74(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's Condition2 column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001E9DFC(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's ConditionCap2 column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001E9E84(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's HideCondition column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001E9F0C(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: true when row id's "Hide" bit of the BTL_ChBtl "Flag" column is set, false when either handle
-    // is null or id is out of range.
-    bool fn_71001E9F94(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's TresureNeed1 column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001EA02C(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's TresureNeed2 column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001EA0B4(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's TresureNeed3 column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001EA13C(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's ClearReward column of BTL_ChBtl (value type 2).
-    unsigned int fn_71001EA1C4(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's Event column of BTL_ChBtl (value type 2); carried as getArtsDrRangeType before, refuted: that is not the column it reads.
-    unsigned int fn_71001EA24C(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's value of slot `slot` (0-2) of the BTL_ChBtl columns Driver1.., through its slot table.
-    unsigned int fn_71001EA2D4(unsigned int id, unsigned int slot) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtl.
-    // What it does: a row's value of slot `slot` (0-2) of the BTL_ChBtl columns TresureNeed1.., through its slot table.
-    unsigned int fn_71001EA2E8(unsigned int id, unsigned int slot) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_ChBtlWpnRev.
-    // What it does: a row's value of slot `slot` (0-49) of the BTL_ChBtlWpnRev columns WpnDmg1.., through its slot table.
-    unsigned int fn_71001EA2FC(unsigned int id, unsigned int slot) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_IrGroupRev.
-    // What it does: a row's value of slot `slot` (0-2) of the BTL_IrGroupRev columns GroupRev1.., through its slot table.
-    unsigned int fn_71001EA310(unsigned int id, unsigned int slot) const;
+    // 2.0.0's symbols name it. What it does: a row's ParamMin column of BTL_DifSetting (value type 1).
+    unsigned int getBTL_DifSettingParamMin(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's ParamMax column of BTL_DifSetting (value type 2).
+    unsigned int getBTL_DifSettingParamMax(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's Interval column of BTL_DifSetting (value type 1).
+    unsigned int getBTL_DifSettingInterval(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's ConditionOri column of BTL_DifSetting (value type 2).
+    unsigned int getBTL_DifSettingConditionOri(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's ConditionIra column of BTL_DifSetting (value type 2).
+    unsigned int getBTL_DifSettingConditionIra(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: true when row id's "Ira" bit of the BTL_DifSetting "Flag" column is set,
+    // false when either handle is null or id is out of range.
+    bool isBTL_DifSettingFlagIra(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's value of slot `slot` (0-3) of the BTL_DifSetting columns Normal..,
+    // through its slot table.
+    unsigned int getBTL_DifSettingDiff(unsigned int id, unsigned int slot) const;
+    // 2.0.0's symbols name it. What it does: the BTL_ChBtl table's first id (getIdTop).
+    unsigned int getBTL_ChBtlStart() const;
+    // 2.0.0's symbols name it. What it does: the BTL_ChBtl table's one-past-last id (getIdTop + getIdCount).
+    unsigned int getBTL_ChBtlEnd() const;
+    // 2.0.0's symbols name it. What it does: a row's Name column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlName(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's Difficult column of BTL_ChBtl (value type 1).
+    unsigned int getBTL_ChBtlDifficult(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's Wave column of BTL_ChBtl (value type 1).
+    unsigned int getBTL_ChBtlWave(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's Caption column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlCaption(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's MapJump column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlMapJump(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's Weather column of BTL_ChBtl (value type 1).
+    unsigned int getBTL_ChBtlWeather(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's Type column of BTL_ChBtl (value type 1).
+    unsigned int getBTL_ChBtlType(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's NeedDefeat column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlNeedDefeat(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's MaxLevel column of BTL_ChBtl (value type 1).
+    unsigned int getBTL_ChBtlMaxLevel(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's MaxWpnRank column of BTL_ChBtl (value type 1).
+    unsigned int getBTL_ChBtlMaxWpnRank(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's WpnRevTable column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlWpnRevTable(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's TimeLimit column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlTimeLimit(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's JoinNumber column of BTL_ChBtl (value type 1).
+    unsigned int getBTL_ChBtlJoinNumber(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's NeedItem column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlNeedItem(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's Condition column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlCondition(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's ConditionCap column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlConditionCap(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's Condition2 column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlCondition2(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's ConditionCap2 column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlConditionCap2(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's HideCondition column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlHideCondition(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: true when row id's "Hide" bit of the BTL_ChBtl "Flag" column is set, false
+    // when either handle is null or id is out of range.
+    bool isBTL_ChBtlFlagHide(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's TresureNeed1 column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlTresureNeed1(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's TresureNeed2 column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlTresureNeed2(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's TresureNeed3 column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlTresureNeed3(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's ClearReward column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlClearReward(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's Event column of BTL_ChBtl (value type 2); carried as
+    // getArtsDrRangeType before, refuted: that is not the column it reads.
+    unsigned int getArtsDrRangeType(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's value of slot `slot` (0-2) of the BTL_ChBtl columns Driver1..,
+    // through its slot table.
+    unsigned int getBTL_ChBtlDriver(unsigned int id, unsigned int slot) const;
+    // 2.0.0's symbols name it. What it does: a row's value of slot `slot` (0-2) of the BTL_ChBtl columns
+    // TresureNeed1.., through its slot table.
+    unsigned int getBTL_ChBtlTresureNeed(unsigned int id, unsigned int slot) const;
+    // 2.0.0's symbols name it. What it does: a row's value of slot `slot` (0-49) of the BTL_ChBtlWpnRev columns
+    // WpnDmg1.., through its slot table.
+    unsigned int getBTL_ChBtlWpnRevWpnDmg(unsigned int id, unsigned int slot) const;
+    // 2.0.0's symbols name it. What it does: a row's value of slot `slot` (0-2) of the BTL_IrGroupRev columns
+    // GroupRev1.., through its slot table.
+    unsigned int getBTL_IrGroupRevGroupRev(unsigned int id, unsigned int slot) const;
     // the tables, by GfDataBdat id (s_aszGfBdatName); names follow 1.0.0's accessors (getArtsDr.., getBTL_Class..);
     // the six tables 1.0.0 does not have are named after their bdat names (not the original's names).
     CBdatWrapper* m_fpArtsDr;  // 0x10, BTL_Arts_Dr

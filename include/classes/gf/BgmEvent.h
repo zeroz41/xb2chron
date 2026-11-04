@@ -25,14 +25,11 @@ public:
             m_requestNo = 0;
         }
     }
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: BgmEvent::update calls it on
-    // this with the update info first (where 1.0.0's update inlined its event BGM checks). What it does: 1.0.0's
-    // checkStopByHandOver / updatePlaying / beginPlay sequence.
-    void fn_7100265120(const fw::UpdateInfo& info);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: GfEvtBgm::stopBgm calls it on
-    // the BgmEvent instance. What it does: when GfGameManager::fn_71002A9E68() holds and m_overTime is negative,
-    // sets m_overTimeStop.
-    void fn_7100265440();
+    // 2.0.0's symbols name it. What it does: 1.0.0's checkStopByHandOver / updatePlaying / beginPlay sequence.
+    void updateEventBgm(const fw::UpdateInfo& info);
+    // 2.0.0's symbols name it. What it does: when GfGameManager::isGameTypeIra() holds and m_overTime is negative, sets
+    // m_overTimeStop.
+    void setBgmClearByStopBgm();
 
     unsigned char pad_638[0x5C];
     // cancelOverTime clears it (the name is not the original's)
@@ -43,7 +40,7 @@ public:
     unsigned char pad_6A1[0x7F];
     // cleared by gevPlayEvent on GEV 13 (the name is not the original's)
     unsigned int m_requestNo;
-    // set by fn_7100265440 (the name is not the original's)
+    // set by setBgmClearByStopBgm (the name is not the original's)
     bool m_overTimeStop;
 };
 }  // namespace gf

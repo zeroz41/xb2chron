@@ -380,21 +380,21 @@ bool GfGameEvent::isLeaderCharaNG(unsigned int chara) {
 
 GfGameEvent::~GfGameEvent() {}
 
-int GfGameEvent::fn_71002A0FEC() {
+int GfGameEvent::getStartEventId() {
     if (get() != nullptr) {
         return get()->pad_1914;
     }
     return 0;
 }
 
-void GfGameEvent::fn_71002A16EC(unsigned int lodId, unsigned int switchId) {
+void GfGameEvent::setMapLodSwitch(unsigned int lodId, unsigned int switchId) {
     int bdatId = GfFieldLod::get()->findBdatIdByLodId(lodId);
     if (bdatId != 0) {
         GfFieldLod::get()->setLodSwitchId(bdatId, switchId);
     }
 }
 
-int GfGameEvent::fn_71002A1740(unsigned int lodId) {
+int GfGameEvent::getMapLodSwitch(unsigned int lodId) {
     int bdatId = GfFieldLod::get()->findBdatIdByLodId(lodId);
     if (bdatId != 0) {
         return GfFieldLod::get()->fn_71002768BC(bdatId);
@@ -415,7 +415,7 @@ void GfGameEvent::gevPause(unsigned int prev, unsigned int now) {
     manager->setMasterPause(pause);
 }
 
-void GfGameEvent::fn_71002A19D4() {
+void GfGameEvent::destroyPlayingBgm() {
     if (GfEvtBgm* bgm = GfEvtBgm::get()) {
         bgm->clear();
     }
@@ -526,7 +526,7 @@ GfEvtModelEnemy* GfGameEvent::createEnemy(GfInitParamEnemy& param) {
     return model;
 }
 
-GfEvtModelWeapon* GfGameEvent::fn_71002A1FFC(GfInitParamWeapon& param) {
+GfEvtModelWeapon* GfGameEvent::createWeapon(GfInitParamWeapon& param) {
     if (param.pad_12c == 1011 && get() != nullptr && get()->m_playEventId == 10345) {
         param.m_objId = GfBdatChrBl::get()->getChrBlDefWeapon(1011);
     }

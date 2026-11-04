@@ -68,14 +68,12 @@ public:
     void matCall_BaseColor(const MdsMatInfoHeader* info, int slot, int matIdx);
     void matCall_BaseVal(const MdsMatInfoHeader* info, int slot, int matIdx);
     void matCall_TransVal(const MdsMatInfoHeader* info, int slot, int matIdx);
-    // Placeholder names: new in 3.0.1 (s_pCallMatVal slots 31-34; 1.0.0's table has 31 entries), nothing in
-    // 1.0.0's place names them. Members because s_pCallMatVal holds them as DrMdoMat member pointers, called by
-    // updateMatCallBack like the named matCall_ callbacks. What they do: large material-value callbacks (0xEB4,
-    // 0x10A0, 0x5B38 and 0xF8 bytes) not yet read.
-    void fn_71007701FC(const MdsMatInfoHeader* info, int slot, int matIdx);
-    void fn_71007710B0(const MdsMatInfoHeader* info, int slot, int matIdx);
-    void fn_7100772150(const MdsMatInfoHeader* info, int slot, int matIdx);
-    void fn_7100777C88(const MdsMatInfoHeader* info, int slot, int matIdx);
+    // 2.0.0's symbols name them. What they do: large material-value callbacks (0xEB4, 0x10A0, 0x5B38 and 0xF8 bytes)
+    // not yet read.
+    void matCall_CalcPrjView(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_CalcPrjChgView(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_CalcPrjDefCall(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_CalcPrjAlpha(const MdsMatInfoHeader* info, int slot, int matIdx);
 
     int getVanishEffectMax() const;
     // DrMdoCtlDammy's destructor releases the material through it

@@ -28,8 +28,8 @@ public:
     virtual bool isDepopCondMatched() const;  // slot 13
     // slots 14/15 (AGmkNpc slots 4/5; its overrides, originally fn_7100590868 / fn_71005909C0): measured from the
     // route's point nearest the player instead of the gimmick's position
-    virtual bool fn_710058EF4C() const;
-    virtual bool fn_710058F030() const;
+    virtual bool isPopDistCondMatched() const;
+    virtual bool isDepopDistCondMatched() const;
     virtual unsigned char* getBindedBdatFp() const;  // slot 16
     virtual int getBindedBdatId() const;  // slot 17
     virtual bool findPopPosRot(mm::Vec3&, mm::Vec3&) const;  // slot 18

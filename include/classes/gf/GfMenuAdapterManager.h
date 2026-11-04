@@ -31,11 +31,9 @@ public:
     static void endAddAfter();
     static void addActiveCategory(unsigned int category);
     static void delActiveCategory(unsigned int category);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member because it sits among
-    // this class's functions and works on its singleton's lists. What it does: deletes, from every list (the
-    // five categories, the uncategorized one and the after one), each adapter whose plugin is gone or held by
-    // it alone, without updating the others.
-    static void fn_7100330A48();
+    // 2.0.0's symbols name it. What it does: deletes, from every list (the five categories, the uncategorized one and
+    // the after one), each adapter whose plugin is gone or held by it alone, without updating the others.
+    static void cleanup();
     // the list an adapter joins (GfMenuAdapter's constructor): uncategorized when there is no category and
     // the flag is set, else the category's, or the after list between beginAddAfter and endAddAfter
     void addAdapter(GfMenuAdapter* adapter, bool uncategorized);

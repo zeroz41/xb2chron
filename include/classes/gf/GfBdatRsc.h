@@ -61,12 +61,10 @@ public:
     int getRscEnRotateZ(unsigned int id) const;
     int getRscEnRotateDeg(unsigned int id) const;
     unsigned int getRscEnRotEffScale(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpRscEn table. What it does: returns fn_710020D650(*m_fpRscEn, id).
-    unsigned int fn_710021903C(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpRscEn table. What it does: returns fn_710020D6D8(*m_fpRscEn, id).
-    unsigned int fn_71002190C4(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns fn_710020D650(*m_fpRscEn, id).
+    unsigned int getRscEnExtraParts5(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns fn_710020D6D8(*m_fpRscEn, id).
+    unsigned int getRscEnExtraParts6(unsigned int id) const;
     unsigned int getRscEnDeadSeNum(unsigned int id) const;
     unsigned int getRscEnWeaponNum(unsigned int id, unsigned int slot) const;
     unsigned int getRscEnExtraParts(unsigned int id, unsigned int slot) const;
@@ -78,9 +76,8 @@ public:
     const char* getRscNpcListModel(unsigned int id) const;
     const char* getRscNpcListMotion(unsigned int id) const;
     const char* getRscNpcListAddMotion(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpRscNpcList table. What it does: returns getRscNpcListEvtRetarget(*m_fpRscNpcList, id).
-    unsigned int fn_7100219574(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns getRscNpcListEvtRetarget(*m_fpRscNpcList, id).
+    unsigned int getRscNpcListEvtRetarget(unsigned int id) const;
     const char* getRscNpcListComp_Eff(unsigned int id) const;
     unsigned int getRscNpcListCollisionId(unsigned int id) const;
     unsigned int getRscNpcListRace(unsigned int id) const;
@@ -92,33 +89,24 @@ public:
     unsigned int getRscNpcListOffsetID(unsigned int id) const;
     unsigned int getRscNpcListEyeRot(unsigned int id) const;
     unsigned int getRscNpcListScale(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpRscNpcList table. What it does: returns getRscNpcListJob(*m_fpRscNpcList, id).
-    unsigned int fn_7100219BD0(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpRscNpcList table. What it does: returns getRscNpcListHitonowaFlag(*m_fpRscNpcList, id).
-    unsigned int fn_7100219C58(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpRscNpcList table. What it does: returns getRscNpcListNpcMeetFlag(*m_fpRscNpcList, id).
-    unsigned int fn_7100219CE0(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpRscNpcList table. What it does: returns getRscNpcListMSGID(*m_fpRscNpcList, id).
-    unsigned int fn_7100219D68(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpRscNpcList table. What it does: returns getRscNpcListCondition1(*m_fpRscNpcList, id).
-    unsigned int fn_7100219DF0(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpRscNpcList table. What it does: returns getRscNpcListMSGID2(*m_fpRscNpcList, id).
-    unsigned int fn_7100219E78(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpRscNpcList table. What it does: returns getRscNpcListCondition2(*m_fpRscNpcList, id).
-    unsigned int fn_7100219F00(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpRscNpcList table. What it does: returns getRscNpcListMSGID3(*m_fpRscNpcList, id).
-    unsigned int fn_7100219F88(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpRscNpcList table. What it does: returns getRscNpcListresult(*m_fpRscNpcList, id).
-    unsigned int fn_710021A010(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns getRscNpcListJob(*m_fpRscNpcList, id).
+    unsigned int getRscNpcListJob(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns getRscNpcListHitonowaFlag(*m_fpRscNpcList, id).
+    unsigned int getRscNpcListHitonowaFlag(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns getRscNpcListNpcMeetFlag(*m_fpRscNpcList, id).
+    unsigned int getRscNpcListNpcMeetFlag(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns getRscNpcListMSGID(*m_fpRscNpcList, id).
+    unsigned int getRscNpcListMSGID(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns getRscNpcListCondition1(*m_fpRscNpcList, id).
+    unsigned int getRscNpcListCondition1(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns getRscNpcListMSGID2(*m_fpRscNpcList, id).
+    unsigned int getRscNpcListMSGID2(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns getRscNpcListCondition2(*m_fpRscNpcList, id).
+    unsigned int getRscNpcListCondition2(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns getRscNpcListMSGID3(*m_fpRscNpcList, id).
+    unsigned int getRscNpcListMSGID3(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: returns getRscNpcListresult(*m_fpRscNpcList, id).
+    unsigned int getRscNpcListresult(unsigned int id) const;
     unsigned int getRscNpcListExtraParts(unsigned int id, unsigned int slot) const;
     const char* getRscMobListModel(unsigned int id) const;
     const char* getRscMobListMotion(unsigned int id) const;
@@ -152,9 +140,9 @@ public:
     const char* getDriverParamExtMountBone(unsigned int id) const;
     unsigned int getDriverParamExtMountCond(unsigned int id) const;
     const char* getVoiceTableDriver(unsigned int id, unsigned int slot) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpVoiceTable table. What it does: calls the slot's getter from its table of fn_7100211A98... column getters ("" for an empty slot).
-    const char* fn_710021AF00(unsigned int id, unsigned int slot) const;
+    // 2.0.0's symbols name it. What it does: calls the slot's getter from its table of getVoiceTableIra1... column
+    // getters ("" for an empty slot).
+    const char* getVoiceTableIra(unsigned int id, unsigned int slot) const;
     const char* getVoiceTableBladeBlade(unsigned int id, unsigned int slot) const;
     const char* getVoiceTableRareBlade(unsigned int id, unsigned int slot) const;
     const char* getVoiceTableCommonCommonBlade(unsigned int id, unsigned int slot) const;

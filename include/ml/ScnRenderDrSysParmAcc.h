@@ -63,7 +63,7 @@ public:
     void setTimeVal(float time);  // the time of day, 0..1 of 24 hours
     void setWeather(int weather);
     void setWeatherFrame(float frame);
-    // 3.0.1's code under this name sets a DrMan flag (DrMan::fn_710071E620); 1.0.0's forwarded to
+    // 3.0.1's code under this name sets a DrMan flag (DrMan::weatherFrmEnd); 1.0.0's forwarded to
     // DrPixlPostParm::getWeatherFrame.
     void getWeatherFrame() const;
     void setSeamMapAddPosMode(bool enable);
@@ -86,10 +86,9 @@ public:
     void setAutoResetScene(bool enable);
     void setGamma(float gamma);
     void setCaptureMode(bool enable);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its one caller
-    // (fw::fn_71001996F0) hands it a ScnRenderDrSysParmAcc it just constructed. What it does: stores the flag as a
-    // word at 0x1D50 of DrMan::get()'s DrMan (not through the accessor's own m_drMan).
-    void fn_710070A2F4(bool flag);
+    // 2.0.0's symbols name it. What it does: stores the flag as a word at 0x1D50 of DrMan::get()'s DrMan (not through
+    // the accessor's own m_drMan).
+    void setRenderTexMode(bool flag);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in this unit and
     // reads the accessor's m_drMan. What it does: returns fn_710071E77C's answer on m_drMan; GfMapManager::isExistObj
     // asks it (on a just-constructed accessor) when no map object exists.

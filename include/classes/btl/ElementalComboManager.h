@@ -151,10 +151,8 @@ public:
     void SetElementalValue(int element, float value);
     float GetElementalValue(int element) const;
     void SetRestTimeSpeed(float speed);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among the
-    // class's functions and reads its fields. What it does: answers pad_aaf[stage - 1] for a stage up to
-    // m_comboStage, 0 above it.
-    unsigned char fn_710008D814(int stage) const;
+    // 2.0.0's symbols name it. What it does: answers pad_aaf[stage - 1] for a stage up to m_comboStage, 0 above it.
+    unsigned char GetStageElementalComboID(int stage) const;
     void MulRestTimeSpeed(float rate);
     float GetRestTimeRatio(bool& fixed) const;
     void ApplyElementalComboBonus(int, int, int);
@@ -187,7 +185,7 @@ public:
     unsigned char pad_aa6;
     // GetResistantAttrBreakTotalDamage answers an entry per attribute 1-8 (the name is not the original's)
     unsigned char m_resistantAttrBreakTotalDamage[8];
-    unsigned char pad_aaf[3];  // fn_710008D814 answers an entry per stage
+    unsigned char pad_aaf[3];  // GetStageElementalComboID answers an entry per stage
     // a player character's manager (CheckCharacterID; the name is not the original's)
     unsigned char m_isPlayer : 1;
     // Reset(true) runs once until it is cleared (the name is not the original's)

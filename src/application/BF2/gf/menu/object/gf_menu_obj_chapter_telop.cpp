@@ -269,7 +269,7 @@ void GfMenuObjChapterTelop::openEndTelop(GfMenuCallContext* context, int chapter
     if (ui::UIObjectAcc(handle).m_object != nullptr) {
         if (!ui::UIObjectAcc(handle).isTerm()) {
             GfMenuObject::startCallContext(context, 0x44, handle);
-            if (GfMenuObjUtil::fn_710048FD30(3)) {
+            if (GfMenuObjUtil::isValidExpansion(3)) {
                 int index = chapter > 10 ? 12 : chapter;
                 ui::EventData event;
                 event.m_type = 0x21;

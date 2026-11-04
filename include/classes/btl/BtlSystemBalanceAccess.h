@@ -18,17 +18,13 @@ public:
     bool IsSpKizunaLineEnemy(unsigned int enemyId) const;
     bool IsSpForceLandEnemy(unsigned int enemyId) const;
     bool IsSpBenkeiWeapondEnemy(unsigned int enemyId) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // fields from `this` (its caller fn_7100086240 passes the singleton). What it does: tests the enemy ID at 0xCC.
-    bool fn_710001C404(unsigned int enemyId) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // enemy-ID fields from `this` like the Is*Enemy queries beside it (no direct caller found). What it does:
-    // tests the four enemy IDs at 0xCE-0xD4.
-    bool fn_710001C414(unsigned int enemyId) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // fields from `this` and sits among its queries (no direct caller found). What it does: a rate times 10
-    // above 8 answers 2.0, else the percentage byte at 0x121 + index, divided by 100.
-    float fn_710001C450(float rate) const;
+    // 2.0.0's symbols name it. What it does: tests the enemy ID at 0xCC.
+    bool IsSpPlayerZombieEnemy(unsigned int enemyId) const;
+    // 2.0.0's symbols name it. What it does: tests the four enemy IDs at 0xCE-0xD4.
+    bool IsExWeaponAlphaProcEnemy(unsigned int enemyId) const;
+    // 2.0.0's symbols name it. What it does: a rate times 10 above 8 answers 2.0, else the percentage byte at 0x121 +
+    // index, divided by 100.
+    float GetTemporaryDamageChangeRate(float rate) const;
 
     unsigned char pad_8[0x2C];
     // ElementalComboManager::CheckCharacterID: a player character's maximum elemental value (the name is not the
@@ -63,9 +59,9 @@ public:
     unsigned short m_spKizunaLineEnemy[2];
     unsigned short m_spForceLandEnemy[2];
     unsigned short m_spBenkeiWeapondEnemy;
-    // compared with an enemy ID by fn_710001C404; meaning unknown
+    // compared with an enemy ID by IsSpPlayerZombieEnemy; meaning unknown
     unsigned short pad_CC;
-    // compared with an enemy ID by fn_710001C414; meaning unknown
+    // compared with an enemy ID by IsExWeaponAlphaProcEnemy; meaning unknown
     unsigned short pad_CE[4];
     unsigned char pad_D6[0x16];
     // the HP rate below which a character counts as dying: Utility::GetDyingHpRate reads it (the name is not
@@ -84,10 +80,10 @@ public:
     unsigned char pad_118[0x8];
     // the challenge battle unit's fn_7100026D20 compares its object's float at 0x18 with it; meaning unknown
     unsigned char pad_120;
-    // percentages fn_710001C450 picks by a rate in tenths; meaning unknown
+    // percentages GetTemporaryDamageChangeRate picks by a rate in tenths; meaning unknown
     unsigned char pad_121[0x9];
     unsigned char pad_12A[0x6];
-    float pad_130;  // GROUP_DATA::fn_71000A107C starts the group's pad_10C at it; meaning unknown
+    float pad_130;  // GROUP_DATA::SetTemporaryDamage starts the group's pad_10C at it; meaning unknown
     unsigned char pad_134[0xC];  // Create allocates 0x140 bytes
 };
 }  // namespace btl

@@ -1,7 +1,7 @@
-#include "classes/gf/TUnk_B60928.h"
-#include "classes/gf/TUnk_B60928/TUnk_B60970.h"
-#include "classes/gf/TUnk_B60928/TUnk_B60998.h"
-#include "classes/gf/TUnk_B60928/TUnk_B609C0.h"
+#include "classes/gf/GfMenuObjBtlTime.h"
+#include "classes/gf/GfMenuObjBtlTime/TimeListener.h"
+#include "classes/gf/GfMenuObjBtlTime/EtherListener.h"
+#include "classes/gf/GfMenuObjBtlTime/ScoreListener.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfMenuAdapterManager.h"
@@ -15,24 +15,24 @@
 namespace gf {
 
 // An inferred helper (no symbol: inlined everywhere; the name is not the original's): the handle of `handle`'s child
-// of that name. fn_71003B48B8's accessors take the top stack slots as an inlined callee's do.
+// of that name. reset's accessors take the top stack slots as an inlined callee's do.
 static inline unsigned int searchChildOf(unsigned int handle, const char* name) {
     ui::UIObjectAcc parent(handle);
     return parent.searchChild(name);
 }
 
-TUnk_B60928::TUnk_B60928(unsigned int handle) : GfMenuObject(handle), m_seq(this), m_seq2(this), m_etherBox(0) {}
+GfMenuObjBtlTime::GfMenuObjBtlTime(unsigned int handle) : GfMenuObject(handle), m_seq(this), m_seq2(this), m_etherBox(0) {}
 
-TUnk_B60928::~TUnk_B60928() {}
+GfMenuObjBtlTime::~GfMenuObjBtlTime() {}
 
-void TUnk_B60928::initialize() {
+void GfMenuObjBtlTime::initialize() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     GfMenuObject::attachExternalCall(0x87, main.m_handle);
     {
         ui::UIObjectAcc time(m_handle, "LAY_time");
         {
 #line 86
-            TUnk_B60970* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B60970(this);
+            TimeListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TimeListener(this);
             listener->m_RefCount = 1;
             ui::UIEventManager::get()->registObjectListener(time.m_handle, listener);
             if (listener != nullptr) {
@@ -42,13 +42,13 @@ void TUnk_B60928::initialize() {
         GfMenuBattleAdapter::create(time.searchChild("TXT_time"), 0x19);
         GfMenuBattleAdapter::create(time.searchChild("TXT_time_shadow"), 0x19);
     }
-    if (GfMenuObjUtil::fn_710048FD30(1) && !GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(1) && !GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuAdapterManager::beginCategory(4);
         {
             ui::UIObjectAcc ether(m_handle, "LAY_ether");
             {
 #line 106
-                TUnk_B60998* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B60998(this);
+                EtherListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) EtherListener(this);
                 listener->m_RefCount = 1;
                 ui::UIEventManager::get()->registObjectListener(ether.m_handle, listener);
                 if (listener != nullptr) {
@@ -79,7 +79,7 @@ void TUnk_B60928::initialize() {
             ui::UIObjectAcc score(m_handle, "LAY_score");
             {
 #line 145
-                TUnk_B609C0* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B609C0(this);
+                ScoreListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ScoreListener(this);
                 listener->m_RefCount = 1;
                 ui::UIEventManager::get()->registObjectListener(score.m_handle, listener);
                 if (listener != nullptr) {
@@ -114,36 +114,36 @@ void TUnk_B60928::initialize() {
         GfMenuAdapterManager::endCategory();
     }
     GfMenuObject::initialize();
-    fn_71003B48B8();
+    reset();
 }
 
-void TUnk_B60928::fn_71003B48B8() {
+void GfMenuObjBtlTime::reset() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x87));
     if (acc.m_object != nullptr && !acc.isTerm()) {
         ui::EventData event;
         event.m_type = 0x103;
         GfMenuObject::sendEvent(searchChildOf(acc.m_handle, "LAY_time"), event, 0.0f);
-        if (GfMenuObjUtil::fn_710048FD30(1)) {
+        if (GfMenuObjUtil::isValidExpansion(1)) {
             GfMenuObject::sendEvent(searchChildOf(acc.m_handle, "LAY_ether"), event, 0.0f);
         }
-        if (GfMenuObjUtil::fn_710048FD30(1)) {
+        if (GfMenuObjUtil::isValidExpansion(1)) {
             GfMenuObject::sendEvent(searchChildOf(acc.m_handle, "LAY_score"), event, 0.0f);
         }
     }
 }
 
-void TUnk_B60928::finalize() {
+void GfMenuObjBtlTime::finalize() {
     GfMenuObject::finalize();
 }
 
-void TUnk_B60928::update() {
+void GfMenuObjBtlTime::update() {
     m_seq.update();
     m_seq2.update();
     GfMenuObject::update();
 }
 
-void TUnk_B60928::fn_71003B4AD8(int part, unsigned int param) {
-    if (part == 0 || (!GfMenuObjUtil::fn_710048FD30(3) && GfMenuObjUtil::fn_710048FD30(1))) {
+void GfMenuObjBtlTime::fn_71003B4AD8(int part, unsigned int param) {
+    if (part == 0 || (!GfMenuObjUtil::isValidExpansion(3) && GfMenuObjUtil::isValidExpansion(1))) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x87));
         if (acc.m_object != nullptr && !acc.isTerm()) {
             unsigned int handle = fn_71003B4B7C(acc.m_handle, part, false);
@@ -157,18 +157,18 @@ void TUnk_B60928::fn_71003B4AD8(int part, unsigned int param) {
     }
 }
 
-unsigned int TUnk_B60928::fn_71003B4B7C(unsigned int handle, int part, bool always) {
+unsigned int GfMenuObjBtlTime::fn_71003B4B7C(unsigned int handle, int part, bool always) {
     ui::UIObjectAcc acc(handle);
     switch (part) {
     case 0:
         return acc.searchChild("LAY_time");
     case 1:
-        if (always || GfGameManager::fn_71002AC580()) {
+        if (always || GfGameManager::isBattleArenaActive()) {
             return acc.searchChild("LAY_ether");
         }
         break;
     case 2:
-        if (always || GfGameManager::fn_71002AC580()) {
+        if (always || GfGameManager::isBattleArenaActive()) {
             return acc.searchChild("LAY_score");
         }
         break;
@@ -176,8 +176,8 @@ unsigned int TUnk_B60928::fn_71003B4B7C(unsigned int handle, int part, bool alwa
     return 0;
 }
 
-void TUnk_B60928::fn_71003B4C24(int part) {
-    if (part == 0 || (!GfMenuObjUtil::fn_710048FD30(3) && GfMenuObjUtil::fn_710048FD30(1))) {
+void GfMenuObjBtlTime::fn_71003B4C24(int part) {
+    if (part == 0 || (!GfMenuObjUtil::isValidExpansion(3) && GfMenuObjUtil::isValidExpansion(1))) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x87));
         if (acc.m_object != nullptr && !acc.isTerm()) {
             unsigned int handle = fn_71003B4B7C(acc.m_handle, part, false);
@@ -190,32 +190,32 @@ void TUnk_B60928::fn_71003B4C24(int part) {
     }
 }
 
-void TUnk_B60928::fn_71003B4CC0() {
-    if (!GfMenuObjUtil::fn_710048FD30(1)) {
+void GfMenuObjBtlTime::openFromChallengeBattle() {
+    if (!GfMenuObjUtil::isValidExpansion(1)) {
         return;
     }
     fn_71003B4AD8(0, 0);
     fn_71003B4AD8(1, 0);
-    if (GfGameManager::fn_71002AC5D8()->m_kind == 1) {
+    if (GfGameManager::getBattleArenaMenuInfo()->m_kind == 1) {
         fn_71003B4AD8(2, 0);
-    } else if (GfGameManager::fn_71002AC5D8()->m_kind == 3) {
+    } else if (GfGameManager::getBattleArenaMenuInfo()->m_kind == 3) {
         fn_71003B4AD8(2, 1);
     } else {
         fn_71003B4C24(2);
     }
 }
 
-void TUnk_B60928::fn_71003B4D3C() {
+void GfMenuObjBtlTime::closeAll() {
     fn_71003B4C24(0);
-    if (GfMenuObjUtil::fn_710048FD30(1)) {
+    if (GfMenuObjUtil::isValidExpansion(1)) {
         fn_71003B4C24(1);
     }
-    if (GfMenuObjUtil::fn_710048FD30(1)) {
+    if (GfMenuObjUtil::isValidExpansion(1)) {
         fn_71003B4C24(2);
     }
 }
 
-void TUnk_B60928::fn_71003B4D80() {
+void GfMenuObjBtlTime::noticeNewRecord() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x87));
     if (acc.m_object != nullptr && !acc.isTerm()) {
         unsigned int handle = fn_71003B4B7C(acc.m_handle, 0, false);
@@ -227,7 +227,7 @@ void TUnk_B60928::fn_71003B4D80() {
     }
 }
 
-void TUnk_B60928::fn_71003B4E18() {
+void GfMenuObjBtlTime::noticeTimeLimit() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x87));
     if (acc.m_object != nullptr && !acc.isTerm()) {
         unsigned int handle = fn_71003B4B7C(acc.m_handle, 0, false);
@@ -239,7 +239,7 @@ void TUnk_B60928::fn_71003B4E18() {
     }
 }
 
-void TUnk_B60928::TUnk_B60970::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjBtlTime::TimeListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1: {
@@ -258,7 +258,7 @@ void TUnk_B60928::TUnk_B60970::reciveEvent(const ui::EventData& event, unsigned 
         break;
     case 0x21:
         if (m_open != 1) {
-            float delay = (m_first == 1 && GfGameManager::fn_71002AC580()) ? 0.5f : 0.0f;
+            float delay = (m_first == 1 && GfGameManager::isBattleArenaActive()) ? 0.5f : 0.0f;
             GfMenuObjUtil::PresetCtrlParam param;
             param.m_preset = 1;
             param.m_out = 0;
@@ -307,7 +307,7 @@ void TUnk_B60928::TUnk_B60970::reciveEvent(const ui::EventData& event, unsigned 
     case 0x100:
         if (m_open != 0) {
             m_owner->m_seq.clear();
-            m_owner->m_seq.addJob(&TUnk_B60928::fn_71003B52DC);
+            m_owner->m_seq.addJob(&GfMenuObjBtlTime::seqNewRecordFadeIn);
         }
         break;
     case 0x101: {
@@ -323,7 +323,7 @@ void TUnk_B60928::TUnk_B60970::reciveEvent(const ui::EventData& event, unsigned 
     }
     case 0x102:
         if (m_state.m_closePending != 0) {
-            TUnk_B60928::fn_71003B4C24(0);
+            GfMenuObjBtlTime::fn_71003B4C24(0);
         }
         break;
     case 0x103: {
@@ -338,7 +338,7 @@ void TUnk_B60928::TUnk_B60970::reciveEvent(const ui::EventData& event, unsigned 
     }
 }
 
-bool TUnk_B60928::fn_71003B52DC() {
+bool GfMenuObjBtlTime::seqNewRecordFadeIn() {
     ui::UIObjectAcc record(m_handle, "LAY_time_new_record");
     record.setDisp(true);
     {
@@ -357,8 +357,8 @@ bool TUnk_B60928::fn_71003B52DC() {
         eff.startAnimation("start", false);
     }
     m_seq.addWait(5);
-    m_seq.addJob(&TUnk_B60928::fn_71003B5E54);
-    m_seq.addJob(&TUnk_B60928::fn_71003B5E70);
+    m_seq.addJob(&GfMenuObjBtlTime::seqNewRecordSE);
+    m_seq.addJob(&GfMenuObjBtlTime::seqNewRecordWait);
     return true;
 }
 
@@ -372,7 +372,7 @@ static inline void hideEtherBoxGet(unsigned int handle) {
     }
 }
 
-void TUnk_B60928::TUnk_B60998::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjBtlTime::EtherListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:
@@ -421,7 +421,7 @@ void TUnk_B60928::TUnk_B60998::reciveEvent(const ui::EventData& event, unsigned 
                 GfMenuObjUtil::playSE("dlc_se_btl_chbtl006");
                 m_owner->m_etherBox = box;
                 m_owner->m_seq2.clear();
-                m_owner->m_seq2.addJob(&TUnk_B60928::fn_71003B5B28);
+                m_owner->m_seq2.addJob(&GfMenuObjBtlTime::seqGetBoxStart);
             } else if (state == 2) {
                 name.format("LAY_ether_box_icon@%02d", box + 1);
                 ui::UIObjectAcc lay(acc.m_handle, name.m_str);
@@ -443,7 +443,7 @@ void TUnk_B60928::TUnk_B60998::reciveEvent(const ui::EventData& event, unsigned 
             param.m_slot = m_ctrl;
             param.m_startFlag4 = true;
             param.m_eventId = 1;
-            param.m_delay = GfGameManager::fn_71002AC580() ? 0.5f : 0.0f;
+            param.m_delay = GfGameManager::isBattleArenaActive() ? 0.5f : 0.0f;
             int ctrl = GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
             if (ctrl != -1) {
                 m_open = 1;
@@ -498,7 +498,7 @@ void TUnk_B60928::TUnk_B60998::reciveEvent(const ui::EventData& event, unsigned 
     }
 }
 
-bool TUnk_B60928::fn_71003B5B28() {
+bool GfMenuObjBtlTime::seqGetBoxStart() {
     {
         ui::UIObjectAcc get(m_handle, "TXT_ether_box_get");
         if (get.m_object != nullptr) {
@@ -515,11 +515,11 @@ bool TUnk_B60928::fn_71003B5B28() {
     param.m_startFlags = 8;
     param.m_setDefault = true;
     GfMenuObjUtil::startCtrl(get.m_handle, param, nullptr);
-    m_seq2.addJob(&TUnk_B60928::fn_71003B6170);
+    m_seq2.addJob(&GfMenuObjBtlTime::seqGetBoxWait);
     return true;
 }
 
-void TUnk_B60928::TUnk_B609C0::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjBtlTime::ScoreListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:
@@ -546,7 +546,7 @@ void TUnk_B60928::TUnk_B609C0::reciveEvent(const ui::EventData& event, unsigned 
             param.m_slot = m_ctrl;
             param.m_startFlag4 = true;
             param.m_eventId = 1;
-            param.m_delay = GfGameManager::fn_71002AC580() ? 0.5f : 0.0f;
+            param.m_delay = GfGameManager::isBattleArenaActive() ? 0.5f : 0.0f;
             int ctrl = GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
             if (ctrl != -1) {
                 m_open = 1;
@@ -576,21 +576,21 @@ void TUnk_B60928::TUnk_B609C0::reciveEvent(const ui::EventData& event, unsigned 
     }
 }
 
-bool TUnk_B60928::fn_71003B5E54() {
+bool GfMenuObjBtlTime::seqNewRecordSE() {
     GfMenuObjUtil::playSE(0x22);
     return true;
 }
 
-bool TUnk_B60928::fn_71003B5E70() {
+bool GfMenuObjBtlTime::seqNewRecordWait() {
     ui::UIObjectAcc eff(m_handle, "IMG_time_new_record_eff");
     if (eff.isPlayingAnimation()) {
         return false;
     }
-    m_seq.addJob(&TUnk_B60928::fn_71003B5F20);
+    m_seq.addJob(&GfMenuObjBtlTime::seqNewRecordFadeOut);
     return true;
 }
 
-bool TUnk_B60928::fn_71003B5F20() {
+bool GfMenuObjBtlTime::seqNewRecordFadeOut() {
     ui::UIObjectAcc record(m_handle, "LAY_time_new_record");
     GfMenuObjUtil::CtrlParam param;
     param.m_methods = 0x10000000;
@@ -599,20 +599,20 @@ bool TUnk_B60928::fn_71003B5F20() {
     param.m_startFlags = 10;
     param.m_setDefault = true;
     GfMenuObjUtil::startCtrl(record.searchChild("TXT_time_new_record"), param, nullptr);
-    m_seq.addJob(&TUnk_B60928::fn_71003B6028);
+    m_seq.addJob(&GfMenuObjBtlTime::seqNewRecordFadeWait);
     return true;
 }
 
-bool TUnk_B60928::fn_71003B6028() {
+bool GfMenuObjBtlTime::seqNewRecordFadeWait() {
     ui::UIObjectAcc text(m_handle, "TXT_time_new_record");
     if (GfMenuObjUtil::isBusyCtrl(GfMenuObjUtil::getCtrlID(text.m_handle))) {
         return false;
     }
-    m_seq.addJob(&TUnk_B60928::fn_71003B60DC);
+    m_seq.addJob(&GfMenuObjBtlTime::seqNewRecordEnd);
     return true;
 }
 
-bool TUnk_B60928::fn_71003B60DC() {
+bool GfMenuObjBtlTime::seqNewRecordEnd() {
     ui::UIObjectAcc record(m_handle, "LAY_time_new_record");
     record.setDisp(false);
     ui::EventData event;
@@ -621,17 +621,17 @@ bool TUnk_B60928::fn_71003B60DC() {
     return true;
 }
 
-bool TUnk_B60928::fn_71003B6170() {
+bool GfMenuObjBtlTime::seqGetBoxWait() {
     ui::UIObjectAcc get(m_handle, "TXT_ether_box_get");
     if (GfMenuObjUtil::isBusyCtrl(GfMenuObjUtil::getCtrlID(get.m_handle))) {
         return false;
     }
     m_seq2.addWait(60);
-    m_seq2.addJob(&TUnk_B60928::fn_71003B62C4);
+    m_seq2.addJob(&GfMenuObjBtlTime::seqGetBoxEnd);
     return true;
 }
 
-bool TUnk_B60928::fn_71003B62C4() {
+bool GfMenuObjBtlTime::seqGetBoxEnd() {
     ui::UIObjectAcc get(m_handle, "TXT_ether_box_get");
     GfMenuObjUtil::CtrlParam param;
     param.m_methods = 0x10000000;

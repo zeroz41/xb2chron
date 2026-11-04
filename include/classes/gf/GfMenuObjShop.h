@@ -34,8 +34,8 @@ public:
     // what open sends the shop's layer (event 0x21)
     struct OpenParam {
         unsigned int m_shopId;  // the event's first parameter (16 bits) (the name is not the original's)
-        // the event's 16-bit parameter 2, sent only when GfMenuObjUtil::fn_710048FD30(3) and
-        // GfMenuManager::fn_710035DC94() answer true (new in 3.0.1; the name is not the original's)
+        // the event's 16-bit parameter 2, sent only when GfMenuObjUtil::isValidExpansion(3) and
+        // GfMenuManager::isOpenCampMenu() answer true (new in 3.0.1; the name is not the original's)
         bool m_option;
     };
     virtual ~GfMenuObjShop();  // slot 0
@@ -49,18 +49,15 @@ public:
     static void close(GfMenuCallContext* context);
     // the shop's layer (object 0x77) shows or hides its blade (event 0x46, parameter the flag)
     static void dispBlade(bool disp);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its unit holds only
-    // GfMenuObjShop's functions and it sits between close/dispBlade and MainListener::reciveEvent, reaching the
-    // shop's object (0x77) as they do. What it does: when GfMenuObjUtil::fn_710048FD30(3) answers true, sends
-    // event 0x47 with GfMenuReference::getReferenceShopID() to the shop layer's child "LAY_exc_task_list".
-    static void fn_7100477960();
+    // 2.0.0's symbols name it. What it does: when GfMenuObjUtil::isValidExpansion(3) answers true, sends event 0x47
+    // with GfMenuReference::getReferenceShopID() to the shop layer's child "LAY_exc_task_list".
+    static void changeCraft();
 
     // redraws the shop's item lists (1.0.0's update calls it at the same flag; 3.0.1 adds the exchange tasks)
     void refreshItemList();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because update calls it with
-    // this when m_stockNumDirty is set. What it does: shows "LAY_stock_num" by the mode at 0x28 and
-    // GfMenuReference::fn_710036934C(), and moves it by the value at 0x580 (-0x27 more in mode 3).
-    void fn_710047688C();
+    // 2.0.0's symbols name it. What it does: shows "LAY_stock_num" by the mode at 0x28 and
+    // GfMenuReference::getReferenceItemType(), and moves it by the value at 0x580 (-0x27 more in mode 3).
+    void refreshStock();
     // the "IMG_store_sell_filter_icon@NN" icons of "LAY_store_sell_filter": the current filter's gets "sys_select"
     void refreshFilterIcon();
     // the SHOP special-shop row (BDAT 0xF4) whose shop_id is that shop and whose scenario_flag is 0 or the current
@@ -73,11 +70,10 @@ public:
     // the exchange task (BDAT 0xF2 row) can be rewarded: no "Reward", or every item of its reward's items 8-11 fits
     // the item box (GfItemUtil::isEnableAddItemBox)
     bool canGetExcTaskReward(unsigned int task);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because refreshItemList calls it
-    // with this and it sits among the exchange-task functions. What it does: the item ids (low 16 bits) of the
-    // exchange task's (BDAT 0xF2 row's "Reward", GfQuestUtil::getReward) reward items 8-11 that are set go to the
-    // vector until it is full; true when it holds any.
-    bool fn_71004802F8(unsigned int task, mm::mtl::FixedVector<unsigned short, 4>& items);
+    // 2.0.0's symbols name it. What it does: the item ids (low 16 bits) of the exchange task's (BDAT 0xF2 row's
+    // "Reward", GfQuestUtil::getReward) reward items 8-11 that are set go to the vector until it is full; true when it
+    // holds any.
+    bool getExcTaskRewardItem(unsigned int task, mm::mtl::FixedVector<unsigned short, 4>& items);
     // the exchange task's (BDAT 0xF2 row) "HideReward" flag, its "Reward" items in the list and its reward's first
     // value; true when either is there
     bool getExcTaskReward(unsigned int task, unsigned int& value, GfMenuItemList* list, bool& hide);
@@ -109,7 +105,7 @@ public:
     // the shop (GfBdatShop's shop list row): InnActListener pays the inn with it (GfGameUtilShop::execPayInn); the
     // name is not the original's
     unsigned int m_shopId;  // 0x24
-    // the shop's mode: 3 moves "LAY_stock_num" up by 0x27, 0 shows it by the filter's item type (fn_710047688C;
+    // the shop's mode: 3 moves "LAY_stock_num" up by 0x27, 0 shows it by the filter's item type (refreshStock;
     // the name is not the original's)
     int m_mode;  // 0x28
     unsigned char pad_2C[0x38 - 0x2C];
@@ -123,14 +119,14 @@ public:
     GfMenuItemList* m_sellItemList;  // 0x48
     // the sell list's objects (initialize creates it; setupSellItemList's page rows; the name is not the original's)
     ui::UISelectObjList* m_sellObjList;  // 0x50
-    // fn_710047688C: "LAY_stock_num" follows the current filter's item type (the name is not the original's)
+    // refreshStock: "LAY_stock_num" follows the current filter's item type (the name is not the original's)
     bool m_useFilterItemType;  // 0x58
     // 1.0.0's reqRefreshItemList sets it, update calls refreshItemList and clears it (the name is not the original's)
     bool m_refreshItemList;  // 0x59
-    // update redraws "LAY_stock_num" (fn_710047688C) and clears it (the name is not the original's)
+    // update redraws "LAY_stock_num" (refreshStock) and clears it (the name is not the original's)
     bool m_stockNumDirty;  // 0x5A
     unsigned char pad_5B[0x60 - 0x5B];
-    // the item filters and the current one (setFilterIndex, fn_710047688C; the names are not the original's)
+    // the item filters and the current one (setFilterIndex, refreshStock; the names are not the original's)
     mm::mtl::FixedVector<unsigned int, 22> m_filters;  // 0x60
     unsigned int m_filterIndex;  // 0xC0
     unsigned char pad_C4[0xC8 - 0xC4];
@@ -171,7 +167,7 @@ public:
     GfMenuCallContext* m_blWeaponContext;  // 0x570
     // the constructor creates it; seqItemGet opens the got-item text with it (the name is not the original's)
     GfMenuCallContext* m_callContext;  // 0x578
-    // fn_710047688C adds it to "LAY_stock_num"'s y position (the name is not the original's)
+    // refreshStock adds it to "LAY_stock_num"'s y position (the name is not the original's)
     int m_stockNumOffsetY;  // 0x580
     // later fields (from the constructor): 0x4F0 pointer, 0x504 int -1, 0x508..0x540 eight pointers, 0x548
     // QuestTaskParam, 0x568 int, 0x570 pointer, 0x578 GfMenuCallContext*, 0x584 int, 0x588 short

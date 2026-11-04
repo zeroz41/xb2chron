@@ -20,18 +20,16 @@ public:
     static bool isSkillUnlock(unsigned int driver, unsigned int line, unsigned int level, bool round);
     // the skill point cost of the line's next level (symbols)
     static unsigned int getNextSkillPoint(unsigned int driver, unsigned int line, bool round);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address follows
-    // getNextSkillPoint in GfDataBlade's unit and it takes the same (driver, line, round). What it does: the 16-bit
-    // level of kizuna line `line` (+8 of the line's 10-byte record at +0x30, or +0x62 for the new game plus round) of
-    // the driver's row (DLC rows 0x11-0x19 in GfDataManager::fn_7100224A10's table, others in getDataGame's); 0 for
-    // a DLC driver (row above 6) whose GfBdatChrDr::fn_71001F16A4 is set. GfGameUtil::checkDriverSkillLevelUp and
-    // execDriverSkillLevelUp test it against 2 and the requested level.
-    static unsigned int fn_710024AD38(unsigned int driver, unsigned int line, bool round);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address follows
-    // fn_710024AD38 and it takes the same row plus a level. What it does: stores the level (low byte) as
-    // fn_710024AD38's field and, for a level above 0, refreshes the line's skill ids from the "SkillID" columns.
-    // Caller: GfGameUtil::execDriverSkillLevelUp after paying the skill points.
-    static void fn_710024ADFC(unsigned int driver, unsigned int line, unsigned int level, bool round);
+    // 2.0.0's symbols name it. What it does: the 16-bit level of kizuna line `line` (+8 of the line's 10-byte record at
+    // +0x30, or +0x62 for the new game plus round) of the driver's row (DLC rows 0x11-0x19 in
+    // GfDataManager::getDataGameIra's table, others in getDataGame's); 0 for a DLC driver (row above 6) whose
+    // GfBdatChrDr::getChrIrType is set. GfGameUtil::checkDriverSkillLevelUp and execDriverSkillLevelUp test it against
+    // 2 and the requested level.
+    static unsigned int getSkillLevel(unsigned int driver, unsigned int line, bool round);
+    // 2.0.0's symbols name it. What it does: stores the level (low byte) as getSkillLevel's field and, for a level
+    // above 0, refreshes the line's skill ids from the "SkillID" columns. Caller: GfGameUtil::execDriverSkillLevelUp
+    // after paying the skill points.
+    static void setSkillLevel(unsigned int driver, unsigned int line, unsigned int level, bool round);
 };
 
 }  // namespace gf

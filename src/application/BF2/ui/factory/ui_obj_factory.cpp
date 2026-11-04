@@ -35,7 +35,7 @@ UIObjFactory::~UIObjFactory() {
         }
     }
     m_orders.destroy();
-    fn_71006757FC();
+    clearPreloadResource();
     UIUtil::termObjectMap();
 }
 
@@ -69,7 +69,7 @@ void UIObjFactory::update(const fw::UpdateInfo&) {
                 order->m_resource->load(order->m_info, UIUtil::getResourceAllocator());
             }
         } else if (!order->m_resource->isLoading()) {
-            order->m_resource->fn_71006943A0();
+            order->m_resource->ready();
             if (order->m_resource->isValid()) {
                 createRootObject(*order);
             }
@@ -122,7 +122,7 @@ void UIObjFactory::registPreloadResource(unsigned int type, const char* name) {
     }
 }
 
-void UIObjFactory::fn_71006757FC() {
+void UIObjFactory::clearPreloadResource() {
     for (PreloadInfo* it = m_preloads.begin(); it != m_preloads.end(); ++it) {
         if (it->m_info != nullptr) {
             delete it->m_info;

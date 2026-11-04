@@ -6,7 +6,7 @@
 
 namespace gf {
 // table 0x7100B5B908 (no RTTI, no 1.0.0 symbol): a GfMenuCharDataAdapter converter new in 3.0.1, built only by
-// GfMenuCharDataAdapter::fn_710033A3D4: the blade (type 4) in a slot of a reference driver (GfMenuReference::getReferenceDriverID).
+// GfMenuCharDataAdapter::createFromReferenceBladeSet: the blade (type 4) in a slot of a reference driver (GfMenuReference::getReferenceDriverID).
 class TUnk_B5B908 : public ::gf::GfMenuCharDataAdapter::IConverter {
 public:
     TUnk_B5B908(unsigned int index, int slot) : m_index(index), m_slot(slot) {}

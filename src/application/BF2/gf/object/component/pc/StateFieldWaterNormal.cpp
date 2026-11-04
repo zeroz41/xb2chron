@@ -813,7 +813,7 @@ void StateFieldWaterDeadIdle::enter(GfComBehaviorPc*, ai::State*) {}
 
 void StateFieldWaterDeadIdle::leave(GfComBehaviorPc*, ai::State*) {}
 
-void StateFieldWaterDeadIdle::fn_7100507984(GfComBehaviorPc* behavior, const fw::UpdateInfo&) {
+void StateFieldWaterDeadIdle::update(GfComBehaviorPc* behavior, const fw::UpdateInfo&) {
     GfComPropertyPc* property = behavior->m_owner->findComponent<GfComPropertyPc>(5);
     if (property->m_status.get()->m_hp != 0) {
         MsgObjectNotifyHealHp msg;

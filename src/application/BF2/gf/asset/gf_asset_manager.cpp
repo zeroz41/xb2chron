@@ -90,12 +90,12 @@ GfSlotMapping* GfAssetManager::getSlotMapping() {
     return nullptr;
 }
 
-bool GfAssetManager::fn_71001AE8A8(mm::mtl::FixedVector<const char*, 128>& names, GF_ASSET_HANDLE* handle,
+bool GfAssetManager::getFileNameByExt(mm::mtl::FixedVector<const char*, 128>& names, GF_ASSET_HANDLE* handle,
                                    const char* name) {
     if (handle != reinterpret_cast<GF_ASSET_HANDLE*>(-1) && name != nullptr) {
         AssetPackInfo* info = getAssetPackInfo(handle);
         if (info != nullptr) {
-            return info->fn_71001B1840(names, name);
+            return info->getFileNameByExt(names, name);
         }
     }
     return !names.empty();
@@ -115,10 +115,10 @@ GfAssetResource* GfAssetManager::getResource(GF_ASSET_HANDLE* handle, GfFileIdx 
     return resource;
 }
 
-GfAssetResource* GfAssetManager::fn_71001AE9D0(GF_ASSET_HANDLE* handle, const char* name) {
+GfAssetResource* GfAssetManager::getResource(GF_ASSET_HANDLE* handle, const char* name) {
     AssetPackInfo* info = getAssetPackInfo(handle);
     if (info != nullptr) {
-        return info->fn_71001B1B30(name);
+        return info->getResource(name);
     }
     return nullptr;
 }
@@ -291,10 +291,10 @@ void GfAssetManager::setupLoadStart(GF_ASSET_HANDLE* handle) {
     }
 }
 
-bool GfAssetManager::fn_71001AF824(GF_ASSET_HANDLE* handle, const char* name) {
+bool GfAssetManager::isExistResourceName(GF_ASSET_HANDLE* handle, const char* name) {
     AssetPackInfo* info = getAssetPackInfo(handle);
     if (info != nullptr) {
-        return info->fn_71001B3624(name);
+        return info->isExistResourceName(name);
     }
     return false;
 }

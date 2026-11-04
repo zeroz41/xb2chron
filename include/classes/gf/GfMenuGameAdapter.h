@@ -41,21 +41,18 @@ public:
     bool update_RealTime();
     bool update_Chapter();
     bool update_DispAccess();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's type table ends at
-    // update_DispAccess). A member because it is type 18 of this class's TypeSetup table. What it does: takes the
-    // item type GfMenuReference::fn_710036934C returns; for a valid type (1 to 20) shows
-    // GfMenuItemUtil::getIconNumber(type, 0, number, false)'s icon and returns true, otherwise false.
-    bool fn_710033E76C();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it is type 19 of this
-    // class's TypeSetup table. What it does: for a valid item type from GfMenuReference::fn_710036934C (1 to 20)
-    // shows 0 when GfMenuItemUtil::canCountStack(type), otherwise GfItemBoxBase::fn_71002F9DD4(type) of the
+    // 2.0.0's symbols name it. What it does: takes the item type GfMenuReference::getReferenceItemType returns; for a
+    // valid type (1 to 20) shows GfMenuItemUtil::getIconNumber(type, 0, number, false)'s icon and returns true,
+    // otherwise false.
+    bool update_BoxCapIcon();
+    // 2.0.0's symbols name it. What it does: for a valid item type from GfMenuReference::getReferenceItemType (1 to 20)
+    // shows 0 when GfMenuItemUtil::canCountStack(type), otherwise GfItemBoxBase::countItemCategory(type) of the
     // GfItemBox singleton (the sum of the stack counts of that type's items), and returns true; false otherwise.
-    bool fn_710033E7CC();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it is type 20 of this
-    // class's TypeSetup table. What it does: for a valid item type from GfMenuReference::fn_710036934C (1 to 20)
-    // shows GfItemBoxBase::fn_71002F9F6C(type) of the GfItemBox singleton (the number of that type's entries) and
+    bool update_BoxCapNum();
+    // 2.0.0's symbols name it. What it does: for a valid item type from GfMenuReference::getReferenceItemType (1 to 20)
+    // shows GfItemBoxBase::maxItemCategory(type) of the GfItemBox singleton (the number of that type's entries) and
     // returns true; false otherwise.
-    bool fn_710033E840();
+    bool update_BoxCapMax();
     mm::mtl::Delegate<bool()> m_update;  // its type's update_*; update shows what it returns
     // the index update_ReferenceNum passes to GfMenuReference::getReferenceNumber (nothing in this unit sets it; the
     // name is not the original's)

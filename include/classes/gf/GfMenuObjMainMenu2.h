@@ -23,7 +23,7 @@ public:
     class IndexListener;
     class MainListener;
     // what registOpenParam keeps for the next open: GfMenuManager::setMainmenuOpenMap passes 1,
-    // setMainmenuOpenSystem 6 (5 in 3.0.1 when GfMenuObjUtil::fn_710048FD30(3) answers true)
+    // setMainmenuOpenSystem 6 (5 in 3.0.1 when GfMenuObjUtil::isValidExpansion(3) answers true)
     // (the field name is not the original's)
     struct OpenParam {
         unsigned int m_page;
@@ -62,9 +62,9 @@ public:
     static void openChrChange2Sub(ui::UIObjectAcc& acc, ChrChangeParam& param);
     static void inputChrChangeSub(ui::UIObjectAcc& acc, ChrChangeParam& param, int index);
     static void closeChrChangeSub(ui::UIObjectAcc& acc, ChrChangeParam& param);
-    // Placeholder name: the symbols leave it unnamed. The driver list's counterpart of refreshCharChangeBl:
-    // openChrChangeSub and inputChrChangeSub call it with the parameter's driver list.
-    static void fn_71004323A8(ui::UIObjectAcc& acc, GfMenuDriverList* list);
+    // 2.0.0's symbols name it. The driver list's counterpart of refreshCharChangeBl: openChrChangeSub and
+    // inputChrChangeSub call it with the parameter's driver list.
+    static void refreshCharChangeDr(ui::UIObjectAcc& acc, GfMenuDriverList* list);
     static void refreshCharChangeBl(ui::UIObjectAcc& acc, GfMenuBladeList* list);
     GfMenuObjMainMenu2(unsigned int handle);
     virtual ~GfMenuObjMainMenu2();  // slot 0
@@ -112,22 +112,19 @@ public:
         }
     }
 
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0 names it. A static member: it reads this class's statics
-    // only. What it does: true when GfMenuObjUtil::fn_710048FD30(3) holds and s_bgOpen is set; its one caller is
-    // GfMenuObjMainMenu2BG::initialize (0x7100433D04).
-    static bool fn_7100432E2C();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0 names it. A static member: it reads this class's statics
-    // only. What it does: returns s_worldMapOpen; its one caller is GfMenuObjWorldMap::initialize (0x710049626C).
-    static bool fn_7100432E5C();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0 names it. A static member: it reads this class's statics
-    // only. What it does: s_index while GfMenuObjUtil::fn_710048FD30(3) holds, else 0; its one caller is
-    // fn_71003D4B70.
-    static unsigned int fn_7100432E6C();
-    // Placeholder name: the symbols leave it unnamed. A static member: it reads and sets this class's statics only.
-    // What it does: on menu layer 3 (GfMenuObjUtil::fn_710048FD30(3)) it sets s_closeKeyLocked, disabling the close
-    // key first (setCloseKeyEnable(false), inlined) when it locks; its one caller is GfMenuObjPartyForm3's main
-    // listener (0x7100453FCC).
-    static void fn_71004335FC(bool lock);
+    // 2.0.0's symbols name it. What it does: true when GfMenuObjUtil::isValidExpansion(3) holds and s_bgOpen is set;
+    // its one caller is GfMenuObjMainMenu2BG::initialize (0x7100433D04).
+    static bool isOpenHitonowaDirect();
+    // 2.0.0's symbols name it. What it does: returns s_worldMapOpen; its one caller is GfMenuObjWorldMap::initialize
+    // (0x710049626C).
+    static bool isOpenDirect();
+    // 2.0.0's symbols name it. What it does: s_index while GfMenuObjUtil::isValidExpansion(3) holds, else 0; its one
+    // caller is fn_71003D4B70.
+    static unsigned int getSubIndexTextID();
+    // 2.0.0's symbols name it. What it does: on menu layer 3 (GfMenuObjUtil::isValidExpansion(3)) it sets
+    // s_closeKeyLocked, disabling the close key first (setCloseKeyEnable(false), inlined) when it locks; its one caller
+    // is GfMenuObjPartyForm3's main listener (0x7100453FCC).
+    static void lockCloseKey(bool lock);
     // a contents entry's BDAT and text id: the menu table's (0x17F, 0x180 on menu layer 3) title row in 0x117 while
     // its useCond holds, else text 0x67C of 0xF5 (the parameter names are not the original's)
     static void getContentsText(unsigned int index, unsigned char*& bdat, unsigned int& text);
@@ -145,20 +142,20 @@ public:
     static unsigned int s_openMenuID;
     static bool s_cancelEnable;  // 1.0.0's name
     // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB886). On menu layer 3
-    // (GfMenuObjUtil::fn_710048FD30(3)) setCloseKeyEnable does nothing while it is set; the close listener
+    // (GfMenuObjUtil::isValidExpansion(3)) setCloseKeyEnable does nothing while it is set; the close listener
     // clears it, the main listener reads it.
     static bool s_closeKeyLocked;
     // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB884). initialize clears it, the
-    // contents listener sets it, GfMenuObjWorldMap::initialize reads it through fn_7100432E5C.
+    // contents listener sets it, GfMenuObjWorldMap::initialize reads it through isOpenDirect.
     static bool s_worldMapOpen;
     // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB887). The constructor clears it,
     // the contents listener sets it; isOpenCharMenu answers true while it is set (menu layer 3).
     static bool s_charMenuOpen;
     // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB888). The constructor and the
-    // destructor clear it; GfMenuObjMainMenu2BG::initialize reads it through fn_7100432E2C.
+    // destructor clear it; GfMenuObjMainMenu2BG::initialize reads it through isOpenHitonowaDirect.
     static unsigned char s_bgOpen;
     // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB88C). The index listener stores
-    // the selected index in it on menu layer 3; fn_7100432E6C returns it.
+    // the selected index in it on menu layer 3; getSubIndexTextID returns it.
     static unsigned int s_index;
 
     unsigned char pad_24[4];

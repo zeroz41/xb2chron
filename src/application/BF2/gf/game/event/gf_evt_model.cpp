@@ -338,7 +338,7 @@ void GfEvtModelDriver::setWeaponBattleState() {
             }
         }
     }
-    if (GfDataDriver::fn_710023F9A8(m_objId) && GfDataDriver::fn_7100241660(m_objId)) {
+    if (GfDataDriver::isIra(m_objId) && GfDataDriver::isIraHideWeaponOnField(m_objId)) {
         SCOM_OBJ_ALPHA::createWeapon(m_handle, 0.0f, 1.0f);
     }
 }
@@ -364,7 +364,7 @@ void GfEvtModelDriver::setWeaponFieldState() {
             }
         }
     }
-    if (GfDataDriver::fn_710023F9A8(m_objId) && GfDataDriver::fn_7100241660(m_objId)) {
+    if (GfDataDriver::isIra(m_objId) && GfDataDriver::isIraHideWeaponOnField(m_objId)) {
         SCOM_OBJ_ALPHA::createWeapon(m_handle, 0.0f, 0.0f);
     }
 }
@@ -436,7 +436,7 @@ void GfEvtModelDriver::StateStartBattle::enter(GfEvtModelDriver* owner, ai::Stat
             }
         }
     }
-    if (GfDataDriver::fn_710023F9A8(owner->m_objId) && GfDataDriver::fn_7100241660(owner->m_objId)) {
+    if (GfDataDriver::isIra(owner->m_objId) && GfDataDriver::isIraHideWeaponOnField(owner->m_objId)) {
         SCOM_OBJ_ALPHA::createWeapon(owner->m_handle, 0.5f, 1.0f);
     }
 }
@@ -487,7 +487,7 @@ void GfEvtModelDriver::StateEndBattle::enter(GfEvtModelDriver* owner, ai::State*
             }
         }
     }
-    if (GfDataDriver::fn_710023F9A8(owner->m_objId) && GfDataDriver::fn_7100241660(owner->m_objId)) {
+    if (GfDataDriver::isIra(owner->m_objId) && GfDataDriver::isIraHideWeaponOnField(owner->m_objId)) {
         SCOM_OBJ_ALPHA::createWeapon(owner->m_handle, 0.5f, 0.0f);
     }
 }

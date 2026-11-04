@@ -30,9 +30,9 @@ void pluginEvtSeRegist();
 void pluginEvtVolRegist();
 void pluginEvtRandRegist();
 void pluginEvtPayRegist();
-// Placeholder name: new in 3.0.1 (1.0.0 has no evt_ex plugin), and the symbols name no function here. pluginRegist
-// calls it between pluginEvtPayRegist and pluginEvtEnvRegist; it registers the evt_ex plugin (ScriptCamMotion.cpp).
-void fn_710066162C();
+// 2.0.0's symbols name it. pluginRegist calls it between pluginEvtPayRegist and pluginEvtEnvRegist; it registers the
+// evt_ex plugin (ScriptCamMotion.cpp).
+void pluginEvtExRegist();
 void pluginEvtEnvRegist();
 void pluginEvtMovRegist();
 void pluginEvtMapRegist();

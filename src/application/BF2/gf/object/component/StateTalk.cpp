@@ -72,14 +72,14 @@ inline bool StateIdle::isExecEndScheduleCondMatched(GfComBehaviorNpc& owner, ai:
 void StateIdle::enter(GfComBehaviorNpc* owner, ai::State* prev) {
     m_endSchedule = isExecEndScheduleCondMatched(*owner, prev);
     if (owner->m_turnCmd.pad_6c) {
-        fn_71004E0660(*owner);
-        m_seq = &StateIdle::fn_71004E0948;
+        applyInitStateName(*owner);
+        m_seq = &StateIdle::seqCheckNextState;
     } else {
-        m_seq = &StateIdle::fn_71004E09E0;
+        m_seq = &StateIdle::seqWaitTurnEnd;
     }
 }
 
-void StateIdle::fn_71004E0948(GfComBehaviorNpc& owner, const fw::UpdateInfo& info) {
+void StateIdle::seqCheckNextState(GfComBehaviorNpc& owner, const fw::UpdateInfo& info) {
     if (m_execCmd.m_info.handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) && m_execCmd.m_info.cmdName.m_nLen != 0) {
         m_execCmd.update(info.m_deltaTime);
         if (!m_execCmd.m_done) {

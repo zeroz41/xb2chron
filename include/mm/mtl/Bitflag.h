@@ -25,7 +25,7 @@ class Bitflag {
 public:
     // set and test as GfMenuManager's Bitflag<32> code shows them (one 32-bit word: no word index, the mask
     // 1UL << index without & 31); the names are not the original's
-    // sets one flag of the first word (GfDataDriver::fn_7100248EB0 asserts at line 77 and ORs the mask in; the name
+    // sets one flag of the first word (GfDataDriver::setActivateWeaponType asserts at line 77 and ORs the mask in; the name
     // is not the original's)
     void set(unsigned int index) {
 #line 77 MM_MTL_BITFLAG_PATH

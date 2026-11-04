@@ -86,8 +86,8 @@ public:
     bool isMove() const;
     void execTurnCmdToPos(const mm::Vec3& pos);
     // turns to the given yaw plus its steering's angle (the same body as GfComBehaviorNpc's execTurnCmd, with
-    // CreateInfo's defaults; mob::StateMove's fn_71004D82FC calls it). Inferred name: execTurnCmd
-    void fn_71004D459C(float rotY);
+    // CreateInfo's defaults; mob::StateMove's seqWaitMoveEnd calls it). Inferred name: execTurnCmd
+    void execTurnCmd(float rotY);
     // turns toward its navigation mesh object's move vector, or toward pad_110 when it has none
     void execTurnCmdToGoal();
     // where it walks to: pad_110 (no copy of it exists; StateBattle's sequences store the goal in place)
@@ -113,8 +113,8 @@ public:
         // plain halves: StateBattle<T>::isCondMatch's one 32-bit load of both is GVN widening its second load
         unsigned short m_battleReaction;
         unsigned short m_battleMot;  // the FLD_NpcMobMotionId row StateBattle::seqApplyBattleMot runs
-        // CloseRange squared (read only when GfGameManager::fn_71002A9E68 answers true): mob::StateApproachPc's
-        // fn_71004D7468 compares it with pad_53d0
+        // CloseRange squared (read only when GfGameManager::isGameTypeIra answers true): mob::StateApproachPc's
+        // isCondMatch compares it with pad_53d0
         float m_approachDistSq;
     };
     BdatInfo m_bdatInfo;
@@ -144,7 +144,7 @@ public:
     void* pad_53b8;  // its Listener clears it on a standby logout
     Listener m_listener;  // (the name is not the original's)
     float pad_53d0;
-    float pad_53d4;  // mob::StateApproachPc's fn_71004D7468 needs it at most 4
+    float pad_53d4;  // mob::StateApproachPc's isCondMatch needs it at most 4
     unsigned char pad_53d8;
     bool pad_53d9;  // mob::StateApproachPc sets it on entering
 };

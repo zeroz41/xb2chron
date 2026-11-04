@@ -66,8 +66,8 @@ static GfMenuGfObjAdapter::TypeSetup s_typeSetups[] = {
     {&GfMenuGfObjAdapter::update_EN_ElemEffID, {0, 0, 65535}},
     {&GfMenuGfObjAdapter::update_EN_TypeIcon, {1, 0, 0}},
     {&GfMenuGfObjAdapter::update_EN_Scout, {1, 0, 0}},
-    {&GfMenuGfObjAdapter::fn_710033FB0C, {3, 0, 0}},
-    {&GfMenuGfObjAdapter::fn_710033FB70, {3, 0, 0}},
+    {&GfMenuGfObjAdapter::update_EN_Angry, {3, 0, 0}},
+    {&GfMenuGfObjAdapter::update_EN_Awake, {3, 0, 0}},
     {&GfMenuGfObjAdapter::update_BL_Kizuna, {0, 0, 7}},
     {&GfMenuGfObjAdapter::update_BL_Special, {0, 0, 100}},
     {&GfMenuGfObjAdapter::update_BL_SpecialLv, {0, 0, 4}},
@@ -75,8 +75,8 @@ static GfMenuGfObjAdapter::TypeSetup s_typeSetups[] = {
     {&GfMenuGfObjAdapter::update_BL_ChangeRecast2, {0, 0, 100}},
     {&GfMenuGfObjAdapter::update_BL_DispCurrent, {3, 0, 0}},
     {&GfMenuGfObjAdapter::update_BL_DispComboReady, {3, 0, 0}},
-    {&GfMenuGfObjAdapter::fn_7100340094, {1, 0, 0}},
-    {&GfMenuGfObjAdapter::fn_7100340154, {0, 0, 9999}},
+    {&GfMenuGfObjAdapter::update_IRA_NpcHitonowaIcon, {1, 0, 0}},
+    {&GfMenuGfObjAdapter::update_IRA_TemporaryHp, {0, 0, 9999}},
 };
 
 namespace {
@@ -542,7 +542,7 @@ bool GfMenuGfObjAdapter::update_EN_Scout(GF_OBJ_HANDLE* handle) {
     return true;
 }
 
-bool GfMenuGfObjAdapter::fn_710033FB0C(GF_OBJ_HANDLE* handle) {
+bool GfMenuGfObjAdapter::update_EN_Angry(GF_OBJ_HANDLE* handle) {
     GfObjPropertyEnemy* enemy = getEnemyProperty(handle);
     if (enemy == nullptr) {
         return false;
@@ -550,8 +550,8 @@ bool GfMenuGfObjAdapter::fn_710033FB0C(GF_OBJ_HANDLE* handle) {
     return enemy->pad_154;
 }
 
-bool GfMenuGfObjAdapter::fn_710033FB70(GF_OBJ_HANDLE* handle) {
-    if (!GfMenuObjUtil::fn_710048FD30(1) && !GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuGfObjAdapter::update_EN_Awake(GF_OBJ_HANDLE* handle) {
+    if (!GfMenuObjUtil::isValidExpansion(1) && !GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
     GfObjPropertyEnemy* enemy = getEnemyProperty(handle);
@@ -687,15 +687,15 @@ bool GfMenuGfObjAdapter::update_BL_DispComboReady(GF_OBJ_HANDLE* handle) {
     return (blade->m_comboReady & 2) != 0;
 }
 
-bool GfMenuGfObjAdapter::fn_7100340094(GF_OBJ_HANDLE* handle) {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuGfObjAdapter::update_IRA_NpcHitonowaIcon(GF_OBJ_HANDLE* handle) {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
     GfObjAcc acc(handle);
     if (acc.getType() != 6) {
         return false;
     }
-    switch (GfDataBlade::fn_710024DD94(acc.fn_7100523B74())) {
+    switch (GfDataBlade::fn_710024DD94(acc.getNpcRscId())) {
     case 0:
     case 2:
         if (!fn_71002D9B5C(handle)) {
@@ -712,8 +712,8 @@ bool GfMenuGfObjAdapter::fn_7100340094(GF_OBJ_HANDLE* handle) {
     }
 }
 
-bool GfMenuGfObjAdapter::fn_7100340154(GF_OBJ_HANDLE* handle) {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuGfObjAdapter::update_IRA_TemporaryHp(GF_OBJ_HANDLE* handle) {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
     GfObjProperty* property = GfObjUtil::getProperty(handle);

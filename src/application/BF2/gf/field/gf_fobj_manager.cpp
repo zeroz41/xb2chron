@@ -92,10 +92,10 @@ void GfFobjManager::update(const fw::UpdateInfo& info) {
     if (manager == nullptr || !manager->m_initialized) {
         return;
     }
-    manager->fn_7100289504();
+    manager->updateEnhanceEffect();
     if (manager->m_dropitemListFP == nullptr) {
         manager->m_dropitemListFP =
-            Bdat::isExistFP(GfGameManager::fn_71002A9E68() ? "RSC_dropitemListIra" : "RSC_dropitemList");
+            Bdat::isExistFP(GfGameManager::isGameTypeIra() ? "RSC_dropitemListIra" : "RSC_dropitemList");
     }
     if (manager->m_dropitemParamFP == nullptr) {
         manager->m_dropitemParamFP = Bdat::isExistFP("RSC_dropitemParam");
@@ -112,7 +112,7 @@ void GfFobjManager::update(const fw::UpdateInfo& info) {
     manager->m_seManager.update(info.m_deltaTime);
 }
 
-void GfFobjManager::fn_7100289504() {
+void GfFobjManager::updateEnhanceEffect() {
     m_leaderBonus = 0.0f;
     GfObjAcc acc(GfGameManager::getPartyLeaderDriver());
     int driver = acc.getDriverId();
@@ -144,8 +144,8 @@ GfDropitemParams* GfFobjManager::getDropitemParams() {
     return nullptr;
 }
 
-void GfFobjManager::fn_7100289668() {
-    m_seManager.fn_7100282EA8();
+void GfFobjManager::rebuildForGameType() {
+    m_seManager.rebuildForGameType();
 }
 
 void GfFobjManager::listenerGfObj(IGfObjListener::OBJEVT evt, GF_OBJ_HANDLE* handle, unsigned int type) {

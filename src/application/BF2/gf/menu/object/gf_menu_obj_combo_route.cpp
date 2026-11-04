@@ -9,7 +9,7 @@
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UIManager.h"
 #include "classes/gf/GfMenuReference.h"
-#include "classes/gf/TUnk_B61408.h"
+#include "classes/gf/GfMenuObjComboRouteSimple.h"
 
 namespace gf {
 
@@ -156,8 +156,8 @@ void GfMenuObjComboRoute::setupComboRoute(ui::UIObjectAcc& acc) {
 }
 
 void GfMenuObjComboRoute::open() {
-    if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuReference::fn_7100368418(5)) {
-        TUnk_B61408::fn_71003DC3AC();
+    if (GfMenuObjUtil::isValidExpansion(3) && GfMenuReference::isIraFlag(5)) {
+        GfMenuObjComboRouteSimple::open();
         return;
     }
     unsigned int handle = GfMenuObject::getAttachedObject(0x5E);
@@ -171,8 +171,8 @@ void GfMenuObjComboRoute::open() {
 }
 
 void GfMenuObjComboRoute::close() {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
-        TUnk_B61408::fn_71003DC440();
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        GfMenuObjComboRouteSimple::close();
     }
     unsigned int handle = GfMenuObject::getAttachedObject(0x5E);
     if (ui::UIObjectAcc(handle).m_object != nullptr) {
@@ -185,8 +185,8 @@ void GfMenuObjComboRoute::close() {
 }
 
 void GfMenuObjComboRoute::disp(bool disp) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
-        TUnk_B61408::fn_71003DC4D4(disp);
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        GfMenuObjComboRouteSimple::disp(disp);
     }
     unsigned int handle = GfMenuObject::getAttachedObject(0x5E);
     if (ui::UIObjectAcc(handle).m_object != nullptr) {

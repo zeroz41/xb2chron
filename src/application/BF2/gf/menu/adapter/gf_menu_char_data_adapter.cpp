@@ -168,28 +168,28 @@ static GfMenuCharDataAdapter::TypeSetup s_typeSetups[] = {
     {&GfMenuCharDataAdapter::update_BL_CVName, {2, 0, 0}},
     {&GfMenuCharDataAdapter::update_BL_IlustName, {2, 0, 0}},
     {&GfMenuCharDataAdapter::update_BL_TeamName, {2, 0, 0}},
-    {&GfMenuCharDataAdapter::fn_7100338A74, {1, 0, 0}},
+    {&GfMenuCharDataAdapter::update_BL_WpnImage, {1, 0, 0}},
     {&GfMenuCharDataAdapter::update_BL_InMercenry, {3, 0, 0}},
     {&GfMenuCharDataAdapter::update_EN_BookID, {0, 0, 9999}},
-    {&GfMenuCharDataAdapter::fn_7100338D80, {0, 0, 999}},
+    {&GfMenuCharDataAdapter::update_EN_BaseLv, {0, 0, 999}},
     {&GfMenuCharDataAdapter::update_EN_Family, {2, 0, 0}},
     {&GfMenuCharDataAdapter::update_EN_Genus, {2, 0, 0}},
     {&GfMenuCharDataAdapter::update_EN_RewardExp, {0, 0, 999999999}},
     {&GfMenuCharDataAdapter::update_EN_RewardGold, {0, 0, 999999999}},
-    {&GfMenuCharDataAdapter::fn_7100339058, {7, 4, 0}},
-    {&GfMenuCharDataAdapter::fn_7100339108, {7, 4, 0}},
-    {&GfMenuCharDataAdapter::fn_71003391AC, {3, 0, 0}},
-    {&GfMenuCharDataAdapter::fn_7100339224, {3, 0, 0}},
-    {&GfMenuCharDataAdapter::fn_710033929C, {3, 0, 0}},
-    {&GfMenuCharDataAdapter::fn_7100339314, {3, 0, 0}},
-    {&GfMenuCharDataAdapter::fn_71003393E4, {3, 0, 0}},
-    {&GfMenuCharDataAdapter::fn_71003394AC, {3, 0, 0}},
-    {&GfMenuCharDataAdapter::fn_7100339574, {0, 0, 100}},
-    {&GfMenuCharDataAdapter::fn_71003396C4, {3, 0, 0}},
-    {&GfMenuCharDataAdapter::fn_710033973C, {1, 0, 0}},
-    {&GfMenuCharDataAdapter::fn_7100339800, {1, 0, 0}},
-    {&GfMenuCharDataAdapter::fn_710033987C, {2, 0, 0}},
-    {&GfMenuCharDataAdapter::fn_71003399DC, {1, 0, 0}},
+    {&GfMenuCharDataAdapter::update_EN_DefeatedTime, {7, 4, 0}},
+    {&GfMenuCharDataAdapter::update_EN_DefeatedTime2, {7, 4, 0}},
+    {&GfMenuCharDataAdapter::update_IRA_IsFrontBtl, {3, 0, 0}},
+    {&GfMenuCharDataAdapter::update_IRA_IsBackBtl, {3, 0, 0}},
+    {&GfMenuCharDataAdapter::update_IRA_NotReserveBtl, {3, 0, 0}},
+    {&GfMenuCharDataAdapter::update_IRA_IsFront, {3, 0, 0}},
+    {&GfMenuCharDataAdapter::update_IRA_IsBack, {3, 0, 0}},
+    {&GfMenuCharDataAdapter::update_IRA_NotReserve, {3, 0, 0}},
+    {&GfMenuCharDataAdapter::update_IRA_ChangeRecast, {0, 0, 100}},
+    {&GfMenuCharDataAdapter::update_IRA_TypeBlade, {3, 0, 0}},
+    {&GfMenuCharDataAdapter::update_IRA_BackDrFace, {1, 0, 0}},
+    {&GfMenuCharDataAdapter::update_IRA_NpcFaceIcon, {1, 0, 0}},
+    {&GfMenuCharDataAdapter::update_IRA_TeamName, {2, 0, 0}},
+    {&GfMenuCharDataAdapter::update_IRA_TalentIcon, {1, 0, 0}},
 };
 
 GfMenuCharDataAdapter::~GfMenuCharDataAdapter() {
@@ -734,8 +734,8 @@ bool GfMenuCharDataAdapter::fn_71003386E0(const DataParamAcc& acc) {
     if (acc.getObjType() != 4) {
         return false;
     }
-    if (GfGameManager::isClearGame() && GfMenuObjUtil::fn_71004903E4(getBladeId(acc)) &&
-        GfMenuObjUtil::fn_71004903F4()) {
+    if (GfGameManager::isClearGame() && GfMenuObjUtil::isBladeHana(getBladeId(acc)) &&
+        GfMenuObjUtil::isBladeHanaInMercenary()) {
         return true;
     }
     return GfDataBlade::fn_71002383C8(getBladeId(acc));
@@ -821,7 +821,7 @@ bool GfMenuCharDataAdapter::update_EN_BookID(const DataParamAcc& acc) {
     return true;
 }
 
-bool GfMenuCharDataAdapter::fn_7100338D80(const DataParamAcc& acc) {
+bool GfMenuCharDataAdapter::update_EN_BaseLv(const DataParamAcc& acc) {
     if (acc.getObjType() != 5) {
         return false;
     }
@@ -845,36 +845,36 @@ bool GfMenuCharDataAdapter::update_EN_RewardGold(const DataParamAcc& acc) {
     return false;
 }
 
-bool GfMenuCharDataAdapter::fn_71003391AC(const DataParamAcc& acc) {
-    if (GfMenuObjUtil::fn_710048FD30(3) && acc.getObjType() == 3) {
-        return GfMenuReference::fn_7100367EF4(getDriverId(acc)) == 0;
+bool GfMenuCharDataAdapter::update_IRA_IsFrontBtl(const DataParamAcc& acc) {
+    if (GfMenuObjUtil::isValidExpansion(3) && acc.getObjType() == 3) {
+        return GfMenuReference::getIraCharForm(getDriverId(acc)) == 0;
     }
     return false;
 }
 
-bool GfMenuCharDataAdapter::fn_7100339224(const DataParamAcc& acc) {
-    if (GfMenuObjUtil::fn_710048FD30(3) && acc.getObjType() == 3) {
-        return GfMenuReference::fn_7100367EF4(getDriverId(acc)) == 1;
+bool GfMenuCharDataAdapter::update_IRA_IsBackBtl(const DataParamAcc& acc) {
+    if (GfMenuObjUtil::isValidExpansion(3) && acc.getObjType() == 3) {
+        return GfMenuReference::getIraCharForm(getDriverId(acc)) == 1;
     }
     return false;
 }
 
-bool GfMenuCharDataAdapter::fn_710033929C(const DataParamAcc& acc) {
-    if (GfMenuObjUtil::fn_710048FD30(3) && acc.getObjType() == 3) {
-        return GfMenuReference::fn_7100367EF4(getDriverId(acc)) != 2;
+bool GfMenuCharDataAdapter::update_IRA_NotReserveBtl(const DataParamAcc& acc) {
+    if (GfMenuObjUtil::isValidExpansion(3) && acc.getObjType() == 3) {
+        return GfMenuReference::getIraCharForm(getDriverId(acc)) != 2;
     }
     return false;
 }
 
-bool GfMenuCharDataAdapter::fn_71003396C4(const DataParamAcc& acc) {
-    if (GfMenuObjUtil::fn_710048FD30(3) && acc.getObjType() == 3) {
-        return !GfDataDriver::fn_7100237A94(getDriverId(acc));
+bool GfMenuCharDataAdapter::update_IRA_TypeBlade(const DataParamAcc& acc) {
+    if (GfMenuObjUtil::isValidExpansion(3) && acc.getObjType() == 3) {
+        return !GfDataDriver::isIraFront(getDriverId(acc));
     }
     return false;
 }
 
-bool GfMenuCharDataAdapter::fn_7100339800(const DataParamAcc& acc) {
-    if (GfMenuObjUtil::fn_710048FD30(3) && acc.getObjType() == 6) {
+bool GfMenuCharDataAdapter::update_IRA_NpcFaceIcon(const DataParamAcc& acc) {
+    if (GfMenuObjUtil::isValidExpansion(3) && acc.getObjType() == 6) {
         unsigned int value = GfDataBlade::fn_710024DA88(getBladeId(acc));
         if (value != 0) {
             setNumber(value - 0xED03);
@@ -884,8 +884,8 @@ bool GfMenuCharDataAdapter::fn_7100339800(const DataParamAcc& acc) {
     return false;
 }
 
-bool GfMenuCharDataAdapter::fn_71003399DC(const DataParamAcc& acc) {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuCharDataAdapter::update_IRA_TalentIcon(const DataParamAcc& acc) {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
     int icon = GfMenuObjUtil::getFaceIconID(acc);
@@ -911,8 +911,8 @@ GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromCoverter(unsigned int ha
     return adapter;
 }
 
-bool GfMenuCharDataAdapter::fn_7100339108(const DataParamAcc& acc) {
-    if (acc.getObjType() != 5 || !GfGameManager::fn_71002AC64C()) {
+bool GfMenuCharDataAdapter::update_EN_DefeatedTime2(const DataParamAcc& acc) {
+    if (acc.getObjType() != 5 || !GfGameManager::isEnableNamedRecord()) {
         return false;
     }
     ui::uiDateTime time = {};
@@ -944,7 +944,7 @@ bool GfMenuCharDataAdapter::update_DR_ClassBuffLv(const DataParamAcc& acc) {
         return false;
     }
     unsigned int driverClass;
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         driverClass = fn_71002DC130(getDriverId(acc));
     } else {
         driverClass = acc.getClass(m_virtualMode == 1);
@@ -1005,12 +1005,12 @@ bool GfMenuCharDataAdapter::update_BL_TeamName(const DataParamAcc& acc) {
     return true;
 }
 
-bool GfMenuCharDataAdapter::fn_7100339058(const DataParamAcc& acc) {
-    if (acc.getObjType() != 5 || !GfGameManager::fn_71002AC64C()) {
+bool GfMenuCharDataAdapter::update_EN_DefeatedTime(const DataParamAcc& acc) {
+    if (acc.getObjType() != 5 || !GfGameManager::isEnableNamedRecord()) {
         return false;
     }
     ui::uiDateTime time = {};
-    unsigned int mode = GfMenuReference::fn_7100369304();
+    unsigned int mode = GfMenuReference::getReferenceBtlchDifficulty();
     unsigned int sec = fn_71002ED608(getBladeId(acc), mode);
     time.minute = sec / 60;
     time.sec = sec % 60;
@@ -1037,7 +1037,7 @@ bool GfMenuCharDataAdapter::update_DR_SetBladeFace(const DataParamAcc& acc) {
 
 bool GfMenuCharDataAdapter::update_BL_AttrIcon(const DataParamAcc& acc) {
     int icon;
-    if (GfMenuObjUtil::fn_710048FD30(3) && acc.getObjType() == 3) {
+    if (GfMenuObjUtil::isValidExpansion(3) && acc.getObjType() == 3) {
         icon = static_cast<unsigned short>(acc.getAttribute(-1, m_virtualMode == 1) + 0x9E);
     } else {
         if (acc.getObjType() != 4) {
@@ -1081,11 +1081,11 @@ bool GfMenuCharDataAdapter::update_AttrName(const DataParamAcc& acc) {
     return true;
 }
 
-bool GfMenuCharDataAdapter::fn_710033973C(const DataParamAcc& acc) {
-    if (!GfMenuObjUtil::fn_710048FD30(3) || acc.getObjType() != 3) {
+bool GfMenuCharDataAdapter::update_IRA_BackDrFace(const DataParamAcc& acc) {
+    if (!GfMenuObjUtil::isValidExpansion(3) || acc.getObjType() != 3) {
         return false;
     }
-    int icon = GfMenuObjUtil::getFaceIconID(DataParamAcc(3, GfDataDriver::fn_7100241A1C(getDriverId(acc)), GimmickType(0)));
+    int icon = GfMenuObjUtil::getFaceIconID(DataParamAcc(3, GfDataDriver::getIraBack(getDriverId(acc)), GimmickType(0)));
     if (icon == 0) {
         return false;
     }
@@ -1095,7 +1095,7 @@ bool GfMenuCharDataAdapter::fn_710033973C(const DataParamAcc& acc) {
 
 bool GfMenuCharDataAdapter::update_BL_AttrCol2(const DataParamAcc& acc) {
     unsigned int attribute;
-    if (GfMenuObjUtil::fn_710048FD30(3) && acc.getObjType() == 3) {
+    if (GfMenuObjUtil::isValidExpansion(3) && acc.getObjType() == 3) {
         attribute = acc.getAttribute(-1, m_virtualMode == 1);
     } else {
         if (acc.getObjType() != 4) {
@@ -1109,8 +1109,8 @@ bool GfMenuCharDataAdapter::update_BL_AttrCol2(const DataParamAcc& acc) {
     return true;
 }
 
-bool GfMenuCharDataAdapter::fn_71003393E4(const DataParamAcc& acc) {
-    if (!GfMenuObjUtil::fn_710048FD30(3) || acc.getObjType() != 3) {
+bool GfMenuCharDataAdapter::update_IRA_IsBack(const DataParamAcc& acc) {
+    if (!GfMenuObjUtil::isValidExpansion(3) || acc.getObjType() != 3) {
         return false;
     }
     unsigned int party = GfGameParty::getPartyId(3, getDriverId(acc));
@@ -1120,8 +1120,8 @@ bool GfMenuCharDataAdapter::fn_71003393E4(const DataParamAcc& acc) {
     return GfGameParty::getDriverBdatId(party, 1) == getDriverId(acc);
 }
 
-bool GfMenuCharDataAdapter::fn_71003394AC(const DataParamAcc& acc) {
-    if (!GfMenuObjUtil::fn_710048FD30(3) || acc.getObjType() != 3) {
+bool GfMenuCharDataAdapter::update_IRA_NotReserve(const DataParamAcc& acc) {
+    if (!GfMenuObjUtil::isValidExpansion(3) || acc.getObjType() != 3) {
         return false;
     }
     unsigned int party = GfGameParty::getPartyId(3, getDriverId(acc));
@@ -1139,8 +1139,8 @@ GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromPartyDriver(unsigned int
     return createFromCoverter(handle, kind, converter, changed);
 }
 
-bool GfMenuCharDataAdapter::fn_7100339314(const DataParamAcc& acc) {
-    if (!GfMenuObjUtil::fn_710048FD30(3) || acc.getObjType() != 3) {
+bool GfMenuCharDataAdapter::update_IRA_IsFront(const DataParamAcc& acc) {
+    if (!GfMenuObjUtil::isValidExpansion(3) || acc.getObjType() != 3) {
         return false;
     }
     unsigned int party = GfGameParty::getPartyId(3, getDriverId(acc));
@@ -1155,7 +1155,7 @@ bool GfMenuCharDataAdapter::update_DR_ClassBuffName(const DataParamAcc& acc) {
         return false;
     }
     unsigned int driverClass;
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         driverClass = fn_71002DC130(getDriverId(acc));
     } else {
         driverClass = acc.getClass(m_virtualMode == 1);
@@ -1170,8 +1170,8 @@ bool GfMenuCharDataAdapter::update_DR_ClassBuffName(const DataParamAcc& acc) {
 
 bool GfMenuCharDataAdapter::update_BL_DR_Name(const DataParamAcc& acc) {
     unsigned int driver = GfDataBlade::getCreator(getBladeId(acc));
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
-        driver = GfDataDriver::fn_71002417DC(GfDataBlade::fn_7100236518(getBladeId(acc)));
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        driver = GfDataDriver::getIraFront(GfDataBlade::getIraDriver(getBladeId(acc)));
     }
     if (driver == 0) {
         return false;
@@ -1185,8 +1185,8 @@ bool GfMenuCharDataAdapter::update_BL_DR_Name(const DataParamAcc& acc) {
 
 bool GfMenuCharDataAdapter::update_BL_DR_Face(const DataParamAcc& acc) {
     unsigned int driver = GfDataBlade::getCreator(getBladeId(acc));
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
-        driver = GfDataDriver::fn_71002417DC(GfDataBlade::fn_7100236518(getBladeId(acc)));
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        driver = GfDataDriver::getIraFront(GfDataBlade::getIraDriver(getBladeId(acc)));
     }
     if (driver == 0) {
         return false;
@@ -1209,7 +1209,7 @@ bool GfMenuCharDataAdapter::update_DR_BtlFace(const DataParamAcc& acc) {
     int face;
     if (getDriverId(acc) == 1 && GfGameManager::isRexAwakening()) {
         face = 8;
-    } else if (GfMenuObjUtil::fn_710048FD30(3) && getDriverId(acc) == 0x14 && GfMenuObjUtil::fn_710048FCF8()) {
+    } else if (GfMenuObjUtil::isValidExpansion(3) && getDriverId(acc) == 0x14 && GfMenuObjUtil::isIraSinMaskOff()) {
         face = 0xB;
     } else {
         int icon = acc.getIconData();
@@ -1284,7 +1284,7 @@ bool GfMenuCharDataAdapter::update_DR_ExpProgress(const DataParamAcc& acc) {
 }
 
 bool GfMenuCharDataAdapter::update_BL_SpecialName(const DataParamAcc& acc) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         if (acc.getObjType() != 4 && acc.getObjType() != 3) {
             return false;
         }
@@ -1315,7 +1315,7 @@ bool GfMenuCharDataAdapter::update_BL_SpecialName(const DataParamAcc& acc) {
 }
 
 bool GfMenuCharDataAdapter::update_BL_SpecialDesc(const DataParamAcc& acc) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         if (acc.getObjType() != 4 && acc.getObjType() != 3) {
             return false;
         }
@@ -1470,12 +1470,12 @@ GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromEnemyList(unsigned int h
     return createFromCoverter(handle, kind, converter, changed);
 }
 
-bool GfMenuCharDataAdapter::fn_7100339574(const DataParamAcc& acc) {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuCharDataAdapter::update_IRA_ChangeRecast(const DataParamAcc& acc) {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
     if (!GfGameManager::isBattle()) {
-        const GfMenuReference::DriverGauge* gauge = GfMenuReference::fn_7100367C78(getDriverId(acc));
+        const GfMenuReference::DriverGauge* gauge = GfMenuReference::getIraCharProperty(getDriverId(acc));
         if (gauge == nullptr) {
             return false;
         }
@@ -1487,13 +1487,13 @@ bool GfMenuCharDataAdapter::fn_7100339574(const DataParamAcc& acc) {
         } else {
             return false;
         }
-        setNumber(GfMenuReference::fn_7100368418(bit) ? 100 : 0);
+        setNumber(GfMenuReference::isIraFlag(bit) ? 100 : 0);
         return false;
     } else {
         if (acc.getObjType() != 3) {
             return false;
         }
-        const GfMenuReference::DriverGauge* gauge = GfMenuReference::fn_7100367C78(getDriverId(acc));
+        const GfMenuReference::DriverGauge* gauge = GfMenuReference::getIraCharProperty(getDriverId(acc));
         if (gauge == nullptr) {
             return false;
         }
@@ -1515,8 +1515,8 @@ GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromEnBookList(unsigned int 
     return createFromCoverter(handle, kind, converter, changed);
 }
 
-bool GfMenuCharDataAdapter::fn_710033987C(const DataParamAcc& acc) {
-    if (!GfMenuObjUtil::fn_710048FD30(3) || acc.getObjType() != 3) {
+bool GfMenuCharDataAdapter::update_IRA_TeamName(const DataParamAcc& acc) {
+    if (!GfMenuObjUtil::isValidExpansion(3) || acc.getObjType() != 3) {
         return false;
     }
     unsigned int driver = getDriverId(acc);
@@ -1698,7 +1698,7 @@ bool GfMenuCharDataAdapter::update_FavoriteItemName(const DataParamAcc& acc) {
 }
 
 bool GfMenuCharDataAdapter::update_BL_WeaponIcon(const DataParamAcc& acc) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         unsigned int blade;
         if (acc.getObjType() == 3) {
             blade = GfDataBlade::fn_7100237B70(getDriverId(acc), -1);
@@ -1728,14 +1728,14 @@ bool GfMenuCharDataAdapter::update_BL_WeaponIcon(const DataParamAcc& acc) {
         if (type == 0) {
             return false;
         }
-        if (GfMenuObjUtil::fn_710048FD30(1)) {
+        if (GfMenuObjUtil::isValidExpansion(1)) {
             if (type == 0x21) {
                 type = 0x1B;
             } else if (type == 0x22) {
                 type = 0x1C;
             }
         }
-        if (TUnk_B54858::get()->fn_71002A75DC(0x20301)) {
+        if (GfGameAoc::get()->fn_71002A75DC(0x20301)) {
             if (type == 0x24) {
                 type = 0x1D;
             } else if (type == 0x23) {
@@ -1747,7 +1747,7 @@ bool GfMenuCharDataAdapter::update_BL_WeaponIcon(const DataParamAcc& acc) {
     return true;
 }
 
-bool GfMenuCharDataAdapter::fn_7100338A74(const DataParamAcc& acc) {
+bool GfMenuCharDataAdapter::update_BL_WpnImage(const DataParamAcc& acc) {
     if (acc.getObjType() != 4) {
         return false;
     }
@@ -1764,7 +1764,7 @@ bool GfMenuCharDataAdapter::fn_7100338A74(const DataParamAcc& acc) {
     unsigned int rsc = 0;
     if (!GfDataBlade::isCommonBlade(getBladeId(acc))) {
         GfBdatChrBl* chrBl = mm::mtl::PtrSingleton<GfBdatChrBl>::sys();
-        if (items->isPcWpnFlagPrivate(weapon) || GfMenuObjUtil::fn_710048FD30(3)) {
+        if (items->isPcWpnFlagPrivate(weapon) || GfMenuObjUtil::isValidExpansion(3)) {
             rsc = chrBl->getChrBlPrivateWpnR_Driver(getBladeId(acc)) != 0
                       ? chrBl->getChrBlPrivateWpnR_Driver(getBladeId(acc))
                       : (chrBl->getChrBlPrivateWpnR(getBladeId(acc)) != 0 ? chrBl->getChrBlPrivateWpnR(getBladeId(acc)) : 0);
@@ -1784,7 +1784,7 @@ bool GfMenuCharDataAdapter::fn_7100338A74(const DataParamAcc& acc) {
     return true;
 }
 
-GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A1F0(unsigned int handle, unsigned int kind,
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromNamedList(unsigned int handle, unsigned int kind,
                                                             const GfMenuIDList* list, int index, bool changed) {
 #line 1013
     TUnk_B5B878* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5B878(list, index);
@@ -1823,7 +1823,7 @@ GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromReferenceBlade(unsigned 
     return createFromCoverter(handle, kind, converter, changed);
 }
 
-GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A3D4(unsigned int handle, unsigned int kind,
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromReferenceBladeSet(unsigned int handle, unsigned int kind,
                                                             unsigned int index, int slot, bool changed) {
 #line 1041
     TUnk_B5B908* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5B908(index, slot);
@@ -1864,7 +1864,7 @@ bool GfMenuCharDataAdapter::update_EN_Genus(const DataParamAcc& acc) {
 GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromReferenceBladeOwnerDriver(unsigned int handle,
                                                                                   unsigned int kind,
                                                                                   unsigned int blade, bool changed) {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return nullptr;
     }
 #line 1082
@@ -1876,7 +1876,7 @@ GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromReferenceBladeOwnerDrive
 GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A7EC(unsigned int handle, unsigned int kind,
                                                             const GfMenuDriverList* list, unsigned int index,
                                                             unsigned int party, bool changed) {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return nullptr;
     }
 #line 1092
@@ -1884,9 +1884,9 @@ GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A7EC(unsigned int handle,
     return createFromCoverter(handle, kind, converter, changed);
 }
 
-GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A940(unsigned int handle, unsigned int kind,
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromNpcIDList(unsigned int handle, unsigned int kind,
                                                             const GfMenuIDList* list, int index, bool changed) {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return nullptr;
     }
 #line 1102
@@ -1920,23 +1920,23 @@ void GfMenuCharDataAdapter::update(fw::UpdateInfo const&) {
                         }
                         acc.setVirtualSetBlade(GfMenuReference::getDriverVirtualBladeID(), slot);
                     }
-                    // the original asks fn_710048FD30(3) up to three times on one path (its code has the three
-                    // separate calls); with layer 3, slot 0 is the extra accessory (fn_7100221F88), slot n index n - 1
+                    // the original asks isValidExpansion(3) up to three times on one path (its code has the three
+                    // separate calls); with layer 3, slot 0 is the extra accessory (setVirtualEquipWpnAcce), slot n index n - 1
                     if (GfMenuReference::getDriverVirtualEquipAcc() != 0) {
-                        if (GfMenuObjUtil::fn_710048FD30(3)) {
+                        if (GfMenuObjUtil::isValidExpansion(3)) {
                             unsigned int slot = GfMenuReference::getDriverVirtualEquipAccSlot();
                             if (slot == 0) {
-                                acc.fn_7100221F88(GfMenuReference::getDriverVirtualEquipAcc());
+                                acc.setVirtualEquipWpnAcce(GfMenuReference::getDriverVirtualEquipAcc());
                             } else {
                                 acc.setVirtualEquipAcc(slot - 1, GfMenuReference::getDriverVirtualEquipAcc());
                             }
-                        } else if (GfMenuObjUtil::fn_710048FD30(3)) {
+                        } else if (GfMenuObjUtil::isValidExpansion(3)) {
                             unsigned int slot = GfMenuReference::getDriverVirtualEquipAccSlot();
                             if (slot != 0) {
                                 acc.setVirtualEquipAcc(slot - 1, GfMenuReference::getDriverVirtualEquipAcc());
                             }
                         } else {
-                            bool layer = GfMenuObjUtil::fn_710048FD30(3);
+                            bool layer = GfMenuObjUtil::isValidExpansion(3);
                             unsigned int slot = GfMenuReference::getDriverVirtualEquipAccSlot();
                             if (layer) {
                                 if (slot != 0) {
@@ -1959,7 +1959,7 @@ void GfMenuCharDataAdapter::update(fw::UpdateInfo const&) {
                     break;
                 }
             }
-            if (acc.getObjType() == 4 && !GfMenuObjUtil::fn_7100490CE0(getBladeId(acc)) &&
+            if (acc.getObjType() == 4 && !GfMenuObjUtil::isIraDummyBlade(getBladeId(acc)) &&
                 !GfMenuObjUtil::isValidBlade(getBladeId(acc))) {
                 disp = false;
             } else {
@@ -2129,10 +2129,10 @@ void TUnk_B5B878::getCharData(unsigned char& objType, unsigned int& objId) {
     if (index != -1 && index < m_list->getSize()) {
         unsigned int id = m_list->getContents(m_list->getPageIndex(index)).m_id;
         objType = 5;
-        if (GfGameManager::fn_71002A9E68()) {
-            objId = mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys()->fn_71001F4EB8(id);
+        if (GfGameManager::isGameTypeIra()) {
+            objId = mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys()->getBTL_NamedListIraEnemyID(id);
         } else {
-            objId = mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys()->fn_71001F4DE8(id);
+            objId = mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys()->getBTL_NamedListEnemyID(id);
         }
     }
 }
@@ -2150,9 +2150,9 @@ void GfMenuCharDataAdapter::ReferenceBladeConverter::getCharData(unsigned char& 
 void TUnk_B5B908::getCharData(unsigned char& objType, unsigned int& objId) {
     DataParamAcc acc(3, GfMenuReference::getReferenceDriverID(m_index), static_cast<GimmickType>(0));
     if (acc.isValid()) {
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(3)) {
             mm::mtl::FixedVector<unsigned short, 32> drivers;
-            GfDataDriver::fn_71002416B4(drivers, getDriverId(acc));
+            GfDataDriver::getIraBack(drivers, getDriverId(acc));
             if (static_cast<unsigned long>(m_slot) < drivers.size()) {
                 objType = 4;
                 objId = GfDataDriver::isActivateUnuse(drivers[m_slot]) ? 0 : GfDataBlade::fn_7100237B70(drivers[m_slot], -1);
@@ -2191,8 +2191,8 @@ void GfMenuCharDataAdapter::ReferenceBladeOwnerDriverConverter::getCharData(unsi
                                                                             unsigned int& objId) {
     objType = 3;
     objId = 0;
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
-        const GfMenuReference::BladeOwner* owner = GfMenuReference::fn_7100367BD8(m_blade);
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        const GfMenuReference::BladeOwner* owner = GfMenuReference::getIraCharInfoFromFromID(m_blade);
         if (owner != nullptr) {
             objType = 3;
             objId = owner->m_driver;
@@ -2203,7 +2203,7 @@ void GfMenuCharDataAdapter::ReferenceBladeOwnerDriverConverter::getCharData(unsi
 void TUnk_B5B9C8::getCharData(unsigned char& objType, unsigned int& objId) {
     objType = 3;
     objId = 0;
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         unsigned int driver = m_list->getContents(m_index).m_driver;
         if (driver != 0) {
             int partyId = GfDataParty::getDriverPartyID(driver);

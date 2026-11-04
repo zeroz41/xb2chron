@@ -46,7 +46,7 @@ GfMenuEvTherterAdapter* GfMenuEvTherterAdapter::create(unsigned int handle, unsi
 }
 
 bool GfMenuEvTherterAdapter::update_Title(unsigned int theaterId) {
-    unsigned char* fp = GfDataBdat::getFP(GfMenuObjUtil::fn_710048FD30(3) ? 0xFE : 0xFD);
+    unsigned char* fp = GfDataBdat::getFP(GfMenuObjUtil::isValidExpansion(3) ? 0xFE : 0xFD);
     if (fp == nullptr) {
         return false;
     }
@@ -57,7 +57,7 @@ bool GfMenuEvTherterAdapter::update_Title(unsigned int theaterId) {
 }
 
 bool GfMenuEvTherterAdapter::update_Thumb(unsigned int theaterId) {
-    unsigned char* fp = GfDataBdat::getFP(GfMenuObjUtil::fn_710048FD30(3) ? 0xFE : 0xFD);
+    unsigned char* fp = GfDataBdat::getFP(GfMenuObjUtil::isValidExpansion(3) ? 0xFE : 0xFD);
     if (fp == nullptr) {
         return false;
     }

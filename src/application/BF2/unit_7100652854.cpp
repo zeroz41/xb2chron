@@ -344,7 +344,7 @@ static int fn_7100653728(VMThread* th, ai::AiData* data) {
 
 // aiData.getTargetBladeId
 static int fn_710065377C(VMThread* th, ai::AiData* data) {
-    int id = Utility::fn_7100014DC0(data->getHandleTarget());
+    int id = Utility::AI_GetBladeBdatID(data->getHandleTarget());
     retInt(th, id != 0 ? id : -1);
     return 1;
 }
@@ -448,7 +448,7 @@ static int fn_7100653C40(VMThread* th, ai::AiData* data) {
 
 // aiData.getElemBall
 static int fn_7100653C8C(VMThread* th, ai::AiData* data) {
-    retInt(th, Utility::fn_71000126C0(data->getHandle()));
+    retInt(th, Utility::AI_GetResistantAttrNum(data->getHandle()));
     return 1;
 }
 
@@ -484,7 +484,7 @@ static int fn_7100653E58(VMThread* th, ai::AiData* data) {
 
 // aiData.actionTalentArts
 static int fn_7100653EA8(VMThread* th, ai::AiData* data) {
-    retBool(th, Utility::fn_7100012DEC(data->getHandle()));
+    retBool(th, Utility::AI_StartActionTalentArts(data->getHandle()));
     return 1;
 }
 
@@ -782,7 +782,7 @@ static int fn_7100654D48(VMThread* th, ai::AiData* data) {
 
 // aiData.isTalentArts
 static int fn_7100654DC4(VMThread* th, ai::AiData* data) {
-    retBool(th, Utility::fn_7100014958(data->getHandle(), -1));
+    retBool(th, Utility::AI_IsEnableTalentArts(data->getHandle(), -1));
     return 1;
 }
 

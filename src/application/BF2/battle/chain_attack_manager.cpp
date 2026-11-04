@@ -28,7 +28,7 @@ void ChainAttackManager::Update(const fw::UpdateInfo& info) {
     sys()->UpdateProc(info);
 }
 
-bool ChainAttackManager::fn_7100023F58() const {
+bool ChainAttackManager::IsStartDirectionAfterFadeOut() const {
     return m_startStep > 1;
 }
 
@@ -71,13 +71,13 @@ float ChainAttackManager::GetDamageRate() const {
     return rate.f;
 }
 
-void ChainAttackManager::fn_71000247D0(float value) {
+void ChainAttackManager::AddCriticalBonus(float value) {
     if (m_procState >= 1 && m_procState <= 50) {
         m_addedValue += value;
     }
 }
 
-float ChainAttackManager::fn_71000247F4() const {
+float ChainAttackManager::GetCriticalBonus() const {
     if (m_procState != 0) {
         return m_addedValue;
     }

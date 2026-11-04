@@ -2,7 +2,7 @@
 #include "gf/GfDataBlade.h"
 #include "gf/GfDataParty.h"
 #include "gf/GfMenuTypes.h"
-#include "classes/gf/TUnk_B61178.h"
+#include "classes/gf/GfMenuObjCharSelectIra.h"
 #include "classes/gf/GfMenuDriverList.h"
 #include "classes/gf/GfMenuFullScreen.h"
 #include "classes/gf/GfAllocator.h"
@@ -35,14 +35,14 @@ inline int startHalfFadeIn(unsigned int handle, int eventId) {
     param.m_eventId = eventId;
     return GfMenuObjUtil::startCtrl(handle, param, nullptr);
 }
-// the LAY_char layouts of a row's three image slots (driver, front and back blade): fn_71003D38E0 fits each
+// the LAY_char layouts of a row's three image slots (driver, front and back blade): applyImageParam fits each
 // IMG_char_img@ image to one. Proposed name, not the original's (lbl_7100B611C0)
 const char* const sCharFrames[] = {"character_dr", "character_bl_front", "character_bl_back"};
 }  // namespace
 
-int TUnk_B61178::s_state;
+int GfMenuObjCharSelectIra::s_state;
 
-TUnk_B61178::TUnk_B61178(unsigned int handle)
+GfMenuObjCharSelectIra::GfMenuObjCharSelectIra(unsigned int handle)
     : GfMenuObject(handle), m_driverList(nullptr), m_selectList(nullptr), m_driver(0), m_partyId(0), m_seq(this),
       m_seq2(this), pad_578(0), pad_57C(0), m_selectList2(nullptr), m_unusedList(nullptr), m_driverList2(nullptr),
       m_shownDriver(0), pad_5C4(0), m_req(-1), pad_61C(false) {
@@ -65,7 +65,7 @@ TUnk_B61178::TUnk_B61178(unsigned int handle)
     }
 }
 
-TUnk_B61178::~TUnk_B61178() {
+GfMenuObjCharSelectIra::~GfMenuObjCharSelectIra() {
     if (m_unusedList != nullptr) {
         m_unusedList->release();
         m_unusedList = nullptr;
@@ -89,32 +89,32 @@ TUnk_B61178::~TUnk_B61178() {
     s_state = 0;
 }
 
-void TUnk_B61178::fn_71003D1670() {
+void GfMenuObjCharSelectIra::fn_71003D1670() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x61));
     if (acc.m_object != nullptr) {
         GfMenuObject::sendOpenEvent(acc.searchChild("LAY_move"), 0, 0.0f);
     }
 }
 
-void TUnk_B61178::fn_71003D16C8() {
+void GfMenuObjCharSelectIra::fn_71003D16C8() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x61));
     if (acc.m_object != nullptr) {
         GfMenuObject::sendCloseEvent(acc.searchChild("LAY_move"), 0, 0.0f);
     }
 }
 
-int TUnk_B61178::fn_71003D1720() {
+int GfMenuObjCharSelectIra::getSubMenuMode() {
     return s_state;
 }
 
-void TUnk_B61178::fn_71003D1730(unsigned int handle, unsigned short subLayer) {
+void GfMenuObjCharSelectIra::openFromBattleBefore(unsigned int handle, unsigned short subLayer) {
     GfMenuTypes::Param param;
     param.m_halves.m_type = 1;
     GfMenuFullScreen::registLayerParam(0x12D, param);
     GfMenuObject::changeFSSubLayer(handle, subLayer, 0x12D, true);
 }
 
-bool TUnk_B61178::fn_71003D242C() {
+bool GfMenuObjCharSelectIra::seqWaitStreaming() {
     ui::UIObjectAcc acc(m_handle, "LAY_main");
     mm::mtl::FixStr<32> name;
     for (unsigned int i = 0; i < pad_578; i++) {
@@ -135,24 +135,24 @@ bool TUnk_B61178::fn_71003D242C() {
     return true;
 }
 
-bool TUnk_B61178::fn_71003D2558() {
+bool GfMenuObjCharSelectIra::seqOpenCharSelectByInit() {
     ui::UIObjectAcc acc(m_handle, "LAY_char");
     GfMenuObject::sendOpenEvent(acc.m_handle, 0, 0.0f);
     return true;
 }
 
-void TUnk_B61178::finalize() {
+void GfMenuObjCharSelectIra::finalize() {
     GfMenuObject::finalize();
 }
 
-void TUnk_B61178::update() {
+void GfMenuObjCharSelectIra::update() {
     m_seq.update();
     m_seq2.update();
     unsigned int driver = 0;
     if (s_state == 1) {
         driver = GfMenuReference::getReferenceDriverID(0);
     } else if (s_state == 2) {
-        driver = GfDataBlade::fn_7100236518(GfMenuReference::getReferenceBladeID(0));
+        driver = GfDataBlade::getIraDriver(GfMenuReference::getReferenceBladeID(0));
     }
     if (driver != 0 && m_shownDriver != driver) {
         ui::UIObjectAcc acc(m_handle, "LAY_move");
@@ -165,22 +165,22 @@ void TUnk_B61178::update() {
     GfMenuObject::update();
 }
 
-void TUnk_B61178::fn_71003D273C(unsigned int driver) {
-    if (GfDataDriver::fn_7100237A94(driver)) {
+void GfMenuObjCharSelectIra::fn_71003D273C(unsigned int driver) {
+    if (GfDataDriver::isIraFront(driver)) {
         GfMenuReference::setReferenceDriverID(0, driver);
         GfMenuReference::setReferenceDriverID(1, driver);
         GfMenuReference::setReferenceBladeID(0, 0);
     } else {
-        GfMenuReference::setReferenceDriverID(0, GfDataDriver::fn_71002417DC(driver));
+        GfMenuReference::setReferenceDriverID(0, GfDataDriver::getIraFront(driver));
         GfMenuReference::setReferenceDriverID(1, driver);
         GfMenuReference::setReferenceBladeID(0, GfDataBlade::fn_7100237B70(driver, -1));
     }
 }
 
-void TUnk_B61178::fn_71003D2EA4() {
+void GfMenuObjCharSelectIra::updateDriverPosList() {
     m_ids.clear();
     if (m_driverList->getSize() == 3) {
-        if (GfDataDriver::fn_7100237A94(m_driverList->getContents(0).m_driver)) {
+        if (GfDataDriver::isIraFront(m_driverList->getContents(0).m_driver)) {
             m_ids.push_back(0);
             m_ids.push_back(1);
             m_ids.push_back(2);
@@ -197,7 +197,7 @@ void TUnk_B61178::fn_71003D2EA4() {
     }
 }
 
-void TUnk_B61178::fn_71003D38E0() {
+void GfMenuObjCharSelectIra::applyImageParam() {
     ui::UIObjectAcc layout(m_handle, "LAY_char");
     mm::Vec2 scale;
     GfMenuObjUtil::ImageParam param;
@@ -215,7 +215,7 @@ void TUnk_B61178::fn_71003D38E0() {
                 unsigned int driver = m_driverList->getContents(i).m_driver;
                 unsigned int slot = 0;
                 if (count == 3) {
-                    if (!GfDataDriver::fn_7100237A94(driver)) {
+                    if (!GfDataDriver::isIraFront(driver)) {
                         slot = i == 2 ? 2 : 1;
                     }
                 } else if (count == 2) {
@@ -255,7 +255,7 @@ void TUnk_B61178::fn_71003D38E0() {
     }
 }
 
-void TUnk_B61178::fn_71003D3C34(int index) {
+void GfMenuObjCharSelectIra::refreshSubMenu(int index) {
     ui::UIObjectAcc acc(m_handle, "LAY_sub_menu");
     unsigned char* bdat;
     unsigned int title;
@@ -280,7 +280,7 @@ void TUnk_B61178::fn_71003D3C34(int index) {
     }
 }
 
-void TUnk_B61178::fn_71003D3DCC(unsigned int driver) {
+void GfMenuObjCharSelectIra::updateDispDriver(unsigned int driver) {
     ui::UIObjectAcc move(m_handle, "LAY_move");
     ui::UIObjectAcc image(m_handle, "IMG_char_move_img");
     mm::Vec2 scale;
@@ -301,10 +301,10 @@ void TUnk_B61178::fn_71003D3DCC(unsigned int driver) {
     GfMenuObjUtil::addPos(image.m_handle, param.m_x, param.m_y);
 }
 
-void TUnk_B61178::fn_71003D3EC0(unsigned int driver) {
+void GfMenuObjCharSelectIra::updateTopDriver(unsigned int driver) {
     if (GfDataDriver::isActivateUnuse(driver)) {
         mm::mtl::FixedVector<unsigned short, 32> drivers;
-        GfDataDriver::fn_71002416B4(drivers, driver);
+        GfDataDriver::getIraBack(drivers, driver);
         for (unsigned int i = 0; i < drivers.size(); i++) {
             if (!GfDataDriver::isActivateUnuse(*drivers.at(i))) {
                 driver = drivers[i];
@@ -316,12 +316,12 @@ void TUnk_B61178::fn_71003D3EC0(unsigned int driver) {
     m_partyId = GfDataParty::getDriverPartyID(driver);
 }
 
-void TUnk_B61178::fn_71003D3F94(unsigned int blade) {
-    unsigned int driver = GfDataBlade::fn_7100236518(blade);
+void GfMenuObjCharSelectIra::changeBlade(unsigned int blade) {
+    unsigned int driver = GfDataBlade::getIraDriver(blade);
     unsigned int listDriver = GfDataDriver::fn_71002418CC(driver, 0);
     if (m_driver != listDriver) {
-        fn_71003D3EC0(listDriver);
-        fn_71003D27B8(m_driver, false);
+        updateTopDriver(listDriver);
+        updateDriverList(m_driver, false);
     }
     for (unsigned int i = 0; i < m_driverList->getSize(); i++) {
         if (m_driverList->getContents(i).m_driver == driver) {
@@ -330,16 +330,16 @@ void TUnk_B61178::fn_71003D3F94(unsigned int blade) {
     }
 }
 
-bool TUnk_B61178::fn_71003D4568() {
+bool GfMenuObjCharSelectIra::seqWaitRequest() {
     if (m_req == -1) {
         return true;
     }
     return GfReqManager::isValid(m_req);
 }
 
-bool TUnk_B61178::fn_71003D4580() {
+bool GfMenuObjCharSelectIra::seqChangeDriverList() {
     unsigned int driver = m_driverList->getContents(m_driverList->getIndex(false)).m_driver;
-    fn_71003D27B8(driver, false);
+    updateDriverList(driver, false);
     if (m_ctrl != -1) {
         GfMenuObjUtil::setCtrlDefault(m_ctrl);
         GfMenuObjUtil::releaseCtrl(m_ctrl);
@@ -360,16 +360,16 @@ bool TUnk_B61178::fn_71003D4580() {
     return true;
 }
 
-bool TUnk_B61178::fn_71003D478C() {
+bool GfMenuObjCharSelectIra::seqOpenCharSelectByFormChange() {
     ui::UIObjectAcc acc(m_handle, "LAY_char");
     if (GfMenuObjUtil::getCtrlID(acc.m_handle) == -1) {
-        fn_71003D27B8(m_driver, true);
+        updateDriverList(m_driver, true);
         GfMenuObject::sendOpenEvent(acc.m_handle, 2, 0.0f);
     }
     return true;
 }
 
-void TUnk_B61178::fn_71003D4800() {
+void GfMenuObjCharSelectIra::startCharSelect() {
     unsigned int input = GfMenuObject::getFSInputObject(0);
     GfMenuObjMainMenu2::openCharChange(input, 3, false);
     GfMenuObjMainMenu2::cancelEnableMainMenu(true);
@@ -394,7 +394,7 @@ void TUnk_B61178::fn_71003D4800() {
     GfMenuObject::setupInputSelection(input, m_ids[index], count);
 }
 
-void TUnk_B61178::fn_71003D4974() {
+void GfMenuObjCharSelectIra::resetObjControl() {
     for (unsigned int i = 0; i < m_selectList->getSize(); i++) {
         int ctrl = GfMenuObjUtil::getCtrlID(m_selectList->getObject(i));
         if (ctrl != -1) {
@@ -413,17 +413,17 @@ void TUnk_B61178::fn_71003D4974() {
 void TUnk_B611D8::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     if (event.m_type == 0x104) {
-        if (TUnk_B61178::s_state == 1) {
-            TUnk_B61178* owner = m_owner;
+        if (GfMenuObjCharSelectIra::s_state == 1) {
+            GfMenuObjCharSelectIra* owner = m_owner;
             unsigned int driver = GfMenuReference::getReferenceDriverID(0);
             if (owner->m_driver != driver) {
-                owner->fn_71003D3EC0(driver);
-                owner->fn_71003D27B8(owner->m_driver, false);
+                owner->updateTopDriver(driver);
+                owner->updateDriverList(owner->m_driver, false);
             }
-        } else if (TUnk_B61178::s_state == 2) {
+        } else if (GfMenuObjCharSelectIra::s_state == 2) {
             unsigned int blade = GfMenuReference::getReferenceBladeID(0);
-            m_owner->fn_71003D3F94(GfMenuReference::getReferenceBladeID(0));
-            TUnk_B61178::fn_71003D273C(GfDataBlade::fn_7100236518(blade));
+            m_owner->changeBlade(GfMenuReference::getReferenceBladeID(0));
+            GfMenuObjCharSelectIra::fn_71003D273C(GfDataBlade::getIraDriver(blade));
         }
         GfMenuObject::sendOpenEvent(acc.searchChild("LAY_sub_menu"), 1, 0.0f);
     } else {
@@ -431,10 +431,10 @@ void TUnk_B611D8::reciveEvent(const ui::EventData& event, unsigned int handle) {
     }
 }
 
-bool TUnk_B61178::fn_71003D5C48() {
+bool GfMenuObjCharSelectIra::seqOpenCharSelect() {
     ui::UIObjectAcc acc(m_handle, "LAY_char");
     if (GfMenuObjUtil::getCtrlID(acc.m_handle) == -1) {
-        fn_71003D27B8(m_driver, false);
+        updateDriverList(m_driver, false);
         GfMenuObject::sendOpenEvent(acc.m_handle, 1, 0.0f);
     }
     return true;
@@ -466,12 +466,12 @@ void TUnk_B61228::reciveEvent(const ui::EventData& event, unsigned int handle) {
     }
 }
 
-bool TUnk_B61178::fn_71003D6E94() {
+bool GfMenuObjCharSelectIra::seqWaitStreamingDriver() {
     ui::UIObjectAcc acc(m_handle, "IMG_char_move_img");
     return !acc.isStreaming();
 }
 
-bool TUnk_B61178::fn_71003D6EE0() {
+bool GfMenuObjCharSelectIra::seqOpenDriver() {
     ui::UIObjectAcc acc(m_handle, "LAY_move");
     startHalfFadeIn(acc.m_handle, 0);
     return true;

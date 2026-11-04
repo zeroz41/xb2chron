@@ -1,8 +1,8 @@
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkSet.h"
 #include "classes/gmk/GmkCollection.h"
-#include "classes/gf/TUnk_B51DE0.h"
-#include "classes/gf/TUnk_B51E28.h"
+#include "classes/gf/LocatorGimmickEnemyWave.h"
+#include "classes/gf/LocatorCollection.h"
 #include "classes/gmk/AGmkNpc.h"
 #include "classes/gmk/GmkNpcManager.h"
 #include "classes/gmk/GmkManager.h"
@@ -51,9 +51,9 @@
 #include "classes/gmk/GmkWarp.h"
 #include "classes/gmk/GmkDoor.h"
 #include "classes/gmk/GmkElevator.h"
-#include "classes/gmk/TUnk_B6D660.h"
+#include "classes/gmk/GmkCamp.h"
 #include "classes/gf/GfGmkLocator.h"
-#include "classes/gf/TUnk_B51E90.h"
+#include "classes/gf/GfFieldNpcLocator.h"
 #include "classes/gmk/GmkNpc.h"
 #include "classes/gmk/GmkRoutedNpc.h"
 #include "classes/gf/GfGmkLocatorAtlas.h"
@@ -242,7 +242,7 @@ void LocatorBat_EnemyID::update() {
                 GF_OBJ_HANDLE* handle = enemy->getGobInst(j);
                 GfObjAcc objAcc(handle);
                 if (objAcc.isValidTransform() && !GfGameUtil::isGameObjWait(handle) &&
-                    (!GfGameManager::fn_71002A9E68() || m_enemyId == 0 || m_enemyId == objAcc.getEnArrangeId())) {
+                    (!GfGameManager::isGameTypeIra() || m_enemyId == 0 || m_enemyId == objAcc.getEnArrangeId())) {
                     m_posList.push_back(objAcc.getWorldTransformNoSync().position);
                     found = true;
                 }
@@ -270,7 +270,7 @@ void LocatorBat_EnemyID::update() {
                 GF_OBJ_HANDLE* handle = enemy->getGobInst(j);
                 GfObjAcc objAcc(handle);
                 if (objAcc.isValidTransform() && !GfGameUtil::isGameObjWait(handle) &&
-                    (!GfGameManager::fn_71002A9E68() || m_enemyId == 0 || m_enemyId == objAcc.getEnArrangeId())) {
+                    (!GfGameManager::isGameTypeIra() || m_enemyId == 0 || m_enemyId == objAcc.getEnArrangeId())) {
                     m_posList.push_back(objAcc.getWorldTransformNoSync().position);
                     found = true;
                 }
@@ -670,7 +670,7 @@ void LocatorGimmick::create(QuestID questId, unsigned short row) {
         m_gmkType = 0x3a;
         m_gmkId = enemyWaveId;
     } else if (campId != 0) {
-        m_gmkType = gmk::TUnk_B6D660::TYPE;
+        m_gmkType = gmk::GmkCamp::TYPE;
         m_gmkId = campId;
     } else if (collectionId != 0) {
         m_gmkType = gmk::GmkCollection::TYPE;
@@ -757,8 +757,8 @@ void LocatorGimmick::update() {
         }
         m_pos = *gmk->m_pos;
         break;
-    case gmk::TUnk_B6D660::TYPE:
-        if (!static_cast<const gmk::TUnk_B6D660*>(gmk)->getBdatInfo()->fn_71005B94AC()) {
+    case gmk::GmkCamp::TYPE:
+        if (!static_cast<const gmk::GmkCamp*>(gmk)->getBdatInfo()->isCondMatched()) {
             return;
         }
         m_pos = *gmk->m_pos;
@@ -769,12 +769,12 @@ void LocatorGimmick::update() {
     }
     m_posNum = 1;
 }
-TUnk_B51DE0::TUnk_B51DE0(QuestID questId, unsigned short row) {
+LocatorGimmickEnemyWave::LocatorGimmickEnemyWave(QuestID questId, unsigned short row) {
     if (!questId.empty() && row != 0) {
         create(questId, row);
     }
 }
-void TUnk_B51DE0::update() {
+void LocatorGimmickEnemyWave::update() {
     if (!isValid()) {
         return;
     }
@@ -807,7 +807,7 @@ void TUnk_B51DE0::update() {
         m_posList.push_back(*gmk->m_pos);
     }
 }
-void TUnk_B51E28::fn_710026F0FC(QuestID questId, unsigned short collectionId) {
+void LocatorCollection::create(QuestID questId, unsigned short collectionId) {
     dispose();
     m_questId = questId;
     m_collectionId = collectionId;
@@ -822,7 +822,7 @@ void TUnk_B51E28::fn_710026F0FC(QuestID questId, unsigned short collectionId) {
     int iconId = gmk::getBdatIdOfQuestTargetIcon(GfQuestTarget::getIconTypeCollect(4, collectionId, m_questId, mapId, true));
     m_iconBdatId = iconId < 0 ? 0x19f : iconId;
 }
-void TUnk_B51E28::update() {
+void LocatorCollection::update() {
     if (m_collectionId == 0) {
         return;
     }
@@ -838,7 +838,7 @@ void TUnk_B51E28::update() {
     unsigned int num = list->getInstNum();
     for (unsigned int i = 0; i != num; i++) {
         const gmk::GmkCollection* gmk = static_cast<const gmk::GmkCollection*>(list->getInst(i));
-        if (gmk->isValid() && gmk->fn_710059BFFC(m_collectionId) && gmk->getBdatInfo()->isPopCondMatchedExceptDist() &&
+        if (gmk->isValid() && gmk->isSameTableID(m_collectionId) && gmk->getBdatInfo()->isPopCondMatchedExceptDist() &&
             !gmk->isWaitRepop()) {
             m_posList.push_back(*gmk->m_pos);
         }
@@ -889,19 +889,19 @@ void GfFieldLocator::update() {
 bool GfFieldLocator::isIconIdPreorder(int iconId) {
     return static_cast<unsigned short>(Bdat::getValCheck(GfDataBdat::getFP(0x7b), 1, 0x10, 2)) == iconId;
 }
-TUnk_B51E90::TUnk_B51E90(const CreateInfo* info) : m_id(0), m_posNum(0), m_pos(mm::Vec3::zero), pad_20(0) {
+GfFieldNpcLocator::GfFieldNpcLocator(const CreateInfo* info) : m_id(0), m_posNum(0), m_pos(mm::Vec3::zero), pad_20(0) {
     if (info != nullptr) {
-        fn_71002700F0();
+        dispose();
         m_id = info->m_id;
     }
 }
-void TUnk_B51E90::fn_71002700F0() {
+void GfFieldNpcLocator::dispose() {
     pad_20 = 0;
     m_posNum = 0;
     m_pos = mm::Vec3::zero;
     m_id = 0;
 }
-void TUnk_B51E90::fn_710027011C() {
+void GfFieldNpcLocator::update() {
     if (m_id == 0) {
         return;
     }

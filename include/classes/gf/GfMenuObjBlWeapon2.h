@@ -48,13 +48,11 @@ public:
     // in items and adds each row's adapters
     static void setupItemList(ui::UIObjectAcc& acc, GfMenuItemList* items, ui::UISelectObjList* select,
                               unsigned int openType, unsigned int shop);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member because it sits in this
-    // class's unit between openCharChange and closeCharChange, its one caller is ItemSelectListener::reciveEvent and it
-    // takes setupItemList's arguments (acc, items, select, openType, shop). What it does: for each row of select, the
-    // row's TXT_chipname_@%02d gets colour "txt_normal", or from a shop (openType 1) "txt_disable" when the row's item
+    // 2.0.0's symbols name it. What it does: for each row of select, the row's TXT_chipname_@%02d gets colour
+    // "txt_normal", or from a shop (openType 1) "txt_disable" when the row's item
     // (items->getContents(items->getPageIndex(row))) is at its box limit (GfItemUtil::getEnableStock equals
     // getItemBoxCount) or costs more (GfItemUtil::getPrice with shop) than GfDataUtil::getMoney.
-    static void fn_71003AC544(ui::UIObjectAcc& acc, GfMenuItemList* items, ui::UISelectObjList* select,
+    static void refreshItemList(ui::UIObjectAcc& acc, GfMenuItemList* items, ui::UISelectObjList* select,
                               unsigned int openType, unsigned int shop);
     // static: WeaponListener passes the acc first (x0); it never reads the list
     static void setupWeapon(ui::UIObjectAcc& acc, GfMenuItemList* items, GfMenuWeaponAdapter::ReferenceChip& chip);

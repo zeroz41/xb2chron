@@ -38,7 +38,7 @@ bool GfMenuOrderMgr::isInitialized() {
 
 void GfMenuOrderMgr::postUpdate(const fw::UpdateInfo& info) {
     GfMenuOrderMgr* mgr = get();
-    if (mgr != nullptr && mgr->m_state == 0 && mgr->fn_7100363CD4(mgr->m_current)) {
+    if (mgr != nullptr && mgr->m_state == 0 && mgr->pickLogOrder(mgr->m_current)) {
         ui::UIManager::get()->requestObjectEvent(mgr->m_current.m_handle, mgr->m_current.m_event, 0.0f);
         mgr->m_state = 1;
     }

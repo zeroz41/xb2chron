@@ -13,10 +13,9 @@ public:
     static void incDeadNum(unsigned int);
     static unsigned int getEnBoolId(unsigned int arrange);
     static unsigned int getDefeatNum(unsigned int arrange);  // local flag 0x20, the book row + 0x142
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
-    // unit between GfDataEnBook::getDefeatNum and incDefeatNum. What it does: getDefeatNum on the given game data
-    // (its local flags at +0xFBBC4): 0 for arrangement 0 or no book row. Caller: fn_71002E2F4C.
-    static unsigned int fn_7100253EB4(const SDataGame& game, unsigned int arrange);
+    // 2.0.0's symbols name it. What it does: getDefeatNum on the given game data (its local flags at +0xFBBC4): 0 for
+    // arrangement 0 or no book row. Caller: fn_71002E2F4C.
+    static unsigned int getDefeatNum(const SDataGame& game, unsigned int arrange);
     // local flag (1, book + 48590) of the arrangement's enemy book row; false for none
     static bool isAttackFlag(unsigned int arrange);
 };

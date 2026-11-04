@@ -90,7 +90,7 @@ public:
     static unsigned int getLeaderLevel();
     static void getCurrentPartyInfo(RQ_SETUP_PARTY& info);
     static void getCurrentPartyInfo(RQ_SETUP_PARTY_DRIVER& info);
-    // 3.0.1's symbol name: TUnk_28D7B8::fn_710028E15C passes its RQ_SETUP_PARTY
+    // 3.0.1's symbol name: GfArenaParty::setupLevelForBattleEnd passes its RQ_SETUP_PARTY
     static void setupRequestData(const RQ_SETUP_PARTY& info);
     // the hierarchy of a party member's driver or blade (0 for none; the return type is not proven)
     static unsigned int getHierarchyByHandle(gf::GF_OBJ_HANDLE* handle);
@@ -114,32 +114,28 @@ public:
     static gf::GF_OBJ_HANDLE* getHandleDriverByBdatID(unsigned int driver);
     // the handle of the party blade of a blade id (the members 0-2's current blades)
     static gf::GF_OBJ_HANDLE* getHandleBladeByBdatID(unsigned int blade);
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0's GfPlayComResetBlade::update
-    // has no such calls). Statics of GfGameParty: their addresses lie in gf_game_party's unit and they read
-    // PtrSingleton<GfGameParty> (the driver handle of party slot `slot`, entries of 0x50 from +0x10; -1 for
-    // slot -1 or no party). What they do: GfObjUtil::getObj of that handle, then GfGameMoverSwitcher's object
-    // at +8 gets, through its table slot 3, the object's +0xE0 and a 0x18-byte message {0x33, 0x01000000, 0,
-    // slot, ...}: fn_71002BC718 with words {0, 1}, fn_71002BC7AC with {0, 2}, fn_71002BC840 with {1, ...}.
-    // GfPlayComResetBlade::update calls them for its mode 0, 1, 2 when GfGameManager::fn_71002A9E68 answers
-    // true and the slot is 0-2; ChainAttackManager::UpdateProc calls fn_71002BC7AC too.
-    static void fn_71002BC718(unsigned int slot);
-    static void fn_71002BC7AC(unsigned int slot);
-    static void fn_71002BC840(unsigned int slot);
+    // 2.0.0's symbols name them. Statics of GfGameParty: their addresses lie in gf_game_party's unit and they read
+    // PtrSingleton<GfGameParty> (the driver handle of party slot `slot`, entries of 0x50 from +0x10; -1 for slot -1 or
+    // no party). What they do: GfObjUtil::getObj of that handle, then GfGameMoverSwitcher's object at +8 gets, through
+    // its table slot 3, the object's +0xE0 and a 0x18-byte message {0x33, 0x01000000, 0, slot, ...}:
+    // switchFormationForIra with words {0, 1}, switchFormationForIraFR with {0, 2}, switchFormationForIraBR with {1,
+    // ...}. GfPlayComResetBlade::update calls them for its mode 0, 1, 2 when GfGameManager::isGameTypeIra answers true
+    // and the slot is 0-2; ChainAttackManager::UpdateProc calls switchFormationForIraFR too.
+    static void switchFormationForIra(unsigned int slot);
+    static void switchFormationForIraFR(unsigned int slot);
+    static void switchFormationForIraBR(unsigned int slot);
     static unsigned short getPartyGauge();  // GfMenuBattleAdapter shows it in hundreds (300 full)
     static bool isLeaderBlade();
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0's GfGameManager::gevBattleStart
-    // and gevBattleEnd call only GfGameScene). Members: they lie in gf_game_party's unit and GfGameManager's
-    // gevBattleStart / gevBattleEnd call them on PtrSingleton<GfGameParty>'s instance. What they do:
-    // fn_71002B8D3C, unless the byte at 0x370 is set, stores getCurrentPartyInfo of the RQ_SETUP_PARTY at 0x130
-    // and sets that byte (a party snapshot taken once when a battle starts); fn_71002B8D70 is empty.
-    void fn_71002B8D3C();
-    void fn_71002B8D70();
-    // Placeholder name: new in 3.0.1 (1.0.0's GfGameManager::gevPlayEvent does not call it). A member: it lies in
-    // gf_game_party's unit and GfGameManager::gevPlayEvent passes PtrSingleton<GfGameParty>'s instance, the GEV and
-    // the id on. What it does: for GEV 10 only, hands the RQ_SETUP_PARTY at 0x130 to fn_71002B8D88.
-    void fn_71002B8D74(gf::GEV gev, unsigned int id);
+    // 2.0.0's symbols name them. They lie in gf_game_party's unit and GfGameManager's gevBattleStart / gevBattleEnd
+    // call them on PtrSingleton<GfGameParty>'s instance. What they do: gevBattleStart, unless the byte at 0x370 is set,
+    // stores getCurrentPartyInfo of the RQ_SETUP_PARTY at 0x130 and sets that byte (a party snapshot taken once when a
+    // battle starts); gevBattleEnd is empty.
+    void gevBattleStart();
+    void gevBattleEnd();
+    // 2.0.0's symbols name it. What it does: for GEV 10 only, hands the RQ_SETUP_PARTY at 0x130 to fn_71002B8D88.
+    void gevPlayEvent(gf::GEV gev, unsigned int id);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: it lies in
-    // gf_game_party's unit and fn_71002B8D74 hands it the RQ_SETUP_PARTY at 0x130. What it does: fills a local
+    // gf_game_party's unit and gevPlayEvent hands it the RQ_SETUP_PARTY at 0x130. What it does: fills a local
     // RQ_SETUP_PARTY with getCurrentPartyInfo and compares it with the one given, working on the members'
     // objects through GfObjUtil::getObj.
     static void fn_71002B8D88(RQ_SETUP_PARTY& party);
@@ -147,35 +143,29 @@ public:
     void entryHandle(gf::GF_OBJ_HANDLE* handle, unsigned int type);
     void destroyedObject(gf::GF_OBJ_HANDLE* handle);
     void removeHandle(gf::GF_OBJ_HANDLE* handle);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: it lies in
-    // gf_game_party's unit, and listenerGfObj calls it with an object handle. What it does: through the object's
-    // GfComCollider sets or clears collider states, GfObjAcc::setDisp / setAlphaNormal by the flag, then repeats
-    // for the object's followers (GfObjManager::getFollowObj); BattleCharacter::SetAction and
-    // ChainAttackManager::UpdateProc call it too.
-    static void fn_71002BC46C(gf::GF_OBJ_HANDLE* handle, bool flag);
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Static members: they lie in
-    // gf_game_party's unit and read PtrSingleton<GfGameParty>'s instance. What they do: fn_71002BC6D0 returns
-    // m_currentPartyValid (false without an instance), fn_71002BC6F8 returns m_warpObj (-1 without one).
-    static bool fn_71002BC6D0();
-    static gf::GF_OBJ_HANDLE* fn_71002BC6F8();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: it lies in
-    // gf_game_party's unit and reads the members through getHandleDriver. What it does: counts the party slots
-    // 0-2 whose driver handle GfObjUtil::isValid accepts.
-    static unsigned int fn_71002BC338();
+    // 2.0.0's symbols name it. What it does: through the object's GfComCollider sets or clears collider states,
+    // GfObjAcc::setDisp / setAlphaNormal by the flag, then repeats for the object's followers
+    // (GfObjManager::getFollowObj); BattleCharacter::SetAction and ChainAttackManager::UpdateProc call it too.
+    static void setDispIraParty(gf::GF_OBJ_HANDLE* handle, bool flag);
+    // 2.0.0's symbols name them. Static members: they lie in gf_game_party's unit and read PtrSingleton<GfGameParty>'s
+    // instance. What they do: isNeedResetBladeForIra returns m_currentPartyValid (false without an instance),
+    // getDummpMover returns m_warpObj (-1 without one).
+    static bool isNeedResetBladeForIra();
+    static gf::GF_OBJ_HANDLE* getDummpMover();
+    // 2.0.0's symbols name it. What it does: counts the party slots 0-2 whose driver handle GfObjUtil::isValid accepts.
+    static unsigned int getDriverNum();
     // 1.0.0's getHierarchyMax (same place, after getBladeBdatId; it took the largest m_hierarchyDriver /
     // m_hierarchyBlade of the members 0-2, 3.0.1 does so over every party in m_hierarchy)
     static unsigned int getHierarchyMax();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it lies in gf_game_party's
-    // unit and GfGameManager::setupGame passes PtrSingleton<GfGameParty>'s instance. What it does: resets
-    // m_hierarchy to {0}, adding 1 and 2 when GfGameManager::fn_71002A9E68 answers true.
-    void fn_71002BC3B4();
+    // 2.0.0's symbols name it. What it does: resets m_hierarchy to {0}, adding 1 and 2 when
+    // GfGameManager::isGameTypeIra answers true.
+    void setupGame();
     static void setupPartyPositionByPartyPosition(const GfPartyPosInfo& info);
     static gf::GfWeapon* getHandleWeapon(unsigned int index, int set);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: it lies in
-    // gf_game_party's unit and calls getHandleWeapon. What it does: for a driver object, its weapon: its own
-    // mount (GfMountManager::getGfWeapon) when GfDataDriver::fn_710023F9A8 accepts its driver id, else its party
-    // slot's (getHandleWeapon with set -1); null for others (BattleCharacter::AttackTimingProc calls it).
-    static gf::GfWeapon* fn_71002B7C34(gf::GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name it. What it does: for a driver object, its weapon: its own mount
+    // (GfMountManager::getGfWeapon) when GfDataDriver::isIra accepts its driver id, else its party slot's
+    // (getHandleWeapon with set -1); null for others (BattleCharacter::AttackTimingProc calls it).
+    static gf::GfWeapon* getHandleWeaponDriver(gf::GF_OBJ_HANDLE* handle);
 
     mm::mtl::FixedArray<GfMemberInfo, 3> m_members;  // by party slot
     bool m_initialized;  // 1.0.0's initialize sets it, finalize clears it, isInitialized reads it
@@ -197,7 +187,7 @@ public:
     int m_partyIdMemberOK[3];
     unsigned char pad_39c[0x4];
     mm::mtl::FixedVector<unsigned int, 3> m_hierarchy;  // party slots in hierarchy order (getHandleByHierarchy)
-    // the object update warps to the controlled mover's position each frame, -1 for none (fn_71002BC6F8 returns
+    // the object update warps to the controlled mover's position each frame, -1 for none (getDummpMover returns
     // it); the name is not the original's
     GF_OBJ_HANDLE* m_warpObj;
 };

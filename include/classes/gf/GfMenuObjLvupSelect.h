@@ -26,18 +26,17 @@ public:
     // m_seq's jobs (1.0.0's names: SelectListener queues seqConfirmLevelUp at the same place in both versions, and
     // it queues seqExecLevelUp)
     bool seqConfirmLevelUp();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because seqConfirmLevelUp adds it
-    // to m_seq as a GfMenuObjLvupSelect job (Delegate memberFuncInvoker<GfMenuObjLvupSelect>). What it does: a second
-    // confirmation (common window 0x102), queued instead of seqExecLevelUp after the game is cleared when the bonus
-    // experience overflows (m_bonusOver); once answered with 0 it queues seqExecLevelUp, otherwise enables input 4.
-    bool fn_710042E8EC();
+    // 2.0.0's symbols name it. What it does: a second confirmation (common window 0x102), queued instead of
+    // seqExecLevelUp after the game is cleared when the bonus experience overflows (m_bonusOver); once answered with 0
+    // it queues seqExecLevelUp, otherwise enables input 4.
+    bool seqConfirmLostExp();
     bool seqExecLevelUp();
 
     GfMenuSequence<GfMenuObjLvupSelect, 8> m_seq;  // 0x28
     bool m_confirmOpen;  // 0x2B8: the running job has started (its window opened, its effect started)
     unsigned char pad_2B9[7];
     unsigned int m_level;  // 0x2C0: the level chosen (SelectListener's case 8)
-    bool m_levelDown;  // 0x2C4: m_level is below the driver's level (fn_71002DB338 instead of execLevelUp)
+    bool m_levelDown;  // 0x2C4: m_level is below the driver's level (execLevelDown instead of execLevelUp)
     bool m_bonusOver;  // 0x2C5: updateBonusExp's experience is over 999999999
     mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_levelNumber;  // 0x2C8: "TXT_lvslc_lvnum@%02d"'s number
     mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_bonusExp;  // 0x2D0: "TXT_bonus_exp_num"'s number

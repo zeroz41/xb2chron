@@ -40,14 +40,14 @@ void EffectObject::SetObject(gf::GF_OBJ_HANDLE* handle, mm::mtl::FixedVector<fw:
     m_isTimed = false;
 }
 
-void EffectObject::fn_710009B8C4(int slot, int artsKind, bool flag, unsigned int artsParam) {
+void EffectObject::SetArtsData(int slot, int artsKind, bool flag, unsigned int artsParam) {
     const BattleCharacter* chara = mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(m_owner);
     if (chara != nullptr) {
-        fn_710009B958(*chara->GetArtsSlotData(slot, !flag, -1), artsKind, artsParam);
+        SetArtsData(*chara->GetArtsSlotData(slot, !flag, -1), artsKind, artsParam);
     }
 }
 
-void EffectObject::fn_710009B958(const ARTS_SLOT_DATA& slot, int artsKind, unsigned int artsParam) {
+void EffectObject::SetArtsData(const ARTS_SLOT_DATA& slot, int artsKind, unsigned int artsParam) {
     m_artsSlot = slot;
     m_artsParam = artsParam;
     m_artsKind = artsKind;

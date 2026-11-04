@@ -18,7 +18,7 @@ public:
         }
     }
     // the same with the request handle passed in and the blade it counts for (0: none): createBladeArts,
-    // fn_7100564088 and createBladeNArts call newHandle, then DataParamAcc::getBlade, then store the fields, which
+    // createBladeArtsSp and createBladeNArts call newHandle, then DataParamAcc::getBlade, then store the fields, which
     // only this argument order gives
     SCOM_ACHIEV_INC(unsigned long handle, unsigned int type, int value, unsigned int blade)
         : SCOM(SCOM_TYPE(0x37), handle), m_value(type), m_value2(value) {
@@ -44,36 +44,36 @@ public:
     // blade fn_7100563BB4 lists for the handle; the wrappers pass a fixed type and value 1
     static void fn_7100563BB4(mm::mtl::FixedVector<unsigned short, 422>&, GF_OBJ_HANDLE*, bool);
     static unsigned long createBladeArts(GF_OBJ_HANDLE*, unsigned int);
-    static unsigned long fn_7100564088(GF_OBJ_HANDLE*, unsigned int);
+    static unsigned long createBladeArtsSp(GF_OBJ_HANDLE*, unsigned int);
     static unsigned long createBladeNArts(GF_OBJ_HANDLE*);
-    static void fn_7100564354(GF_OBJ_HANDLE*);
+    static void createElementalCombo(GF_OBJ_HANDLE*);
     static void fn_7100564360(GF_OBJ_HANDLE*, unsigned int, unsigned int);
-    static void fn_71005645DC(GF_OBJ_HANDLE*);
-    static void fn_71005645E8(GF_OBJ_HANDLE*);
+    static void createElementalComboFinish(GF_OBJ_HANDLE*);
+    static void createFightCombo(GF_OBJ_HANDLE*);
     static void fn_71005645F0(GF_OBJ_HANDLE*, unsigned int);
-    static void fn_7100564920(GF_OBJ_HANDLE*);
-    static void fn_7100564928(GF_OBJ_HANDLE*);
-    static void fn_7100564ACC();
-    static void fn_7100564AE8(GF_OBJ_HANDLE*);
-    static void fn_7100564AF4();
-    static void fn_7100564B10(GF_OBJ_HANDLE*);
-    static void fn_7100564B1C(GF_OBJ_HANDLE*);
-    static void fn_7100564B28(GF_OBJ_HANDLE*);
-    static void fn_7100564C9C(GF_OBJ_HANDLE*, unsigned int);
-    static void fn_7100564CAC(GF_OBJ_HANDLE*);
-    static void fn_7100564DC0(GF_OBJ_HANDLE*, unsigned int);
-    static void fn_7100564FE8(GF_OBJ_HANDLE*, unsigned int);
-    // placeholders, members because they follow fn_7100564FE8 in this class's run of gf_req_scom and, like it, add to
+    static void createFightComboFinish(GF_OBJ_HANDLE*);
+    static void createChainAttack(GF_OBJ_HANDLE*);
+    static void createButtonChallenge();
+    static void createHelp(GF_OBJ_HANDLE*);
+    static void createPotGet();
+    static void createAvoid(GF_OBJ_HANDLE*);
+    static void createGuard(GF_OBJ_HANDLE*);
+    static void createBladeChange(GF_OBJ_HANDLE*);
+    static void createRecover(GF_OBJ_HANDLE*, unsigned int);
+    static void createBackAttack(GF_OBJ_HANDLE*);
+    static void createDamageMax(GF_OBJ_HANDLE*, unsigned int);
+    static void createDamageAdd(GF_OBJ_HANDLE*, unsigned int);
+    // placeholders, members because they follow createDamageAdd in this class's run of gf_req_scom and, like it, add to
     // GfDataAchievement::addTotalCount; their one caller is GfGameScene::BattleAchievement::addDamage (a type-3 object's
-    // damage with its value, then the handle alone when the damage has attack flag 2; fn_71005653A4 the latter for the
+    // damage with its value, then the handle alone when the damage has attack flag 2; createCriticalHit the latter for the
     // notice's handle)
-    static void fn_7100565210(GF_OBJ_HANDLE*, unsigned int);
-    static void fn_71005653A4(GF_OBJ_HANDLE*);
-    static void fn_7100565534(GF_OBJ_HANDLE*);
-    // placeholder, a member because it follows fn_7100565534 in this class's run of gf_req_scom and has its shape:
+    static void createDamageGet(GF_OBJ_HANDLE*, unsigned int);
+    static void createCriticalHit(GF_OBJ_HANDLE*);
+    static void createCriticalGet(GF_OBJ_HANDLE*);
+    // placeholder, a member because it follows createCriticalGet in this class's run of gf_req_scom and has its shape:
     // counts achievement 0x76 once and 0x77 for every blade fn_7100563BB4 lists for the handle; its one caller is the
     // dispatch at 0x710000FDEC
-    static void fn_71005656C4(GF_OBJ_HANDLE*);
+    static void createKizuna(GF_OBJ_HANDLE*);
 
     // type-0x22 requests not yet counted: exec adds them as one (GfAchievManager::incAchiev(0x22, 1))
     static unsigned int s_countSalvageShop;
@@ -100,14 +100,14 @@ void fn_7100566594();
 void fn_71005665D8();
 // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions for the same reasons (no
 // request, no this; between SCOM_ACHIEV_INC's functions). What they do: fill a blade list with
-// GfDataBlade::fn_71002376E8 and pass it to GfAchievManager::incAchievWithBlade(type, 1, list): type 0x9B
+// GfDataBlade::getListParty and pass it to GfAchievManager::incAchievWithBlade(type, 1, list): type 0x9B
 // (fn_7100566168, caller the dispatch fn_710000FDEC) or the type given (fn_7100566424, caller
 // minigame::tora::MinigameUpdatableObject::update).
 void fn_7100566168();
 void fn_7100566424(unsigned int type);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function for the same reasons (no
 // request, no this; between SCOM_ACHIEV_INC's functions). What it does: counts the local flags 2/1..100 that are 2,
-// adds local flag 0x20/0x141, and sets achievement total 75 to that: GfDataAchievement::fn_710024B71C(75, 0), then
+// adds local flag 0x20/0x141, and sets achievement total 75 to that: GfDataAchievement::setTotalCount(75, 0), then
 // addTotalCount(75, count). Caller: GfGameScene::playEventSequenceEnd.
 void fn_71005663BC();
 }  // namespace gf

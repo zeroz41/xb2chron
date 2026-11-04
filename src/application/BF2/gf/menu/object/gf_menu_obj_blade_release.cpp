@@ -185,7 +185,7 @@ bool GfMenuObjBladeRelease::seqSubMenuOpen() {
         m_idList->addContents(MenuID{1, 0});
         if (!GfMenuObjUtil::isScenarioBlade(info.m_blade) && info.m_blade != GfDataBlade::getStartCommonBlade() &&
             !m_drivers.empty() && GfItemUtil::getItemBoxCount(0x6340) != 0 &&
-            !GfDataBlade::fn_710023978C(info.m_blade) &&
+            !GfDataBlade::isFreeEngage(info.m_blade) &&
             (m_drivers.size() != 1 || m_drivers.begin()[0] != info.m_creator)) {
             m_idList->addContents(MenuID{2, 0});
         }
@@ -252,7 +252,7 @@ bool GfMenuObjBladeRelease::seqEffReleaseA() {
         m_seqStep = true;
         return false;
     }
-    if (!m_voicePlayed && m_voice != nullptr && GfMenuObjUtil::fn_7100492C88()) {
+    if (!m_voicePlayed && m_voice != nullptr && GfMenuObjUtil::isVoiceSkip()) {
         GfGameVoice::playStop(m_voice);
         m_voice = nullptr;
         if (GfMenuObjUtil::isBusyCtrl(ctrl)) {
@@ -284,7 +284,7 @@ bool GfMenuObjBladeRelease::seqEffReleaseB() {
         m_seqStep = true;
         return false;
     }
-    if (!m_voicePlayed && GfMenuObjUtil::fn_7100492C88()) {
+    if (!m_voicePlayed && GfMenuObjUtil::isVoiceSkip()) {
         if (GfMenuObjUtil::isBusyCtrl(ctrl)) {
             GfMenuObjUtil::CtrlParam param;
             param.m_methods = 2;
@@ -324,7 +324,7 @@ bool GfMenuObjBladeRelease::seqExecRelease() {
         m_itemList->addItem(info, false);
     }
     GfGameUtil::execActivateUnuseForBlade(blade, true);
-    GfMenuObjPopup::fn_710045D754(blade);
+    GfMenuObjPopup::removeBlade(blade);
     for (unsigned int i = 0; i < m_bladeList->getSize(); i++) {
         if (m_bladeList->getContents(i).m_blade == blade) {
             GfMenuBladeList* list = m_bladeList;

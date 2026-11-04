@@ -44,7 +44,7 @@ void GfFieldCollect::start(GF_OBJ_HANDLE* handle) {
     m_handle = handle;
     m_seqTime = 0.0f;
     unsigned int time =
-        Bdat::getValCheck(GfDataBdat::getFP(0x7B), 0, GfGameManager::fn_71002A9E68() ? 0x53 : 4, 8);
+        Bdat::getValCheck(GfDataBdat::getFP(0x7B), 0, GfGameManager::isGameTypeIra() ? 0x53 : 4, 8);
     m_doStartTime = *reinterpret_cast<float*>(&time);
 }
 
@@ -72,24 +72,24 @@ void GfFieldCollect::seqWaitUIEnd(float) {
     SCOM_ACHIEV_INC::addTotalCount(0x41, 1);
     SCOM_ACHIEV_INC::create(0x41, 1, 0);
     SCOM_ACHIEV_INC::create(0x42, 1, 0);
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         if (gmk::AGmkBase* gmk = gmk::getBindedGmkInst(m_handle)) {
             gmk::GmkType type = gmk->getGmkType();
             unsigned int id = gmk->m_createInfo.m_bdatId;
             if (GfQuestUtil::getGimmickTaskEndCheck(type, id) == 2) {
-                SCOM_QUEST_GIMMICK::fn_710055F594(id, 0.0f);
+                SCOM_QUEST_GIMMICK::createCollection(id, 0.0f);
             }
         }
     }
     m_seqTime = 0.0f;
     if (m_isPreciousOnly) {
-        m_seq = &GfFieldCollect::fn_71002681C4;
+        m_seq = &GfFieldCollect::seqDelayEmitPrecious;
     } else {
         m_seq = &GfFieldCollect::seqDo;
     }
 }
 
-void GfFieldCollect::fn_71002681C4(float dt) {
+void GfFieldCollect::seqDelayEmitPrecious(float dt) {
     m_seqTime += dt;
     if (m_seqTime < 1.0f) {
         return;

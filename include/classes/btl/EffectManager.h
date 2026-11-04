@@ -55,8 +55,8 @@ public:
         ARTS_SLOT_DATA m_artsSlot;
         float m_interval;           // the time between two creations
         float m_timer;              // the time left to the next creation
-        unsigned int m_artsParam;   // EffectObject::fn_710009B958's
-        unsigned char m_artsKind;   // EffectObject::fn_710009B958's
+        unsigned int m_artsParam;   // EffectObject::SetArtsData's
+        unsigned char m_artsKind;   // EffectObject::SetArtsData's
         unsigned char m_count;      // how many times it is created
         unsigned char m_created;    // how many times it was
         unsigned char m_num;        // EffectObjects created each time
@@ -98,10 +98,9 @@ public:
     // m_rates[index], clamped to 0..0xFFFF, and sets m_ratesDirty so UpdateProc clears them all next frame.
     // EffectObject::ReturnLinkObj calls it.
     void fn_710009970C(int index, int value);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in this unit
-    // and reads m_rates. What it does: m_rates[index] / 100 (times 0.01f). BattleCharacter::GetDamageEnhanceRate
+    // 2.0.0's symbols name it. What it does: m_rates[index] / 100 (times 0.01f). BattleCharacter::GetDamageEnhanceRate
     // calls it.
-    float fn_7100099748(int index) const;
+    float GetCircleDamageBonusRate(int index) const;
 
     EFFECT_DATA m_effects[90];
     mm::mtl::FixedList<PROC_DATA, 90> m_procList;

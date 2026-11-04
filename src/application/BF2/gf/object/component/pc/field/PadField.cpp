@@ -356,7 +356,7 @@ void PadField::setup(int padNo, GfComPropertyPc& property) {
 }
 
 void PadField::decideAction() const {
-    if (btl::Utility::fn_710000FBC4() || btl::BattleGlobal::sys()->IsPause(-1)) {
+    if (btl::Utility::IsBanOperateForField() || btl::BattleGlobal::sys()->IsPause(-1)) {
         return;
     }
     setInput(InputID(0));
@@ -366,7 +366,7 @@ void PadField::jumpAction() const {
     if (GfGameManager::isDisableJumpForRide()) {
         return;
     }
-    if (btl::Utility::fn_710000FBC4() || btl::BattleGlobal::sys()->IsPause(-1)) {
+    if (btl::Utility::IsBanOperateForField() || btl::BattleGlobal::sys()->IsPause(-1)) {
         return;
     }
     setInput(InputID(2));
@@ -376,24 +376,24 @@ void PadField::lockAction() const {
     if (GfGameManager::isDisableAutoRun()) {
         return;
     }
-    if (btl::Utility::fn_710000FBC4() || btl::BattleGlobal::sys()->IsPause(-1)) {
+    if (btl::Utility::IsBanOperateForField() || btl::BattleGlobal::sys()->IsPause(-1)) {
         return;
     }
     setInput(InputID(1));
 }
 
 void PadField::wallReleaseAction() const {
-    if (btl::Utility::fn_710000FBC4() || btl::BattleGlobal::sys()->IsPause(-1)) {
+    if (btl::Utility::IsBanOperateForField() || btl::BattleGlobal::sys()->IsPause(-1)) {
         return;
     }
     setInput(InputID(3));
 }
 
 void PadField::lureAction() const {
-    if (btl::Utility::fn_710000FBC4() || btl::BattleGlobal::sys()->IsPause(-1)) {
+    if (btl::Utility::IsBanOperateForField() || btl::BattleGlobal::sys()->IsPause(-1)) {
         return;
     }
-    if (btl::TUnk_B3A9C8::sys()->fn_7100026A48()) {
+    if (btl::ChallengeBattleManager::sys()->IsResult()) {
         return;
     }
     setInput(InputID(4));
@@ -401,7 +401,7 @@ void PadField::lureAction() const {
 
 void PadField::moveFront(float value) {
     if (m_property != nullptr && (m_property->m_stateFlags & 1)) {
-        if (btl::Utility::fn_710000FBC4()) {
+        if (btl::Utility::IsBanOperateForField()) {
             m_property->m_inputDir.y = 0.0f;
         } else {
             m_property->m_inputDir.y = value;
@@ -411,7 +411,7 @@ void PadField::moveFront(float value) {
 
 void PadField::moveSide(float value) {
     if (m_property != nullptr && (m_property->m_stateFlags & 1)) {
-        if (btl::Utility::fn_710000FBC4()) {
+        if (btl::Utility::IsBanOperateForField()) {
             m_property->m_inputDir.x = 0.0f;
         } else {
             m_property->m_inputDir.x = value;

@@ -22,16 +22,14 @@ public:
     bool isOpenEventTheater() const;
     void setupEventTheater();
     bool hasResultEventTheater() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 goes from hasResultEventTheater
-    // to openOption). A member because it sits in TitleMenu's run and reads TitleMenu's call context. What it
-    // does: false without a context, else the context's isTerm().
-    bool fn_7100153350() const;
+    // 2.0.0's symbols name it. What it does: false without a context, else the context's isTerm().
+    bool isExitEventTheater() const;
     void openOption();
     bool isOpenOption() const;
     void setupOption();
-    // Placeholder name: new in 3.0.1 (where 1.0.0 has hasResultOption, which reads the result count instead).
-    // A member for the same reason as fn_7100153350; same body: false without a context, else isTerm().
-    bool fn_71001533B8() const;
+    // 2.0.0's symbols name it. A member for the same reason as isExitEventTheater; same body: false without a context,
+    // else isTerm().
+    bool isExitOption() const;
     void exitOption();
     int getPlayEventID() const;
     void exitEventTheater();

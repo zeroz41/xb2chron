@@ -1,6 +1,6 @@
-#include "classes/gf/TUnk_B63AE0.h"
-#include "classes/gf/TUnk_B63AE0/TUnk_B63B28.h"
-#include "classes/gf/TUnk_B63AE0/TUnk_B63B50.h"
+#include "classes/gf/GfMenuObjOCG.h"
+#include "classes/gf/GfMenuObjOCG/MainListener.h"
+#include "classes/gf/GfMenuObjOCG/ResultListener.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfMenuBattleAdapter.h"
 #include "classes/gf/GfMenuReferenceAdapter.h"
@@ -15,26 +15,26 @@
 
 namespace gf {
 
-TUnk_B63AE0::TUnk_B63AE0(unsigned int handle)
+GfMenuObjOCG::GfMenuObjOCG(unsigned int handle)
     : GfMenuObject(handle), m_count(0), m_seq(this), m_ctrl(-1), m_animHandle(0), m_numbers(),
       m_result(0) {
     m_numbers[0] = GfMenuReferenceNumber::create();
     m_numbers[1] = GfMenuReferenceNumber::create();
 }
 
-TUnk_B63AE0::~TUnk_B63AE0() {
+GfMenuObjOCG::~GfMenuObjOCG() {
     m_numbers[0] = nullptr;
     m_numbers[1] = nullptr;
 }
 
-void TUnk_B63AE0::fn_7100448E04(bool disp) {
+void GfMenuObjOCG::disp(bool disp) {
     ui::UIObjectAcc root(GfMenuObject::getAttachedObject(0x90));
     if (root.m_object != nullptr) {
         root.setDisp(disp);
     }
 }
 
-void TUnk_B63AE0::fn_7100448E58() {
+void GfMenuObjOCG::openGear() {
     ui::UIObjectAcc root(GfMenuObject::getAttachedObject(0x90));
     if (root.m_object != nullptr) {
         ui::UIObjectAcc special(root.searchChild("LAY_special"));
@@ -43,7 +43,7 @@ void TUnk_B63AE0::fn_7100448E58() {
     }
 }
 
-void TUnk_B63AE0::fn_7100448ED4() {
+void GfMenuObjOCG::closeGear() {
     ui::UIObjectAcc root(GfMenuObject::getAttachedObject(0x90));
     if (root.m_object != nullptr) {
         ui::UIObjectAcc special(root.searchChild("LAY_special"));
@@ -51,7 +51,7 @@ void TUnk_B63AE0::fn_7100448ED4() {
     }
 }
 
-void TUnk_B63AE0::fn_7100448F44(GfMenuCallContext* context, unsigned int first, unsigned int second) {
+void GfMenuObjOCG::openResult(GfMenuCallContext* context, unsigned int first, unsigned int second) {
     ui::UIObjectAcc root(GfMenuObject::getAttachedObject(0x90));
     if (root.m_object != nullptr && GfMenuObjUtil::checkCCStart(context)) {
         ui::UIObjectAcc result(root.searchChild("LAY_result"));
@@ -64,7 +64,7 @@ void TUnk_B63AE0::fn_7100448F44(GfMenuCallContext* context, unsigned int first, 
     }
 }
 
-void TUnk_B63AE0::fn_7100448FFC() {
+void GfMenuObjOCG::noticeExtend() {
     ui::UIObjectAcc root(GfMenuObject::getAttachedObject(0x90));
     if (root.m_object != nullptr) {
         ui::UIObjectAcc special(root.searchChild("LAY_special"));
@@ -74,7 +74,7 @@ void TUnk_B63AE0::fn_7100448FFC() {
     }
 }
 
-void TUnk_B63AE0::initialize() {
+void GfMenuObjOCG::initialize() {
     {
         ui::UIObjectAcc root(m_handle);
         root.setDispPriority(ui::UIUtil::getGroupPriority(2) + 1);
@@ -85,7 +85,7 @@ void TUnk_B63AE0::initialize() {
     {
         ui::UIObjectAcc special(main.m_handle, "LAY_special");
 #line 178
-        TUnk_B63B28* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B63B28(this);
+        MainListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) MainListener(this);
         listener->m_RefCount = 1;
         ui::UIEventManager::get()->registObjectListener(special.m_handle, listener);
         if (listener != nullptr) {
@@ -123,7 +123,7 @@ void TUnk_B63AE0::initialize() {
         GfMenuReferenceAdapter::create(result.searchChild("TXT_result_total_num@01"), m_numbers[0], false);
         GfMenuReferenceAdapter::create(result.searchChild("TXT_result_total_num@02"), m_numbers[1], false);
 #line 240
-        TUnk_B63B50* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B63B50(this);
+        ResultListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ResultListener(this);
         listener->m_RefCount = 1;
         ui::UIEventManager::get()->registObjectListener(result.m_handle, listener);
         if (listener != nullptr) {
@@ -133,18 +133,18 @@ void TUnk_B63AE0::initialize() {
     GfMenuObject::initialize();
 }
 
-void TUnk_B63AE0::finalize() {
+void GfMenuObjOCG::finalize() {
     GfMenuObject::finalize();
 }
 
-void TUnk_B63AE0::update() {
+void GfMenuObjOCG::update() {
     m_seq.update();
     GfMenuObject::update();
 }
 
-// TUnk_B63B28::reciveEvent (0x71004495A0) and fn_71004498C4 are not here yet: see the report
+// MainListener::reciveEvent (0x71004495A0) and fn_71004498C4 are not here yet: see the report
 
-void TUnk_B63AE0::TUnk_B63B50::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjOCG::ResultListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     if (event.m_type == 1) {
         acc.setDisp(false);
@@ -159,7 +159,7 @@ void TUnk_B63AE0::TUnk_B63B50::reciveEvent(const ui::EventData& event, unsigned 
         m_owner->m_ctrl = -1;
         m_owner->m_seq.clear();
         m_owner->m_seq.addWait(1);
-        m_owner->m_seq.addJob(&TUnk_B63AE0::fn_7100449E78);
+        m_owner->m_seq.addJob(&GfMenuObjOCG::seqStartResult);
         acc.setSuspend(false);
     } else if (event.m_type == 0x101) {
         GfMenuObject::termCallContext(acc.m_handle);
@@ -170,9 +170,9 @@ void TUnk_B63AE0::TUnk_B63B50::reciveEvent(const ui::EventData& event, unsigned 
     }
 }
 
-// fn_7100449E78 (0x7100449E78) is not here yet: see the report (candidate in wip, scheduling near-miss)
+// seqStartResult (0x7100449E78) is not here yet: see the report (candidate in wip, scheduling near-miss)
 
-bool TUnk_B63AE0::fn_710044A304() {
+bool GfMenuObjOCG::seqCtrlWait() {
     if (m_ctrl != -1) {
         if (GfMenuObjUtil::isBusyCtrl(m_ctrl)) {
             return false;
@@ -182,7 +182,7 @@ bool TUnk_B63AE0::fn_710044A304() {
     return true;
 }
 
-bool TUnk_B63AE0::fn_710044A348() {
+bool GfMenuObjOCG::seqAnimWait() {
     bool done = true;
     if (m_animHandle != 0) {
         ui::UIObjectAcc anim(m_animHandle);
@@ -195,7 +195,7 @@ bool TUnk_B63AE0::fn_710044A348() {
     return done;
 }
 
-bool TUnk_B63AE0::fn_710044A3AC() {
+bool GfMenuObjOCG::seqCloseResult() {
     ui::UIObjectAcc result(m_handle, "LAY_result");
     {
         ui::UIObjectAcc base(result.m_handle, "IMG_result_base");
@@ -220,13 +220,13 @@ bool TUnk_B63AE0::fn_710044A3AC() {
         param.m_startFlags = 10;
         m_ctrl = GfMenuObjUtil::startCtrl(result.m_handle, param, "LAY_result_total@02");
     }
-    m_seq.addJob(&TUnk_B63AE0::fn_710044A304);
-    m_seq.addJob(&TUnk_B63AE0::fn_710044A348);
-    m_seq.addJob(&TUnk_B63AE0::fn_710044A5DC);
+    m_seq.addJob(&GfMenuObjOCG::seqCtrlWait);
+    m_seq.addJob(&GfMenuObjOCG::seqAnimWait);
+    m_seq.addJob(&GfMenuObjOCG::seqEndResult);
     return true;
 }
 
-bool TUnk_B63AE0::fn_710044A5DC() {
+bool GfMenuObjOCG::seqEndResult() {
     ui::UIObjectAcc result(m_handle, "LAY_result");
     ui::EventData event;
     event.m_type = 0x101;

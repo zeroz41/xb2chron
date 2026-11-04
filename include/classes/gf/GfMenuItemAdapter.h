@@ -63,10 +63,9 @@ public:
     bool update_Icon(const MenuItemInfo& item);
     bool update_IconAll(const MenuItemInfo& item);
     bool update_Count(const MenuItemInfo& item);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it is entry 4 of this
-    // class's TypeSetup table (a number plugin 0..999). What it does: shows GfItemUtil::getEnableStock of the
-    // item, or 3 for item 0x62D9 on menu layer 3 (GfMenuObjUtil::fn_710048FD30(3)); 0 without an item.
-    bool fn_710034220C(const MenuItemInfo& item);
+    // 2.0.0's symbols name it. What it does: shows GfItemUtil::getEnableStock of the item, or 3 for item 0x62D9 on menu
+    // layer 3 (GfMenuObjUtil::isValidExpansion(3)); 0 without an item.
+    bool update_CountMax(const MenuItemInfo& item);
     bool update_Price(const MenuItemInfo& item);
     bool update_SellPrice(const MenuItemInfo& item);
     bool update_RareIcon(const MenuItemInfo& item);
@@ -86,10 +85,9 @@ public:
     bool update_dispRevise(const MenuItemInfo& item);
     bool update_roleText(const MenuItemInfo& item);
     bool update_canStack(const MenuItemInfo& item);
-    // Placeholder name: the symbols call 0x7100342FA8 createFromCoverter, but it is entry 24 of this class's
-    // TypeSetup table (an image plugin) and reads the item like the callbacks before it, so the symbol is not its
-    // name. What it does: on menu layer 3, for a type 2 item, the icon of GfBdatItem's fn_7100202C3C(item) + 0x9E.
-    bool fn_7100342FA8(const MenuItemInfo& item);
+    // 2.0.0's symbols name it. What it does: on menu layer 3, for a type 2 item, the icon of GfBdatItem's
+    // getPcEquipAddAtr(item) + 0x9E.
+    bool update_IconElem(const MenuItemInfo& item);
 
     // the field names are not the original's: the item it shows (create's; update takes the converter's through
     // changeItem), the callback create picks and where update takes the item from (owned)

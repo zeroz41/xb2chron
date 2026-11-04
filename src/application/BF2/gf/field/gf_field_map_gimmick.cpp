@@ -477,15 +477,15 @@ void GfFieldMapGimmick::create(GF_OBJ_HANDLE* handle) {
 
 void GfFieldMapGimmick::update(float dt) {
     if (m_solveState == 1) {
-        if (GfGameManager::fn_71002A9E68()) {
+        if (GfGameManager::isGameTypeIra()) {
             if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::get()) {
-                scene->fn_71002C345C(true);
+                scene->setArenaPlayerStop(true);
             }
         }
     } else if (m_solveState == 2) {
-        if (GfGameManager::fn_71002A9E68()) {
+        if (GfGameManager::isGameTypeIra()) {
             if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::get()) {
-                scene->fn_71002C345C(false);
+                scene->setArenaPlayerStop(false);
             }
         }
     }
@@ -528,9 +528,9 @@ void GfFieldMapGimmick::onFsSucceeded() {
     }
     m_lodStep = 1;
     m_seqLod = &GfFieldMapGimmick::seqLod_init;
-    if (GfGameManager::fn_71002A9E68() && m_gmkAcc.isValid() &&
+    if (GfGameManager::isGameTypeIra() && m_gmkAcc.isValid() &&
         static_cast<gmk::GmkMapGimmick*>(m_gmkAcc.m_gmk)->getBdatInfo()->m_effectId != 0) {
-        m_seqOther = &GfFieldMapGimmick::fn_710027AA68;
+        m_seqOther = &GfFieldMapGimmick::seqEffect_init;
     } else {
         m_seqMapObj = &GfFieldMapGimmick::seqMapObj_init;
     }
@@ -573,7 +573,7 @@ void GfFieldJump::onFsSucceeded() {
                     msg.m_bdatId = gmk->m_createInfo.m_bdatId;
                     msg.m_gmkId = gmk->m_createInfo.m_bdatId;
                     static_cast<fw::MessageObject*>(mover)->recieveMessage(obj, msg);
-                    if (GfGameManager::fn_71002A9E68()) {
+                    if (GfGameManager::isGameTypeIra()) {
                         gmk->fn_71005A7770();
                     }
                     return;

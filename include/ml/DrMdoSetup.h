@@ -72,12 +72,10 @@ public:
     void varStTex_FlagWaveTex1(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
     void varStTex_EtcTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
     void varStTex_ToonDarkGradTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
-    // Placeholder names: new in 3.0.1 (s_pStaticTexture slots 44-45; 1.0.0's table has 44 entries), nothing in
-    // 1.0.0's place names them. Members because s_pStaticTexture holds them as DrMdoSetup member pointers like the
-    // varStTex_ callbacks. What they do: 0x710077C23C binds DrPixlMan::getDepthObj()'s texture at +0x130 (sampling
-    // 2, 0); 0x710077C294 binds DrIniSys texture [1] or [2] by bit 2 of this+0xF9 (sampling 2, 0).
-    void fn_710077C23C(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
-    void fn_710077C294(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
+    // 2.0.0's symbols name them. What they do: 0x710077C23C binds DrPixlMan::getDepthObj()'s texture at +0x130
+    // (sampling 2, 0); 0x710077C294 binds DrIniSys texture [1] or [2] by bit 2 of this+0xF9 (sampling 2, 0).
+    void varStTex_StencilTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
+    void varStTex_DitherCalcTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
 
     // Static image callbacks: s_pStaticImage[id] binds DrPixlMan pixl object id's texture as a UAV image.
     void varStImg_BaseColor(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);

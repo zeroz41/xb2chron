@@ -631,7 +631,7 @@ void UIObjectAcc::updateLayoutSize() {
     }
 }
 
-bool UIObjectAcc::fn_7100690ED4() const {
+bool UIObjectAcc::isStreamImage3rd() const {
     if (m_object != nullptr) {
         return m_object->m_flags.test(18);
     }
@@ -701,7 +701,7 @@ void UIObjectAcc::setStreamImage2nd() {
     }
 }
 
-void UIObjectAcc::fn_7100691FD0() {
+void UIObjectAcc::setStreamImage3rd() {
     if (m_object != nullptr) {
         UIImageObject* object = mm::mtl::rttiCast<UIImageObject>(m_object);
         if (object != nullptr) {
@@ -710,7 +710,7 @@ void UIObjectAcc::fn_7100691FD0() {
     }
 }
 
-void UIObjectAcc::fn_710069201C() {
+void UIObjectAcc::resetStreamImageEx() {
     if (m_object != nullptr) {
         UIImageObject* object = mm::mtl::rttiCast<UIImageObject>(m_object);
         if (object != nullptr) {

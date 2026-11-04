@@ -1,22 +1,22 @@
 #include "classes/gf/GfSound.h"
 #include "classes/gf/GfWeapon.h"
-#include "classes/gf/TUnk_B52C38.h"
-#include "classes/gf/TUnk_28D5BC.h"
-#include "classes/gf/TUnk_28D7B8.h"
+#include "classes/gf/GfArenaBattle.h"
+#include "classes/gf/GfArenaJingle.h"
+#include "classes/gf/GfArenaParty.h"
 #include "gf/GfItemUtil.h"
 #include "classes/gf/GfBdatChrBl.h"
 #include "classes/gf/GfEvent.h"
 #include "gf/GfDataBlade.h"
-#include "classes/gf/TUnk_B535D0.h"
-#include "classes/gf/TUnk_B607D8.h"
+#include "classes/gf/GfGameArena.h"
+#include "classes/gf/GfMenuObjBtlchTelop.h"
 #include "btl/Utility.h"
 #include "classes/gf/GfBdatBtl.h"
 #include "classes/gf/GfGameParty.h"
 #include "gf/GfDataParty.h"
 #include "classes/gf/GfGameCond.h"
 #include "classes/gf/GfPlayComStartTutorial.h"
-#include "classes/gmk/TUnk_B6D528.h"
-#include "classes/gf/TUnk_B60928.h"
+#include "classes/gmk/GmkBattleChallenge.h"
+#include "classes/gf/GfMenuObjBtlTime.h"
 #include "classes/gf/GfAppendWire.h"
 #include "classes/anm/Skeleton.h"
 #include "classes/fw/ModelObject.h"
@@ -199,7 +199,7 @@ void GfAppendWire::updateState(const fw::UpdateInfo& info) {
 }
 
 
-bool TUnk_B52C38::recieveMessage(fw::MessageObject* sender, fw::Message& msg) {
+bool GfArenaBattle::recieveMessage(fw::MessageObject* sender, fw::Message& msg) {
     if (msg.m_id == 0x1000034) {
         fn_710028C9CC(sender, static_cast<MsgUnk_1000034&>(msg));
         return true;
@@ -207,18 +207,18 @@ bool TUnk_B52C38::recieveMessage(fw::MessageObject* sender, fw::Message& msg) {
     return false;
 }
 
-TUnk_B52C38::~TUnk_B52C38() {
+GfArenaBattle::~GfArenaBattle() {
     if (m_context != nullptr) {
         m_context->release();
         m_context = nullptr;
     }
 }
 
-void TUnk_B52C38::fn_710028D128() {
+void GfArenaBattle::fn_710028D128() {
     m_isDone = false;
     pad_A8 = 1;
     while (GfGameManager::isFading(-1)) {
-        m_owner->fn_7100291E2C(0);
+        m_owner->sleep(0);
     }
     if (m_context == nullptr) {
         m_context = GfMenuCallContext::create();
@@ -227,83 +227,83 @@ void TUnk_B52C38::fn_710028D128() {
         }
     }
     m_context->reset();
-    TUnk_B607D8::OpenParam param = {0, 0};
-    if (TUnk_B607D8::fn_71003B0CE4(m_context, param)) {
-        btl::Utility::fn_710000FB6C();
+    GfMenuObjBtlchTelop::OpenParam param = {0, 0};
+    if (GfMenuObjBtlchTelop::open(m_context, param)) {
+        btl::Utility::ChallengeBattleStartTelopCallback();
         while (!m_context->isTerm()) {
-            m_owner->fn_7100291E2C(0);
+            m_owner->sleep(0);
         }
     }
 }
 
-void TUnk_B52C38::fn_710028D1CC() {
+void GfArenaBattle::fn_710028D1CC() {
     pad_7C = 0;
     pad_98 = true;
     m_isDone = false;
-    gmk::TUnk_B6D528::s_battleId = m_key.m_id;
-    unsigned int mode = GfBdatBtl::get()->fn_71001E98AC(m_key.m_id);
+    gmk::GmkBattleChallenge::s_battleId = m_key.m_id;
+    unsigned int mode = GfBdatBtl::get()->getBTL_ChBtlType(m_key.m_id);
     if (pad_7C == 0) {
         if (mode == 3) {
             do {
                 if (m_result == 2 || m_owner->fn_7100291D68()) {
                     break;
                 }
-                m_owner->fn_7100291E2C(0);
+                m_owner->sleep(0);
             } while (pad_7C == 0);
         } else {
             do {
                 if (m_result == 2 || m_owner->fn_7100291D68()) {
                     break;
                 }
-                unsigned int wave = gmk::TUnk_B6D528::s_state.m_waveIndex;
+                unsigned int wave = gmk::GmkBattleChallenge::s_state.m_waveIndex;
                 if (pad_A8 != wave) {
-                    int result = gmk::TUnk_B6D528::s_state.m_result;
+                    int result = gmk::GmkBattleChallenge::s_state.m_result;
                     if (m_context != nullptr || (m_context = GfMenuCallContext::create()) != nullptr) {
                         m_context->reset();
-                        TUnk_B607D8::OpenParam param;
+                        GfMenuObjBtlchTelop::OpenParam param;
                         param.m_type = wave != 0 ? (result == 1 ? 2 : 1) : 0;
                         param.m_value = wave;
-                        if (TUnk_B607D8::fn_71003B0CE4(m_context, param)) {
+                        if (GfMenuObjBtlchTelop::open(m_context, param)) {
                             pad_A8 = wave;
                         }
                     }
                 }
-                m_owner->fn_7100291E2C(0);
+                m_owner->sleep(0);
             } while (pad_7C == 0);
         }
     }
     while (GfPlayComStartTutorial::s_activateCount > 0) {
-        m_owner->fn_7100291E2C(0);
+        m_owner->sleep(0);
     }
-    gmk::TUnk_B6D528::fn_71005B7344();
+    gmk::GmkBattleChallenge::terminate();
     pad_98 = false;
     m_isDone = true;
 }
 
-void TUnk_B52C38::fn_710028D584() {
-    m_owner->m_partySetup->fn_710028E15C();
+void GfArenaBattle::mapjumpForReturnFieldForObjCleanup() {
+    m_owner->m_partySetup->setupLevelForBattleEnd();
     memcpy(fn_71002EE8C4(), m_option, sizeof(m_option));
-    GfEvent::fn_71003274A8();
+    GfEvent::callChangeGameDifficult();
 }
 
-TUnk_28D5BC::TUnk_28D5BC()
+GfArenaJingle::GfArenaJingle()
     : m_category(reinterpret_cast<GF_SE_CATEGORY_HANDLE*>(-1)), m_delay(0.0f), m_fadeTime(0.0f), m_bgm(0) {}
 
-TUnk_28D5BC::~TUnk_28D5BC() {}
+GfArenaJingle::~GfArenaJingle() {}
 
-void TUnk_28D5BC::fn_710028D5F0() {
+void GfArenaJingle::initialize() {
     if (GfSound* sound = GfSound::get()) {
         m_category = sound->createCategoryHandle();
     }
 }
 
-void TUnk_28D5BC::fn_710028D624() {
+void GfArenaJingle::finalize() {
     if (GfSound* sound = GfSound::get()) {
         sound->releaseCategoryHandle(m_category);
     }
 }
 
-void TUnk_28D5BC::fn_710028D644(const fw::UpdateInfo& info) {
+void GfArenaJingle::update(const fw::UpdateInfo& info) {
     GfSound* sound = GfSound::get();
     if (sound == nullptr) {
         return;
@@ -322,31 +322,31 @@ void TUnk_28D5BC::fn_710028D644(const fw::UpdateInfo& info) {
     }
 }
 
-TUnk_28D7B8::TUnk_28D7B8(TUnk_B535D0* owner) : m_owner(owner) {}
+GfArenaParty::GfArenaParty(GfGameArena* owner) : m_owner(owner) {}
 
-TUnk_28D7B8::~TUnk_28D7B8() {}
+GfArenaParty::~GfArenaParty() {}
 
 
-void TUnk_28D7B8::fn_710028DA24() {
+void GfArenaParty::addFieldBlade() {
     GfBdatChrBl* bdat = GfBdatChrBl::get();
     unsigned int start = bdat->getChrBlStart();
     unsigned int end = bdat->getChrBlEnd();
     for (unsigned int blade = start; blade < end; blade++) {
-        if (bdat->fn_71001ED40C(blade) && fn_71002EDAD4(blade) && GfDataBlade::isActivateUnuse(blade)) {
+        if (bdat->isChrBlFlagOnlyChBtl(blade) && fn_71002EDAD4(blade) && GfDataBlade::isActivateUnuse(blade)) {
             GfDataBlade::setActivateReserver(blade);
             fn_71002FE418(blade);
         }
     }
 }
 
-void TUnk_28D7B8::fn_710028DAB4() {
+void GfArenaParty::removeFieldBlade() {
     GfBdatChrBl* bdat = GfBdatChrBl::get();
     unsigned int start = bdat->getChrBlStart();
     unsigned int end = bdat->getChrBlEnd();
     for (unsigned int blade = start; blade < end; blade++) {
-        if (bdat->fn_71001ED40C(blade) && fn_71002EDAD4(blade) && !GfDataBlade::isActivateUnuse(blade) &&
-            !((blade == 0x452 || blade == 0x453) && GfGameManager::fn_71002AC650()) &&
-            !(blade == 0x457 && GfGameManager::fn_71002AC670())) {
+        if (bdat->isChrBlFlagOnlyChBtl(blade) && fn_71002EDAD4(blade) && !GfDataBlade::isActivateUnuse(blade) &&
+            !((blade == 0x452 || blade == 0x453) && GfGameManager::isEnableInGameSF()) &&
+            !(blade == 0x457 && GfGameManager::isEnableInGameElma())) {
             GfDataDriver::unsetBlade(blade);
             GfDataBlade::setActivateUnuse(blade);
         }
@@ -354,27 +354,27 @@ void TUnk_28D7B8::fn_710028DAB4() {
     fn_71002EC268(false, true);
 }
 
-void TUnk_28D7B8::fn_710028DF1C(const GfGameManager::BattleChallengeRecord::Key& key) {
+void GfArenaParty::fn_710028DF1C(const GfGameManager::BattleChallengeRecord::Key& key) {
     m_lists.fn_71002907A0(key);
     for (const GfGameManager::BattleChallengeRecord::Entry38& entry : m_lists.m_list38) {
-        GfDataDriver::fn_710024487C(entry.m_driver, entry.m_challengeLevel);
+        GfDataDriver::setLevel(entry.m_driver, entry.m_challengeLevel);
     }
     m_owner->m_record.m_lists.m_list38 = m_lists.m_list38;
 }
 
-void TUnk_28D7B8::fn_710028E050(const GfGameManager::BattleChallengeRecord::Key& key) {
+void GfArenaParty::fn_710028E050(const GfGameManager::BattleChallengeRecord::Key& key) {
     m_lists.fn_71002908DC(key);
     m_owner->m_record.m_lists.m_listE0 = m_lists.m_listE0;
 }
 
-void TUnk_28D7B8::fn_710028E15C() {
+void GfArenaParty::setupLevelForBattleEnd() {
     mm::mtl::FixedVector<unsigned int, 32> blades;
     m_party.getAllBlade(blades);
     for (unsigned int blade : blades) {
         GfDataBlade::setUnselect(blade, false);
     }
     for (const GfGameManager::BattleChallengeRecord::Entry38& entry : m_lists.m_list38) {
-        GfDataDriver::fn_710024487C(entry.m_driver, entry.m_level);
+        GfDataDriver::setLevel(entry.m_driver, entry.m_level);
     }
     GfGameParty::setupRequestData(m_party);
     m_lists.m_list38.clear();
@@ -382,16 +382,16 @@ void TUnk_28D7B8::fn_710028E15C() {
     m_owner->m_record.m_lists = m_lists;
 }
 
-bool TUnk_28D7B8::fn_710028E3F8(const GfGameManager::BattleChallengeRecord::Key& key) {
+bool GfArenaParty::fn_710028E3F8(const GfGameManager::BattleChallengeRecord::Key& key) {
     if (key.m_id == 0) {
         return false;
     }
     GfBdatBtl* bdat = GfBdatBtl::get();
-    if (bdat->fn_71001E98AC(key.m_id) == 3) {
+    if (bdat->getBTL_ChBtlType(key.m_id) == 3) {
         return true;
     }
     for (unsigned int slot = 0; slot < 3; slot++) {
-        unsigned int driver = bdat->fn_71001EA2D4(key.m_id, slot);
+        unsigned int driver = bdat->getBTL_ChBtlDriver(key.m_id, slot);
         if (!(driver == 0 || driver == 7 || driver == 9) && !GfDataParty::isExistDriver(driver)) {
             return false;
         }

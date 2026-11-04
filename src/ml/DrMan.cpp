@@ -828,9 +828,9 @@ void DrMan::setTimeVal(float time) {
     }
 }
 
-void DrMan::fn_710071E620() { m_weatherFrameReq[s_nDblStockIdx] = true; }
+void DrMan::weatherFrmEnd() { m_weatherFrameReq[s_nDblStockIdx] = true; }
 
-bool DrMan::fn_710071E640() { return m_weatherFrameReq[s_nDblIdx] != 0; }
+bool DrMan::isWeatherFrmEnd() { return m_weatherFrameReq[s_nDblIdx] != 0; }
 
 void DrMan::setGlobalWind(const mm::Vec3& power) {
     mm::Vec3& wind = m_globalWind[s_nDblStockIdx];
@@ -841,7 +841,7 @@ void DrMan::setGlobalWind(const mm::Vec3& power) {
 
 void DrMan::setAllMiddelTexStmChk(bool check) { m_allMiddelTexStmChk[s_nDblIdx] |= check; }
 
-void DrMan::fn_710071E75C() { m_seamCalc[s_nDblIdx] = true; }
+void DrMan::setSeamMapOn() { m_seamCalc[s_nDblIdx] = true; }
 
 bool DrMan::fn_710071E77C() { return m_seamCalc[s_nDblStockIdx]; }
 

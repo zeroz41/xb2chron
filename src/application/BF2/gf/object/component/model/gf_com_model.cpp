@@ -37,28 +37,28 @@
 namespace gf {
 namespace mob {
 
-void StateApproachPc::fn_71004D70EC(GfComBehaviorMob* owner, ai::State*) {
+void StateApproachPc::enter(GfComBehaviorMob* owner, ai::State*) {
     owner->pad_53d9 = true;
-    m_seq = &StateApproachPc::fn_71004D7108;
+    m_seq = &StateApproachPc::seqTurnPc;
 }
 
-void StateApproachPc::fn_71004D7108(GfComBehaviorMob& owner, const fw::UpdateInfo&) {
+void StateApproachPc::seqTurnPc(GfComBehaviorMob& owner, const fw::UpdateInfo&) {
     if (gmk::isPlayerExist()) {
         owner.execTurnCmdToPos(gmk::getPlayerPos());
-        m_seq = &StateApproachPc::fn_71004D71C4;
+        m_seq = &StateApproachPc::seqWaitTurnEnd;
     }
 }
 
-void StateApproachPc::fn_71004D71C4(GfComBehaviorMob& owner, const fw::UpdateInfo&) {
+void StateApproachPc::seqWaitTurnEnd(GfComBehaviorMob& owner, const fw::UpdateInfo&) {
     if (owner.m_turnCmd.pad_6c) {
         m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, "C_move"));
-        m_seq = &StateApproachPc::fn_71004D723C;
+        m_seq = &StateApproachPc::seqApproachPc;
     }
 }
 
-void StateApproachPc::fn_71004D714C(GfComBehaviorMob*, ai::State*) { m_seq = nullptr; }
+void StateApproachPc::leave(GfComBehaviorMob*, ai::State*) { m_seq = nullptr; }
 
-void StateApproachPc::fn_71004D7154(GfComBehaviorMob* owner, const fw::UpdateInfo& info) {
+void StateApproachPc::update(GfComBehaviorMob* owner, const fw::UpdateInfo& info) {
     m_execCmd.update(info.m_deltaTime);
     if (m_seq) {
         (this->*m_seq)(*owner, info);

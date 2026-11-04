@@ -46,11 +46,11 @@ GfMenuObjTitle::GfMenuObjTitle(unsigned int handle)
     m_msgList = GfMenuMsgList::create();
     m_number = GfMenuReferenceNumber::create();
     m_numberMax = GfMenuReferenceNumber::create();
-    if (ui::UIUtil::fn_7100696970(3) && !GfMenuManager::isRegionJP()) {
+    if (ui::UIUtil::isEnableExpType(3) && !GfMenuManager::isRegionJP()) {
         m_iraOverseas = true;
     }
     if (!s_NoSaveData && tl::TitleMain::sys()->m_newGameAdv) {
-        m_iraJP = GfMenuObjUtil::fn_710048FD30(3) && GfMenuManager::isRegionJP();
+        m_iraJP = GfMenuObjUtil::isValidExpansion(3) && GfMenuManager::isRegionJP();
     }
 }
 
@@ -156,7 +156,7 @@ bool GfMenuObjTitle::fn_710048AF50() {
         ui::UIObjectAcc acc(m_handle, "LAY_main");
         unsigned short result = GfMenuManager::getCommonWindowResult();
         if (result == 0) {
-            m_seq.addJob(&GfMenuObjTitle::fn_710048AAD8);
+            m_seq.addJob(&GfMenuObjTitle::seqSelectDifficulity);
         } else {
             ui::EventData event;
             event.m_type = 0x101;
@@ -167,7 +167,7 @@ bool GfMenuObjTitle::fn_710048AF50() {
     return true;
 }
 
-bool GfMenuObjTitle::fn_710048B878() {
+bool GfMenuObjTitle::seqConfirmAdvancedNewGame() {
     if (!m_confirmOpen) {
         GfMenuManager::openCommonWindow(0x116);
         m_confirmOpen = true;
@@ -181,7 +181,7 @@ bool GfMenuObjTitle::fn_710048B878() {
         unsigned short result = GfMenuManager::getCommonWindowResult();
         if (result == 0) {
             GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
-            m_seq.addJob(&GfMenuObjTitle::fn_710048AAD8);
+            m_seq.addJob(&GfMenuObjTitle::seqSelectDifficulity);
         } else {
             GfMenuObject::enableInput(acc.m_handle);
         }
@@ -190,7 +190,7 @@ bool GfMenuObjTitle::fn_710048B878() {
     return true;
 }
 
-bool GfMenuObjTitle::fn_710048BF38() {
+bool GfMenuObjTitle::seqTipsDifficulity() {
     if (!m_confirmOpen) {
         GfMenuManager::openCommonWindow(0x10A);
         m_confirmOpen = true;

@@ -13,7 +13,7 @@ namespace gf {
 class GfMenuReferenceItem : public ::mm::mtl::ReferenceObject {
 public:
     virtual ~GfMenuReferenceItem() {}  // slot 0
-    // a new one (TUnk_B625A0's constructor holds it; inline: the name is not the original's)
+    // a new one (GfMenuObjGiftBox's constructor holds it; inline: the name is not the original's)
     static GfMenuReferenceItem* create() {
 #line 57 GF_MENU_REFERENCE_ITEM_PATH
         return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfMenuReferenceItem;

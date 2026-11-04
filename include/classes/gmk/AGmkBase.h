@@ -89,7 +89,7 @@ bool fn_71005B38EC(const AGmkBase* gmk);
 unsigned int fn_71005B3814(const AGmkBase* gmk);
 // What fn_71005B3824 does: the GmkEnemy (0x1D8-byte element) at its data's u32 at 0xC plus index in the enemy list of
 // its list's create info (0x1B8), none when that list is missing or shorter
-// (not const: TUnk_B6D418::create sets its insts' flags through it; the return type is not in the symbol)
+// (not const: GmkEnemyWave::create sets its insts' flags through it; the return type is not in the symbol)
 GmkEnemy* fn_71005B3824(const AGmkBase* gmk, unsigned int index);
 // whether the player's object exists (defined in GmkElevator.cpp's unit; StateFieldHome::isCondMatch is its tail
 // call)

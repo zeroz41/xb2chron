@@ -128,20 +128,16 @@ public:
     // the game flag (8 bits wide, after 0x5EF) counting a collect or use task's items
     int getCollectUseFlagIndex(const QuestTaskParam& param) const;
     // generated column accessors
-    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
-    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
-    // has their shape. What it does: reads a row of GfBdatQuest's column BattleEnemyRaceID (1.0.0 accessor prefix +
-    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
-    unsigned int fn_710025ABB8(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: reads a row of GfBdatQuest's column BattleEnemyRaceID (1.0.0 accessor
+    // prefix + BDAT column name from rebuild's getMember string), 0 out of the table's range.
+    unsigned int getBattleEnemyRaceID(unsigned int id) const;
     unsigned int getBattleDeadAll(unsigned int id) const;
     unsigned int getBattleTimeCount(unsigned int id) const;
     unsigned int getBattleReduceEnemyHP(unsigned int id) const;
     unsigned int getBattleReducePCHP(unsigned int id) const;
-    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
-    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
-    // has their shape. What it does: reads a row of GfBdatQuest's column BattleTargetOff (1.0.0 accessor prefix +
-    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
-    unsigned int fn_710025AFC4(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: reads a row of GfBdatQuest's column BattleTargetOff (1.0.0 accessor prefix
+    // + BDAT column name from rebuild's getMember string), 0 out of the table's range.
+    unsigned int getBattleTargetOff(unsigned int id) const;
     unsigned int getRequestItemSetNpcID(unsigned int id) const;
     unsigned int getRequestItemSetItemID(unsigned int id, unsigned int index) const;
     unsigned int getRequestItemSetCount(unsigned int id, unsigned int index) const;
@@ -154,11 +150,9 @@ public:
     unsigned int getCollectMapID(unsigned int id) const;
     // 1.0.0's name: QuestListAcc::getCollectNpcID reads the same table and BDAT column
     unsigned int getCollectNpcID(unsigned int id) const;
-    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
-    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
-    // has their shape. What it does: reads a row of GfBdatQuest's column CollectCollectionID (1.0.0 accessor prefix +
-    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
-    unsigned int fn_710025B5CC(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: reads a row of GfBdatQuest's column CollectCollectionID (1.0.0 accessor
+    // prefix + BDAT column name from rebuild's getMember string), 0 out of the table's range.
+    unsigned int getCollectCollectionID(unsigned int id) const;
     // 1.0.0's name: QuestListAcc::getUsebladeID reads the same table and BDAT column
     unsigned int getUsebladeID(unsigned int id) const;
     unsigned int getReachCategory(unsigned int id) const;
@@ -179,21 +173,15 @@ public:
     unsigned int getGimmickWarpGimmickID(unsigned int id) const;
     unsigned int getGimmickSalvagePointID(unsigned int id) const;
     unsigned int getGimmickTboxPopID(unsigned int id) const;
-    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
-    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
-    // has their shape. What it does: reads a row of GfBdatQuest's column GimmickEnemyWaveID (1.0.0 accessor prefix +
-    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
-    unsigned int fn_710025C23C(unsigned int id) const;
-    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
-    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
-    // has their shape. What it does: reads a row of GfBdatQuest's column GimmickCampPopID (1.0.0 accessor prefix +
-    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
-    unsigned int fn_710025C2D0(unsigned int id) const;
-    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
-    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
-    // has their shape. What it does: reads a row of GfBdatQuest's column GimmickCollectionPopID (1.0.0 accessor prefix +
-    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
-    unsigned int fn_710025C364(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: reads a row of GfBdatQuest's column GimmickEnemyWaveID (1.0.0 accessor
+    // prefix + BDAT column name from rebuild's getMember string), 0 out of the table's range.
+    unsigned int getGimmickEnemyWaveID(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: reads a row of GfBdatQuest's column GimmickCampPopID (1.0.0 accessor
+    // prefix + BDAT column name from rebuild's getMember string), 0 out of the table's range.
+    unsigned int getGimmickCampPopID(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: reads a row of GfBdatQuest's column GimmickCollectionPopID (1.0.0 accessor
+    // prefix + BDAT column name from rebuild's getMember string), 0 out of the table's range.
+    unsigned int getGimmickCollectionPopID(unsigned int id) const;
     // 1.0.0's name: QuestListAcc::getGimmickEndCheck reads the same table and BDAT column
     unsigned int getGimmickEndCheck(unsigned int id) const;
     unsigned int getFieldSkillCountFieldSkillID(unsigned int id) const;

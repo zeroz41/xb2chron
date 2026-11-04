@@ -44,10 +44,10 @@ public:
     bool isChrEnParamFlagGrdDirRight(unsigned int id) const;
     bool isChrEnParamFlagGrdDirBack(unsigned int id) const;
     bool isChrEnParamFlagFldDmgType(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrEnParam.
-    // What it does: true when row id's "TrgRndLady" bit of the CHR_EnParam "Flag" column is set, false when either handle
-    // is null or id is out of range (bdatRefresh looks the bit up after FldDmgType's; 1.0.0 has no such column).
-    bool fn_71001F78D8(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: true when row id's "TrgRndLady" bit of the CHR_EnParam "Flag" column is
+    // set, false when either handle is null or id is out of range (bdatRefresh looks the bit up after FldDmgType's;
+    // 1.0.0 has no such column).
+    bool isChrEnParamFlagTrgRndLady(unsigned int id) const;
     unsigned int getChrEnParamHealPotDrop(unsigned int id) const;
     unsigned int getChrEnParamRstFiCombo(unsigned int id) const;
     unsigned int getChrEnParamIvdFiCombo(unsigned int id) const;

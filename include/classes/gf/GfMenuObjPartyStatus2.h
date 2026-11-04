@@ -19,11 +19,10 @@ public:
     static void disp(bool disp);
     // 3.0.1 symbol: GfMenuObjExpGet::open passes a driver's party place (GfDataParty::getDriverPartyID) for its level up
     static void levelup(unsigned int party);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it is in this class's
-    // unit. What it does: sends the object attached as 0x5D (unless it is missing or terminating) an event 0xD with
-    // parameters 3, 0, the value, 0 (GfMenuObjPartyStatus::MainListener's member change (0x109) passes the member
-    // for members above 1).
-    static void fn_710045A610(unsigned int value);
+    // 2.0.0's symbols name it. What it does: sends the object attached as 0x5D (unless it is missing or terminating) an
+    // event 0xD with parameters 3, 0, the value, 0 (GfMenuObjPartyStatus::MainListener's member change (0x109) passes
+    // the member for members above 1).
+    static void clearDying(unsigned int value);
     class MainListener;
     virtual ~GfMenuObjPartyStatus2();  // slot 0
     virtual void initialize();  // slot 2

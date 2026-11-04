@@ -5,7 +5,7 @@
 
 namespace gf {
 
-// message 0x1000034 (no name for it survives; 0x48 bytes): the arena play commands send it to TUnk_B535D0 (the
+// message 0x1000034 (no name for it survives; 0x48 bytes): the arena play commands send it to GfGameArena (the
 // arena manager), whose recieveMessage (fn_7100290D40) switches on m_type (2..0x15). Sent with type 9/10
 // (GfPlayComMapjumpForLeaveArena start/end), 1 (GfPlayComMapjumpForBattleMapFromArena::end) and 13 with m_param
 // (GfPlayComStartChallengeBattle::start); the field names are not the original's

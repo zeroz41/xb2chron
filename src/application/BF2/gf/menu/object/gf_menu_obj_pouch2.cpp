@@ -346,7 +346,7 @@ void GfMenuObjPouch2::ResultListener::reciveEvent(ui::EventData const& event, un
 }
 
 void GfMenuObjPouch2::getFilterText(unsigned int filter, ui::UIStr& text) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIStr str(GfDataBdat::getFP(0x11D), GfMenuObjUtil::getMsgIDFromList(0x14D, filter + 1));
         text.copy(str);
     } else {

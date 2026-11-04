@@ -19,29 +19,29 @@
 
 namespace btl {
 
-float Utility::fn_71000152D0() {
+float Utility::AI_GetPartyGaugeNum() {
     int gauge = DataManager::get()->GetPartyGauge();
     return gauge > 299 ? 3.0f : gauge * 0.0033333334f;
 }
 
-float Utility::fn_710001530C() {
-    return TUnk_B3BD68::get()->m_sides[1].m_gauge;
+float Utility::AI_GetEnemySirenSpGaugeRate() {
+    return SirenBattleManager::get()->m_sides[1].m_gauge;
 }
 
-void Utility::fn_7100015320(float ratio) {
-    TUnk_B3BD68::get()->fn_71000A6FD0(ratio, false);
+void Utility::AI_AddEnemySirenSpGaugeRate(float ratio) {
+    SirenBattleManager::get()->AddSirenSpGaugeRate(ratio, false);
 }
 
-int Utility::fn_7100015334(bool white) {
-    TUnk_B3BD68* siren = TUnk_B3BD68::get();
+int Utility::AI_GetSirenBuffLevel(bool white) {
+    SirenBattleManager* siren = SirenBattleManager::get();
     return siren->m_sides[!white].m_level;
 }
 
-int Utility::fn_710001535C() {
-    if (TUnk_B3A9C8::get()->fn_710002567C()) {
+int Utility::AI_GetChallengeID() {
+    if (ChallengeBattleManager::get()->IsProc()) {
         return 0;
     }
-    return TUnk_B3A9C8::get()->pad_2a;
+    return ChallengeBattleManager::get()->pad_2a;
 }
 
 BladeArtsManager::BladeArtsManager() {
@@ -132,7 +132,7 @@ bool BladeArtsManager::NotifyProgress(gf::GF_OBJ_HANDLE* handle, PROGRESS_ID id)
     return result;
 }
 
-unsigned int BladeArtsManager::fn_71000161A8(gf::GF_OBJ_HANDLE* handle) const {
+unsigned int BladeArtsManager::GetButtonChallengeID(gf::GF_OBJ_HANDLE* handle) const {
     const PROC_DATA* data = find(handle);
     if (data == nullptr) {
         return 0;

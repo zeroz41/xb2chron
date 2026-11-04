@@ -69,30 +69,30 @@ bool GfMenuMsgList::getMsg(int index, ui::UIStr& str, bool page) {
     return false;
 }
 
-void GfMenuMsgList::fn_7100379F9C(bool descending) {
+void GfMenuMsgList::sort(bool descending) {
     if (getSize() == 0) {
         return;
     }
     std::function<bool(const MsgID&, const MsgID&)> compare;
-    compare = descending ? fn_710037A0E0 : fn_710037A10C;
-    sort(compare);
+    compare = descending ? sortDescending : sortAscending;
+    UIListInfo<MsgID>::sort(compare);
 }
 
-bool GfMenuMsgList::fn_710037A0E0(const MsgID& a, const MsgID& b) {
+bool GfMenuMsgList::sortDescending(const MsgID& a, const MsgID& b) {
     if (a.m_sortKey == b.m_sortKey) {
         return a.m_id < b.m_id;
     }
     return a.m_sortKey > b.m_sortKey;
 }
 
-bool GfMenuMsgList::fn_710037A10C(const MsgID& a, const MsgID& b) {
+bool GfMenuMsgList::sortAscending(const MsgID& a, const MsgID& b) {
     if (a.m_sortKey == b.m_sortKey) {
         return a.m_id < b.m_id;
     }
     return a.m_sortKey < b.m_sortKey;
 }
 
-unsigned int GfMenuMsgList::fn_710037A244(unsigned int id) {
+unsigned int GfMenuMsgList::find(unsigned int id) {
     for (unsigned int i = 0; i < getSize(); i++) {
         if (getContents(i).m_id == id) {
             return i;

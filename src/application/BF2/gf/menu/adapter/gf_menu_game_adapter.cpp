@@ -42,9 +42,9 @@ static GfMenuGameAdapter::TypeSetup s_typeSetups[] = {
     {&GfMenuGameAdapter::update_RealTime, {7, 6, 0}},
     {&GfMenuGameAdapter::update_Chapter, {0, 1, 99}},
     {&GfMenuGameAdapter::update_DispAccess, {3, 0, 0}},
-    {&GfMenuGameAdapter::fn_710033E76C, {1, 0, 0}},
-    {&GfMenuGameAdapter::fn_710033E7CC, {0, 0, 999}},
-    {&GfMenuGameAdapter::fn_710033E840, {0, 0, 999}},
+    {&GfMenuGameAdapter::update_BoxCapIcon, {1, 0, 0}},
+    {&GfMenuGameAdapter::update_BoxCapNum, {0, 0, 999}},
+    {&GfMenuGameAdapter::update_BoxCapMax, {0, 0, 999}},
 };
 
 // the body stores the table (an empty one would not): a statement the build compiles away
@@ -217,8 +217,8 @@ bool GfMenuGameAdapter::update_DispAccess() {
     return GfGameManager::isPlaySequenceClear();
 }
 
-bool GfMenuGameAdapter::fn_710033E76C() {
-    unsigned int type = GfMenuReference::fn_710036934C();
+bool GfMenuGameAdapter::update_BoxCapIcon() {
+    unsigned int type = GfMenuReference::getReferenceItemType();
     if (type < 1 || type > 20) {
         return false;
     }
@@ -230,25 +230,25 @@ bool GfMenuGameAdapter::fn_710033E76C() {
     return true;
 }
 
-bool GfMenuGameAdapter::fn_710033E7CC() {
-    unsigned int type = GfMenuReference::fn_710036934C();
+bool GfMenuGameAdapter::update_BoxCapNum() {
+    unsigned int type = GfMenuReference::getReferenceItemType();
     if (type < 1 || type > 20) {
         return false;
     }
     int count = 0;
     if (!GfMenuItemUtil::canCountStack(type)) {
-        count = GfItemBox::get()->fn_71002F9DD4(static_cast<ItemType::Type>(type));
+        count = GfItemBox::get()->countItemCategory(static_cast<ItemType::Type>(type));
     }
     setNumber(count);
     return true;
 }
 
-bool GfMenuGameAdapter::fn_710033E840() {
-    unsigned int type = GfMenuReference::fn_710036934C();
+bool GfMenuGameAdapter::update_BoxCapMax() {
+    unsigned int type = GfMenuReference::getReferenceItemType();
     if (type < 1 || type > 20) {
         return false;
     }
-    setNumber(GfItemBox::get()->fn_71002F9F6C(static_cast<ItemType::Type>(type)));
+    setNumber(GfItemBox::get()->maxItemCategory(static_cast<ItemType::Type>(type)));
     return true;
 }
 

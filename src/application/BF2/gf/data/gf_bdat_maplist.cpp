@@ -1087,7 +1087,7 @@ const char* GfBdatMaplist::getWeatherInfosnd(unsigned int id) const {
     return _gfbml::getWeatherInfosnd(*m_fpWeatherInfo, id);
 }
 
-const char* GfBdatMaplist::fn_710020A2AC(unsigned int id) const {
+const char* GfBdatMaplist::getWeatherInfosnd_ira(unsigned int id) const {
     return _gfbml::getWeatherInfosnd_ira(*m_fpWeatherInfo, id);
 }
 

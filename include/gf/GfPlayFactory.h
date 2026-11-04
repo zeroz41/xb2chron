@@ -39,12 +39,8 @@ public:
     static bool createWarp(GF_OBJ_HANDLE* handle);
     static bool createGmkTutorial(const char* name, unsigned int id);
     static bool createStartTutorial(unsigned int id, GfSequentialPlaySignal* signal);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits between
-    // GfPlayFactory's unit and gf_sequential_play's and its body is a create* sequence: when isScenarioGame and not
-    // isLeaveGameForDebug, beginCommand(0), pushState(6), addEventPlayerStop(true), fn_7100322C64(name, id),
-    // fn_7100322808(), addEventPlayerStop(false), popState(), clears the GfSequentialPlay's int at 0x20F0 and answers
-    // true. Caller: the sys plugin's playTutorial (a string and an int from the script).
-    static bool fn_7100321924(const char* name, unsigned int id);
+    // 2.0.0's symbols name it. Caller: the sys plugin's playTutorial (a string and an int from the script).
+    static bool createTutorialScript(const char* name, unsigned int id);
     static bool createGmkCamera(mm::mtl::IntrusivePtr<fw::Camera> camera);
     // queues the player's death of a kind (StateUtil::notifyDead's); true when queued or a running one took the kind
     static bool createPlayerDead(GfPlayerDead type);
@@ -71,21 +67,20 @@ public:
     static void createBattleStart(bool flag);
     static void createGimmickTaskComplete(gmk::GmkType type, unsigned int id, float time);
     static bool createArtsMovie(const char* name);
-    // Placeholder name: new in 3.0.1 (1.0.0's unit ends at createResetBladeForBladeSwitch). A member because it fills
-    // this unit among GfPlayFactory's create functions. What it does: when the game condition in row 0x2F of BDAT
-    // table 0x17E's "cond" column holds, no party slot's blade reset runs or is queued (GfPlayComResetBlade::isPlaying,
-    // GfSequentialPlay::isExistResetBladeParty, slots 0-2) and no state 0x14 or special action runs, queues
-    // addMoverSwitch in state 0x18; true when queued.
+    // 2.0.0's symbols name it (1.0.0's unit ends at createResetBladeForBladeSwitch). What it does: when the game
+    // condition in row 0x2F of BDAT table 0x17E's "cond" column holds, no party slot's blade reset runs or is queued
+    // (GfPlayComResetBlade::isPlaying, GfSequentialPlay::isExistResetBladeParty, slots 0-2) and no state 0x14 or
+    // special action runs, queues addMoverSwitch in state 0x18; true when queued.
     static bool createResetBladeForBattleEnd(unsigned int slot, int setId, bool stopPlayer);
     static bool createResetBladeForBladeSwitch(unsigned int slot, int setId);
-    static bool fn_7100321258();
-    // Placeholder name: new in 3.0.1, like fn_7100321258. What it does: as createMoverSwitch, queues
-    // addResetBlade(0, 0) in state 0x18 unless state 0x14 or a special action runs; true when queued.
-    static bool fn_7100321328();
+    static bool createPartySwitchForIra();
+    // 2.0.0's symbols name it. What it does: as createMoverSwitch, queues addResetBlade(0, 0) in state 0x18 unless
+    // state 0x14 or a special action runs; true when queued.
+    static bool createBladeSwitch();
     static bool createMoverSwitch();
-    // Placeholder name: new in 3.0.1, like fn_7100321258. What it does: as createMoverSwitch, queues
-    // addResetBlade(0, 2) in state 0x18 unless state 0x14 or a special action runs; true when queued.
-    static bool fn_71003213F4();
+    // 2.0.0's symbols name it. What it does: as createMoverSwitch, queues addResetBlade(0, 2) in state 0x18 unless
+    // state 0x14 or a special action runs; true when queued.
+    static bool createBladeSwitchBR();
     static bool createMenuObjCommonText(GfMenuObjCommonText::OpenKizunaParam& param);
     static bool createEventAfterScript(int id);
     static bool createHoodHomuraBattou();

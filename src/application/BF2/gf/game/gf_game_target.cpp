@@ -273,7 +273,7 @@ void GfGameTarget::judgeNearTarget() {
         }
         m_nearHold = false;
     }
-    btl::BattleGlobal::get()->fn_710000A764();
+    btl::BattleGlobal::get()->NotifyShiftNone();
 }
 
 void GfGameTarget::notifyTarget() {

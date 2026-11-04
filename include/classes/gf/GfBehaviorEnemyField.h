@@ -28,7 +28,7 @@ public:
     // its table's key function: disposes, then its members go (the D2 copy follows TFieldExecCmdTurn's)
     virtual ~GfBehaviorEnemyField();  // slot 0
     void dispose();
-    // advances the field movement by dt (GfComBehaviorEnemy::fn_71004BE49C calls it each frame)
+    // advances the field movement by dt (GfComBehaviorEnemy::updateField calls it each frame)
     void update(float dt);
     // whether the enemy reached its goal (pad_c0) within pad_18, or its local steer timed out colliding
     bool isArrivedToGoal() const;

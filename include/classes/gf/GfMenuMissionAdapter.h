@@ -56,14 +56,12 @@ public:
         return GfDataMercenaries::isMissionComplete(mission) ? 3 : 0;
     }
     bool update_MissionName();
-    // Placeholder names: one of them is 1.0.0's update_MissionSummary (the callback after update_MissionName), the
-    // other is new in 3.0.1; nothing yet tells which. Members because they are entries 1 and 2 of this class's
-    // TypeSetup table (text plugins). What they do: show the mission's summary (GfDataMercenaries::
-    // getMsgSummaryName) or, for a complete mission or a team back with its reward, its quest's result
-    // (GfDataQuest::getResult of GfDataMercenaries::getMissionQuestID); fn_7100345648 takes the result only for a
-    // complete mission with no team.
-    bool fn_7100345570();
-    bool fn_7100345648();
+    // 2.0.0's symbols name them. What they do: show the mission's summary (GfDataMercenaries:: getMsgSummaryName) or,
+    // for a complete mission or a team back with its reward, its quest's result (GfDataQuest::getResult of
+    // GfDataMercenaries::getMissionQuestID); update_MissionSummary2 takes the result only for a complete mission with
+    // no team.
+    bool update_MissionSummary();
+    bool update_MissionSummary2();
     bool update_MissionCategoryIcon();
     bool update_MissionTime();
     bool update_MissionTimeRemain();

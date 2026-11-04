@@ -42,7 +42,7 @@ public:
     // GfGameEvent and GfGameTalk::play ask it: DebugManager's play-once debug flag
     bool isDebugPlayOnetime() const;
     // plays the event sequence name (SeqManager::play) unless one is playing, keeping handle and the four words
-    // (+0x280..+0x294) and, when GfGameManager::fn_71002A9E68 allows it, pos and the float; GfGameTalk::play and
+    // (+0x280..+0x294) and, when GfGameManager::isGameTypeIra allows it, pos and the float; GfGameTalk::play and
     // GfGameEvent::fn_71002A0CDC call it (the float's place among the parameters is not known)
     void fn_71001486C0(const char* name, gf::GF_OBJ_HANDLE* handle, unsigned int, unsigned int, unsigned int,
                        unsigned int, const mm::Vec3* pos, float);

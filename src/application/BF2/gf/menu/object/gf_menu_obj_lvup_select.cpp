@@ -65,7 +65,7 @@ void GfMenuObjLvupSelect::initialize() {
         mainListener->release();
     }
     GfMenuObject::attachExternalCall(0x57, acc.m_handle);
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuAdapterManager::beginAddAfter();
     }
     {
@@ -110,7 +110,7 @@ void GfMenuObjLvupSelect::initialize() {
         m_bonusExp->m_min = 0;
         m_bonusExp->m_max = 999999999;
     }
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuAdapterManager::endAddAfter();
     }
     GfMenuObject::initialize();
@@ -252,8 +252,8 @@ void GfMenuObjLvupSelect::SelectListener::reciveEvent(ui::EventData const& event
         m_owner->m_levelNumber->m_min = first;
         int& max = m_owner->m_levelNumber->m_max;
         max = last;
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
-            GfMenuObjCmnStatus::fn_71003D7620(true);
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            GfMenuObjCmnStatus::setIraFrontMode(true);
         }
         GfMenuObjCmnStatus::openDrStatus(1, 0);
         break;
@@ -290,7 +290,7 @@ bool GfMenuObjLvupSelect::seqConfirmLevelUp() {
     unsigned short result = GfMenuManager::getCommonWindowResult();
     if (result == 0) {
         if (GfGameManager::isClearGame() && m_bonusOver) {
-            m_seq.addJob(&GfMenuObjLvupSelect::fn_710042E8EC);
+            m_seq.addJob(&GfMenuObjLvupSelect::seqConfirmLostExp);
         } else {
             m_seq.addJob(&GfMenuObjLvupSelect::seqExecLevelUp);
         }
@@ -329,7 +329,7 @@ void GfMenuObjLvupSelect::DrImgListener::reciveEvent(ui::EventData const& event,
     }
 }
 
-bool GfMenuObjLvupSelect::fn_710042E8EC() {
+bool GfMenuObjLvupSelect::seqConfirmLostExp() {
     if (!m_confirmOpen) {
         GfMenuManager::openCommonWindow(0x102);
         m_confirmOpen = true;
@@ -363,9 +363,9 @@ bool GfMenuObjLvupSelect::seqExecLevelUp() {
             param.m_startFlags = 10;
             GfMenuObjUtil::startCtrl(number.m_handle, param, nullptr);
         }
-        if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        if (!GfMenuObjUtil::isValidExpansion(3)) {
             if (m_levelDown) {
-                GfGameUtil::fn_71002DB338(GfMenuReference::getReferenceDriverID(0), m_level);
+                GfGameUtil::execLevelDown(GfMenuReference::getReferenceDriverID(0), m_level);
             } else {
                 GfGameUtil::execLevelUp(GfMenuReference::getReferenceDriverID(0), m_level);
             }
@@ -373,7 +373,7 @@ bool GfMenuObjLvupSelect::seqExecLevelUp() {
             unsigned int driver = GfMenuReference::getReferenceDriverID(0);
             if (GfDataDriver::isActivateUnuse(driver)) {
                 mm::mtl::FixedVector<unsigned short, 32> drivers;
-                GfDataDriver::fn_71002416B4(drivers, driver);
+                GfDataDriver::getIraBack(drivers, driver);
                 for (unsigned int i = 0; i < drivers.size(); i++) {
                     if (!GfDataDriver::isActivateUnuse(drivers[i])) {
                         driver = drivers[i];
@@ -383,7 +383,7 @@ bool GfMenuObjLvupSelect::seqExecLevelUp() {
             }
             unsigned int partyDriver = GfDataParty::getDriver(GfDataParty::getDriverPartyID(driver), 0);
             if (m_levelDown) {
-                GfGameUtil::fn_71002DB338(partyDriver, m_level);
+                GfGameUtil::execLevelDown(partyDriver, m_level);
             } else {
                 GfGameUtil::execLevelUp(partyDriver, m_level);
             }

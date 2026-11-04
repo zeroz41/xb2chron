@@ -38,11 +38,10 @@ public:
 
     // takes the channel's queued orders off (cancelOrder passes the singleton)
     void cancelLogOrder(int channel);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: postUpdate passes the singleton and
-    // its m_current. What it does: false (and the order zeroed) when the queue is empty; otherwise pops the first
-    // order into it and returns true, unless that order is on channel 2 while GfMenuObjUtil::fn_710048FD30(3) and
-    // (GfMenuManager::fn_710035A800() or GfMenuReference::fn_7100368418(6)) hold.
-    bool fn_7100363CD4(sLog& order);
+    // 2.0.0's symbols name it. What it does: false (and the order zeroed) when the queue is empty; otherwise pops the
+    // first order into it and returns true, unless that order is on channel 2 while GfMenuObjUtil::isValidExpansion(3)
+    // and (GfMenuManager::hasNpcEntry() or GfMenuReference::isIraFlag(6)) hold.
+    bool pickLogOrder(sLog& order);
 
     bool m_initialized;  // build sets it, destroy clears it
     mm::mtl::FixedQueue<sLog, 20> m_logs;  // 0x10 (the name is not the original's)

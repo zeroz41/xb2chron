@@ -8,21 +8,21 @@
 
 namespace btl {
 
-TUnk_B3BC20::TUnk_B3BC20() : m_count(0), m_serial(0) {}
+FormationChangeManager::FormationChangeManager() : m_count(0), m_serial(0) {}
 
-TUnk_B3BC20::~TUnk_B3BC20() {}
+FormationChangeManager::~FormationChangeManager() {}
 
 void fn_710009D7B8() {
 #line 83
-    TUnk_B3BC20* manager = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B3BC20;
-    manager->fn_710009D92C();
+    FormationChangeManager* manager = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) FormationChangeManager;
+    manager->NotifyMapChange();
 }
 
 void fn_710009D90C() {
-    delete TUnk_B3BC20::get();
+    delete FormationChangeManager::get();
 }
 
-void TUnk_B3BC20::fn_710009D92C() {
+void FormationChangeManager::NotifyMapChange() {
     m_serial = 1;
     for (int i = 0; i < 10; i++) {
         m_requests[i].clear();
@@ -30,13 +30,13 @@ void TUnk_B3BC20::fn_710009D92C() {
     m_count = 0;
 }
 
-void TUnk_B3BC20::fn_710009DA40(const fw::UpdateInfo& info) {}
+void FormationChangeManager::PreUpdate(const fw::UpdateInfo& info) {}
 
-void TUnk_B3BC20::fn_710009DA44(const fw::UpdateInfo& info) {
-    get()->fn_710009DA5C(info);
+void FormationChangeManager::Update(const fw::UpdateInfo& info) {
+    get()->UpdateProc(info);
 }
 
-bool TUnk_B3BC20::fn_710009E940(gf::GF_OBJ_HANDLE* handle, bool flag) {
+bool FormationChangeManager::RegisterBladeChange(gf::GF_OBJ_HANDLE* handle, bool flag) {
     BattleGlobal* global = BattleGlobal::get();
     if (!global->m_challengeAnySuccess || !global->IsEnableBattle()) {
         return false;
@@ -60,14 +60,14 @@ bool TUnk_B3BC20::fn_710009E940(gf::GF_OBJ_HANDLE* handle, bool flag) {
     request.m_serial = m_serial;
     request.m_type = 2;
     request.m_groupIndex = character->GetGroupIndex();
-    request.m_flag29 = character->fn_710002F1F8();
+    request.m_flag29 = character->IsForward();
     request.m_flag2a = flag;
     m_serial = m_serial == 0xFFFFFFFF ? 1 : m_serial + 1;
     m_count++;
     return true;
 }
 
-void TUnk_B3BC20::fn_710009EAD0(gf::GF_OBJ_HANDLE* handle) {
+void FormationChangeManager::ForceExit(gf::GF_OBJ_HANDLE* handle) {
     for (int i = 0; i < m_count; i++) {
         if (m_requests[i].m_handle[0] == handle || m_requests[i].m_handle[1] == handle) {
             m_requests[i].m_end = true;
@@ -76,7 +76,7 @@ void TUnk_B3BC20::fn_710009EAD0(gf::GF_OBJ_HANDLE* handle) {
     }
 }
 
-TUnk_B3BC20::Request* TUnk_B3BC20::fn_710009EB1C(gf::GF_OBJ_HANDLE* handle) {
+FormationChangeManager::Request* FormationChangeManager::fn_710009EB1C(gf::GF_OBJ_HANDLE* handle) {
     for (int i = 0; i < m_count; i++) {
         if (m_requests[i].m_handle[0] == handle || m_requests[i].m_handle[1] == handle) {
             return &m_requests[i];
@@ -85,7 +85,7 @@ TUnk_B3BC20::Request* TUnk_B3BC20::fn_710009EB1C(gf::GF_OBJ_HANDLE* handle) {
     return nullptr;
 }
 
-bool TUnk_B3BC20::fn_710009EB70(gf::GF_OBJ_HANDLE* handle) const {
+bool FormationChangeManager::IsRegister(gf::GF_OBJ_HANDLE* handle) const {
     for (int i = 0; i < m_count; i++) {
         if (m_requests[i].m_handle[0] == handle || m_requests[i].m_handle[1] == handle) {
             return true;
@@ -94,7 +94,7 @@ bool TUnk_B3BC20::fn_710009EB70(gf::GF_OBJ_HANDLE* handle) const {
     return false;
 }
 
-bool TUnk_B3BC20::fn_710009EBC4(int group) const {
+bool FormationChangeManager::IsRegisterGroup(int group) const {
     for (int i = 0; i < m_count; i++) {
         if (m_requests[i].m_groupIndex == group) {
             return true;
@@ -103,7 +103,7 @@ bool TUnk_B3BC20::fn_710009EBC4(int group) const {
     return false;
 }
 
-bool TUnk_B3BC20::fn_710009EC0C(gf::GF_OBJ_HANDLE* handle) const {
+bool FormationChangeManager::IsRegisterBladeChange(gf::GF_OBJ_HANDLE* handle) const {
     for (int i = 0; i < m_count; i++) {
         if (m_requests[i].m_type == 2) {
             if (m_requests[i].m_handle[0] == handle) {
@@ -117,7 +117,7 @@ bool TUnk_B3BC20::fn_710009EC0C(gf::GF_OBJ_HANDLE* handle) const {
     return false;
 }
 
-bool TUnk_B3BC20::fn_710009EC6C(gf::GF_OBJ_HANDLE* handle) const {
+bool FormationChangeManager::IsRegisterFormationChange(gf::GF_OBJ_HANDLE* handle) const {
     for (int i = 0; i < m_count; i++) {
         if (m_requests[i].m_type == 1) {
             if (m_requests[i].m_handle[0] == handle) {
@@ -131,7 +131,7 @@ bool TUnk_B3BC20::fn_710009EC6C(gf::GF_OBJ_HANDLE* handle) const {
     return false;
 }
 
-void TUnk_B3BC20::fn_710009ECCC(gf::GF_OBJ_HANDLE* handle) {
+void FormationChangeManager::SetEnableCancel(gf::GF_OBJ_HANDLE* handle) {
     for (int i = 0; i < m_count; i++) {
         if (m_requests[i].m_handle[0] == handle || m_requests[i].m_handle[1] == handle) {
             m_requests[i].m_flag32 = true;
@@ -140,7 +140,7 @@ void TUnk_B3BC20::fn_710009ECCC(gf::GF_OBJ_HANDLE* handle) {
     }
 }
 
-bool TUnk_B3BC20::fn_710009ED18(gf::GF_OBJ_HANDLE* handle) {
+bool FormationChangeManager::fn_710009ED18(gf::GF_OBJ_HANDLE* handle) {
     Request* request = fn_710009EB1C(handle);
     bool flag;
     if (request != nullptr) {
@@ -148,7 +148,7 @@ bool TUnk_B3BC20::fn_710009ED18(gf::GF_OBJ_HANDLE* handle) {
             flag = true;
         } else {
             BattleCharacter* character = CharacterManager::get()->GetCharacterConst(handle);
-            flag = character->fn_710002F1F8() && character->IsControlCharacterGroup() && character->pad_11B3_1;
+            flag = character->IsForward() && character->IsControlCharacterGroup() && character->pad_11B3_1;
         }
     }
     return request == nullptr || flag;

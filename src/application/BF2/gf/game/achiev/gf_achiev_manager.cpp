@@ -157,7 +157,7 @@ void GfAchievManager::incAchievWithBlade(unsigned int type, int value,
     }
 }
 
-void GfAchievManager::fn_710028A720(unsigned int type, int value,
+void GfAchievManager::checkAchievWithBlade(unsigned int type, int value,
                                     const mm::mtl::FixedVector<unsigned short, 422>& blades) {
     for (const unsigned short* it = blades.begin(); it != blades.end(); ++it) {
         fn_710028A448(type, value, *it);
@@ -202,9 +202,9 @@ static const unsigned short s_extraBlades[] = {
 };
 
 // Placeholder name: 1.0.0 has it unnamed too (a file-local function). What it does: whether the blade (not a
-// dummy blade unless fn_71002364B8 holds) has an affinity chart line of the achievement.
+// dummy blade unless isIra holds) has an affinity chart line of the achievement.
 static bool fn_710028AA4C(unsigned int blade, unsigned int achievement) {
-    if (!GfDataBlade::fn_71002364B8(blade) && GfDataBlade::isDummyBlade(blade)) {
+    if (!GfDataBlade::isIra(blade) && GfDataBlade::isDummyBlade(blade)) {
         return false;
     }
     for (unsigned int line = 0; line < 10; ++line) {
@@ -220,7 +220,7 @@ bool GfAchievManager::getBladeByAchievementSet(mm::mtl::FixedVector<unsigned sho
     if (achievement == 0) {
         return false;
     }
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         for (unsigned int driver = 17; driver < 26; ++driver) {
             unsigned int blade = GfDataBlade::fn_7100237B70(driver, -1);
             if (fn_710028AA4C(blade, achievement)) {

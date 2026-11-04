@@ -1,4 +1,4 @@
-#include "classes/gf/TUnk_B60AA8.h"
+#include "classes/gf/GfMenuObjCampMenu.h"
 #include "gf/gf_menu_obj_camp_menu.h"
 #include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfAllocator.h"
@@ -37,7 +37,7 @@ namespace gf {
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAA1D0)
 int g_campMenuState;
 
-TUnk_B60AA8::TUnk_B60AA8(unsigned int handle)
+GfMenuObjCampMenu::GfMenuObjCampMenu(unsigned int handle)
     : GfMenuObject(handle), m_seq(this), m_jobStarted(false), m_driverList0(nullptr), m_driverList1(nullptr),
       m_selectList(nullptr), m_cursor(nullptr), m_context(nullptr), m_voice(nullptr), m_sound(0) {
     m_driverList0 = GfMenuDriverList::create();
@@ -48,7 +48,7 @@ TUnk_B60AA8::TUnk_B60AA8(unsigned int handle)
     m_context = GfMenuCallContext::create();
 }
 
-TUnk_B60AA8::~TUnk_B60AA8() {
+GfMenuObjCampMenu::~GfMenuObjCampMenu() {
     if (m_context != nullptr) {
         m_context->release();
         m_context = nullptr;
@@ -113,12 +113,12 @@ void fn_71003BBCDC() {
     GfMenuFlag::set1(0x54, 0);
 }
 
-void TUnk_B60AA8::finalize() {
+void GfMenuObjCampMenu::finalize() {
     GfMenuObject::detachExternalCall(0x8D);
     GfMenuObject::finalize();
 }
 
-void TUnk_B60AA8::update() {
+void GfMenuObjCampMenu::update() {
     m_seq.update();
     if (m_voice != nullptr && GfGameVoice::getResult(m_voice) >= 3) {
         m_voice = nullptr;
@@ -126,7 +126,7 @@ void TUnk_B60AA8::update() {
     GfMenuObject::update();
 }
 
-void TUnk_B60AA8::fn_71003BCCD4() {
+void GfMenuObjCampMenu::refreshNotice() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     main.setDispChild(false, "IMG_select_sleep_notice");
     main.setDispChild(false, "IMG_select_craft_notice");
@@ -134,7 +134,7 @@ void TUnk_B60AA8::fn_71003BCCD4() {
     mm::mtl::FixStr<32> name;
     bool craft = false;
     for (unsigned int i = 0; i < m_driverList0->getSize(); i++) {
-        bool notice = fn_71003BE8C4(m_driverList0->getContents(i).m_driver);
+        bool notice = hasNewCraft(m_driverList0->getContents(i).m_driver);
         name.format("IMG_craft_item_notice@%02d", i + 1);
         main.setDispChild(notice, name.m_str);
         craft |= notice;
@@ -148,7 +148,7 @@ void TUnk_B60AA8::fn_71003BCCD4() {
     }
 }
 
-bool TUnk_B60AA8::fn_71003BCEAC() {
+bool GfMenuObjCampMenu::seqConfirmSleep() {
     if (!m_jobStarted) {
         GfMenuManager::openCommonWindow(0x11F);
         m_jobStarted = true;
@@ -174,7 +174,7 @@ bool TUnk_B60AA8::fn_71003BCEAC() {
     return true;
 }
 
-bool TUnk_B60AA8::fn_71003BCFB8() {
+bool GfMenuObjCampMenu::seqConfirmExit() {
     if (!m_jobStarted) {
         GfMenuManager::openCommonWindow(0x11E);
         m_jobStarted = true;
@@ -193,18 +193,18 @@ bool TUnk_B60AA8::fn_71003BCFB8() {
     return true;
 }
 
-bool TUnk_B60AA8::fn_71003BD058() {
-    m_seq.addJob(&TUnk_B60AA8::fn_71003BE178);
-    m_seq.addJob(&TUnk_B60AA8::fn_71003BE1A0);
+bool GfMenuObjCampMenu::seqClose() {
+    m_seq.addJob(&GfMenuObjCampMenu::seqCloseSpecialFadeOut);
+    m_seq.addJob(&GfMenuObjCampMenu::seqCloseSpecialFadeWait);
     if (fn_71002EDA8C()) {
-        m_seq.addJob(&TUnk_B60AA8::fn_71003BE1BC);
-        m_seq.addJob(&TUnk_B60AA8::fn_71003BE1EC);
+        m_seq.addJob(&GfMenuObjCampMenu::seqAutoSave);
+        m_seq.addJob(&GfMenuObjCampMenu::seqAutoSaveWait);
     }
-    m_seq.addJob(&TUnk_B60AA8::fn_71003BE1F4);
+    m_seq.addJob(&GfMenuObjCampMenu::seqCloseSpecial);
     return true;
 }
 
-void TUnk_B60AA8::TUnk_B60B20::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjCampMenu::CraftListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:
@@ -220,7 +220,7 @@ void TUnk_B60AA8::TUnk_B60B20::reciveEvent(const ui::EventData& event, unsigned 
             m_owner->m_driverList0->setIndex(index);
             m_owner->m_selectList->setIndex(index);
             m_owner->m_cursor->setDisp(true);
-            m_owner->fn_71003BD69C();
+            m_owner->refreshCraftInfo();
         }
         if (prev != -1 && index != prev) {
             GfMenuObjUtil::playSECommonCursor();
@@ -290,14 +290,14 @@ void TUnk_B60AA8::TUnk_B60B20::reciveEvent(const ui::EventData& event, unsigned 
         int ctrl = GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_craft_select"), 1, 1);
         GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
         m_owner->m_cursor->setDisp(false);
-        m_owner->fn_71003BCCD4();
-        m_owner->fn_71003BD69C();
+        m_owner->refreshNotice();
+        m_owner->refreshCraftInfo();
         break;
     }
     }
 }
 
-void TUnk_B60AA8::fn_71003BD69C() {
+void GfMenuObjCampMenu::refreshCraftInfo() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     unsigned short info[2];
     if (fn_71003BE7EC(m_driverList0->getContents(m_driverList0->getIndex(false)).m_driver, info)) {
@@ -309,7 +309,7 @@ void TUnk_B60AA8::fn_71003BD69C() {
     }
 }
 
-void TUnk_B60AA8::TUnk_B60B48::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjCampMenu::SleepListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:
@@ -319,8 +319,8 @@ void TUnk_B60AA8::TUnk_B60B48::reciveEvent(const ui::EventData& event, unsigned 
         GfMenuObjOperationInfo::close();
         m_owner->m_jobStarted = false;
         m_owner->m_seq.clear();
-        m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BD924);
-        m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BD978);
+        m_owner->m_seq.addJob(&GfMenuObjCampMenu::seqWaitSleepFade);
+        m_owner->m_seq.addJob(&GfMenuObjCampMenu::seqStartLevelUp);
         break;
     default:
         ui::UIObjectListener::reciveEvent(event, handle);
@@ -328,7 +328,7 @@ void TUnk_B60AA8::TUnk_B60B48::reciveEvent(const ui::EventData& event, unsigned 
     }
 }
 
-bool TUnk_B60AA8::fn_71003BD924() {
+bool GfMenuObjCampMenu::seqWaitSleepFade() {
     if (!m_jobStarted) {
         GfMenuFade::setFade(2, 30, mm::Col4::black);
         m_jobStarted = true;
@@ -337,19 +337,19 @@ bool TUnk_B60AA8::fn_71003BD924() {
     return !GfMenuManager::isFading();
 }
 
-bool TUnk_B60AA8::fn_71003BD978() {
+bool GfMenuObjCampMenu::seqStartLevelUp() {
     GfMenuManager::openFullScreen(5, true, true);
-    m_seq.addJob(&TUnk_B60AA8::fn_71003BEB30);
+    m_seq.addJob(&GfMenuObjCampMenu::seqWaitFSClose);
     if (fn_71002EDA8C()) {
-        m_seq.addJob(&TUnk_B60AA8::fn_71003BE1BC);
-        m_seq.addJob(&TUnk_B60AA8::fn_71003BE1EC);
+        m_seq.addJob(&GfMenuObjCampMenu::seqAutoSave);
+        m_seq.addJob(&GfMenuObjCampMenu::seqAutoSaveWait);
     }
-    m_seq.addJob(&TUnk_B60AA8::fn_71003BEB4C);
+    m_seq.addJob(&GfMenuObjCampMenu::seqEndSleep);
     m_jobStarted = false;
     return true;
 }
 
-void TUnk_B60AA8::TUnk_B60B70::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjCampMenu::ShopListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:
@@ -360,13 +360,13 @@ void TUnk_B60AA8::TUnk_B60B70::reciveEvent(const ui::EventData& event, unsigned 
             if (m_mode == 1) {
                 g_campMenuState = 1;
                 if (GfDataBlade::fn_7100231884() > 0x2AFE && GfDataBlade::fn_7100231884() < 0x2B01) {
-                    m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BE178);
-                    m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BE1A0);
+                    m_owner->m_seq.addJob(&GfMenuObjCampMenu::seqCloseSpecialFadeOut);
+                    m_owner->m_seq.addJob(&GfMenuObjCampMenu::seqCloseSpecialFadeWait);
                     if (fn_71002EDA8C()) {
-                        m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BE1BC);
-                        m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BE1EC);
+                        m_owner->m_seq.addJob(&GfMenuObjCampMenu::seqAutoSave);
+                        m_owner->m_seq.addJob(&GfMenuObjCampMenu::seqAutoSaveWait);
                     }
-                    m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BE1F4);
+                    m_owner->m_seq.addJob(&GfMenuObjCampMenu::seqCloseSpecial);
                 }
                 GfMenuObjOperationInfo::close();
             }
@@ -375,13 +375,13 @@ void TUnk_B60AA8::TUnk_B60B70::reciveEvent(const ui::EventData& event, unsigned 
         break;
     case 0x21: {
         GfMenuObjShop::OpenParam param;
-        param.m_shopId = m_owner->fn_71003BDF70();
+        param.m_shopId = m_owner->refreshShopInfo();
         param.m_option = true;
         m_owner->m_context->reset();
         GfMenuObjShop::open(m_owner->m_context, param);
         m_owner->m_jobStarted = false;
         m_owner->m_seq.clear();
-        m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BE0FC);
+        m_owner->m_seq.addJob(&GfMenuObjCampMenu::seqWaitShop);
         acc.setDisp(true);
         int ctrl = GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_shop_header"), 1, 1);
         GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
@@ -408,8 +408,8 @@ void TUnk_B60AA8::TUnk_B60B70::reciveEvent(const ui::EventData& event, unsigned 
     case 0x102: {
         unsigned int index = event.m_param0;
         m_owner->m_driverList0->setIndex(index);
-        m_owner->fn_71003BDF70();
-        GfMenuObjShop::fn_7100477960();
+        m_owner->refreshShopInfo();
+        GfMenuObjShop::changeCraft();
         break;
     }
     default:
@@ -418,7 +418,7 @@ void TUnk_B60AA8::TUnk_B60B70::reciveEvent(const ui::EventData& event, unsigned 
     }
 }
 
-bool TUnk_B60AA8::fn_71003BE0FC() {
+bool GfMenuObjCampMenu::seqWaitShop() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     if (m_context->isTerm()) {
         GfMenuObject::sendCloseEvent(main.searchChild("LAY_shop"), 0, 0.0f);
@@ -428,32 +428,32 @@ bool TUnk_B60AA8::fn_71003BE0FC() {
     return false;
 }
 
-bool TUnk_B60AA8::fn_71003BE178() {
+bool GfMenuObjCampMenu::seqCloseSpecialFadeOut() {
     GfMenuFade::setFade(1, 15, mm::Col4::black);
     return true;
 }
 
-bool TUnk_B60AA8::fn_71003BE1A0() {
+bool GfMenuObjCampMenu::seqCloseSpecialFadeWait() {
     return !GfMenuManager::isFading();
 }
 
-bool TUnk_B60AA8::fn_71003BE1BC() {
+bool GfMenuObjCampMenu::seqAutoSave() {
     mm::mtl::PtrSingleton<GfFieldTime>::sys()->setTime(7, 0);
-    GfGameManager::fn_71002AC6A8();
+    GfGameManager::reqestEventAutoSave();
     return true;
 }
 
-bool TUnk_B60AA8::fn_71003BE1EC() {
+bool GfMenuObjCampMenu::seqAutoSaveWait() {
     return true;
 }
 
-bool TUnk_B60AA8::fn_71003BE1F4() {
+bool GfMenuObjCampMenu::seqCloseSpecial() {
     mm::mtl::PtrSingleton<ui::UIManager>::sys()->terminateLayer(m_fsLayer, true);
     m_jobStarted = false;
     return true;
 }
 
-void TUnk_B60AA8::TUnk_B60B98::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjCampMenu::ChrChangeListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:
@@ -464,7 +464,7 @@ void TUnk_B60AA8::TUnk_B60B98::reciveEvent(const ui::EventData& event, unsigned 
         break;
     case 3:
         if (event.m_param0 == 1) {
-            TUnk_B60AA8* owner = m_owner;
+            GfMenuObjCampMenu* owner = m_owner;
             owner->fn_71003BE490(owner->m_driverList1->getIndex(false));
             GfMenuObject::enableInput(acc.m_handle);
             GfMenuObject::resetInputSelection(acc.m_handle);
@@ -516,7 +516,7 @@ void TUnk_B60AA8::TUnk_B60B98::reciveEvent(const ui::EventData& event, unsigned 
     }
 }
 
-bool TUnk_B60AA8::fn_71003BE7EC(unsigned int driver, unsigned short* shop) {
+bool GfMenuObjCampMenu::fn_71003BE7EC(unsigned int driver, unsigned short* shop) {
     unsigned char* fp = GfDataBdat::getFP(0x10E);
     if (fp != nullptr) {
         for (int i = 0; i < Bdat::getIdCount(fp); i++) {
@@ -533,11 +533,11 @@ bool TUnk_B60AA8::fn_71003BE7EC(unsigned int driver, unsigned short* shop) {
     return false;
 }
 
-bool TUnk_B60AA8::fn_71003BEB30() {
+bool GfMenuObjCampMenu::seqWaitFSClose() {
     return !GfMenuManager::isOpenFullScreen();
 }
 
-bool TUnk_B60AA8::fn_71003BEB4C() {
+bool GfMenuObjCampMenu::seqEndSleep() {
     mm::mtl::PtrSingleton<ui::UIManager>::sys()->terminateLayer(m_fsLayer, true);
     m_jobStarted = false;
     return true;

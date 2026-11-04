@@ -22,10 +22,9 @@ public:
     virtual void onEnter(void*, ai::State*);  // slot 3
     virtual void onLeave(void*, ai::State*);  // slot 4
     virtual void onStep(void*, void const*);  // slot 5
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because the state's onEnter
-    // and onStep tail-call them with its own this, the title and the slot's second argument.
-    void fn_71001565A0(TitleMain* title, ai::State* prev);
-    void fn_71001565A8(TitleMain* title, const fw::UpdateInfo& info);
+    // 2.0.0's symbols name them.
+    void enter(TitleMain* title, ai::State* prev);
+    void update(TitleMain* title, const fw::UpdateInfo& info);
 };
 }  // namespace tl
 

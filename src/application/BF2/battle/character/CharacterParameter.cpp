@@ -25,13 +25,13 @@ namespace {
 // the luck the character's (or, while slot 65 holds, its driver's) data gives before enhancements (the name is not
 // the original's; GetLUK hands it to ApplyStatusEnhance)
 inline int GetBaseLuck(const CharacterParameter& param) {
-    gf::DataParamAcc acc(param.fn_7100085314(true) ? param.m_driverHandle : param.m_handle);
+    gf::DataParamAcc acc(param.IsBlade(true) ? param.m_driverHandle : param.m_handle);
     return acc.getLuck(false);
 }
 }  // namespace
 
 
-CharacterParameter* CharacterParameter::fn_710007D990() const {
+CharacterParameter* CharacterParameter::GetBuddyCharacterParameterConst() const {
     gf::GF_OBJ_HANDLE* driver = m_driverHandle;
     BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(driver);
     if (chr == nullptr) {
@@ -40,12 +40,12 @@ CharacterParameter* CharacterParameter::fn_710007D990() const {
     return chr->GetCharacterParameterConst(true);
 }
 
-void CharacterParameter::fn_710007E0E8(gf::GF_OBJ_HANDLE* handle) {
+void CharacterParameter::TailInitialize(gf::GF_OBJ_HANDLE* handle) {
     if (BattleGlobal::sys()->m_challengeAnySuccess) {
         m_flags622_11 = false;
         return;
     }
-    if (fn_7100085314(false)) {
+    if (IsBlade(false)) {
         m_flags622_11 = gf::GfDataBlade::isDummyBlade(m_enArrangeID);
     } else {
         gf::DataParamAcc acc(handle);
@@ -54,7 +54,7 @@ void CharacterParameter::fn_710007E0E8(gf::GF_OBJ_HANDLE* handle) {
 }
 
 int CharacterParameter::GetLevel() const {
-    gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
+    gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
     return acc.getLevel(false);
 }
 
@@ -66,7 +66,7 @@ bool CharacterParameter::InitializeEnhance() const {
 void CharacterParameter::BattleStart(int) {
     InitializeArtsPalette(0);
     if (pad_20 != BattleGlobal::sys()->pad_a9c && !BladeChangeManager::sys()->IsRegister(m_handle) &&
-        !TUnk_B3BC20::sys()->fn_710009EB70(m_handle)) {
+        !FormationChangeManager::sys()->IsRegister(m_handle)) {
         ResetRecast();
     }
     pad_20 = BattleGlobal::sys()->pad_a9c;
@@ -78,12 +78,12 @@ void CharacterParameter::BattleEnd() {
     m_hasHateTarget = false;
 }
 
-void CharacterParameter::fn_710007EFC8() {
+void CharacterParameter::CheckFormationPosition() {
     bool notBlade;
     if (BattleGlobal::sys()->m_challengeAnySuccess) {
-        notBlade = IsEnemyParameter() || Utility::fn_7100011EA0(m_handle);
+        notBlade = IsEnemyParameter() || Utility::IsForward(m_handle);
     } else {
-        notBlade = !fn_7100085314(false);
+        notBlade = !IsBlade(false);
     }
     m_isNotBlade = notBlade;
 }
@@ -143,7 +143,7 @@ unsigned int CharacterParameter::CalcDamageArmor(unsigned int damage) {
         if (m_buffs[i].m_id == 5) {
             unsigned int armor = static_cast<unsigned int>(m_buffs[i].m_effect);
             if (result > armor) {
-                fn_7100080130(5, false, true);
+                ClearBuff(5, false, true);
                 return result - armor;
             }
             m_buffs[i].m_effect = static_cast<float>(armor - result);
@@ -160,7 +160,7 @@ bool CharacterParameter::IsBuff(int buff) const {
     if (m_flags622_6) {
         return false;
     }
-    const CharacterParameter* param = fn_710007D990();
+    const CharacterParameter* param = GetBuddyCharacterParameterConst();
     if (param == nullptr) {
         return false;
     }
@@ -193,7 +193,7 @@ float CharacterParameter::GetBuffEffect(int buff) const {
         if (param->m_flags622_6) {
             return effect;
         }
-        param = param->fn_710007D990();
+        param = param->GetBuddyCharacterParameterConst();
         if (param == nullptr) {
             return effect;
         }
@@ -216,7 +216,7 @@ bool CharacterParameter::IsBuffInfinite(int buff) const {
     return false;
 }
 
-float CharacterParameter::fn_7100080FC0() const {
+float CharacterParameter::GetTalentSinAttackSpeedBonus() const {
     float rate = 0.0f;
     if (BattleGlobal::sys()->m_challengeAnySuccess && IsBuff(29)) {
         rate = Bdat::getValCheckU16(gf::GfDataBdat::getFP(0x11), "BaseRecast", 29) * 0.01f;
@@ -224,7 +224,7 @@ float CharacterParameter::fn_7100080FC0() const {
     return rate;
 }
 
-void CharacterParameter::fn_71000812C0(int count) {
+void CharacterParameter::AddPerfectAvoid(int count) {
     if (m_isNotBlade) {
         int value = pad_5df + count;
         pad_5df = value < 0 ? 0 : (value > 255 ? 255 : value);
@@ -240,7 +240,7 @@ void CharacterParameter::fn_71000812C0(int count) {
     }
     CharacterParameter* param = chr->GetCharacterParameter(true);
     if (param != nullptr && param->m_isNotBlade) {
-        param->fn_71000812C0(count);
+        param->AddPerfectAvoid(count);
     }
 }
 
@@ -297,7 +297,7 @@ bool CharacterParameter::IsProgressCoolTime() const {
 }
 
 void CharacterParameter::SetSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, float rate, unsigned short time) {
-    if (fn_710008527C(false)) {
+    if (IsDriver(false)) {
         BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(m_driverHandle);
         if (chr == nullptr) {
             return;
@@ -315,7 +315,7 @@ void CharacterParameter::SetSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, float 
 }
 
 void CharacterParameter::AddSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, float rate, unsigned short time) {
-    if (fn_710008527C(false)) {
+    if (IsDriver(false)) {
         BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(m_driverHandle);
         if (chr == nullptr) {
             return;
@@ -333,7 +333,7 @@ void CharacterParameter::AddSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, float 
 }
 
 void CharacterParameter::MinSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, float rate, unsigned short time) {
-    if (fn_710008527C(false)) {
+    if (IsDriver(false)) {
         BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(m_driverHandle);
         if (chr == nullptr) {
             return;
@@ -352,7 +352,7 @@ void CharacterParameter::MinSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, float 
 }
 
 float CharacterParameter::GetSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, int* time) const {
-    if (fn_710008527C(false)) {
+    if (IsDriver(false)) {
         BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(m_driverHandle);
         if (chr == nullptr) {
             return 0.0f;
@@ -372,13 +372,13 @@ float CharacterParameter::GetSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, int* 
     return 0.0f;
 }
 
-unsigned short CharacterParameter::fn_7100081D64() const {
+unsigned short CharacterParameter::GetKizunaLinkBdatID() const {
     const CharacterParameter* param = this;
     do {
-        if (param->fn_7100085314(false)) {
+        if (param->IsBlade(false)) {
             return param->pad_5da;
         }
-        param = param->fn_710007D990();
+        param = param->GetBuddyCharacterParameterConst();
     } while (param != nullptr);
     return 0;
 }
@@ -397,7 +397,7 @@ int CharacterParameter::GetAttribute() const {
 int CharacterParameter::GetSTR() const {
     int value;
     {
-        gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
+        gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
         value = acc.getStrength(false);
     }
     ENHANCE_DATA data;
@@ -413,7 +413,7 @@ int CharacterParameter::GetSTR() const {
 int CharacterParameter::GetDEX() const {
     int value;
     {
-        gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
+        gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
         value = acc.getDex(false);
     }
     ENHANCE_DATA data;
@@ -429,7 +429,7 @@ int CharacterParameter::GetDEX() const {
 int CharacterParameter::GetAGI() const {
     int value;
     {
-        gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
+        gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
         value = acc.getAgility(false);
     }
     ENHANCE_DATA data;
@@ -449,7 +449,7 @@ int CharacterParameter::GetLUK() const {
 int CharacterParameter::GetEtherPower() const {
     int value;
     {
-        gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
+        gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
         value = acc.getPowerEther(false);
     }
     ENHANCE_DATA data;
@@ -465,7 +465,7 @@ int CharacterParameter::GetEtherPower() const {
 int CharacterParameter::GetPArmor() const {
     int value;
     {
-        gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
+        gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
         value = acc.getPArmor(false);
     }
     ENHANCE_DATA data;
@@ -481,7 +481,7 @@ int CharacterParameter::GetPArmor() const {
 int CharacterParameter::GetEArmor() const {
     int value;
     {
-        gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
+        gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
         value = acc.getEArmor(false);
     }
     ENHANCE_DATA data;
@@ -497,7 +497,7 @@ int CharacterParameter::GetEArmor() const {
 int CharacterParameter::GetCriticalPercent() const {
     int value;
     {
-        gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
+        gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
         value = acc.getCriticalRate(false);
     }
     ENHANCE_DATA data;
@@ -513,7 +513,7 @@ int CharacterParameter::GetCriticalPercent() const {
 int CharacterParameter::GetGuardPercent() const {
     int value;
     {
-        gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
+        gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
         value = acc.getGuardRate(false);
     }
     ENHANCE_DATA data;
@@ -529,7 +529,7 @@ int CharacterParameter::GetGuardPercent() const {
 int CharacterParameter::GetResistPowerAttack() const {
     int value;
     {
-        gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
+        gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
         value = static_cast<signed char>(acc.getResistancePower());
     }
     ENHANCE_DATA data;
@@ -545,7 +545,7 @@ int CharacterParameter::GetResistPowerAttack() const {
 int CharacterParameter::GetResistEtherAttack() const {
     int value;
     {
-        gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
+        gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
         value = static_cast<signed char>(acc.getResistanceEther());
     }
     ENHANCE_DATA data;

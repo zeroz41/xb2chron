@@ -10,8 +10,8 @@
 #include "classes/gf/GfMenuObjPartyStatus.h"
 #include "classes/gf/GfMenuObjPartyGauge.h"
 #include "classes/gf/GfMenuObjBladeChange.h"
-#include "classes/gf/TUnk_B60E28.h"
-#include "classes/gf/TUnk_B63AE0.h"
+#include "classes/gf/GfMenuObjCharChange.h"
+#include "classes/gf/GfMenuObjOCG.h"
 #include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfObjPropertyEnemy.h"
@@ -263,29 +263,29 @@ int GfMenuReference::getChainAttackBurstCount() {
     return 0;
 }
 
-void GfMenuReference::fn_7100367360(unsigned int number) {
+void GfMenuReference::setChainAttackOverkillBonus(unsigned int number) {
     GfMenuReference* self = get();
     if (self) self->m_chainAttackExtraNumber = number;
 }
 
-unsigned int GfMenuReference::fn_7100367380() {
+unsigned int GfMenuReference::getChainAttackOverkillBonus() {
     GfMenuReference* self = get();
     if (self) return self->m_chainAttackExtraNumber;
     return 0;
 }
 
-void GfMenuReference::fn_71003673A8(float seconds) {
+void GfMenuReference::setBattleTime(float seconds) {
     GfMenuReference* self = get();
     if (self) self->m_timeSeconds = seconds;
 }
 
-float GfMenuReference::fn_71003673C8() {
+float GfMenuReference::getBattleTime() {
     GfMenuReference* self = get();
     if (self) return self->m_timeSeconds;
     return 0.0f;
 }
 
-float GfMenuReference::fn_710036742C() {
+float GfMenuReference::getVisionTimeRatio() {
     GfMenuReference* self = get();
     if (self) return self->m_challengeRatio;
     return 0.0f;
@@ -294,12 +294,12 @@ float GfMenuReference::fn_710036742C() {
 void GfMenuReference::fn_7100367454(unsigned int value) {
     GfMenuReference* self = get();
     if (self) {
-        if (self->m_bladeChangeValue != value) GfMenuObjBladeChange::fn_7100391CDC();
+        if (self->m_bladeChangeValue != value) GfMenuObjBladeChange::refreshBattleMode();
         self->m_bladeChangeValue = value;
     }
 }
 
-unsigned int GfMenuReference::fn_71003674A0() {
+unsigned int GfMenuReference::getBattleMode() {
     GfMenuReference* self = get();
     if (self) return self->m_bladeChangeValue;
     return 0;
@@ -426,7 +426,7 @@ int GfMenuReference::getBladeSetIDFromParty(unsigned int party, unsigned int slo
 
 bool GfMenuReference::fn_7100367ADC(unsigned int slot, const BladeOwner& owner) {
     bool changed = false;
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (slot < 3 && self) {
             BladeOwner& record = self->m_bladeOwner[slot];
@@ -437,8 +437,8 @@ bool GfMenuReference::fn_7100367ADC(unsigned int slot, const BladeOwner& owner) 
     return changed;
 }
 
-const GfMenuReference::BladeOwner* GfMenuReference::fn_7100367BD8(unsigned int blade) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+const GfMenuReference::BladeOwner* GfMenuReference::getIraCharInfoFromFromID(unsigned int blade) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) {
             for (const BladeOwner& owner : self->m_bladeOwner) {
@@ -449,8 +449,8 @@ const GfMenuReference::BladeOwner* GfMenuReference::fn_7100367BD8(unsigned int b
     return nullptr;
 }
 
-const GfMenuReference::DriverGauge* GfMenuReference::fn_7100367C78(unsigned int driver) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+const GfMenuReference::DriverGauge* GfMenuReference::getIraCharProperty(unsigned int driver) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) {
             for (unsigned int i = 0; i < 3; i++) {
@@ -461,8 +461,8 @@ const GfMenuReference::DriverGauge* GfMenuReference::fn_7100367C78(unsigned int 
     return nullptr;
 }
 
-void GfMenuReference::fn_7100367D1C() {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuReference::resetIraCharRecast() {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) {
             for (unsigned int i = 0; i < 3; i++) {
@@ -473,7 +473,7 @@ void GfMenuReference::fn_7100367D1C() {
 }
 
 void GfMenuReference::fn_7100367D6C(unsigned int driver, const DriverGauge& gauge) {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) return;
+    if (!GfMenuObjUtil::isValidExpansion(3)) return;
     GfMenuReference* self = get();
     if (!self) return;
     unsigned int added = 0;
@@ -489,15 +489,15 @@ void GfMenuReference::fn_7100367D6C(unsigned int driver, const DriverGauge& gaug
     }
     self->m_gaugeTypeBits |= added;
     if ((added & 3) && (self->m_gaugeTypeBits & 3) == 3) {
-        TUnk_B60E28::fn_71003C3470();
+        GfMenuObjCharChange::changeFormation();
     }
     if ((added & 4) && (self->m_gaugeTypeBits & 4)) {
-        TUnk_B60E28::fn_71003C34E0();
+        GfMenuObjCharChange::changeBlade();
     }
 }
 
-int GfMenuReference::fn_7100367EF4(unsigned int driver) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+int GfMenuReference::getIraCharForm(unsigned int driver) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) {
             for (unsigned int i = 0; i < 3; i++) {
@@ -509,15 +509,15 @@ int GfMenuReference::fn_7100367EF4(unsigned int driver) {
     return -1;
 }
 
-void GfMenuReference::fn_7100367F98(float ratio) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuReference::setIraSpecialArtsRecast(float ratio) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) self->m_layerRatio = ratio;
     }
 }
 
-float GfMenuReference::fn_7100367FDC() {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+float GfMenuReference::getIraSpecialArtsRecast() {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) return self->m_layerRatio;
     }
@@ -525,14 +525,14 @@ float GfMenuReference::fn_7100367FDC() {
 }
 
 void GfMenuReference::fn_7100368018(int index) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) self->m_layerIndex = index;
     }
 }
 
-int GfMenuReference::fn_710036805C() {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+int GfMenuReference::getIraSpecialArtsLv() {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) return self->m_layerIndex;
         return 0;
@@ -540,8 +540,8 @@ int GfMenuReference::fn_710036805C() {
     return 0;
 }
 
-unsigned int GfMenuReference::fn_71003680AC(unsigned int index) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+unsigned int GfMenuReference::getIraOperationBtnCommand(unsigned int index) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (index < 4 && self) return self->m_layerCommand[index].m_value;
         return 0;
@@ -549,18 +549,18 @@ unsigned int GfMenuReference::fn_71003680AC(unsigned int index) {
     return 0;
 }
 
-void GfMenuReference::fn_710036810C(bool flag) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuReference::setIraOperationDisp(bool flag) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) {
-            if (self->m_layerFlag != flag) TUnk_B60E28::fn_71003C3550(flag);
+            if (self->m_layerFlag != flag) GfMenuObjCharChange::reverse(flag);
             self->m_layerFlag = flag;
         }
     }
 }
 
 bool GfMenuReference::fn_71003682D8(unsigned int index, unsigned int flag) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (index < 4 && self) return self->m_layerCommand[index].m_flags.test(flag);
         return false;
@@ -568,15 +568,15 @@ bool GfMenuReference::fn_71003682D8(unsigned int index, unsigned int flag) {
     return false;
 }
 
-void GfMenuReference::fn_7100368380(unsigned int bit, bool on) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuReference::setIraFlag(unsigned int bit, bool on) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) self->m_layerBits.set(bit, on);
     }
 }
 
-bool GfMenuReference::fn_7100368418(unsigned int bit) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuReference::isIraFlag(unsigned int bit) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) return self->m_layerBits.test(bit);
     }
@@ -584,7 +584,7 @@ bool GfMenuReference::fn_7100368418(unsigned int bit) {
 }
 
 void GfMenuReference::fn_7100368498(float ratio, unsigned int index) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (index < 2 && self) {
             float& value = self->m_layerGauge[index].m_ratio;
@@ -598,15 +598,15 @@ void GfMenuReference::fn_7100368498(float ratio, unsigned int index) {
     }
 }
 
-void GfMenuReference::fn_710036851C(unsigned int index, unsigned char count) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuReference::setIraSirenInfoLv(unsigned int index, unsigned char count) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (index < 2 && self) self->m_layerGauge[index].m_count = count;
     }
 }
 
-void GfMenuReference::fn_7100368570(unsigned int index, bool on) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuReference::setIraSirenInfoDown(unsigned int index, bool on) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (index < 2 && self) {
             LayerGauge& gauge = self->m_layerGauge[index];
@@ -614,17 +614,17 @@ void GfMenuReference::fn_7100368570(unsigned int index, bool on) {
             gauge.m_stateA = on;
             if (old != on) {
                 if (index == 1) {
-                    GfMenuObjPartyGauge::fn_7100456B60(on);
+                    GfMenuObjPartyGauge::setLock(on);
                 } else if (index == 0) {
-                    GfMenuObjPartyGauge::fn_7100456EA0(on);
+                    GfMenuObjPartyGauge::setLockSirenEN(on);
                 }
             }
         }
     }
 }
 
-void GfMenuReference::fn_7100368600(unsigned int index, bool on) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuReference::setIraSirenInfoCompete(unsigned int index, bool on) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (index < 2 && self) {
             LayerGauge& gauge = self->m_layerGauge[index];
@@ -632,12 +632,12 @@ void GfMenuReference::fn_7100368600(unsigned int index, bool on) {
             gauge.m_stateB = on;
             if (old != on) {
                 if (index == 1) {
-                    GfMenuObjPartyGauge::fn_7100456CB4(!on);
+                    GfMenuObjPartyGauge::dispSirenPT(!on);
                 } else if (index == 0) {
                     if (on) {
-                        GfMenuObjPartyGauge::fn_7100456E00();
+                        GfMenuObjPartyGauge::closeSirenEN();
                     } else {
-                        GfMenuObjPartyGauge::fn_7100456D60();
+                        GfMenuObjPartyGauge::openSirenEN();
                     }
                 }
             }
@@ -645,8 +645,8 @@ void GfMenuReference::fn_7100368600(unsigned int index, bool on) {
     }
 }
 
-void GfMenuReference::fn_7100368744(unsigned int index, unsigned int gimmickId, float ratio) {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuReference::setIraChainInfo(unsigned int index, unsigned int gimmickId, float ratio) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (index < 3 && self) {
             self->m_layerGimmick[index].m_gimmickId = gimmickId;
@@ -655,10 +655,10 @@ void GfMenuReference::fn_7100368744(unsigned int index, unsigned int gimmickId, 
     }
 }
 
-const GfMenuReference::LayerGimmick* GfMenuReference::fn_71003687B0(unsigned int index) {
+const GfMenuReference::LayerGimmick* GfMenuReference::getIraChainInfo(unsigned int index) {
     static LayerGimmick s_dummy;
     const LayerGimmick* gimmick = &s_dummy;
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (index < 3 && self) gimmick = &self->m_layerGimmick[index];
     }
@@ -668,19 +668,19 @@ const GfMenuReference::LayerGimmick* GfMenuReference::fn_71003687B0(unsigned int
 const GfMenuReference::ComboRouteState* GfMenuReference::fn_71003689C0() {
     static ComboRouteState s_dummy;
     const ComboRouteState* state = &s_dummy;
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) state = &self->m_comboRoute;
     }
     return state;
 }
 
-void GfMenuReference::fn_7100368A44() {
-    TUnk_B63AE0::fn_7100448E58();
+void GfMenuReference::openOCG() {
+    GfMenuObjOCG::openGear();
 }
 
-void GfMenuReference::fn_7100368A48() {
-    TUnk_B63AE0::fn_7100448ED4();
+void GfMenuReference::closeOCG() {
+    GfMenuObjOCG::closeGear();
 }
 
 void GfMenuReference::fn_7100368A4C(const LayerResult& result) {
@@ -694,11 +694,11 @@ void GfMenuReference::fn_7100368A4C(const LayerResult& result) {
             if (current.m_numbers[i] > 999) current.m_numbers[i] = 999;
         }
         if (current.m_ratio > 1.0f) current.m_ratio = 1.0f;
-        if (result.m_ratio > ratio) TUnk_B63AE0::fn_7100448FFC();
+        if (result.m_ratio > ratio) GfMenuObjOCG::noticeExtend();
     }
 }
 
-const GfMenuReference::LayerResult* GfMenuReference::fn_7100368B40() {
+const GfMenuReference::LayerResult* GfMenuReference::getOCGInfo() {
     static LayerResult s_dummy;
     GfMenuReference* self = get();
     if (self) return &self->m_layerResult;
@@ -706,7 +706,7 @@ const GfMenuReference::LayerResult* GfMenuReference::fn_7100368B40() {
 }
 
 void GfMenuReference::fn_7100368BAC(GfMenuCallContext* context, const ResultPair& pair) {
-    TUnk_B63AE0::fn_7100448F44(context, pair.m_first, pair.m_second);
+    GfMenuObjOCG::openResult(context, pair.m_first, pair.m_second);
 }
 
 void GfMenuReference::clearLinkList() {
@@ -743,7 +743,7 @@ GfMenuItemList* GfMenuReference::getItemLinkList() {
     return nullptr;
 }
 
-void GfMenuReference::fn_7100368E98() {
+void GfMenuReference::resetReferenceParam() {
     GfMenuReference* self = get();
     if (self) {
         for (int i = 0; i < 8; i++) self->m_referenceDriverID[i] = 0;
@@ -874,7 +874,7 @@ void GfMenuReference::fn_71003692E4(unsigned int mode) {
     if (self) self->m_challengeBattleMode = mode;
 }
 
-unsigned int GfMenuReference::fn_7100369304() {
+unsigned int GfMenuReference::getReferenceBtlchDifficulty() {
     GfMenuReference* self = get();
     if (self) return self->m_challengeBattleMode;
     return 0;
@@ -885,7 +885,7 @@ void GfMenuReference::fn_710036932C(unsigned int type) {
     if (self) self->m_referenceItemType = type;
 }
 
-unsigned int GfMenuReference::fn_710036934C() {
+unsigned int GfMenuReference::getReferenceItemType() {
     GfMenuReference* self = get();
     if (self) return self->m_referenceItemType;
     return 0;

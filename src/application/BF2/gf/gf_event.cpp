@@ -31,10 +31,10 @@ void GfEvent::callChangeScenarioFlag(unsigned int flag, unsigned int prevFlag) {
     }
 }
 
-void GfEvent::fn_7100326D4C(unsigned int value) {
+void GfEvent::callChangeAocFlag(unsigned int value) {
     GfEvent* event = get();
     for (unsigned long i = 0; i < event->m_listeners.size(); ++i) {
-        event->m_listeners[i]->fn_710000FAB8(value);
+        event->m_listeners[i]->gevChangeAocFlag(value);
     }
 }
 
@@ -108,10 +108,10 @@ void GfEvent::callPartyChange() {
     }
 }
 
-void GfEvent::fn_71003274A8() {
+void GfEvent::callChangeGameDifficult() {
     GfEvent* event = get();
     for (unsigned long i = 0; i < event->m_listeners.size(); ++i) {
-        event->m_listeners[i]->fn_710000FA20();
+        event->m_listeners[i]->gevChangeGameDifficult();
     }
 }
 
@@ -199,17 +199,17 @@ void GfEvent::callItemAdd(unsigned int item, int count) {
     }
 }
 
-void GfEvent::fn_7100327DC4(unsigned int value0, unsigned int value1) {
+void GfEvent::callOrbParam(unsigned int value0, unsigned int value1) {
     GfEvent* event = get();
     for (unsigned long i = 0; i < event->m_listeners.size(); ++i) {
-        event->m_listeners[i]->fn_710000FA60(value0, value1);
+        event->m_listeners[i]->gevOrbParam(value0, value1);
     }
 }
 
-void GfEvent::fn_7100327E78(unsigned int value0, unsigned int value1) {
+void GfEvent::callAcceParam(unsigned int value0, unsigned int value1) {
     GfEvent* event = get();
     for (unsigned long i = 0; i < event->m_listeners.size(); ++i) {
-        event->m_listeners[i]->fn_710000FA64(value0, value1);
+        event->m_listeners[i]->gevAcceParam(value0, value1);
     }
 }
 
@@ -276,31 +276,31 @@ void GfEvent::callPartyMover(GF_OBJ_HANDLE*handle, bool flag) {
     }
 }
 
-void GfEvent::fn_7100328568() {
+void GfEvent::callOpenMeinMenu() {
     GfEvent* event = get();
     for (unsigned long i = 0; i < event->m_listeners.size(); ++i) {
-        event->m_listeners[i]->fn_710000FA18();
+        event->m_listeners[i]->gevOpenMainMenu();
     }
 }
 
-void GfEvent::fn_7100328604(unsigned int value) {
+void GfEvent::callHitonowaChanged(unsigned int value) {
     GfEvent* event = get();
     for (unsigned long i = 0; i < event->m_listeners.size(); ++i) {
-        event->m_listeners[i]->fn_710000FA14(value);
+        event->m_listeners[i]->gevHitonowaChanged(value);
     }
 }
 
-void GfEvent::fn_71003286B0(unsigned int hana, bool extend, unsigned int slot) {
+void GfEvent::callHanaCondenser(unsigned int hana, bool extend, unsigned int slot) {
     GfEvent* event = get();
     for (unsigned long i = 0; i < event->m_listeners.size(); ++i) {
-        event->m_listeners[i]->fn_710000FA68(hana, extend, slot);
+        event->m_listeners[i]->gevHanaCondenser(hana, extend, slot);
     }
 }
 
-void GfEvent::fn_7100328774() {
+void GfEvent::callOpenPortal() {
     GfEvent* event = get();
     for (unsigned long i = 0; i < event->m_listeners.size(); ++i) {
-        event->m_listeners[i]->fn_710000FA1C();
+        event->m_listeners[i]->gevOpenPortal();
     }
 }
 

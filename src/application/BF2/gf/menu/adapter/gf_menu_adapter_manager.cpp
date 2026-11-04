@@ -170,7 +170,7 @@ void GfMenuAdapterManager::delActiveCategory(unsigned int category) {
     }
 }
 
-void GfMenuAdapterManager::fn_7100330A48() {
+void GfMenuAdapterManager::cleanup() {
     GfMenuAdapterManager* manager = get();
     if (manager == nullptr) {
         return;

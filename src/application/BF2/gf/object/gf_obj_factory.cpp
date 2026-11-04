@@ -272,7 +272,7 @@ GF_OBJ_HANDLE* GfObjFactory::createGmkNpc(const CBdatWrapper& bdat, int row) {
     param.pad_18 = &fp;
     param.pad_a0[0] = Bdat::getValCheck(bdat.m_fp, "MountPoint", row, 2);
     param.pad_a0[1] = Bdat::getValCheck(bdat.m_fp, "MountObject", row, 2);
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         param.pad_a0[2] = Bdat::getValCheck(bdat.m_fp, "MountPoint2", row, 2);
         param.pad_a0[3] = Bdat::getValCheck(bdat.m_fp, "MountObject2", row, 2);
     }

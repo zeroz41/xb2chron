@@ -1,22 +1,22 @@
-// the arena (challenge battle) game mode: its singleton TUnk_B535D0, its state machine and the simple states
+// the arena (challenge battle) game mode: its singleton GfGameArena, its state machine and the simple states
 
 #include "classes/gf/GfGameManager.h"
-#include "classes/gf/TUnk_B535D0.h"
+#include "classes/gf/GfGameArena.h"
 #include "gf/SDataGame.h"
-#include "classes/gf/TUnk_B52C38.h"
-#include "classes/gf/TUnk_28D7B8.h"
-#include "classes/gf/TUnk_28E618.h"
-#include "classes/gf/TUnk_28D5BC.h"
-#include "classes/gf/TUnk_B52C68.h"
-#include "classes/gf/TUnk_B53648.h"
-#include "classes/gf/TUnk_B53690.h"
-#include "classes/gf/TUnk_B52EC0.h"
-#include "classes/gf/TUnk_B536D8.h"
-#include "classes/gf/TUnk_B53720.h"
-#include "classes/gf/TUnk_B53768.h"
-#include "classes/gf/TUnk_B537B0.h"
-#include "classes/gf/TUnk_B53118.h"
-#include "classes/gf/TUnk_B53370.h"
+#include "classes/gf/GfArenaBattle.h"
+#include "classes/gf/GfArenaParty.h"
+#include "classes/gf/GfArenaReward.h"
+#include "classes/gf/GfArenaJingle.h"
+#include "classes/gf/StateArenaWait.h"
+#include "classes/gf/StateArenaSetup.h"
+#include "classes/gf/StateArenaLeave.h"
+#include "classes/gf/StateArenaField.h"
+#include "classes/gf/StateArenaDestroy.h"
+#include "classes/gf/StateArenaStartBattle.h"
+#include "classes/gf/StateArenaExecBattle.h"
+#include "classes/gf/StateArenaResultBattle.h"
+#include "classes/gf/StateArenaReturnBattle.h"
+#include "classes/gf/StateArenaEvent.h"
 #include "classes/fw/FrameworkMemory.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfGameFlag.h"
@@ -33,9 +33,9 @@
 
 namespace gf {
 
-TUnk_B535D0::MapjumpParam::MapjumpParam() : m_mapjumpId(0xE1) {}
+GfGameArena::MapjumpParam::MapjumpParam() : m_mapjumpId(0xE1) {}
 
-bool TUnk_B535D0::recieveMessage(fw::MessageObject* sender, fw::Message& msg) {
+bool GfGameArena::recieveMessage(fw::MessageObject* sender, fw::Message& msg) {
     if (msg.m_id == 0x1000034) {
         fn_7100290D40(sender, static_cast<MsgUnk_1000034&>(msg));
         return true;
@@ -43,48 +43,48 @@ bool TUnk_B535D0::recieveMessage(fw::MessageObject* sender, fw::Message& msg) {
     return false;
 }
 
-void TUnk_B535D0::fn_7100291100(const GfSetupParam& param) {
+void GfGameArena::initialize(const GfSetupParam& param) {
 #line 109
-    m_partySetup = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) TUnk_28D7B8(this);
-    m_msgObj = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) TUnk_B52C38(this);
-    m_helper = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) TUnk_28E618(this);
-    m_sound = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) TUnk_28D5BC();
+    m_partySetup = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfArenaParty(this);
+    m_msgObj = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfArenaBattle(this);
+    m_helper = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfArenaReward(this);
+    m_sound = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfArenaJingle();
     m_fsm.beginSetup(this, 10);
-    m_fsm.registerState<TUnk_B52C68>(0);
-    m_fsm.registerState<TUnk_B53648>(1);
-    m_fsm.registerState<TUnk_B53690>(2);
-    m_fsm.registerState<TUnk_B52EC0>(3);
-    m_fsm.registerState<TUnk_B536D8>(9);
-    m_fsm.registerState<TUnk_B53720>(4);
-    m_fsm.registerState<TUnk_B53768>(5);
-    m_fsm.registerState<TUnk_B537B0>(6);
-    m_fsm.registerState<TUnk_B53118>(7);
-    m_fsm.registerState<TUnk_B53370>(8);
+    m_fsm.registerState<StateArenaWait>(0);
+    m_fsm.registerState<StateArenaSetup>(1);
+    m_fsm.registerState<StateArenaLeave>(2);
+    m_fsm.registerState<StateArenaField>(3);
+    m_fsm.registerState<StateArenaDestroy>(9);
+    m_fsm.registerState<StateArenaStartBattle>(4);
+    m_fsm.registerState<StateArenaExecBattle>(5);
+    m_fsm.registerState<StateArenaResultBattle>(6);
+    m_fsm.registerState<StateArenaReturnBattle>(7);
+    m_fsm.registerState<StateArenaEvent>(8);
     m_fsm.endSetup();
     m_fsm.setState(0);
 #line 130
-    m_updater = new (fw::FrameworkMemory::getAllocator(5), 16, __FILE__, __LINE__) MicroUpdater<TUnk_B535D0>();
-    m_updater->start(this, &fn_7100291C6C);
+    m_updater = new (fw::FrameworkMemory::getAllocator(5), 16, __FILE__, __LINE__) MicroUpdater<GfGameArena>();
+    m_updater->start(this, &fnUpdate);
     fn_71002906D0(m_ids);
-    m_sound->fn_710028D5F0();
+    m_sound->initialize();
     GfGameFlag::setLocal(1, 0xDC0D, 0);
     m_isSetUp = true;
 }
 
-TUnk_B535D0::~TUnk_B535D0() {}
+GfGameArena::~GfGameArena() {}
 
-void TUnk_B535D0::fn_7100291AD8(const GfSetupParam& param) {
+void GfGameArena::build(const GfSetupParam& param) {
 #line 89
-    new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) TUnk_B535D0(param);
+    new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfGameArena(param);
 }
 
-void TUnk_B535D0::fn_7100291B1C() {
-    TUnk_B535D0* self = sys();
-    self->fn_7100291B64();
+void GfGameArena::destroy() {
+    GfGameArena* self = sys();
+    self->finalize();
     delete self;
 }
 
-void TUnk_B535D0::fn_7100291B64() {
+void GfGameArena::finalize() {
     while (!fn_7100291CAC()) {
         GfSleep(1);
     }
@@ -93,7 +93,7 @@ void TUnk_B535D0::fn_7100291B64() {
         m_updater = nullptr;
     }
     m_fsm.cleanup();
-    m_sound->fn_710028D624();
+    m_sound->finalize();
     if (m_sound != nullptr) {
         delete m_sound;
         m_sound = nullptr;
@@ -113,56 +113,56 @@ void TUnk_B535D0::fn_7100291B64() {
     m_isSetUp = false;
 }
 
-void TUnk_B535D0::fn_7100291C6C(TUnk_B535D0* self) {
+void GfGameArena::fnUpdate(GfGameArena* self) {
     for (;;) {
         self->m_fsm.update(&self->m_updateInfo);
         ml::MicroThread::sys()->sleep(0, true);
     }
 }
 
-bool TUnk_B535D0::fn_7100291CAC() {
+bool GfGameArena::fn_7100291CAC() {
     return m_fsm.m_pState->m_stateID == 9;
 }
 
-bool TUnk_B535D0::fn_7100291D54() {
+bool GfGameArena::fn_7100291D54() {
     return m_fsm.m_pState->m_stateID == 5;
 }
 
-bool TUnk_B535D0::fn_7100291D68() {
+bool GfGameArena::fn_7100291D68() {
     if (GfManager::isDestroyNow()) {
         return true;
     }
     return m_isEnd;
 }
 
-bool TUnk_B535D0::fn_7100291DA0() {
+bool GfGameArena::fn_7100291DA0() {
     return m_fsm.m_pState->m_stateID == 3;
 }
 
-bool TUnk_B535D0::fn_7100291DB4() {
+bool GfGameArena::fn_7100291DB4() {
     return GfGameFlag::getLocal(1, 0xDC0D) != 0;
 }
 
-bool TUnk_B535D0::fn_7100291DD8() {
+bool GfGameArena::fn_7100291DD8() {
     if (m_msgObj->m_isDone) {
         return true;
     }
     return m_fsm.m_pState->m_stateID == 7;
 }
 
-bool TUnk_B535D0::fn_7100291E00() {
+bool GfGameArena::fn_7100291E00() {
     return m_fsm.m_pState->m_stateID == 8;
 }
 
-void TUnk_B535D0::fn_7100291E2C(unsigned int frames) {
+void GfGameArena::sleep(unsigned int frames) {
     ml::MicroThread::sys()->sleep(frames, true);
 }
 
-unsigned int TUnk_B535D0::fn_7100291E14(GF_OBJ_HANDLE* handle) {
+unsigned int GfGameArena::fn_7100291E14(GF_OBJ_HANDLE* handle) {
     return m_partySetup->fn_710028E5BC(m_msgObj->m_key, handle);
 }
 
-void TUnk_B535D0::fn_7100291F2C() {
+void GfGameArena::createMapSound() {
     fw::SoundResource::SetupInfo info;
     info.pad_8 = 0x80;
     info.pad_0 = 5;
@@ -178,14 +178,14 @@ void TUnk_B535D0::fn_7100291F2C() {
 }
 
 // Proposed name, not the original's: the names of the arena states (IDs 0..9: 3 is the field state, 9 the one
-// fn_7100291B64 waits for). Only the strings survive in the original (.rodata lbl_710098A308..0x710098A38D, after
+// finalize waits for). Only the strings survive in the original (.rodata lbl_710098A308..0x710098A38D, after
 // "dlc_se_btl_chbtl", no reference left): what pointed at them was unreferenced and dropped by the linker.
 const char* g_arenaStateNames[] = {
     "ARENA_WAIT", "ARENA_SETUP", "ARENA_LEAVE", "ARENA_FIELD", "ARENA_BTL_START",
     "ARENA_BTL", "ARENA_BTL_RESULT", "ARENA_BTL_RETURN", "ARENA_EVENT", "ARENA_DESTROY",
 };
 
-void TUnk_B535D0::fn_7100291FF0() {
+void GfGameArena::destroyMapSound() {
     fw::SoundResource* resource = m_soundResource;
     m_soundPack = nullptr;
     if (resource != nullptr) {
@@ -194,29 +194,29 @@ void TUnk_B535D0::fn_7100291FF0() {
     }
 }
 
-void TUnk_B535D0::fn_7100291CC0() {
+void GfGameArena::setupGame() {
     GfDataManager::getDataGame()->m_ruleTable.fn_7100290510(m_ids);
 }
 
-TUnk_B535D0::RuleTable* TUnk_B535D0::fn_7100291CF4() {
+GfGameArena::RuleTable* GfGameArena::fn_7100291CF4() {
     return &GfDataManager::getDataGame()->m_ruleTable;
 }
 
-GfGameManager::BattleChallengeRecord::Rule* TUnk_B535D0::fn_7100291D14(unsigned int id, unsigned int mode) {
+GfGameManager::BattleChallengeRecord::Rule* GfGameArena::fn_7100291D14(unsigned int id, unsigned int mode) {
     RuleRow* rows = GfDataManager::getDataGame()->m_ruleTable.m_rows;
     return &rows[id].m_rules[mode];
 }
 
-unsigned int TUnk_B535D0::fn_7100292060(const fw::UpdateInfo& info) {
+unsigned int GfGameArena::update(const fw::UpdateInfo& info) {
     m_updateInfo = info;
     m_updater->update();
     if (m_sound != nullptr) {
-        m_sound->fn_710028D644(info);
+        m_sound->update(info);
     }
     return GfGameFlag::getLocal(1, 0xDC0D);
 }
 
-bool TUnk_B535D0::fn_71002920F0() {
+bool GfGameArena::fn_71002920F0() {
     return ::mm::mtl::PtrSingleton<GfPlayComStartChallengeBattle>::sys() != nullptr;
 }
 

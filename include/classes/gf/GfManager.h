@@ -29,11 +29,10 @@ public:
     static void setExec(EXEC_STATE state);
     void initialize();
     static void postUpdate(const fw::UpdateInfo& info);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among GfManager's per-frame
-    // functions in its unit (between activate's thunk and postUpdate). What it does: passes the update info to
-    // GfGameManager's fn_71002AC9C0 when there is a game manager. Its one caller is TitleApp's table slot 17
-    // (fn_710014E6CC), between TitleApplet::update (slot 16, which calls GfManager::update) and postUpdate
-    static void fn_710032A958(const fw::UpdateInfo& info);
+    // 2.0.0's symbols name it. What it does: passes the update info to GfGameManager's updateAfterLayer when there is a
+    // game manager. Its one caller is TitleApp's table slot 17 (fn_710014E6CC), between TitleApplet::update (slot 16,
+    // which calls GfManager::update) and postUpdate
+    static void updateAfterLayer(const fw::UpdateInfo& info);
     static void update(const fw::UpdateInfo& info);
     virtual ~GfManager();  // slot 0
     void finalize();
@@ -58,20 +57,16 @@ public:
     static void setupOptionData(const SDataOption& option);
     static bool isContinueGame();
     static bool isNewGame();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among GfManager's
-    // functions in its unit (between isNewGame and isExistSaveData). What it does: returns
-    // GfGameManager::fn_71002A9E68()'s answer (a tail call)
-    static bool fn_710032A1DC();
+    // 2.0.0's symbols name it. What it does: returns GfGameManager::isGameTypeIra()'s answer (a tail call)
+    static bool isGameTypeIra();
     // 1.0.0's names for the functions at 0x710032A270 and 0x710032A298 (same code, the flag moved from 0x58 to 0x60)
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it writes GfManager's
-    // s_pThis object. What it does: stores its bool in m_stopUpdate when there is a manager (update and postUpdate
-    // then skip the managers)
-    static void fn_710032A1E0(bool flag);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among GfManager's functions in
-    // its unit. What it does: passes its bool to the framework's, the effect manager's and the sound manager's
-    // fn_71001836D0 / fn_710017CB08 / fn_71001A0EF8 (each when it exists), GfGameManager::fn_71002AC558 and
+    // 2.0.0's symbols name it. What it does: stores its bool in m_stopUpdate when there is a manager (update and
+    // postUpdate then skip the managers)
+    static void setBusyForChangeGame(bool flag);
+    // 2.0.0's symbols name it. What it does: passes its bool to the framework's, the effect manager's and the sound
+    // manager's setupThreadPostUpdate / setIra / setupGameType (each when it exists), GfGameManager::resetGameType and
     // fw::fn_71001996F0
-    static void fn_710032A1FC(bool flag);
+    static void resetGameType(bool flag);
     static bool isExistSaveData();
     static void setSaveDataCreated();
 
@@ -86,7 +81,7 @@ public:
     unsigned int m_frameCount;  // update counts its frames (the name is not the original's)
     float m_loadGameTime;  // gevGameState: the load's seconds (-1 at first; setupContinueGame clears it)
     bool m_saveDataCreated;  // setSaveDataCreated (isExistSaveData)
-    // update and postUpdate run no manager while it is set (fn_710032A1E0's; the name is not the original's)
+    // update and postUpdate run no manager while it is set (setBusyForChangeGame's; the name is not the original's)
     bool m_stopUpdate;
     unsigned char pad_62[0x6];
 };

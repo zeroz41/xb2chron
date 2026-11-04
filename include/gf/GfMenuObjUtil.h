@@ -191,7 +191,7 @@ public:
     static int getPresetCtrlCurve(unsigned int preset);  // 3.0.1's always 1
     // the time of that preset control (GfMenuObjCharSelect::seqStreamWaitStatDr passes 6)
     static float getPresetCtrlTime(unsigned int preset);
-    // sets param up as that preset's fade-in control, with slot as its m_slot (TUnk_B62AA0::fn_710041F864 passes
+    // sets param up as that preset's fade-in control, with slot as its m_slot (GfMenuObjHitonowa::dispLevel passes
     // 3 and -1)
     static void setPresetCtrl_Fadein(unsigned int preset, CtrlParam& param, int slot);
     // the colour ui::UIColorLibrary names (r, g, b; black without one), in a function-local static
@@ -239,76 +239,57 @@ public:
     // a combo's effect text, and its effect (3.0.1's always 1) (GfMenuElementComboAdapter's update_*)
     static ui::UIStr getElementComboEffectName(unsigned int combo);
     static unsigned char getElementComboEffect(unsigned int combo);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in this
-    // file, which holds only GfMenuObjUtil's functions (1.0.0: 159 of 159). What it does: whether the add-on menu
-    // layer `layer` is usable. False unless bit `layer` of UIStr.cpp's layer mask (lbl_7100B75878; fn_7100696950
-    // sets a bit, fn_7100696970 tests one, fn_7100696A28 opens a set layer's "MNU_Layer_Dlc%02d" BDAT) is set;
-    // then layer 3 is GfGameManager::fn_71002A9E68, layer 2 is always usable, layer 1 is fn_71002AC598 (add-on
-    // content 0x01010003, checked by gf_game_env.cpp's fn_71002A75DC), any other layer is not. GfMenuManager's
-    // constructor sets bit 1 when fn_71002AC598 holds, and bit 3 when "menu_ira/font/bf2.wisty" is present (it then
-    // gives UIStr the font folder "menu_ira") or add-on content 0x101 is owned. 344 functions call it: 3 at 427 call sites
-    // and 1 at 46.
-    static bool fn_710048FD30(unsigned int layer);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
-    // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: true when ui::UIUtil::fn_7100696970(1) and
-    // GfGameManager::fn_71002AC598() hold and GfGameManager::getMapID() is 0x3A. Callers: GfGamePad::
+    // 2.0.0's symbols name it. What it does: whether the add-on menu layer `layer` is usable. False unless bit `layer`
+    // of UIStr.cpp's layer mask (lbl_7100B75878; registEnableExpType sets a bit, isEnableExpType tests one,
+    // getLayerBdat opens a set layer's "MNU_Layer_Dlc%02d" BDAT) is set; then layer 3 is GfGameManager::isGameTypeIra,
+    // layer 2 is always usable, layer 1 is isInstalledBattleArenaContents (add-on content 0x01010003, checked by
+    // gf_game_env.cpp's fn_71002A75DC), any other layer is not. GfMenuManager's constructor sets bit 1 when
+    // isInstalledBattleArenaContents holds, and bit 3 when "menu_ira/font/bf2.wisty" is present (it then gives UIStr
+    // the font folder "menu_ira") or add-on content 0x101 is owned. 344 functions call it: 3 at 427 call sites and 1 at
+    // 46.
+    static bool isValidExpansion(unsigned int layer);
+    // 2.0.0's symbols name it. What it does: true when ui::UIUtil::isEnableExpType(1) and
+    // GfGameManager::isInstalledBattleArenaContents() hold and GfGameManager::getMapID() is 0x3A. Callers: GfGamePad::
     // eventInGameOpenSkipTravelMenu (refuses the menu then), GfMenuObjMainMenu2::ContentsListener,
     // GfMenuObjMainSubmenu::ListListener, GfMenuObjWorldMap::MapSelectListener and GfMenuObjWorldMap::isEnterMap.
-    static bool fn_7100492CBC();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
-    // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: whether blade is one of 1005..1007.
-    static bool fn_71004903E4(unsigned int blade);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
-    // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: whether blade is one of 1124..1132
-    // (GfMenuCharDataAdapter::update shows a blade object only when this or isValidBlade holds).
-    static bool fn_7100490CE0(unsigned int blade);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
-    // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: false unless GfGameManager::isClearGame; then
-    // true when GfDataBlade::fn_71002383C8 holds for blade 1005 or 1006, else whether the game data's short at
-    // 0x8E04 is 2.
-    static bool fn_71004903F4();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
-    // GfMenuObjUtil's functions (unit GfMenuObjUtil, right before fn_710048FD30). What it does: true when
-    // ui::UIUtil::fn_7100696970(3) and GfGameManager::fn_71002A9E68 hold and fn_71002EB3C0 does not;
-    // GfMenuCharDataAdapter::update_DR_BtlFace then shows face 0xB for driver 0x14.
-    static bool fn_710048FCF8();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has isBladeCurrent before
-    // canRemoveBladeEx, a different body). A member because its address lies among GfMenuObjUtil's functions (unit
-    // GfMenuObjUtil, right before canRemoveBladeEx). What it does: whether blade is one of 1043..1049
+    static bool isInChallengeBattleMap();
+    // 2.0.0's symbols name it. What it does: whether blade is one of 1005..1007.
+    static bool isBladeHana(unsigned int blade);
+    // 2.0.0's symbols name it. What it does: whether blade is one of 1124..1132 (GfMenuCharDataAdapter::update shows a
+    // blade object only when this or isValidBlade holds).
+    static bool isIraDummyBlade(unsigned int blade);
+    // 2.0.0's symbols name it. What it does: false unless GfGameManager::isClearGame; then true when
+    // GfDataBlade::fn_71002383C8 holds for blade 1005 or 1006, else whether the game data's short at 0x8E04 is 2.
+    static bool isBladeHanaInMercenary();
+    // 2.0.0's symbols name it. What it does: true when ui::UIUtil::isEnableExpType(3) and GfGameManager::isGameTypeIra
+    // hold and fn_71002EB3C0 does not; GfMenuCharDataAdapter::update_DR_BtlFace then shows face 0xB for driver 0x14.
+    static bool isIraSinMaskOff();
+    // 2.0.0's symbols name it. What it does: whether blade is one of 1043..1049
     // (GfMenuObjBlWeapon2::ItemSelectListener::reciveEvent).
-    static bool fn_7100491990(unsigned int blade);
+    static bool isBladeNoBuildWeapon(unsigned int blade);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
-    // GfMenuObjUtil's functions (unit GfMenuObjUtil, between fn_7100490CE0 and convMenuBladeID). What it does: the
+    // GfMenuObjUtil's functions (unit GfMenuObjUtil, between isIraDummyBlade and convMenuBladeID). What it does: the
     // same body as getBladeSlotMax (1, 2 once local flag 0x89FF is 1, 3 once 0x8A00 is 1); callers
     // GfMenuObjSaveLoad2::refreshSave and fn_71002EAF78.
     static unsigned int fn_7100490D28();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
-    // GfMenuObjUtil's functions (unit GfMenuObjUtil, after fn_71004903F4). What it does: 0 unless
-    // GfGameManager::isClearGame; then the first of blades 1005, 1006, 1007 that GfDataBlade::fn_71002383C8 holds
-    // for, else 0 (GfMenuObjBladeSet2::BladeListListener::reciveEvent).
-    static unsigned int fn_7100490440();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
-    // GfMenuObjUtil's functions (unit GfMenuObjUtil, after fn_7100490440). What it does: false once the game is
-    // cleared and driver 4 is GfDataDriver::isActivateUnuse; true when driver 4 is not isActivateParty; else whether
-    // more than one of party slots 0-2 has a driver (GfGameParty::getDriverBdatId(slot, 0) != 0)
-    // (GfMenuBladeList::setupFromTeam).
-    static bool fn_71004904A0();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
-    // GfMenuObjUtil's functions (unit GfMenuObjUtil, after getName). What it does: GfDataBlade::fn_7100239934(blade,
-    // flag), and for blade 1001/1002 the same for both, for 1005..1007 for all three (the blade release, blade set
-    // and mercenary form listeners call it).
-    static void fn_71004922BC(unsigned int blade, bool flag);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
-    // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: true when bit 2 of byte 4 of
-    // ui::UIUtil::getPadData() is set, else that byte's bit 1 (GfMenuObjFieldSkill::update stops its voice when this
-    // and fn_710048FD30(3) hold).
-    static bool fn_7100492C88();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
-    // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: spaces the count children of handle named by
-    // format (format % 1.., a FixStr) evenly, centred, by the width of the child it names with name (asserts
-    // "pszName != 0"); gf_menu_obj_btlch_order's LAY_limit listener lays out "LAY_limit_dr@%02d" by "limit_driver"
-    // and "LAY_limit_bl@%02d" by "limit_blade" with it.
-    static void fn_7100493D2C(unsigned int handle, const char* format, unsigned int count, const char* name);
+    // 2.0.0's symbols name it. What it does: 0 unless GfGameManager::isClearGame; then the first of blades 1005, 1006,
+    // 1007 that GfDataBlade::fn_71002383C8 holds for, else 0 (GfMenuObjBladeSet2::BladeListListener::reciveEvent).
+    static unsigned int getBladeHanaInMercenary();
+    // 2.0.0's symbols name it. What it does: false once the game is cleared and driver 4 is
+    // GfDataDriver::isActivateUnuse; true when driver 4 is not isActivateParty; else whether more than one of party
+    // slots 0-2 has a driver (GfGameParty::getDriverBdatId(slot, 0) != 0) (GfMenuBladeList::setupFromTeam).
+    static bool canBladeHanaInMercenary();
+    // 2.0.0's symbols name it. What it does: GfDataBlade::setBladeLock(blade, flag), and for blade 1001/1002 the same
+    // for both, for 1005..1007 for all three (the blade release, blade set and mercenary form listeners call it).
+    static void setBladeFavorite(unsigned int blade, bool flag);
+    // 2.0.0's symbols name it. What it does: true when bit 2 of byte 4 of ui::UIUtil::getPadData() is set, else that
+    // byte's bit 1 (GfMenuObjFieldSkill::update stops its voice when this and isValidExpansion(3) hold).
+    static bool isVoiceSkip();
+    // 2.0.0's symbols name it. What it does: spaces the count children of handle named by format (format % 1.., a
+    // FixStr) evenly, centred, by the width of the child it names with name (asserts "pszName != 0");
+    // gf_menu_obj_btlch_order's LAY_limit listener lays out "LAY_limit_dr@%02d" by "limit_driver" and
+    // "LAY_limit_bl@%02d" by "limit_blade" with it.
+    static void placeObjectHFromLayout(unsigned int handle, const char* format, unsigned int count, const char* name);
     // the icons of a driver's arts at a level (getArtsIconInfo zeroes it first); the names are not the original's
     struct ArtsIconInfo {
         unsigned int m_type;     // 0xC, 0xD, 0xE for the special kinds

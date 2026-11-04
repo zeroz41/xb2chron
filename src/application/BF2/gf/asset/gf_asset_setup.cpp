@@ -181,11 +181,11 @@ const char* GfAssetSetupDriver::getPath() const {
 }
 
 GfAssetType GfAssetSetupDriver::getAssetType() const {
-    return static_cast<GfAssetType>(GfGameManager::fn_71002A9E68() ? 5 : 4);
+    return static_cast<GfAssetType>(GfGameManager::isGameTypeIra() ? 5 : 4);
 }
 
 GfAssetType GfAssetSetupDriver::getAssetTypeMot() const {
-    return static_cast<GfAssetType>(GfGameManager::fn_71002A9E68() ? 7 : 5);
+    return static_cast<GfAssetType>(GfGameManager::isGameTypeIra() ? 7 : 5);
 }
 
 const char* GfAssetSetupEventDriver::getEvtMotFile(GfAssetType type) {
@@ -615,7 +615,7 @@ const char* GfAssetSetupEnemy::getMdlFile(GfAssetType type) {
 const char* fn_71001BD044(const char* name, bool createType3) {
     GfBdatChrDr* chrDr = GfBdatChrDr::sys();
     for (unsigned int driver = 1; driver <= 6; driver++) {
-        if (GfDataDriver::fn_7100249170(driver) && strcmp(name, chrDr->getChrDrModel(driver)) == 0) {
+        if (GfDataDriver::isAttachedParty(driver) && strcmp(name, chrDr->getChrDrModel(driver)) == 0) {
             return fn_71002DF39C(driver, false, createType3);
         }
     }

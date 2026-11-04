@@ -10,7 +10,7 @@ const char* GfDataSave::getSaveDataFileName() {
     return "bf2savefile";
 }
 
-const char* GfDataSave::fn_710022C0FC() {
+const char* GfDataSave::getIraSaveDataFileName() {
     return "irasavefile";
 }
 
@@ -49,15 +49,15 @@ void GfDataSave::getFileNameForLoad(mm::mtl::FixStr<256>& out, SAVESLOT slot) {
     }
 }
 
-void GfDataSave::fn_710022C2B0(mm::mtl::FixStr<256>& out, SAVESLOT slot) {
+void GfDataSave::getFileNameForIraLoad(mm::mtl::FixStr<256>& out, SAVESLOT slot) {
     if (slot == -1) {
         out.clear();
     } else if (slot == 0x16) {
         getSaveDataPath(out);
-        out += fn_710022C0FC();
+        out += getIraSaveDataFileName();
     } else if (slot < 10) {
         getSaveDataPath(out);
-        out += fn_710022C0FC();
+        out += getIraSaveDataFileName();
         mm::mtl::FixStr<16> num;
         num.format("%d", slot);
         out += num.m_str;
@@ -89,15 +89,15 @@ void GfDataSave::getFileNameForSave(mm::mtl::FixStr<256>& out, SAVESLOT slot) {
     }
 }
 
-void GfDataSave::fn_710022C63C(mm::mtl::FixStr<256>& out, SAVESLOT slot) {
+void GfDataSave::getFileNameForIraSave(mm::mtl::FixStr<256>& out, SAVESLOT slot) {
     if (slot == -1) {
         out.clear();
     } else if (slot == 0x16) {
         getSaveDataPath(out);
-        out += fn_710022C0FC();
+        out += getIraSaveDataFileName();
     } else if (slot < 10) {
         getSaveDataPath(out);
-        out += fn_710022C0FC();
+        out += getIraSaveDataFileName();
         mm::mtl::FixStr<16> num;
         num.format("%d", slot);
         out += num.m_str;
@@ -115,7 +115,7 @@ void GfDataSave::getFileNameForOption(mm::mtl::FixStr<256>& out) {
     out += getOptionSaveDataFileName();
 }
 
-void GfDataSave::fn_710022C894(mm::mtl::FixStr<256>& out) {
+void GfDataSave::getFileNameForIraOption(mm::mtl::FixStr<256>& out) {
     getSaveDataPath(out);
     out += "iraoption";
 }
@@ -125,8 +125,8 @@ void GfDataSave::getFileNameForSaveBin(mm::mtl::FixStr<256>& out, SAVESLOT slot)
     out += getSaveDataExtNameForBin();
 }
 
-void GfDataSave::fn_710022C96C(mm::mtl::FixStr<256>& out, SAVESLOT slot) {
-    fn_710022C63C(out, slot);
+void GfDataSave::getFileNameForIraSaveBin(mm::mtl::FixStr<256>& out, SAVESLOT slot) {
+    getFileNameForIraSave(out, slot);
     out += getSaveDataExtNameForBin();
 }
 
@@ -136,7 +136,7 @@ void GfDataSave::getFileNameForOptionBin(mm::mtl::FixStr<256>& out) {
 }
 
 void GfDataSave::getFileNameForOptionXml(mm::mtl::FixStr<256>& out) {
-    fn_710022C894(out);
+    getFileNameForIraOption(out);
     out += getSaveDataExtNameForBin();
 }
 

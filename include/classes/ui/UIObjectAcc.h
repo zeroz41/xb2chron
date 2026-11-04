@@ -53,15 +53,13 @@ public:
     void setAnimationPlaybackTime(float time);
     bool isPlayingAnimation();
     void setStreamImage2nd();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in UIObjectAcc's unit
-    // next to setStreamImage2nd and reads m_object the same way. What it does: when m_object is a ui::UIImageObject
-    // (RTTI isKindOf UIImageObject::m_rtti), sets bit 0x40000 of its u32 at 0x98. GfMenuObjHitonowa's fn_710041D268
-    // and fn_710041E90C call it.
-    void fn_7100691FD0();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member, as fn_7100691FD0. What it does:
-    // when m_object is a ui::UIImageObject, clears bits 0x60000 of its u32 at 0x98 (the bits setStreamImage2nd and
-    // fn_7100691FD0 set). The same two callers call it first.
-    void fn_710069201C();
+    // 2.0.0's symbols name it. What it does: when m_object is a ui::UIImageObject (RTTI isKindOf
+    // UIImageObject::m_rtti), sets bit 0x40000 of its u32 at 0x98. GfMenuObjHitonowa's setFaceStream and fn_710041E90C
+    // call it.
+    void setStreamImage3rd();
+    // 2.0.0's symbols name it. What it does: when m_object is a ui::UIImageObject, clears bits 0x60000 of its u32 at
+    // 0x98 (the bits setStreamImage2nd and setStreamImage3rd set). The same two callers call it first.
+    void resetStreamImageEx();
     void stopAnimation();
     bool isPlaybackControl() const;
     void applyText(const char* text);
@@ -105,11 +103,9 @@ public:
     bool isControl() const;
     bool isDuplicate() const;
     bool isStreamImage2nd() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in UIObjectAcc's unit
-    // between the flag getters and reads m_object the same way. What it does: bit 18 of its object's flags at 0x98
-    // (false without an object), the bit fn_7100691FD0 sets and fn_710069201C clears. ui::UIStreamManager::start
-    // calls it.
-    bool fn_7100690ED4() const;
+    // 2.0.0's symbols name it. What it does: bit 18 of its object's flags at 0x98 (false without an object), the bit
+    // setStreamImage3rd sets and resetStreamImageEx clears. ui::UIStreamManager::start calls it.
+    bool isStreamImage3rd() const;
     void setTexFilterNearest();  // its layer object's texture filter type 0 (on a fresh LayerAccObjBase)
     void setTextFacePattern(const char* name);  // the face pattern UIFontManager has under that name
     unsigned int getRenderIndex();  // its screen object's view index, 0 when it is not a screen

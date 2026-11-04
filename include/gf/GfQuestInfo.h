@@ -26,12 +26,10 @@ public:
     static QuestID getParentQuest(QuestID id);
     // the event a quest plays at its order (state 2: call event A) or else (call event B)
     static unsigned int getPlayEvent(QuestID id, QSTATE state);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's getPlayEvent is followed by
-    // getProgressQuest). A member because it fills this unit between two GfQuestInfo functions and its only caller is
-    // GfQuestManager::checkQuestComplete. What it does: builds the quest's tasks 0-3 (QuestTaskParam, state 0) and
-    // answers true as soon as one is of task type 1, or of type 8 (a gimmick task) whose task id
-    // QuestListAcc::fn_710025C23C answers nonzero; false otherwise.
-    static bool fn_7100302360(QuestID id);
+    // 2.0.0's symbols name it. What it does: builds the quest's tasks 0-3 (QuestTaskParam, state 0) and answers true as
+    // soon as one is of task type 1, or of type 8 (a gimmick task) whose task id QuestListAcc::getGimmickEnemyWaveID
+    // answers nonzero; false otherwise.
+    static bool hasBattleTask(QuestID id);
     static QuestID getProgressQuest(QuestID id);
     static bool isParent(QuestID id);
     static QuestID getChildQuestID(QuestID id);

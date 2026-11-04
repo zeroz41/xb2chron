@@ -31,7 +31,7 @@ public:
 };
 // Placeholder name: nothing names it (no symbol). A free function because it takes nothing and reaches the title
 // through TitleMain::sys(); TitleStatePlayGame::enter calls it for menu result 5. What it does: clears the sound UI
-// option flags A..C of the game's and the title's options unless fn_71002A9E68 or GfGameUtilSaveData::fn_71002EDC78
+// option flags A..C of the game's and the title's options unless isGameTypeIra or GfGameUtilSaveData::fn_71002EDC78
 // holds, and resets their m_keyD above 1 to 0 unless the game is cleared (isClearGame / fn_71002EDCEC).
 void fn_7100154638();
 }  // namespace tl

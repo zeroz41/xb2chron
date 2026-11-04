@@ -53,14 +53,14 @@ void GfMenuObjPartyGauge::initialize() {
                     GfMenuObject::addNumberEventCondition(gauge.m_handle, name.m_str, 0, i, 1.0f);
                 }
             }
-            if (GfMenuObjUtil::fn_710048FD30(3)) {
+            if (GfMenuObjUtil::isValidExpansion(3)) {
                 GfMenuBattleAdapter::create(gauge.searchChild("IMG_siren_pt_lv"), 0x23);
             }
         }
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(3)) {
             ui::UIObjectAcc siren(acc.m_handle, "LAY_siren");
 #line 114
-            TUnk_B63FC8* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B63FC8(this);
+            SirenListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SirenListener(this);
             listener->m_RefCount = 1;
             ui::UIEventManager::get()->registObjectListener(siren.m_handle, listener);
             if (listener != nullptr) {
@@ -110,11 +110,11 @@ void GfMenuObjPartyGauge::close() {
     }
 }
 
-void GfMenuObjPartyGauge::fn_71004569F8() {
+void GfMenuObjPartyGauge::enableOpen() {
     s_locked = false;
 }
 
-void GfMenuObjPartyGauge::fn_7100456A08() {
+void GfMenuObjPartyGauge::disableOpen() {
     s_locked = true;
 }
 
@@ -129,8 +129,8 @@ void GfMenuObjPartyGauge::disp(bool disp) {
     }
 }
 
-void GfMenuObjPartyGauge::fn_7100456AC8() {
-    if (GfMenuObjUtil::fn_710048FD30(1) || GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuObjPartyGauge::damage() {
+    if (GfMenuObjUtil::isValidExpansion(1) || GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x55));
         if (acc.m_object != nullptr && !acc.isTerm()) {
             ui::UIObjectAcc gauge(acc.m_handle, "LAY_gauge");
@@ -141,8 +141,8 @@ void GfMenuObjPartyGauge::fn_7100456AC8() {
     }
 }
 
-void GfMenuObjPartyGauge::fn_7100456B60(bool flag) {
-    if (GfMenuObjUtil::fn_710048FD30(1) || GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuObjPartyGauge::setLock(bool flag) {
+    if (GfMenuObjUtil::isValidExpansion(1) || GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x55));
         if (acc.m_object != nullptr && !acc.isTerm()) {
             ui::UIObjectAcc gauge(acc.m_handle, "LAY_gauge");
@@ -155,7 +155,7 @@ void GfMenuObjPartyGauge::fn_7100456B60(bool flag) {
 }
 
 void GfMenuObjPartyGauge::fn_7100456C0C(int value) {
-    if (GfMenuObjUtil::fn_710048FD30(1) || GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(1) || GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x55));
         if (acc.m_object != nullptr && !acc.isTerm()) {
             ui::UIObjectAcc gauge(acc.m_handle, "LAY_gauge");
@@ -167,8 +167,8 @@ void GfMenuObjPartyGauge::fn_7100456C0C(int value) {
     }
 }
 
-void GfMenuObjPartyGauge::fn_7100456CB4(bool flag) {
-    if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuReference::fn_7100368418(4)) {
+void GfMenuObjPartyGauge::dispSirenPT(bool flag) {
+    if (GfMenuObjUtil::isValidExpansion(3) && GfMenuReference::isIraFlag(4)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x55));
         if (acc.m_object != nullptr && !acc.isTerm()) {
             ui::UIObjectAcc gauge(acc.m_handle, "LAY_gauge");
@@ -180,8 +180,8 @@ void GfMenuObjPartyGauge::fn_7100456CB4(bool flag) {
     }
 }
 
-void GfMenuObjPartyGauge::fn_7100456D60() {
-    if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuReference::fn_7100368418(4)) {
+void GfMenuObjPartyGauge::openSirenEN() {
+    if (GfMenuObjUtil::isValidExpansion(3) && GfMenuReference::isIraFlag(4)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x55));
         if (acc.m_object != nullptr && !acc.isTerm()) {
             ui::UIObjectAcc siren(acc.m_handle, "LAY_siren");
@@ -193,8 +193,8 @@ void GfMenuObjPartyGauge::fn_7100456D60() {
     }
 }
 
-void GfMenuObjPartyGauge::fn_7100456E00() {
-    if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuReference::fn_7100368418(4)) {
+void GfMenuObjPartyGauge::closeSirenEN() {
+    if (GfMenuObjUtil::isValidExpansion(3) && GfMenuReference::isIraFlag(4)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x55));
         if (acc.m_object != nullptr && !acc.isTerm()) {
             ui::UIObjectAcc siren(acc.m_handle, "LAY_siren");
@@ -206,8 +206,8 @@ void GfMenuObjPartyGauge::fn_7100456E00() {
     }
 }
 
-void GfMenuObjPartyGauge::fn_7100456EA0(bool flag) {
-    if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuReference::fn_7100368418(4)) {
+void GfMenuObjPartyGauge::setLockSirenEN(bool flag) {
+    if (GfMenuObjUtil::isValidExpansion(3) && GfMenuReference::isIraFlag(4)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x55));
         if (acc.m_object != nullptr && !acc.isTerm()) {
             ui::UIObjectAcc siren(acc.m_handle, "LAY_siren");
@@ -274,7 +274,7 @@ void GfMenuObjPartyGauge::GaugeListener::reciveEvent(const ui::EventData& event,
                 m_owner->m_barCtrl = -1;
             }
         }
-        if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuReference::fn_7100368418(4) &&
+        if (GfMenuObjUtil::isValidExpansion(3) && GfMenuReference::isIraFlag(4) &&
             acc.searchSibiling("LAY_siren") != 0) {
             ui::UIObjectAcc sirenIcon(acc.m_handle, "IMG_siren_pt_icon");
             if (index == 2) {
@@ -295,9 +295,9 @@ void GfMenuObjPartyGauge::GaugeListener::reciveEvent(const ui::EventData& event,
             m_state.m_ctrl = GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
             m_state.m_open = 1;
         }
-        if (GfMenuObjUtil::fn_710048FD30(3) && acc.searchSibiling("LAY_siren") != 0) {
+        if (GfMenuObjUtil::isValidExpansion(3) && acc.searchSibiling("LAY_siren") != 0) {
             acc.setDispChild(false, "LAY_siren_pt");
-            if (GfMenuReference::fn_7100368418(4) && !GfMenuReference::fn_71003686A0(1)->m_stateB) {
+            if (GfMenuReference::isIraFlag(4) && !GfMenuReference::getIraSirenInfo(1)->m_stateB) {
                 GfMenuObject::sendEvent(acc.searchSibiling("LAY_siren"), event, 0.0f);
                 acc.setDispChild(true, "LAY_siren_pt");
             }
@@ -315,13 +315,13 @@ void GfMenuObjPartyGauge::GaugeListener::reciveEvent(const ui::EventData& event,
             m_state.m_ctrl = GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
             m_state.m_open = 0;
         }
-        if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuReference::fn_7100368418(4) &&
+        if (GfMenuObjUtil::isValidExpansion(3) && GfMenuReference::isIraFlag(4) &&
             acc.searchSibiling("LAY_siren") != 0) {
             GfMenuObject::sendEvent(acc.searchSibiling("LAY_siren"), event, 0.0f);
         }
         break;
     case 0x100:
-        if (GfMenuObjUtil::fn_710048FD30(1) || GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(1) || GfMenuObjUtil::isValidExpansion(3)) {
             ui::UIObjectAcc limit(acc.m_handle, "IMG_gauge_limit");
             if (limit.m_object != nullptr) {
                 limit.setAlpha(1.0f);
@@ -330,9 +330,9 @@ void GfMenuObjPartyGauge::GaugeListener::reciveEvent(const ui::EventData& event,
         }
         return;
     case 0x101:
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(3)) {
             ui::UIObjectAcc lock(acc.m_handle, "IMG_gauge_lock");
-            if (GfMenuReference::fn_7100368418(4)) {
+            if (GfMenuReference::isIraFlag(4)) {
                 bool disp = event.m_param0 == 1;
                 lock.startAnimation("chain_3", false);
                 lock.setDisp(disp);
@@ -342,7 +342,7 @@ void GfMenuObjPartyGauge::GaugeListener::reciveEvent(const ui::EventData& event,
         }
         return;
     case 0x102:
-        if (GfMenuObjUtil::fn_710048FD30(1) || GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(1) || GfMenuObjUtil::isValidExpansion(3)) {
             unsigned int count = event.m_param0;
             ui::UIObjectAcc lock(acc.m_handle, "IMG_gauge_lock");
             if (lock.m_object != nullptr) {
@@ -356,7 +356,7 @@ void GfMenuObjPartyGauge::GaugeListener::reciveEvent(const ui::EventData& event,
         }
         return;
     case 0x103:
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(3)) {
             int value = event.m_param0;
             acc.setDispChild(value == 1, "LAY_siren_pt");
             if (value != 1) {
@@ -369,7 +369,7 @@ void GfMenuObjPartyGauge::GaugeListener::reciveEvent(const ui::EventData& event,
     UIObjectListener::reciveEvent(event, handle);
 }
 
-void GfMenuObjPartyGauge::TUnk_B63FC8::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjPartyGauge::SirenListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:
@@ -442,7 +442,7 @@ void GfMenuObjPartyGauge::TUnk_B63FC8::reciveEvent(const ui::EventData& event, u
         break;
     }
     case 0x101:
-        if (GfMenuObjUtil::fn_710048FD30(1) || GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(1) || GfMenuObjUtil::isValidExpansion(3)) {
             ui::UIObjectAcc lock(acc.m_handle, "IMG_siren_en_lock");
             bool disp = event.m_param0 == 1;
             lock.startAnimation("chain_3", false);

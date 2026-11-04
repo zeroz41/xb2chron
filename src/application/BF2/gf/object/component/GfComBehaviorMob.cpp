@@ -53,7 +53,7 @@ void GfComBehaviorMob::BdatInfo::create(const CBdatWrapper& bdat, int row) {
     if (Bdat::getMember(bdat.m_fp, "BattleMot")) {
         m_battleMot = Bdat::getValCheck(bdat.m_fp, "BattleMot", row, 2);
     }
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         unsigned short close = Bdat::getValCheckU16(bdat.m_fp, "CloseRange", row);
         m_approachDistSq = close * close;
     }
@@ -235,8 +235,8 @@ bool GfComBehaviorMob::isStateCondMatch(mob::STATE_ID state) {
     case 5:
         return npc::StateBattle<GfComBehaviorMob>::isCondMatch(*this);
     case 6:
-        if (GfGameManager::fn_71002A9E68()) {
-            return mob::StateApproachPc::fn_71004D7468(*this);
+        if (GfGameManager::isGameTypeIra()) {
+            return mob::StateApproachPc::isCondMatch(*this);
         }
         break;
     }
@@ -300,7 +300,7 @@ void GfComBehaviorMob::execTurnCmdToPos(const mm::Vec3& pos) {
     m_turnCmd.create(info);
 }
 
-void GfComBehaviorMob::fn_71004D459C(float rotY) {
+void GfComBehaviorMob::execTurnCmd(float rotY) {
     float steer = m_localSteer.m_info.m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) ? m_localSteer.getCurAngle() : 0.0f;
     TFieldExecCmdTurn<GfComAsm>::CreateInfo info(static_cast<GfObj*>(m_owner)->m_handle, steer + rotY);
     m_turnCmd.create(info);

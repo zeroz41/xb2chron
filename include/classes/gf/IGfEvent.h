@@ -20,10 +20,10 @@ namespace gf {
 class IGfEvent {
 public:
     virtual ~IGfEvent() {}  // slot 0
-    virtual void fn_710000FA14(unsigned int) {}  // slot 2 (GfEvent::fn_7100328604 forwards one 32-bit value)
-    virtual void fn_710000FA18() {}  // slot 3
-    virtual void fn_710000FA1C() {}  // slot 4
-    virtual void fn_710000FA20() {}  // slot 5
+    virtual void gevHitonowaChanged(unsigned int) {}  // slot 2 (GfEvent::callHitonowaChanged forwards one 32-bit value)
+    virtual void gevOpenMainMenu() {}  // slot 3
+    virtual void gevOpenPortal() {}  // slot 4
+    virtual void gevChangeGameDifficult() {}  // slot 5
     virtual void gevPartyMover(gf::GF_OBJ_HANDLE*, bool) {}  // slot 6
     virtual void gevExecBuy(unsigned int, unsigned int, unsigned int) {}  // slot 7
     virtual void gevGetArts(unsigned int, unsigned int, bool) {}  // slot 8
@@ -39,9 +39,9 @@ public:
     virtual void gevPartyIDMemberOK(bool, unsigned int) {}  // slot 18
     virtual void gevPartyMemberOK(bool) {}  // slot 19
     virtual void gevItemAdd(unsigned int, int) {}  // slot 20
-    virtual void fn_710000FA60(unsigned int, unsigned int) {}  // slot 21 (GfEvent::fn_7100327DC4 forwards two 32-bit values)
-    virtual void fn_710000FA64(unsigned int, unsigned int) {}  // slot 22 (GfEvent::fn_7100327E78 forwards two 32-bit values)
-    virtual void fn_710000FA68(unsigned int, bool, unsigned int) {}  // slot 23 (GfEvent::fn_71003286B0 forwards its three arguments)
+    virtual void gevOrbParam(unsigned int, unsigned int) {}  // slot 21 (GfEvent::callOrbParam forwards two 32-bit values)
+    virtual void gevAcceParam(unsigned int, unsigned int) {}  // slot 22 (GfEvent::callAcceParam forwards two 32-bit values)
+    virtual void gevHanaCondenser(unsigned int, bool, unsigned int) {}  // slot 23 (GfEvent::callHanaCondenser forwards its three arguments)
     virtual void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int) {}  // slot 24
     virtual void gevMercenariesTeam(unsigned int) {}  // slot 25
     virtual void gevDriverLevel(unsigned int, unsigned int, unsigned int) {}  // slot 26
@@ -64,7 +64,7 @@ public:
     virtual void gevBattleStart() {}  // slot 43
     virtual void gevBattleEnd() {}  // slot 44
     virtual void gevChangeScenarioFlag(unsigned int, unsigned int) {}  // slot 45
-    virtual void fn_710000FAB8(unsigned int) {}  // slot 46 (GfGameManager's override forwards a 32-bit id)
+    virtual void gevChangeAocFlag(unsigned int) {}  // slot 46 (GfGameManager's override forwards a 32-bit id)
     virtual void gevSalvageStateChange(unsigned int) {}  // slot 47
     virtual void gevGameMapModel(gf::GF_OBJ_HANDLE*, bool) {}  // slot 48
     virtual void gevChangeWeather(unsigned int, unsigned int) {}  // slot 49

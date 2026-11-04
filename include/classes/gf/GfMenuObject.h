@@ -46,11 +46,9 @@ public:
     static void setupInputSelectionFromList(unsigned int handle, const ui::UIListInfoBase& list);
     static void setInputSelectionChecker(unsigned int handle, ui::IUIInputSelectionChecker* checker);
     static void setupPadLineSelection(unsigned int handle, unsigned int count);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's setupPadLineSelection is followed by
-    // setPadLineSelectionLoop). A member because it sits among GfMenuObject's input wrappers and has their shape.
-    // What it does: UIInputManager::fn_7100679754 with the input handle of the handle's object and the second
-    // argument; no caller in the module.
-    static void fn_7100362A08(unsigned int handle, unsigned int value);
+    // 2.0.0's symbols name it. What it does: UIInputManager::setPadLineSelectionForce with the input handle of the
+    // handle's object and the second argument; no caller in the module.
+    static void setupPadLineSelectionForce(unsigned int handle, unsigned int value);
     static void setPadLineSelectionLoop(unsigned int handle, bool loop);
     static void setPadLoopSetting(unsigned int handle, bool loop);
     static void setupPointerSelection(unsigned int handle, const ui::UIInputPointer::SelectionSetup& setup);

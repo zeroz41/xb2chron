@@ -95,14 +95,10 @@ public:
     unsigned int getEquipOrbPrice(unsigned int id) const;
     unsigned int getEquipOrbRarity(unsigned int id) const;
     bool isEquipOrbFlagNoSell(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpEquipOrb (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's Model value of the EquipOrb table.
-    const char* fn_7100200F60(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpEquipOrb (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's Blade value of the EquipOrb table.
-    unsigned int fn_7100200FE4(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's Model value of the EquipOrb table.
+    const char* getEquipOrbModel(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's Blade value of the EquipOrb table.
+    unsigned int getEquipOrbBlade(unsigned int id) const;
     unsigned int getEquipOrbsortJP(unsigned int id) const;
     unsigned int getPreciousStart() const;
     unsigned int getPreciousEnd() const;
@@ -114,42 +110,24 @@ public:
     unsigned int getPreciousValueMax(unsigned int id) const;
     unsigned int getPreciousClearNewGame(unsigned int id) const;
     unsigned int getPreciousNoMultiple(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPreciousIra (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the PreciousIra table's end id (getIdTop + getIdCount).
-    unsigned int fn_71002014B4() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPreciousIra (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's Name value of the PreciousIra table.
-    unsigned int fn_71002014F0(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPreciousIra (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's Caption value of the PreciousIra table.
-    unsigned int fn_7100201578(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPreciousIra (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's Category value of the PreciousIra table.
-    unsigned int fn_7100201600(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPreciousIra (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's Type value of the PreciousIra table.
-    unsigned int fn_7100201688(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPreciousIra (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's Price value of the PreciousIra table.
-    unsigned int fn_7100201710(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPreciousIra (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's ValueMax value of the PreciousIra table.
-    unsigned int fn_7100201794(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPreciousIra (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's ClearNewGame value of the PreciousIra table.
-    unsigned int fn_710020181C(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPreciousIra (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's NoMultiple value of the PreciousIra table.
-    unsigned int fn_71002018A4(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the PreciousIra table's end id (getIdTop + getIdCount).
+    unsigned int getPreciousIraEnd() const;
+    // 2.0.0's symbols name it. What it does: the row's Name value of the PreciousIra table.
+    unsigned int getPreciousIraName(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's Caption value of the PreciousIra table.
+    unsigned int getPreciousIraCaption(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's Category value of the PreciousIra table.
+    unsigned int getPreciousIraCategory(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's Type value of the PreciousIra table.
+    unsigned int getPreciousIraType(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's Price value of the PreciousIra table.
+    unsigned int getPreciousIraPrice(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's ValueMax value of the PreciousIra table.
+    unsigned int getPreciousIraValueMax(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's ClearNewGame value of the PreciousIra table.
+    unsigned int getPreciousIraClearNewGame(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's NoMultiple value of the PreciousIra table.
+    unsigned int getPreciousIraNoMultiple(unsigned int id) const;
     unsigned int getPrecioussortJP(unsigned int id) const;
     unsigned int getInfoStart() const;
     unsigned int getInfoEnd() const;
@@ -212,10 +190,8 @@ public:
     unsigned int getPcWpnChipCreateWpn15(unsigned int id) const;
     unsigned int getPcWpnChipCreateWpn16(unsigned int id) const;
     unsigned int getPcWpnChipPrice(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPcWpnChip (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's PriceIra value of the PcWpnChip table.
-    unsigned int fn_7100202820(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's PriceIra value of the PcWpnChip table.
+    unsigned int getPcWpnChipPriceIra(unsigned int id) const;
     unsigned int getPcWpnChipRarity(unsigned int id) const;
     bool isPcWpnChipFlagNoSell(unsigned int id) const;
     unsigned int getPcWpnChipsortJP(unsigned int id) const;
@@ -234,10 +210,8 @@ public:
     unsigned int getPcEquipBns_Agility(unsigned int id) const;
     unsigned int getPcEquipBns_Luck(unsigned int id) const;
     unsigned int getPcEquipEnhance1(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPcEquip (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's AddAtr value of the PcEquip table.
-    unsigned int fn_7100202C3C(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's AddAtr value of the PcEquip table.
+    unsigned int getPcEquipAddAtr(unsigned int id) const;
     unsigned int getPcEquipPrice(unsigned int id) const;
     unsigned int getPcEquipRarity(unsigned int id) const;
     bool isPcEquipFlagNoSell(unsigned int id) const;
@@ -250,27 +224,17 @@ public:
     bool isPcEquipFlagEqPC07(unsigned int id) const;
     bool isPcEquipFlagEqPC08(unsigned int id) const;
     bool isPcEquipFlagEqPC09(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPcEquip (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: whether the row's Flag column has its EqPC10 bit, of the PcEquip table.
-    bool fn_71002033C0(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPcEquip (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: whether the row's Flag column has its EqPC11 bit, of the PcEquip table.
-    bool fn_7100203458(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPcEquip (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: whether the row's Flag column has its EqPC12 bit, of the PcEquip table.
-    bool fn_71002034F0(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: whether the row's Flag column has its EqPC10 bit, of the PcEquip table.
+    bool isPcEquipFlagEqPC10(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: whether the row's Flag column has its EqPC11 bit, of the PcEquip table.
+    bool isPcEquipFlagEqPC11(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: whether the row's Flag column has its EqPC12 bit, of the PcEquip table.
+    bool isPcEquipFlagEqPC12(unsigned int id) const;
     unsigned int getPcEquipIcon(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPcEquip (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's Driver value of the PcEquip table.
-    unsigned int fn_7100203610(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPcEquip (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's Model value of the PcEquip table.
-    const char* fn_7100203698(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's Driver value of the PcEquip table.
+    unsigned int getPcEquipDriver(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's Model value of the PcEquip table.
+    const char* getPcEquipModel(unsigned int id) const;
     unsigned int getPcEquipsortJP(unsigned int id) const;
     unsigned int getSalvageStart() const;
     unsigned int getSalvageEnd() const;
@@ -394,46 +358,26 @@ public:
     unsigned int getITM_HanaAssistNeedEther(unsigned int id) const;
     unsigned int getITM_HanaAssistDustEther(unsigned int id) const;
     unsigned int getITM_HanaAssistCondition(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpITM_HanaAssist (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's Blade value of the ITM_HanaAssist table.
-    unsigned int fn_7100206788(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpITM_HanaAssist (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's Model value of the ITM_HanaAssist table.
-    const char* fn_7100206810(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPcWpnIr (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's AtkLv1 value of the PcWpnIr table.
-    unsigned int fn_7100206894(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPcWpnIr (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's AtkLv99 value of the PcWpnIr table.
-    unsigned int fn_710020691C(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPcWpnIr (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's StbLv1 value of the PcWpnIr table.
-    unsigned int fn_71002069A4(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPcWpnIr (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's StbLv99 value of the PcWpnIr table.
-    unsigned int fn_7100206A2C(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPcWpnIr (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's CriRateLv1 value of the PcWpnIr table.
-    unsigned int fn_7100206AB4(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPcWpnIr (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's CriRateLv99 value of the PcWpnIr table.
-    unsigned int fn_7100206B3C(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPcWpnIr (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's GuardRateLv1 value of the PcWpnIr table.
-    unsigned int fn_7100206BC4(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this class's
-    // m_fpPcWpnIr (the GfBdatItem tables' accessor block, between 1.0.0's members).
-    // What it does: the row's GuardRateLv99 value of the PcWpnIr table.
-    unsigned int fn_7100206C4C(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's Blade value of the ITM_HanaAssist table.
+    unsigned int getITM_HanaAssistBlade(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's Model value of the ITM_HanaAssist table.
+    const char* getITM_HanaAssistModel(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's AtkLv1 value of the PcWpnIr table.
+    unsigned int getITM_PcWpnIrAtkLv1(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's AtkLv99 value of the PcWpnIr table.
+    unsigned int getITM_PcWpnIrAtkLv99(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's StbLv1 value of the PcWpnIr table.
+    unsigned int getITM_PcWpnIrStbLv1(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's StbLv99 value of the PcWpnIr table.
+    unsigned int getITM_PcWpnIrStbLv99(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's CriRateLv1 value of the PcWpnIr table.
+    unsigned int getITM_PcWpnIrCriRateLv1(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's CriRateLv99 value of the PcWpnIr table.
+    unsigned int getITM_PcWpnIrCriRateLv99(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's GuardRateLv1 value of the PcWpnIr table.
+    unsigned int getITM_PcWpnIrGuardRateLv1(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the row's GuardRateLv99 value of the PcWpnIr table.
+    unsigned int getITM_PcWpnIrGuardRateLv99(unsigned int id) const;
     const char* getITM_HanaAssistUI(unsigned int id) const;
     unsigned int getITM_HanaAssistsortJP(unsigned int id) const;
     // the tables' wrappers (1.0.0's accessor names; PreciousIra and PcWpnIr are proposed, from their BDAT files)

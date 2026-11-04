@@ -148,11 +148,11 @@ public:
     bool seqCreateSetup();
     // placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (between seqCreateSetup and
     // seqCreateStartDriver): once no fade runs, steps the page sequence on
-    bool fn_7100399180();
+    bool seqCreateSkipToReslt();
     // placeholder name: new in 3.0.1 (1.0.0's seqCreateStart is followed by ResultListener::reciveEvent);
     // CreationListener queues it: once no fade runs, idles the driver, hides the drivers and the crystals and
-    // queues fn_7100399180
-    bool fn_71003983C4();
+    // queues seqCreateSkipToReslt
+    bool seqCreateSkip();
     bool seqCreateStartDriver();
     bool seqCreateWaitDriver();
     bool seqCreateBuildBlade();

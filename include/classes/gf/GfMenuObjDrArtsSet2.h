@@ -42,7 +42,7 @@ public:
 
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because the constructor calls it
     // and its address lies between the constructor and the destructor. What it does: when layer 1 is usable
-    // (GfMenuObjUtil::fn_710048FD30(1)), lists driver 1's equipped weapon types (GfDataDriver::getEquipWpnType),
+    // (GfMenuObjUtil::isValidExpansion(1)), lists driver 1's equipped weapon types (GfDataDriver::getEquipWpnType),
     // drops each type but 0x11 whose four enabled arts (GfMenuObjUtil::getEnableArts) are all at level 0 and type
     // 0x11 when driver 1's blade (GfDataDriver::getBlade(1, -1)) is valid, then answers whether type 0x21 is left.
     static bool fn_71003E91EC();
@@ -67,26 +67,22 @@ public:
     void refreshArtsNeedWP(ui::UIObjectAcc& acc, GfMenuArtsList* arts, unsigned int driver, unsigned int wpnType);
     void refreshParam(ui::UIObjectAcc& acc, unsigned int driver, unsigned int wpnType, GfMenuArtsList* arts,
                       unsigned int index);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because ArtsListListener::reciveEvent
-    // calls it with the owner and its address lies among the owner's functions. What it does: when layer 3 is usable
-    // (GfMenuObjUtil::fn_710048FD30(3)), sets "LAY_arts"' operation info: actions 12 (index < 3 on the arts list),
-    // 9 (items to use), 10 and 11 enabled only while pad_12C is -1, action 1 while pad_2BA is clear, text 2 swapped
-    // and "LAY_list_index_btn" half transparent otherwise.
-    void fn_71003EF53C();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because ArtsListListener::reciveEvent
-    // calls it with the owner and its address lies among the owner's functions. What it does: counts the enabled arts
-    // (GfMenuObjUtil::getEnableArts, at least 3) of the driver of reference s_wpnTypeIndex and the weapon type in
-    // m_number; without the flag sets "LAY_arts"' input selection to the index over that count and opens the
-    // character change (GfMenuObjMainMenu2::openCharChange with pad_2B8); with it closes the character change, first
-    // setting the selection over one fewer when pad_2B4 or pad_2B9 is set.
-    void fn_71003EF804(int index, bool close);
+    // 2.0.0's symbols name it. What it does: when layer 3 is usable (GfMenuObjUtil::isValidExpansion(3)), sets
+    // "LAY_arts"' operation info: actions 12 (index < 3 on the arts list), 9 (items to use), 10 and 11 enabled only
+    // while pad_12C is -1, action 1 while pad_2BA is clear, text 2 swapped and "LAY_list_index_btn" half transparent
+    // otherwise.
+    void updateArtsInputIra();
+    // 2.0.0's symbols name it. What it does: counts the enabled arts (GfMenuObjUtil::getEnableArts, at least 3) of the
+    // driver of reference s_wpnTypeIndex and the weapon type in m_number; without the flag sets "LAY_arts"' input
+    // selection to the index over that count and opens the character change (GfMenuObjMainMenu2::openCharChange with
+    // pad_2B8); with it closes the character change, first setting the selection over one fewer when pad_2B4 or pad_2B9
+    // is set.
+    void updateArtsSwapSelectIra(int index, bool close);
     bool seqSelectItem();
     bool seqConfirmItem();
     bool seqReturnWeaponSelect();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because seqSelectItem queues it
-    // as a job of m_seq (in place of seqReturnWeaponSelect while layer 3 is usable). What it does: sends event
-    // 0x101 to "LAY_arts"; returns true.
-    bool fn_71003F03D8();
+    // 2.0.0's symbols name it. What it does: sends event 0x101 to "LAY_arts"; returns true.
+    bool seqReturnArtsSelect();
 
     // Proposed names, not the original's: the symbols leave them unnamed (lbl_7100EAB060, lbl_7100EAB064). The
     // constructor clears the first and sets the second to fn_71003E91EC's answer while the game is cleared, layer
@@ -109,11 +105,11 @@ public:
     GfMenuItemList* m_items;  // 0x148: the constructor creates it (initialize adds items 0x633D-0x633F)
     GfMenuSequence<GfMenuObjDrArtsSet2, 4> m_seq;  // 0x150
     bool m_seqStep;  // 0x2B0: the running seq* job has started its step
-    // 0x2B4: fn_71003EF804 passes it as GfMenuObjUtil::getEnableArts' mode
+    // 0x2B4: updateArtsSwapSelectIra passes it as GfMenuObjUtil::getEnableArts' mode
     unsigned int pad_2B4;
-    bool pad_2B8;  // fn_71003EF804 passes it to GfMenuObjMainMenu2::openCharChange as its kind (0 or 1)
-    bool pad_2B9;  // fn_71003EF804 passes it as GfMenuObjUtil::getEnableArts' flag
-    bool pad_2BA;  // fn_71003EF53C disables operation 1 while it is set
+    bool pad_2B8;  // updateArtsSwapSelectIra passes it to GfMenuObjMainMenu2::openCharChange as its kind (0 or 1)
+    bool pad_2B9;  // updateArtsSwapSelectIra passes it as GfMenuObjUtil::getEnableArts' flag
+    bool pad_2BA;  // updateArtsInputIra disables operation 1 while it is set
 };
 }  // namespace gf
 

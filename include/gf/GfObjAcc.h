@@ -94,11 +94,10 @@ public:
     bool getBoneTransform(fw::Transform& transform, const char* bone);
     bool getBoneTransform(fw::Transform& transform, int bone);
     unsigned int getBdatId() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies in GfObjAcc's unit
-    // and its callers pass a GfObjAcc as this. What it does: returns getBdatId() (a tail call). Callers:
-    // GfMenuGfObjAdapter::fn_7100340094 (hands it to GfDataBlade::fn_710024DD94), fn_71003601DC,
+    // 2.0.0's symbols name it. What it does: returns getBdatId() (a tail call). Callers:
+    // GfMenuGfObjAdapter::update_IRA_NpcHitonowaIcon (hands it to GfDataBlade::fn_710024DD94), fn_71003601DC,
     // GfMenuObjTargetInfo::openOther.
-    unsigned int fn_7100523B74() const;
+    unsigned int getNpcRscId() const;
     unsigned int getDriverId() const;  // the driver object's row (DataObjDriver)
     unsigned int getBladeId() const;  // the blade object's row (DataObjBlade)
     bool isEnemyBlade() const;
@@ -123,11 +122,10 @@ public:
     unsigned int getPartyID() const;
     bool isCollideModelClip() const;
     void setEnableCollideModelClip(bool on);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies at the end of
-    // GfObjAcc's unit and reads this's object and bdat id. What it does: the extra access distance of the object: 4
-    // for the type-6 object of row 0xE4D, the kind-0x3E gimmick's float at 0x58 for a gimmick object (type 8), else 0.
-    // Callers: GfGameSearchObj::updateObj, gf::pc::isActiveRange (adds it to the access range).
-    float fn_710052478C() const;
+    // 2.0.0's symbols name it. What it does: the extra access distance of the object: 4 for the type-6 object of row
+    // 0xE4D, the kind-0x3E gimmick's float at 0x58 for a gimmick object (type 8), else 0. Callers:
+    // GfGameSearchObj::updateObj, gf::pc::isActiveRange (adds it to the access range).
+    float getTargetSearchOffset() const;
 
     GFOBJ_INFO* m_info;  // GfObjManager::getObjInfo's for the handle
     GfObj* m_obj;  // the GfObj constructor's argument

@@ -311,15 +311,15 @@ void GfMenuObjCmnStatus::setDrPageParam(unsigned int handle) {
         for (int i = 1; i < 4; i++) {
             int slot = i - 1;
             name.format("TXT_status_dr_param_bl_name@%02d", i);
-            GfMenuCharDataAdapter* blade = GfMenuCharDataAdapter::fn_710033A3D4(acc.searchChild(name.m_str), 2, 0, slot, true);
+            GfMenuCharDataAdapter* blade = GfMenuCharDataAdapter::createFromReferenceBladeSet(acc.searchChild(name.m_str), 2, 0, slot, true);
             if (blade != nullptr) {
                 name.format("LAY_status_dr_param_bl@%02d", i);
                 blade->m_rowHandle = acc.searchChild(name.m_str);
             }
             name.format("TXT_status_dr_param_bl_comp@%02d", i);
-            GfMenuCharDataAdapter::fn_710033A3D4(acc.searchChild(name.m_str), 0x4D, 0, slot, true);
+            GfMenuCharDataAdapter::createFromReferenceBladeSet(acc.searchChild(name.m_str), 0x4D, 0, slot, true);
             name.format("TXT_status_dr_param_bl_role@%02d", i);
-            GfMenuCharDataAdapter::fn_710033A3D4(acc.searchChild(name.m_str), 0x41, 0, slot, true);
+            GfMenuCharDataAdapter::createFromReferenceBladeSet(acc.searchChild(name.m_str), 0x41, 0, slot, true);
         }
     }
     {
@@ -347,11 +347,11 @@ void GfMenuObjCmnStatus::setDrPageParam(unsigned int handle) {
     }
 }
 
-void GfMenuObjCmnStatus::fn_71003D7620(bool disp) {
+void GfMenuObjCmnStatus::setIraFrontMode(bool disp) {
     s_DispTeamName = disp;
 }
 
-void GfMenuObjCmnStatus::fn_71003DB79C(unsigned int id) {
+void GfMenuObjCmnStatus::updateDriverBase(unsigned int id) {
     bool sk = id == 4 || id == 5;
     ui::UIObjectAcc index(m_handle, "LAY_status_dr_index");
     ui::UIObjectAcc indexSk(m_handle, "LAY_status_dr_index_sk");

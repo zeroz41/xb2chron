@@ -52,10 +52,9 @@ public:
     }
     static void Update(const fw::UpdateInfo& info);
     void UpdateProc(const fw::UpdateInfo& info);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this unit's
-    // ChainAttackManager (BladeChangeManager::BladeChangeProc passes the singleton). What it does: true when the
-    // start direction step (byte 0x1978, ChainAttackStartDirectionProc's switch) is past 1.
-    bool fn_7100023F58() const;
+    // 2.0.0's symbols name it. What it does: true when the start direction step (byte 0x1978,
+    // ChainAttackStartDirectionProc's switch) is past 1.
+    bool IsStartDirectionAfterFadeOut() const;
     unsigned char GetSpAttackLevel(int index) const;
     float GetSpAttackRecast(int index, int attr) const;
     int GetOrderAttr(int index) const;
@@ -63,14 +62,11 @@ public:
     bool IsProc(bool) const;
     bool IsResult() const;
     float GetDamageRate() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it updates this
-    // unit's ChainAttackManager (BattleCharacter::SatisfyEnhanceCondition passes the singleton). What it does:
-    // while the chain attack proc state (0x1A00) is 1-50, adds its float to m_addedValue.
-    void fn_71000247D0(float value);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this unit's
-    // ChainAttackManager (BattleCharacter::GetCriticalRate passes the singleton). What it does: m_addedValue
-    // while a chain attack proc state (0x1A00) is set, else 0.
-    float fn_71000247F4() const;
+    // 2.0.0's symbols name it. What it does: while the chain attack proc state (0x1A00) is 1-50, adds its float to
+    // m_addedValue.
+    void AddCriticalBonus(float value);
+    // 2.0.0's symbols name it. What it does: m_addedValue while a chain attack proc state (0x1A00) is set, else 0.
+    float GetCriticalBonus() const;
     void AddTotalDamage(unsigned int damage);
     int GetGroupIndex() const;
     bool IsStartWait() const;
@@ -86,7 +82,7 @@ public:
     unsigned char pad_10[0x20];
     ::mm::mtl::FixedVector<DROP_ITEM_DATA, 32> m_dropItems;  // AddDropData's (the name is not the original's)
     unsigned char pad_1838[0x10C];
-    float m_addedValue;  // fn_71000247D0 adds to it (the name is not the original's)
+    float m_addedValue;  // AddCriticalBonus adds to it (the name is not the original's)
     unsigned int m_totalDamage;  // AddTotalDamage (the name is not the original's)
     unsigned char pad_194C[0x14];
     ::mm::mtl::IntrusivePtr<fw::Camera> m_startCamera;  // ChainAttackStartDirectionProc pops it (the name is not the original's)

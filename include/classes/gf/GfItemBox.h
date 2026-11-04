@@ -86,27 +86,22 @@ public:
     unsigned int getItemTime(unsigned int item, GfItemHandle handle);
     void setEquipFlag(unsigned int item, GfItemHandle handle, bool equip);
     GfItemHandle getNoEquipItemHandle(unsigned int item);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
-    // GfItemBoxBase's functions (between updateSerialLocal and findItem) and walks this box from begin(type). What it
-    // does: true when an item of the type with an id has the serial (its handle's bits 6-31); addItem calls it.
-    bool fn_71002F87F8(ItemType::Type type, unsigned int serial);
+    // 2.0.0's symbols name it. What it does: true when an item of the type with an id has the serial (its handle's bits
+    // 6-31); addItem calls it.
+    bool findSerial(ItemType::Type type, unsigned int serial);
     // 1.0.0's name: its canAddItem(unsigned int) sits at the same place (after setType, before decItem) and its
     // GfItemBox::addItem(unsigned, unsigned) calls it at the same site as 3.0.1's (fn_71002F9004 in the symbols)
     bool canAddItem(unsigned int item);
-    // Placeholder name: new in 3.0.1 (between decItem and countItem; 1.0.0 had makeItem there, a different
-    // signature). GfItemBox::fn_71002FA2B0 passes it an item and a handle copy and returns its bool.
-    bool fn_71002F9634(unsigned int item, GfItemHandle handle);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
-    // GfItemBoxBase's functions in gf_item_manager and is called on the GfItemBox singleton's GfItemBoxBase. What it
-    // does: walks the items of a type from begin(type) and sums the stack count (bits 19-28 of each item's word) of
-    // those with an id (bits 0-12); GfItemUtil::isEnableAddItemBox, GfEquipUtil, GfMenuItemUtil::canBuyItem and
-    // GfMenuGameAdapter's type 19 call it.
-    int fn_71002F9DD4(ItemType::Type type);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reasons. What it
-    // does: the number of a type's entries (from begin(type) to that type's list end); GfMenuObjShop's
-    // StoreListListener and GfMenuGameAdapter's type 20 call it.
-    int fn_71002F9F6C(ItemType::Type type);
-    // Placeholder name: new in 3.0.1 (1.0.0 had setItemBox(ItemBox*, bool) instead). GfItemBox::fn_71002FA0F4 calls it
+    // 2.0.0's symbols name it. GfItemBox::decItem passes it an item and a handle copy and returns its bool.
+    bool decItem(unsigned int item, GfItemHandle handle);
+    // 2.0.0's symbols name it. What it does: walks the items of a type from begin(type) and sums the stack count (bits
+    // 19-28 of each item's word) of those with an id (bits 0-12); GfItemUtil::isEnableAddItemBox, GfEquipUtil,
+    // GfMenuItemUtil::canBuyItem and GfMenuGameAdapter's type 19 call it.
+    int countItemCategory(ItemType::Type type);
+    // 2.0.0's symbols name it. What it does: the number of a type's entries (from begin(type) to that type's list end);
+    // GfMenuObjShop's StoreListListener and GfMenuGameAdapter's type 20 call it.
+    int maxItemCategory(ItemType::Type type);
+    // Placeholder name: new in 3.0.1 (1.0.0 had setItemBox(ItemBox*, bool) instead). GfItemBox::initialize calls it
     // with SDataGame's item box (ItemBox) and its second entry area (SDataGame::ItemBoxEx); it sets up the 19 type
     // lists from them.
     void fn_71002F3F98(ItemBox* favoriteItemType, SDataGame::ItemBoxEx* itemBox);
@@ -134,19 +129,16 @@ public:
     static bool addItem(unsigned int item, unsigned int count);
     static bool decItem(unsigned int item, unsigned int count);
     static bool decItemForNewGame(unsigned int item, unsigned int count);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among GfItemBox's
-    // functions in gf_item_manager (between addItem and decItem's neighbours) and takes no object. What it does:
-    // passes the item and a copy of the handle to the singleton's GfItemBoxBase fn_71002F9634 and returns its
-    // bool; GfItemUtil::fn_71002FA968 calls it when its handle is non-zero.
-    static bool fn_71002FA2B0(unsigned int item, GfItemHandle handle);
-    // Placeholder name: the symbols call it GfItemInfo::getMaxStock() const, but it frees the singleton's 19 lists
-    // and clears its two SDataGame pointers (1.0.0's getMaxStock reads a type's max stock). A member: GfItemManager's
-    // finalize (inlined in destroy) calls it on GfItemBox::get(); its body reaches the object through get() again.
-    void fn_71002FA134();
-    // Placeholder name: new in 3.0.1. A member: GfItemManager's initialize (inlined in its constructor) calls it on
-    // GfItemBox::get() and passes nothing else. It hands GfDataItem::getFavoriteItemType() and getItemBox() (the two
-    // SDataGame pointers) to the singleton's fn_71002F3F98.
-    void fn_71002FA0F4();
+    // 2.0.0's symbols name it. What it does: passes the item and a copy of the handle to the singleton's GfItemBoxBase
+    // decItem and returns its bool; GfItemUtil::fn_71002FA968 calls it when its handle is non-zero.
+    static bool decItem(unsigned int item, GfItemHandle handle);
+    // 2.0.0's symbols name it. GfItemManager's finalize (inlined in destroy) calls it on GfItemBox::get(); its body
+    // reaches the object through get() again.
+    void finalize();
+    // 2.0.0's symbols name it. GfItemManager's initialize (inlined in its constructor) calls it on GfItemBox::get() and
+    // passes nothing else. It hands GfDataItem::getFavoriteItemType() and getItemBox() (the two SDataGame pointers) to
+    // the singleton's fn_71002F3F98.
+    void initialize();
 };
 }  // namespace gf
 

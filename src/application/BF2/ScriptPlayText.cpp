@@ -605,7 +605,7 @@ static int fn_7100665D10(VMThread* pThread) {
 // evt_status.getLeader
 static int fn_7100665EF8(VMThread* pThread) {
     unsigned int id = mm::mtl::Singleton<event::ObjectPartyList>::getPtr()->getLeaderDriverId();
-    if (gf::GfGameManager::fn_71002A9E68()) {
+    if (gf::GfGameManager::isGameTypeIra()) {
         // drivers 17-25 are the script's 1-9; the rest count as 1
         static const unsigned int table[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         if (id < 26) {
@@ -631,7 +631,7 @@ static int fn_7100665EF8(VMThread* pThread) {
 static int fn_7100665FD8(VMThread* pThread) {
     unsigned int bladeId = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
     unsigned int id = mm::mtl::Singleton<event::StatusManager>::getPtr()->getDriverByBladeId(bladeId);
-    if (gf::GfGameManager::fn_71002A9E68()) {
+    if (gf::GfGameManager::isGameTypeIra()) {
         id = 1;
     } else {
         static const unsigned int table[] = {0, 1, 2, 3, 0, 0, 4};

@@ -22,7 +22,7 @@ public:
     static int canEquipAcc(unsigned int item, unsigned int, unsigned int);  // 0 when the accessory can be equipped
     static int getItemNum(unsigned char type, unsigned int id);  // GfItemUtil::getItemBoxCount(id)
     // the party driver that has the accessory (item and handle) equipped, 0 for none; slot gets its slot (one more
-    // when GfMenuObjUtil::fn_710048FD30(3) holds; 0 for a DLC driver's own accessory). The name is 1.0.0's: its
+    // when GfMenuObjUtil::isValidExpansion(3) holds; 0 for a DLC driver's own accessory). The name is 1.0.0's: its
     // searchEquipAcc has the same callers (canEquipAcc, GfMenuObjDrEquip2); the symbols spell it fn_7100354624
     static unsigned short searchEquipAcc(unsigned int item, GfItemHandle handle, unsigned int* slot);
     // whether the party has the money for the item at the shop and room for it in its box
@@ -38,12 +38,11 @@ public:
     // whether an item (GfMenuItemAdapter::update_canStack) or an item type (GfMenuGameAdapter's type 19) counts its
     // stack
     static bool canCountStack(unsigned int id);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among this
-    // class's functions (between canEquipAcc and searchEquipOrb). What it does: whether an item is bound to a blade:
-    // by GfDataItem::getItemType (2: GfBdatItem::fn_7100203610, 3: fn_7100200FE4, 20: fn_7100206788, else false)
-    // the item row's blade/driver value, true when it is not 0 and equals blade. GfMenuHanaAdapter::isEquipParts
-    // passes a Hana part and Hana.
-    static bool fn_71003547CC(unsigned int item, unsigned int blade);
+    // 2.0.0's symbols name it. What it does: whether an item is bound to a blade: by GfDataItem::getItemType (2:
+    // GfBdatItem::getPcEquipDriver, 3: getEquipOrbBlade, 20: getITM_HanaAssistBlade, else false) the item row's
+    // blade/driver value, true when it is not 0 and equals blade. GfMenuHanaAdapter::isEquipParts passes a Hana part
+    // and Hana.
+    static bool isModelChangeItem(unsigned int item, unsigned int blade);
 };
 
 }  // namespace gf

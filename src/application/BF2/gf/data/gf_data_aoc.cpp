@@ -1,4 +1,4 @@
-#include "classes/gf/TUnk_B4C840.h"
+#include "classes/gf/GfDataAoc.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfInfo.h"
 #include "classes/fw/FrameworkMemory.h"
@@ -24,7 +24,7 @@ static const int s_keys6[] = {1523903846, 0};
 // lbl_7100B4C860 (the name is not the original's)
 static const int* s_keyTables[6] = {s_keys1, s_keys2, s_keys3, s_keys4, s_keys5, s_keys6};
 
-void TUnk_B4C840::fn_71002226F4() {
+void GfDataAoc::fn_71002226F4() {
     for (int i = 0; i < 6; i++) {
         m_ids[i] = -1;
     }
@@ -69,21 +69,21 @@ void TUnk_B4C840::fn_71002226F4() {
     m_ready = true;
 }
 
-TUnk_B4C840::~TUnk_B4C840() {}
+GfDataAoc::~GfDataAoc() {}
 
-void TUnk_B4C840::fn_7100222908(const GfSetupParam&) {
+void GfDataAoc::build(const GfSetupParam&) {
 #line 43
-    new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) TUnk_B4C840;
+    new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfDataAoc;
 }
 
-void TUnk_B4C840::fn_710022299C() {
-    TUnk_B4C840* data = get();
+void GfDataAoc::destroy() {
+    GfDataAoc* data = get();
     data->m_ready = false;
     delete data;
 }
 
-int TUnk_B4C840::fn_71002229C0(unsigned int index) {
-    TUnk_B4C840* data = get();
+int GfDataAoc::fn_71002229C0(unsigned int index) {
+    GfDataAoc* data = get();
     if (data == nullptr) {
         return -1;
     }

@@ -108,7 +108,7 @@ void GfMenuObjOption::MainListener::reciveEvent(ui::EventData const& event, unsi
         if (m_owner->m_category != -1) {
             convLevelListToOptionData(m_owner->m_category, m_owner->m_levels, m_owner->m_option);
         }
-        float scale = GfMenuObjUtil::fn_710048FD30(3) ? 0.9375f : 0.875f;
+        float scale = GfMenuObjUtil::isValidExpansion(3) ? 0.9375f : 0.875f;
         m_owner->m_option.m_soundUi.m_volume[0] = scale * m_owner->m_option.m_soundUi.m_volume[1];
         m_owner->m_option.m_soundUi.m_volume[3] = m_owner->m_option.m_soundUi.m_volume[0];
         m_owner->m_option.m_soundUi.m_volume[4] = m_owner->m_option.m_soundUi.m_volume[2];
@@ -201,7 +201,7 @@ bool GfMenuObjOption::attach(GfMenuCallContext* context) {
 }
 
 static inline bool isAllDifficulty() {
-    return (GfMenuObjUtil::fn_710048FD30(3) && GfGameManager::isClearGame()) || GfGameUtilSaveData::fn_71002EDCEC();
+    return (GfMenuObjUtil::isValidExpansion(3) && GfGameManager::isClearGame()) || GfGameUtilSaveData::fn_71002EDCEC();
 }
 
 // the index-th value of the list in use, of the two it is handed (the name is not the original's)
@@ -210,7 +210,7 @@ static inline int getDifficulty(const int* list, const int* listAll, unsigned lo
 }
 
 unsigned int GfMenuObjOption::fn_7100452ADC(int value) {
-    for (unsigned int i = 0; i < fn_7100452B84(); i++) {
+    for (unsigned int i = 0; i < getDifficultyMax(); i++) {
         if (getDifficulty(s_difficultyList, s_difficultyListAll, i) == value) {
             return i;
         }
@@ -218,12 +218,12 @@ unsigned int GfMenuObjOption::fn_7100452ADC(int value) {
     return 0;
 }
 
-unsigned int GfMenuObjOption::fn_7100452B84() {
+unsigned int GfMenuObjOption::getDifficultyMax() {
     return isAllDifficulty() ? 4 : 2;
 }
 
-int GfMenuObjOption::fn_7100452BC0(unsigned int index) {
-    if (index < fn_7100452B84()) {
+int GfMenuObjOption::getDifficultyFromIndex(unsigned int index) {
+    if (index < getDifficultyMax()) {
         return getDifficulty(s_difficultyList, s_difficultyListAll, index);
     }
     return 0;

@@ -67,7 +67,7 @@ public:
     bool isExistEvent(unsigned int id) const;
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because both callers (ScriptPlayText's
     // ui isOpenPartyForm and waitCloseFullScreen) call it on PtrSingleton<GfSequentialPlay>::sys(). What it does: for
-    // menu 0x24 while GfGameManager::fn_71002A9E68 holds, looks through the command list at 0x1850 and the one at 0x8
+    // menu 0x24 while GfGameManager::isGameTypeIra holds, looks through the command list at 0x1850 and the one at 0x8
     // for a GfPlayComOpenMenu2 command of state 0xC whose value at 0x10 is 1; other menus take a second path through
     // the same lists (GfPlayComOpenMenu). The callers pass 0x24 and 0; the second argument is not read.
     bool fn_7100323420(unsigned int menu, unsigned int param);
@@ -94,7 +94,7 @@ public:
     static void addEvent(int id, unsigned int, unsigned int, bool flag);
     // Placeholder name: the symbols spelled 1.0.0's addEvent(char const*, unsigned int, unsigned int, bool) here (same
     // GfPlayFactory callers), but 3.0.1's takes an event id, two values, a BGM name, a position and a time: the name is
-    // withdrawn. What it does: hands them all to GfPlayComEvent::fn_7100319674 and adds the command it makes.
+    // withdrawn. What it does: hands them all to GfPlayComEvent::create and adds the command it makes.
     static void fn_71003227B8(unsigned int id, unsigned int, unsigned int, const char* bgm, const mm::Vec3* pos,
                               float time);
     static void addPlayerDead(GfPlayerDead dead);
@@ -144,34 +144,29 @@ public:
     static void addWaitGmkCameraEnd(mm::mtl::IntrusivePtr<fw::Camera> camera);
     static void addResetBladePlayerStop(bool stop);
     static void addMenuObjCommonText(GfMenuObjCommonText::OpenKizunaParam& param);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it fills
-    // GfSequentialPlay's unit next to addCallbackEventSequence and its callers use it as one of the command list's
-    // add functions (GfPlayFactory::createTalk, createOneEvent, createQuestUIComplete). What it does: when
-    // GfGameManager::fn_71002A9E68() holds, makes a command (fn_710031988C) and adds it (addCommand).
-    static void fn_71003227E4();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member because it fills
-    // GfSequentialPlay's unit among the add functions and does what they do. What it does: when
-    // GfGameManager::fn_71002A9E68() holds, makes a GfPlayComIraCampSave (GfPlayComIraCampSave::fn_7100319900, the
-    // one that skips the request unless no other runs) and adds it (addCommand).
-    static void fn_7100322808();
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Static members because they fill
-    // GfSequentialPlay's unit among the add functions and do what they do. What they do: addCommand of
-    // GfPlayComMapjumpForLeaveArena::create(info), GfPlayComMapjumpForBattleMapFromArena::create(info),
-    // GfPlayComWaitArenaStateField::create(), GfPlayComStartChallengeBattle::create(param).
-    static void fn_7100322674(const GfMapjumpInfo& info);
-    static void fn_7100322688(const GfMapjumpInfo& info);
-    static void fn_710032269C();
+    // 2.0.0's symbols name it. What it does: when GfGameManager::isGameTypeIra() holds, makes a command
+    // (createForEvent) and adds it (addCommand).
+    static void addIraCampSaveForEvent();
+    // 2.0.0's symbols name it. What it does: when GfGameManager::isGameTypeIra() holds, makes a GfPlayComIraCampSave
+    // (GfPlayComIraCampSave::createForTutorial, the one that skips the request unless no other runs) and adds it
+    // (addCommand).
+    static void addIraCampSaveForTutorial();
+    // 2.0.0's symbols name addMapjumpForLeaveArena, addMapjumpForBattleMapFromArena, addWaitArenaStateField; the fn_
+    // names are placeholders. What they do: addCommand of GfPlayComMapjumpForLeaveArena::create(info),
+    // GfPlayComMapjumpForBattleMapFromArena::create(info), GfPlayComWaitArenaStateField::create(),
+    // GfPlayComStartChallengeBattle::create(param).
+    static void addMapjumpForLeaveArena(const GfMapjumpInfo& info);
+    static void addMapjumpForBattleMapFromArena(const GfMapjumpInfo& info);
+    static void addWaitArenaStateField();
     static void fn_71003226B0(const MsgUnk_1000034::Param& param);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member because it fills
     // GfSequentialPlay's unit after addMenuObjCommonText and does what the add functions do. What it does:
     // addCommand(GfPlayComScriptTutorialSeq::fn_710031E044(name, startId)); its one caller is
-    // GfPlayFactory::fn_7100321924(const char*, unsigned int).
+    // GfPlayFactory::createTutorialScript(const char*, unsigned int).
     static void fn_7100322C64(const char* name, int startId);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member because it fills
-    // GfSequentialPlay's unit after addStartTutorial and does what the add functions do. What it does:
-    // addCommand(GfPlayComOpenNpcEntry::fn_7100319F34(entries)); its one caller is GfPlayFactory's fn_7100320D44
-    // (GfMenuManager::gevPlayerControl's), between pushState(6) and popState.
-    static void fn_7100322930(const mm::mtl::FixedVector<unsigned short, 256>& entries);
+    // 2.0.0's symbols name it. What it does: addCommand(GfPlayComOpenNpcEntry::create(entries)); its one caller is
+    // GfPlayFactory's fn_7100320D44 (GfMenuManager::gevPlayerControl's), between pushState(6) and popState.
+    static void addOpenNpcEntry(const mm::mtl::FixedVector<unsigned short, 256>& entries);
     // what GfPlayComPause and GfPlayComState run when they start
     static void pauseOn(unsigned int pause);
     static void pauseOff();

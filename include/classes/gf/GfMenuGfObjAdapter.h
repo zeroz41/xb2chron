@@ -89,12 +89,10 @@ public:
     bool update_EN_ElemEffID(GF_OBJ_HANDLE* handle);
     bool update_EN_TypeIcon(GF_OBJ_HANDLE* handle);
     bool update_EN_Scout(GF_OBJ_HANDLE* handle);
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0 goes from update_EN_Scout to
-    // update_BL_Kizuna). Members because they are entries 34 and 35 of this class's TypeSetup table (disp
-    // plugins). What they do: when the object is an enemy, return its property's byte at 0x154 / 0x155 (the
-    // second only when GfMenuObjUtil::fn_710048FD30(1) or (3)).
-    bool fn_710033FB0C(GF_OBJ_HANDLE* handle);
-    bool fn_710033FB70(GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name them. What they do: when the object is an enemy, return its property's byte at 0x154 / 0x155
+    // (the second only when GfMenuObjUtil::isValidExpansion(1) or (3)).
+    bool update_EN_Angry(GF_OBJ_HANDLE* handle);
+    bool update_EN_Awake(GF_OBJ_HANDLE* handle);
     bool update_BL_Kizuna(GF_OBJ_HANDLE* handle);
     bool update_BL_Special(GF_OBJ_HANDLE* handle);
     bool update_BL_SpecialLv(GF_OBJ_HANDLE* handle);
@@ -102,14 +100,12 @@ public:
     bool update_BL_ChangeRecast2(GF_OBJ_HANDLE* handle);
     bool update_BL_DispCurrent(GF_OBJ_HANDLE* handle);
     bool update_BL_DispComboReady(GF_OBJ_HANDLE* handle);
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0's callbacks end with
-    // update_BL_DispComboReady). Members because they are entries 43 and 44 of this class's TypeSetup table.
-    // What they do, when GfMenuObjUtil::fn_710048FD30(3): fn_7100340094, for an object of type 6, sets the number
-    // to 1 for fn_710024DD94(its BDAT id) 1 or 3, to 0 for 0 or 2 when fn_71002D9B5C(handle);
-    // fn_7100340154 sets the number to the UI HP plus the int at 0x8 of the property's character, its max to the
-    // UI max HP.
-    bool fn_7100340094(GF_OBJ_HANDLE* handle);
-    bool fn_7100340154(GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name them. What they do, when GfMenuObjUtil::isValidExpansion(3): update_IRA_NpcHitonowaIcon, for
+    // an object of type 6, sets the number to 1 for fn_710024DD94(its BDAT id) 1 or 3, to 0 for 0 or 2 when
+    // fn_71002D9B5C(handle); update_IRA_TemporaryHp sets the number to the UI HP plus the int at 0x8 of the property's
+    // character, its max to the UI max HP.
+    bool update_IRA_NpcHitonowaIcon(GF_OBJ_HANDLE* handle);
+    bool update_IRA_TemporaryHp(GF_OBJ_HANDLE* handle);
     GF_OBJ_HANDLE* m_handle;  // the object shown (-1: none); changeGfObj sets it (the name is not the original's)
     // create's: the table entry's callback, called with m_handle (the name is not the original's)
     mm::mtl::Delegate<bool(GF_OBJ_HANDLE*)> m_update;

@@ -11,7 +11,7 @@ GfItemManager::GfItemManager(const GfSetupParam& param) : m_initialized(false) {
 void GfItemManager::initialize(const GfSetupParam& param) {
 #line 80
     new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfItemBox;
-    GfItemBox::get()->fn_71002FA0F4();
+    GfItemBox::get()->initialize();
     m_initialized = true;
 }
 
@@ -29,7 +29,7 @@ void GfItemManager::destroy() {
 }
 
 void GfItemManager::finalize() {
-    GfItemBox::get()->fn_71002FA134();
+    GfItemBox::get()->finalize();
     delete GfItemBox::get();
     m_initialized = false;
 }

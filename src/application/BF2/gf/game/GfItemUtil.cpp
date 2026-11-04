@@ -60,7 +60,7 @@ bool GfItemUtil::fn_71002FA968(unsigned int item, int count, bool silent, GfItem
     }
     bool result;
     if (handle.m_handle != 0) {
-        result = GfItemBox::fn_71002FA2B0(item, handle);
+        result = GfItemBox::decItem(item, handle);
     } else if (count < 0) {
         result = GfItemBox::decItem(item, -count);
     } else {
@@ -100,7 +100,7 @@ bool GfItemUtil::isEnableAddItemBox(unsigned int item, int count) {
         if (GfItemBox::get()->isMulti(type)) {
             have = GfItemBox::get()->countItem(item);
         } else {
-            have = GfItemBox::get()->fn_71002F9DD4(type);
+            have = GfItemBox::get()->countItemCategory(type);
         }
         int stock = getEnableStock(item);
         return stock > have && stock - have >= count;
@@ -199,12 +199,12 @@ void GfEquipUtil::equipBladeChip(unsigned int blade, unsigned int chip) {
     GfReqCommand::reqRebuildPartyWeapon(blade);
 }
 
-bool GfEquipUtil::fn_71002FC38C(unsigned int driver) {
-    return GfDataDriver::fn_7100247BF0(driver);
+bool GfEquipUtil::isEnableExtendDriverAcce(unsigned int driver) {
+    return GfDataDriver::isEnableExtendEquipAcce(driver);
 }
 
-void GfEquipUtil::fn_71002FC390(unsigned int driver, bool flag) {
-    GfDataDriver::fn_7100247B40(driver, flag);
+void GfEquipUtil::setEnableExtendDriverAcce(unsigned int driver, bool flag) {
+    GfDataDriver::setEnableExtendEquipAcce(driver, flag);
 }
 
 unsigned int GfEquipUtil::getEquipDriverAcce(unsigned int driver, unsigned int slot) {
@@ -224,7 +224,7 @@ unsigned int GfEquipUtil::getEquipBladeOrb(unsigned int blade, unsigned int slot
 }
 
 unsigned int GfItemUtil::fn_71002FCD64(unsigned int driver) {
-    return GfDataDriver::fn_7100247474(driver);
+    return GfDataDriver::getEquipWpnAcce(driver);
 }
 
 unsigned int GfRecipeOrbUtil::getRecipeID(unsigned int item) {
@@ -241,8 +241,8 @@ bool GfRecipeOrbUtil::isEnableRecipe(unsigned int recipe) {
 }
 
 SDataPouch& GfPouchUtil::getPouch(unsigned int driver, unsigned int pouch) {
-    if (GfGameManager::fn_71002A9E68()) {
-        driver = GfDataDriver::fn_71002417DC(driver);
+    if (GfGameManager::isGameTypeIra()) {
+        driver = GfDataDriver::getIraFront(driver);
     }
     return *GfDataDriver::getPouchData(driver, pouch);
 }
@@ -252,8 +252,8 @@ bool GfPouchUtil::isExistOpenItem() {
 }
 
 unsigned int GfPouchUtil::getOpenCount(unsigned int driver) {
-    if (GfGameManager::fn_71002A9E68()) {
-        driver = GfDataDriver::fn_71002417DC(driver);
+    if (GfGameManager::isGameTypeIra()) {
+        driver = GfDataDriver::getIraFront(driver);
     }
     unsigned int count = 0;
     for (unsigned int i = 0; i < 3; i++) {

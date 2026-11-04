@@ -192,7 +192,7 @@ public:
     CGLibTextureBuffer m_texture;        // 0xB0
     CGLibDepthBuffer* m_pDepthBuffer;    // 0x120: &m_depthBuffer
     CGLibTextureBuffer* m_pSubTexture;   // 0x128: &m_subTexture
-    // 0x130: &m_texture, the texture DrMdoSetup::fn_710077C23C binds (DrPixlMan::getDepthObj's)
+    // 0x130: &m_texture, the texture DrMdoSetup::varStTex_StencilTex binds (DrPixlMan::getDepthObj's)
     CGLibTextureBuffer* m_pTexture;
     unsigned short m_mipNum;             // 0x138: cleared by the destructor
     unsigned char pad_13a[2];            // 0x13A

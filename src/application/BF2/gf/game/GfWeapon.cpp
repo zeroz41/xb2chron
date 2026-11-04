@@ -140,7 +140,7 @@
 #include "classes/gf/SCOM_LEVELUP_DEVELOP.h"
 #include "gf/GfDataDevelop.h"
 #include "gf/QuestListAcc.h"
-#include "classes/gf/TUnk_B535D0.h"
+#include "classes/gf/GfGameArena.h"
 #include "classes/gf/GfGameEnv.h"
 #include "classes/gf/GfGameMercenaries.h"
 #include "gf/GfDataMercenaries.h"
@@ -474,7 +474,7 @@ bool GfGameUtil::isCondDriverModel(unsigned int driver) {
 
 const char* fn_71002DF624(unsigned int driverId, bool check, bool flag) {
     if (check && driverId == 6) {
-        flag = flag | GfDataEvent::fn_710024F910(GfGameEvent::fn_71002A0FEC());
+        flag = flag | GfDataEvent::isInvalidMelefRetarget(GfGameEvent::getStartEventId());
     }
     return fn_71002DF4C4(driverId, flag);
 }
@@ -526,10 +526,10 @@ void GfGameUtil::changeStopLayer(GF_OBJ_HANDLE* handle, bool stop) {
 void GfGameUtil::fn_71002DF8B0(GF_OBJ_HANDLE*& handle) {
     DataParamAcc acc(handle);
     if (GfObjUtil::isValid(handle) && acc.getObjType() == 3 &&
-        GfDataDriver::fn_710023F9A8(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0)) {
+        GfDataDriver::isIra(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0)) {
         mm::mtl::FixedVector<unsigned short, 32> drivers;
-        drivers.push_back(GfDataDriver::fn_71002417DC(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0));
-        GfDataDriver::fn_71002416B4(drivers, acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0);
+        drivers.push_back(GfDataDriver::getIraFront(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0));
+        GfDataDriver::getIraBack(drivers, acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0);
         for (unsigned short id : drivers) {
             GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriverByBdatID(id);
             if (GfObjUtil::isValid(driver)) {
@@ -834,7 +834,7 @@ void GfGameUtil::makeStateIdleByBlade(mm::mtl::FixStr<32>& out, unsigned int bla
     if (blade == 0) {
         return;
     }
-    if (GfDataDriver::fn_710023F9A8(GfDataBlade::fn_7100236518(blade))) {
+    if (GfDataDriver::isIra(GfDataBlade::getIraDriver(blade))) {
         out = "S_01_btidle";
         return;
     }
@@ -1023,7 +1023,7 @@ void GfGameUtil::setHp(GF_OBJ_HANDLE* handle, unsigned int hp) {
 }
 
 void GfGameUtil::incEnemySuppress(unsigned int enemy) {
-    if (!GfGameManager::fn_71002AC580() && GfDataBlade::fn_7100234998(enemy) &&
+    if (!GfGameManager::isBattleArenaActive() && GfDataBlade::fn_7100234998(enemy) &&
         mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys()->isChrEnArrangeFlagNamed(enemy) &&
         GfDataBlade::fn_7100234940(enemy) == 1) {
         GfDataBlade::fn_71002355AC();
@@ -1040,21 +1040,21 @@ void fn_71002DAB40(unsigned int driver, unsigned int exp) {
     if (value > 999999999) {
         value = 999999999;
     }
-    GfDataDriver::fn_71002448D8(driver, value);
-    if (GfDataDriver::fn_710023F9A8(driver)) {
-        GfDataDriver::fn_71002417DC(driver);
+    GfDataDriver::setExp(driver, value);
+    if (GfDataDriver::isIra(driver)) {
+        GfDataDriver::getIraFront(driver);
     }
 }
 
 // inline: adds the driver's battle experience to its experience (capped at 999999999) and clears it; the name is
 // not the original's
 static inline void flushDriverBattleExp(unsigned int driver) {
-    unsigned int exp = GfDataDriver::fn_7100245EFC(driver) + GfDataDriver::fn_7100245EA8(driver);
-    GfDataDriver::fn_71002448D8(driver, exp > 999999999 ? 999999999 : exp);
-    GfDataDriver::fn_7100244988(driver, 0);
+    unsigned int exp = GfDataDriver::getBattleExp(driver) + GfDataDriver::getExp(driver);
+    GfDataDriver::setExp(driver, exp > 999999999 ? 999999999 : exp);
+    GfDataDriver::setBattleExp(driver, 0);
 }
 
-void GfGameUtil::fn_71002DB338(unsigned int driver, unsigned int level) {
+void GfGameUtil::execLevelDown(unsigned int driver, unsigned int level) {
     unsigned int current = GfDataDriver::getLevel(driver);
     if (current <= level) {
         return;
@@ -1062,8 +1062,8 @@ void GfGameUtil::fn_71002DB338(unsigned int driver, unsigned int level) {
     flushDriverBattleExp(driver);
     do {
         current--;
-        GfDataDriver::fn_710024487C(driver, current);
-        GfDataDriver::fn_7100244988(driver, GfDataDriver::fn_7100245F50(driver));
+        GfDataDriver::setLevel(driver, current);
+        GfDataDriver::setBattleExp(driver, GfDataDriver::getBattleExpNextLevel(driver));
         flushDriverBattleExp(driver);
     } while (level != current);
 }
@@ -1092,13 +1092,13 @@ int GfGameUtil::execDriverSkillLevelUp(unsigned int driver, unsigned int line, u
     if (result != 0) {
         return result;
     }
-    GfDataDriver::fn_7100247E88(driver, -static_cast<int>(GfDataDriverSkill::getNextSkillPoint(driver, line, round)));
-    GfDataDriverSkill::fn_710024ADFC(driver, line, level, round);
+    GfDataDriver::addSkillPoint(driver, -static_cast<int>(GfDataDriverSkill::getNextSkillPoint(driver, line, round)));
+    GfDataDriverSkill::setSkillLevel(driver, line, level, round);
     return 0;
 }
 
 int GfGameUtil::checkDriverSkillLevelUp(unsigned int driver, unsigned int line, unsigned int level, bool round) {
-    unsigned int now = GfDataDriverSkill::fn_710024AD38(driver, line, round);
+    unsigned int now = GfDataDriverSkill::getSkillLevel(driver, line, round);
     if (now > 2) {
         return 1;
     }
@@ -1108,7 +1108,7 @@ int GfGameUtil::checkDriverSkillLevelUp(unsigned int driver, unsigned int line, 
     if (!GfDataDriverSkill::isSkillUnlock(driver, line, level, round)) {
         return 4;
     }
-    if (GfDataDriverSkill::getNextSkillPoint(driver, line, round) > GfDataDriver::fn_7100247E28(driver)) {
+    if (GfDataDriverSkill::getNextSkillPoint(driver, line, round) > GfDataDriver::getSkillPoint(driver)) {
         return 3;
     }
     return 0;
@@ -1152,18 +1152,18 @@ void GfGameUtil::execLevelUp(unsigned int driver, unsigned int level) {
             break;
         }
         exp -= need;
-        GfDataDriver::fn_710024487C(driver, lv + 1);
+        GfDataDriver::setLevel(driver, lv + 1);
     }
     if (acc.getLevel(false) == prev) {
         return;
     }
-    GfDataDriver::fn_71002448D8(driver, exp);
-    GfDataDriver::fn_7100244988(driver, 0);
-    if (GfDataDriver::fn_710023F9A8(driver)) {
-        GfDataDriver::fn_71002417DC(driver);
+    GfDataDriver::setExp(driver, exp);
+    GfDataDriver::setBattleExp(driver, 0);
+    if (GfDataDriver::isIra(driver)) {
+        GfDataDriver::getIraFront(driver);
     }
-    if (GfMenuManager::fn_710035DC94()) {
-        SCOM_FIELD_VOICE::fn_7100567634(ParamObj(3, driver));
+    if (GfMenuManager::isOpenCampMenu()) {
+        SCOM_FIELD_VOICE::createLevelupForCamp(ParamObj(3, driver));
     } else {
         SCOM_FIELD_VOICE::createLevelup(ParamObj(3, driver));
     }
@@ -1173,11 +1173,11 @@ void GfGameUtil::execLevelUp(unsigned int driver, unsigned int level) {
     }
     GfEvent::callDriverLevel(driver, acc.getLevel(false), prev);
     GfDataDriver::openDriverArtsForLevelup(driver);
-    if (GfDataDriver::fn_7100237A94(driver)) {
+    if (GfDataDriver::isIraFront(driver)) {
         mm::mtl::FixedVector<unsigned short, 32> list;
-        GfDataDriver::fn_71002416B4(list, driver);
+        GfDataDriver::getIraBack(list, driver);
         for (const unsigned short& id : list) {
-            if (GfDataDriver::fn_7100249170(id)) {
+            if (GfDataDriver::isAttachedParty(id)) {
                 GfDataDriver::openDriverArtsForLevelup(id);
             }
         }
@@ -1185,21 +1185,21 @@ void GfGameUtil::execLevelUp(unsigned int driver, unsigned int level) {
 }
 
 void GfGameUtil::addWpForObject(unsigned int driver, unsigned int id, int wp) {
-    if (!GfDataDriver::fn_710023F9A8(driver)) {
+    if (!GfDataDriver::isIra(driver)) {
         addWp(driver, id, wp);
         return;
     }
     mm::mtl::FixedVector<unsigned short, 32> drivers;
     drivers.push_back(driver);
-    unsigned int base = GfDataDriver::fn_71002417DC(driver);
+    unsigned int base = GfDataDriver::getIraFront(driver);
     if (std::find(drivers.begin(), drivers.end(), static_cast<unsigned short>(base)) == drivers.end() &&
-        GfDataDriver::fn_7100249170(base)) {
+        GfDataDriver::isAttachedParty(base)) {
         drivers.push_back(base);
     }
     mm::mtl::FixedVector<unsigned short, 32> list;
-    GfDataDriver::fn_71002416B4(list, base);
+    GfDataDriver::getIraBack(list, base);
     for (const unsigned short& other : list) {
-        if (GfDataDriver::fn_7100249170(other) && std::find(drivers.begin(), drivers.end(), other) == drivers.end()) {
+        if (GfDataDriver::isAttachedParty(other) && std::find(drivers.begin(), drivers.end(), other) == drivers.end()) {
             drivers.push_back(other);
         }
     }
@@ -1209,35 +1209,35 @@ void GfGameUtil::addWpForObject(unsigned int driver, unsigned int id, int wp) {
     }
 }
 
-void GfGameUtil::fn_71002DB9D4(unsigned int driver, int sp) {
+void GfGameUtil::addSp(unsigned int driver, int sp) {
     if (driver == 0) {
         mm::mtl::FixedVector<unsigned short, 32> drivers;
         GfPartySelect::getDriverList(drivers, static_cast<GfPartySelect::LIST_TYPE>(2), 0);
         for (unsigned short* it = drivers.begin(); it != drivers.end(); ++it) {
-            fn_71002DB9D4(*it, sp);
+            addSp(*it, sp);
         }
     } else {
         DataParamAcc acc(3, driver, static_cast<GimmickType>(0));
         if (!acc.isScenarioMask()) {
-            GfDataDriver::fn_7100247E88(driver, sp);
+            GfDataDriver::addSkillPoint(driver, sp);
         }
     }
 }
 
 void GfGameUtil::addSP(unsigned int driver, int sp) {
-    if (!GfGameManager::fn_71002A9E68()) {
-        fn_71002DB9D4(driver, sp);
+    if (!GfGameManager::isGameTypeIra()) {
+        addSp(driver, sp);
         return;
     }
     if (driver != 0) {
         GfBdatChrDr* bdat = mm::mtl::PtrSingleton<GfBdatChrDr>::sys();
-        fn_71002DBB58(bdat->fn_71001F172C(bdat->fn_71001F13E0(driver)), sp);
+        fn_71002DBB58(bdat->getChrIrGroupID(bdat->getChrDrIraParam(driver)), sp);
         return;
     }
     for (unsigned int i = 0; i < 10; i++) {
         if (unsigned int id = GfGameParty::getDriverBdatId(i, 0)) {
             GfBdatChrDr* bdat = mm::mtl::PtrSingleton<GfBdatChrDr>::sys();
-            fn_71002DBB58(bdat->fn_71001F172C(bdat->fn_71001F13E0(id)), sp);
+            fn_71002DBB58(bdat->getChrIrGroupID(bdat->getChrDrIraParam(id)), sp);
         }
     }
 }
@@ -1262,7 +1262,7 @@ void GfGameUtil::addIdeaPoint(unsigned int driver, unsigned int type, int point)
 }
 
 void GfGameUtil::addDevelopPoint(unsigned int zone, unsigned int point) {
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         return;
     }
     if (GfDataBlade::fn_710024E91C() && zone == 6) {
@@ -1282,7 +1282,7 @@ void GfGameUtil::addDevelopPoint(unsigned int zone, unsigned int point) {
 }
 
 void GfGameUtil::execDevelopLevelUp() {
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         return;
     }
     QuestListAcc* acc = QuestListAcc::get();
@@ -1317,7 +1317,7 @@ void GfGameUtil::execDevelopLevelUp() {
 
 void GfGameUtil::addTrustPoint(unsigned int blade, unsigned int point) {
     unsigned int trust = GfDataBlade::getTrustPoint(blade) + point;
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         trust += GfGameManager::getOwnerBonus().m_values[14] * 50;
     }
     if (trust > 0xFFFF) {
@@ -1348,7 +1348,7 @@ void GfGameUtil::addTrustPoint(unsigned int blade, unsigned int point) {
 
 unsigned int fn_71002DC130(unsigned int driver) {
     mm::mtl::FixedVector<unsigned short, 32> drivers;
-    GfDataDriver::fn_71002416B4(drivers, driver);
+    GfDataDriver::getIraBack(drivers, driver);
     unsigned int total = 0;
     unsigned int count = 0;
     for (const unsigned short& id : drivers) {
@@ -1367,8 +1367,8 @@ unsigned int fn_71002DC130(unsigned int driver) {
         total = 1;
     }
     GfBdatChrDr* chr = mm::mtl::PtrSingleton<GfBdatChrDr>::sys();
-    unsigned int group = chr->fn_71001F172C(chr->fn_71001F13E0(driver));
-    return mm::mtl::PtrSingleton<GfBdatBtl>::sys()->fn_71001EA310(total, group - 1);
+    unsigned int group = chr->getChrIrGroupID(chr->getChrDrIraParam(driver));
+    return mm::mtl::PtrSingleton<GfBdatBtl>::sys()->getBTL_IrGroupRevGroupRev(total, group - 1);
 }
 
 bool GfGameUtil::isPointSavable(const mm::Vec3& pos) {
@@ -1404,8 +1404,8 @@ void GfGameUtil::addTrustRankForKizunaRing(unsigned int blade) {
     if (driver == 0) {
         driver = GfDataBlade::getCreator(blade);
     }
-    if (GfGameManager::fn_71002A9E68()) {
-        driver = GfDataDriver::fn_71002417DC(GfDataBlade::fn_7100236518(blade));
+    if (GfGameManager::isGameTypeIra()) {
+        driver = GfDataDriver::getIraFront(GfDataBlade::getIraDriver(blade));
     }
     if (driver != 0) {
         SCOM_POPUP::createAffinity(blade, driver, next);
@@ -1455,7 +1455,7 @@ bool fn_71002DA394(GF_OBJ_HANDLE* handle) {
 }
 
 void fn_71002DA4FC(int value) {
-    if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
+    if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
         MsgUnk_1000034 msg(0xE);
         msg.pad_28 = value;
         static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
@@ -1463,7 +1463,7 @@ void fn_71002DA4FC(int value) {
 }
 
 void fn_71002DA570(int value) {
-    if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
+    if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
         MsgUnk_1000034 msg(0xF);
         msg.pad_2C = value;
         static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
@@ -1471,7 +1471,7 @@ void fn_71002DA570(int value) {
 }
 
 void fn_71002DA5E4(unsigned int value) {
-    if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
+    if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
         MsgUnk_1000034 msg(0x10);
         msg.pad_30 = value;
         static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
@@ -1485,7 +1485,7 @@ void GfGameUtil::addExpInn(unsigned int exp) {
     mm::mtl::FixedVector<unsigned short, 32> drivers;
     GfPartySelect::getDriverList(drivers, static_cast<GfPartySelect::LIST_TYPE>(8), 0);
     GfPartySelect::getDriverList(drivers, static_cast<GfPartySelect::LIST_TYPE>(7), 0);
-    if (!GfGameManager::fn_71002A9E68()) {
+    if (!GfGameManager::isGameTypeIra()) {
         for (int id = 1; id < 7; id++) {
             if (std::find(drivers.begin(), drivers.end(), static_cast<unsigned short>(id)) != drivers.end()) {
                 continue;
@@ -1496,10 +1496,10 @@ void GfGameUtil::addExpInn(unsigned int exp) {
             drivers.push_back(id);
         }
     }
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         unsigned int seen = 0;
         for (unsigned short* it = drivers.begin(); it != drivers.end();) {
-            unsigned int bit = 1 << GfDataDriver::fn_71002419C8(*it);
+            unsigned int bit = 1 << GfDataDriver::getIraGroup(*it);
             if (seen & bit) {
                 it = drivers.erase(it);
             } else {
@@ -1524,10 +1524,10 @@ void GfGameUtil::addExpBattle(unsigned int driver, unsigned int exp) {
     mm::mtl::FixedVector<unsigned short, 32> drivers;
     GfPartySelect::getDriverList(drivers, static_cast<GfPartySelect::LIST_TYPE>(8), 0);
     GfPartySelect::getDriverList(drivers, static_cast<GfPartySelect::LIST_TYPE>(7), 0);
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         unsigned int seen = 0;
         for (unsigned short* it = drivers.begin(); it != drivers.end();) {
-            unsigned int bit = 1 << GfDataDriver::fn_71002419C8(*it);
+            unsigned int bit = 1 << GfDataDriver::getIraGroup(*it);
             if (seen & bit) {
                 it = drivers.erase(it);
             } else {
@@ -1681,13 +1681,13 @@ int GfGameUtil::fn_71002DE83C(GF_OBJ_HANDLE* handle) {
     }
     unsigned int party = GfGameParty::getPartyId(handle);
     int type = GfObjUtil::getObjType(handle);
-    unsigned int id = GfObjUtil::fn_710054FCDC(handle);
+    unsigned int id = GfObjUtil::getPartyPos(handle);
     GfGamePlayerFormation* formation = mm::mtl::PtrSingleton<GfGamePlayerFormation>::sys();
     for (unsigned long i = 0; i < 9; i++) {
         GfObjSetup* setup = GfObjUtil::getObjSetup(formation->m_players[i].m_handle);
         if (setup != nullptr && setup->m_partyId == party &&
             GfObjUtil::getObjType(formation->m_players[i].m_handle) == type &&
-            GfObjUtil::fn_710054FCDC(formation->m_players[i].m_handle) == id) {
+            GfObjUtil::getPartyPos(formation->m_players[i].m_handle) == id) {
             return i;
         }
     }
@@ -1754,8 +1754,8 @@ bool GfGameUtil::execActivateUnuseForBlade(unsigned int blade, bool releaseOrbs)
     return false;
 }
 
-bool GfGameUtil::fn_71002E16F4(unsigned int driver) {
-    if (GfDataDriver::fn_7100241DD4(driver)) {
+bool GfGameUtil::equipDriverBladeForce(unsigned int driver) {
+    if (GfDataDriver::equipDriverBladeFromReserverBlade(driver)) {
         return false;
     }
     switch (driver) {
@@ -1959,7 +1959,7 @@ unsigned int GfGameUtil::execAddRareBlade(const SDataBlade& data) {
     return blade;
 }
 
-unsigned int GfGameUtil::fn_71002E1B64(SDataBlade& data, unsigned int item) {
+unsigned int GfGameUtil::execAddCommonBlade(SDataBlade& data, unsigned int item) {
     if (GfDataBlade::fn_7100231FF8() && data.m_bladeId == GfDataBlade::getStartCommonBlade()) {
         GfDataBlade::setActivateReserver(data.m_bladeId);
         return data.m_bladeId;
@@ -2068,7 +2068,7 @@ int GfGameUtilHana::getEmptyParts(unsigned int item) {
 }
 
 void GfGameUtil::execEquipDriverDefaultAcce(unsigned int driver) {
-    if (driver == 0 || GfDataDriver::fn_71002491D4(driver)) {
+    if (driver == 0 || GfDataDriver::isEquipDefaultAcce(driver)) {
         return;
     }
     GfDataDriver::getSDataDriver(driver)->m_defaultAcceDone = true;
@@ -2081,12 +2081,12 @@ void GfGameUtil::execEquipDriverDefaultAcce(unsigned int driver) {
     }
 }
 
-void GfGameUtil::fn_71002EB4B8(unsigned int driver) {
-    if (!GfDataDriver::fn_7100237A94(driver) || GfDataDriver::fn_7100247474(driver) != 0) {
+void GfGameUtil::execEquipIraDefaultWpnAcce(unsigned int driver) {
+    if (!GfDataDriver::isIraFront(driver) || GfDataDriver::getEquipWpnAcce(driver) != 0) {
         return;
     }
-    unsigned int id = mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->fn_71001F13E0(driver);
-    unsigned int accessory = mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->fn_71001F17B4(id);
+    unsigned int id = mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->getChrDrIraParam(driver);
+    unsigned int accessory = mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->getChrIrDefWpnAcce(id);
     if (accessory != 0) {
         if (GfItemUtil::isEnableAddItemBox(accessory, 1)) {
             GfItemUtil::addItemBoxWithSilent(accessory, 1);
@@ -2206,8 +2206,8 @@ const char* fn_71002DF4C4(unsigned int driverId, bool flag) {
         if (acce == 0) {
             continue;
         }
-        const char* name = bdat->fn_7100203698(acce);
-        if (name == nullptr || *name == '\0' || bdat->fn_7100203610(acce) != driverId) {
+        const char* name = bdat->getPcEquipModel(acce);
+        if (name == nullptr || *name == '\0' || bdat->getPcEquipDriver(acce) != driverId) {
             continue;
         }
         if (flag && driverId == 6 && strcmp(name, "pc/pc110601") == 0) {
@@ -2221,7 +2221,7 @@ const char* fn_71002DF4C4(unsigned int driverId, bool flag) {
 bool fn_71002E66F8(mm::mtl::FixedVector<unsigned short, 32>& list) {
     if (GfDataBlade::fn_71002324C8()) {
         for (unsigned int driver = 17; driver < 26; ++driver) {
-            if (GfDataDriver::fn_7100237A94(driver)) {
+            if (GfDataDriver::isIraFront(driver)) {
                 list.push_back(driver);
             }
         }
@@ -2599,7 +2599,7 @@ RESULT_HANA GfGameUtilHana::execEquipCondenserParts(unsigned int hana, unsigned 
         }
     }
     GfDataHana::setEquipParts(hana, equip);
-    GfEvent::fn_71003286B0(hana, false, slot);
+    GfEvent::callHanaCondenser(hana, false, slot);
     return static_cast<RESULT_HANA>(0);
 }
 
@@ -2669,7 +2669,7 @@ bool fn_71002EE5E0(QuestID quest, unsigned int task) {
 }
 
 void fn_71002EE640(unsigned int blade) {
-    if (!GfGameManager::fn_71002A9E68() || GfDataBlade::getTrustRank(blade) != 5) {
+    if (!GfGameManager::isGameTypeIra() || GfDataBlade::getTrustRank(blade) != 5) {
         return;
     }
     if (GfDataBlade::getKizunaringMax(blade) > GfDataBlade::getKizunaringCompleteNum(blade)) {
@@ -2684,7 +2684,7 @@ void fn_71002EE640(unsigned int blade) {
 }
 
 bool fn_71002EE72C(unsigned int blade) {
-    if (!GfGameManager::fn_71002A9E68() || GfDataBlade::getTrustRank(blade) != 5) {
+    if (!GfGameManager::isGameTypeIra() || GfDataBlade::getTrustRank(blade) != 5) {
         return false;
     }
     return GfDataBlade::getKizunaringMax(blade) == GfDataBlade::getKizunaringCompleteNum(blade);
@@ -2722,7 +2722,7 @@ SDataOption* GfGameUtilSaveData::getValidOptionData() {
 void GfGameUtilSaveData::flushOptionSaveData() {
     SDataOption* option = getValidOptionData();
     GfMenuManager::applyOptionData(*option);
-    if (GfMenuManager::fn_71003596C0()) {
+    if (GfMenuManager::isEnableVoiceChange()) {
         fw::LangUtil::setVoiceType(static_cast<fw::LangType>(option->m_soundUi.m_byte1E == 0));
     }
     if (GfSound* sound = mm::mtl::PtrSingleton<GfSound>::sys()) {
@@ -2742,7 +2742,7 @@ void GfGameUtilSaveData::getSaveDataMenuInfo(SaveMenuInfo& info) {
 }
 
 bool fn_71002EB3C0() {
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         return !GfGameCond::isGameCond(0xE86);
     }
     return GfDataBlade::fn_7100231884() < 5048;
@@ -2758,7 +2758,7 @@ unsigned int fn_71002EC634() {
 }
 
 unsigned int fn_71002EC674(GF_OBJ_HANDLE* handle) {
-    TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys();
+    GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys();
     if (arena != nullptr && arena->fn_7100291D54()) {
         return arena->fn_7100291E14(handle);
     }
@@ -2772,38 +2772,38 @@ unsigned int fn_71002EC6F4(GF_OBJ_HANDLE* handle) {
 }
 
 bool fn_71002ED330() {
-    if (!GfGameManager::fn_71002AC598()) {
+    if (!GfGameManager::isInstalledBattleArenaContents()) {
         return false;
     }
     if (GfItemUtil::getItemBoxCount(25497) == 0) {
         return false;
     }
-    const TUnk_B535D0::RuleRow& row = GfDataManager::getDataGame()->m_ruleTable.m_rows[25];
+    const GfGameArena::RuleRow& row = GfDataManager::getDataGame()->m_ruleTable.m_rows[25];
     return row.m_rules[1].m_value0 != 0 || row.m_rules[0].m_value0 != 0 || row.m_rules[2].m_value0 != 0 ||
            row.m_rules[3].m_value0 != 0 || row.m_rules[4].m_value0 != 0;
 }
 
-// whether the add-on content state (TUnk_B54858) owns the encoded add-on item id, false without it (as
-// GfGameManager::fn_71002AC598 does for 0x30101). Inline: no copy exists; fn_71002ED3E8's 0x451 case needs it as a
+// whether the add-on content state (GfGameAoc) owns the encoded add-on item id, false without it (as
+// GfGameManager::isInstalledBattleArenaContents does for 0x30101). Inline: no copy exists; fn_71002ED3E8's 0x451 case needs it as a
 // call of its own to keep the original's block order. The name is not the original's.
 static inline bool isAocOwned(unsigned int id) {
-    if (TUnk_B54858* aoc = TUnk_B54858::get()) {
+    if (GfGameAoc* aoc = GfGameAoc::get()) {
         return aoc->fn_71002A75DC(id);
     }
     return false;
 }
 
-// blade 0x457's test, shared by fn_71002ED3E8 and fn_71002EDAD4 (both inline it): GfGameManager::fn_71002AC598,
+// blade 0x457's test, shared by fn_71002ED3E8 and fn_71002EDAD4 (both inline it): GfGameManager::isInstalledBattleArenaContents,
 // item 25497 in the box and a first rule value set in row 25 of SDataGame's challenge rule table (tested in the
 // order 1, 0, 2, 3, 4). Inline: no copy exists. The name is not the original's.
 static inline bool isBlade457Unlocked() {
-    if (!GfGameManager::fn_71002AC598()) {
+    if (!GfGameManager::isInstalledBattleArenaContents()) {
         return false;
     }
     if (GfItemUtil::getItemBoxCount(25497) == 0) {
         return false;
     }
-    const TUnk_B535D0::RuleRow& row = GfDataManager::getDataGame()->m_ruleTable.m_rows[25];
+    const GfGameArena::RuleRow& row = GfDataManager::getDataGame()->m_ruleTable.m_rows[25];
     return row.m_rules[1].m_value0 != 0 || row.m_rules[0].m_value0 != 0 || row.m_rules[2].m_value0 != 0 ||
            row.m_rules[3].m_value0 != 0 || row.m_rules[4].m_value0 != 0;
 }
@@ -2814,7 +2814,7 @@ bool fn_71002ED3E8(unsigned int blade) {
         return isAocOwned(0x20101);
     case 0x452:
     case 0x453:
-        return GfGameManager::fn_71002AC598();
+        return GfGameManager::isInstalledBattleArenaContents();
     case 0x457:
         return isBlade457Unlocked();
     default:
@@ -2824,15 +2824,15 @@ bool fn_71002ED3E8(unsigned int blade) {
 
 unsigned int fn_71002ED4F0(unsigned int enemy) {
     GfBdatChrEnArrange* bdat = mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys();
-    if (GfGameManager::fn_71002A9E68()) {
-        for (unsigned int row = bdat->fn_71001F4E70(), end = bdat->fn_71001F4E7C(); row < end; row++) {
-            if (bdat->fn_71001F4EB8(row) == enemy) {
+    if (GfGameManager::isGameTypeIra()) {
+        for (unsigned int row = bdat->getBTL_NamedListIraStart(), end = bdat->getBTL_NamedListIraEnd(); row < end; row++) {
+            if (bdat->getBTL_NamedListIraEnemyID(row) == enemy) {
                 return row;
             }
         }
     } else {
-        for (unsigned int row = bdat->fn_71001F4DA0(), end = bdat->fn_71001F4DAC(); row < end; row++) {
-            if (bdat->fn_71001F4DE8(row) == enemy) {
+        for (unsigned int row = bdat->getBTL_NamedListStart(), end = bdat->getBTL_NamedListEnd(); row < end; row++) {
+            if (bdat->getBTL_NamedListEnemyID(row) == enemy) {
                 return row;
             }
         }
@@ -2861,17 +2861,17 @@ void fn_71002ED99C(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag) {
 }
 
 bool fn_71002ED9CC() {
-    if (GfDataManager::fn_7100224A10()->m_word2 == 0) {
+    if (GfDataManager::getDataGameIra()->m_word2 == 0) {
         return false;
     }
-    return mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->fn_71001F1AEC(GfDataManager::fn_7100224A10()->m_word2) != 0;
+    return mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->getIRA_PartyGuest1(GfDataManager::getDataGameIra()->m_word2) != 0;
 }
 
 bool fn_71002EDA2C() {
-    if (GfDataManager::fn_7100224A10()->m_word2 == 0) {
+    if (GfDataManager::getDataGameIra()->m_word2 == 0) {
         return false;
     }
-    return mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->fn_71001F1B74(GfDataManager::fn_7100224A10()->m_word2) != 0;
+    return mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->getIRA_PartyGuest2(GfDataManager::getDataGameIra()->m_word2) != 0;
 }
 
 bool fn_71002EDA8C() {
@@ -2940,7 +2940,7 @@ void fn_71002EDD60() {
 
 fw::SoundPack* fn_71002EE5A0(const char* name) {
     if (GfFieldSound* sound = mm::mtl::PtrSingleton<GfFieldSound>::sys()) {
-        return sound->fn_710027CE60(name);
+        return sound->getDlcSePack(name);
     }
     return nullptr;
 }

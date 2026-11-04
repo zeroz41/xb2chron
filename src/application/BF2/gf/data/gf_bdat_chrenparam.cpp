@@ -1027,9 +1027,9 @@ void initEnemyGroupEnemyID9(const CBdatWrapper& bdat) {
     s_memberEnemyGroupEnemyID9 = bdat.getMember("EnemyID9");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of EnemyGroup getters holds it.
-// What it does: reads the EnemyID9 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001F5C40(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the EnemyID9 column (unsigned short) of a row, as the init function
+// above found it.
+unsigned int getEnemyGroupEnemyID9(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberEnemyGroupEnemyID9 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberEnemyGroupEnemyID9, id, 2);
@@ -1042,9 +1042,9 @@ void initEnemyGroupEnemyID10(const CBdatWrapper& bdat) {
     s_memberEnemyGroupEnemyID10 = bdat.getMember("EnemyID10");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of EnemyGroup getters holds it.
-// What it does: reads the EnemyID10 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001F5CC8(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the EnemyID10 column (unsigned short) of a row, as the init function
+// above found it.
+unsigned int getEnemyGroupEnemyID10(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberEnemyGroupEnemyID10 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberEnemyGroupEnemyID10, id, 2);
@@ -1057,9 +1057,9 @@ void initEnemyGroupEnemyID11(const CBdatWrapper& bdat) {
     s_memberEnemyGroupEnemyID11 = bdat.getMember("EnemyID11");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of EnemyGroup getters holds it.
-// What it does: reads the EnemyID11 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001F5D50(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the EnemyID11 column (unsigned short) of a row, as the init function
+// above found it.
+unsigned int getEnemyGroupEnemyID11(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberEnemyGroupEnemyID11 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberEnemyGroupEnemyID11, id, 2);
@@ -1072,9 +1072,9 @@ void initEnemyGroupEnemyID12(const CBdatWrapper& bdat) {
     s_memberEnemyGroupEnemyID12 = bdat.getMember("EnemyID12");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of EnemyGroup getters holds it.
-// What it does: reads the EnemyID12 column (unsigned short) of a row, as the init function above found it.
-unsigned int fn_71001F5DD8(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the EnemyID12 column (unsigned short) of a row, as the init function
+// above found it.
+unsigned int getEnemyGroupEnemyID12(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberEnemyGroupEnemyID12 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (unsigned short)bdat.getValCheck(s_memberEnemyGroupEnemyID12, id, 2);
@@ -1337,7 +1337,7 @@ bool GfBdatChrEnParam::isChrEnParamFlagFldDmgType(unsigned int id) const {
     return _gfbep::isChrEnParamFlagFldDmgType(*m_fpChrEnParam, id);
 }
 
-bool GfBdatChrEnParam::fn_71001F78D8(unsigned int id) const {
+bool GfBdatChrEnParam::isChrEnParamFlagTrgRndLady(unsigned int id) const {
     return _gfbep::isChrEnParamFlagTrgRndLady(*m_fpChrEnParam, id);
 }
 
@@ -1467,10 +1467,10 @@ unsigned int GfBdatChrEnParam::getEnemyGroupEnemyID(unsigned int id, unsigned in
         _gfbep::getEnemyGroupEnemyID6,
         _gfbep::getEnemyGroupEnemyID7,
         _gfbep::getEnemyGroupEnemyID8,
-        _gfbep::fn_71001F5C40,
-        _gfbep::fn_71001F5CC8,
-        _gfbep::fn_71001F5D50,
-        _gfbep::fn_71001F5DD8,
+        _gfbep::getEnemyGroupEnemyID9,
+        _gfbep::getEnemyGroupEnemyID10,
+        _gfbep::getEnemyGroupEnemyID11,
+        _gfbep::getEnemyGroupEnemyID12,
     };
     return _gfbep::getSlot(s_getters, slot)(*m_fpEnemyGroup, id);
 }

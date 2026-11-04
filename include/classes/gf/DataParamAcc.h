@@ -24,12 +24,11 @@ public:
     bool isValid() const;
     const char* getName() const;
     const char* getVoiceStr() const;
-    // Placeholder names (fn_71002208A4, fn_7100221170, fn_7100221F88): new or changed in 3.0.1, nothing in 1.0.0's
-    // place names them. Members because they sit among DataParamAcc's forwarders and read this->m_obj. What they do:
-    // fn_71002208A4 forwards its three arguments to IDataObj slot 76 (1.0.0's two-argument getDriverArts; 3.0.1's
-    // DataObjDriver override picks its arts table by the third), 0 for an invalid object; fn_7100221170 forwards a
-    // part to slot 42 (new in 3.0.1; DataObjEnemy's override), true for an invalid object; fn_7100221F88 forwards an
-    // item to slot 52 (new in 3.0.1; DataObjDriver's override asks GfDataItem::getItemType of it).
+    // 2.0.0's symbols name getExp, getBattleExp; the fn_ names are placeholders. What they do: fn_71002208A4 forwards
+    // its three arguments to IDataObj slot 76 (1.0.0's two-argument getDriverArts; 3.0.1's DataObjDriver override picks
+    // its arts table by the third), 0 for an invalid object; isHideInitExtraParts forwards a part to slot 42 (new in
+    // 3.0.1; DataObjEnemy's override), true for an invalid object; setVirtualEquipWpnAcce forwards an item to slot 52
+    // (new in 3.0.1; DataObjDriver's override asks GfDataItem::getItemType of it).
     unsigned int getObjType() const;
     const char* getModelResourceName() const;
     const char* getMotionResourceName() const;
@@ -68,7 +67,7 @@ public:
     unsigned int getGender() const;
     unsigned int getAttribute(int value, bool flag) const;
     bool isDispInitExtraParts(unsigned int index) const;
-    bool fn_7100221170(unsigned int index) const;  // placeholder: see the comment above the block
+    bool isHideInitExtraParts(unsigned int index) const;  // placeholder: see the comment above the block
     bool isScenarioMask() const;
     unsigned int getRole(bool flag) const;
     int getMenuOffset() const;
@@ -105,7 +104,7 @@ public:
     void setVirtualSetBlade(unsigned int index, int value);  // was fn_7100221E64 by position; forwards IDataObj slot 49 (see NOTES)
     void setVirtualEquipWpnChip(unsigned int index);
     void setVirtualEquipOrb(unsigned int index, unsigned int index2);
-    void fn_7100221F88(unsigned int index);  // placeholder: see the comment above the block
+    void setVirtualEquipWpnAcce(unsigned int index);  // placeholder: see the comment above the block
     void setMenuParam();
     unsigned int getBdatIdEnParam() const;  // was isGuardFront by position; forwards IDataObj slot 112 (see NOTES)
     unsigned int getResistancePower() const;  // was getResistanceCombo by position; forwards IDataObj slot 119 (see NOTES)

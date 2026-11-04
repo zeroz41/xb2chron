@@ -35,7 +35,7 @@ static int fn_7100312E00(QuestID id, unsigned int enemy);
 static void fn_7100312FBC(QTYPE type);
 
 // The parent quests a new game keeps (fn_7100312FBC; lbl_71009BC46C, and lbl_71009BC470 in the mode
-// GfGameManager::fn_71002A9E68 tests). The names are not the original's.
+// GfGameManager::isGameTypeIra tests). The names are not the original's.
 static const unsigned short s_newGameKeepQuests[] = {0xA4B, 0xA60};
 static const unsigned short s_newGameKeepQuestsMode[] = {0x8E1, 0x8E3, 0x8E5, 0x8E7, 0x8E9, 0x8EB};
 
@@ -515,7 +515,7 @@ static void fn_7100312FBC(QTYPE type) {
         unsigned short id = it.getQuestID().m_id;
         unsigned long count;
         const unsigned short* keep;
-        if (GfGameManager::fn_71002A9E68()) {
+        if (GfGameManager::isGameTypeIra()) {
             keep = s_newGameKeepQuestsMode;
             count = 6;
         } else {

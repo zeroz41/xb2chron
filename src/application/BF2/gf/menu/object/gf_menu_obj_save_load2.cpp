@@ -207,7 +207,7 @@ void GfMenuObjSaveLoad2::MainListener::reciveEvent(const ui::EventData& event, u
                 GfMenuObject::enableInput(handle);
             } else if (m_owner->m_confirm == 0) {
                 bool close = GfDataBlade::fn_7100231884() > 10042;
-                if (GfMenuObjUtil::fn_710048FD30(3)) {
+                if (GfMenuObjUtil::isValidExpansion(3)) {
                     close = GfDataBlade::fn_7100231884() > 11125;
                 }
                 m_owner->m_seq.clear();

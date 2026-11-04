@@ -447,7 +447,7 @@ bool GfMenuObjButtonChallenge2::seqWaitMashingV2() {
     if (m_index < m_param.m_buttons.size()) {
         pad_490++;
         if (GfMenuManager::isBattleState(8)) {
-            GfMenuReference::fn_71003673F0(1.0f - static_cast<float>(pad_498) / static_cast<float>(pad_490));
+            GfMenuReference::setVisionTimeRatio(1.0f - static_cast<float>(pad_498) / static_cast<float>(pad_490));
         }
         if (pad_490 < pad_498) {
             return false;

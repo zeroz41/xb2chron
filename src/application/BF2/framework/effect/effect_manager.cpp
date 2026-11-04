@@ -1001,36 +1001,36 @@ bool EffectManager::getVolumeFadeParam(unsigned int type, ml::VolumeFadeParams& 
     return false;
 }
 
-void EffectManager::fn_7100179D30(bool flag) {
-    effect::SystemManager::getPtr()->fn_710083FF24(flag);
+void EffectManager::setDisableCollision(bool flag) {
+    effect::SystemManager::getPtr()->setDisableCollision(flag);
 }
 
-void EffectManager::fn_710017658C() {
+void EffectManager::requestDestroy() {
     pad_2fdb = 1;
     pad_2fd7 = 1;
     pad_2fda = 0;
 }
 
-bool EffectManager::fn_71001765AC() {
+bool EffectManager::isDestryed() {
     return pad_2fdb == 0;
 }
 
-void EffectManager::fn_71001765C0() {
+void EffectManager::requestLoad() {
     pad_2fdc = 1;
 }
 
-bool EffectManager::fn_71001765D0() {
+bool EffectManager::isLoaded() {
     return pad_2fdc == 0;
 }
 
 bool EffectManager::finalize() {
-    return fn_71001765E8();
+    return commonDestryed();
 }
 
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B415B0). fn_7100177028's folder.
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B415B0). getCommonFilePath's folder.
 const char* s_commonEffectDir = "effect/common";
 
-bool EffectManager::fn_7100177028(mm::mtl::FixStr<32>& path) {
+bool EffectManager::getCommonFilePath(mm::mtl::FixStr<32>& path) {
     path = s_commonEffectDir;
     if (m_gfManagerFlag) {
         path += "_dlc";
@@ -1102,7 +1102,7 @@ void EffectManager::tail(const UpdateInfo& info, bool flag) {
     }
 }
 
-void EffectManager::fn_710017CB08(bool flag) {
+void EffectManager::setIra(bool flag) {
     m_gfManagerFlag = flag;
 }
 

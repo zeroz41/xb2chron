@@ -54,7 +54,7 @@ public:
 // takes no object, and it sits at the start of CommonResource.cpp's split (1.0.0's CommonResource.o starts at
 // search; its code is RenderParam's pattern, so it likely ends the unit before). What it does: builds an
 // ml::ScnRenderDrSysParmAcc for view 0 of the Framework's scene renderer and hands the flag to its
-// fn_710070A2F4 (DrMan's word at 0x1D50). Called by gf::GfManager::initialize and fn_710032A1FC.
+// setRenderTexMode (DrMan's word at 0x1D50). Called by gf::GfManager::initialize and resetGameType.
 void fn_71001996F0(bool flag);
 }  // namespace fw
 

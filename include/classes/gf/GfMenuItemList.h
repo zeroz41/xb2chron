@@ -89,11 +89,10 @@ public:
     void decItem(const MenuItemInfo& item, bool);
     // takes count off the item at index (erasing it at 0 or below); with the bool, a SCOM_ADD_ITEM request of -count
     void decItem(unsigned int index, unsigned int count, bool);
-    // Placeholder names: nothing in 1.0.0's place names them. fn_7100375BF4: decItem of the item fn_7100375C50
-    // finds (GfMenuObjShop::NumSelectListener); fn_7100375C50: the index of the item with the same type, id and
-    // box handle, -1 when none
-    void fn_7100375BF4(const MenuItemInfo& item, bool);
-    unsigned int fn_7100375C50(const MenuItemInfo& item);
+    // 2.0.0's symbols name them. decItemH: decItem of the item findItemH finds (GfMenuObjShop::NumSelectListener);
+    // findItemH: the index of the item with the same type, id and box handle, -1 when none
+    void decItemH(const MenuItemInfo& item, bool);
+    unsigned int findItemH(const MenuItemInfo& item);
     void setupFromShop(const ItemShopSetup& setup);
     void setupFromShopExcTask(const ItemShopExcSetup& setup);
     void sort(unsigned int order, bool);
@@ -124,26 +123,22 @@ public:
     static bool sortGetAreaDescending(const MenuItemInfo& a, const MenuItemInfo& b);
     static bool sortIdAscending(const MenuItemInfo& a, const MenuItemInfo& b);
     static bool sortIdDescending(const MenuItemInfo& a, const MenuItemInfo& b);
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because sort(5/9) picks them as
-    // comparators for type 2 items (this class's sort orders). What they do: fn_710037749C / fn_7100377614 order
-    // by the enhance key GfBdatItem::fn_7100202C3C reads, asc/desc, then the item id; fn_710037777C /
-    // fn_71003778C0 the same for the other enhance key (see the bodies).
-    static bool fn_710037749C(const MenuItemInfo& a, const MenuItemInfo& b);
-    static bool fn_7100377614(const MenuItemInfo& a, const MenuItemInfo& b);
-    static bool fn_710037777C(const MenuItemInfo& a, const MenuItemInfo& b);
-    static bool fn_71003778C0(const MenuItemInfo& a, const MenuItemInfo& b);
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because sort(order) calls them
-    // with this and order - 0x50 (fn_7100377F28), order - 0x40 (fn_7100378144), order - 0x20 (fn_710037835C);
-    // each sorts the list with a comparator lambda of its own (tables 0x7100B5F660, 0x7100B5F618, 0x7100B5F5D0).
-    void fn_7100377F28(unsigned int order);
+    // 2.0.0's symbols name them. What they do: sortTypeWpnAccesoryAscending / sortTypeWpnAccesoryDescending order by
+    // the enhance key GfBdatItem::getPcEquipAddAtr reads, asc/desc, then the item id; sortTypeAccesoryAscending /
+    // sortTypeAccesoryDescending the same for the other enhance key (see the bodies).
+    static bool sortTypeWpnAccesoryAscending(const MenuItemInfo& a, const MenuItemInfo& b);
+    static bool sortTypeWpnAccesoryDescending(const MenuItemInfo& a, const MenuItemInfo& b);
+    static bool sortTypeAccesoryAscending(const MenuItemInfo& a, const MenuItemInfo& b);
+    static bool sortTypeAccesoryDescending(const MenuItemInfo& a, const MenuItemInfo& b);
+    // 2.0.0's symbols name sortFromBuff; the fn_ names are placeholders.
+    void sortFromBuff(unsigned int order);
     void fn_7100378144(unsigned int order);
     void fn_710037835C(unsigned int order);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because only fn_710037835C calls
-    // it, once per item. What it does: the key fn_710037835C sorts by: for items of types 2, 3, 18 and 20 (type 9:
-    // of the item its ItemProperty::m_enhance names) whose m_enhance2 row has an effect, that effect's
-    // GfBdatBtl::fn_71001E80D0 value (0 when it is s_firstEnhanceSortKey); else 24.
-    static unsigned int fn_7100378524(const MenuItemInfo& item);
-    // the key value fn_7100377F28 / fn_7100378144 / fn_710037835C put first (their order argument). Proposed names,
+    // 2.0.0's symbols name it. What it does: the key fn_710037835C sorts by: for items of types 2, 3, 18 and 20 (type
+    // 9: of the item its ItemProperty::m_enhance names) whose m_enhance2 row has an effect, that effect's
+    // GfBdatBtl::getBTL_EnhanceEffSortCat value (0 when it is s_firstEnhanceSortKey); else 24.
+    static unsigned int getEnhanceSortCat(const MenuItemInfo& item);
+    // the key value sortFromBuff / fn_7100378144 / fn_710037835C put first (their order argument). Proposed names,
     // not the original's: the symbols leave them unnamed (lbl_7100EA70C0, lbl_7100EA70BC, lbl_7100EA70B8)
     static unsigned int s_firstEnhanceSortKey;
     static unsigned int s_firstRole;

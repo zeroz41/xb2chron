@@ -63,16 +63,13 @@ public:
     bool update_ArtsEnhanceDescriptionNextLv();
     bool update_ArtsDispLvMax();
     bool update_ArtsTextIndex();
-    // Placeholder name: new in 3.0.1 (its type table's slot 22; 1.0.0's table ends at slot 21), nothing in 1.0.0's
-    // place names it. A member: the type table holds it as a GfMenuArtsAdapter member function. What it does: with
-    // add-on menu layer 3 usable (GfMenuObjUtil::fn_710048FD30(3)), shows the message GfDataDriverArts::getIconID
-    // (GfBdatBtl::fn_71001E6BDC, the TalentCap column) gives for m_artsId from GfDataBdat table 0x191; false
-    // otherwise or for message 0.
-    bool fn_71003321F4();
-    // Placeholder name: new in 3.0.1 (its type table's slot 23), nothing in 1.0.0's place names it. A member: the
-    // type table holds it. What it does: as fn_71003321F4, with GfDataDriverArts::getDebugName
-    // (GfBdatBtl::fn_71001E6B54, the CondCap column) for the message, also from table 0x191.
-    bool fn_710033226C();
+    // 2.0.0's symbols name it. What it does: with add-on menu layer 3 usable (GfMenuObjUtil::isValidExpansion(3)),
+    // shows the message GfDataDriverArts::getIconID (GfBdatBtl::getArtsDrUI, the TalentCap column) gives for m_artsId
+    // from GfDataBdat table 0x191; false otherwise or for message 0.
+    bool update_IraArtsTalentCaption();
+    // 2.0.0's symbols name it. What it does: as update_IraArtsTalentCaption, with GfDataDriverArts::getDebugName
+    // (GfBdatBtl::getArtsDrDebugName, the CondCap column) for the message, also from table 0x191.
+    bool update_IraArtsTalentCond();
     mm::mtl::Delegate<bool()> m_update;  // its type's update_*; update shows what it returns
     IConverter* m_converter;  // update takes the arts from it; owned
     unsigned int m_artsId;    // 0 shows nothing

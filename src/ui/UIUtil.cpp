@@ -160,27 +160,27 @@ unsigned char* getBdatFP(unsigned char index) {
     return nullptr;
 }
 
-void fn_7100696920(unsigned int no) {
+void setResourceReplaceID(unsigned int no) {
     s_uioReplaceNo = no;
 }
 
-void fn_7100696930(const char* dir) {
+void changeRootFolder(const char* dir) {
     s_menuDir = dir;
 }
 
-const char* fn_7100696940() {
+const char* getRootFolder() {
     return s_menuDir;
 }
 
-void fn_7100696950(unsigned int bit) {
+void registEnableExpType(unsigned int bit) {
     s_layerMask |= 1 << bit;
 }
 
-bool fn_7100696970(unsigned int bit) {
+bool isEnableExpType(unsigned int bit) {
     return (s_layerMask & (1 << bit)) != 0;
 }
 
-bool fn_7100696990(const char* file) {
+bool canUIOReplace(const char* file) {
     unsigned char* fp = s_BdatFPs[16];
     if (fp != nullptr) {
         for (int i = 0; i < Bdat::getIdCount(fp); i++) {
@@ -193,11 +193,11 @@ bool fn_7100696990(const char* file) {
     return false;
 }
 
-unsigned char* fn_7100696A28(unsigned int dlc) {
+unsigned char* getLayerBdat(unsigned int dlc) {
     if (dlc == 0) {
         return s_BdatFPs[6];
     }
-    if (fn_7100696970(dlc)) {
+    if (isEnableExpType(dlc)) {
         mm::mtl::FixStr<32> name;
         name.format("MNU_Layer_Dlc%02d", dlc);
         return Bdat::getFP(name.m_str);

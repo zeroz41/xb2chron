@@ -117,7 +117,7 @@ bool AssetPackInfo::getSlotHandle(mm::mtl::FixedVector<GF_SLOT_HANDLE*, 88>& han
     return !handles.empty();
 }
 
-bool AssetPackInfo::fn_71001B1840(mm::mtl::FixedVector<const char*, 128>& names, const char* name) {
+bool AssetPackInfo::getFileNameByExt(mm::mtl::FixedVector<const char*, 128>& names, const char* name) {
     for (GfAssetPack* pack : m_packs) {
         for (const GfAssetPack::Resource& resource : pack->m_resources) {
             if (resource.m_resource != nullptr && strstr(resource.m_resource->getAssetName(), name) != nullptr) {
@@ -169,7 +169,7 @@ inline GfAssetResource* GfAssetPack::getResource(const char* name) const {
     return nullptr;
 }
 
-GfAssetResource* AssetPackInfo::fn_71001B1B30(const char* name) {
+GfAssetResource* AssetPackInfo::getResource(const char* name) {
     for (GfAssetPack** it = m_packs.begin(); it != m_packs.end(); ++it) {
         if (GfAssetResource* resource = (*it)->getResource(name)) {
             return resource;
@@ -395,7 +395,7 @@ bool AssetPackInfo::isSameResource(const AssetPackInfo* other) const {
     return true;
 }
 
-bool AssetPackInfo::fn_71001B3624(const char* name) const {
+bool AssetPackInfo::isExistResourceName(const char* name) const {
     for (const GfAssetPack* pack : m_packs) {
         for (const GfAssetFiles::AssetFile* file : pack->m_files.m_files) {
             GfAssetResource* resource = pack->getResource(file->m_idx);

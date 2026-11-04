@@ -42,19 +42,15 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     // takes the point's icon down (GfFieldCollect::seqWaitDrop passes true once every item has dropped)
     void disposeIcon(bool flag);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it tests this gimmick
-    // (GmkElevator.cpp's unit, next to isWaitRepop). What it does: isValid() and its BdatInfo's CollectionTable
-    // (m_collectionTable) equals the given BDAT 0x1E0 row (gf_field_locator's collection locator update passes its row)
-    bool fn_710059BFFC(unsigned short collectionId) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this gimmick's
-    // row id (m_createInfo.m_bdatId) and sits among its functions (GmkElevator.cpp's unit, before fn_710059BFFC).
-    // What it does: true unless fn_71002A9E68() holds and the row id is in 4401..4900, then whether local flag
-    // (1, id + 51429) is set (GfGmkLocator::getPosNum calls it).
-    bool fn_710059BF94() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this gimmick's
-    // BdatInfo (m_collectionTable) and sits among its functions (after fn_710059BFFC). What it does: while
-    // isValid(), its CollectionTable row's "categoryName" in BDAT 0x1E0, else 0 (GfComBehaviorGmk::createMenuObj).
-    unsigned int fn_710059C044() const;
+    // 2.0.0's symbols name it. What it does: isValid() and its BdatInfo's CollectionTable (m_collectionTable) equals
+    // the given BDAT 0x1E0 row (gf_field_locator's collection locator update passes its row)
+    bool isSameTableID(unsigned short collectionId) const;
+    // 2.0.0's symbols name it. What it does: true unless isGameTypeIra() holds and the row id is in 4401..4900, then
+    // whether local flag (1, id + 51429) is set (GfGmkLocator::getPosNum calls it).
+    bool isFound() const;
+    // 2.0.0's symbols name it. What it does: while isValid(), its CollectionTable row's "categoryName" in BDAT 0x1E0,
+    // else 0 (GfComBehaviorGmk::createMenuObj).
+    unsigned int getCategoryName_fld_gmkname() const;
     bool isWaitRepop() const;
     void setTargetable(bool targetable);
     void seqUpdateRepopCounter(float dt);

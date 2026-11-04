@@ -38,7 +38,7 @@ static GfMenuBattleAdapter::TypeSetup s_typeSetups[] = {
     {&GfMenuBattleAdapter::update_ChainAttackRecast, {0, 0, 100}},
     {&GfMenuBattleAdapter::update_ChainAttackCount, {0, 0, 99}},
     {&GfMenuBattleAdapter::update_ChainAttackDamageRatio, {0, 0, 9999}},
-    {&GfMenuBattleAdapter::fn_71003331F8, {0, 0, 9999}},
+    {&GfMenuBattleAdapter::update_ChainAttackOverkillBonus, {0, 0, 9999}},
     {&GfMenuBattleAdapter::update_ChainAttackExpBonus, {0, 0, 999}},
     {&GfMenuBattleAdapter::update_ChainAttackTotalDamage, {0, 0, 9999999}},
     {&GfMenuBattleAdapter::update_ChainAttackBurstCount, {0, 0, 99}},
@@ -46,25 +46,25 @@ static GfMenuBattleAdapter::TypeSetup s_typeSetups[] = {
     {&GfMenuBattleAdapter::update_ElemComboEffTime, {0, 0, 100}},
     {&GfMenuBattleAdapter::update_ArtsRange, {3, 0, 0}},
     {&GfMenuBattleAdapter::update_ReverseIconCol, {8, 0, 0}},
-    {&GfMenuBattleAdapter::fn_71003333D0, {7, 4, 0}},
-    {&GfMenuBattleAdapter::fn_7100333434, {0, 0, 99999}},
-    {&GfMenuBattleAdapter::fn_7100333474, {0, 0, 99999}},
-    {&GfMenuBattleAdapter::fn_71003334B4, {0, 0, 99999}},
-    {&GfMenuBattleAdapter::fn_71003334F4, {0, 0, 100}},
-    {&GfMenuBattleAdapter::fn_710033355C, {0, 0, 100}},
-    {&GfMenuBattleAdapter::fn_71003335AC, {0, 0, 100}},
-    {&GfMenuBattleAdapter::fn_7100333630, {0, 0, 4}},
-    {&GfMenuBattleAdapter::fn_7100333674, {3, 0, 0}},
-    {&GfMenuBattleAdapter::fn_71003336A0, {0, 0, 100}},
-    {&GfMenuBattleAdapter::fn_7100333700, {0, 0, 5}},
-    {&GfMenuBattleAdapter::fn_7100333750, {0, 0, 5}},
-    {&GfMenuBattleAdapter::fn_71003337A0, {1, 0, 0}},
-    {&GfMenuBattleAdapter::fn_710033383C, {0, 0, 100}},
-    {&GfMenuBattleAdapter::fn_71003338A0, {2, 0, 0}},
-    {&GfMenuBattleAdapter::fn_7100333934, {1, 0, 0}},
-    {&GfMenuBattleAdapter::fn_71003339D0, {0, 0, 999}},
-    {&GfMenuBattleAdapter::fn_7100333A00, {0, 0, 100}},
-    {&GfMenuBattleAdapter::fn_7100333A40, {0, 0, 999}},
+    {&GfMenuBattleAdapter::update_BattleTime, {7, 4, 0}},
+    {&GfMenuBattleAdapter::update_BtlChEther, {0, 0, 99999}},
+    {&GfMenuBattleAdapter::update_BtlChScore, {0, 0, 99999}},
+    {&GfMenuBattleAdapter::update_BtlChScoreNeed, {0, 0, 99999}},
+    {&GfMenuBattleAdapter::update_BtlChBoxRate, {0, 0, 100}},
+    {&GfMenuBattleAdapter::update_VisionTimeRatio, {0, 0, 100}},
+    {&GfMenuBattleAdapter::update_IraSpecialRecast, {0, 0, 100}},
+    {&GfMenuBattleAdapter::update_IraSpecialLv, {0, 0, 4}},
+    {&GfMenuBattleAdapter::update_IraTalentArtsEnable, {3, 0, 0}},
+    {&GfMenuBattleAdapter::update_IraSirenGaugeEN, {0, 0, 100}},
+    {&GfMenuBattleAdapter::update_IraSirenLvPT, {0, 0, 5}},
+    {&GfMenuBattleAdapter::update_IraSirenLvEN, {0, 0, 5}},
+    {&GfMenuBattleAdapter::update_IraChainDrFace, {1, 0, 0}},
+    {&GfMenuBattleAdapter::update_IraChainRecast, {0, 0, 100}},
+    {&GfMenuBattleAdapter::update_IraChainDrName, {2, 0, 0}},
+    {&GfMenuBattleAdapter::update_IraChainDrElem, {1, 0, 0}},
+    {&GfMenuBattleAdapter::update_OCGGearCount, {0, 0, 999}},
+    {&GfMenuBattleAdapter::update_OCGTimeRatio, {0, 0, 100}},
+    {&GfMenuBattleAdapter::update_OCGBonus, {0, 0, 999}},
 };
 
 GfMenuBattleAdapter::~GfMenuBattleAdapter() {
@@ -220,8 +220,8 @@ bool GfMenuBattleAdapter::update_ChainAttackDamageRatio() {
     return true;
 }
 
-bool GfMenuBattleAdapter::fn_71003331F8() {
-    setNumber(GfMenuReference::fn_7100367380());
+bool GfMenuBattleAdapter::update_ChainAttackOverkillBonus() {
+    setNumber(GfMenuReference::getChainAttackOverkillBonus());
     return true;
 }
 
@@ -258,7 +258,7 @@ bool GfMenuBattleAdapter::update_ArtsRange() {
 }
 
 bool GfMenuBattleAdapter::update_ReverseIconCol() {
-    if (m_index == 0 && GfMenuObjUtil::fn_710048FD30(3)) {
+    if (m_index == 0 && GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
     if (!GfMenuReference::isReversePaletteBtnState(m_index, 0)) {
@@ -272,60 +272,60 @@ bool GfMenuBattleAdapter::update_ReverseIconCol() {
     return true;
 }
 
-bool GfMenuBattleAdapter::fn_7100333434() {
-    if (!GfGameManager::fn_71002AC580()) {
+bool GfMenuBattleAdapter::update_BtlChEther() {
+    if (!GfGameManager::isBattleArenaActive()) {
         return false;
     }
-    setNumber(GfGameManager::fn_71002AC5D8()->m_value2C);
+    setNumber(GfGameManager::getBattleArenaMenuInfo()->m_value2C);
     return true;
 }
 
-bool GfMenuBattleAdapter::fn_7100333474() {
-    if (!GfGameManager::fn_71002AC580()) {
+bool GfMenuBattleAdapter::update_BtlChScore() {
+    if (!GfGameManager::isBattleArenaActive()) {
         return false;
     }
-    setNumber(GfGameManager::fn_71002AC5D8()->m_value28);
+    setNumber(GfGameManager::getBattleArenaMenuInfo()->m_value28);
     return true;
 }
 
-bool GfMenuBattleAdapter::fn_71003334B4() {
-    if (!GfGameManager::fn_71002AC580()) {
+bool GfMenuBattleAdapter::update_BtlChScoreNeed() {
+    if (!GfGameManager::isBattleArenaActive()) {
         return false;
     }
-    setNumber(GfGameManager::fn_71002AC5D8()->m_value1C);
+    setNumber(GfGameManager::getBattleArenaMenuInfo()->m_value1C);
     return true;
 }
 
-bool GfMenuBattleAdapter::fn_71003334F4() {
-    if (!GfGameManager::fn_71002AC580()) {
+bool GfMenuBattleAdapter::update_BtlChBoxRate() {
+    if (!GfGameManager::isBattleArenaActive()) {
         return false;
     }
     unsigned int index = m_index;
-    GfGameManager::fn_71002AC5D8();
+    GfGameManager::getBattleArenaMenuInfo();
     if (index < 3) {
-        const GfGameManager::BattleChallengeRecord* record = GfGameManager::fn_71002AC5D8();
+        const GfGameManager::BattleChallengeRecord* record = GfGameManager::getBattleArenaMenuInfo();
         setNumber(record->m_ratios[m_index] * 100.0f);
         return true;
     }
     return false;
 }
 
-bool GfMenuBattleAdapter::fn_710033355C() {
-    if (!GfMenuObjUtil::fn_710048FD30(1)) {
+bool GfMenuBattleAdapter::update_VisionTimeRatio() {
+    if (!GfMenuObjUtil::isValidExpansion(1)) {
         return false;
     }
-    setNumber(GfMenuReference::fn_710036742C() * 100.0f);
+    setNumber(GfMenuReference::getVisionTimeRatio() * 100.0f);
     return true;
 }
 
-bool GfMenuBattleAdapter::fn_71003335AC() {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuBattleAdapter::update_IraSpecialRecast() {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
     int number;
-    int current = GfMenuReference::fn_710036805C();
+    int current = GfMenuReference::getIraSpecialArtsLv();
     if (m_index == current) {
-        number = GfMenuReference::fn_7100367FDC() * 100.0f;
+        number = GfMenuReference::getIraSpecialArtsRecast() * 100.0f;
     } else if (m_index > current) {
         number = 0;
     } else {
@@ -335,50 +335,50 @@ bool GfMenuBattleAdapter::fn_71003335AC() {
     return number > 0;
 }
 
-bool GfMenuBattleAdapter::fn_7100333630() {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuBattleAdapter::update_IraSpecialLv() {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
-    setNumber(GfMenuReference::fn_710036805C());
+    setNumber(GfMenuReference::getIraSpecialArtsLv());
     return true;
 }
 
-bool GfMenuBattleAdapter::fn_7100333674() {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuBattleAdapter::update_IraTalentArtsEnable() {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
-    return GfMenuReference::fn_7100368418(3);
+    return GfMenuReference::isIraFlag(3);
 }
 
-bool GfMenuBattleAdapter::fn_71003336A0() {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuBattleAdapter::update_IraSirenGaugeEN() {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
-    setNumber(GfMenuReference::fn_71003686A0(0)->m_ratio * 100.0f);
-    return GfMenuReference::fn_7100368418(4);
+    setNumber(GfMenuReference::getIraSirenInfo(0)->m_ratio * 100.0f);
+    return GfMenuReference::isIraFlag(4);
 }
 
-bool GfMenuBattleAdapter::fn_7100333700() {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuBattleAdapter::update_IraSirenLvPT() {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
-    setNumber(GfMenuReference::fn_71003686A0(1)->m_count);
-    return GfMenuReference::fn_7100368418(4);
+    setNumber(GfMenuReference::getIraSirenInfo(1)->m_count);
+    return GfMenuReference::isIraFlag(4);
 }
 
-bool GfMenuBattleAdapter::fn_7100333750() {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuBattleAdapter::update_IraSirenLvEN() {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
-    setNumber(GfMenuReference::fn_71003686A0(0)->m_count);
-    return GfMenuReference::fn_7100368418(4);
+    setNumber(GfMenuReference::getIraSirenInfo(0)->m_count);
+    return GfMenuReference::isIraFlag(4);
 }
 
-bool GfMenuBattleAdapter::fn_71003337A0() {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuBattleAdapter::update_IraChainDrFace() {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
-    unsigned int id = GfMenuReference::fn_71003687B0(m_index)->m_gimmickId;
+    unsigned int id = GfMenuReference::getIraChainInfo(m_index)->m_gimmickId;
     if (id == 0) {
         return false;
     }
@@ -394,20 +394,20 @@ bool GfMenuBattleAdapter::fn_71003337A0() {
     return true;
 }
 
-bool GfMenuBattleAdapter::fn_710033383C() {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuBattleAdapter::update_IraChainRecast() {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
-    const GfMenuReference::LayerGimmick* gimmick = GfMenuReference::fn_71003687B0(m_index);
+    const GfMenuReference::LayerGimmick* gimmick = GfMenuReference::getIraChainInfo(m_index);
     setNumber(gimmick->m_ratio * 100.0f);
     return gimmick->m_ratio > 0.0f;
 }
 
-bool GfMenuBattleAdapter::fn_71003338A0() {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuBattleAdapter::update_IraChainDrName() {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
-    DataParamAcc acc(3, GfMenuReference::fn_71003687B0(m_index)->m_gimmickId, static_cast<GimmickType>(0));
+    DataParamAcc acc(3, GfMenuReference::getIraChainInfo(m_index)->m_gimmickId, static_cast<GimmickType>(0));
     if (!acc.isValid()) {
         return false;
     }
@@ -415,11 +415,11 @@ bool GfMenuBattleAdapter::fn_71003338A0() {
     return true;
 }
 
-bool GfMenuBattleAdapter::fn_7100333934() {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+bool GfMenuBattleAdapter::update_IraChainDrElem() {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
-    DataParamAcc acc(3, GfMenuReference::fn_71003687B0(m_index)->m_gimmickId, static_cast<GimmickType>(0));
+    DataParamAcc acc(3, GfMenuReference::getIraChainInfo(m_index)->m_gimmickId, static_cast<GimmickType>(0));
     if (!acc.isValid()) {
         return false;
     }
@@ -427,18 +427,18 @@ bool GfMenuBattleAdapter::fn_7100333934() {
     return true;
 }
 
-bool GfMenuBattleAdapter::fn_71003339D0() {
-    setNumber(GfMenuReference::fn_7100368B40()->m_number);
+bool GfMenuBattleAdapter::update_OCGGearCount() {
+    setNumber(GfMenuReference::getOCGInfo()->m_number);
     return true;
 }
 
-bool GfMenuBattleAdapter::fn_7100333A00() {
-    setNumber(GfMenuReference::fn_7100368B40()->m_ratio * 100.0f);
+bool GfMenuBattleAdapter::update_OCGTimeRatio() {
+    setNumber(GfMenuReference::getOCGInfo()->m_ratio * 100.0f);
     return true;
 }
 
-bool GfMenuBattleAdapter::fn_7100333A40() {
-    const GfMenuReference::LayerResult* result = GfMenuReference::fn_7100368B40();
+bool GfMenuBattleAdapter::update_OCGBonus() {
+    const GfMenuReference::LayerResult* result = GfMenuReference::getOCGInfo();
     setNumber(static_cast<unsigned int>(m_index) < 3 ? result->m_numbers[m_index] : 0);
     return true;
 }

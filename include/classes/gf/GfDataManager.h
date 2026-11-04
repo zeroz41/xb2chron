@@ -32,11 +32,9 @@ public:
     static SDataSystem* getDataSystem();  // GfDataStore's
     static SDataGame* getDataGame();  // GfDataStore's
     static SDataOption* getDataOption();  // GfDataStore's
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address follows
-    // getDataGame's in this unit and, like it, it only forwards to a GfDataStore function (fn_710022D440). What it
-    // does: returns the DLC drivers' data (GfDataDriver::getSDataDriver indexes its 0xDAC-byte driver records with
-    // row - 0x11).
-    static SDataDlc* fn_7100224A10();
+    // 2.0.0's symbols name it. What it does: returns the DLC drivers' data (GfDataDriver::getSDataDriver indexes its
+    // 0xDAC-byte driver records with row - 0x11).
+    static SDataDlc* getDataGameIra();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in this
     // unit and it takes no object (GfDataManager's statics fill the unit). What it does: GfDataItem::getItemType of
     // item, then by the type (1..0x14, jump table 0x71009B9BCC) a per-type function on the matching parts of the

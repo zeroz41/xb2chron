@@ -63,7 +63,7 @@ public:
         bool m_nextRegistered : 1;  // set before UpdateProc registers the next voice
         bool pad_bit3 : 1;  // fn_71000AEAB4: the row's "Timer" is not 0
         bool pad_bit4 : 1;  // fn_71000AEAB4: played without an object
-        bool pad_bit5 : 1;  // fn_71000AA39C tests it
+        bool pad_bit5 : 1;  // IsTalkSirenSp tests it
         bool pad_bit6 : 1;
         bool pad_bit7 : 1;
         unsigned char pad_15[4];  // 0x5A each when UpdateProc drops the entry
@@ -116,10 +116,9 @@ public:
     void InitializeGroupTopData();
     void NotifyMapChange();
     bool IsTalk(int chr) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because the siren battle manager
-    // passes the TalkManager singleton and it sits in talk_manager_battle's range. What it does: true when one of
-    // the entries (count at +0xB50, 0x20 bytes apart from +0x24) has bit 5 of its first byte set.
-    bool fn_71000AA39C() const;
+    // 2.0.0's symbols name it. What it does: true when one of the entries (count at +0xB50, 0x20 bytes apart from
+    // +0x24) has bit 5 of its first byte set.
+    bool IsTalkSirenSp() const;
     bool IsEnableFieldBladeChange() const;
     bool IsPlayingEnemyVoice() const;
     bool IsPlayingEnemyWinVoice() const;
@@ -164,7 +163,7 @@ public:
     unsigned long PlayVoice(int, int);
     unsigned long PlayVoice(int, const char*);
     void PlayNarrationVoice(NARRATION_TYPE type, int, int);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because TUnk_B3BD68's update
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because SirenBattleManager's update
     // passes the TalkManager singleton and it sits in talk_manager_battle's range. What it does: raises
     // m_timeA[index] to time when it is below.
     void fn_71000AF7FC(unsigned int index, float time);

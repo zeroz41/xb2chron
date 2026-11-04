@@ -62,7 +62,7 @@ bool GfMenuZoneMapAdapter::update_ZoneMapName() {
 
 bool GfMenuZoneMapAdapter::update_ZonePointName() {
     unsigned char* message = GfDataBdat::getFP(0x1B3);
-    if (GfMenuObjWorldMap::fn_7100495A98(m_mapId)) {
+    if (GfMenuObjWorldMap::isOpenLandmark(m_mapId)) {
         ui::UIStr text(message, m_param);
         setText(text);
     } else {

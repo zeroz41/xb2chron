@@ -5616,11 +5616,11 @@ unsigned int GfBdatBtl::getArtsDrCaption(unsigned int id) const {
     return _gfbbt::getArtsDrCaption(*m_fpArtsDr, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E6B54(unsigned int id) const {
+unsigned int GfBdatBtl::getArtsDrDebugName(unsigned int id) const {
     return _gfbbt::getArtsDrCondCap(*m_fpArtsDr, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E6BDC(unsigned int id) const {
+unsigned int GfBdatBtl::getArtsDrUI(unsigned int id) const {
     return _gfbbt::getArtsDrTalentCap(*m_fpArtsDr, id);
 }
 
@@ -5632,7 +5632,7 @@ unsigned int GfBdatBtl::getArtsDrWpnType(unsigned int id) const {
     return _gfbbt::getArtsDrWpnType(*m_fpArtsDr, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E6D74(unsigned int id) const {
+unsigned int GfBdatBtl::getArtsDrIrType(unsigned int id) const {
     return _gfbbt::getArtsDrIrType(*m_fpArtsDr, id);
 }
 
@@ -5802,7 +5802,7 @@ unsigned int GfBdatBtl::getGrowLevelExp(unsigned int id) const {
     return _gfbbt::getGrowLevelExp(*m_fpGrow, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E77DC(unsigned int id) const {
+unsigned int GfBdatBtl::getGrowLevelExp2(unsigned int id) const {
     return _gfbbt::getGrowLevelExp2(*m_fpGrow, id);
 }
 
@@ -5872,7 +5872,7 @@ unsigned int GfBdatBtl::getBTL_EnhanceCaption(unsigned int id) const {
     return _gfbbt::getBTL_EnhanceCaption(*m_fpBTL_Enhance, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E7F28(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_EnhanceCaption2(unsigned int id) const {
     return _gfbbt::getBTL_EnhanceCaption2(*m_fpBTL_Enhance, id);
 }
 
@@ -5884,7 +5884,7 @@ bool GfBdatBtl::isBTL_EnhanceEffFlagCondition(unsigned int id) const {
     return _gfbbt::isBTL_EnhanceEffFlagCondition(*m_fpBTL_EnhanceEff, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E80D0(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_EnhanceEffSortCat(unsigned int id) const {
     return _gfbbt::getBTL_EnhanceEffSortCat(*m_fpBTL_EnhanceEff, id);
 }
 
@@ -6097,31 +6097,31 @@ const char* GfBdatBtl::getVo_Field_FilterChangeFile(unsigned int id) const {
     return _gfbbt::getVo_Field_FilterChangeFile(*m_fpVo_Field_Filter, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E91E8(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_DifSettingParamMin(unsigned int id) const {
     return _gfbbt::getBTL_DifSettingParamMin(*m_fpBTL_DifSetting, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9270(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_DifSettingParamMax(unsigned int id) const {
     return _gfbbt::getBTL_DifSettingParamMax(*m_fpBTL_DifSetting, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E92F8(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_DifSettingInterval(unsigned int id) const {
     return _gfbbt::getBTL_DifSettingInterval(*m_fpBTL_DifSetting, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9380(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_DifSettingConditionOri(unsigned int id) const {
     return _gfbbt::getBTL_DifSettingConditionOri(*m_fpBTL_DifSetting, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9408(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_DifSettingConditionIra(unsigned int id) const {
     return _gfbbt::getBTL_DifSettingConditionIra(*m_fpBTL_DifSetting, id);
 }
 
-bool GfBdatBtl::fn_71001E9490(unsigned int id) const {
+bool GfBdatBtl::isBTL_DifSettingFlagIra(unsigned int id) const {
     return _gfbbt::isBTL_DifSettingFlagIra(*m_fpBTL_DifSetting, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9520(unsigned int id, unsigned int slot) const {
+unsigned int GfBdatBtl::getBTL_DifSettingDiff(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
         _gfbbt::fn_71001E11BC,
@@ -6132,115 +6132,115 @@ unsigned int GfBdatBtl::fn_71001E9520(unsigned int id, unsigned int slot) const 
     return _gfbbt::getSlot(s_getters, slot)(*m_fpBTL_DifSetting, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9534() const {
+unsigned int GfBdatBtl::getBTL_ChBtlStart() const {
     return Bdat::getIdTop(m_fpBTL_ChBtl->m_fp);
 }
 
-unsigned int GfBdatBtl::fn_71001E9540() const {
+unsigned int GfBdatBtl::getBTL_ChBtlEnd() const {
     return Bdat::getIdTop(m_fpBTL_ChBtl->m_fp) + Bdat::getIdCount(m_fpBTL_ChBtl->m_fp);
 }
 
-unsigned int GfBdatBtl::fn_71001E957C(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlName(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlName(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9604(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlDifficult(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlDifficult(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E968C(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlWave(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlWave(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9714(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlCaption(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlCaption(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E979C(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlMapJump(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlMapJump(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9824(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlWeather(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlWeather(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E98AC(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlType(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlType(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9934(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlNeedDefeat(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlNeedDefeat(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E99BC(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlMaxLevel(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlMaxLevel(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9A44(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlMaxWpnRank(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlMaxWpnRank(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9ACC(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlWpnRevTable(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlWpnRevTable(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9B54(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlTimeLimit(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlTimeLimit(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9BDC(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlJoinNumber(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlJoinNumber(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9C64(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlNeedItem(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlNeedItem(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9CEC(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlCondition(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlCondition(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9D74(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlConditionCap(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlConditionCap(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9DFC(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlCondition2(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlCondition2(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9E84(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlConditionCap2(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlConditionCap2(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001E9F0C(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlHideCondition(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlHideCondition(*m_fpBTL_ChBtl, id);
 }
 
-bool GfBdatBtl::fn_71001E9F94(unsigned int id) const {
+bool GfBdatBtl::isBTL_ChBtlFlagHide(unsigned int id) const {
     return _gfbbt::isBTL_ChBtlFlagHide(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001EA02C(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlTresureNeed1(unsigned int id) const {
     return _gfbbt::fn_71001E1574(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001EA0B4(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlTresureNeed2(unsigned int id) const {
     return _gfbbt::fn_71001E15FC(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001EA13C(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlTresureNeed3(unsigned int id) const {
     return _gfbbt::fn_71001E1684(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001EA1C4(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlClearReward(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlClearReward(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001EA24C(unsigned int id) const {
+unsigned int GfBdatBtl::getArtsDrRangeType(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlEvent(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001EA2D4(unsigned int id, unsigned int slot) const {
+unsigned int GfBdatBtl::getBTL_ChBtlDriver(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
         _gfbbt::fn_71001E13DC,
@@ -6250,7 +6250,7 @@ unsigned int GfBdatBtl::fn_71001EA2D4(unsigned int id, unsigned int slot) const 
     return _gfbbt::getSlot(s_getters, slot)(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001EA2E8(unsigned int id, unsigned int slot) const {
+unsigned int GfBdatBtl::getBTL_ChBtlTresureNeed(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
         _gfbbt::fn_71001E1574,
@@ -6260,7 +6260,7 @@ unsigned int GfBdatBtl::fn_71001EA2E8(unsigned int id, unsigned int slot) const 
     return _gfbbt::getSlot(s_getters, slot)(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::fn_71001EA2FC(unsigned int id, unsigned int slot) const {
+unsigned int GfBdatBtl::getBTL_ChBtlWpnRevWpnDmg(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
         nullptr,
@@ -6317,7 +6317,7 @@ unsigned int GfBdatBtl::fn_71001EA2FC(unsigned int id, unsigned int slot) const 
     return _gfbbt::getSlot(s_getters, slot)(*m_fpBTL_ChBtlWpnRev, id);
 }
 
-unsigned int GfBdatBtl::fn_71001EA310(unsigned int id, unsigned int slot) const {
+unsigned int GfBdatBtl::getBTL_IrGroupRevGroupRev(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static unsigned int (*s_getters[])(const CBdatWrapper&, unsigned int) = {
         _gfbbt::fn_71001E24DC,

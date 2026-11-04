@@ -25,7 +25,7 @@ public:
         // list of that type
         int m_type;
         bool m_selectFlag;  // getDriverList's third argument
-        // 3.0.1: with GfMenuObjUtil::fn_710048FD30(3), the drivers go through GfDataDriver::fn_71002417DC
+        // 3.0.1: with GfMenuObjUtil::isValidExpansion(3), the drivers go through GfDataDriver::getIraFront
         bool m_convertDriver;
         bool m_skipUnused;  // with m_convertDriver, a type 1/2 list drops drivers GfDataDriver::isActivateUnuse holds for
     };
@@ -39,7 +39,7 @@ public:
         int m_index;  // GfDataParty::getDriver's index for parties 0-2; -1 leaves the list as it was
     };
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it is called on a
-    // GfMenuDriverList (gf_menu_obj_char_select_ira's TUnk_B61178::fn_71003D27B8) and sits in this unit between
+    // GfMenuDriverList (gf_menu_obj_char_select_ira's GfMenuObjCharSelectIra::updateDriverList) and sits in this unit between
     // UIListInfo<MenuDriverInfo>::addContents and clear. What it does: unless m_index is -1, sets the list up and
     // adds GfDataParty::getDriver(m_index, party) for parties 0, 1 and 2 when it is not 0 and
     // GfDataDriver::isActivateUnuse does not hold for it.

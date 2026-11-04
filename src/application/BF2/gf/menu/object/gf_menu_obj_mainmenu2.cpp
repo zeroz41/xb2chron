@@ -13,8 +13,8 @@
 #include "classes/gf/GfMenuObjMainMenu2/ContentsListener.h"
 #include "classes/gf/GfMenuObjMainMenu2/IndexListener.h"
 #include "classes/gf/GfMenuObjMainMenu2/MainListener.h"
-#include "classes/gf/TUnk_B5F9E8.h"
-#include "classes/gf/TUnk_B625A0.h"
+#include "classes/gf/GfMenuObjAnnounce.h"
+#include "classes/gf/GfMenuObjGiftBox.h"
 #include "classes/gf/GfMenuGameAdapter.h"
 #include "classes/ui/UIEventManager.h"
 #include "classes/ui/UICtrlCursorSelect.h"
@@ -91,18 +91,18 @@ GfMenuObjMainMenu2::~GfMenuObjMainMenu2() {
 
 void GfMenuObjMainMenu2::initialize() {
     ui::UIObjectAcc acc(m_handle);
-    unsigned char* bdat = GfDataBdat::getFP(GfMenuObjUtil::fn_710048FD30(3) ? 0x180 : 0x17F);
+    unsigned char* bdat = GfDataBdat::getFP(GfMenuObjUtil::isValidExpansion(3) ? 0x180 : 0x17F);
     m_contentsIds.clear();
     for (unsigned int i = 0; i < (unsigned int)Bdat::getIdCount(bdat); i++) {
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(3)) {
             if (7 == Bdat::getIdTop(bdat) + i || Bdat::getIdTop(bdat) + i == 8) {
                 continue;
             }
         } else {
-            if (Bdat::getIdTop(bdat) + i == 8 && !TUnk_B5F9E8::fn_71003828CC()) {
+            if (Bdat::getIdTop(bdat) + i == 8 && !GfMenuObjAnnounce::hasAnyDLC()) {
                 continue;
             }
-            if (Bdat::getIdTop(bdat) + i == 9 && TUnk_B5F9E8::fn_71003828CC()) {
+            if (Bdat::getIdTop(bdat) + i == 9 && GfMenuObjAnnounce::hasAnyDLC()) {
                 continue;
             }
         }
@@ -338,10 +338,10 @@ void GfMenuObjMainMenu2::MainListener::reciveEvent(ui::EventData const& event, u
         GfMenuObject::hookCtrlEvent(handle, moveMainMenu(owner, 4, true));
         GfMenuObjOperationInfo::open(owner.searchChild("LAY_close"), owner.searchChild("LAY_contents"), 0, 0);
         setDispGold(true);
-        if (GfMenuManager::fn_710035A6BC()) {
-            acc.setDispChild(TUnk_B625A0::fn_710040BF88(true), "LAY_gift_icon");
+        if (GfMenuManager::hasGift()) {
+            acc.setDispChild(GfMenuObjGiftBox::hasGetableGift(true), "LAY_gift_icon");
         }
-        unsigned char* fp = GfDataBdat::getFP(GfMenuObjUtil::fn_710048FD30(3) ? 0x180 : 0x17F);
+        unsigned char* fp = GfDataBdat::getFP(GfMenuObjUtil::isValidExpansion(3) ? 0x180 : 0x17F);
         GfMenuObjOperationInfo::setGuideText(
             (unsigned short)Bdat::getVal(fp, "guide", m_owner->m_contentsIds[m_owner->m_contentsIndex]), 0);
         m_owner->m_menuId = 0;
@@ -416,7 +416,7 @@ void GfMenuObjMainMenu2::setupMainMenu(ui::UIObjectAcc& acc, const mm::mtl::Fixe
             continue;
         }
         setContentsText(item, ids[i] - 1);
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(3)) {
             if (ids.size() == 7) {
                 name.format("IMG_contents_item_bg@%02d", no);
                 layout.format("mnu075_menu_anim_%02d", no);
@@ -443,8 +443,8 @@ void GfMenuObjMainMenu2::setupMainMenu(ui::UIObjectAcc& acc, const mm::mtl::Fixe
     }
     GfMenuGameAdapter::create(acc.searchChild("TXT_info_time"), 0, true);
     GfMenuGameAdapter::create(acc.searchChild("TXT_info_money"), 1, true);
-    if (GfMenuManager::fn_710035A6BC()) {
-        acc.setDispChild(TUnk_B625A0::fn_710040BF88(true), "LAY_gift_icon");
+    if (GfMenuManager::hasGift()) {
+        acc.setDispChild(GfMenuObjGiftBox::hasGetableGift(true), "LAY_gift_icon");
     }
     ui::UIObjectAcc bg(acc.searchChild("IMG_contents_bg"));
     bg.startAnimation("loop", false);
@@ -453,7 +453,7 @@ void GfMenuObjMainMenu2::setupMainMenu(ui::UIObjectAcc& acc, const mm::mtl::Fixe
 bool GfMenuObjMainMenu2::seqExecTerm() {
     ui::UIObjectAcc acc(m_handle);
     ui::UIObjectAcc main(acc.searchChild("LAY_main"));
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         if (m_jobStarted) {
             m_jobStarted = false;
         } else if (!GfGameManager::isEvent(false) && !GfGameManager::isTalking()) {
@@ -462,7 +462,7 @@ bool GfMenuObjMainMenu2::seqExecTerm() {
                 GfMenuObjPopup::continuePickup(0x14);
             }
         }
-        GfMenuReference::fn_7100368380(6, false);
+        GfMenuReference::setIraFlag(6, false);
     } else {
         if (m_jobStarted) {
             m_jobStarted = false;
@@ -486,7 +486,7 @@ void GfMenuObjMainMenu2::setDispGold(bool disp) {
 }
 
 void GfMenuObjMainMenu2::setCloseKeyEnable(bool enable) {
-    if (GfMenuObjUtil::fn_710048FD30(3) && s_closeKeyLocked) {
+    if (GfMenuObjUtil::isValidExpansion(3) && s_closeKeyLocked) {
         return;
     }
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x5F));
@@ -531,12 +531,12 @@ void GfMenuObjMainMenu2::IndexListener::reciveEvent(const ui::EventData& event, 
         } else {
             title.setDisp(false);
         }
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfMenuObjUtil::isValidExpansion(3)) {
             s_index = index;
         }
     } else if (event.m_type == 0x101) {
         int index = event.m_param0;
-        unsigned char* fp = GfDataBdat::getFP(GfMenuObjUtil::fn_710048FD30(3) ? 0x180 : 0x17F);
+        unsigned char* fp = GfDataBdat::getFP(GfMenuObjUtil::isValidExpansion(3) ? 0x180 : 0x17F);
         unsigned int id = m_owner->m_contentsIds[index];
         unsigned int text = (unsigned short)Bdat::getVal(fp, "subTitle", id);
         if (handle != 0) {
@@ -574,7 +574,7 @@ void GfMenuObjMainMenu2::closeCharChange() {
     }
 }
 
-void GfMenuObjMainMenu2::fn_71004323A8(ui::UIObjectAcc& acc, GfMenuDriverList* list) {
+void GfMenuObjMainMenu2::refreshCharChangeDr(ui::UIObjectAcc& acc, GfMenuDriverList* list) {
     ui::UIObjectAcc change(acc.m_handle, "LAY_chr_change_dr");
     mm::mtl::FixStr<32> name;
     unsigned int party;
@@ -589,7 +589,7 @@ void GfMenuObjMainMenu2::fn_71004323A8(ui::UIObjectAcc& acc, GfMenuDriverList* l
         name.format("IMG_chr_change_no@%02d", i + 1);
         ui::UIObjectAcc number(change.m_handle, name.m_str);
         if (i < party) {
-            if (GfMenuObjUtil::fn_710048FD30(3)) {
+            if (GfMenuObjUtil::isValidExpansion(3)) {
                 unsigned int driver = list->getContents(i).m_driver;
                 if (GfDataDriver::isActivateUnuse(driver)) {
                     number.setImageIndex(i);
@@ -700,7 +700,7 @@ void GfMenuObjMainMenu2::inputChrChangeSub(ui::UIObjectAcc& acc, ChrChangeParam&
             return;
         }
         param.m_driverList->setIndex(index);
-        fn_71004323A8(acc, param.m_driverList);
+        refreshCharChangeDr(acc, param.m_driverList);
         if (GfMenuReference::getReferenceDriverID(0) ==
             param.m_driverList->getContents(param.m_driverList->getIndex(false)).m_driver) {
             return;
@@ -740,22 +740,22 @@ void GfMenuObjMainMenu2::closeChrChangeSub(ui::UIObjectAcc& acc, ChrChangeParam&
 }
 
 bool GfMenuObjMainMenu2::isOpenCharMenu() {
-    if (GfMenuObjUtil::fn_710048FD30(3) && s_charMenuOpen) {
+    if (GfMenuObjUtil::isValidExpansion(3) && s_charMenuOpen) {
         return true;
     }
     return s_openMenuID == 0x27 || s_openMenuID == 0x12D;
 }
 
-bool GfMenuObjMainMenu2::fn_7100432E2C() {
-    return GfMenuObjUtil::fn_710048FD30(3) && s_bgOpen != 0;
+bool GfMenuObjMainMenu2::isOpenHitonowaDirect() {
+    return GfMenuObjUtil::isValidExpansion(3) && s_bgOpen != 0;
 }
 
-bool GfMenuObjMainMenu2::fn_7100432E5C() {
+bool GfMenuObjMainMenu2::isOpenDirect() {
     return s_worldMapOpen;
 }
 
-unsigned int GfMenuObjMainMenu2::fn_7100432E6C() {
-    return GfMenuObjUtil::fn_710048FD30(3) ? s_index : 0;
+unsigned int GfMenuObjMainMenu2::getSubIndexTextID() {
+    return GfMenuObjUtil::isValidExpansion(3) ? s_index : 0;
 }
 
 void GfMenuObjMainMenu2::ChrChangeListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
@@ -925,7 +925,7 @@ void GfMenuObjMainMenu2::CloseListener::reciveEvent(const ui::EventData& event, 
 }
 
 void GfMenuObjMainMenu2::getContentsText(unsigned int index, unsigned char*& bdat, unsigned int& text) {
-    unsigned char* menu = GfDataBdat::getFP(GfMenuObjUtil::fn_710048FD30(3) ? 0x180 : 0x17F);
+    unsigned char* menu = GfDataBdat::getFP(GfMenuObjUtil::isValidExpansion(3) ? 0x180 : 0x17F);
     int top = Bdat::getIdTop(menu);
     if (GfMenuObjUtil::getMenuCondition((unsigned short)Bdat::getVal(menu, "useCond", top + index))) {
         bdat = GfDataBdat::getFP(0x117);
@@ -960,8 +960,8 @@ void GfMenuObjMainMenu2::cancelEnableMainMenu(bool enable) {
     }
 }
 
-void GfMenuObjMainMenu2::fn_71004335FC(bool lock) {
-    if (GfMenuObjUtil::fn_710048FD30(3) && s_closeKeyLocked != lock) {
+void GfMenuObjMainMenu2::lockCloseKey(bool lock) {
+    if (GfMenuObjUtil::isValidExpansion(3) && s_closeKeyLocked != lock) {
         if (lock) {
             setCloseKeyEnable(false);
         }
@@ -1035,7 +1035,7 @@ void GfMenuObjMainMenu2::execMapJump() {
 }
 
 bool SelectionChecker::isEnableSelect(unsigned int id, int select) {
-    unsigned char* bdat = GfDataBdat::getFP(GfMenuObjUtil::fn_710048FD30(3) ? 0x180 : 0x17F);
+    unsigned char* bdat = GfDataBdat::getFP(GfMenuObjUtil::isValidExpansion(3) ? 0x180 : 0x17F);
     return GfMenuObjUtil::getMenuCondition(static_cast<unsigned short>(
         Bdat::getVal(bdat, "useCond", Bdat::getIdTop(bdat) + select)));
 }

@@ -444,7 +444,7 @@ void GfComBehaviorPc::procMsgObjectNotifyDead(fw::MessageObject* sender, MsgObje
             }
         }
     }
-    btl::Utility::fn_71000100A8(handle, msg);
+    btl::Utility::NotifyDead(handle, msg);
 }
 
 void GfComBehaviorPc::procAnimCallback(GfComAsm* asmCom, const CallBackCache& cache) {

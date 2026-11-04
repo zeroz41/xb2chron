@@ -23,24 +23,20 @@ public:
     static bool isOpenBlStatus();
     static void setInputEnable();
     static void setInputDisable();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it writes this class's
-    // file static next to s_DispFlag (0x7100EAA1E2), as the constructor and CharStatusListener::reciveEvent do.
-    // What it does: stores its argument there; GfMenuObjLvupSelect::SelectListener::reciveEvent passes true when
-    // GfMenuObjUtil::fn_710048FD30(3) holds. The driver page then shows TXT_status_dr_index_name_team instead of
-    // TXT_status_dr_index_name.
-    static void fn_71003D7620(bool disp);
+    // 2.0.0's symbols name it. What it does: stores its argument there;
+    // GfMenuObjLvupSelect::SelectListener::reciveEvent passes true when GfMenuObjUtil::isValidExpansion(3) holds. The
+    // driver page then shows TXT_status_dr_index_name_team instead of TXT_status_dr_index_name.
+    static void setIraFrontMode(bool disp);
     // the blade page's index and base images: the _sk ones for the ids 2-6, the others otherwise (the parameter
     // name is not the original's; CharStatusListener::reciveEvent passes it for the blade page)
     void updateBladeBase(unsigned int id);
     // the driver page's adapters on the object handle (its parameters, their differences, its blades and its
     // ideas' levels) and m_ideaGraph (the parameter name is not the original's)
     void setDrPageParam(unsigned int handle);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because
-    // CharStatusListener::reciveEvent calls it on its owner, as it calls updateBladeBase for the blade page.
-    // What it does: the driver page's version of updateBladeBase: shows LAY_status_dr_index_sk and
-    // IMG_status_dr_base_sk for the ids 4 and 5, LAY_status_dr_index and IMG_status_dr_base otherwise; the
-    // listener calls it when GfMenuObjUtil::fn_710048FD30(3) holds.
-    void fn_71003DB79C(unsigned int id);
+    // 2.0.0's symbols name it. What it does: the driver page's version of updateBladeBase: shows LAY_status_dr_index_sk
+    // and IMG_status_dr_base_sk for the ids 4 and 5, LAY_status_dr_index and IMG_status_dr_base otherwise; the listener
+    // calls it when GfMenuObjUtil::isValidExpansion(3) holds.
+    void updateDriverBase(unsigned int id);
     class CharStatusListener;
     class MainListener;
     virtual ~GfMenuObjCmnStatus();  // slot 0
@@ -50,7 +46,7 @@ public:
     // whether the driver's [0] and the blade's [1] page is open
     static bool s_DispFlag[2];
     // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAA1E2). Whether the driver page
-    // shows the team's name (fn_71003D7620 sets it, the constructor and the page's close clear it).
+    // shows the team's name (setIraFrontMode sets it, the constructor and the page's close clear it).
     static bool s_DispTeamName;
     // the field names are not the original's: the driver's [0] and the blade's [1] parameter lists
     // (CharStatusListener picks LAY_status_dr_param@NN / LAY_status_bl_param@NN into them by its page)

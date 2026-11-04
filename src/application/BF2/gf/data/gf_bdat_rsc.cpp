@@ -3597,9 +3597,9 @@ void initVoiceTableIra1(const CBdatWrapper& bdat) {
     s_memberVoiceTableIra1 = bdat.getMember("Ira1");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTable getters holds it.
-// What it does: reads the Ira1 column (const char*) of a row, as the init function above found it.
-const char* fn_7100211A98(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the Ira1 column (const char*) of a row, as the init function above found
+// it.
+const char* getVoiceTableIra1(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableIra1 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableIra1, id, 7);
@@ -3612,9 +3612,9 @@ void initVoiceTableIra2(const CBdatWrapper& bdat) {
     s_memberVoiceTableIra2 = bdat.getMember("Ira2");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTable getters holds it.
-// What it does: reads the Ira2 column (const char*) of a row, as the init function above found it.
-const char* fn_7100211B1C(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the Ira2 column (const char*) of a row, as the init function above found
+// it.
+const char* getVoiceTableIra2(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableIra2 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableIra2, id, 7);
@@ -3627,9 +3627,9 @@ void initVoiceTableIra3(const CBdatWrapper& bdat) {
     s_memberVoiceTableIra3 = bdat.getMember("Ira3");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTable getters holds it.
-// What it does: reads the Ira3 column (const char*) of a row, as the init function above found it.
-const char* fn_7100211BA0(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the Ira3 column (const char*) of a row, as the init function above found
+// it.
+const char* getVoiceTableIra3(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableIra3 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableIra3, id, 7);
@@ -3642,9 +3642,9 @@ void initVoiceTableIra4(const CBdatWrapper& bdat) {
     s_memberVoiceTableIra4 = bdat.getMember("Ira4");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTable getters holds it.
-// What it does: reads the Ira4 column (const char*) of a row, as the init function above found it.
-const char* fn_7100211C24(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the Ira4 column (const char*) of a row, as the init function above found
+// it.
+const char* getVoiceTableIra4(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableIra4 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableIra4, id, 7);
@@ -3657,9 +3657,9 @@ void initVoiceTableIra5(const CBdatWrapper& bdat) {
     s_memberVoiceTableIra5 = bdat.getMember("Ira5");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTable getters holds it.
-// What it does: reads the Ira5 column (const char*) of a row, as the init function above found it.
-const char* fn_7100211CA8(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the Ira5 column (const char*) of a row, as the init function above found
+// it.
+const char* getVoiceTableIra5(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableIra5 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableIra5, id, 7);
@@ -3672,9 +3672,9 @@ void initVoiceTableIra6(const CBdatWrapper& bdat) {
     s_memberVoiceTableIra6 = bdat.getMember("Ira6");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTable getters holds it.
-// What it does: reads the Ira6 column (const char*) of a row, as the init function above found it.
-const char* fn_7100211D2C(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the Ira6 column (const char*) of a row, as the init function above found
+// it.
+const char* getVoiceTableIra6(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableIra6 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableIra6, id, 7);
@@ -3687,9 +3687,9 @@ void initVoiceTableIra7(const CBdatWrapper& bdat) {
     s_memberVoiceTableIra7 = bdat.getMember("Ira7");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTable getters holds it.
-// What it does: reads the Ira7 column (const char*) of a row, as the init function above found it.
-const char* fn_7100211DB0(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the Ira7 column (const char*) of a row, as the init function above found
+// it.
+const char* getVoiceTableIra7(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableIra7 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableIra7, id, 7);
@@ -3702,9 +3702,9 @@ void initVoiceTableIra8(const CBdatWrapper& bdat) {
     s_memberVoiceTableIra8 = bdat.getMember("Ira8");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTable getters holds it.
-// What it does: reads the Ira8 column (const char*) of a row, as the init function above found it.
-const char* fn_7100211E34(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the Ira8 column (const char*) of a row, as the init function above found
+// it.
+const char* getVoiceTableIra8(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableIra8 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableIra8, id, 7);
@@ -3717,9 +3717,9 @@ void initVoiceTableIra9(const CBdatWrapper& bdat) {
     s_memberVoiceTableIra9 = bdat.getMember("Ira9");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTable getters holds it.
-// What it does: reads the Ira9 column (const char*) of a row, as the init function above found it.
-const char* fn_7100211EB8(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the Ira9 column (const char*) of a row, as the init function above found
+// it.
+const char* getVoiceTableIra9(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableIra9 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableIra9, id, 7);
@@ -4308,9 +4308,9 @@ void initVoiceTableRareRareBlade38(const CBdatWrapper& bdat) {
     s_memberVoiceTableRareRareBlade38 = bdat.getMember("RareBlade38");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTableRare getters holds it.
-// What it does: reads the RareBlade38 column (const char*) of a row, as the init function above found it.
-const char* fn_71002137FC(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the RareBlade38 column (const char*) of a row, as the init function
+// above found it.
+const char* getVoiceTableRareRareBlade38(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableRareRareBlade38 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableRareRareBlade38, id, 7);
@@ -4323,9 +4323,9 @@ void initVoiceTableRareRareBlade39(const CBdatWrapper& bdat) {
     s_memberVoiceTableRareRareBlade39 = bdat.getMember("RareBlade39");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTableRare getters holds it.
-// What it does: reads the RareBlade39 column (const char*) of a row, as the init function above found it.
-const char* fn_7100213880(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the RareBlade39 column (const char*) of a row, as the init function
+// above found it.
+const char* getVoiceTableRareRareBlade39(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableRareRareBlade39 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableRareRareBlade39, id, 7);
@@ -4338,9 +4338,9 @@ void initVoiceTableRareRareBlade40(const CBdatWrapper& bdat) {
     s_memberVoiceTableRareRareBlade40 = bdat.getMember("RareBlade40");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTableRare getters holds it.
-// What it does: reads the RareBlade40 column (const char*) of a row, as the init function above found it.
-const char* fn_7100213904(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the RareBlade40 column (const char*) of a row, as the init function
+// above found it.
+const char* getVoiceTableRareRareBlade40(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableRareRareBlade40 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableRareRareBlade40, id, 7);
@@ -4353,9 +4353,9 @@ void initVoiceTableRareRareBlade41(const CBdatWrapper& bdat) {
     s_memberVoiceTableRareRareBlade41 = bdat.getMember("RareBlade41");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTableRare getters holds it.
-// What it does: reads the RareBlade41 column (const char*) of a row, as the init function above found it.
-const char* fn_7100213988(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the RareBlade41 column (const char*) of a row, as the init function
+// above found it.
+const char* getVoiceTableRareRareBlade41(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableRareRareBlade41 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableRareRareBlade41, id, 7);
@@ -4368,9 +4368,9 @@ void initVoiceTableRareRareBlade42(const CBdatWrapper& bdat) {
     s_memberVoiceTableRareRareBlade42 = bdat.getMember("RareBlade42");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTableRare getters holds it.
-// What it does: reads the RareBlade42 column (const char*) of a row, as the init function above found it.
-const char* fn_7100213A0C(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the RareBlade42 column (const char*) of a row, as the init function
+// above found it.
+const char* getVoiceTableRareRareBlade42(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableRareRareBlade42 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableRareRareBlade42, id, 7);
@@ -4383,9 +4383,9 @@ void initVoiceTableRareRareBlade43(const CBdatWrapper& bdat) {
     s_memberVoiceTableRareRareBlade43 = bdat.getMember("RareBlade43");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTableRare getters holds it.
-// What it does: reads the RareBlade43 column (const char*) of a row, as the init function above found it.
-const char* fn_7100213A90(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the RareBlade43 column (const char*) of a row, as the init function
+// above found it.
+const char* getVoiceTableRareRareBlade43(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableRareRareBlade43 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableRareRareBlade43, id, 7);
@@ -4398,9 +4398,9 @@ void initVoiceTableRareRareBlade44(const CBdatWrapper& bdat) {
     s_memberVoiceTableRareRareBlade44 = bdat.getMember("RareBlade44");
 }
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; the table of VoiceTableRare getters holds it.
-// What it does: reads the RareBlade44 column (const char*) of a row, as the init function above found it.
-const char* fn_7100213B14(const CBdatWrapper& bdat, unsigned int id) {
+// 2.0.0's symbols name it. What it does: reads the RareBlade44 column (const char*) of a row, as the init function
+// above found it.
+const char* getVoiceTableRareRareBlade44(const CBdatWrapper& bdat, unsigned int id) {
     if (s_memberVoiceTableRareRareBlade44 != nullptr && bdat.getIdTop() <= id &&
         id < bdat.getIdTop() + bdat.getIdCount()) {
         return (const char*)bdat.getValCheck(s_memberVoiceTableRareRareBlade44, id, 7);
@@ -5658,11 +5658,11 @@ unsigned int GfBdatRsc::getRscEnRotEffScale(unsigned int id) const {
     return _gfbrs::getRscEnRotEffScale(*m_fpRscEn, id);
 }
 
-unsigned int GfBdatRsc::fn_710021903C(unsigned int id) const {
+unsigned int GfBdatRsc::getRscEnExtraParts5(unsigned int id) const {
     return _gfbrs::fn_710020D650(*m_fpRscEn, id);
 }
 
-unsigned int GfBdatRsc::fn_71002190C4(unsigned int id) const {
+unsigned int GfBdatRsc::getRscEnExtraParts6(unsigned int id) const {
     return _gfbrs::fn_710020D6D8(*m_fpRscEn, id);
 }
 
@@ -5727,7 +5727,7 @@ const char* GfBdatRsc::getRscNpcListAddMotion(unsigned int id) const {
     return _gfbrs::getRscNpcListAddMotion(*m_fpRscNpcList, id);
 }
 
-unsigned int GfBdatRsc::fn_7100219574(unsigned int id) const {
+unsigned int GfBdatRsc::getRscNpcListEvtRetarget(unsigned int id) const {
     return _gfbrs::getRscNpcListEvtRetarget(*m_fpRscNpcList, id);
 }
 
@@ -5775,39 +5775,39 @@ unsigned int GfBdatRsc::getRscNpcListScale(unsigned int id) const {
     return _gfbrs::getRscNpcListScale(*m_fpRscNpcList, id);
 }
 
-unsigned int GfBdatRsc::fn_7100219BD0(unsigned int id) const {
+unsigned int GfBdatRsc::getRscNpcListJob(unsigned int id) const {
     return _gfbrs::getRscNpcListJob(*m_fpRscNpcList, id);
 }
 
-unsigned int GfBdatRsc::fn_7100219C58(unsigned int id) const {
+unsigned int GfBdatRsc::getRscNpcListHitonowaFlag(unsigned int id) const {
     return _gfbrs::getRscNpcListHitonowaFlag(*m_fpRscNpcList, id);
 }
 
-unsigned int GfBdatRsc::fn_7100219CE0(unsigned int id) const {
+unsigned int GfBdatRsc::getRscNpcListNpcMeetFlag(unsigned int id) const {
     return _gfbrs::getRscNpcListNpcMeetFlag(*m_fpRscNpcList, id);
 }
 
-unsigned int GfBdatRsc::fn_7100219D68(unsigned int id) const {
+unsigned int GfBdatRsc::getRscNpcListMSGID(unsigned int id) const {
     return _gfbrs::getRscNpcListMSGID(*m_fpRscNpcList, id);
 }
 
-unsigned int GfBdatRsc::fn_7100219DF0(unsigned int id) const {
+unsigned int GfBdatRsc::getRscNpcListCondition1(unsigned int id) const {
     return _gfbrs::getRscNpcListCondition1(*m_fpRscNpcList, id);
 }
 
-unsigned int GfBdatRsc::fn_7100219E78(unsigned int id) const {
+unsigned int GfBdatRsc::getRscNpcListMSGID2(unsigned int id) const {
     return _gfbrs::getRscNpcListMSGID2(*m_fpRscNpcList, id);
 }
 
-unsigned int GfBdatRsc::fn_7100219F00(unsigned int id) const {
+unsigned int GfBdatRsc::getRscNpcListCondition2(unsigned int id) const {
     return _gfbrs::getRscNpcListCondition2(*m_fpRscNpcList, id);
 }
 
-unsigned int GfBdatRsc::fn_7100219F88(unsigned int id) const {
+unsigned int GfBdatRsc::getRscNpcListMSGID3(unsigned int id) const {
     return _gfbrs::getRscNpcListMSGID3(*m_fpRscNpcList, id);
 }
 
-unsigned int GfBdatRsc::fn_710021A010(unsigned int id) const {
+unsigned int GfBdatRsc::getRscNpcListresult(unsigned int id) const {
     return _gfbrs::getRscNpcListresult(*m_fpRscNpcList, id);
 }
 
@@ -6202,18 +6202,18 @@ const char* GfBdatRsc::getVoiceTableDriver(unsigned int id, unsigned int slot) c
     return "";
 }
 
-const char* GfBdatRsc::fn_710021AF00(unsigned int id, unsigned int slot) const {
+const char* GfBdatRsc::getVoiceTableIra(unsigned int id, unsigned int slot) const {
     // the slots' getters (the name is not the original's)
     static const char* (*s_getters[])(const CBdatWrapper&, unsigned int) = {
-        _gfbrs::fn_7100211A98,
-        _gfbrs::fn_7100211B1C,
-        _gfbrs::fn_7100211BA0,
-        _gfbrs::fn_7100211C24,
-        _gfbrs::fn_7100211CA8,
-        _gfbrs::fn_7100211D2C,
-        _gfbrs::fn_7100211DB0,
-        _gfbrs::fn_7100211E34,
-        _gfbrs::fn_7100211EB8,
+        _gfbrs::getVoiceTableIra1,
+        _gfbrs::getVoiceTableIra2,
+        _gfbrs::getVoiceTableIra3,
+        _gfbrs::getVoiceTableIra4,
+        _gfbrs::getVoiceTableIra5,
+        _gfbrs::getVoiceTableIra6,
+        _gfbrs::getVoiceTableIra7,
+        _gfbrs::getVoiceTableIra8,
+        _gfbrs::getVoiceTableIra9,
     };
     const char* (*getter)(const CBdatWrapper&, unsigned int) = _gfbrs::getSlot(s_getters, slot);
     if (getter != nullptr) {
@@ -6284,13 +6284,13 @@ const char* GfBdatRsc::getVoiceTableRareBlade(unsigned int id, unsigned int slot
         _gfbrs::getVoiceTableRareRareBlade35,
         _gfbrs::getVoiceTableRareRareBlade36,
         _gfbrs::getVoiceTableRareRareBlade37,
-        _gfbrs::fn_71002137FC,
-        _gfbrs::fn_7100213880,
-        _gfbrs::fn_7100213904,
-        _gfbrs::fn_7100213988,
-        _gfbrs::fn_7100213A0C,
-        _gfbrs::fn_7100213A90,
-        _gfbrs::fn_7100213B14,
+        _gfbrs::getVoiceTableRareRareBlade38,
+        _gfbrs::getVoiceTableRareRareBlade39,
+        _gfbrs::getVoiceTableRareRareBlade40,
+        _gfbrs::getVoiceTableRareRareBlade41,
+        _gfbrs::getVoiceTableRareRareBlade42,
+        _gfbrs::getVoiceTableRareRareBlade43,
+        _gfbrs::getVoiceTableRareRareBlade44,
     };
     const char* (*getter)(const CBdatWrapper&, unsigned int) = _gfbrs::getSlot(s_getters, slot);
     if (getter != nullptr) {

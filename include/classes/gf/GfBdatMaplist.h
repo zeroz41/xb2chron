@@ -35,10 +35,10 @@ public:
     unsigned int getWeatherInfomsg(unsigned int id) const;
     const char* getWeatherInfoeff(unsigned int id) const;
     const char* getWeatherInfosnd(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpWeatherInfo.
-    // What it does: row id's "snd_ira" column (a string) of FLD_WeatherInfo, nullptr when the handle is null or id is out of range
-    // (bdatRefresh looks it up between snd and sndBegin; 1.0.0 has no such column).
-    const char* fn_710020A2AC(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: row id's "snd_ira" column (a string) of FLD_WeatherInfo, nullptr when the
+    // handle is null or id is out of range (bdatRefresh looks it up between snd and sndBegin; 1.0.0 has no such
+    // column).
+    const char* getWeatherInfosnd_ira(unsigned int id) const;
     const char* getWeatherInfosndBegin(unsigned int id) const;
     unsigned int getTimeInfomsg(unsigned int id) const;
     // the tables, by GfDataBdat id (s_aszGfBdatName), created in this order by createFP; names follow 1.0.0's

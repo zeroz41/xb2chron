@@ -99,7 +99,7 @@ public:
     // placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. What it does: BgmBattle::update calls it
     // with the field BGM's battle BGM id when the track's condition id differs (it sits where 1.0.0's
     // BgmTrack::play(unsigned int) sat, after the constructor; the BgmBattle constructor calls it too)
-    void fn_7100263490(unsigned int id);
+    void play(unsigned int id);
     // 1.0.0's symbol: 3.0.1's fn_7100263FF0 has the body of 1.0.0's BgmTrack::stopBGM(float) (each entry stopped,
     // the fade pair set to 0/1, the condition id cleared unless m_keepBgmCondID, entry 0's name emptied)
     void stopBGM(float time);

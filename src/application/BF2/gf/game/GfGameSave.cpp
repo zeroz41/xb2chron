@@ -73,7 +73,7 @@ void GfGameSave::execGameSaveWithMicroThread() {
 }
 
 void GfGameSave::execOptionSaveWithMicroThread() {
-    GfEvent::fn_71003274A8();
+    GfEvent::callChangeGameDifficult();
     m_state = 2;
     mm::mtl::FixStr<256> name;
     createOptionSaveData(name);
@@ -95,7 +95,7 @@ void GfGameSave::createOptionSaveData(mm::mtl::FixStr<256>& name) {
     }
     m_writeData = m_optionData;
     m_writeSize = sizeof(SDataOption);
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         GfDataSave::getFileNameForOptionXml(name);
     } else {
         GfDataSave::getFileNameForOptionBin(name);
@@ -118,7 +118,7 @@ bool GfGameSave::OnFileEvent(ml::EventFileTh* event) {
 }
 
 GfGameLoad::GfGameLoad(SAVESLOT slot)
-    : m_ira(GfGameManager::fn_71002A9E68()), m_slot(slot), m_saveData(nullptr), m_optionData(nullptr), m_state(0),
+    : m_ira(GfGameManager::isGameTypeIra()), m_slot(slot), m_saveData(nullptr), m_optionData(nullptr), m_state(0),
       m_fileHandle(nullptr), m_fileKind(0), m_fileResult(-1), m_dest(nullptr), m_copyDest(nullptr),
       m_readData(nullptr), m_readSize(0) {}
 
@@ -144,7 +144,7 @@ void GfGameLoad::getGameFileNameBin(mm::mtl::FixStr<256>& out) {
     if (m_fileName.m_nLen != 0) {
         name = m_fileName.m_str;
     } else if (m_ira) {
-        GfDataSave::fn_710022C2B0(name, m_slot);
+        GfDataSave::getFileNameForIraLoad(name, m_slot);
     } else {
         GfDataSave::getFileNameForLoad(name, m_slot);
     }
@@ -155,7 +155,7 @@ void GfGameLoad::getGameFileNameBin(mm::mtl::FixStr<256>& out) {
 void GfGameLoad::getOptionFileNameBin(mm::mtl::FixStr<256>& out) {
     mm::mtl::FixStr<256> name;
     if (m_ira) {
-        GfDataSave::fn_710022C894(name);
+        GfDataSave::getFileNameForIraOption(name);
     } else {
         GfDataSave::getFileNameForOption(name);
     }

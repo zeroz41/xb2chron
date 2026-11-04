@@ -140,7 +140,7 @@ unsigned int GfItemBoxBase::updateSerialLocal(ItemType::Type type) {
     return next;
 }
 
-bool GfItemBoxBase::fn_71002F87F8(ItemType::Type type, unsigned int serial) {
+bool GfItemBoxBase::findSerial(ItemType::Type type, unsigned int serial) {
     item_iterator it = begin(type);
     item_iterator last = end(type);
     for (; it.m_cur != last.m_cur; ++it) {
@@ -189,7 +189,7 @@ int GfItemBoxBase::countItem(unsigned int item) {
     return count;
 }
 
-int GfItemBoxBase::fn_71002F9DD4(ItemType::Type type) {
+int GfItemBoxBase::countItemCategory(ItemType::Type type) {
     item_iterator it = begin(type);
     item_iterator last = end(type);
     int count = 0;
@@ -202,7 +202,7 @@ int GfItemBoxBase::fn_71002F9DD4(ItemType::Type type) {
     return count;
 }
 
-int GfItemBoxBase::fn_71002F9F6C(ItemType::Type type) {
+int GfItemBoxBase::maxItemCategory(ItemType::Type type) {
     item_iterator it = begin(type);
     return getItemTypeInfo(type).m_end - it.m_cur;
 }
@@ -246,11 +246,11 @@ bool GfItemBox::addItem(unsigned int item, unsigned int count) {
     return true;
 }
 
-void GfItemBox::fn_71002FA0F4() {
+void GfItemBox::initialize() {
     get()->fn_71002F3F98(GfDataItem::getFavoriteItemType(), GfDataItem::getItemBox());
 }
 
-void GfItemBox::fn_71002FA134() {
+void GfItemBox::finalize() {
     GfItemBox* box = get();
     for (int i = 0; i < 19; i++) {
         box->m_lists[i].clear();
@@ -276,7 +276,7 @@ bool GfItemBox::decItemForNewGame(unsigned int item, unsigned int count) {
 }  // namespace gf
 
 namespace gf {
-bool GfItemBox::fn_71002FA2B0(unsigned int item, GfItemHandle handle) {
-    return get()->fn_71002F9634(item, handle);
+bool GfItemBox::decItem(unsigned int item, GfItemHandle handle) {
+    return get()->GfItemBoxBase::decItem(item, handle);
 }
 }  // namespace gf

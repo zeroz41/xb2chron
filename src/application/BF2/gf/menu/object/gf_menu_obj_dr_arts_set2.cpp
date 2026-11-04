@@ -46,8 +46,8 @@ GfMenuObjDrArtsSet2::GfMenuObjDrArtsSet2(unsigned int handle)
     pad_2B4 = 0;
     m_blades = GfMenuBladeList::create();
     m_items = GfMenuItemList::create();
-    s_extraWpnType = GfGameManager::isClearGame() && !GfMenuObjUtil::fn_710048FD30(3) &&
-                     GfMenuObjUtil::fn_710048FD30(1) && fn_71003E91EC();
+    s_extraWpnType = GfGameManager::isClearGame() && !GfMenuObjUtil::isValidExpansion(3) &&
+                     GfMenuObjUtil::isValidExpansion(1) && fn_71003E91EC();
     s_wpnTypeIndex = 0;
 }
 
@@ -93,7 +93,7 @@ void GfMenuObjDrArtsSet2::initialize() {
         }
     }
     GfMenuObject::attachExternalCall(0x65, handle);
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         handle = acc.searchChild("LAY_wpn");
 #line 249
         WpnTypeListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) WpnTypeListener(this);
@@ -148,7 +148,7 @@ void GfMenuObjDrArtsSet2::initialize() {
             m_items->addItem(info, false);
         }
     }
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuObject::disableInput(acc.searchChild("LAY_wpn"));
     }
     GfMenuObject::disableInput(acc.searchChild("LAY_arts"));
@@ -192,7 +192,7 @@ int GfMenuObjDrArtsSet2::checkArtsLvUp(unsigned int driver, unsigned int wpnType
                                        unsigned int index) {
     unsigned int artsId = (index < arts->m_list.size() ? arts->m_list[index] : arts->m_dummy).m_artsId;
     unsigned int level = (index < arts->m_list.size() ? arts->m_list[index] : arts->m_dummy).m_level;
-    if (GfMenuObjUtil::fn_710048FD30(3) && pad_2BA) {
+    if (GfMenuObjUtil::isValidExpansion(3) && pad_2BA) {
         int size = arts->getSize();
         if (artsId == 0 || size - 1 == index) {
             return 4;
@@ -214,10 +214,10 @@ bool GfMenuObjDrArtsSet2::seqSelectItem() {
     }
     GfMenuCallContext::GfMenuResult result;
     if (m_context->m_results.empty() || (m_context->popResult(result), result.m_id == -1)) {
-        if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        if (!GfMenuObjUtil::isValidExpansion(3)) {
             m_seq.addJob(&GfMenuObjDrArtsSet2::seqReturnWeaponSelect);
         } else {
-            m_seq.addJob(&GfMenuObjDrArtsSet2::fn_71003F03D8);
+            m_seq.addJob(&GfMenuObjDrArtsSet2::seqReturnArtsSelect);
         }
     } else {
         m_items->setIndex(result.m_id);
@@ -279,8 +279,8 @@ void GfMenuObjDrArtsSet2::refreshLvCap(ui::UIObjectAcc& acc, unsigned int driver
     }
 }
 
-void GfMenuObjDrArtsSet2::fn_71003EF53C() {
-    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+void GfMenuObjDrArtsSet2::updateArtsInputIra() {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
         return;
     }
     ui::UIObjectAcc acc(m_handle, "LAY_arts");
@@ -314,7 +314,7 @@ void GfMenuObjDrArtsSet2::refreshArtsNeedWP(ui::UIObjectAcc& acc, GfMenuArtsList
             GfMenuObjUtil::setColMulandAdd(text.m_handle, "txt_warning");
             text.setBorderWeight(2.0f);
         }
-        if (GfMenuObjUtil::fn_710048FD30(3) && pad_2B9 && index == arts->getSize() - 1) {
+        if (GfMenuObjUtil::isValidExpansion(3) && pad_2B9 && index == arts->getSize() - 1) {
             bool disp = pad_2B4 != 0;
             name.format("LAY_arts_tag_wp@%02d", i);
             acc.setDispChild(disp, name.m_str);
@@ -324,7 +324,7 @@ void GfMenuObjDrArtsSet2::refreshArtsNeedWP(ui::UIObjectAcc& acc, GfMenuArtsList
     }
 }
 
-void GfMenuObjDrArtsSet2::fn_71003EF804(int index, bool close) {
+void GfMenuObjDrArtsSet2::updateArtsSwapSelectIra(int index, bool close) {
     ui::UIObjectAcc acc(m_handle, "LAY_arts");
     unsigned int driver = GfMenuReference::getReferenceDriverID(s_wpnTypeIndex);
     mm::mtl::FixedArray<unsigned int, 4> arts;
@@ -398,7 +398,7 @@ void GfMenuObjDrArtsSet2::LevelupListener::reciveEvent(const ui::EventData& even
     }
 }
 
-bool GfMenuObjDrArtsSet2::fn_71003F03D8() {
+bool GfMenuObjDrArtsSet2::seqReturnArtsSelect() {
     ui::UIObjectAcc acc(m_handle, "LAY_arts");
     sendEvent(acc.m_handle, 0x101, 0);
     return true;

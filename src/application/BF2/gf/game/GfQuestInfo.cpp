@@ -53,14 +53,14 @@ unsigned int GfQuestInfo::getPlayEvent(QuestID id, QSTATE state) {
     return GfDataQuest::getListCallEventB(id);
 }
 
-bool GfQuestInfo::fn_7100302360(QuestID id) {
+bool GfQuestInfo::hasBattleTask(QuestID id) {
     QuestListAcc* acc = QuestListAcc::get();
     for (unsigned int i = 0; i < 4; i++) {
         QuestTaskParam task(id, i, TASK_STATE(0));
         if (task.m_taskType == 1) {
             return true;
         }
-        if (task.m_taskType == 8 && acc->fn_710025C23C(task.m_taskId) != 0) {
+        if (task.m_taskType == 8 && acc->getGimmickEnemyWaveID(task.m_taskId) != 0) {
             return true;
         }
     }

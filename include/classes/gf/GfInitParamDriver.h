@@ -13,12 +13,10 @@ public:
     // (GfInitParamDriver::operator=, GfObjSetupBlade's constructor)
     GfAssetSetup* m_assetSetup;
     virtual bool isAllWeapon() const { return m_isAllWeapon; }  // slot 0
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it, and nothing in 3.0.1 calls it. A member
-    // because it fills this class's fields (m_bladeId at 0x1AC) and sits among gf_obj_setup.cpp's driver and blade
-    // code. What it does: creation type 3, object id driverId, pad_40 = 7, pad_81/pad_82 cleared, m_bladeId =
-    // bladeId; when GfDataDriver::fn_710023F9A8(driverId) accepts the driver, m_bladeId becomes
+    // 2.0.0's symbols name it. What it does: creation type 3, object id driverId, pad_40 = 7, pad_81/pad_82 cleared,
+    // m_bladeId = bladeId; when GfDataDriver::isIra(driverId) accepts the driver, m_bladeId becomes
     // GfDataBlade::fn_7100237B70(driverId, -1) instead.
-    void fn_710054E050(unsigned int driverId, unsigned int bladeId);
+    void setupForEventCS(unsigned int driverId, unsigned int bladeId);
 
     // inline: no copy of it exists (event::ModelObj::setupModel builds one on the stack)
     GfInitParamDriver() : GfInitParam(3), pad_98() {

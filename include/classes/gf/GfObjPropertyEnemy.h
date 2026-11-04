@@ -46,8 +46,8 @@ public:
     // the elements shown, by GfMenuGfObjAdapter::m_index, and their count
     mm::mtl::FixedVector<unsigned int, 10> m_resAttrList;
     unsigned int pad_150;
-    bool pad_154;  // fn_710033FB0C's answer
-    bool pad_155;  // fn_710033FB70's answer
+    bool pad_154;  // update_EN_Angry's answer
+    bool pad_155;  // update_EN_Awake's answer
     unsigned char pad_156[0xA];
 };
 }  // namespace gf

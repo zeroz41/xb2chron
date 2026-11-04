@@ -69,10 +69,8 @@ public:
     void seqEnd(float dt);
     void seqWaitDo(float dt);
     void seqWaitUIEnd(float dt);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because seqWaitUIEnd stores it
-    // as the next step (m_seq) when m_isPreciousOnly is set. What it does: adds dt to m_seqTime and moves on to
-    // seqDo once a second has passed.
-    void fn_71002681C4(float dt);
+    // 2.0.0's symbols name it. What it does: adds dt to m_seqTime and moves on to seqDo once a second has passed.
+    void seqDelayEmitPrecious(float dt);
     void seqDo(float dt);
     void seqWaitDrop(float dt);
 

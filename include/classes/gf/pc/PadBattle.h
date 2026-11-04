@@ -43,24 +43,24 @@ public:
     void orderRally() const;
     void changeTargetR() const;
     void changeTargetL() const;
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: setup binds them as actions
-    // of this class (bindAction<PadBattle, void (PadBattle::*)() const>). What they do: as the actions above, set
-    // input bit 23 ("auto_switch"), 24 ("mind_eye"), 25 ("ira_formation_change" and "ira_formation_change2"),
-    // 26 ("ira_blade_change"), 27-30 ("ira_tactics_00".."03"), 31 ("ira_talent_arts"), 32 ("spskill")
-    void fn_71004E2BC4() const;
-    void fn_71004E2C78() const;
-    void fn_71004E2D2C() const;
-    void fn_71004E2DE0() const;
-    void fn_71004E2E94() const;
-    void fn_71004E2F48() const;
-    void fn_71004E2FFC() const;
-    void fn_71004E30B0() const;
-    void fn_71004E3164() const;
-    void fn_71004E3218() const;
+    // 2.0.0's symbols name them. Setup binds them as actions of this class (bindAction<PadBattle, void (PadBattle::*)()
+    // const>). What they do: as the actions above, set input bit 23 ("auto_switch"), 24 ("mind_eye"), 25
+    // ("ira_formation_change" and "ira_formation_change2"), 26 ("ira_blade_change"), 27-30 ("ira_tactics_00".."03"), 31
+    // ("ira_talent_arts"), 32 ("spskill")
+    void switchAuto() const;
+    void mindEye() const;
+    void iraFormationChange() const;
+    void iraBladeChange() const;
+    void iraTactics00() const;
+    void iraTactics01() const;
+    void iraTactics02() const;
+    void iraTactics03() const;
+    void iraTalentArts() const;
+    void ocg() const;
 
     // whether an action may set its input: a property is being updated, and while BattleGlobal's flag bit 3 is
     // set, only for the controlled character or during a chain attack (inline: no symbol; the name is not the
-    // original's). The actions first skip everything while TUnk_B3A9C8's fn_7100026A58 holds.
+    // original's). The actions first skip everything while ChallengeBattleManager's IsExit holds.
     bool isInputEnable() const;
     // sets bit id of the property's action set (1.0.0's symbols name it; out of line there with an assert, 3.0.1
     // inlines every use)

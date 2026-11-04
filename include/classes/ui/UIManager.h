@@ -32,7 +32,7 @@ public:
     void update(const fw::UpdateInfo& info);
     void terminate();
     // 1.0.0's symbol (same callers): in 3.0.1 (0x710068F188) a layer id of 100 or more is DLC id / 100's
-    // (MNU_Layer_Dlc%02d) and goes to fn_710068F208 only while that DLC is enabled
+    // (MNU_Layer_Dlc%02d) and goes to createLayerEx only while that DLC is enabled
     bool createLayer(unsigned int id);
     // 1.0.0's isLayerCreated (out of line there, inlined by every 3.0.1 caller): m_layers lists the layer id
     bool isLayerCreated(unsigned int id) {
@@ -43,31 +43,25 @@ public:
         }
         return false;
     }
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's createLayer holds this body).
-    // A member because createLayer hands it `this` and it reads m_groups and m_layers. What it does: orders the
-    // root objects of the layer row `id` of the layer table `bdat` ("sheet%02d" names, "prio%02d" priorities,
-    // "group") from UIObjFactory into the row's group, skipping objects the group has that are not terminating,
-    // and lists the layer in m_layers if it is not listed yet; with `force` false a listed layer is left alone.
-    // True when the table was there and the layer was (re)created.
-    bool fn_710068F208(unsigned char* bdat, unsigned int id, bool force);
+    // 2.0.0's symbols name it. What it does: orders the root objects of the layer row `id` of the layer table `bdat`
+    // ("sheet%02d" names, "prio%02d" priorities, "group") from UIObjFactory into the row's group, skipping objects the
+    // group has that are not terminating, and lists the layer in m_layers if it is not listed yet; with `force` false a
+    // listed layer is left alone. True when the table was there and the layer was (re)created.
+    bool createLayerEx(unsigned char* bdat, unsigned int id, bool force);
     unsigned int searchObject(const char* name, unsigned short group);
     void terminateLayer(unsigned int id, bool release);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_groups and
-    // m_layers of the `this` it is passed. What it does: for a listed layer `id` of the layer table `bdat`,
-    // terminates (UIGroup::terminateObject, `release` passed on) each of the row's "sheet%02d" objects its group
-    // has assigned to that layer (UIGroup::isAssignedLayer).
-    void fn_710068F58C(unsigned char* bdat, unsigned int id, bool release);
+    // 2.0.0's symbols name it. What it does: for a listed layer `id` of the layer table `bdat`, terminates
+    // (UIGroup::terminateObject, `release` passed on) each of the row's "sheet%02d" objects its group has assigned to
+    // that layer (UIGroup::isAssignedLayer).
+    void terminateLayerEx(unsigned char* bdat, unsigned int id, bool release);
     void releaseLayer(unsigned int id);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_groups and
-    // m_layers of the `this` it is passed. What it does: for a listed layer `id` of the layer table `bdat`,
-    // releases (UIGroup::releaseObject) each of the row's "sheet%02d" objects in its group.
-    void fn_710068F744(unsigned char* bdat, unsigned int id);
+    // 2.0.0's symbols name it. What it does: for a listed layer `id` of the layer table `bdat`, releases
+    // (UIGroup::releaseObject) each of the row's "sheet%02d" objects in its group.
+    void releaseLayerEx(unsigned char* bdat, unsigned int id);
     bool preloadLayer(unsigned int id);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has nothing between preloadLayer
-    // and terminateObject). A member because its address is among UIManager's functions in its unit. What it
-    // does: hands on to UIObjFactory::fn_71006757FC (every preloaded resource released). Its caller is
-    // GfMenuManager's fn_71003597B0.
-    void fn_710068F958();
+    // 2.0.0's symbols name it. What it does: hands on to UIObjFactory::clearPreloadResource (every preloaded resource
+    // released). Its caller is GfMenuManager's fn_71003597B0.
+    void clearPreload();
     void terminateObject(const char* name, unsigned char group, bool release);
     void requestObjectEvent(unsigned int handle, const EventData& event, float delay);
     void requestGameEvent(unsigned int handle, const EventData& event);

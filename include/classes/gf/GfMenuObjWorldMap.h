@@ -48,11 +48,10 @@ public:
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it is the first function
-    // of gf_menu_obj_world_map's .text, which GfMenuObjWorldMap's functions fill. What it does: true when the
-    // 1-bit local game flag 51161 + id is 1; GfMenuZoneMapAdapter::update_ZonePointName passes its map id and shows
-    // the point's name only then (else GfDataBdat 0xF5's row 0x67C). isEnableJump inlines it.
-    static bool fn_7100495A98(unsigned int id);
+    // 2.0.0's symbols name it. What it does: true when the 1-bit local game flag 51161 + id is 1;
+    // GfMenuZoneMapAdapter::update_ZonePointName passes its map id and shows the point's name only then (else
+    // GfDataBdat 0xF5's row 0x67C). isEnableJump inlines it.
+    static bool isOpenLandmark(unsigned int id);
     static bool isEnterMap(unsigned int mapId);
     // 1.0.0's setFadeIn/setFadeOut (0x71004E6D2C, 0x71004E6E18; out of line there, inlined into MainListener in 3.0.1)
     static int setFadeIn(unsigned int handle) {
@@ -76,22 +75,19 @@ public:
         GfMenuObject::hookCtrlEvent(handle, ctrl);
         return ctrl;
     }
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its code sits in
-    // gf_menu_obj_world_map's .text right after initialize, which calls it (as WorldMapListener::reciveEvent does).
-    // What it does: clears the list, then adds each map of the selectable-map table whose chkMapCond holds: maps 52
-    // and 53 when add-on menu layer 3 is usable (GfMenuObjUtil::fn_710048FD30(3)), else 3-6, 9-16, 18, 20 and 21.
-    static void fn_710049761C(GfMenuIDList* list);
+    // 2.0.0's symbols name it. What it does: clears the list, then adds each map of the selectable-map table whose
+    // chkMapCond holds: maps 52 and 53 when add-on menu layer 3 is usable (GfMenuObjUtil::isValidExpansion(3)), else
+    // 3-6, 9-16, 18, 20 and 21.
+    static void setupMapList(GfMenuIDList* list);
     // fills list with the zone rows (GfDataBdat 0x17B) whose include_map is the referenced world map's resource and
     // whose condition does not hold, when a gimmick row of the zone's menuGroup has a MAPJUMPID and is on the current
     // floor or its jump flag is set; true when it holds any
     bool setupZoneList(GfMenuZoneMapList* list);
     static void refreshMapSelect(ui::UIObjectAcc& acc, GfMenuIDList* list, ui::UISelectObjList* selectList, int index);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its code sits in
-    // gf_menu_obj_world_map's .text among GfMenuObjWorldMap's functions (after ZoneSelectListener::reciveEvent, which
-    // calls it with its UIObjectAcc and m_zoneList). What it does: setupPointSelect's work for the zone list (9
-    // TXT_zonename_@NN adapters with their LAY_zonespot@NN rows, IMG_sonestay_@NN hidden, the zone scroll bar), and
-    // the scroll bar synced to LAY_zone_focus when add-on menu layer 3 is usable.
-    static void fn_710049A6E8(ui::UIObjectAcc& acc, GfMenuZoneMapList* list);
+    // 2.0.0's symbols name it. What it does: setupPointSelect's work for the zone list (9 TXT_zonename_@NN adapters
+    // with their LAY_zonespot@NN rows, IMG_sonestay_@NN hidden, the zone scroll bar), and the scroll bar synced to
+    // LAY_zone_focus when add-on menu layer 3 is usable.
+    static void setupZoneSelect(ui::UIObjectAcc& acc, GfMenuZoneMapList* list);
     // starts each of the list's first count objects' return control (the selected one's move back, the others'
     // fade-in motion) and gives them display priority 8; the last control's slot, -1 for none
     static int ctrlGroupReturn(ui::UISelectObjList* list, unsigned int count);
@@ -101,11 +97,10 @@ public:
     static void refreshPointSelect(ui::UIObjectAcc& acc, GfMenuZoneMapList* list, ui::UISelectObjList* selectList,
                                    unsigned int mapId);
     static void refreshPointText(ui::UIObjectAcc& acc, GfMenuZoneMapList* list, ui::UISelectObjList* selectList);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it reads m_handle and m_iconFilter
-    // through `this`. What it does: shows each of the 9 first icons of nd_lay_icon_node_tbl under "LAY_zonemap" when
-    // its m_iconFilter bit is set; with fadeFirst the first (LAY_icon_mapjump) stays shown and gets alpha 1 or 0
-    // instead. ZoneMapListener::reciveEvent, IconFilterListener::reciveEvent and seqGimik call it.
-    void fn_710049D2A4(bool fadeFirst);
+    // 2.0.0's symbols name it. What it does: shows each of the 9 first icons of nd_lay_icon_node_tbl under
+    // "LAY_zonemap" when its m_iconFilter bit is set; with fadeFirst the first (LAY_icon_mapjump) stays shown and gets
+    // alpha 1 or 0 instead. ZoneMapListener::reciveEvent, IconFilterListener::reciveEvent and seqGimik call it.
+    void updateDispIconNode(bool fadeFirst);
     // the floor shown: the zone list's selected map, or in group mode the selected point's "menuMapImage" (u16)
     unsigned int getFloor();
     // a copy of LAY_icon's IMG_zoneicon under the icon type's layout (nd_lay_icon_node_tbl), shown at pos with the
@@ -117,10 +112,9 @@ public:
     // true for a gimmick whose getGmkType() is 3 or 4 and whose bound bdat row's "ShopID" column (u16) is 222;
     // GfMenuMapInfo::postUpdate and fn_71003601DC pass it gimmicks.
     static bool fn_710049FB94(const gmk::AGmkBase* gmk);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its code sits in
-    // gf_menu_obj_world_map's .text after setupIconTableSub. What it does: returns entry id of a guarded function-static
-    // table of two colours, (1, 1, 1) and (0.78, 1, 0), entry 0 for an id past 1; GfMenuObjMinimap2::update calls it.
-    static mm::Col3 fn_710049FD30(unsigned int id);
+    // 2.0.0's symbols name it. What it does: returns entry id of a guarded function-static table of two colours, (1, 1,
+    // 1) and (0.78, 1, 0), entry 0 for an id past 1; GfMenuObjMinimap2::update calls it.
+    static mm::Col3 getShopIconColor(unsigned int id);
     static bool isEnableJump(const MenuZoneMapInfo& info);
     static void getFloorAABB(unsigned int mapId, unsigned int floor, mm::Aabb& aabb, mm::Pnt<short>& center);
     int getTotalFieldSkillLv(unsigned int fieldSkill);

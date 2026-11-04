@@ -27,7 +27,7 @@ public:
         // original's)
         float m_appearDelay;
         float m_appearDelayRange;
-        // seqWaitBeginDrop builds the drops with fn_71002849C4 when set, else with EmitInfo::createDropitemInfos
+        // seqWaitBeginDrop builds the drops with createDropitemInfosBattleChallenge when set, else with EmitInfo::createDropitemInfos
         unsigned char pad_0x28;
         unsigned char pad_0x29;  // seqWaitBeginDrop copies it into EmitInfo::pad_0x56
         // the items' rows (GfFobjDropitem::EmitInfo::createDropitemInfos takes them with m_itemCount); update runs

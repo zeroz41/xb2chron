@@ -253,8 +253,7 @@ static VMPluginFunc s_evtexPlugin[] = {
     {nullptr, nullptr},
 };
 
-// Placeholder name: new in 3.0.1 (1.0.0 has no evt_ex plugin), and the symbols name no function here. pluginRegist
-// calls it; the pattern of the other plugins would make it pluginEvtExRegist, which no evidence confirms.
-void fn_710066162C() {
+// 2.0.0's symbols name it. pluginRegist calls it.
+void pluginEvtExRegist() {
     vmPluginRegist("evt_ex", s_evtexPlugin);
 }

@@ -47,19 +47,19 @@ bool CharacterParameter::IsAlwaysKakusei() const {
     return false;
 }
 
-bool CharacterParameter::fn_7100088FE4() const {
+bool CharacterParameter::IsChallengeTarget() const {
     return false;
 }
 
-bool CharacterParameter::fn_7100088FEC() const {
+bool CharacterParameter::IsSeriousBattleEnemy() const {
     return false;
 }
 
-bool CharacterParameter::fn_7100088FF4() const {
+bool CharacterParameter::IsApplyMapRev() const {
     return true;
 }
 
-bool CharacterParameter::fn_7100088FFC() const {
+bool CharacterParameter::IsInvalidTalentKasumi() const {
     return false;
 }
 
@@ -87,7 +87,7 @@ bool PlayerParameter::IsPlayerParameter() const {
     return true;
 }
 
-void PlayerParameter::fn_7100088F58() {
+void PlayerParameter::ResetHanaBusterRebootTimer() {
     pad_638 = 0;
 }
 
@@ -95,7 +95,7 @@ int PlayerParameter::GetBladeChangeType() const {
     return m_bladeChangeType;
 }
 
-bool PlayerParameter::fn_7100088FF4() const {
+bool PlayerParameter::IsApplyMapRev() const {
     return pad_643;
 }
 
@@ -111,7 +111,7 @@ bool EnemyParameter::IsInvalidWarp() const {
     return m_isInvalidWarp;
 }
 
-bool EnemyParameter::fn_7100088ED0() const {
+bool EnemyParameter::IsLadyTarget() const {
     return pad_bit12;
 }
 
@@ -119,7 +119,7 @@ bool EnemyParameter::fn_7100088ED8() const {
     return pad_bit9;
 }
 
-bool EnemyParameter::fn_7100088EE0() const {
+bool EnemyParameter::IsLevelDiffDamageCorrect() const {
     return pad_bit10;
 }
 
@@ -131,11 +131,11 @@ int EnemyParameter::GetAngryAuraID() const {
     return m_angryAuraID;
 }
 
-int EnemyParameter::fn_7100088F70() const {
+int EnemyParameter::GetChallengeScore() const {
     return pad_8aa;
 }
 
-int EnemyParameter::fn_7100088F78() const {
+int EnemyParameter::GetChallengeEtherCube() const {
     return pad_8ac;
 }
 
@@ -157,15 +157,15 @@ void EnemyParameter::IncEatNum() {
     }
 }
 
-bool EnemyParameter::fn_7100088FE4() const {
+bool EnemyParameter::IsChallengeTarget() const {
     return pad_bit13;
 }
 
-bool EnemyParameter::fn_7100088FEC() const {
+bool EnemyParameter::IsSeriousBattleEnemy() const {
     return pad_bit14;
 }
 
-bool EnemyParameter::fn_7100088FFC() const {
+bool EnemyParameter::IsInvalidTalentKasumi() const {
     return pad_bit15;
 }
 

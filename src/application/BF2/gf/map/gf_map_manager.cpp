@@ -102,7 +102,7 @@ void GfMapManager::buildMapData(GF_OBJ_HANDLE* handle) {
     manager->m_assetHandle = GfObjUtil::getAssetHandle(manager->m_handle);
     manager->m_coli.create(manager->m_assetHandle);
     if (fw::EffectManager* effect = fw::EffectManager::get()) {
-        effect->fn_7100179D30(false);
+        effect->setDisableCollision(false);
     }
     manager->m_navi.create(manager->m_assetHandle);
     manager->m_eff.create(manager->m_assetHandle, getModelObject());
@@ -128,7 +128,7 @@ void GfMapManager::destroyMapData(GF_OBJ_HANDLE* handle) {
     m_eff.destroy();
     m_navi.destroy();
     if (fw::EffectManager* effect = fw::EffectManager::get()) {
-        effect->fn_7100179D30(true);
+        effect->setDisableCollision(true);
         ml::TimeCount time;
         while (time.getSecLap() < GfInfo::m_fSecPerFrame) {
         }

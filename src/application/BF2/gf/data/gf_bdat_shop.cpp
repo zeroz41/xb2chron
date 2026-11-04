@@ -1330,7 +1330,7 @@ unsigned int GfBdatShop::getShopChangeTaskEnd() const {
     return Bdat::getIdTop(m_fpShopChangeTask->m_fp) + Bdat::getIdCount(m_fpShopChangeTask->m_fp);
 }
 
-unsigned int GfBdatShop::fn_710021E294(unsigned int id) const {
+unsigned int GfBdatShop::getShopChangeTaskName(unsigned int id) const {
     return _gfbsh::getShopChangeTaskName(*m_fpShopChangeTask, id);
 }
 
@@ -1342,7 +1342,7 @@ unsigned int GfBdatShop::getShopChangeTaskAddFlagValue(unsigned int id) const {
     return _gfbsh::getShopChangeTaskAddFlagValue(*m_fpShopChangeTask, id);
 }
 
-unsigned int GfBdatShop::fn_710021E42C(unsigned int id) const {
+unsigned int GfBdatShop::getShopChangeTaskIraCraftIndex(unsigned int id) const {
     return _gfbsh::getShopChangeTaskIraCraftIndex(*m_fpShopChangeTask, id);
 }
 
@@ -1398,7 +1398,7 @@ unsigned int GfBdatShop::getMNU_EventTheaterflag_index(unsigned int id) const {
     return _gfbsh::getMNU_EventTheaterflag_index(*m_fpMNU_EventTheater, id);
 }
 
-unsigned int GfBdatShop::fn_710021E7CC(unsigned int id) const {
+unsigned int GfBdatShop::getMNU_DlcGiftgetflag(unsigned int id) const {
     return _gfbsh::getMNU_DlcGiftgetflag(*m_fpMNU_DlcGift, id);
 }
 

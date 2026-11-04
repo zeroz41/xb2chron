@@ -163,10 +163,10 @@ void GfMenuObject::setupPadLineSelection(unsigned int handle, unsigned int count
     }
 }
 
-void GfMenuObject::fn_7100362A08(unsigned int handle, unsigned int value) {
+void GfMenuObject::setupPadLineSelectionForce(unsigned int handle, unsigned int value) {
     unsigned int input = ui::UIInputManager::get()->searchInputHandle(handle);
     if (input != 0) {
-        ui::UIInputManager::get()->fn_7100679754(input, value);
+        ui::UIInputManager::get()->setPadLineSelectionForce(input, value);
     }
 }
 

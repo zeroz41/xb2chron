@@ -93,20 +93,19 @@ public:
     static bool isExistSameAsset(GfAssetPack* pack);
     // hands a resource to the loaded packs until one releases its reference to it
     void releaseRefResource(void* resource);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
-    // GfAssetManager's functions and reads its singleton's pack records. What it does: for a valid handle and a
-    // non-null name, collects the names of the asset's resources containing `name` (AssetPackInfo::fn_71001B1840);
-    // returns !names.empty(). Callers: GfComEffectCaster::setup, setupEfTail, fn_7100540E78.
-    static bool fn_71001AE8A8(mm::mtl::FixedVector<const char*, 128>& names, GF_ASSET_HANDLE* handle,
+    // 2.0.0's symbols name it. What it does: for a valid handle and a non-null name, collects the names of the asset's
+    // resources containing `name` (AssetPackInfo::getFileNameByExt); returns !names.empty(). Callers:
+    // GfComEffectCaster::setup, setupEfTail, fn_7100540E78.
+    static bool getFileNameByExt(mm::mtl::FixedVector<const char*, 128>& names, GF_ASSET_HANDLE* handle,
                               const char* name);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
-    // the asset's resource whose asset name equals `name` (AssetPackInfo::fn_71001B1B30), nullptr for an unknown
-    // handle. Callers: GfComEffectCaster::setup, setupEfTail, fn_7100540E78.
-    static GfAssetResource* fn_71001AE9D0(GF_ASSET_HANDLE* handle, const char* name);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
-    // whether one of the asset's resource names contains `name` (AssetPackInfo::fn_71001B3624), false for an
-    // unknown handle. Callers: fn_71002C5208, GfGameScene::fn_71002C56D4.
-    static bool fn_71001AF824(GF_ASSET_HANDLE* handle, const char* name);
+    // 2.0.0's symbols name it. What it does: the asset's resource whose asset name equals `name`
+    // (AssetPackInfo::getResource), nullptr for an unknown handle. Callers: GfComEffectCaster::setup, setupEfTail,
+    // fn_7100540E78.
+    static GfAssetResource* getResource(GF_ASSET_HANDLE* handle, const char* name);
+    // 2.0.0's symbols name it. What it does: whether one of the asset's resource names contains `name`
+    // (AssetPackInfo::isExistResourceName), false for an unknown handle. Callers: fn_71002C5208,
+    // GfGameScene::fn_71002C56D4.
+    static bool isExistResourceName(GF_ASSET_HANDLE* handle, const char* name);
 
     // the asset packs' records, one per handle: a handle's low ten bits index them (the name is not the original's)
     ml::fixed_size_alloc_inside<AssetPackInfo, 1024> m_packInfos;

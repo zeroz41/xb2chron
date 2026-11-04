@@ -40,11 +40,9 @@ public:
     bool update_ChainAttackRecast();
     bool update_ChainAttackCount();
     bool update_ChainAttackDamageRatio();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 goes from
-    // update_ChainAttackDamageRatio to update_ChainAttackExpBonus). A member because it is entry 17 of this class's
-    // TypeSetup table (a number plugin 0..9999). What it does: sets the number to GfMenuReference::fn_7100367380()'s
-    // and returns true.
-    bool fn_71003331F8();
+    // 2.0.0's symbols name it. What it does: sets the number to GfMenuReference::getChainAttackOverkillBonus()'s and
+    // returns true.
+    bool update_ChainAttackOverkillBonus();
     bool update_ChainAttackExpBonus();
     bool update_ChainAttackTotalDamage();
     bool update_ChainAttackBurstCount();
@@ -52,40 +50,40 @@ public:
     bool update_ElemComboEffTime();
     bool update_ArtsRange();
     bool update_ReverseIconCol();
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0's file ends its callbacks with
-    // update_ReverseIconCol). Members because they are entries 25..43 of this class's TypeSetup table, read
-    // m_index and call setNumber/setText/setTime on this. What they do:
-    // fn_71003333D0: a time plugin (seconds 4): GfMenuReference::fn_71003673C8()'s seconds as minutes (max 99)
-    //   and seconds;
-    // fn_7100333434/fn_7100333474/fn_71003334B4: when fn_71002AC580(), the int at 0x2C / int at 0x28 / short at
-    //   0x1C of fn_71002AC5D8()'s record (numbers 0..99999);
-    // fn_71003334F4: when fn_71002AC580() and m_index < 3, the float at 0xAD0 + m_index*4 of that record, in percent;
-    // fn_710033355C: on menu layer 1 (GfMenuObjUtil::fn_710048FD30(1)), GfMenuReference::fn_710036742C() in percent;
-    // fn_71003335AC/fn_7100333630/fn_7100333674/fn_71003336A0/fn_7100333700/fn_7100333750: on menu layer 3, values
-    //   of GfMenuReference::fn_710036805C/fn_7100367FDC/fn_71003686A0 and its flags at 0x4CFA0 (bits 3, 4);
-    // fn_71003337A0/fn_710033383C/fn_71003338A0/fn_7100333934: on menu layer 3, the face icon, a float in percent,
-    //   the name and the attribute icon of the gimmick GfMenuReference::fn_71003687B0(m_index) names;
-    // fn_71003339D0/fn_7100333A00/fn_7100333A40: the int at 0, the float at 4 (percent) and the int at
-    //   8 + m_index*4 (m_index < 3) of GfMenuReference::fn_7100368B40()'s record.
-    bool fn_71003333D0();
-    bool fn_7100333434();
-    bool fn_7100333474();
-    bool fn_71003334B4();
-    bool fn_71003334F4();
-    bool fn_710033355C();
-    bool fn_71003335AC();
-    bool fn_7100333630();
-    bool fn_7100333674();
-    bool fn_71003336A0();
-    bool fn_7100333700();
-    bool fn_7100333750();
-    bool fn_71003337A0();
-    bool fn_710033383C();
-    bool fn_71003338A0();
-    bool fn_7100333934();
-    bool fn_71003339D0();
-    bool fn_7100333A00();
-    bool fn_7100333A40();
+    // 2.0.0's symbols name them. What they do: update_BattleTime: a time plugin (seconds 4):
+    // GfMenuReference::getBattleTime()'s seconds as minutes (max 99) and seconds;
+    // update_BtlChEther/update_BtlChScore/update_BtlChScoreNeed: when isBattleArenaActive(), the int at 0x2C / int at
+    // 0x28 / short at 0x1C of getBattleArenaMenuInfo()'s record (numbers 0..99999); update_BtlChBoxRate: when
+    // isBattleArenaActive() and m_index < 3, the float at 0xAD0 + m_index*4 of that record, in percent;
+    // update_VisionTimeRatio: on menu layer 1 (GfMenuObjUtil::isValidExpansion(1)),
+    // GfMenuReference::getVisionTimeRatio() in percent;
+    // update_IraSpecialRecast/update_IraSpecialLv/update_IraTalentArtsEnable/update_IraSirenGaugeEN/update_IraSirenLvPT/update_IraSirenLvEN:
+    // on menu layer 3, values of GfMenuReference::getIraSpecialArtsLv/getIraSpecialArtsRecast/getIraSirenInfo and its
+    // flags at 0x4CFA0 (bits 3, 4);
+    // update_IraChainDrFace/update_IraChainRecast/update_IraChainDrName/update_IraChainDrElem: on menu layer 3, the
+    // face icon, a float in percent, the name and the attribute icon of the gimmick
+    // GfMenuReference::getIraChainInfo(m_index) names; update_OCGGearCount/update_OCGTimeRatio/update_OCGBonus: the int
+    // at 0, the float at 4 (percent) and the int at 8 + m_index*4 (m_index < 3) of GfMenuReference::getOCGInfo()'s
+    // record.
+    bool update_BattleTime();
+    bool update_BtlChEther();
+    bool update_BtlChScore();
+    bool update_BtlChScoreNeed();
+    bool update_BtlChBoxRate();
+    bool update_VisionTimeRatio();
+    bool update_IraSpecialRecast();
+    bool update_IraSpecialLv();
+    bool update_IraTalentArtsEnable();
+    bool update_IraSirenGaugeEN();
+    bool update_IraSirenLvPT();
+    bool update_IraSirenLvEN();
+    bool update_IraChainDrFace();
+    bool update_IraChainRecast();
+    bool update_IraChainDrName();
+    bool update_IraChainDrElem();
+    bool update_OCGGearCount();
+    bool update_OCGTimeRatio();
+    bool update_OCGBonus();
 
     // which one of its kind it shows: create clears it, callers set it (GfMenuObjSpecialGauge's gauge levels),
     // the callbacks read it, update takes the converter's (the name is not the original's)

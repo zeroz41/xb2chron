@@ -115,7 +115,7 @@ public:
     void setCategoryVolume(GF_SE_CATEGORY_HANDLE* handle, fw::SoundCategory category, float volume, float time);
     void destroyCategorySe(fw::SoundCategory category);  // GfFieldSound::destroyCategorySeForMapjump's
     float getCategoryVolume(GF_SE_CATEGORY_HANDLE* handle, fw::SoundCategory category) const;  // GfGameEvent's
-    // a BGM by its ID (TUnk_28D5BC::fn_710028D644 passes its ID, fade time, false, 0 and category 3; the names of the
+    // a BGM by its ID (GfArenaJingle::update passes its ID, fade time, false, 0 and category 3; the names of the
     // parameters are not the original's)
     SoundHandle playBgm(unsigned int id, float time, bool loop, int param, fw::SoundCategory category);
     // a BGM by its stream path (TitleMain::update passes "stream/bgm/m02.wav" or "m204.wav", 1.0, false, -1 and
@@ -172,10 +172,9 @@ public:
         }
     }
     void setPause(SoundHandle handle, bool pause, float time);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this GfSound's
-    // SeParams (this+0x5268) like setPause next to it. What it does: 1.0.0's setPauseType with type 8 (sets or
-    // clears pause bit 3 of the handle's SE and calls fw::SoundManager::pause when its paused state changes).
-    void fn_7100570158(SoundHandle handle, bool pause, float time);
+    // 2.0.0's symbols name it. What it does: 1.0.0's setPauseType with type 8 (sets or clears pause bit 3 of the
+    // handle's SE and calls fw::SoundManager::pause when its paused state changes).
+    void setPauseForBgmSuspend(SoundHandle handle, bool pause, float time);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
     // whether the handle's SE has pause bit 3 set (false when the handle has no SE).
     bool fn_71005701D8(SoundHandle handle);

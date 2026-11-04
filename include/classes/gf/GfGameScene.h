@@ -33,10 +33,9 @@ bool isPartyMemberGetFieldDamage(unsigned int index);
 // table 0x7100B55EF0
 class GfGameScene : public ::mm::mtl::PtrSingleton< ::gf::GfGameScene> {
 public:
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because ScriptPlayText's ui
-    // startTutorial calls it on PtrSingleton<GfGameScene>::sys() (when there is one). What it does: when the byte at
-    // 0x8B9 is set, clears it and calls GfEvent::callPlayerControl(15).
-    void fn_71002C4BE4();
+    // 2.0.0's symbols name it. What it does: when the byte at 0x8B9 is set, clears it and calls
+    // GfEvent::callPlayerControl(15).
+    void eventTutorialSequence();
     QuestID getQuestIdForTaskLog() const;  // 1.0.0 symbol
     void postUpdate(const fw::UpdateInfo& info);
     void setEnemyDead(GF_OBJ_HANDLE* handle);  // SCOM_CHAR_DEAD::exec passes the dead object
@@ -108,15 +107,13 @@ public:
     void setEventPlayerStop(bool stop);
     // named by 1.0.0: reference (1.0.0's GfPlayComResetBladePlayerStop::start calls setResetBladePlayerStop)
     void setResetBladePlayerStop(bool stop);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it follows setResetBladePlayerStop in
-    // gf_game_scene and GfFieldMapGimmick::update calls it on the GfGameScene singleton. What it does:
-    // EvtPlayerStop::setPlayerStop(stop) on the EvtPlayerStop at +0x658; GfFieldMapGimmick::update passes true while
-    // the gimmick's field skill runs (solve state 1) and false once it is solved (state 2).
-    void fn_71002C345C(bool stop);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because
-    // GfPlayComAfterEventScript::start calls it on the GfGameScene singleton. What it does: sets the bool at +0x8B9
-    // when the script name contains "aoc_tut24", "aoc_tut04" or "aoc_tut10" (it never clears it).
-    void fn_71002C4B80(const char* name);
+    // 2.0.0's symbols name it. What it does: EvtPlayerStop::setPlayerStop(stop) on the EvtPlayerStop at +0x658;
+    // GfFieldMapGimmick::update passes true while the gimmick's field skill runs (solve state 1) and false once it is
+    // solved (state 2).
+    void setArenaPlayerStop(bool stop);
+    // 2.0.0's symbols name it. What it does: sets the bool at +0x8B9 when the script name contains "aoc_tut24",
+    // "aoc_tut04" or "aoc_tut10" (it never clears it).
+    void eventAfterScriptEvent(const char* name);
 
     // GfGameManager reads and writes the next four through its own accessors (isStartGame/setStartGame,
     // isEnableRoomForHikariLv4, setStopMainMenuOpenForGimmick, is/setValidCollisionVelocity); the field names
@@ -154,13 +151,12 @@ public:
     void fn_71002C4C0C(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag, unsigned int kind);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // gf_game_scene's unit and GfGameManager's statics pass the scene. What they do: fn_71002C4B38: whether the int
-    // at 0x698 is below 2 (GfGameManager::fn_71002AC340); fn_71002C4BFC: whether the int at 0x68C is not 0
-    // (GfGameManager::fn_71002AC764).
+    // at 0x698 is below 2 (GfGameManager::isInvalidBattleStop); fn_71002C4BFC: whether the int at 0x68C is not 0
+    // (GfGameManager::isSepiaFilter).
     bool fn_71002C4B38();
     bool fn_71002C4BFC();
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
-    // gf_game_scene's unit and GfGameManager::fn_71002AC9C0 tail-calls it on the scene with its update info.
-    void fn_71002CC060(const ::fw::UpdateInfo& info);
+// 2.0.0's symbols name it.
+    void updateAfterLayer(const ::fw::UpdateInfo& info);
     // Placeholder name: new in 3.0.1. Placed here because its address follows update in gf_game_scene's unit and update
     // calls it with a driver index (no scene in x0, so static); unless an event, a talk, a map jump or the game start
     // runs, it updates the driver's three pouches (GfPouchUtil::updatePouch on each GfPouchUtil::getPouch)
@@ -197,21 +193,21 @@ public:
     void gevChangeParty();
     void gevBattleStart();
     void gevBattleEnd();
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: they lie in gf_game_scene's
-    // unit and GfGameManager's IGfEvent overrides fn_710000FA68, fn_710000FA60, fn_710000FA64, fn_710000FA20,
-    // fn_710000FA1C and fn_710000FA18 (IGfEvent's slots 23, 21, 22, 5, 4 and 3, in that order) forward to them on PtrSingleton<GfGameScene>'s instance, passing their arguments on. What they do: fn_71002C5200 and
-    // fn_71002C56CC hand the value to the same file function fn_71002C5208 (which, when
-    // GfGameManager::isFullScreenMenu answers true, builds "%s%s" ".wimdo" model paths); fn_71002C56D4 does the
-    // same kind of work with its value; fn_71002C5994 calls fn_71002E0F28 on every object of
-    // GfGameObj::getList(5); fn_71002C79B8 starts from the scene's byte at 0x6A0; fn_71002C7C44, unless
-    // GfGameManager::fn_71002A9E68 answers true, sets local game flag 52962 (type 1) once
-    // GfDataBlade::fn_7100231884 reaches 8003.
+    // 2.0.0's symbols name gevChangeGameDifficult, gevOpenPortal, gevOpenMainMenu; the fn_ names are placeholders. They
+    // lie in gf_game_scene's unit and GfGameManager's IGfEvent overrides gevHanaCondenser, gevOrbParam, gevAcceParam,
+    // gevChangeGameDifficult, gevOpenPortal and gevOpenMainMenu (IGfEvent's slots 23, 21, 22, 5, 4 and 3, in that
+    // order) forward to them on PtrSingleton<GfGameScene>'s instance, passing their arguments on. What they do:
+    // fn_71002C5200 and fn_71002C56CC hand the value to the same file function fn_71002C5208 (which, when
+    // GfGameManager::isFullScreenMenu answers true, builds "%s%s" ".wimdo" model paths); fn_71002C56D4 does the same
+    // kind of work with its value; gevChangeGameDifficult calls fn_71002E0F28 on every object of GfGameObj::getList(5);
+    // gevOpenPortal starts from the scene's byte at 0x6A0; gevOpenMainMenu, unless GfGameManager::isGameTypeIra answers
+    // true, sets local game flag 52962 (type 1) once GfDataBlade::fn_7100231884 reaches 8003.
     void fn_71002C5200(unsigned int value, bool flag);
     void fn_71002C56CC(unsigned int value);
     void fn_71002C56D4(unsigned int value);
-    void fn_71002C5994();
-    void fn_71002C79B8();
-    void fn_71002C7C44();
+    void gevChangeGameDifficult();
+    void gevOpenPortal();
+    void gevOpenMainMenu();
     void setCameraAvtivateOneTime();
     bool isPlayerCameraPause();
     void setPlayerCameraPause(bool pause);
@@ -338,7 +334,7 @@ public:
     unsigned char pad_422[0x6];
     // setEraseQuestEnemyForEventStart pushes the quest's enemies here (the name is not the original's)
     mm::mtl::FixedVector<GF_OBJ_HANDLE*, 64> m_eraseQuestEnemies;  // 0x428
-    // GfGameManager::fn_71002AC384 answers whether it is above 0 (btl::BattleCharacter::IsProcAI asks; the name is
+    // GfGameManager::isStopEnemyAttack answers whether it is above 0 (btl::BattleCharacter::IsProcAI asks; the name is
     // not the original's)
     int m_value630;
     // SCOM_FIELD_VOICE::createLandmark and createUnexplored play nothing while it is below 60 (+0x624 in 1.0.0;
@@ -346,7 +342,7 @@ public:
     unsigned int m_value634;
     EvtPlayerStop m_eventPlayerStop;  // setEventPlayerStop's
     EvtPlayerStop m_resetBladePlayerStop;  // setResetBladePlayerStop's
-    EvtPlayerStop m_gimmickPlayerStop;  // fn_71002C345C's (GfFieldMapGimmick::update calls it)
+    EvtPlayerStop m_gimmickPlayerStop;  // setArenaPlayerStop's (GfFieldMapGimmick::update calls it)
     // gf::_gffsn::bgmvolFadeBattleEvent fades its track out while it is set (+0x648 in 1.0.0; the name is not the
     // original's)
     bool m_battleEventBgm;
@@ -384,12 +380,12 @@ public:
     // GfPlayComIraCampSave::start clears it and requests solo party 22 (GfReqCommand::reqSoloParty) while it is set;
     // the name is not the original's
     bool m_iraCampSolo;
-    // fn_71002C4B80 sets it for the "aoc_tut24", "aoc_tut04" and "aoc_tut10" scripts; fn_71002C4BE4 clears it and
+    // eventAfterScriptEvent sets it for the "aoc_tut24", "aoc_tut04" and "aoc_tut10" scripts; eventTutorialSequence clears it and
     // calls GfEvent::callPlayerControl(15) (the name is not the original's)
     bool m_tutorialPlayerControl;
     unsigned char pad_8BA[0x2];
     int pad_8BC;  // setupGame and playEventSequenceEnd clear it (the name is not the original's)
-    bool m_flag8C0;  // GfGameManager::fn_71002AC6F0 sets it (the name is not the original's)
+    bool m_flag8C0;  // GfGameManager::reqestCraftPopupForIra sets it (the name is not the original's)
     unsigned char pad_8C1[0xF];  // build allocates 0x8D0 bytes
     void qevCompleteQuest(const gf::QuestCompleteParam& param);
     void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
@@ -398,11 +394,10 @@ public:
     void playEventSequenceStart(unsigned int id);
     void playEventSequenceEnd(unsigned int id);
     void playEventPlayEnd(unsigned int id);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because gevPlayEvent (its only
-    // caller) passes the scene and the event id on for GEV 14. What it does: 0x620 bytes that, in a scenario game,
-    // read the controlled mover's position (GfGameManager::getControlMoverPosition, fn_71002AB894), destroy party
-    // objects (SCOM_DESTROY_PARTY_OBJ::create) and set the scene's sound category volumes.
-    void fn_71002C6D48(unsigned int id);
+    // 2.0.0's symbols name it. What it does: 0x620 bytes that, in a scenario game, read the controlled mover's position
+    // (GfGameManager::getControlMoverPosition, setControlMoverPositionForNoPlayer), destroy party objects
+    // (SCOM_DESTROY_PARTY_OBJ::create) and set the scene's sound category volumes.
+    void playEventStartFrame(unsigned int id);
     void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);
     void clear();
     void setEraseQuestEnemyForEventStart(QuestID quest);

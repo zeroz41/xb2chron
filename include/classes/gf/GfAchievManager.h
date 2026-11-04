@@ -45,10 +45,9 @@ public:
     void incleaseAchievCount(QuestID id, unsigned int count, unsigned int add);
     void incAchievWithBlade(unsigned int type, int value, const mm::mtl::FixedVector<unsigned short, 422>& blades);
     virtual ~GfAchievManager();  // slot 0
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because fn_71005661C0 calls it on
-    // PtrSingleton<GfAchievManager>'s instance (which it does not read). What it does: for every blade of blades,
-    // fn_710028A448(type, value, blade). Its one caller passes type 0x9C.
-    void fn_710028A720(unsigned int type, int value, const mm::mtl::FixedVector<unsigned short, 422>& blades);
+    // 2.0.0's symbols name it. What it does: for every blade of blades, fn_710028A448(type, value, blade). Its one
+    // caller passes type 0x9C.
+    void checkAchievWithBlade(unsigned int type, int value, const mm::mtl::FixedVector<unsigned short, 422>& blades);
     void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);
     // adds to list the blades with an affinity chart line of the achievement; whether list holds any
     bool getBladeByAchievementSet(mm::mtl::FixedVector<unsigned short, 422>& list, unsigned int achievement) const;
@@ -60,7 +59,7 @@ public:
 // Placeholder name: 1.0.0 has it unnamed too (no symbol: file-local in the original; defined in
 // gf_achiev_manager.cpp). What it does: for each of the blade's affinity chart lines (9 to 0), finds the line's current
 // quest (the first not finished; a finished one without flag bit 0 ends the search) and, when it is ordered and
-// counts the statistic type, adds value's count to it. incAchiev, incAchievWithBlade and fn_710028A720 call it.
+// counts the statistic type, adds value's count to it. incAchiev, incAchievWithBlade and checkAchievWithBlade call it.
 void fn_710028A448(unsigned int type, int value, unsigned int blade);
 }  // namespace gf
 

@@ -45,7 +45,7 @@ void UIResource::releaseResourceList() {
     }
 }
 
-void UIResource::fn_71006943A0() {
+void UIResource::ready() {
     if (m_resourceList.capacity() != 0 && m_resourceList.size() != 0) {
         for (ResourceInfo* it = m_resourceList.begin(); it != m_resourceList.end();) {
             if (it->m_isRemovable && it->m_resource->valid() && it->m_resource->getAssetSize() == 0) {

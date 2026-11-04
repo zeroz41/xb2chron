@@ -46,18 +46,15 @@ public:
     void setUsingGame(bool usingGame);
     // GfAssetManager::destroyExtResource forwards to it (3.0.1's symbols name it)
     void releaseExtResource();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because GfAssetManager::
-    // fn_71001AE8A8 calls it on the handle's AssetPackInfo. What it does: walks the packs' resources and appends to
-    // `names` the asset name of each resource whose name contains `name` (strstr); returns !names.empty().
-    bool fn_71001B1840(mm::mtl::FixedVector<const char*, 128>& names, const char* name);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because GfAssetManager::
-    // fn_71001AE9D0 calls it on the handle's AssetPackInfo. What it does: walks the packs' resources and returns the
-    // first whose asset name equals `name` (strcmp), else nullptr.
-    GfAssetResource* fn_71001B1B30(const char* name);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because GfAssetManager::
-    // fn_71001AF824 calls it on the handle's AssetPackInfo. What it does: walks the packs' resources and returns
-    // true when one's asset name contains `name` (strstr).
-    bool fn_71001B3624(const char* name) const;
+    // 2.0.0's symbols name it. What it does: walks the packs' resources and appends to `names` the asset name of each
+    // resource whose name contains `name` (strstr); returns !names.empty().
+    bool getFileNameByExt(mm::mtl::FixedVector<const char*, 128>& names, const char* name);
+    // 2.0.0's symbols name it. What it does: walks the packs' resources and returns the first whose asset name equals
+    // `name` (strcmp), else nullptr.
+    GfAssetResource* getResource(const char* name);
+    // 2.0.0's symbols name it. What it does: walks the packs' resources and returns true when one's asset name contains
+    // `name` (strstr).
+    bool isExistResourceName(const char* name) const;
     // 1.0.0's symbols name it (GfAssetManager::updateCheckLoading calls it there and here); clears m_reload, then
     // walks m_packs with an empty body (begin()/end() asserts only)
     void setLoadComplete();

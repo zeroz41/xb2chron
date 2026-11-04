@@ -191,14 +191,14 @@ void UIManager::terminate() {
 bool UIManager::createLayer(unsigned int id) {
     unsigned char* bdat;
     if (id < 100) {
-        bdat = UIUtil::fn_7100696A28(0);
+        bdat = UIUtil::getLayerBdat(0);
     } else {
-        if (!UIUtil::fn_7100696970(id / 100)) {
+        if (!UIUtil::isEnableExpType(id / 100)) {
             return false;
         }
-        bdat = UIUtil::fn_7100696A28(id / 100);
+        bdat = UIUtil::getLayerBdat(id / 100);
     }
-    return fn_710068F208(bdat, id, false);
+    return createLayerEx(bdat, id, false);
 }
 
 unsigned int UIManager::searchObject(const char* name, unsigned short group) {
@@ -210,13 +210,13 @@ unsigned int UIManager::searchObject(const char* name, unsigned short group) {
 
 void UIManager::terminateLayer(unsigned int id, bool release) {
     if (id < 100) {
-        fn_710068F58C(UIUtil::getBdatFP(6), id, release);
-    } else if (UIUtil::fn_7100696970(id / 100)) {
-        fn_710068F58C(UIUtil::fn_7100696A28(id / 100), id, release);
+        terminateLayerEx(UIUtil::getBdatFP(6), id, release);
+    } else if (UIUtil::isEnableExpType(id / 100)) {
+        terminateLayerEx(UIUtil::getLayerBdat(id / 100), id, release);
     }
 }
 
-void UIManager::fn_710068F58C(unsigned char* bdat, unsigned int id, bool release) {
+void UIManager::terminateLayerEx(unsigned char* bdat, unsigned int id, bool release) {
     if (!isLayerCreated(id) || bdat == nullptr) {
         return;
     }
@@ -238,15 +238,15 @@ void UIManager::releaseLayer(unsigned int id) {
     if (id < 100) {
         bdat = UIUtil::getBdatFP(6);
     } else {
-        if (!UIUtil::fn_7100696970(id / 100)) {
+        if (!UIUtil::isEnableExpType(id / 100)) {
             return;
         }
-        bdat = UIUtil::fn_7100696A28(id / 100);
+        bdat = UIUtil::getLayerBdat(id / 100);
     }
-    fn_710068F744(bdat, id);
+    releaseLayerEx(bdat, id);
 }
 
-void UIManager::fn_710068F744(unsigned char* bdat, unsigned int id) {
+void UIManager::releaseLayerEx(unsigned char* bdat, unsigned int id) {
     if (!isLayerCreated(id) || bdat == nullptr) {
         return;
     }
@@ -285,8 +285,8 @@ bool UIManager::preloadLayer(unsigned int id) {
     return true;
 }
 
-void UIManager::fn_710068F958() {
-    UIObjFactory::get()->fn_71006757FC();
+void UIManager::clearPreload() {
+    UIObjFactory::get()->clearPreloadResource();
 }
 
 void UIManager::terminateObject(const char* name, unsigned char group, bool release) {

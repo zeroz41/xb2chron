@@ -117,12 +117,12 @@
 #include "classes/gf/GfGameEvent.h"
 #include "gf/GfUtil.h"
 #include "classes/gf/SCOM_SCRIPT.h"
-#include "classes/gf/TUnk_B6AD28.h"
-#include "classes/gf/TUnk_B6AF70.h"
-#include "classes/gf/TUnk_B6AFA0.h"
+#include "classes/gf/SCOM_BATTLE_ARENA.h"
+#include "classes/gf/SCOM_ADD_ECUBE.h"
+#include "classes/gf/SCOM_ADD_SCORE.h"
 #include "classes/gf/SCOM_DESTROY_PARTY_OBJ.h"
 #include "gf/GfGameUnit.h"
-#include "classes/gf/TUnk_B535D0.h"
+#include "classes/gf/GfGameArena.h"
 #include "gf/MsgUnk_1000034.h"
 #include "classes/gf/GfScriptManager.h"
 #include "ml/MTRand.h"
@@ -166,7 +166,7 @@ bool SCOM_SET_MERCENARIES_LEVEL::exec(fw::UpdateInfo const&) {
     return true;
 }
 
-bool TUnk_B6AF70::exec(fw::UpdateInfo const&) {
+bool SCOM_ADD_ECUBE::exec(fw::UpdateInfo const&) {
     fn_71002DA4FC(m_value);
     return true;
 }
@@ -176,11 +176,11 @@ unsigned long fn_7100558BAC(int value) {
         return -1;
     }
 #line 147
-    TUnk_B6AF70* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B6AF70(value);
+    SCOM_ADD_ECUBE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ADD_ECUBE(value);
     return GfReqSmallCom::addRequest(request);
 }
 
-bool TUnk_B6AFA0::exec(fw::UpdateInfo const&) {
+bool SCOM_ADD_SCORE::exec(fw::UpdateInfo const&) {
     fn_71002DA570(m_value);
     return true;
 }
@@ -190,7 +190,7 @@ unsigned long fn_7100558D28(int value) {
         return -1;
     }
 #line 164
-    TUnk_B6AFA0* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B6AFA0(value);
+    SCOM_ADD_SCORE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ADD_SCORE(value);
     return GfReqSmallCom::addRequest(request);
 }
 
@@ -239,7 +239,7 @@ bool SCOM_OBJ_WARP_POS::exec(fw::UpdateInfo const&) {
     return true;
 }
 
-void SCOM_OBJ_WARP_POS::fn_710055AA2C(GF_OBJ_HANDLE* handle, const fw::Transform& transform, bool arg) {
+void SCOM_OBJ_WARP_POS::create(GF_OBJ_HANDLE* handle, const fw::Transform& transform, bool arg) {
 #line 782
     SCOM_OBJ_WARP_POS* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_OBJ_WARP_POS(SCOM_TYPE(17));
     request->m_value = handle;
@@ -430,7 +430,7 @@ inline SCOM_BC_PARTICLE::SCOM_BC_PARTICLE(GF_OBJ_HANDLE* obj, float time)
     }
 }
 
-unsigned long SCOM_BC_PARTICLE::fn_710056ABC4(GF_OBJ_HANDLE* obj, float time) {
+unsigned long SCOM_BC_PARTICLE::create(GF_OBJ_HANDLE* obj, float time) {
     if (obj == reinterpret_cast<GF_OBJ_HANDLE*>(-1) || time < 1e-6f) {
         return -1;
     }
@@ -439,7 +439,7 @@ unsigned long SCOM_BC_PARTICLE::fn_710056ABC4(GF_OBJ_HANDLE* obj, float time) {
     return GfReqSmallCom::addRequestParallel(request);
 }
 
-unsigned long SCOM_BC_PARTICLE::fn_710056ACD8(GF_OBJ_HANDLE* obj, float time) {
+unsigned long SCOM_BC_PARTICLE::createPortal(GF_OBJ_HANDLE* obj, float time) {
     if (obj == reinterpret_cast<GF_OBJ_HANDLE*>(-1) || time < 1e-6f) {
         return -1;
     }
@@ -449,7 +449,7 @@ unsigned long SCOM_BC_PARTICLE::fn_710056ACD8(GF_OBJ_HANDLE* obj, float time) {
     return GfReqSmallCom::addRequestParallel(request);
 }
 
-unsigned long SCOM_BC_PARTICLE::fn_710056ADF4(GF_OBJ_HANDLE* obj, float time) {
+unsigned long SCOM_BC_PARTICLE::createPortalEvt(GF_OBJ_HANDLE* obj, float time) {
     if (obj == reinterpret_cast<GF_OBJ_HANDLE*>(-1) || time < 1e-6f) {
         return -1;
     }
@@ -630,12 +630,12 @@ unsigned long SCOM_SET_MERCENARIES_LEVEL::create(unsigned int a0) {
 }
 
 bool SCOM_ADD_TRUST::exec(fw::UpdateInfo const&) {
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         if (m_value2 == 0) {
             mm::mtl::FixedVector<unsigned short, 32> drivers;
-            GfDataDriver::fn_7100241570(drivers);
+            GfDataDriver::getListIra(drivers);
             for (const unsigned short& driver : drivers) {
-                if (GfDataDriver::fn_7100237A94(driver) || GfDataDriver::isActivateUnuse(driver)) {
+                if (GfDataDriver::isIraFront(driver) || GfDataDriver::isActivateUnuse(driver)) {
                     continue;
                 }
                 GfGameUtil::setTrustPointForDebug(driver, m_value);
@@ -817,7 +817,7 @@ unsigned long SCOM_OBJ_ALPHA::create(GF_OBJ_HANDLE* handle, float time, float al
     return GfReqSmallCom::addRequestParallel(new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_OBJ_ALPHA(GfReqSmallCom::sys()->newHandle(), handle, time, alpha));
 }
 
-unsigned long SCOM_OBJ_ALPHA::fn_710055D40C(GF_OBJ_HANDLE* handle, float time, float alpha) {
+unsigned long SCOM_OBJ_ALPHA::createEventPause(GF_OBJ_HANDLE* handle, float time, float alpha) {
     if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
         return -1;
     }
@@ -868,7 +868,7 @@ SCOM_OBJ_VFADE::SCOM_OBJ_VFADE(GF_SCOM_HANDLE* handle, GF_OBJ_HANDLE* obj, float
 
 void SCOM_OBJ_VFADE::applyPartsRatio(GfVolumeFade* fade, float ratio) {
     fade->setFadeRatio(m_acc, m_parts, ratio);
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         return;
     }
     if (!m_isOtherPartsOff) {
@@ -1261,7 +1261,7 @@ unsigned long SCOM_QUEST_GIMMICK::createTresure(unsigned int id, float time) {
     return GfReqSmallCom::addRequest(request);
 }
 
-unsigned long SCOM_QUEST_GIMMICK::fn_710055F284(unsigned int id, float time) {
+unsigned long SCOM_QUEST_GIMMICK::createEnemyWave(unsigned int id, float time) {
     if (time > 0.0f) {
         GfPlayFactory::createGimmickTaskComplete(gmk::GmkType(58), id, time);
         return -1;
@@ -1274,7 +1274,7 @@ unsigned long SCOM_QUEST_GIMMICK::fn_710055F284(unsigned int id, float time) {
     return GfReqSmallCom::addRequest(request);
 }
 
-unsigned long SCOM_QUEST_GIMMICK::fn_710055F40C(unsigned int id, float time) {
+unsigned long SCOM_QUEST_GIMMICK::createCamp(unsigned int id, float time) {
     if (time > 0.0f) {
         GfPlayFactory::createGimmickTaskComplete(gmk::GmkType(62), id, time);
         return -1;
@@ -1287,7 +1287,7 @@ unsigned long SCOM_QUEST_GIMMICK::fn_710055F40C(unsigned int id, float time) {
     return GfReqSmallCom::addRequest(request);
 }
 
-unsigned long SCOM_QUEST_GIMMICK::fn_710055F594(unsigned int id, float time) {
+unsigned long SCOM_QUEST_GIMMICK::createCollection(unsigned int id, float time) {
     if (time > 0.0f) {
         GfPlayFactory::createGimmickTaskComplete(gmk::GmkType(28), id, time);
         return -1;
@@ -1319,7 +1319,7 @@ unsigned long SCOM_ENBOOK_DEAD_PLAYER::create(GF_OBJ_HANDLE* handle) {
 }
 
 bool SCOM_ENBOOK_BOSS_TIME::exec(fw::UpdateInfo const&) {
-    fn_71002ED774(m_enemy, m_time, GfGameManager::fn_71002AC57C());
+    fn_71002ED774(m_enemy, m_time, GfGameManager::getBtlDifficult());
     return true;
 }
 
@@ -1442,13 +1442,13 @@ unsigned long SCOM_POPUP::createMercenaryReturn(unsigned int a0, unsigned int a1
     return GfReqSmallCom::addRequestParallel(request);
 }
 
-void SCOM_POPUP::fn_7100569D44(unsigned int mapId, unsigned int teamId) {
+void SCOM_POPUP::cancelMercenaryReturn(unsigned int mapId, unsigned int teamId) {
     GfMenuObjPopup::OpenParam param;
     param.m_type = 8;
     param.m_value[0] = mapId;
     param.m_value[1] = teamId;
     param.m_value[2] = GfDataMercenaries::getTeamLeader(teamId);
-    GfMenuObjPopup::fn_710045D48C(param);
+    GfMenuObjPopup::remove(param);
 }
 
 unsigned long SCOM_POPUP::createMercenaryAdd(unsigned int a0) {
@@ -1469,7 +1469,7 @@ unsigned long SCOM_POPUP::createAchievement(unsigned int blade, unsigned int lin
     if (GfGameManager::isStartGame()) {
         return -1;
     }
-    if (!GfGameManager::fn_71002A9E68() && !GfMenuObjUtil::getMenuCondition(15)) {
+    if (!GfGameManager::isGameTypeIra() && !GfMenuObjUtil::getMenuCondition(15)) {
         return -1;
     }
     if (GfGameUtil::setupSaveAchievementPopup(blade, line, level)) {
@@ -1500,8 +1500,8 @@ unsigned long SCOM_POPUP::createArts(unsigned int a0, unsigned int a1) {
     return GfReqSmallCom::addRequestParallel(request);
 }
 
-unsigned long SCOM_POPUP::fn_710056A3FC(unsigned int) {
-    if (GfGameManager::isStartGame() || !GfGameManager::fn_71002AC598() || GfItemUtil::getItemBoxCount(25443) == 0 ||
+unsigned long SCOM_POPUP::createChBtlNewChallenge(unsigned int) {
+    if (GfGameManager::isStartGame() || !GfGameManager::isInstalledBattleArenaContents() || GfItemUtil::getItemBoxCount(25443) == 0 ||
         GfGameFlag::getLocal(1, 35337) == 0) {
         return -1;
     }
@@ -1515,7 +1515,7 @@ unsigned long SCOM_POPUP::fn_710056A3FC(unsigned int) {
     return GfReqSmallCom::addRequestParallel(request);
 }
 
-unsigned long SCOM_POPUP::fn_710056A4D8(unsigned int driver, unsigned int a1, unsigned int a2) {
+unsigned long SCOM_POPUP::createCraft(unsigned int driver, unsigned int a1, unsigned int a2) {
     if (GfGameManager::isStartGame() || GfDataDriver::isActivateUnuse(driver)) {
         return -1;
     }
@@ -1604,7 +1604,7 @@ unsigned long SCOM_ACHIEV_INC::createBladeArts(GF_OBJ_HANDLE* handle, unsigned i
     return GfReqSmallCom::addRequestParallel(request);
 }
 
-unsigned long SCOM_ACHIEV_INC::fn_7100564088(GF_OBJ_HANDLE* handle, unsigned int arts) {
+unsigned long SCOM_ACHIEV_INC::createBladeArtsSp(GF_OBJ_HANDLE* handle, unsigned int arts) {
     if (arts == 0) {
         return -1;
     }
@@ -1630,7 +1630,7 @@ unsigned long SCOM_ACHIEV_INC::createBladeNArts(GF_OBJ_HANDLE* handle) {
     return GfReqSmallCom::addRequestParallel(request);
 }
 
-void SCOM_ACHIEV_INC::fn_7100564354(GF_OBJ_HANDLE* handle) {
+void SCOM_ACHIEV_INC::createElementalCombo(GF_OBJ_HANDLE* handle) {
     fn_7100564360(handle, 0x7D, 1);
 }
 
@@ -1648,25 +1648,25 @@ void SCOM_ACHIEV_INC::fn_7100564360(GF_OBJ_HANDLE* handle, unsigned int type, un
     }
 }
 
-void SCOM_ACHIEV_INC::fn_71005645DC(GF_OBJ_HANDLE* handle) {
+void SCOM_ACHIEV_INC::createElementalComboFinish(GF_OBJ_HANDLE* handle) {
     fn_7100564360(handle, 0x7F, 1);
 }
 
-void SCOM_ACHIEV_INC::fn_71005645E8(GF_OBJ_HANDLE* handle) {
+void SCOM_ACHIEV_INC::createFightCombo(GF_OBJ_HANDLE* handle) {
     fn_71005645F0(handle, 0x79);
 }
 
-void SCOM_ACHIEV_INC::fn_7100564920(GF_OBJ_HANDLE* handle) {
+void SCOM_ACHIEV_INC::createFightComboFinish(GF_OBJ_HANDLE* handle) {
     fn_71005645F0(handle, 0x7B);
 }
 
-void SCOM_ACHIEV_INC::fn_7100564928(GF_OBJ_HANDLE* handle) {
-    if (!GfGameManager::fn_71002A9E68()) {
+void SCOM_ACHIEV_INC::createChainAttack(GF_OBJ_HANDLE* handle) {
+    if (!GfGameManager::isGameTypeIra()) {
         fn_7100564360(handle, 0x81, 1);
         return;
     }
     GfObjAcc acc(handle);
-    if (GfDataDriver::fn_7100237A94(acc.getDriverId())) {
+    if (GfDataDriver::isIraFront(acc.getDriverId())) {
         return;
     }
     unsigned int blade = GfDataBlade::fn_7100237B70(acc.getDriverId(), -1);
@@ -1675,27 +1675,27 @@ void SCOM_ACHIEV_INC::fn_7100564928(GF_OBJ_HANDLE* handle) {
     create(0x81, 1, blade);
 }
 
-void SCOM_ACHIEV_INC::fn_7100564ACC() {
+void SCOM_ACHIEV_INC::createButtonChallenge() {
     fn_7100564360(GfGameManager::getPartyLeaderDriver(), 0x83, 1);
 }
 
-void SCOM_ACHIEV_INC::fn_7100564AE8(GF_OBJ_HANDLE* handle) {
+void SCOM_ACHIEV_INC::createHelp(GF_OBJ_HANDLE* handle) {
     fn_7100564360(handle, 0x85, 1);
 }
 
-void SCOM_ACHIEV_INC::fn_7100564AF4() {
+void SCOM_ACHIEV_INC::createPotGet() {
     fn_7100564360(GfGameManager::getPartyLeaderDriver(), 0x87, 1);
 }
 
-void SCOM_ACHIEV_INC::fn_7100564B10(GF_OBJ_HANDLE* handle) {
+void SCOM_ACHIEV_INC::createAvoid(GF_OBJ_HANDLE* handle) {
     fn_7100564360(handle, 0x89, 1);
 }
 
-void SCOM_ACHIEV_INC::fn_7100564B1C(GF_OBJ_HANDLE* handle) {
+void SCOM_ACHIEV_INC::createGuard(GF_OBJ_HANDLE* handle) {
     fn_7100564360(handle, 0x8B, 1);
 }
 
-void SCOM_ACHIEV_INC::fn_7100564B28(GF_OBJ_HANDLE* handle) {
+void SCOM_ACHIEV_INC::createBladeChange(GF_OBJ_HANDLE* handle) {
     DataParamAcc acc(handle);
     unsigned int blade = acc.isValid() ? acc.getBdatId() : 0;
     addTotalCount(0x8C, 1);
@@ -1703,11 +1703,11 @@ void SCOM_ACHIEV_INC::fn_7100564B28(GF_OBJ_HANDLE* handle) {
     create(0x8D, 1, blade);
 }
 
-void SCOM_ACHIEV_INC::fn_7100564C9C(GF_OBJ_HANDLE* handle, unsigned int value) {
+void SCOM_ACHIEV_INC::createRecover(GF_OBJ_HANDLE* handle, unsigned int value) {
     fn_7100564360(handle, 0x95, value);
 }
 
-void SCOM_ACHIEV_INC::fn_7100564CAC(GF_OBJ_HANDLE* handle) {
+void SCOM_ACHIEV_INC::createBackAttack(GF_OBJ_HANDLE* handle) {
     mm::mtl::FixedVector<unsigned short, 422> blades;
     fn_7100563BB4(blades, handle, true);
     if (!blades.empty()) {
@@ -1719,7 +1719,7 @@ void SCOM_ACHIEV_INC::fn_7100564CAC(GF_OBJ_HANDLE* handle) {
     }
 }
 
-void SCOM_ACHIEV_INC::fn_7100564DC0(GF_OBJ_HANDLE* handle, unsigned int value) {
+void SCOM_ACHIEV_INC::createDamageMax(GF_OBJ_HANDLE* handle, unsigned int value) {
     addTotalCount(0x92, value);
     create(0x92, value, 0);
     mm::mtl::FixedVector<unsigned short, 422> blades;
@@ -1739,7 +1739,7 @@ void SCOM_ACHIEV_INC::fn_7100564DC0(GF_OBJ_HANDLE* handle, unsigned int value) {
     }
 }
 
-void SCOM_ACHIEV_INC::fn_7100564FE8(GF_OBJ_HANDLE* handle, unsigned int value) {
+void SCOM_ACHIEV_INC::createDamageAdd(GF_OBJ_HANDLE* handle, unsigned int value) {
     addTotalCount(0x8E, value);
     create(0x8E, value, 0);
     mm::mtl::FixedVector<unsigned short, 422> blades;
@@ -1759,7 +1759,7 @@ void SCOM_ACHIEV_INC::fn_7100564FE8(GF_OBJ_HANDLE* handle, unsigned int value) {
     }
 }
 
-void SCOM_ACHIEV_INC::fn_7100565210(GF_OBJ_HANDLE* handle, unsigned int value) {
+void SCOM_ACHIEV_INC::createDamageGet(GF_OBJ_HANDLE* handle, unsigned int value) {
     addTotalCount(0x90, value);
     create(0x90, value, 0);
     mm::mtl::FixedVector<unsigned short, 422> blades;
@@ -1773,7 +1773,7 @@ void SCOM_ACHIEV_INC::fn_7100565210(GF_OBJ_HANDLE* handle, unsigned int value) {
     }
 }
 
-void SCOM_ACHIEV_INC::fn_71005653A4(GF_OBJ_HANDLE* handle) {
+void SCOM_ACHIEV_INC::createCriticalHit(GF_OBJ_HANDLE* handle) {
     addTotalCount(0x72, 1);
     create(0x72, 1, 0);
     mm::mtl::FixedVector<unsigned short, 422> blades;
@@ -1787,7 +1787,7 @@ void SCOM_ACHIEV_INC::fn_71005653A4(GF_OBJ_HANDLE* handle) {
     }
 }
 
-void SCOM_ACHIEV_INC::fn_7100565534(GF_OBJ_HANDLE* handle) {
+void SCOM_ACHIEV_INC::createCriticalGet(GF_OBJ_HANDLE* handle) {
     addTotalCount(0x74, 1);
     create(0x74, 1, 0);
     mm::mtl::FixedVector<unsigned short, 422> blades;
@@ -1801,7 +1801,7 @@ void SCOM_ACHIEV_INC::fn_7100565534(GF_OBJ_HANDLE* handle) {
     }
 }
 
-void SCOM_ACHIEV_INC::fn_71005656C4(GF_OBJ_HANDLE* handle) {
+void SCOM_ACHIEV_INC::createKizuna(GF_OBJ_HANDLE* handle) {
     addTotalCount(0x76, 1);
     create(0x76, 1, 0);
     mm::mtl::FixedVector<unsigned short, 422> blades;
@@ -1835,21 +1835,21 @@ void SCOM_ACHIEV_INC::createCrystal() {
 
 void fn_7100566168() {
     mm::mtl::FixedVector<unsigned short, 422> blades;
-    GfDataBlade::fn_71002376E8(blades);
+    GfDataBlade::getListParty(blades);
     if (GfAchievManager* manager = GfAchievManager::sys()) {
         manager->incAchievWithBlade(0x9B, 1, blades);
     }
 }
 
 void fn_71005661C0(unsigned int value) {
-    if (!GfGameManager::fn_71002AC598()) {
+    if (!GfGameManager::isInstalledBattleArenaContents()) {
         return;
     }
     GfDataAchievement::addTotalCount(0x9D, value);
     mm::mtl::FixedVector<unsigned short, 422> blades;
-    GfDataBlade::fn_71002376E8(blades);
+    GfDataBlade::getListParty(blades);
     if (GfAchievManager* manager = GfAchievManager::sys()) {
-        manager->fn_710028A720(0x9C, value, blades);
+        manager->checkAchievWithBlade(0x9C, value, blades);
     }
 }
 
@@ -1861,13 +1861,13 @@ void fn_71005663BC() {
         }
     }
     count += GfGameFlag::getLocal(0x20, 0x141);
-    GfDataAchievement::fn_710024B71C(75, 0);
+    GfDataAchievement::setTotalCount(75, 0);
     GfDataAchievement::addTotalCount(75, count);
 }
 
 void fn_7100566424(unsigned int type) {
     mm::mtl::FixedVector<unsigned short, 422> blades;
-    GfDataBlade::fn_71002376E8(blades);
+    GfDataBlade::getListParty(blades);
     if (GfAchievManager* manager = GfAchievManager::sys()) {
         manager->incAchievWithBlade(type, 1, blades);
     }
@@ -1962,7 +1962,7 @@ inline bool SCOM_FIELD_VOICE::isStopVoice() const {
     return (m_stopOnEvent && GfGameManager::isPlayEvent()) || m_flagD3;
 }
 
-bool SCOM_FIELD_VOICE::fn_7100566B24(mm::mtl::FixedVector<GF_OBJ_HANDLE*, 9>& handles) {
+bool SCOM_FIELD_VOICE::getIraMember(mm::mtl::FixedVector<GF_OBJ_HANDLE*, 9>& handles) {
     for (unsigned int i = 0; i < 3; i++) {
         for (unsigned int j = 0; j < 3; j++) {
             GF_OBJ_HANDLE* handle = GfGameParty::getHandleDriver(i, j);
@@ -2107,7 +2107,7 @@ unsigned long SCOM_FIELD_VOICE::createLandmark() {
     if (party == -1) {
         return -1;
     }
-    bool torna = GfGameManager::fn_71002A9E68();
+    bool torna = GfGameManager::isGameTypeIra();
     GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
     GF_OBJ_HANDLE* partner;
     if (torna) {
@@ -2144,7 +2144,7 @@ unsigned long SCOM_FIELD_VOICE::createUnexplored() {
     if (party == -1) {
         return -1;
     }
-    bool torna = GfGameManager::fn_71002A9E68();
+    bool torna = GfGameManager::isGameTypeIra();
     GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
     GF_OBJ_HANDLE* partner;
     if (torna) {
@@ -2170,7 +2170,7 @@ unsigned long SCOM_FIELD_VOICE::createUnexplored() {
     return GfReqSmallCom::addRequestParallel(request);
 }
 
-unsigned long SCOM_FIELD_VOICE::fn_7100567634(const ParamObj& obj) {
+unsigned long SCOM_FIELD_VOICE::createLevelupForCamp(const ParamObj& obj) {
     unsigned long handle = createLevelup(obj);
     if (SCOM_FIELD_VOICE* request = static_cast<SCOM_FIELD_VOICE*>(findRequest(handle))) {
         request->m_stopOnEvent = false;
@@ -2183,7 +2183,7 @@ unsigned long SCOM_FIELD_VOICE::createExitInn() {
     if (party == -1) {
         return -1;
     }
-    bool torna = GfGameManager::fn_71002A9E68();
+    bool torna = GfGameManager::isGameTypeIra();
     GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
     GF_OBJ_HANDLE* partner;
     if (torna) {
@@ -2282,7 +2282,7 @@ unsigned long SCOM_FIELD_VOICE::createSkipTravel(bool start) {
     CV_FIELD field = start ? CV_FIELD(19) : CV_FIELD(20);
     int party = fn_71005680B0();
     if (party != -1) {
-        bool torna = GfGameManager::fn_71002A9E68();
+        bool torna = GfGameManager::isGameTypeIra();
         GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
         GF_OBJ_HANDLE* partner =
             torna ? GfGameParty::getHandleDriver(party, 1) : GfGameParty::getHandleBlade(party, -1);
@@ -2302,7 +2302,7 @@ unsigned long SCOM_FIELD_VOICE::createRestart(CV_FIELD field) {
     if (party == -1) {
         return -1;
     }
-    bool torna = GfGameManager::fn_71002A9E68();
+    bool torna = GfGameManager::isGameTypeIra();
     GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
     GF_OBJ_HANDLE* partner;
     if (torna) {
@@ -2332,7 +2332,7 @@ int SCOM_FIELD_VOICE::fn_71005680B0() {
     mm::mtl::FixedVector<unsigned short, 32> parties;
     for (unsigned int i = 0; i < 3; i++) {
         bool valid;
-        if (GfGameManager::fn_71002A9E68()) {
+        if (GfGameManager::isGameTypeIra()) {
             valid = GfGameParty::getDriverBdatId(i, 0) != 0 && GfGameParty::getDriverBdatId(i, 1) != 0;
         } else {
             valid = GfGameObj::isValidGameObj(GfGameParty::getHandleDriver(i, 0), true, nullptr) &&
@@ -2377,7 +2377,7 @@ unsigned long SCOM_FIELD_VOICE::createTime(CV_FIELD field) {
     if (party == -1) {
         return -1;
     }
-    bool torna = GfGameManager::fn_71002A9E68();
+    bool torna = GfGameManager::isGameTypeIra();
     GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
     GF_OBJ_HANDLE* partner;
     if (torna) {
@@ -2411,13 +2411,13 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createFieldSkillStart(unsigned int blade, u
     return GfGameVoice::playVoice(ParamObj(4, blade), name, CV_PRIO(1), false);
 }
 
-GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::fn_7100568D34(unsigned int skill) {
-    if (GfGameManager::fn_71002A9E68()) {
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createFieldSkillClear(unsigned int skill) {
+    if (GfGameManager::isGameTypeIra()) {
         VoiceList names;
         names.push_back("750101");
         names.push_back("750102");
         names.push_back("750103");
-        return fn_7100568E1C(names);
+        return createInPartyForIra(names);
     }
     QuestListAcc* quests = QuestListAcc::get();
     DataParamAcc leader(GfGameManager::getPartyLeaderDriver());
@@ -2431,11 +2431,11 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::fn_7100568D34(unsigned int skill) {
 }
 
 GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createFieldSkillMiss(unsigned int skill) {
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         VoiceList names;
         names.push_back("760101");
         names.push_back("760102");
-        return fn_7100568E1C(names);
+        return createInPartyForIra(names);
     }
     QuestListAcc* quests = QuestListAcc::get();
     DataParamAcc leader(GfGameManager::getPartyLeaderDriver());
@@ -2459,12 +2459,12 @@ static inline unsigned int getBladeBdatId(const DataParamAcc& acc) {
     return acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0;
 }
 
-GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::fn_7100568E1C(const VoiceList& names) {
-    if (!GfGameManager::fn_71002A9E68()) {
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createInPartyForIra(const VoiceList& names) {
+    if (!GfGameManager::isGameTypeIra()) {
         return nullptr;
     }
     mm::mtl::FixedVector<GF_OBJ_HANDLE*, 9> handles;
-    if (!fn_7100566B24(handles)) {
+    if (!getIraMember(handles)) {
         return nullptr;
     }
     DataParamAcc blade(handles[ml::mtRand(handles.size())]);
@@ -2473,7 +2473,7 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::fn_7100568E1C(const VoiceList& names) {
     }
     mm::mtl::FixStr<32> name(s_bladeVoiceIds[getBladeBdatId(blade) - 0x11]);
     name += names[ml::mtRand(names.size())];
-    return GfGameVoice::fn_71002F1D5C(blade.m_handle, name.m_str, CV_PRIO(3));
+    return GfGameVoice::playVoiceParty(blade.m_handle, name.m_str, CV_PRIO(3));
 }
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B6AAC0)
@@ -2490,34 +2490,34 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createDriverKizuna(unsigned int id) {
     return GfGameVoice::playVoice(3, id, s_driverKizunaVoices[id - 1][ml::mtRand(3)], CV_PRIO(3));
 }
 
-void SCOM_FIELD_VOICE::fn_71005691B0() {
+void SCOM_FIELD_VOICE::createQuestOrderIra() {
     VoiceList names;
     names.push_back("670101");
     names.push_back("670102");
-    fn_7100568E1C(names);
+    createInPartyForIra(names);
 }
 
-void SCOM_FIELD_VOICE::fn_71005691EC() {
+void SCOM_FIELD_VOICE::createQuestCompleteIra() {
     VoiceList names;
     names.push_back("670103");
     names.push_back("670104");
-    fn_7100568E1C(names);
+    createInPartyForIra(names);
 }
 
 void fn_7100569228() {
     SCOM_FIELD_VOICE::VoiceList names;
     names.push_back("670105");
     names.push_back("670106");
-    SCOM_FIELD_VOICE::fn_7100568E1C(names);
+    SCOM_FIELD_VOICE::createInPartyForIra(names);
 }
 
 GAME_VOICE_HANDLE* fn_7100569264(unsigned int blade, const SCOM_FIELD_VOICE::VoiceList& names) {
-    if (!GfGameManager::fn_71002A9E68() || blade - 0x11 > 8) {
+    if (!GfGameManager::isGameTypeIra() || blade - 0x11 > 8) {
         return nullptr;
     }
     mm::mtl::FixStr<32> name(s_bladeVoiceIds[blade - 0x11]);
     name += names[ml::mtRand(names.size())];
-    return GfGameVoice::fn_71002F1D20(3, blade, name.m_str, CV_PRIO(3));
+    return GfGameVoice::playVoiceParty(3, blade, name.m_str, CV_PRIO(3));
 }
 
 GAME_VOICE_HANDLE* fn_71005693C0(unsigned int blade) {
@@ -2845,8 +2845,8 @@ bool SCOM_SOLO_REX::exec(fw::UpdateInfo const&) {
     return true;
 }
 
-bool TUnk_B6AD28::exec(fw::UpdateInfo const&) {
-    if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
+bool SCOM_BATTLE_ARENA::exec(fw::UpdateInfo const&) {
+    if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
         unsigned int value = m_param;
         MsgUnk_1000034 msg(m_type);
         msg.m_param0.pad_0 = value;
@@ -2855,38 +2855,38 @@ bool TUnk_B6AD28::exec(fw::UpdateInfo const&) {
     return true;
 }
 
-unsigned long TUnk_B6AD28::fn_710056B66C() {
+unsigned long SCOM_BATTLE_ARENA::createWin() {
 #line 6217
-    TUnk_B6AD28* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B6AD28(0x4);
+    SCOM_BATTLE_ARENA* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_BATTLE_ARENA(0x4);
     return GfReqSmallCom::addRequestParallel(request);
 }
 
-unsigned long TUnk_B6AD28::fn_710056B6F4() {
+unsigned long SCOM_BATTLE_ARENA::createLose() {
 #line 6225
-    TUnk_B6AD28* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B6AD28(0x3);
+    SCOM_BATTLE_ARENA* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_BATTLE_ARENA(0x3);
     return GfReqSmallCom::addRequestParallel(request);
 }
 
-unsigned long TUnk_B6AD28::fn_710056B77C() {
+unsigned long SCOM_BATTLE_ARENA::createRetry() {
 #line 6233
-    TUnk_B6AD28* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B6AD28(0x6);
+    SCOM_BATTLE_ARENA* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_BATTLE_ARENA(0x6);
     return GfReqSmallCom::addRequestParallel(request);
 }
 
-unsigned long TUnk_B6AD28::fn_710056B804() {
+unsigned long SCOM_BATTLE_ARENA::createGiveUp() {
 #line 6241
-    TUnk_B6AD28* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B6AD28(0x5);
+    SCOM_BATTLE_ARENA* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_BATTLE_ARENA(0x5);
     return GfReqSmallCom::addRequestParallel(request);
 }
 
-unsigned long TUnk_B6AD28::fn_710056B88C() {
+unsigned long SCOM_BATTLE_ARENA::createLoseStart() {
 #line 6249
-    TUnk_B6AD28* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B6AD28(0x14);
+    SCOM_BATTLE_ARENA* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_BATTLE_ARENA(0x14);
     return GfReqSmallCom::addRequestParallel(request);
 }
 
 void fn_710056B914(float a, float b, unsigned int id) {
-    if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
+    if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
         MsgUnk_1000034 msg(0x12);
         msg.pad_34 = a;
         msg.pad_38 = b;
@@ -2937,7 +2937,7 @@ unsigned long SCOM_FADE::create(unsigned int slot, unsigned int frames, const mm
     return s_hCreatedReq;
 }
 
-unsigned long SCOM_FADE::fn_710055C704(unsigned int slot, unsigned int frames, const mm::Col4& color) {
+unsigned long SCOM_FADE::createEvent(unsigned int slot, unsigned int frames, const mm::Col4& color) {
     if (frames == 0 && color.a == 0.0f && GfGameEvent::getPlayEventId() == 10657) {
         return -1;
     }
@@ -3003,7 +3003,7 @@ void SCOM_PARTY_ADD::addDriver(unsigned int driver, unsigned int param) {
     create();
 }
 
-void SCOM_PARTY_ADD::fn_7100561FDC() {
+void SCOM_PARTY_ADD::setToraBladeFollow() {
     for (mm::mtl::FixedQueue<Info, 16>::iterator it = s_info.begin(); it != s_info.end(); ++it) {
         if ((*it).m_kind == 3 && (*it).m_driver == 4) {
             (*it).m_isEnable = true;
@@ -3012,7 +3012,7 @@ void SCOM_PARTY_ADD::fn_7100561FDC() {
     }
 }
 
-void SCOM_PARTY_ADD::fn_7100562048(unsigned int party) {
+void SCOM_PARTY_ADD::setIraParty(unsigned int party) {
     if (GfManager::isExecModeScenarioGame() && GfGameManager::isClearGame()) {
         return;
     }

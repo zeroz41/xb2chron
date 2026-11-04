@@ -65,23 +65,17 @@ public:
     // both read s_pTop
     static DrMan* getIns();
     void blurCallBackRender();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: `this` is the DrMan
-    // (ScnRenderDrSysParmAcc::getWeatherFrame passes its m_drMan), its code is in the DrMan unit. What it does: sets the
-    // byte at 0x1CC0 + s_nDblStockIdx to 1 (a double-buffered bool flag).
-    void fn_710071E620();
+    // 2.0.0's symbols name it. What it does: sets the byte at 0x1CC0 + s_nDblStockIdx to 1 (a double-buffered bool
+    // flag).
+    void weatherFrmEnd();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: `this` is the DrMan
     // (ScnRenderDrSysParmAcc::fn_710070A0DC passes its m_drMan), its code is in the DrMan unit. What it does: returns
     // the byte at 0x1DBC + s_nDblStockIdx (a double-buffered bool flag).
     bool fn_710071E77C();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: `this` is the DrMan
-    // (DrEnvColiMan::update, DrEnvironmentTime::setWeatherNum(DrMan*, ...), DrMdoMat::updateTimerCalc pass one), its
-    // code is in the DrMan unit. What it does: returns the byte at 0x1CC0 + s_nDblIdx != 0 (the flag fn_710071E620
-    // sets).
-    bool fn_710071E640();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: `this` is the DrMan
-    // (DrMdoCtlSeam::calcBegin passes one), its code is in the DrMan unit. What it does: sets the byte at
-    // 0x1DBC + s_nDblIdx to 1 (the flag fn_710071E77C reads).
-    void fn_710071E75C();
+    // 2.0.0's symbols name it. What it does: returns the byte at 0x1CC0 + s_nDblIdx != 0 (the flag weatherFrmEnd sets).
+    bool isWeatherFrmEnd();
+    // 2.0.0's symbols name it. What it does: sets the byte at 0x1DBC + s_nDblIdx to 1 (the flag fn_710071E77C reads).
+    void setSeamMapOn();
     static CriticalSection* getCriticalSection();
     bool isTemporalUPSToGlobalIBL() const;
     void setAllMiddelTexStmChk(bool check);
@@ -236,9 +230,9 @@ public:
     unsigned char pad_1CA0[0x4];
     float m_timeVal[2];                 // 0x1CA4, by s_nDblStockIdx: setTimeVal clamps to [0, 1] (name inferred)
     unsigned char pad_1CAC[0x14];
-    // 0x1CC0: fn_710071E620 (ScnRenderDrSysParmAcc::getWeatherFrame's call) sets [s_nDblStockIdx], fn_710071E640 reads
+    // 0x1CC0: weatherFrmEnd (ScnRenderDrSysParmAcc::getWeatherFrame's call) sets [s_nDblStockIdx], isWeatherFrmEnd reads
     // [s_nDblIdx] (the name is not the original's)
-    // a byte, not a bool: fn_710071E640 compares it with 0
+    // a byte, not a bool: isWeatherFrmEnd compares it with 0
     unsigned char m_weatherFrameReq[2];
     bool m_homeMenu;                    // 0x1CC2, bkgHomeMenu(true) sets it
     bool m_autoResetScene;
@@ -250,7 +244,7 @@ public:
     unsigned int* m_dispOffBits;  // 0x1D20: a bit per display index, set = hidden (ScnObjAccPartsEtcPos::isDisp; name inferred)
     unsigned char pad_1D28[0x8];
     mm::Vec3 m_globalWind[2];           // 0x1D30, by s_nDblNowIdx (getGlobalWind)
-    // 0x1D50: ScnRenderDrSysParmAcc::fn_710070A2F4 stores its flag here (fw::CommonResource passes it); what reads
+    // 0x1D50: ScnRenderDrSysParmAcc::setRenderTexMode stores its flag here (fw::CommonResource passes it); what reads
     // it is not known (the name is not the original's)
     int m_commonFlag;
     // 0x1D54: 1 makes DrIniSys load the DLC toon gradients and filter LUT (the name is not the original's)
@@ -287,7 +281,7 @@ public:
     unsigned char pad_1DAA[0xE];
     bool m_allMiddelTexStmChk[2];       // 0x1DB8, by s_nDblStockIdx
     bool m_seamMapStmOk[2];             // 0x1DBA, setSeamMapStmOk writes [s_nDblIdx]
-    // 0x1DBC: fn_710071E75C (DrMdoCtlSeam::calcBegin's call) sets [s_nDblIdx], fn_710071E77C reads [s_nDblStockIdx]
+    // 0x1DBC: setSeamMapOn (DrMdoCtlSeam::calcBegin's call) sets [s_nDblIdx], fn_710071E77C reads [s_nDblStockIdx]
     // (the name is not the original's)
     bool m_seamCalc[2];
     bool m_cameraLight;

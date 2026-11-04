@@ -57,11 +57,11 @@ fw::CommonResource* GfStaticRes::search(const char* path) {
     return fw::CommonResource::search(s_hMem, path);
 }
 
-void GfStaticRes::fn_710032C04C(bool dlcCamera) {
+void GfStaticRes::setupGameType(bool dlcCamera) {
     if (dlcCamera) {
-        fn_710032C088(s_cameraParam, s_cameraParamDlc);
+        replaceLoad(s_cameraParam, s_cameraParamDlc);
     } else {
-        fn_710032C088(s_cameraParamDlc, s_cameraParam);
+        replaceLoad(s_cameraParamDlc, s_cameraParam);
     }
 }
 

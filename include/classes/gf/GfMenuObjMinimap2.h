@@ -30,14 +30,13 @@ public:
     bool refreshMapPosition();
     // 256 copies of "LAY_icon"'s "IMG_icon" (hidden, suspended, masked by "IMG_map_mask") into the table
     static void createIconTable(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 256>& table);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its code is in this
-    // class's unit after createIconTable and has its shape. What it does: createIconTable's work on "LAY_icon2"
-    // and "IMG_icon2" (only when "LAY_icon2" exists); MainListener's open event (1) fills m_icon2Table with it.
-    static void fn_7100444B88(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 256>& table);
+    // 2.0.0's symbols name it. What it does: createIconTable's work on "LAY_icon2" and "IMG_icon2" (only when
+    // "LAY_icon2" exists); MainListener's open event (1) fills m_icon2Table with it.
+    static void createIconTable2(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 256>& table);
 
     bool m_mapCreated;  // set when MapListener has streamed the map images (the name is not the original's)
     mm::mtl::FixedVector<unsigned int, 256> m_iconTable;   // createIconTable's (the name is not the original's)
-    mm::mtl::FixedVector<unsigned int, 256> m_icon2Table;  // fn_7100444B88's (the name is not the original's)
+    mm::mtl::FixedVector<unsigned int, 256> m_icon2Table;  // createIconTable2's (the name is not the original's)
     mm::Rect<short> m_mapRect;    // the layout's "mini_map" or "mini_map2" (the name is not the original's)
     mm::Rect<short> m_dummyRect;  // "IMG_dummy"'s (the name is not the original's)
     // MainListener's zoom step (0-3; 1 and 2 scale the map by m_scale) and that scale (the names are not the

@@ -28,8 +28,8 @@ namespace gf {
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B5D228).
 static GfMenuMissionAdapter::TypeSetup s_typeSetups[] = {
     {&GfMenuMissionAdapter::update_MissionName, {2, 0, 0}},
-    {&GfMenuMissionAdapter::fn_7100345570, {2, 0, 0}},
-    {&GfMenuMissionAdapter::fn_7100345648, {2, 0, 0}},
+    {&GfMenuMissionAdapter::update_MissionSummary, {2, 0, 0}},
+    {&GfMenuMissionAdapter::update_MissionSummary2, {2, 0, 0}},
     {&GfMenuMissionAdapter::update_MissionCategoryIcon, {1, 0, 0}},
     {&GfMenuMissionAdapter::update_MissionTime, {7, 3, 0}},
     {&GfMenuMissionAdapter::update_MissionTimeRemain, {7, 3, 0}},
@@ -112,7 +112,7 @@ bool GfMenuMissionAdapter::update_MissionName() {
     return true;
 }
 
-bool GfMenuMissionAdapter::fn_7100345570() {
+bool GfMenuMissionAdapter::update_MissionSummary() {
     unsigned char* bdat;
     unsigned int id;
     if (getStat(m_missionId, false) == 2 || getStat(m_missionId, false) == 3) {
@@ -128,7 +128,7 @@ bool GfMenuMissionAdapter::fn_7100345570() {
     return true;
 }
 
-bool GfMenuMissionAdapter::fn_7100345648() {
+bool GfMenuMissionAdapter::update_MissionSummary2() {
     unsigned char* bdat;
     unsigned int id;
     if (getStat(m_missionId, false) == 3) {

@@ -22,7 +22,7 @@ GfMenuObjHelpHud::~GfMenuObjHelpHud() {}
 // sends the help HUD (external call 0x84) event 0x101 (its listener enables input and shows LAY_help), unless
 // add-on menu layer 3 is usable
 void GfMenuObjHelpHud::enable() {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         return;
     }
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x84));
@@ -35,7 +35,7 @@ void GfMenuObjHelpHud::enable() {
 
 // sends it event 0x102 (its listener disables input and drops the page shown)
 void GfMenuObjHelpHud::disable() {
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         return;
     }
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x84));

@@ -30,7 +30,7 @@ const char* s_szCommonName = "se_fld_allmap";
 // the DLC game (createCommonSound picks it when s_isDlc is set).
 const char* s_szDlcCommonName = "dlc_fld_allmap";
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100D6C918). GfSetupParam's DLC flag, which
-// initialize and createCommonSound store; fn_710027C7D4 and createMapSound pick the DLC pack names by it.
+// initialize and createCommonSound store; getSePackName and createMapSound pick the DLC pack names by it.
 bool s_isDlc;
 }  // namespace _gffsn
 
@@ -134,7 +134,7 @@ void GfFieldSound::finalize() {
 
 void GfFieldSound::createCommonSound(bool isDlc) {
     _gffsn::s_isDlc = isDlc;
-    const char* name = fn_710027C7D4();
+    const char* name = getSePackName();
     fw::SoundResource::SetupInfo info;
     info.pad_8 = 0x80;
     info.pad_0 = 5;
@@ -149,7 +149,7 @@ void GfFieldSound::createCommonSound(bool isDlc) {
     m_commonPack = fw::SoundManager::get()->findPack(name, nullptr);
 }
 
-const char* GfFieldSound::fn_710027C7D4() {
+const char* GfFieldSound::getSePackName() {
     return _gffsn::s_isDlc ? _gffsn::s_szDlcCommonName : _gffsn::s_szCommonName;
 }
 
@@ -263,7 +263,7 @@ fw::SoundPack* GfFieldSound::getMapPack() {
     return m_mapSound.m_pack;
 }
 
-fw::SoundPack* GfFieldSound::fn_710027CE60(const char* name) {
+fw::SoundPack* GfFieldSound::getDlcSePack(const char* name) {
     fw::SoundPack* pack = m_dlcSound.m_pack;
     if (pack != nullptr && !pack->findSource(name)) {
         pack = nullptr;

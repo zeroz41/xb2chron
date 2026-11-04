@@ -7,8 +7,8 @@
 
 namespace gf {
 // table 0x7100B5B878 (no RTTI, no 1.0.0 symbol): a GfMenuCharDataAdapter converter new in 3.0.1, built only by
-// GfMenuCharDataAdapter::fn_710033A1F0: the enemy (type 5) an ID list's entry names, through GfBdatChrEnArrange's
-// fn_71001F4EB8 or fn_71001F4DE8 (GfGameManager::fn_71002A9E68 chooses).
+// GfMenuCharDataAdapter::createFromNamedList: the enemy (type 5) an ID list's entry names, through GfBdatChrEnArrange's
+// getBTL_NamedListIraEnemyID or getBTL_NamedListEnemyID (GfGameManager::isGameTypeIra chooses).
 class TUnk_B5B878 : public ::gf::GfMenuCharDataAdapter::IConverter {
 public:
     // index -1: the list's selected one

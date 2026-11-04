@@ -25,7 +25,7 @@ public:
         unsigned short m_condition = 0;   // the row's "Condition" (a GfGameCond id; 0: none)
         unsigned short m_nameRadius = 5;  // the row's "nameRadius"
         unsigned short m_mapobjId = 0;    // the row's "mapobjID"
-        unsigned short m_effectId = 0;    // the row's "effectID" (only when GfGameManager::fn_71002A9E68())
+        unsigned short m_effectId = 0;    // the row's "effectID" (only when GfGameManager::isGameTypeIra())
         bool m_msgRay = false;            // flag "MSG_ray"
         TimeCond m_popTime;        // the row's "popTime"
         WeatherCond m_popWeather;  // the row's "popWeather"
@@ -58,7 +58,7 @@ public:
     // 0x70: its effects by LOD state (the destructor disposes them; Vector<GmkMapGimmick>::resize constructs it; the
     // name is not the original's)
     gf::GfFieldLodEffect m_lodEffect;
-    // 0xA8, 0xA9: the enemy wave gimmick (TUnk_B6D418::fn_71005B3D64) sets the first and clears the second on the map
+    // 0xA8, 0xA9: the enemy wave gimmick (GmkEnemyWave::seqWaitToValidLinkGmkList) sets the first and clears the second on the map
     // gimmick its row names (meaning unknown)
     bool pad_a8;
     bool pad_a9;

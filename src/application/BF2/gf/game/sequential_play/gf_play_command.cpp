@@ -152,7 +152,7 @@
 #include "gf/GfQuestTask.h"
 #include "classes/gf/SCOM_FADE.h"
 #include "classes/gf/GfMenuCallContext.h"
-#include "classes/gf/TUnk_B63A48.h"
+#include "classes/gf/GfMenuObjNpcTelop.h"
 #include "classes/gf/GfQuestEvent.h"
 #include "gf/GfQuestInfo.h"
 #include "classes/gf/GfFieldGimmick.h"
@@ -177,7 +177,7 @@
 #include "classes/gf/GfPlayComMapjumpForBattleMapFromArena.h"
 #include "classes/gf/GfPlayComWaitArenaStateField.h"
 #include "classes/gf/GfPlayComStartChallengeBattle.h"
-#include "classes/gf/TUnk_B535D0.h"
+#include "classes/gf/GfGameArena.h"
 #include "gf/MsgUnk_1000034.h"
 #include "classes/gf/GfPlayComScriptTutorialSeq.h"
 #include "classes/gf/GfPlayCom.h"
@@ -311,7 +311,7 @@ void GfPlayComWaitBattleEnd::start() {
         if (m_eventId != 0) {
             unsigned int type = GfDataEvent::getEventType(m_eventId) - 1;
             if (type < 3 && scene->isNeedResetBladeForBattleEndForBattleEnd()) {
-                btl::Utility::fn_71000100F0();
+                btl::Utility::NotifyNeedPutAwayWeapon();
             }
         }
     }
@@ -401,12 +401,12 @@ bool GfPlayComIraCampSave::update(const fw::UpdateInfo& info, bool flag) {
     return true;
 }
 
-GfPlayComIraCampSave* GfPlayComIraCampSave::fn_710031988C() {
+GfPlayComIraCampSave* GfPlayComIraCampSave::createForEvent() {
 #line 1006
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComIraCampSave(false);
 }
 
-GfPlayComIraCampSave* GfPlayComIraCampSave::fn_7100319900() {
+GfPlayComIraCampSave* GfPlayComIraCampSave::createForTutorial() {
 #line 1012
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComIraCampSave(true);
 }
@@ -446,7 +446,7 @@ void GfPlayComEventWeather::start() {
     GfFieldWeather::setWeatherForEvent(m_weather, nullptr);
 }
 
-GfPlayComEventWeather* GfPlayComEventWeather::fn_7100318730(WEATYPE weather) {
+GfPlayComEventWeather* GfPlayComEventWeather::create(WEATYPE weather) {
 #line 276
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComEventWeather(weather);
 }
@@ -486,7 +486,7 @@ void GfPlayComAfterEventScript::start() {
         GfGameEvent::setAfterEventStartID(startId);
         m_script = SCOM_SCRIPT::create(3, name, true);
         if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
-            scene->fn_71002C4B80(name);
+            scene->eventAfterScriptEvent(name);
         }
     }
 }
@@ -601,7 +601,7 @@ GfPlayComMiniGame* GfPlayComMiniGame::create() {
 // hand: begin GfPlayComMenuChapter::~GfPlayComMenuChapter
 void GfPlayComStartTutorial::start() {
     unsigned char* fp = GfDataBdat::getFP(0xFF);
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         if (unsigned char* fpLayer = GfDataBdat::getFP(0x100)) {
             Bdat::getIdTop(fpLayer);
             fp = fpLayer;
@@ -624,9 +624,9 @@ GfPlayComStartTutorial* GfPlayComStartTutorial::create(unsigned int id) {
 }
 
 void GfPlayComOpenNpcEntry::start() {
-    TUnk_B63A48::OpenParam param;
+    GfMenuObjNpcTelop::OpenParam param;
     for (unsigned int i = 0; i < m_entries.size(); i++) {
-        TUnk_B63A48::OpenParam::Entry entry;
+        GfMenuObjNpcTelop::OpenParam::Entry entry;
         entry.m_id = m_entries[i];
         entry.m_bdat = nullptr;
         entry.m_name = 0;
@@ -636,7 +636,7 @@ void GfPlayComOpenNpcEntry::start() {
         }
     }
     param.m_flag = 2;
-    TUnk_B63A48::fn_7100447644(m_context, param);
+    GfMenuObjNpcTelop::open(m_context, param);
 }
 
 void GfPlayComOpenNpcEntry::end() {
@@ -1010,7 +1010,7 @@ void GfPlayComTalk::start() {
                         s_questTargetNpc = m_npc;
                         s_questTargetCondID = condId;
                     }
-                    if (!GfManager::isExecModeThater() && GfGameManager::fn_71002A9E68()) {
+                    if (!GfManager::isExecModeThater() && GfGameManager::isGameTypeIra()) {
                         bool met = GfDataBlade::fn_710024DE6C(m_npc);
                         GfDataBlade::fn_710024DDDC(m_npc, true);
                         if (met != GfDataBlade::fn_710024DE6C(m_npc)) {
@@ -1031,8 +1031,8 @@ void GfPlayComTalk::end() {
         QuestID quest = m_lastOrder == GfQuestManager::getLastOrder() ? QuestID() : GfQuestManager::getLastOrder();
         GfQuestUtil::finishTalkNpc(m_map, m_npc, quest);
     }
-    if (!GfManager::isExecModeThater() && GfGameManager::fn_71002A9E68() && m_newMeet) {
-        GfMenuManager::fn_710035A764(m_npc);
+    if (!GfManager::isExecModeThater() && GfGameManager::isGameTypeIra() && m_newMeet) {
+        GfMenuManager::requestNpcEntry(m_npc);
     }
     s_questTargetNpc = 0;
     s_questTargetCondID = 0;
@@ -1084,14 +1084,14 @@ bool GfPlayComResetBlade::update(const fw::UpdateInfo& info, bool flag) {
         if (GfSequentialPlay::isSequenceSpecialAction()) {
             return true;
         }
-        if (GfGameManager::fn_71002A9E68()) {
+        if (GfGameManager::isGameTypeIra()) {
             if (m_blade <= 2) {
                 if (m_mode == 0) {
-                    GfGameParty::fn_71002BC718(m_blade);
+                    GfGameParty::switchFormationForIra(m_blade);
                 } else if (m_mode == 1) {
-                    GfGameParty::fn_71002BC7AC(m_blade);
+                    GfGameParty::switchFormationForIraFR(m_blade);
                 } else if (m_mode == 2) {
-                    GfGameParty::fn_71002BC840(m_blade);
+                    GfGameParty::switchFormationForIraBR(m_blade);
                 }
                 return true;
             }
@@ -1170,14 +1170,14 @@ GfPlayComMenuObjCommonText* GfPlayComMenuObjCommonText::create(GfMenuObjCommonTe
 
 void GfPlayComMapjumpForLeaveArena::start() {
     m_started = true;
-    if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
+    if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
         MsgUnk_1000034 msg(9);
         static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
     }
 }
 
 void GfPlayComMapjumpForLeaveArena::end() {
-    if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
+    if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
         MsgUnk_1000034 msg(10);
         static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
     }
@@ -1187,7 +1187,7 @@ bool GfPlayComMapjumpForLeaveArena::update(const fw::UpdateInfo& info, bool flag
     if (flag) {
         return true;
     }
-    TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys();
+    GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys();
     if (arena && !arena->fn_7100291CAC()) {
         return false;
     }
@@ -1208,7 +1208,7 @@ void GfPlayComMapjumpForBattleMapFromArena::start() {
 }
 
 void GfPlayComMapjumpForBattleMapFromArena::end() {
-    if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
+    if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
         MsgUnk_1000034 msg(1);
         static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
     }
@@ -1228,7 +1228,7 @@ GfPlayComMapjumpForBattleMapFromArena* GfPlayComMapjumpForBattleMapFromArena::cr
 
 bool GfPlayComWaitArenaStateField::update(const fw::UpdateInfo& info, bool flag) {
     if (!flag) {
-        TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys();
+        GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys();
         if (arena && !arena->fn_7100291DA0()) {
             return false;
         }
@@ -1243,7 +1243,7 @@ GfPlayComWaitArenaStateField* GfPlayComWaitArenaStateField::create() {
 
 void GfPlayComStartChallengeBattle::start() {
     GfEvent::addEventCallback(this);
-    if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
+    if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
         MsgUnk_1000034 msg(13);
         msg.m_param8 = m_param.pad_8;
         msg.m_param0 = m_param.pad_0;

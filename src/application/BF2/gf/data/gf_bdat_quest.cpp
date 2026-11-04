@@ -335,7 +335,7 @@ void GfBdatQuest::bdatRefresh() {
     m_questListAcc->makeQuestTaskInfo(m_useIra);
 }
 
-void GfBdatQuest::fn_710020D134(bool useIra) {
+void GfBdatQuest::setupGameType(bool useIra) {
     m_useIra = useIra;
     bdatRefresh();
 }

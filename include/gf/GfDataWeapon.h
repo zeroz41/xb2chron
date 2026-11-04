@@ -13,17 +13,15 @@ public:
     static int getGuardRatio(unsigned int weapon);
     static int getCriticalRatio(unsigned int weapon);
     static int getStability(unsigned int weapon);
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Static members because they sit in
-    // GfDataBlade's unit among GfDataWeapon's functions (between getStability and getEnhance) and take a driver row
-    // (no this). What they do: 0 unless the row is 0x11-0x13; then they follow the row's linked rows
-    // (GfDataDriver::fn_71002417DC) and interpolate two GfBdatItem columns of that row by the driver's level
-    // (min + (max - min) * (level - 1) / 98): fn_710024FA88 the damage (PcWpnIr AtkLv1/AtkLv99), fn_710024FB98 the
-    // guard rate, fn_710024FCA8 the critical rate, fn_710024FDB8 the stability (StbLv1/StbLv99) that
+    // 2.0.0's symbols name them. What they do: 0 unless the row is 0x11-0x13; then they follow the row's linked rows
+    // (GfDataDriver::getIraFront) and interpolate two GfBdatItem columns of that row by the driver's level (min + (max
+    // - min) * (level - 1) / 98): getDamageForIra the damage (PcWpnIr AtkLv1/AtkLv99), getGuardRatioForIra the guard
+    // rate, getCriticalRatioForIra the critical rate, getStabilityForIra the stability (StbLv1/StbLv99) that
     // DataObjDriver::getWeaponDamage / getGuardRate / getCriticalRate / getWeaponStability add for a DLC driver.
-    static unsigned int fn_710024FA88(unsigned int driver);
-    static unsigned int fn_710024FB98(unsigned int driver);
-    static unsigned int fn_710024FCA8(unsigned int driver);
-    static unsigned int fn_710024FDB8(unsigned int driver);
+    static unsigned int getDamageForIra(unsigned int driver);
+    static unsigned int getGuardRatioForIra(unsigned int driver);
+    static unsigned int getCriticalRatioForIra(unsigned int driver);
+    static unsigned int getStabilityForIra(unsigned int driver);
     static unsigned int getEnhance(unsigned int weapon);
     // its weapon type's name message; false when it has none
     static bool getWeaponTypeNameByItem(unsigned char*& bdat, unsigned int& id, unsigned int weapon);

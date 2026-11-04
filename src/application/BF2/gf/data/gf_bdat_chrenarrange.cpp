@@ -1234,11 +1234,11 @@ unsigned int GfBdatChrEnArrange::getChrEnArrangePreciousID(unsigned int id) cons
     return _gfbcb::getChrEnArrangePreciousID(*m_fpChrEnArrange, id);
 }
 
-unsigned int GfBdatChrEnArrange::fn_71001F3260(unsigned int id) const {
+unsigned int GfBdatChrEnArrange::getChrEnArrangeScore(unsigned int id) const {
     return _gfbcb::getChrEnArrangeScore(*m_fpChrEnArrange, id);
 }
 
-unsigned int GfBdatChrEnArrange::fn_71001F32E8(unsigned int id) const {
+unsigned int GfBdatChrEnArrange::getChrEnArrangeECube(unsigned int id) const {
     return _gfbcb::getChrEnArrangeECube(*m_fpChrEnArrange, id);
 }
 
@@ -1326,15 +1326,15 @@ bool GfBdatChrEnArrange::isChrEnArrangeFlagSalvage(unsigned int id) const {
     return _gfbcb::isChrEnArrangeFlagSalvage(*m_fpChrEnArrange, id);
 }
 
-bool GfBdatChrEnArrange::fn_71001F3F28(unsigned int id) const {
+bool GfBdatChrEnArrange::isChrEnArrangeFlagSerious(unsigned int id) const {
     return _gfbcb::isChrEnArrangeFlagSerious(*m_fpChrEnArrange, id);
 }
 
-bool GfBdatChrEnArrange::fn_71001F3FB8(unsigned int id) const {
+bool GfBdatChrEnArrange::isChrEnArrangeFlagNoChgBtl(unsigned int id) const {
     return _gfbcb::isChrEnArrangeFlagNoChgBtl(*m_fpChrEnArrange, id);
 }
 
-bool GfBdatChrEnArrange::fn_71001F4048(unsigned int id) const {
+bool GfBdatChrEnArrange::isChrEnArrangeFlagNoKasumi(unsigned int id) const {
     return _gfbcb::isChrEnArrangeFlagNoKasumi(*m_fpChrEnArrange, id);
 }
 
@@ -1426,7 +1426,7 @@ unsigned int GfBdatChrEnArrange::getChrEnArrangeDriverLev(unsigned int id) const
     return _gfbcb::getChrEnArrangeDriverLev(*m_fpChrEnArrange, id);
 }
 
-unsigned int GfBdatChrEnArrange::fn_71001F4C90(unsigned int id) const {
+unsigned int GfBdatChrEnArrange::getChrEnArrangeRace(unsigned int id) const {
     return _gfbcb::getChrEnArrangeRace(*m_fpChrEnArrange, id);
 }
 
@@ -1434,27 +1434,27 @@ unsigned int GfBdatChrEnArrange::getBTL_EnBookBaseEnemyID(unsigned int id) const
     return _gfbcb::getBTL_EnBookBaseEnemyID(*m_fpBTL_EnBook, id);
 }
 
-unsigned int GfBdatChrEnArrange::fn_71001F4DA0() const {
+unsigned int GfBdatChrEnArrange::getBTL_NamedListStart() const {
     return Bdat::getIdTop(m_fpBTL_NamedList->m_fp);
 }
 
-unsigned int GfBdatChrEnArrange::fn_71001F4DAC() const {
+unsigned int GfBdatChrEnArrange::getBTL_NamedListEnd() const {
     return Bdat::getIdTop(m_fpBTL_NamedList->m_fp) + Bdat::getIdCount(m_fpBTL_NamedList->m_fp);
 }
 
-unsigned int GfBdatChrEnArrange::fn_71001F4DE8(unsigned int id) const {
+unsigned int GfBdatChrEnArrange::getBTL_NamedListEnemyID(unsigned int id) const {
     return _gfbcb::getBTL_NamedListEnemyID(*m_fpBTL_NamedList, id);
 }
 
-unsigned int GfBdatChrEnArrange::fn_71001F4E70() const {
+unsigned int GfBdatChrEnArrange::getBTL_NamedListIraStart() const {
     return Bdat::getIdTop(m_fpBTL_NamedListIra->m_fp);
 }
 
-unsigned int GfBdatChrEnArrange::fn_71001F4E7C() const {
+unsigned int GfBdatChrEnArrange::getBTL_NamedListIraEnd() const {
     return Bdat::getIdTop(m_fpBTL_NamedListIra->m_fp) + Bdat::getIdCount(m_fpBTL_NamedListIra->m_fp);
 }
 
-unsigned int GfBdatChrEnArrange::fn_71001F4EB8(unsigned int id) const {
+unsigned int GfBdatChrEnArrange::getBTL_NamedListIraEnemyID(unsigned int id) const {
     return _gfbcb::getBTL_NamedListIraEnemyID(*m_fpBTL_NamedListIra, id);
 }
 

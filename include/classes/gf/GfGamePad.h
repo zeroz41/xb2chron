@@ -63,11 +63,10 @@ public:
     void eventInGameOpenMainMenu();
     void eventInGameOpenSystemMenu();
     void eventInGameOpenSkipTravelMenu();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because changePadInputMode binds
-    // it to the "call_party" action with this object (when GfGameManager::fn_71002A9E68 holds). What it does: when
-    // the main menu may open and GfMenuManager::fn_710035A6CC/fn_710035A6F8 hold, the controlled mover's alpha life
-    // is at least 1 and at least two of party 0-2's first drivers are set, calls GfPlayFactory::fn_7100321258.
-    void fn_71002B6440();
+    // 2.0.0's symbols name it. What it does: when the main menu may open and
+    // GfMenuManager::canPlayerControl/isEnableMinimap hold, the controlled mover's alpha life is at least 1 and at
+    // least two of party 0-2's first drivers are set, calls GfPlayFactory::createPartySwitchForIra.
+    void eventInGameParty();
 
     bool m_initialized;  // isInitialized's (1.0.0): set while the listener is registered (the name is not the original's)
     bool m_eventPause;   // isEventPause's: the "pause_event" action came this frame (the name is not the original's)

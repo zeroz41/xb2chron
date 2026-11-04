@@ -64,8 +64,8 @@ void GfMenuLocation::updateLocator() {
     if (self == nullptr) {
         return;
     }
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
-        self->m_locator.fn_710027011C();
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        self->m_locator.update();
     }
     for (unsigned long kind = 0; kind < 5; kind++) {
         for (unsigned long i = 0; i < self->m_lists[kind].m_locators.size(); i++) {
@@ -137,20 +137,20 @@ void GfMenuLocation::refreshLocatorFromQuest(unsigned int kind, unsigned int typ
     }
 }
 
-void GfMenuLocation::fn_7100356980(unsigned int value) {
+void GfMenuLocation::startNpcNavigate(unsigned int value) {
     if (get() != nullptr) {
         get()->m_requestId = value;
     }
 }
 
-unsigned int GfMenuLocation::fn_7100356998() {
+unsigned int GfMenuLocation::getNpcNavigateID() {
     if (get() != nullptr) {
         return get()->m_requestId;
     }
     return 0;
 }
 
-void GfMenuLocation::fn_71003569B8() {
+void GfMenuLocation::reset() {
     GfMenuLocation* self = get();
     if (self == nullptr) {
         return;

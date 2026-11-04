@@ -110,8 +110,8 @@ void GfComEffectCaster::setupEfTail(unsigned int id) {
         if (m_tailId != id) {
             mm::mtl::FixedVector<const char*, 128> names;
             GF_ASSET_HANDLE* asset = GfObjUtil::getAssetHandle(static_cast<GfObj*>(m_owner)->m_handle);
-            if (GfAssetManager::fn_71001AE8A8(names, asset, ".wiswt")) {
-                if (GfAssetResource* resource = GfAssetManager::fn_71001AE9D0(asset, names[0])) {
+            if (GfAssetManager::getFileNameByExt(names, asset, ".wiswt")) {
+                if (GfAssetResource* resource = GfAssetManager::getResource(asset, names[0])) {
                     EffectCaster* caster = m_caster;
                     void* data = resource->getAssetData();
                     unsigned int size = resource->getAssetSize();
@@ -124,9 +124,9 @@ void GfComEffectCaster::setupEfTail(unsigned int id) {
     } else if (m_caster && m_tailId != id) {
         mm::mtl::FixedVector<const char*, 128> names;
         GF_ASSET_HANDLE* asset = GfObjUtil::getAssetHandle(static_cast<GfObj*>(m_owner)->m_handle);
-        GfAssetManager::fn_71001AE8A8(names, asset, ".wiswt");
+        GfAssetManager::getFileNameByExt(names, asset, ".wiswt");
         for (const char* name : names) {
-            if (GfAssetResource* resource = GfAssetManager::fn_71001AE9D0(asset, name)) {
+            if (GfAssetResource* resource = GfAssetManager::getResource(asset, name)) {
                 if (const char* number = strchr(resource->getAssetName(), '_')) {
                     char digits[4] = {};
                     digits[0] = number[1];
@@ -278,7 +278,7 @@ fw::EffectPack* GfComEffectCaster::getWeaponEffectPack(const char* name) {
         }
         fw::EffectPack* found = nullptr;
         for (unsigned int i = 0; i < m_packs.size(); ++i) {
-            if (m_packs.at(i)->m_id == type || GfGameManager::fn_71002A9E68()) {
+            if (m_packs.at(i)->m_id == type || GfGameManager::isGameTypeIra()) {
                 if (m_packs[i].m_pack && m_packs[i].m_pack->searchEfb(name)) {
                     found = m_packs[i].m_pack;
                     break;
@@ -363,12 +363,12 @@ bool GfComEffectCaster::startTimer(unsigned int id) {
     return false;
 }
 
-bool GfComEffectCaster::fn_71004B39DC(mm::mtl::FixedVector<fw::EffectPack*, 8>& packs) {
+bool GfComEffectCaster::getEffectPack(mm::mtl::FixedVector<fw::EffectPack*, 8>& packs) {
     packs.clear();
     if (pad_48) {
         packs.push_back(pad_48);
     }
-    if (GfGameManager::fn_71002A9E68()) {
+    if (GfGameManager::isGameTypeIra()) {
         for (PackEntry& entry : m_packs) {
             packs.push_back(entry.m_pack);
         }
@@ -386,9 +386,9 @@ bool GfComEffectCaster::getWeaponEffectPack(mm::mtl::FixedVector<fw::EffectPack*
     return !packs.empty();
 }
 
-void GfComEffectCaster::fn_71004B3B68(const mm::Mat44& mtx) {
+void GfComEffectCaster::applyEffpointByMatrix(const mm::Mat44& mtx) {
     if (m_caster) {
-        m_caster->fn_71004B3B78(mtx);
+        m_caster->flushDirectMatrix(mtx);
     }
 }
 }  // namespace gf

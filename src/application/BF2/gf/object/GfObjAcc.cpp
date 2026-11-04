@@ -39,7 +39,7 @@
 #include "classes/btl/CharacterManager.h"
 #include "classes/btl/CharacterParameter.h"
 #include "classes/gmk/AGmkBase.h"
-#include "classes/gmk/TUnk_B6D660.h"
+#include "classes/gmk/GmkCamp.h"
 
 namespace gf {
 
@@ -479,7 +479,7 @@ unsigned int GfObjAcc::getBdatId() const {
     return 0;
 }
 
-unsigned int GfObjAcc::fn_7100523B74() const { return getBdatId(); }
+unsigned int GfObjAcc::getNpcRscId() const { return getBdatId(); }
 
 unsigned int GfObjAcc::getDriverId() const { return getBdatId(); }
 
@@ -665,12 +665,12 @@ void GfObjAcc::setEnableCollideModelClip(bool on) {
     }
 }
 
-float GfObjAcc::fn_710052478C() const {
+float GfObjAcc::getTargetSearchOffset() const {
     if (m_obj != nullptr) {
         if (m_obj->m_type == 8) {
             gmk::AGmkBase* gmk = gmk::getBindedGmkInst(getHandle());
-            if (gmk != nullptr && gmk->getGmkType() == gmk::TUnk_B6D660::TYPE) {
-                return static_cast<gmk::TUnk_B6D660*>(gmk)->pad_58;
+            if (gmk != nullptr && gmk->getGmkType() == gmk::GmkCamp::TYPE) {
+                return static_cast<gmk::GmkCamp*>(gmk)->pad_58;
             }
         } else if (m_obj->m_type == 6) {
             if (getBdatId() == 0xE4D) {

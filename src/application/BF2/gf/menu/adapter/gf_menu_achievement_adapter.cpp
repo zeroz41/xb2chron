@@ -189,7 +189,7 @@ bool GfMenuAchievementAdapter::update_AchievementTypeIcon() {
         int icon;
         if (release == 4 || release == 5) {
             icon = 5;
-        } else if (GfMenuObjUtil::fn_710048FD30(3) && release == 3) {
+        } else if (GfMenuObjUtil::isValidExpansion(3) && release == 3) {
             icon = 5;
         } else {
             icon = 11;

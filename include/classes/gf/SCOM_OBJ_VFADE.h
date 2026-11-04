@@ -37,7 +37,7 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it builds an
     // SCOM_OBJ_VFADE (its table, its constructor). What it does: like createBattle (ratio 0, all parts, acc 4) but
     // never queues the request: updates the fade once with a one-frame UpdateInfo (GfInfo::m_fSecPerFrame), then
-    // deletes it. Caller: GfGameParty::fn_71002BC46C.
+    // deletes it. Caller: GfGameParty::setDispIraParty.
     static void fn_710055E1A4(GF_OBJ_HANDLE* obj, float ratio, unsigned int effect);
     // createParts (acc 4) for an enemy blade or blade 0x451, else createPartsWithSingle (part 0 for other blades)
     static unsigned long createBattleParts(GF_OBJ_HANDLE* obj, float time, float ratio, unsigned int, VFPARTS parts);

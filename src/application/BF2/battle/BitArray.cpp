@@ -29,23 +29,23 @@
 
 namespace btl {
 
-void Utility::fn_710000FB3C() {
-    TUnk_B3A9C8::sys()->fn_71000255A8();
+void Utility::StartChallengeBattleCallback() {
+    ChallengeBattleManager::sys()->Start();
 }
 
-void Utility::fn_710000FB4C() {
-    TUnk_B3A9C8::sys()->fn_710002568C();
+void Utility::EndChallengeBattleCallback() {
+    ChallengeBattleManager::sys()->End();
 }
 
-void Utility::fn_710000FB5C() {
-    TUnk_B3A9C8::sys()->fn_710002579C();
+void Utility::RetryChallengeBattleCallback() {
+    ChallengeBattleManager::sys()->Retry();
 }
 
-void Utility::fn_710000FB6C() {
-    TUnk_B3A9C8::sys()->fn_710002575C();
+void Utility::ChallengeBattleStartTelopCallback() {
+    ChallengeBattleManager::sys()->NotifyStartTelop();
 }
 
-bool Utility::fn_710000FB7C() {
+bool Utility::IsPause() {
     BattleGlobal* global = BattleGlobal::sys();
     if (global->IsPause(-1)) {
         return true;
@@ -53,11 +53,11 @@ bool Utility::fn_710000FB7C() {
     return global->pad_a50 <= 0.0f;
 }
 
-bool Utility::fn_710000FBC4() {
-    return !(TUnk_B3A9C8::sys()->fn_7100026E64() && TUnk_B3BD68::sys()->fn_71000A6E5C());
+bool Utility::IsBanOperateForField() {
+    return !(ChallengeBattleManager::sys()->IsEnableOperate() && SirenBattleManager::sys()->IsEnableOperate());
 }
 
-bool Utility::fn_710000FC08() {
+bool Utility::IsEnablePreciousDrop() {
     if (BattleGlobal::sys()->IsPause(-1)) {
         return false;
     }
@@ -67,7 +67,7 @@ bool Utility::fn_710000FC08() {
     if (ChainAttackManager::sys()->IsProc(true)) {
         return false;
     }
-    return !BattleGlobal::sys()->fn_7100007554();
+    return !BattleGlobal::sys()->IsFutureView();
 }
 
 gf::GF_OBJ_HANDLE* Utility::GetLeader() {
@@ -89,14 +89,14 @@ bool Utility::IsSatisfyConditionFld(int condition) {
     return gf::GfGameCond::isGameCond(condition);
 }
 
-void Utility::fn_71000100A8(gf::GF_OBJ_HANDLE* handle, const gf::MsgObjectNotifyDead& msg) {
+void Utility::NotifyDead(gf::GF_OBJ_HANDLE* handle, const gf::MsgObjectNotifyDead& msg) {
     BattleCharacter* character = CharacterManager::sys()->GetCharacterConst(handle);
     if (character) {
         character->NotifyDead(msg);
     }
 }
 
-void Utility::fn_71000100F0() {
+void Utility::NotifyNeedPutAwayWeapon() {
     BattleGlobal::sys()->pad_bit7 = true;
 }
 
@@ -172,7 +172,7 @@ int Utility::GetDamageAttackerType(gf::GF_OBJ_HANDLE* object, gf::GF_OBJ_HANDLE*
 }
 
 void Utility::fn_7100010900(int value) {
-    TUnk_B3A9C8::sys()->fn_7100026CF0(value);
+    ChallengeBattleManager::sys()->AddEtherCube(value);
 }
 
 float Utility::GetDyingHpRate() {
@@ -187,16 +187,16 @@ unsigned int Utility::fn_7100010D3C(int blade) {
     return gf::GfDataBlade::fn_7100237B70(fn_7100011638(blade), fn_710001165C(blade));
 }
 
-void Utility::fn_7100010D84() {
+void Utility::FullCoolTime() {
     DataManager::sys()->pad_15D1A = 1;
 }
 
-void Utility::fn_7100010DA4(float value) {
+void Utility::SetBattleEndEnemyCall(float value) {
     BattleGlobal::sys()->pad_5dd8 = value;
 }
 
-void Utility::fn_7100010DBC(int stage, bool engagedOnly) {
-    DataManager::sys()->fn_71000968B8(stage, engagedOnly);
+void Utility::SetPlayerKizunaStage(int stage, bool engagedOnly) {
+    DataManager::sys()->SetKizunaStage(stage, engagedOnly);
 }
 
 bool Utility::IsEnableFieldBladeChange() {
@@ -207,7 +207,7 @@ bool Utility::IsEnableFieldBladeChange() {
     if (!TalkManager::sys()->IsEnableFieldBladeChange()) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && TUnk_B3BC20::sys()->m_count > 0) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && FormationChangeManager::sys()->m_count > 0) {
         return false;
     }
     return true;
@@ -234,7 +234,7 @@ bool Utility::IsBladeArtsBuff(int buff) {
     return buff >= 1 && buff <= 9;
 }
 
-bool Utility::fn_7100011EA0(gf::GF_OBJ_HANDLE* handle) {
+bool Utility::IsForward(gf::GF_OBJ_HANDLE* handle) {
     if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         return false;
     }
@@ -271,21 +271,21 @@ int Utility::fn_710001165C(int blade) {
     }
 }
 
-bool Utility::fn_7100011E1C() {
+bool Utility::IsEnableEnemyBattle() {
     if (BattleGlobal::sys()->IsEnableBattle()) {
-        return TUnk_B3A9C8::sys()->fn_7100026E84();
+        return ChallengeBattleManager::sys()->IsEnableEnemyBattle();
     }
     return false;
 }
 
-bool Utility::fn_7100011E58() {
-    return TUnk_B3A9C8::sys()->fn_7100026DF0();
+bool Utility::IsBattleAutoHeal() {
+    return ChallengeBattleManager::sys()->IsEnableAutoHeal();
 }
 
-bool Utility::fn_7100011E68(gf::GF_OBJ_HANDLE* handle) {
+bool Utility::IsCharacterAutoHeal(gf::GF_OBJ_HANDLE* handle) {
     BattleCharacter* character = CharacterManager::sys()->GetCharacterConst(handle);
     if (character) {
-        return character->fn_7100041728();
+        return character->IsAutoHeal();
     }
     return true;
 }
@@ -441,7 +441,7 @@ int Utility::AI_GetElementalComboID(gf::GF_OBJ_HANDLE* handle) {
     return 0;
 }
 
-int Utility::fn_71000126C0(gf::GF_OBJ_HANDLE* handle) {
+int Utility::AI_GetResistantAttrNum(gf::GF_OBJ_HANDLE* handle) {
     BattleCharacter* character = CharacterManager::sys()->GetCharacterConst(handle);
     if (character) {
         return fn_71000A2B74(character->GetCharacterParameterConst(true)->pad_5d8);
@@ -537,7 +537,7 @@ bool Utility::AI_StartActionRescue(gf::GF_OBJ_HANDLE* handle, int target) {
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     bool isPlayer;
@@ -572,7 +572,7 @@ bool Utility::AI_StartActionArts(gf::GF_OBJ_HANDLE* handle, int slot, int target
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     int index;
@@ -619,7 +619,7 @@ bool Utility::AI_StartActionAttack(gf::GF_OBJ_HANDLE* handle) {
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     if (!chr->IsProcAI(false)) {
@@ -628,12 +628,12 @@ bool Utility::AI_StartActionAttack(gf::GF_OBJ_HANDLE* handle) {
     return chr->AI_Attack(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), false);
 }
 
-bool Utility::fn_7100012DEC(gf::GF_OBJ_HANDLE* handle) {
+bool Utility::AI_StartActionTalentArts(gf::GF_OBJ_HANDLE* handle) {
     BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     if (!chr->IsProcAI(false)) {
@@ -647,7 +647,7 @@ bool Utility::AI_StartActionBladeChange(gf::GF_OBJ_HANDLE* handle, int blade) {
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     if (!chr->IsProcAI(false)) {
@@ -738,7 +738,7 @@ bool Utility::AI_StartMovePosition(gf::GF_OBJ_HANDLE* handle, const mm::Vec3& po
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     BattleCharacter::AI_MOVE_PARAM param;
@@ -756,7 +756,7 @@ bool Utility::AI_StartMoveTarget(gf::GF_OBJ_HANDLE* handle, int target, float va
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     BattleCharacter::AI_MOVE_PARAM param;
@@ -774,7 +774,7 @@ bool Utility::AI_StartMoveFront(gf::GF_OBJ_HANDLE* handle, int target, float val
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     BattleCharacter::AI_MOVE_PARAM param;
@@ -793,7 +793,7 @@ bool Utility::AI_StartMoveSide(gf::GF_OBJ_HANDLE* handle, int target, float valu
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     BattleCharacter::AI_MOVE_PARAM param;
@@ -812,7 +812,7 @@ bool Utility::AI_StartMoveLeft(gf::GF_OBJ_HANDLE* handle, int target, float valu
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     BattleCharacter::AI_MOVE_PARAM param;
@@ -831,7 +831,7 @@ bool Utility::AI_StartMoveRight(gf::GF_OBJ_HANDLE* handle, int target, float val
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     BattleCharacter::AI_MOVE_PARAM param;
@@ -850,7 +850,7 @@ bool Utility::AI_StartMoveBack(gf::GF_OBJ_HANDLE* handle, int target, float valu
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     BattleCharacter::AI_MOVE_PARAM param;
@@ -868,7 +868,7 @@ bool Utility::AI_StartMoveFriendBack(gf::GF_OBJ_HANDLE* handle, float value0, fl
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     mm::mtl::FixedVector<unsigned char, 90> list;
@@ -906,7 +906,7 @@ bool Utility::AI_StartMoveSatellite(gf::GF_OBJ_HANDLE* handle, bool flag, float 
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     BattleCharacter::AI_MOVE_PARAM param;
@@ -924,7 +924,7 @@ bool Utility::AI_StartMoveBackward(gf::GF_OBJ_HANDLE* handle, float value0, floa
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     BattleCharacter::AI_MOVE_PARAM param;
@@ -942,7 +942,7 @@ bool Utility::AI_StartMovePosBackward(gf::GF_OBJ_HANDLE* handle, mm::Vec3& pos, 
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     mm::Vec3 dest;
@@ -1033,7 +1033,7 @@ int Utility::AI_GetDeadCharacterNum(gf::GF_OBJ_HANDLE* handle, CHECK_CHR_NUM_MOD
     return GetCharacterList(list, handle, mode, 0x65);
 }
 
-int Utility::fn_7100014448(gf::GF_OBJ_HANDLE* handle, CHECK_CHR_NUM_MODE mode) {
+int Utility::AI_GetDeadCharacterNumIncludeNoBattle(gf::GF_OBJ_HANDLE* handle, CHECK_CHR_NUM_MODE mode) {
     mm::mtl::FixedVector<unsigned char, 90> list;
     return GetCharacterList(list, handle, mode, 0x64);
 }
@@ -1077,7 +1077,7 @@ bool Utility::AI_IsEnableSpAttack(gf::GF_OBJ_HANDLE* handle, int level) {
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     if (level != 0 && AI_GetSpAttackLevel(handle) != level) {
@@ -1094,7 +1094,7 @@ bool Utility::AI_StartSpAttack(gf::GF_OBJ_HANDLE* handle) {
     if (!chr) {
         return false;
     }
-    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->IsForward()) {
         return false;
     }
     if (!chr->IsProcAI(false)) {
@@ -1140,12 +1140,12 @@ bool Utility::AI_IsEnableArtsByID(gf::GF_OBJ_HANDLE* handle, int id, int target)
     return false;
 }
 
-bool Utility::fn_7100014958(gf::GF_OBJ_HANDLE* handle, int target) {
+bool Utility::AI_IsEnableTalentArts(gf::GF_OBJ_HANDLE* handle, int target) {
     if (!BattleGlobal::sys()->m_challengeAnySuccess) {
         return false;
     }
     BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
-    if (!chr || !chr->fn_710002F1F8()) {
+    if (!chr || !chr->IsForward()) {
         return false;
     }
     if (chr->pad_F09_3 || !chr->pad_F09_4) {
@@ -1284,7 +1284,7 @@ bool Utility::AI_IsKillChild() {
     return BattleGlobal::sys()->m_killChild;
 }
 
-bool Utility::fn_71000151EC() {
+bool Utility::AI_IsUseSirenSp() {
     return BattleGlobal::sys()->pad_bit55;
 }
 

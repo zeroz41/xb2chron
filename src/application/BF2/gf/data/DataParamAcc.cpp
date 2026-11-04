@@ -440,9 +440,9 @@ bool DataParamAcc::isDispInitExtraParts(unsigned int index) const {
     return true;
 }
 
-bool DataParamAcc::fn_7100221170(unsigned int index) const {
+bool DataParamAcc::isHideInitExtraParts(unsigned int index) const {
     if (isValid()) {
-        return m_obj->fn_710022BD80(index);
+        return m_obj->isHideInitExtraParts(index);
     }
     return true;
 }
@@ -694,9 +694,9 @@ void DataParamAcc::setVirtualEquipOrb(unsigned int index, unsigned int index2) {
     }
 }
 
-void DataParamAcc::fn_7100221F88(unsigned int index) {
+void DataParamAcc::setVirtualEquipWpnAcce(unsigned int index) {
     if (isValid()) {
-        m_obj->fn_710022BDB8(index);
+        m_obj->setVirtualEquipWpnAcce(index);
     }
 }
 

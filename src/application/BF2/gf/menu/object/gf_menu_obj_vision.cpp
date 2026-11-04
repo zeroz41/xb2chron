@@ -1,4 +1,4 @@
-#include "classes/gf/TUnk_B64F08.h"
+#include "classes/gf/GfMenuObjVision.h"
 #include "classes/gf/GfMenuDriverList.h"
 #include "classes/gf/GfMenuCharDataAdapter.h"
 #include "gf/GfMenuObjUtil.h"
@@ -30,7 +30,7 @@ void hideParts(unsigned int handle) {
 }
 }  // namespace
 
-bool TUnk_B64F08::fn_71004944B8(int blade) {
+bool GfMenuObjVision::fn_71004944B8(int blade) {
     if (blade == 0x412) {
         return false;
     }
@@ -40,7 +40,7 @@ bool TUnk_B64F08::fn_71004944B8(int blade) {
     return GfDataBlade::fn_7100231884() > 2000;
 }
 
-TUnk_B64F08::TUnk_B64F08(unsigned int handle)
+GfMenuObjVision::GfMenuObjVision(unsigned int handle)
     : GfMenuObject(handle), m_seq(this), m_ctrl(-1), m_animHandle(0), m_result(0), m_drivers(nullptr) {
     m_drivers = GfMenuDriverList::create();
     ui::UIListInfoBase::SetupParam param;
@@ -48,15 +48,15 @@ TUnk_B64F08::TUnk_B64F08(unsigned int handle)
     m_drivers->clear();
 }
 
-TUnk_B64F08::~TUnk_B64F08() {
+GfMenuObjVision::~GfMenuObjVision() {
     if (m_drivers != nullptr) {
         m_drivers->release();
         m_drivers = nullptr;
     }
 }
 
-void TUnk_B64F08::fn_7100494708(GfMenuCallContext* context, const OpenParam& param) {
-    if (GfMenuObjUtil::fn_710048FD30(1)) {
+void GfMenuObjVision::open(GfMenuCallContext* context, const OpenParam& param) {
+    if (GfMenuObjUtil::isValidExpansion(1)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x8b));
         if (acc.m_object != nullptr && GfMenuObjUtil::checkCCStart(context)) {
             ui::EventData event;
@@ -72,8 +72,8 @@ void TUnk_B64F08::fn_7100494708(GfMenuCallContext* context, const OpenParam& par
     context->abort();
 }
 
-void TUnk_B64F08::fn_71004947C4(unsigned int value, GfMenuCallContext* context) {
-    if (GfMenuObjUtil::fn_710048FD30(1)) {
+void GfMenuObjVision::close(unsigned int value, GfMenuCallContext* context) {
+    if (GfMenuObjUtil::isValidExpansion(1)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x8b));
         if (acc.m_object != nullptr) {
             if (context != nullptr && GfMenuObjUtil::checkCCStart(context)) {
@@ -89,8 +89,8 @@ void TUnk_B64F08::fn_71004947C4(unsigned int value, GfMenuCallContext* context) 
     context->abort();
 }
 
-void TUnk_B64F08::initialize() {
-    if (GfMenuObjUtil::fn_710048FD30(1)) {
+void GfMenuObjVision::initialize() {
+    if (GfMenuObjUtil::isValidExpansion(1)) {
         ui::UIObjectAcc acc(m_handle, "LAY_main");
         GfMenuObject::attachExternalCall(0x8b, acc.m_handle);
 #line 149
@@ -111,14 +111,14 @@ void TUnk_B64F08::initialize() {
     }
 }
 
-void TUnk_B64F08::finalize() {
-    if (GfMenuObjUtil::fn_710048FD30(1)) {
+void GfMenuObjVision::finalize() {
+    if (GfMenuObjUtil::isValidExpansion(1)) {
         GfMenuObject::finalize();
     }
 }
 
-void TUnk_B64F08::update() {
-    if (GfMenuObjUtil::fn_710048FD30(1)) {
+void GfMenuObjVision::update() {
+    if (GfMenuObjUtil::isValidExpansion(1)) {
         m_seq.update();
         GfMenuObject::update();
     }
@@ -166,9 +166,9 @@ void TUnk_B64F50::reciveEvent(const ui::EventData& event, unsigned int handle) {
                 arts.setDisp(false);
             }
         }
-        GfMenuReference::fn_71003673F0(1.0f);
+        GfMenuReference::setVisionTimeRatio(1.0f);
         m_owner->m_seq.clear();
-        m_owner->m_seq.addJob(&TUnk_B64F08::fn_7100494DEC);
+        m_owner->m_seq.addJob(&GfMenuObjVision::seqStart);
         return;
     }
     case 1:
@@ -193,16 +193,16 @@ void TUnk_B64F50::reciveEvent(const ui::EventData& event, unsigned int handle) {
     acc.setSuspend(true);
 }
 
-bool TUnk_B64F08::fn_7100494DEC() {
+bool GfMenuObjVision::seqStart() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     main.setDisp(true);
     main.setAlpha(1.0f);
     hideParts(m_handle);
-    m_seq.addJob(&TUnk_B64F08::fn_7100494F1C);
+    m_seq.addJob(&GfMenuObjVision::seqEnFadeIn);
     return true;
 }
 
-bool TUnk_B64F08::fn_7100494F1C() {
+bool GfMenuObjVision::seqEnFadeIn() {
     ui::UIObjectAcc part(m_handle, "LAY_en");
     GfMenuObjUtil::CtrlParam param;
     GfMenuObjUtil::setPresetCtrl_Fadein(0, param, -1);
@@ -211,11 +211,11 @@ bool TUnk_B64F08::fn_7100494F1C() {
     part.setDisp(true);
     m_ctrl = GfMenuObjUtil::startCtrl(part.m_handle, param, nullptr);
     m_seq.addWait(3);
-    m_seq.addJob(&TUnk_B64F08::fn_71004950AC);
+    m_seq.addJob(&GfMenuObjVision::seqArtsFadeIn);
     return true;
 }
 
-bool TUnk_B64F08::fn_71004950AC() {
+bool GfMenuObjVision::seqArtsFadeIn() {
     ui::UIObjectAcc part(m_handle, "LAY_arts");
     GfMenuObjUtil::CtrlParam param;
     GfMenuObjUtil::setPresetCtrl_Fadein(0, param, -1);
@@ -224,11 +224,11 @@ bool TUnk_B64F08::fn_71004950AC() {
     part.setDisp(true);
     m_ctrl = GfMenuObjUtil::startCtrl(part.m_handle, param, nullptr);
     m_seq.addWait(3);
-    m_seq.addJob(&TUnk_B64F08::fn_710049523C);
+    m_seq.addJob(&GfMenuObjVision::seqCharFadeIn);
     return true;
 }
 
-bool TUnk_B64F08::fn_710049523C() {
+bool GfMenuObjVision::seqCharFadeIn() {
     ui::UIObjectAcc part(m_handle, "LAY_char");
     GfMenuObjUtil::CtrlParam param;
     GfMenuObjUtil::setPresetCtrl_Fadein(0, param, -1);
@@ -237,51 +237,51 @@ bool TUnk_B64F08::fn_710049523C() {
     part.setDisp(true);
     m_ctrl = GfMenuObjUtil::startCtrl(part.m_handle, param, nullptr);
     m_seq.addWait(3);
-    m_seq.addJob(&TUnk_B64F08::fn_71004953CC);
+    m_seq.addJob(&GfMenuObjVision::seqFadeInEnd);
     return true;
 }
 
-bool TUnk_B64F08::fn_71004953CC() {
+bool GfMenuObjVision::seqFadeInEnd() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     GfMenuObject::termCallContext(main.m_handle);
     m_result = 0;
-    m_seq.addJob(&TUnk_B64F08::fn_7100495470);
+    m_seq.addJob(&GfMenuObjVision::seqWait);
     return true;
 }
 
-bool TUnk_B64F08::fn_7100495470() {
+bool GfMenuObjVision::seqWait() {
     if (m_result == 0) {
         return false;
     }
     if (m_result == 1) {
-        m_seq.addJob(&TUnk_B64F08::fn_710049553C);
+        m_seq.addJob(&GfMenuObjVision::seqSuccess);
     } else {
-        m_seq.addJob(&TUnk_B64F08::fn_7100495724);
+        m_seq.addJob(&GfMenuObjVision::seqFailed);
     }
     return true;
 }
 
-bool TUnk_B64F08::fn_710049553C() {
+bool GfMenuObjVision::seqSuccess() {
     ui::UIObjectAcc eff(m_handle, "IMG_eff");
     eff.setDisp(true);
     eff.startAnimation("start", false);
     m_animHandle = eff.m_handle;
     m_seq.addWait(9);
-    m_seq.addJob(&TUnk_B64F08::fn_7100495820);
-    m_seq.addJob(&TUnk_B64F08::fn_71004958B4);
-    m_seq.addJob(&TUnk_B64F08::fn_7100495918);
+    m_seq.addJob(&GfMenuObjVision::seqSuccess2);
+    m_seq.addJob(&GfMenuObjVision::seqAnimWait);
+    m_seq.addJob(&GfMenuObjVision::seqEnd);
     return true;
 }
 
-bool TUnk_B64F08::fn_7100495724() {
+bool GfMenuObjVision::seqFailed() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     m_ctrl = GfMenuObjUtil::setCommonFadeOut(main.m_handle, 0, 0);
-    m_seq.addJob(&TUnk_B64F08::fn_7100495960);
-    m_seq.addJob(&TUnk_B64F08::fn_7100495918);
+    m_seq.addJob(&GfMenuObjVision::seqCtrlWait);
+    m_seq.addJob(&GfMenuObjVision::seqEnd);
     return true;
 }
 
-bool TUnk_B64F08::fn_7100495820() {
+bool GfMenuObjVision::seqSuccess2() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     main.setDispChild(false, "LAY_en");
     main.setDispChild(false, "LAY_arts");
@@ -291,7 +291,7 @@ bool TUnk_B64F08::fn_7100495820() {
     return true;
 }
 
-bool TUnk_B64F08::fn_71004958B4() {
+bool GfMenuObjVision::seqAnimWait() {
     bool done = true;
     if (m_animHandle != 0) {
         ui::UIObjectAcc anim(m_animHandle);
@@ -304,13 +304,13 @@ bool TUnk_B64F08::fn_71004958B4() {
     return done;
 }
 
-bool TUnk_B64F08::fn_7100495918() {
+bool GfMenuObjVision::seqEnd() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     GfMenuObject::sendCloseEvent(main.m_handle, 0, 0.0f);
     return true;
 }
 
-bool TUnk_B64F08::fn_7100495960() {
+bool GfMenuObjVision::seqCtrlWait() {
     if (m_ctrl != -1) {
         if (GfMenuObjUtil::isBusyCtrl(m_ctrl)) {
             return false;

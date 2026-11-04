@@ -81,13 +81,9 @@ public:
     static int getRewardMercenariesPoint(unsigned int mission);
     // the reward slot's item (its low and high halves), false when there is none
     static bool getRewardItem(unsigned int& item, unsigned int& count, unsigned int mission, QUEST_REWARD slot);
-    // 1.0.0's function at this place (an empty body there); 3.0.1 resets every mission's flag to 0
+    // 2.0.0 names it (1.0.0's body there is empty); unless GfGameManager::isGameTypeIra(), sets every mission's
+    // flag (GfDataMercenaries' start to end mission) to 0 through setMissionFlag
     static void setupNewGameParam();
-    // Placeholder name: nothing in 1.0.0's place names it (1.0.0's setupNewGameParam there is empty, so its
-    // callees differ). A member because it sits among GfGameMercenaries' functions in its unit. What it does:
-    // unless GfGameManager::fn_71002A9E68(), sets every mission's flag (GfDataMercenaries' start to end mission)
-    // to 0 through setMissionFlag. Its one caller is fn_71002E2F4C.
-    static void fn_7100301C60();
     static void stopMissionTime(bool stop);
     static void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
 

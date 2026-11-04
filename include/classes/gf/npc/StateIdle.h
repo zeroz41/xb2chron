@@ -34,17 +34,16 @@ public:
     void enter(GfComBehaviorNpc* owner, ai::State* prev);
     void leave(GfComBehaviorNpc* owner, ai::State* next);
     void update(GfComBehaviorNpc* owner, const fw::UpdateInfo& info);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's enter inlined its code). A member
-    // because enter and the sequences call it with the state. What it does: starts the npc's schedule command, the
-    // asm state S_schedule_<n> as a C_ command (GfComAsm's state name, else the npc setup's schedule name), ending
-    // the schedule first when m_endSchedule is set.
-    void fn_71004E0660(GfComBehaviorNpc& owner);
-    // Placeholder name: new in 3.0.1. A sequence (enter stores it in m_seq, as fn_71004E09E0 does). What it does:
-    // runs the schedule command until it ran, then requests the state getNexStateId gives.
-    void fn_71004E0948(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
-    // Placeholder name: new in 3.0.1. A sequence (enter's first one). What it does: waits for the npc's turn to end,
-    // then starts the schedule command and moves on to fn_71004E0948.
-    void fn_71004E09E0(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
+    // 2.0.0's symbols name it. What it does: starts the npc's schedule command, the asm state S_schedule_<n> as a C_
+    // command (GfComAsm's state name, else the npc setup's schedule name), ending the schedule first when m_endSchedule
+    // is set.
+    void applyInitStateName(GfComBehaviorNpc& owner);
+    // 2.0.0's symbols name it. What it does: runs the schedule command until it ran, then requests the state
+    // getNexStateId gives.
+    void seqCheckNextState(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
+    // 2.0.0's symbols name it. What it does: waits for the npc's turn to end, then starts the schedule command and
+    // moves on to seqCheckNextState.
+    void seqWaitTurnEnd(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
     TFieldExecCmd<GfComAsm> m_execCmd;
     // whether starting the schedule command ends the schedule first: enter stores isExecEndScheduleCondMatched of
     // the previous state (the name is not the original's)

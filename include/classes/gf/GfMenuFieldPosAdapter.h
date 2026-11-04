@@ -33,20 +33,18 @@ public:
         m_keepAdjusted = keepAdjusted;
         m_adjusted = false;
     }
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's update calls gf::util::getScreenPos
-    // directly). A member: it takes a first argument it never reads (x0, which update leaves undefined: clang drops an unused this at the call), and only GfMenuFieldPosAdapter::update calls it. What it does: with the
-    // flag false, gf::util::getScreenPos(screen, world) (tail call); with it true, the same projection through
-    // GfInfo::m_viewProj and GfInfo::m_camSize but without getScreenPos's test that the depth (row 2) is at least
-    // 1e-6, so a position behind the camera still projects; false when |w| is at most 1e-6. update passes
-    // m_keepAdjusted && !m_offScreen as the flag.
-    bool fn_710033D6E4(mm::Vec3& screen, const mm::Vec3& world, bool behind);
+    // 2.0.0's symbols name it. What it does: with the flag false, gf::util::getScreenPos(screen, world) (tail call);
+    // with it true, the same projection through GfInfo::m_viewProj and GfInfo::m_camSize but without getScreenPos's
+    // test that the depth (row 2) is at least 1e-6, so a position behind the camera still projects; false when |w| is
+    // at most 1e-6. update passes m_keepAdjusted && !m_offScreen as the flag.
+    bool getScreenPos(mm::Vec3& screen, const mm::Vec3& world, bool behind);
     // the field names are not the original's
     mm::Vec3 m_pos;  // the world position shown at
     bool m_offScreen;  // set when the object could not be kept on the screen: update stops adjusting it
     unsigned char pad_41[3];
     unsigned int m_handle;  // the UI object kept on the screen
     bool m_first;  // the first update puts the object at 10000, 10000
-    bool m_keepAdjusted;  // create's flag: once adjusted, the position stays while GfGameManager::fn_71002A9E68
+    bool m_keepAdjusted;  // create's flag: once adjusted, the position stays while GfGameManager::isGameTypeIra
     bool m_adjusted;
     unsigned char pad_4B[5];
 };

@@ -91,10 +91,8 @@ public:
     bool isCameraCut01End();
     bool applyPartyForm() const;
     void setPartyDisp(bool disp);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's StateSalvageSetupFadeIn::enter calls
-    // setPartyDisp(false) where 3.0.1's calls this with false; StateSalvageResult::leave calls it with true). A member
-    // because its address is in gf_game_salvage's range and the states pass it the salvage game.
-    void fn_7100315A84(bool flag);
+    // 2.0.0's symbols name it.
+    void setPartyNpcMove(bool flag);
     void playAnimation(AnimationType type);
     bool isAnimationEnd() const;
     void playVoice(VoiceType type);

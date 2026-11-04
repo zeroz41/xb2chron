@@ -26,11 +26,10 @@ public:
               pad_0x56(0) {}
         // fills m_items from count rows of items (the item and gold tables)
         void createDropitemInfos(unsigned char* items, int count);
-        // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because seqWaitBeginDrop
-        // calls it on its EmitInfo in place of createDropitemInfos when its CreateInfo's 0x28 is set. What it does:
-        // fills m_items (Vector<GfDropitemInfo>::expand) from count random rows of a BDAT table (FixStr formats,
-        // ml::mtRand), checking GfItemUtil::getItemBoxCount; fn_71002862F8 is its helper.
-        void fn_71002849C4(int count);
+        // 2.0.0's symbols name it. What it does: fills m_items (Vector<GfDropitemInfo>::expand) from count random rows
+        // of a BDAT table (FixStr formats, ml::mtRand), checking GfItemUtil::getItemBoxCount; fn_71002862F8 is its
+        // helper.
+        void createDropitemInfosBattleChallenge(int count);
 
         mm::Vec3 m_pos;  // where the items drop from
         float m_angle;  // emitDropitems spreads the drops from m_angle - m_angleRange
@@ -70,11 +69,10 @@ public:
     // makes a field object dropping gold (row 10 to 14 of the field object table by the amount against the
     // thresholds of table 0x7B rows 8 to 11) and gives its setup the amount; the object's handle
     static GF_OBJ_HANDLE* emitDropgold(unsigned char paramId, unsigned int gold);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because emitDropitems calls it in
-    // place of emitDropgold for its second kind of amount. What it does: makes the field object of row 30 (paramId
-    // picks its "paramid<n>" column, as emitDropgold's) and gives its setup the amount (m_amount, which applyGetItem
-    // hands to btl::Utility::fn_7100010900); returns the object's handle.
-    static GF_OBJ_HANDLE* fn_7100287E30(unsigned char paramId, unsigned int amount);
+    // 2.0.0's symbols name it. What it does: makes the field object of row 30 (paramId picks its "paramid<n>" column,
+    // as emitDropgold's) and gives its setup the amount (m_amount, which applyGetItem hands to
+    // btl::Utility::fn_7100010900); returns the object's handle.
+    static GF_OBJ_HANDLE* emitDropEtherCube(unsigned char paramId, unsigned int amount);
     static int getResBdatIdFromItemId(int itemId);
     // drops info's items around info.m_pos; returns the longest appear delay it gave a drop (-1 when there is
     // nothing to drop)

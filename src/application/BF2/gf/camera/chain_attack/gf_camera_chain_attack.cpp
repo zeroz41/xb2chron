@@ -38,7 +38,7 @@ mm::mtl::IntrusivePtr<ChainAttackCameraEntity> ChainAttackCameraEntity::create()
 void ChainAttackCameraEntity::onActivate() {}
 
 void ChainAttackCameraEntity::update(const fw::UpdateInfo& info) {
-    if (GfGameManager::fn_71002A9E68() && GfGameManager::isExecTutorial()) {
+    if (GfGameManager::isGameTypeIra() && GfGameManager::isExecTutorial()) {
         return;
     }
     if (m_rate > 0.0f) {

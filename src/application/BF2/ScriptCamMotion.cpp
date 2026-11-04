@@ -202,38 +202,38 @@ static int fn_7100657CEC(VMThread* pThread) {
 
 // btl_ai.getPartyGaugeNum
 static int fn_7100657D30(VMThread* pThread) {
-    vmRetFixedSet(pThread, btl::Utility::fn_71000152D0());
+    vmRetFixedSet(pThread, btl::Utility::AI_GetPartyGaugeNum());
     return 1;
 }
 
 // btl_ai.getEnemySirenGaugeRatio
 static int fn_7100657D74(VMThread* pThread) {
-    vmRetFixedSet(pThread, btl::Utility::fn_710001530C());
+    vmRetFixedSet(pThread, btl::Utility::AI_GetEnemySirenSpGaugeRate());
     return 1;
 }
 
 // btl_ai.addEnemySirenGaugeRatio
 static int fn_7100657DB8(VMThread* pThread) {
-    btl::Utility::fn_7100015320(vmArgFixedGet(1, vmArgPtrGet(pThread, 1)));
-    vmRetFixedSet(pThread, btl::Utility::fn_710001530C());
+    btl::Utility::AI_AddEnemySirenSpGaugeRate(vmArgFixedGet(1, vmArgPtrGet(pThread, 1)));
+    vmRetFixedSet(pThread, btl::Utility::AI_GetEnemySirenSpGaugeRate());
     return 1;
 }
 
 // btl_ai.getWhiteSirenLevel
 static int fn_7100657E14(VMThread* pThread) {
-    vmRetIntSet(pThread, btl::Utility::fn_7100015334(1));
+    vmRetIntSet(pThread, btl::Utility::AI_GetSirenBuffLevel(1));
     return 1;
 }
 
 // btl_ai.getBlackSirenLevel
 static int fn_7100657E5C(VMThread* pThread) {
-    vmRetIntSet(pThread, btl::Utility::fn_7100015334(0));
+    vmRetIntSet(pThread, btl::Utility::AI_GetSirenBuffLevel(0));
     return 1;
 }
 
 // btl_ai.getChallengeID
 static int fn_7100657EA4(VMThread* pThread) {
-    vmRetIntSet(pThread, btl::Utility::fn_710001535C());
+    vmRetIntSet(pThread, btl::Utility::AI_GetChallengeID());
     return 1;
 }
 
@@ -289,13 +289,13 @@ static int fn_7100658188(VMThread* pThread) {
 
 // btl_ai.isUseSirenSp
 static int fn_71006581D0(VMThread* pThread) {
-    vmRetBoolSet(pThread, btl::Utility::fn_71000151EC());
+    vmRetBoolSet(pThread, btl::Utility::AI_IsUseSirenSp());
     return 1;
 }
 
 // btl_ai.isPause
 static int fn_7100658218(VMThread* pThread) {
-    vmRetBoolSet(pThread, btl::Utility::fn_710000FB7C());
+    vmRetBoolSet(pThread, btl::Utility::IsPause());
     return 1;
 }
 
@@ -352,19 +352,19 @@ static int fn_71006584EC(VMThread* pThread) {
 static int fn_7100658518(VMThread* pThread) {
     int stage = vmArgOmitChk(pThread, 1) ? 6 : vmArgIntGet(1, vmArgPtrGet(pThread, 1));
     bool flag = vmArgOmitChk(pThread, 2) ? false : vmArgBoolGet(2, vmArgPtrGet(pThread, 2)) != 0;
-    btl::Utility::fn_7100010DBC(stage, flag);
+    btl::Utility::SetPlayerKizunaStage(stage, flag);
     return 0;
 }
 
 // btl_ai.fullCoolTime
 static int fn_71006585A8(VMThread* pThread) {
-    btl::Utility::fn_7100010D84();
+    btl::Utility::FullCoolTime();
     return 0;
 }
 
 // btl_ai.setBattleEndEnemyCall
 static int fn_71006585C0(VMThread* pThread) {
-    btl::Utility::fn_7100010DA4(vmArgIntGet(1, vmArgPtrGet(pThread, 1)));
+    btl::Utility::SetBattleEndEnemyCall(vmArgIntGet(1, vmArgPtrGet(pThread, 1)));
     return 0;
 }
 

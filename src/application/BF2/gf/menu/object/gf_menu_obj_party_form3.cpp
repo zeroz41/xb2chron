@@ -121,7 +121,7 @@ void GfMenuObjPartyForm3::initialize() {
         m_numbers[i]->m_value = 3;
     }
     GfMenuObject::disableInput(acc.searchChild("LAY_dr_select"));
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc(m_handle, "LAY_guest@01").setDisp(fn_71002ED9CC());
         ui::UIObjectAcc(m_handle, "LAY_guest@02").setDisp(fn_71002EDA2C());
         if (!GfMenuObjUtil::getMenuCondition(0x2F)) {
@@ -141,7 +141,7 @@ void GfMenuObjPartyForm3::update() {
 }
 
 bool GfMenuObjPartyForm3::seqAnnounceChange() {
-    if (GfMenuObjUtil::fn_710048FD30(3) && m_openType == 2) {
+    if (GfMenuObjUtil::isValidExpansion(3) && m_openType == 2) {
         return true;
     }
     if (m_announceContext != nullptr) {
@@ -155,7 +155,7 @@ bool GfMenuObjPartyForm3::seqAnnounceChange() {
 bool GfMenuObjPartyForm3::seqWaitOpenEnd() {
     ui::UIObjectAcc acc(m_handle, "LAY_dr_select");
     GfMenuObject::enableInput(acc.m_handle);
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuObjMainMenu2::setCloseKeyEnable(true);
     }
     return true;

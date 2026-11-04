@@ -83,7 +83,7 @@ inline EvtBgmTaskDelayStop* EvtBgmTaskDelayStop::create(const EventBgmSetup& set
 void GfEvtBgm::stopBgm(const EventBgmSetup& setup) {
     if (m_setup.m_overTime != 0.0f) {
         if (BgmEvent* event = BgmEvent::get()) {
-            event->fn_7100265440();
+            event->setBgmClearByStopBgm();
         }
         return;
     }

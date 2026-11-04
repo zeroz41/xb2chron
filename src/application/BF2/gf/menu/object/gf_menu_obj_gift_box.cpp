@@ -1,5 +1,5 @@
-#include "classes/gf/TUnk_B625A0.h"
-#include "classes/gf/TUnk_B625A0/TUnk_B625E8.h"
+#include "classes/gf/GfMenuObjGiftBox.h"
+#include "classes/gf/GfMenuObjGiftBox/MainListener.h"
 #include "classes/gf/GfMenuFullScreen.h"
 #include "classes/gf/GfMenuIDList.h"
 #include "classes/gf/GfDataBdat.h"
@@ -18,7 +18,7 @@
 
 namespace gf {
 
-TUnk_B625A0::TUnk_B625A0(unsigned int handle)
+GfMenuObjGiftBox::GfMenuObjGiftBox(unsigned int handle)
     : GfMenuObject(handle), m_topList(nullptr), m_subList(nullptr), m_numbers(), m_seq(this), pad_378(0),
       m_refItem(), m_ids(), m_counts(), m_menuId(0), m_hasMenuId(false), m_noMenuId(false) {
     m_topList = GfMenuMsgList::create();
@@ -29,7 +29,7 @@ TUnk_B625A0::TUnk_B625A0(unsigned int handle)
     }
 }
 
-TUnk_B625A0::~TUnk_B625A0() {
+GfMenuObjGiftBox::~GfMenuObjGiftBox() {
     m_refItem = nullptr;
     for (int i = 0; i < 22; i++) {
         m_numbers[i] = nullptr;
@@ -47,17 +47,17 @@ TUnk_B625A0::~TUnk_B625A0() {
     }
 }
 
-bool TUnk_B625A0::fn_710040C16C(unsigned int row, unsigned int arg) {
+bool GfMenuObjGiftBox::canGetItem(unsigned int row, unsigned int arg) {
     if (GfGameFlag::getLocal(1, static_cast<unsigned short>(Bdat::getVal(GfDataBdat::getFP(0x10A), "getflag", row))) == 0 &&
         GfGameCond::isGameCond(static_cast<unsigned short>(Bdat::getVal(GfDataBdat::getFP(0x10A), "condition", row)))) {
-        return !fn_710040EF7C(row, arg);
+        return !isGetItemFull(row, arg);
     }
     return false;
 }
 
-bool TUnk_B625A0::fn_710040C3B4() {
+bool GfMenuObjGiftBox::hasFreeGift() {
     unsigned char* fp = GfDataBdat::getFP(0x10A);
-    if (TUnk_B4C840::fn_71002229C0(5) >= 0) {
+    if (GfDataAoc::fn_71002229C0(5) >= 0) {
         for (int i = 0; i < Bdat::getIdCount(fp); i++) {
             if (Bdat::getVal(fp, "releasecount", Bdat::getIdTop(fp) + i) & 0x80) {
                 return true;
@@ -67,28 +67,28 @@ bool TUnk_B625A0::fn_710040C3B4() {
     return false;
 }
 
-void TUnk_B625A0::fn_710040C444() {
+void GfMenuObjGiftBox::setCloseToAnnounce() {
     GfMenuTypes::Param param;
     param.m_menuId = 1;
     GfMenuFullScreen::registLayerParam(0x46, param);
 }
 
-void TUnk_B625A0::fn_710040C474() {
+void GfMenuObjGiftBox::setCloseToAnnounceEx() {
     GfMenuTypes::Param param;
     param.m_menuId = 2;
     GfMenuFullScreen::registLayerParam(0x46, param);
 }
 
-void TUnk_B625A0::finalize() {
+void GfMenuObjGiftBox::finalize() {
     GfMenuObject::finalize();
 }
 
-void TUnk_B625A0::update() {
+void GfMenuObjGiftBox::update() {
     m_seq.update();
     GfMenuObject::update();
 }
 
-void TUnk_B625A0::TUnk_B625E8::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjGiftBox::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     if (event.m_type == 1) {
         GfMenuObjUtil::setCommonFadeIn(acc.m_handle, 1, 0);
@@ -105,11 +105,11 @@ void TUnk_B625A0::TUnk_B625E8::reciveEvent(const ui::EventData& event, unsigned 
     }
 }
 
-bool TUnk_B625A0::fn_7100410158() {
+bool GfMenuObjGiftBox::seqWaitCommonDialog() {
     return !GfMenuManager::isOpenCommonWindow();
 }
 
-bool TUnk_B625A0::fn_7100410174() {
+bool GfMenuObjGiftBox::seqReturnTop() {
     ui::UIObjectAcc acc(m_handle, "LAY_main");
     ui::EventData event;
     event.m_type = 0x100;
@@ -118,15 +118,15 @@ bool TUnk_B625A0::fn_7100410174() {
     return true;
 }
 
-bool TUnk_B625A0::fn_7100410788() {
-    fn_710040F0B8(m_subList->getContents(m_subList->getIndex(false)).m_id);
-    fn_710040E388(true);
-    fn_710040E88C();
+bool GfMenuObjGiftBox::seqGetItem() {
+    execGetItem(m_subList->getContents(m_subList->getIndex(false)).m_id);
+    refreshTopList(true);
+    refreshSubList();
     GfMenuManager::openCommonWindow(0xE8);
     return true;
 }
 
-bool TUnk_B625A0::fn_7100410848() {
+bool GfMenuObjGiftBox::seqReturnSub() {
     ui::UIObjectAcc acc(m_handle, "LAY_main");
     ui::EventData event;
     event.m_type = 0x100;

@@ -66,7 +66,7 @@ GfFobjSeManager::GfFobjSeManager(const CreateInfo* info) : m_pack(nullptr) {
 void GfFobjSeManager::create(const CreateInfo& info) {
     dispose();
     m_info = info;
-    const char* name = GfFieldSound::fn_710027C7D4();
+    const char* name = GfFieldSound::getSePackName();
     m_pack = fw::SoundManager::sys()->findPack(name, nullptr);
     if (m_pack == nullptr) {
         dispose();
@@ -89,8 +89,8 @@ void GfFobjSeManager::dispose() {
     m_info = CreateInfo();
 }
 
-void GfFobjSeManager::fn_7100282EA8() {
-    const char* name = GfFieldSound::fn_710027C7D4();
+void GfFobjSeManager::rebuildForGameType() {
+    const char* name = GfFieldSound::getSePackName();
     m_pack = fw::SoundManager::sys()->findPack(name, nullptr);
 }
 
@@ -234,7 +234,7 @@ void GfDropitemEmitter::seqWaitBeginDrop(float dt) {
     }
     GfFobjDropitem::EmitInfo info;
     if (m_info.pad_0x28) {
-        info.fn_71002849C4(m_info.m_itemCount);
+        info.createDropitemInfosBattleChallenge(m_info.m_itemCount);
     } else {
         info.createDropitemInfos(m_info.m_items, m_info.m_itemCount);
     }
@@ -274,7 +274,7 @@ void GfFobjDropitem::destroy() {
 
 // whether getter may take the item: both objects have a transform, the item is within the item_get param's
 // heights of getter (radius widens them) and, across the ground, within the param's radius plus owner bonus 10
-// (percent, capped at 10000), the field's leader bonus and radius. While GfGameManager::fn_71002A9E68 holds, an
+// (percent, capped at 10000), the field's leader bonus and radius. While GfGameManager::isGameTypeIra holds, an
 // item lower than GfFobjManager's m_settingValue below getter counts as at getter's position.
 bool GfFobjDropitem::canGetItem(GF_OBJ_HANDLE* getter, float radius) const {
     GfObj* getterObj = GfObjUtil::getObj(getter);
@@ -290,7 +290,7 @@ bool GfFobjDropitem::canGetItem(GF_OBJ_HANDLE* getter, float radius) const {
     }
     mm::Vec3 diff = itemObj->getComponent<GfComTransform>(0)->getPosition() -
                     getterObj->getComponent<GfComTransform>(0)->getPosition();
-    if (GfGameManager::fn_71002A9E68() && diff.y < -GfFobjManager::get()->m_settingValue) {
+    if (GfGameManager::isGameTypeIra() && diff.y < -GfFobjManager::get()->m_settingValue) {
         diff = mm::Vec3::zero;
     }
     if (diff.y + radius < -param->lower) {
@@ -377,7 +377,7 @@ GF_OBJ_HANDLE* GfFobjDropitem::emitDropitem(unsigned char paramId, int itemId, f
     return handle;
 }
 
-GF_OBJ_HANDLE* GfFobjDropitem::fn_7100287E30(unsigned char paramId, unsigned int amount) {
+GF_OBJ_HANDLE* GfFobjDropitem::emitDropEtherCube(unsigned char paramId, unsigned int amount) {
     unsigned char* fp = GfFobjManager::sys() != nullptr ? GfFobjManager::sys()->m_dropitemListFP : nullptr;
     GfFobjManager::getDropitemParams();
     GfInitParamFobj param;

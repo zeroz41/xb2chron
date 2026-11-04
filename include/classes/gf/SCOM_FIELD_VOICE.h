@@ -14,22 +14,18 @@ namespace gf {
 // table 0x7100B6B690
 class SCOM_FIELD_VOICE : public ::gf::SCOM {
 public:
-    // the voice names fn_7100568E1C and fn_7100569264 pick one of (ml::mtRand(size())); their callers push them on
+    // the voice names createInPartyForIra and fn_7100569264 pick one of (ml::mtRand(size())); their callers push them on
     // the stack. mm::mtl::FixedVector of five: fn_7100569264 asserts "index < size()" (FixedVector line 181) and
     // fn_71005693FC pushes with "size() < capacity()"; the destructor's size clear folds once the callees are
     // defined in this unit (their parameter becomes readonly). The typedef name is not the original's.
     typedef ::mm::mtl::FixedVector<const char*, 5> VoiceList;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because SCOM_FIELD_VOICE's
-    // fn_71005691B0, fn_71005691EC, fn_7100568D34 and createFieldSkillMiss call it and it sits among its create
-    // functions. What it does: when GfGameManager::fn_71002A9E68 holds, picks a party blade (fn_7100566B24,
-    // ml::mtRand) of bdat id 0x11 and up and plays one of names (ml::mtRand(size())) for it, with the blade's name
-    // from the table at 0x7100B6AB50; 0 when it plays nothing (not recovered).
-    static GAME_VOICE_HANDLE* fn_7100568E1C(const VoiceList& names);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its two callers are
-    // SCOM_FIELD_VOICE's: fn_7100568E1C and fn_71005687A4 (createBadWeather's voice pair); kept out of line in both.
-    // What it does: pushes the handles GfGameParty::getHandleDriver(i, 0..2) gives for the party slots i 0..2 that
-    // are not -1; true when it found any.
-    static bool fn_7100566B24(::mm::mtl::FixedVector<GF_OBJ_HANDLE*, 9>& handles);
+    // 2.0.0's symbols name it. What it does: when GfGameManager::isGameTypeIra holds, picks a party blade
+    // (getIraMember, ml::mtRand) of bdat id 0x11 and up and plays one of names (ml::mtRand(size())) for it, with the
+    // blade's name from the table at 0x7100B6AB50; 0 when it plays nothing (not recovered).
+    static GAME_VOICE_HANDLE* createInPartyForIra(const VoiceList& names);
+    // 2.0.0's symbols name it. What it does: pushes the handles GfGameParty::getHandleDriver(i, 0..2) gives for the
+    // party slots i 0..2 that are not -1; true when it found any.
+    static bool getIraMember(::mm::mtl::FixedVector<GF_OBJ_HANDLE*, 9>& handles);
     // the names below are not the original's (what the create functions store and exec reads)
     // one voice to play: exec waits m_wait seconds, plays it (GfFieldVoice::playVoice(m_obj, m_field, m_prio)),
     // then waits for GfGameVoice::getResult(m_voice)
@@ -75,10 +71,9 @@ public:
     static GAME_VOICE_HANDLE* createFallDead(const ParamObj& obj);
     // the level-up voice (field and wait from the party member); queued to stop on events unless talking
     static unsigned long createLevelup(const ParamObj& obj);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it follows createLevelup
-    // and wraps it. What it does: createLevelup(obj), then clears that request's m_stopOnEvent; returns the handle
-    // (caller GfGameUtil::execLevelUp).
-    static unsigned long fn_7100567634(const ParamObj& obj);
+    // 2.0.0's symbols name it. What it does: createLevelup(obj), then clears that request's m_stopOnEvent; returns the
+    // handle (caller GfGameUtil::execLevelUp).
+    static unsigned long createLevelupForCamp(const ParamObj& obj);
     static GAME_VOICE_HANDLE* createMercenariesIn(unsigned int id);
     static GAME_VOICE_HANDLE* createMercenariesLeader(unsigned int id);
     static GAME_VOICE_HANDLE* createReleaseBlade(unsigned int id);
@@ -93,23 +88,19 @@ public:
     // a driver's bond voice: one of three (ml::mtRand(3)) for driver id 1..6 (GfGameVoice::playVoice type 3);
     // nullptr for any other id
     static GAME_VOICE_HANDLE* createDriverKizuna(unsigned int id);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's createQuest(CV_FIELD) has the same
-    // size but plays a voice through GfFieldVoice::playVoice; this takes no argument). A member because it sits among
-    // this class's create functions in gf_req_scom (after createDriverKizuna). What it does: passes the voice pair
-    // "670101"/"670102" (count 2) to fn_7100568E1C. Its one caller is GfMenuObjQuestLog::seqOrderWaitCtrl, after a
-    // quest's order window when GfMenuObjUtil::fn_710048FD30(3) holds.
-    static void fn_71005691B0();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason (right after
-    // fn_71005691B0). What it does: passes the voice pair "670103"/"670104" (count 2) to fn_7100568E1C. Its one
-    // caller is GfMenuObjQuestLog::seqCompleteWait, after a quest's complete window when fn_710048FD30(3) holds.
-    static void fn_71005691EC();
+    // 2.0.0's symbols name it. What it does: passes the voice pair "670101"/"670102" (count 2) to createInPartyForIra.
+    // Its one caller is GfMenuObjQuestLog::seqOrderWaitCtrl, after a quest's order window when
+    // GfMenuObjUtil::isValidExpansion(3) holds.
+    static void createQuestOrderIra();
+    // 2.0.0's symbols name it. What it does: passes the voice pair "670103"/"670104" (count 2) to createInPartyForIra.
+    // Its one caller is GfMenuObjQuestLog::seqCompleteWait, after a quest's complete window when isValidExpansion(3)
+    // holds.
+    static void createQuestCompleteIra();
     // the voice when a field skill starts: GfDataBlade::getFieldSkillVoice(blade, skill) for the blade, at once
     // (0 when the blade has none). Caller: GfMenuObjFieldSkill::SkillInfoListener::reciveEvent.
     static GAME_VOICE_HANDLE* createFieldSkillStart(unsigned int blade, unsigned int skill);
-    // Placeholder name (inferred: createFieldSkillSuccess): it sits between createFieldSkillStart and
-    // createFieldSkillMiss and is their twin with QuestListAcc::getFLD_FieldSkillSettingSuccessVoiceCategory (voices
-    // "750101"-"750103" first). Caller: GfMenuObjFieldSkill::ResultListener::reciveEvent on success.
-    static GAME_VOICE_HANDLE* fn_7100568D34(unsigned int);
+    // 2.0.0's symbols name it. Caller: GfMenuObjFieldSkill::ResultListener::reciveEvent on success.
+    static GAME_VOICE_HANDLE* createFieldSkillClear(unsigned int);
     // the voice when a field skill fails (QuestListAcc::getFLD_FieldSkillSettingMissVoiceCategory). Caller:
     // GfMenuObjFieldSkill::ResultListener::reciveEvent on failure.
     static GAME_VOICE_HANDLE* createFieldSkillMiss(unsigned int);
@@ -135,7 +126,7 @@ public:
     // SCOM_FIELD_VOICE's create functions (createLandmark, createUnexplored, createExitInn, createSkipTravel,
     // createRestart, createBadWeather, createTime) call it. What it does: collects the party slots 0..2 whose
     // driver and blade are valid game objects (GfGameObj::isValidGameObj(handle, true, null); when
-    // GfGameManager::fn_71002A9E68 holds, whose two GfGameParty::getDriverBdatId(slot, 0/1) are non-zero) in a
+    // GfGameManager::isGameTypeIra holds, whose two GfGameParty::getDriverBdatId(slot, 0/1) are non-zero) in a
     // 32-entry mm::mtl::FixedVector<unsigned short> and returns one picked by ml::mtRand(count), or -1 when none.
     static int fn_71005680B0();
 
@@ -151,9 +142,9 @@ public:
 };
 
 // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions: they take no this, and their
-// callers are menu code outside any SCOM class. What fn_7100569264 does: when GfGameManager::fn_71002A9E68 holds and
+// callers are menu code outside any SCOM class. What fn_7100569264 does: when GfGameManager::isGameTypeIra holds and
 // blade is a bdat id 0x11..0x19, plays one of names (ml::mtRand(size())) appended to the blade's name (table
-// 0x7100B6AB50) for the blade (GfGameVoice::fn_71002F1D20(3, blade, ...)); 0 otherwise (not recovered). The others
+// 0x7100B6AB50) for the blade (GfGameVoice::playVoiceParty(3, blade, ...)); 0 otherwise (not recovered). The others
 // pass it fixed lists: fn_71005693C0 "680101"/"680102" (caller fn_71003BD208), fn_71005695D0 "700101".."700103"
 // (caller GfMenuObjDrArtsSet2::ArtsListListener::reciveEvent), fn_7100569618 "710101".."710103" (caller
 // GfMenuObjDrKizunaRing::seqSkillAnime).

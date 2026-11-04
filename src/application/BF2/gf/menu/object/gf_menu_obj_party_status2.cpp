@@ -174,7 +174,7 @@ void GfMenuObjPartyStatus2::MainListener::reciveEvent(const ui::EventData& event
         }
         break;
     case 0x101:
-        if (!GfMenuObjUtil::fn_710048FD30(3) || !GfMenuManager::isOpenFullScreen()) {
+        if (!GfMenuObjUtil::isValidExpansion(3) || !GfMenuManager::isOpenFullScreen()) {
             int index = event.m_param0 + 1;
             mm::mtl::FixStr<32> name;
             name.format("IMG_dr_exp_eff@%02d", index);
@@ -244,7 +244,7 @@ void GfMenuObjPartyStatus2::setupPartyStatus(ui::UIObjectAcc& acc, GfMenuRewrite
         unsigned int backHandle = hp.duplicateChild(name.m_str);
         ui::UIObjectAcc back(backHandle);
         if (back.m_object != nullptr) {
-            if (!GfMenuObjUtil::fn_710048FD30(3)) {
+            if (!GfMenuObjUtil::isValidExpansion(3)) {
                 GfMenuGfObjAdapter* damage = GfMenuGfObjAdapter::createFromPartyDriver(backHandle, 0, i, true);
                 if (damage != nullptr) {
                     damage->setNumberInterpolateMode(0.6f);
@@ -371,7 +371,7 @@ void GfMenuObjPartyStatus2::levelup(unsigned int party) {
     }
 }
 
-void GfMenuObjPartyStatus2::fn_710045A610(unsigned int value) {
+void GfMenuObjPartyStatus2::clearDying(unsigned int value) {
     unsigned int handle = GfMenuObject::getAttachedObject(0x5D);
     if (ui::UIObjectAcc(handle).m_object != nullptr) {
         if (!ui::UIObjectAcc(handle).isTerm()) {

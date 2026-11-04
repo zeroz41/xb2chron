@@ -36,8 +36,8 @@ void TitleApplet::update(const fw::UpdateInfo& info) {
     TitleMain::update(info);
 }
 
-void TitleApplet::fn_710014E704(const fw::UpdateInfo& info) {
-    gf::GfManager::fn_710032A958(info);
+void TitleApplet::updateAfterLayer(const fw::UpdateInfo& info) {
+    gf::GfManager::updateAfterLayer(info);
 }
 
 void TitleApplet::postUpdate(const fw::UpdateInfo& info) {

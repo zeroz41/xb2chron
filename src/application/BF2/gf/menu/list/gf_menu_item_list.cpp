@@ -169,14 +169,14 @@ void GfMenuItemList::decItem(unsigned int index, unsigned int count, bool reques
     }
 }
 
-void GfMenuItemList::fn_7100375BF4(const MenuItemInfo& item, bool request) {
-    unsigned int index = fn_7100375C50(item);
+void GfMenuItemList::decItemH(const MenuItemInfo& item, bool request) {
+    unsigned int index = findItemH(item);
     if (index != 0xFFFFFFFF) {
         decItem(index, item.m_count, request);
     }
 }
 
-unsigned int GfMenuItemList::fn_7100375C50(const MenuItemInfo& item) {
+unsigned int GfMenuItemList::findItemH(const MenuItemInfo& item) {
     for (unsigned int i = 0; i < getSize(); ++i) {
         const MenuItemInfo& contents = getContents(i);
         if (contents.m_type == item.m_type && contents.m_id == item.m_id && contents.m_entry.m_handle == item.m_entry.m_handle) {
@@ -227,7 +227,7 @@ void GfMenuItemList::sort(unsigned int order, bool ascending) {
         compare = ascending ? sortRareAscending : sortRareDescending;
         break;
     case 5:
-        if (GfItemUtil::getType((m_list.size() != 0 ? m_list[0] : m_dummy).m_id) == 2 && GfMenuObjUtil::fn_710048FD30(3)) {
+        if (GfItemUtil::getType((m_list.size() != 0 ? m_list[0] : m_dummy).m_id) == 2 && GfMenuObjUtil::isValidExpansion(3)) {
             unsigned int i = 0;
             for (; i < getSize(); i++) {
                 if (GfBdatItem::sys()->getPcEquipArmorType(getContents(i).m_id) != 2) {
@@ -235,7 +235,7 @@ void GfMenuItemList::sort(unsigned int order, bool ascending) {
                 }
             }
             if (i == getSize()) {
-                compare = ascending ? fn_710037749C : fn_7100377614;
+                compare = ascending ? sortTypeWpnAccesoryAscending : sortTypeWpnAccesoryDescending;
             }
         }
         break;
@@ -248,8 +248,8 @@ void GfMenuItemList::sort(unsigned int order, bool ascending) {
     case 9:
         switch (GfItemUtil::getType((m_list.size() != 0 ? m_list[0] : m_dummy).m_id)) {
         case 2:
-            if (!GfMenuObjUtil::fn_710048FD30(3)) {
-                compare = ascending ? fn_710037777C : fn_71003778C0;
+            if (!GfMenuObjUtil::isValidExpansion(3)) {
+                compare = ascending ? sortTypeAccesoryAscending : sortTypeAccesoryDescending;
             } else {
                 unsigned int i = 0;
                 for (; i < getSize(); i++) {
@@ -258,9 +258,9 @@ void GfMenuItemList::sort(unsigned int order, bool ascending) {
                     }
                 }
                 if (i == getSize()) {
-                    compare = ascending ? fn_710037749C : fn_7100377614;
+                    compare = ascending ? sortTypeWpnAccesoryAscending : sortTypeWpnAccesoryDescending;
                 } else {
-                    compare = ascending ? fn_710037777C : fn_71003778C0;
+                    compare = ascending ? sortTypeAccesoryAscending : sortTypeAccesoryDescending;
                 }
             }
             break;
@@ -295,7 +295,7 @@ void GfMenuItemList::sort(unsigned int order, bool ascending) {
         break;
     default:
         if (order > 0x50) {
-            fn_7100377F28(order - 0x50);
+            sortFromBuff(order - 0x50);
         } else if (order > 0x40) {
             fn_7100378144(order - 0x40);
         } else if (order > 0x20) {
@@ -306,7 +306,7 @@ void GfMenuItemList::sort(unsigned int order, bool ascending) {
     UIListInfo<MenuItemInfo>::sort(compare);
 }
 
-bool GfMenuItemList::fn_710037749C(const MenuItemInfo& a, const MenuItemInfo& b) {
+bool GfMenuItemList::sortTypeWpnAccesoryAscending(const MenuItemInfo& a, const MenuItemInfo& b) {
     ItemProperty propA;
     ItemProperty propB;
     GfItemUtil::getProperty(propA, a.m_id, 0);
@@ -317,8 +317,8 @@ bool GfMenuItemList::fn_710037749C(const MenuItemInfo& a, const MenuItemInfo& b)
     if (propB.m_type != 2) {
         return true;
     }
-    unsigned int keyA = GfBdatItem::sys()->fn_7100202C3C(a.m_id);
-    unsigned int keyB = GfBdatItem::sys()->fn_7100202C3C(b.m_id);
+    unsigned int keyA = GfBdatItem::sys()->getPcEquipAddAtr(a.m_id);
+    unsigned int keyB = GfBdatItem::sys()->getPcEquipAddAtr(b.m_id);
     if (keyA == keyB) {
         GfBdatBtl* btl = GfBdatBtl::sys();
         unsigned int effectA = btl->getBTL_EnhanceEnhanceEffect(propA.m_enhance2);
@@ -347,7 +347,7 @@ bool GfMenuItemList::fn_710037749C(const MenuItemInfo& a, const MenuItemInfo& b)
     return keyA > keyB;
 }
 
-bool GfMenuItemList::fn_7100377614(const MenuItemInfo& a, const MenuItemInfo& b) {
+bool GfMenuItemList::sortTypeWpnAccesoryDescending(const MenuItemInfo& a, const MenuItemInfo& b) {
     ItemProperty propA;
     ItemProperty propB;
     GfItemUtil::getProperty(propA, a.m_id, 0);
@@ -358,8 +358,8 @@ bool GfMenuItemList::fn_7100377614(const MenuItemInfo& a, const MenuItemInfo& b)
     if (propB.m_type != 2) {
         return true;
     }
-    unsigned int keyA = GfBdatItem::sys()->fn_7100202C3C(a.m_id);
-    unsigned int keyB = GfBdatItem::sys()->fn_7100202C3C(b.m_id);
+    unsigned int keyA = GfBdatItem::sys()->getPcEquipAddAtr(a.m_id);
+    unsigned int keyB = GfBdatItem::sys()->getPcEquipAddAtr(b.m_id);
     if (keyA == keyB) {
         GfBdatBtl* btl = GfBdatBtl::sys();
         unsigned int effectA = btl->getBTL_EnhanceEnhanceEffect(propA.m_enhance2);
@@ -388,7 +388,7 @@ bool GfMenuItemList::fn_7100377614(const MenuItemInfo& a, const MenuItemInfo& b)
     return keyA < keyB;
 }
 
-bool GfMenuItemList::fn_710037777C(const MenuItemInfo& a, const MenuItemInfo& b) {
+bool GfMenuItemList::sortTypeAccesoryAscending(const MenuItemInfo& a, const MenuItemInfo& b) {
     GfBdatItem* item = GfBdatItem::sys();
     if (GfItemUtil::getItemCategory(a.m_id) != 2) {
         return false;
@@ -423,7 +423,7 @@ bool GfMenuItemList::fn_710037777C(const MenuItemInfo& a, const MenuItemInfo& b)
     return effectA > effectB;
 }
 
-bool GfMenuItemList::fn_71003778C0(const MenuItemInfo& a, const MenuItemInfo& b) {
+bool GfMenuItemList::sortTypeAccesoryDescending(const MenuItemInfo& a, const MenuItemInfo& b) {
     GfBdatItem* item = GfBdatItem::sys();
     if (a.m_type != 2) {
         return false;
@@ -884,7 +884,7 @@ void GfMenuItemList::fn_710037835C(unsigned int order) {
     s_firstEnhanceSortKey = order;
     unsigned int* keys = new (getAllocator(ALLOCATOR(0)), nullptr, 0, 8) unsigned int[static_cast<unsigned int>(getSize())];
     for (unsigned int i = 0; i < getSize(); i++) {
-        keys[i] = fn_7100378524(getContents(i));
+        keys[i] = getEnhanceSortCat(getContents(i));
         getContents(i).m_sortIndex = i;
     }
     UIListInfo<MenuItemInfo>::sort([keys](const MenuItemInfo& a, const MenuItemInfo& b) {
@@ -900,5 +900,5 @@ void GfMenuItemList::fn_710037835C(unsigned int order) {
 
 }  // namespace gf
 
-// the ID list's comparator swap (GfMenuIDList::fn_7100371F98, gf_menu_id_list, calls it; the original keeps its copy here)
+// the ID list's comparator swap (GfMenuIDList::sortFromWork, gf_menu_id_list, calls it; the original keeps its copy here)
 template void std::function<bool(const gf::MenuID&, const gf::MenuID&)>::swap(std::function<bool(const gf::MenuID&, const gf::MenuID&)>&);

@@ -12,8 +12,8 @@ public:
     // the party's blades counted for statistics 38 to 48, in that order (the names are not the original's)
     struct BladeCounts {
         unsigned int m_num;            // the blades (38)
-        unsigned int m_gender1;        // GfDataBlade::fn_710023982C 1 (39)
-        unsigned int m_gender2;        // GfDataBlade::fn_710023982C 2 (40)
+        unsigned int m_gender1;        // GfDataBlade::getGender 1 (39)
+        unsigned int m_gender2;        // GfDataBlade::getGender 2 (40)
         unsigned int m_race2;          // GfDataBlade::getRace 2 (41)
         unsigned int m_weaponType[7];  // GfDataBlade::getBladeWpnType 10 to 16 (42 to 48)
     };
@@ -38,7 +38,7 @@ public:
 
 private:
     // Placeholder name: nothing names it. A member because only this class's functions call it (no object). What
-    // it does: the party's blades (GfDataBlade::fn_71002376E8, getListReserver, removeSameBlade) without blade,
+    // it does: the party's blades (GfDataBlade::getListParty, getListReserver, removeSameBlade) without blade,
     // counted into counts.
     static void fn_710028AF64(BladeCounts& counts, unsigned int blade);
 };

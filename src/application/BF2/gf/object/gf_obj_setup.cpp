@@ -594,14 +594,14 @@ GfObjSetupBlade::GfObjSetupBlade(const GfInitParamBlade& param)
     m_param = param;
 }
 
-void GfInitParamDriver::fn_710054E050(unsigned int driverId, unsigned int bladeId) {
+void GfInitParamDriver::setupForEventCS(unsigned int driverId, unsigned int bladeId) {
     pad_40 = 7;
     m_objId = driverId;
     pad_81 = false;
     m_createType = 3;
     m_bladeId = bladeId;
     pad_82 = 0;
-    if (GfDataDriver::fn_710023F9A8(driverId)) {
+    if (GfDataDriver::isIra(driverId)) {
         m_bladeId = GfDataBlade::fn_7100237B70(driverId, -1);
     }
 }

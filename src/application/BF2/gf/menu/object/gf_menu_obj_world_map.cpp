@@ -42,7 +42,7 @@
 
 namespace gf {
 
-bool GfMenuObjWorldMap::fn_7100495A98(unsigned int id) {
+bool GfMenuObjWorldMap::isOpenLandmark(unsigned int id) {
     return GfGameFlag::getLocal(1, id + 51161) == 1;
 }
 
@@ -159,7 +159,7 @@ void GfMenuObjWorldMap::update() {
 
 bool GfMenuObjWorldMap::isEnterMap(unsigned int mapId) {
     unsigned char* fp = GfDataBdat::getFP(0x179);
-    if (!GfMenuObjUtil::fn_710048FD30(1) || !GfMenuObjUtil::fn_7100492CBC()) {
+    if (!GfMenuObjUtil::isValidExpansion(1) || !GfMenuObjUtil::isInChallengeBattleMap()) {
         int top = Bdat::getIdTop(fp);
         for (unsigned int i = 0; i < Bdat::getIdCount(fp); i++) {
             if (static_cast<unsigned short>(Bdat::getVal(fp, "mapId", top + i)) == mapId) {
@@ -200,12 +200,12 @@ bool GfMenuObjWorldMap::seqTexLoadWait() {
     return !floor.isStreaming();
 }
 
-void GfMenuObjWorldMap::fn_710049761C(GfMenuIDList* list) {
+void GfMenuObjWorldMap::setupMapList(GfMenuIDList* list) {
     list->clear();
-    for (unsigned int i = 0; i < (GfMenuObjUtil::fn_710048FD30(3) ? 2u : 15u); i++) {
-        if (chkMapCond((GfMenuObjUtil::fn_710048FD30(3) ? sSelectMaps.layer3 : sSelectMaps.normal)[i], nullptr)) {
+    for (unsigned int i = 0; i < (GfMenuObjUtil::isValidExpansion(3) ? 2u : 15u); i++) {
+        if (chkMapCond((GfMenuObjUtil::isValidExpansion(3) ? sSelectMaps.layer3 : sSelectMaps.normal)[i], nullptr)) {
             MenuID id = MenuID();
-            id.m_id = (GfMenuObjUtil::fn_710048FD30(3) ? sSelectMaps.layer3 : sSelectMaps.normal)[i];
+            id.m_id = (GfMenuObjUtil::isValidExpansion(3) ? sSelectMaps.layer3 : sSelectMaps.normal)[i];
             list->addContents(id);
         }
     }
@@ -227,13 +227,13 @@ bool GfMenuObjWorldMap::setupZoneList(GfMenuZoneMapList* list) {
                 unsigned char* gmkFp = m_gmkBdat;
                 int gmkTop = Bdat::getIdTop(gmkFp);
                 unsigned int gmkCount = Bdat::getIdCount(gmkFp);
-                unsigned int floor = GfMenuMapInfo::fn_7100361DC0();
+                unsigned int floor = GfMenuMapInfo::getCurMapInfoID();
                 for (unsigned int j = 0; j < gmkCount; j++) {
                     int gmkRow = gmkTop + j;
                     unsigned short group = Bdat::getVal(gmkFp, "menuGroup", gmkRow);
                     unsigned short jump = Bdat::getVal(gmkFp, "MAPJUMPID", gmkRow);
                     unsigned short image = Bdat::getVal(gmkFp, "menuMapImage", gmkRow);
-                    if (jump != 0 && group == info.m_mapId && (image == floor || fn_7100495A98(gmkRow))) {
+                    if (jump != 0 && group == info.m_mapId && (image == floor || isOpenLandmark(gmkRow))) {
                         list->addContents(info);
                         break;
                     }
@@ -360,7 +360,7 @@ void GfMenuObjWorldMap::refreshMapSelect(ui::UIObjectAcc& acc, GfMenuIDList* lis
     }
 }
 
-void GfMenuObjWorldMap::fn_710049A6E8(ui::UIObjectAcc& acc, GfMenuZoneMapList* list) {
+void GfMenuObjWorldMap::setupZoneSelect(ui::UIObjectAcc& acc, GfMenuZoneMapList* list) {
     mm::mtl::FixStr<32> name;
     for (int i = 0; i < 9; i++) {
         name.format("TXT_zonename_@%02d", i + 1);
@@ -373,7 +373,7 @@ void GfMenuObjWorldMap::fn_710049A6E8(ui::UIObjectAcc& acc, GfMenuZoneMapList* l
         GfMenuObjUtil::setChildDisp(acc.m_handle, name.m_str, false);
     }
     GfMenuObjUtil::createVScrollBarPlugin(acc.searchChild("IMG_zone_scroll_bar"), list, "IMG_zone_scroll_bar_base", true);
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc bar(acc.m_handle, "LAY_zone_scroll_bar");
         GfMenuObjUtil::createSyncPlugin(acc.searchChild("LAY_zone_focus"), acc.searchChild("LAY_zone_scroll_bar"), 0x10);
         bar.setAlpha(0.0f);
@@ -470,10 +470,10 @@ bool GfMenuObjWorldMap::isEnableJump(const MenuZoneMapInfo& info) {
     if (info.m_disableCondition != 0 && GfGameCond::isGameCondWithMap(info.m_disableCondition, mapId)) {
         return false;
     }
-    return fn_7100495A98(info.m_mapId);
+    return isOpenLandmark(info.m_mapId);
 }
 
-void GfMenuObjWorldMap::fn_710049D2A4(bool fadeFirst) {
+void GfMenuObjWorldMap::updateDispIconNode(bool fadeFirst) {
     ui::UIObjectAcc zoneMap(m_handle, "LAY_zonemap");
     for (int i = 0; i < 9; i++) {
         bool on = (m_iconFilter & (1 << i)) != 0;
@@ -517,7 +517,7 @@ void GfMenuObjWorldMap::IconFilterListener::reciveEvent(ui::EventData const& eve
             {
                 ui::UIObjectAcc text(acc.m_handle, "TXT_icon_filter_index");
                 unsigned short msg =
-                    GfMenuObjUtil::getMsgIDFromList(GfMenuObjUtil::fn_710048FD30(3) ? 0x160 : 0x15F, index + 1);
+                    GfMenuObjUtil::getMsgIDFromList(GfMenuObjUtil::isValidExpansion(3) ? 0x160 : 0x15F, index + 1);
                 ui::UIStr str(GfDataBdat::getFP(0xF5), msg);
                 text.setText(str);
             }
@@ -541,7 +541,7 @@ void GfMenuObjWorldMap::IconFilterListener::reciveEvent(ui::EventData const& eve
             }
             m_owner->m_iconFilter = flags;
             m_owner->refreshIconFilter();
-            m_owner->fn_710049D2A4(true);
+            m_owner->updateDispIconNode(true);
             unsigned int on = m_owner->m_iconFilter & (1 << index);
             if (on) {
                 GfMenuObjUtil::playSE(0xC);
@@ -683,7 +683,7 @@ unsigned int GfMenuObjWorldMap::setupIconTableSub(ui::UIObjectAcc& acc, mm::mtl:
     return handle;
 }
 
-mm::Col3 GfMenuObjWorldMap::fn_710049FD30(unsigned int id) {
+mm::Col3 GfMenuObjWorldMap::getShopIconColor(unsigned int id) {
     static const mm::Col3 colors[2] = {mm::Col3(1.0f, 1.0f, 1.0f), mm::Col3(0.78f, 1.0f, 0.0f)};
     if (id >= 2) {
         return colors[0];

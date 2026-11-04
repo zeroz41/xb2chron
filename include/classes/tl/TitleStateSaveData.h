@@ -22,9 +22,8 @@ public:
     virtual void onEnter(void*, ai::State*);  // slot 3
     virtual void onLeave(void*, ai::State*);  // slot 4
     virtual void onStep(void*, void const*);  // slot 5
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because the state's onStep
-    // tail-calls it with its own this, the title and the step's argument (the other states' update shape).
-    void fn_710015359C(TitleMain* title, const fw::UpdateInfo& info);
+    // 2.0.0's symbols name it.
+    void update(TitleMain* title, const fw::UpdateInfo& info);
 };
 }  // namespace tl
 

@@ -453,7 +453,7 @@ bool GfComBehaviorEnemy::isOtherMemberHome() const {
     return false;
 }
 
-void GfComBehaviorEnemy::fn_71004BE49C(const fw::UpdateInfo& info) {
+void GfComBehaviorEnemy::updateField(const fw::UpdateInfo& info) {
     m_field.update(info.m_deltaTime);
     GfObjAcc acc(static_cast<GfObj*>(m_owner)->m_handle);
     if (acc.isEnemyBlade()) {
@@ -463,7 +463,7 @@ void GfComBehaviorEnemy::fn_71004BE49C(const fw::UpdateInfo& info) {
                                           ->m_driverHandle;
         const btl::BattleCharacter* driver = btl::CharacterManager::sys()->GetCharacterConst(driverHandle);
         if (driver != nullptr && driver->IsBattle()) {
-            fn_71004BEC5C(static_cast<enemy::STATE_ID>(0));
+            setStateId(static_cast<enemy::STATE_ID>(0));
         }
     }
     if (getStateId() != 13 && m_field.pad_52a0[9]) {
@@ -471,7 +471,7 @@ void GfComBehaviorEnemy::fn_71004BE49C(const fw::UpdateInfo& info) {
     }
 }
 
-void GfComBehaviorEnemy::fn_71004BEC5C(enemy::STATE_ID state) {
+void GfComBehaviorEnemy::setStateId(enemy::STATE_ID state) {
     if (state == 0) {
         pad_54e2 = false;
         m_reqChangeBattle = false;
@@ -479,7 +479,7 @@ void GfComBehaviorEnemy::fn_71004BEC5C(enemy::STATE_ID state) {
         m_field.m_pitchRoll.pad_30 = 0x101;
         GfObjSetupEnemy* setup =
             mm::mtl::rttiCast<GfObjSetupEnemy>(GfObjManager::getObjInfo(static_cast<GfObj*>(m_owner)->m_handle)->m_setup);
-        btl::TUnk_B3BD68* siren = btl::TUnk_B3BD68::sys();
+        btl::SirenBattleManager* siren = btl::SirenBattleManager::sys();
         if (siren->m_params[0].m_arrangeID != setup->m_enArrangeId &&
             siren->m_params[1].m_arrangeID != setup->m_enArrangeId) {
             static_cast<GfObj*>(m_owner)->pad_110 |= 4;
@@ -552,7 +552,7 @@ void GfComBehaviorEnemy::onPopped() {
         info->m_obj->m_type == 5) {
         setup = mm::mtl::rttiCast<GfObjSetupEnemy>(info->m_setup);
     }
-    btl::TUnk_B3BD68* siren = btl::TUnk_B3BD68::sys();
+    btl::SirenBattleManager* siren = btl::SirenBattleManager::sys();
     unsigned int arrangeId = setup->m_enArrangeId;
     enemy::STATE_ID state;
     if (siren->m_params[0].m_arrangeID == arrangeId || siren->m_params[1].m_arrangeID == arrangeId) {
@@ -611,7 +611,7 @@ void GfComBehaviorEnemy::onPopped() {
             }
         }
     }
-    fn_71004BEC5C(state);
+    setStateId(state);
 }
 
 void GfComBehaviorEnemy::reqChangeBattle() {
@@ -620,7 +620,7 @@ void GfComBehaviorEnemy::reqChangeBattle() {
     }
 }
 
-void GfComBehaviorEnemy::fn_71004C1D20() {
+void GfComBehaviorEnemy::reqChangeBattleAfterIdle() {
     if (getStateId() != 0) {
         pad_54e2 = true;
     }

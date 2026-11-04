@@ -35,7 +35,7 @@ SDataSystem& GfDataStore::getDataSystem() {
     return get()->m_system;
 }
 
-SDataDlc& GfDataStore::fn_710022D440() {
+SDataDlc& GfDataStore::getDataGameIra() {
     return get()->m_dlc;
 }
 
@@ -67,10 +67,10 @@ void SSoundUiOption::clear() {
     m_volume[10] = static_cast<int>(volume.m_nareVoiceVolume * 255.0f);
     m_volume[11] = static_cast<int>(volume.m_systemVolume * 255.0f);
     m_volume[12] = static_cast<int>(volume.m_menuBgmVolume * 255.0f);
-    fn_710022E334();
+    initializeReserverArea();
 }
 
-void SSoundUiOption::fn_710022E334() {
+void SSoundUiOption::initializeReserverArea() {
     m_keyA = 0xED;
     m_keyB = 0x1EB0;
     m_keyC = 0x5F;

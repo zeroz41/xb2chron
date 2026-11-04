@@ -136,23 +136,23 @@ void GfMenuIDList::setupExcTaskListFromShop(const ui::UIListInfoBase::SetupParam
     }
 }
 
-void GfMenuIDList::fn_7100371F98(bool descending) {
+void GfMenuIDList::sortFromWork(bool descending) {
     if (getSize() == 0) {
         return;
     }
     std::function<bool(const MenuID&, const MenuID&)> compare;
-    compare = descending ? fn_71003720DC : fn_7100372108;
+    compare = descending ? sortDescending : sortAscending;
     sort(compare);
 }
 
-bool GfMenuIDList::fn_71003720DC(const MenuID& a, const MenuID& b) {
+bool GfMenuIDList::sortDescending(const MenuID& a, const MenuID& b) {
     if (a.m_subId == b.m_subId) {
         return a.m_id < b.m_id;
     }
     return a.m_subId > b.m_subId;
 }
 
-bool GfMenuIDList::fn_7100372108(const MenuID& a, const MenuID& b) {
+bool GfMenuIDList::sortAscending(const MenuID& a, const MenuID& b) {
     if (a.m_subId == b.m_subId) {
         return a.m_id < b.m_id;
     }

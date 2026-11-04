@@ -7,7 +7,7 @@
 
 namespace gf {
 // table 0x7100B5B9F8 (no RTTI, no 1.0.0 symbol): a GfMenuCharDataAdapter converter new in 3.0.1, built only by
-// GfMenuCharDataAdapter::fn_710033A940: an ID list's entry as an NPC (type 6).
+// GfMenuCharDataAdapter::createFromNpcIDList: an ID list's entry as an NPC (type 6).
 class TUnk_B5B9F8 : public ::gf::GfMenuCharDataAdapter::IConverter {
 public:
     // index -1: the list's selected one

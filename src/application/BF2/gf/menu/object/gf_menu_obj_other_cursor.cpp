@@ -71,7 +71,7 @@ void GfMenuObjOtherCursor::update() {
                         event.m_param0 = 1;
                         break;
                     default:
-                        if (GfMenuObjUtil::fn_710048FD30(3) && type == 62) {
+                        if (GfMenuObjUtil::isValidExpansion(3) && type == 62) {
                             event.m_param0 = 1;
                         } else {
                             event.m_param0 = 0;

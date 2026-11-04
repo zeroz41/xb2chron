@@ -38,7 +38,7 @@ GfMenuFieldPosAdapter* GfMenuFieldPosAdapter::create(unsigned int handle, const 
 }
 
 void GfMenuFieldPosAdapter::update(const fw::UpdateInfo& info) {
-    if (GfGameManager::fn_71002A9E68() && m_adjusted) {
+    if (GfGameManager::isGameTypeIra() && m_adjusted) {
         return;
     }
     ui::UIObjectPlugin* plugin = m_plugin;
@@ -46,7 +46,7 @@ void GfMenuFieldPosAdapter::update(const fw::UpdateInfo& info) {
         return;
     }
     mm::Vec3 screen;
-    bool onScreen = GfGameManager::fn_71002A9E68() ? fn_710033D6E4(screen, m_pos, m_keepAdjusted ? !m_offScreen : false)
+    bool onScreen = GfGameManager::isGameTypeIra() ? getScreenPos(screen, m_pos, m_keepAdjusted ? !m_offScreen : false)
                                                    : util::getScreenPos(screen, m_pos);
     if (!onScreen || !mm::Quat::isValid(screen.x) || !mm::Quat::isValid(screen.y)) {
         return;
@@ -81,7 +81,7 @@ void GfMenuFieldPosAdapter::update(const fw::UpdateInfo& info) {
     static_cast<ui::UIObjectPosPlugin*>(plugin)->m_pos.y = y;
 }
 
-bool GfMenuFieldPosAdapter::fn_710033D6E4(mm::Vec3& screen, const mm::Vec3& world, bool behind) {
+bool GfMenuFieldPosAdapter::getScreenPos(mm::Vec3& screen, const mm::Vec3& world, bool behind) {
     if (!behind) {
         return util::getScreenPos(screen, world);
     }

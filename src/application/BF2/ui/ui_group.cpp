@@ -226,7 +226,7 @@ bool UIGroup::isAssignedLayer(const char* name, unsigned int layer) {
     return it->m_layer == layer;
 }
 
-bool UIGroup::fn_710068DBAC(const char* name) {
+bool UIGroup::isTerminating(const char* name) {
     unsigned int handle = searchObject(name);
     for (RootObjInfo* it = m_rootObjs.begin(); it != m_rootObjs.end(); ++it) {
         if (it->m_terminate && it->m_handle == handle) {

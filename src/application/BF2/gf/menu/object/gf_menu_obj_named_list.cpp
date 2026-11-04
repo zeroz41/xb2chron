@@ -1,4 +1,4 @@
-#include "classes/gf/TUnk_B638F8.h"
+#include "classes/gf/GfMenuObjNamedList.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfBdatChrEnArrange.h"
 #include "classes/gf/GfDataBdat.h"
@@ -32,7 +32,7 @@ namespace gf {
 
 // the named enemy table (inline; the name is not the original's)
 static inline unsigned char* getNamedTable() {
-    return GfDataBdat::getFP(GfGameManager::fn_71002A9E68() ? 0x2B : 0x2A);
+    return GfDataBdat::getFP(GfGameManager::isGameTypeIra() ? 0x2B : 0x2A);
 }
 
 // fn_71002ED5B0 of a row of the named enemy table (inline; the name is not the original's)
@@ -44,13 +44,13 @@ static inline bool hasNamedRecord(unsigned int row, unsigned int mode) {
     return fn_71002ED5B0((unsigned short)Bdat::getVal(fp, "EnemyID", row), mode);
 }
 
-TUnk_B638F8::TUnk_B638F8(unsigned int handle)
+GfMenuObjNamedList::GfMenuObjNamedList(unsigned int handle)
     : GfMenuObject(handle), m_list(nullptr), m_select(nullptr), m_cursor(nullptr), m_zones(), m_zoneIndex(0), pad_7C(0),
       m_difficulty(0), m_difficultyCount(0) {
     m_list = GfMenuIDList::create();
 }
 
-TUnk_B638F8::~TUnk_B638F8() {
+GfMenuObjNamedList::~GfMenuObjNamedList() {
     if (m_cursor != nullptr) {
         m_cursor->release();
         m_cursor = nullptr;
@@ -65,7 +65,7 @@ TUnk_B638F8::~TUnk_B638F8() {
     }
 }
 
-// initialize, fn_7100445F58 and fn_7100446240 are not identical yet: $W/wip/full_draft.cpp (session 27 namedlist)
+// initialize, updateNamedIDList and convZoneToFilter are not identical yet: $W/wip/full_draft.cpp (session 27 namedlist)
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B63990). The animation of each
 // difficulty, as gf_menu_obj_btlch_order's s_difficultyAnims.
@@ -78,8 +78,8 @@ inline const char* getEntry(const char* (&table)[N], Index index) {
     return table[index];
 }
 
-void TUnk_B638F8::fn_7100446374() {
-    int value = GfMenuObjOption::fn_7100452BC0(m_difficulty);
+void GfMenuObjNamedList::refreshDifficulty() {
+    int value = GfMenuObjOption::getDifficultyFromIndex(m_difficulty);
     {
         ui::UIObjectAcc text(m_handle, "TXT_difficulty_index");
         if (GfDataBdat::getFP(0x169) == nullptr) {
@@ -98,18 +98,18 @@ void TUnk_B638F8::fn_7100446374() {
     }
 }
 
-void TUnk_B638F8::finalize() {
+void GfMenuObjNamedList::finalize() {
     GfMenuObject::finalize();
 }
 
-void TUnk_B638F8::update() {
+void GfMenuObjNamedList::update() {
     GfMenuObject::update();
 }
 
-// TUnk_B63940::reciveEvent, TUnk_B63968::reciveEvent and fn_7100446AC8 are not identical yet (the listeners' tables
+// TUnk_B63940::reciveEvent, TUnk_B63968::reciveEvent and refreshFilterIcon are not identical yet (the listeners' tables
 // and destructors come with their reciveEvent): $W/wip/full_draft.cpp (session 27 namedlist)
 
-bool TUnk_B638F8::fn_7100446BA4(const MenuID& a, const MenuID& b) {
+bool GfMenuObjNamedList::sortLevel(const MenuID& a, const MenuID& b) {
     unsigned char* fp = getNamedTable();
     unsigned short arrangeA = Bdat::getVal(fp, "EnemyID", a.m_id);
     unsigned short arrangeB = Bdat::getVal(fp, "EnemyID", b.m_id);
@@ -121,8 +121,8 @@ bool TUnk_B638F8::fn_7100446BA4(const MenuID& a, const MenuID& b) {
     return lvA < lvB;
 }
 
-bool TUnk_B638F8::fn_7100446C54(unsigned int row) {
-    return hasNamedRecord(row, GfGameManager::fn_71002AC57C());
+bool GfMenuObjNamedList::isDefeated(unsigned int row) {
+    return hasNamedRecord(row, GfGameManager::getBtlDifficult());
 }
 
 }  // namespace gf

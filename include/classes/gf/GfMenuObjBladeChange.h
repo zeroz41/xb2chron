@@ -28,20 +28,16 @@ public:
     static void dispInfo(bool disp);
     static void enableAwakening(bool enable);
     static void pushGroupUp();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it drives the object
-    // attached at 0x3C (the one the class's open/close/push functions drive) and reads the flag
-    // fn_710039232C/fn_71003923CC keep. What it does: sends event 0x105 to the attached object's sibling
-    // "LAY_dr_solo" while that flag is set, else to the attached object itself. Callers: BladeListener::reciveEvent,
+    // 2.0.0's symbols name it. What it does: sends event 0x105 to the attached object's sibling "LAY_dr_solo" while
+    // that flag is set, else to the attached object itself. Callers: BladeListener::reciveEvent,
     // TUnk_B5FEE8::reciveEvent, fn_7100367454 and fn_71003C56C0.
-    static void fn_7100391CDC();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it drives the object
-    // attached at 0x3C. What it does: sends event 0x21 (open) to the attached object's sibling "LAY_dr_solo" and
+    static void refreshBattleMode();
+    // 2.0.0's symbols name it. What it does: sends event 0x21 (open) to the attached object's sibling "LAY_dr_solo" and
     // sets s_soloOpen. Caller: fn_7100359144.
-    static void fn_710039232C();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it drives the object
-    // attached at 0x3C. What it does: sends event 0x22 (close) to the attached object's sibling "LAY_dr_solo" and
-    // clears s_soloOpen. Caller: fn_7100359144.
-    static void fn_71003923CC();
+    static void openDrSolo();
+    // 2.0.0's symbols name it. What it does: sends event 0x22 (close) to the attached object's sibling "LAY_dr_solo"
+    // and clears s_soloOpen. Caller: fn_7100359144.
+    static void closeDrSolo();
     void ctrlAwakening(bool awake);
     void ctrlHomuri(bool on);
     void updateFace(unsigned int index);
@@ -52,7 +48,7 @@ public:
     virtual void update();  // slot 4
 
     // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EA7170). Whether "LAY_dr_solo" is
-    // open: fn_710039232C sets it, fn_71003923CC clears it, fn_7100391CDC reads it (through the GOT: not file-static)
+    // open: openDrSolo sets it, closeDrSolo clears it, refreshBattleMode reads it (through the GOT: not file-static)
     static bool s_soloOpen;
 
     unsigned int m_ctrlSlot;   // 0x24: ctrlAwakening's control slot

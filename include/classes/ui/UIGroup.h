@@ -59,11 +59,9 @@ public:
     void releaseObject(const char* name);
     bool isActiveLayer(unsigned short layer);
     bool isAssignedLayer(const char* name, unsigned int layer);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's isAssignedLayer is followed by
-    // attachInput). A member because `this` is a UIGroup (it reads m_objList and m_rootObjs). What it does: true
-    // when the root object the name finds (searchObject, inlined) is listed and terminating (m_terminate set by
-    // terminateObject/terminateObjectAll). Its one caller is fn_710068F208.
-    bool fn_710068DBAC(const char* name);
+    // 2.0.0's symbols name it. What it does: true when the root object the name finds (searchObject, inlined) is listed
+    // and terminating (m_terminate set by terminateObject/terminateObjectAll). Its one caller is createLayerEx.
+    bool isTerminating(const char* name);
     void attachInput(const char* name, UIInputLayer* layer);
     void suspend(bool stopApply);
     void resume();

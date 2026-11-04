@@ -51,11 +51,9 @@ public:
     void FinishBladeArts(gf::GF_OBJ_HANDLE* handle);
     bool NotifyProgress(gf::GF_OBJ_HANDLE* handle, PROGRESS_ID id);
     void StartButtonChallenge(gf::GF_OBJ_HANDLE* handle);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no function between
-    // StartButtonChallenge and GetTargetHandle). A member because its address is in blade_arts_manager's unit, its
-    // walk is GetTargetHandle's and BattleCharacter::AttackTimingProc calls it on the singleton. What it does:
-    // returns the ButtonChallenge id (m_challengeId) of the entry whose driver or blade is the handle, 0 for none.
-    unsigned int fn_71000161A8(gf::GF_OBJ_HANDLE* handle) const;
+    // 2.0.0's symbols name it. What it does: returns the ButtonChallenge id (m_challengeId) of the entry whose driver
+    // or blade is the handle, 0 for none.
+    unsigned int GetButtonChallengeID(gf::GF_OBJ_HANDLE* handle) const;
     gf::GF_OBJ_HANDLE* GetTargetHandle(gf::GF_OBJ_HANDLE* handle) const;
     bool IsRegister(gf::GF_OBJ_HANDLE* handle) const;
     bool IsBladeStart(gf::GF_OBJ_HANDLE* handle) const;

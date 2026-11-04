@@ -3499,10 +3499,10 @@ void UIManager::closeOpeningTelopUI(OPTELOP_TYPE type) {
         gf::GfMenuObjOpeningTelop::closeRight();
         break;
     case OPTELOP_LH:
-        gf::GfMenuObjOpeningTelop::fn_710044AC84();
+        gf::GfMenuObjOpeningTelop::closeLeftHalf();
         break;
     case OPTELOP_RH:
-        gf::GfMenuObjOpeningTelop::fn_710044AB90();
+        gf::GfMenuObjOpeningTelop::closeRightHalf();
         break;
     }
 }

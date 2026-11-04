@@ -20,7 +20,7 @@ public:
     // are not the original's)
     struct ResourceInfo {
         fw::CommonResource* m_resource;  // referenced; releaseResourceList releases it
-        bool m_isRemovable;  // set from the build entry: fn_71006943A0 drops the entry once it loaded empty
+        bool m_isRemovable;  // set from the build entry: ready drops the entry once it loaded empty
     };
     // a render view load made for a layout of type 4 (the field names are not the original's)
     struct RenderViewInfo {
@@ -47,11 +47,9 @@ public:
     void releaseResourceList();
     void releaseCaptureList();
     void load(const UIBuildInfo* info, mm::mtl::IAllocator* allocator);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it walks m_resourceList (this
-    // at 0x30 handed to Vector::erase), defined between load and isValid. What it does: when the list has room and
-    // entries, erases each entry whose m_isRemovable is set and whose resource is valid() with getAssetSize() 0.
-    // Called by UIObjFactory::update.
-    void fn_71006943A0();
+    // 2.0.0's symbols name it. What it does: when the list has room and entries, erases each entry whose m_isRemovable
+    // is set and whose resource is valid() with getAssetSize() 0. Called by UIObjFactory::update.
+    void ready();
     bool isValid() const;
     bool isLoading() const;
     fw::CommonResource* search(const char* name) const;  // the loaded resource of that file name, or null

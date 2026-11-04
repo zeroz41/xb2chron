@@ -177,7 +177,7 @@ void GfMenuObjCompass::update() {
                         image.setImageIndex(GfMenuBdat::getIconImageIndex(data.m_iconId));
                         ui::UIObjectAcc arrow(icon.searchChild("IMG_icon_pos"));
                         arrow.setImageIndex(pos);
-                        if (GfMenuObjUtil::fn_710048FD30(3)) {
+                        if (GfMenuObjUtil::isValidExpansion(3)) {
                             ui::UIObjectAcc npc(icon.searchChild("IMG_icon_npc"));
                             bool isNpc = obj->m_param.m_id == 4;
                             image.setAlpha(isNpc ? 0.0f : 1.0f);

@@ -18,7 +18,7 @@ namespace fw {
 
 void fn_71001996F0(bool flag) {
     ml::ScnRenderDrSysParmAcc acc(mm::mtl::PtrSingleton<Framework>::get()->m_scn->m_renderDrSys, 0);
-    acc.fn_710070A2F4(flag);
+    acc.setRenderTexMode(flag);
 }
 
 CommonResource* CommonResource::search(mtl::ALLOC_HANDLE handle, const char* path) {

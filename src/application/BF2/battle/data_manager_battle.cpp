@@ -13,7 +13,7 @@ DataManager::~DataManager() {}
 void DataManager::Create() {
 #line 109
     DataManager* manager = new (gf::getAllocator(gf::ALLOCATOR(1)), __FILE__, __LINE__, 8) DataManager;
-    manager->fn_7100090384();
+    manager->ClearCache();
 }
 
 void DataManager::Destroy() {

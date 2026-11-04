@@ -285,7 +285,7 @@ bool GfMenuObjQuestLog::seqTitleStart() {
     QuestID id;
     getRef<GfMenuReferenceQuest>(0)->getQuest(id);
     int category = QuestListAcc::get()->getListQuestCategory(id);
-    bool layer3 = GfMenuObjUtil::fn_710048FD30(3);
+    bool layer3 = GfMenuObjUtil::isValidExpansion(3);
     if (!layer3 || pad_948) {
         if (category == 1) {
             acc.startAnimation("start_scenario", false);
@@ -306,7 +306,7 @@ bool GfMenuObjQuestLog::seqTitleStart() {
         if (category == 1) {
             acc.startAnimation("start_scenario", false);
             m_titleSeq.addWait(9);
-            m_titleSeq.addJob(&GfMenuObjQuestLog::fn_710046D648);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::seqCompleteJingle);
             m_titleSeq.addWait(10);
             m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeInText);
             m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeInScenario);
@@ -315,7 +315,7 @@ bool GfMenuObjQuestLog::seqTitleStart() {
         } else {
             acc.startAnimation("start", false);
             m_titleSeq.addWait(9);
-            m_titleSeq.addJob(&GfMenuObjQuestLog::fn_710046D648);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::seqCompleteJingle);
             m_titleSeq.addWait(10);
             m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeInText);
             m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeInNormal);
@@ -390,7 +390,7 @@ bool GfMenuObjQuestLog::seqCompleteStart() {
     return true;
 }
 
-bool GfMenuObjQuestLog::fn_710046D648() {
+bool GfMenuObjQuestLog::seqCompleteJingle() {
     GfMenuObjUtil::playJingle(7);
     return true;
 }
@@ -400,7 +400,7 @@ bool GfMenuObjQuestLog::seqTitleFadeInText() {
     param.m_time = 0.2f;
     param.m_methods = 1;
     GfMenuObjUtil::startCtrl(m_handle, param, "TXT_title");
-    if (!pad_948 && !GfMenuObjUtil::fn_710048FD30(3)) {
+    if (!pad_948 && !GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuObjUtil::playJingle(7);
     }
     return true;
@@ -496,14 +496,14 @@ void GfMenuObjQuestLog::OrderListener::reciveEvent(ui::EventData const& event, u
         open.m_param0 = event.m_param0;
         GfMenuObject::sendEvent(acc.searchSibiling("LAY_title"), open, 0.0f);
         m_owner->getRef<GfMenuReferenceQuest>(2)->m_quest = QuestID(event.m_param0);
-        bool layer3 = GfMenuObjUtil::fn_710048FD30(3);
+        bool layer3 = GfMenuObjUtil::isValidExpansion(3);
         m_owner->m_orderSeq.clear();
         if (!layer3) {
             m_owner->m_orderSeq.addWait(0x4B);
             m_owner->m_orderSeq.addJob(&GfMenuObjQuestLog::seqOrderStart);
         } else {
             m_owner->m_orderSeq.addWait(0xE);
-            m_owner->m_orderSeq.addJob(&GfMenuObjQuestLog::fn_710046CDFC);
+            m_owner->m_orderSeq.addJob(&GfMenuObjQuestLog::seqOrderJingle);
             m_owner->m_orderSeq.addWait(0x2D);
             m_owner->m_orderSeq.addJob(&GfMenuObjQuestLog::seqOrderStart);
         }
@@ -516,7 +516,7 @@ void GfMenuObjQuestLog::OrderListener::reciveEvent(ui::EventData const& event, u
     }
 }
 
-bool GfMenuObjQuestLog::fn_710046CDFC() {
+bool GfMenuObjQuestLog::seqOrderJingle() {
     GfMenuObjUtil::playJingle(6);
     return true;
 }
@@ -527,7 +527,7 @@ bool GfMenuObjQuestLog::seqOrderStart() {
     param.m_motionLib = "sample";
     param.m_motion = "fadein";
     GfMenuObjUtil::startCtrl(m_handle, param, "TXT_order");
-    bool layer3 = GfMenuObjUtil::fn_710048FD30(3);
+    bool layer3 = GfMenuObjUtil::isValidExpansion(3);
     m_orderSeq.addWait(0x37);
     m_orderSeq.addJob(&GfMenuObjQuestLog::seqOrderWaitCtrl);
     if (!layer3) {
@@ -616,8 +616,8 @@ bool GfMenuObjQuestLog::seqOrderWaitCtrl() {
     param.m_startFlags = 10;
     GfMenuObjUtil::startCtrl(m_handle, param, "TXT_order");
     m_orderSeq.addJob(&GfMenuObjQuestLog::seqOrderWait);
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
-        SCOM_FIELD_VOICE::fn_71005691B0();
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        SCOM_FIELD_VOICE::createQuestOrderIra();
     }
     return true;
 }
@@ -648,8 +648,8 @@ bool GfMenuObjQuestLog::seqCompleteWait() {
     ui::EventData event;
     event.m_type = 0x103;
     GfMenuObject::sendEvent(complete.m_handle, event, 0.0f);
-    if (GfMenuObjUtil::fn_710048FD30(3)) {
-        SCOM_FIELD_VOICE::fn_71005691EC();
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        SCOM_FIELD_VOICE::createQuestCompleteIra();
     }
     return true;
 }

@@ -61,7 +61,7 @@ public:
     virtual void setVirtualEquipWpn(unsigned int, int);  // slot 47
     virtual void setVirtualEquipAcc(unsigned int, unsigned int);  // slot 48
     virtual void setVirtualSetBlade(unsigned int, int);  // slot 49
-    virtual void fn_710022BDB8(unsigned int) override;  // slot 52
+    virtual void setVirtualEquipWpnAcce(unsigned int) override;  // slot 52
     virtual bool isVirtualSetting() const;  // slot 53
     virtual int getMenuOffset() const;  // slot 55
     virtual const char* getCamBone() const;  // slot 57

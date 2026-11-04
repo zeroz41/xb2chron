@@ -7,7 +7,7 @@
 #include "classes/gf/GfMenuReference.h"
 #include "classes/gf/GfWeapon.h"
 #include "classes/ui/UIEventManager.h"
-#include "classes/gf/TUnk_B60E28.h"
+#include "classes/gf/GfMenuObjCharChange.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfMenuObject.h"
 #include "classes/ui/UIObjectAcc.h"
@@ -113,7 +113,7 @@ void GfMenuObjBladeChange::initialize() {
                 soloListener->release();
             }
         }
-        m_seqActive = GfMenuObjUtil::fn_710048FD30(1);
+        m_seqActive = GfMenuObjUtil::isValidExpansion(1);
         GfMenuObject::initialize();
     }
 }
@@ -130,7 +130,7 @@ void GfMenuObjBladeChange::update() {
     GfMenuObject::update();
 }
 
-void GfMenuObjBladeChange::fn_7100391CDC() {
+void GfMenuObjBladeChange::refreshBattleMode() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x3C));
     if (acc.m_object != nullptr && !acc.isTerm()) {
         ui::EventData event;
@@ -162,7 +162,7 @@ void TUnk_B5FEE8::reciveEvent(const ui::EventData& event, unsigned int handle) {
         if (m_owner->m_seqActive) {
             acc.setDispChild(false, "TXT_btl_mode@01");
             acc.setDispChild(false, "TXT_btl_mode@02");
-            GfMenuObjBladeChange::fn_7100391CDC();
+            GfMenuObjBladeChange::refreshBattleMode();
         }
         GfMenuObjUtil::PresetCtrlParam param;
         param.m_preset = 1;
@@ -183,7 +183,7 @@ void TUnk_B5FEE8::reciveEvent(const ui::EventData& event, unsigned int handle) {
         break;
     }
     case 0x105: {
-        unsigned int mode = GfMenuReference::fn_71003674A0();
+        unsigned int mode = GfMenuReference::getBattleMode();
         unsigned int on;
         unsigned int off;
         if (mode == 0) {
@@ -247,7 +247,7 @@ void GfMenuObjBladeChange::close() {
     }
 }
 
-void GfMenuObjBladeChange::fn_710039232C() {
+void GfMenuObjBladeChange::openDrSolo() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x3C));
     if (acc.m_object != nullptr && !acc.isTerm()) {
         ui::UIObjectAcc solo(acc.searchSibiling("LAY_dr_solo"));
@@ -260,7 +260,7 @@ void GfMenuObjBladeChange::fn_710039232C() {
     }
 }
 
-void GfMenuObjBladeChange::fn_71003923CC() {
+void GfMenuObjBladeChange::closeDrSolo() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x3C));
     if (acc.m_object != nullptr && !acc.isTerm()) {
         ui::UIObjectAcc solo(acc.searchSibiling("LAY_dr_solo"));
@@ -276,8 +276,8 @@ void GfMenuObjBladeChange::fn_71003923CC() {
 void GfMenuObjBladeChange::dispInfo(bool disp) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x3C));
     if (acc.m_object != nullptr && !acc.isTerm()) {
-        if (GfMenuObjUtil::fn_710048FD30(3)) {
-            TUnk_B60E28::fn_71003C3648(disp);
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            GfMenuObjCharChange::dispInfo(disp);
         } else {
             acc.setDispChild(disp, "LAY_info");
         }

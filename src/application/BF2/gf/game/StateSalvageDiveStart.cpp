@@ -175,7 +175,7 @@ void StateSalvageLoad::update(GfGameSalvage* salvage, const fw::UpdateInfo& info
 
 void StateSalvageSetupFadeIn::enter(GfGameSalvage* salvage, ai::State* prev) {
     ml::DevClock::getClockNow(m_clock);
-    salvage->fn_7100315A84(false);
+    salvage->setPartyNpcMove(false);
     SCOM_FADE::create(0, 10, mm::Col4(0.0f, 0.0f, 0.0f, 0.0f));
     GfEvent::callSalvageStateChange(6);
 }
@@ -398,7 +398,7 @@ void StateSalvageResult::enter(GfGameSalvage* salvage, ai::State* prev) {
 }
 
 void StateSalvageResult::leave(GfGameSalvage* salvage, ai::State* next) {
-    salvage->fn_7100315A84(true);
+    salvage->setPartyNpcMove(true);
 }
 
 void StateSalvageResult::update(GfGameSalvage* salvage, const fw::UpdateInfo& info) {

@@ -192,15 +192,15 @@ void GfSequentialPlay::addMapjump(const GfMapjumpInfo& info) {
     addCommand(GfPlayComMapjump::create(info));
 }
 
-void GfSequentialPlay::fn_7100322674(const GfMapjumpInfo& info) {
+void GfSequentialPlay::addMapjumpForLeaveArena(const GfMapjumpInfo& info) {
     addCommand(GfPlayComMapjumpForLeaveArena::create(info));
 }
 
-void GfSequentialPlay::fn_7100322688(const GfMapjumpInfo& info) {
+void GfSequentialPlay::addMapjumpForBattleMapFromArena(const GfMapjumpInfo& info) {
     addCommand(GfPlayComMapjumpForBattleMapFromArena::create(info));
 }
 
-void GfSequentialPlay::fn_710032269C() {
+void GfSequentialPlay::addWaitArenaStateField() {
     addCommand(GfPlayComWaitArenaStateField::create());
 }
 
@@ -247,27 +247,27 @@ void GfSequentialPlay::addEventFade() {
 // The symbols name it addEvent(int, ...) (1.0.0's overload at this place, called from createTheaterEvent there and
 // here); 3.0.1's body makes a GfPlayComEventWeather from the first argument and reads no other.
 void GfSequentialPlay::addEvent(int id, unsigned int, unsigned int, bool) {
-    addCommand(GfPlayComEventWeather::fn_7100318730(WEATYPE(id)));
+    addCommand(GfPlayComEventWeather::create(WEATYPE(id)));
 }
 
 void GfSequentialPlay::fn_71003227B8(unsigned int id, unsigned int first, unsigned int second, const char* bgm,
                                      const mm::Vec3* pos, float time) {
-    addCommand(GfPlayComEvent::fn_7100319674(id, first, second, bgm, pos, time));
+    addCommand(GfPlayComEvent::create(id, first, second, bgm, pos, time));
 }
 
 void GfSequentialPlay::addCallbackEventSequence(int id, bool begin) {
     addCommand(GfPlayComCallbackEventSequence::create(id, begin));
 }
 
-void GfSequentialPlay::fn_71003227E4() {
-    if (GfGameManager::fn_71002A9E68()) {
-        addCommand(GfPlayComIraCampSave::fn_710031988C());
+void GfSequentialPlay::addIraCampSaveForEvent() {
+    if (GfGameManager::isGameTypeIra()) {
+        addCommand(GfPlayComIraCampSave::createForEvent());
     }
 }
 
-void GfSequentialPlay::fn_7100322808() {
-    if (GfGameManager::fn_71002A9E68()) {
-        addCommand(GfPlayComIraCampSave::fn_7100319900());
+void GfSequentialPlay::addIraCampSaveForTutorial() {
+    if (GfGameManager::isGameTypeIra()) {
+        addCommand(GfPlayComIraCampSave::createForTutorial());
     }
 }
 
@@ -319,8 +319,8 @@ void GfSequentialPlay::addStartTutorial(unsigned int id) {
     addCommand(GfPlayComStartTutorial::create(id));
 }
 
-void GfSequentialPlay::fn_7100322930(const mm::mtl::FixedVector<unsigned short, 256>& entries) {
-    addCommand(GfPlayComOpenNpcEntry::fn_7100319F34(entries));
+void GfSequentialPlay::addOpenNpcEntry(const mm::mtl::FixedVector<unsigned short, 256>& entries) {
+    addCommand(GfPlayComOpenNpcEntry::create(entries));
 }
 
 void GfSequentialPlay::addMiniGame() {

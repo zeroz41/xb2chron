@@ -436,10 +436,10 @@ void (DrMdoMat::*DrMdoMat::s_pCallMatVal[35])(const MdsMatInfoHeader*, int, int)
     &DrMdoMat::matCall_BaseColor,
     &DrMdoMat::matCall_BaseVal,
     &DrMdoMat::matCall_TransVal,
-    &DrMdoMat::fn_71007701FC,
-    &DrMdoMat::fn_71007710B0,
-    &DrMdoMat::fn_7100772150,
-    &DrMdoMat::fn_7100777C88,
+    &DrMdoMat::matCall_CalcPrjView,
+    &DrMdoMat::matCall_CalcPrjChgView,
+    &DrMdoMat::matCall_CalcPrjDefCall,
+    &DrMdoMat::matCall_CalcPrjAlpha,
 };
 
 void DrMdoAnim::animcall_UV_Scr_U(DrResMdoMat* mat, float* work, float value) {
@@ -1035,13 +1035,13 @@ void DrMdoSetup::varStTex_ToonDarkGradTex(const MdsMatInfoHeader* info, unsigned
     }
 }
 
-void DrMdoSetup::fn_710077C23C(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+void DrMdoSetup::varStTex_StencilTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
     DrAPCache* ap = m_pDrMan->m_apCache;
     ap->beginTexSampling(2, 0);
     ap->setTexture(*m_pDrMan->m_pixlMan->getDepthObj()->m_pTexture, location);
 }
 
-void DrMdoSetup::fn_710077C294(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+void DrMdoSetup::varStTex_DitherCalcTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
     DrAPCache* ap = m_pDrMan->m_apCache;
     ap->beginTexSampling(2, 0);
     DrIniSys* iniSys = m_pDrMan->m_iniSys;
@@ -1153,8 +1153,8 @@ void (DrMdoSetup::*DrMdoSetup::s_pStaticTexture[46])(const MdsMatInfoHeader*, un
     &DrMdoSetup::varStTex_FlagWaveTex1,
     &DrMdoSetup::varStTex_EtcTex,
     &DrMdoSetup::varStTex_ToonDarkGradTex,
-    &DrMdoSetup::fn_710077C23C,
-    &DrMdoSetup::fn_710077C294,
+    &DrMdoSetup::varStTex_StencilTex,
+    &DrMdoSetup::varStTex_DitherCalcTex,
 };
 
 void (DrMdoSetup::*DrMdoSetup::s_pStaticImage[5])(const MdsMatInfoHeader*, unsigned int, unsigned int) = {

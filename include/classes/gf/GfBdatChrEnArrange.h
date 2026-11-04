@@ -35,12 +35,12 @@ public:
     unsigned int getChrEnArrangeDropTableID2(unsigned int id) const;
     unsigned int getChrEnArrangeDropTableID3(unsigned int id) const;
     unsigned int getChrEnArrangePreciousID(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrEnArrange.
-    // What it does: row id's "Score" column (unsigned short) of CHR_EnArrange, 0 when the handle is null or id is out of range (1.0.0 has no such column).
-    unsigned int fn_71001F3260(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrEnArrange.
-    // What it does: row id's "ECube" column (unsigned short) of CHR_EnArrange, 0 when the handle is null or id is out of range (1.0.0 has no such column).
-    unsigned int fn_71001F32E8(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: row id's "Score" column (unsigned short) of CHR_EnArrange, 0 when the
+    // handle is null or id is out of range (1.0.0 has no such column).
+    unsigned int getChrEnArrangeScore(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: row id's "ECube" column (unsigned short) of CHR_EnArrange, 0 when the
+    // handle is null or id is out of range (1.0.0 has no such column).
+    unsigned int getChrEnArrangeECube(unsigned int id) const;
     unsigned int getChrEnArrangeScale(unsigned int id) const;
     unsigned int getChrEnArrangeChrSize(unsigned int id) const;
     unsigned int getChrEnArrangeTurnSize(unsigned int id) const;
@@ -62,15 +62,15 @@ public:
     bool isChrEnArrangeFlagAlwaysAttack(unsigned int id) const;
     bool isChrEnArrangeFlagPGMax(unsigned int id) const;
     bool isChrEnArrangeFlagSalvage(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrEnArrange.
-    // What it does: true when row id's "Serious" bit of the CHR_EnArrange "Flag" column is set, false when either handle is null or id is out of range (1.0.0 has no such column).
-    bool fn_71001F3F28(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrEnArrange.
-    // What it does: true when row id's "NoChgBtl" bit of the CHR_EnArrange "Flag" column is set, false when either handle is null or id is out of range (1.0.0 has no such column).
-    bool fn_71001F3FB8(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrEnArrange.
-    // What it does: true when row id's "NoKasumi" bit of the CHR_EnArrange "Flag" column is set, false when either handle is null or id is out of range (1.0.0 has no such column).
-    bool fn_71001F4048(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: true when row id's "Serious" bit of the CHR_EnArrange "Flag" column is
+    // set, false when either handle is null or id is out of range (1.0.0 has no such column).
+    bool isChrEnArrangeFlagSerious(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: true when row id's "NoChgBtl" bit of the CHR_EnArrange "Flag" column is
+    // set, false when either handle is null or id is out of range (1.0.0 has no such column).
+    bool isChrEnArrangeFlagNoChgBtl(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: true when row id's "NoKasumi" bit of the CHR_EnArrange "Flag" column is
+    // set, false when either handle is null or id is out of range (1.0.0 has no such column).
+    bool isChrEnArrangeFlagNoKasumi(unsigned int id) const;
     unsigned int getChrEnArrangeLinkRadius(unsigned int id) const;
     unsigned int getChrEnArrangeDetects(unsigned int id) const;
     unsigned int getChrEnArrangeSearchRange(unsigned int id) const;
@@ -93,28 +93,26 @@ public:
     unsigned int getChrEnArrangeSeEnvID(unsigned int id) const;
     unsigned int getChrEnArrangeZoneID(unsigned int id) const;
     unsigned int getChrEnArrangeDriverLev(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpChrEnArrange.
-    // What it does: row id's "Race" column (unsigned short) of CHR_EnArrange, 0 when the handle is null or id is out of range (1.0.0 has no such column).
-    unsigned int fn_71001F4C90(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: row id's "Race" column (unsigned short) of CHR_EnArrange, 0 when the
+    // handle is null or id is out of range (1.0.0 has no such column).
+    unsigned int getChrEnArrangeRace(unsigned int id) const;
     unsigned int getBTL_EnBookBaseEnemyID(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_NamedList.
-    // What it does: the BTL_NamedList table's first row id.
-    unsigned int fn_71001F4DA0() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_NamedList.
-    // What it does: the BTL_NamedList table's first row id + row count (one past the last row).
-    unsigned int fn_71001F4DAC() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_NamedList.
-    // What it does: row id's "EnemyID" column (unsigned short) of BTL_NamedList, 0 when the handle is null or id is out of range (1.0.0 has no such column).
-    unsigned int fn_71001F4DE8(unsigned int id) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_NamedListIra.
-    // What it does: the BTL_NamedListIra table's first row id.
-    unsigned int fn_71001F4E70() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_NamedListIra.
-    // What it does: the BTL_NamedListIra table's first row id + row count (one past the last row).
-    unsigned int fn_71001F4E7C() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_fpBTL_NamedListIra.
-    // What it does: row id's "EnemyID" column (unsigned short) of BTL_NamedListIra, 0 when the handle is null or id is out of range (1.0.0 has no such column).
-    unsigned int fn_71001F4EB8(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the BTL_NamedList table's first row id.
+    unsigned int getBTL_NamedListStart() const;
+    // 2.0.0's symbols name it. What it does: the BTL_NamedList table's first row id + row count (one past the last
+    // row).
+    unsigned int getBTL_NamedListEnd() const;
+    // 2.0.0's symbols name it. What it does: row id's "EnemyID" column (unsigned short) of BTL_NamedList, 0 when the
+    // handle is null or id is out of range (1.0.0 has no such column).
+    unsigned int getBTL_NamedListEnemyID(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: the BTL_NamedListIra table's first row id.
+    unsigned int getBTL_NamedListIraStart() const;
+    // 2.0.0's symbols name it. What it does: the BTL_NamedListIra table's first row id + row count (one past the last
+    // row).
+    unsigned int getBTL_NamedListIraEnd() const;
+    // 2.0.0's symbols name it. What it does: row id's "EnemyID" column (unsigned short) of BTL_NamedListIra, 0 when the
+    // handle is null or id is out of range (1.0.0 has no such column).
+    unsigned int getBTL_NamedListIraEnemyID(unsigned int id) const;
     // the tables, by GfDataBdat id (s_aszGfBdatName), created in this order by createFP; m_fpChrEnArrange and
     // m_fpBTL_EnBook follow 1.0.0's accessors (getChrEnArrange.., getBTL_EnBook..), the two 3.0.1 tables' names are
     // their bdat names (not the original's)

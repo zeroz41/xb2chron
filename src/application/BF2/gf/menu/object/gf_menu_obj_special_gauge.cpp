@@ -52,7 +52,7 @@ void GfMenuObjSpecialGauge::initialize() {
             ui::UIObjectAcc image(main.m_handle, name.m_str);
             if (image.m_object != nullptr) {
                 GfMenuAdapter* adapter;
-                if (GfMenuObjUtil::fn_710048FD30(3)) {
+                if (GfMenuObjUtil::isValidExpansion(3)) {
                     GfMenuBattleAdapter* battle = GfMenuBattleAdapter::create(image.m_handle, 0x1F);
                     battle->m_index = i;
                     adapter = battle;
@@ -66,7 +66,7 @@ void GfMenuObjSpecialGauge::initialize() {
                 GfMenuObject::addNumberEventCondition(main.m_handle, name.m_str, 0, i, 1.0f);
             }
         }
-        bool layer = GfMenuObjUtil::fn_710048FD30(3);
+        bool layer = GfMenuObjUtil::isValidExpansion(3);
         unsigned int arts = acc.searchChild("IMG_arts_lv");
         if (layer) {
             GfMenuBattleAdapter::create(arts, 0x20);

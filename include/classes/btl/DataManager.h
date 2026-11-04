@@ -32,12 +32,11 @@ struct alignas(16) ARTS_DATA {
     // the share of the hits' damage that hit takes (the hits' weights, divided by the two counts and the BDAT
     // table 0x12 row's "AddAtkNum" + 1)
     float GetHitWeightRate(int hit) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among ARTS_DATA's
-    // and ARTS_SLOT_DATA's members and reads this record only. What it does: 1 when m_kind is 3; else 2 when the
-    // enhance of m_enhance[index - 1] (DataManager::GetEnhanceData) is effect 0x182; else 0 (BattleCharacter::ActionArts).
-    int fn_7100003910(int index) const;
+    // 2.0.0's symbols name it. What it does: 1 when m_kind is 3; else 2 when the enhance of m_enhance[index - 1]
+    // (DataManager::GetEnhanceData) is effect 0x182; else 0 (BattleCharacter::ActionArts).
+    int CheckHealArts(int index) const;
     unsigned long long pad_0_0 : 24;
-    unsigned long long m_kind : 5;  // fn_7100003910 answers 1 for 3 (the name is not the original's)
+    unsigned long long m_kind : 5;  // CheckHealArts answers 1 for 3 (the name is not the original's)
     unsigned long long pad_0_29 : 16;
     unsigned long long m_hitWeightTotal : 12;  // the hits' weights' total (GetHitWeightRate; the name is not the original's)
     unsigned long long m_initialRecast : 7;  // percent (ARTS_SLOT_DATA::ResetRecast; the name is not the original's)
@@ -79,7 +78,7 @@ struct alignas(16) ARTS_DATA {
     };
     HIT m_hits[16];
     unsigned char pad_90[0x4];
-    // an enhance of the arts (fn_7100003910 reads entry index - 1; the count is not recovered, the names are not the
+    // an enhance of the arts (CheckHealArts reads entry index - 1; the count is not recovered, the names are not the
     // original's)
     struct ENHANCE {
         unsigned short id;
@@ -125,11 +124,10 @@ public:
     static bool IsValidDeadEnhance(int enhance);
     // the enhance's effect (BDAT table 0x2C); false when it has none
     static bool GetEnhanceData(int enhance, ENHANCE_EFFECT_DATA& data, bool);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because Create calls it on the
-    // new instance and fn_710009673C forwards to it. What it does: when m_criticalSection is enabled calls the
-    // unnamed 0x71008B2B70 on it, empties the four arts caches (the counts at 0x73D8, 0xCEB0, 0xF7A0, 0x112F8, as the
-    // destructor does) and resets their entries' bitfields.
-    void fn_7100090384();
+    // 2.0.0's symbols name it. What it does: when m_criticalSection is enabled calls the unnamed 0x71008B2B70 on it,
+    // empties the four arts caches (the counts at 0x73D8, 0xCEB0, 0xF7A0, 0x112F8, as the destructor does) and resets
+    // their entries' bitfields.
+    void ClearCache();
     void SetPartyGauge(int value, bool flag);  // GfGameUtil::setMaxPartyGauge passes (300, false)
     // Create: 1.0.0's name (fn_710009028C in 3.0.1): 1.0.0's BattleManager::Initialize calls it fourth, as 3.0.1's does
     static void Create();
@@ -148,11 +146,10 @@ public:
     void FluctuatePartyGauge(int value, int groupIndex);
     // BattleCharacter::AddPartyGauge passes its value, its group index and true
     void AddPartyGauge(float value, int groupIndex, bool);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because Utility::fn_7100010DBC
-    // calls it on DataManager::sys() and it sits in DataManager's unit. What it does: KIZUNA_GAUGE_DATA::
-    // SetKizunaStage(stage, 0.5, true) on GROUP_DATA::GetBladeDataConst of every blade (0-4) of the three groups at
-    // +0x12E30, +0x12F50 and +0x13070, or, with engagedOnly, only on each group's engaged blade (index -1).
-    void fn_71000968B8(int stage, bool engagedOnly);
+    // 2.0.0's symbols name it. What it does: KIZUNA_GAUGE_DATA:: SetKizunaStage(stage, 0.5, true) on
+    // GROUP_DATA::GetBladeDataConst of every blade (0-4) of the three groups at +0x12E30, +0x12F50 and +0x13070, or,
+    // with engagedOnly, only on each group's engaged blade (index -1).
+    void SetKizunaStage(int stage, bool engagedOnly);
 
     ml::CriticalSection m_criticalSection;  // the destructor destroys it (the name is not the original's)
     // GetCharacterParameterConst answers ids below 1000 from here (the name is not the original's)
@@ -177,7 +174,7 @@ public:
     unsigned char m_elementalEffectID;
     unsigned char pad_15D14;
     bool m_specialEffects[5];  // SetSpecialEffects, IsSpecialEffects (the name is not the original's)
-    unsigned char pad_15D1A;  // Utility::fn_7100010D84 sets it to 1
+    unsigned char pad_15D1A;  // Utility::FullCoolTime sets it to 1
 };
 }  // namespace btl
 
