@@ -1011,7 +1011,7 @@ unsigned int GfDataBlade::getStartCommonBlade() {
     return 1197;
 }
 
-unsigned int GfDataBlade::getEndCommonBlade() {
+unsigned int GfDataBlade::getStartActCommonBlade() {
     return 1401;
 }
 
@@ -3205,7 +3205,7 @@ bool GfDataBlade::getListRare(mm::mtl::FixedVector<unsigned short, 422>& list) {
     return !list.empty();
 }
 
-bool GfDataBlade::getlistCommon(mm::mtl::FixedVector<unsigned short, 422>& list) {
+bool GfDataBlade::getListCommon(mm::mtl::FixedVector<unsigned short, 422>& list) {
     for (unsigned int blade = 1197; blade < 1397; blade++) {
         if (!isActivateUnuse(blade) || isUnselect(blade)) {
             list.push_back(blade);
@@ -5534,14 +5534,14 @@ int GfDataBlade::getCreator(unsigned int blade) {
     return GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_creator;
 }
 
-bool GfDataBlade::isActivateMercenaryTeam(unsigned int blade) {
-    return GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_activateMercenaryTeam != 0;
+bool GfDataBlade::isBladeLock(unsigned int blade) {
+    return GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_bladeLock != 0;
 }
 
 void GfDataBlade::setBladeLock(unsigned int blade, bool flag) {
     unsigned int index = getBladeIndex(blade);
     SDataGame* game = GfDataManager::getDataGame();
-    game->m_blades[index].m_activateMercenaryTeam = flag;
+    game->m_blades[index].m_bladeLock = flag;
 }
 
 const char* GfDataBlade::getCommonBladeName(unsigned int blade) {
@@ -5587,7 +5587,7 @@ bool GfDataMercenaries::isMissionOrderTeam(unsigned int mission) {
     return getTeamIDByMissionID(mission) != 0;
 }
 
-bool GfDataBlade::fn_71002383C8(unsigned int blade) {
+bool GfDataBlade::isActivateMercenaryTeam(unsigned int blade) {
     if (blade == 0) {
         return false;
     }
@@ -6165,7 +6165,7 @@ unsigned int GfDataDriver::getEquipAcce(unsigned int driver, unsigned int slot) 
     return getEquipAcce(*getSDataDriver(driver), slot);
 }
 
-unsigned int GfDataBlade::fn_7100231754() {
+unsigned int GfDataBlade::getEndCommonBlade() {
     return 1397;
 }
 

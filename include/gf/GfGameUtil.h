@@ -107,10 +107,10 @@ public:
     // SCOM_ADD_EXP::exec: inn experience (its value), else battle experience for a driver (driver, value)
     static void addExpInn(unsigned int exp);
     static void addExpBattle(unsigned int driver, unsigned int exp);
-    // SCOM_ADD_SP::exec: (driver, value)
-    // 0x71002DBA88 (3.0.1's addSP): addSp unless GfGameManager::isGameTypeIra holds; then fn_71002DBB58 on
-    // the ChrDr getChrIrGroupID value of the driver (of each of the ten party drivers for driver 0)
-    static void addSP(unsigned int driver, int sp);
+    // 2.0.0's symbols name it; SCOM_ADD_SP::exec calls it with (driver, value). What it does: addSp unless
+    // GfGameManager::isGameTypeIra holds; then fn_71002DBB58 on the ChrDr getChrIrGroupID value of the driver (of each
+    // of the ten party drivers for driver 0)
+    static void addSpForObject(unsigned int driver, int sp);
     // Placeholder name: new in 3.0.1 (1.0.0's setFormationParam, 0x20C bytes, holds this loop itself), nothing names
     // it. A member because its only caller is GfGameUtil::setFormationParam, right before it. What it does: -1 for a
     // trinity blade; else the index (0-8) of the first GfGamePlayerFormation player whose object setup has the
@@ -120,7 +120,7 @@ public:
     // 2.0.0's symbols name it. What it does: for a driver whose DataParamAcc is not scenario-masked, adds sp to its
     // skill points (GfDataDriver::addSkillPoint).
     static void addSp(unsigned int driver, int sp);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because addSP (its unit, right
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because addSpForObject (its unit, right
     // before it) tail-calls it with its sp. What it does: for the DLC driver rows 0x11 to 0x19 whose GfBdatChrDr
     // getChrIrGroupID (of getChrDrIraParam) equals id and that are not GfDataDriver::isActivateUnuse, adds sp.
     static void fn_71002DBB58(unsigned int id, int sp);
@@ -171,7 +171,7 @@ public:
     static void setPartyChange10020();  // (symbols; the pt plugin's setPartyChange10020)
     // 3.0.1's takes a third argument (it tests bit 0 of w2; the symbols' Ejj is 1.0.0's two-argument signature);
     // ScriptPlayText's pt setDriverEnable passes (0, 1011, false). The third's name and type are inferred.
-    // returns whether it went ahead (GfDataBlade::fn_71002383C8 held): equipDriverBladeForce tail-calls it and returns 0
+    // returns whether it went ahead (GfDataBlade::isActivateMercenaryTeam held): equipDriverBladeForce tail-calls it and returns 0
     // otherwise
     static bool execEquipMercenariesBlade(unsigned int driver, unsigned int blade, bool flag);
     // named by the symbols: adds a rare blade (GfDataBlade::addRareBlade) and, when that gives one, copies blade
@@ -337,7 +337,7 @@ public:
     // Placeholder name: GfWeapon's unit's function (callers GfGameObj::checkEnableGameObj, GfGameUtil::levelupForEnemy and
     // GfGameScene::gevChangeGameDifficult, which calls it on every object of list 5). A free function: its class is not known.
     static void refreshEnemyHp(GF_OBJ_HANDLE* handle);
-    // 2.0.0's symbols name it. What it does: for blade 1001, else 1002 (the first GfDataBlade::fn_71002383C8 holds
+    // 2.0.0's symbols name it. What it does: for blade 1001, else 1002 (the first GfDataBlade::isActivateMercenaryTeam holds
     // for), cancels the mission of the blade's mercenary team (GfGameMercenaries::cancelMission of
     // GfDataMercenaries::getMissionIdByBlade) and clears that team's members (clearTeamMember of getTeamID);
     // GfGameScene::gevChangeScenarioFlag calls it.

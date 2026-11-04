@@ -714,7 +714,7 @@ bool GfPlayFactory::createBladeSwitch() {
     return true;
 }
 
-bool GfPlayFactory::createMoverSwitch() {
+bool GfPlayFactory::createBladeSwitchFR() {
     if (GfSequentialPlay::isInnerState(GF_STATE(0x14))) {
         return false;
     }

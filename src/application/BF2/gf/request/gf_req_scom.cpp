@@ -2621,7 +2621,7 @@ bool SCOM_ADD_SP::exec(fw::UpdateInfo const&) {
             driver = acc.getDriverId();
         }
     }
-    GfGameUtil::addSP(driver, m_value);
+    GfGameUtil::addSpForObject(driver, m_value);
     return true;
 }
 
@@ -2836,7 +2836,7 @@ bool SCOM_SOLO_REX::exec(fw::UpdateInfo const&) {
         if (creator == 0 || creator == 1) {
             continue;
         }
-        if (GfDataBlade::isDummyBlade(blade) || GfDataBlade::fn_71002383C8(blade)) {
+        if (GfDataBlade::isDummyBlade(blade) || GfDataBlade::isActivateMercenaryTeam(blade)) {
             continue;
         }
         if (GfDataBlade::getSetDriver(blade) == 0 || GfDataBlade::isReleasedRareBlade(blade)) {
@@ -2954,7 +2954,7 @@ void SCOM_PARTY_ADD::addBlade(unsigned int blade, unsigned int driver, int param
     if (blade == 0) {
         return;
     }
-    if (GfGameManager::isClearGame() && (blade - 1001 < 3 || GfDataBlade::fn_71002383C8(blade))) {
+    if (GfGameManager::isClearGame() && (blade - 1001 < 3 || GfDataBlade::isActivateMercenaryTeam(blade))) {
         return;
     }
     Info info = {GfDataBlade::getActBlade2CommonBlade(blade), driver, param, true, false, false, true, 1};
@@ -2988,7 +2988,7 @@ void SCOM_PARTY_ADD::removeBlade(unsigned int blade, bool flag, bool checkClear)
     if (blade == 0) {
         return;
     }
-    if (GfGameManager::isClearGame() && checkClear && (blade - 1001 < 3 || GfDataBlade::fn_71002383C8(blade))) {
+    if (GfGameManager::isClearGame() && checkClear && (blade - 1001 < 3 || GfDataBlade::isActivateMercenaryTeam(blade))) {
         return;
     }
     Info info = {GfDataBlade::getActBlade2CommonBlade(blade), 0, -1, flag, false, false, true, 2};

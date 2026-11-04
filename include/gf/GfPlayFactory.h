@@ -75,11 +75,13 @@ public:
     static bool createResetBladeForBattleEnd(unsigned int slot, int setId, bool stopPlayer);
     static bool createResetBladeForBladeSwitch(unsigned int slot, int setId);
     static bool createPartySwitchForIra();
-    // 2.0.0's symbols name it. What it does: as createMoverSwitch, queues addResetBlade(0, 0) in state 0x18 unless
+    // 2.0.0's symbols name it. What it does: as createBladeSwitchFR, queues addResetBlade(0, 0) in state 0x18 unless
     // state 0x14 or a special action runs; true when queued.
     static bool createBladeSwitch();
-    static bool createMoverSwitch();
-    // 2.0.0's symbols name it. What it does: as createMoverSwitch, queues addResetBlade(0, 2) in state 0x18 unless
+    // 2.0.0's symbols name it. What it does: as createBladeSwitch, queues addResetBlade(0, 1) in state 0x18 unless
+    // state 0x14 or a special action runs; true when queued.
+    static bool createBladeSwitchFR();
+    // 2.0.0's symbols name it. What it does: as createBladeSwitchFR, queues addResetBlade(0, 2) in state 0x18 unless
     // state 0x14 or a special action runs; true when queued.
     static bool createBladeSwitchBR();
     static bool createMenuObjCommonText(GfMenuObjCommonText::OpenKizunaParam& param);

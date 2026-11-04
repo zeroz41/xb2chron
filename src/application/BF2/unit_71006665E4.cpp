@@ -829,8 +829,8 @@ static int fn_7100669814(VMThread* pThread) {
          gf::GfDataDriver::isActivateUnuse(creator) && !gf::GfDataBlade::isEnableEngageRex(blade) &&
          !(blade == 1042 && creator == 8 && gf::GfDataUtil::getScenarioFlag() == 1021)) ||
         (gf::GfDataHana::isValid(blade) &&
-         (gf::GfDataBlade::fn_71002383C8(1005) || gf::GfDataBlade::fn_71002383C8(1006) ||
-          gf::GfDataBlade::fn_71002383C8(1007)))) {
+         (gf::GfDataBlade::isActivateMercenaryTeam(1005) || gf::GfDataBlade::isActivateMercenaryTeam(1006) ||
+          gf::GfDataBlade::isActivateMercenaryTeam(1007)))) {
         gf::SCOM_PARTY_ADD::removeBlade(blade, true, true);
     } else {
         gf::SCOM_PARTY_ADD::addBlade(blade, driver, slot);
@@ -896,7 +896,7 @@ static int fn_7100669D34(VMThread* pThread) {
     unsigned int blade = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
     // Pyra and Mythra (1001, 1002) stay as they are once the game is cleared
     if (gf::GfGameManager::isClearGame() && blade >= 1001 && blade <= 1003 &&
-        (gf::GfDataBlade::fn_71002383C8(1001) || gf::GfDataBlade::fn_71002383C8(1002))) {
+        (gf::GfDataBlade::isActivateMercenaryTeam(1001) || gf::GfDataBlade::isActivateMercenaryTeam(1002))) {
         return 0;
     }
     gf::SCOM_CURRENT_BLADE::create(blade);

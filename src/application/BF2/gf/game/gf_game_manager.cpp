@@ -1408,7 +1408,7 @@ bool GfGameManager::isAutoTalkOK() {
     return isControlFree();
 }
 
-bool GfGameManager::isQuestCompleteUI() {
+bool GfGameManager::isExecCompleteUI() {
     return GfPlayComQuestCompleteUI::s_active > 0;
 }
 

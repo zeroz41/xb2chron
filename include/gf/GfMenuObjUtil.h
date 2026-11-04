@@ -259,7 +259,7 @@ public:
     // blade object only when this or isValidBlade holds).
     static bool isIraDummyBlade(unsigned int blade);
     // 2.0.0's symbols name it. What it does: false unless GfGameManager::isClearGame; then true when
-    // GfDataBlade::fn_71002383C8 holds for blade 1005 or 1006, else whether the game data's short at 0x8E04 is 2.
+    // GfDataBlade::isActivateMercenaryTeam holds for blade 1005 or 1006, else whether the game data's short at 0x8E04 is 2.
     static bool isBladeHanaInMercenary();
     // 2.0.0's symbols name it. What it does: true when ui::UIUtil::isEnableExpType(3) and GfGameManager::isGameTypeIra
     // hold and GfGameUtil::isDispSinMask does not; GfMenuCharDataAdapter::update_DR_BtlFace then shows face 0xB for driver 0x14.
@@ -271,7 +271,7 @@ public:
     // once 0x8A00 is 1; the game data is not read); callers GfMenuObjSaveLoad2::refreshSave and fn_71002EAF78.
     static unsigned int getBladeSlotMax(const SDataGame&);
     // 2.0.0's symbols name it. What it does: 0 unless GfGameManager::isClearGame; then the first of blades 1005, 1006,
-    // 1007 that GfDataBlade::fn_71002383C8 holds for, else 0 (GfMenuObjBladeSet2::BladeListListener::reciveEvent).
+    // 1007 that GfDataBlade::isActivateMercenaryTeam holds for, else 0 (GfMenuObjBladeSet2::BladeListListener::reciveEvent).
     static unsigned int getBladeHanaInMercenary();
     // 2.0.0's symbols name it. What it does: false once the game is cleared and driver 4 is
     // GfDataDriver::isActivateUnuse; true when driver 4 is not isActivateParty; else whether more than one of party

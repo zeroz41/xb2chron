@@ -164,14 +164,14 @@ static GfMenuCharDataAdapter::TypeSetup s_typeSetups[] = {
     {&GfMenuCharDataAdapter::update_BL_CorrectiveTypeName, {2, 0, 0}},
     {&GfMenuCharDataAdapter::update_BL_CorrectiveValue, {0, 0, 100}},
     {&GfMenuCharDataAdapter::update_BL_OrbSlotEnable, {3, 0, 0}},
-    {&GfMenuCharDataAdapter::fn_71003386E0, {3, 0, 0}},
+    {&GfMenuCharDataAdapter::update_BL_InMercenry, {3, 0, 0}},
     {&GfMenuCharDataAdapter::update_BL_Rank, {1, 0, 0}},
     {&GfMenuCharDataAdapter::update_BL_Rarity, {1, 0, 0}},
     {&GfMenuCharDataAdapter::update_BL_CVName, {2, 0, 0}},
     {&GfMenuCharDataAdapter::update_BL_IlustName, {2, 0, 0}},
     {&GfMenuCharDataAdapter::update_BL_TeamName, {2, 0, 0}},
     {&GfMenuCharDataAdapter::update_BL_WpnImage, {1, 0, 0}},
-    {&GfMenuCharDataAdapter::update_BL_InMercenry, {3, 0, 0}},
+    {&GfMenuCharDataAdapter::update_BL_Lock, {3, 0, 0}},
     {&GfMenuCharDataAdapter::update_EN_BookID, {0, 0, 9999}},
     {&GfMenuCharDataAdapter::update_EN_BaseLv, {0, 0, 999}},
     {&GfMenuCharDataAdapter::update_EN_Family, {2, 0, 0}},
@@ -732,7 +732,7 @@ bool GfMenuCharDataAdapter::update_BL_RoleIcon(const DataParamAcc& acc) {
     return false;
 }
 
-bool GfMenuCharDataAdapter::fn_71003386E0(const DataParamAcc& acc) {
+bool GfMenuCharDataAdapter::update_BL_InMercenry(const DataParamAcc& acc) {
     if (acc.getObjType() != 4) {
         return false;
     }
@@ -740,7 +740,7 @@ bool GfMenuCharDataAdapter::fn_71003386E0(const DataParamAcc& acc) {
         GfMenuObjUtil::isBladeHanaInMercenary()) {
         return true;
     }
-    return GfDataBlade::fn_71002383C8(getBladeId(acc));
+    return GfDataBlade::isActivateMercenaryTeam(getBladeId(acc));
 }
 
 bool GfMenuCharDataAdapter::update_BL_AffinityText(const DataParamAcc& acc) {
@@ -808,9 +808,9 @@ bool GfMenuCharDataAdapter::update_BL_Rarity(const DataParamAcc& acc) {
     return false;
 }
 
-bool GfMenuCharDataAdapter::update_BL_InMercenry(const DataParamAcc& acc) {
+bool GfMenuCharDataAdapter::update_BL_Lock(const DataParamAcc& acc) {
     if (acc.getObjType() == 4) {
-        return GfDataBlade::isActivateMercenaryTeam(getBladeId(acc));
+        return GfDataBlade::isBladeLock(getBladeId(acc));
     }
     return false;
 }

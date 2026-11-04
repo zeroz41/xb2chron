@@ -302,8 +302,8 @@ bool GfMenuBladeList::sortGenderAscending(const MenuBladeInfo& a, const MenuBlad
 
 
 bool GfMenuBladeList::sortFavoriteDescending(const MenuBladeInfo& a, const MenuBladeInfo& b) {
-    bool activeA = GfDataBlade::isActivateMercenaryTeam(a.m_blade);
-    bool activeB = GfDataBlade::isActivateMercenaryTeam(b.m_blade);
+    bool activeA = GfDataBlade::isBladeLock(a.m_blade);
+    bool activeB = GfDataBlade::isBladeLock(b.m_blade);
     if (activeA != activeB) {
         return activeA && !activeB;
     }
@@ -316,8 +316,8 @@ bool GfMenuBladeList::sortFavoriteDescending(const MenuBladeInfo& a, const MenuB
 }
 
 bool GfMenuBladeList::sortFavoriteAscending(const MenuBladeInfo& a, const MenuBladeInfo& b) {
-    bool activeA = GfDataBlade::isActivateMercenaryTeam(a.m_blade);
-    bool activeB = GfDataBlade::isActivateMercenaryTeam(b.m_blade);
+    bool activeA = GfDataBlade::isBladeLock(a.m_blade);
+    bool activeB = GfDataBlade::isBladeLock(b.m_blade);
     if (activeA != activeB) {
         return activeB && !activeA;
     }

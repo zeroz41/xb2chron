@@ -238,7 +238,7 @@ bool GfAchievManager::getBladeByAchievementSet(mm::mtl::FixedVector<unsigned sho
                 list.push_back(s_extraBlades[i]);
             }
         }
-        for (unsigned int blade = GfDataBlade::getStartCommonBlade(); blade < GfDataBlade::fn_7100231754();
+        for (unsigned int blade = GfDataBlade::getStartCommonBlade(); blade < GfDataBlade::getEndCommonBlade();
              ++blade) {
             if (!GfDataBlade::isActivateUnuse(blade) && fn_710028AA4C(blade, achievement)) {
                 list.push_back(blade);

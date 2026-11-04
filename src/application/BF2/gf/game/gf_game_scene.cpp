@@ -867,7 +867,7 @@ void GfGameScene::qevCompleteQuest(const QuestCompleteParam&) {
     m_completeQuest = true;
 }
 
-void GfGameScene::updateAppendModel(const fw::UpdateInfo& info) {
+void GfGameScene::postUpdateAppendModel(const fw::UpdateInfo& info) {
     for (mm::mtl::FixedList<GfAppendWire*, 8>::iterator it = m_appendWires.begin(); it != m_appendWires.end(); ++it) {
         (*it)->update(info);
     }
@@ -883,7 +883,7 @@ void GfGameScene::updateAppendModel(const fw::UpdateInfo& info) {
 }
 
 void GfGameScene::postUpdate(const fw::UpdateInfo& info) {
-    updateAppendModel(info);
+    postUpdateAppendModel(info);
     if (GfPause::isPause(1) || GfPlayComEventFade::s_activate != 0) {
         m_frameCount690 = 0;
     } else if (m_frameCount690 < 999) {

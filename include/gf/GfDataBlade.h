@@ -66,7 +66,7 @@ public:
     // searchEquipHanaParts.
     static bool getListRare(mm::mtl::FixedVector<unsigned short, 422>& list);
     // fills list with the common blades 1197 to 1396 that are in use or unselectable
-    static bool getlistCommon(mm::mtl::FixedVector<unsigned short, 422>& list);
+    static bool getListCommon(mm::mtl::FixedVector<unsigned short, 422>& list);
     // 2.0.0's symbols name it. What it does: walks the blade rows (local game flag 0xD860 picks the walk) adding blades
     // to the list; returns a bool. Callers: SCOM_ACHIEV_INC::fn_71005645F0 (when GfDataUtil::isIra is false),
     // GfMenuBladeList::setupFromDriver/setupFromReleasble/setupFromTeam, GfMenuObjUtil.
@@ -83,12 +83,10 @@ public:
     static unsigned int getMenuIlustName(unsigned int blade);
     // the blade's menu voice file name in voice slot slot (GfBdatChrBl::getChrBlMnuVoice; GfMenuObjBladeBook's preview)
     static const char* getMenuVoiceName(unsigned int blade, unsigned int slot);
-    // Placeholder name: nothing names it (1.0.0's GfGameUtil::execActivateMercenaryTeamForBlade calls
-    // isActivateMercenaryTeam at its place, but 3.0.1 keeps that function at 0x71002398D8, reading another field).
-    // A member because it lives in GfDataBlade's unit among its functions (no this). What it does: false for blade 0,
-    // else whether the short at 0x5A2C of the blade's game data slot (getDataGame + slot * 0x8A4, the slot mapping
-    // isActivateMercenaryTeam uses) is 2; execActivateMercenaryTeamForBlade does nothing when it holds.
-    static bool fn_71002383C8(unsigned int blade);
+    // 2.0.0's symbols name it. What it does: false for blade 0, else whether the short at 0x5A2C of the blade's game
+    // data slot (getDataGame + slot * 0x8A4, the slot mapping isBladeLock uses) is 2;
+    // GfGameUtil::execActivateMercenaryTeamForBlade does nothing when it holds.
+    static bool isActivateMercenaryTeam(unsigned int blade);
     static ActivateType getBladeActivateType(const SDataBlade& blade);
     static ActivateType getBladeActivateType(unsigned int blade);
     static unsigned int addRareBlade(const SDataBlade& data);  // (symbols) the new blade, 0 for none
@@ -149,8 +147,8 @@ public:
     static bool isFreeEngage(unsigned int blade);
     // GfBdatChrBl::isChrBlFlagNoMapRev(blade) for a blade row below getChrBlEnd, else false (btl::PlayerParameter::Initialize)
     static bool isNoMapRev(unsigned int blade);
-    // 2.0.0's symbols name it. What it does: stores the flag into the blade's SDataBlade::m_activateMercenaryTeam (the
-    // byte isActivateMercenaryTeam reads); GfGameUtil::changeKubira and setBladeFavorite call it.
+    // 2.0.0's symbols name it. What it does: stores the flag into the blade's SDataBlade::m_bladeLock (the
+    // byte isBladeLock reads); GfGameUtil::changeKubira and setBladeFavorite call it.
     static void setBladeLock(unsigned int blade, bool flag);
     // the release level of a skill line: lines 0-2 the arts, 3-5 the skills, 6-8 the field skills, 9 the key
     static unsigned int getAchievReleaseLevel(unsigned int blade, unsigned int line);
@@ -237,7 +235,8 @@ public:
     static bool isHikariCurrent();
     static void setHikariCurrent(bool value);
     static unsigned int getStartCommonBlade();
-    static unsigned int getEndCommonBlade();
+    // 2.0.0's symbols name it (the same 1401; its one caller is TitleStatePlayEvent::enter in both builds)
+    static unsigned int getStartActCommonBlade();
     static unsigned int getStartUiCommonBlade();
     static bool isCommonBlade(unsigned int blade);
     static bool isRegularBlade(unsigned int blade);
@@ -288,9 +287,9 @@ public:
     static void setTrustPoint(unsigned int blade, unsigned int point);
     static bool getExtraParts(unsigned int blade, unsigned int part);
     static const BladeSkillSlot* getSkill(unsigned int blade, unsigned int index);
-    // (appended by chardata) 1.0.0's name: its GfMenuCharDataAdapter::update_BL_InMercenry calls it at the same site
-    // (the symbols call it fn_71002398D8)
-    static bool isActivateMercenaryTeam(unsigned int blade);
+    // 2.0.0's symbols name it (1.0.0 called this code isActivateMercenaryTeam). What it does: whether the blade's
+    // m_bladeLock byte (setBladeLock) is set.
+    static bool isBladeLock(unsigned int blade);
     static bool isNeedAttributeResource(unsigned int blade);
     // the reserve blades (GfDataMercenaries::getReserver fills its list with them)
     static void getListReserver(mm::mtl::FixedVector<unsigned short, 422>& list);
@@ -307,9 +306,9 @@ public:
     // 2.0.0's symbols name it. What it does: whether local flag 0x89FB (type 1) of game's GameFlag is set
     // (isHomuriNameHikari's flag).
     static bool isHomuriNameHikari(const SDataGame& game);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
-    // GfDataBlade's unit among GfDataBlade's functions. What it does: returns 1397 (GfAchievManager::getBladeByAchievementSet calls it).
-    static unsigned int fn_7100231754();
+    // 2.0.0's symbols name it (right after getStartCommonBlade in both builds). What it does: returns 1397
+    // (GfAchievManager::getBladeByAchievementSet and GfGameUtil::setupPoweredNewGameParam call it).
+    static unsigned int getEndCommonBlade();
     // 2.0.0's symbols name it. What it does: whether blade is in 1124-1132 (DataObjBlade::getNorAtkDmgMin/Max pass a
     // blade id).
     static bool isIra(unsigned int blade);

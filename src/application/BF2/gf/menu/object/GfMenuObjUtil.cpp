@@ -602,23 +602,23 @@ bool GfMenuObjUtil::isBladeHanaInMercenary() {
     if (!GfGameManager::isClearGame()) {
         return false;
     }
-    if (GfDataBlade::fn_71002383C8(1005) || GfDataBlade::fn_71002383C8(1006)) {
+    if (GfDataBlade::isActivateMercenaryTeam(1005) || GfDataBlade::isActivateMercenaryTeam(1006)) {
         return true;
     }
-    return GfDataBlade::fn_71002383C8(1007);
+    return GfDataBlade::isActivateMercenaryTeam(1007);
 }
 
 unsigned int GfMenuObjUtil::getBladeHanaInMercenary() {
     if (!GfGameManager::isClearGame()) {
         return 0;
     }
-    if (GfDataBlade::fn_71002383C8(1005)) {
+    if (GfDataBlade::isActivateMercenaryTeam(1005)) {
         return 1005;
     }
-    if (GfDataBlade::fn_71002383C8(1006)) {
+    if (GfDataBlade::isActivateMercenaryTeam(1006)) {
         return 1006;
     }
-    return GfDataBlade::fn_71002383C8(1007) ? 1007 : 0;
+    return GfDataBlade::isActivateMercenaryTeam(1007) ? 1007 : 0;
 }
 
 bool GfMenuObjUtil::canBladeHanaInMercenary() {

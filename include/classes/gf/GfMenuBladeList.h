@@ -84,7 +84,7 @@ public:
     static bool sortCreatorDescending(const MenuBladeInfo& a, const MenuBladeInfo& b);
     static bool sortGenderDescending(const MenuBladeInfo& a, const MenuBladeInfo& b);
     static bool sortGenderAscending(const MenuBladeInfo& a, const MenuBladeInfo& b);
-    // What they do: blades of an active mercenary team (GfDataBlade::isActivateMercenaryTeam) first (sortFavoriteDescending)
+    // What they do: locked blades (GfDataBlade::isBladeLock, which setBladeFavorite sets) first (sortFavoriteDescending)
     // or last (sortFavoriteAscending), then born time descending, then blade id.
     static bool sortFavoriteDescending(const MenuBladeInfo& a, const MenuBladeInfo& b);
     static bool sortFavoriteAscending(const MenuBladeInfo& a, const MenuBladeInfo& b);

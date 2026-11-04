@@ -985,7 +985,7 @@ void GfGameUtil::setAchievementReleaseLevel(unsigned int blade, unsigned int lin
 }
 
 bool GfGameUtil::execActivateMercenaryTeamForBlade(unsigned int blade) {
-    if (GfDataBlade::fn_71002383C8(blade)) return false;
+    if (GfDataBlade::isActivateMercenaryTeam(blade)) return false;
     ActivateType from = GfDataBlade::getBladeActivateType(*GfDataBlade::getSDataBlade(blade));
     GfDataBlade::setActivateMercenaryTeam(blade);
     GfEvent::callBladeActivate(blade, from, static_cast<ActivateType>(3));
@@ -1229,7 +1229,7 @@ void GfGameUtil::addSp(unsigned int driver, int sp) {
     }
 }
 
-void GfGameUtil::addSP(unsigned int driver, int sp) {
+void GfGameUtil::addSpForObject(unsigned int driver, int sp) {
     if (!GfGameManager::isGameTypeIra()) {
         addSp(driver, sp);
         return;
@@ -1777,7 +1777,7 @@ bool GfGameUtil::equipDriverBladeForce(unsigned int driver) {
 }
 
 bool GfGameUtil::execEquipMercenariesBlade(unsigned int driver, unsigned int blade, bool flag) {
-    if (!GfDataBlade::fn_71002383C8(blade)) {
+    if (!GfDataBlade::isActivateMercenaryTeam(blade)) {
         return false;
     }
     if (flag || GfDataDriver::getBladeSet(driver) < 0 || GfDataBlade::isDummyBlade(GfDataDriver::getBlade(driver, -1))) {
@@ -1793,9 +1793,9 @@ bool GfGameUtil::execEquipMercenariesBlade(unsigned int driver, unsigned int bla
 
 void GfGameUtil::execClearMercenariesInHomuraHikari() {
     unsigned int blade = 1001;
-    if (!GfDataBlade::fn_71002383C8(blade)) {
+    if (!GfDataBlade::isActivateMercenaryTeam(blade)) {
         blade = 1002;
-        if (!GfDataBlade::fn_71002383C8(blade)) {
+        if (!GfDataBlade::isActivateMercenaryTeam(blade)) {
             return;
         }
     }

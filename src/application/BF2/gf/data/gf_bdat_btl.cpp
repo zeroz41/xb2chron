@@ -6236,7 +6236,7 @@ unsigned int GfBdatBtl::getBTL_ChBtlClearReward(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlClearReward(*m_fpBTL_ChBtl, id);
 }
 
-unsigned int GfBdatBtl::getArtsDrRangeType(unsigned int id) const {
+unsigned int GfBdatBtl::getBTL_ChBtlEvent(unsigned int id) const {
     return _gfbbt::getBTL_ChBtlEvent(*m_fpBTL_ChBtl, id);
 }
 

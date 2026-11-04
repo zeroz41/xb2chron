@@ -215,7 +215,7 @@ void GfSlotAll::releaseSlot(GF_SLOT_HANDLE* handle) {
     slots[index]->releaseSlot();
 }
 
-bool GfSlotAll::isExistAsset(GF_SLOT_HANDLE* handle) const {
+bool GfSlotAll::isExistData(GF_SLOT_HANDLE* handle) const {
     if (handle == reinterpret_cast<GF_SLOT_HANDLE*>(-1)) {
         return false;
     }

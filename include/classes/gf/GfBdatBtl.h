@@ -196,9 +196,8 @@ public:
     unsigned int getBTL_ChBtlTresureNeed3(unsigned int id) const;
     // 2.0.0's symbols name it. What it does: a row's ClearReward column of BTL_ChBtl (value type 2).
     unsigned int getBTL_ChBtlClearReward(unsigned int id) const;
-    // 2.0.0's symbols name it. What it does: a row's Event column of BTL_ChBtl (value type 2); carried as
-    // getArtsDrRangeType before, refuted: that is not the column it reads.
-    unsigned int getArtsDrRangeType(unsigned int id) const;
+    // 2.0.0's symbols name it. What it does: a row's Event column of BTL_ChBtl (value type 2).
+    unsigned int getBTL_ChBtlEvent(unsigned int id) const;
     // 2.0.0's symbols name it. What it does: a row's value of slot `slot` (0-2) of the BTL_ChBtl columns Driver1..,
     // through its slot table.
     unsigned int getBTL_ChBtlDriver(unsigned int id, unsigned int slot) const;

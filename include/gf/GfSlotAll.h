@@ -25,7 +25,8 @@ public:
     GF_SLOT_HANDLE* createSlotHandle(GfAssetType type, unsigned int index);  // out of line in 1.0.0, inline in 3.0.1
     GF_SLOT_HANDLE* setupSlotNumTail(GfAssetType type, unsigned int num, unsigned int param);
     void releaseSlot(GF_SLOT_HANDLE* handle);
-    bool isExistAsset(GF_SLOT_HANDLE* handle) const;
+    // 2.0.0's symbols name it (its size and its caller, GfSlotMapping::isExistData, are 2.0.0's isExistData's)
+    bool isExistData(GF_SLOT_HANDLE* handle) const;
     void createSlot(GfAssetType type, unsigned int count, const char* name, unsigned int size,
                     GfSlotAllocator* parent, bool memoryDebug);
     unsigned long getByteSizeBySlotNum(GfAssetType type, unsigned int num) const;

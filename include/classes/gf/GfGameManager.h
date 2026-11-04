@@ -42,8 +42,9 @@ public:
     static bool isGmkTutorialSequenceOK();
     // not in battle, not in theater mode, and the control is free
     static bool isAutoTalkOK();
-    // a GfPlayComQuestCompleteUI is alive
-    static bool isQuestCompleteUI();
+    // 2.0.0's symbols name it: BattleManager::CheckGameOver calls it in both builds (2.0.0's uncalled
+    // isQuestCompleteUI has the same code). What it does: whether a GfPlayComQuestCompleteUI is alive.
+    static bool isExecCompleteUI();
     static bool isEnableBattouWithHoodHomura(bool flag);
     // the leader may not draw its weapon (a blade reset plays, the first blade rebuilds, or isEnableBattouWithHoodHomura(true))
     static bool isDisableBattou();

@@ -231,14 +231,14 @@ public:
     bool update_BL_CorrectiveTypeName(const DataParamAcc& acc);
     bool update_BL_CorrectiveValue(const DataParamAcc& acc);
     bool update_BL_OrbSlotEnable(const DataParamAcc& acc);
-    bool fn_71003386E0(const DataParamAcc& acc);  // placeholder: new in 3.0.1 (1.0.0's type table has no slot for it), the type table's slot 83
+    bool update_BL_InMercenry(const DataParamAcc& acc);  // 2.0.0's symbols name it; the type table's slot 83
     bool update_BL_Rank(const DataParamAcc& acc);
     bool update_BL_Rarity(const DataParamAcc& acc);
     bool update_BL_CVName(const DataParamAcc& acc);
     bool update_BL_IlustName(const DataParamAcc& acc);
     bool update_BL_TeamName(const DataParamAcc& acc);
     bool update_BL_WpnImage(const DataParamAcc& acc);  // placeholder: new in 3.0.1 (1.0.0's type table has no slot for it), the type table's slot 89
-    bool update_BL_InMercenry(const DataParamAcc& acc);
+    bool update_BL_Lock(const DataParamAcc& acc);
     bool update_EN_BookID(const DataParamAcc& acc);
     bool update_EN_BaseLv(const DataParamAcc& acc);  // placeholder: new in 3.0.1 (1.0.0's type table has no slot for it), the type table's slot 92
     bool update_EN_Family(const DataParamAcc& acc);

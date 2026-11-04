@@ -172,7 +172,7 @@ public:
     void setDamageCharacter(GF_OBJ_HANDLE* handle);
     void addDamage(GF_OBJ_HANDLE* handle, const MsgObjectNotifyDamage& msg);
     void saveBattleHpForEnemy(GF_OBJ_HANDLE* handle);
-    void updateAppendModel(const fw::UpdateInfo& info);
+    void postUpdateAppendModel(const fw::UpdateInfo& info);
     // the object's wire, null for none (GfGameUtil's startWire/startWireWithClose/endWire call GfAppendWire's
     // members on it; the return type is inferred from that)
     GfAppendWire* getAppendControl(GF_OBJ_HANDLE* handle);

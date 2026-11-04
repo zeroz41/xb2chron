@@ -105,7 +105,7 @@ public:
     int m_hasCondMotion;
     char m_addMotionName[0x14];  // GfDataBlade::getResourceNameAddMotion; the length is the distance to the next
     char m_voiceStr[0x1C];  // GfDataBlade::getVoiceStr; the length is the distance to the next
-    unsigned char m_activateMercenaryTeam;  // GfDataBlade::isActivateMercenaryTeam (named after it; not the original's name)
+    unsigned char m_bladeLock;  // GfDataBlade::isBladeLock/setBladeLock (named after them)
     // a byte only Hana's forms use (GfDataHana::getMercenaryUnuse/setMercenaryUnuse; GfGameMercenaries::addTeamMember sets
     // it). The name is not the original's.
     unsigned char m_hanaTeamFlag;
