@@ -343,8 +343,8 @@ bool GfMenuObjHitonowa::seqNextEntry() {
 }
 }  // namespace gf
 
-// instantiated for gf::GfMenuObjHitonowa::delNpc (not written yet)
-template mm::mtl::Vector<fw::AssetCsvb*>::iterator mm::mtl::Vector<fw::AssetCsvb*>::erase(fw::AssetCsvb**);
+// instantiated for gf::GfMenuObjHitonowa::delNpc (not written yet); 2.0.0's symbols name the element type
+template mm::mtl::Vector<gf::MenuID>::iterator mm::mtl::Vector<gf::MenuID>::erase(gf::MenuID*);
 
 namespace gf {
 

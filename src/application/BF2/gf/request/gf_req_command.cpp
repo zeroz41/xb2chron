@@ -60,8 +60,17 @@ struct MapjumpPos {
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAEB00)
 mm::mtl::RTTI MapjumpCamera::m_rtti("MapjumpCamera", &::fw::Camera::m_rtti, nullptr);
+// 2.0.0's symbols name it (by its destructor); the member's name is not the original's
+class MapjumpPosition {
+public:
+    ~MapjumpPosition();
+    mm::mtl::FixedVector<MapjumpPos, 1024> m_positions;
+};
+
+MapjumpPosition::~MapjumpPosition() {}
+
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAEB20)
-static mm::mtl::FixedVector<MapjumpPos, 1024> s_mapjumpPositions;
+static MapjumpPosition s_mapjumpPositions;
 
 struct ReqStartScriptParam : public GfReqParam {
     mm::mtl::FixStr<32> m_name;

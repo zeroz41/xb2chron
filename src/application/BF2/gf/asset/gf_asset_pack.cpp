@@ -494,5 +494,6 @@ void GfAssetFiles::setInitializeParam(const GfAssetFilesInfo& info) {
 
 }  // namespace gf
 
-// the reflection value vector's growth (its user is not written yet)
-template void mm::mtl::Vector<fw::ReflectionValueStruct*>::expand(size_t, size_t);
+// the pack vector's growth: 2.0.0's symbols name the instantiation (its users, AssetPackInfo's constructor and
+// setAssetPack, are not written yet)
+template void mm::mtl::Vector<gf::GfAssetPack*>::expand(size_t, size_t);
