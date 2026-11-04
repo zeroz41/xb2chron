@@ -85,10 +85,10 @@ public:
     EffectObject* GetEffect(unsigned int id);
     int GetFreeDataIndex() const;
     void CreateBullet(int, const ARTS_DATA&, int, unsigned int, int, gf::GF_OBJ_HANDLE*, gf::GF_OBJ_HANDLE*,
-                      const mm::Vec3&, const mm::Vec3&, bool);
+                      const mm::Vec3&, const mm::Vec3&, bool, bool);
     void RegisterCreateEffect(mm::mtl::FixedVector<fw::EffectPack*, 8>& packs, const char* name,
-                              const mm::Vec3& pos, const mm::Vec3& scale, float, int, int, gf::GF_OBJ_HANDLE*, int,
-                              int, bool, unsigned int);
+                              const mm::Vec3& pos, const mm::Vec3& scale, float, int, int, gf::GF_OBJ_HANDLE*,
+                              gf::GF_OBJ_HANDLE*, gf::GF_OBJ_HANDLE*, const ARTS_SLOT_DATA&, int, unsigned int);
     void CreateCircleEffect(int, gf::GF_OBJ_HANDLE*, gf::GF_OBJ_HANDLE*);
     // IsExistChrHitEffect: 1.0.0's name (fn_7100099470 in 3.0.1): 1.0.0's stood in the same place, between
     // CreateCircleEffect and the destructor, with the same signature

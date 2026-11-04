@@ -29,7 +29,7 @@ public:
     // TitleMenu::setupOption attaches the option menu object to its call context: true when the object is there
     static bool attach(GfMenuCallContext* context);
     static void initOptionData(SDataOption& option);
-    static void getDefaultLevel(unsigned int category, mm::mtl::FixedVector<Level, 32>& levels);
+    static void getDefaultLevel(unsigned int category, mm::mtl::FixedVector<Level, 32>& levels, bool);
     static void convLevelListToOptionData(unsigned int category, const mm::mtl::FixedVector<Level, 32>& levels,
                                           SDataOption& option);
     // 2.0.0's symbols name them (new in 3.0.1's line: 1.0.0 has getVolumeLevel, getGammaLevel, getVolumeValue and

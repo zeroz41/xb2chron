@@ -9,6 +9,7 @@
 namespace fw { class UpdateInfo; }
 namespace gf { class GfManager; }
 namespace gf { class SDataGame; }
+namespace gf { class SDataGameIra; }
 namespace gf { class SDataOption; }
 namespace gf { class SDataSystem; }
 namespace gf { enum EXEC_STATE : int; }
@@ -51,7 +52,8 @@ public:
     static bool isExecModeAdvertize();
     static bool isExecModeTool();
     static bool isExecModeThater();
-    static void setupContinueGame(const SDataSystem& system, const SDataGame& game, const SDataOption& option);
+    static void setupContinueGame(const SDataSystem& system, const SDataGame& game, const SDataOption& option,
+                                  const SDataGameIra& ira);
     static void setupReturnTitle();
     static void execToAdvertize();
     static void setupOptionData(const SDataOption& option);

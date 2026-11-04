@@ -11,6 +11,7 @@ namespace gf { class GfSetupParam; }
 namespace mm { class Vec3; }
 namespace fw { class UpdateInfo; }
 namespace gf { enum GF_STATE : int; }
+namespace gf { enum GAME_TYPE : int; }
 namespace gf { enum ActivateType : int; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfGameManager; }
@@ -266,8 +267,8 @@ public:
     // not displayed (GfObjAcc::isDisp(0) false); false otherwise. Caller: GfComBehaviorPc::update.
     static bool isPlayEventHideChar(GF_OBJ_HANDLE* handle);
     static void clear();
-    // takes isGameTypeIra()'s answer in 3.0.1 (every caller passes it; the symbols still spell 1.0.0's setupGame())
-    static void setupGame(bool flag);
+    // 2.0.0's symbols name its parameter type; every caller passes isGameTypeIra()'s answer
+    static void setupGame(GAME_TYPE type);
     virtual void gevHanaCondenser(unsigned int, bool, unsigned int);  // slot 2 (its code forwards the 32-bit value and the bool to GfGameScene, not the third; placeholder name: see IGfEvent)
     virtual void gevOrbParam(unsigned int, unsigned int);  // slot 3 (forwards the first 32-bit value to GfGameScene; placeholder name: see IGfEvent)
     virtual void gevAcceParam(unsigned int, unsigned int);  // slot 4 (forwards the first 32-bit value to GfGameScene; placeholder name: see IGfEvent)

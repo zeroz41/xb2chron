@@ -119,7 +119,7 @@ bool IsBattleAutoHeal();
 // (GfComBehaviorPc::procMsgObjectNotifyDead).
 void NotifyDead(gf::GF_OBJ_HANDLE* handle, const gf::MsgObjectNotifyDead& msg);
 // What it does: ChallengeBattleManager::IsEnableEnemyBattle while BattleGlobal::IsEnableBattle holds, else false
-// (BattleCharacter::UpdateHateRingData, GfComBehaviorEnemy::canChangeBattle).
+// (BattleCharacter::UpdateHateRingData, GfComBehaviorEnemy::canChangeBattleWithoutDelay).
 bool IsEnableEnemyBattle();
 // What it does: BattleCharacter::IsAutoHeal on the handle's character, true without one
 // (GfGameScene::updateAutoHeal).

@@ -48,9 +48,9 @@ public:
         ui::UIManager::get()->requestObjectEvent(handle, event, frames * (1.0f / 30.0f));
     }
     static void setupItemList(ui::UIObjectAcc& acc, GfMenuItemList* list, ui::UISelectObjList* select);
-    // 3.0.1 calls both with the filter index: updateItemList with three arguments, refreshItemList with four
-    // (the symbols keep 1.0.0's parameter lists)
-    static void updateItemList(GfMenuItemList* list, ui::UISelectObjList* select, unsigned int filter);
+    // 3.0.1 calls both with the filter index: updateItemList with three arguments (2.0.0's symbols give it a fourth,
+    // which neither build's callers set), refreshItemList with four (the symbols keep 1.0.0's parameter list)
+    static void updateItemList(GfMenuItemList* list, ui::UISelectObjList* select, unsigned int filter, unsigned int);
     static void refreshItemList(ui::UIObjectAcc& acc, GfMenuItemList* list, ui::UISelectObjList* select,
                                 unsigned int filter);
     static void setupFilter(ui::UIObjectAcc& acc, unsigned int filter);

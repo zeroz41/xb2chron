@@ -54,6 +54,9 @@ public:
     // getBTL_ChBtlMapJump gives the row's map, sets that map's WeatherParam weather id from getBTL_ChBtlWeather (+1, at
     // most 5), time 0, length 100.
     static void setupBattleMapWeather(unsigned int id);
+    // GfGameArena::procMsgGameBtlArena (message type 13) and StateArenaEvent test it against 0. What it does: the
+    // BTL_ChBtl row's Event (GfBdatBtl::getBTL_ChBtlEvent); 0 for id 0.
+    static unsigned int getPlayEvent(unsigned int id);
     // GfGameArena::procMsgGameBtlArena calls them on SDataGame's rows with the message's id. What they do: isPlayEvent
     // answers bit 1 of byte 10 of row id (0 for id 0), setPlayEvent sets that bit (not for id 0).
     static void setPlayEvent(::mm::mtl::FixedArray<ChBtlInfo, 48>& infos, unsigned int id);

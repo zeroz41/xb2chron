@@ -99,8 +99,9 @@ public:
     // last two parameters with 0xffff on entry (and w20/w27, #0xffff): unsigned short.
     void updateSubMsgList(unsigned int title);
     void getEvthIDList(GfMenuIDList* list, unsigned short title, unsigned short);
-    // 0x71004047B8 (the symbols name it GfMenuObjOption::refreshLevel, but its this is this class and its only caller
-    // is this class's listener) shows m_levels row by row; left out until the symbol is renamed
+    // 2.0.0's symbols name it (its only caller is this class's listener). What it does (not written yet): shows
+    // m_levels row by row.
+    void refreshLevel(unsigned int);
 
     // the names of the fields below are not the original's
     int m_title;  // 0x24: which TXT_header_title@%02d / TXT_header_input@%02d (from 1) HeaderListener shows

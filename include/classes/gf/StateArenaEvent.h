@@ -30,7 +30,7 @@ public:
     virtual void gevPlayEvent(gf::GEV gev, unsigned int);  // slot 8
     // 2.0.0's symbols name it. A member because onEnter tail-calls it
     // with its own arguments. What it does (0x160 bytes, not written yet): adds the state as event callback,
-    // reads GfDataDriverArts::getRangeType, GfDataEvent::getEventZone, and GfPlayFactory::createMap... play commands.
+    // reads GfArenaUtil::getPlayEvent, GfDataEvent::getEventZone, and GfPlayFactory::createMap... play commands.
     void enter(GfGameArena* arena, ai::State* prev);
 
     // 1/3/2 for GEV 0xC/0xD/0xE (gevPlayEvent); onStep asks for state 4 at 3 (the name is not the original's)
