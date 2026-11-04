@@ -30,12 +30,12 @@ fw::MemHandlebaseAllocator s_ResAllocator;
 unsigned char* s_BdatFPs[17];
 unsigned int s_SafeMarginW;
 unsigned int s_SafeMarginH;
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EC5458)
-unsigned int s_uioReplaceNo;
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B75878)
-unsigned int s_layerMask = 1;
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B75880)
-const char* s_menuDir = "menu";
+// 2.0.0's symbols name it
+unsigned int s_ResourceReplaceID;
+// 2.0.0's symbols name it
+unsigned int s_EnableExpFlag = 1;
+// 2.0.0's symbols name it
+const char* s_pRootFolder = "menu";
 
 void initLayerLib() {
     layer::LayerAccManager manager;
@@ -161,23 +161,23 @@ unsigned char* getBdatFP(unsigned char index) {
 }
 
 void setResourceReplaceID(unsigned int no) {
-    s_uioReplaceNo = no;
+    s_ResourceReplaceID = no;
 }
 
 void changeRootFolder(const char* dir) {
-    s_menuDir = dir;
+    s_pRootFolder = dir;
 }
 
 const char* getRootFolder() {
-    return s_menuDir;
+    return s_pRootFolder;
 }
 
 void registEnableExpType(unsigned int bit) {
-    s_layerMask |= 1 << bit;
+    s_EnableExpFlag |= 1 << bit;
 }
 
 bool isEnableExpType(unsigned int bit) {
-    return (s_layerMask & (1 << bit)) != 0;
+    return (s_EnableExpFlag & (1 << bit)) != 0;
 }
 
 bool canUIOReplace(const char* file) {
@@ -226,7 +226,7 @@ static inline void lowerFileName(mm::mtl::FixStr<128>& path) {
 }
 
 void makeMenuFontDataFileName(mm::mtl::FixStr<128>& path, const char* name) {
-    path.format("/%s/font/%s", s_menuDir, name);
+    path.format("/%s/font/%s", s_pRootFolder, name);
     if (strstr(name, ".wifnt") == nullptr) {
         path += ".wifnt";
     }
@@ -234,7 +234,7 @@ void makeMenuFontDataFileName(mm::mtl::FixStr<128>& path, const char* name) {
 }
 
 void makeMenuFontStyleFileName(mm::mtl::FixStr<128>& path, const char* name) {
-    path.format("/%s/font/%s", s_menuDir, name);
+    path.format("/%s/font/%s", s_pRootFolder, name);
     if (strstr(name, ".wisty") == nullptr) {
         path += ".wisty";
     }
@@ -242,7 +242,7 @@ void makeMenuFontStyleFileName(mm::mtl::FixStr<128>& path, const char* name) {
 }
 
 void makeMSProjFileName(mm::mtl::FixStr<128>& path, const char* name) {
-    path.format("/%s/msproj/%s", s_menuDir, name);
+    path.format("/%s/msproj/%s", s_pRootFolder, name);
     if (strstr(name, ".msbp") == nullptr) {
         path += ".msbp";
     }
@@ -250,7 +250,7 @@ void makeMSProjFileName(mm::mtl::FixStr<128>& path, const char* name) {
 }
 
 void makeMenuImageFileName(mm::mtl::FixStr<128>& path, const char* name) {
-    path.format("/%s/image/%s", s_menuDir, name);
+    path.format("/%s/image/%s", s_pRootFolder, name);
     if (strstr(name, ".wilay") == nullptr) {
         path += ".wilay";
     }
@@ -258,7 +258,7 @@ void makeMenuImageFileName(mm::mtl::FixStr<128>& path, const char* name) {
 }
 
 void makeMenuLayoutFileName(mm::mtl::FixStr<128>& path, const char* name) {
-    path.format("/%s/layout/%s", s_menuDir, name);
+    path.format("/%s/layout/%s", s_pRootFolder, name);
     if (strstr(name, ".wilay") == nullptr) {
         path += ".wilay";
     }
@@ -266,11 +266,11 @@ void makeMenuLayoutFileName(mm::mtl::FixStr<128>& path, const char* name) {
 }
 
 void makeMenuUIOFileName(mm::mtl::FixStr<128>& path, const char* name) {
-    if (s_uioReplaceNo != 0) {
+    if (s_ResourceReplaceID != 0) {
         unsigned char* fp = s_BdatFPs[16];
         if (fp != nullptr) {
             mm::mtl::FixStr<32> column;
-            column.format("replace%02d", s_uioReplaceNo);
+            column.format("replace%02d", s_ResourceReplaceID);
             if (Bdat::getMember(fp, column.m_str) != nullptr) {
                 for (int i = 0; i < Bdat::getIdCount(fp); i++) {
                     int id = Bdat::getIdTop(fp) + i;
@@ -281,7 +281,7 @@ void makeMenuUIOFileName(mm::mtl::FixStr<128>& path, const char* name) {
             }
         }
     }
-    path.format("/%s/object/%s", s_menuDir, name);
+    path.format("/%s/object/%s", s_pRootFolder, name);
     if (strstr(name, ".uio") == nullptr) {
         path += ".uio";
     }
@@ -289,7 +289,7 @@ void makeMenuUIOFileName(mm::mtl::FixStr<128>& path, const char* name) {
 }
 
 void makeMenuUIMFileName(mm::mtl::FixStr<128>& path, const char* name) {
-    path.format("/%s/motion/%s", s_menuDir, name);
+    path.format("/%s/motion/%s", s_pRootFolder, name);
     if (strstr(name, ".uim") == nullptr) {
         path += ".uim";
     }
@@ -297,7 +297,7 @@ void makeMenuUIMFileName(mm::mtl::FixStr<128>& path, const char* name) {
 }
 
 void makeMenuUIPFileName(mm::mtl::FixStr<128>& path, const char* name) {
-    path.format("/%s/particle/%s", s_menuDir, name);
+    path.format("/%s/particle/%s", s_pRootFolder, name);
     if (strstr(name, ".uip") == nullptr) {
         path += ".uip";
     }

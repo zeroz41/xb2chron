@@ -25,7 +25,7 @@ public:
     static void open(unsigned int row);
     // 2.0.0's symbols name it. What it does: the same game test, then GfMenuObject::sendCloseEvent(0x8A's handle, 0)
     // when object 0x8A exists. GfMenuObjCommonText's MainListener calls it on its close event (0x22) when
-    // GfMenuObjCommonText::s_isNamedDialogOpen is set
+    // GfMenuObjCommonText::s_OpenNamedDialog is set
     static void close();
     unsigned char pad_24[4];
     GfMenuIDList* m_list;  // the enemy shown, as a one-entry list for the adapters (the name is not the original's)

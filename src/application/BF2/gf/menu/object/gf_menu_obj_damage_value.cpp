@@ -22,8 +22,8 @@
 
 namespace gf {
 
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAAA50)
-mm::mtl::FixedQueue<GfMenuObjDamageValue::OpenParam, 32> GfMenuObjDamageValue::s_openRequests;
+// 2.0.0's symbols name it
+mm::mtl::FixedQueue<GfMenuObjDamageValue::OpenParam, 32> GfMenuObjDamageValue::s_queue;
 
 GfMenuObjDamageValue::GfMenuObjDamageValue(unsigned int handle) : GfMenuObject(handle) {}
 
@@ -48,7 +48,7 @@ void GfMenuObjDamageValue::initialize() {
     ui::UIObjectAcc(m_handle).setTerm();
     GfMenuObject::initialize();
     GfMenuManyObjects::createQueue<DamageInfo>(0, 32);
-    s_openRequests.clear();
+    s_queue.clear();
 }
 
 void GfMenuObjDamageValue::finalize() {
@@ -56,11 +56,11 @@ void GfMenuObjDamageValue::finalize() {
 }
 
 void GfMenuObjDamageValue::update() {
-    const mm::mtl::FixedQueue<OpenParam, 32>& requests = s_openRequests;
+    const mm::mtl::FixedQueue<OpenParam, 32>& requests = s_queue;
     for (mm::mtl::FixedQueue<OpenParam, 32>::const_iterator it = requests.begin(); it != requests.end(); ++it) {
         open(*it);
     }
-    s_openRequests.clear();
+    s_queue.clear();
     GfMenuObject::update();
 }
 
@@ -77,10 +77,10 @@ inline void GfMenuObjDamageValue::removeObject(ui::UIObjectAcc screen) {
 // 0x71003E6CF4 setupScreen: not identical yet, candidate in wip/
 
 unsigned int GfMenuObjDamageValue::fn_71003E7394(const OpenParam& param) {
-    if (s_openRequests.full()) {
-        s_openRequests.pop();
+    if (s_queue.full()) {
+        s_queue.pop();
     }
-    s_openRequests.push_back(param);
+    s_queue.push_back(param);
     return 0;
 }
 
@@ -106,7 +106,7 @@ void GfMenuObjDamageValue::closeAll() {
         return;
     }
     GfMenuManyObjects::closeAll<DamageInfo>(0, &close);
-    s_openRequests.clear();
+    s_queue.clear();
 }
 
 }  // namespace gf

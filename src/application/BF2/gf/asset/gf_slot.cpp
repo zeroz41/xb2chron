@@ -7,8 +7,8 @@
 
 namespace gf {
 
-// lbl_7100C24DF8
-ml::CriticalSection g_slotCriticalSection;
+// 2.0.0's symbols name it
+ml::CriticalSection GfSlotBase::s_section;
 
 void GfSizeAlloc::setup(mm::mtl::IAllocator* allocator, unsigned int blockSize, void* buffer,
                         unsigned long bufferSize) {
@@ -64,7 +64,7 @@ namespace gf {
 // alloc and free (and the FixedList<unsigned int, 64>::erase they instantiate): not written yet (not identical)
 
 inline void GfSlotBase::destroy() {
-    ml::CS lock(g_slotCriticalSection);
+    ml::CS lock(GfSlotBase::s_section);
     m_allocator.destroy();
 }
 
@@ -73,29 +73,29 @@ GfSlotBase::~GfSlotBase() {
 }
 
 void* GfSlotBase::allocate(unsigned long size, unsigned long alignment) {
-    ml::CS lock(g_slotCriticalSection);
+    ml::CS lock(GfSlotBase::s_section);
     return m_allocator.allocate(size, alignment);
 }
 
 void GfSlotBase::deallocate(void* memory) {
-    ml::CS lock(g_slotCriticalSection);
+    ml::CS lock(GfSlotBase::s_section);
     m_allocator.deallocate(memory);
 }
 
 const char* GfSlotBase::getName() const {
-    ml::CS lock(g_slotCriticalSection);
+    ml::CS lock(GfSlotBase::s_section);
     return m_allocator.m_name.m_str;
 }
 
 void GfSlotBase::releaseSlot() {
-    ml::CS lock(g_slotCriticalSection);
+    ml::CS lock(GfSlotBase::s_section);
     {
         // a locked block whose body the release build compiles out (as the original's code shows: lock, unlock)
-        ml::CS check(g_slotCriticalSection);
+        ml::CS check(GfSlotBase::s_section);
     }
     {
         // a locked block whose body the release build compiles out (as the original's code shows: lock, unlock)
-        ml::CS check(g_slotCriticalSection);
+        ml::CS check(GfSlotBase::s_section);
     }
     m_slotHandle = reinterpret_cast<GF_SLOT_HANDLE*>(-1);
     m_parentSlot = nullptr;
@@ -104,14 +104,14 @@ void GfSlotBase::releaseSlot() {
 }
 
 void GfSlotBase::setMultiSlot(unsigned int count) {
-    ml::CS lock(g_slotCriticalSection);
+    ml::CS lock(GfSlotBase::s_section);
     if (m_allocator.getAllocs() == 0) {
         m_multiSlot = count;
         m_allocator.resize(m_slotSize * count);
     }
     {
         // a locked block whose body the release build compiles out (as the original's code shows: lock, unlock)
-        ml::CS check(g_slotCriticalSection);
+        ml::CS check(GfSlotBase::s_section);
     }
 }
 

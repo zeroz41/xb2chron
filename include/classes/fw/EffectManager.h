@@ -65,6 +65,8 @@ public:
     // 2.0.0's symbols name it. What it does: sets path to the common effect folder, "effect/common" with "_dlc"
     // appended while m_gfManagerFlag is set, then "/"; true.
     bool getCommonFilePath(mm::mtl::FixStr<32>& path);
+    // 2.0.0's symbols name it: getCommonFilePath's folder ("effect/common").
+    static const char* s_commonFilePath;
     virtual void update(fw::UpdateInfo const&);  // slot 4
     virtual void updateLayer(fw::UpdateInfo const&, unsigned int);  // slot 5
     virtual void updateLayerPost(fw::UpdateInfo const&, unsigned int);  // slot 6

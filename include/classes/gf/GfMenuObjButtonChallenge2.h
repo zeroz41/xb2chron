@@ -72,6 +72,9 @@ public:
     static void close(GfMenuCallContext* context);
     static void resume(GfMenuCallContext* context);
     static void setSpeedFactor(GfMenuCallContext* context, float factor);
+    // 2.0.0's symbols name it: LAY_main's display priority (initialize keeps it; open gives it back to the opened
+    // object's parent outside battle)
+    static unsigned int s_DefRootPrio;
 
     void setup(const OpenParam& param, unsigned int index, bool flag);
     bool seqStart();

@@ -15,10 +15,10 @@
 
 namespace gf {
 
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB8D0)
-GfMenuObjNpcTelop::OpenParam g_npcTelopParam;
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB928)
-bool g_npcTelopOpen;
+// 2.0.0's symbols name it (lbl_7100EAB8D0)
+GfMenuObjNpcTelop::OpenParam GfMenuObjNpcTelop::s_OpenParam;
+// 2.0.0's symbols name it (lbl_7100EAB928)
+bool GfMenuObjNpcTelop::s_Open;
 
 GfMenuObjNpcTelop::GfMenuObjNpcTelop(unsigned int handle)
     : GfMenuObject(handle), m_selectList(nullptr), m_idList(nullptr), m_seq0(this), m_seq1(this) {
@@ -49,7 +49,7 @@ void GfMenuObjNpcTelop::open(GfMenuCallContext* context, const OpenParam& param)
     if (GfMenuObjUtil::isValidExpansion(3) && GfMenuObjUtil::checkCCStart(context)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x8C));
         if (acc.m_object != nullptr) {
-            g_npcTelopParam = param;
+            s_OpenParam = param;
             ui::UIObjectAcc dummy(acc.searchSibiling("LAY_dummy"));
             GfMenuObject::sendOpenEvent(dummy.m_handle, 0, 0.0f);
             GfMenuObject::startCallContext(context, 0x8C, dummy.m_handle);
@@ -58,11 +58,11 @@ void GfMenuObjNpcTelop::open(GfMenuCallContext* context, const OpenParam& param)
 }
 
 GfMenuObjNpcTelop::OpenParam* GfMenuObjNpcTelop::getOpenParam() {
-    return &g_npcTelopParam;
+    return &s_OpenParam;
 }
 
 bool GfMenuObjNpcTelop::isOpen() {
-    return g_npcTelopOpen;
+    return s_Open;
 }
 
 void GfMenuObjNpcTelop::initialize() {
@@ -171,14 +171,14 @@ void GfMenuObjNpcTelop::HitonowaListener::reciveEvent(const ui::EventData& event
             m_owner->m_seq1.addJob(&GfMenuObjNpcTelop::seqWaitCloseFullscreen);
             m_owner->m_seq1.addJob(&GfMenuObjNpcTelop::seqEndHitonowa);
             m_state = 1;
-            g_npcTelopOpen = true;
+            s_Open = true;
         }
         break;
     case 0x22:
         if (m_state == 1) {
             GfMenuObject::termCallContext(acc.m_handle);
             m_state = 0;
-            g_npcTelopOpen = false;
+            s_Open = false;
         }
         break;
     default:

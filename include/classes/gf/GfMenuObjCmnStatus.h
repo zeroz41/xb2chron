@@ -48,9 +48,9 @@ public:
     virtual void update();  // slot 4
     // whether the driver's [0] and the blade's [1] page is open
     static bool s_DispFlag[2];
-    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAA1E2). Whether the driver page
-    // shows the team's name (setIraFrontMode sets it, the constructor and the page's close clear it).
-    static bool s_DispTeamName;
+    // 2.0.0's symbols name it. Whether the driver page shows the team's name (setIraFrontMode sets it, the constructor
+    // and the page's close clear it).
+    static bool s_IraFrontMode;
     // the field names are not the original's: the driver's [0] and the blade's [1] parameter lists
     // (CharStatusListener picks LAY_status_dr_param@NN / LAY_status_bl_param@NN into them by its page)
     ui::UISelectObjList* m_paramLists[2];

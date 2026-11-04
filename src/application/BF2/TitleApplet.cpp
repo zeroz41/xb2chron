@@ -21,7 +21,7 @@ void TitleApplet::initialize(const fw::Framework& framework) {
     param.pad_10 = m_env.pad_0;
     param.m_execState = static_cast<gf::EXEC_STATE>(2);  // EXEC_STATE has no known enumerator names
     param.m_view->m_backCol = mm::Col4::black;
-    param.m_dlcCameraParam = TitleApp::m_dlcCameraParam;
+    param.m_dlcCameraParam = s_bGameTypeIra;
     gf::GfManager::build(param);
     TitleMain::create();
 }

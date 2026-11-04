@@ -1,5 +1,4 @@
 #include "classes/gf/GfMenuObjCampMenu.h"
-#include "gf/gf_menu_obj_camp_menu.h"
 #include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataBdat.h"
@@ -36,8 +35,8 @@
 
 namespace gf {
 
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAA1D0)
-int g_campMenuState;
+// 2.0.0's symbols name it (lbl_7100EAA1D0)
+int GfMenuObjCampMenu::s_SelectResult;
 
 GfMenuObjCampMenu::GfMenuObjCampMenu(unsigned int handle)
     : GfMenuObject(handle), m_seq(this), m_jobStarted(false), m_driverList0(nullptr), m_driverList1(nullptr),
@@ -74,14 +73,14 @@ GfMenuObjCampMenu::~GfMenuObjCampMenu() {
 }
 
 int GfMenuObjCampMenu::getSelectResult() {
-    return g_campMenuState;
+    return s_SelectResult;
 }
 
 void GfMenuObjCampMenu::returnFromEvent() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x8D));
     if (acc.m_object != nullptr) {
         GfMenuObject::sendOpenEvent(acc.searchChild("LAY_menu"), 0, 0.0f);
-        g_campMenuState = 0;
+        s_SelectResult = 0;
     }
 }
 
@@ -91,7 +90,7 @@ void GfMenuObjCampMenu::closeShopToTalk() {
         ui::EventData event;
         event.m_type = 0x101;
         GfMenuObject::sendEvent(acc.searchChild("LAY_shop"), event, 0.0f);
-        g_campMenuState = 0;
+        s_SelectResult = 0;
     }
 }
 
@@ -360,7 +359,7 @@ void GfMenuObjCampMenu::ShopListener::reciveEvent(const ui::EventData& event, un
     case 3:
         if (event.m_param0 == 2) {
             if (m_mode == 1) {
-                g_campMenuState = 1;
+                s_SelectResult = 1;
                 if (GfDataUtil::getScenarioFlag() > 0x2AFE && GfDataUtil::getScenarioFlag() < 0x2B01) {
                     m_owner->m_seq.addJob(&GfMenuObjCampMenu::seqCloseSpecialFadeOut);
                     m_owner->m_seq.addJob(&GfMenuObjCampMenu::seqCloseSpecialFadeWait);

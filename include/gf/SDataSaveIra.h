@@ -1,5 +1,5 @@
-#ifndef GF_SDATASAVE_H
-#define GF_SDATASAVE_H
+#ifndef GF_SDATASAVEIRA_H
+#define GF_SDATASAVEIRA_H
 
 #include "gf/SDataDriver.h"
 #include "gf/SDataGame.h"
@@ -18,25 +18,27 @@ public:
     unsigned long m_systemValue;
 };
 
-// a save: 0x137B10 bytes (createSaveBuffer allocates them). 1.0.0's was the system and the game only (0x1176A0);
+// a save: 0x137B10 bytes (createSaveBuffer allocates them). 2.0.0's symbols name it (2.0.0 has no SDataSave; its
+// SDataSaveIra constructor, clear and destructor have the sizes of these). 1.0.0's SDataSave was the system and the
+// game only (0x1176A0);
 // 3.0.1 adds the DLC drivers and a block after them, the same two GfDataStore keeps after its SDataOption
-// (getDataGameIra returns GfDataStore's DLC drivers; GfDataStore::GfDataStore builds both as SDataSave() does).
+// (getDataGameIra returns GfDataStore's DLC drivers; GfDataStore::GfDataStore builds both as SDataSaveIra() does).
 // The member names are not the original's.
-class SDataSave {
+class SDataSaveIra {
 public:
-    SDataSave();  // SDataSave
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's makeNewGameSaveData builds the
-    // save in place with SDataSave()'s code inline). A member because GfGameSave::makeNewGameSaveData calls it on
-    // its own s_SDataSave and its code (in title_main's unit) works on its argument as SDataSave() does on this.
-    // What it does: what SDataSave() does (the version 0x3A15B, SDataGame(), the DLC drivers and the block after
-    // them cleared), 0x210 bytes as SDataSave() is; TitleStateSaveData and TitleStateMainScreen call it too.
-    void fn_7100153694();
+    SDataSaveIra();
+    // 2.0.0's symbols name it: new since 1.0.0, nothing in 1.0.0's place names it (1.0.0's makeNewGameSaveData builds the
+    // save in place with SDataSaveIra()'s code inline). A member because GfGameSave::makeNewGameSaveData calls it on
+    // its own s_SDataSave and its code (in title_main's unit) works on its argument as SDataSaveIra() does on this.
+    // What it does: what SDataSaveIra() does (the version 0x3A15B, SDataGame(), the DLC drivers and the block after
+    // them cleared), 0x210 bytes as SDataSaveIra() is; TitleStateSaveData and TitleStateMainScreen call it too.
+    void clear();
 
     SDataSystem m_system;
     SDataGame m_game;  // 0x10
     SDataIra m_dlcDrivers[16];  // 0x126D90; GfDataDriver::getSDataDriver reads rows 0x11 to 0x19 from them
     // 0x134850: a word, 16 0x324-byte records (each 0x320 bytes copied bit for bit and a word copied with
-    // algorithm.h's copy_n), 0x78 bytes, a word: SDataSave() clears it all, assigns a cleared record to the 16
+    // algorithm.h's copy_n), 0x78 bytes, a word: SDataSaveIra() clears it all, assigns a cleared record to the 16
     // and clears the 0x78 bytes again
     unsigned char pad_134850[0x32C0];
 };

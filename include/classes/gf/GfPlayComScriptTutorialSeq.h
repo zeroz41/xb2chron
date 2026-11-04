@@ -12,7 +12,7 @@ class GfPlayComScriptTutorialSeq : public GfPlayCom {
 public:
     GfPlayComScriptTutorialSeq(const char* name, int startId)
         : GfPlayCom(30, false), m_script(reinterpret_cast<GF_SCOM_HANDLE*>(-1)) {
-        s_activate++;
+        s_refCount++;
         m_name = name;
         m_startId = startId;
     }
@@ -30,9 +30,8 @@ public:
     virtual void end();  // slot 5
     virtual bool update(const fw::UpdateInfo& info, bool flag);  // slot 6
     static mm::mtl::RTTI m_rtti;
-    // the commands alive (the constructor counts up, the destructor down). Proposed name, not the original's: the
-    // symbols leave it unnamed (lbl_7100EA50E8)
-    static int s_activate;
+    // the commands alive (the constructor counts up, the destructor down). 2.0.0's symbols name it
+    static int s_refCount;
 
     mm::mtl::FixStr<64> m_name;  // the script start runs (SCOM_SCRIPT 3); the name is not the original's
     int m_startId;  // GfGameEvent::setAfterEventStartID's; the name is not the original's

@@ -112,17 +112,17 @@ public:
         }
     }
 
-    // 2.0.0's symbols name it. What it does: true when GfMenuObjUtil::isValidExpansion(3) holds and s_bgOpen is set;
-    // its one caller is GfMenuObjMainMenu2BG::initialize (0x7100433D04).
+    // 2.0.0's symbols name it. What it does: true when GfMenuObjUtil::isValidExpansion(3) holds and s_IraHitonowaDirect
+    // is set; its one caller is GfMenuObjMainMenu2BG::initialize (0x7100433D04).
     static bool isOpenHitonowaDirect();
-    // 2.0.0's symbols name it. What it does: returns s_worldMapOpen; its one caller is GfMenuObjWorldMap::initialize
+    // 2.0.0's symbols name it. What it does: returns s_openDirect; its one caller is GfMenuObjWorldMap::initialize
     // (0x710049626C).
     static bool isOpenDirect();
-    // 2.0.0's symbols name it. What it does: s_index while GfMenuObjUtil::isValidExpansion(3) holds, else 0; its one
-    // caller is GfMenuObjCharSelectIra::CharListener::reciveEvent.
+    // 2.0.0's symbols name it. What it does: s_IraSubIndexText while GfMenuObjUtil::isValidExpansion(3) holds, else 0;
+    // its one caller is GfMenuObjCharSelectIra::CharListener::reciveEvent.
     static unsigned int getSubIndexTextID();
     // 2.0.0's symbols name it. What it does: on menu layer 3 (GfMenuObjUtil::isValidExpansion(3)) it sets
-    // s_closeKeyLocked, disabling the close key first (setCloseKeyEnable(false), inlined) when it locks; its one caller
+    // s_closeLock, disabling the close key first (setCloseKeyEnable(false), inlined) when it locks; its one caller
     // is GfMenuObjPartyForm3's main listener (0x7100453FCC).
     static void lockCloseKey(bool lock);
     // a contents entry's BDAT and text id: the menu table's (0x17F, 0x180 on menu layer 3) title row in 0x117 while
@@ -141,22 +141,21 @@ public:
     // the menu the update keeps in s_openMenuID (1.0.0's name); isOpenCharMenu compares it with 0x27 and 0x12D
     static unsigned int s_openMenuID;
     static bool s_cancelEnable;  // 1.0.0's name
-    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB886). On menu layer 3
-    // (GfMenuObjUtil::isValidExpansion(3)) setCloseKeyEnable does nothing while it is set; the close listener
-    // clears it, the main listener reads it.
-    static bool s_closeKeyLocked;
-    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB884). initialize clears it, the
-    // contents listener sets it, GfMenuObjWorldMap::initialize reads it through isOpenDirect.
-    static bool s_worldMapOpen;
-    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB887). The constructor clears it,
-    // the contents listener sets it; isOpenCharMenu answers true while it is set (menu layer 3).
-    static bool s_charMenuOpen;
-    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB888). The constructor and the
-    // destructor clear it; GfMenuObjMainMenu2BG::initialize reads it through isOpenHitonowaDirect.
-    static unsigned char s_bgOpen;
-    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB88C). The index listener stores
-    // the selected index in it on menu layer 3; getSubIndexTextID returns it.
-    static unsigned int s_index;
+    // 2.0.0's symbols name it. On menu layer 3 (GfMenuObjUtil::isValidExpansion(3)) setCloseKeyEnable does nothing
+    // while it is set; the close listener clears it, the main listener reads it.
+    static bool s_closeLock;
+    // 2.0.0's symbols name it. initialize clears it, the contents listener sets it, GfMenuObjWorldMap::initialize reads
+    // it through isOpenDirect.
+    static bool s_openDirect;
+    // 2.0.0's symbols name it. The constructor clears it, the contents listener sets it; isOpenCharMenu answers true
+    // while it is set (menu layer 3).
+    static bool s_IraPartyFormDirect;
+    // 2.0.0's symbols name it. The constructor and the destructor clear it; GfMenuObjMainMenu2BG::initialize reads it
+    // through isOpenHitonowaDirect.
+    static unsigned char s_IraHitonowaDirect;
+    // 2.0.0's symbols name it. The index listener stores the selected index in it on menu layer 3; getSubIndexTextID
+    // returns it.
+    static unsigned int s_IraSubIndexText;
 
     unsigned char pad_24[4];
     // the contents' cursor (the main listener shows it and reads its list's selection); released by the destructor

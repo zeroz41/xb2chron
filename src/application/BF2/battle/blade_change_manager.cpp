@@ -184,7 +184,7 @@ bool BladeChangeManager::IsEnableFieldDead(gf::GF_OBJ_HANDLE* handle) const {
             if (chara == nullptr) {
                 return true;
             }
-            return !chara->fn_7100028D0C(false);
+            return !chara->IsBlade(false);
         }
     }
     return true;

@@ -49,13 +49,16 @@ public:
     static void build(const GfSetupParam& param);
     static void destroy();
     // 1.0.0's createCommonSound (the symbol at the same place, called from the same place: initialize, with the
-    // same body); 3.0.1 adds the DLC flag, which it stores in s_isDlc before picking the pack name
+    // same body); 3.0.1 adds the DLC flag, which it stores in s_bReadSeIra before picking the pack name
     void createCommonSound(bool isDlc);
-    // 2.0.0's symbols name it. What it does: returns _gffsn::s_szDlcCommonName when s_isDlc is set, else
+    // 2.0.0's symbols name it. What it does: returns _gffsn::s_szCommonNameDlc when s_bReadSeIra is set, else
     // _gffsn::s_szCommonName ("dlc_fld_allmap" / "se_fld_allmap"; 1.0.0's GfFobjSeManager::create passes the literal
     // "se_fld_allmap" to SoundManager::findPack where 3.0.1 calls this); GfFobjSeManager::create and rebuildForGameType
     // pass it to SoundManager::findPack.
     static const char* getSePackName();
+    // 2.0.0's symbols name it: GfSetupParam's DLC flag (initialize and createCommonSound store it; getSePackName and
+    // createMapSound pick the DLC pack names by it)
+    static bool s_bReadSeIra;
     void destroyCommonSound();
     void clear();
     void update(const fw::UpdateInfo& info);

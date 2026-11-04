@@ -19,6 +19,10 @@ public:
     // 2.0.0's symbols name it. Passes the update info to gf::GfManager::updateAfterLayer
     virtual void updateAfterLayer(const fw::UpdateInfo& info);  // slot 15
     virtual void postUpdate(const fw::UpdateInfo& info);  // slot 16
+
+    // 2.0.0's symbols name it (defined in TitleApp's unit). TitleApp::execute() clears it, execute and the regional
+    // execute()s set it; initialize hands it to gf::GfSetupParam's m_dlcCameraParam
+    static bool s_bGameTypeIra;
 };
 }  // namespace tl
 

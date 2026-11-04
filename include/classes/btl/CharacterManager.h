@@ -55,7 +55,7 @@ public:
     gf::GF_OBJ_HANDLE* GetCharacterHandle(int index) const;  // the handle of the character at index
     BattleCharacter* GetControlCharacter();
     bool IsControlCharacter(gf::GF_OBJ_HANDLE* handle);
-    // the first enemy in use in battle (IsBattle), with skipFn28D0C one fn_7100028D0C(false) refuses, with aliveOnly
+    // the first enemy in use in battle (IsBattle), with skipFn28D0C one IsBlade(false) refuses, with aliveOnly
     // one alive (IsDead(0) false); BattleCharacter::UpdateTarget calls it
     BattleCharacter* GetBattleEnemyCharacter(bool aliveOnly, bool skipFn28D0C);
     // 2.0.0's symbols name it. A member: it writes m_enhanceCount. What

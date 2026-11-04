@@ -58,8 +58,8 @@ using namespace grlib;
 namespace ml {
 // the shader library files DrIniSys reads (data of this file, in its order)
 const char* SYSTEM_INI_FILE = "/monolib/shader/lib_nx.ini";
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B7A478)
-const char* SYSTEM_DLC_INI_FILE = "/monolib/shader/lib_dlc_nx.ini";
+// 2.0.0's symbols name it
+const char* SYSTEM_INI_DLC_FILE = "/monolib/shader/lib_dlc_nx.ini";
 const char* DITHER_FILE01 = "dither1";
 const char* DITHER_FILE02 = "dither2";
 const char* DITHER_FILE03 = "dither3";
@@ -67,10 +67,10 @@ const char* VOLUME_FILE = "volume";
 const char* AMBBRDF_FILE = "ambientbrdf";
 const char* TOON_GRAD_FILE = "toon_grad";  // 1.0.0's name (the symbols leave it unnamed, lbl_7100B7A4A8)
 const char* TOON_GRAD_NIGHT_FILE = "toon_grad_night";  // 1.0.0's name (lbl_7100B7A4B0)
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B7A4B8)
-const char* TOON_DLC_GRAD_FILE = "toon_dlc_grad";
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B7A4C0)
-const char* TOON_DLC_GRAD_NIGHT_FILE = "toon_dlc_grad_night";
+// 2.0.0's symbols name it
+const char* TOON_GRAD_DLC_FILE = "toon_dlc_grad";
+// 2.0.0's symbols name it
+const char* TOON_GRAD_NIGHT_DLC_FILE = "toon_dlc_grad_night";
 const char* TOON_RIM_FILE = "toon_rim";
 const char* DUMMY_CUBEMAP_FILE = "dummy_cube";
 const char* MIRROR_BALL_MDL_FILE = "mirror_ball";

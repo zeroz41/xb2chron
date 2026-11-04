@@ -34,14 +34,16 @@ public:
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
     // 2.0.0's symbols name it. What it does: with GfMenuObjUtil::isValidExpansion(3) and a context checkCCStart
-    // accepts, copies param into g_npcTelopParam, sends an open event to the object's sibling LAY_dummy and starts the
+    // accepts, copies param into s_OpenParam, sends an open event to the object's sibling LAY_dummy and starts the
     // context on it. Callers: event::UIManager::openHitonowaUI, GfPlayComOpenNpcEntry::start.
     static void open(GfMenuCallContext* context, const OpenParam& param);
-    // 2.0.0's symbols name it. What it does: returns g_npcTelopParam. Caller: gf_menu_obj_hitonowa's GfMenuObjHitonowa::initialize.
+    // 2.0.0's symbols name it. What it does: returns s_OpenParam. Caller: gf_menu_obj_hitonowa's GfMenuObjHitonowa::initialize.
     static OpenParam* getOpenParam();
-    // 2.0.0's symbols name it. What it does: returns g_npcTelopOpen (HitonowaListener sets it on the open event 0x21,
+    // 2.0.0's symbols name it. What it does: returns s_Open (HitonowaListener sets it on the open event 0x21,
     // clears it on close 0x22).
     static bool isOpen();
+    static OpenParam s_OpenParam;  // 2.0.0's symbols name it (lbl_7100EAB8D0)
+    static bool s_Open;  // 2.0.0's symbols name it (lbl_7100EAB928)
     // the sequences' jobs (placeholder names: new in 3.0.1, nothing in 1.0.0 names them)
     bool seqWaitStream();  // waits while a face (IMG_char_face@NN of LAY_main) is streaming, then counts m_waitCount
     bool seqWaitCloseFullscreen();  // waits while a full-screen menu is open
@@ -79,11 +81,6 @@ public:
     unsigned char pad_1C[4];
     GfMenuObjNpcTelop* m_owner;
 };
-
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB8D0)
-extern GfMenuObjNpcTelop::OpenParam g_npcTelopParam;
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB928)
-extern bool g_npcTelopOpen;
 
 }  // namespace gf
 

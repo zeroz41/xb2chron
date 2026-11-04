@@ -18,8 +18,8 @@
 namespace gf {
 
 bool GfMenuObjCmnStatus::s_DispFlag[2];
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAA1E2)
-bool GfMenuObjCmnStatus::s_DispTeamName;
+// 2.0.0's symbols name it
+bool GfMenuObjCmnStatus::s_IraFrontMode;
 
 GfMenuObjCmnStatus::GfMenuObjCmnStatus(unsigned int handle)
     : GfMenuObject(handle), m_paramLists(), m_ideaGraph(nullptr) {
@@ -29,7 +29,7 @@ GfMenuObjCmnStatus::GfMenuObjCmnStatus(unsigned int handle)
     create = ui::UISelectObjList::CreateParam();
     create.m_allocator = getAllocator(ALLOCATOR(0));
     m_paramLists[1] = ui::UISelectObjList::create(create);
-    s_DispTeamName = false;
+    s_IraFrontMode = false;
 }
 
 GfMenuObjCmnStatus::~GfMenuObjCmnStatus() {
@@ -348,7 +348,7 @@ void GfMenuObjCmnStatus::setDrPageParam(unsigned int handle) {
 }
 
 void GfMenuObjCmnStatus::setIraFrontMode(bool disp) {
-    s_DispTeamName = disp;
+    s_IraFrontMode = disp;
 }
 
 void GfMenuObjCmnStatus::updateDriverBase(unsigned int id) {

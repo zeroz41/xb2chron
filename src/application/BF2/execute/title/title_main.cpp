@@ -1,11 +1,11 @@
 #include "gf/SDataGame.h"
 #include "classes/tl/TitleMain.h"
-#include "gf/SDataSave.h"
+#include "gf/SDataSaveIra.h"
 // the title screen: TitleMain and its states (the states' slots are inline: their tables are emitted with the
 // registrations in TitleMain::initialize, or with the state's own out-of-line virtual)
 
 #include "classes/tl/TitleMain.h"
-#include "gf/SDataSave.h"
+#include "gf/SDataSaveIra.h"
 #include "classes/tl/TitleStatePlayEvent.h"
 #include "classes/gf/GfFieldLod.h"
 #include "classes/gf/GfGameManager.h"
@@ -184,12 +184,12 @@ void TitleMain::destroy() {
 }
 
 void TitleMain::createSaveBuffer() {
-    if (gf::SDataSave* save = m_saveBuffer) {
+    if (gf::SDataSaveIra* save = m_saveBuffer) {
         save->m_system.m_version = 0x3A15B;
         save->m_system.m_systemValue = 0;
         new (&save->m_game) gf::SDataGame();
     } else {
-        m_saveBuffer = new (ml::WorkRootMem::getMemTMP(), nullptr, 0, 4, false) gf::SDataSave();
+        m_saveBuffer = new (ml::WorkRootMem::getMemTMP(), nullptr, 0, 4, false) gf::SDataSaveIra();
     }
     if (m_optionBuffer == nullptr) {
         m_optionBuffer = new (ml::WorkRootMem::getMemTMP(), nullptr, 0, 4, false) gf::SDataOption();
@@ -234,11 +234,11 @@ bool TitleMain::isStateReturnTitle() const {
     return title->m_fsm.m_pState->m_stateID == 8;
 }
 
-gf::SDataSave* TitleMain::fn_710014FB00() {
+gf::SDataSaveIra* TitleMain::fn_710014FB00() {
     return m_saveBuffer;
 }
 
-gf::SDataSave* TitleMain::getSaveBuffer() {
+gf::SDataSaveIra* TitleMain::getSaveBuffer() {
     return m_saveBuffer;
 }
 
@@ -254,7 +254,7 @@ void TitleMain::setupTitleOptionToGameOption() {
 
 // the chapter of the saved scenario (scenario flag 1 / 1000, 1 to 10); 0 without a valid save or scenario
 unsigned int TitleMain::getChapterIdFromSaveData() {
-    gf::SDataSave* save = m_saveBuffer;
+    gf::SDataSaveIra* save = m_saveBuffer;
     if (save->m_system.m_version != 0x3A15B) {
         return 0;
     }
@@ -327,7 +327,7 @@ unsigned int TitleMain::getEventTheaterTime(unsigned int event) const {
 }
 
 bool TitleMain::isValidAocVersion() const {
-    gf::SDataSave* save = m_saveBuffer;
+    gf::SDataSaveIra* save = m_saveBuffer;
     if (save->m_system.m_version != 0x3A15B) {
         return true;
     }

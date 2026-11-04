@@ -21,8 +21,8 @@ public:
     virtual void end();  // slot 5
     virtual bool update(const fw::UpdateInfo& info, bool flag);  // slot 6
     static mm::mtl::RTTI m_rtti;
-    // started commands: start() counts up, end() down (the name is not the original's)
-    static int s_start;
+    // started commands: start() counts up, end() down (2.0.0's symbols name it)
+    static int s_activate;
     int m_state;       // update's steps: 0 waits to start the fade, 1 waits for the field, 2 counts m_wait down
     float m_wait;      // GfGameEvent::getFadeInWaitSec
     float m_fadeTime;  // GfGameEvent::getFadeInSec

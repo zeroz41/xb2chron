@@ -72,9 +72,9 @@ public:
                                mm::mtl::IntrusivePtr<GfMenuReferenceNumber> price);
     static void updateItemList(GfMenuItemList* list, ItemType::Type type, unsigned int mode);
 
-    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB878). Set by updateItemList (an
-    // item was added), cleared by initialize; update refreshes the item list's counts while it is set.
-    static bool s_itemCountDirty;
+    // 2.0.0's symbols name it. Set by updateItemList (an item was added), cleared by initialize; update refreshes the
+    // item list's counts while it is set.
+    static bool s_UpdateItemList;
 
     // the names below are not the original's
     GfMenuIDList* m_partsList;                          // initialize's (5 rows)

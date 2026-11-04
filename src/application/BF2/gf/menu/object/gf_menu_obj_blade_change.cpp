@@ -23,7 +23,7 @@ template mm::mtl::Vector<gf::MenuBladeInfo>::iterator mm::mtl::Vector<gf::MenuBl
 
 namespace gf {
 
-bool GfMenuObjBladeChange::s_soloOpen;
+bool GfMenuObjBladeChange::s_DrSolo;
 
 GfMenuObjBladeChange::GfMenuObjBladeChange(unsigned int handle)
     : GfMenuObject(handle), m_ctrlSlot(-1), pad_28(-1), m_awakeMoved(false), pad_2D(false), pad_2E(false), m_seqActive(false), m_slots(),
@@ -136,7 +136,7 @@ void GfMenuObjBladeChange::refreshBattleMode() {
     if (acc.m_object != nullptr && !acc.isTerm()) {
         ui::EventData event;
         event.m_type = 0x105;
-        if (s_soloOpen) {
+        if (s_DrSolo) {
             ui::UIObjectAcc solo(acc.searchSibiling("LAY_dr_solo"));
             if (solo.m_object != nullptr) {
                 GfMenuObject::sendEvent(solo.m_handle, event, 0.0f);
@@ -256,7 +256,7 @@ void GfMenuObjBladeChange::openDrSolo() {
             ui::EventData event;
             event.m_type = 0x21;
             GfMenuObject::sendEvent(solo.m_handle, event, 0.0f);
-            s_soloOpen = true;
+            s_DrSolo = true;
         }
     }
 }
@@ -269,7 +269,7 @@ void GfMenuObjBladeChange::closeDrSolo() {
             ui::EventData event;
             event.m_type = 0x22;
             GfMenuObject::sendEvent(solo.m_handle, event, 0.0f);
-            s_soloOpen = false;
+            s_DrSolo = false;
         }
     }
 }

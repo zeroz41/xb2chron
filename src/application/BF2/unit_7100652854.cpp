@@ -912,12 +912,11 @@ static int fn_7100655310(VMThread* th, void* unused, unsigned long ocId) {
     return 1;
 }
 
-// The aiData script class's properties: none. Proposed name, not the original's: the symbols leave it unnamed
-// (lbl_7100EC16F0).
-static VMOCProperty s_aiDataProperties[1];
+// The aiData script class's properties: none. 2.0.0's symbols name it.
+VMOCProperty aiData_property[1];
 
-// The aiData script class's methods. Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B720C0).
-static VMOCMethod s_aiDataMethods[] = {
+// The aiData script class's methods. 2.0.0's symbols name it.
+VMOCMethod aiData_selector[] = {
     {"IsValid", reinterpret_cast<void*>(&fn_7100652854), 0},
     {"GetParam", reinterpret_cast<void*>(&fn_71006528A0), 0},
     {"SetParam", reinterpret_cast<void*>(&fn_7100652904), 0},
@@ -1011,7 +1010,7 @@ static VMOCMethod s_aiDataMethods[] = {
     {NULL, NULL, 0},
 };
 
-VMOC aiData = {"aiData", reinterpret_cast<void*>(&fn_7100655310), s_aiDataProperties, s_aiDataMethods};
+VMOC aiData = {"aiData", reinterpret_cast<void*>(&fn_7100655310), aiData_property, aiData_selector};
 
 void ocAiDataRegist() {
     vmOCRegist(&aiData);

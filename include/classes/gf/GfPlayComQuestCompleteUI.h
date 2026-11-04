@@ -29,8 +29,8 @@ public:
     virtual bool update(const fw::UpdateInfo& info, bool flag);  // slot 6
     static mm::mtl::RTTI m_rtti;
     static int s_active;  // live commands: the constructor counts up, the destructor down
-    // started commands: start() counts up, end() down (the name is not the original's)
-    static int s_start;
+    // started commands: start() counts up, end() down (2.0.0's symbols name it)
+    static int s_disp;
     QuestID m_id;
     QuestID m_next;
     QSTATE m_state;

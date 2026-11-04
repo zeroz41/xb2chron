@@ -39,10 +39,10 @@ extern fw::MemHandlebaseAllocator s_ResAllocator;  // getResourceAllocator's ("M
 extern unsigned char* s_BdatFPs[17];          // the menu's BDAT tables (initBdatFP), by index
 extern unsigned int s_SafeMarginW;                 // setSafeMergin's
 extern unsigned int s_SafeMarginH;
-// Proposed names, not the original's: the symbols leave them unnamed (lbl_7100B75878, lbl_7100B75880, lbl_7100EC5458)
-extern unsigned int s_layerMask;     // the add-on layers usable (registEnableExpType sets a bit, isEnableExpType tests one)
-extern const char* s_menuDir;        // the menu's root folder ("menu"; changeRootFolder sets it)
-extern unsigned int s_uioReplaceNo;  // MNU_UioReplace's replace column (setResourceReplaceID sets it)
+// 2.0.0's symbols name them
+extern unsigned int s_EnableExpFlag;      // the add-on layers usable (registEnableExpType sets a bit, isEnableExpType tests one)
+extern const char* s_pRootFolder;         // the menu's root folder ("menu"; changeRootFolder sets it)
+extern unsigned int s_ResourceReplaceID;  // MNU_UioReplace's replace column (setResourceReplaceID sets it)
 void initLayerLib();
 void termLayerLib();
 void initBdatFP();  // opens the menu's BDAT tables into s_BdatFPs (UIManager::resetData first)
@@ -97,17 +97,18 @@ void setDockPos(unsigned int handle, unsigned int target, unsigned char side, bo
 // against the word). GfMenuObjUtil::isValidExpansion passes its add-on menu layer, and
 // ui::UIManager::createLayer/terminateLayer/releaseLayer call it too.
 bool isEnableExpType(unsigned int bit);
-// 2.0.0's symbols name it. What it does: stores its argument in s_uioReplaceNo, the column number makeMenuUIOFileName
-// reads MNU_UioReplace's "replace%02d" from (gf::GfMenuManager's constructor and setupGame call it).
+// 2.0.0's symbols name it. What it does: stores its argument in s_ResourceReplaceID, the column number
+// makeMenuUIOFileName reads MNU_UioReplace's "replace%02d" from (gf::GfMenuManager's constructor and setupGame call
+// it).
 void setResourceReplaceID(unsigned int no);
-// 2.0.0's symbols name it. What it does: stores the menu's root folder s_menuDir ("menu" until set; the
+// 2.0.0's symbols name it. What it does: stores the menu's root folder s_pRootFolder ("menu" until set; the
 // makeMenu*FileName paths start with it); gf::GfMenuManager's constructor calls it.
 void changeRootFolder(const char* dir);
-// 2.0.0's symbols name it. What it does: returns s_menuDir (GfMenuMapInfo::setCurrentMap, getMapInfoIndex and
+// 2.0.0's symbols name it. What it does: returns s_pRootFolder (GfMenuMapInfo::setCurrentMap, getMapInfoIndex and
 // GfMenuObjStaffroll::initialize read it).
 const char* getRootFolder();
-// 2.0.0's symbols name it. What it does: sets bit `bit` of the layer mask s_layerMask (the bit isEnableExpType tests);
-// gf::GfMenuManager's constructor calls it.
+// 2.0.0's symbols name it. What it does: sets bit `bit` of the layer mask s_EnableExpFlag (the bit isEnableExpType
+// tests); gf::GfMenuManager's constructor calls it.
 void registEnableExpType(unsigned int bit);
 // 2.0.0's symbols name it. What it does: true when `file` is one of the "file" column's values of MNU_UioReplace
 // (s_BdatFPs[16]), compared by strcmp; GfMenuHUD::switchExpansionLayer calls it.

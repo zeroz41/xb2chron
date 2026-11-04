@@ -43,12 +43,12 @@
 namespace gf {
 
 unsigned int GfMenuObjMainMenu2::s_openMenuID;
-bool GfMenuObjMainMenu2::s_worldMapOpen;
+bool GfMenuObjMainMenu2::s_openDirect;
 bool GfMenuObjMainMenu2::s_cancelEnable;
-bool GfMenuObjMainMenu2::s_closeKeyLocked;
-bool GfMenuObjMainMenu2::s_charMenuOpen;
-unsigned char GfMenuObjMainMenu2::s_bgOpen;
-unsigned int GfMenuObjMainMenu2::s_index;
+bool GfMenuObjMainMenu2::s_closeLock;
+bool GfMenuObjMainMenu2::s_IraPartyFormDirect;
+unsigned char GfMenuObjMainMenu2::s_IraHitonowaDirect;
+unsigned int GfMenuObjMainMenu2::s_IraSubIndexText;
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB890). initialize stores how many
 // contents ids it collected (m_contentsIds' size); setupMainMenu and the contents listener read it.
 static unsigned int s_contentsCount;
@@ -61,8 +61,8 @@ GfMenuObjMainMenu2::GfMenuObjMainMenu2(unsigned int handle)
     m_bladeList = GfMenuBladeList::create();
     m_checker = new (getAllocator(ALLOCATOR(0)), __FILE__, 210, 8) SelectionChecker;
     s_openMenuID = 0;
-    s_charMenuOpen = false;
-    s_bgOpen = 0;
+    s_IraPartyFormDirect = false;
+    s_IraHitonowaDirect = 0;
 }
 
 GfMenuObjMainMenu2::~GfMenuObjMainMenu2() {
@@ -87,7 +87,7 @@ GfMenuObjMainMenu2::~GfMenuObjMainMenu2() {
         m_checker = nullptr;
     }
     s_openMenuID = 0;
-    s_bgOpen = 0;
+    s_IraHitonowaDirect = 0;
 }
 
 void GfMenuObjMainMenu2::initialize() {
@@ -155,7 +155,7 @@ void GfMenuObjMainMenu2::initialize() {
     }
     m_context = GfMenuCallContext::create();
     acc.setDispChild(GfMenuManager::isClearCheck(), "IMG_clear_mark");
-    s_worldMapOpen = false;
+    s_openDirect = false;
     GfMenuObject::initialize();
 }
 
@@ -458,7 +458,7 @@ bool GfMenuObjMainMenu2::seqExecTerm() {
         if (m_jobStarted) {
             m_jobStarted = false;
         } else if (!GfGameManager::isEvent(false) && !GfGameManager::isTalking()) {
-            if (!s_charMenuOpen ||
+            if (!s_IraPartyFormDirect ||
                 (GfDataUtil::getScenarioFlag() != 0x2B38 && GfDataUtil::getScenarioFlag() != 0x2B74)) {
                 GfMenuObjPopup::continuePickup(0x14);
             }
@@ -487,7 +487,7 @@ void GfMenuObjMainMenu2::setDispGold(bool disp) {
 }
 
 void GfMenuObjMainMenu2::setCloseKeyEnable(bool enable) {
-    if (GfMenuObjUtil::isValidExpansion(3) && s_closeKeyLocked) {
+    if (GfMenuObjUtil::isValidExpansion(3) && s_closeLock) {
         return;
     }
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x5F));
@@ -533,7 +533,7 @@ void GfMenuObjMainMenu2::IndexListener::reciveEvent(const ui::EventData& event, 
             title.setDisp(false);
         }
         if (GfMenuObjUtil::isValidExpansion(3)) {
-            s_index = index;
+            s_IraSubIndexText = index;
         }
     } else if (event.m_type == 0x101) {
         int index = event.m_param0;
@@ -741,22 +741,22 @@ void GfMenuObjMainMenu2::closeChrChangeSub(ui::UIObjectAcc& acc, ChrChangeParam&
 }
 
 bool GfMenuObjMainMenu2::isOpenCharMenu() {
-    if (GfMenuObjUtil::isValidExpansion(3) && s_charMenuOpen) {
+    if (GfMenuObjUtil::isValidExpansion(3) && s_IraPartyFormDirect) {
         return true;
     }
     return s_openMenuID == 0x27 || s_openMenuID == 0x12D;
 }
 
 bool GfMenuObjMainMenu2::isOpenHitonowaDirect() {
-    return GfMenuObjUtil::isValidExpansion(3) && s_bgOpen != 0;
+    return GfMenuObjUtil::isValidExpansion(3) && s_IraHitonowaDirect != 0;
 }
 
 bool GfMenuObjMainMenu2::isOpenDirect() {
-    return s_worldMapOpen;
+    return s_openDirect;
 }
 
 unsigned int GfMenuObjMainMenu2::getSubIndexTextID() {
-    return GfMenuObjUtil::isValidExpansion(3) ? s_index : 0;
+    return GfMenuObjUtil::isValidExpansion(3) ? s_IraSubIndexText : 0;
 }
 
 void GfMenuObjMainMenu2::ChrChangeListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
@@ -886,7 +886,7 @@ void GfMenuObjMainMenu2::CloseListener::reciveEvent(const ui::EventData& event, 
     case 1:
         GfMenuObject::disableInput(handle);
         s_cancelEnable = false;
-        s_closeKeyLocked = false;
+        s_closeLock = false;
         break;
     case 8:
         switch (event.m_param1) {
@@ -962,11 +962,11 @@ void GfMenuObjMainMenu2::cancelEnableMainMenu(bool enable) {
 }
 
 void GfMenuObjMainMenu2::lockCloseKey(bool lock) {
-    if (GfMenuObjUtil::isValidExpansion(3) && s_closeKeyLocked != lock) {
+    if (GfMenuObjUtil::isValidExpansion(3) && s_closeLock != lock) {
         if (lock) {
             setCloseKeyEnable(false);
         }
-        s_closeKeyLocked = lock;
+        s_closeLock = lock;
     }
 }
 

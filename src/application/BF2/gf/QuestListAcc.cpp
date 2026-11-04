@@ -1,7 +1,7 @@
 #include "gf/SDataGame.h"
-#include "gf/SDataSave.h"
+#include "gf/SDataSaveIra.h"
 #include "gf/FileStaticVec3.h"
-#include "gf/SDataSave.h"
+#include "gf/SDataSaveIra.h"
 #include "gf/QuestListAcc.h"
 #include "gf/QuestListAcc.h"
 #include "classes/gf/GfBdatQuest.h"
@@ -4086,7 +4086,9 @@ unsigned int QuestListAcc::getTaskFlag(unsigned int purposeId, unsigned int task
 
 // a save built when the program starts and destroyed at its end (_GLOBAL__sub_I_QuestListAcc.cpp builds it, 0x137B10
 // bytes of .bss after the file's two Vec3s; reached through the GOT, so not file-local). Nothing else in 3.0.1
-// reads it. Proposed name, not the original's: the symbols leave it unnamed (lbl_7100C34D20).
-SDataSave s_SDataSave;
+// reads it. 2.0.0's symbols name it.
+namespace _gfdsv {
+SDataSaveIra s_tempSav;
+}  // namespace _gfdsv
 
 }  // namespace gf

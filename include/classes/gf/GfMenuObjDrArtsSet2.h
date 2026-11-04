@@ -67,7 +67,7 @@ public:
     // otherwise.
     void updateArtsInputIra();
     // 2.0.0's symbols name it. What it does: counts the enabled arts (GfMenuObjUtil::getEnableArts, at least 3) of the
-    // driver of reference s_wpnTypeIndex and the weapon type in m_number; without the flag sets "LAY_arts"' input
+    // driver of reference s_RefDriverIndex and the weapon type in m_number; without the flag sets "LAY_arts"' input
     // selection to the index over that count and opens the character change (GfMenuObjMainMenu2::openCharChange with
     // pad_2B8); with it closes the character change, first setting the selection over one fewer when pad_2B4 or pad_2B9
     // is set.
@@ -78,11 +78,10 @@ public:
     // 2.0.0's symbols name it. What it does: sends event 0x101 to "LAY_arts"; returns true.
     bool seqReturnArtsSelect();
 
-    // Proposed names, not the original's: the symbols leave them unnamed (lbl_7100EAB060, lbl_7100EAB064). The
-    // constructor clears the first and sets the second to isActiveBCHWpn's answer while the game is cleared, layer
-    // 3 is not usable and layer 1 is.
-    static unsigned int s_wpnTypeIndex;
-    static bool s_extraWpnType;
+    // 2.0.0's symbols name them. The constructor clears the first and sets the second to isActiveBCHWpn's answer while
+    // the game is cleared, layer 3 is not usable and layer 1 is.
+    static unsigned int s_RefDriverIndex;
+    static bool s_EnableWpn2;
 
     mm::mtl::FixedVector<unsigned int, 50> m_wpnTypes;  // 0x28
     mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_number;  // 0xF8: initialize creates it

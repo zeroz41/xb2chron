@@ -41,7 +41,7 @@
 
 namespace gf {
 
-bool GfMenuObjHanaPartsMake::s_itemCountDirty;
+bool GfMenuObjHanaPartsMake::s_UpdateItemList;
 
 GfMenuObjHanaPartsMake::GfMenuObjHanaPartsMake(unsigned int handle)
     : GfMenuObject(handle), m_partsList(nullptr), m_partsSelect(nullptr), m_partsCursor(nullptr), m_itemList(nullptr),
@@ -82,7 +82,7 @@ GfMenuObjHanaPartsMake::~GfMenuObjHanaPartsMake() {
 }
 
 void GfMenuObjHanaPartsMake::updateItemList() {
-    s_itemCountDirty = true;
+    s_UpdateItemList = true;
 }
 
 void GfMenuObjHanaPartsMake::initialize() {
@@ -149,7 +149,7 @@ void GfMenuObjHanaPartsMake::initialize() {
     GfMenuObject::disableInput(acc.searchChild("LAY_partsmake_window"));
     GfMenuObject::disableInput(acc.searchChild("LAY_metl_window"));
     GfMenuObject::disableInput(acc.searchChild("LAY_make_diarog"));
-    s_itemCountDirty = false;
+    s_UpdateItemList = false;
     GfMenuObject::initialize();
 }
 
@@ -158,13 +158,13 @@ void GfMenuObjHanaPartsMake::finalize() {
 }
 
 void GfMenuObjHanaPartsMake::update() {
-    if (s_itemCountDirty) {
+    if (s_UpdateItemList) {
         if (m_listMode == 0) {
             for (unsigned int i = 0; i < m_itemList->getSize(); i++) {
                 m_itemList->getContents(i).m_count = GfItemUtil::getItemBoxCount(m_itemList->getContents(i).m_id);
             }
         }
-        s_itemCountDirty = false;
+        s_UpdateItemList = false;
     }
     GfMenuObject::update();
 }

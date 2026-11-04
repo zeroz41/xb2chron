@@ -71,7 +71,6 @@
 #include "gf/GfPlayFactory.h"
 #include "gf/GfReqCommand.h"
 #include "gf/ParamReturnTitle.h"
-#include "gf/gf_menu_obj_camp_menu.h"
 #include "mm/Col4.h"
 #include "mm/Vec3.h"
 #include "mm/mtl/FixStr.h"

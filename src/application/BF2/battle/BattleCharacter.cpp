@@ -1344,7 +1344,7 @@ void BattleCharacter::ResetAlphaAnimation() {
     }
 }
 
-bool BattleCharacter::fn_7100028D0C(bool flag) {
+bool BattleCharacter::IsBlade(bool flag) const {
     if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
         return param->IsBlade(flag);
     }

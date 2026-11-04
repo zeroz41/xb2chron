@@ -3,7 +3,7 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "gf/SDataOption.h"
-#include "gf/SDataSave.h"
+#include "gf/SDataSaveIra.h"
 #include "gf/SDataDlc.h"
 
 namespace gf { class GfDataStore; class GfSetupParam; }
@@ -38,7 +38,7 @@ public:
     SDataSystem m_system;  // 0x8 (the member names are not the original's)
     SDataGame m_game;  // 0x20
     SDataOption m_option;  // 0x126DA0
-    // 0x126E28: the DLC drivers and the block a save keeps after them (SDataSave's m_dlcDrivers and pad_134850)
+    // 0x126E28: the DLC drivers and the block a save keeps after them (SDataSaveIra's m_dlcDrivers and pad_134850)
     SDataDlc m_dlc;
     bool m_initialized;  // 0x137BA8: destroy clears it, initialize sets it
 };

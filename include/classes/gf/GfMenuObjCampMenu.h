@@ -52,15 +52,18 @@ public:
     // with an IraCraftIndex (BDAT 0xF2) whose local flag 2 (0xEE04 + index) is clear.
     static bool hasNewCraft(unsigned int driver);
     // 2.0.0's symbols name them (they were free functions in gf before). What they do:
-    // getSelectResult returns g_campMenuState (GfMenuManager::isCampSelectTalk compares it with 1).
+    // getSelectResult returns s_SelectResult (GfMenuManager::isCampSelectTalk compares it with 1).
     static int getSelectResult();
     // returnFromEvent takes the attached object 0x8D (GfMenuObject::getAttachedObject), and when its ui::UIObjectAcc
-    // is valid sends an open event (0, child "LAY_menu", 0.0f) and clears g_campMenuState. Caller:
+    // is valid sends an open event (0, child "LAY_menu", 0.0f) and clears s_SelectResult. Caller:
     // GfMenuManager::openCampMenu when its layer-300 flag is already set.
     static void returnFromEvent();
     // closeShopToTalk: when the attached object 0x8D's ui::UIObjectAcc is valid, sends event 0x101 (parameters zero)
-    // to its child "LAY_shop" and clears g_campMenuState. Caller: GfMenuObjShop::ExcTaskListListener::reciveEvent.
+    // to its child "LAY_shop" and clears s_SelectResult. Caller: GfMenuObjShop::ExcTaskListListener::reciveEvent.
     static void closeShopToTalk();
+    // 2.0.0's symbols name it (lbl_7100EAA1D0). Reached through the GOT; getSelectResult returns it, the camp
+    // menu's listeners set it to 1 (and 0), returnFromEvent/closeShopToTalk clear it after sending their event.
+    static int s_SelectResult;
     // enableCraftChrChange: when the attached object 0x8D's ui::UIObjectAcc is valid, GfMenuObject::enableInput on its
     // child "LAY_chr_change"; disableCraftChrChange the same with GfMenuObject::disableInput. Caller:
     // GfMenuObjShop::ExcTaskListListener::reciveEvent.

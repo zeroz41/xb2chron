@@ -1027,11 +1027,11 @@ bool EffectManager::finalize() {
     return commonDestryed();
 }
 
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B415B0). getCommonFilePath's folder.
-const char* s_commonEffectDir = "effect/common";
+// 2.0.0's symbols name it. getCommonFilePath's folder.
+const char* EffectManager::s_commonFilePath = "effect/common";
 
 bool EffectManager::getCommonFilePath(mm::mtl::FixStr<32>& path) {
-    path = s_commonEffectDir;
+    path = s_commonFilePath;
     if (m_gfManagerFlag) {
         path += "_dlc";
     }

@@ -2,7 +2,7 @@
 #define GF_GFGAMEUTILSAVEDATA_H
 
 namespace gf { class SDataOption; }
-namespace gf { class SDataSave; }
+namespace gf { class SDataSaveIra; }
 namespace gf { class SaveMenuInfo; }
 
 namespace gf {
@@ -22,7 +22,7 @@ public:
     // What it does: clears the info's 0xF0-byte table, then fills one 16-byte row per u16 id at save+0xE9894
     // (6 bytes apart, while the u16 at save+0x14BD6 is below 10049), each from GfDataDriver::getDriverRelativeID's 0x5A0-byte record
     // (u16s at +0x60..+0x66, +0xD0), and sets the byte at info+0x510 from the byte at save+0x1AE91.
-    static void fn_71002EAF78(SaveMenuInfo& info, SDataSave* save);
+    static void fn_71002EAF78(SaveMenuInfo& info, SDataSaveIra* save);
 };
 }  // namespace gf
 

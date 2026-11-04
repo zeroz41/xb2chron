@@ -12,8 +12,8 @@
 namespace tl {
 
 const char* TitleApp::m_szTitle = "Title";
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100C232DA)
-bool TitleApp::m_dlcCameraParam;
+// 2.0.0's symbols name it
+bool TitleApplet::s_bGameTypeIra;
 
 bool TitleApp::wkStandbyLogout() {
     if (!LauncherApp::wkStandbyLogout()) {

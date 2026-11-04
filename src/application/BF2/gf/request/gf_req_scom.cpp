@@ -2947,8 +2947,8 @@ unsigned long SCOM_FADE::createEvent(unsigned int slot, unsigned int frames, con
 }
 
 mm::mtl::FixedQueue<SCOM_PARTY_ADD::Info, 16> SCOM_PARTY_ADD::s_info;
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EB6CE8)
-unsigned int SCOM_PARTY_ADD::s_party;
+// 2.0.0's symbols name it
+unsigned int SCOM_PARTY_ADD::s_iraParty;
 
 void SCOM_PARTY_ADD::addBlade(unsigned int blade, unsigned int driver, int param) {
     if (blade == 0) {
@@ -3018,7 +3018,7 @@ void SCOM_PARTY_ADD::setIraParty(unsigned int party) {
     if (GfManager::isExecModeScenarioGame() && GfGameManager::isClearGame()) {
         return;
     }
-    s_party = party;
+    s_iraParty = party;
     create();
 }
 
@@ -3093,7 +3093,7 @@ GfReqSmallCom::GfReqSmallCom() {
     m_handleCount = 0;
     m_isSubParallel = false;
     SCOM_PARTY_ADD::s_info.clear();
-    SCOM_PARTY_ADD::s_party = 0;
+    SCOM_PARTY_ADD::s_iraParty = 0;
 }
 
 GfReqSmallCom::~GfReqSmallCom() {}

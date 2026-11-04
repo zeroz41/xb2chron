@@ -23,7 +23,7 @@
 #include "classes/gf/GfFieldGimmick.h"
 #include "gf/GfDataBlade.h"
 #include "classes/gf/GfFieldGimmick.h"
-#include "gf/SDataSave.h"
+#include "gf/SDataSaveIra.h"
 #include "btl/Utility.h"
 #include "classes/gf/GfGameEnv.h"
 #include "classes/gf/GfGameManager.h"
@@ -129,8 +129,11 @@
 
 namespace gf {
 
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100D6CBE8)
-bool GfGameManager::s_disablePlayerCameraPause;
+namespace _gfgm {
+// 2.0.0's symbols name it. While it is set, GfGameManager::isPlayerCameraPause answers false; clear() resets it and
+// setDisablePlayerCameraPauseForTitle sets it (reached through the GOT, so not a file static)
+bool s_bDisablePlayerCamPause;
+}  // namespace _gfgm
 
 GfGameManager::~GfGameManager() {
     ;
@@ -159,7 +162,7 @@ void GfGameManager::clear() {
         scene->clear();
     }
     GfGameSpeed::clear();
-    s_disablePlayerCameraPause = false;
+    _gfgm::s_bDisablePlayerCamPause = false;
 }
 
 GF_STATE GfGameManager::getState() {
@@ -811,11 +814,11 @@ void GfGameManager::setHomuriWeaponExtraMesh(bool flag, float time) {
 }
 
 bool GfGameManager::isDispPreciousMenu() {
-    return GfPlayComQuestCompleteUI::s_start > 0;
+    return GfPlayComQuestCompleteUI::s_disp > 0;
 }
 
 bool GfGameManager::isDispQuestCompleteMenu() {
-    return GfPlayComQuestCompleteUI::s_start > 0;
+    return GfPlayComQuestCompleteUI::s_disp > 0;
 }
 
 bool GfGameManager::isInvalidBattleStop() {
@@ -1358,7 +1361,7 @@ bool GfGameManager::isFadeout() {
 }
 
 bool GfGameManager::isPlayerCameraPause() {
-    if (GfManager::isDestroyNow() || s_disablePlayerCameraPause) {
+    if (GfManager::isDestroyNow() || _gfgm::s_bDisablePlayerCamPause) {
         return false;
     }
     if (isFadeout()) {
@@ -1371,7 +1374,7 @@ bool GfGameManager::isPlayerCameraPause() {
 }
 
 void GfGameManager::setDisablePlayerCameraPauseForTitle(bool flag) {
-    s_disablePlayerCameraPause = flag;
+    _gfgm::s_bDisablePlayerCamPause = flag;
 }
 
 bool GfGameManager::isExecTutorial() {

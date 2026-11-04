@@ -27,13 +27,14 @@ namespace gf {
 namespace _gffsn {
 // the common SE pack's name (1.0.0's symbol)
 const char* s_szCommonName = "se_fld_allmap";
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B525B0). The common SE pack's name in
-// the DLC game (createCommonSound picks it when s_isDlc is set).
-const char* s_szDlcCommonName = "dlc_fld_allmap";
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100D6C918). GfSetupParam's DLC flag, which
-// initialize and createCommonSound store; getSePackName and createMapSound pick the DLC pack names by it.
-bool s_isDlc;
+// 2.0.0's symbols name it. The common SE pack's name in the DLC game (createCommonSound picks it when
+// GfFieldSound::s_bReadSeIra is set).
+const char* s_szCommonNameDlc = "dlc_fld_allmap";
 }  // namespace _gffsn
+
+// 2.0.0's symbols name it. GfSetupParam's DLC flag, which initialize and createCommonSound store; getSePackName and
+// createMapSound pick the DLC pack names by it.
+bool GfFieldSound::s_bReadSeIra;
 
 inline void GfFieldSound::SoundDlc::destroy() {
     m_pack = nullptr;
@@ -69,7 +70,7 @@ inline void GfFieldSound::SoundDlc::setupWithMicroThread(const char* name) {
 
 inline void GfFieldSound::getMapSeFile(mm::mtl::FixStr<128>& path, const char* name) {
     mm::mtl::FixStr<64> file;
-    if (_gffsn::s_isDlc) {
+    if (s_bReadSeIra) {
         file.format("dlc_%s", name);
     } else {
         file.format("se_fld_%s", name);
@@ -78,7 +79,7 @@ inline void GfFieldSound::getMapSeFile(mm::mtl::FixStr<128>& path, const char* n
 }
 
 void GfFieldSound::initialize(const GfSetupParam& param) {
-    _gffsn::s_isDlc = param.m_dlcCameraParam;
+    s_bReadSeIra = param.m_dlcCameraParam;
     if (GfSound* sound = GfSound::get()) {
         m_categoryHandle = sound->createCategoryHandle();
         m_mapjumpCategoryHandle = sound->createCategoryHandle();
@@ -134,7 +135,7 @@ void GfFieldSound::finalize() {
 }
 
 void GfFieldSound::createCommonSound(bool isDlc) {
-    _gffsn::s_isDlc = isDlc;
+    s_bReadSeIra = isDlc;
     const char* name = getSePackName();
     fw::SoundResource::SetupInfo info;
     info.pad_8 = 0x80;
@@ -151,7 +152,7 @@ void GfFieldSound::createCommonSound(bool isDlc) {
 }
 
 const char* GfFieldSound::getSePackName() {
-    return _gffsn::s_isDlc ? _gffsn::s_szDlcCommonName : _gffsn::s_szCommonName;
+    return s_bReadSeIra ? _gffsn::s_szCommonNameDlc : _gffsn::s_szCommonName;
 }
 
 void GfFieldSound::destroyCommonSound() {

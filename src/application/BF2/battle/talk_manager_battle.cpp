@@ -213,7 +213,7 @@ unsigned long TalkManager::PlayVoice(int chr, int voice) {
         return 0;
     }
     int kind;
-    if (character->fn_7100028D0C(true)) {
+    if (character->IsBlade(true)) {
         kind = 2;
     } else {
         kind = character->IsPlayer() ? 1 : 3;

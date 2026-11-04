@@ -8,9 +8,6 @@
 namespace gf { class GF_SLOT_HANDLE; }
 
 namespace gf {
-// lbl_7100C24DF8 (gf_slot.cpp's): locks every GfSlotBase and GfSlotAll member in 3.0.1 (the name is not the original's)
-extern ml::CriticalSection g_slotCriticalSection;
-
 // table 0x7100B45978: one slot of an asset type (GfSlotAll holds them). An IAllocator by its table (slots ~, ~,
 // allocate, deallocate, getName as IAllocator's; 1.0.0's symbols name them) that hands the calls to its own
 // GfSlotAllocator. In 3.0.1 every member locks the file's critical section (gf_slot.cpp). The field names are not the
@@ -28,44 +25,47 @@ public:
     virtual void deallocate(void* memory);  // slot 3
     virtual const char* getName() const;  // slot 4
 
+    // 2.0.0's symbols name it (defined in gf_slot.cpp): locks every GfSlotBase and GfSlotAll member in 3.0.1
+    static ml::CriticalSection s_section;
+
     void destroy();  // out of line in 1.0.0, inline in 3.0.1
     void releaseSlot();
     void setMultiSlot(unsigned int count);
     unsigned long getBlockSize() const {
-        ml::CS lock(g_slotCriticalSection);
+        ml::CS lock(s_section);
         return m_allocator.getBlockSize();
     }
     unsigned long getSlotSize() const {
-        ml::CS lock(g_slotCriticalSection);
+        ml::CS lock(s_section);
         return m_slotSize;
     }
     void* getBuffer() {
-        ml::CS lock(g_slotCriticalSection);
+        ml::CS lock(s_section);
         return m_allocator.getBuffer();
     }
     unsigned long getBufferSize() const {
-        ml::CS lock(g_slotCriticalSection);
+        ml::CS lock(s_section);
         return m_allocator.getBufferSize();
     }
     GF_SLOT_HANDLE* getSlotHandle() const {
-        ml::CS lock(g_slotCriticalSection);
+        ml::CS lock(s_section);
         return m_slotHandle;
     }
     void setSlotHandle(GF_SLOT_HANDLE* handle, unsigned int param) {
-        ml::CS lock(g_slotCriticalSection);
+        ml::CS lock(s_section);
         m_slotHandle = handle;
         m_slotParam = param;
     }
     void setParentSlot(GfSlotBase* parent) {
-        ml::CS lock(g_slotCriticalSection);
+        ml::CS lock(s_section);
         m_parentSlot = parent;
     }
     bool isExistAsset() const {
-        ml::CS lock(g_slotCriticalSection);
+        ml::CS lock(s_section);
         return m_allocator.getAllocs() != 0;
     }
     unsigned int getMultiSlot() const {
-        ml::CS lock(g_slotCriticalSection);
+        ml::CS lock(s_section);
         return m_multiSlot;
     }
 

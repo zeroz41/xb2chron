@@ -90,7 +90,7 @@ public:
     // A member because its address is in blade_change_manager's unit and StateField::onDead calls it on
     // PtrSingleton<BladeChangeManager>::sys(). What it does: finds the entry IsRegister would (driver with
     // m_isDriverDone clear, blade, or m_newBlade with m_isNewBladeDone clear); for that entry it returns true when
-    // CharacterManager::GetCharacterConst(handle) is none, else the negation of fn_7100028D0C(character, false); true
+    // CharacterManager::GetCharacterConst(handle) is none, else the negation of IsBlade(character, false); true
     // when no entry holds it. StateField::onDead handles a death only when true.
     bool IsEnableFieldDead(gf::GF_OBJ_HANDLE* handle) const;
 

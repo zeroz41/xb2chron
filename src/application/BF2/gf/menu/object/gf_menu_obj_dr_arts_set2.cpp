@@ -33,8 +33,8 @@
 
 namespace gf {
 
-unsigned int GfMenuObjDrArtsSet2::s_wpnTypeIndex;
-bool GfMenuObjDrArtsSet2::s_extraWpnType;
+unsigned int GfMenuObjDrArtsSet2::s_RefDriverIndex;
+bool GfMenuObjDrArtsSet2::s_EnableWpn2;
 
 GfMenuObjDrArtsSet2::GfMenuObjDrArtsSet2(unsigned int handle)
     : GfMenuObject(handle), m_wpnTypes(), m_number(), m_number2(), m_object(nullptr), m_context(nullptr),
@@ -46,9 +46,9 @@ GfMenuObjDrArtsSet2::GfMenuObjDrArtsSet2(unsigned int handle)
     pad_2B4 = 0;
     m_blades = GfMenuBladeList::create();
     m_items = GfMenuItemList::create();
-    s_extraWpnType = GfGameManager::isClearGame() && !GfMenuObjUtil::isValidExpansion(3) &&
+    s_EnableWpn2 = GfGameManager::isClearGame() && !GfMenuObjUtil::isValidExpansion(3) &&
                      GfMenuObjUtil::isValidExpansion(1) && isActiveBCHWpn();
-    s_wpnTypeIndex = 0;
+    s_RefDriverIndex = 0;
 }
 
 GfMenuObjDrArtsSet2::~GfMenuObjDrArtsSet2() {
@@ -180,7 +180,7 @@ void GfMenuObjDrArtsSet2::refreshLvUp(ui::UIObjectAcc& acc, unsigned int driver,
         i++;
         name.format("LAY_wpn_arts_lv_up@%02d", i);
         acc.setDispChild(lvUp, name.m_str);
-        if (s_extraWpnType) {
+        if (s_EnableWpn2) {
             ui::UIObjectAcc wpn2(acc.searchSibiling("LAY_wpn2"));
             name.format("LAY_wpn2_arts_lv_up@%02d", i);
             wpn2.setDispChild(lvUp, name.m_str);
@@ -245,7 +245,7 @@ void GfMenuObjDrArtsSet2::refreshLvUpWpn(ui::UIObjectAcc& acc, unsigned int driv
         i++;
         name.format("IMG_wpn_lvup@%02d", i);
         acc.setDispChild(lvUp, name.m_str);
-        if (s_extraWpnType) {
+        if (s_EnableWpn2) {
             ui::UIObjectAcc wpn2(acc.searchSibiling("LAY_wpn2"));
             name.format("IMG_wpn2_lvup@%02d", i);
             wpn2.setDispChild(lvUp, name.m_str);
@@ -326,7 +326,7 @@ void GfMenuObjDrArtsSet2::refreshArtsNeedWP(ui::UIObjectAcc& acc, GfMenuArtsList
 
 void GfMenuObjDrArtsSet2::updateArtsSwapSelectIra(int index, bool close) {
     ui::UIObjectAcc acc(m_handle, "LAY_arts");
-    unsigned int driver = GfMenuReference::getReferenceDriverID(s_wpnTypeIndex);
+    unsigned int driver = GfMenuReference::getReferenceDriverID(s_RefDriverIndex);
     mm::mtl::FixedArray<unsigned int, 4> arts;
     unsigned int count = GfMenuObjUtil::getEnableArts(arts, driver, m_number->m_value, pad_2B4, pad_2B9);
     if (count <= 3) {

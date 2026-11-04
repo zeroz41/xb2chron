@@ -165,25 +165,25 @@ public:
     bool IsInAttackRange(int, float*) const;
     bool IsEnableTurnAI() const;
     void TurnTarget(bool, bool, bool);
-    // Placeholder name: 1.0.0's ButtonChallenge::ResultProc calls IsBlade() const in its place, with no argument.
+    // 2.0.0's symbols name it; 1.0.0's ButtonChallenge::ResultProc calls IsBlade() const, with no argument.
     // A member: called on CharacterManager::GetCharacterConst's character. What it does: ButtonChallenge asks it
     // with true; when it holds, the challenge's character is a blade and its driver (the parameter's handle) acts.
-    bool fn_7100028D0C(bool);
+    bool IsBlade(bool) const;
     // 2.0.0's symbols name it. What it does: with true, unless CheckResistReaction(2, nullptr, true) resists, blows the
     // character back (strength from BDAT table 0x3A's "PowLv%d_%s" row), sets its action 0x10 and notifies TalkManager
     // trigger 0x31; then fades out (or, with BattleGlobal's flag bit 0, removes) the effect whose id it keeps at 0x15C
     // and clears the id.
     void NotifyMindEyeEnd(bool);
     // 2.0.0's symbols name it; 1.0.0's ResultProc calls GetWeaponAttack(bool, bool) const in its place, with one argument
-    // fewer. A member: as fn_7100028D0C. What it does: gives the attack ButtonChallenge adds to the stat for its
+    // fewer. A member: as IsBlade. What it does: gives the attack ButtonChallenge adds to the stat for its
     // damage; ButtonChallenge passes its param's flag, false, false.
     float GetWeaponAttack(bool, bool, unsigned int) const;
     // 2.0.0's symbols name it; 1.0.0's ResultProc calls GetFriendEnhanceRate(int, bool) const in its place, with one
-    // argument fewer. A member: as fn_7100028D0C. What it does: ButtonChallenge passes 0xB9, 0, 0 and adds a positive
+    // argument fewer. A member: as IsBlade. What it does: ButtonChallenge passes 0xB9, 0, 0 and adds a positive
     // result to the party gauge.
     float GetFriendEnhanceRate(int, bool, bool) const;
     // 2.0.0's symbols name it; 1.0.0's ResultProc calls AchieveCondition(int, unsigned int) const in its place, with the
-    // same arguments (0xC, 0): the rename's evidence. A member: as fn_7100028D0C.
+    // same arguments (0xC, 0): the rename's evidence. A member: as IsBlade.
     void AchieveCondition(int, unsigned int) const;
 
     // the index into m_aActionFuncList (its Action/ActionCommand/ActionCommandEnd triples); the enumerator names

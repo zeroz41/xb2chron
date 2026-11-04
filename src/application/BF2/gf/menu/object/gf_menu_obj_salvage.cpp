@@ -31,8 +31,8 @@ const char* s_rankAnims[] = {"rank_1", "rank_2", "rank_3", "rank_4"};
 const char* s_recordKinds[] = {"time", "ether", "score"};
 }  // namespace
 
-// proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB92B)
-bool GfMenuObjSalvage::s_recordFlag;
+// 2.0.0's symbols name it
+bool GfMenuObjSalvage::s_BtlchNewRecord;
 
 GfMenuObjSalvage::GfMenuObjSalvage(unsigned int handle)
     : GfMenuObject(handle), m_param(), m_seq(this), m_appeared(false), m_time(), m_newRecords(0) {
@@ -82,7 +82,7 @@ void GfMenuObjSalvage::openBtlchRecord(GfMenuCallContext* context) {
 
 void GfMenuObjSalvage::setBtlchNewRecord(bool flag) {
     if (GfMenuObjUtil::isValidExpansion(1)) {
-        s_recordFlag = flag;
+        s_BtlchNewRecord = flag;
     }
 }
 

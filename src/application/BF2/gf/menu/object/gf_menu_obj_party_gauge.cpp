@@ -17,7 +17,7 @@
 
 namespace gf {
 
-bool GfMenuObjPartyGauge::s_locked;
+bool GfMenuObjPartyGauge::s_OpenDisable;
 
 GfMenuObjPartyGauge::GfMenuObjPartyGauge(unsigned int handle) : GfMenuObject(handle) {
     m_barCtrl = -1;
@@ -89,7 +89,7 @@ void GfMenuObjPartyGauge::update() {
 
 void GfMenuObjPartyGauge::open() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x55));
-    if (acc.m_object != nullptr && !acc.isTerm() && !s_locked) {
+    if (acc.m_object != nullptr && !acc.isTerm() && !s_OpenDisable) {
         if (!GfMenuManager::isBattleState(3)) {
             acc.setDisp(true);
         }
@@ -102,7 +102,7 @@ void GfMenuObjPartyGauge::open() {
 
 void GfMenuObjPartyGauge::close() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x55));
-    if (acc.m_object != nullptr && !acc.isTerm() && !s_locked) {
+    if (acc.m_object != nullptr && !acc.isTerm() && !s_OpenDisable) {
         ui::UIObjectAcc gauge(acc.m_handle, "LAY_gauge");
         ui::EventData event;
         event.m_type = 0x22;
@@ -111,16 +111,16 @@ void GfMenuObjPartyGauge::close() {
 }
 
 void GfMenuObjPartyGauge::enableOpen() {
-    s_locked = false;
+    s_OpenDisable = false;
 }
 
 void GfMenuObjPartyGauge::disableOpen() {
-    s_locked = true;
+    s_OpenDisable = true;
 }
 
 void GfMenuObjPartyGauge::disp(bool disp) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x55));
-    if (acc.m_object != nullptr && !acc.isTerm() && !s_locked) {
+    if (acc.m_object != nullptr && !acc.isTerm() && !s_OpenDisable) {
         acc.setDisp(disp);
         ui::UIObjectAcc gauge(acc.m_handle, "LAY_gauge");
         ui::EventData event;
@@ -261,10 +261,10 @@ void GfMenuObjPartyGauge::GaugeListener::reciveEvent(const ui::EventData& event,
                 param.m_startFlags = 8;
                 param.m_bright = 0.25f;
                 m_owner->m_barCtrl = GfMenuObjUtil::startCtrl(acc.searchChild("LAY_gauge_bar"), param, nullptr);
-                if (!GfMenuObjPartyGauge::s_locked) {
+                if (!GfMenuObjPartyGauge::s_OpenDisable) {
                     GfMenuObjUtil::playSE(0x26);
                 }
-            } else if (!GfMenuObjPartyGauge::s_locked) {
+            } else if (!GfMenuObjPartyGauge::s_OpenDisable) {
                 GfMenuObjUtil::playSE(0x25);
             }
         } else {

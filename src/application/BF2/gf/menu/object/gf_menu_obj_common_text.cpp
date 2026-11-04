@@ -307,8 +307,8 @@ void GfMenuObjCommonText::openKizunaDialog(GfMenuCallContext* context, const Ope
 GfMenuItemList* GfMenuObjCommonText::s_pItemList;
 GfMenuIDList* GfMenuObjCommonText::s_pSubMenuIDList;
 GfMenuDriverList* GfMenuObjCommonText::s_pChangeDrList;
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAA200)
-bool GfMenuObjCommonText::s_isNamedDialogOpen;
+// 2.0.0's symbols name it
+bool GfMenuObjCommonText::s_OpenNamedDialog;
 
 void GfMenuObjCommonText::openGetItem(GfMenuCallContext* context, const GfMenuItemList* items) {
     unsigned int handle = GfMenuObject::getAttachedObject(100);
@@ -681,9 +681,9 @@ void GfMenuObjCommonText::MainListener::reciveEvent(const ui::EventData& event, 
         GfMenuObject::termCallContext(handle);
         m_kind = 0xFF;
         GfMenuAdapterManager::delActiveCategory(3);
-        if (GfMenuObjCommonText::s_isNamedDialogOpen) {
+        if (GfMenuObjCommonText::s_OpenNamedDialog) {
             GfMenuObjNamedDialog::close();
-            GfMenuObjCommonText::s_isNamedDialogOpen = false;
+            GfMenuObjCommonText::s_OpenNamedDialog = false;
         }
     }
     UIObjectListener::reciveEvent(event, handle);
@@ -774,7 +774,7 @@ void GfMenuObjCommonText::openWithNamed(GfMenuCallContext* context, unsigned int
     open(context, text, 0);
     if (GfGameManager::isEnableNamedRecord()) {
         GfMenuObjNamedDialog::open(row);
-        s_isNamedDialogOpen = true;
+        s_OpenNamedDialog = true;
     }
 }
 

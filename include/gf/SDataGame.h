@@ -53,7 +53,7 @@ struct SDataGameSavedEvent {
 
 class SDataGame {
 public:
-    // out of line in title_main's unit (0x710014FDE0); SDataSave() and TitleMain::createSaveBuffer call it
+    // out of line in title_main's unit (0x710014FDE0); SDataSaveIra() and TitleMain::createSaveBuffer call it
     SDataGame();
     unsigned int m_money;  // 0x0 (named after its accessors; the name is not the original's)
     // 0x4-0x24: the landmark point, its position and Y rotation (1.0.0's GfFieldManager::setLandmarkPoint stores them,
@@ -105,7 +105,7 @@ public:
     // not the original's)
     unsigned int m_gameClearCount;
     // 0x109B30: the task achievements (GfDataQuest::getTaskAchieve returns them; GfGameUtilSaveData::setupGameSaveDataForIra copies them, its end
-    // is begin + count * 12; the count sits at 0x10A130, room for 128; ~SDataSave clears it after none other than
+    // is begin + count * 12; the count sits at 0x10A130, room for 128; ~SDataSaveIra clears it after none other than
     // m_teams; the name is not the original's)
     mm::mtl::FixedVector<TaskAchieve, 128> m_taskAchieve;
     // 0x10A138: the parent quests in the order they were taken, the last one latest (GfQuestUtil's

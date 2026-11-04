@@ -47,8 +47,8 @@ public:
     static void close(unsigned int handle);  // fades that copy out (event 0x22)
     static void closeAll();  // GfMenuManager::gevSalvageStateChange(6) calls it (1.0.0 symbol)
     // the opens fn_71003E7394 queues for update to hand to open, each update (a global: its code loads it through
-    // the GOT; the name is not the original's)
-    static mm::mtl::FixedQueue<OpenParam, 32> s_openRequests;
+    // the GOT; 2.0.0's symbols name it)
+    static mm::mtl::FixedQueue<OpenParam, 32> s_queue;
 };
 }  // namespace gf
 

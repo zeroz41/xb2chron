@@ -322,14 +322,10 @@ public:
     static const mm::Vec3& getControlMoverPosition();
     // 2.0.0's symbols name them. Statics of GfGameManager: their addresses lie in gf_game_manager's unit among
     // GfGameManager's functions and they use no instance. What they do: isDispPreciousMenu and isDispQuestCompleteMenu
-    // (the same code) answer whether GfPlayComQuestCompleteUI::s_start is above 0; btl::BattleGlobal::PreUpdateProc
+    // (the same code) answer whether GfPlayComQuestCompleteUI::s_disp is above 0; btl::BattleGlobal::PreUpdateProc
     // calls both. Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static of GfGameManager (address
-    // among its functions in gf_game_manager's unit). What it does: stores the flag into s_disablePlayerCameraPause.
+    // among its functions in gf_game_manager's unit). What it does: stores the flag into _gfgm::s_bDisablePlayerCamPause.
     static void setDisablePlayerCameraPauseForTitle(bool flag);
-    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100D6CBE8). While it is set,
-    // isPlayerCameraPause answers false; clear() resets it and setDisablePlayerCameraPauseForTitle sets it (reached through the GOT, so
-    // a class static rather than a file static)
-    static bool s_disablePlayerCameraPause;
     // 1.0.0's isExecTutorial tail-called GfMenuObjTutorial::isWaiting from btl::BattleGlobal::PreUpdateProc;
     // 3.0.1's PreUpdateProc calls this one at the same place (the symbols still spell it fn_71002AA6CC)
     static bool isExecTutorial();

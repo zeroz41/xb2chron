@@ -17,14 +17,14 @@ struct SDataDriverAcce {
 
 // a driver's arts records past the ones its data keeps, 0x324 bytes: 20-byte arts records (five words) for arts slots
 // from 0x1C (GfDataDriver::getDriverWeaponType returns record index - 0x1C), then (0x1E0) the level bytes of the arts from
-// 0x280 (getDriverArtsLevel, setDriverArtsLevel, GfDataDriverArts::getArtsLevel read byte arts - 0x280), then a word (SDataSave()
+// 0x280 (getDriverArtsLevel, setDriverArtsLevel, GfDataDriverArts::getArtsLevel read byte arts - 0x280), then a word (SDataSaveIra()
 // copies 0x320 bytes and the word apart). One per driver: SDataGame keeps 16 at 0x11768C, SDataDlc 16 for the DLC
 // drivers. The counts are those that fill 0x320 bytes; the type and field names are not the original's.
 struct SDataDriverArtsEx {
     unsigned int m_arts[24][5];
     unsigned char m_artsLevels[0x140];
     // 0x320: the driver's flags 0x1C.. (GfDataDriver::isActivateWeaponType tests and setActivateWeaponType sets flag index - 0x1C,
-    // asserting index < 28 at bitflag.h's lines 133 and 77; SDataSave() copies it with copy_n)
+    // asserting index < 28 at bitflag.h's lines 133 and 77; SDataSaveIra() copies it with copy_n)
     mm::mtl::Bitflag<28> m_flags;
 };
 

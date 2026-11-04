@@ -171,10 +171,10 @@ float bgmvolFadeDisableEventBgm(ExecFadeParam& param) {
 }
 
 // 2.0.0's symbols name it. What it does: a volume fade check like the others: fades out while the game data's local
-// flag (GfDataUtil::getScenarioFlag) is 11091 or 11116 and GfPlayComEventFade::s_start is set, else fades in.
+// flag (GfDataUtil::getScenarioFlag) is 11091 or 11116 and GfPlayComEventFade::s_activate is set, else fades in.
 float bgmvolFadeEnableEvent1763(ExecFadeParam& param) {
     bool fadeOut = (GfDataUtil::getScenarioFlag() == 11091 || GfDataUtil::getScenarioFlag() == 11116) &&
-                   GfPlayComEventFade::s_start != 0;
+                   GfPlayComEventFade::s_activate != 0;
     return bgmvolControlFade(*param.m_updateInfo,
                              fadeOut ? param.m_fade->m_fadeOutTime : param.m_fade->m_fadeInTime, fadeOut);
 }

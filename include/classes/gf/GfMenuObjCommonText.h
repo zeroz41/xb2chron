@@ -70,9 +70,9 @@ public:
     static GfMenuIDList* s_pSubMenuIDList;
     static GfMenuDriverList* s_pChangeDrList;
     // set by openWithNamed once it has opened GfMenuObjNamedDialog's dialog (GfMenuObjNamedDialog::open);
-    // MainListener's close event (0x22) closes that dialog (GfMenuObjNamedDialog::close) and clears it. Proposed name,
-    // not the original's: the symbols leave it unnamed (lbl_7100EAA200)
-    static bool s_isNamedDialogOpen;
+    // MainListener's close event (0x22) closes that dialog (GfMenuObjNamedDialog::close) and clears it. 2.0.0's
+    // symbols name it
+    static bool s_OpenNamedDialog;
 
     // the fields from 0x28 (in GfMenuObject's tail padding; the constructor zeroes 0x28..0x8C in one memset): what
     // the constructor, initialize and the listeners store there, released by the destructor. The field names are

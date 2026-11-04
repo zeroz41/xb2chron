@@ -151,7 +151,7 @@ bool CharacterManager::IsControlCharacter(gf::GF_OBJ_HANDLE* handle) {
 BattleCharacter* CharacterManager::GetBattleEnemyCharacter(bool aliveOnly, bool skipFn28D0C) {
     for (int i = PLAYER_NUM; i < CHARACTER_NUM; i++) {
         BattleCharacter* chr = GetCharacterConst(i);
-        if (chr != nullptr && chr->IsBattle() && (!skipFn28D0C || !chr->fn_7100028D0C(false)) &&
+        if (chr != nullptr && chr->IsBattle() && (!skipFn28D0C || !chr->IsBlade(false)) &&
             (!aliveOnly || !chr->IsDead(0))) {
             return chr;
         }
@@ -398,7 +398,7 @@ bool CharacterManager::IsExistChallengeBattleEnemy() const {
 void CharacterManager::BattleEndInitialize() {
     for (unsigned char index : m_sortedSlots) {
         BattleCharacter* chr = &m_slots[index].m_chr;
-        if (chr->fn_7100028D0C(true)) continue;
+        if (chr->IsBlade(true)) continue;
         if (chr->m_isPlayer || !chr->IsDead(0)) {
             chr->BattleEndInitialize();
         }
@@ -452,7 +452,7 @@ bool CharacterManager::IsExistAlwaysKakusei() const {
 bool CharacterManager::IsExistHomuri() const {
     for (int i = 0; i < PLAYER_NUM; i++) {
         BattleCharacter* chr = GetCharacterConst(i);
-        if (chr == nullptr || !chr->fn_7100028D0C(false)) continue;
+        if (chr == nullptr || !chr->IsBlade(false)) continue;
         // 1003: the bdat id the name asks for (Homura)
         bool found = chr->m_bdatID == 1003;
         if (found) return true;
@@ -480,7 +480,7 @@ int CharacterManager::GetBattleEnemyMaxLevel(bool addNamed) const {
 void CharacterManager::PlayEnemyWinVoice() {
     for (int i = PLAYER_NUM; i < CHARACTER_NUM; i++) {
         BattleCharacter* chr = GetCharacterConst(i);
-        if (chr != nullptr && chr->IsBattle() && !chr->fn_7100028D0C(false) && !chr->IsDead(0)) {
+        if (chr != nullptr && chr->IsBattle() && !chr->IsBlade(false) && !chr->IsDead(0)) {
             if (mm::mtl::PtrSingleton<TalkManager>::sys()->NotifyTrigger(i, static_cast<TalkManager::TRIGGER>(23), 0, 0)) {
                 return;
             }

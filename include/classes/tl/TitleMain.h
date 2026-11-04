@@ -9,7 +9,7 @@
 #include "mm/mtl/FixStr.h"
 
 namespace gf { class SDataOption; }
-namespace gf { class SDataSave; }
+namespace gf { class SDataSaveIra; }
 namespace gf { class GF_SE_CATEGORY_HANDLE; }
 namespace gf { enum SAVESLOT : int; }
 
@@ -41,8 +41,8 @@ public:
     // clearSaveBuffer there). A member because it reads this+0x130 like getSaveBuffer, right before it. What it
     // does: returns the save buffer (createSaveBuffer's), exactly as getSaveBuffer does; 14 callers
     // (GfGameManager::isClearGame, GfGameUtilSaveData::setupGameSaveData, GfMenuObjTitle::initialize...).
-    gf::SDataSave* fn_710014FB00();
-    gf::SDataSave* getSaveBuffer();
+    gf::SDataSaveIra* fn_710014FB00();
+    gf::SDataSaveIra* getSaveBuffer();
     // returns a reference: GfGameUtilSaveData::getValidOptionData calls it without a tail call, which a pointer
     // return would give (the callee's nonnull/dereferenceable return attributes stop clang's tail call)
     gf::SDataOption& getOptionBuffer();
@@ -122,7 +122,7 @@ public:
     // stores: the first char and the length at 0x128; the name stays a placeholder)
     mm::mtl::FixStr<128> pad_A8;
     unsigned char pad_12C[0x4];
-    gf::SDataSave* m_saveBuffer;  // createSaveBuffer's (getSaveBuffer; the name is not the original's)
+    gf::SDataSaveIra* m_saveBuffer;  // createSaveBuffer's (getSaveBuffer; the name is not the original's)
     gf::SDataOption* m_optionBuffer;  // createSaveBuffer's (getOptionBuffer; the name is not the original's)
     // the event TitleStatePlayEvent::enter plays (it copies it and reads the event id): TitleStateMainScreen::update
     // changes to state 4 when it holds one, TitleStateSelectEvent::eventMenuResult fills it from m_eventTemplate with

@@ -1,6 +1,6 @@
 #include "classes/gf/GfEvent.h"
 #include "gf/FileStaticVec3.h"
-#include "gf/SDataSave.h"
+#include "gf/SDataSaveIra.h"
 #include "classes/ml/DevFileTh.h"
 #include "classes/gf/GfDataManager.h"
 #include "gf/GfDataSave.h"
@@ -32,21 +32,21 @@ namespace gf {
 
 namespace _gfgsv {
 // named by 1.0.0 (_ZN2gf6_gfgsv11s_SDataSaveE; the symbols leave 3.0.1's unnamed, lbl_7100D6CCA0)
-SDataSave s_SDataSave;
+SDataSaveIra s_SDataSave;
 SDataOption s_SDataOption;
 }  // namespace _gfgsv
 
-SDataSave* GfGameSave::getGameSaveData() {
+SDataSaveIra* GfGameSave::getGameSaveData() {
     return &_gfgsv::s_SDataSave;
 }
 
-SDataSave* GfGameSave::getGameOptionData() {
+SDataSaveIra* GfGameSave::getGameOptionData() {
     return &_gfgsv::s_SDataSave;
 }
 
 void GfGameSave::makeNewGameSaveData() {
     if (GfDataManager::sys() != nullptr) {
-        _gfgsv::s_SDataSave.fn_7100153694();
+        _gfgsv::s_SDataSave.clear();
         _gfgsv::s_SDataOption = *GfDataManager::getDataOption();
     }
 }

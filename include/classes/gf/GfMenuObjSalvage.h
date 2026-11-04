@@ -36,8 +36,8 @@ public:
     // 2.0.0's symbols name it. What it does: with GfMenuObjUtil::isValidExpansion(1), stores its argument in that flag.
     static void setBtlchNewRecord(bool flag);
     // set by setBtlchNewRecord, read and cleared by seqRecordInfoOpen: with it, a new record marks the time too (bit 0 of
-    // m_newRecords). The code reaches it through the GOT: not file-local. (the name is not the original's)
-    static bool s_recordFlag;
+    // m_newRecords). The code reaches it through the GOT: not file-local. 2.0.0's symbols name it.
+    static bool s_BtlchNewRecord;
 
     bool seqResultAppear();
     bool seqResultLeave();

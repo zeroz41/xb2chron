@@ -33,10 +33,10 @@ public:
     // DrSoloListener::reciveEvent, setBattleMode and GfMenuObjCharChange::MainListener::reciveEvent.
     static void refreshBattleMode();
     // 2.0.0's symbols name it. What it does: sends event 0x21 (open) to the attached object's sibling "LAY_dr_solo" and
-    // sets s_soloOpen. Caller: GfMenuManager::updateHudState.
+    // sets s_DrSolo. Caller: GfMenuManager::updateHudState.
     static void openDrSolo();
     // 2.0.0's symbols name it. What it does: sends event 0x22 (close) to the attached object's sibling "LAY_dr_solo"
-    // and clears s_soloOpen. Caller: GfMenuManager::updateHudState.
+    // and clears s_DrSolo. Caller: GfMenuManager::updateHudState.
     static void closeDrSolo();
     void ctrlAwakening(bool awake);
     void ctrlHomuri(bool on);
@@ -48,9 +48,9 @@ public:
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
 
-    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EA7170). Whether "LAY_dr_solo" is
-    // open: openDrSolo sets it, closeDrSolo clears it, refreshBattleMode reads it (through the GOT: not file-static)
-    static bool s_soloOpen;
+    // 2.0.0's symbols name it. Whether "LAY_dr_solo" is open: openDrSolo sets it, closeDrSolo clears it,
+    // refreshBattleMode reads it (through the GOT: not file-static)
+    static bool s_DrSolo;
 
     unsigned int m_ctrlSlot;   // 0x24: ctrlAwakening's control slot
     unsigned int pad_28;       // -1 from the constructor

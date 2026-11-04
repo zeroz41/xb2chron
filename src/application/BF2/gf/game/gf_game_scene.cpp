@@ -884,7 +884,7 @@ void GfGameScene::updateAppendModel(const fw::UpdateInfo& info) {
 
 void GfGameScene::postUpdate(const fw::UpdateInfo& info) {
     updateAppendModel(info);
-    if (GfPause::isPause(1) || GfPlayComEventFade::s_start != 0) {
+    if (GfPause::isPause(1) || GfPlayComEventFade::s_activate != 0) {
         m_frameCount690 = 0;
     } else if (m_frameCount690 < 999) {
         m_frameCount690++;

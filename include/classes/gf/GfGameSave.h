@@ -3,7 +3,7 @@
 
 #include "classes/ml/IWorkEvent.h"
 #include "classes/gf/GfAllocator.h"
-#include "gf/SDataSave.h"
+#include "gf/SDataSaveIra.h"
 #include "mm/mtl/FixStr.h"
 #include "gf/SDataOption.h"
 
@@ -35,8 +35,8 @@ public:
     virtual ~GfGameSave();  // slot 0
     virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
 
-    static SDataSave* getGameSaveData();
-    static SDataSave* getGameOptionData();  // 3.0.1's returns the save data, as getGameSaveData
+    static SDataSaveIra* getGameSaveData();
+    static SDataSaveIra* getGameOptionData();  // 3.0.1's returns the save data, as getGameSaveData
     static void makeNewGameSaveData();
 
     // 1.0.0's took the slot only; 3.0.1's adds three flags (stored at 0x30-0x32, each masked to a bool)
@@ -51,7 +51,7 @@ public:
         m_writeData = nullptr;
         m_writeSize = 0;
         if (m_saveData != nullptr) {
-            m_saveData->~SDataSave();
+            m_saveData->~SDataSaveIra();
             getAllocator(ALLOCATOR(0))->deallocate(m_saveData);
             m_saveData = nullptr;
         }
@@ -64,7 +64,7 @@ public:
     // (the field names are not the original's)
     int m_state;  // 1 while a write waits for OnFileEvent
     SAVESLOT m_slot;
-    SDataSave* m_saveData;  // createGameSaveData's copy, from allocator 0
+    SDataSaveIra* m_saveData;  // createGameSaveData's copy, from allocator 0
     SDataOption* m_optionData;  // createOptionSaveData's, from allocator 0
     const void* m_writeData;
     unsigned long m_writeSize;

@@ -850,13 +850,13 @@ bool GfMenuItemList::sortIdDescending(const MenuItemInfo& a, const MenuItemInfo&
     return a.m_id > b.m_id;
 }
 
-// Proposed names, not the original's: the symbols leave them unnamed (lbl_7100EA70B8, lbl_7100EA70BC, lbl_7100EA70C0)
-unsigned int GfMenuItemList::s_firstEnhanceSortKey;
-unsigned int GfMenuItemList::s_firstRole;
-unsigned int GfMenuItemList::s_firstPartsSortKey;
+// 2.0.0's symbols name them
+unsigned int GfMenuItemList::s_PrioEnhanceSortCat;
+unsigned int GfMenuItemList::s_PrioRole;
+unsigned int GfMenuItemList::s_PrioBuff;
 
 void GfMenuItemList::sortFromRole(unsigned int order) {
-    s_firstRole = order;
+    s_PrioRole = order;
     unsigned int* keys = new (getAllocator(ALLOCATOR(0)), nullptr, 0, 8) unsigned int[static_cast<unsigned int>(getSize())];
     for (unsigned int i = 0; i < getSize(); i++) {
         const MenuItemInfo& item = getContents(i);
@@ -864,7 +864,7 @@ void GfMenuItemList::sortFromRole(unsigned int order) {
         GfItemUtil::getProperty(prop, item.m_id, 0);
         unsigned int key = 4;
         if (item.m_type == 16 && prop.m_role != 0) {
-            key = prop.m_role == s_firstRole ? 0 : prop.m_role;
+            key = prop.m_role == s_PrioRole ? 0 : prop.m_role;
         }
         keys[i] = key;
         getContents(i).m_sortIndex = i;
@@ -881,7 +881,7 @@ void GfMenuItemList::sortFromRole(unsigned int order) {
 }
 
 void GfMenuItemList::sortFromEnhance(unsigned int order) {
-    s_firstEnhanceSortKey = order;
+    s_PrioEnhanceSortCat = order;
     unsigned int* keys = new (getAllocator(ALLOCATOR(0)), nullptr, 0, 8) unsigned int[static_cast<unsigned int>(getSize())];
     for (unsigned int i = 0; i < getSize(); i++) {
         keys[i] = getEnhanceSortCat(getContents(i));

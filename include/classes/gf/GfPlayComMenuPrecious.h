@@ -23,9 +23,9 @@ public:
     static mm::mtl::RTTI m_rtti;
     // how many are running (GfPlayFactory::createMenuPrecious queues its command list in mode 1 only while none is)
     static int s_activate;
-    // how many have started and not ended (start counts up, end down; nothing else reads it). The name is not
-    // the original's: 3.0.1 leaves it unnamed (lbl_7100EA4CC4)
-    static int s_start;
+    // how many have started and not ended (start counts up, end down; nothing else reads it). 2.0.0's symbols
+    // name it
+    static int s_disp;
 
     unsigned int m_id;  // the precious window start opens; the name is not the original's
 };

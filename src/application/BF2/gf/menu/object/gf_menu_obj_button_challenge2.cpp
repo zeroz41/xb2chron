@@ -17,14 +17,11 @@
 #include "ui/EventData.h"
 #include "ui/UIUtil.h"
 
-namespace gmo_button_challenge2 {
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAA1CC). initialize keeps LAY_main's
-// display priority; open gives it back to the opened object's parent outside battle. External: the code reaches it
-// through the GOT
-unsigned int dispPriority;
-}  // namespace gmo_button_challenge2
-
 namespace gf {
+
+// 2.0.0's symbols name it. initialize keeps LAY_main's display priority; open gives it back to the opened object's
+// parent outside battle. External: the code reaches it through the GOT
+unsigned int GfMenuObjButtonChallenge2::s_DefRootPrio;
 
 GfMenuObjButtonChallenge2::~GfMenuObjButtonChallenge2() {
     if (m_updater1.m_ctrl != nullptr) {
@@ -44,7 +41,7 @@ GfMenuObjButtonChallenge2::~GfMenuObjButtonChallenge2() {
 void GfMenuObjButtonChallenge2::initialize() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     if (main.m_object != nullptr) {
-        gmo_button_challenge2::dispPriority = ui::UIObjectAcc(m_handle).getDispPriority();
+        s_DefRootPrio = ui::UIObjectAcc(m_handle).getDispPriority();
         ui::UIObjectAcc(m_handle).setAlpha(1.0f);
         GfMenuObject::attachExternalCall(0x4B, main.m_handle);
         {

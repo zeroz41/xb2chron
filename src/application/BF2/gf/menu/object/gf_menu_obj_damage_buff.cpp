@@ -29,8 +29,8 @@ inline const char* getColor(const char* (&colors)[N], int type) {
 }
 }  // namespace
 
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAA440)
-mm::mtl::FixedQueue<GfMenuObjDamageBuff::OpenParam, 32> GfMenuObjDamageBuff::s_openRequests;
+// 2.0.0's symbols name it
+mm::mtl::FixedQueue<GfMenuObjDamageBuff::OpenParam, 32> GfMenuObjDamageBuff::s_queue;
 
 GfMenuObjDamageBuff::GfMenuObjDamageBuff(unsigned int handle) : GfMenuObject(handle) {}
 
@@ -55,7 +55,7 @@ void GfMenuObjDamageBuff::initialize() {
     ui::UIObjectAcc(m_handle).setTerm();
     GfMenuObject::initialize();
     GfMenuManyObjects::createQueue<DamageInfo>(1, 32);
-    s_openRequests.clear();
+    s_queue.clear();
 }
 
 void GfMenuObjDamageBuff::finalize() {
@@ -63,11 +63,11 @@ void GfMenuObjDamageBuff::finalize() {
 }
 
 void GfMenuObjDamageBuff::update() {
-    const mm::mtl::FixedQueue<OpenParam, 32>& requests = s_openRequests;
+    const mm::mtl::FixedQueue<OpenParam, 32>& requests = s_queue;
     for (mm::mtl::FixedQueue<OpenParam, 32>::const_iterator it = requests.begin(); it != requests.end(); ++it) {
         open(*it);
     }
-    s_openRequests.clear();
+    s_queue.clear();
     GfMenuObject::update();
 }
 
@@ -264,10 +264,10 @@ void GfMenuObjDamageBuff::setupScreen(unsigned int handle, int type, int resist,
 }
 
 unsigned int GfMenuObjDamageBuff::fn_71003E537C(const OpenParam& param) {
-    if (s_openRequests.full()) {
-        s_openRequests.pop();
+    if (s_queue.full()) {
+        s_queue.pop();
     }
-    s_openRequests.push_back(param);
+    s_queue.push_back(param);
     return 0;
 }
 
@@ -344,7 +344,7 @@ void GfMenuObjDamageBuff::closeAll() {
     }
     if (!ui::UIObjectAcc(root).isTerm()) {
         GfMenuManyObjects::closeAll<DamageInfo>(1, &close);
-        s_openRequests.clear();
+        s_queue.clear();
     }
 }
 

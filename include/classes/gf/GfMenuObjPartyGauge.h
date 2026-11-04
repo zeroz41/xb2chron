@@ -10,10 +10,11 @@ public:
     GfMenuObjPartyGauge(unsigned int handle);
     static void open();   // 1.0.0 symbol
     static void close();  // 1.0.0 symbol
-    // 2.0.0's symbols name it. What it does: clears s_locked (GfMenuManager::unloadBchUI calls it after terminating ui
-    // layer 102; reciveEvent calls it too).
+    // 2.0.0's symbols name it. What it does: clears s_OpenDisable (GfMenuManager::unloadBchUI calls it after
+    // terminating ui layer 102; reciveEvent calls it too).
     static void enableOpen();
-    // 2.0.0's symbols name it. What it does: sets s_locked (caller GfMenuObjBtlchOrder::ListListener::reciveEvent).
+    // 2.0.0's symbols name it. What it does: sets s_OpenDisable (caller
+    // GfMenuObjBtlchOrder::ListListener::reciveEvent).
     static void disableOpen();
     // 1.0.0 symbol; 3.0.1's copy still carries a placeholder name (fn_7100456A1C), see the menu manager's renames
     static void disp(bool disp);
@@ -39,9 +40,8 @@ public:
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
 
-    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB929). While set, open, close and
-    // disp leave the gauge alone.
-    static bool s_locked;
+    // 2.0.0's symbols name it. While set, open, close and disp leave the gauge alone.
+    static bool s_OpenDisable;
     // the slot of the control GaugeListener starts on "LAY_gauge_bar" when the third gauge fills (-1 for none;
     // the name is not the original's)
     int m_barCtrl;

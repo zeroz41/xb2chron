@@ -144,7 +144,7 @@
 #include "classes/gf/GfGameEnv.h"
 #include "classes/gf/GfGameMercenaries.h"
 #include "gf/GfDataMercenaries.h"
-#include "gf/SDataSave.h"
+#include "gf/SDataSaveIra.h"
 #include "gf/GfGameUtilSkipTravel.h"
 #include "gf/GfDataMap.h"
 #include "classes/gf/GfGameSave.h"
@@ -2736,7 +2736,7 @@ void GfGameUtilSaveData::flushOptionSaveData() {
 }
 
 void GfGameUtilSaveData::getSaveDataMenuInfo(SaveMenuInfo& info) {
-    SDataSave* save;
+    SDataSaveIra* save;
     tl::TitleMain* title = mm::mtl::PtrSingleton<tl::TitleMain>::sys();
     if (title != nullptr && title->fn_710014FB00()->m_system.m_version == 0x3A15B) {
         save = title->getSaveBuffer();
@@ -2998,13 +2998,12 @@ template void mm::mtl::UniquePtr<gf::GfTargetProperty, mm::mtl::UniquePtrDefault
 
 namespace gf {
 
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EA4890). Not static: the original
-// reaches it through the GOT.
-int g_bootType;
+// 2.0.0's symbols name it (the original reaches it through the GOT).
+int GfBootUtil::s_bootType;
 
 void GfBootUtil::execBootScriptWithMicroThread(unsigned int type, bool run) {
     if (run) {
-        g_bootType = type;
+        s_bootType = type;
         if (mm::mtl::PtrSingleton<GfScriptManager>::sys() != nullptr) {
             GfScriptManager::loadScript(0x46, "aoc_boot");
             while (!GfScriptManager::isScriptLoaded(0x46)) {
@@ -3020,13 +3019,13 @@ void GfBootUtil::execBootScriptWithMicroThread(unsigned int type, bool run) {
                 }
             }
             GfScriptManager::destroyScript(0x46);
-            g_bootType = 0;
+            s_bootType = 0;
         }
     }
 }
 
 int GfBootUtil::getBootType() {
-    return g_bootType;
+    return s_bootType;
 }
 
 float GfGameUtilFieldEnhance::integrateAccessoriesEffect(unsigned int driver, unsigned short effect) {

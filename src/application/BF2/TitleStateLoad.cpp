@@ -1,5 +1,5 @@
 #include "classes/tl/TitleMain.h"
-#include "gf/SDataSave.h"
+#include "gf/SDataSaveIra.h"
 #include "classes/tl/TitleStatePlayEvent.h"
 #include "classes/gf/GfFieldLod.h"
 #include "classes/gf/GfGameManager.h"
@@ -203,7 +203,7 @@ void TitleStateLoad::update(TitleMain* title, const fw::UpdateInfo& info) {
 void TitleStateSaveData::update(TitleMain* title, const fw::UpdateInfo& info) {
     if (gf::GfGameManager::isGameTypeIra()) {
         gf::GfGameLoad load(static_cast<gf::SAVESLOT>(0x16));
-        title->getSaveBuffer()->fn_7100153694();
+        title->getSaveBuffer()->clear();
         load.execGameLoadWithMicroThread(*title->getSaveBuffer());
         if (title->getSaveBuffer()->m_system.m_version != 0x3A15B) {
             requestState(11);

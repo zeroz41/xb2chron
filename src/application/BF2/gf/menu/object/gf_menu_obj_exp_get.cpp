@@ -52,8 +52,8 @@ GfMenuObjExpGet::ExpGetInfo* getOpenInfo(unsigned int kind, unsigned int positio
 }
 }  // namespace
 
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB068)
-mm::mtl::FixedQueue<GfMenuObjExpGet::OpenParam, 64> GfMenuObjExpGet::s_openRequests;
+// 2.0.0's symbols name it
+mm::mtl::FixedQueue<GfMenuObjExpGet::OpenParam, 64> GfMenuObjExpGet::s_queue;
 
 GfMenuObjExpGet::GfMenuObjExpGet(unsigned int handle) : GfMenuObject(handle) {}
 
@@ -80,7 +80,7 @@ void GfMenuObjExpGet::initialize() {
     GfMenuObject::initialize();
     GfMenuManyObjects::createQueue<ExpGetInfo>(4, 64);
     GfMenuManyObjects::createQueue<ExpGetInfo>(5, 64);
-    s_openRequests.clear();
+    s_queue.clear();
 }
 
 void GfMenuObjExpGet::finalize() {
@@ -88,11 +88,11 @@ void GfMenuObjExpGet::finalize() {
 }
 
 void GfMenuObjExpGet::update() {
-    const mm::mtl::FixedQueue<OpenParam, 64>& requests = s_openRequests;
+    const mm::mtl::FixedQueue<OpenParam, 64>& requests = s_queue;
     for (mm::mtl::FixedQueue<OpenParam, 64>::const_iterator it = requests.begin(); it != requests.end(); ++it) {
         open(*it);
     }
-    s_openRequests.clear();
+    s_queue.clear();
     GfMenuObject::update();
 }
 
@@ -223,7 +223,7 @@ void GfMenuObjExpGet::close(unsigned int handle) {
 void GfMenuObjExpGet::closeAll() {
     GfMenuManyObjects::closeAll<ExpGetInfo>(4, &close);
     GfMenuManyObjects::closeAll<ExpGetInfo>(5, &close2);
-    s_openRequests.clear();
+    s_queue.clear();
 }
 
 }  // namespace gf
