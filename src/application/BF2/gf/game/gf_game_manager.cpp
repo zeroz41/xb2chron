@@ -957,7 +957,7 @@ bool GfGameManager::isEnableInGameElma() {
 void GfGameManager::reqestEventAutoSave() {
     if (GfGameUtilDiff::isEnableAutoSave()) {
         if (GfGameScene* scene = GfGameScene::get()) {
-            scene->m_iraCampSolo = true;
+            scene->m_iraCampSave = true;
         }
     }
 }

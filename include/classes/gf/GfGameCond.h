@@ -56,8 +56,9 @@ public:
     static bool isGameCond(unsigned int condition);
     static bool isGameCondWithMap(unsigned int condition, unsigned int map);
     static bool isGameCondWithBlade(unsigned int condition, unsigned int blade);
-    // whether one of the row's slots before its first empty one is an environment condition
-    static bool applyCond(unsigned int condition, unsigned int);
+    // 2.0.0's symbols name it: whether one of the row's slots before its first empty one is an environment
+    // condition (GfPlayComSalvage::update calls it)
+    static bool hasEnvCondition(unsigned int condition);
 };
 }  // namespace gf
 

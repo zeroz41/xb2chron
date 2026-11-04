@@ -31,7 +31,7 @@ public:
     // symbols name it
     static int s_refCount;
 
-    unsigned int m_req;  // start's GfReqCommand::reqSoloParty handle; the name is not the original's
+    unsigned int m_req;  // start's GfReqCommand::reqAutoSave handle; the name is not the original's
     bool m_skip;  // start makes no request when it is set; the name is not the original's
 };
 }  // namespace gf

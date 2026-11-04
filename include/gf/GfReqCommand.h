@@ -17,8 +17,9 @@ public:
     static unsigned int reqWaitEvent(float time, GF_OBJ_HANDLE* handle);
     // a map jump request: returns its handle (GfPlayComMapjump::start keeps it for GfReqManager::isValid)
     static unsigned int reqMapjump(const GfMapjumpInfo& info);
-    // returns its handle (GfPlayComIraCampSave::start passes 22 and waits on GfReqManager::isValid)
-    static unsigned int reqSoloParty(unsigned int party);
+    // 2.0.0's symbols name it (its GfGameUtil::execAutoSave calls it too): returns its handle
+    // (GfPlayComIraCampSave::start passes slot 22 and waits on GfReqManager::isValid)
+    static unsigned int reqAutoSave(SAVESLOT slot);
     // the fld script plugin's startScript passes (0, name, true) and ignores the returned handle
     static unsigned int reqStartScript(unsigned int id, const char* name, bool start);
     // a save request: returns its handle (GfMenuObjBladeCreate::seqSave passes slot 22 and waits on

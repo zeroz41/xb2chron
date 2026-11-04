@@ -230,7 +230,7 @@ public:
     unsigned char pad_1CA0[0x4];
     float m_timeVal[2];                 // 0x1CA4, by s_nDblStockIdx: setTimeVal clamps to [0, 1] (name inferred)
     unsigned char pad_1CAC[0x14];
-    // 0x1CC0: weatherFrmEnd (ScnRenderDrSysParmAcc::getWeatherFrame's call) sets [s_nDblStockIdx], isWeatherFrmEnd reads
+    // 0x1CC0: weatherFrmEnd (ScnRenderDrSysParmAcc::weatherFrmEnd's call) sets [s_nDblStockIdx], isWeatherFrmEnd reads
     // [s_nDblIdx] (the name is not the original's)
     // a byte, not a bool: isWeatherFrmEnd compares it with 0
     unsigned char m_weatherFrameReq[2];

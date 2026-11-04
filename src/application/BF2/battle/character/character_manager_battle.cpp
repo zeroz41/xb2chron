@@ -356,7 +356,7 @@ bool CharacterManager::IsExistSeriousBattleEnemy() const {
     for (int i = PLAYER_NUM; i < CHARACTER_NUM; i++) {
         BattleCharacter* chr = GetCharacterConst(i);
         if (chr == nullptr) continue;
-        bool found = chr->GetWeaponEffectCaster();
+        bool found = chr->IsSeriousBattleEnemy();
         if (found) return true;
     }
     return false;

@@ -24,8 +24,8 @@ public:
     // the driver of the member at an index of a party (0: the game data's party at 0xE9884, 1 and 2 the other two
     // parties GfDataManager::getDataGameIra keeps at 0x10D04 and 0x10D40). 2.0.0's symbols name it; 1.0.0's
     // GfDataParty::getDriver(unsigned int) has the same body for party 0, sits next to GfDataDriver::getBlade as this
-    // does, and 1.0.0's GfMenuObjUtil::isBladeEnableOffset calls it where 3.0.1's calls getDriver (3.0.1 added the
-    // second parameter, as for getPartyMember; 2.0.0's symbols type it gf::PTPOS)
+    // does, and 1.0.0's GfMenuObjUtil::isBladeEnableOffset calls it where 3.0.1's isLeaderBladeEnable calls getDriver
+    // (3.0.1 added the second parameter, as for getPartyMember; 2.0.0's symbols type it gf::PTPOS)
     static unsigned int getDriver(unsigned int index, PTPOS party);
     // the party index of a driver (0.., -1 for 0 or a driver not in the party). 2.0.0's symbols name it;
     // 1.0.0's GfDataParty::getDriverPartyID(unsigned int) sits right after GfDataBlade::isActivateParty as this does,

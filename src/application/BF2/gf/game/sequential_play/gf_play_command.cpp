@@ -385,9 +385,9 @@ GfPlayComIraCampSave::~GfPlayComIraCampSave() { s_refCount--; }
 void GfPlayComIraCampSave::start() {
     if (s_refCount == 1 && !m_skip) {
         GfGameScene* scene = GfGameScene::get();
-        if (scene != nullptr && scene->m_iraCampSolo) {
-            scene->m_iraCampSolo = false;
-            m_req = GfReqCommand::reqSoloParty(22);
+        if (scene != nullptr && scene->m_iraCampSave) {
+            scene->m_iraCampSave = false;
+            m_req = GfReqCommand::reqAutoSave(static_cast<SAVESLOT>(22));
         }
     }
 }

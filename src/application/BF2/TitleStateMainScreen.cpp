@@ -99,7 +99,7 @@ void TitleStateMainScreen::playTitleEvent(TitleMain* title) {
     }
     fw::RenderParam::resetScene();
     ml::ScnRenderDrSysParmAcc acc(fw::Framework::sys()->m_scn->m_renderDrSys, 0);
-    acc.getWeatherFrame();
+    acc.weatherFrmEnd();
     gf::SCOM_FADE::create(0, 15, mm::Col4::zero);
     gf::SCOM_FADE::create(1, 15, mm::Col4::zero);
     gf::SCOM_FADE::create(2, 15, mm::Col4::zero);

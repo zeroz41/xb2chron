@@ -63,7 +63,7 @@ public:
     virtual bool IsInvalidHikariSp() const;  // slot 71
     virtual bool IsAlwaysKakusei() const;  // slot 72
     virtual bool IsChallengeTarget() const;  // slot 73 (placeholder name: see CharacterParameter)
-    virtual bool IsSeriousBattleEnemy() const;  // slot 74 (placeholder name: see CharacterParameter)
+    virtual bool IsSeriousBattleEnemy() const;  // slot 74
     virtual bool IsInvalidTalentKasumi() const;  // slot 76 (placeholder name: see CharacterParameter)
     virtual void SetBuddy(gf::GF_OBJ_HANDLE*, bool);  // slot 77
     virtual int ApplyStatusEnhanceAndDifficulty(int, int, int) const;  // slot 78

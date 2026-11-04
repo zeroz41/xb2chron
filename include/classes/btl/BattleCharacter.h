@@ -65,15 +65,16 @@ public:
     bool PlaySE(BTL_SE se, int no, const mm::Vec3* pos, bool follow);
     void PlaySystemSE(BTL_SE se, int no, bool, bool);
     void StopSE(BTL_SE se, int no);
-    // 3.0.1's body answers its parameter's slot 74 (a bool) for a living non-player character in battle while
-    // BattleGlobal's m_challengeAnySuccess is set, else false: the return type is read from that tail call
-    bool GetWeaponEffectCaster();
+    // 2.0.0's symbols name it (1.0.0's GetWeaponEffectCaster sat here). What it does: its parameter's
+    // IsSeriousBattleEnemy for a living non-player character in battle while BattleGlobal's m_challengeAnySuccess is
+    // set, else false
+    bool IsSeriousBattleEnemy() const;
     // where the character stands to the target, 0-3 (Utility::AI_GetTargetDirection answers it plus 1); the bool
     // it sets makes the answer void
     unsigned char CheckAttackPosition(gf::GF_OBJ_HANDLE* target, bool, bool* out) const;
     // takes target (or the character m_aiArtsTarget names, once) as m_subTargetHandle, with its attack position and
     // weapon distance; the controlled character hands it to BattleGlobal
-    void SetAttackTarget(gf::GF_OBJ_HANDLE* target, bool);
+    void SetAttackTarget(gf::GF_OBJ_HANDLE* target);
     void CheckWeaponDistance(gf::GF_OBJ_HANDLE* target);
     // what the enemy's battle states hand an animation annotation to (1.0.0's name)
     void AsmCallback(const gf::MsgObjectNotifyAsmCallback& msg);

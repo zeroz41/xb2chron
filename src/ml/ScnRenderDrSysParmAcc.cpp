@@ -1585,7 +1585,7 @@ void ScnRenderDrSysParmAcc::setWeather(int weather) { m_postParm->m_weather = we
 
 void ScnRenderDrSysParmAcc::setWeatherFrame(float frame) { m_postParm->setWeatherFrame(frame); }
 
-void ScnRenderDrSysParmAcc::getWeatherFrame() const { m_drMan->weatherFrmEnd(); }
+void ScnRenderDrSysParmAcc::weatherFrmEnd() { m_drMan->weatherFrmEnd(); }
 
 void ScnRenderDrSysParmAcc::setSeamMapAddPosMode(bool enable) { m_drMan->m_seamMapAddPosMode = enable; }
 

@@ -637,7 +637,7 @@ bool GfMenuObjUtil::canBladeHanaInMercenary() {
     return count >= 2;
 }
 
-bool GfMenuObjUtil::isBladeEnableOffset(unsigned int driver, int offset) {
+bool GfMenuObjUtil::isLeaderBladeEnable() {
     if (ui::UIUtil::isEnableExpType(3) && GfGameManager::isGameTypeIra()) {
         return true;
     }

@@ -513,10 +513,10 @@ const GROUP_DATA* BattleCharacter::GetGroupDataConst() const {
     return data->m_isValid ? data : nullptr;
 }
 
-bool BattleCharacter::GetWeaponEffectCaster() {
+bool BattleCharacter::IsSeriousBattleEnemy() const {
     if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_challengeAnySuccess && !m_isPlayer && m_isBattle &&
         !IsDead(0)) {
-        return GetCharacterParameter(false)->IsSeriousBattleEnemy();
+        return GetCharacterParameterConst(false)->IsSeriousBattleEnemy();
     }
     return false;
 }
@@ -892,7 +892,7 @@ bool BattleCharacter::CheckRandFriendEnhanceRate(int id) const {
     return ml::mtRandf1() <= rate;
 }
 
-void BattleCharacter::SetAttackTarget(gf::GF_OBJ_HANDLE* target, bool) {
+void BattleCharacter::SetAttackTarget(gf::GF_OBJ_HANDLE* target) {
     if (m_aiArtsTarget >= 0) {
         if (BattleCharacter* chr = mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(m_aiArtsTarget)) {
             target = chr->m_handle;

@@ -24,11 +24,11 @@ namespace gf {
 // The requests' data (each new'd for GfReqManager::addCommand, which deletes it once the request ran). Every name
 // below is inferred, not the original's.
 
-// a save: reqSave, reqSaveForLastGame, reqSoloParty and reqSaveOption fill it
+// a save: reqSave, reqSaveForLastGame, reqAutoSave and reqSaveOption fill it
 struct ReqSaveParam : public GfReqParam {
-    ReqSaveParam() : m_soloParty(false), m_flag(false) {}
-    unsigned int m_slot;  // a SAVESLOT, or reqSoloParty's party; reqSaveOption's -1
-    bool m_soloParty;     // reqSoloParty's
+    ReqSaveParam() : m_autoSave(false), m_flag(false) {}
+    unsigned int m_slot;  // a SAVESLOT; reqSaveOption's -1
+    bool m_autoSave;      // reqAutoSave's
     bool m_flag;          // reqSaveForLastGame's
 };
 
@@ -106,11 +106,11 @@ void GfReqCommand::execSaveOption(const GfReqParam* param) {
     gameSave.execOptionSaveWithMicroThread();
 }
 
-unsigned int GfReqCommand::reqSoloParty(unsigned int party) {
+unsigned int GfReqCommand::reqAutoSave(SAVESLOT slot) {
 #line 165
     ReqSaveParam* param = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ReqSaveParam;
-    param->m_slot = party;
-    param->m_soloParty = true;
+    param->m_slot = slot;
+    param->m_autoSave = true;
     return GfReqManager::addCommand(param, execSave);
 }
 

@@ -379,9 +379,9 @@ public:
     };
     mm::mtl::FixedVector<AppendRecord, 16> m_appendRecords;  // 0x6A8
     unsigned char pad_8B0[0x8];
-    // GfPlayComIraCampSave::start clears it and requests solo party 22 (GfReqCommand::reqSoloParty) while it is set;
-    // the name is not the original's
-    bool m_iraCampSolo;
+    // GfPlayComIraCampSave::start clears it and requests an auto save to slot 22 (GfReqCommand::reqAutoSave) while it
+    // is set; the name is not the original's
+    bool m_iraCampSave;
     // eventAfterScriptEvent sets it for the "aoc_tut24", "aoc_tut04" and "aoc_tut10" scripts; eventTutorialSequence clears it and
     // calls GfEvent::callPlayerControl(15) (the name is not the original's)
     bool m_tutorialPlayerControl;

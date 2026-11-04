@@ -328,9 +328,10 @@ public:
     // (appended by menuobjutil, session 19)
     // the set (slot) of a driver's blade, -1 for none
     static int getSetBladeID(unsigned int driver, int slot, bool);
-    // whether the blade slot can be used: always with add-on menu layer 3 usable, else whether the first party
-    // member's driver has a set blade that is not a dummy (3.0.1 ignores both arguments)
-    static bool isBladeEnableOffset(unsigned int driver, int offset);
+    // 2.0.0's symbols name it (their isBladeEnableOffset beside it takes a driver and an offset and calls
+    // getSetBladeID; 3.0.1 has no such function). Whether the leader's blade can be used: always with add-on menu
+    // layer 3 usable, else whether the first party member's driver has a set blade that is not a dummy
+    static bool isLeaderBladeEnable();
     static unsigned int getBladeAttributeIconID(unsigned int blade);  // 0x9E plus the blade's attribute
     static bool isBladeDifferentImage(unsigned int blade, unsigned int other);  // their menu ids differ
     static bool isScenarioBlade(unsigned int blade);  // a regular blade or blade 1014

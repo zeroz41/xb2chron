@@ -70,7 +70,7 @@ public:
     int GetAliveBossNum() const;
     bool IsCharacterDead(gf::GF_OBJ_HANDLE* handle) const;
     // 2.0.0's symbols name it. What it does: false unless BattleGlobal's m_challengeAnySuccess is set; then whether an
-    // enemy in use answers BattleCharacter::GetWeaponEffectCaster (BattleGlobal::BattleStartInitialize calls it).
+    // enemy in use answers BattleCharacter::IsSeriousBattleEnemy (BattleGlobal::BattleStartInitialize calls it).
     bool IsExistSeriousBattleEnemy() const;
     bool IsExistAlivePlayer() const;
     // 2.0.0's symbols name it. What it does: whether an enemy in use that is no blade is alive (IsDead(0) false), with
