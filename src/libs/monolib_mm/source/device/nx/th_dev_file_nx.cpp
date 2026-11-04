@@ -2477,8 +2477,8 @@ bool DevFileTh::checkValidFileBlock(const char* path) {
 }
 
 namespace dvfl_detail {
-mm::mtl::FixedVector<ReserveArchiveParam, 8> g_reserveArchives;
-mm::mtl::FixedVector<LoadMediaParam, 8> g_loadMedia;
+mm::mtl::FixedVector<ReserveArchiveParam, 16> g_reserveArchives;
+mm::mtl::FixedVector<LoadMediaParam, 16> g_loadMedia;
 mm::mtl::FixedVector<IDevFileEvent*, 8> g_FileEventListener;
 }  // namespace dvfl_detail
 

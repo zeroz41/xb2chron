@@ -118,15 +118,17 @@ public:
 namespace dvfl_detail {
 // 0x71006B580C (this unit)
 void addMediaPath(MEDIA media, const char* path, int prio);
-// named by the symbols: an archive DevFileTh::registArchive keeps in g_reserveArchives (0x320 bytes: the
-// FixedVector<ReserveArchiveParam, 8>'s size sits at 0x1900; fields not read yet)
+// named by the symbols: an archive DevFileTh::registArchive keeps in g_reserveArchives (0x190 bytes: its copy
+// constructor writes up to 0x190, and 2.0.0's symbols give the FixedVector capacity 16, whose size sits at 0x1900;
+// fields not read yet)
 struct ReserveArchiveParam {
-    unsigned char pad_0[0x320];
+    unsigned char pad_0[0x190];
 };
-// named by the symbols: a search path addMediaPath inserts into g_loadMedia (0x118 bytes: the FixedVector<
-// LoadMediaParam, 8>'s size sits at 0x8C0; fields not read yet)
+// named by the symbols: a search path addMediaPath inserts into g_loadMedia (0x8C bytes: FixedVector::insert
+// steps by 0x8C and checks the count against 16, as 2.0.0's symbols give; the size sits at 0x8C0; fields not
+// read yet)
 struct LoadMediaParam {
-    unsigned char pad_0[0x118];
+    unsigned char pad_0[0x8C];
 };
 }  // namespace dvfl_detail
 }  // namespace ml
