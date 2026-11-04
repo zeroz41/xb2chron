@@ -41,7 +41,7 @@ public:
     void setPadLineSelection(unsigned int handle, unsigned int max);
     void setPadLineSelectionLoop(unsigned int handle, bool loop);
     void setPadPageSize(unsigned int handle, unsigned int size);
-    void setPadLoopSetting(unsigned int handle, bool loop);
+    void setPadHideSelect(unsigned int handle, bool hide);
     void setupPointerSelection(unsigned int handle, const UIInputPointer::SelectionSetup& setup);
     void changePointerPos(unsigned int handle, const mm::Pnt<short>& pos);
     void changeRegionScale(unsigned int handle, float scale);

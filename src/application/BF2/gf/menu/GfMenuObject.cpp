@@ -177,10 +177,10 @@ void GfMenuObject::setPadLineSelectionLoop(unsigned int handle, bool loop) {
     }
 }
 
-void GfMenuObject::setPadLoopSetting(unsigned int handle, bool loop) {
+void GfMenuObject::setPadHideSelect(unsigned int handle, bool hide) {
     unsigned int input = ui::UIInputManager::get()->searchInputHandle(handle);
     if (input != 0) {
-        ui::UIInputManager::get()->setPadLoopSetting(input, loop);
+        ui::UIInputManager::get()->setPadHideSelect(input, hide);
     }
 }
 

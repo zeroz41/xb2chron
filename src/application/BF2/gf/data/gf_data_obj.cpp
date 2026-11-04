@@ -143,7 +143,7 @@ const char* DataObjDriver::getMotionResourceName() const {
 }
 
 const char* DataObjDriver::getEffectResourceName() const {
-    return GfDataDriver::getDebugName(getBdatId());
+    return GfDataDriver::getEffectResourceName(getBdatId());
 }
 
 const char* DataObjDriver::getName() const {

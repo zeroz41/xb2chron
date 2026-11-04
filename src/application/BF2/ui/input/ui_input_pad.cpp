@@ -13,7 +13,8 @@ namespace ui {
 
 UIInputPad::UIInputPad(unsigned int id, unsigned int handle, const PadSetup& setup)
     : UIInputLayer(id, handle, setup), m_padActions(setup.m_actions), m_param(setup.m_param), m_padNext(0),
-      m_padPrev(0), m_lineSelectionMax(0), m_lineNum(0), m_pageSize(0), m_repeatCount(0), m_eventExt(0), m_loop(false) {
+      m_padPrev(0), m_lineSelectionMax(0), m_lineNum(0), m_pageSize(0), m_repeatCount(0), m_eventExt(0),
+      m_hideSelect(false) {
     const PadParam& param = setup.m_param;
     // the UI pad buttons that move the selection, by the setup's pad type
     int next = 0;
@@ -116,13 +117,13 @@ void UIInputPad::setPageSize(unsigned int size) {
     }
 }
 
-void UIInputPad::setLoop(bool loop) {
-    m_loop = loop;
+void UIInputPad::setHideSelect(bool hide) {
+    m_hideSelect = hide;
 }
 
-// the setup's select text, none while looping (3.0.1's; no evidence names it)
+// the setup's select text, none while setHideSelect is on (3.0.1's; no evidence names it)
 unsigned short UIInputPad::getSelectTextID() const {
-    if (m_loop) {
+    if (m_hideSelect) {
         return 0;
     }
     return m_param.m_selectText;

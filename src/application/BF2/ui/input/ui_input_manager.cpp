@@ -265,13 +265,13 @@ void UIInputManager::setPadPageSize(unsigned int handle, unsigned int size) {
     }
 }
 
-void UIInputManager::setPadLoopSetting(unsigned int handle, bool loop) {
+void UIInputManager::setPadHideSelect(unsigned int handle, bool hide) {
     for (InputList::iterator it = m_layers.begin(); it != m_layers.end(); ++it) {
         InputLayerInfo& info = *it;
         if (info.m_handle == handle) {
             UIInputPad* pad = info.m_layer->castUIInputPad();
             if (pad != nullptr) {
-                pad->setLoop(loop);
+                pad->setHideSelect(hide);
             }
             return;
         }

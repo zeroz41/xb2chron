@@ -204,7 +204,8 @@ void GfAchievStats::getAchievementAddCount(unsigned int& add, unsigned int& tota
     total = 0;
     add = 0;
     unsigned int count;
-    if (GfDataAchievement::getAchievementTotalFlgIndex8(stats) >= 0 || GfDataAchievement::getAchievementTotalFlgIndex(stats) >= 0) {
+    if (GfDataAchievement::getAchievementTotalFlgIndex8(stats) >= 0 ||
+        GfDataAchievement::getAchievementTotalFlgIndex32(stats) >= 0) {
         count = GfDataAchievement::getTotalCount(stats);
     } else {
         switch (stats) {
@@ -252,7 +253,7 @@ int GfAchievStats::getAchievementTotalCount(const AchievQuest& quest) {
     BladeCounts counts = {};
     fn_710028AF64(counts, quest.m_blade);
     if (GfDataAchievement::getAchievementTotalFlgIndex8(quest.m_stats) >= 0 ||
-        GfDataAchievement::getAchievementTotalFlgIndex(quest.m_stats) >= 0) {
+        GfDataAchievement::getAchievementTotalFlgIndex32(quest.m_stats) >= 0) {
         return GfDataAchievement::getTotalCount(quest.m_stats);
     }
     switch (quest.m_stats) {

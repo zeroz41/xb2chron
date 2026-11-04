@@ -38,7 +38,7 @@ public:
     // Its bool: ListListener passes false at both calls and the body never reads it.
     void refreshList(bool);
     // 2.0.0's symbols name it. What it does: for a tips id at or past BDAT table 0x102's id top, a row whose "page" is
-    // 0 answers m_regionJP, any other row bit 0 of local game flag 2's entry id - top + 0xEF05.
+    // 0 answers m_onlyIra, any other row bit 0 of local game flag 2's entry id - top + 0xEF05.
     bool isUnlockTipsID(unsigned int id);
     // 2.0.0's symbols name it. What it does: when isUnlockTipsID(id) answers true, sets bit 1 of local game flag 2's
     // entry id - top + 0xEF05 (BDAT table 0x102's id top).
@@ -53,9 +53,9 @@ public:
     void* m_reserved;  // 0x388: cleared by the constructor, never read in this unit (the name is not the original's)
     GfMenuIDList* m_idList;  // 0x390: the constructor's create, the destructor releases it
     bool m_fromLayer;  // 0x398: initialize got a full-screen layer parameter (the name is not the original's)
-    // 0x399: initialize sets it from GfMenuManager::isRegionJP when cleared-game tips show; isUnlockTipsID answers it
+    // 0x399: initialize sets it from GfMenuManager::isOnlyIra when cleared-game tips show; isUnlockTipsID answers it
     // for page-0 rows (the name is not the original's)
-    bool m_regionJP;
+    bool m_onlyIra;
 
     // 2.0.0's symbols name it (lbl_7100EAB930). True while an instance lives.
     static bool s_Open;

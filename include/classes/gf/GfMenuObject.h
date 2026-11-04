@@ -50,7 +50,7 @@ public:
     // handle's object and the second argument; no caller in the module.
     static void setupPadLineSelectionForce(unsigned int handle, unsigned int value);
     static void setPadLineSelectionLoop(unsigned int handle, bool loop);
-    static void setPadLoopSetting(unsigned int handle, bool loop);
+    static void setPadHideSelect(unsigned int handle, bool hide);
     static void setupPointerSelection(unsigned int handle, const ui::UIInputPointer::SelectionSetup& setup);
     static void changePointerPos(unsigned int handle, const mm::Pnt<short>& pos);
     static void changePointerRegionScale(unsigned int handle, float scale);

@@ -24,7 +24,7 @@ bool GfMenuObjTips::s_Open;
 
 GfMenuObjTips::GfMenuObjTips(unsigned int handle)
     : GfMenuObject(handle), m_seq(this), m_mainSeq(this), m_context(nullptr), m_reserved(nullptr), m_idList(nullptr),
-      m_fromLayer(false), m_regionJP(false) {
+      m_fromLayer(false), m_onlyIra(false) {
     m_context = GfMenuCallContext::create();
     m_idList = GfMenuIDList::create();
     s_Open = true;
@@ -154,8 +154,8 @@ void GfMenuObjTips::initialize() {
         ui::UIObjectAcc list(main.m_handle, "LAY_list");
         GfMenuObject::sendOpenEvent(list.m_handle, index, 0.0f);
         if (GfMenuManager::isClearCheck()) {
-            m_regionJP = GfMenuObjUtil::isValidExpansion(3) && GfMenuManager::isRegionJP();
-            if (m_regionJP) {
+            m_onlyIra = GfMenuObjUtil::isValidExpansion(3) && GfMenuManager::isOnlyIra();
+            if (m_onlyIra) {
                 unsigned char* fp = GfDataBdat::getFP(0x10C);
                 unsigned char* message = GfDataBdat::getFP(0x13B);
                 unsigned short title = Bdat::getVal(fp, "title", 1);
@@ -239,7 +239,7 @@ bool GfMenuObjTips::isUnlockTipsID(unsigned int id) {
         return false;
     }
     if ((unsigned short)Bdat::getVal(fp, "page", id) == 0) {
-        return m_regionJP;
+        return m_onlyIra;
     }
     return GfGameFlag::getLocal(2, id - Bdat::getIdTop(fp) + 0xEF05) & 1;
 }

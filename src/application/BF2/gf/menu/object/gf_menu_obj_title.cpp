@@ -36,7 +36,7 @@ bool GfMenuObjTitle::s_NoSaveData = true;
 GfMenuObjTitle::GfMenuObjTitle(unsigned int handle)
     : GfMenuObject(handle), m_items(), m_index(0), m_list(nullptr), m_seq(this), m_confirmOpen(false),
       m_callContext(nullptr), m_idList(nullptr), m_str(), m_msgList(nullptr), m_number(), m_numberMax(), pad_200(),
-      m_iraJP(false), m_iraOverseas(false) {
+      m_onlyIra(false), m_iraAddOn(false) {
     s_NoSaveData = true;
     m_idList = GfMenuIDList::create();
     ui::UIListInfoBase::SetupParam param;
@@ -46,11 +46,11 @@ GfMenuObjTitle::GfMenuObjTitle(unsigned int handle)
     m_msgList = GfMenuMsgList::create();
     m_number = GfMenuReferenceNumber::create();
     m_numberMax = GfMenuReferenceNumber::create();
-    if (ui::UIUtil::isEnableExpType(3) && !GfMenuManager::isRegionJP()) {
-        m_iraOverseas = true;
+    if (ui::UIUtil::isEnableExpType(3) && !GfMenuManager::isOnlyIra()) {
+        m_iraAddOn = true;
     }
     if (!s_NoSaveData && tl::TitleMain::sys()->m_newGameAdv) {
-        m_iraJP = GfMenuObjUtil::isValidExpansion(3) && GfMenuManager::isRegionJP();
+        m_onlyIra = GfMenuObjUtil::isValidExpansion(3) && GfMenuManager::isOnlyIra();
     }
 }
 

@@ -40,8 +40,8 @@ public:
     void setLineSelectionMaxForce(unsigned int max);  // setLineSelectionMax without the one-line check
     void setLineSelectLoop(bool loop);
     void setPageSize(unsigned int size);
-    void setLoop(bool loop);
-    unsigned short getSelectTextID() const;  // m_param.m_selectText, 0 while m_loop
+    void setHideSelect(bool hide);
+    unsigned short getSelectTextID() const;  // m_param.m_selectText, 0 while m_hideSelect
     int moveSelect(const fw::PadData& pad, unsigned int step, int select);
     int fixSelectNo(int select, bool line, bool press);
 
@@ -63,7 +63,7 @@ public:
     unsigned int m_repeatCount;       // the frames a button has been held (m_param.m_shift); the name is not the original's
     unsigned char pad_404[0x4];
     EventData m_eventExt;  // 9: the selection hit an end and stayed (m_param0 says which)
-    bool m_loop;           // setLoop; getSelectTextID gives no message while it is set
+    bool m_hideSelect;     // setHideSelect; getSelectTextID gives no message while it is set
 };
 }  // namespace ui
 

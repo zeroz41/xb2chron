@@ -64,10 +64,12 @@ public:
     mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_number;  // 0x1F0 (the name is not the original's)
     mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_numberMax;  // 0x1F8 (the name is not the original's)
     unsigned char pad_200[0x8];
-    // 0x208: with save data and TitleMain::m_newGameAdv, add-on layer 3 in Japan (the name is not the original's)
-    bool m_iraJP;
-    // 0x209: the constructor sets it with add-on layer 3 outside Japan (the name is not the original's)
-    bool m_iraOverseas;
+    // 0x208: with save data and TitleMain::m_newGameAdv, add-on layer 3 and GfMenuManager::isOnlyIra (the name is not
+    // the original's)
+    bool m_onlyIra;
+    // 0x209: the constructor sets it with add-on layer 3 when GfMenuManager::isOnlyIra answers false (the name is not
+    // the original's)
+    bool m_iraAddOn;
 };
 }  // namespace gf
 

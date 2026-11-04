@@ -99,9 +99,10 @@ public:
     static void addCoin(int coin);
     // SCOM_ADD_ETHER::create forwards its value
     static void addEther(int ether);
-    // SCOM_ADD_TRUST::exec: (blade or driver, value); the debug setter in the Torna mode (GfGameManager::isGameTypeIra)
+    // SCOM_ADD_TRUST::exec: (blade or driver, value); addTrustPointIra in the Torna mode (GfGameManager::isGameTypeIra)
     static void addTrustPoint(unsigned int id, unsigned int point);
-    static void setTrustPointForDebug(unsigned int driver, unsigned int point);
+    // 2.0.0's symbols name it (carried as setTrustPointForDebug before): addTrustPoint on the driver's getIraBlade
+    static void addTrustPointIra(unsigned int driver, unsigned int point);
     // SCOM_CHAR_DEAD::exec passes the dead enemy's arrange id
     static void incEnemySuppress(unsigned int enemy);
     // SCOM_ADD_EXP::exec: inn experience (its value), else battle experience for a driver (driver, value)

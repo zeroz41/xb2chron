@@ -127,7 +127,7 @@ GfMenuManager::GfMenuManager(const GfSetupParam& param)
       m_curCameraType(0), m_callContext(nullptr), m_commonWindowResult(0), m_battleState(), pad_40E0(), m_dispHud(),
       pad_40E8(0), pad_40F0(0), m_updateDT(0.0f), m_comboRouteOpen(), m_openBtlModelView(false), m_openNameSelect(false),
       m_openOpeningTelop(false), m_hideAll(false), m_enableQuestOpen(false), m_evTheaterFlag(false), m_layer101Open(false),
-      m_layer72Open(false), m_layer300Open(false), m_region(0), m_optionFlag(false), m_regionJP(false),
+      m_layer72Open(false), m_layer300Open(false), m_region(0), m_optionFlag(false), m_onlyIra(false),
       m_baseGameFlag(false), pad_4113(1), m_bladeBookFlag(), pad_4118(0), pad_4120(), m_latestCommonWinID(0),
       m_mapjumpAtlasInfo(), m_titleValue(0), m_titleCount(0), m_npcMeetIds(), pad_43B0(0) {
     bool jp = ml::DevFileTh::checkValidFileBlock("bdat/jp.bin");
@@ -142,9 +142,9 @@ GfMenuManager::GfMenuManager(const GfSetupParam& param)
             ui::UIUtil::setResourceReplaceID(1);
             pad_4113 = 0;
         }
-        m_regionJP = true;
+        m_onlyIra = true;
     }
-    if (m_regionJP) {
+    if (m_onlyIra) {
         m_optionFlag = true;
     }
     if (GfGameManager::isInstalledBattleArenaContents()) {
@@ -205,12 +205,12 @@ bool GfMenuManager::isInitialized() {
            GfMenuSoundManager::isInitialized();
 }
 
-bool GfMenuManager::isRegionJP() {
+bool GfMenuManager::isOnlyIra() {
     GfMenuManager* mgr = get();
     if (mgr == nullptr) {
         return false;
     }
-    return mgr->m_regionJP;
+    return mgr->m_onlyIra;
 }
 
 void GfMenuManager::initOptionData(SDataOption& option) {
@@ -917,7 +917,7 @@ bool GfMenuManager::isResExist(unsigned int index) {
 
 const char* GfMenuManager::getGameVersionString() {
     GfMenuManager* mgr = GfMenuManager::get();
-    if ((mgr == nullptr || !mgr->m_regionJP) && GfGameManager::isGameTypeIra()) {
+    if ((mgr == nullptr || !mgr->m_onlyIra) && GfGameManager::isGameTypeIra()) {
         return "2.0.1";
     }
     nn::oe::GetDisplayVersion(&s_displayVersion);

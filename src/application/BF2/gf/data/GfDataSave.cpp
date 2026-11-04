@@ -135,7 +135,7 @@ void GfDataSave::getFileNameForOptionBin(mm::mtl::FixStr<256>& out) {
     out += getSaveDataExtNameForBin();
 }
 
-void GfDataSave::getFileNameForOptionXml(mm::mtl::FixStr<256>& out) {
+void GfDataSave::getFileNameForIraOptionBin(mm::mtl::FixStr<256>& out) {
     getFileNameForIraOption(out);
     out += getSaveDataExtNameForBin();
 }

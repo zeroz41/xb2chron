@@ -131,7 +131,8 @@ public:
     static bool getName(unsigned char*& bdat, unsigned int& id, unsigned int driver);
     static const char* getModelResourceName(unsigned int driver);
     static const char* getMotionResourceName(unsigned int driver);
-    static const char* getDebugName(unsigned int driver);  // DataObjDriver::getEffectResourceName returns it
+    // 2.0.0's symbols name it (carried as getDebugName before); DataObjDriver::getEffectResourceName returns it
+    static const char* getEffectResourceName(unsigned int driver);
     static unsigned int getEyeRotControl(unsigned int driver);
     static unsigned int getSkillPoint(const SDataDriver& data);
     static unsigned int getClass(const SDataDriver& data);
@@ -335,7 +336,7 @@ public:
     static bool getEquipAcceEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriver& data);
     // 2.0.0's symbols name it. What it does: for drivers 17-25 only (else 0), GfBdatChrDr::getChrDrDefBlade(driver, 0)
     // of the driver itself (slot other than 0/1), or of the first (slot 0) / second (slot 1) id getIraBack lists for
-    // it, 0 when the list is too short. GfGameUtil::setTrustPointForDebug passes (driver, -1) and adds the trust to the
+    // it, 0 when the list is too short. GfGameUtil::addTrustPointIra passes (driver, -1) and adds the trust to the
     // result.
     static unsigned int getIraBlade(unsigned int driver, int slot);
     // 2.0.0's symbols name it. What it does: the slot DataObjDriver::setVirtualSetBlade engages a blade in: for driver

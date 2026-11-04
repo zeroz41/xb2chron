@@ -640,10 +640,10 @@ bool SCOM_ADD_TRUST::exec(fw::UpdateInfo const&) {
                 if (GfDataDriver::isIraFront(driver) || GfDataDriver::isActivateUnuse(driver)) {
                     continue;
                 }
-                GfGameUtil::setTrustPointForDebug(driver, m_value);
+                GfGameUtil::addTrustPointIra(driver, m_value);
             }
         } else if (GfDataDriver::isDriver(m_value2)) {
-            GfGameUtil::setTrustPointForDebug(m_value2, m_value);
+            GfGameUtil::addTrustPointIra(m_value2, m_value);
         }
     } else {
         if (m_value2 == 0) {

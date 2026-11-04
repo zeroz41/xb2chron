@@ -958,7 +958,7 @@ int GfGameUtilHana::getConvertToEther(unsigned int item) {
 
 namespace gf {
 
-void GfGameUtil::setTrustPointForDebug(unsigned int driver, unsigned int point) {
+void GfGameUtil::addTrustPointIra(unsigned int driver, unsigned int point) {
     addTrustPoint(GfDataDriver::getIraBlade(driver, -1), point);
 }
 
@@ -2741,7 +2741,7 @@ void GfGameUtilSaveData::getSaveDataMenuInfo(SaveMenuInfo& info) {
     if (title != nullptr && title->fn_710014FB00()->m_system.m_version == 0x3A15B) {
         save = title->getSaveBuffer();
     } else {
-        save = GfGameSave::getGameOptionData();
+        save = GfGameSave::getIraGameSaveData();
     }
     fn_71002EAF78(info, save);
 }

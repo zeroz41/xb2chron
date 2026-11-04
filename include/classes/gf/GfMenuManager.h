@@ -183,7 +183,7 @@ public:
     // GfMenuObjOpeningTelop's open/close calls send nothing while it holds, and GfMenuObjStaffroll::update tests it.
     static bool isTheaterNonTelop();
     // 2.0.0's symbols name it. What it does: "2.0.1" when GfGameManager::isGameTypeIra() answers true and the manager
-    // is missing or not m_regionJP, else the application's display version (nn::oe::GetDisplayVersion into a file
+    // is missing or not m_onlyIra, else the application's display version (nn::oe::GetDisplayVersion into a file
     // static). Caller: GfMenuObjTitle::initialize.
     static const char* getGameVersionString();
     // 2.0.0's symbols name it. What it does: when GfMenuObjUtil::isValidExpansion(3) answers true and the manager's
@@ -200,7 +200,8 @@ public:
     static void updateLocatorAtlasCinfo(const GfGmkLocatorAtlas::CreateInfo& info);
     static void getFadeColor(unsigned int layer, mm::Col4& color);
     static void initOptionData(SDataOption& option);
-    static bool isRegionJP();  // the constructor sets it when menu_ira/font/bf2.wisty exists
+    // 2.0.0's symbols name it. The constructor sets it when menu_ira/font/bf2.wisty exists
+    static bool isOnlyIra();
     static unsigned int getRegion();
     static bool isRegionUS();  // getRegion() is 1
     static void setEnableQuestOpen(bool enable);
@@ -261,7 +262,7 @@ public:
     unsigned char pad_4106[0x6];
     unsigned int m_region;  // 0x410C getRegion; the constructor sets 1 without bdat/jp.bin (the name is not the original's)
     bool m_optionFlag;  // 0x4110 isEnableVoiceChange reads it (GfMenuObjOption, flushOptionSaveData) (the name is not the original's)
-    bool m_regionJP;  // 0x4111 isRegionJP
+    bool m_onlyIra;  // 0x4111 isOnlyIra
     // 0x4112 isEnableExpBlade3 returns it unless GfGameManager::isGameTypeIra() answers true (the name is not the
     // original's)
     bool m_baseGameFlag;

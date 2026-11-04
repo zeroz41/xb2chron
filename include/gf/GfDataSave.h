@@ -34,9 +34,9 @@ public:
     // and in 3.0.1, where the symbols spell it fn_710022C8FC)
     static void getFileNameForSaveBin(mm::mtl::FixStr<256>& out, SAVESLOT slot);
     static void getFileNameForOption(mm::mtl::FixStr<256>& out);
-    // named by the symbols: GfGameSave::createOptionSaveData's file name, the Xml one when
+    // named by the symbols: GfGameSave::createOptionSaveData's file name, the Ira one when
     // GfGameManager::isGameTypeIra was set
-    static void getFileNameForOptionXml(mm::mtl::FixStr<256>& out);
+    static void getFileNameForIraOptionBin(mm::mtl::FixStr<256>& out);
     static void getFileNameForOptionBin(mm::mtl::FixStr<256>& out);
     static const char* getSaveDataExtNameForBin();
     // 2.0.0's symbols name it. What it does: out = "save:/" + "irasavefile", then the slot's number formatted after it

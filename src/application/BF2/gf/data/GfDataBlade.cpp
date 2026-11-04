@@ -338,7 +338,7 @@ const char* GfDataDriver::getMotionResourceName(unsigned int driver) {
     return GfBdatChrDr::get()->getChrDrMotion(driver);
 }
 
-const char* GfDataDriver::getDebugName(unsigned int driver) {
+const char* GfDataDriver::getEffectResourceName(unsigned int driver) {
     return GfBdatChrDr::get()->getChrDrCom_Eff(driver);
 }
 
@@ -1441,7 +1441,7 @@ void GfDataAchievement::clearTotalCount(unsigned int type) {
         GfGameFlag::setLocal(8, index, 0);
         return;
     }
-    index = getAchievementTotalFlgIndex(type);
+    index = getAchievementTotalFlgIndex32(type);
     if (index < 0) {
         return;
     }
@@ -5373,7 +5373,7 @@ bool GfDataFieldSkill::getCaption(unsigned char*& bdat, unsigned int& id, unsign
 }
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BA0B8). The statistics whose totals are
-// kept in 32-bit local flags 258 on (getAchievementTotalFlgIndex).
+// kept in 32-bit local flags 258 on (getAchievementTotalFlgIndex32).
 static const unsigned short s_achievementTotalStats[64] = {
         0x31, 0x36, 0x3C, 0x3E, 0x63, 0x72, 0x74, 0x76, 0x78, 0x7A, 0x7C, 0x7E,
         0x80, 0x82, 0x84, 0x86, 0x88, 0x8A, 0x8C, 0x8E, 0x90, 0x92, 0x94, 0x33,
@@ -5383,7 +5383,7 @@ static const unsigned short s_achievementTotalStats[64] = {
         0x0, 0x0, 0x0, 0x0,
 };
 
-int GfDataAchievement::getAchievementTotalFlgIndex(unsigned short stats) {
+int GfDataAchievement::getAchievementTotalFlgIndex32(unsigned short stats) {
     if (stats == 0) {
         return -1;
     }
@@ -5432,7 +5432,7 @@ unsigned int GfDataAchievement::getTotalCount(unsigned int stats) {
     if (index >= 0) {
         return GfGameFlag::getLocal(8, index);
     }
-    index = getAchievementTotalFlgIndex(stats);
+    index = getAchievementTotalFlgIndex32(stats);
     if (index < 0) {
         return 0;
     }
@@ -5446,7 +5446,7 @@ void GfDataAchievement::addTotalCount(unsigned int type, unsigned int value) {
         GfGameFlag::setLocal(8, index, count > 255 ? 255 : count);
         return;
     }
-    index = getAchievementTotalFlgIndex(type);
+    index = getAchievementTotalFlgIndex32(type);
     if (index < 0) {
         return;
     }
@@ -5461,7 +5461,7 @@ void GfDataAchievement::setTotalCount(unsigned int type, unsigned int value) {
         GfGameFlag::setLocal(8, index, value > 255 ? 255 : value);
         return;
     }
-    index = getAchievementTotalFlgIndex(type);
+    index = getAchievementTotalFlgIndex32(type);
     if (index < 0) {
         return;
     }

@@ -122,7 +122,7 @@ float bgmvolNotBattleBoss(ExecFadeParam& param) {
                              fadeOut ? param.m_fade->m_fadeOutTime : param.m_fade->m_fadeInTime, fadeOut);
 }
 
-float bgmvolFadeEvent(ExecFadeParam& param) {
+float bgmvolFadeOCG(ExecFadeParam& param) {
     bool fadeOut = BgmBattleBoss::get()->getBgmCondID() == 0x55 && param.m_track->m_fieldBgm->getRscBossBattleBgmID() != 0x55;
     return bgmvolControlFade(*param.m_updateInfo,
                              fadeOut ? param.m_fade->m_fadeOutTime : param.m_fade->m_fadeInTime, fadeOut);
@@ -369,7 +369,7 @@ BgmBattleBoss::BgmBattleBoss(GfFieldBgm* fieldBgm) : BgmTrack(fieldBgm, true) {
     addVolumeFade(_gffsn::bgmvolStop, 1.0f, 1.0f, true);
     addVolumeFade(_gffsn::bgmvolBossCondition, 4.0f, 4.0f, true);
     addVolumeFade(_gffsn::bgmvolNotBattleBoss, 8.0f, 2.0f, true);
-    addVolumeFade(_gffsn::bgmvolFadeEvent, 2.0f, 2.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeOCG, 2.0f, 2.0f, true);
     addVolumeFade(_gffsn::bgmvolFadeNotBattle, 2.0f, 2.0f, true);
     addVolumeFade(_gffsn::bgmvolFadeLeaveGame, 1.0f, 1.0f, true);
     addVolumeFade(_gffsn::bgmvolFadeDeadSequence, 2.0f, 99.0f, true);

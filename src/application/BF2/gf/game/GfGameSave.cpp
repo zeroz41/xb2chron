@@ -40,7 +40,7 @@ SDataSaveIra* GfGameSave::getGameSaveData() {
     return &_gfgsv::s_SDataSave;
 }
 
-SDataSaveIra* GfGameSave::getGameOptionData() {
+SDataSaveIra* GfGameSave::getIraGameSaveData() {
     return &_gfgsv::s_SDataSave;
 }
 
@@ -96,7 +96,7 @@ void GfGameSave::createOptionSaveData(mm::mtl::FixStr<256>& name) {
     m_writeData = m_optionData;
     m_writeSize = sizeof(SDataOption);
     if (GfGameManager::isGameTypeIra()) {
-        GfDataSave::getFileNameForOptionXml(name);
+        GfDataSave::getFileNameForIraOptionBin(name);
     } else {
         GfDataSave::getFileNameForOptionBin(name);
     }

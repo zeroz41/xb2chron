@@ -15,7 +15,7 @@ public:
     static void setupOptionSaveData(SDataOption& option);
     static void flushOptionSaveData();
     // named by the symbols: fills the save menu's summary from TitleMain's save buffer (when its version is
-    // 0x3A15B) or else GfGameSave::getGameOptionData
+    // 0x3A15B) or else GfGameSave::getIraGameSaveData
     static void getSaveDataMenuInfo(SaveMenuInfo& info);
     // Placeholder name: the symbols leave it unnamed in 3.0.1 and 1.0.0 (1.0.0's fn_7100355D90, the same tail call
     // of getSaveDataMenuInfo). A member because getSaveDataMenuInfo is its only caller and it sits right after it.

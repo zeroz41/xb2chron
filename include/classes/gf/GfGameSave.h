@@ -36,7 +36,7 @@ public:
     virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
 
     static SDataSaveIra* getGameSaveData();
-    static SDataSaveIra* getGameOptionData();  // 3.0.1's returns the save data, as getGameSaveData
+    static SDataSaveIra* getIraGameSaveData();  // 2.0.0's symbols name it; returns the save data, as getGameSaveData
     static void makeNewGameSaveData();
 
     // 1.0.0's took the slot only; 3.0.1's adds three flags (stored at 0x30-0x32, each masked to a bool)
