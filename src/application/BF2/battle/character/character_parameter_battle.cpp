@@ -337,7 +337,7 @@ float CharacterParameter::GetMindEyeHateRate() const {
     return 1.0f;
 }
 
-float PlayerParameter::GetUseWeaponRate(int) const {
+float PlayerParameter::GetMindEyeRestRate() const {
     if (pad_634 <= 0.0f) {
         return 0.0f;
     }
@@ -446,11 +446,11 @@ void EnemyParameter::Initialize(gf::GF_OBJ_HANDLE* handle) {
     gf::GfBdatChrEnArrange* arrange = gf::GfBdatChrEnArrange::sys();
     pad_8aa = arrange->getChrEnArrangeScore(arrangeID);
     pad_8ac = arrange->getChrEnArrangeECube(arrangeID);
-    m_isInvalidWarp = isEnemyBlade ? true : arrange->isChrEnArrangeFlagNoTarget(arrangeID);
+    m_isInvalidTarget = isEnemyBlade ? true : arrange->isChrEnArrangeFlagNoTarget(arrangeID);
     m_isInvalidHikariSp = arrange->isChrEnArrangeFlagHikariSP4(arrangeID);
     m_isAlwaysKakusei = arrange->isChrEnArrangeFlagHomuri(arrangeID);
     m_isChild = arrange->isChrEnArrangeFlagChild(arrangeID);
-    pad_bit9 = arrange->isChrEnArrangeFlagNoWarp(arrangeID);
+    m_isInvalidWarp = arrange->isChrEnArrangeFlagNoWarp(arrangeID);
     pad_bit10 = !arrange->isChrEnArrangeFlagIgnoreLevPow(arrangeID);
     m_isFallDeadDrop = !arrange->isChrEnArrangeFlagSalvage(arrangeID);
     pad_bit13 = !arrange->isChrEnArrangeFlagNoChgBtl(arrangeID);
@@ -512,7 +512,7 @@ void EnemyParameter::MulHate(int index, int kind, float rate) {
     }
 }
 
-int EnemyParameter::ApplyStatusEnhance(int value, int rateId, int addId) const {
+int EnemyParameter::ApplyStatusEnhanceAndDifficulty(int value, int rateId, int addId) const {
     ENHANCE_DATA data;
     if (rateId != 0 && GetAdditionalEnhanceEffect(data, rateId, nullptr)) {
         value += static_cast<int>(value * data.m_value);
@@ -785,7 +785,7 @@ bool CharacterParameter::IsEnemyParameter() const {
     return false;
 }
 
-bool CharacterParameter::IsInvalidWarp() const {
+bool CharacterParameter::IsInvalidTarget() const {
     return !m_isNotBlade;
 }
 
@@ -795,7 +795,7 @@ bool CharacterParameter::IsLadyTarget() const {
     return false;
 }
 
-bool CharacterParameter::fn_7100088ED8() const {
+bool CharacterParameter::IsInvalidWarp() const {
     return false;
 }
 
@@ -855,7 +855,7 @@ void CharacterParameter::StartMindEye() {}
 
 void CharacterParameter::EndMindEye(bool) {}
 
-float CharacterParameter::GetUseWeaponRate(int) const {
+float CharacterParameter::GetMindEyeRestRate() const {
     return 0.0f;
 }
 
@@ -952,7 +952,7 @@ EnemyParameter::EnemyParameter()
       pad_8a8(0), pad_8aa(0), pad_8ac(0), pad_8ae(0), m_deadSEID(0), m_overwriteAttr(9), m_notifiedAttr(9),
       m_eatNum(0), pad_8b4(0), pad_8b5(0xFF), m_isAngry(false), pad_bit1(false), pad_bit2(false), pad_bit3(false),
       m_isEatTarget(false), m_isChild(false), m_isInvalidHikariSp(false), m_isAlwaysKakusei(false),
-      m_isInvalidWarp(false), pad_bit9(false), pad_bit10(true), m_isFallDeadDrop(true), pad_bit12(false),
+      m_isInvalidTarget(false), m_isInvalidWarp(false), pad_bit10(true), m_isFallDeadDrop(true), pad_bit12(false),
       pad_bit13(false), pad_bit14(false), pad_bit15(false) {
 }
 }  // namespace btl

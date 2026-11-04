@@ -93,8 +93,8 @@ public:
     bool fn_71000561E4(unsigned int id);
     bool CheckPowerCharge(unsigned int id);
     // 2.0.0's symbols name it. What it does: as CheckPowerCharge for buff 0x23: while the buff is on, adds its effect /
-    // 100 to BattleGlobal's damage rate of the id, marks the id's critical recast enhance as ended
-    // (SetCriticalRecastEnhanceEnd) and clears the buff; answers whether the buff was on. Callers: ActionArts,
+    // 100 to BattleGlobal's damage rate of the id, marks the id's attack as an angry arts attack
+    // (SetAngryArtsAttack) and clears the buff; answers whether the buff was on. Callers: ActionArts,
     // ActionBladeArts, ActionSpAttack.
     bool CheckAngryArts(unsigned int id);
     // sends the effect caster a MsgFxRimBloom for the one-shot rim blooms 23-30
@@ -123,7 +123,8 @@ public:
     void FluctuateKizuna(int, float);
     void AddPartyGauge(float);
     bool IsAngry() const;
-    bool IsBlade() const;
+    // 2.0.0's symbols name it (1.0.0's IsBlade() const; 2.0.0 gave some of its callers IsBlade(bool))
+    bool IsBackward() const;
     bool IsBattle() const;
     void BattleEndInitialize();
     // 1.0.0's names: 1.0.0's CharacterManager::PreUpdateProc and PostUpdateProc call them first on every character
@@ -375,7 +376,7 @@ public:
     // 2.0.0's symbols name it. As IsForward; callers Utility::AI_AddBladeArtsRecast and ten others. What it does:
     // the parameter's slot 64 with the flag (false without a parameter).
     bool IsDriver(bool) const;
-    // 2.0.0's symbols name them. Members: they call PlayCustomVoice. What they do: for a blade (IsBlade),
+    // 2.0.0's symbols name them. Members: they call PlayCustomVoice. What they do: when IsBackward holds,
     // PlayCustomVoice(13) / PlayCustomVoice(14).
     void NotifyElementalCombo(gf::GF_OBJ_HANDLE*, int, bool);
     void NotifySufferElementalCombo(int, int);

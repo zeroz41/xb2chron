@@ -58,7 +58,7 @@ template mm::mtl::FixedList<btl::EffectManager::REGISTER_PROC_DATA, 30>::iterato
 
 namespace btl {
 
-bool EffectManager::IsExistChrHitEffect(gf::GF_OBJ_HANDLE* handle) const {
+bool EffectManager::IsExistChrCircle(gf::GF_OBJ_HANDLE* handle) const {
     for (mm::mtl::FixedList<PROC_DATA, 90>::const_iterator it = m_procList.begin(); it != m_procList.end();
          ++it) {
         const EFFECT_DATA& data = m_effects[(*it).m_index];

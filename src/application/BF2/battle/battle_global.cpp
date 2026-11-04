@@ -258,7 +258,7 @@ bool BattleGlobal::IsEndDropHealPot2(unsigned int id) const {
     return false;
 }
 
-void BattleGlobal::fn_710000B338(unsigned int id) {
+void BattleGlobal::SetCriticalRecastEnhanceEnd(unsigned int id) {
     AttackDamageData* data = findAttackData(id);
     if (data != nullptr) {
         data->endCriticalRecastEnhance = true;
@@ -303,17 +303,17 @@ bool BattleGlobal::IsTalentMinochiAttack(unsigned int id) const {
     return false;
 }
 
-void BattleGlobal::SetCriticalRecastEnhanceEnd(unsigned int id) {
+void BattleGlobal::SetAngryArtsAttack(unsigned int id) {
     AttackDamageData* data = findAttackData(id);
     if (data != nullptr) {
-        data->criticalRecastEnhanceEnd = true;
+        data->angryArtsAttack = true;
     }
 }
 
 bool BattleGlobal::IsAngryArtsAttack(unsigned int id) const {
     AttackDamageData* data = findAttackData(id);
     if (data != nullptr) {
-        return data->criticalRecastEnhanceEnd;
+        return data->angryArtsAttack;
     }
     return false;
 }

@@ -27,10 +27,10 @@ public:
     virtual bool InitializeEnhance() const;  // slot 21
     virtual void SetResistantAttr(int, int, bool);  // slot 22
     virtual bool IsEnemyParameter() const;  // slot 24
-    virtual bool IsInvalidWarp() const;  // slot 25
+    virtual bool IsInvalidTarget() const;  // slot 25
     virtual void UpdateLadyTarget();  // slot 26
     virtual bool IsLadyTarget() const;  // slot 27 (placeholder name: see CharacterParameter)
-    virtual bool fn_7100088ED8() const;  // slot 28 (placeholder name: see CharacterParameter)
+    virtual bool IsInvalidWarp() const;  // slot 28
     virtual bool IsLevelDiffDamageCorrect() const;  // slot 29 (placeholder name: see CharacterParameter)
     virtual bool IsFallDeadDrop() const;  // slot 30
     virtual bool SetAngry(bool, float);  // slot 31 (returns bool like the base: BattleCharacter::SetAngry returns its result)
@@ -66,7 +66,7 @@ public:
     virtual bool IsSeriousBattleEnemy() const;  // slot 74 (placeholder name: see CharacterParameter)
     virtual bool IsInvalidTalentKasumi() const;  // slot 76 (placeholder name: see CharacterParameter)
     virtual void SetBuddy(gf::GF_OBJ_HANDLE*, bool);  // slot 77
-    virtual int ApplyStatusEnhance(int, int, int) const;  // slot 78
+    virtual int ApplyStatusEnhanceAndDifficulty(int, int, int) const;  // slot 78
     virtual void InitializeAttackParam();  // slot 79
     virtual ~EnemyParameter();  // slot 81
 
@@ -142,8 +142,8 @@ public:
     bool m_isInvalidHikariSp : 1;
     bool m_isAlwaysKakusei : 1;
     // read by the slot getters below (the names are not the original's)
+    bool m_isInvalidTarget : 1;  // IsInvalidTarget
     bool m_isInvalidWarp : 1;  // IsInvalidWarp
-    bool pad_bit9 : 1;  // slot 28 (fn_7100088ED8)
     bool pad_bit10 : 1;  // slot 29 (IsLevelDiffDamageCorrect)
     bool m_isFallDeadDrop : 1;  // IsFallDeadDrop
     bool pad_bit12 : 1;  // slot 27 (IsLadyTarget)

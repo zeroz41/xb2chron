@@ -23,7 +23,7 @@ namespace btl {
 
 namespace {
 // the luck the character's (or, while slot 65 holds, its driver's) data gives before enhancements (the name is not
-// the original's; GetLUK hands it to ApplyStatusEnhance)
+// the original's; GetLUK hands it to ApplyStatusEnhanceAndDifficulty)
 inline int GetBaseLuck(const CharacterParameter& param) {
     gf::DataParamAcc acc(param.IsBlade(true) ? param.m_driverHandle : param.m_handle);
     return acc.getLuck(false);
@@ -443,7 +443,7 @@ int CharacterParameter::GetAGI() const {
 }
 
 int CharacterParameter::GetLUK() const {
-    return ApplyStatusEnhance(GetBaseLuck(*this), 5, 15);
+    return ApplyStatusEnhanceAndDifficulty(GetBaseLuck(*this), 5, 15);
 }
 
 int CharacterParameter::GetEtherPower() const {

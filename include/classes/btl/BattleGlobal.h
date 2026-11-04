@@ -238,12 +238,12 @@ public:
         bool noShootBullet : 1;  // SetShootBullet stores the negation; IsShootBullet while clear
         bool damageRateChanged : 1;  // AddDamageRate/MulDamageRate set it when asked; GetDamageRate reports it
         bool endDropHealPot2 : 1;  // SetEndDropHealPot2/IsEndDropHealPot2
-        bool endCriticalRecastEnhance : 1;  // IsEndCriticalRecastEnhance
+        bool endCriticalRecastEnhance : 1;  // SetCriticalRecastEnhanceEnd/IsEndCriticalRecastEnhance
         bool pad_bit8 : 1;
         bool pad_bit9 : 1;
         bool pad_bit10 : 1;
         bool pad_bit11 : 1;
-        bool criticalRecastEnhanceEnd : 1;  // SetCriticalRecastEnhanceEnd
+        bool angryArtsAttack : 1;  // SetAngryArtsAttack/IsAngryArtsAttack
         bool updated : 1;  // set by every lookup
         unsigned int : 2;
         unsigned char : 0;  // 16-bit flags, then a byte of flags of its own (16- and 8-bit stores)
@@ -282,14 +282,13 @@ public:
     void AddDamageRate(unsigned int id, float rate, bool markChanged);
     void MulDamageRate(unsigned int id, float rate, bool markChanged);
     float GetDamageRate(unsigned int id, bool* changed) const;
-    // 2.0.0's symbols name SetTalentMinochiAttack, IsTalentMinochiAttack, IsAngryArtsAttack, SetAchieveBackAttack,
-    // IsAchieveBackAttack, IsChainAttackDamage, SetFutureViewCalc, GetFutureViewResult; the fn_ names are placeholders.
-    // They sit among BattleGlobal's attack accessors and look the record up in this BattleGlobal's records. What they
-    // do:
-    void fn_710000B338(unsigned int id);  // sets the flag IsEndCriticalRecastEnhance reads
+    // 2.0.0's symbols name SetAngryArtsAttack, SetTalentMinochiAttack, IsTalentMinochiAttack, IsAngryArtsAttack,
+    // SetAchieveBackAttack, IsAchieveBackAttack, IsChainAttackDamage, SetFutureViewCalc, GetFutureViewResult. They sit
+    // among BattleGlobal's attack accessors and look the record up in this BattleGlobal's records. What they do:
+    void SetAngryArtsAttack(unsigned int id);  // sets the flag IsAngryArtsAttack reads
     void SetTalentMinochiAttack(unsigned int id);  // sets flag bit 11
     bool IsTalentMinochiAttack(unsigned int id) const;  // flag bit 11 (false when there is no record)
-    bool IsAngryArtsAttack(unsigned int id) const;  // the flag SetCriticalRecastEnhanceEnd sets
+    bool IsAngryArtsAttack(unsigned int id) const;  // the flag SetAngryArtsAttack sets
     void SetAchieveBackAttack(unsigned int id, bool on);  // stores flag bit 10
     bool IsAchieveBackAttack(unsigned int id) const;  // flag bit 10
     bool IsChainAttackDamage(unsigned int id) const;  // whether a chain attack was running when the record was made
@@ -356,7 +355,8 @@ public:
     unsigned char pad_5bf0[2][9];
     unsigned char pad_5c02;  // ELEMENTAL_COMBO_FLOW_DATA::GetNextID reads pad_5bf0 while it is 2
     unsigned char pad_5c03[0x49];
-    // EnemyParameter::ApplyStatusEnhance scales every enhanced value by it (the name is not the original's)
+    // EnemyParameter::ApplyStatusEnhanceAndDifficulty scales every enhanced value by it (the name is not the
+    // original's)
     float m_statusEnhanceRate;
     // the challenge battle unit's GetDropEtherCubeRate returns it; meaning unknown
     float pad_5c50;

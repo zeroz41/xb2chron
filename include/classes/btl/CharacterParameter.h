@@ -80,7 +80,7 @@ struct ARTS_PALETTE_DATA {
 // table 0x7100B3B2F0
 class CharacterParameter {
 public:
-    // GetAdditionalEnhanceEffect fills it; ApplyStatusEnhance reads the float at its start
+    // GetAdditionalEnhanceEffect fills it; ApplyStatusEnhanceAndDifficulty reads the float at its start
     struct ENHANCE_DATA {
         float m_value;  // the name is not the original's
         unsigned char pad_4[0x4];
@@ -208,14 +208,15 @@ public:
     virtual void SetResistantAttr(int, int, bool);  // slot 22
     virtual bool IsPlayerParameter() const;  // slot 23
     virtual bool IsEnemyParameter() const;  // slot 24
-    virtual bool IsInvalidWarp() const;  // slot 25
+    // 2.0.0's symbols name it. What it does: holds while m_isNotBlade is clear; EnemyParameter's returns bit 8 of its
+    // flags at 0x8B6.
+    virtual bool IsInvalidTarget() const;  // slot 25
     // 2.0.0's symbols name it. What it does: does nothing; EnemyParameter's override is UpdateLadyTarget.
     virtual void UpdateLadyTarget();  // slot 26
     // 2.0.0's symbols name it. What it does: returns false; EnemyParameter's returns bit 12 of its flags at 0x8B6.
     virtual bool IsLadyTarget() const;  // slot 27
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 28 of this table.
-    // What it does: returns false; EnemyParameter's returns bit 9 of its flags at 0x8B6 (1.0.0's IsLevelDiffDamageCorrect read the bit after IsInvalidWarp's, but 3.0.1 inserted slots here).
-    virtual bool fn_7100088ED8() const;  // slot 28
+    // 2.0.0's symbols name it. What it does: returns false; EnemyParameter's returns bit 9 of its flags at 0x8B6.
+    virtual bool IsInvalidWarp() const;  // slot 28
     // 2.0.0's symbols name it. What it does: returns false; EnemyParameter's returns bit 10 of its flags at 0x8B6.
     virtual bool IsLevelDiffDamageCorrect() const;  // slot 29
     virtual bool IsFallDeadDrop() const;  // slot 30
@@ -255,7 +256,9 @@ public:
     virtual float GetMindEyeMoveSpeedRate() const;  // slot 46
     virtual float GetMindEyeAttackRate() const;  // slot 47
     virtual float GetMindEyeHateRate() const;  // slot 48
-    virtual float GetUseWeaponRate(int) const;  // slot 49
+    // 2.0.0's symbols name it (1.0.0's slot was GetUseWeaponRate(int)). What it does: returns 0; PlayerParameter's
+    // returns its 0x634 timer's share of the start value.
+    virtual float GetMindEyeRestRate() const;  // slot 49
     // What it does: returns false; PlayerParameter's returns whether its 0x634 timer runs (a blade asks its
     // driver's parameter).
     virtual bool IsMindEye() const;  // slot 50
@@ -302,7 +305,7 @@ public:
     // 2.0.0's symbols name it. What it does: returns false; EnemyParameter's returns bit 15 of its flags at 0x8B6.
     virtual bool IsInvalidTalentKasumi() const;  // slot 76
     virtual void SetBuddy(gf::GF_OBJ_HANDLE*, bool);  // slot 77
-    virtual int ApplyStatusEnhance(int, int, int) const;  // slot 78
+    virtual int ApplyStatusEnhanceAndDifficulty(int, int, int) const;  // slot 78
     virtual void InitializeAttackParam();  // slot 79
     virtual unsigned int CalcDamageArmorEx(unsigned int);  // slot 80
     // 2.0.0's symbols name it. What it does: unless BattleGlobal's m_challengeAnySuccess is set, sets bit 11 of the

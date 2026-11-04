@@ -97,7 +97,7 @@ void DataManager::ReleaseEnemyGroup(gf::GF_OBJ_HANDLE* handle) {
     }
 }
 
-int DataManager::GetEnemyGroupIndex(gf::GF_OBJ_HANDLE* handle) {
+int DataManager::GetEnemyGroupIndex(gf::GF_OBJ_HANDLE* handle) const {
     int index = -1;
     if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         for (int i = 0; i < 35; i++) {

@@ -64,7 +64,7 @@ bool CharacterParameter::IsInvalidTalentKasumi() const {
 }
 
 // the parameter names are not the original's
-int CharacterParameter::ApplyStatusEnhance(int value, int rateId, int addId) const {
+int CharacterParameter::ApplyStatusEnhanceAndDifficulty(int value, int rateId, int addId) const {
     ENHANCE_DATA data;
     if (rateId != 0 && GetAdditionalEnhanceEffect(data, rateId, nullptr)) {
         value += static_cast<int>(value * data.m_value);
@@ -107,16 +107,16 @@ bool EnemyParameter::IsEnemyParameter() const {
     return true;
 }
 
-bool EnemyParameter::IsInvalidWarp() const {
-    return m_isInvalidWarp;
+bool EnemyParameter::IsInvalidTarget() const {
+    return m_isInvalidTarget;
 }
 
 bool EnemyParameter::IsLadyTarget() const {
     return pad_bit12;
 }
 
-bool EnemyParameter::fn_7100088ED8() const {
-    return pad_bit9;
+bool EnemyParameter::IsInvalidWarp() const {
+    return m_isInvalidWarp;
 }
 
 bool EnemyParameter::IsLevelDiffDamageCorrect() const {

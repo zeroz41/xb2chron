@@ -135,7 +135,7 @@ public:
     static void PostUpdate(const fw::UpdateInfo& info);
     int RegisterEnemyGroup(gf::GF_OBJ_HANDLE* first, gf::GF_OBJ_HANDLE* second);
     void ReleaseEnemyGroup(gf::GF_OBJ_HANDLE* handle);
-    int GetEnemyGroupIndex(gf::GF_OBJ_HANDLE* handle);
+    int GetEnemyGroupIndex(gf::GF_OBJ_HANDLE* handle) const;
     void GetArtsData(ARTS_DATA::DATA_TYPE type, int id, ARTS_DATA& data) const;
     bool IsSpecialEffects(int effect) const;
     // BattleCharacter::GetCharacterParameter passes the character's id

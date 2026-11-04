@@ -394,7 +394,7 @@ int Utility::AI_GetEnemyNum() {
     int num = 0;
     for (int i = 20; i < 90; i++) {
         BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(i);
-        if (chr && !chr->IsBlade() && !chr->IsDead(0)) {
+        if (chr && !chr->IsBackward() && !chr->IsDead(0)) {
             num += chr->IsBattle();
         }
     }
@@ -405,7 +405,7 @@ int Utility::AI_GetPlayerNum() {
     int num = 0;
     for (int i = 0; i < 20; i++) {
         BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(i);
-        if (chr && !chr->IsBlade() && !chr->IsDead(0)) {
+        if (chr && !chr->IsBackward() && !chr->IsDead(0)) {
             num += chr->IsBattle();
         }
     }
@@ -677,7 +677,7 @@ int Utility::AI_GetArtsEnemyNum() {
     int num = 0;
     for (int i = 20; i < 90; i++) {
         BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(i);
-        if (chr && !chr->IsBlade() && !chr->IsDead(0) && chr->IsBattle()) {
+        if (chr && !chr->IsBackward() && !chr->IsDead(0) && chr->IsBattle()) {
             switch (chr->m_state) {
             case 7:
             case 9:
@@ -694,7 +694,7 @@ int Utility::AI_GetArtsPlayerNum() {
     int num = 0;
     for (int i = 0; i < 20; i++) {
         BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(i);
-        if (chr && !chr->IsBlade() && !chr->IsDead(0) && chr->IsBattle()) {
+        if (chr && !chr->IsBackward() && !chr->IsDead(0) && chr->IsBattle()) {
             switch (chr->m_state) {
             case 7:
             case 9:

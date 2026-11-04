@@ -365,7 +365,7 @@ bool CharacterManager::IsExistSeriousBattleEnemy() const {
 bool CharacterManager::IsExistAlivePlayer() const {
     for (int i = 0; i < PLAYER_NUM; i++) {
         BattleCharacter* chr = GetCharacterConst(i);
-        if (chr != nullptr && !chr->IsBlade() && !chr->IsDead(0)) {
+        if (chr != nullptr && !chr->IsBackward() && !chr->IsDead(0)) {
             return true;
         }
     }
@@ -375,7 +375,7 @@ bool CharacterManager::IsExistAlivePlayer() const {
 bool CharacterManager::IsExistAliveEnemy(bool battleOnly) const {
     for (int i = PLAYER_NUM; i < CHARACTER_NUM; i++) {
         BattleCharacter* chr = GetCharacterConst(i);
-        if (chr != nullptr && (!battleOnly || chr->IsBattle()) && !chr->IsBlade() && !chr->IsDead(0)) {
+        if (chr != nullptr && (!battleOnly || chr->IsBattle()) && !chr->IsBackward() && !chr->IsDead(0)) {
             return true;
         }
     }

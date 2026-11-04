@@ -90,11 +90,10 @@ public:
                               const mm::Vec3& pos, const mm::Vec3& scale, float, int, int, gf::GF_OBJ_HANDLE*,
                               gf::GF_OBJ_HANDLE*, gf::GF_OBJ_HANDLE*, const ARTS_SLOT_DATA&, int, unsigned int);
     void CreateCircleEffect(int, gf::GF_OBJ_HANDLE*, gf::GF_OBJ_HANDLE*);
-    // IsExistChrHitEffect: 1.0.0's name (fn_7100099470 in 3.0.1): 1.0.0's stood in the same place, between
-    // CreateCircleEffect and the destructor, with the same signature
-    bool IsExistChrHitEffect(gf::GF_OBJ_HANDLE* handle) const;
+    // 2.0.0's symbols name it (1.0.0's function in this place was IsExistChrHitEffect)
+    bool IsExistChrCircle(gf::GF_OBJ_HANDLE* handle) const;
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in this unit
-    // between IsExistChrHitEffect and the destructor and works on m_rates. What it does: adds the value to
+    // between IsExistChrCircle and the destructor and works on m_rates. What it does: adds the value to
     // m_rates[index], clamped to 0..0xFFFF, and sets m_ratesDirty so UpdateProc clears them all next frame.
     // EffectObject::ReturnLinkObj calls it.
     void AddCircleDamageBonus(int index, int value);

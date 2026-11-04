@@ -425,7 +425,7 @@ void BattleCharacter::ActionCommandEndBladeArts() {
     }
 }
 
-bool BattleCharacter::IsBlade() const {
+bool BattleCharacter::IsBackward() const {
     if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
         return !param->m_isNotBlade;
     }
@@ -699,7 +699,7 @@ void BattleCharacter::CreateDeadEffect() {
     if (!m_isPlayer) {
         return;
     }
-    if (IsBlade()) {
+    if (IsBackward()) {
         return;
     }
     BattleGlobal* global = mm::mtl::PtrSingleton<BattleGlobal>::sys();
@@ -1008,7 +1008,7 @@ bool BattleCharacter::CheckAngryArts(unsigned int id) {
     }
     float rate = param->GetBuffEffect(0x23) * 0.01f;
     mm::mtl::PtrSingleton<BattleGlobal>::sys()->AddDamageRate(id, rate, false);
-    mm::mtl::PtrSingleton<BattleGlobal>::sys()->SetCriticalRecastEnhanceEnd(id);
+    mm::mtl::PtrSingleton<BattleGlobal>::sys()->SetAngryArtsAttack(id);
     param->ClearBuff(0x23, false, true);
     return true;
 }
@@ -1419,13 +1419,13 @@ void BattleCharacter::NotifyBuddySufferFightCombo(int, int value) {
 }
 
 void BattleCharacter::NotifyElementalCombo(gf::GF_OBJ_HANDLE*, int, bool) {
-    if (IsBlade()) {
+    if (IsBackward()) {
         PlayCustomVoice(13);
     }
 }
 
 void BattleCharacter::NotifySufferElementalCombo(int, int) {
-    if (IsBlade()) {
+    if (IsBackward()) {
         PlayCustomVoice(14);
     }
 }

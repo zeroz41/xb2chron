@@ -37,7 +37,7 @@ public:
     virtual float GetMindEyeMoveSpeedRate() const;  // slot 46
     virtual float GetMindEyeAttackRate() const;  // slot 47
     virtual float GetMindEyeHateRate() const;  // slot 48
-    virtual float GetUseWeaponRate(int) const;  // slot 49
+    virtual float GetMindEyeRestRate() const;  // slot 49
     virtual bool IsMindEye() const;  // slot 50
     virtual void ResetHanaBusterRebootTimer();  // slot 51 (placeholder name: see CharacterParameter)
     virtual void SetHanaBusterRebootTimer();  // slot 52
@@ -59,7 +59,7 @@ public:
     // BattleStart and CalcDamageArmorEx set it up from the pouch buff when negative); meaning unknown
     int pad_630;
     // a timer: slot 43 starts it at BtlSystemBalanceAccess's 0x10C, PreUpdate counts it down, slot 44 ends it,
-    // GetUseWeaponRate answers its share of the start value; meaning unknown
+    // GetMindEyeRestRate answers its share of the start value
     float pad_634;
     // a timer: slot 52 starts it, PreUpdate counts it down, slot 53 holds when it ran out; slot 51 clears it
     float pad_638;
