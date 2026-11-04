@@ -14,7 +14,6 @@
 #include "classes/gf/GfPlayComMenuCommonFromParam.h"
 #include "classes/gf/GfPlayComMenuObjCommonText.h"
 #include "classes/gf/GfPlayComMenuPrecious.h"
-#include "classes/gf/GfPlayComMoverSwitch.h"
 #include "classes/gf/GfPlayComPlayerDead.h"
 #include "classes/gf/GfPlayComQuestCompleteUI.h"
 #include "classes/gf/GfPlayComQuestOrderUI.h"
@@ -244,10 +243,10 @@ void GfSequentialPlay::addEventFade() {
     addCommand(GfPlayComEventFade::create());
 }
 
-// The symbols name it addEvent(int, ...) (1.0.0's overload at this place, called from createTheaterEvent there and
-// here); 3.0.1's body makes a GfPlayComEventWeather from the first argument and reads no other.
-void GfSequentialPlay::addEvent(int id, unsigned int, unsigned int, bool) {
-    addCommand(GfPlayComEventWeather::create(WEATYPE(id)));
+// 2.0.0's symbols name it, with the same body (3.0.1's symbols spelled 1.0.0's addEvent(int, ...) overload at this
+// place, called from createTheaterEvent there and here)
+void GfSequentialPlay::addEventWeather(WEATYPE weather) {
+    addCommand(GfPlayComEventWeather::create(weather));
 }
 
 void GfSequentialPlay::addEvent(int id, unsigned int first, unsigned int second, const char* bgm,
@@ -414,8 +413,8 @@ void GfSequentialPlay::addResetBlade(unsigned int blade, int mode) {
     addCommand(GfPlayComResetBlade::create(blade, mode));
 }
 
-void GfSequentialPlay::addMoverSwitch() {
-    addCommand(GfPlayComMoverSwitch::create());
+void GfSequentialPlay::addPartySwitch() {
+    addCommand(GfPlayComResetBlade::createPartySwitch());
 }
 
 void GfSequentialPlay::addHoodHomuraBattou() {

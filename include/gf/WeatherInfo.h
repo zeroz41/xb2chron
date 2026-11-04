@@ -6,7 +6,7 @@ namespace gf { enum WEATYPE : int; }
 namespace gf { enum WEATHERID : int; }
 namespace gf { class WeatherEff; }
 namespace gf { class WeatherSnd; }
-namespace gf { struct WeatherUpdateInfo; }
+namespace gf { struct WeatherUpdate; }
 
 namespace gf {
 // one weather on GfFieldWeather's list: its effect and its sound, its time and its fade
@@ -18,7 +18,7 @@ struct WeatherInfo {
     bool isTimeup() const;
     // 2.0.0's symbols name it. What it does: fades the effect and the sound out over time and sets the fade times.
     void fadeoutEnv(float time);
-    void update(const WeatherUpdateInfo& info);  // 1.0.0's took the fw::UpdateInfo and the fade-out flag
+    void update(const WeatherUpdate& info);  // 1.0.0's took the fw::UpdateInfo and the fade-out flag
     bool updateFadein(const fw::UpdateInfo& info);  // true once faded in
     void createEnv();  // 1.0.0's
     bool updateFadeout(const fw::UpdateInfo& info);  // true once faded out

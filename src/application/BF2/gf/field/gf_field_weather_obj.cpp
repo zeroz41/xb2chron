@@ -90,7 +90,7 @@ inline bool WeatherEff::isDispEffect() const {
     return GfFieldWeather::isDispWeather();
 }
 
-void WeatherEff::update(const WeatherUpdateInfo& info, float) {
+void WeatherEff::update(const WeatherUpdate& info, float) {
     if (m_handle != 0) {
         if (isEraseEffect()) {
             m_isWait = true;
@@ -115,14 +115,14 @@ void WeatherEff::update(const WeatherUpdateInfo& info, float) {
 }
 
 // 1.0.0's; 3.0.1 keeps no copy (every use inlines it)
-inline void WeatherEff::applyAlpha(const WeatherUpdateInfo&) {
+inline void WeatherEff::applyAlpha(const WeatherUpdate&) {
     if (m_handle != 0) {
         fw::EffectManager::get()->setAlpha(m_handle, m_alpha);
     }
 }
 
 // 1.0.0's; 3.0.1 keeps no copy (every use inlines it)
-inline void WeatherEff::applySpeed(const WeatherUpdateInfo& info) {
+inline void WeatherEff::applySpeed(const WeatherUpdate& info) {
     if (m_handle != 0) {
         fw::EffectManager::get()->setSpeed(m_handle, info.m_speed);
     }
@@ -193,7 +193,7 @@ void WeatherSnd::fadeout(float time) {
     }
 }
 
-void WeatherSnd::update(const WeatherUpdateInfo& info, float volume) {
+void WeatherSnd::update(const WeatherUpdate& info, float volume) {
     GfSound* sound = GfSound::get();
     if (sound == nullptr) {
         return;
@@ -254,7 +254,7 @@ inline bool WeatherSnd::isCreateSe(float volume) const {
 }
 
 // 1.0.0's; 3.0.1 keeps no copy (every use inlines it)
-inline void WeatherSnd::applyVolume(const WeatherUpdateInfo&, float volume) {
+inline void WeatherSnd::applyVolume(const WeatherUpdate&, float volume) {
     if (m_handle.isValid() && GfSound::get() != nullptr) {
         GfSound::get()->setVolume(m_handle, m_volume * volume, 0.0f);
     }
@@ -316,7 +316,7 @@ void WeatherInfo::fadeoutEnv(float time) {
     m_fadeTimeMax = time;
 }
 
-void WeatherInfo::update(const WeatherUpdateInfo& info) {
+void WeatherInfo::update(const WeatherUpdate& info) {
     m_eff->update(info, m_alpha);
     m_snd->update(info, m_alpha);
     if (!GfPause::isPause(0x10) && m_time < m_timeMax) {
@@ -343,7 +343,7 @@ bool WeatherInfo::updateFadein(const fw::UpdateInfo& info) {
         return true;
     }
     m_alpha = m_fadeTime / m_fadeTimeMax;
-    WeatherUpdateInfo updateInfo(info);
+    WeatherUpdate updateInfo(info);
     update(updateInfo);
     return false;
 }
@@ -365,7 +365,7 @@ bool WeatherInfo::updateFadeout(const fw::UpdateInfo& info) {
         return true;
     }
     m_alpha = m_fadeTime / m_fadeTimeMax;
-    WeatherUpdateInfo updateInfo(info);
+    WeatherUpdate updateInfo(info);
     updateInfo.m_isFadeout = true;
     update(updateInfo);
     return false;
@@ -398,7 +398,7 @@ void WeatherInfo::setPause(bool pause) {
     m_snd->setPause(pause);
 }
 
-WeatherUpdateInfo::WeatherUpdateInfo(const fw::UpdateInfo& info)
+WeatherUpdate::WeatherUpdate(const fw::UpdateInfo& info)
     : m_speed(info.m_speed), m_deltaTime(info.m_deltaTime), m_isFadeout(false), m_isTimeStop(false) {}
 
 }  // namespace gf

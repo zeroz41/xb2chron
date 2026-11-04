@@ -71,7 +71,7 @@ public:
     // 2.0.0's symbols name it (1.0.0's unit ends at createResetBladeForBladeSwitch). What it does: when the game
     // condition in row 0x2F of BDAT table 0x17E's "cond" column holds, no party slot's blade reset runs or is queued
     // (GfPlayComResetBlade::isPlaying, GfSequentialPlay::isExistResetBladeParty, slots 0-2) and no state 0x14 or
-    // special action runs, queues addMoverSwitch in state 0x18; true when queued.
+    // special action runs, queues addPartySwitch in state 0x18; true when queued.
     static bool createResetBladeForBattleEnd(unsigned int slot, int setId, bool stopPlayer);
     static bool createResetBladeForBladeSwitch(unsigned int slot, int setId);
     static bool createPartySwitchForIra();

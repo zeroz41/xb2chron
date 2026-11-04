@@ -1128,7 +1128,7 @@ GfPlayComResetBlade::~GfPlayComResetBlade() {
     }
 }
 
-GfPlayCom* GfPlayComMoverSwitch::create() {
+GfPlayComResetBlade* GfPlayComResetBlade::createPartySwitch() {
 #line 3355
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComResetBlade(3, -1);
 }

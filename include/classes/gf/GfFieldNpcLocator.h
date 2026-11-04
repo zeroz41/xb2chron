@@ -9,13 +9,13 @@ namespace gf {
 // destructor, so every virtual is inline and the constructing unit emits it.
 class GfFieldNpcLocator {
 public:
-    // what the constructor is given (the name is not the original's): GfMenuLocation::postUpdate passes its requested id
-    struct CreateInfo {
+    // what the constructor is given (2.0.0's symbols name it): GfMenuLocation::postUpdate passes its requested id
+    struct CreateInfoByRSC {
         unsigned short m_id;
     };
 
     // Placeholder (fn_7100270094): zeroes the fields, then takes info's id when info is given
-    GfFieldNpcLocator(const CreateInfo* info);
+    GfFieldNpcLocator(const CreateInfoByRSC* info);
     virtual ~GfFieldNpcLocator() {  // slot 0
         dispose();
     }

@@ -19,6 +19,10 @@ public:
         }
     }
     static GfPlayComResetBlade* create(unsigned int blade, int mode);
+    // 2.0.0's symbols name it, with the same body and source line (3.0.1's symbols spelled 1.0.0's
+    // GfPlayComMoverSwitch::create): a GfPlayComResetBlade(3, -1) (blade 3 is no party slot, so the constructor pushes
+    // nothing)
+    static GfPlayComResetBlade* createPartySwitch();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfPlayComResetBlade();  // slot 1 (symbols: fn_710031D164, D0 fn_710031D21C)
     virtual const char* getFuncName() const {  // slot 3

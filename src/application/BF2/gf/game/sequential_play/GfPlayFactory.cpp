@@ -693,7 +693,7 @@ bool GfPlayFactory::createPartySwitchForIra() {
     }
     GfSequentialPlay::beginCommand(GfSequentialPlay::TYPE(0));
     GfSequentialPlay::pushState(GF_STATE(0x18));
-    GfSequentialPlay::addMoverSwitch();
+    GfSequentialPlay::addPartySwitch();
     GfSequentialPlay::popState();
     GfSequentialPlay::play();
     return true;

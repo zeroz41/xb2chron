@@ -11,6 +11,7 @@
 #include "mm/Vec3.h"
 
 namespace gf { class GfSequentialPlay; }
+namespace gf { enum WEATYPE : int; }
 namespace gf { class ParamReturnTitle; }
 namespace fw { class UpdateInfo; }
 namespace gf {
@@ -91,7 +92,7 @@ public:
     static void addWaitBattleEnd(unsigned int wait);
     static void addMiniGame();
     static void addEventFade();
-    static void addEvent(int id, unsigned int, unsigned int, bool flag);
+    static void addEventWeather(WEATYPE weather);
     // 2.0.0's symbols name it (3.0.1's symbols spelled 1.0.0's addEvent(char const*, unsigned int, unsigned int, bool)
     // here; same GfPlayFactory callers). What it does: hands them all to GfPlayComEvent::create and adds the command it makes.
     static void addEvent(int id, unsigned int, unsigned int, const char* bgm, const mm::Vec3* pos,
@@ -139,7 +140,9 @@ public:
     static void addMenuChapterSave(unsigned int id);
     static void addGimmickTaskComplete(gmk::GmkType type, unsigned int id, float time);
     static bool isExistResetBladeParty(unsigned int slot);
-    static void addMoverSwitch();
+    // 2.0.0's symbols name it (3.0.1's symbols spelled 2.0.0's addMoverSwitch; GfPlayFactory::createPartySwitchForIra
+    // calls it in both)
+    static void addPartySwitch();
     static void addWaitGmkCameraEnd(mm::mtl::IntrusivePtr<fw::Camera> camera);
     static void addResetBladePlayerStop(bool stop);
     static void addMenuObjCommonText(GfMenuObjCommonText::OpenKizunaParam& param);

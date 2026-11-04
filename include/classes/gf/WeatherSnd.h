@@ -12,13 +12,13 @@ public:
     virtual void create(gf::WEATYPE type);  // slot 2
     virtual void destroy();  // slot 3
     virtual void fadeout(float time);  // slot 4
-    virtual void update(const WeatherUpdateInfo& info, float volume);  // slot 5
+    virtual void update(const WeatherUpdate& info, float volume);  // slot 5
     virtual bool isPlay() const;  // slot 6
     virtual void setPause(bool);  // slot 8
     bool isRoomSe() const;  // 1.0.0's
     bool isEraseSe() const;  // 1.0.0's
     bool isCreateSe(float volume) const;  // 1.0.0's
-    void applyVolume(const WeatherUpdateInfo& info, float volume);  // 1.0.0's
+    void applyVolume(const WeatherUpdate& info, float volume);  // 1.0.0's
 
     SoundHandle m_handle;  // the weather's loop (GfSound::playSe)
     gf::WEATYPE m_type;  // create's

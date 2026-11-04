@@ -891,7 +891,8 @@ void GfFieldLocator::update() {
 bool GfFieldLocator::isIconIdPreorder(int iconId) {
     return static_cast<unsigned short>(Bdat::getValCheck(GfDataBdat::getFP(0x7b), 1, 0x10, 2)) == iconId;
 }
-GfFieldNpcLocator::GfFieldNpcLocator(const CreateInfo* info) : m_id(0), m_posNum(0), m_pos(mm::Vec3::zero), pad_20(0) {
+GfFieldNpcLocator::GfFieldNpcLocator(const CreateInfoByRSC* info)
+    : m_id(0), m_posNum(0), m_pos(mm::Vec3::zero), pad_20(0) {
     if (info != nullptr) {
         dispose();
         m_id = info->m_id;

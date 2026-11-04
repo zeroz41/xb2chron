@@ -11,14 +11,14 @@ public:
     virtual void create(gf::WEATYPE type);  // slot 2
     virtual void destroy();  // slot 3
     virtual void fadeout(float time);  // slot 4
-    virtual void update(const WeatherUpdateInfo& info, float volume);  // slot 5
+    virtual void update(const WeatherUpdate& info, float volume);  // slot 5
     virtual bool isPlay() const;  // slot 6
     virtual void setForceName(char const*);  // slot 7
     virtual void setPause(bool);  // slot 8
     bool isEraseEffect() const;  // 1.0.0's
     bool isDispEffect() const;  // 1.0.0's
-    void applyAlpha(const WeatherUpdateInfo& info);  // 1.0.0's
-    void applySpeed(const WeatherUpdateInfo& info);  // 1.0.0's
+    void applyAlpha(const WeatherUpdate& info);  // 1.0.0's
+    void applySpeed(const WeatherUpdate& info);  // 1.0.0's
 
     gf::WEATYPE m_type;  // create's
     // set while the effect waits out of sight (in a room, or the weather hidden): it fades out, and is created
