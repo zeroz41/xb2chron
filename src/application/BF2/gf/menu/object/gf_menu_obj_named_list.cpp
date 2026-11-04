@@ -107,8 +107,8 @@ void GfMenuObjNamedList::update() {
     GfMenuObject::update();
 }
 
-// TUnk_B63940::reciveEvent, TUnk_B63968::reciveEvent and refreshFilterIcon are not identical yet (the listeners' tables
-// and destructors come with their reciveEvent): $W/wip/full_draft.cpp (session 27 namedlist)
+// ListListener::reciveEvent, FilterListener::reciveEvent and refreshFilterIcon are not identical yet (the listeners'
+// tables and destructors come with their reciveEvent): $W/wip/full_draft.cpp (session 27 namedlist)
 
 bool GfMenuObjNamedList::sortLevel(const MenuID& a, const MenuID& b) {
     unsigned char* fp = getNamedTable();

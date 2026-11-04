@@ -33,10 +33,10 @@ public:
     // ascending, both by m_id ascending on a tie.
     static bool sortDescending(const MenuID& a, const MenuID& b);
     static bool sortAscending(const MenuID& a, const MenuID& b);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in this
-    // unit's text after the comparators and sorts this list. What it does: sorts the list with a copy of the
-    // given comparison (UIListInfo<MenuID>::sort); its one caller is updateNamedIDList.
-    void fn_710037212C(const std::function<bool(const MenuID&, const MenuID&)>& compare);
+    // 2.0.0's symbols name it. What it does: sorts the list with a copy of the given comparison
+    // (UIListInfo<MenuID>::sort); its one caller is GfMenuObjNamedList::updateNamedIDList. It hides the base's sort:
+    // this unit's other sorts call UIListInfo<MenuID>::sort by name.
+    void sort(std::function<bool(const MenuID&, const MenuID&)> compare);
 };
 }  // namespace gf
 

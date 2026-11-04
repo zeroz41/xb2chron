@@ -17,13 +17,12 @@ public:
     static void disableOpen();
     // 1.0.0 symbol; 3.0.1's copy still carries a placeholder name (fn_7100456A1C), see the menu manager's renames
     static void disp(bool disp);
-    // 2.0.0's symbols name damage, setLock; the fn_ names are placeholders. What they do: while
-    // GfMenuObjUtil::isValidExpansion(1) or (3) holds, each sends an event to "LAY_gauge" of the attached party gauge
-    // object (0x55): damage event 0x100, setLock event 0x101 with the flag, fn_7100456C0C event 0x102 with the value
-    // (btl::UIManager::UpdatePartyGauge calls all three).
+    // 2.0.0's symbols name them. What they do: while GfMenuObjUtil::isValidExpansion(1) or (3) holds, each sends an
+    // event to "LAY_gauge" of the attached party gauge object (0x55): damage event 0x100, setLock event 0x101 with the
+    // flag, setLimit event 0x102 with the value (btl::UIManager::UpdatePartyGauge calls all three).
     static void damage();
     static void setLock(bool flag);
-    static void fn_7100456C0C(int value);
+    static void setLimit(unsigned int value);
     // 2.0.0's symbols name them. What they do: while GfMenuObjUtil::isValidExpansion(3) and
     // GfMenuReference::isIraFlag(4) hold, each sends an event to a child of the attached party gauge object:
     // dispSirenPT event 0x103 with the flag to "LAY_gauge"; setLockSirenEN event 0x101 with the flag to "LAY_siren";

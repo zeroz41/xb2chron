@@ -42,7 +42,7 @@ public:
     // GfDataUtil::getScenarioFlag and m_eventChapterSave (+0x28) is not 0.
     static bool isStartChapterSave();
     // 2.0.0's symbols name it. What it does: GfGameFlag::getLocal of the game data's flags (GfDataManager::getDataGame
-    // + 0xFBBC4), width 16, index 1; GfMenuObjVision::fn_71004944B8 compares it with 2000.
+    // + 0xFBBC4), width 16, index 1; GfMenuObjUtil::isCustomEnableBlade compares it with 2000.
     static unsigned short getScenarioFlag();
     // 2.0.0's symbols name it. What it does: local flag 1 (type 16) of game's GameFlag (+0xFBBC4).
     static unsigned short getScenarioFlag(const SDataGame& game);

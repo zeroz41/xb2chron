@@ -154,7 +154,7 @@ void GfMenuObjPartyGauge::setLock(bool flag) {
     }
 }
 
-void GfMenuObjPartyGauge::fn_7100456C0C(int value) {
+void GfMenuObjPartyGauge::setLimit(unsigned int value) {
     if (GfMenuObjUtil::isValidExpansion(1) || GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x55));
         if (acc.m_object != nullptr && !acc.isTerm()) {

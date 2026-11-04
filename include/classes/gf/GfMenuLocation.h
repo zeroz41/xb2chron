@@ -64,7 +64,7 @@ public:
     // 2.0.0's symbols name it. What it does: when the instance exists, stores value in m_requestId (GfMenuObjHitonowa's
     // setupGame, initialize and seqWaitNavi pass it).
     static void startNpcNavigate(unsigned int value);
-    // 2.0.0's symbols name it. What it does: m_requestId, 0 without the instance (callers: fn_71003601DC,
+    // 2.0.0's symbols name it. What it does: m_requestId, 0 without the instance (callers: GfMenuMapInfo::convGmkToIcon,
     // GfMenuObjHitonowa's initialize, MainListener::reciveEvent and seqWaitNavi).
     static unsigned int getNpcNavigateID();
     // 2.0.0's symbols name it. What it does: when the instance exists, empties every list (locators, orders, both

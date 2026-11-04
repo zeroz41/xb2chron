@@ -211,7 +211,7 @@ static inline int getDifficulty(const int* list, const int* listAll, unsigned lo
     return (isAllDifficulty() ? listAll : list)[index];
 }
 
-unsigned int GfMenuObjOption::fn_7100452ADC(int value) {
+unsigned int GfMenuObjOption::getDifficultyIndex(unsigned int value) {
     for (unsigned int i = 0; i < getDifficultyMax(); i++) {
         if (getDifficulty(s_difficultyList, s_difficultyListAll, i) == value) {
             return i;

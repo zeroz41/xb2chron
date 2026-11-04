@@ -33,6 +33,10 @@ public:
     // the operation info's action 9 (remove/add a driver) enabled and its text by the party's driver count against
     // count, while no driver is being moved (m_moveIndex < 0)
     void refreshRemoveAddOperation(unsigned int handle, int count);
+    // 2.0.0's symbols name it (not written yet; DriverSelectListener::reciveEvent calls it). Static: its first
+    // argument is the UIObjectAcc it hands on to setupDriverLayout with the two counts and the numbers
+    static void setupDriverSelect(ui::UIObjectAcc&, GfMenuDriverList*, unsigned int, unsigned int,
+                                  mm::mtl::FixedArray<mm::mtl::IntrusivePtr<GfMenuReferenceNumber>, 7>&);
 
     // field names are not the original's
     unsigned char pad_24[0x4];  // from the end of GfMenuObject (0x24)

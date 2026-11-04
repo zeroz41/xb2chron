@@ -142,11 +142,11 @@ void GfMenuObjBtlTime::update() {
     GfMenuObject::update();
 }
 
-void GfMenuObjBtlTime::fn_71003B4AD8(int part, unsigned int param) {
+void GfMenuObjBtlTime::open(unsigned int part, int param) {
     if (part == 0 || (!GfMenuObjUtil::isValidExpansion(3) && GfMenuObjUtil::isValidExpansion(1))) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x87));
         if (acc.m_object != nullptr && !acc.isTerm()) {
-            unsigned int handle = fn_71003B4B7C(acc.m_handle, part, false);
+            unsigned int handle = getTypeObject(acc.m_handle, part, false);
             if (handle != 0) {
                 ui::EventData event;
         event.m_type = 0x21;
@@ -157,7 +157,7 @@ void GfMenuObjBtlTime::fn_71003B4AD8(int part, unsigned int param) {
     }
 }
 
-unsigned int GfMenuObjBtlTime::fn_71003B4B7C(unsigned int handle, int part, bool always) {
+unsigned int GfMenuObjBtlTime::getTypeObject(unsigned int handle, unsigned int part, bool always) {
     ui::UIObjectAcc acc(handle);
     switch (part) {
     case 0:
@@ -176,11 +176,11 @@ unsigned int GfMenuObjBtlTime::fn_71003B4B7C(unsigned int handle, int part, bool
     return 0;
 }
 
-void GfMenuObjBtlTime::fn_71003B4C24(int part) {
+void GfMenuObjBtlTime::close(unsigned int part) {
     if (part == 0 || (!GfMenuObjUtil::isValidExpansion(3) && GfMenuObjUtil::isValidExpansion(1))) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x87));
         if (acc.m_object != nullptr && !acc.isTerm()) {
-            unsigned int handle = fn_71003B4B7C(acc.m_handle, part, false);
+            unsigned int handle = getTypeObject(acc.m_handle, part, false);
             if (handle != 0) {
                 ui::EventData event;
         event.m_type = 0x22;
@@ -194,31 +194,31 @@ void GfMenuObjBtlTime::openFromChallengeBattle() {
     if (!GfMenuObjUtil::isValidExpansion(1)) {
         return;
     }
-    fn_71003B4AD8(0, 0);
-    fn_71003B4AD8(1, 0);
+    open(0, 0);
+    open(1, 0);
     if (GfGameManager::getBattleArenaMenuInfo()->m_kind == 1) {
-        fn_71003B4AD8(2, 0);
+        open(2, 0);
     } else if (GfGameManager::getBattleArenaMenuInfo()->m_kind == 3) {
-        fn_71003B4AD8(2, 1);
+        open(2, 1);
     } else {
-        fn_71003B4C24(2);
+        close(2);
     }
 }
 
 void GfMenuObjBtlTime::closeAll() {
-    fn_71003B4C24(0);
+    close(0);
     if (GfMenuObjUtil::isValidExpansion(1)) {
-        fn_71003B4C24(1);
+        close(1);
     }
     if (GfMenuObjUtil::isValidExpansion(1)) {
-        fn_71003B4C24(2);
+        close(2);
     }
 }
 
 void GfMenuObjBtlTime::noticeNewRecord() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x87));
     if (acc.m_object != nullptr && !acc.isTerm()) {
-        unsigned int handle = fn_71003B4B7C(acc.m_handle, 0, false);
+        unsigned int handle = getTypeObject(acc.m_handle, 0, false);
         if (handle != 0) {
             ui::EventData event;
         event.m_type = 0x100;
@@ -230,7 +230,7 @@ void GfMenuObjBtlTime::noticeNewRecord() {
 void GfMenuObjBtlTime::noticeTimeLimit() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x87));
     if (acc.m_object != nullptr && !acc.isTerm()) {
-        unsigned int handle = fn_71003B4B7C(acc.m_handle, 0, false);
+        unsigned int handle = getTypeObject(acc.m_handle, 0, false);
         if (handle != 0) {
             ui::EventData event;
         event.m_type = 0x101;
@@ -323,7 +323,7 @@ void GfMenuObjBtlTime::TimeListener::reciveEvent(const ui::EventData& event, uns
     }
     case 0x102:
         if (m_state.m_closePending != 0) {
-            GfMenuObjBtlTime::fn_71003B4C24(0);
+            GfMenuObjBtlTime::close(0);
         }
         break;
     case 0x103: {

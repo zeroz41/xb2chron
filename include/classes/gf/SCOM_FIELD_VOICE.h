@@ -149,7 +149,7 @@ public:
     static void createArtsSetIra(unsigned int blade);
     static void createSkillGetIra(unsigned int blade);
     // 2.0.0's symbols name them. createHitonowaGet (code at 0x7100569228): passes createInPartyForIra a stack list of
-    // the two strings "670105" and "670106" (count 2); callers GfMenuObjHitonowa::seqDispResult and fn_7100447D88.
+    // the two strings "670105" and "670106" (count 2); callers GfMenuObjHitonowa::seqDispResult and GfMenuObjNpcTelop::MainListener::reciveEvent.
     // playStop (code at 0x7100566E60): finds the request whose value at +8 is the handle in GfReqSmallCom's list at +8,
     // else the one at +0x9028, and sets its byte at +0xD3; its one caller is GfGameVoice::playStop (a tail call).
     // createChangeWeatherIra (0x71005687A4) is not written yet.

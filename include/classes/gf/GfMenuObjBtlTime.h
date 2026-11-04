@@ -24,14 +24,14 @@ public:
     // LAY_ether and LAY_score when GfMenuObjUtil::isValidExpansion(1) holds (initialize calls it last; the battle
     // challenge manager calls it when it resets).
     static void reset();
-    // fn_71003B4AD8 sends the open event (0x21, first parameter `param`) to part `part` (0 LAY_time, 1 LAY_ether,
-    // 2 LAY_score: fn_71003B4B7C), for parts other than 0 only when isValidExpansion(1) holds and isValidExpansion(3) does
-    // not; fn_71003B4C24 sends that part the close event (0x22).
-    static void fn_71003B4AD8(int part, unsigned int param);
-    // fn_71003B4B7C: the handle of part `part` under `handle` (LAY_time, LAY_ether, LAY_score), 0 for any other
+    // open sends the open event (0x21, first parameter `param`) to part `part` (0 LAY_time, 1 LAY_ether, 2 LAY_score:
+    // getTypeObject), for parts other than 0 only when isValidExpansion(1) holds and isValidExpansion(3) does not;
+    // close sends that part the close event (0x22).
+    static void open(unsigned int part, int param);
+    // getTypeObject: the handle of part `part` under `handle` (LAY_time, LAY_ether, LAY_score), 0 for any other
     // part; LAY_ether and LAY_score only when `always` or GfGameManager::isBattleArenaActive() holds
-    static unsigned int fn_71003B4B7C(unsigned int handle, int part, bool always);
-    static void fn_71003B4C24(int part);
+    static unsigned int getTypeObject(unsigned int handle, unsigned int part, bool always);
+    static void close(unsigned int part);
     // openFromChallengeBattle opens parts 0 and 1 and, by the short at 6 of GfGameManager::getBattleArenaMenuInfo()'s record, opens
     // LAY_score with 0 (1), with 1 (3) or closes it (other values), all only when isValidExpansion(1) holds;
     // closeAll closes parts 0, 1 and 2 (1 and 2 only when isValidExpansion(1) holds)

@@ -12,7 +12,7 @@
 namespace gf { class GfMenuCallContext; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class DataParamAcc; }
-namespace gf { class GfMenuBladeList; }
+namespace gf { class GfMenuBladeList; class SDataGame; }
 namespace gf { struct GfRequestBladeData; }
 namespace ui { class UIListInfoBase; class UIObjectAcc; }
 namespace fw { enum SoundCategory : int; }
@@ -267,11 +267,9 @@ public:
     // 2.0.0's symbols name it. What it does: whether blade is one of 1043..1049
     // (GfMenuObjBlWeapon2::ItemSelectListener::reciveEvent).
     static bool isBladeNoBuildWeapon(unsigned int blade);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
-    // GfMenuObjUtil's functions (unit GfMenuObjUtil, between isIraDummyBlade and convMenuBladeID). What it does: the
-    // same body as getBladeSlotMax (1, 2 once local flag 0x89FF is 1, 3 once 0x8A00 is 1); callers
-    // GfMenuObjSaveLoad2::refreshSave and fn_71002EAF78.
-    static unsigned int fn_7100490D28();
+    // 2.0.0's symbols name it. What it does: the same body as getBladeSlotMax() (1, 2 once local flag 0x89FF is 1, 3
+    // once 0x8A00 is 1; the game data is not read); callers GfMenuObjSaveLoad2::refreshSave and fn_71002EAF78.
+    static unsigned int getBladeSlotMax(const SDataGame&);
     // 2.0.0's symbols name it. What it does: 0 unless GfGameManager::isClearGame; then the first of blades 1005, 1006,
     // 1007 that GfDataBlade::fn_71002383C8 holds for, else 0 (GfMenuObjBladeSet2::BladeListListener::reciveEvent).
     static unsigned int getBladeHanaInMercenary();
@@ -344,6 +342,10 @@ public:
                                 const mm::mtl::FixedVector<unsigned short, 422>* list);
     static bool canRemoveBlade(unsigned int blade, const mm::mtl::FixedVector<unsigned short, 422>* list);
     static bool isCustomEnableDriver(unsigned int driver);
+    // 2.0.0's symbols name it. Defined in gf_menu_obj_vision.cpp (the unit that owns its address; 2.0.0 places it
+    // among GfMenuObjUtil's functions). What it does: false for blade 0x412, else true once the game is cleared or
+    // GfDataUtil::getScenarioFlag() is past 2000 (GfMenuObjCharSelect::CharListener asks it).
+    static bool isCustomEnableBlade(unsigned int blade);
     // whether the driver has Homura (blade 1001): its creator, and not unused
     static bool hasHomura(unsigned int driver);
     // the cursor's list becomes the handle's children that format names (from 1), or those of the names

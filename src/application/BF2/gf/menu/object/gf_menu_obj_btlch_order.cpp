@@ -39,7 +39,7 @@ GfMenuObjBtlchOrder::GfMenuObjBtlchOrder(unsigned int handle)
         param.m_pageRowSize = 3;
         m_driverList->setup(getAllocator(ALLOCATOR(0)), param);
     }
-    m_difficulty = GfMenuObjOption::fn_7100452ADC(GfGameUtilSaveData::getValidOptionData()->m_soundUi.m_keyD);
+    m_difficulty = GfMenuObjOption::getDifficultyIndex(GfGameUtilSaveData::getValidOptionData()->m_soundUi.m_keyD);
     m_difficultyCount = GfMenuObjOption::getDifficultyMax();
     GfMenuReference::setReferenceBtlchDifficulty(
         static_cast<GFDIFF>(GfMenuObjOption::getDifficultyFromIndex(m_difficulty)));

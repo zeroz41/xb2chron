@@ -15,6 +15,7 @@ namespace gf {
 // LAY_time one after another
 class GfMenuObjVision : public ::gf::GfMenuObject {
 public:
+    class MainListener;
     // what open passes on as its open event's parameters (the names are not the original's)
     struct OpenParam {
         unsigned char pad_0[4];
@@ -28,11 +29,8 @@ public:
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
-    // 2.0.0's symbols name open; the fn_ names are placeholders. open: with the context started, event 0x21 with param
-    // to the attached object (without isValidExpansion(1) it aborts the context as GfMenuCallContext::abort does).
-    // fn_71004944B8 (GfMenuObjCharSelect::CharListener asks it): false for blade 0x412, else true once the game is
-    // cleared or GfDataUtil::getScenarioFlag() is past 2000
-    static bool fn_71004944B8(int blade);
+    // 2.0.0's symbols name open. open: with the context started, event 0x21 with param to the attached object (without
+    // isValidExpansion(1) it aborts the context as GfMenuCallContext::abort does).
     static void open(GfMenuCallContext* context, const OpenParam& param);
     // close: event 0x100 with value to the attached object, starting the context first when there is one
     // (without isValidExpansion(1) it aborts the context)
@@ -65,12 +63,12 @@ public:
     GfMenuDriverList* m_drivers;  // the driver shown, as a list for the adapter (the name is not the original's)
 };
 
-// table 0x7100B64F50: GfMenuObjVision's listener (nothing names the class yet)
-class TUnk_B64F50 : public ::ui::UIObjectListener {
+// table 0x7100B64F50: GfMenuObjVision's listener (2.0.0's symbols name it)
+class GfMenuObjVision::MainListener : public ::ui::UIObjectListener {
 public:
     // its code zeroes 0xC-0x1B after storing its table: its own fields, as other menus' listeners use theirs
-    TUnk_B64F50(GfMenuObjVision* owner) : pad_0C(), m_owner(owner) {}
-    virtual ~TUnk_B64F50() {}  // slot 0: its D1 slot is the base's destructor
+    MainListener(GfMenuObjVision* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~MainListener() {}  // slot 0: its D1 slot is the base's destructor
     // slot 2. 0x21 (open's open): shows the driver (0: the set one) and the art's name in TXT_arts (the
     // event's message, else the target enemy's) and restarts the sequence at seqStart; 1 hides the object;
     // 0x22 ends the call context, clears the sequence and hides the parts; 0x100: 3 closes, others are m_result

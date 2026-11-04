@@ -29,7 +29,7 @@ public:
     // theater calls it after filling a list.
     void sort(bool descending);
     // 2.0.0's symbols name it. What it does: the index of the first content whose m_id is id, -1 when none; the gift
-    // box menu (fn_710040E1E0) calls it on a GfMenuMsgList it fills.
+    // box menu (GfMenuObjGiftBox::updateTopList) calls it on a GfMenuMsgList it fills.
     unsigned int find(unsigned int id);
     // 2.0.0's symbols name them. What they do: sortDescending orders by m_sortKey descending, sortAscending by
     // m_sortKey ascending, both by m_id ascending on a tie.

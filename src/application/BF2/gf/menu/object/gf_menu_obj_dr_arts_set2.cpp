@@ -47,7 +47,7 @@ GfMenuObjDrArtsSet2::GfMenuObjDrArtsSet2(unsigned int handle)
     m_blades = GfMenuBladeList::create();
     m_items = GfMenuItemList::create();
     s_extraWpnType = GfGameManager::isClearGame() && !GfMenuObjUtil::isValidExpansion(3) &&
-                     GfMenuObjUtil::isValidExpansion(1) && fn_71003E91EC();
+                     GfMenuObjUtil::isValidExpansion(1) && isActiveBCHWpn();
     s_wpnTypeIndex = 0;
 }
 

@@ -14,7 +14,7 @@ public:
     static void equipBladeChip(unsigned int blade, unsigned int chip);
     // 2.0.0's symbols name it. What it does: GfDataDriver::isEnableExtendEquipAcce(driver), bit 31 of the driver's
     // third accessory word. Callers: GfMenuObjDrEquip2::SlotListener::reciveEvent and gf_menu_obj_drequip2's
-    // refreshExpandOperation / fn_71003F20EC.
+    // refreshExpandOperation / GfMenuObjDrEquip2::updateEquipItemList.
     static bool isEnableExtendDriverAcce(unsigned int driver);
     // 2.0.0's symbols name it. What it does: GfDataDriver::setEnableExtendEquipAcce(driver, flag), setting or clearing
     // that bit. Caller: GfMenuObjDrEquip2::SlotListener::reciveEvent.

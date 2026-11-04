@@ -32,13 +32,12 @@ public:
     static void getDefaultLevel(unsigned int category, mm::mtl::FixedVector<Level, 32>& levels);
     static void convLevelListToOptionData(unsigned int category, const mm::mtl::FixedVector<Level, 32>& levels,
                                           SDataOption& option);
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0 has getVolumeLevel, getGammaLevel,
-    // getVolumeValue and getGammaValue there, with other signatures). Members because they sit among
-    // GfMenuObjOption's statics in its unit, after attach. What they do: they read one of two lists of values, 2 long
+    // 2.0.0's symbols name them (new in 3.0.1's line: 1.0.0 has getVolumeLevel, getGammaLevel, getVolumeValue and
+    // getGammaValue there, with other signatures). What they do: they read one of two lists of values, 2 long
     // ({1, 0}) or, when GfMenuObjUtil::isValidExpansion(3) and GfGameManager::isClearGame hold or
     // GfGameUtil::isAdvancedDifficulity does, 4 long ({1, 0, 2, 4}).
-    // fn_7100452ADC: the index of value in the list (0 when it is not there)
-    static unsigned int fn_7100452ADC(int value);
+    // getDifficultyIndex: the index of value in the list (0 when it is not there)
+    static unsigned int getDifficultyIndex(unsigned int value);
     // getDifficultyMax: the list's length, 2 or 4
     static unsigned int getDifficultyMax();
     // getDifficultyFromIndex: the list's value at index (0 past its end)

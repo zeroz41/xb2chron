@@ -19,6 +19,8 @@ class GfMenuReferenceNumber;
 class GfMenuObjTitle : public ::gf::GfMenuObject {
 public:
     class ListListener;
+    // table 0x7100B64DF8 (2.0.0's symbols name it); its reciveEvent (not written yet) queues seqConfirmAdvancedNewGame
+    class InfoListener;
 
     GfMenuObjTitle(unsigned int handle);
     // TitleMenu::setupTitle attaches the title menu object to its call context; true when the object is there
@@ -41,8 +43,8 @@ public:
     // written yet). fn_710048AF50: opens common window 0xE1 once, then on result 0 queues seqSelectDifficulity, else
     // sends event 0x101 to LAY_main; queued by ListListener::reciveEvent. seqConfirmAdvancedNewGame: opens common
     // window 0x116 once, then on result 0 sends LAY_ang_info's close event and queues seqSelectDifficulity, else
-    // enables LAY_ang_info's input; queued by fn_710048B048. seqTipsDifficulity: opens common window 0x10A once, then
-    // hands m_index to LAY_main's call context as the result; queued by seqSelectDifficulity.
+    // enables LAY_ang_info's input; queued by InfoListener::reciveEvent. seqTipsDifficulity: opens common window 0x10A
+    // once, then hands m_index to LAY_main's call context as the result; queued by seqSelectDifficulity.
     bool seqSelectDifficulity();
     bool fn_710048AF50();
     bool seqConfirmAdvancedNewGame();

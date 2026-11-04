@@ -34,7 +34,7 @@ public:
     // 1. Caller: GfMenuObjNpcTelop::HitonowaListener::reciveEvent (gf_menu_obj_* code).
     static void setBootFromEvent();
     // 2.0.0's symbols name it. What it does: clears the stream-image bits of image (resetStreamImageEx), asks
-    // getNpcChange about id, and sets setStreamImage2nd for 1 or setStreamImage3rd's bit for 2. Caller: fn_7100447D88.
+    // getNpcChange about id, and sets setStreamImage2nd for 1 or setStreamImage3rd's bit for 2. Caller: GfMenuObjNpcTelop::MainListener::reciveEvent.
     static void setFaceStream(ui::UIObjectAcc& image, unsigned int id);
     // 2.0.0's symbols name it. A member: in this unit, called only by setFaceStream. What it does (from its caller):
     // returns 0, 1 or 2 for id, writing an unsigned int through value.

@@ -13,6 +13,7 @@ namespace gf {
 // close, disp).
 class GfMenuObjComboRouteSimple : public ::gf::GfMenuObject {
 public:
+    class MainListener;
     GfMenuObjComboRouteSimple(unsigned int handle);
     virtual ~GfMenuObjComboRouteSimple();  // slot 0
     virtual void initialize();  // slot 2
@@ -32,12 +33,12 @@ public:
     static void refresh();
 };
 
-// table 0x7100B61450: GfMenuObjComboRouteSimple's listener on "LAY_main" (nothing names the class yet)
-class TUnk_B61450 : public ::ui::UIObjectListener {
+// table 0x7100B61450: GfMenuObjComboRouteSimple's listener on "LAY_main" (2.0.0's symbols name it)
+class GfMenuObjComboRouteSimple::MainListener : public ::ui::UIObjectListener {
 public:
     // its code zeroes 0xC-0x1B after storing its table, as other menus' listeners do
-    TUnk_B61450(GfMenuObjComboRouteSimple* owner) : m_open(0), m_ctrl(0), pad_14(), m_owner(owner) {}
-    virtual ~TUnk_B61450() {}  // slot 0: its D1 slot is the base's destructor
+    MainListener(GfMenuObjComboRouteSimple* owner) : m_open(0), m_ctrl(0), pad_14(), m_owner(owner) {}
+    virtual ~MainListener() {}  // slot 0: its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const& event, unsigned int handle);  // slot 2
     int m_open;  // 1 between the open event (0x21) and the close one (0x22) (the name is not the original's)
     int m_ctrl;  // the control opening or closing LAY_route, -1 for none (the name is not the original's)

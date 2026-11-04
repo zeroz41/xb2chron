@@ -207,15 +207,15 @@ bool GfMenuMapInfo::getCurMapAreaInfo(MapAreaInfo& out) {
     return true;
 }
 
-bool GfMenuMapInfo::fn_71003620FC(mm::Rect<int>& rect) {
+bool GfMenuMapInfo::getCurMapRegionInfo(RegionInfo& region) {
     GfMenuMapInfo* info = get();
     if (info != nullptr) {
         SegData* data = static_cast<SegData*>(info->m_segInfos[info->m_curAreaIndex].m_resource->getAssetData());
         if (data != nullptr) {
-            rect.x = info->m_segOffsX;
-            rect.y = info->m_segOffsY;
-            rect.w = data->m_width;
-            rect.h = data->m_height;
+            region.m_offsX = info->m_segOffsX;
+            region.m_offsY = info->m_segOffsY;
+            region.m_width = data->m_width;
+            region.m_height = data->m_height;
         }
     }
     return false;

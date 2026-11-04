@@ -14,8 +14,8 @@ namespace gf {
 // table 0x7100B5E890
 class GfMenuHUD : public ::mm::mtl::PtrSingleton< ::gf::GfMenuHUD> {
 public:
-    // a UI object the HUD waits for (fn_7100353A04 asks UIManager::searchObject for each); the names are not the
-    // original's
+    // a UI object the HUD waits for (systemSwitchExpLayer asks UIManager::searchObject for each); the names are not
+    // the original's
     struct WaitObject {
         const char* m_name;
         unsigned int m_id;
@@ -35,6 +35,14 @@ public:
     void systemStart();
     void systemWait();
     void systemUpdate();
+    // 2.0.0's symbols name it. What it does: cleans up the adapters, then creates (UIManager::createLayerEx) each layer
+    // of the type's layer table (ui::UIUtil::getLayerBdat) whose "group" is 0-2 or 4
+    static void addExpansionLayer(unsigned int type);
+    // 2.0.0's symbols name it. A system step: once no m_waitObjects entry is found (UIManager::searchObject), clears
+    // them, adds m_layerType's expansion layers and goes on to systemUpdate
+    void systemSwitchExpLayer();
+    // 2.0.0's symbols name it (not written yet; GfMenuManager::setupGame calls it)
+    static void switchExpansionLayer(unsigned int type);
     bool m_initialized;
     unsigned int m_sceneId;      // 1.0.0's getSceneID reads it (the name is not the original's)
     unsigned int m_nextSceneId;  // 1.0.0's changeScene sets it (the name is not the original's)

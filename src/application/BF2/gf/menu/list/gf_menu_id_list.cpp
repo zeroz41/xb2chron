@@ -66,7 +66,7 @@ void GfMenuIDList::setupMissionListFromZone(const ui::UIListInfoBase::SetupParam
         id.m_id = missions[i];
         addContents(id);
     }
-    sort(sortMissionComplete);
+    UIListInfo<MenuID>::sort(sortMissionComplete);
 }
 
 bool GfMenuIDList::sortMissionComplete(const MenuID& a, const MenuID& b) {
@@ -142,7 +142,7 @@ void GfMenuIDList::sortFromWork(bool descending) {
     }
     std::function<bool(const MenuID&, const MenuID&)> compare;
     compare = descending ? sortDescending : sortAscending;
-    sort(compare);
+    UIListInfo<MenuID>::sort(compare);
 }
 
 bool GfMenuIDList::sortDescending(const MenuID& a, const MenuID& b) {
@@ -159,8 +159,8 @@ bool GfMenuIDList::sortAscending(const MenuID& a, const MenuID& b) {
     return a.m_subId < b.m_subId;
 }
 
-void GfMenuIDList::fn_710037212C(const std::function<bool(const MenuID&, const MenuID&)>& compare) {
-    sort(compare);
+void GfMenuIDList::sort(std::function<bool(const MenuID&, const MenuID&)> compare) {
+    UIListInfo<MenuID>::sort(compare);
 }
 
 }  // namespace gf

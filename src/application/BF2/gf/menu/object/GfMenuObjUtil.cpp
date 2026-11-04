@@ -756,7 +756,7 @@ unsigned short GfMenuObjUtil::getBladeAttributeID(unsigned int blade) {
     return GfDataBlade::getSDataBlade(blade)->m_attribute;
 }
 
-unsigned int GfMenuObjUtil::fn_7100490D28() {
+unsigned int GfMenuObjUtil::getBladeSlotMax(const SDataGame&) {
     unsigned int max = 1;
     if (GfGameFlag::getLocal(1, 0x89FF) == 1) {
         max = 2;

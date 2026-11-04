@@ -240,7 +240,7 @@ bool GfMenuObjPopup::remove(const OpenParam& param) {
         for (unsigned int i = 0; i < count; ++i) {
             OpenParam queued;
             if (getParam(i, queued) && queued == param) {
-                GfMenuManyObjects::fn_710045D604<PopupInfo>(7, i);
+                GfMenuManyObjects::removeIndex<PopupInfo>(7, i);
                 return true;
             }
         }
@@ -260,7 +260,7 @@ bool GfMenuObjPopup::removeBlade(unsigned int value) {
             for (unsigned int i = 0; i < count; ++i) {
                 OpenParam queued;
                 if (getParam(i, queued) && (queued.m_type & ~1u) == 4 && queued.m_value[0] == value) {
-                    GfMenuManyObjects::fn_710045D604<PopupInfo>(7, i);
+                    GfMenuManyObjects::removeIndex<PopupInfo>(7, i);
                     removed = true;
                 }
             }

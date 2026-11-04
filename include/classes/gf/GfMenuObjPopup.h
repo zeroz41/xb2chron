@@ -44,7 +44,7 @@ public:
     // plays sound 0x22 and queues its "in" and "out" animations and seqGiftEnd.
     bool seqGiftIn();
     // 2.0.0's symbols name it. What it does: drops the first queued popup whose request equals param
-    // (GfMenuManyObjects::fn_710045D604) and answers true.
+    // (GfMenuManyObjects::removeIndex) and answers true.
     static bool remove(const OpenParam& param);
     // 2.0.0's symbols name it. What it does: drops every queued popup of kind 4 or 5 whose first value is value;
     // answers whether it dropped one.

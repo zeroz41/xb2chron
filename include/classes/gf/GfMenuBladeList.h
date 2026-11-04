@@ -13,7 +13,7 @@ public:
     unsigned int m_blade;  // GfDataBlade's blade id (GfMenuMercenariesAdapter::update_TeamStrength)
     // GfDataBlade::getCreator's for the blade (GfMenuBladeList::updateOwner stores it; the name is not the original's)
     unsigned int m_creator;
-    // fn_710036E1A0 stores the index the content had before sorting and its field skill level (the names are not
+    // sortFromFieldSkill stores the index the content had before sorting and its field skill level (the names are not
     // the original's)
     unsigned short m_index;
     unsigned short m_skillLevel;
@@ -61,13 +61,12 @@ public:
     };
     void setupFromDriver(const DriverSetup& setup);
     void updateOwner();
-    // orders the list by a sort type (1.0.0's sort has the same switch; types over 100 go to fn_710036E1A0)
+    // orders the list by a sort type (1.0.0's sort has the same switch; types over 100 go to sortFromFieldSkill)
     void sort(unsigned int type, bool descending);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because sort passes it this and
-    // it reads the list's contents. What it does: for sort types over 100 (type - 100 = a field skill id), marks
+    // 2.0.0's symbols name it. What it does: for sort types over 100 (type - 100 = a field skill id), marks
     // each blade that has that field skill (DataParamAcc::getFieldSkill/getFieldSkillLevel, slots 0-2), stores
     // the index and skill level in the info's pad, then sorts with a lambda (table 0x7100B5F238).
-    void fn_710036E1A0(unsigned int skill);
+    void sortFromFieldSkill(unsigned int skill);
     static bool sortTimeAscending(const MenuBladeInfo& a, const MenuBladeInfo& b);
     static bool sortTimeDescending(const MenuBladeInfo& a, const MenuBladeInfo& b);
     static bool sortNameDescending(const MenuBladeInfo& a, const MenuBladeInfo& b);

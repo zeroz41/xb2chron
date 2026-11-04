@@ -297,9 +297,9 @@ void GfMenuItemList::sort(unsigned int order, bool ascending) {
         if (order > 0x50) {
             sortFromBuff(order - 0x50);
         } else if (order > 0x40) {
-            fn_7100378144(order - 0x40);
+            sortFromRole(order - 0x40);
         } else if (order > 0x20) {
-            fn_710037835C(order - 0x20);
+            sortFromEnhance(order - 0x20);
         }
         return;
     }
@@ -855,7 +855,7 @@ unsigned int GfMenuItemList::s_firstEnhanceSortKey;
 unsigned int GfMenuItemList::s_firstRole;
 unsigned int GfMenuItemList::s_firstPartsSortKey;
 
-void GfMenuItemList::fn_7100378144(unsigned int order) {
+void GfMenuItemList::sortFromRole(unsigned int order) {
     s_firstRole = order;
     unsigned int* keys = new (getAllocator(ALLOCATOR(0)), nullptr, 0, 8) unsigned int[static_cast<unsigned int>(getSize())];
     for (unsigned int i = 0; i < getSize(); i++) {
@@ -880,7 +880,7 @@ void GfMenuItemList::fn_7100378144(unsigned int order) {
     delete[] keys;
 }
 
-void GfMenuItemList::fn_710037835C(unsigned int order) {
+void GfMenuItemList::sortFromEnhance(unsigned int order) {
     s_firstEnhanceSortKey = order;
     unsigned int* keys = new (getAllocator(ALLOCATOR(0)), nullptr, 0, 8) unsigned int[static_cast<unsigned int>(getSize())];
     for (unsigned int i = 0; i < getSize(); i++) {

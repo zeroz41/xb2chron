@@ -142,7 +142,7 @@ void GfMenuObjOCG::update() {
     GfMenuObject::update();
 }
 
-// MainListener::reciveEvent (0x71004495A0) and fn_71004498C4 are not here yet: see the report
+// MainListener::reciveEvent (0x71004495A0) and refreshGearCount are not here yet: see the report
 
 void GfMenuObjOCG::ResultListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);

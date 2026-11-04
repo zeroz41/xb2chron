@@ -107,11 +107,9 @@ public:
     // type's image, added to icons; 0 when icons is full
     static unsigned int setupIconTableSub(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 256>& icons,
                                           unsigned int type, mm::Pnt<short> pos, mm::Vec2 scale);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its code sits in
-    // gf_menu_obj_world_map's .text among GfMenuObjWorldMap's functions (after getFieldSkillFromGimmik). What it does:
-    // true for a gimmick whose getGmkType() is 3 or 4 and whose bound bdat row's "ShopID" column (u16) is 222;
-    // GfMenuMapInfo::postUpdate and fn_71003601DC pass it gimmicks.
-    static bool fn_710049FB94(const gmk::AGmkBase* gmk);
+    // 2.0.0's symbols name it. What it does: true for a gimmick whose getGmkType() is 3 or 4 and whose bound bdat
+    // row's "ShopID" column (u16) is 222; GfMenuMapInfo::postUpdate and GfMenuMapInfo::convGmkToIcon pass it gimmicks.
+    static bool isShopMinstrel(const gmk::AGmkBase& gmk);
     // 2.0.0's symbols name it. What it does: returns entry id of a guarded function-static table of two colours, (1, 1,
     // 1) and (0.78, 1, 0), entry 0 for an id past 1; GfMenuObjMinimap2::update calls it.
     static mm::Col3 getShopIconColor(unsigned int id);

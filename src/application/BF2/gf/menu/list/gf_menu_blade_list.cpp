@@ -80,7 +80,7 @@ void GfMenuBladeList::sort(unsigned int type, bool descending) {
         break;
     default:
         if (type > 100) {
-            fn_710036E1A0(type - 100);
+            sortFromFieldSkill(type - 100);
         }
         return;
     }
@@ -367,7 +367,7 @@ bool GfMenuBladeList::sortTrustDescending(const MenuBladeInfo& a, const MenuBlad
     return trustA > trustB;
 }
 
-void GfMenuBladeList::fn_710036E1A0(unsigned int skill) {
+void GfMenuBladeList::sortFromFieldSkill(unsigned int skill) {
     unsigned int size = getSize();
     bool* hasSkill = new (getAllocator(ALLOCATOR(0)), nullptr, 0, 8) bool[size];
     for (unsigned int i = 0; i < getSize(); ++i) {

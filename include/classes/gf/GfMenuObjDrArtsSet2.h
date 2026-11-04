@@ -40,12 +40,6 @@ public:
         ui::UIManager::get()->requestObjectEvent(handle, event, 0.0f);
     }
 
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because the constructor calls it
-    // and its address lies between the constructor and the destructor. What it does: when layer 1 is usable
-    // (GfMenuObjUtil::isValidExpansion(1)), lists driver 1's equipped weapon types (GfDataDriver::getEquipWpnType),
-    // drops each type but 0x11 whose four enabled arts (GfMenuObjUtil::getEnableArts) are all at level 0 and type
-    // 0x11 when driver 1's blade (GfDataDriver::getBlade(1, -1)) is valid, then answers whether type 0x21 is left.
-    static bool fn_71003E91EC();
     void setupWpnType(ui::UIObjectAcc& acc, mm::mtl::IntrusivePtr<GfMenuReferenceNumber> number, GfMenuArtsList* arts,
                       GfMenuBladeList* blades);
     // 0 when the art can level up, 4 at its highest level (refreshParam, refreshLvUp read it)
@@ -85,7 +79,7 @@ public:
     bool seqReturnArtsSelect();
 
     // Proposed names, not the original's: the symbols leave them unnamed (lbl_7100EAB060, lbl_7100EAB064). The
-    // constructor clears the first and sets the second to fn_71003E91EC's answer while the game is cleared, layer
+    // constructor clears the first and sets the second to isActiveBCHWpn's answer while the game is cleared, layer
     // 3 is not usable and layer 1 is.
     static unsigned int s_wpnTypeIndex;
     static bool s_extraWpnType;
@@ -111,6 +105,13 @@ public:
     bool pad_2B9;  // updateArtsSwapSelectIra passes it as GfMenuObjUtil::getEnableArts' flag
     bool pad_2BA;  // updateArtsInputIra disables operation 1 while it is set
 };
+
+// 2.0.0's symbols name it, a free function (not written yet; its address lies between GfMenuObjDrArtsSet2's
+// constructor and destructor). What it does: when layer 1 is usable (GfMenuObjUtil::isValidExpansion(1)), lists driver
+// 1's equipped weapon types (GfDataDriver::getEquipWpnType), drops each type but 0x11 whose four enabled arts
+// (GfMenuObjUtil::getEnableArts) are all at level 0 and type 0x11 when driver 1's blade (GfDataDriver::getBlade(1, -1))
+// is valid, then answers whether type 0x21 is left.
+bool isActiveBCHWpn();
 }  // namespace gf
 
 #endif

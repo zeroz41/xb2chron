@@ -1,5 +1,9 @@
 #include "classes/gf/GfMenuHUD.h"
 #include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfMenuAdapterManager.h"
+#include "classes/ui/UIManager.h"
+#include "plugin/Bdat.h"
+#include "ui/UIUtil.h"
 
 namespace gf {
 
@@ -37,7 +41,20 @@ void GfMenuHUD::systemStart() {
     m_system.set(this, &GfMenuHUD::systemWait);
 }
 
-// fn_7100353934 is not here yet: see the report
+void GfMenuHUD::addExpansionLayer(unsigned int type) {
+    unsigned char* fp = ui::UIUtil::getLayerBdat(type);
+    if (fp == nullptr) {
+        return;
+    }
+    GfMenuAdapterManager::cleanup();
+    for (int i = 0; i < Bdat::getIdCount(fp); i++) {
+        int id = Bdat::getIdTop(fp) + i;
+        unsigned char group = Bdat::getVal(fp, "group", id);
+        if (group < 3 || group == 4) {
+            ui::UIManager::sys()->createLayerEx(fp, id, true);
+        }
+    }
+}
 
 void GfMenuHUD::systemWait() {
     m_system.set(this, &GfMenuHUD::systemUpdate);
@@ -45,6 +62,17 @@ void GfMenuHUD::systemWait() {
 
 void GfMenuHUD::systemUpdate() {}
 
-// fn_7100353A04 and fn_7100353A94 are not here yet: see the report
+void GfMenuHUD::systemSwitchExpLayer() {
+    for (WaitObject* it = m_waitObjects.begin(); it != m_waitObjects.end(); ++it) {
+        if (ui::UIManager::sys()->searchObject(it->m_name, it->m_id) != 0) {
+            return;
+        }
+    }
+    m_waitObjects.clear();
+    addExpansionLayer(m_layerType);
+    m_system.set(this, &GfMenuHUD::systemUpdate);
+}
+
+// switchExpansionLayer is not here yet: see the report
 
 }  // namespace gf

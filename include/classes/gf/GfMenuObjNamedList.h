@@ -14,6 +14,8 @@ namespace gf {
 // and record time, filtered by zone (the "LAY_list_filter" icons) and by difficulty (TXT_difficulty_index)
 class GfMenuObjNamedList : public ::gf::GfMenuObject {
 public:
+    class ListListener;
+    class FilterListener;
     GfMenuObjNamedList(unsigned int handle);
     virtual ~GfMenuObjNamedList();  // slot 0
     virtual void initialize();  // slot 2
@@ -52,22 +54,22 @@ public:
     int m_difficultyCount;               // 0x84 GfMenuObjOption::getDifficultyMax (the name is not the original's)
 };
 
-// table 0x7100B63940: GfMenuObjNamedList's list listener (nothing names the class yet)
-class TUnk_B63940 : public ::ui::UIObjectListener {
+// table 0x7100B63940: GfMenuObjNamedList's list listener (2.0.0's symbols name it)
+class GfMenuObjNamedList::ListListener : public ::ui::UIObjectListener {
 public:
     // its code zeroes 0xC-0x1B after storing its table, as other menus' listeners do
-    TUnk_B63940(GfMenuObjNamedList* owner) : pad_0C(), m_owner(owner) {}
-    virtual ~TUnk_B63940() {}  // slot 0: its D1 slot is the base's destructor
+    ListListener(GfMenuObjNamedList* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~ListListener() {}  // slot 0: its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const& event, unsigned int handle);  // slot 2
     unsigned char pad_0C[0x10];
     GfMenuObjNamedList* m_owner;  // what initialize makes it for
 };
 
-// table 0x7100B63968: GfMenuObjNamedList's zone filter listener (nothing names the class yet)
-class TUnk_B63968 : public ::ui::UIObjectListener {
+// table 0x7100B63968: GfMenuObjNamedList's zone filter listener (2.0.0's symbols name it)
+class GfMenuObjNamedList::FilterListener : public ::ui::UIObjectListener {
 public:
-    TUnk_B63968(GfMenuObjNamedList* owner) : pad_0C(), m_owner(owner) {}
-    virtual ~TUnk_B63968() {}  // slot 0: its D1 slot is the base's destructor
+    FilterListener(GfMenuObjNamedList* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~FilterListener() {}  // slot 0: its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const& event, unsigned int handle);  // slot 2
     unsigned char pad_0C[0x10];
     GfMenuObjNamedList* m_owner;  // what initialize makes it for

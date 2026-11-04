@@ -19,7 +19,7 @@ GfMenuDriverList* GfMenuDriverList::create() {
     return list;
 }
 
-void GfMenuDriverList::fn_7100370618(const IndexSetup& setup) {
+void GfMenuDriverList::setupFromIraDriver(const IraDriverSetup& setup) {
     ::ui::UIListInfoBase::SetupParam param = setup.m_param;
     int index = setup.m_index;
     if (index != -1) {

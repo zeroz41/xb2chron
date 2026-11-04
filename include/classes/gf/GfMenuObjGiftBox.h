@@ -55,6 +55,8 @@ public:
     static void execGetItem(unsigned int id);
     void refreshTopList(bool);
     void refreshSubList();
+    // 2.0.0's symbols name it (not written yet): fills m_topList from table 0x10A (initialize, TopListener)
+    void updateTopList();
 
     GfMenuMsgList* m_topList;  // 0x28: "LAY_top_list"'s list (initialize: setBdat(0, 0x139))
     GfMenuIDList* m_subList;   // 0x30: seqGetItem reads its selected id

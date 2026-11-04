@@ -656,12 +656,12 @@ void GfMenuObjWorldMap::getFloorAABB(unsigned int mapId, unsigned int floor, mm:
     }
 }
 
-bool GfMenuObjWorldMap::fn_710049FB94(const gmk::AGmkBase* gmk) {
-    unsigned int type = gmk->getGmkType();
+bool GfMenuObjWorldMap::isShopMinstrel(const gmk::AGmkBase& gmk) {
+    unsigned int type = gmk.getGmkType();
     if (type - 3 > 1) {
         return false;
     }
-    return Bdat::getValCheckU16(gmk->getBindedBdatFp(), "ShopID", gmk->m_createInfo.m_bdatId) == 0xDE;
+    return Bdat::getValCheckU16(gmk.getBindedBdatFp(), "ShopID", gmk.m_createInfo.m_bdatId) == 0xDE;
 }
 
 unsigned int GfMenuObjWorldMap::setupIconTableSub(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 256>& icons,

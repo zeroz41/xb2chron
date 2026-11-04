@@ -269,7 +269,7 @@ public:
     // 2.0.0's symbols name them. What they do: they read or write the singleton's word at 0x4CB84
     // (m_bladeChangeValue). setBattleMode stores it and, when it changed, calls GfMenuObjBladeChange::refreshBattleMode
     // (event 0x105 to the blade change object); getBattleMode returns it (callers BladeListener::reciveEvent,
-    // TUnk_B5FEE8::reciveEvent, GfMenuObjCharChange::MainListener::reciveEvent).
+    // GfMenuObjBladeChange::DrSoloListener::reciveEvent, GfMenuObjCharChange::MainListener::reciveEvent).
     static void setBattleMode(BTL_MODE value);
     static unsigned int getBattleMode();
     // an operation button (one of the four records below) and a button's state (one of a record's four flags); 2.0.0's
@@ -351,7 +351,7 @@ public:
     static const LayerGimmick* getIraChainInfo(unsigned int index);
     static const OCGInfo* getOCGInfo();
     // a 0x10-byte record at 0x4CFD4 of the instance (the names are not the original's): three words and two bytes
-    // the combo route display (gf_menu_obj_combo_route_simple, TUnk_B61450::reciveEvent) reads through getIraBladeComboInfo.
+    // the combo route display (gf_menu_obj_combo_route_simple, GfMenuObjComboRouteSimple::MainListener::reciveEvent) reads through getIraBladeComboInfo.
     // updateIraBladeCombo copies one in (an assignment copies its 14 data bytes), resetIraBladeCombo clears it; both
     // refresh the display (GfMenuObjComboRouteSimple::refresh) when it changed. 2.0.0's symbols name the type.
     struct IraBladeComboInfo {
@@ -380,7 +380,7 @@ public:
     // btl::UIManager::UpdateMenuData.
     static void updateIraBladeCombo(const IraBladeComboInfo& state);
     // getIraBladeComboInfo: m_comboRoute when isValidExpansion(3) holds and the singleton exists, else a zeroed static
-    // dummy; caller TUnk_B61450::reciveEvent (gf_menu_obj_combo_route_simple).
+    // dummy; caller GfMenuObjComboRouteSimple::MainListener::reciveEvent (gf_menu_obj_combo_route_simple).
     static const IraBladeComboInfo* getIraBladeComboInfo();
     // openOCG / closeOCG: tail-call GfMenuObjOCG::openGear (open LAY_special of object 0x90) /
     // closeGear (close it); caller UpdateOCG (A48 also EndOCG).

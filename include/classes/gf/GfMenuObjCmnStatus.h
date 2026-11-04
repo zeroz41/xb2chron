@@ -33,6 +33,9 @@ public:
     // the driver page's adapters on the object handle (its parameters, their differences, its blades and its
     // ideas' levels) and m_ideaGraph (the parameter name is not the original's)
     void setDrPageParam(unsigned int handle);
+    // 2.0.0's symbols name it (not written yet): the Ira driver page's setDrPageParam (TXT_status_dr_index_name_team,
+    // GfMenuCharDataAdapter::createFromReferenceDriver; CharStatusListener::reciveEvent)
+    void setDrPageParamIra(unsigned int handle);
     // 2.0.0's symbols name it. What it does: the driver page's version of updateBladeBase: shows LAY_status_dr_index_sk
     // and IMG_status_dr_base_sk for the ids 4 and 5, LAY_status_dr_index and IMG_status_dr_base otherwise; the listener
     // calls it when GfMenuObjUtil::isValidExpansion(3) holds.

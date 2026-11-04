@@ -1,6 +1,6 @@
 #include "classes/gf/GfMenuObjBladeChange.h"
 #include "classes/gf/GfMenuObjBladeChange/BladeListener.h"
-#include "classes/gf/TUnk_B5FEE8.h"
+#include "classes/gf/GfMenuObjBladeChange/DrSoloListener.h"
 #include "classes/gf/GfMenuAdapter.h"
 #include "classes/gf/GfMenuCharDataAdapter.h"
 #include "classes/gf/GfMenuGfObjAdapter.h"
@@ -107,7 +107,7 @@ void GfMenuObjBladeChange::initialize() {
         {
             ui::UIObjectAcc solo(acc.m_handle, "LAY_dr_solo");
 #line 224
-            TUnk_B5FEE8* soloListener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5FEE8(this);
+            DrSoloListener* soloListener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) DrSoloListener(this);
             soloListener->m_RefCount = 1;
             ui::UIEventManager::get()->registObjectListener(solo.m_handle, soloListener);
             if (soloListener != nullptr) {
@@ -147,7 +147,7 @@ void GfMenuObjBladeChange::refreshBattleMode() {
     }
 }
 
-void TUnk_B5FEE8::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjBladeChange::DrSoloListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     default:

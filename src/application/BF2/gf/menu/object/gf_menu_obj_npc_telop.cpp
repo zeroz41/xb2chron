@@ -71,7 +71,7 @@ void GfMenuObjNpcTelop::initialize() {
         if (acc.m_object != nullptr) {
             GfMenuObject::attachExternalCall(0x8C, acc.m_handle);
 #line 154
-            TUnk_B63A90* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B63A90(this);
+            MainListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) MainListener(this);
             listener->m_RefCount = 1;
             ui::UIEventManager::get()->registObjectListener(acc.m_handle, listener);
             if (listener != nullptr) {

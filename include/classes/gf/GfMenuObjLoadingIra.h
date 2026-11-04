@@ -12,6 +12,7 @@ namespace gf {
 // dispSaving
 class GfMenuObjLoadingIra : public ::gf::GfMenuObject {
 public:
+    class LoadingListener;
     GfMenuObjLoadingIra(unsigned int handle);
     virtual ~GfMenuObjLoadingIra();  // slot 0
     virtual void initialize();  // slot 2
@@ -28,12 +29,12 @@ public:
     signed char m_dispCount;
 };
 
-// table 0x7100B62DA0: GfMenuObjLoadingIra's listener on LAY_loading and LAY_saving (nothing names the class yet)
-class TUnk_B62DA0 : public ::ui::UIObjectListener {
+// table 0x7100B62DA0: GfMenuObjLoadingIra's listener on LAY_loading and LAY_saving (2.0.0's symbols name it)
+class GfMenuObjLoadingIra::LoadingListener : public ::ui::UIObjectListener {
 public:
     // its code zeroes 0xC-0x1B after storing its table: its own fields, as other menus' listeners use theirs
-    TUnk_B62DA0(GfMenuObjLoadingIra* owner) : pad_0C(), m_owner(owner) {}
-    virtual ~TUnk_B62DA0() {}  // slot 0: its D1 slot is the base's destructor
+    LoadingListener(GfMenuObjLoadingIra* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~LoadingListener() {}  // slot 0: its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
     unsigned char pad_0C[0x10];
     GfMenuObjLoadingIra* m_owner;  // what initialize makes it for

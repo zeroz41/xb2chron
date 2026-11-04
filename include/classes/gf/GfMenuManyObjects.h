@@ -70,13 +70,11 @@ public:
     // (a reference-bound temporary shares the slot of the icon's position)
     template <typename T>
     static void add(unsigned int index, T info, void (*close)(unsigned int));
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member template because it works on any
-    // kind's queue like remove and closeAll (its code checks index < 8 and reads m_queues[index]); its one instance
-    // (PopupInfo, kind 7) sits in gf_menu_obj_popup between that unit's callers of it. What it does: disposes and
-    // erases the element `position` places after the queue's first; answers false when the queue is missing or
-    // empty or holds fewer elements.
+    // 2.0.0's symbols name it. Its one instance (PopupInfo, kind 7) sits in gf_menu_obj_popup between that unit's
+    // callers of it. What it does: disposes and erases the element `position` places after the queue's first; answers
+    // false when the queue is missing or empty or holds fewer elements.
     template <typename T>
-    static bool fn_710045D604(unsigned int index, int position);
+    static bool removeIndex(unsigned int index, unsigned int position);
     bool m_initialized;  // set by initialize, cleared by finalize
     // remove and closeAll (templates on the kind of object) index the first eight: each a queue of that kind's
     // open objects, or none
@@ -133,7 +131,7 @@ void GfMenuManyObjects::add(unsigned int index, T info, void (*close)(unsigned i
     }
 }
 template <typename T>
-bool GfMenuManyObjects::fn_710045D604(unsigned int index, int position) {
+bool GfMenuManyObjects::removeIndex(unsigned int index, unsigned int position) {
     if (index < 8) {
         mm::mtl::Queue<T>* queue = getQueue<T>(index);
         if (queue != nullptr && !queue->empty()) {

@@ -26,7 +26,7 @@ void GfMenuObjBtlchTelop::initialize() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     GfMenuObject::attachExternalCall(0x88, main.m_handle);
 #line 71
-    TUnk_B60820* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B60820(this);
+    MainListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) MainListener(this);
     listener->m_RefCount = 1;
     ui::UIEventManager::get()->registObjectListener(main.m_handle, listener);
     if (listener != nullptr) {
@@ -111,7 +111,7 @@ void GfMenuObjBtlchTelop::reset() {
     acc.setDispChild(false, "LAY_result_info");
 }
 
-void TUnk_B60820::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjBtlchTelop::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:

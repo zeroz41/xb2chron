@@ -64,7 +64,7 @@ void GfMenuObjComboRouteSimple::initialize() {
     ui::UIObjectAcc acc(m_handle, "LAY_main");
     GfMenuObject::attachExternalCall(0x8E, acc.m_handle);
 #line 115
-    TUnk_B61450* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B61450(this);
+    MainListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) MainListener(this);
     listener->m_RefCount = 1;
     ui::UIEventManager::get()->registObjectListener(acc.m_handle, listener);
     if (listener != nullptr) {
@@ -81,7 +81,7 @@ void GfMenuObjComboRouteSimple::update() {
     GfMenuObject::update();
 }
 
-void TUnk_B61450::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjComboRouteSimple::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:

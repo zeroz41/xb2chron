@@ -31,7 +31,7 @@ void hideParts(unsigned int handle) {
 }
 }  // namespace
 
-bool GfMenuObjVision::fn_71004944B8(int blade) {
+bool GfMenuObjUtil::isCustomEnableBlade(unsigned int blade) {
     if (blade == 0x412) {
         return false;
     }
@@ -95,7 +95,7 @@ void GfMenuObjVision::initialize() {
         ui::UIObjectAcc acc(m_handle, "LAY_main");
         GfMenuObject::attachExternalCall(0x8b, acc.m_handle);
 #line 149
-        TUnk_B64F50* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B64F50(this);
+        MainListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) MainListener(this);
         // the original stores the count after the listener's own fields, not with its base
         listener->m_RefCount = 1;
         ui::UIEventManager::get()->registObjectListener(acc.m_handle, listener);
@@ -125,7 +125,7 @@ void GfMenuObjVision::update() {
     }
 }
 
-void TUnk_B64F50::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjVision::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 0x21: {

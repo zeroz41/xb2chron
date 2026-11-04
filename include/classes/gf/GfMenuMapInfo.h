@@ -12,6 +12,7 @@ namespace gf { class GfMenuMapInfo; }
 namespace gf { class GfSetupParam; }
 namespace fw { class CommonResource; }
 namespace fw { struct UpdateInfo; }
+namespace gmk { class AGmkBase; }
 
 namespace gf {
 // table 0x7100B5EDC0
@@ -53,8 +54,8 @@ public:
         int m_otherArea;
         unsigned int m_floorId;       // getCurMapInfoID returns the current area's (GfMenuObjWorldMap reads it)
     };
-    // a segment image resource's asset: the segment grid (getMapSegImageName, fn_71003620FC read it); the names are
-    // not the original's
+    // a segment image resource's asset: the segment grid (getMapSegImageName, getCurMapRegionInfo read it); the names
+    // are not the original's
     struct SegData {
         int m_width;
         int m_height;
@@ -62,6 +63,14 @@ public:
         int m_rows;
         unsigned char pad_10[0x10];
         unsigned char m_cells[1];     // per segment, row-major from the far corner: whether it has an image
+    };
+    // what getCurMapRegionInfo fills: the segment offset and the segment image's size (2.0.0's symbols name the type;
+    // the field names are not the original's)
+    struct RegionInfo {
+        int m_offsX;
+        int m_offsY;
+        int m_width;
+        int m_height;
     };
 
     GfMenuMapInfo(const GfSetupParam& param);
@@ -95,10 +104,16 @@ public:
     // 2.0.0's symbols name it. What it does: the current area's segment info's value at 0x14, 0 when the area has none;
     // GfMenuObjWorldMap::initialize, setupZoneList and its zone list listener call it.
     static unsigned int getCurMapInfoID();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads the menu's
-    // singleton. What it does: when the current area's segment image has loaded, fills rect with the segment
-    // offset (0x6c, 0x70) and the image's first two values; returns false either way (GfMenuObjMinimap2::update).
-    static bool fn_71003620FC(mm::Rect<int>& rect);
+    // 2.0.0's symbols name it. What it does: when the current area's segment image has loaded, fills info with the
+    // segment offset (0x6c, 0x70) and the image's first two values; returns false either way
+    // (GfMenuObjMinimap2::update).
+    static bool getCurMapRegionInfo(RegionInfo& info);
+    // 2.0.0's symbols name it (not written yet): the icon kinds of a gimmick, false without one or without the menu
+    // (GfMenuMapInfo::postUpdate)
+    static bool convGmkToIcon(const gmk::AGmkBase*, unsigned int&, unsigned int&);
+    // 2.0.0's symbols name it (not written yet): reads MNU_MapInfoFile (MNU_MapInfoFile_ira with isValidExpansion(3))
+    // (GfMenuManager::setupGame)
+    static void setupMapInfo();
 
     bool m_initialized;                                    // set by initialize
     mm::mtl::Vector<fw::CommonResource*> m_mapResources;   // per map info: its resource

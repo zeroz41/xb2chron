@@ -18,7 +18,7 @@ void GfMenuObjLoadingIra::initialize() {
     {
         ui::UIObjectAcc acc(m_handle, "LAY_loading");
 #line 53
-        TUnk_B62DA0* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B62DA0(this);
+        LoadingListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) LoadingListener(this);
         // the original stores the count after the listener's own fields, not with its base
         listener->m_RefCount = 1;
         ui::UIEventManager::get()->registObjectListener(acc.m_handle, listener);
@@ -29,7 +29,7 @@ void GfMenuObjLoadingIra::initialize() {
     {
         ui::UIObjectAcc acc(m_handle, "LAY_saving");
 #line 58
-        TUnk_B62DA0* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B62DA0(this);
+        LoadingListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) LoadingListener(this);
         listener->m_RefCount = 1;
         ui::UIEventManager::get()->registObjectListener(acc.m_handle, listener);
         if (listener != nullptr) {
@@ -48,7 +48,7 @@ void GfMenuObjLoadingIra::update() {
     GfMenuObject::update();
 }
 
-void TUnk_B62DA0::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjLoadingIra::LoadingListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:

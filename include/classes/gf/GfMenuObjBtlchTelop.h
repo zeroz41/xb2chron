@@ -15,6 +15,7 @@ namespace gf {
 // shows the battle challenge's telops (LAY_start, TXT_wave_title, ...)
 class GfMenuObjBtlchTelop : public ::gf::GfMenuObject {
 public:
+    class MainListener;
     GfMenuObjBtlchTelop(unsigned int handle);
     virtual ~GfMenuObjBtlchTelop();  // slot 0
     virtual void initialize();  // slot 2
@@ -77,12 +78,12 @@ public:
     unsigned int m_result;
 };
 
-// table 0x7100B60820: GfMenuObjBtlchTelop's listener (nothing names the class yet)
-class TUnk_B60820 : public ::ui::UIObjectListener {
+// table 0x7100B60820: GfMenuObjBtlchTelop's listener (2.0.0's symbols name it)
+class GfMenuObjBtlchTelop::MainListener : public ::ui::UIObjectListener {
 public:
     // its code zeroes 0xC-0x1B after storing its table: its own fields, as other menus' listeners use theirs
-    TUnk_B60820(GfMenuObjBtlchTelop* owner) : m_open(), pad_10(), m_owner(owner) {}
-    virtual ~TUnk_B60820() {}  // slot 0: its D1 slot is the base's destructor
+    MainListener(GfMenuObjBtlchTelop* owner) : m_open(), pad_10(), m_owner(owner) {}
+    virtual ~MainListener() {}  // slot 0: its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
     int m_open;  // 1 while a telop runs: set by the open event (0x21), cleared by close (0x22) and 1 (the name is not the original's)
     unsigned char pad_10[0xC];

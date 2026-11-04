@@ -110,7 +110,7 @@ const char* getRootFolder();
 // gf::GfMenuManager's constructor calls it.
 void registEnableExpType(unsigned int bit);
 // 2.0.0's symbols name it. What it does: true when `file` is one of the "file" column's values of MNU_UioReplace
-// (s_BdatFPs[16]), compared by strcmp; fn_7100353A94 calls it.
+// (s_BdatFPs[16]), compared by strcmp; GfMenuHUD::switchExpansionLayer calls it.
 bool canUIOReplace(const char* file);
 // 2.0.0's symbols name it. What it does: the layer BDAT of an add-on: for 0 the menu's own layer table (s_BdatFPs[6],
 // getBdatFP(6)); while bit `dlc` of the layer mask lbl_7100B75878 is set, the table "MNU_Layer_Dlc%02d" names

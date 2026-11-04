@@ -215,6 +215,6 @@ const char* CommonResource::getAssetName() const {
 
 }  // namespace fw
 
-// Vector<CommonResource*>'s growth (0x7100199740): 3.0.1 keeps this unit's copy (fn_71003606A0 calls it); nothing
+// Vector<CommonResource*>'s growth (0x7100199740): 3.0.1 keeps this unit's copy (GfMenuMapInfo::setupMapInfo calls it); nothing
 // left in the unit uses the vector, so it is instantiated here
 template void mm::mtl::Vector<fw::CommonResource*>::expand(size_t capacity, size_t alignment);

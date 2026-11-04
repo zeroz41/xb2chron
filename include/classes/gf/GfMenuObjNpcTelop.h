@@ -15,7 +15,7 @@ namespace gf {
 // and it has no RTTI. Attached as external call 0x8C; shows up to three faces (LAY_char@NN's IMG_char_face@NN).
 class GfMenuObjNpcTelop : public ::gf::GfMenuObject {
 public:
-    class TUnk_B63A90;
+    class MainListener;
     class HitonowaListener;
     // what open shows (event::UIManager::openHitonowaUI fills one); the names are not the original's
     struct OpenParam {
@@ -56,11 +56,11 @@ public:
     GfMenuSequence<GfMenuObjNpcTelop, 4> m_seq1;  // 0x1A0 (the name is not the original's)
 };
 
-// table 0x7100B63A90: LAY_main's listener
-class GfMenuObjNpcTelop::TUnk_B63A90 : public ::ui::UIObjectListener {
+// table 0x7100B63A90: LAY_main's listener (2.0.0's symbols name it; its reciveEvent is not written yet)
+class GfMenuObjNpcTelop::MainListener : public ::ui::UIObjectListener {
 public:
-    TUnk_B63A90(GfMenuObjNpcTelop* owner) : m_state(0), pad_10(), m_owner(owner) {}
-    virtual ~TUnk_B63A90() {}  // slot 0: weak, its D1 slot is the base's destructor
+    MainListener(GfMenuObjNpcTelop* owner) : m_state(0), pad_10(), m_owner(owner) {}
+    virtual ~MainListener() {}  // slot 0: weak, its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
     int m_state;
     unsigned char pad_10[0xC];  // cleared with m_state by the constructor

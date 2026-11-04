@@ -35,6 +35,9 @@ public:
     // 1.0.0's setupEquipItem (0x71004569D8: same place after EquipItemListener::reciveEvent, the same arguments
     // and its first three createFromList calls); the symbols spell fn_71003F33C8
     static GfMenuItemAdapter* setupEquipItem(ui::UIObjectAcc& acc, GfMenuItemList* items);
+    // 2.0.0's symbols name it (not written yet): refills the list for a reference driver
+    // (GfMenuReference::getReferenceDriverID; SlotListener::reciveEvent and setupSlot call it)
+    static void updateEquipItemList(GfMenuItemList* items, unsigned int);
 
     // 0x24: the reference driver index (GfMenuReference::getReferenceDriverID); the constructor and initialize
     // clear it

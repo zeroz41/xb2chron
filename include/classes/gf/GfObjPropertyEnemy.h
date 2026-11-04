@@ -20,7 +20,7 @@ public:
     bool m_scout;
     unsigned char pad_C3;
     unsigned int m_artsId;  // the art it is using (0: none)
-    // a message for the art (TUnk_B64F50::reciveEvent shows it in TXT_arts, its id as 16 bits, 0 read as 1) and
+    // a message for the art (GfMenuObjVision::MainListener::reciveEvent shows it in TXT_arts, its id as 16 bits, 0 read as 1) and
     // the message data it is in (the names are not the original's)
     unsigned int m_artsNameId;
     unsigned char* m_artsNameBdat;

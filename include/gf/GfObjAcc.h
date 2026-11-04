@@ -95,7 +95,7 @@ public:
     bool getBoneTransform(fw::Transform& transform, int bone);
     unsigned int getBdatId() const;
     // 2.0.0's symbols name it. What it does: returns getBdatId() (a tail call). Callers:
-    // GfMenuGfObjAdapter::update_IRA_NpcHitonowaIcon (hands it to GfDataNpc::getHitonowaFlag), fn_71003601DC,
+    // GfMenuGfObjAdapter::update_IRA_NpcHitonowaIcon (hands it to GfDataNpc::getHitonowaFlag), GfMenuMapInfo::convGmkToIcon,
     // GfMenuObjTargetInfo::openOther.
     unsigned int getNpcRscId() const;
     unsigned int getDriverId() const;  // the driver object's row (DataObjDriver)

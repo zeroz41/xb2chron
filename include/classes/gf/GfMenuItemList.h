@@ -130,15 +130,15 @@ public:
     static bool sortTypeWpnAccesoryDescending(const MenuItemInfo& a, const MenuItemInfo& b);
     static bool sortTypeAccesoryAscending(const MenuItemInfo& a, const MenuItemInfo& b);
     static bool sortTypeAccesoryDescending(const MenuItemInfo& a, const MenuItemInfo& b);
-    // 2.0.0's symbols name sortFromBuff; the fn_ names are placeholders.
+    // 2.0.0's symbols name them.
     void sortFromBuff(unsigned int order);
-    void fn_7100378144(unsigned int order);
-    void fn_710037835C(unsigned int order);
-    // 2.0.0's symbols name it. What it does: the key fn_710037835C sorts by: for items of types 2, 3, 18 and 20 (type
+    void sortFromRole(unsigned int order);
+    void sortFromEnhance(unsigned int order);
+    // 2.0.0's symbols name it. What it does: the key sortFromEnhance sorts by: for items of types 2, 3, 18 and 20 (type
     // 9: of the item its ItemProperty::m_enhance names) whose m_enhance2 row has an effect, that effect's
     // GfBdatBtl::getBTL_EnhanceEffSortCat value (0 when it is s_firstEnhanceSortKey); else 24.
     static unsigned int getEnhanceSortCat(const MenuItemInfo& item);
-    // the key value sortFromBuff / fn_7100378144 / fn_710037835C put first (their order argument). Proposed names,
+    // the key value sortFromBuff / sortFromRole / sortFromEnhance put first (their order argument). Proposed names,
     // not the original's: the symbols leave them unnamed (lbl_7100EA70C0, lbl_7100EA70BC, lbl_7100EA70B8)
     static unsigned int s_firstEnhanceSortKey;
     static unsigned int s_firstRole;

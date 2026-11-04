@@ -43,6 +43,8 @@ public:
     static void closeGear();
     static void openResult(GfMenuCallContext* context, unsigned int first, unsigned int second);
     static void noticeExtend();
+    // 2.0.0's symbols name it (not written yet): LAY_special_count's gear count (MainListener::reciveEvent)
+    void refreshGearCount(unsigned int);
     unsigned int m_count;  // cleared by the constructor (the name is not the original's)
     GfMenuSequence<GfMenuObjOCG, 16> m_seq;
     int m_ctrl;  // a control slot seqCtrlWait waits for, -1 for none (the name is not the original's)
