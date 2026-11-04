@@ -685,7 +685,7 @@ void GfGameScene::gevDriverLevel(unsigned int driver, unsigned int level, unsign
         param.m_type = 3;
         param.m_value = level;
         param.m_object = handle;
-        GfMenuObjExpGet::fn_7100406D3C(param);
+        GfMenuObjExpGet::open(param);
     }
 }
 

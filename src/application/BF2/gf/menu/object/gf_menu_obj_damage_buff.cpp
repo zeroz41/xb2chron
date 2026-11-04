@@ -65,7 +65,7 @@ void GfMenuObjDamageBuff::finalize() {
 void GfMenuObjDamageBuff::update() {
     const mm::mtl::FixedQueue<OpenParam, 32>& requests = s_queue;
     for (mm::mtl::FixedQueue<OpenParam, 32>::const_iterator it = requests.begin(); it != requests.end(); ++it) {
-        open(*it);
+        myOpen(*it);
     }
     s_queue.clear();
     GfMenuObject::update();
@@ -81,7 +81,7 @@ inline void GfMenuObjDamageBuff::setupPlugin(unsigned int handle) {
     }
 }
 
-unsigned int GfMenuObjDamageBuff::open(const OpenParam& param) {
+unsigned int GfMenuObjDamageBuff::myOpen(const OpenParam& param) {
     if (GfMenuObjUtil::isMenuObjectFull() || GfMenuCallManager::get()->m_strLinker.m_freeIndices.empty()) {
         return 0;
     }
@@ -263,7 +263,7 @@ void GfMenuObjDamageBuff::setupScreen(unsigned int handle, int type, int resist,
     GfMenuObjUtil::setChildAddColor(handle, "IMG_bg", getColor(s_colors, type));
 }
 
-unsigned int GfMenuObjDamageBuff::fn_71003E537C(const OpenParam& param) {
+unsigned int GfMenuObjDamageBuff::open(const OpenParam& param) {
     if (s_queue.full()) {
         s_queue.pop();
     }

@@ -90,13 +90,13 @@ void GfMenuObjExpGet::finalize() {
 void GfMenuObjExpGet::update() {
     const mm::mtl::FixedQueue<OpenParam, 64>& requests = s_queue;
     for (mm::mtl::FixedQueue<OpenParam, 64>::const_iterator it = requests.begin(); it != requests.end(); ++it) {
-        open(*it);
+        myOpen(*it);
     }
     s_queue.clear();
     GfMenuObject::update();
 }
 
-// open (GfMenuObjExpGet::open) is in wip/ (not identical yet): see NOTES.md
+// myOpen (GfMenuObjExpGet::myOpen) is in wip/ (not identical yet): see NOTES.md
 
 
 inline void GfMenuObjExpGet::removeObject2(ui::UIObjectAcc screen) {
@@ -203,7 +203,7 @@ void GfMenuObjExpGet::setupPlugin(unsigned int handle, unsigned int type) {
     }
 }
 
-// fn_7100406D3C is in wip/ (not identical yet)
+// open (the queue push) is in wip/ (not identical yet)
 
 
 void GfMenuObjExpGet::close(unsigned int handle) {
@@ -228,6 +228,6 @@ void GfMenuObjExpGet::closeAll() {
 
 }  // namespace gf
 
-// the info queue's operations (their callers, open and the list listener's, are not written yet)
+// the info queue's operations (their callers, myOpen and the list listener's, are not written yet)
 template void mm::mtl::Queue<gf::GfMenuObjExpGet::ExpGetInfo>::push_back(const gf::GfMenuObjExpGet::ExpGetInfo&);
 template void gf::GfMenuManyObjects::remove<gf::GfMenuObjExpGet::ExpGetInfo>(unsigned int, unsigned int);

@@ -58,13 +58,13 @@ void GfMenuObjDamageValue::finalize() {
 void GfMenuObjDamageValue::update() {
     const mm::mtl::FixedQueue<OpenParam, 32>& requests = s_queue;
     for (mm::mtl::FixedQueue<OpenParam, 32>::const_iterator it = requests.begin(); it != requests.end(); ++it) {
-        open(*it);
+        myOpen(*it);
     }
     s_queue.clear();
     GfMenuObject::update();
 }
 
-// 0x71003E634C open(const OpenParam&) (GfMenuObjDamageValue::open): not identical yet, candidate in wip/
+// 0x71003E634C myOpen(const OpenParam&) (GfMenuObjDamageValue::myOpen): not identical yet, candidate in wip/
 
 inline void GfMenuObjDamageValue::removeObject(ui::UIObjectAcc screen) {
     GfMenuManyObjects::remove<DamageInfo>(0, screen.m_handle);
@@ -76,7 +76,7 @@ inline void GfMenuObjDamageValue::removeObject(ui::UIObjectAcc screen) {
 
 // 0x71003E6CF4 setupScreen: not identical yet, candidate in wip/
 
-unsigned int GfMenuObjDamageValue::fn_71003E7394(const OpenParam& param) {
+unsigned int GfMenuObjDamageValue::open(const OpenParam& param) {
     if (s_queue.full()) {
         s_queue.pop();
     }
@@ -111,6 +111,6 @@ void GfMenuObjDamageValue::closeAll() {
 
 }  // namespace gf
 
-// the info queue's operations (their callers, open and the list listener's, are not written yet)
+// the info queue's operations (their callers, myOpen and the list listener's, are not written yet)
 template void mm::mtl::Queue<gf::GfMenuObjDamageValue::DamageInfo>::push_back(const gf::GfMenuObjDamageValue::DamageInfo&);
 template void gf::GfMenuManyObjects::remove<gf::GfMenuObjDamageValue::DamageInfo>(unsigned int, unsigned int);
