@@ -1288,4 +1288,14 @@ bool GfMenuObjUtil::isCustomEnableDriver(unsigned int driver) {
     return false;
 }
 
+bool GfMenuObjUtil::isCustomEnableBlade(unsigned int blade) {
+    if (blade == 0x412) {
+        return false;
+    }
+    if (GfGameManager::isClearGame()) {
+        return true;
+    }
+    return GfDataUtil::getScenarioFlag() > 2000;
+}
+
 }  // namespace gf

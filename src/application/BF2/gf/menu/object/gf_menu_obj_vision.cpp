@@ -2,7 +2,6 @@
 #include "classes/gf/GfMenuDriverList.h"
 #include "classes/gf/GfMenuCharDataAdapter.h"
 #include "gf/GfMenuObjUtil.h"
-#include "classes/gf/GfGameManager.h"
 #include "gf/GfDataBlade.h"
 #include "ui/EventData.h"
 #include "classes/gf/GfAllocator.h"
@@ -15,7 +14,6 @@
 #include "classes/gf/GfObjPropertyEnemy.h"
 #include "gf/GfObjUtil.h"
 #include "ui/UIStr.h"
-#include "gf/GfDataUtil.h"
 
 namespace gf {
 
@@ -30,16 +28,6 @@ void hideParts(unsigned int handle) {
     parts.setDispChild(false, "IMG_eff");
 }
 }  // namespace
-
-bool GfMenuObjUtil::isCustomEnableBlade(unsigned int blade) {
-    if (blade == 0x412) {
-        return false;
-    }
-    if (GfGameManager::isClearGame()) {
-        return true;
-    }
-    return GfDataUtil::getScenarioFlag() > 2000;
-}
 
 GfMenuObjVision::GfMenuObjVision(unsigned int handle)
     : GfMenuObject(handle), m_seq(this), m_ctrl(-1), m_animHandle(0), m_result(0), m_drivers(nullptr) {
