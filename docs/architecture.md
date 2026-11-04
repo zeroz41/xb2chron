@@ -98,6 +98,43 @@ the module's own tables and inherits no name:
         --splits config/XC2_100/splits.txt
     zkit analyze --out build/XC2_301/analysis
 
+## Names from 2.0.0
+
+2.0.0 lies between the two builds, so code an update added after 1.0.0, or changed, often has its 3.0.1 form
+there already. Its `main` survives as an IDA Pro 7.0 XML export (`xb2_200.xml` with its `.bytes`, under `rom/`,
+not in the repository): 53,101 functions and 5,472 data objects under their original mangled names, and 18,649
+more under IDA's placeholders. The export's memory, placed at its addresses, and its function list (the unwind
+table is not in the dump, so the function ranges come from the symbols' sizes and IDA's ranges) make a second
+donor, `xc2_200`, read by the same signatures as `xc2_100`. Rebuilding that module from an export is not part of
+zkit yet.
+
+The 3.0.1 symbols now hold 2,807 function names and 206 data names only 2.0.0 has; for 31,940 functions both
+donors give the same name. 2.0.0 also checks and extends what 1.0.0 gave:
+
+- **seeded match** (`zkit signatures match --seeded --donor xc2_200`): with the names already in place as seeds,
+  every 3.0.1 function pairs with a 2.0.0 function by its shape, references and place. Where the name differs, the
+  declaration was wrong: a `const`, a parameter type, a member of another class, or a `TUnk_<address>` class that
+  2.0.0 names (often a listener nested in its menu object). Those were applied in the source unit by unit, each
+  unit compiled and compared, losing no match;
+- **order**: between two functions both builds name the same, placeholders pair in order with the 2.0.0
+  functions 3.0.1's names lack, where the counts, the class and the size (within twice) agree. Hiding names that
+  are known, this was wrong 3 times in 24,484, all in gaps holding several pairs; class tables placed by data order
+  between named tables were never wrong;
+- **sizes**: an object the base symbols cut short at a member's label grows to 2.0.0's size where only labels lie
+  inside (`zkit analyze`); 49 grew and took in 455 labels;
+- **guards**: a static's initialization guard is named after the object its initializer constructs, which the
+  code shows (`_ZGV` and the object's name).
+
+- **copies**: a data name the base symbols carry at two addresses, which the donors place at one of them, is a
+  label at the other (`zkit analyze`; `s_jobs` and `s_aArgParam` were such copies).
+
+Where 2.0.0 and 1.0.0 name a class table differently, the code decides. Both times it chose 2.0.0: the table the
+tree called `GfMenuMissionAdapter::MissionListConverter` is built by `GfMenuWorldMapAdapter::createFromListWork`
+and its third slot is the size of 2.0.0's `ListWorkConverter::getMapId`, not of `getMissionId`; the one called
+`GfMenuObjChainCount::MainListener` is installed by `GfMenuObjChainAttack::initialize` and its `reciveEvent` is
+the size of 2.0.0's `OverkillListener::reciveEvent`. 1.0.0 has neither class, so its match took the nearest one
+with the same slots. With both donors' signatures in the cache, `zkit analyze` uses both.
+
 ## Source layout
 
 The game's assertions name their source files, as built on Monolith Soft's machines under
