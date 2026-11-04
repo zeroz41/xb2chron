@@ -28,6 +28,7 @@
 #include "gf/GfDataDriver.h"
 #include "gf/GfObjAcc.h"
 #include "gf/GfObjUtil.h"
+#include "classes/gf/DataParamAcc.h"
 #include "gf/GfUtil.h"
 #include "ml/ScnObjAccResNode.h"
 #include <string.h>
@@ -401,6 +402,11 @@ bool GfArenaParty::checkDriver(const ArenaBattleStart& key) {
         }
     }
     return true;
+}
+
+unsigned int GfArenaParty::getWeaponDamage(const ArenaBattleStart& key, GF_OBJ_HANDLE* handle) const {
+    DataParamAcc acc(handle);
+    return GfArenaUtil::getWeaponDamage(key, acc.getBlade(-1, false));
 }
 
 }  // namespace gf

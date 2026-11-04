@@ -1162,26 +1162,20 @@ application/BF2/gf/game/GfAchievStats.cpp:
 	.data        start:0x00B52C30 end:0x00B52C38
 
 application/BF2/gf/GfAppendWire.cpp:
-	.text        start:0x0028B318 end:0x0028E5BC
+	.text        start:0x0028B318 end:0x0028E618
 	.rodata      start:0x0098A24B end:0x0098A25A
 	.rodata      start:0x009B548C end:0x009B5490
 	.rodata      start:0x009BB048 end:0x009BB0A0
 	.data        start:0x00B52C38 end:0x00B52C68
 
-application/BF2/gf/unit_710028E5BC.cpp:
-	.text        start:0x0028E5BC end:0x0028F250
+application/BF2/gf/unit_710028E618.cpp:
+	.text        start:0x0028E618 end:0x0028F250
 	.rodata      start:0x0098A25A end:0x0098A268
 
 application/BF2/gf/unit_710028EBB0.cpp:
-	.text        start:0x0028F250 end:0x0029064C
+	.text        start:0x0028F250 end:0x00290D00
 	.rodata      start:0x0098A268 end:0x0098A2AE
 	.data        start:0x00B52C68 end:0x00B535D0
-
-application/BF2/gf/data/GfDataBlade_710029064C.cpp:
-	.text        start:0x0029064C end:0x00290CC4
-
-application/BF2/gf/unit_7100290CC4.cpp:
-	.text        start:0x00290CC4 end:0x00290D00
 
 application/BF2/gf/game/arena/gf_game_arena.cpp:
 	.text        start:0x00290D00 end:0x002923A4

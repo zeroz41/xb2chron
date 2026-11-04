@@ -1,5 +1,4 @@
 #include "classes/gf/GfArenaReward.h"
-#include "classes/gf/GfArenaParty.h"
 #include "classes/gf/GfReqSmallCom.h"
 #include "classes/gf/SCOM_BATTLE_ARENA.h"
 #include "classes/gf/GimmickCamera.h"
@@ -7,15 +6,8 @@
 #include "classes/gf/GfBdatBtl.h"
 #include "classes/gf/GfGameParty.h"
 #include "classes/gmk/AGmkBase.h"
-#include "classes/gf/DataParamAcc.h"
-#include "gf/GfArenaUtil.h"
 
 namespace gf {
-
-unsigned int GfArenaParty::getWeaponDamage(const ArenaBattleStart& key, GF_OBJ_HANDLE* handle) const {
-    DataParamAcc acc(handle);
-    return GfArenaUtil::getWeaponDamage(key, acc.getBlade(-1, false));
-}
 
 GfArenaReward::GfArenaReward(GfGameArena* owner) : m_owner(owner) {}
 
