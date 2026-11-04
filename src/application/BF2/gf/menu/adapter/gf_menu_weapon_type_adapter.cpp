@@ -79,7 +79,7 @@ GfMenuWeaponTypeAdapter* GfMenuWeaponTypeAdapter::create(unsigned int handle, un
 
 inline bool GfMenuWeaponTypeAdapter::getDriverArts(DriverArts& arts) {
     mm::mtl::FixedArray<unsigned int, 4> list;
-    if (GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, 0, false)) {
+    if (GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, static_cast<PTPOS>(0), false)) {
         if (m_artsIndex < 4) {
             arts.m_arts = list[m_artsIndex];
             arts.m_level = GfDataDriverArts::getArtsLevel(m_driverId, arts.m_arts);
@@ -109,13 +109,13 @@ bool GfMenuWeaponTypeAdapter::update_WpnTypeIcon() {
 }
 
 bool GfMenuWeaponTypeAdapter::update_WpnTypeWP() {
-    setNumber(GfDataDriverArts::getWp(m_driverId, m_wpnType, 0));
+    setNumber(GfDataDriverArts::getWp(m_driverId, m_wpnType, static_cast<PTPOS>(0)));
     return true;
 }
 
 bool GfMenuWeaponTypeAdapter::update_ArtsName() {
     mm::mtl::FixedArray<unsigned int, 4> list;
-    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, 0, false)) {
+    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, static_cast<PTPOS>(0), false)) {
         return false;
     }
     unsigned int arts = list[m_artsIndex];
@@ -131,7 +131,7 @@ bool GfMenuWeaponTypeAdapter::update_ArtsName() {
 
 bool GfMenuWeaponTypeAdapter::update_ArtsIconType() {
     mm::mtl::FixedArray<unsigned int, 4> list;
-    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, 0, false)) {
+    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, static_cast<PTPOS>(0), false)) {
         return false;
     }
     unsigned int arts = list[m_artsIndex];
@@ -148,7 +148,7 @@ bool GfMenuWeaponTypeAdapter::update_ArtsIconType() {
 
 bool GfMenuWeaponTypeAdapter::update_ArtsIconEnhance() {
     mm::mtl::FixedArray<unsigned int, 4> list;
-    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, 0, false)) {
+    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, static_cast<PTPOS>(0), false)) {
         return false;
     }
     unsigned int arts = list[m_artsIndex];
@@ -165,7 +165,7 @@ bool GfMenuWeaponTypeAdapter::update_ArtsIconEnhance() {
 
 bool GfMenuWeaponTypeAdapter::update_ArtsIconReact() {
     mm::mtl::FixedArray<unsigned int, 4> list;
-    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, 0, false)) {
+    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, static_cast<PTPOS>(0), false)) {
         return false;
     }
     unsigned int arts = list[m_artsIndex];
@@ -182,7 +182,7 @@ bool GfMenuWeaponTypeAdapter::update_ArtsIconReact() {
 
 bool GfMenuWeaponTypeAdapter::update_ArtsIconRange() {
     mm::mtl::FixedArray<unsigned int, 4> list;
-    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, 0, false)) {
+    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, static_cast<PTPOS>(0), false)) {
         return false;
     }
     unsigned int arts = list[m_artsIndex];
@@ -261,7 +261,7 @@ bool GfMenuWeaponTypeAdapter::update_ArtsNumRecast() {
 
 bool GfMenuWeaponTypeAdapter::update_ArtsLevel() {
     mm::mtl::FixedArray<unsigned int, 4> list;
-    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, 0, false)) {
+    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, static_cast<PTPOS>(0), false)) {
         return false;
     }
     unsigned int arts = list[m_artsIndex];
@@ -271,7 +271,7 @@ bool GfMenuWeaponTypeAdapter::update_ArtsLevel() {
 
 bool GfMenuWeaponTypeAdapter::update_ArtsIconLevel() {
     mm::mtl::FixedArray<unsigned int, 4> list;
-    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, 0, false)) {
+    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, static_cast<PTPOS>(0), false)) {
         return false;
     }
     unsigned int arts = list[m_artsIndex];
@@ -281,7 +281,7 @@ bool GfMenuWeaponTypeAdapter::update_ArtsIconLevel() {
 
 bool GfMenuWeaponTypeAdapter::update_ArtsDescription() {
     mm::mtl::FixedArray<unsigned int, 4> list;
-    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, 0, false)) {
+    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, static_cast<PTPOS>(0), false)) {
         return false;
     }
     unsigned int arts = list[m_artsIndex];
@@ -292,7 +292,7 @@ bool GfMenuWeaponTypeAdapter::update_ArtsDescription() {
 
 bool GfMenuWeaponTypeAdapter::update_ArtsWp() {
     mm::mtl::FixedArray<unsigned int, 4> list;
-    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, 0, false)) {
+    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, static_cast<PTPOS>(0), false)) {
         return false;
     }
     unsigned int arts = list[m_artsIndex];
@@ -302,7 +302,7 @@ bool GfMenuWeaponTypeAdapter::update_ArtsWp() {
 
 bool GfMenuWeaponTypeAdapter::update_ArtsDriverLevel() {
     mm::mtl::FixedArray<unsigned int, 4> list;
-    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, 0, false)) {
+    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, static_cast<PTPOS>(0), false)) {
         return false;
     }
     unsigned int arts = list[m_artsIndex];
@@ -319,7 +319,7 @@ bool GfMenuWeaponTypeAdapter::update_ArtsDriverLevel() {
 
 bool GfMenuWeaponTypeAdapter::update_ArtsLevel0Disp() {
     mm::mtl::FixedArray<unsigned int, 4> list;
-    if (GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, 0, false)) {
+    if (GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, static_cast<PTPOS>(0), false)) {
         unsigned int arts = list[m_artsIndex];
         if (GfDataDriverArts::getArtsLevel(m_driverId, arts) != 0) {
             return m_param == 0;
@@ -330,7 +330,7 @@ bool GfMenuWeaponTypeAdapter::update_ArtsLevel0Disp() {
 
 bool GfMenuWeaponTypeAdapter::update_ArtsLevelMaxDisp() {
     mm::mtl::FixedArray<unsigned int, 4> list;
-    if (GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, 0, false)) {
+    if (GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, static_cast<PTPOS>(0), false)) {
         unsigned int arts = list[m_artsIndex];
         if (GfDataDriverArts::getArtsLevel(m_driverId, arts) < GfDataDriverArts::getLevelMax(arts)) {
             return m_param == 0;
@@ -341,7 +341,7 @@ bool GfMenuWeaponTypeAdapter::update_ArtsLevelMaxDisp() {
 
 bool GfMenuWeaponTypeAdapter::update_ArtsEnhanceDescription() {
     mm::mtl::FixedArray<unsigned int, 4> list;
-    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, 0, false)) {
+    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, static_cast<PTPOS>(0), false)) {
         return false;
     }
     unsigned int arts = list[m_artsIndex];
@@ -353,7 +353,7 @@ bool GfMenuWeaponTypeAdapter::update_ArtsEnhanceDescription() {
 
 bool GfMenuWeaponTypeAdapter::update_ArtsReleseLv() {
     mm::mtl::FixedArray<unsigned int, 4> list;
-    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, 0, false)) {
+    if (!GfMenuObjUtil::getEnableArts(list, m_driverId, m_wpnType, static_cast<PTPOS>(0), false)) {
         return false;
     }
     setNumber(GfDataDriverArts::getLevelCap(list[m_artsIndex], m_param));

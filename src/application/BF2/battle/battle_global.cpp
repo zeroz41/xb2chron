@@ -850,7 +850,7 @@ void BattleGlobal::SetupLeaderAndControlCharacterHandle() {
     if (ChainAttackManager::sys()->IsProc(false)) {
         int group = ChainAttackManager::sys()->GetGroupIndex();
         if (group >= 0) {
-            m_controlHandle = gf::GfGameParty::getHandleDriver(group, 0);
+            m_controlHandle = gf::GfGameParty::getHandleDriver(group, static_cast<gf::PTPOS>(0));
         }
     }
 }

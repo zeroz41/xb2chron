@@ -6,7 +6,9 @@ namespace gf { class SDataEnemy; }
 namespace gf { class IDataObj; }
 namespace gf { struct ParamObj; }
 namespace gf { struct SDataIdea; }
-namespace gf { enum PTPOS : int; }
+// 2.0.0's symbols name gf::PTPOS (a party position, 0..2); GfGameParty::getHandleDriver indexes with it
+// zero-extended in 2.0.0 and 3.0.1 alike, so it is unsigned
+namespace gf { enum PTPOS : unsigned int; }
 
 namespace gf {
 // what kind of object a DataParamAcc reads (its constructor's third argument)

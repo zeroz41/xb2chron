@@ -841,7 +841,7 @@ bool GfGameManager::isStopEnemyAttack() {
 bool GfGameManager::isPartyMemberPlayVoice() {
     if (GfGameVoice* voice = GfGameVoice::get()) {
         for (unsigned int i = 0; i < 3; i++) {
-            if (voice->isPlayVoice(GfGameParty::getHandleDriver(i, 0))) {
+            if (voice->isPlayVoice(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0)))) {
                 return true;
             }
             if (voice->isPlayVoice(GfGameParty::getHandleBlade(i, -1))) {
@@ -999,12 +999,12 @@ bool GfGameManager::isSepiaFilter() {
 bool GfGameManager::fn_71002AC77C(unsigned int party) {
     GfGameAoc* aoc = GfGameAoc::get();
     if (aoc && aoc->m_mode == 1) {
-        GfObjAcc driver0(GfGameParty::getHandleDriver(party, 0));
-        GfObjAcc driver1(GfGameParty::getHandleDriver(party, 1));
-        GfObjAcc driver2(GfGameParty::getHandleDriver(party, 2));
+        GfObjAcc driver0(GfGameParty::getHandleDriver(party, static_cast<PTPOS>(0)));
+        GfObjAcc driver1(GfGameParty::getHandleDriver(party, static_cast<PTPOS>(1)));
+        GfObjAcc driver2(GfGameParty::getHandleDriver(party, static_cast<PTPOS>(2)));
         return driver0.isBattle() || driver1.isBattle() || driver2.isBattle();
     }
-    GfObjAcc driver(GfGameParty::getHandleDriver(party, 0));
+    GfObjAcc driver(GfGameParty::getHandleDriver(party, static_cast<PTPOS>(0)));
     GfObjAcc blade(GfGameParty::getHandleBlade(party, -1));
     if (!driver.m_obj) {
         return false;
@@ -1425,7 +1425,7 @@ bool GfGameManager::isBattleStop() {
     if (GfGameParty::getBladeBdatId(0, -1) != 1001) {
         return false;
     }
-    GfObjAcc driver(GfGameParty::getHandleDriver(0, 0));
+    GfObjAcc driver(GfGameParty::getHandleDriver(0, static_cast<PTPOS>(0)));
     GfObjAcc blade(GfGameParty::getHandleBlade(0, -1));
     if (blade.getBladeId() == 1001 && !driver.isBattle() && blade.isRebuild()) {
         return true;

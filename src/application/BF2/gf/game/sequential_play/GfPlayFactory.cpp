@@ -610,7 +610,7 @@ bool GfPlayFactory::createResetBladeForBattleEnd(unsigned int slot, int setId, b
     if (GfPlayComResetBlade::isPlaying(slot)) {
         return false;
     }
-    GfObjAcc acc(GfGameParty::getHandleDriver(slot, 0));
+    GfObjAcc acc(GfGameParty::getHandleDriver(slot, static_cast<PTPOS>(0)));
     if (acc.isBattle()) {
         return false;
     }
@@ -645,7 +645,7 @@ bool GfPlayFactory::createResetBladeForBladeSwitch(unsigned int slot, int setId)
     if (GfPlayComResetBlade::isPlaying(slot)) {
         return false;
     }
-    GfObjAcc acc(GfGameParty::getHandleDriver(slot, 0));
+    GfObjAcc acc(GfGameParty::getHandleDriver(slot, static_cast<PTPOS>(0)));
     if (acc.isBattle()) {
         return false;
     }

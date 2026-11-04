@@ -1448,7 +1448,7 @@ void GfDataAchievement::clearTotalCount(unsigned int type) {
     GfGameFlag::setLocal(32, index, 0);
 }
 
-GfDataParty::PartyMember* GfDataParty::getPartyMember(unsigned int index, unsigned int party) {
+GfDataParty::PartyMember* GfDataParty::getPartyMember(unsigned int index, PTPOS party) {
     switch (party) {
     case 1:
         return &GfDataManager::getDataGameIra()->m_partyMembers[0][index];
@@ -5594,7 +5594,7 @@ bool GfDataBlade::isActivateMercenaryTeam(unsigned int blade) {
     return GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_dataType == 2;
 }
 
-unsigned int GfDataParty::getDriver(unsigned int index, unsigned int party) {
+unsigned int GfDataParty::getDriver(unsigned int index, PTPOS party) {
     return getPartyMember(index, party)->m_driver;
 }
 

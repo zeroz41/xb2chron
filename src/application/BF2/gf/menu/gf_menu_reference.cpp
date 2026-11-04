@@ -395,7 +395,7 @@ bool GfMenuReference::isReversePaletteBtnState(unsigned int slot, unsigned int s
 }
 
 int GfMenuReference::getBladeSetIDFromParty(unsigned int party, unsigned int slot) {
-    DataParamAcc acc(GfGameParty::getHandleDriver(party, 0));
+    DataParamAcc acc(GfGameParty::getHandleDriver(party, static_cast<PTPOS>(0)));
     int result = -1;
     if (acc.isValid()) {
         unsigned int max = GfMenuObjUtil::getBladeSlotMax();

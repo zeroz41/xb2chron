@@ -120,7 +120,7 @@ unsigned int GfReqCommand::reqRebuildPartyWeapon(unsigned int blade) {
     if (party == static_cast<unsigned int>(-1)) {
         return -1;
     }
-    DataParamAcc driver(GfGameParty::getHandleDriver(party, 0));
+    DataParamAcc driver(GfGameParty::getHandleDriver(party, static_cast<PTPOS>(0)));
     unsigned int driverId = 0;
     if (driver.isValid() && driver.getObjType() == 3) {
         driverId = driver.getBdatId();

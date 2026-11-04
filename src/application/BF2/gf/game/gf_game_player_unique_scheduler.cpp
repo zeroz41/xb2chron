@@ -184,13 +184,13 @@ void GfGamePlayerUniqueScheduler::gevPartyMemberOK(bool ok) {
             // three drivers for each of the first three (getHandleDriver's second argument 0 to 2)
             for (unsigned int i = 0; i < 3; i++) {
                 for (unsigned int j = 0; j < 3; j++) {
-                    setMember(m_members[i * 3 + j], GfGameParty::getHandleDriver(i, j));
+                    setMember(m_members[i * 3 + j], GfGameParty::getHandleDriver(i, static_cast<PTPOS>(j)));
                 }
             }
         } else {
             // the first three drivers and their blades
             for (unsigned int i = 0; i < 3; i++) {
-                setMember(m_members[i * 2], GfGameParty::getHandleDriver(i, 0));
+                setMember(m_members[i * 2], GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0)));
                 setMember(m_members[i * 2 + 1], GfGameParty::getHandleBlade(i, -1));
             }
         }

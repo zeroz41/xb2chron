@@ -1119,7 +1119,7 @@ bool GfMenuCharDataAdapter::update_IRA_IsBack(const DataParamAcc& acc) {
     if (party == 0xFFFFFFFF) {
         return false;
     }
-    return GfGameParty::getDriverBdatId(party, 1) == getDriverId(acc);
+    return GfGameParty::getDriverBdatId(party, static_cast<PTPOS>(1)) == getDriverId(acc);
 }
 
 bool GfMenuCharDataAdapter::update_IRA_NotReserve(const DataParamAcc& acc) {
@@ -1130,7 +1130,7 @@ bool GfMenuCharDataAdapter::update_IRA_NotReserve(const DataParamAcc& acc) {
     if (party == 0xFFFFFFFF) {
         return false;
     }
-    return GfGameParty::getDriverBdatId(party, 2) != getDriverId(acc);
+    return GfGameParty::getDriverBdatId(party, static_cast<PTPOS>(2)) != getDriverId(acc);
 }
 
 GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromPartyDriver(unsigned int handle, unsigned int kind,
@@ -1149,7 +1149,7 @@ bool GfMenuCharDataAdapter::update_IRA_IsFront(const DataParamAcc& acc) {
     if (party == 0xFFFFFFFF) {
         return false;
     }
-    return GfGameParty::getDriverBdatId(party, 0) == getDriverId(acc);
+    return GfGameParty::getDriverBdatId(party, static_cast<PTPOS>(0)) == getDriverId(acc);
 }
 
 bool GfMenuCharDataAdapter::update_DR_ClassBuffName(const DataParamAcc& acc) {
@@ -2062,7 +2062,7 @@ GfMenuCharDataAdapter::GfObjConverter* GfMenuCharDataAdapter::IConverter::fromGf
 }
 
 void GfMenuCharDataAdapter::PartyDriverConverter::getCharData(unsigned char& objType, unsigned int& objId) {
-    GfObjAcc acc(GfGameParty::getHandleDriver(m_party, 0));
+    GfObjAcc acc(GfGameParty::getHandleDriver(m_party, static_cast<PTPOS>(0)));
     objType = acc.getType();
     objId = acc.getBdatId();
 }
@@ -2218,7 +2218,7 @@ void GfMenuCharDataAdapter::IraDriverListFormConverter::getCharData(unsigned cha
         if (driver != 0) {
             int partyId = GfDataParty::getDriverPartyID(driver);
             if (partyId != -1) {
-                objId = GfDataParty::getDriver(partyId, m_party);
+                objId = GfDataParty::getDriver(partyId, static_cast<PTPOS>(m_party));
             }
         }
     }

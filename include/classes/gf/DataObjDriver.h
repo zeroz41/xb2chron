@@ -82,7 +82,7 @@ public:
     virtual void addWeaponPoint(unsigned int, int);  // slot 73
     virtual unsigned int getSkillPoint() const;  // slot 74
     virtual void addSkillPoint(int);  // slot 75
-    virtual unsigned int getDriverArts(unsigned int, unsigned int, unsigned int) const;  // slot 76
+    virtual unsigned int getDriverArts(unsigned int, unsigned int, PTPOS) const;  // slot 76
     virtual bool setDriverArts(unsigned int, int, unsigned int);  // slot 77
     virtual unsigned int getDriverArtsLevel(unsigned int) const;  // slot 78
     virtual void setDriverArtsLevel(unsigned int, unsigned int);  // slot 79

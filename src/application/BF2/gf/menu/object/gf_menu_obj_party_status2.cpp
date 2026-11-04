@@ -278,7 +278,7 @@ void GfMenuObjPartyStatus2::setupPartyStatus(ui::UIObjectAcc& acc, GfMenuRewrite
 
 void GfMenuObjPartyStatus2::movePartyFrameIn(ui::UIObjectAcc& acc, unsigned int index, int& ctrl) {
     mm::mtl::FixStr<32> name;
-    GfObjAcc driver(GfGameParty::getHandleDriver(index, 0));
+    GfObjAcc driver(GfGameParty::getHandleDriver(index, static_cast<PTPOS>(0)));
     driver.getBdatId();
     name.format("LAY_dr@%02d", index + 1);
     ui::UIObjectAcc frame(acc.searchChild(name.m_str));
@@ -295,7 +295,7 @@ void GfMenuObjPartyStatus2::movePartyFrameIn(ui::UIObjectAcc& acc, unsigned int 
 
 void GfMenuObjPartyStatus2::movePartyFrameOut(ui::UIObjectAcc& acc, unsigned int index, int& ctrl) {
     mm::mtl::FixStr<32> name;
-    GfObjAcc driver(GfGameParty::getHandleDriver(index, 0));
+    GfObjAcc driver(GfGameParty::getHandleDriver(index, static_cast<PTPOS>(0)));
     int id = driver.getBdatId();
     name.format("LAY_dr@%02d", index + 1);
     ui::UIObjectAcc frame(acc.searchChild(name.m_str));

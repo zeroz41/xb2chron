@@ -1251,7 +1251,7 @@ void GfMenuManager::gevChangeParty() {
     }
     unsigned int changed = 0;
     GfMenuReference::IraCharInfo owner = {0, {0xFF, 0.0f}};
-    if (unsigned int driver = GfGameParty::getDriverBdatId(0, 0)) {
+    if (unsigned int driver = GfGameParty::getDriverBdatId(0, static_cast<PTPOS>(0))) {
         owner.m_driver = driver;
         owner.m_gauge.m_type = 0;
     }
@@ -1263,7 +1263,7 @@ void GfMenuManager::gevChangeParty() {
     owner.m_gauge.m_type = 0xFF;
     owner.m_gauge.m_rate = 0.0f;
     owner.m_gauge.m_flags.reset();
-    if (unsigned int driver = GfGameParty::getDriverBdatId(0, 1)) {
+    if (unsigned int driver = GfGameParty::getDriverBdatId(0, static_cast<PTPOS>(1))) {
         owner.m_driver = driver;
         owner.m_gauge.m_type = 1;
     }
@@ -1272,7 +1272,7 @@ void GfMenuManager::gevChangeParty() {
     owner.m_gauge.m_type = 0xFF;
     owner.m_gauge.m_rate = 0.0f;
     owner.m_gauge.m_flags.reset();
-    if (unsigned int driver = GfGameParty::getDriverBdatId(0, 2)) {
+    if (unsigned int driver = GfGameParty::getDriverBdatId(0, static_cast<PTPOS>(2))) {
         owner.m_driver = driver;
         owner.m_gauge.m_type = 2;
     }

@@ -364,7 +364,7 @@ bool GfMenuMercenariesAdapter::update_TeamNameRes() {
     unsigned int index = m_bladeList->getRowOffset() + m_index;
     int reference = GfMenuReference::getReferenceNumber(0);
     if (reference == 0) {
-        DataParamAcc acc(3, GfDataParty::getPartyMember(index, 0)->m_driver, GimmickType(0));
+        DataParamAcc acc(3, GfDataParty::getPartyMember(index, static_cast<PTPOS>(0))->m_driver, GimmickType(0));
         if (!acc.isValid()) {
             return false;
         }
@@ -404,7 +404,7 @@ bool GfMenuMercenariesAdapter::update_TeamIconResFace() {
     unsigned int index = m_bladeList->getRowOffset() + m_index;
     int reference = GfMenuReference::getReferenceNumber(0);
     if (reference == 0) {
-        DataParamAcc acc(3, GfDataParty::getPartyMember(index, 0)->m_driver, GimmickType(0));
+        DataParamAcc acc(3, GfDataParty::getPartyMember(index, static_cast<PTPOS>(0))->m_driver, GimmickType(0));
         if (!acc.isValid()) {
             return false;
         }

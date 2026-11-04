@@ -2,6 +2,7 @@
 #define GF_GFDATADRIVERARTS_H
 
 namespace gf {
+enum PTPOS : unsigned int;
 
 // the drivers' arts' data (functions, by their symbols): GfBdatBtl's ArtsDr table, by an arts id and a level
 class GfDataDriverArts {
@@ -28,10 +29,10 @@ public:
     // (appended by wpntype) 1.0.0's name: the symbols call it fn_71002453B4 (1.0.0's
     // GfMenuWeaponTypeAdapter::update_Arts* call getArtsLevel(driver, arts) at the same sites with the same arguments)
     static unsigned int getArtsLevel(unsigned int driver, unsigned int arts);
-    // (appended by wpntype) 1.0.0's name (getWp(unsigned int, unsigned int)): the symbols call it fn_7100249790
-    // (1.0.0's update_WpnTypeWP calls getWp at the same site); 3.0.1 added the mode (0, 1 or 2: which weapon point
+    // (appended by wpntype) 2.0.0's symbols name it (1.0.0's getWp(unsigned int, unsigned int); 1.0.0's
+    // update_WpnTypeWP calls getWp at the same site); 3.0.1 added the mode (gf::PTPOS 0, 1 or 2: which weapon point
     // table it reads; update_WpnTypeWP passes 0)
-    static int getWp(unsigned int driver, unsigned int wpnType, int mode);
+    static int getWp(unsigned int driver, unsigned int wpnType, PTPOS mode);
     // 1.0.0's name: the symbols call it fn_71002498F8 (it follows getWp; 1.0.0's DataObjDriver::addWeaponPoint calls
     // addWp at the same site with the same arguments; 3.0.1 added the DLC drivers' records)
     static void addWp(unsigned int driver, unsigned int wpnType, int point);

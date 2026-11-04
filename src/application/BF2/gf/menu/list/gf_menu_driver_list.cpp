@@ -28,7 +28,7 @@ void GfMenuDriverList::setupFromIraDriver(const IraDriverSetup& setup) {
             MenuDriverInfo info;
             info.m_driver = 0;
             for (unsigned int party = 0; party < 3; party++) {
-                unsigned int driver = GfDataParty::getDriver(index, party);
+                unsigned int driver = GfDataParty::getDriver(index, static_cast<PTPOS>(party));
                 if (driver != 0 && !GfDataDriver::isActivateUnuse(driver)) {
                     info.m_driver = driver;
                     addContents(info);

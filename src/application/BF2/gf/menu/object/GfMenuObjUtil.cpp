@@ -482,7 +482,7 @@ bool GfMenuObjUtil::isExitDriver(unsigned int index) {
     if (index >= 3) {
         index %= 3;
     }
-    return GfGameParty::getHandleDriver(index, 0) != reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    return GfGameParty::getHandleDriver(index, static_cast<PTPOS>(0)) != reinterpret_cast<GF_OBJ_HANDLE*>(-1);
 }
 
 bool GfMenuObjUtil::isIraSinMaskOff() {
@@ -583,7 +583,7 @@ unsigned int GfMenuObjUtil::getDriverClassBuffLv(unsigned int driverClass, unsig
 
 unsigned int GfMenuObjUtil::getDriverPartyID(unsigned int driver) {
     for (unsigned int i = 0; i < 10; i++) {
-        if (GfDataParty::getDriver(i, 0) == driver) {
+        if (GfDataParty::getDriver(i, static_cast<PTPOS>(0)) == driver) {
             return i;
         }
     }
@@ -630,7 +630,7 @@ bool GfMenuObjUtil::canBladeHanaInMercenary() {
     }
     unsigned int count = 0;
     for (unsigned int slot = 0; slot < 3; slot++) {
-        if (GfGameParty::getDriverBdatId(slot, 0) != 0) {
+        if (GfGameParty::getDriverBdatId(slot, static_cast<PTPOS>(0)) != 0) {
             count++;
         }
     }
@@ -641,14 +641,14 @@ bool GfMenuObjUtil::isBladeEnableOffset(unsigned int driver, int offset) {
     if (ui::UIUtil::isEnableExpType(3) && GfGameManager::isGameTypeIra()) {
         return true;
     }
-    unsigned int blade = GfDataDriver::getBlade(GfDataParty::getDriver(0, 0), -1);
+    unsigned int blade = GfDataDriver::getBlade(GfDataParty::getDriver(0, static_cast<PTPOS>(0)), -1);
     return blade != 0 && !GfDataBlade::isDummyBlade(blade);
 }
 
 gf::GF_OBJ_HANDLE* GfMenuObjUtil::getLeaderBladeHandle(bool flag) {
     int set = 0;
     {
-        DataParamAcc acc(3, GfDataParty::getDriver(0, 0), static_cast<GimmickType>(0));
+        DataParamAcc acc(3, GfDataParty::getDriver(0, static_cast<PTPOS>(0)), static_cast<GimmickType>(0));
         if (acc.isValid()) {
             set = acc.getBladeSet(false);
         }
@@ -671,7 +671,7 @@ unsigned int GfMenuObjUtil::getBladeIDFromPartySlot(unsigned int driver, int slo
     if (driver > 9) {
         return 0;
     }
-    DataParamAcc acc(3, GfDataParty::getDriver(driver, 0), static_cast<GimmickType>(0));
+    DataParamAcc acc(3, GfDataParty::getDriver(driver, static_cast<PTPOS>(0)), static_cast<GimmickType>(0));
     int set = getSetBladeID(driver, slot, flag);
     unsigned int blade = 0;
     if (set != -1) {
@@ -681,7 +681,7 @@ unsigned int GfMenuObjUtil::getBladeIDFromPartySlot(unsigned int driver, int slo
 }
 
 unsigned int GfMenuObjUtil::getBladeIDFromPartyBackSlot(unsigned int driver, int slot, bool flag) {
-    if (GfDataParty::getDriver(driver, 0) != 1) {
+    if (GfDataParty::getDriver(driver, static_cast<PTPOS>(0)) != 1) {
         return 0;
     }
     int set;
@@ -712,7 +712,7 @@ unsigned int GfMenuObjUtil::getBladeIDFromPartyBackSlot(unsigned int driver, int
 
 unsigned int GfMenuObjUtil::getBladeIDFromDriverSlot(unsigned int driver, int slot) {
     for (unsigned int i = 0; i < 10; i++) {
-        if (GfDataParty::getDriver(i, 0) == driver) {
+        if (GfDataParty::getDriver(i, static_cast<PTPOS>(0)) == driver) {
             return getBladeIDFromPartySlot(i, slot, false);
         }
     }

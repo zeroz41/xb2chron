@@ -169,7 +169,10 @@ inline int GfMenuObjDrArtsSet2::checkArtsLvUp(unsigned int driver, unsigned int 
     if (arts == 0 || GfDataDriverArts::getLevelMax(arts) <= level) {
         return 4;
     }
-    return GfDataDriverArts::getNeedLevelupWp(driver, arts) > GfDataDriverArts::getWp(driver, wpnType, 0) ? 5 : 0;
+    return GfDataDriverArts::getNeedLevelupWp(driver, arts) >
+                   GfDataDriverArts::getWp(driver, wpnType, static_cast<PTPOS>(0))
+               ? 5
+               : 0;
 }
 
 void GfMenuObjDrArtsSet2::refreshLvUp(ui::UIObjectAcc& acc, unsigned int driver, unsigned int wpnType,
@@ -231,7 +234,7 @@ void GfMenuObjDrArtsSet2::refreshLvUpWpn(ui::UIObjectAcc& acc, unsigned int driv
                                          const mm::mtl::FixedVector<unsigned int, 50>& wpnTypes) {
     for (unsigned int i = 0; i < wpnTypes.size();) {
         mm::mtl::FixedArray<unsigned int, 4> arts;
-        unsigned int count = GfMenuObjUtil::getEnableArts(arts, driver, wpnTypes[i], 0, false);
+        unsigned int count = GfMenuObjUtil::getEnableArts(arts, driver, wpnTypes[i], static_cast<PTPOS>(0), false);
         bool lvUp = false;
         mm::mtl::FixStr<32> name;
         for (unsigned int j = 0; j < count; j++) {
@@ -328,7 +331,8 @@ void GfMenuObjDrArtsSet2::updateArtsSwapSelectIra(int index, bool close) {
     ui::UIObjectAcc acc(m_handle, "LAY_arts");
     unsigned int driver = GfMenuReference::getReferenceDriverID(s_RefDriverIndex);
     mm::mtl::FixedArray<unsigned int, 4> arts;
-    unsigned int count = GfMenuObjUtil::getEnableArts(arts, driver, m_number->m_value, pad_2B4, pad_2B9);
+    unsigned int count =
+        GfMenuObjUtil::getEnableArts(arts, driver, m_number->m_value, static_cast<PTPOS>(pad_2B4), pad_2B9);
     if (count <= 3) {
         count = 3;
     }

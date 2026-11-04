@@ -96,7 +96,7 @@ int GfMenuObjPartyStatus::openPartyStatus(unsigned int handle, int value) {
             mm::mtl::FixStr<32> name;
             name.format("LAY_mem%d", i + 1);
             if (id == GfMenuObjUtil::getLeaderPartyID() ||
-                GfGameParty::getHandleDriver(id, 0) != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                GfGameParty::getHandleDriver(id, static_cast<PTPOS>(0)) != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
                 acc.setDispChild(true, name.m_str);
             } else {
                 acc.setDispChild(false, name.m_str);
@@ -181,7 +181,7 @@ void GfMenuObjPartyStatus::setupComboReq(const ui::UIObjectAcc& acc, unsigned sh
     ui::UIObjectAcc(acc.m_handle, name.m_str).setImageIndex(GfMenuBdat::getIconImageIndex(icon));
     if (index == 0) {
         bool sp = false;
-        if (GfDataParty::getDriver(index, 0) == 1) {
+        if (GfDataParty::getDriver(index, static_cast<PTPOS>(0)) == 1) {
             sp = GfDataDriver::getBlade(1, -1) == 0x3EB;
         }
         ui::UIObjectAcc(acc.m_handle, "IMG_combo_req2_sp@01").setDisp(sp);

@@ -465,7 +465,7 @@ void GfPlayComWaitEvent::end() {
 
 bool GfPlayComWaitEvent::update(const fw::UpdateInfo& info, bool flag) {
     for (unsigned int i = 0; i < 3; i++) {
-        DataParamAcc acc(GfGameParty::getHandleDriver(i, 0));
+        DataParamAcc acc(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0)));
         if (acc.isValid() && acc.getHp() == 0) {
             GfGameUtil::setHp(acc.m_handle, 1);
         }
@@ -1074,7 +1074,7 @@ bool GfPlayComResetBlade::update(const fw::UpdateInfo& info, bool flag) {
             return true;
         }
         if (m_blade <= 2) {
-            GfObjAcc acc(GfGameParty::getHandleDriver(m_blade, 0));
+            GfObjAcc acc(GfGameParty::getHandleDriver(m_blade, static_cast<PTPOS>(0)));
             if (acc.isBattle()) {
                 return true;
             }

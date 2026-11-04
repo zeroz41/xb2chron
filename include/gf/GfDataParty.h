@@ -4,6 +4,7 @@
 namespace mm { class Vec3; }
 
 namespace gf {
+enum PTPOS : unsigned int;
 struct SDataParty;
 
 // the party's game data (functions, by 1.0.0's symbols)
@@ -18,14 +19,14 @@ public:
         unsigned short m_hierarchyBlade;
     };
     // the member at an index of a party: 0 is the game data's (1.0.0's one-argument function), 1 and 2 two other
-    // parties' kept elsewhere (3.0.1 added the second parameter; its name is not the original's)
-    static PartyMember* getPartyMember(unsigned int index, unsigned int party);
+    // parties' kept elsewhere (3.0.1 added the second parameter; 2.0.0's symbols type it gf::PTPOS)
+    static PartyMember* getPartyMember(unsigned int index, PTPOS party);
     // the driver of the member at an index of a party (0: the game data's party at 0xE9884, 1 and 2 the other two
-    // parties GfDataManager::getDataGameIra keeps at 0x10D04 and 0x10D40). The symbols spell it fn_7100238EC8: 1.0.0's
+    // parties GfDataManager::getDataGameIra keeps at 0x10D04 and 0x10D40). 2.0.0's symbols name it; 1.0.0's
     // GfDataParty::getDriver(unsigned int) has the same body for party 0, sits next to GfDataDriver::getBlade as this
     // does, and 1.0.0's GfMenuObjUtil::isBladeEnableOffset calls it where 3.0.1's calls getDriver (3.0.1 added the
-    // second parameter, as for getPartyMember; its name is not the original's)
-    static unsigned int getDriver(unsigned int index, unsigned int party);
+    // second parameter, as for getPartyMember; 2.0.0's symbols type it gf::PTPOS)
+    static unsigned int getDriver(unsigned int index, PTPOS party);
     // the party index of a driver (0.., -1 for 0 or a driver not in the party). The symbols spell it fn_710023B1D8:
     // 1.0.0's GfDataParty::getDriverPartyID(unsigned int) sits right after GfDataBlade::isActivateParty as this does,
     // has the same shape (0 -> -1, then the game data's party records from 0xE9884 compared one by one) and the same

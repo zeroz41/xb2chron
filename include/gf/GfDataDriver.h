@@ -1,7 +1,7 @@
 #ifndef GF_GFDATADRIVER_H
 #define GF_GFDATADRIVER_H
 
-namespace gf { class SDataDriver; enum DBSLOT : int; struct GfItemHandle; enum PTPOS : int; }
+namespace gf { class SDataDriver; enum DBSLOT : int; struct GfItemHandle; enum PTPOS : unsigned int; }
 namespace gf { struct SDataPouch; }
 namespace gf { struct SDataIra; struct SDataDriverArtsEx; }
 namespace gf { enum FAVORITE : int; }

@@ -254,7 +254,7 @@ void GfGameScene::checkFieldBladeChange() {
         return;
     }
     for (unsigned int i = 0; i < 3; i++) {
-        GfObjAcc acc(GfGameParty::getHandleDriver(i, 0));
+        GfObjAcc acc(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0)));
         if (acc.isBattle()) {
             continue;
         }
@@ -264,7 +264,7 @@ void GfGameScene::checkFieldBladeChange() {
         }
         int setId = GfSelectBlade::getStartBattleSetId(i);
         if (setId >= 0) {
-            DataParamAcc driver(GfGameParty::getHandleDriver(i, 0));
+            DataParamAcc driver(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0)));
             if (setId != driver.getBladeSet(false)) {
                 if (isEnableRideCondition(i)) {
                     GfPlayFactory::createResetBladeForBattleEnd(i, setId, false);
@@ -339,7 +339,7 @@ bool GfGameScene::isRide(unsigned int id) const {
     if (id == 0xFFFFFFFF) {
         return false;
     }
-    GfObjAcc acc(GfGameParty::getHandleDriver(id, 0));
+    GfObjAcc acc(GfGameParty::getHandleDriver(id, static_cast<PTPOS>(0)));
     return GfDataParty::isNiaByakko(id) && !acc.isBattle();
 }
 
@@ -511,7 +511,7 @@ bool GfGameScene::isDisableJumpForRide() const {
     if (!m_rideActive) {
         return false;
     }
-    GfObjAcc acc(GfGameParty::getHandleDriver(0, 0));
+    GfObjAcc acc(GfGameParty::getHandleDriver(0, static_cast<PTPOS>(0)));
     if (isBattle() && !acc.isBattle() && m_openMainMenuState != 2) {
         return false;
     }
@@ -528,7 +528,7 @@ bool GfGameScene::isNeedResetBladeForBattleEndForBattleEnd() const {
     }
     for (unsigned int i = 0; i < 3; i++) {
         bool homura;  // Rex (driver 1) with blade 1003
-        if (GfGameParty::getDriverBdatId(i, 0) == 1) {
+        if (GfGameParty::getDriverBdatId(i, static_cast<PTPOS>(0)) == 1) {
             homura = GfDataDriver::getBlade(1, -1) == 1003;
         } else {
             continue;
@@ -573,7 +573,7 @@ bool GfGameScene::isSepiaFilter() const {
 
 void GfGameScene::applyMapjumpForStart(const MapjumpCallbackInfo&) {
     for (unsigned int i = 0; i < 3; i++) {
-        GF_OBJ_HANDLE* handle = GfGameParty::getHandleDriver(i, 0);
+        GF_OBJ_HANDLE* handle = GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0));
         if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
             DataParamAcc acc(handle);
             if (acc.isValid()) {
@@ -939,7 +939,7 @@ void GfGameScene::enterBattle(bool battle) {
         }
     }
     for (unsigned int i = 0; i < 3; i++) {
-        GfObjUtil::setDisableAutoHeal(GfGameParty::getHandleDriver(i, 0), false);
+        GfObjUtil::setDisableAutoHeal(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0)), false);
     }
 }
 
@@ -991,7 +991,7 @@ void GfGameScene::updateParam(const fw::UpdateInfo&) {
 
 void GfGameScene::updatePartyBattle(const fw::UpdateInfo&) {
     for (unsigned int i = 0; i < 3; i++) {
-        GfObjAcc acc(GfGameParty::getHandleDriver(i, 0));
+        GfObjAcc acc(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0)));
         if (acc.isBattle() && m_partyBattleStartCount[i] < 3) {
             m_partyBattleStartCount[i]++;
             GfGameParty::setupBattleStart(i);
@@ -1020,7 +1020,7 @@ void GfGameScene::updateHikariLv4Room(const fw::UpdateInfo&) {
         }
     }
     if (blade == 1002 && !GfGameManager::isRoom()) {
-        GfObjAcc acc(GfGameParty::getHandleDriver(0, 0));
+        GfObjAcc acc(GfGameParty::getHandleDriver(0, static_cast<PTPOS>(0)));
         mm::Vec3 hit;
         mm::Vec3 from = acc.getWorldTransform().position + mm::Vec3(0.0f, 1.0f, 0.0f);
         if (!util::getUpperHitCollision(hit, from, 100.0f)) {
@@ -1202,7 +1202,7 @@ void GfGameScene::setRideOn(unsigned int id) {
     if (id == 0xFFFFFFFF) {
         return;
     }
-    GfObjAcc acc(GfGameParty::getHandleDriver(id, 0));
+    GfObjAcc acc(GfGameParty::getHandleDriver(id, static_cast<PTPOS>(0)));
     if (GfDataParty::isNiaByakko(id) && !acc.isBattle()) {
         m_rideRequest = false;
         if (!GfGameRide::testRideOn()) {

@@ -382,7 +382,8 @@ bool GfMenuObjLvupSelect::seqExecLevelUp() {
                     }
                 }
             }
-            unsigned int partyDriver = GfDataParty::getDriver(GfDataParty::getDriverPartyID(driver), 0);
+            unsigned int partyDriver =
+                GfDataParty::getDriver(GfDataParty::getDriverPartyID(driver), static_cast<PTPOS>(0));
             if (m_levelDown) {
                 GfGameUtil::execLevelDown(partyDriver, m_level);
             } else {

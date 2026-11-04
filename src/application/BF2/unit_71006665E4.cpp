@@ -945,7 +945,7 @@ static int fn_7100669E4C(VMThread* pThread) {
 static int fn_7100669E64(VMThread* pThread) {
     unsigned int blade = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
     if (gf::GfDataBlade::isActivateUnuse(blade)) {
-        unsigned int driver = gf::GfGameParty::getDriverBdatId(0, 0);
+        unsigned int driver = gf::GfGameParty::getDriverBdatId(0, static_cast<gf::PTPOS>(0));
         gf::GfDataBlade::setCreator(blade, driver);
         gf::GfDataBlade::setEnableEngageRex(blade, false);
         gf::SCOM_PARTY_ADD::addBlade(blade, driver, -1);

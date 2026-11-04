@@ -14,7 +14,7 @@ GfChainAttack::~GfChainAttack() {}
 
 void GfChainAttack::createPartyDriver() {
     for (unsigned int i = 0; i < 3; i++) {
-        unsigned int id = GfGameParty::getDriverBdatId(i, 0);
+        unsigned int id = GfGameParty::getDriverBdatId(i, static_cast<PTPOS>(0));
         if (id != 0) {
             GfInitParamDriver param;
             param.m_createType = 7;

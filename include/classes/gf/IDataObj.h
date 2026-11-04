@@ -95,7 +95,7 @@ public:
     virtual void addSkillPoint(int) {}  // slot 75
     // three arguments in 3.0.1 (1.0.0's has two): DataParamAcc's forwarder passes w1-w3 and DataObjDriver's override
     // picks its table by the third
-    virtual unsigned int getDriverArts(unsigned int, unsigned int, unsigned int) const { return 0; }  // slot 76
+    virtual unsigned int getDriverArts(unsigned int, unsigned int, PTPOS) const { return 0; }  // slot 76
     virtual bool setDriverArts(unsigned int, int, unsigned int) { return false; }  // slot 77
     virtual unsigned int getDriverArtsLevel(unsigned int) const { return 0; }  // slot 78
     virtual void setDriverArtsLevel(unsigned int, unsigned int) {}  // slot 79

@@ -485,7 +485,7 @@ void GfGameSalvage::setPartyNpcMove(bool flag) {
     GF_OBJ_HANDLE* mover = GfGameManager::getControlMover();
     bool stop = !flag;
     for (unsigned int i = 0; i < 3; i++) {
-        GfObjAcc driver(GfGameParty::getHandleDriver(i, 0));
+        GfObjAcc driver(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0)));
         GfObjAcc blade(GfGameParty::getHandleBlade(i, -1));
         if (i == 0 && driver.getDriverId() == 2 && blade.getBladeId() == 1004) {
             continue;

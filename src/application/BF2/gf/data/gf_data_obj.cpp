@@ -253,7 +253,7 @@ unsigned int DataObjDriver::getWeaponPoint(unsigned int wpnType) const {
         }
         wpnType = GfDataBlade::getSDataBlade(blade)->m_weaponType;
     }
-    return GfDataDriverArts::getWp(m_bdatId, wpnType, 0);
+    return GfDataDriverArts::getWp(m_bdatId, wpnType, static_cast<PTPOS>(0));
 }
 
 void DataObjDriver::addWeaponPoint(unsigned int wpnType, int point) {
@@ -384,7 +384,7 @@ unsigned int DataObjDriver::getBladeSkillLevel(bool virtualParam, unsigned int i
     return acc.getBladeSkillLevel(index, false);
 }
 
-unsigned int DataObjDriver::getDriverArts(unsigned int index, unsigned int slot, unsigned int mode) const {
+unsigned int DataObjDriver::getDriverArts(unsigned int index, unsigned int slot, PTPOS mode) const {
     unsigned int* arts;
     switch (mode) {
     case 0:

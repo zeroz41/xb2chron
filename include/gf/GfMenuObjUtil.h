@@ -10,6 +10,7 @@
 #include "gf/SoundHandle.h"
 
 namespace gf { class GfMenuCallContext; }
+namespace gf { enum PTPOS : unsigned int; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class DataParamAcc; }
 namespace gf { class GfMenuBladeList; class SDataGame; }
@@ -306,7 +307,7 @@ public:
     // added the last two arguments (with add-on menu layer 3 usable, mode 0 with the flag set, or mode 1, also take
     // GfDataDriverArts::getEnableArts's arts of mode 3 or 2); GfMenuWeaponTypeAdapter passes 0 and false
     static unsigned int getEnableArts(mm::mtl::FixedArray<unsigned int, 4>& arts, unsigned int driver,
-                                      unsigned int wpnType, int mode, bool flag);
+                                      unsigned int wpnType, PTPOS mode, bool flag);
     // (appended by chardata) used by GfMenuCharDataAdapter::update_*
     static unsigned int convMenuDriverID(unsigned int driver);  // the driver's menu id (0 for none)
     static unsigned int convMenuBladeID(unsigned int blade);    // the blade's menu id

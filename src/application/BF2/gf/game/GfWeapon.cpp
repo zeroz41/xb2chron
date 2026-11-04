@@ -1240,7 +1240,7 @@ void GfGameUtil::addSpForObject(unsigned int driver, int sp) {
         return;
     }
     for (unsigned int i = 0; i < 10; i++) {
-        if (unsigned int id = GfGameParty::getDriverBdatId(i, 0)) {
+        if (unsigned int id = GfGameParty::getDriverBdatId(i, static_cast<PTPOS>(0))) {
             GfBdatChrDr* bdat = mm::mtl::PtrSingleton<GfBdatChrDr>::sys();
             fn_71002DBB58(bdat->getChrIrGroupID(bdat->getChrDrIraParam(id)), sp);
         }
@@ -2119,7 +2119,7 @@ bool GfGameUtil::isCondBladeModel(unsigned int blade) {
     if (GfGameManager::isChangeNormalHomuraForce(blade)) {
         return false;
     }
-    GfObjAcc acc(GfGameParty::getHandleDriver(GfGameParty::getPartyId(4, blade), 0));
+    GfObjAcc acc(GfGameParty::getHandleDriver(GfGameParty::getPartyId(4, blade), static_cast<PTPOS>(0)));
     if (acc.m_obj != nullptr && acc.isBattle()) {
         return false;
     }

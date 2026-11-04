@@ -80,7 +80,7 @@ gf::GF_OBJ_HANDLE* Utility::GetControlCharacterHandle() {
     if (chain->IsProc(false)) {
         int group = ChainAttackManager::sys()->GetGroupIndex();
         if (group >= 0) {
-            return gf::GfGameParty::getHandleDriver(group, 0);
+            return gf::GfGameParty::getHandleDriver(group, static_cast<gf::PTPOS>(0));
         }
     }
     return gf::GfGameManager::getPartyLeaderDriver();
@@ -240,7 +240,7 @@ bool Utility::IsForward(gf::GF_OBJ_HANDLE* handle) {
         return false;
     }
     for (unsigned int group = 0; group < 3; group++) {
-        if (gf::GfGameParty::getHandleDriver(group, 0) == handle) {
+        if (gf::GfGameParty::getHandleDriver(group, static_cast<gf::PTPOS>(0)) == handle) {
             return true;
         }
     }

@@ -433,7 +433,7 @@ bool GfMenuObjCharSelect::seqSpNiaChangeBl() {
     SCOM_NIA_BLADE::create(true);
     unsigned int num = 0;
     for (unsigned int i = 0; i < 3; i++) {
-        if (GfGameParty::getDriverBdatId(i, 0) != 0) {
+        if (GfGameParty::getDriverBdatId(i, static_cast<PTPOS>(0)) != 0) {
             num++;
         }
     }

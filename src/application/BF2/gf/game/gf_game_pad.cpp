@@ -153,7 +153,7 @@ void GfGamePad::eventInGameParty() {
     }
     unsigned int count = 0;
     for (unsigned int party = 0; party < 3; ++party) {
-        if (GfDataParty::getDriver(party, 0) != 0) {
+        if (GfDataParty::getDriver(party, static_cast<PTPOS>(0)) != 0) {
             ++count;
         }
     }

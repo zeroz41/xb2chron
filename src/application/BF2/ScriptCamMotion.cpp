@@ -338,7 +338,8 @@ static int fn_7100658440(VMThread* pThread) {
     int driver = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
     int level = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
     bool flag = vmArgOmitChk(pThread, 3) ? false : vmArgBoolGet(3, vmArgPtrGet(pThread, 3)) != 0;
-    btl::Utility::AI_SetBladeArtsRecastByLevel(gf::GfGameParty::getHandleDriver(driver, 0), level, flag);
+    btl::Utility::AI_SetBladeArtsRecastByLevel(gf::GfGameParty::getHandleDriver(driver, static_cast<gf::PTPOS>(0)), level,
+                                               flag);
     return 0;
 }
 

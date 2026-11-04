@@ -17,7 +17,7 @@ GfTrinityAttack::~GfTrinityAttack() {}
 // the partner blade of the leader's (driver 1) engaged blade engaged, when it is engagedId and the partner is set
 // (inline: the name is not the original's)
 static inline unsigned int findPartnerBlade(unsigned int engagedId, unsigned int partnerId) {
-    if (GfGameParty::getDriverBdatId(0, 0) == 1) {
+    if (GfGameParty::getDriverBdatId(0, static_cast<PTPOS>(0)) == 1) {
         int engaged = GfDataDriver::getBladeSet(1);
         if (GfGameParty::getBladeBdatId(0, engaged) == engagedId) {
             int count = GfDataDriver::getMaxSetBladeNum(1);

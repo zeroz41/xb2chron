@@ -861,7 +861,7 @@ SCOM_OBJ_VFADE::SCOM_OBJ_VFADE(GF_SCOM_HANDLE* handle, GF_OBJ_HANDLE* obj, float
     } else if (param.getObjType() == 10) {
         unsigned int party = GfGameParty::getPartyId(obj);
         DataParamAcc blade(GfGameParty::getHandleBlade(party, -1));
-        DataParamAcc driver(GfGameParty::getHandleDriver(party, 0));
+        DataParamAcc driver(GfGameParty::getHandleDriver(party, static_cast<PTPOS>(0)));
         if (GfDataUtil::isEffectKagutsuchi(blade) || GfDataUtil::isEffectKagutsuchi(driver)) {
             m_effect = VFEFF(16);
         }
@@ -1938,7 +1938,7 @@ bool SCOM_FIELD_SKILL::exec(const fw::UpdateInfo&) {
             return false;
         }
         for (unsigned int i = 0; i < 3; i++) {
-            DataParamAcc driver(3, GfGameParty::getDriverBdatId(i, 0), GimmickType(0));
+            DataParamAcc driver(3, GfGameParty::getDriverBdatId(i, static_cast<PTPOS>(0)), GimmickType(0));
             if (driver.isValid()) {
                 unsigned int driverId = 0;
                 if (driver.isValid() && driver.getObjType() == 3) {
@@ -1967,7 +1967,7 @@ inline bool SCOM_FIELD_VOICE::isStopVoice() const {
 bool SCOM_FIELD_VOICE::getIraMember(mm::mtl::FixedVector<GF_OBJ_HANDLE*, 9>& handles) {
     for (unsigned int i = 0; i < 3; i++) {
         for (unsigned int j = 0; j < 3; j++) {
-            GF_OBJ_HANDLE* handle = GfGameParty::getHandleDriver(i, j);
+            GF_OBJ_HANDLE* handle = GfGameParty::getHandleDriver(i, static_cast<PTPOS>(j));
             if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
                 handles.push_back(handle);
             }
@@ -2110,10 +2110,10 @@ unsigned long SCOM_FIELD_VOICE::createLandmark() {
         return -1;
     }
     bool torna = GfGameManager::isGameTypeIra();
-    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
+    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, static_cast<PTPOS>(0));
     GF_OBJ_HANDLE* partner;
     if (torna) {
-        partner = GfGameParty::getHandleDriver(party, 1);
+        partner = GfGameParty::getHandleDriver(party, static_cast<PTPOS>(1));
     } else {
         partner = GfGameParty::getHandleBlade(party, -1);
     }
@@ -2147,10 +2147,10 @@ unsigned long SCOM_FIELD_VOICE::createUnexplored() {
         return -1;
     }
     bool torna = GfGameManager::isGameTypeIra();
-    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
+    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, static_cast<PTPOS>(0));
     GF_OBJ_HANDLE* partner;
     if (torna) {
-        partner = GfGameParty::getHandleDriver(party, 1);
+        partner = GfGameParty::getHandleDriver(party, static_cast<PTPOS>(1));
     } else {
         partner = GfGameParty::getHandleBlade(party, -1);
     }
@@ -2186,10 +2186,10 @@ unsigned long SCOM_FIELD_VOICE::createExitInn() {
         return -1;
     }
     bool torna = GfGameManager::isGameTypeIra();
-    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
+    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, static_cast<PTPOS>(0));
     GF_OBJ_HANDLE* partner;
     if (torna) {
-        partner = GfGameParty::getHandleDriver(party, 1);
+        partner = GfGameParty::getHandleDriver(party, static_cast<PTPOS>(1));
     } else {
         partner = GfGameParty::getHandleBlade(party, -1);
     }
@@ -2229,7 +2229,7 @@ unsigned long SCOM_FIELD_VOICE::createMercenariesStart(unsigned int id) {
 unsigned int SCOM_FIELD_VOICE::fn_7100567A44() {
     mm::mtl::FixedVector<unsigned short, 32> drivers;
     for (unsigned int i = 0; i < 5; i++) {
-        unsigned int driver = GfDataParty::getDriver(i, 0);
+        unsigned int driver = GfDataParty::getDriver(i, static_cast<PTPOS>(0));
         if (driver != 0) {
             drivers.push_back(driver);
         }
@@ -2285,9 +2285,9 @@ unsigned long SCOM_FIELD_VOICE::createSkipTravel(bool start) {
     int party = fn_71005680B0();
     if (party != -1) {
         bool torna = GfGameManager::isGameTypeIra();
-        GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
+        GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, static_cast<PTPOS>(0));
         GF_OBJ_HANDLE* partner =
-            torna ? GfGameParty::getHandleDriver(party, 1) : GfGameParty::getHandleBlade(party, -1);
+            torna ? GfGameParty::getHandleDriver(party, static_cast<PTPOS>(1)) : GfGameParty::getHandleBlade(party, -1);
 #line 4858
         SCOM_FIELD_VOICE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_FIELD_VOICE(true);
         if (request != 0) {
@@ -2305,10 +2305,10 @@ unsigned long SCOM_FIELD_VOICE::createRestart(CV_FIELD field) {
         return -1;
     }
     bool torna = GfGameManager::isGameTypeIra();
-    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
+    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, static_cast<PTPOS>(0));
     GF_OBJ_HANDLE* partner;
     if (torna) {
-        partner = GfGameParty::getHandleDriver(party, 1);
+        partner = GfGameParty::getHandleDriver(party, static_cast<PTPOS>(1));
     } else {
         partner = GfGameParty::getHandleBlade(party, -1);
     }
@@ -2335,9 +2335,10 @@ int SCOM_FIELD_VOICE::fn_71005680B0() {
     for (unsigned int i = 0; i < 3; i++) {
         bool valid;
         if (GfGameManager::isGameTypeIra()) {
-            valid = GfGameParty::getDriverBdatId(i, 0) != 0 && GfGameParty::getDriverBdatId(i, 1) != 0;
+            valid = GfGameParty::getDriverBdatId(i, static_cast<PTPOS>(0)) != 0 &&
+                    GfGameParty::getDriverBdatId(i, static_cast<PTPOS>(1)) != 0;
         } else {
-            valid = GfGameObj::isValidGameObj(GfGameParty::getHandleDriver(i, 0), true, nullptr) &&
+            valid = GfGameObj::isValidGameObj(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0)), true, nullptr) &&
                     GfGameObj::isValidGameObj(GfGameParty::getHandleBlade(i, -1), true, nullptr);
         }
         if (valid) {
@@ -2380,10 +2381,10 @@ unsigned long SCOM_FIELD_VOICE::createTime(CV_FIELD field) {
         return -1;
     }
     bool torna = GfGameManager::isGameTypeIra();
-    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
+    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, static_cast<PTPOS>(0));
     GF_OBJ_HANDLE* partner;
     if (torna) {
-        partner = GfGameParty::getHandleDriver(party, 1);
+        partner = GfGameParty::getHandleDriver(party, static_cast<PTPOS>(1));
     } else {
         partner = GfGameParty::getHandleBlade(party, -1);
     }

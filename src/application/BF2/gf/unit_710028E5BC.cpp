@@ -65,7 +65,7 @@ void GfArenaReward::playReturnVoice(bool flag) {
     GF_OBJ_HANDLE* handles[3];
     unsigned int count = 0;
     for (unsigned int i = 0; i < 3; ++i) {
-        handles[i] = GfGameParty::getHandleDriver(i, 0);
+        handles[i] = GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0));
         if (handles[i] != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
             ++count;
         }

@@ -55,7 +55,7 @@ void StateUtil::broadcastPlayer(GfComBehaviorPc& behavior, fw::Message& msg) {
 void StateUtil::broadcastDriver(GfComBehaviorPc& behavior, fw::Message& msg) {
     behavior.m_owner->getComponent<GfComPropertyPc>(5);
     for (unsigned int i = 0; i < 3; i++) {
-        GF_OBJ_HANDLE* handle = GfGameParty::getHandleDriver(i, 0);
+        GF_OBJ_HANDLE* handle = GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0));
         GfObj* self = static_cast<GfObj*>(behavior.m_owner);
         if (handle != self->m_handle) {
             if (GfObj* obj = GfObjUtil::getObj(handle)) {

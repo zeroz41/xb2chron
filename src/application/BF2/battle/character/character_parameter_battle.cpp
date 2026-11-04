@@ -49,9 +49,9 @@ inline unsigned int GetChallengeValue(const PlayerParameter& param) {
         id = param.m_enArrangeID;
     } else {
         unsigned int group = param.m_groupIndex;
-        gf::GF_OBJ_HANDLE* driver = gf::GfGameParty::getHandleDriver(group, 0);
+        gf::GF_OBJ_HANDLE* driver = gf::GfGameParty::getHandleDriver(group, static_cast<gf::PTPOS>(0));
         if (param.m_handle == driver) {
-            driver = gf::GfGameParty::getHandleDriver(group, 1);
+            driver = gf::GfGameParty::getHandleDriver(group, static_cast<gf::PTPOS>(1));
         }
         gf::GfObjAcc acc(driver);
         id = acc.getBdatId();
@@ -913,7 +913,8 @@ int fn_7100087A34(unsigned int party) {
     // the BDAT 0xB0 row each of the blades 0x452..0x457 brings, -1 for none. Proposed name, not the original's:
     // the symbols leave it unnamed (lbl_71009B7530)
     static const int s_bgmRows[6] = {0x52, 0x52, -1, -1, -1, 0x54};
-    if (gf::GfGameParty::getHandleDriver(party, 0) != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+    if (gf::GfGameParty::getHandleDriver(party, static_cast<gf::PTPOS>(0)) !=
+        reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         int count = 0;
         int rows[5];
         for (int i = 0; i != 5; i++) {

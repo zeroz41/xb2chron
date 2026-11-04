@@ -492,7 +492,7 @@ gf::GF_OBJ_HANDLE* BattleCharacter::GetRescueTarget() const {
     if (target < 0) {
         return reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     }
-    return gf::GfGameParty::getHandleDriver(target, 0);
+    return gf::GfGameParty::getHandleDriver(target, static_cast<gf::PTPOS>(0));
 }
 
 

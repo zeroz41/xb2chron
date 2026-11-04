@@ -12,7 +12,7 @@ void HateRingManager::Update(const fw::UpdateInfo& info) {
 }
 
 gf::GF_OBJ_HANDLE* HateRingManager::GetTargetHandle(gf::GF_OBJ_HANDLE* handle) const {
-    return gf::GfGameParty::getHandleDriver(GetTarget(handle), 0);
+    return gf::GfGameParty::getHandleDriver(GetTarget(handle), static_cast<gf::PTPOS>(0));
 }
 
 unsigned char HateRingManager::GetHateEnemyNum(int index) const {
