@@ -37,12 +37,10 @@ public:
     static bool isReturnTitle();
     static void returnTitle(gf::SAVESLOT slot);  // GfPlayComReturnTitle passes -1
     bool isStateReturnTitle() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has getSaveBuffer, getOptionBuffer,
-    // clearSaveBuffer there). A member because it reads this+0x130 like getSaveBuffer, right before it. What it
-    // does: returns the save buffer (createSaveBuffer's), exactly as getSaveBuffer does; 14 callers
-    // (GfGameManager::isClearGame, GfGameUtilSaveData::setupGameSaveData, GfMenuObjTitle::initialize...).
-    gf::SDataSaveIra* fn_710014FB00();
+    // 2.0.0's symbols name both, by their callers (1.0.0's single getSaveBuffer was carried on the second before).
+    // In 3.0.1 both return the save buffer (createSaveBuffer's).
     gf::SDataSaveIra* getSaveBuffer();
+    gf::SDataSaveIra* getIraSaveBuffer();
     // returns a reference: GfGameUtilSaveData::getValidOptionData calls it without a tail call, which a pointer
     // return would give (the callee's nonnull/dereferenceable return attributes stop clang's tail call)
     gf::SDataOption& getOptionBuffer();
@@ -68,20 +66,20 @@ public:
     // GfDataUtil::getScenarioFlag (local flag 1, type 16) is 10032 or more; then sets m_isClear when the clear count is
     // not 0 and clears m_newGameAdv again when GfDataUtil::isAdvanceSaved holds.
     void getGameClearFlagFromSaveData();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because
+    // 2.0.0's symbols name it. A member because
     // TitleStateMainScreen::playTitleEvent calls it with the title and it reads the title's save buffer and
     // m_newGameAdv. What it does: true when the save buffer's version is 0x3A15B, GfDataUtil::isClearGameCheck holds
     // for its game and m_newGameAdv is set.
     bool isTitleEventClearGame() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because fn_7100400410 calls it
+    // 2.0.0's symbols name it. A member because fn_7100400410 calls it
     // on TitleMain's instance and it reads the title's save buffer. What it does: the weather of the save buffer's
     // saved event row whose event is the given one (0 without a save buffer or such a row).
     unsigned short getEventTheaterWeather(unsigned int event) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason as
+    // 2.0.0's symbols name it. A member for the same reason as
     // TitleMain::getEventTheaterWeather. What it does: the hour of the save buffer's saved event row whose event is the given one (12
     // without a save buffer or such a row).
     unsigned int getEventTheaterTime(unsigned int event) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because
+    // 2.0.0's symbols name it. A member because
     // GfMenuObjTitle::ListListener::reciveEvent calls it with TitleMain's instance and it reads the title's save
     // buffer. What it does: true when the save buffer's version is not 0x3A15B, else whether
     // GfDataUtil::isInvalidVersionAoc does not hold for its game.
@@ -122,7 +120,8 @@ public:
     // stores: the first char and the length at 0x128; the name stays a placeholder)
     mm::mtl::FixStr<128> pad_A8;
     unsigned char pad_12C[0x4];
-    gf::SDataSaveIra* m_saveBuffer;  // createSaveBuffer's (getSaveBuffer; the name is not the original's)
+    // createSaveBuffer's (getSaveBuffer, getIraSaveBuffer; the name is not the original's)
+    gf::SDataSaveIra* m_saveBuffer;
     gf::SDataOption* m_optionBuffer;  // createSaveBuffer's (getOptionBuffer; the name is not the original's)
     // the event TitleStatePlayEvent::enter plays (it copies it and reads the event id): TitleStateMainScreen::update
     // changes to state 4 when it holds one, TitleStateSelectEvent::eventMenuResult fills it from m_eventTemplate with

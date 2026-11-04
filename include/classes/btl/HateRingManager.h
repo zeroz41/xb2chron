@@ -26,7 +26,7 @@ public:
     static void Create();
     static void Destroy();
     // 1.0.0's name: 3.0.1's BattleManager::update calls it between ChainAttackManager::PreUpdate and
-    // EffectManager's, where 1.0.0's calls HateRingManager::PreUpdate. Its symbol still spells fn_71000A14E0.
+    // EffectManager's, where 1.0.0's calls HateRingManager::PreUpdate. 2.0.0's symbols name it.
     static void PreUpdate(const fw::UpdateInfo& info);
     static void Update(const fw::UpdateInfo& info);
     void UpdateProc(const fw::UpdateInfo& info);

@@ -42,7 +42,7 @@ void BladeArtsManager::NotifyMapChange() {
     m_procNum = 0;
 }
 
-void BladeArtsManager::PreUpdateProc(const fw::UpdateInfo& info) {}
+void BladeArtsManager::PreUpdate(const fw::UpdateInfo& info) {}
 
 void BladeArtsManager::FinishBladeArts(gf::GF_OBJ_HANDLE* handle) {
     int num = m_procNum;

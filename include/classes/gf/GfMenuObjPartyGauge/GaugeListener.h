@@ -37,7 +37,7 @@ public:
     };
     SirenListener(GfMenuObjPartyGauge* owner) : m_state(), m_owner(owner) {}
     virtual ~SirenListener() {}  // slot 0: weak in the original, and its D1 slot is the base's destructor
-    // slot 2 (the symbols spell it fn_71004574D4)
+    // slot 2
     virtual void reciveEvent(const ui::EventData& event, unsigned int handle);
     State m_state;
     GfMenuObjPartyGauge* m_owner;

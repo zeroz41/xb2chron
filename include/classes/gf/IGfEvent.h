@@ -15,8 +15,8 @@ namespace gf {
 // table 0x7100B55698: the game events a listener GfEvent::addEventCallback registers hears. Every slot is inline and
 // empty (the table and the destructors are GfGamePlayerCamera's unit's, the slots' bodies the first unit's that
 // needed them). Names: 1.0.0's, by the slot each override takes in 3.0.1's derived tables, and by 1.0.0's order
-// between those. Slots 2-5, 21-23 and 46 are new in 3.0.1 (1.0.0's table has none of them): placeholder names, each
-// the address of this class's own empty body
+// between those. Slots 2-5, 21-23 and 46 are new since 1.0.0 (its table has none of them): 2.0.0's symbols name
+// them
 class IGfEvent {
 public:
     virtual ~IGfEvent() {}  // slot 0

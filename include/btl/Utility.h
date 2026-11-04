@@ -105,7 +105,7 @@ bool AI_IsKillChild();
 // 0 (btl_ai.isPause).
 bool IsPause();
 // 2.0.0's symbols name StartChallengeBattleCallback, EndChallengeBattleCallback, RetryChallengeBattleCallback,
-// ChallengeBattleStartTelopCallback, IsBattleAutoHeal; the fn_ names are placeholders. What they do: call
+// ChallengeBattleStartTelopCallback, IsBattleAutoHeal. What they do: call
 // ChallengeBattleManager (the challenge battle singleton) Start (enter calls it), End (StateArenaReturnBattle::onLeave), Retry
 // (execAfterBattle), NotifyStartTelop (execBattleStart), AddEtherCube(value) (GfFobjDropitem::applyGetItem) and
 // IsEnableAutoHeal (GfGameScene::updateAutoHeal).

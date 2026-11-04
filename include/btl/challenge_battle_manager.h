@@ -4,9 +4,8 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/mm/mtl/ReferenceObject.h"
 
-// The class of application/BF2/battle/challenge_battle_manager.cpp. Nothing names it: the symbols leave its table
-// (0x7100B3A9C8) and its singleton (0x7100B939B0) unnamed and 1.0.0 has no such file, so it is ChallengeBattleManager and its
-// functions keep placeholder names (new in 3.0.1, nothing in 1.0.0's place names them).
+// The class of application/BF2/battle/challenge_battle_manager.cpp (table 0x7100B3A9C8,
+// singleton 0x7100B939B0; not in 1.0.0). 2.0.0's symbols name ChallengeBattleManager and its functions.
 
 namespace btl { class BattleCharacter; }
 namespace fw { class UpdateInfo; }

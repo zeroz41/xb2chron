@@ -4,9 +4,8 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/mtl/IntrusivePtr.h"
 
-// The class of application/BF2/battle/siren_battle_manager.cpp. Nothing names it: the symbols leave its table
-// (0x7100B3BD68) and its singleton (0x7100B939D0) unnamed and 1.0.0 has no such file, so it is SirenBattleManager and its
-// functions keep placeholder names (new in 3.0.1, nothing in 1.0.0's place names them).
+// The class of application/BF2/battle/siren_battle_manager.cpp (table 0x7100B3BD68,
+// singleton 0x7100B939D0; not in 1.0.0). 2.0.0's symbols name SirenBattleManager and its functions.
 
 namespace fw { class Camera; class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }

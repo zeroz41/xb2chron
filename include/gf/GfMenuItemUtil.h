@@ -23,7 +23,7 @@ public:
     static int getItemNum(unsigned char type, unsigned int id);  // GfItemUtil::getItemBoxCount(id)
     // the party driver that has the accessory (item and handle) equipped, 0 for none; slot gets its slot (one more
     // when GfMenuObjUtil::isValidExpansion(3) holds; 0 for a DLC driver's own accessory). The name is 1.0.0's: its
-    // searchEquipAcc has the same callers (canEquipAcc, GfMenuObjDrEquip2); the symbols spell it fn_7100354624
+    // searchEquipAcc has the same callers (canEquipAcc, GfMenuObjDrEquip2); 2.0.0's symbols name it too
     static unsigned short searchEquipAcc(unsigned int item, GfItemHandle handle, unsigned int* slot);
     // whether the party has the money for the item at the shop and room for it in its box
     static bool canBuyItem(unsigned int item, unsigned int shop);

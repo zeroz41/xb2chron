@@ -27,7 +27,7 @@ public:
     // does, and 1.0.0's GfMenuObjUtil::isBladeEnableOffset calls it where 3.0.1's calls getDriver (3.0.1 added the
     // second parameter, as for getPartyMember; 2.0.0's symbols type it gf::PTPOS)
     static unsigned int getDriver(unsigned int index, PTPOS party);
-    // the party index of a driver (0.., -1 for 0 or a driver not in the party). The symbols spell it fn_710023B1D8:
+    // the party index of a driver (0.., -1 for 0 or a driver not in the party). 2.0.0's symbols name it;
     // 1.0.0's GfDataParty::getDriverPartyID(unsigned int) sits right after GfDataBlade::isActivateParty as this does,
     // has the same shape (0 -> -1, then the game data's party records from 0xE9884 compared one by one) and the same
     // callers (GfAssetSetupBlade::setup, DataObjBlade::getBladeSet, GfDataBlade's party lists)

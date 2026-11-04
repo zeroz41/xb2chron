@@ -17,10 +17,10 @@ public:
     virtual bool isPopCondMatched() const = 0;  // slot 2
     virtual bool isDepopCondMatched() const = 0;  // slot 3
     // slot 4: whether the interest position lies inside its row's Visible_XZ / Visible_Y distances (false without an
-    // interest position); the placeholder name is GmkNpc's override (inferred: an "inside visible distance" test)
+    // interest position); 2.0.0's symbols name GmkNpc's override
     virtual bool isPopDistCondMatched() const = 0;
     // slot 5: whether the interest position lies outside its row's Invisible_XZ / Invisible_Y distances (true without
-    // an interest position); the placeholder name is GmkNpc's override (inferred: an "outside invisible distance" test)
+    // an interest position); 2.0.0's symbols name GmkNpc's override
     virtual bool isDepopDistCondMatched() const = 0;
     virtual unsigned char* getBindedBdatFp() const = 0;  // slot 6: its list's BDAT table
     virtual int getBindedBdatId() const = 0;  // slot 7: its BDAT row

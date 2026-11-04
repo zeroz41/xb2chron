@@ -48,7 +48,7 @@ public:
     // callers in 3.0.1: 4 for no art or one at its highest level, 5 when the weapon type's points are short of the
     // level-up cost, 0 when it can level up
     static int checkArtsLvUp(unsigned int driver, unsigned int wpnType, unsigned int arts, unsigned int level);
-    // 1.0.0's refreshLvUp (0x710044B7D0: the same calls, string and arguments); the symbols spell fn_71003EBC3C
+    // 1.0.0's refreshLvUp (0x710044B7D0: the same calls, string and arguments); 2.0.0's symbols name it
     void refreshLvUp(ui::UIObjectAcc& acc, unsigned int driver, unsigned int wpnType, GfMenuArtsList* arts);
     void setupWpnTypeIcon(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 50>& wpnTypes,
                           GfMenuBladeList* blades);

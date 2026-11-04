@@ -19,10 +19,10 @@ public:
     virtual ~GfDataAoc();  // slot 0 (the key function)
 
     // allocates (gf_data_aoc.cpp line 43) the singleton (GfDataManager's constructor passes its setup parameter;
-    // placeholder name, inferred: the GfDataBdat::build of this file)
+    // 2.0.0's symbols name it)
     static void build(const GfSetupParam& param);
     // clears m_ready and deletes the singleton (GfDataManager::destroy calls it after GfDataBdat::destroy;
-    // placeholder name, inferred: destroy)
+    // 2.0.0's symbols name it)
     static void destroy();
     // m_ids[index], -1 while there is no singleton (GfMenuManager::getGiftNumber passes 4, the gift box menu 5;
     // 2.0.0's symbols name it)

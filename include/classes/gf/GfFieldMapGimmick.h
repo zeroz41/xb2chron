@@ -74,7 +74,7 @@ public:
     // effectID, finds that gimmick (GmkManager::findFirstGmkInstByBdatId, type 0xD; dispose() when none), plays its
     // "mapobjeffect" effect and "mapobjSE" sound at it, then waits "mapobj_nextwait" in seqEffect_nextwait.
     void seqEffect_init(float dt);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because seqEffect_init stores it in
+    // 2.0.0's symbols name it. A member because seqEffect_init stores it in
     // m_seqOther. What it does: seqMapObj_nextwait's wait on m_seqOther: adds dt to m_elapsedTime and, once it reaches
     // m_waitTime, clears m_seqOther and (nowaitGmkCam, field skill succeeded) solves the gimmick as the others do.
     void seqEffect_nextwait(float dt);

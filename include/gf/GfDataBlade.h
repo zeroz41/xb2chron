@@ -91,12 +91,12 @@ public:
     static ActivateType getBladeActivateType(unsigned int blade);
     static unsigned int addRareBlade(const SDataBlade& data);  // (symbols) the new blade, 0 for none
     // (1.0.0's symbols: its GfGameUtil::execAddCommonBlade calls addCommonBlade(data) where 3.0.1's execAddCommonBlade
-    // calls this function, followed by the same code; the symbols still spell it fn_710023C934) the new blade, 0 for none
+    // calls this function, followed by the same code; 2.0.0's symbols name it) the new blade, 0 for none
     static unsigned int addCommonBlade(const SDataBlade& data);
     static bool isActivateReserver(unsigned int blade);
     static bool setActivateReserver(unsigned int blade);
     // (1.0.0's symbols: its GfGameUtil::execEquipMercenariesBlade calls setActivateDriver(blade, -1, driver, 0) where
-    // 3.0.1's calls this function with the same arguments; the symbols still spell it fn_710022F584) activates the
+    // 3.0.1's calls this function with the same arguments; 2.0.0's symbols name it) activates the
     // blade for the driver; 3.0.1's code returns a bool
     static bool setActivateDriver(unsigned int blade, int slot, unsigned int driver, unsigned int type);
     // 2.0.0's symbols name it. A member because it lives in GfDataBlade's unit among its functions (before

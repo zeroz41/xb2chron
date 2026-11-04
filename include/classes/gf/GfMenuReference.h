@@ -85,7 +85,7 @@ public:
     };
     // a 0x10-byte record of the three at 0x4CF28 of the instance: a driver, then the gauge getIraCharProperty answers
     // (2.0.0's symbols name the type, the field names are not the original's; the adapter's
-    // GfMenuCharDataAdapter::ReferenceBladeOwnerDriverConverter shows the
+    // GfMenuCharDataAdapter::IraCharFormConverter shows the
     // driver; getIraCharInfoFromFromID compares the gauge's first word, which it calls a blade, with its argument;
     // resetIraCharRecast clears every m_rate)
     struct IraCharInfo {

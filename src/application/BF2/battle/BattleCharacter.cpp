@@ -959,7 +959,7 @@ void BattleCharacter::StartFullBurst(int value) {
     pad_1030 = value * 8;
 }
 
-bool BattleCharacter::fn_71000561E4(unsigned int id) {
+bool BattleCharacter::CheckPowerCharge(unsigned int id) {
     if (!mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_challengeAnySuccess) {
         const CharacterParameter* param = GetCharacterParameterConst(false);
         if (param == nullptr || !param->IsDriver(false)) {
@@ -981,7 +981,7 @@ bool BattleCharacter::fn_71000561E4(unsigned int id) {
     return true;
 }
 
-bool BattleCharacter::CheckPowerCharge(unsigned int id) {
+bool BattleCharacter::CheckTalentMinochi(unsigned int id) {
     CharacterParameter* param = GetCharacterParameter(false);
     if (param == nullptr) {
         return false;

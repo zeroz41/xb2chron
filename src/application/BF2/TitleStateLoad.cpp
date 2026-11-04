@@ -203,9 +203,9 @@ void TitleStateLoad::update(TitleMain* title, const fw::UpdateInfo& info) {
 void TitleStateSaveData::update(TitleMain* title, const fw::UpdateInfo& info) {
     if (gf::GfGameManager::isGameTypeIra()) {
         gf::GfGameLoad load(static_cast<gf::SAVESLOT>(0x16));
-        title->getSaveBuffer()->clear();
-        load.execGameLoadWithMicroThread(*title->getSaveBuffer());
-        if (title->getSaveBuffer()->m_system.m_version != 0x3A15B) {
+        title->getIraSaveBuffer()->clear();
+        load.execGameLoadWithMicroThread(*title->getIraSaveBuffer());
+        if (title->getIraSaveBuffer()->m_system.m_version != 0x3A15B) {
             requestState(11);
             return;
         }

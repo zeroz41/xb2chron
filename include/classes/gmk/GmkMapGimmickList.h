@@ -13,7 +13,7 @@ namespace gmk {
 // table 0x7100B6DF28
 class GmkMapGimmickList : public ::gmk::TGmkList< ::gmk::GmkMapGimmick, ::gmk::GmkMapGimmick::BdatInfo, 1196441933u, 2u, ::gmk::GmkMapGimmickGob> {
 public:
-    // 0x71005783E8 (the symbols still spell fn_71005783E8): builds TGmkList<GmkMapGimmick> and m_triggerList
+    // 0x71005783E8 (2.0.0's symbols name it): builds TGmkList<GmkMapGimmick> and m_triggerList
     explicit GmkMapGimmickList(unsigned int updateGmkNumPerFrame);
     virtual ~GmkMapGimmickList();  // slot 0
     virtual gmk::AGmkBase* getInst(unsigned int) const;  // slot 6

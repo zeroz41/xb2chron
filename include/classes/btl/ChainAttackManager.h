@@ -72,7 +72,7 @@ public:
     // 2.0.0's symbols give it a bool, which it does not read (2.0.0's callers pass true)
     bool IsStartWait(bool) const;
     bool IsSelectAction() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this unit's
+    // 2.0.0's symbols name it. A member because it reads this unit's
     // ChainAttackManager (BattleCharacter::AI_Move passes the singleton). What it does: true when the proc state
     // (0x1A00) is 12 or 13.
     bool IsIraChange() const;

@@ -27,7 +27,7 @@ public:
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
 
-    // the sequence's jobs (placeholder names: new in 3.0.1, nothing in 1.0.0 names them)
+    // the sequence's jobs (2.0.0's symbols name them)
     bool seqConfirmSleep();  // opens common window 0x11F; on result 0 closes LAY_menu and opens LAY_sleep, else LAY_menu event 0x100
     bool seqConfirmExit();  // opens common window 0x11E, then sends LAY_menu event 0x100 (1 when its result is 0)
     bool seqWaitSleepFade();  // starts fade 2 (30 frames, black), then waits for it

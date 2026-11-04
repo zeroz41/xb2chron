@@ -41,9 +41,9 @@ public:
     static void Create();
     static void Destroy();
     void NotifyMapChange();
-    // 1.0.0's name (its symbol at the same place in the file; 3.0.1's BattleManager::update calls it before
-    // CharacterManager's update, as 1.0.0's does)
-    static void PreUpdateProc(const fw::UpdateInfo& info);
+    // 1.0.0's and 2.0.0's BattleManager::update call PreUpdate, as 3.0.1's calls this one before CharacterManager's
+    // update (their PreUpdateProc beside it has no callers, and 3.0.1 keeps only one)
+    static void PreUpdate(const fw::UpdateInfo& info);
     static void Update(const fw::UpdateInfo& info);
     bool BladeArtsProc(PROC_DATA& data);
     bool RegisterBladeArts(gf::GF_OBJ_HANDLE* driver, gf::GF_OBJ_HANDLE* blade, gf::GF_OBJ_HANDLE* target, int arts,

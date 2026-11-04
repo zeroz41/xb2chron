@@ -234,11 +234,11 @@ bool TitleMain::isStateReturnTitle() const {
     return title->m_fsm.m_pState->m_stateID == 8;
 }
 
-gf::SDataSaveIra* TitleMain::fn_710014FB00() {
+gf::SDataSaveIra* TitleMain::getSaveBuffer() {
     return m_saveBuffer;
 }
 
-gf::SDataSaveIra* TitleMain::getSaveBuffer() {
+gf::SDataSaveIra* TitleMain::getIraSaveBuffer() {
     return m_saveBuffer;
 }
 

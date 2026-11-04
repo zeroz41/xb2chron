@@ -84,11 +84,11 @@ void TitleStateMainScreen::playTitleEvent(TitleMain* title) {
     unsigned short event;
     if (gf::GfManager::isGameTypeIra()) {
         event = title->TitleMain::isTitleEventClearGame() ? 0x29D6 : 0x29D5;
-    } else if (gf::GfDataUtil::isClearTwiceGame(title->fn_710014FB00()->m_game)) {
+    } else if (gf::GfDataUtil::isClearTwiceGame(title->getSaveBuffer()->m_game)) {
         unsigned int index = ml::mtRand(3);
         event = s_randomTitleEvents[index > 2 ? 2 : index];
     } else if (title->TitleMain::isTitleEventClearGame()) {
-        event = gf::GfDataBlade::isHomuriNameHikari(title->fn_710014FB00()->m_game) ? 0x296E : 0x296D;
+        event = gf::GfDataBlade::isHomuriNameHikari(title->getSaveBuffer()->m_game) ? 0x296E : 0x296D;
     } else {
         unsigned int chapter = title->getChapterIdFromSaveData();
         event = s_chapterTitleEvents[chapter > 11 ? 11 : chapter];

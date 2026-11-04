@@ -27,11 +27,11 @@ public:
     bool isValid() const;
     const char* getName() const;
     const char* getVoiceStr() const;
-    // 2.0.0's symbols name getExp, getBattleExp, getDriverArts; the fn_ names are placeholders. What they do: getDriverArts forwards
-    // its three arguments to IDataObj slot 76 (1.0.0's two-argument getDriverArts; 3.0.1's DataObjDriver override picks
-    // its arts table by the third), 0 for an invalid object; isHideInitExtraParts forwards a part to slot 42 (new in
-    // 3.0.1; DataObjEnemy's override), true for an invalid object; setVirtualEquipWpnAcce forwards an item to slot 52
-    // (new in 3.0.1; DataObjDriver's override asks GfDataItem::getItemType of it).
+    // 2.0.0's symbols name getExp, getBattleExp, getDriverArts, isHideInitExtraParts, setVirtualEquipWpnAcce. What they
+    // do: getDriverArts forwards its three arguments to IDataObj slot 76 (1.0.0's two-argument getDriverArts; 3.0.1's
+    // DataObjDriver override picks its arts table by the third), 0 for an invalid object; isHideInitExtraParts forwards
+    // a part to slot 42 (not in 1.0.0; DataObjEnemy's override), true for an invalid object; setVirtualEquipWpnAcce
+    // forwards an item to slot 52 (not in 1.0.0; DataObjDriver's override asks GfDataItem::getItemType of it).
     unsigned int getObjType() const;
     const char* getModelResourceName() const;
     const char* getMotionResourceName() const;

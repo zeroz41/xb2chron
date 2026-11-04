@@ -28,7 +28,7 @@ public:
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
     // 2.0.0's symbols name them. fn_7100383310 calls them; each registers the gift box's full-screen layer (0x46) with
-    // menu id 1 / 2, which initialize reads back into m_menuId. Placeholder name: new after 1.0.0, nothing names it. A
+    // menu id 1 / 2, which initialize reads back into m_menuId. 2.0.0's symbols name it. A
     // static member: its address lies in this class's unit (before canGetItem, which it calls) and it takes no object.
     // What it does: off menu layer 3 and with GfMenuManager::hasGift, walks BDAT 0x10A's rows ("releasecount", add-on
     // 5, canGetItem) and answers whether a gift is waiting; the flag picks which rows count. Callers:

@@ -58,7 +58,7 @@ public:
     static unsigned short m_achieve2blade[0x4D80];
     // a general-purpose (hanyou) task's flag: its type (8 or 16: the flag width), the flag, two counts (the second the
     // limit GfQuestTask::getTaskCount reports). 3.0.1's takes four references before the task (it reads x3 and x4;
-    // the symbols still spell 1.0.0's three)
+    // 1.0.0's symbols spell three, 2.0.0's four)
     static bool getHanyouFlg(unsigned int& type, unsigned int& flag, unsigned int& count, unsigned int& limit,
                              const QuestTaskParam& param);
     static mm::mtl::FixedVector<TaskAchieve, 128>* getTaskAchieve();  // SDataGame::m_taskAchieve

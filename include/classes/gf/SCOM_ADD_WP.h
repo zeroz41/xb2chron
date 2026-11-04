@@ -12,7 +12,7 @@ class SCOM_ADD_WP : public ::gf::SCOM {
 public:
     explicit SCOM_ADD_WP(SCOM_TYPE type) : SCOM(type) {}
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
-    // Placeholder name: nothing in 1.0.0's place names it. A member: it builds this class (type 7, its table) in mode
+    // 2.0.0's symbols name it. A member: it builds this class (type 7, its table) in mode
     // 3 for a driver; its caller is btl::CharacterManager::AddExpWpSp.
     static unsigned long createForBdatid(int driver, int, unsigned int);
 

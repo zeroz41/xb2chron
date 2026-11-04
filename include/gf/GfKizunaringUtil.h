@@ -14,7 +14,7 @@ public:
     // the reward of a driver's completed affinity chart (GfBdatChrDr's row; the bool picks getChrIrKizunaReward2's over
     // getChrIrKizunaReward1's), reward 0x3A3 when there is none. 1.0.0's symbol at this place (same caller,
     // GfMenuObjDrKizunaRing::seqComplete), getCompleteKizunaringRewardForDriver, takes only the reward and returns
-    // reward 0x3A3, so the name stays a placeholder
+    // reward 0x3A3; 2.0.0's symbols name this one, with the reward, driver and bool
     static bool getCompleteKizunaringRewardForDriver(GfQuestReward& reward, unsigned int driver, bool);
 };
 }  // namespace gf

@@ -10,7 +10,7 @@
 #include "classes/gf/GfMenuCharDataAdapter/EnBookListConverter.h"
 #include "classes/gf/GfMenuCharDataAdapter/ReferenceDriverConverter.h"
 #include "classes/gf/GfMenuCharDataAdapter/ReferenceBladeConverter.h"
-#include "classes/gf/GfMenuCharDataAdapter/ReferenceBladeOwnerDriverConverter.h"
+#include "classes/gf/GfMenuCharDataAdapter/IraCharFormConverter.h"
 #include "classes/gf/GfMenuCharDataAdapter/NamedListConverter.h"
 #include "classes/gf/GfMenuCharDataAdapter/ReferenceBladeSetConverter.h"
 #include "classes/gf/GfMenuCharDataAdapter/BladeListOwnerDriverConverter.h"
@@ -1869,15 +1869,14 @@ bool GfMenuCharDataAdapter::update_EN_Genus(const DataParamAcc& acc) {
     return true;
 }
 
-GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromReferenceBladeOwnerDriver(unsigned int handle,
-                                                                                  unsigned int kind,
-                                                                                  unsigned int blade, bool changed) {
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromIraCharForm(unsigned int handle, unsigned int kind,
+                                                                    unsigned int blade, bool changed) {
     if (!GfMenuObjUtil::isValidExpansion(3)) {
         return nullptr;
     }
 #line 1082
-    ReferenceBladeOwnerDriverConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
-        ReferenceBladeOwnerDriverConverter(blade);
+    IraCharFormConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        IraCharFormConverter(blade);
     return createFromCoverter(handle, kind, converter, changed);
 }
 
@@ -2197,8 +2196,7 @@ void GfMenuCharDataAdapter::BladeListSetDriverConverter::getCharData(unsigned ch
     }
 }
 
-void GfMenuCharDataAdapter::ReferenceBladeOwnerDriverConverter::getCharData(unsigned char& objType,
-                                                                            unsigned int& objId) {
+void GfMenuCharDataAdapter::IraCharFormConverter::getCharData(unsigned char& objType, unsigned int& objId) {
     objType = 3;
     objId = 0;
     if (GfMenuObjUtil::isValidExpansion(3)) {

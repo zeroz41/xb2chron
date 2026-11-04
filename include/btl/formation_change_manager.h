@@ -4,9 +4,8 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/Vec3.h"
 
-// The class of application/BF2/battle/formation_change_manager.cpp. Nothing names it: the symbols leave its table
-// (0x7100B3BC20) and its singleton (0x7100B942E8) unnamed and 1.0.0 has no such file, so it is FormationChangeManager and its
-// functions keep placeholder names (new in 3.0.1, nothing in 1.0.0's place names them).
+// The class of application/BF2/battle/formation_change_manager.cpp (table 0x7100B3BC20,
+// singleton 0x7100B942E8; not in 1.0.0). 2.0.0's symbols name FormationChangeManager and its functions.
 
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }

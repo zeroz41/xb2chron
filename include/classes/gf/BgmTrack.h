@@ -96,7 +96,7 @@ public:
     // 1.0.0's out-of-line getter (3.0.1 inlines it)
     unsigned int getBgmCondID() const { return m_bgmCondID; }
 
-    // placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. What it does: BgmBattle::update calls it
+    // 2.0.0's symbols name it. What it does: BgmBattle::update calls it
     // with the field BGM's battle BGM id when the track's condition id differs (it sits where 1.0.0's
     // BgmTrack::play(unsigned int) sat, after the constructor; the BgmBattle constructor calls it too)
     void play(unsigned int id);

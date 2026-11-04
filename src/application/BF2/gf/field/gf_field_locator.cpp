@@ -629,8 +629,7 @@ void LocatorReach::update() {
         }
     }
 }
-// 1.0.0's symbols name it (0x71002DDBCC, same stores and columns, called by createByQuest); the symbols still spell
-// it LocatorGimmick::create
+// 1.0.0's and 2.0.0's symbols name it (1.0.0's 0x71002DDBCC: same stores and columns, called by createByQuest)
 void LocatorGimmick::create(QuestID questId, unsigned short row) {
     dispose();
     m_questId = questId;

@@ -27,8 +27,7 @@ public:
     // the weapon types (1-4) of the driver's arts types 1-49 (CHR_Dr's weapon type columns); room for 50 in 3.0.1 (its
     // push_back checks 50, its count sits 0xC8 bytes past the room; 1.0.0's symbol named the type with 27)
     static void getEquipWpnType(mm::mtl::FixedVector<unsigned int, 50>& types, const SDataDriver& data);
-    // 1.0.0's names (the symbols still spell 3.0.1's copies fn_<address>: same call sites, same arguments; 3.0.1's
-    // also cover the DLC drivers)
+    // 1.0.0's and 2.0.0's names (same call sites, same arguments; 3.0.1's also cover the DLC drivers)
     static SDataDriver* getSDataDriver(unsigned int driver);  // getSDataDriver
     // the driver's arts records past the ones its data keeps, found the getSDataDriver way (DLC rows 0x11-0x19 in
     // GfDataManager::getDataGameIra's, others in getDataGame's 16, clamped as getSDataDriver clamps); inline in
@@ -36,7 +35,7 @@ public:
     static SDataDriverArtsEx* getSDataDriverArtsEx(unsigned int driver);
     static unsigned int getLevel(const SDataDriver& data);  // getLevel
     // 1.0.0's name: its getLevel(unsigned int) has the same callers (GfMenuObjDrArtsSet2::ArtsListListener,
-    // GfMenuObjLvupSelect's listeners) and reads getLevel(*getSDataDriver(driver)); the symbols spell fn_7100234674
+    // GfMenuObjLvupSelect's listeners) and reads getLevel(*getSDataDriver(driver)); 2.0.0's symbols name it
     static unsigned int getLevel(unsigned int driver);
     // 2.0.0's symbols name it. What it does: for a DLC driver row (0x11-0x19) whose CHR_Ir "Type" is set, finds the
     // first CHR_Ir row of the same "GroupID" whose Type is 0 and returns its "driverID" (0x11 when there is none); any
@@ -143,7 +142,7 @@ public:
     static unsigned int getFootStepEffect(unsigned int driver);
     static const char* getVoiceStr(const SDataDriver& data);
     static unsigned int getFavorite(unsigned int driver, FAVORITE favorite);
-    // whether the favorite has been used (seen). The symbols spell it fn_7100248A84: 1.0.0's
+    // whether the favorite has been used (seen). 2.0.0's symbols name it; 1.0.0's
     // GfMenuObjUtil::getFavoriteStat calls GfDataDriver::isUsedFavorite(driver, favorite) where 3.0.1's calls
     // isUsedFavorite with the same arguments (3.0.1's body also handles drivers 17-25)
     static bool isUsedFavorite(unsigned int driver, FAVORITE favorite);
@@ -273,7 +272,7 @@ public:
     // GfDataManager::getDataGameIra's 0xDAC-byte table, else an empty handle (GfItemUtil::getEquipChar calls it).
     static GfItemHandle getEquipWpnAcceHandle(unsigned int driver);
     // the item handle of the accessory in the driver's slot (0-1, 2 the DLC drivers' extra slot); the name is 1.0.0's
-    // (its getEquipAcceHandle has the same callers), the symbols still spell it fn_7100247988
+    // (its getEquipAcceHandle has the same callers) and 2.0.0's
     static GfItemHandle getEquipAcceHandle(unsigned int driver, unsigned int slot);
     // 2.0.0's symbols name it. What it does: sets the 16-bit item id (+0x5A4) of the DLC driver (0x11-0x19) row of
     // GfDataManager::getDataGameIra's 0xDAC-byte table (getEquipWpnAcce reads it).

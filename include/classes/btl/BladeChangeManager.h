@@ -61,10 +61,10 @@ public:
     static void Create();
     static void Destroy();
     // 1.0.0's name: 3.0.1's BattleManager::gevMapjump calls it where 1.0.0's calls BladeChangeManager::NotifyMapChange
-    // (the same code). Its symbol still spells fn_71000166CC.
+    // (the same code). 2.0.0's symbols name it.
     void NotifyMapChange();
-    // 1.0.0's name: 3.0.1's BattleManager::update calls it between BladeArtsManager::PreUpdateProc and FormationChangeManager's,
-    // where 1.0.0's calls BladeChangeManager::PreUpdate. Its symbol still spells fn_710001671C.
+    // 1.0.0's name: 3.0.1's BattleManager::update calls it between BladeArtsManager::PreUpdate and
+    // FormationChangeManager's, where 1.0.0's calls BladeChangeManager::PreUpdate. 2.0.0's symbols name it.
     static void PreUpdate(const fw::UpdateInfo& info);
     static void Update(const fw::UpdateInfo& info);
     void UpdateProc(const fw::UpdateInfo& info);

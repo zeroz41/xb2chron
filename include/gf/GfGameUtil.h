@@ -84,7 +84,7 @@ public:
     static void changeAlphaBelonging(GF_OBJ_HANDLE* handle, unsigned int slot, float alpha, float time);
     static const char* getBladeModel(unsigned int blade, bool flag);
     static const char* getBladeMotion(unsigned int blade, bool flag);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // 2.0.0's symbols name it. A member because its address lies among
     // GfGameUtil's (right after getBladeModel, its only caller found). What it does: unless the blade is a Hana
     // (GfDataHana::isValid), the model name a GfBdatItem row of one of the blade's equipped orbs gives
     // (GfDataBlade::getEquipOrb by slot, getEquipOrbModel the name, getEquipOrbBlade the blade it is for, which must be
@@ -113,15 +113,15 @@ public:
     // of the ten party drivers for driver 0)
     static void addSpForObject(unsigned int driver, int sp);
     // Placeholder name: new in 3.0.1 (1.0.0's setFormationParam, 0x20C bytes, holds this loop itself), nothing names
-    // it. A member because its only caller is GfGameUtil::setFormationParam, right before it. What it does: -1 for a
-    // trinity blade; else the index (0-8) of the first GfGamePlayerFormation player whose object setup has the
-    // handle's party id (GfGameParty::getPartyId) and whose GfObjUtil::getObjType and getPartyPos equal the
-    // handle's; -1 when none does.
+    // it, 2.0.0's symbols included. A member because its only caller is GfGameUtil::setFormationParam, right before it.
+    // What it does: -1 for a trinity blade; else the index (0-8) of the first GfGamePlayerFormation player whose object
+    // setup has the handle's party id (GfGameParty::getPartyId) and whose GfObjUtil::getObjType and getPartyPos equal
+    // the handle's; -1 when none does.
     static int fn_71002DE83C(GF_OBJ_HANDLE* handle);
     // 2.0.0's symbols name it. What it does: for a driver whose DataParamAcc is not scenario-masked, adds sp to its
     // skill points (GfDataDriver::addSkillPoint).
     static void addSp(unsigned int driver, int sp);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because addSpForObject (its unit, right
+    // 2.0.0's symbols name it. A member because addSpForObject (its unit, right
     // before it) tail-calls it with its sp. What it does: for the DLC driver rows 0x11 to 0x19 whose GfBdatChrDr
     // getChrIrGroupID (of getChrDrIraParam) equals id and that are not GfDataDriver::isActivateUnuse, adds sp.
     static void fn_71002DBB58(unsigned int id, int sp);
@@ -257,7 +257,7 @@ public:
     // a driver's level raised to that level (GfMenuObjLvupSelect::seqExecLevelUp)
     static void execLevelUp(unsigned int driver, unsigned int level);
     // 2.0.0's symbols name it. What it does: when the driver's level (GfDataDriver::getLevel) is above the level,
-    // lowers it there (GfDataDriver::getBattleExp, getExp, getBattleExpNextLevel and the placeholders
+    // lowers it there (GfDataDriver::getBattleExp, getExp, getBattleExpNextLevel and
     // setLevel/setExp/setBattleExp, the 999999999 experience cap). GfMenuObjLvupSelect::seqExecLevelUp calls it instead
     // of execLevelUp when the chosen level is lower.
     static void execLevelDown(unsigned int driver, unsigned int level);
@@ -270,7 +270,7 @@ public:
     // the object's HP (its property's, else its data's maximum) and maximum HP; type and id as DataParamAcc's
     static unsigned int getNowHp(gf::GF_OBJ_HANDLE* handle, unsigned int type, unsigned int id);
     static unsigned int getMaxHp(gf::GF_OBJ_HANDLE* handle, unsigned int type, unsigned int id);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // 2.0.0's symbols name it. A member because its address lies among
     // GfGameUtil's (right after getMaxHp) and its only callers are getNowHp, getMaxHp, getNowHpForUi and
     // getMaxHpForUi. What it does: for a valid driver object whose driver row GfDataDriver::isIra accepts,
     // collects GfDataDriver::getIraFront(driver) and GfDataDriver::getIraBack's list of driver ids and replaces
@@ -304,8 +304,7 @@ public:
     // MsgGameBtlArena of type 0xE (GfGameUtil::addEtherCube), 0xF (GfGameUtil::addScore) or 0x10
     // (GfGameUtil::applyClearTimeForArena) carrying value in its parameter word 0x30, 0x34 or 0x38. Callers: the exec
     // of the requests SCOM_ADD_ECUBE and SCOM_ADD_SCORE (their value at 0x1C) and gf_req_scom's SCOM_CLEAR_TIME::create.
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
-    // GfWeapon's unit among free placeholders and it takes only a handle. What it does: false unless the object is a
+    // 2.0.0's symbols name it. What it does: false unless the object is a
     // driver (GfObjUtil::getObjType 3); true when it is driver 0x11 whose GfComAsm (component 2) plays a layer-0 state
     // whose name holds "btstart", else whether GfMountManager::getMountType(handle, 0) is 1 or 3.
     // PlayerCameraTarget::writeTargetInfo takes it as m_isRiding in a battle.
@@ -335,8 +334,8 @@ public:
     // flag also takes GfDataEvent::isInvalidMelefRetarget of GfGameEvent::getStartEventId() (as
     // GfGameUtil::getDriverModel does). GfAssetSetup::setRefResource calls it.
     static const char* getAcceDriverModel(unsigned int driverId, bool check, bool flag);
-    // Placeholder name: GfWeapon's unit's function (callers GfGameObj::checkEnableGameObj, GfGameUtil::levelupForEnemy and
-    // GfGameScene::gevChangeGameDifficult, which calls it on every object of list 5). A free function: its class is not known.
+    // 2.0.0's symbols name it (callers GfGameObj::checkEnableGameObj, GfGameUtil::levelupForEnemy and
+    // GfGameScene::gevChangeGameDifficult, which calls it on every object of list 5).
     static void refreshEnemyHp(GF_OBJ_HANDLE* handle);
     // 2.0.0's symbols name it. What it does: for blade 1001, else 1002 (the first GfDataBlade::isActivateMercenaryTeam holds
     // for), cancels the mission of the blade's mercenary team (GfGameMercenaries::cancelMission of
@@ -357,13 +356,12 @@ public:
     // 2.0.0's symbols name it. What it does: the address 0x4C bytes into the option data: tl::TitleMain's
     // getOptionBuffer when GfManager::isExecModeAdvertize or isExecModeThater holds and TitleMain exists, else
     // GfDataManager::getDataOption(). GfArenaBattle::mapjumpForReturnFieldForObjCleanup / execBattleSequence copy 0x3C bytes
-    // into it. Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions because their
-    // addresses are in GfWeapon's unit (no object). What they do: GfGameUtil::isDispLauraMedal: whether
+    // into it. 2.0.0's symbols name them (not in 1.0.0). What they do: GfGameUtil::isDispLauraMedal: whether
     // GfDataUtil::getScenarioFlag() lies in 11100..11130 (caller fn_7100543F98).
     // GfGameUtil::isNeedRetargetDriverResource / GfGameUtil::getNeedRetargetDriverId: whether a model name contains
     // "pc110601" (true / 6, else false / 0; GfAssetSetupEnemy::setup and GfAssetSetupNpc::setup call both).
     // GfGameUtil::playSeForPartySwitch: plays menu sound effect 0x2E (GfMenuObjUtil::playSE;
-    // GfReqCommand::execChangeBladeWithBladeId calls it). GfGameUtil::getDlcSePack / GfGameUtil::getDlcSeName:
+    // GfReqCommand::execPartySwitchForIra calls it). GfGameUtil::getDlcSePack / GfGameUtil::getDlcSeName:
     // GfFieldSound's getDlcSePack / getDlcSeName for name when GfFieldSound is up (none otherwise;
     // GfComSound::playSe2D calls both).
     static bool isDispLauraMedal();

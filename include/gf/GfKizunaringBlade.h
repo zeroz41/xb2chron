@@ -38,8 +38,8 @@ public:
     static void qevCompleteQuest(const QuestCompleteParam& param);
     // the levels of a blade's chart line up to level that are done
     static int getSkillLevel(unsigned int blade, unsigned int line, unsigned int level);
-    // Placeholder name: nothing names it (1.0.0 has its counterpart, fn_7100364750, unnamed as well: a local
-    // symbol, so the original's is not a member). Declared here because refreshOrderQuestList, its one caller,
+    // Placeholder name: nothing names it (1.0.0's counterpart, fn_7100364750, and 2.0.0's are unnamed as well:
+    // local symbols, so the original's is not a member). Declared here because refreshOrderQuestList, its one caller,
     // calls it for each blade with an affinity chart and each line from 9 down to 0. What it does: for line 9 it
     // walks the line's 5 quests (GfDataBlade::getAchievInfo): an ordered quest with an achievement blade has its
     // next quest (GfDataQuest::getListNextQuestA) and itself entered with GfQuestManager::entryOrderAchievQuest;
@@ -47,7 +47,7 @@ public:
     // other lines it does the same for levels 1-5 up to GfDataBlade::getKeyReleaseLevel, opening the first level's
     // quest with GfDataBlade::setSkillLineLevel(blade, line, 0).
     static void fn_71002FF034(unsigned int blade, unsigned int line);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+    // 2.0.0's symbols name it. A free function because its address is in
     // GfItemUtil's unit (no this). What it does: for a nonzero blade, walks its GfDataBlade::getAchievInfo entries 0..9
     // (stops at one whose first short is 0) and runs GfQuestTask::refreshTaskParam on GfDataQuest::getListNextQuestA of
     // each of the entry's five quest IDs. GfArenaParty::addFieldBlade calls it after GfDataBlade::setActivateReserver.

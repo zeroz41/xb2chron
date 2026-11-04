@@ -164,9 +164,8 @@ public:
     static bool isBusyBladeCreateEvent();
     static bool isLeaveGameForDebug();
     static bool isControlFree();
-    // an event plays: GfGameScene::isPlayEvent() when there is a GfGameScene (the symbols still spell it
-    // isPlayEvent; 1.0.0's isPlayEvent at 0x71003196DC has the same code, and SCOM_FIELD_VOICE's stop test calls it
-    // in both)
+    // an event plays: GfGameScene::isPlayEvent() when there is a GfGameScene (2.0.0's symbols name it; 1.0.0's
+    // isPlayEvent at 0x71003196DC has the same code, and SCOM_FIELD_VOICE's stop test calls it in both)
     static bool isPlayEvent();
     static bool isScenarioGame();
     static bool isGmkTutorialOK();
@@ -229,7 +228,7 @@ public:
     static void reqestCraftPopupForIra();
     // 2.0.0's symbols name it. What it does: GfGameScene::isSepiaFilter() when there is a GfGameScene, else false.
     static bool isSepiaFilter();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // 2.0.0's symbols name it. A static member: its code is in gf_game_manager's unit among
     // GfGameManager's functions and takes no instance. What it does: when GfGameAoc's instance exists with mode 1,
     // whether any of the party's drivers 0..2 (GfGameParty::getHandleDriver(party, n)) is in battle; else whether
     // driver 0 or the party's blade (getHandleBlade(party, -1)) is in battle, false without a driver.
@@ -237,7 +236,7 @@ public:
     // 2.0.0's symbols name it. What it does: false unless GfGameAoc's instance exists, its mode is not 1 and
     // isExistGameAoc(0x30101) holds; then gf::GfGameUtilDiff::isEnableSpecialBgm() (option byte 0x84 is 0).
     static bool isEnableSpecialBgm();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // 2.0.0's symbols name it. A static member: its code is in gf_game_manager's unit among
     // GfGameManager's functions and takes no instance. What it does: whether id is 0 or one of 30255..30258.
     static bool isEventTutorial(unsigned int id);
     // 2.0.0's symbols name it. What it does: the byte at 0x21B of PtrSingleton<tl::TitleMain>'s instance is set (false
@@ -270,10 +269,10 @@ public:
     static void clear();
     // 2.0.0's symbols name its parameter type; every caller passes isGameTypeIra()'s answer
     static void setupGame(GAME_TYPE type);
-    virtual void gevHanaCondenser(unsigned int, bool, unsigned int);  // slot 2 (its code forwards the 32-bit value and the bool to GfGameScene, not the third; placeholder name: see IGfEvent)
-    virtual void gevOrbParam(unsigned int, unsigned int);  // slot 3 (forwards the first 32-bit value to GfGameScene; placeholder name: see IGfEvent)
-    virtual void gevAcceParam(unsigned int, unsigned int);  // slot 4 (forwards the first 32-bit value to GfGameScene; placeholder name: see IGfEvent)
-    virtual void gevChangeGameDifficult();  // slot 5 (forwards to GfGameScene; placeholder name: see IGfEvent)
+    virtual void gevHanaCondenser(unsigned int, bool, unsigned int);  // slot 2 (forwards its first two to GfGameScene)
+    virtual void gevOrbParam(unsigned int, unsigned int);  // slot 3 (forwards the first 32-bit value to GfGameScene)
+    virtual void gevAcceParam(unsigned int, unsigned int);  // slot 4 (forwards the first 32-bit value to GfGameScene)
+    virtual void gevChangeGameDifficult();  // slot 5 (forwards to GfGameScene)
     virtual void gevExecBuy(unsigned int, unsigned int, unsigned int);  // slot 6
     virtual void gevChangeParty();  // slot 7
     virtual void gevGetArts(unsigned int, unsigned int, bool);  // slot 8
@@ -298,14 +297,14 @@ public:
     virtual void gevReloadBdat(gf::RELOAD_BDAT, unsigned int);  // slot 27
     virtual void gevSalvageStateChange(unsigned int);  // slot 28
     virtual void gevChangeScenarioFlag(unsigned int, unsigned int);  // slot 29
-    virtual void gevChangeAocFlag(unsigned int id);  // slot 30 (forwards the id to GfGameAoc::gevChangeAocFlag; placeholder name: see IGfEvent)
+    virtual void gevChangeAocFlag(unsigned int id);  // slot 30 (forwards the id to GfGameAoc::gevChangeAocFlag)
     virtual void gevChangeWeather(unsigned int, unsigned int);  // slot 31
     virtual void gevChangeTimeRange(unsigned int);  // slot 32
     virtual void gevGameState(gf::GF_STATE, gf::GF_STATE);  // slot 33
     virtual void gevControllFree(bool);  // slot 34
     virtual void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);  // slot 35
-    virtual void gevOpenPortal();  // slot 36 (forwards to GfGameScene; placeholder name: see IGfEvent)
-    virtual void gevOpenMainMenu();  // slot 37 (forwards to GfGameScene; placeholder name: see IGfEvent)
+    virtual void gevOpenPortal();  // slot 36 (forwards to GfGameScene)
+    virtual void gevOpenMainMenu();  // slot 37 (forwards to GfGameScene)
     virtual void qevOrderQuest(gf::QuestOrderParam const&);  // slot 38
     virtual void qevCompleteQuest(gf::QuestCompleteParam const&);  // slot 39
     virtual void qevCompleteChildQuest(gf::QuestCompleteChildParam const&);  // slot 40
@@ -325,11 +324,11 @@ public:
     // 2.0.0's symbols name them. Statics of GfGameManager: their addresses lie in gf_game_manager's unit among
     // GfGameManager's functions and they use no instance. What they do: isDispPreciousMenu and isDispQuestCompleteMenu
     // (the same code) answer whether GfPlayComQuestCompleteUI::s_disp is above 0; btl::BattleGlobal::PreUpdateProc
-    // calls both. Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static of GfGameManager (address
+    // calls both. 2.0.0's symbols name it. A static of GfGameManager (address
     // among its functions in gf_game_manager's unit). What it does: stores the flag into _gfgm::s_bDisablePlayerCamPause.
     static void setDisablePlayerCameraPauseForTitle(bool flag);
     // 1.0.0's isExecTutorial tail-called GfMenuObjTutorial::isWaiting from btl::BattleGlobal::PreUpdateProc;
-    // 3.0.1's PreUpdateProc calls this one at the same place (the symbols still spell it fn_71002AA6CC)
+    // 3.0.1's PreUpdateProc calls this one at the same place (2.0.0's symbols name it)
     static bool isExecTutorial();
     static bool isDispPreciousMenu();
     static bool isDispQuestCompleteMenu();

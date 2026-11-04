@@ -86,12 +86,14 @@ public:
     // the sensor of the object's GfComEnvSensor (a player's through GfComPropertyPc::getEnvSensor, else slot 11 of
     // its property's owner)
     const gf::EnviromentSensor* GetEnviromentSensor() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
-    // functions and reads its parameter. What it does: as CheckPowerCharge for buff 3, multiplying BattleGlobal's
-    // damage rate of the id by 1 + its effect / 100; unless BattleGlobal's m_challengeAnySuccess is set it needs the
-    // parameter's slot 64 (IsDriver(false)) to hold first. Answers whether the buff was on.
-    bool fn_71000561E4(unsigned int id);
+    // 2.0.0's symbols name it (1.0.0's CheckPowerCharge also multiplies the damage rate). What it does: for buff 3,
+    // multiplies BattleGlobal's damage rate of the id by 1 + its effect / 100; unless BattleGlobal's
+    // m_challengeAnySuccess is set it needs the parameter's slot 64 (IsDriver(false)) to hold first. Answers whether
+    // the buff was on.
     bool CheckPowerCharge(unsigned int id);
+    // 2.0.0's symbols name it (carried as CheckPowerCharge before). What it does: for a non-blade with buff 0x20 on,
+    // adds its effect / 100 to BattleGlobal's damage rate of the id and marks it (SetTalentMinochiAttack)
+    bool CheckTalentMinochi(unsigned int id);
     // 2.0.0's symbols name it. What it does: as CheckPowerCharge for buff 0x23: while the buff is on, adds its effect /
     // 100 to BattleGlobal's damage rate of the id, marks the id's attack as an angry arts attack
     // (SetAngryArtsAttack) and clears the buff; answers whether the buff was on. Callers: ActionArts,
@@ -239,8 +241,8 @@ public:
     void DropItem(DROP_ITEM_TYPE type, bool);
     void SetRimBloom(RIMBLOOM_ID id, bool on);
     // 1.0.0's name: its DeleteKizunaLinkEffect() (0x7100022458) has the same body without the flag (the SE is
-    // always played there) and the same callers (dtor, Initialize, NotifyBattleEnd, ManagerUpdate); 3.0.1's symbols
-    // spell fn_710002C71C
+    // always played there) and the same callers (dtor, Initialize, NotifyBattleEnd, ManagerUpdate); 2.0.0's symbols
+    // name it too
     void DeleteKizunaLinkEffect(bool playSE);
     const gf::GfComProperty* GetComPropertyConst() const;
     gf::GfComEffectCaster* GetEffectCaster();
@@ -291,7 +293,7 @@ public:
     void AlphaAnimation(ALPHA_PROC_ID id);
     void DeleteAnimSpecialProc();
     // 1.0.0's name: its ResetAlphaAnimation (0x710001F77C) has the same three BladeChangeManager callers and the
-    // same body over 17 entries (3.0.1's symbols spell fn_7100028A40)
+    // same body over 17 entries (2.0.0's symbols name it too)
     void ResetAlphaAnimation();
     ActionCommand* GetFreeCommand();
     int GetGroupIndex() const;

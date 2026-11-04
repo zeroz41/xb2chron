@@ -48,7 +48,7 @@ struct ReqChangeBladeWithSetIdParam : public GfReqParam {
     bool m_flag;
 };
 
-// 3.0.1's reqChangeBladeWithBladeId keeps none of its arguments
+// reqPartySwitchForIra's: it takes no arguments
 struct ReqEmptyParam : public GfReqParam {};
 
 // a map execMapjump has jumped to and the controlled mover's position when it left it; the names are not the
@@ -214,10 +214,10 @@ void GfReqCommand::execChangeBladeWithSetId(const GfReqParam* param) {
     fn_71005573CC(change->m_slot, change->m_setId);
 }
 
-unsigned int GfReqCommand::reqChangeBladeWithBladeId(unsigned int slot, unsigned int blade) {
+unsigned int GfReqCommand::reqPartySwitchForIra() {
 #line 427
     ReqEmptyParam* param = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ReqEmptyParam;
-    return GfReqManager::addCommand(param, execChangeBladeWithBladeId);
+    return GfReqManager::addCommand(param, execPartySwitchForIra);
 }
 
 unsigned int GfReqCommand::reqDestroyGf() {

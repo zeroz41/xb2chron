@@ -124,7 +124,7 @@ void GfMenuObjTitle::moveCursor(unsigned int handle, int index) {
     }
 }
 
-bool GfMenuObjTitle::seqConfirmNewGame() {
+bool GfMenuObjTitle::seqAocError() {
     if (!m_confirmOpen) {
         GfMenuManager::openCommonWindow(0x11B);
         m_confirmOpen = true;
@@ -143,7 +143,7 @@ bool GfMenuObjTitle::seqConfirmNewGame() {
     return true;
 }
 
-bool GfMenuObjTitle::fn_710048AF50() {
+bool GfMenuObjTitle::seqConfirmNewGame() {
     if (!m_confirmOpen) {
         GfMenuManager::openCommonWindow(0xE1);
         m_confirmOpen = true;

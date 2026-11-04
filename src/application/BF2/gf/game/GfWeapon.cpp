@@ -2738,8 +2738,8 @@ void GfGameUtilSaveData::flushOptionSaveData() {
 void GfGameUtilSaveData::getSaveDataMenuInfo(SaveMenuInfo& info) {
     SDataSaveIra* save;
     tl::TitleMain* title = mm::mtl::PtrSingleton<tl::TitleMain>::sys();
-    if (title != nullptr && title->fn_710014FB00()->m_system.m_version == 0x3A15B) {
-        save = title->getSaveBuffer();
+    if (title != nullptr && title->getSaveBuffer()->m_system.m_version == 0x3A15B) {
+        save = title->getIraSaveBuffer();
     } else {
         save = GfGameSave::getIraGameSaveData();
     }
@@ -2923,7 +2923,7 @@ bool GfGameUtil::isAdvancedGameOption() {
     SDataGame* game = GfDataManager::getDataGame();
     if (tl::TitleMain* title = mm::mtl::PtrSingleton<tl::TitleMain>::sys()) {
         if (GfManager::isExecModeAdvertize() || GfManager::isExecModeThater()) {
-            game = &title->getSaveBuffer()->m_game;
+            game = &title->getIraSaveBuffer()->m_game;
         }
     }
     return ItemCountLowLevel::getCount(game->m_itemBox, game->m_itemBoxExtend, 25495) != 0;
@@ -2933,7 +2933,7 @@ bool GfGameUtil::isAdvancedDifficulity() {
     SDataGame* game = GfDataManager::getDataGame();
     if (tl::TitleMain* title = mm::mtl::PtrSingleton<tl::TitleMain>::sys()) {
         if (GfManager::isExecModeAdvertize() || GfManager::isExecModeThater()) {
-            game = &title->getSaveBuffer()->m_game;
+            game = &title->getIraSaveBuffer()->m_game;
         }
     }
     return ItemCountLowLevel::getCount(game->m_itemBox, game->m_itemBoxExtend, 25496) != 0;

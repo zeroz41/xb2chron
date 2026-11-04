@@ -15,7 +15,7 @@ class GmkBattleChallengePortalGob;
 
 class GmkBattleChallengePortal : public ::gmk::AGmkBase {
 public:
-    // the overrides its table holds (slot functions still carry their placeholder symbols, given per slot)
+    // the overrides its table holds
     virtual ~GmkBattleChallengePortal();  // slot 0 (~GmkBattleChallengePortal)
     virtual gmk::GmkType getGmkType() const;  // slot 2 (getGmkType)
     virtual bool isValid() const;  // slot 3 (isValid)
@@ -31,7 +31,7 @@ public:
         // its row reader: out of line (create), called by initGmkBdatInfo (initGmkBdatInfo) where the template
         // calls T1::create (so the name is the template's; the CBdatWrapper parameter as GmkElevator::BdatInfo's)
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
-        // Placeholder name (new in 3.0.1): its row's pop conditions (scenario flag range, quest state range, time
+        // 2.0.0's symbols name it: its row's pop conditions (scenario flag range, quest state range, time
         // range, game condition), as GmkEvent::BdatInfo::isCondMatched plus the time range
         bool isPopCommonCondMatched(const AGmkBase& gmk) const;
         unsigned short m_condition;      // 0x0

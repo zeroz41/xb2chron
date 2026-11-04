@@ -112,17 +112,17 @@ public:
 class GROUP_DATA {
 public:
     void SetBuddyBladeIndex(int index);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its callers
+    // 2.0.0's symbols name it. A member: its callers
     // (ChainAttackManager::UpdateProc, DataManager::UpdateProc) pass a group, and it sits among GROUP_DATA's
     // functions. What it does: SetBuddyBladeIndex with the index of the blade whose m_blade is blade, -1 for none.
     void SetIraBuddyBladeIndex(unsigned int blade);
     const GROUP_BLADE_DATA* GetBladeDataConst(int index) const;
-    void SetNeedPermit(bool need);  // 1.0.0's name (3.0.1's symbols spell fn_71000A0460)
+    void SetNeedPermit(bool need);  // 1.0.0's and 2.0.0's name
     // 2.0.0's symbols name it. A member as SetIraBuddyBladeIndex. What it does:
     // the valid blade whose m_blade is blade, else blade 0 (AI_IraFormationChange, BladeChangeProc call it).
     const GROUP_BLADE_DATA* GetBladeDataByBdatIDConst(unsigned int blade) const;
     // 1.0.0's name (its ProgressCoolTime(float) has the same blade loop and stands in the same place, after
-    // Update); 3.0.1's symbols spell fn_71000A0F24
+    // Update); 2.0.0's symbols name it too
     void ProgressCoolTime(float time);
     // 2.0.0's symbols name it. What it does: while the group's character (m_handle) is in battle, pad_108 = value
     // clamped to [0, max HP - HP] (mm::clamp), and pad_10C starts at BtlSystemBalanceAccess's pad_130 when it was below

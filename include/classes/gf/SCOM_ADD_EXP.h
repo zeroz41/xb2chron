@@ -12,7 +12,7 @@ class SCOM_ADD_EXP : public ::gf::SCOM {
 public:
     explicit SCOM_ADD_EXP(SCOM_TYPE type) : SCOM(type) {}
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
-    // Placeholder name: nothing in 1.0.0's place names it. A member: it builds this class (type 4, its table) with
+    // 2.0.0's symbols name it. A member: it builds this class (type 4, its table) with
     // no object (m_value3 -1); its caller is btl::CharacterManager::AddExpWpSp.
     static unsigned long createBattleExp(unsigned int, unsigned int);
     static unsigned long createInnExp(unsigned int);

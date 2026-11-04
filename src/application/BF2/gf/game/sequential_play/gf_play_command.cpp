@@ -1096,10 +1096,7 @@ bool GfPlayComResetBlade::update(const fw::UpdateInfo& info, bool flag) {
                 }
                 return true;
             }
-            // the original passes no second argument (w1 is never set before the call; 3.0.1's
-            // reqChangeBladeWithBladeId reads neither): an uninitialized local reproduces that
-            unsigned int blade;
-            m_req = GfReqCommand::reqChangeBladeWithBladeId(m_blade, blade);
+            m_req = GfReqCommand::reqPartySwitchForIra();
         } else {
             m_req = GfReqCommand::reqChangeBladeWithSetId(m_blade, m_mode, true);
         }

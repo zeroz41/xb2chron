@@ -11,7 +11,8 @@ public:
     static unsigned int reqRebuildPartyWeapon(unsigned int blade);
     // both return the request's handle (GfPlayComResetBlade::update keeps it for GfReqManager::isValid)
     static unsigned int reqChangeBladeWithSetId(unsigned int slot, int setId, bool flag);
-    static unsigned int reqChangeBladeWithBladeId(unsigned int slot, unsigned int blade);
+    // 2.0.0's symbols name it, with no arguments (1.0.0's reqChangeBladeWithBladeId took a slot and a blade)
+    static unsigned int reqPartySwitchForIra();
     // a wait-event request (GfPlayComWaitEvent::start keeps the handle and waits on GfReqManager::isValid)
     static unsigned int reqWaitEvent(float time, GF_OBJ_HANDLE* handle);
     // a map jump request: returns its handle (GfPlayComMapjump::start keeps it for GfReqManager::isValid)
@@ -45,7 +46,7 @@ public:
     static void execRebuildPartyWeapon(const GfReqParam* param);
     static void execChangeParty(const GfReqParam* param);
     static void execChangeBladeWithSetId(const GfReqParam* param);
-    static void execChangeBladeWithBladeId(const GfReqParam* param);
+    static void execPartySwitchForIra(const GfReqParam* param);
     static void execMapjump(const GfReqParam* param);
     static void execDestroyGf(const GfReqParam* param);
     static void execStartScript(const GfReqParam* param);

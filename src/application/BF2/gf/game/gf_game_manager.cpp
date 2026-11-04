@@ -747,7 +747,7 @@ bool GfGameManager::isClearGame() {
     if (GfManager::isExecModeAdvertize() || GfManager::isExecModeThater()) {
         tl::TitleMain* title = tl::TitleMain::get();
         if (title != nullptr && title->m_saveBuffer != nullptr &&
-            GfDataUtil::isClearGame(title->fn_710014FB00()->m_game)) {
+            GfDataUtil::isClearGame(title->getSaveBuffer()->m_game)) {
             return true;
         }
     }

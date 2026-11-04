@@ -31,7 +31,7 @@ public:
     // GfGameSave::createGameSaveData calls it.
     static void getFileNameForIraSaveBin(mm::mtl::FixStr<256>& out, SAVESLOT slot);
     // getFileNameForSave, then ".sav" appended (1.0.0's symbol: the same code, called by createGameSaveData there
-    // and in 3.0.1, where the symbols spell it fn_710022C8FC)
+    // and in 3.0.1; 2.0.0's symbols name it too)
     static void getFileNameForSaveBin(mm::mtl::FixStr<256>& out, SAVESLOT slot);
     static void getFileNameForOption(mm::mtl::FixStr<256>& out);
     // named by the symbols: GfGameSave::createOptionSaveData's file name, the Ira one when

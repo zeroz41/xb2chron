@@ -22,9 +22,8 @@ public:
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
     // 2.0.0's symbols name them. seqCtrlWait waits for m_ctrl's control to end; seqAnimWait for m_animHandle's
-    // animation; seqEndResult sends event 0x101 to LAY_result. Placeholder name: new in 3.0.1, nothing in 1.0.0's place
-    // names it. A member because it is a job of its sequence (ResultListener::reciveEvent queues it on this object
-    // after a one-frame wait when LAY_result opens).
+    // animation; seqEndResult sends event 0x101 to LAY_result. 2.0.0's symbols name it. A member because it is a job of
+    // its sequence (ResultListener::reciveEvent queues it on this object after a one-frame wait when LAY_result opens).
     bool seqStartResult();
     bool seqCtrlWait();
     bool seqAnimWait();
@@ -35,7 +34,7 @@ public:
     // object 0x90); GfMenuReference's openOCG / A48 / BAC / A4C tail-call them. openGear shows LAY_special and sends it
     // the open event; closeGear sends it the close event; openResult (when checkCCStart(context)) sends event 0x21 with
     // the two words to LAY_result and starts the call context on object 0x90; noticeExtend sends event 0x102 to
-    // LAY_special. Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member as the four below
+    // LAY_special. 2.0.0's symbols name it. A static member as the four below
     // (it lies among this class's functions and acts on its object). What it does: shows or hides attached object 0x90
     // when it exists (setDisp of its argument). Caller: GfMenuManager::updateHudState.
     static void disp(bool disp);

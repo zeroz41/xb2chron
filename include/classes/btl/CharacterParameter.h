@@ -153,7 +153,7 @@ public:
     // 1.0.0's GetBuffEffect(int) const (0x710006681C): BattleCharacter::CheckPowerCharge calls it between IsBuff and
     // the damage rate in both builds. 3.0.1's first walks to the first non-blade (m_isNotBlade) up the driver chain
     // (none when m_flags622_6 is set or a driver is missing: 0) and answers the effect of that parameter's buff
-    // (its symbols spell fn_7100080E08)
+    // (2.0.0's symbols name it)
     float GetBuffEffect(int buff) const;
     // 2.0.0's symbols name it. What it does: removes the buff from the list (the last entry moves into its place),
     // clears its bit, and when notify is set tells the character at pad_5e9 and the driver

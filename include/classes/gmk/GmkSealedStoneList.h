@@ -7,8 +7,8 @@
 #include "classes/gmk/GmkSealedStoneEnergyEffectManager.h"
 
 namespace gmk {
-// table 0x7100B6E340; base TGmkList<GmkSealedStone, ...> (table 0x7100B6EFD8, magic 'SLDS'). Placeholder name: the
-// list of kind 0x3F, new in 3.0.1; nothing in 1.0.0 names it. GmkSet::createGmkLists constructs it inline
+// table 0x7100B6E340; base TGmkList<GmkSealedStone, ...> (table 0x7100B6EFD8, magic 'SLDS'). 2.0.0's symbols name
+// it: the list of kind 0x3F (not in 1.0.0). GmkSet::createGmkLists constructs it inline
 // (the base's table, then this one).
 // It overrides the destructors (~GmkSealedStoneList, ~GmkSealedStoneList), create (slot 9, create), dispose
 // (slot 10, dispose) and update (slot 11, update).

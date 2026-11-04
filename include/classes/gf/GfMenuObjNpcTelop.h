@@ -44,7 +44,7 @@ public:
     static bool isOpen();
     static OpenParam s_OpenParam;  // 2.0.0's symbols name it (lbl_7100EAB8D0)
     static bool s_Open;  // 2.0.0's symbols name it (lbl_7100EAB928)
-    // the sequences' jobs (placeholder names: new in 3.0.1, nothing in 1.0.0 names them)
+    // the sequences' jobs (2.0.0's symbols name them)
     bool seqWaitStream();  // waits while a face (IMG_char_face@NN of LAY_main) is streaming, then counts m_waitCount
     bool seqWaitCloseFullscreen();  // waits while a full-screen menu is open
     bool seqEndHitonowa();  // sends LAY_dummy a close event

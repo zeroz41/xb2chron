@@ -174,10 +174,10 @@ public:
     // the "tag" string of row id (1 to 223) of BDAT table 0x3B when its "delivered" column is set, else null; cached
     // in m_seTags (1.0.0's name; BattleCharacter's PlaySE/PlaySystemSE/SetAction call it)
     const char* GetSeTag(int id) const;
-    void RequestJingle(JINGLE_TYPE type);  // 1.0.0's RequestJingle(JINGLE_TYPE) (3.0.1's symbols spell fn_710000C3AC)
+    void RequestJingle(JINGLE_TYPE type);  // 1.0.0's and 2.0.0's RequestJingle(JINGLE_TYPE)
     bool IsJinglePlaying() const;
-    void PlayErrorSE();  // 1.0.0's PlayErrorSE (3.0.1's symbols spell fn_710000C3C8)
-    // 2.0.0's symbols name InitializeIraTalentArtsID, GetElementalComboFlowDataFast; the fn_ names are placeholders.
+    void PlayErrorSE();  // 1.0.0's and 2.0.0's PlayErrorSE
+    // 2.0.0's symbols name InitializeIraTalentArtsID, GetElementalComboFlowDataFast.
     // They read this BattleGlobal's fields (callers pass PtrSingleton<BattleGlobal>::sys()). What they do: Initialize:
     // clears pad_8374[0-8], then keeps in pad_8374[driver - 17] the last row of BDAT table 1 whose "IrType" is 3 for
     // each "Driver" 17-25
@@ -277,8 +277,7 @@ public:
     bool IsShootBullet(unsigned int id) const;
     void SetValidAttackRange(unsigned int id, bool valid);
     bool IsValidAttackRange(unsigned int id) const;
-    // 1.0.0's AddDamageRate/MulDamageRate: the same code in the same place after SetDamageRate (3.0.1's symbols
-    // spell fn_710000BE60/fn_710000BEE8)
+    // 1.0.0's and 2.0.0's AddDamageRate/MulDamageRate: the same code in the same place after SetDamageRate
     void AddDamageRate(unsigned int id, float rate, bool markChanged);
     void MulDamageRate(unsigned int id, float rate, bool markChanged);
     float GetDamageRate(unsigned int id, bool* changed) const;

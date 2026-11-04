@@ -146,10 +146,10 @@ public:
     bool seqSetupCrystal();
     void refreshCrystalList();
     bool seqCreateSetup();
-    // placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (between seqCreateSetup and
-    // seqCreateStartDriver): once no fade runs, steps the page sequence on
+    // 2.0.0's symbols name it (not in 1.0.0; between seqCreateSetup and seqCreateStartDriver): once no fade runs, steps
+    // the page sequence on
     bool seqCreateSkipToReslt();
-    // placeholder name: new in 3.0.1 (1.0.0's seqCreateStart is followed by ResultListener::reciveEvent);
+    // 2.0.0's symbols name it (not in 1.0.0, whose seqCreateStart is followed by ResultListener::reciveEvent);
     // CreationListener queues it: once no fade runs, idles the driver, hides the drivers and the crystals and
     // queues seqCreateSkipToReslt
     bool seqCreateSkip();

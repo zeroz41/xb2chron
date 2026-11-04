@@ -33,7 +33,7 @@ public:
     // GfEquipUtil::isEnableExtendDriverAcce does not hold and the party has item 0x636A.
     void refreshExpandOperation();
     // 1.0.0's setupEquipItem (0x71004569D8: same place after EquipItemListener::reciveEvent, the same arguments
-    // and its first three createFromList calls); the symbols spell fn_71003F33C8
+    // and its first three createFromList calls); 2.0.0's symbols name it
     static GfMenuItemAdapter* setupEquipItem(ui::UIObjectAcc& acc, GfMenuItemList* items);
     // 2.0.0's symbols name it (not written yet): refills the list for a reference driver
     // (GfMenuReference::getReferenceDriverID; SlotListener::reciveEvent and setupSlot call it)

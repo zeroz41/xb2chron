@@ -28,12 +28,12 @@ public:
     // index, an empty handle)
     static void equipBladeOrb(unsigned int blade, unsigned int, unsigned int, GfItemHandle);
     static unsigned int getEquipBladeOrb(unsigned int blade, unsigned int slot);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies among GfItemUtil's
+    // 2.0.0's symbols name it. A member because it lies among GfItemUtil's
     // functions (its unit). What it does: forwards to getEquipWpnAcce, which for a DLC driver (0x11-0x19) gives the
     // 16-bit item id at +0x5A4 of its row of GfDataManager::getDataGameIra's driver table, else 0.
     // GfMenuItemAdapter::ReferenceDriverEquipConverter shows it as slot 0's accessory of such a driver on menu layer 3.
     static unsigned int getEquipIraWpnAcce(unsigned int driver);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies among GfItemUtil's
+    // 2.0.0's symbols name it. A member because it lies among GfItemUtil's
     // functions right after GfEquipUtil::getEquipIraWpnAcce and takes no object. What it does: puts the item on the driver's DLC
     // accessory slot (GfDataDriver::setEquipWpnAcce / setEquipWpnAcceHandle with the handle), returning the old accessory to
     // the item box (or selling it when the box is full); returns true. GfGameUtil::execEquipIraDefaultWpnAcce and

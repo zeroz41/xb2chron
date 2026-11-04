@@ -47,7 +47,8 @@ public:
     void CheckEnd();
     void EndProc();
     void UpdateHit(float a, float b);
-    void ReturnLinkObj();
+    // 2.0.0's symbols name it (1.0.0's ReturnLinkObj, which nothing calls, is gone from 3.0.1)
+    void UpdateSubEffect();
     void HitOneShotProc();
     void StartNextAttack();
     void StartAdditionalAttack();

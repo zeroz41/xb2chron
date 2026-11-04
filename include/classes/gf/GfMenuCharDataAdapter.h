@@ -53,7 +53,7 @@ public:
     class PartyBladeConverter;
     class PartyDriverConverter;
     class ReferenceBladeConverter;
-    class ReferenceBladeOwnerDriverConverter;
+    class IraCharFormConverter;
     class ReferenceBladeSetConverter;
     class ReferenceDriverConverter;
     struct TypeSetup {
@@ -127,11 +127,12 @@ public:
     // GfMenuObjCmnStatus::setDrPageParam, GfMenuObjPouch2::setupResult/setupPartyInfo, GfMenuObjCmnStatus::setDrPageParamIra.
     static GfMenuCharDataAdapter* createFromReferenceBladeSet(unsigned int handle, unsigned int kind, unsigned int index, int slot,
                                                 bool changed);
-    // the driver that owns the referenced blade (3.0.1: GfMenuReference::getIraCharInfoFromFromID's record)
-    static GfMenuCharDataAdapter* createFromReferenceBladeOwnerDriver(unsigned int handle, unsigned int kind,
-                                                                      unsigned int blade, bool changed);
+    // 2.0.0's symbols name it. What it does: the driver that owns the referenced blade (3.0.1:
+    // GfMenuReference::getIraCharInfoFromFromID's record)
+    static GfMenuCharDataAdapter* createFromIraCharForm(unsigned int handle, unsigned int kind, unsigned int blade,
+                                                        bool changed);
     // 2.0.0's symbols name it. A member: it sits among GfMenuCharDataAdapter's createFrom* (after
-    // createFromReferenceBladeOwnerDriver) with createFromDriverList's list, and its code ends in create. What it does:
+    // createFromIraCharForm) with createFromDriverList's list, and its code ends in create. What it does:
     // nullptr unless GfMenuObjUtil::isValidExpansion(3); news a 0x18-byte IraDriverListFormConverter holding the driver
     // list, an index and a party: the driver (type 3) of that party (GfDataParty::getDriver) at the list's driver's
     // party index. Caller: gf_menu_obj_party_form3's GfMenuObjPartyForm3::setupDriverSelect (which passes the same list to

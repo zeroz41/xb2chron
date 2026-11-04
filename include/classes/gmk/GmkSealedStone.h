@@ -27,8 +27,8 @@ public:
     // 2.0.0's symbols name it. What it does: reads the game object handle at 0x48 (nothing when it is -1) and, branches
     // on the flag first (size 0x10C).
     void disposeGobInst(bool);
-    // 2.0.0's symbols name seqValidateResHandle, seqUpdate; the fn_ names are placeholders. What they do: create
-    // installs seqValidateResHandle, which installs seqUpdate (an empty step).
+    // 2.0.0's symbols name seqValidateResHandle, seqUpdate. What they do: create installs seqValidateResHandle, which
+    // installs seqUpdate (an empty step).
     void seqValidateResHandle(float);
     void seqUpdate(float);
     unsigned char pad_48[0x10];  // fields: size from the stride 0x78: Vector<GmkSealedStone>::resize resize

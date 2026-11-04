@@ -140,7 +140,7 @@ static void vmArgAssert(s32 cond) {
 }
 
 
-// The name is 1.0.0's (vmInit, the one of vmInit/vmDestory with a caller); 3.0.1's symbols spell it fn_71006ED39C.
+// The name is 1.0.0's (vmInit, the one of vmInit/vmDestory with a caller).
 void vmInit(void) {
     memset(&s_vmWork, 0, sizeof(s_vmWork));
 }

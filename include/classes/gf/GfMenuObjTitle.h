@@ -37,16 +37,17 @@ public:
     static bool isEnableEventsTheater();
     static bool isEnableNewGameAdv();
     void moveCursor(unsigned int handle, int index);
-    bool seqConfirmNewGame();
-    // 2.0.0's symbols name seqSelectDifficulity, seqConfirmAdvancedNewGame, seqTipsDifficulity; the fn_ names are
-    // placeholders. What they do: seqSelectDifficulity: a job the confirm jobs below queue on a 0 window result (not
-    // written yet). fn_710048AF50: opens common window 0xE1 once, then on result 0 queues seqSelectDifficulity, else
-    // sends event 0x101 to LAY_main; queued by ListListener::reciveEvent. seqConfirmAdvancedNewGame: opens common
-    // window 0x116 once, then on result 0 sends LAY_ang_info's close event and queues seqSelectDifficulity, else
-    // enables LAY_ang_info's input; queued by InfoListener::reciveEvent. seqTipsDifficulity: opens common window 0x10A
-    // once, then hands m_index to LAY_main's call context as the result; queued by seqSelectDifficulity.
+    // 2.0.0's symbols name it. What it does: opens common window 0x11B once, then sends event 0x101 to LAY_main
+    bool seqAocError();
+    // 2.0.0's symbols name them. What they do: seqSelectDifficulity: a job the confirm jobs below queue on a 0 window
+    // result (not written yet). seqConfirmNewGame: opens common window 0xE1 once, then on result 0 queues
+    // seqSelectDifficulity, else sends event 0x101 to LAY_main; queued by ListListener::reciveEvent.
+    // seqConfirmAdvancedNewGame: opens common window 0x116 once, then on result 0 sends LAY_ang_info's close event and
+    // queues seqSelectDifficulity, else enables LAY_ang_info's input; queued by InfoListener::reciveEvent.
+    // seqTipsDifficulity: opens common window 0x10A once, then hands m_index to LAY_main's call context as the result;
+    // queued by seqSelectDifficulity.
     bool seqSelectDifficulity();
-    bool fn_710048AF50();
+    bool seqConfirmNewGame();
     bool seqConfirmAdvancedNewGame();
     bool seqTipsDifficulity();
 
@@ -56,7 +57,7 @@ public:
     int m_index;  // 0x48 (the name is not the original's)
     ui::UISelectObjList* m_list;  // 0x50 (the name is not the original's)
     GfMenuSequence<GfMenuObjTitle, 4> m_seq;  // 0x58
-    bool m_confirmOpen;  // 0x1B8: seqConfirmNewGame opened its window (the name is not the original's)
+    bool m_confirmOpen;  // 0x1B8: the seq job opened its common window (the name is not the original's)
     GfMenuCallContext* m_callContext;  // 0x1C0
     GfMenuIDList* m_idList;  // 0x1C8 (the name is not the original's)
     ui::UIStr m_str;  // 0x1D0 (the name is not the original's)

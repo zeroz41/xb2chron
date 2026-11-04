@@ -88,7 +88,7 @@ public:
     bool initializeManager();
     static void createMemorySection();  // the sound and movie memory sections (kinds 6..9)
     void createManager();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no update thread). A member
+    // 2.0.0's symbols name it (1.0.0 has no update thread). A member
     // because initialize starts it as the "PosuUpdateThread" thread's entry with &m_postUpdateThread. What it does:
     // until m_threadExit, runs ColiManager::postUpdate while m_threadFlag is set, then waits on m_threadEvent; 0.
     static unsigned int fnThread(void* arg);
