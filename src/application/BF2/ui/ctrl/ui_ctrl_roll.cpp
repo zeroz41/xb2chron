@@ -36,7 +36,7 @@ void UICtrlRoll::delObject(unsigned int handle) {
     if (m_entries.size() == m_entries.capacity()) {
         return;
     }
-    for (Entry* it = m_entries.begin(); it != m_entries.end(); ++it) {
+    for (RollObjInfo* it = m_entries.begin(); it != m_entries.end(); ++it) {
         if (it->m_handle == handle) {
             m_entries.erase(it);
             return;
@@ -56,7 +56,7 @@ void UICtrlRoll::update(const fw::UpdateInfo&) {
     UIObjectAcc center(m_handle);
     center.getPosCenter(centerPos);
     for (unsigned long i = 0; i < m_entries.size(); i++) {
-        Entry& entry = m_entries[i];
+        RollObjInfo& entry = m_entries[i];
         UIObjectAcc object(entry.m_handle);
         float angle;
         if (entry.m_param.m_reverse) {

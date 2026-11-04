@@ -190,7 +190,7 @@ bool GfMenuObjBladeRelease::seqSubMenuOpen() {
             m_idList->addContents(MenuID{2, 0});
         }
         m_context->reset();
-        GfMenuObjCommonText::openSubMenu(m_context, m_idList, GfMenuObjCommonText::OpenSubMenuParam{1, 0, 1, 0});
+        GfMenuObjCommonText::openSubMenu(m_context, m_idList, GfMenuObjCommonText::SubMenuOption{1, 0, 1, 0});
         m_seqStep = true;
         pad_46C = -1;
         return false;
