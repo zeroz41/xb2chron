@@ -51,6 +51,7 @@
 #include "classes/gf/GfSequentialPlay.h"
 #include "classes/gf/GfReqManager.h"
 #include "classes/gf/GfMapManager.h"
+#include "gf/GfDataUtil.h"
 
 namespace tl {
 
@@ -280,30 +281,30 @@ void TitleMain::getGameClearFlagFromSaveData() {
     if (m_saveBuffer->m_system.m_version != 0x3A15B) {
         return;
     }
-    if (gf::GfDataBlade::fn_710023217C(m_saveBuffer->m_game)) {
+    if (gf::GfDataUtil::isClearGameCheck(m_saveBuffer->m_game)) {
         if (m_saveBuffer->m_game.m_gameClearCount == 0) {
             m_saveBuffer->m_game.m_gameClearCount = 1;
         }
-        if (gf::GfDataBlade::fn_7100231EB8(m_saveBuffer->m_game) >= 10032) {
+        if (gf::GfDataUtil::getScenarioFlag(m_saveBuffer->m_game) >= 10032) {
             m_newGameAdv = true;
         }
     }
     if (m_saveBuffer->m_game.m_gameClearCount != 0) {
         m_isClear = true;
     }
-    if (gf::GfDataBlade::fn_7100232244(m_saveBuffer->m_game)) {
+    if (gf::GfDataUtil::isAdvanceSaved(m_saveBuffer->m_game)) {
         m_newGameAdv = false;
     }
 }
 
-bool TitleMain::fn_710014FC5C() {
-    if (m_saveBuffer->m_system.m_version == 0x3A15B && gf::GfDataBlade::fn_710023217C(m_saveBuffer->m_game)) {
+bool TitleMain::isTitleEventClearGame() const {
+    if (m_saveBuffer->m_system.m_version == 0x3A15B && gf::GfDataUtil::isClearGameCheck(m_saveBuffer->m_game)) {
         return m_newGameAdv;
     }
     return false;
 }
 
-unsigned short TitleMain::fn_710014FCB0(unsigned int event) {
+unsigned short TitleMain::getEventTheaterWeather(unsigned int event) const {
     if (m_saveBuffer != nullptr) {
         for (gf::SDataGameSavedEvent& row : m_saveBuffer->m_game.m_savedEvents) {
             if (row.m_event == event) {
@@ -314,7 +315,7 @@ unsigned short TitleMain::fn_710014FCB0(unsigned int event) {
     return 0;
 }
 
-unsigned int TitleMain::fn_710014FD10(unsigned int event) {
+unsigned int TitleMain::getEventTheaterTime(unsigned int event) const {
     if (m_saveBuffer != nullptr) {
         for (gf::SDataGameSavedEvent& row : m_saveBuffer->m_game.m_savedEvents) {
             if (row.m_event == event) {
@@ -325,12 +326,12 @@ unsigned int TitleMain::fn_710014FD10(unsigned int event) {
     return 12;
 }
 
-bool TitleMain::fn_710014FD74() {
+bool TitleMain::isValidAocVersion() const {
     gf::SDataSave* save = m_saveBuffer;
     if (save->m_system.m_version != 0x3A15B) {
         return true;
     }
-    return !gf::GfDataBlade::fn_71002325AC(save->m_game);
+    return !gf::GfDataUtil::isInvalidVersionAoc(save->m_game);
 }
 
 void TitleMain::resetGameType(bool flag) {

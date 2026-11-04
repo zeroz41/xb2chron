@@ -193,6 +193,11 @@
 #include "classes/gf/SCOM_MAXIMUM_HEAL.h"
 #include "classes/gf/SCOM_FIELD_VOICE.h"
 #include "mm/mtl/UniquePtr.h"
+#include "gf/GfDataBtlDif.h"
+#include "gf/GfGameUtilFieldEnhance.h"
+#include "gf/GfBootUtil.h"
+#include "gf/GfGameUtilDiff.h"
+#include "gf/ItemCountLowLevel.h"
 
 namespace gf {
 
@@ -472,7 +477,7 @@ bool GfGameUtil::isCondDriverModel(unsigned int driver) {
     return GfGameCond::isGameCond(mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->getChrDrCondition(driver));
 }
 
-const char* fn_71002DF624(unsigned int driverId, bool check, bool flag) {
+const char* GfGameUtil::getAcceDriverModel(unsigned int driverId, bool check, bool flag) {
     if (check && driverId == 6) {
         flag = flag | GfDataEvent::isInvalidMelefRetarget(GfGameEvent::getStartEventId());
     }
@@ -607,7 +612,7 @@ void GfGameUtil::levelupForEnemy(GF_OBJ_HANDLE* handle, unsigned int add) {
         GfObj* healed = GfObjUtil::getObj(handle);
         healed->sendMessage(healed, msg);
     }
-    fn_71002E0F28(handle);
+    GfGameUtil::refreshEnemyHp(handle);
 }
 
 bool GfGameUtil::getMaxHpForUi(GF_OBJ_HANDLE* handle, unsigned int* hp) {
@@ -681,12 +686,12 @@ void GfGameUtil::setMaxPartyGauge() {
 namespace gf {
 
 bool GfGameUtil::isDispRexCrystal() {
-    unsigned short blade = GfDataBlade::fn_7100231884();
+    unsigned short blade = GfDataUtil::getScenarioFlag();
     return blade != 0 && !(blade >= 1001 && blade <= 1030);
 }
 
 bool GfGameUtil::isDispHomuraCrystal() {
-    unsigned short blade = GfDataBlade::fn_7100231884();
+    unsigned short blade = GfDataUtil::getScenarioFlag();
     return !(blade >= 1001 && blade <= 1030);
 }
 
@@ -954,7 +959,7 @@ int GfGameUtilHana::getConvertToEther(unsigned int item) {
 namespace gf {
 
 void GfGameUtil::setTrustPointForDebug(unsigned int driver, unsigned int point) {
-    addTrustPoint(GfDataBlade::fn_7100237B70(driver, -1), point);
+    addTrustPoint(GfDataDriver::getIraBlade(driver, -1), point);
 }
 
 void GfGameUtil::setAchievementReleaseLevel(unsigned int blade, unsigned int line, unsigned int level) {
@@ -998,7 +1003,7 @@ bool GfGameUtil::isDummyBlade(GF_OBJ_HANDLE* handle) {
 namespace gf {
 
 void GfGameUtilCloudSea::setInnCloudSea(CLOUD_SEA cloudSea) {
-    GfDataBlade::fn_710024E8F4(GfGameManager::getMapID(), cloudSea);
+    GfDataMap::setCloudType(GfGameManager::getMapID(), cloudSea);
     GfFieldWeather::setCloudSea(GfGameManager::getMapID(), cloudSea);
 }
 
@@ -1008,7 +1013,7 @@ namespace gf {
 
 void GfGameUtil::incGameClearCount() {
     SDataGame* game = GfDataManager::getDataGame();
-    GfDataBlade::fn_71002320AC(game, true);
+    GfDataUtil::setClearGame(*game, true);
     if (game->m_gameClearCount < 9999) {
         game->m_gameClearCount++;
     }
@@ -1023,14 +1028,14 @@ void GfGameUtil::setHp(GF_OBJ_HANDLE* handle, unsigned int hp) {
 }
 
 void GfGameUtil::incEnemySuppress(unsigned int enemy) {
-    if (!GfGameManager::isBattleArenaActive() && GfDataBlade::fn_7100234998(enemy) &&
+    if (!GfGameManager::isBattleArenaActive() && GfDataEnemy::incEnemySuppress(enemy) &&
         mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys()->isChrEnArrangeFlagNamed(enemy) &&
-        GfDataBlade::fn_7100234940(enemy) == 1) {
-        GfDataBlade::fn_71002355AC();
+        GfDataEnemy::getEnemySuppress(enemy) == 1) {
+        GfDataEnemy::incNamedDefeatNum();
     }
 }
 
-void fn_71002DAB40(unsigned int driver, unsigned int exp) {
+void GfGameUtil::subExpInn(unsigned int driver, unsigned int exp) {
     if (driver == 0) {
         return;
     }
@@ -1147,7 +1152,7 @@ void GfGameUtil::execLevelUp(unsigned int driver, unsigned int level) {
         if (lv < btl->getGrowStart() || lv >= btl->getGrowEnd() - 1) {
             break;
         }
-        unsigned int need = GfDataBlade::fn_71002326F0(lv + 1);
+        unsigned int need = GfDataUtil::getGrowLevelExp(lv + 1);
         if (exp < need) {
             break;
         }
@@ -1204,7 +1209,7 @@ void GfGameUtil::addWpForObject(unsigned int driver, unsigned int id, int wp) {
         }
     }
     for (const unsigned short& target : drivers) {
-        unsigned int blade = GfDataBlade::fn_7100237B70(target, -1);
+        unsigned int blade = GfDataDriver::getIraBlade(target, -1);
         addWp(target, GfDataBlade::getBladeWpnType(blade), wp);
     }
 }
@@ -1265,7 +1270,7 @@ void GfGameUtil::addDevelopPoint(unsigned int zone, unsigned int point) {
     if (GfGameManager::isGameTypeIra()) {
         return;
     }
-    if (GfDataBlade::fn_710024E91C() && zone == 6) {
+    if (GfDataMap::isArcadiaDestroy() && zone == 6) {
         zone = 5;
     }
     unsigned int add = GfGameManager::getOwnerBonus().m_values[5] + point;
@@ -1346,14 +1351,14 @@ void GfGameUtil::addTrustPoint(unsigned int blade, unsigned int point) {
     GfQuestManager::eventCheckTaskAll();
 }
 
-unsigned int fn_71002DC130(unsigned int driver) {
+unsigned int GfGameUtil::getGroupClass(unsigned int driver) {
     mm::mtl::FixedVector<unsigned short, 32> drivers;
     GfDataDriver::getIraBack(drivers, driver);
     unsigned int total = 0;
     unsigned int count = 0;
     for (const unsigned short& id : drivers) {
         if (GfDataDriver::isActivateParty(id)) {
-            total += GfGameUtil::getTrustRank(GfDataBlade::fn_7100237B70(id, -1));
+            total += GfGameUtil::getTrustRank(GfDataDriver::getIraBlade(id, -1));
             count++;
         }
     }
@@ -1412,7 +1417,7 @@ void GfGameUtil::addTrustRankForKizunaRing(unsigned int blade) {
     }
 }
 
-bool fn_71002D9B5C(GF_OBJ_HANDLE* handle) {
+bool GfGameUtil::getUiGetHitonowa(GF_OBJ_HANDLE* handle) {
     if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
         return false;
     }
@@ -1435,7 +1440,7 @@ bool fn_71002D9B5C(GF_OBJ_HANDLE* handle) {
     return Bdat::getFlagVal(gimmick->getBindedBdatFp(), "flag", gimmick->m_createInfo.m_bdatId, "HITONOWAGET") != 0;
 }
 
-bool fn_71002DA394(GF_OBJ_HANDLE* handle) {
+bool GfGameUtil::isBattleWeapon(GF_OBJ_HANDLE* handle) {
     if (GfObjUtil::getObjType(handle) == 3) {
         GfObjAcc acc(handle);
         if (acc.getDriverId() == 0x11) {
@@ -1454,7 +1459,7 @@ bool fn_71002DA394(GF_OBJ_HANDLE* handle) {
     return false;
 }
 
-void fn_71002DA4FC(int value) {
+void GfGameUtil::addEtherCube(unsigned int value) {
     if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
         MsgUnk_1000034 msg(0xE);
         msg.pad_28 = value;
@@ -1462,7 +1467,7 @@ void fn_71002DA4FC(int value) {
     }
 }
 
-void fn_71002DA570(int value) {
+void GfGameUtil::addScore(unsigned int value) {
     if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
         MsgUnk_1000034 msg(0xF);
         msg.pad_2C = value;
@@ -1470,7 +1475,7 @@ void fn_71002DA570(int value) {
     }
 }
 
-void fn_71002DA5E4(unsigned int value) {
+void GfGameUtil::applyClearTimeForArena(unsigned int value) {
     if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
         MsgUnk_1000034 msg(0x10);
         msg.pad_30 = value;
@@ -1490,7 +1495,7 @@ void GfGameUtil::addExpInn(unsigned int exp) {
             if (std::find(drivers.begin(), drivers.end(), static_cast<unsigned short>(id)) != drivers.end()) {
                 continue;
             }
-            if (id == 5 && GfDataBlade::fn_7100231884() > 0xBE8) {
+            if (id == 5 && GfDataUtil::getScenarioFlag() > 0xBE8) {
                 continue;
             }
             drivers.push_back(id);
@@ -1786,7 +1791,7 @@ bool GfGameUtil::execEquipMercenariesBlade(unsigned int driver, unsigned int bla
     return true;
 }
 
-void fn_71002E1824() {
+void GfGameUtil::execClearMercenariesInHomuraHikari() {
     unsigned int blade = 1001;
     if (!GfDataBlade::fn_71002383C8(blade)) {
         blade = 1002;
@@ -1800,7 +1805,7 @@ void fn_71002E1824() {
 }
 
 void GfGameUtil::setSaikaLensOff(GF_OBJ_HANDLE* handle) {
-    unsigned short progress = GfDataBlade::fn_7100231884();
+    unsigned short progress = GfDataUtil::getScenarioFlag();
     GfObjAcc acc(handle);
     switch (acc.getType()) {
     case 4:
@@ -1870,7 +1875,7 @@ void GfGameUtil::setSaikaLensOff() {
     }
 }
 
-void fn_71002E24C0(GF_OBJ_HANDLE* handle, bool show) {
+void GfGameUtil::dispLauraMedal(GF_OBJ_HANDLE* handle, bool show) {
     if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
         return;
     }
@@ -1960,7 +1965,7 @@ unsigned int GfGameUtil::execAddRareBlade(const SDataBlade& data) {
 }
 
 unsigned int GfGameUtil::execAddCommonBlade(SDataBlade& data, unsigned int item) {
-    if (GfDataBlade::fn_7100231FF8() && data.m_bladeId == GfDataBlade::getStartCommonBlade()) {
+    if (GfDataUtil::isClearGame() && data.m_bladeId == GfDataBlade::getStartCommonBlade()) {
         GfDataBlade::setActivateReserver(data.m_bladeId);
         return data.m_bladeId;
     }
@@ -2091,7 +2096,7 @@ void GfGameUtil::execEquipIraDefaultWpnAcce(unsigned int driver) {
         if (GfItemUtil::isEnableAddItemBox(accessory, 1)) {
             GfItemUtil::addItemBoxWithSilent(accessory, 1);
         }
-        GfItemUtil::fn_71002FCD68(driver, accessory, GfItemHandle());
+        GfEquipUtil::equipIraWpnAcce(driver, accessory, GfItemHandle());
     }
 }
 
@@ -2187,7 +2192,7 @@ const char* GfGameUtil::getBladeModel(unsigned int blade, bool flag) {
     return name;
 }
 
-const char* fn_71002DF344(unsigned int blade) {
+const char* GfGameUtil::getAcceBladeModel(unsigned int blade) {
     return GfGameUtil::fn_71002DEFBC(blade);
 }
 
@@ -2218,8 +2223,8 @@ const char* fn_71002DF4C4(unsigned int driverId, bool flag) {
     return nullptr;
 }
 
-bool fn_71002E66F8(mm::mtl::FixedVector<unsigned short, 32>& list) {
-    if (GfDataBlade::fn_71002324C8()) {
+bool GfGameUtil::getDriverAcceList(mm::mtl::FixedVector<unsigned short, 32>& list) {
+    if (GfDataUtil::isIra()) {
         for (unsigned int driver = 17; driver < 26; ++driver) {
             if (GfDataDriver::isIraFront(driver)) {
                 list.push_back(driver);
@@ -2227,7 +2232,7 @@ bool fn_71002E66F8(mm::mtl::FixedVector<unsigned short, 32>& list) {
         }
     } else {
         for (unsigned int driver = 1; driver < 9; ++driver) {
-            if (driver == 5 && GfDataBlade::fn_710023220C()) {
+            if (driver == 5 && GfDataUtil::isVandammeDead()) {
                 continue;
             }
             list.push_back(driver);
@@ -2741,23 +2746,23 @@ void GfGameUtilSaveData::getSaveDataMenuInfo(SaveMenuInfo& info) {
     fn_71002EAF78(info, save);
 }
 
-bool fn_71002EB3C0() {
+bool GfGameUtil::isDispSinMask() {
     if (GfGameManager::isGameTypeIra()) {
         return !GfGameCond::isGameCond(0xE86);
     }
-    return GfDataBlade::fn_7100231884() < 5048;
+    return GfDataUtil::getScenarioFlag() < 5048;
 }
 
-bool fn_71002EB3FC() {
-    unsigned short id = GfDataBlade::fn_7100231884();
+bool GfGameUtil::isDispLauraMedal() {
+    unsigned short id = GfDataUtil::getScenarioFlag();
     return id >= 11100 && id <= 11130;
 }
 
-unsigned int fn_71002EC634() {
+unsigned int GfGameUtilDiff::getBtlDifficult() {
     return getActiveOptionData()->m_soundUi.m_keyD;
 }
 
-unsigned int fn_71002EC674(GF_OBJ_HANDLE* handle) {
+unsigned int GfGameUtil::getWpnDamage(GF_OBJ_HANDLE* handle) {
     GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys();
     if (arena != nullptr && arena->isBattleNow()) {
         return arena->getWeaponDamage(handle);
@@ -2766,12 +2771,12 @@ unsigned int fn_71002EC674(GF_OBJ_HANDLE* handle) {
     return acc.getWeaponDamage(false);
 }
 
-unsigned int fn_71002EC6F4(GF_OBJ_HANDLE* handle) {
+unsigned int GfGameUtil::getWpnStability(GF_OBJ_HANDLE* handle) {
     DataParamAcc acc(handle);
     return acc.getWeaponStability(false);
 }
 
-bool fn_71002ED330() {
+bool GfGameUtil::isEnableBladeElma() {
     if (!GfGameManager::isInstalledBattleArenaContents()) {
         return false;
     }
@@ -2784,7 +2789,7 @@ bool fn_71002ED330() {
 }
 
 // whether the add-on content state (GfGameAoc) owns the encoded add-on item id, false without it (as
-// GfGameManager::isInstalledBattleArenaContents does for 0x30101). Inline: no copy exists; fn_71002ED3E8's 0x451 case needs it as a
+// GfGameManager::isInstalledBattleArenaContents does for 0x30101). Inline: no copy exists; GfGameUtil::isEnableBladeDlc's 0x451 case needs it as a
 // call of its own to keep the original's block order. The name is not the original's.
 static inline bool isAocOwned(unsigned int id) {
     if (GfGameAoc* aoc = GfGameAoc::get()) {
@@ -2793,7 +2798,7 @@ static inline bool isAocOwned(unsigned int id) {
     return false;
 }
 
-// blade 0x457's test, shared by fn_71002ED3E8 and fn_71002EDAD4 (both inline it): GfGameManager::isInstalledBattleArenaContents,
+// blade 0x457's test, shared by GfGameUtil::isEnableBladeDlc and GfGameUtil::isEnableGameBlade (both inline it): GfGameManager::isInstalledBattleArenaContents,
 // item 25497 in the box and a first rule value set in row 25 of SDataGame's challenge rule table (tested in the
 // order 1, 0, 2, 3, 4). Inline: no copy exists. The name is not the original's.
 static inline bool isBlade457Unlocked() {
@@ -2808,7 +2813,7 @@ static inline bool isBlade457Unlocked() {
            row.m_rules[3].m_value0 != 0 || row.m_rules[4].m_value0 != 0;
 }
 
-bool fn_71002ED3E8(unsigned int blade) {
+bool GfGameUtil::isEnableBladeDlc(unsigned int blade) {
     switch (blade) {
     case 0x451:
         return isAocOwned(0x20101);
@@ -2822,7 +2827,7 @@ bool fn_71002ED3E8(unsigned int blade) {
     }
 }
 
-unsigned int fn_71002ED4F0(unsigned int enemy) {
+unsigned int GfGameUtil::getNamedListIndex(unsigned int enemy) {
     GfBdatChrEnArrange* bdat = mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys();
     if (GfGameManager::isGameTypeIra()) {
         for (unsigned int row = bdat->getBTL_NamedListIraStart(), end = bdat->getBTL_NamedListIraEnd(); row < end; row++) {
@@ -2840,50 +2845,50 @@ unsigned int fn_71002ED4F0(unsigned int enemy) {
     return 0;
 }
 
-bool fn_71002ED5B0(unsigned int enemy, unsigned int mode) {
-    unsigned int row = fn_71002ED4F0(enemy);
+bool GfGameUtil::isDefeatNamed(unsigned int enemy, GFDIFF mode) {
+    unsigned int row = GfGameUtil::getNamedListIndex(enemy);
     if (row == 0) {
         return false;
     }
     return (GfDataManager::getDataGame()->m_namedRecords[row].m_flags & (1 << mode)) != 0;
 }
 
-void fn_71002ED96C(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag) {
+void GfGameUtil::setIraBoneMountR(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag) {
     if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
         scene->setIraBoneMount(handle, target, flag, IRA_MOUNT(0));
     }
 }
 
-void fn_71002ED99C(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag) {
+void GfGameUtil::setIraBoneMountL(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag) {
     if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
         scene->setIraBoneMount(handle, target, flag, IRA_MOUNT(1));
     }
 }
 
-bool fn_71002ED9CC() {
+bool GfGameUtil::isEnableIraSatahiko() {
     if (GfDataManager::getDataGameIra()->m_word2 == 0) {
         return false;
     }
     return mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->getIRA_PartyGuest1(GfDataManager::getDataGameIra()->m_word2) != 0;
 }
 
-bool fn_71002EDA2C() {
+bool GfGameUtil::isEnableIraMilto() {
     if (GfDataManager::getDataGameIra()->m_word2 == 0) {
         return false;
     }
     return mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->getIRA_PartyGuest2(GfDataManager::getDataGameIra()->m_word2) != 0;
 }
 
-bool fn_71002EDA8C() {
+bool GfGameUtilDiff::isEnableAutoSave() {
     return getActiveOptionData()->m_soundUi.m_flagD != 0;
 }
 
-bool fn_71002EDAD4(unsigned int blade) {
+bool GfGameUtil::isEnableGameBlade(unsigned int blade) {
     switch (blade) {
     case 0x451:
     case 0x452:
     case 0x453:
-        return fn_71002ED3E8(blade);
+        return GfGameUtil::isEnableBladeDlc(blade);
     case 0x454:
         return GfItemUtil::getItemBoxCount(25498) != 0;
     case 0x455:
@@ -2895,97 +2900,97 @@ bool fn_71002EDAD4(unsigned int blade) {
     }
 }
 
-bool fn_71002EDBD8(unsigned int driverId, bool createTypeIn2311, bool createType3) {
+bool GfGameUtil::isNeedRetargetDriver(unsigned int driverId, bool createTypeIn2311, bool createType3) {
     if (driverId != 6) {
         return false;
     }
-    const char* name = fn_71002DF39C(6, createTypeIn2311, createType3);
+    const char* name = GfGameUtil::getDriverModel(6, createTypeIn2311, createType3);
     return name != nullptr && strstr(name, "pc110601") != nullptr;
 }
 
-bool fn_71002EDC24(const char* name) {
+bool GfGameUtil::isNeedRetargetDriverResource(const char* name) {
     return name != nullptr && strstr(name, "pc110601") != nullptr;
 }
 
-int fn_71002EDC4C(const char* name) {
+int GfGameUtil::getNeedRetargetDriverId(const char* name) {
     if (name == nullptr) {
         return 0;
     }
     return strstr(name, "pc110601") != nullptr ? 6 : 0;
 }
 
-bool GfGameUtilSaveData::fn_71002EDC78() {
+bool GfGameUtil::isAdvancedGameOption() {
     SDataGame* game = GfDataManager::getDataGame();
     if (tl::TitleMain* title = mm::mtl::PtrSingleton<tl::TitleMain>::sys()) {
         if (GfManager::isExecModeAdvertize() || GfManager::isExecModeThater()) {
             game = &title->getSaveBuffer()->m_game;
         }
     }
-    return GfDataManager::fn_7100223650(&game->m_favoriteItemType, &game->m_itemBox, 25495) != 0;
+    return ItemCountLowLevel::getCount(game->m_favoriteItemType, game->m_itemBox, 25495) != 0;
 }
 
-bool GfGameUtilSaveData::fn_71002EDCEC() {
+bool GfGameUtil::isAdvancedDifficulity() {
     SDataGame* game = GfDataManager::getDataGame();
     if (tl::TitleMain* title = mm::mtl::PtrSingleton<tl::TitleMain>::sys()) {
         if (GfManager::isExecModeAdvertize() || GfManager::isExecModeThater()) {
             game = &title->getSaveBuffer()->m_game;
         }
     }
-    return GfDataManager::fn_7100223650(&game->m_favoriteItemType, &game->m_itemBox, 25496) != 0;
+    return ItemCountLowLevel::getCount(game->m_favoriteItemType, game->m_itemBox, 25496) != 0;
 }
 
-void fn_71002EDD60() {
+void GfGameUtil::playSeForPartySwitch() {
     GfMenuObjUtil::playSE(0x2E);
 }
 
-fw::SoundPack* fn_71002EE5A0(const char* name) {
+fw::SoundPack* GfGameUtil::getDlcSePack(const char* name) {
     if (GfFieldSound* sound = mm::mtl::PtrSingleton<GfFieldSound>::sys()) {
         return sound->getDlcSePack(name);
     }
     return nullptr;
 }
 
-const char* fn_71002EE5C0(const char* name) {
+const char* GfGameUtil::getDlcSeName(const char* name) {
     if (GfFieldSound* sound = mm::mtl::PtrSingleton<GfFieldSound>::sys()) {
         return sound->fn_710027CEA4(name);
     }
     return nullptr;
 }
 
-void* fn_71002EE8C4() {
+void* GfGameUtilDiff::getUseSoundUiOption() {
     return &getActiveOptionData()->m_soundUi;
 }
 
-void fn_71002EE904(unsigned int value) {
-    fn_7100254FDC(&getActiveOptionData()->m_soundUi, value);
+void GfGameUtilDiff::getBtlDifParam(unsigned int value) {
+    GfDataBtlDif::getBtlDifParam(getActiveOptionData()->m_soundUi, value);
 }
 
-void fn_71002EE954(unsigned int type) {
-    fn_7100254EF0(&getActiveOptionData()->m_soundUi, type);
+void GfGameUtilDiff::setOptionGameDifficult(GFDIFF type) {
+    GfDataBtlDif::setOptionGameDifficult(getActiveOptionData()->m_soundUi, type);
 }
 
-bool fn_71002EE9A4() {
+bool GfGameUtilDiff::isEnableSpecialBgm() {
     return getActiveOptionData()->m_soundUi.m_flagF == 0;
 }
 
-bool fn_71002EE9EC() {
+bool GfGameUtilDiff::isEnableAutoBattle() {
     return getActiveOptionData()->m_soundUi.m_flagA != 0;
 }
 
-bool fn_71002EEA34() {
+bool GfGameUtilDiff::isEnableAutoButtonChallenge() {
     return getActiveOptionData()->m_soundUi.m_flagB != 0;
 }
 
-bool fn_71002EEA7C() {
+bool GfGameUtilDiff::isEnableEnemyAgg() {
     return getActiveOptionData()->m_soundUi.m_flagC != 0;
 }
 
-bool fn_71002EEAC4() {
+bool GfGameUtilDiff::isEnableHitonowaSkip() {
     return getActiveOptionData()->m_soundUi.m_flagE != 0;
 }
 
-void SDataOption::fn_71002EEB0C() {
-    fn_7100254DF0(&m_soundUi);
+void GfGameUtilDiff::setCustomFollow(SDataOption& option) {
+    GfDataBtlDif::setCustomFollow(option.m_soundUi);
 }
 }  // namespace gf
 
@@ -2997,7 +3002,7 @@ namespace gf {
 // reaches it through the GOT.
 int g_bootType;
 
-void fn_71002EEB14(int type, bool run) {
+void GfBootUtil::execBootScriptWithMicroThread(unsigned int type, bool run) {
     if (run) {
         g_bootType = type;
         if (mm::mtl::PtrSingleton<GfScriptManager>::sys() != nullptr) {
@@ -3020,16 +3025,16 @@ void fn_71002EEB14(int type, bool run) {
     }
 }
 
-int fn_71002EEBE4() {
+int GfBootUtil::getBootType() {
     return g_bootType;
 }
 
-float fn_71002EEBF4(unsigned int driver, unsigned short effect) {
+float GfGameUtilFieldEnhance::integrateAccessoriesEffect(unsigned int driver, unsigned short effect) {
     if (driver == 0) {
         return 0.0f;
     }
     mm::mtl::FixedVector<unsigned short, 64> enhances;
-    if (!GfDataDriver::fn_7100247580(enhances, driver)) {
+    if (!GfDataDriver::getEquipAcceEnahnce(enhances, driver)) {
         return 0.0f;
     }
     float sum = 0.0f;
@@ -3044,7 +3049,7 @@ float fn_71002EEBF4(unsigned int driver, unsigned short effect) {
     return sum * 0.01f;
 }
 
-float fn_71002EECD4(unsigned int driver, int blade, unsigned short effect) {
+float GfGameUtilFieldEnhance::integrateOrbEffect(unsigned int driver, int blade, unsigned short effect) {
     float sum = 0.0f;
     if (driver == 0) {
         return sum;

@@ -46,7 +46,7 @@ public:
     const IGmkList* getGmkList(GmkType type) const;
     IGmkList* getGmkList(GmkType type);
     // the first gimmick of a kind whose BDAT row is bdatId, none when it has none (1.0.0's name: 1.0.0's
-    // GfGameUtil::findNpcMat44 calls it in the place of 3.0.1's fn_710057393C, with the same arguments)
+    // GfGameUtil::findNpcMat44 calls it in the place of 3.0.1's findFirstGmkInstByBdatId, with the same arguments)
     AGmkBase* findFirstGmkInstByBdatId(GmkType type, int bdatId) const;
     // its steps (named by the symbols): wait for the game manager's map, create the lists, then update them
     void seqWaitToValidate_GfGameManager_m_mapID(float dt);

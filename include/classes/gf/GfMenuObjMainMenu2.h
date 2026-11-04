@@ -119,7 +119,7 @@ public:
     // (0x710049626C).
     static bool isOpenDirect();
     // 2.0.0's symbols name it. What it does: s_index while GfMenuObjUtil::isValidExpansion(3) holds, else 0; its one
-    // caller is fn_71003D4B70.
+    // caller is GfMenuObjCharSelectIra::CharListener::reciveEvent.
     static unsigned int getSubIndexTextID();
     // 2.0.0's symbols name it. What it does: on menu layer 3 (GfMenuObjUtil::isValidExpansion(3)) it sets
     // s_closeKeyLocked, disabling the close key first (setCloseKeyEnable(false), inlined) when it locks; its one caller

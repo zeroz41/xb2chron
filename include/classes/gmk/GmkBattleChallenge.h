@@ -17,14 +17,14 @@ class GmkBattleChallengeGob;
 class alignas(16) GmkBattleChallenge : public ::gmk::AGmkBase {
 public:
     // weak (tail of the unit): emitted with the table, whose key function is create
-    virtual ~GmkBattleChallenge() { dispose(); }  // slot 0 (fn_71005BC0BC, dispose inlined; D0 fn_71005BC1C0)
-    virtual gmk::GmkType getGmkType() const { return TYPE; }  // slot 2 (fn_71005BC2B4)
-    virtual bool isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }  // slot 3 (fn_71005BC2BC)
-    virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4 (fn_71005B6F44, 0x234)
-    virtual void dispose();  // slot 5 (fn_71005B726C, 0xD8)
-    virtual void update(float);  // slot 6 (fn_71005B7374, 0x70)
-    virtual void debugDraw() const;  // slot 7 (fn_71005B73E4, empty)
-    // its bdat row (0xA bytes: createGmk's stride; read by initGmkBdatInfo fn_71005D55B4, which inlines create; the
+    virtual ~GmkBattleChallenge() { dispose(); }  // slot 0 (~GmkBattleChallenge, dispose inlined; D0 ~GmkBattleChallenge)
+    virtual gmk::GmkType getGmkType() const { return TYPE; }  // slot 2 (getGmkType)
+    virtual bool isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }  // slot 3 (isValid)
+    virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4 (create, 0x234)
+    virtual void dispose();  // slot 5 (dispose, 0xD8)
+    virtual void update(float);  // slot 6 (update, 0x70)
+    virtual void debugDraw() const;  // slot 7 (debugDraw, empty)
+    // its bdat row (0xA bytes: createGmk's stride; read by initGmkBdatInfo initGmkBdatInfo, which inlines create; the
     // column names are the original's, the field names not)
     class BdatInfo {
     public:

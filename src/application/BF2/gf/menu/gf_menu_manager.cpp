@@ -113,6 +113,7 @@
 #include "classes/gf/GfMenuSoundManager.h"
 #include "classes/gf/GfMenuObjBtlchTutorial.h"
 #include "classes/gf/GfMenuObjTips.h"
+#include "gf/GfDataNpc.h"
 
 namespace gf {
 
@@ -860,7 +861,7 @@ void GfMenuManager::loadBchUI() {
 }
 
 int GfMenuManager::getGiftNumber() {
-    return GfDataAoc::fn_71002229C0(4);
+    return GfDataAoc::getContentVersion(static_cast<AOC_TYPE>(4));
 }
 
 bool GfMenuManager::canPlayerControl() {
@@ -939,7 +940,7 @@ void GfMenuManager::requestNpcEntry(unsigned int id) {
     if (mgr->m_npcMeetIds.size() == mgr->m_npcMeetIds.capacity()) {
         return;
     }
-    if (GfDataBlade::fn_710024DAB0(id) == 0 || !GfDataBlade::fn_710024DE6C(id)) {
+    if (GfDataNpc::getHitonowaMeetsFlag1Index(id) == 0 || !GfDataNpc::isHitonowaMeetsFlag(id)) {
         return;
     }
     mgr->m_npcMeetIds.push_back(id);

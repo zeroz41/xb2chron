@@ -79,6 +79,9 @@
 #include "mm/Vec3.h"
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedVector.h"
+#include "gf/GfDataNpc.h"
+#include "gf/GfDataUtil.h"
+#include "gf/GfBootUtil.h"
 
 // The plugins' return-value setters. Inferred: the names are not the original's (the original may have spelled
 // these out in every function).
@@ -536,7 +539,7 @@ void pluginEvtVolRegist() {
 
 // fld.getScenario
 static int fn_7100668C20(VMThread* pThread) {
-    vmRetIntSet(pThread, gf::GfDataBlade::fn_7100231884());
+    vmRetIntSet(pThread, gf::GfDataUtil::getScenarioFlag());
     return 1;
 }
 
@@ -734,9 +737,9 @@ static int fn_71006695B4(VMThread* pThread) {
 // fld.setNpcMeet
 static int fn_7100669718(VMThread* pThread) {
     int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
-    bool before = gf::GfDataBlade::fn_710024DE6C(id);
-    gf::GfDataBlade::fn_710024DDDC(id, true);
-    if (before != gf::GfDataBlade::fn_710024DE6C(id)) {
+    bool before = gf::GfDataNpc::isHitonowaMeetsFlag(id);
+    gf::GfDataNpc::setHitonowaMeetsFlag(id, true);
+    if (before != gf::GfDataNpc::isHitonowaMeetsFlag(id)) {
         gf::GfMenuManager::requestNpcEntry(id);
     }
     return 0;
@@ -824,7 +827,7 @@ static int fn_7100669814(VMThread* pThread) {
     unsigned int creator = gf::GfDataBlade::getCreator(blade);
     if ((gf::GfDataBlade::isRareBlade(blade) && !gf::GfDataBlade::isDummyBlade(blade) && creator != 0 &&
          gf::GfDataDriver::isActivateUnuse(creator) && !gf::GfDataBlade::isEnableEngageRex(blade) &&
-         !(blade == 1042 && creator == 8 && gf::GfDataBlade::fn_7100231884() == 1021)) ||
+         !(blade == 1042 && creator == 8 && gf::GfDataUtil::getScenarioFlag() == 1021)) ||
         (gf::GfDataHana::isValid(blade) &&
          (gf::GfDataBlade::fn_71002383C8(1005) || gf::GfDataBlade::fn_71002383C8(1006) ||
           gf::GfDataBlade::fn_71002383C8(1007)))) {
@@ -1030,7 +1033,7 @@ static int fn_710066A080(VMThread* pThread) {
 
 // sys.getBootType
 static int fn_710066A0C8(VMThread* pThread) {
-    vmRetIntSet(pThread, gf::fn_71002EEBE4());
+    vmRetIntSet(pThread, gf::GfBootUtil::getBootType());
     return 1;
 }
 

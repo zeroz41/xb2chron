@@ -5,6 +5,7 @@
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataStore.h"
 #include "classes/gf/GfSound.h"
+#include "gf/GfDataBtlDif.h"
 
 namespace gf {
 
@@ -77,7 +78,7 @@ void SSoundUiOption::initializeReserverArea() {
     m_byte3B = 0;
     memset(m_list, 0, sizeof(m_list));
     m_keyD = 6;
-    fn_7100254EF0(this, 0);
+    GfDataBtlDif::setOptionGameDifficult(*this, static_cast<GFDIFF>(0));
     m_flagA = 0;
     m_flagB = 0;
     m_flagC = 0;

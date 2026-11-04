@@ -30,6 +30,9 @@
 #include "gf/GfUtil.h"
 #include "ml/ScnObjAccResNode.h"
 #include <string.h>
+#include "gf/GfGameUtilDiff.h"
+#include "gf/GfGameUtil.h"
+#include "gf/GfKizunaringBlade.h"
 
 namespace gf {
 
@@ -282,7 +285,7 @@ void GfArenaBattle::execBattle(fw::UpdateInfo const&) {
 
 void GfArenaBattle::mapjumpForReturnFieldForObjCleanup() {
     m_owner->m_partySetup->setupLevelForBattleEnd();
-    memcpy(fn_71002EE8C4(), m_option, sizeof(m_option));
+    memcpy(GfGameUtilDiff::getUseSoundUiOption(), m_option, sizeof(m_option));
     GfEvent::callChangeGameDifficult();
 }
 
@@ -332,9 +335,9 @@ void GfArenaParty::addFieldBlade() {
     unsigned int start = bdat->getChrBlStart();
     unsigned int end = bdat->getChrBlEnd();
     for (unsigned int blade = start; blade < end; blade++) {
-        if (bdat->isChrBlFlagOnlyChBtl(blade) && fn_71002EDAD4(blade) && GfDataBlade::isActivateUnuse(blade)) {
+        if (bdat->isChrBlFlagOnlyChBtl(blade) && GfGameUtil::isEnableGameBlade(blade) && GfDataBlade::isActivateUnuse(blade)) {
             GfDataBlade::setActivateReserver(blade);
-            fn_71002FE418(blade);
+            GfKizunaringBlade::refreshAchievementCount(blade);
         }
     }
 }
@@ -344,14 +347,14 @@ void GfArenaParty::removeFieldBlade() {
     unsigned int start = bdat->getChrBlStart();
     unsigned int end = bdat->getChrBlEnd();
     for (unsigned int blade = start; blade < end; blade++) {
-        if (bdat->isChrBlFlagOnlyChBtl(blade) && fn_71002EDAD4(blade) && !GfDataBlade::isActivateUnuse(blade) &&
+        if (bdat->isChrBlFlagOnlyChBtl(blade) && GfGameUtil::isEnableGameBlade(blade) && !GfDataBlade::isActivateUnuse(blade) &&
             !((blade == 0x452 || blade == 0x453) && GfGameManager::isEnableInGameSF()) &&
             !(blade == 0x457 && GfGameManager::isEnableInGameElma())) {
             GfDataDriver::unsetBlade(blade);
             GfDataBlade::setActivateUnuse(blade);
         }
     }
-    fn_71002EC268(false, true);
+    GfGameUtil::execPartyBladeFollow(false, true);
 }
 
 void GfArenaParty::fn_710028DF1C(const GfGameManager::BattleChallengeRecord::Key& key) {

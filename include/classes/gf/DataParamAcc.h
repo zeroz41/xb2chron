@@ -6,6 +6,7 @@ namespace gf { class SDataEnemy; }
 namespace gf { class IDataObj; }
 namespace gf { struct ParamObj; }
 namespace gf { struct SDataIdea; }
+namespace gf { enum PTPOS : int; }
 
 namespace gf {
 // what kind of object a DataParamAcc reads (its constructor's third argument)
@@ -24,7 +25,7 @@ public:
     bool isValid() const;
     const char* getName() const;
     const char* getVoiceStr() const;
-    // 2.0.0's symbols name getExp, getBattleExp; the fn_ names are placeholders. What they do: fn_71002208A4 forwards
+    // 2.0.0's symbols name getExp, getBattleExp, getDriverArts; the fn_ names are placeholders. What they do: getDriverArts forwards
     // its three arguments to IDataObj slot 76 (1.0.0's two-argument getDriverArts; 3.0.1's DataObjDriver override picks
     // its arts table by the third), 0 for an invalid object; isHideInitExtraParts forwards a part to slot 42 (new in
     // 3.0.1; DataObjEnemy's override), true for an invalid object; setVirtualEquipWpnAcce forwards an item to slot 52
@@ -42,8 +43,8 @@ public:
     unsigned int getWeaponPoint(unsigned int index) const;
     void addWeaponPoint(unsigned int index, int value);
     unsigned int getSkillPoint() const;
-    unsigned int fn_71002208A4(unsigned int index, unsigned int index2, unsigned int index3) const;  // placeholder: see the comment above the block
-    bool setDriverArts(unsigned int index, int value, unsigned int index2);  // was fn_7100220918 by position; forwards IDataObj slot 77 (see NOTES)
+    unsigned int getDriverArts(unsigned int index, unsigned int index2, PTPOS index3) const;  // 2.0.0's symbols name it: see the comment above the block
+    bool setDriverArts(unsigned int index, int value, unsigned int index2);  // was setDriverArts by position; forwards IDataObj slot 77 (see NOTES)
     unsigned int getDriverArtsLevel(unsigned int index) const;
     void setDriverArtsLevel(unsigned int index, unsigned int index2);
     unsigned int getHpMax(bool flag) const;
@@ -100,8 +101,8 @@ public:
     unsigned int getBladeArtsExH(bool flag) const;
     unsigned int getBladeArtsEx2(bool flag) const;
     unsigned int getBladeArtsEx2H(bool flag) const;
-    void setVirtualEquipAcc(unsigned int index, unsigned int index2);  // was fn_7100221DFC by position; forwards IDataObj slot 48 (see NOTES)
-    void setVirtualSetBlade(unsigned int index, int value);  // was fn_7100221E64 by position; forwards IDataObj slot 49 (see NOTES)
+    void setVirtualEquipAcc(unsigned int index, unsigned int index2);  // was setVirtualEquipAcc by position; forwards IDataObj slot 48 (see NOTES)
+    void setVirtualSetBlade(unsigned int index, int value);  // was setVirtualSetBlade by position; forwards IDataObj slot 49 (see NOTES)
     void setVirtualEquipWpnChip(unsigned int index);
     void setVirtualEquipOrb(unsigned int index, unsigned int index2);
     void setVirtualEquipWpnAcce(unsigned int index);  // placeholder: see the comment above the block

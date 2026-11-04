@@ -33,7 +33,7 @@ public:
     // GfGameManager::isInstalledBattleArenaContents holds, item 25443 is in the box and local flag (1, 35337) is set;
     // its argument is unused (callers GfGameArena::RuleTable::fn_7100290598, fn_7100290BAC). createCraft: popup type 11
     // with its three arguments unless the game is starting or GfDataDriver::isActivateUnuse(first) (caller
-    // fn_71002E6DCC).
+    // GfGameUtilShop::execIraCraftPopupCheck).
     static unsigned long createChBtlNewChallenge(unsigned int);
     static unsigned long createCraft(unsigned int driver, unsigned int, unsigned int);
 

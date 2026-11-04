@@ -19,6 +19,7 @@
 #include "gf/GfMenuObjUtil.h"
 #include "gf/GfMenuTypes.h"
 #include "mm/mtl/Delegate.h"
+#include "gf/GfGameUtil.h"
 
 namespace gf {
 
@@ -122,8 +123,8 @@ void GfMenuObjPartyForm3::initialize() {
     }
     GfMenuObject::disableInput(acc.searchChild("LAY_dr_select"));
     if (GfMenuObjUtil::isValidExpansion(3)) {
-        ui::UIObjectAcc(m_handle, "LAY_guest@01").setDisp(fn_71002ED9CC());
-        ui::UIObjectAcc(m_handle, "LAY_guest@02").setDisp(fn_71002EDA2C());
+        ui::UIObjectAcc(m_handle, "LAY_guest@01").setDisp(GfGameUtil::isEnableIraSatahiko());
+        ui::UIObjectAcc(m_handle, "LAY_guest@02").setDisp(GfGameUtil::isEnableIraMilto());
         if (!GfMenuObjUtil::getMenuCondition(0x2F)) {
             m_canRemoveAdd = false;
         }

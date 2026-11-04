@@ -14,14 +14,14 @@ class GmkCampGob;
 class GmkCamp : public ::gmk::AGmkBase {
 public:
     // the overrides its table holds (slot functions still carry their placeholder symbols, given per slot)
-    virtual ~GmkCamp();  // slot 0 (fn_71005C401C)
-    virtual gmk::GmkType getGmkType() const;  // slot 2 (fn_71005C4118)
-    virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4 (fn_71005B94D8)
-    virtual void dispose();  // slot 5 (fn_71005B9564)
+    virtual ~GmkCamp();  // slot 0 (~GmkCamp)
+    virtual gmk::GmkType getGmkType() const;  // slot 2 (getGmkType)
+    virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4 (create)
+    virtual void dispose();  // slot 5 (dispose)
     virtual void update(float);  // slot 6 (update)
-    virtual void debugDraw() const;  // slot 7 (fn_71005B98F0)
+    virtual void debugDraw() const;  // slot 7 (debugDraw)
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9 (onPlayerAccessed)
-    // its bdat row (4 bytes: Vector<BdatInfo>::expand fn_710062C6F4 and initGmkBdatInfo fn_710062C5C4 match)
+    // its bdat row (4 bytes: Vector<BdatInfo>::expand expand and initGmkBdatInfo initGmkBdatInfo match)
     class BdatInfo {
     public:
         // 2.0.0's symbols name it. What it does: true when the u16 at the row's offset 0 is 0, else
@@ -44,7 +44,7 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x3e);
     gf::GF_OBJ_HANDLE* m_gob;  // 0x48: dispose destroys it unless it is -1 (the name is not the original's)
-    // fields: size from the stride 0x60: Vector<GmkCamp>::resize fn_710062C3CC
+    // fields: size from the stride 0x60: Vector<GmkCamp>::resize resize
     // 0x50: create squares the float of BDAT table 0x7B's member 0 at row 0x58; update keeps the game object only while
     // the interest point is that close (squared distance; the name is not the original's)
     float m_popDistSq;

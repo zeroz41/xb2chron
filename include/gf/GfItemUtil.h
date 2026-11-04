@@ -117,24 +117,8 @@ public:
     static bool isValidCrystal(unsigned int item);
     static void setEquipFlag(unsigned int item, GfItemHandle handle, bool equip);
     static GfItemHandle getNoEquipItemHandle(unsigned int item);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies among GfItemUtil's
-    // functions (its unit). What it does: forwards to getEquipWpnAcce, which for a DLC driver (0x11-0x19) gives the
-    // 16-bit item id at +0x5A4 of its row of GfDataManager::getDataGameIra's driver table, else 0.
-    // GfMenuItemAdapter::ReferenceDriverEquipConverter shows it as slot 0's accessory of such a driver on menu layer 3.
-    static unsigned int fn_71002FCD64(unsigned int driver);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies among GfItemUtil's
-    // functions right after fn_71002FCD64 and takes no object. What it does: puts the item on the driver's DLC
-    // accessory slot (GfDataDriver::fn_71002474F4 / setEquipWpnAcceHandle with the handle), returning the old accessory to
-    // the item box (or selling it when the box is full); returns true. GfGameUtil::execEquipIraDefaultWpnAcce and
-    // GfMenuObjDrEquip2's removeItem / ItemListListener::reciveEvent call it.
-    static bool fn_71002FCD68(unsigned int driver, unsigned int item, GfItemHandle handle);
 };
 
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
-// GfItemUtil's unit (no this). What it does: for a nonzero blade, walks its GfDataBlade::getAchievInfo entries 0..9
-// (stops at one whose first short is 0) and runs GfQuestTask::refreshTaskParam on GfDataQuest::getListNextQuestA of
-// each of the entry's five quest IDs. GfArenaParty::addFieldBlade calls it after GfDataBlade::setActivateReserver.
-void fn_71002FE418(unsigned int blade);
 
 }  // namespace gf
 

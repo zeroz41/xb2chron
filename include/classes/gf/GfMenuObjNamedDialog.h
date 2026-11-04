@@ -20,7 +20,7 @@ public:
     virtual void update();  // slot 4
     // 2.0.0's symbols name it. What it does: when GfMenuObjUtil::isValidExpansion(3) holds,
     // GfGameManager::isClearGame(), else GfGameManager::isEnableNamedRecord(); then, if object 0x8A exists and
-    // fn_71002ED4F0(row) is nonzero, GfMenuObject::sendOpenEvent(0x8A's handle, that value).
+    // GfGameUtil::getNamedListIndex(row) is nonzero, GfMenuObject::sendOpenEvent(0x8A's handle, that value).
     // GfMenuObjCommonText::openWithNamed passes its third argument (gf::GfFieldGrave::create's grave row)
     static void open(unsigned int row);
     // 2.0.0's symbols name it. What it does: the same game test, then GfMenuObject::sendCloseEvent(0x8A's handle, 0)

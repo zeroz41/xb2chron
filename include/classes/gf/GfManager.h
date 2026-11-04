@@ -30,7 +30,7 @@ public:
     void initialize();
     static void postUpdate(const fw::UpdateInfo& info);
     // 2.0.0's symbols name it. What it does: passes the update info to GfGameManager's updateAfterLayer when there is a
-    // game manager. Its one caller is TitleApp's table slot 17 (fn_710014E6CC), between TitleApplet::update (slot 16,
+    // game manager. Its one caller is TitleApp's table slot 17 (TitleApplet::updateAfterLayer), between TitleApplet::update (slot 16,
     // which calls GfManager::update) and postUpdate
     static void updateAfterLayer(const fw::UpdateInfo& info);
     static void update(const fw::UpdateInfo& info);

@@ -51,7 +51,7 @@ public:
 // A free function next to GfAssetSetupEnemy because its only callers are GfAssetSetupEnemy::getMdlFile and
 // GfAssetSetupEnemyBlade::getMdlFile and it takes no this. What it does: when the model name is a party driver's
 // (drivers 1..6 for which GfDataDriver::isAttachedParty holds, CHR_Dr model compared with strcmp) it returns
-// fn_71002DF39C(driver, false, createType3); else when it is an attached party blade's CHR_Bl model it returns
+// GfGameUtil::getDriverModel(driver, false, createType3); else when it is an attached party blade's CHR_Bl model it returns
 // GfGameUtil::getBladeModel(blade, false); else the name itself. Callers pass m_enemyParam->m_createType == 3.
 const char* fn_71001BD044(const char* name, bool createType3);
 }  // namespace gf

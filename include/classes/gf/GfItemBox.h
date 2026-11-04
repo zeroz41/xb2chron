@@ -6,6 +6,7 @@
 #include "gf/GfItemInfo.h"
 #include "gf/SDataGame.h"
 #include "mm/mtl/Array.h"
+#include "mm/mtl/FixedArray.h"
 
 namespace gf { class GfItemBox; }
 
@@ -101,25 +102,25 @@ public:
     // 2.0.0's symbols name it. What it does: the number of a type's entries (from begin(type) to that type's list end);
     // GfMenuObjShop's StoreListListener and GfMenuGameAdapter's type 20 call it.
     int maxItemCategory(ItemType::Type type);
-    // Placeholder name: new in 3.0.1 (1.0.0 had setItemBox(ItemBox*, bool) instead). GfItemBox::initialize calls it
-    // with SDataGame's item box (ItemBox) and its second entry area (SDataGame::ItemBoxEx); it sets up the 19 type
-    // lists from them.
-    void fn_71002F3F98(ItemBox* favoriteItemType, SDataGame::ItemBoxEx* itemBox);
-    // Placeholder name (one template, 18 instances: fn_71002F42F4..fn_71002F7DF4, all without symbols): new in 3.0.1,
-    // fn_71002F3F98 calls one instance per item type. It points list `index` at the type's N ItemBox entries (and,
-    // when multi, its M entries of the second area) and fills ItemTypeInfo `index` (1.0.0's
-    // GfItemBoxBase::setItemTypeInfo set the same fields). Nine instances share N=200, M=8 yet are separate
-    // functions, so the template takes one more argument; the item type is inferred, not the original's.
-    template <ItemType::Type Type, size_t N, size_t M>
-    static void fn_71002F42F4(ItemBox* box, unsigned int index, ItemTypeInfo* infos,
-                              ::mm::mtl::Array<GfItemInfo*>* lists, GfItemInfo (&items)[N], GfItemInfo (&extra)[M],
-                              unsigned short maxStack, bool multi);
+    // 2.0.0's symbols name it (1.0.0 had setItemBox(ItemBox*, bool) instead). GfItemBox::initialize calls it with
+    // SDataGame's item box (ItemBox) and its second entry area (ItemBoxEx); it sets up the 19 type lists from them
+    // (setupItemLists, one instance per item type).
+    void setItemBox(ItemBox& favoriteItemType, ItemBoxEx& itemBox);
 
-    ItemTypeInfo m_info[19];
+    ::mm::mtl::FixedArray<ItemTypeInfo, 19> m_info;
     ItemBox* m_favoriteItemType;  // GfDataItem::getFavoriteItemType
-    SDataGame::ItemBoxEx* m_itemBox;  // GfDataItem::getItemBox
-    ::mm::mtl::Array<GfItemInfo*> m_lists[19];
+    ItemBoxEx* m_itemBox;  // GfDataItem::getItemBox
+    ::mm::mtl::FixedArray< ::mm::mtl::Array<GfItemInfo*>, 19> m_lists;
 };
+
+// 2.0.0's symbols name it (one instance per item type, items and extra the type's FixedArrays of ItemBox and
+// ItemBoxEx): GfItemBoxBase::setItemBox calls one instance per item type. It points list `index` at the type's
+// ItemBox entries (and, when multi, its entries of the second area) and fills ItemTypeInfo `index` (1.0.0's
+// GfItemBoxBase::setItemTypeInfo set the same fields).
+template <typename Items, typename Extra>
+void setupItemLists(ItemBox& box, unsigned int index, ::mm::mtl::FixedArray<ItemTypeInfo, 19>& infos,
+                    ::mm::mtl::FixedArray< ::mm::mtl::Array<GfItemInfo*>, 19>& lists, Items& items, Extra& extra,
+                    unsigned short maxStack, bool multi);
 
 // the item box singleton (1.0.0's symbols: GfItemBoxBase is its second base, at 8, by the _ZThn8_ thunks of its
 // destructors)
@@ -137,7 +138,7 @@ public:
     void finalize();
     // 2.0.0's symbols name it. GfItemManager's initialize (inlined in its constructor) calls it on GfItemBox::get() and
     // passes nothing else. It hands GfDataItem::getFavoriteItemType() and getItemBox() (the two SDataGame pointers) to
-    // the singleton's fn_71002F3F98.
+    // the singleton's setItemBox.
     void initialize();
 };
 }  // namespace gf

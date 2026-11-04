@@ -21,7 +21,7 @@ public:
     static unsigned int getLevelCap(unsigned int arts, unsigned int index);
     static unsigned int getNeedLevelupWp(unsigned int driver, unsigned int arts);
     // 1.0.0's names: 1.0.0's GfMenuArtsAdapter::update_ArtsNumDamage and update_ArtsNumRecast call
-    // getDamageMul(arts, level) and getRecast(arts, level) where 3.0.1's call fn_7100249CD4 and fn_7100249D00 (the
+    // getDamageMul(arts, level) and getRecast(arts, level) where 3.0.1's call getDamageMul and getRecast (the
     // symbols' names)
     static unsigned int getDamageMul(unsigned int arts, unsigned int level);
     static unsigned int getRecast(unsigned int arts, unsigned int level);

@@ -57,7 +57,7 @@ bool GfMenuObjGiftBox::canGetItem(unsigned int row, unsigned int arg) {
 
 bool GfMenuObjGiftBox::hasFreeGift() {
     unsigned char* fp = GfDataBdat::getFP(0x10A);
-    if (GfDataAoc::fn_71002229C0(5) >= 0) {
+    if (GfDataAoc::getContentVersion(static_cast<AOC_TYPE>(5)) >= 0) {
         for (int i = 0; i < Bdat::getIdCount(fp); i++) {
             if (Bdat::getVal(fp, "releasecount", Bdat::getIdTop(fp) + i) & 0x80) {
                 return true;

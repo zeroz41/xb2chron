@@ -56,6 +56,8 @@
 #include "ml/ScnRenderDrSysParmAcc.h"
 #include "mm/Col4.h"
 #include "gf/GfGameUtilSaveData.h"
+#include "gf/GfDataUtil.h"
+#include "gf/GfGameUtil.h"
 
 // the title states with their own tables (MainScreen, PlayGame, PlayEvent) and the other states' updates
 namespace tl {
@@ -81,11 +83,11 @@ void TitleStateMainScreen::playTitleEvent(TitleMain* title) {
     gf::SCOM_FADE::create(2, 0, mm::Col4::black);
     unsigned short event;
     if (gf::GfManager::isGameTypeIra()) {
-        event = title->fn_710014FC5C() ? 0x29D6 : 0x29D5;
-    } else if (gf::GfDataBlade::fn_71002320C8(title->fn_710014FB00()->m_game)) {
+        event = title->TitleMain::isTitleEventClearGame() ? 0x29D6 : 0x29D5;
+    } else if (gf::GfDataUtil::isClearTwiceGame(title->fn_710014FB00()->m_game)) {
         unsigned int index = ml::mtRand(3);
         event = s_randomTitleEvents[index > 2 ? 2 : index];
-    } else if (title->fn_710014FC5C()) {
+    } else if (title->TitleMain::isTitleEventClearGame()) {
         event = gf::GfDataBlade::isHomuriNameHikari(title->fn_710014FB00()->m_game) ? 0x296E : 0x296D;
     } else {
         unsigned int chapter = title->getChapterIdFromSaveData();
@@ -199,7 +201,7 @@ void TitleStateToTitle::update(TitleMain* title, const fw::UpdateInfo& info) {
 void fn_7100154638() {
     gf::SDataOption* option = gf::GfDataManager::getDataOption();
     gf::SDataOption* titleOption = &TitleMain::sys()->getOptionBuffer();
-    if (!gf::GfGameManager::isGameTypeIra() && !gf::GfGameUtilSaveData::fn_71002EDC78()) {
+    if (!gf::GfGameManager::isGameTypeIra() && !gf::GfGameUtil::isAdvancedGameOption()) {
         option->m_soundUi.m_flagA = 0;
         option->m_soundUi.m_flagB = 0;
         option->m_soundUi.m_flagC = 0;
@@ -208,7 +210,7 @@ void fn_7100154638() {
         titleOption->m_soundUi.m_flagC = 0;
     }
     bool clear = gf::GfGameManager::isGameTypeIra() ? gf::GfGameManager::isClearGame()
-                                                     : gf::GfGameUtilSaveData::fn_71002EDCEC();
+                                                     : gf::GfGameUtil::isAdvancedDifficulity();
     if (!clear) {
         if (option->m_soundUi.m_keyD > 1) {
             option->m_soundUi.m_keyD = 0;

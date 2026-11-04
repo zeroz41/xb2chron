@@ -96,7 +96,7 @@ void GfMenuObjExpGet::update() {
     GfMenuObject::update();
 }
 
-// open (fn_7100405998) is in wip/ (not identical yet): see NOTES.md
+// open (GfMenuObjExpGet::open) is in wip/ (not identical yet): see NOTES.md
 
 
 inline void GfMenuObjExpGet::removeObject2(ui::UIObjectAcc screen) {

@@ -105,7 +105,7 @@ void GfFieldWeather::updateCloudSea(const fw::UpdateInfo& info) {
 
 CLOUD_SEA GfFieldWeather::getCloudSea(unsigned int map) {
     if (map != 0) {
-        return CLOUD_SEA(GfDataBlade::fn_710024E1C8(map)->m_cloudSea != 0);
+        return CLOUD_SEA(GfDataMap::getWeatherParam(map)->m_cloudSea != 0);
     }
     return GfGameEnv::getCurrentCloudSea();
 }
@@ -115,8 +115,8 @@ void GfFieldWeather::applyNowMapWeather(unsigned int prevMap, unsigned int map) 
         return;
     }
     setupGame();
-    fn_710027F598(GfDataBlade::fn_710024E1C8(map));
-    _gffwt::requestCloudSea(GfDataBlade::fn_710024E8D4(map));
+    fn_710027F598(GfDataMap::getWeatherParam(map));
+    _gffwt::requestCloudSea(GfDataMap::getCloudType(map));
     if (map != prevMap) {
         unsigned char play = !GfManager::isExecModeThater();
         if (_gffwt::s_list.size() == 1 && play) {
@@ -130,14 +130,14 @@ void GfFieldWeather::setupGame() {
     GfDataManager::getDataGame();
     GfBdatMaplist* maplist = GfBdatMaplist::get();
     for (unsigned int map = maplist->getMaplistStart(); map < maplist->getMaplistEnd(); map++) {
-        WeatherParam* data = GfDataBlade::fn_710024E1C8(map);
+        WeatherParam* data = GfDataMap::getWeatherParam(map);
         if (data->m_mapId == 0) {
-            data = GfDataBlade::fn_710024E0D0();
+            data = GfDataMap::getEmptyWeatherParam();
             strcpy(data->m_resource, maplist->getMaplistresource(map));
             data->m_mapId = map;
         }
     }
-    WeatherParam* data = GfDataBlade::fn_710024E1C8(GfDataMap::getMapID(GfDataManager::getDataGame()->m_skipTravelID));
+    WeatherParam* data = GfDataMap::getWeatherParam(GfDataMap::getMapID(GfDataManager::getDataGame()->m_skipTravelID));
     _gffwt::requestCloudSea(CLOUD_SEA(data->m_cloudSea));
 }
 

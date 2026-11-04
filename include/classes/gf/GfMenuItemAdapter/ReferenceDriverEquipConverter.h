@@ -8,7 +8,7 @@ namespace gf { class MenuItemInfo; }
 
 namespace gf {
 // table 0x7100B5CE48 (the symbols leave it unnamed: 1.0.0's createFromReferenceDriverEquip builds this class, and
-// 3.0.1's only builder fn_71003432DC is that function, same code; its getItemInfo still reads the reference's driver)
+// 3.0.1's only builder GfMenuItemAdapter::createFromReferenceDriverEquip is that function, same code; its getItemInfo still reads the reference's driver)
 class GfMenuItemAdapter::ReferenceDriverEquipConverter : public ::gf::GfMenuItemAdapter::IConverter {
 public:
     ReferenceDriverEquipConverter(unsigned int reference, unsigned int slot) {

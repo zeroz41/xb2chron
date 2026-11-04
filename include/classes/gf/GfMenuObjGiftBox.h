@@ -45,7 +45,7 @@ public:
     bool seqGetItem();
     bool seqReturnSub();
     // 2.0.0's symbols name them. canGetItem: the row's local flag (type 1) is clear, its game condition holds and
-    // isGetItemFull(row, arg) is false. hasFreeGift: add-on 5 is present (gf::fn_71002229C0(5) >= 0) and some row's
+    // isGetItemFull(row, arg) is false. hasFreeGift: add-on 5 is present (gf::GfDataAoc::getContentVersion(5) >= 0) and some row's
     // "releasecount" has bit 7 set. isGetItemFull (not written yet) is called with the row and the caller's second
     // argument.
     static bool canGetItem(unsigned int row, unsigned int arg);

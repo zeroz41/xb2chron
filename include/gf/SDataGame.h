@@ -15,7 +15,7 @@
 #include "gf/SDataWeather.h"
 
 namespace gf {
-// one of the game data's task achievements: 12 bytes (fn_71002E9D10 steps them by 12; the type name is not the
+// one of the game data's task achievements: 12 bytes (GfGameUtilSaveData::setupGameSaveDataForIra steps them by 12; the type name is not the
 // original's). GfAchievManager::incAchiev reads the fields (the field names are not the original's).
 struct TaskAchieve {
     unsigned short m_questId;    // the quest (QuestTaskParam's)
@@ -38,13 +38,13 @@ struct SDataGameSavedEvent {
     unsigned short m_blades[9];
     unsigned char pad_40[0xC];
     // 0x4C: the time of day (GfFieldTime::getGameTime, fn_71002EEDC0); its hour is the one the event plays at
-    // (title_main's fn_710014FD10 returns it, 12 for an event not saved; fn_7100400410 uses it when the event's bdat
+    // (title_main's TitleMain::getEventTheaterTime returns it, 12 for an event not saved; GfMenuObjEvTheater::getEvthSettingParam uses it when the event's bdat
     // row has no fixed_time; the name is not the original's)
     GameTime m_time;
     // 0x50: the map's weather id (GfFieldWeather::getCurrentMapWeatherID, fn_71002EEDC0; the name is not the
     // original's)
     unsigned short m_mapWeather;
-    // 0x52: the weather (title_main's fn_710014FCB0 returns it, 0 for an event not saved; fn_7100400410 uses it unless
+    // 0x52: the weather (title_main's TitleMain::getEventTheaterWeather returns it, 0 for an event not saved; GfMenuObjEvTheater::getEvthSettingParam uses it unless
     // the row has a fixed_weather; the name is not the original's)
     unsigned short m_weather;
     unsigned char pad_54[0x10];
@@ -54,31 +54,6 @@ class SDataGame {
 public:
     // out of line in title_main's unit (0x710014FDE0); SDataSave() and TitleMain::createSaveBuffer call it
     SDataGame();
-    // Proposed name, not the original's: the second entry area of each item type (0x11D27C, 0x1B04 bytes;
-    // GfDataManager::fn_7100223650 sums a type's counts over ItemBox's list and this one; places and sizes from its
-    // offsets and the counts' bounds). The member names are not the original's (by item type).
-    struct ItemBoxEx {
-        GfItemInfo m_type1[8];
-        GfItemInfo m_type2[8];
-        GfItemInfo m_type3[8];
-        GfItemInfo m_type5[8];
-        GfItemInfo m_type6[200];
-        GfItemInfo m_type14[50];
-        GfItemInfo m_type15[8];
-        GfItemInfo m_type7[200];
-        GfItemInfo m_type8[8];
-        GfItemInfo m_type9[8];
-        GfItemInfo m_type10[8];
-        GfItemInfo m_type11[8];
-        GfItemInfo m_type12[8];
-        GfItemInfo m_type16[8];
-        GfItemInfo m_type17[8];
-        GfItemInfo m_type18[8];
-        GfItemInfo m_type19[8];
-        GfItemInfo m_type20[8];
-        unsigned char pad_1AB8[0x4C];
-    };
-
     unsigned int m_money;  // 0x0 (named after its accessors; the name is not the original's)
     // 0x4-0x24: the landmark point, its position and Y rotation (1.0.0's GfFieldManager::setLandmarkPoint stores them,
     // getLandmarkPoint/Pos/RotY read them; the names are not the original's)
@@ -128,7 +103,7 @@ public:
     // 0x109B2C: how many times the game was cleared (GfGameUtil::incGameClearCount counts it up to 9999; the name is
     // not the original's)
     unsigned int m_gameClearCount;
-    // 0x109B30: the task achievements (GfDataQuest::getTaskAchieve returns them; fn_71002E9D10 copies them, its end
+    // 0x109B30: the task achievements (GfDataQuest::getTaskAchieve returns them; GfGameUtilSaveData::setupGameSaveDataForIra copies them, its end
     // is begin + count * 12; the count sits at 0x10A130, room for 128; ~SDataSave clears it after none other than
     // m_teams; the name is not the original's)
     mm::mtl::FixedVector<TaskAchieve, 128> m_taskAchieve;
@@ -167,8 +142,8 @@ public:
     SDataGameSavedEvent m_savedEvents[500];
     unsigned int m_savedEventCount;
     unsigned char pad_1171D8[0x194];
-    // 0x11736C: the add-on ids + 1 the game was saved with (GfDataBlade::fn_7100232518 stores
-    // GfDataAoc::fn_71002229C0(n) + 1, fn_71002325AC compares; the name is not the original's)
+    // 0x11736C: the add-on ids + 1 the game was saved with (GfDataUtil::saveAocVersion stores
+    // GfDataAoc::getContentVersion(n) + 1, GfDataUtil::isInvalidVersionAoc compares; the name is not the original's)
     int m_aocIds[5];
     unsigned char pad_117380[0x30C];
     // 0x11768C: the 16 drivers' arts records past the ones their data keeps (GfDataDriver::getDriverWeaponType and
@@ -178,17 +153,17 @@ public:
     // it, setupGame / fn_7100291E40 read and mark its rows; the constructor runs its fn_71001528A0; the name is
     // not the original's)
     GfGameArena::RuleTable m_ruleTable;
-    // 0x11B4CC: one record per row of GfBdatChrEnArrange's named-enemy range (gf::fn_71002ED4F0 gives the row, 0 for
-    // none): four times (the columns of modes 0, 1, 2 and 4: gf::fn_71002ED608 / fn_71002ED6B8) and a flag byte with
-    // one bit per mode (gf::fn_71002ED5B0). The type and names are not the original's.
+    // 0x11B4CC: one record per row of GfBdatChrEnArrange's named-enemy range (gf::GfGameUtil::getNamedListIndex gives the row, 0 for
+    // none): four times (the columns of modes 0, 1, 2 and 4: gf::GfGameUtil::getClearNamedTime / GfGameUtil::getClearNamedTime) and a flag byte with
+    // one bit per mode (gf::GfGameUtil::isDefeatNamed). The type and names are not the original's.
     struct NamedRecord {
         unsigned int m_time[4];
         unsigned char m_flags;
         unsigned char pad_11[0x3];
     };
     NamedRecord m_namedRecords[300];
-    // 0x11CC3C: the count GfDataBlade::fn_7100234998 raises for enemies (arrange ids) 1500 and up, at [enemy - 1500]
-    // (below 1500 the count is a 16-bit local flag; GfGameUtil::incEnemySuppress reads it through fn_7100234940). The
+    // 0x11CC3C: the count GfDataEnemy::incEnemySuppress raises for enemies (arrange ids) 1500 and up, at [enemy - 1500]
+    // (below 1500 the count is a 16-bit local flag; GfGameUtil::incEnemySuppress reads it through GfDataEnemy::getEnemySuppress). The
     // name is not the original's.
     unsigned short m_enemySuppressCount[800];
     // 0x11D27C: GfDataItem::getItemBox returns it; GfItemBox::initialize keeps it at +0x310 and clears its 0x1B04

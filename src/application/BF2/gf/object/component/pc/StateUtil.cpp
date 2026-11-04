@@ -43,6 +43,7 @@
 #include "mm/Math.h"
 #include <string.h>
 #include <math.h>
+#include "gf/GfGameUtilFieldEnhance.h"
 
 namespace gf { namespace pc {
 
@@ -371,8 +372,8 @@ void StateUtil::applyDamage(GfComBehaviorPc& behavior, unsigned int percent, boo
             }
         }
         if (driver != 0) {
-            cut += fn_71002EEBF4(driver, 0x108);
-            cut += fn_71002EECD4(driver, -1, 0x108);
+            cut += GfGameUtilFieldEnhance::integrateAccessoriesEffect(driver, 0x108);
+            cut += GfGameUtilFieldEnhance::integrateOrbEffect(driver, -1, 0x108);
         }
     }
     if (cut < 0.0f) {

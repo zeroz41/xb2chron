@@ -16,6 +16,7 @@
 #include "ui/EventData.h"
 #include "mm/mtl/Vector.h"
 #include "classes/gf/GfMenuBladeList.h"
+#include "gf/GfGameUtilDiff.h"
 
 // instantiated for gf::GfMenuObjBladeRelease::seqExecRelease, gf::GfMenuObjMercenaryForm::ListListener::reciveEvent, gf::GfMenuObjMercenaryForm::StartListener::reciveEvent, gf::GfMenuObjMercenaryForm::UnitListener::reciveEvent, gf::GfMenuObjMercenaryForm::updateBladeCount, gf::GfMenuObjMercenaryReport::seqCheckAchive (not written yet)
 template mm::mtl::Vector<gf::MenuBladeInfo>::iterator mm::mtl::Vector<gf::MenuBladeInfo>::erase(gf::MenuBladeInfo*);
@@ -158,7 +159,7 @@ void TUnk_B5FEE8::reciveEvent(const ui::EventData& event, unsigned int handle) {
         break;
     case 0x21: {
         ui::UIObjectAcc solo(acc.m_handle, "LAY_btl_mode_solo");
-        acc.setDisp(m_owner->m_seqActive ? fn_71002EE9EC() : false);
+        acc.setDisp(m_owner->m_seqActive ? GfGameUtilDiff::isEnableAutoBattle() : false);
         if (m_owner->m_seqActive) {
             acc.setDispChild(false, "TXT_btl_mode@01");
             acc.setDispChild(false, "TXT_btl_mode@02");

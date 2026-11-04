@@ -64,28 +64,28 @@ public:
     // time) for the categories 1, 0xD, 0xE, 5, 7, 6 and 8. gevPlayEvent passes (1.0, 0.0).
     void setMaskVolumeFade(float volume, float time);
     // 2.0.0's symbols name it. What it does: clears m_newGameAdv; when the save buffer's version is 0x3A15B and
-    // GfDataBlade::fn_710023217C holds for its game, makes the game's clear count at least 1 and sets m_newGameAdv when
-    // GfDataBlade::fn_7100231EB8 (local flag 1, type 16) is 10032 or more; then sets m_isClear when the clear count is
-    // not 0 and clears m_newGameAdv again when GfDataBlade::fn_7100232244 holds.
+    // GfDataUtil::isClearGameCheck holds for its game, makes the game's clear count at least 1 and sets m_newGameAdv when
+    // GfDataUtil::getScenarioFlag (local flag 1, type 16) is 10032 or more; then sets m_isClear when the clear count is
+    // not 0 and clears m_newGameAdv again when GfDataUtil::isAdvanceSaved holds.
     void getGameClearFlagFromSaveData();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because
     // TitleStateMainScreen::playTitleEvent calls it with the title and it reads the title's save buffer and
-    // m_newGameAdv. What it does: true when the save buffer's version is 0x3A15B, GfDataBlade::fn_710023217C holds
+    // m_newGameAdv. What it does: true when the save buffer's version is 0x3A15B, GfDataUtil::isClearGameCheck holds
     // for its game and m_newGameAdv is set.
-    bool fn_710014FC5C();
+    bool isTitleEventClearGame() const;
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because fn_7100400410 calls it
     // on TitleMain's instance and it reads the title's save buffer. What it does: the weather of the save buffer's
     // saved event row whose event is the given one (0 without a save buffer or such a row).
-    unsigned short fn_710014FCB0(unsigned int event);
+    unsigned short getEventTheaterWeather(unsigned int event) const;
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason as
-    // fn_710014FCB0. What it does: the hour of the save buffer's saved event row whose event is the given one (12
+    // TitleMain::getEventTheaterWeather. What it does: the hour of the save buffer's saved event row whose event is the given one (12
     // without a save buffer or such a row).
-    unsigned int fn_710014FD10(unsigned int event);
+    unsigned int getEventTheaterTime(unsigned int event) const;
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because
     // GfMenuObjTitle::ListListener::reciveEvent calls it with TitleMain's instance and it reads the title's save
     // buffer. What it does: true when the save buffer's version is not 0x3A15B, else whether
-    // GfDataBlade::fn_71002325AC does not hold for its game.
-    bool fn_710014FD74();
+    // GfDataUtil::isInvalidVersionAoc does not hold for its game.
+    bool isValidAocVersion() const;
     // 2.0.0's symbols name it. What it does: passes the bool to GfManager::resetGameType, then clears m_isClear and
     // m_newGameAdv.
     void resetGameType(bool flag);

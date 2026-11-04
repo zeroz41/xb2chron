@@ -1,9 +1,9 @@
 #ifndef GF_GFDATADRIVER_H
 #define GF_GFDATADRIVER_H
 
-namespace gf { class SDataDriver; enum DBSLOT : int; struct GfItemHandle; }
+namespace gf { class SDataDriver; enum DBSLOT : int; struct GfItemHandle; enum PTPOS : int; }
 namespace gf { struct SDataPouch; }
-namespace gf { struct SDataDriverDlc; struct SDataDriverArtsEx; }
+namespace gf { struct SDataIra; struct SDataDriverArtsEx; }
 namespace gf { enum FAVORITE : int; }
 namespace gf { struct SDataIdea; class GfInitParamDriver; }
 
@@ -29,12 +29,12 @@ public:
     static void getEquipWpnType(mm::mtl::FixedVector<unsigned int, 50>& types, const SDataDriver& data);
     // 1.0.0's names (the symbols still spell 3.0.1's copies fn_<address>: same call sites, same arguments; 3.0.1's
     // also cover the DLC drivers)
-    static SDataDriver* getSDataDriver(unsigned int driver);  // fn_7100231C64
+    static SDataDriver* getSDataDriver(unsigned int driver);  // getSDataDriver
     // the driver's arts records past the ones its data keeps, found the getSDataDriver way (DLC rows 0x11-0x19 in
     // GfDataManager::getDataGameIra's, others in getDataGame's 16, clamped as getSDataDriver clamps); inline in
     // getDriverWeaponType, getDriverArtsLevel, setDriverArtsLevel and GfDataDriverArts::getArtsLevel. The name is not the original's.
     static SDataDriverArtsEx* getSDataDriverArtsEx(unsigned int driver);
-    static unsigned int getLevel(const SDataDriver& data);  // fn_710024572C
+    static unsigned int getLevel(const SDataDriver& data);  // getLevel
     // 1.0.0's name: its getLevel(unsigned int) has the same callers (GfMenuObjDrArtsSet2::ArtsListListener,
     // GfMenuObjLvupSelect's listeners) and reads getLevel(*getSDataDriver(driver)); the symbols spell fn_7100234674
     static unsigned int getLevel(unsigned int driver);
@@ -56,26 +56,20 @@ public:
     // room). What it does: fills the list with GfDataBlade::getListReserver's blades, drops those already listed and
     // the ones GameFlag / GfDataDriver::isEnableEquipBlade reject, and answers whether one is left (0x440 bytes).
     static bool fn_7100241E10(unsigned int driver, mm::mtl::FixedVector<unsigned short, 424>& list);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies in GfDataBlade's
-    // unit among GfDataDriver's functions (after fn_7100241E10) and takes a driver id. What it does: the index
-    // getSDataDriver uses: driver - 0x11 for a DLC row (0x11-0x19), else driver - 1 clamped to 1 past 0x10
-    // (caller fn_71002EAF78).
-    static unsigned int fn_710024229C(unsigned int driver);
     // 2.0.0's symbols name it. What it does: the first of the driver's three blade slots (SDataDriver::m_blades)
-    // holding a GfDataBlade::isDummyBlade blade, -1 for none. Caller: gf::fn_71002EC268.
+    // holding a GfDataBlade::isDummyBlade blade, -1 for none. Caller: gf::GfGameUtil::execPartyBladeFollow.
     static int getSetIdByDummyBlade(unsigned int driver);
     // 2.0.0's symbols name it. What it does: for a DLC driver row (0x11-0x19) collects every GfBdatChrDr row of type 1
     // whose group (getChrIrGroupID) equals the driver's into the list (getChrIrdriverID's 16-bit ids) and answers
-    // whether the list is non-empty; any other row: false. Callers include GfDataBlade::fn_7100237B70, getListPartyAll
+    // whether the list is non-empty; any other row: false. Callers include GfDataDriver::getIraBlade, getListPartyAll
     // and GfMenuCharDataAdapter's ReferenceBladeSetConverter::getCharData.
     static bool getIraBack(mm::mtl::FixedVector<unsigned short, 32>& list, unsigned int driver);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies in GfDataBlade's
-    // unit among GfDataDriver's functions and takes a driver id. What it does: finds the driver's row (DLC rows
-    // 0x11-0x19 through GfDataManager::getDataGameIra, others in getDataGame) and tail-calls fn_7100245800 with the
-    // two outputs and the row, which stores the reachable level (from the row's level at 0x94 and GfBdatBtl's growth
-    // table) and a second value and returns true when it found one. GfMenuObjLvupSelect::SelectListener takes the
-    // first output as the level select's maximum.
-    static bool fn_7100245794(unsigned int* level, unsigned int* value, unsigned int driver);
+    // 2.0.0's symbols name it. What it does: finds the driver's row (DLC rows 0x11-0x19 through
+    // GfDataManager::getDataGameIra, others in getDataGame) and tail-calls GfDataDriver::getEnableLevel with the two
+    // outputs and the row, which stores the reachable level (from the row's level at 0x94 and GfBdatBtl's growth table)
+    // and a second value and returns true when it found one. GfMenuObjLvupSelect::SelectListener takes the first output
+    // as the level select's maximum.
+    static bool getEnableLevel(unsigned int& level, unsigned int& value, unsigned int driver);
     // 2.0.0's symbols name it. What it does: true for a driver outside the DLC rows 0x11-0x19; for those, whether
     // GfBdatChrDr::getChrIrType of the row GfBdatChrDr::getChrDrIraParam gives is 0. Caller here:
     // gf_menu_obj_char_select_ira's mnu_chr_sel_ira::setReferenceChar (driver 0 and 1 references both set to it when true).
@@ -85,14 +79,14 @@ public:
     static bool getListIra(mm::mtl::FixedVector<unsigned short, 32>& drivers);
     // whether the driver (data type 1) is in a party slot below 3 (GfDataParty::getDriverPartyID)
     static bool isActivateParty(unsigned int driver);
-    static unsigned int getExp(const SDataDriver& data);  // fn_7100245AB4
-    static unsigned int getBattleExp(const SDataDriver& data);  // fn_7100245B7C
-    static unsigned int getExpNextLevel(const SDataDriver& data);  // fn_710024618C
-    static unsigned int getBattleExpNextLevel(const SDataDriver& data);  // fn_7100245FA4
-    static void addSkillPoint(SDataDriver& data, int point);  // fn_7100247F2C
-    static bool isScenarioMask(unsigned int driver);  // fn_71002465D0
-    static unsigned int getEquipAcce(const SDataDriver& data, unsigned int slot);  // fn_7100247778
-    static void setEquipAcce(SDataDriver& data, unsigned int slot, unsigned int accessory);  // fn_7100247A94
+    static unsigned int getExp(const SDataDriver& data);  // getExp
+    static unsigned int getBattleExp(const SDataDriver& data);  // getBattleExp
+    static unsigned int getExpNextLevel(const SDataDriver& data);  // getExpNextLevel
+    static unsigned int getBattleExpNextLevel(const SDataDriver& data);  // getBattleExpNextLevel
+    static void addSkillPoint(SDataDriver& data, int point);  // addSkillPoint
+    static bool isScenarioMask(unsigned int driver);  // isScenarioMask
+    static unsigned int getEquipAcce(const SDataDriver& data, unsigned int slot);  // getEquipAcce
+    static void setEquipAcce(SDataDriver& data, unsigned int slot, unsigned int accessory);  // setEquipAcce
     // 1.0.0's name: GfEquipUtil::getEquipDriverAcce(driver, slot) tail-calls it in both builds (1.0.0:
     // GfDataDriver::getEquipAcce(unsigned int, unsigned int)); the symbols spell 3.0.1's copy fn_7100247794
     static unsigned int getEquipAcce(unsigned int driver, unsigned int slot);
@@ -130,7 +124,7 @@ public:
     static bool isIra(unsigned int driver);
     // 2.0.0's symbols name it. What it does: the DLC driver's record in that table (rows 0x11 to 0x19, others clamped);
     // DataObjDriver keeps it when isIra accepts the row.
-    static SDataDriverDlc* getSDataIra(unsigned int driver);
+    static SDataIra* getSDataIra(unsigned int driver);
 
     static const char* getName(unsigned int driver);
     // the message table and row of the driver's name
@@ -150,7 +144,7 @@ public:
     static unsigned int getFavorite(unsigned int driver, FAVORITE favorite);
     // whether the favorite has been used (seen). The symbols spell it fn_7100248A84: 1.0.0's
     // GfMenuObjUtil::getFavoriteStat calls GfDataDriver::isUsedFavorite(driver, favorite) where 3.0.1's calls
-    // fn_7100248A84 with the same arguments (3.0.1's body also handles drivers 17-25)
+    // isUsedFavorite with the same arguments (3.0.1's body also handles drivers 17-25)
     static bool isUsedFavorite(unsigned int driver, FAVORITE favorite);
 
     // 2.0.0's symbols name it. What it does: GfBdatChrDr::getChrDrOffsetID for the row (DataObjDriver::getMenuOffset
@@ -174,21 +168,19 @@ public:
     // 2.0.0's symbols name it. What it does: GfBdatChrDr::getChrDrGender for the row (DataObjDriver::getGender returns
     // it).
     static unsigned int getGender(unsigned int driver);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member because its address follows
-    // GfDataDriver::getWeaponEfbFileIdx in the GfDataBlade unit and it takes a driver id, no object. What it does:
-    // pushes onto enhances the equipment enhance ids (GfBdatItem::getPcEquipEnhance1) of the driver's equipped
-    // items (the game data's driver rows, 0x5A0 apart; drivers 0x11-0x19 from another table, 0xDAC apart);
-    // GfFobjManager::updateEnhanceEffect passes its party leader's driver id and sums the "EnhanceEffect" 0xFB rows.
-    static bool fn_7100247580(mm::mtl::FixedVector<unsigned short, 64>& enhances, int driver);
+    // 2.0.0's symbols name it. What it does: pushes onto enhances the equipment enhance ids
+    // (GfBdatItem::getPcEquipEnhance1) of the driver's equipped items (the game data's driver rows, 0x5A0 apart;
+    // drivers 0x11-0x19 from another table, 0xDAC apart); GfFobjManager::updateEnhanceEffect passes its party leader's
+    // driver id and sums the "EnhanceEffect" 0xFB rows.
+    static bool getEquipAcceEnahnce(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver);
     // 2.0.0's symbols name it. What it does: fills enhances with the enhance ids that apply to the driver (its row at
     // data+0x22, the DLC drivers 0x11-0x19 through GfBdatChrDr and getIraBack); DataObjDriver's stat getters sum the
     // BTL_Enhance rows of a given EnhanceEffect from it.
     static void getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriver& data);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member for the same placement as
-    // getValidEnhance. What it does: pushes onto enhances the equipment enhance (GfBdatItem::getPcEquipEnhance1) of the
-    // DLC driver record's item at +0x5A4, when it has one, and returns whether enhances holds any; DataObjDriver's stat
-    // getters use it for m_dlc.
-    static bool fn_7100248668(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriverDlc& data);
+    // 2.0.0's symbols name it. What it does: pushes onto enhances the equipment enhance
+    // (GfBdatItem::getPcEquipEnhance1) of the DLC driver record's item at +0x5A4, when it has one, and returns whether
+    // enhances holds any; DataObjDriver's stat getters use it for m_dlc.
+    static bool getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataIra& data);
     // the stat corrections (percent) DataObjDriver's stat getters apply
     // 2.0.0's symbols name it. What it does: the HP correction percent DataObjDriver::getHpMax applies (like
     // getStrengthRev for the strength).
@@ -224,11 +216,9 @@ public:
     // 1.0.0's setScenarioMask (0x71002A9D44, called by 1.0.0's pt setDriverAway with its two script arguments):
     // the flag byte at 0x59C of the driver's SDataDriver (3.0.1 adds drivers 0x11-0x19)
     static void setScenarioMask(unsigned int driver, bool mask);
-    // Placeholder name: 1.0.0's pt setDriverEnable calls GfDataDriver::setActivateReserver(driver, x) here, 3.0.1
-    // passes three arguments, so the name is not proven. A GfDataDriver member because its address lies among
-    // GfDataDriver's functions. What it does: ScriptPlayText's pt setDriverEnable passes (2, -1, false) when
-    // driver 2 is activate-unuse. The types of the last two are inferred from the constants.
-    static void fn_7100243934(unsigned int driver, int blade, bool flag);
+    // 2.0.0's symbols name it. What it does: ScriptPlayText's pt setDriverEnable passes (2, -1, false) when driver 2 is
+    // activate-unuse. The types of the last two are inferred from the constants.
+    static void setActivateReserver(unsigned int driver, unsigned int blade, PTPOS flag);
     // 2.0.0's symbols name it. What it does: false for driver 0, else whether the byte at 0x572 of that SDataDriver
     // (m_defaultAcceDone) is set; GfGameUtil::execEquipDriverDefaultAcce skips a driver for which it holds.
     static bool isEquipDefaultAcce(unsigned int driver);
@@ -255,12 +245,11 @@ public:
     // GfBdatChrDr::getChrIrGroupID of the driver's GfBdatChrDr::getChrDrIraParam row, 0 for none
     // 2.0.0's symbols name it. What it does: the DLC driver record's m_partyIndex for drivers 0x11-0x19, else 0.
     static unsigned int getPartyPos(unsigned int driver);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among GfDataDriver's
-    // functions (right after getIraFront) and takes a driver id. What it does: of getIraFront(driver) and
-    // getIraBack's list for it, the first id whose getPartyPos value (the DLC record's 16-bit field at 0xDA8,
-    // 0 outside 0x11-0x19) equals the second argument, 0 for none. Callers: gf_menu_obj_char_select_ira's
-    // GfMenuObjCharSelectIra::changeBlade (with 0), GfReqCommand::reqChangeParty.
-    static unsigned int fn_71002418CC(unsigned int driver, unsigned int);
+    // 2.0.0's symbols name it. What it does: of getIraFront(driver) and getIraBack's list for it, the first id whose
+    // getPartyPos value (the DLC record's 16-bit field at 0xDA8, 0 outside 0x11-0x19) equals the second argument, 0 for
+    // none. Callers: gf_menu_obj_char_select_ira's GfMenuObjCharSelectIra::changeBlade (with 0),
+    // GfReqCommand::reqChangeParty.
+    static unsigned int getIraFromPos(unsigned int driver, PTPOS);
     static unsigned int getIraGroup(unsigned int driver);
     // the blade in a slot (slot < 0: the engaged one, m_bladeSet), 0 for none; DLC drivers (0x11-0x19) answer
     // GfBdatChrDr::getChrDrDefBlade1 instead (DataObjDriver::getBlade)
@@ -285,9 +274,9 @@ public:
     // the item handle of the accessory in the driver's slot (0-1, 2 the DLC drivers' extra slot); the name is 1.0.0's
     // (its getEquipAcceHandle has the same callers), the symbols still spell it fn_7100247988
     static GfItemHandle getEquipAcceHandle(unsigned int driver, unsigned int slot);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
-    // GfDataBlade's unit among GfDataDriver's functions. What it does: sets the 16-bit item id (+0x5A4) of the DLC driver (0x11-0x19) row of GfDataManager::getDataGameIra's 0xDAC-byte table (getEquipWpnAcce reads it).
-    static void fn_71002474F4(unsigned int driver, unsigned short item);
+    // 2.0.0's symbols name it. What it does: sets the 16-bit item id (+0x5A4) of the DLC driver (0x11-0x19) row of
+    // GfDataManager::getDataGameIra's 0xDAC-byte table (getEquipWpnAcce reads it).
+    static void setEquipWpnAcce(unsigned int driver, unsigned int item);
     // 1.0.0's name: GfPouchUtil calls it in both builds (1.0.0: GfDataDriver::setPouchData(unsigned int, unsigned
     // int, const SDataPouch&)); copies the slot into the driver's pouch
     static void setPouchData(unsigned int driver, unsigned int pouch, const SDataPouch& data);
@@ -304,10 +293,9 @@ public:
     // 2.0.0's symbols name it. What it does: nothing for driver 0, else setEquipAcce on the driver's data; its one
     // caller is GfEquipUtil::equipDriverAcce.
     static void setEquipAcce(unsigned int driver, unsigned int slot, unsigned int accessory);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
-    // nothing for driver 0, else stores the handle as the item handle of the driver's accessory slot (slots 0-1 at
-    // +0x574, others at +0x2EC); its one caller is GfEquipUtil::equipDriverAcce.
-    static void fn_7100247ABC(unsigned int driver, unsigned int slot, const GfItemHandle& handle);
+    // 2.0.0's symbols name it. What it does: nothing for driver 0, else stores the handle as the item handle of the
+    // driver's accessory slot (slots 0-1 at +0x574, others at +0x2EC); its one caller is GfEquipUtil::equipDriverAcce.
+    static void setEquipAcceHandle(unsigned int driver, unsigned int slot, GfItemHandle handle);
     // 2.0.0's symbols name it. What it does: addSkillPoint on the driver's data; callers
     // GfGameUtil::execDriverSkillLevelUp and addSp.
     static void addSkillPoint(unsigned int driver, int point);
@@ -326,17 +314,14 @@ public:
     static void setExp(unsigned int driver, unsigned int exp);
     // 2.0.0's symbols name it. What it does: as setExp for the battle experience at +0xB4 (getBattleExp's field).
     static void setBattleExp(unsigned int driver, unsigned int exp);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because fn_7100245794 tail-calls
-    // it with its outputs and the driver's data. What it does: see fn_7100245794.
-    static bool fn_7100245800(unsigned int* level, unsigned int* value, const SDataDriver& data);
+    // 2.0.0's symbols name it. What it does: see GfDataDriver::getEnableLevel.
+    static bool getEnableLevel(unsigned int& level, unsigned int& value, const SDataDriver& data);
     // 2.0.0's symbols name it. What it does: getValidEnhance on the driver's data (found the getSDataDriver way); its
     // one caller is btl::PlayerParameter::InitializeEnhance.
     static void getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
-    // GfDataBlade's unit among GfDataDriver's functions (next to fn_71002474F4/setEquipWpnAcceHandle, which set the same row's fields
-    // through the driver id). What it does: stores item into the DLC driver record's 16-bit item id (+0x5A4);
-    // fn_71002251B8 (a DataObjDriver function) passes its record when the item is of type 2.
-    static void fn_710024752C(SDataDriverDlc& data, unsigned short item);
+    // 2.0.0's symbols name it. What it does: stores item into the DLC driver record's 16-bit item id (+0x5A4);
+    // DataObjDriver::setVirtualEquipWpnAcce (a DataObjDriver function) passes its record when the item is of type 2.
+    static void setEquipWpnAcce(SDataIra& data, unsigned int item);
     // 2.0.0's symbols name it. What it does: copies handle into the item handle (+0x5A0) of the DLC driver (0x11-0x19)
     // row of GfDataManager::getDataGameIra's 0xDAC-byte table (getEquipWpnAcceHandle reads it back).
     static void setEquipWpnAcceHandle(unsigned int driver, GfItemHandle handle);
@@ -346,8 +331,20 @@ public:
     static unsigned int getBattleExp(unsigned int driver);
     // 2.0.0's symbols name it. What it does: getBattleExpNextLevel of the driver's row (getSDataDriver).
     static unsigned int getBattleExpNextLevel(unsigned int driver);
-    // 2.0.0's symbols name it. What it does: the work fn_7100247580's comment describes, on one driver's data.
+    // 2.0.0's symbols name it. What it does: the work GfDataDriver::getEquipAcceEnahnce's comment describes, on one driver's data.
     static bool getEquipAcceEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriver& data);
+    // 2.0.0's symbols name it. What it does: for drivers 17-25 only (else 0), GfBdatChrDr::getChrDrDefBlade(driver, 0)
+    // of the driver itself (slot other than 0/1), or of the first (slot 0) / second (slot 1) id getIraBack lists for
+    // it, 0 when the list is too short. GfGameUtil::setTrustPointForDebug passes (driver, -1) and adds the trust to the
+    // result.
+    static unsigned int getIraBlade(unsigned int driver, int slot);
+    // 2.0.0's symbols name it. What it does: the slot DataObjDriver::setVirtualSetBlade engages a blade in: for driver
+    // 1, 4 for blade 1003 and 3 for blade 1002 while blade 1001 has no driver set (getDriverSetID); else the slot it is
+    // given.
+    static int getRuleSetBlade(unsigned int driver, unsigned int blade, int slot);
+    // 2.0.0's symbols name it. What it does: the index getSDataDriver uses: driver - 0x11 for a DLC row (0x11-0x19),
+    // else driver - 1 clamped to 1 past 0x10 (caller fn_71002EAF78).
+    static unsigned int getDriverRelativeID(unsigned int driver);
 };
 }  // namespace gf
 

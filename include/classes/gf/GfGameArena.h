@@ -31,7 +31,7 @@ void fn_71002906D0(::mm::mtl::FixedVector<unsigned short, 128>& ids);
 void fn_7100290BAC(unsigned int value);
 // table 0x7100B535D0 (the fw::MessageObject base's at +0x38, offset 8); the base at 0 is
 // mm::mtl::PtrSingleton<GfGameArena> (its table 0x7100B53628). No RTTI or 1.0.0 symbol names it: the arena manager
-// of gf_game_arena's unit (its constructor fn_7100290FA0 installs both tables; the arena play commands send it
+// of gf_game_arena's unit (its constructor GfGameArena installs both tables; the arena play commands send it
 // MsgUnk_1000034). Only what gf_play_command uses is declared so far (size 0x18E0, layout not recovered).
 class GfGameArena : public ::mm::mtl::PtrSingleton<GfGameArena>, public ::fw::MessageObject {
 public:
@@ -58,7 +58,7 @@ public:
     bool isBattleNow() const;
     bool isInvalidTutorial() const;
     void sleep(unsigned int frames);
-    // 2.0.0's symbols name it. A member: fn_71002EC674 calls it on
+    // 2.0.0's symbols name it. A member: GfGameUtil::getWpnDamage calls it on
     // PtrSingleton<GfGameArena>'s instance while isBattleNow holds. What it does: passes m_msgObj's key and the
     // handle to m_partySetup's fn_710028E5BC.
     unsigned int getWeaponDamage(GF_OBJ_HANDLE* handle) const;
@@ -104,13 +104,13 @@ public:
     // what fn_7100290D40 (message type 2) and GfArenaBattle::mapjumpForReturnField pass to createMapJumpForReturnBattle (the name is not the
     // original's): createMapJumpForReturnBattle copies m_mapjumpId into the first word of the GfMapjumpInfo it builds
     struct MapjumpParam {
-        // fn_7100290D00 (out of line: GfArenaBattle::mapjumpForReturnField calls it; fn_7100290D40 inlines it)
+        // GfGameArena::MapjumpParam::MapjumpParam (out of line: GfArenaBattle::mapjumpForReturnField calls it; fn_7100290D40 inlines it)
         MapjumpParam();
         unsigned int m_mapjumpId;  // 0xE1 (the name is not the original's)
         unsigned char pad_4[4];
     };
 
-    // fn_7100290FA0 (GfGameManager::initialize builds it through build; the parameter is not used)
+    // GfGameArena (GfGameManager::initialize builds it through build; the parameter is not used)
     explicit GfGameArena(const GfSetupParam& param);
     // 2.0.0's symbols name them. Static members: GfGameManager::initialize calls build (after GfGameSalvage::build) and
     // GfGameManager::finalize destroy. What they do: build makes the instance; destroy runs finalize on it, then

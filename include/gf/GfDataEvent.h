@@ -28,8 +28,8 @@ public:
     // 2.0.0's symbols name it. What it does: the event row's 16-bit "scenarioFlag" (tl::TitleStatePlayEvent::enter
     // calls it).
     static unsigned int getEventScenario(unsigned int event);
-    // 2.0.0's symbols name it. What it does: whether the event row's 8-bit "noRetarget" is set (gf::fn_71002DF39C and
-    // fn_71002DF624 call it).
+    // 2.0.0's symbols name it. What it does: whether the event row's 8-bit "noRetarget" is set (gf::GfGameUtil::getDriverModel and
+    // GfGameUtil::getAcceDriverModel call it).
     static bool isInvalidMelefRetarget(unsigned int event);
     // 2.0.0's symbols name it. What it does: setWatchedEventFlag on the game data (GfGameUtil::setWatchedEvent calls
     // it).
@@ -59,6 +59,9 @@ public:
     // 2.0.0's symbols name it. What it does: the event row's float columns zoneX/Y/Z into pos and zoneR (degrees) as
     // radians into angle; false when there is no table. Caller: GfManager::startEventTheater.
     static bool getMapJumpPosition(mm::Vec3& pos, float& angle, unsigned int event);
+    // 2.0.0's symbols name it. What it does: whether id is in 10001-10744 (tl::TitleStatePlayEvent::enter passes an
+    // event id).
+    static bool isScenarioEvent(unsigned int id);
 };
 }  // namespace gf
 

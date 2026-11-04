@@ -452,7 +452,7 @@ void GfMenuItemAdapter::ReferenceDriverEquipConverter::getItemInfo(MenuItemInfo&
         if (GfMenuObjUtil::isValidExpansion(3)) {
             if (GfDataDriver::isIraFront(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0)) {
                 if (m_slot == 0) {
-                    item.m_id = GfItemUtil::fn_71002FCD64(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0);
+                    item.m_id = GfEquipUtil::getEquipIraWpnAcce(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0);
                 } else {
                     item.m_id = acc.getEquipAcce(m_slot - 1, false);
                 }

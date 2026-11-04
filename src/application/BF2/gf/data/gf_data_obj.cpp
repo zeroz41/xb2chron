@@ -51,6 +51,7 @@
 #include "mm/mtl/RTTI.h"
 #include "classes/gf/GfObjSetupWeapon.h"
 #include "classes/gf/GfGameParty.h"
+#include "gf/GfDataUtil.h"
 
 namespace gf {
 
@@ -102,7 +103,7 @@ void DataObjDriver::setVirtualEquipAcc(unsigned int slot, unsigned int accessory
 void DataObjDriver::setVirtualEquipWpnAcce(unsigned int item) {
     setupVirtualParam();
     if (GfDataItem::getItemType(item) == 2 && GfDataDriver::isIra(m_bdatId)) {
-        GfDataDriver::fn_710024752C(*m_dlc, item);
+        GfDataDriver::setEquipWpnAcce(*m_dlc, item);
     }
 }
 
@@ -163,7 +164,7 @@ unsigned short DataObjDriver::getDataType() const {
 
 // GEN-HPMAX-BEGIN
 void fn_71002255EC(unsigned int& value, const SDataDriver& data, unsigned int rateEffect, unsigned int addEffect);
-void fn_710022571C(unsigned int& value, const SDataDriverDlc& data, unsigned int rateEffect, unsigned int addEffect);
+void fn_710022571C(unsigned int& value, const SDataIra& data, unsigned int rateEffect, unsigned int addEffect);
 
 unsigned int DataObjDriver::getHpMax(bool virtualParam) const {
     if (GfDataDriver::isIra(getBdatId()) && !GfDataDriver::isIraFront(getBdatId())) {
@@ -201,9 +202,9 @@ void fn_71002255EC(unsigned int& value, const SDataDriver& data, unsigned int ra
     }
     value = base + base * rate;
 }
-void fn_710022571C(unsigned int& value, const SDataDriverDlc& data, unsigned int rateEffect, unsigned int addEffect) {
+void fn_710022571C(unsigned int& value, const SDataIra& data, unsigned int rateEffect, unsigned int addEffect) {
     mm::mtl::FixedVector<unsigned short, 64> enhances;
-    GfDataDriver::fn_7100248668(enhances, data);
+    GfDataDriver::getValidEnhance(enhances, data);
     float base = value;
     GfBdatBtl* btl = GfBdatBtl::sys();
     for (const unsigned short& enhance : enhances) {
@@ -580,7 +581,7 @@ unsigned int DataObjDriver::getCriticalRate(bool virtualParam) const {
     unsigned int value = data->m_criticalRate;
     if (GfDataDriver::isIra(getBdatId())) {
         if (!GfDataDriver::isIraFront(getBdatId())) {
-            DataParamAcc acc(4, GfDataBlade::fn_7100237B70(getBdatId(), -1), static_cast<GimmickType>(0));
+            DataParamAcc acc(4, GfDataDriver::getIraBlade(getBdatId(), -1), static_cast<GimmickType>(0));
             return acc.getCriticalRate(virtualParam);
         }
         value += GfDataWeapon::getCriticalRatioForIra(GfDataDriver::getIraFront(getBdatId()));
@@ -621,7 +622,7 @@ unsigned int DataObjDriver::getGuardRate(bool virtualParam) const {
     unsigned int value = data->m_guardRate;
     if (GfDataDriver::isIra(getBdatId())) {
         if (!GfDataDriver::isIraFront(getBdatId())) {
-            DataParamAcc acc(4, GfDataBlade::fn_7100237B70(getBdatId(), -1), static_cast<GimmickType>(0));
+            DataParamAcc acc(4, GfDataDriver::getIraBlade(getBdatId(), -1), static_cast<GimmickType>(0));
             return acc.getGuardRate(virtualParam);
         }
         value += GfDataWeapon::getGuardRatioForIra(GfDataDriver::getIraFront(getBdatId()));
@@ -737,7 +738,7 @@ unsigned int DataObjDriver::getBlade(bool virtualParam, int slot) const {
         if (slot > 0) {
             return 0;
         }
-        return GfDataBlade::fn_7100237B70(getBdatId(), -1);
+        return GfDataDriver::getIraBlade(getBdatId(), -1);
     }
     GfObjSetup* setup = GfObjUtil::getObjSetup(m_handle);
     if (setup != nullptr && setup->m_isAllWeapon && setup->pad_58 != 0) {
@@ -845,7 +846,7 @@ unsigned int DataObjDriver::getAttribute(bool virtualParam, int slot) const {
             }
             return GfBdatItem::sys()->getPcEquipAddAtr(item);
         }
-        DataObjBlade data(GfDataBlade::fn_7100237B70(getBdatId(), -1));
+        DataObjBlade data(GfDataDriver::getIraBlade(getBdatId(), -1));
         return data.getAttribute(virtualParam, -1);
     }
     if (slot < 0) {
@@ -1290,7 +1291,7 @@ unsigned int DataObjPcWpn::getAttribute(bool, int slot) const {
     if (party == static_cast<unsigned int>(-1)) {
         return 0;
     }
-    if (GfDataBlade::fn_71002324C8()) {
+    if (GfDataUtil::isIra()) {
         GFOBJ_INFO* info = GfObjManager::getObjInfo(m_handle);
         if (info != nullptr) {
             if (GfObjSetup* setup = info->m_setup) {

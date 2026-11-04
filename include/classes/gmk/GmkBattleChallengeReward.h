@@ -13,18 +13,18 @@ class GmkBattleChallengeRewardGob;
 class GmkBattleChallengeReward : public ::gmk::AGmkBase {
 public:
     // the overrides its table holds (slot functions still carry their placeholder symbols, given per slot)
-    virtual ~GmkBattleChallengeReward();  // slot 0 (fn_71005C3E44)
-    virtual gmk::GmkType getGmkType() const;  // slot 2 (fn_71005C3F48)
-    virtual bool isValid() const;  // slot 3 (fn_71005C3F50)
-    virtual void dispose();  // slot 5 (fn_71005B7DAC)
-    virtual void update(float);  // slot 6 (fn_71005B7E18)
+    virtual ~GmkBattleChallengeReward();  // slot 0 (~GmkBattleChallengeReward)
+    virtual gmk::GmkType getGmkType() const;  // slot 2 (getGmkType)
+    virtual bool isValid() const;  // slot 3 (isValid)
+    virtual void dispose();  // slot 5 (dispose)
+    virtual void update(float);  // slot 6 (update)
     virtual void debugDraw() const;  // slot 7 (debugDraw)
-    virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8 (fn_71005B8360)
-    virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9 (fn_71005C3F70)
+    virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8 (onGobEvent)
+    virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9 (onPlayerAccessed)
     // its bdat row: empty (its Vector<BdatInfo>::resize stores nothing; createGmk's stride is 1)
     class BdatInfo {
     public:
-        // inline and empty: initGmkBdatInfo (fn_71005D12B4) reads the table pointer (getBindedBdatFp) and stores
+        // inline and empty: initGmkBdatInfo (initGmkBdatInfo) reads the table pointer (getBindedBdatFp) and stores
         // nothing, as GmkMob's
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {}
     };
@@ -35,7 +35,7 @@ public:
     gf::GF_OBJ_HANDLE* m_gob;  // dispose destroys it unless it is -1 (the name is not the original's)
     bool m_isAccessed;  // onPlayerAccessed sets it, dispose clears it (the name is not the original's)
     unsigned char pad_61[0x3];
-    // fields: size from the stride 0x78: Vector<GmkBattleChallengeReward>::resize fn_71005D107C/fn_71005D15A4
+    // fields: size from the stride 0x78: Vector<GmkBattleChallengeReward>::resize resize/expand
     float m_waitTime;  // 0x64: initWaitPopTime stores its argument; seqWaitPop waits until m_timer passes it (the name is not the original's)
     float m_timer;  // 0x68: the seq steps add dt to it (the name is not the original's)
     int m_bdatRow;  // 0x6c: the row of BDAT table 0x4D getBdatId_RSC_TboxList/getBdatId_BTL_ChBtlRewardSet read (the name is not the original's)

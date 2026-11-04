@@ -29,6 +29,7 @@
 #include "mm/Pnt.h"
 #include "mm/Vec2.h"
 #include "ui/EventData.h"
+#include "gf/GfDataNpc.h"
 
 namespace gf {
 
@@ -314,7 +315,7 @@ static inline bool getBladeShopName(unsigned char*& bdat, unsigned int& id, GF_O
     if (obj.getType() != 6) {
         return false;
     }
-    if (!GfDataBlade::fn_710024D8C4(bdat, id, obj.getNpcRscId())) {
+    if (!GfDataNpc::getJobMsg(bdat, id, obj.getNpcRscId())) {
         bdat = nullptr;
         id = 0;
         return false;

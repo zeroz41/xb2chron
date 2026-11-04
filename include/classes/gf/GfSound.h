@@ -30,7 +30,7 @@ namespace gf {
 // the master volumes GfSound applies to its categories (GfSound+0x6690; 1.0.0's setters name the volumes, in order)
 class GfMasterVolume {
 public:
-    // out of line in 1.0.0 and 3.0.1 (fn_7100570CC8, which 3.0.1's SSoundUiOption::clear calls where 1.0.0's calls
+    // out of line in 1.0.0 and 3.0.1 (GfMasterVolume::GfMasterVolume, which 3.0.1's SSoundUiOption::clear calls where 1.0.0's calls
     // GfMasterVolume::GfMasterVolume()); GfSound's constructor, in the same file, inlines it
     GfMasterVolume();
     ~GfMasterVolume();

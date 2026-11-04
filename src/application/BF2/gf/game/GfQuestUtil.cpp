@@ -580,7 +580,7 @@ bool GfQuestUtil::getTaskMap(mm::mtl::FixedArray<unsigned short, 4>& maps, Quest
     return true;
 }
 
-void fn_7100313330(QuestID id) {
+void GfQuestUtil::applyNeedFollowQuestTask(QuestID id) {
     if (id.empty() || GfQuestInfo::isParent(id)) {
         return;
     }
@@ -609,7 +609,7 @@ void fn_7100313330(QuestID id) {
     }
 }
 
-void fn_7100313414() {
+void GfQuestUtil::applyNeedFollowQuestState() {
     if (GfQuestInfo::getState(QuestID(0x13BB)) >= 2 && GfQuestInfo::getState(QuestID(0x13BC)) == 0) {
         if (GfQuestManager* manager = mm::mtl::PtrSingleton<GfQuestManager>::get()) {
             manager->acceptOrder(QuestID(0x13BC));

@@ -22,7 +22,7 @@ public:
     // 2.0.0's symbols name them. Each sends an event to that object while it is there (and, except reverse and
     // updateOperation, not terminated), only while GfMenuObjUtil::isValidExpansion(3) holds: open: event 0x108; close:
     // event 0x109 (both from GfMenuManager::gevPlayerControl); changeFormation: event 0x10A; changeBlade: event 0x10B
-    // (both from GfMenuManager::gevChangeParty and fn_7100367D6C); reverse: event 0x106 with the flag as its first
+    // (both from GfMenuManager::gevChangeParty and GfMenuReference::setIraCharProperty); reverse: event 0x106 with the flag as its first
     // parameter (from setIraOperationDisp); updateOperation: event 0x107 with the value as its first parameter, to the
     // object's child "LAY_cmd" (from GfMenuReference::postUpdate and MainListener::reciveEvent).
     static void open();

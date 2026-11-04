@@ -105,7 +105,7 @@ public:
     // 2.0.0's symbols name it. A member: it sits among GfMenuCharDataAdapter's createFrom* (after
     // createFromBladeListOwnerDriver) with createFromBladeList's arguments, and its code ends in create. What it does:
     // news a 0x18-byte BladeListSetDriverConverter holding the blade list and index (-1: the list's index): the entry's
-    // GfDataBlade::getSetDriver (type 3). Caller: gf_menu_obj_btlch_order's fn_71003ADE30.
+    // GfDataBlade::getSetDriver (type 3). Caller: gf_menu_obj_btlch_order's GfMenuObjBtlchOrder::initialize.
     static GfMenuCharDataAdapter* createFromBladeListSetDriver(unsigned int handle, unsigned int kind,
                                                                const GfMenuBladeList* list, unsigned int index,
                                                                bool changed);
@@ -141,7 +141,7 @@ public:
                                                               unsigned int party, bool changed);
     // 2.0.0's symbols name it. What it does: nullptr unless GfMenuObjUtil::isValidExpansion(3); news a 0x18-byte
     // NpcIDListConverter holding the ID list and index (-1: the list's index): the entry's id as an NPC (type 6).
-    // Callers: gf_menu_obj_hitonowa's GfMenuObjHitonowa::initialize, gf_menu_obj_npc_telop's fn_71004477FC (its
+    // Callers: gf_menu_obj_hitonowa's GfMenuObjHitonowa::initialize, gf_menu_obj_npc_telop's GfMenuObjNpcTelop::initialize (its
     // GfMenuIDList).
     static GfMenuCharDataAdapter* createFromNpcIDList(unsigned int handle, unsigned int kind, const GfMenuIDList* list,
                                                 int index, bool changed);

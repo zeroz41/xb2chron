@@ -70,7 +70,7 @@ public:
     static void setCampTalkNew();
     // 2.0.0's symbols name them. Called on the owner by its listeners
     void refreshNotice();  // shows LAY_menu's entries by the game flags
-    bool seqClose();  // queues fade 1, its wait, (with fn_71002EDA8C) the time jobs and seqCloseSpecial
+    bool seqClose();  // queues fade 1, its wait, (with GfGameUtilDiff::isEnableAutoSave) the time jobs and seqCloseSpecial
     void refreshCraftInfo();  // the cursor's driver: its shop becomes the reference shop, its summary TXT_craft_info
     bool seqStartLevelUp();  // opens full screen 5 and queues its jobs
     unsigned int refreshShopInfo();  // the cursor's driver: LAY_shop's header texts and reference; returns its shop

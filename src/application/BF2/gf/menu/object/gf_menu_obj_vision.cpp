@@ -15,6 +15,7 @@
 #include "classes/gf/GfObjPropertyEnemy.h"
 #include "gf/GfObjUtil.h"
 #include "ui/UIStr.h"
+#include "gf/GfDataUtil.h"
 
 namespace gf {
 
@@ -37,7 +38,7 @@ bool GfMenuObjVision::fn_71004944B8(int blade) {
     if (GfGameManager::isClearGame()) {
         return true;
     }
-    return GfDataBlade::fn_7100231884() > 2000;
+    return GfDataUtil::getScenarioFlag() > 2000;
 }
 
 GfMenuObjVision::GfMenuObjVision(unsigned int handle)

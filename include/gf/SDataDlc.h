@@ -9,7 +9,7 @@ namespace gf {
 // GfDataStore::getDataGameIra and GfDataManager::getDataGameIra return it), 0x10D80 bytes. The type and member names
 // are not the original's.
 struct SDataDlc {
-    SDataDriverDlc m_drivers[16];  // GfDataDriver::getSDataDriver reads rows 0x11 to 0x19 from them
+    SDataIra m_drivers[16];  // GfDataDriver::getSDataDriver reads rows 0x11 to 0x19 from them
     unsigned int m_word;  // 0xDAC0 (SDataSave() clears it)
     // 0xDAC4: the DLC drivers' arts records past the ones their data keeps (GfDataDriver::getDriverWeaponType)
     SDataDriverArtsEx m_driverArtsEx[16];

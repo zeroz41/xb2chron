@@ -98,13 +98,13 @@ public:
     // each of the quest's 4 tasks' map (GfQuestTask::getTaskMap), from a linked quest's next quest when the quest's
     // own has none; false for no quest or a parent quest
     static bool getTaskMap(mm::mtl::FixedArray<unsigned short, 4>& maps, QuestID id);
+    // Placeholder names (no symbol; these are new since 1.0.0, so no donor name):
+    // counts the quest's collect tasks as used up while the party holds their limit (GfGameScene::gevItemAdd, update)
+    static void applyNeedFollowQuestTask(QuestID id);
+    // orders or resets a few fixed quests and flags whose conditions are met (GfGameScene::update)
+    static void applyNeedFollowQuestState();
 };
 
-// Placeholder names (no symbol; these are new since 1.0.0, so no donor name):
-// counts the quest's collect tasks as used up while the party holds their limit (GfGameScene::gevItemAdd, update)
-void fn_7100313330(QuestID id);
-// orders or resets a few fixed quests and flags whose conditions are met (GfGameScene::update)
-void fn_7100313414();
 // a condition task's flag conditions: adds how many there are to total and how many hold to met; false when the task
 // is no condition task or its condition has a premise (GfQuestUtil::getMsgQuestTaskLog)
 bool fn_71003134FC(const QuestTaskParam& param, unsigned int& total, unsigned int& met);

@@ -230,6 +230,7 @@
 #include "classes/gf/GfPlayComSalvage.h"
 #include "classes/gf/GfPlayComState.h"
 #include "classes/gf/GfPlayComWait.h"
+#include "gf/GfDataNpc.h"
 
 namespace gf {
 
@@ -649,7 +650,7 @@ void GfPlayComOpenNpcEntry::end() {
 bool GfPlayComOpenNpcEntry::update(const fw::UpdateInfo& info, bool flag) { return m_context->isTerm(); }
 
 void GfPlayComMenuChapterSave::start() {
-    GfDataUtil::setChapterSave(m_id, GfDataBlade::fn_7100231884());
+    GfDataUtil::setChapterSave(m_id, GfDataUtil::getScenarioFlag());
     m_open = false;
 }
 
@@ -1011,9 +1012,9 @@ void GfPlayComTalk::start() {
                         s_questTargetCondID = condId;
                     }
                     if (!GfManager::isExecModeThater() && GfGameManager::isGameTypeIra()) {
-                        bool met = GfDataBlade::fn_710024DE6C(m_npc);
-                        GfDataBlade::fn_710024DDDC(m_npc, true);
-                        if (met != GfDataBlade::fn_710024DE6C(m_npc)) {
+                        bool met = GfDataNpc::isHitonowaMeetsFlag(m_npc);
+                        GfDataNpc::setHitonowaMeetsFlag(m_npc, true);
+                        if (met != GfDataNpc::isHitonowaMeetsFlag(m_npc)) {
                             m_newMeet = true;
                         }
                     }

@@ -22,6 +22,7 @@
 #include "gf/GfPlayFactory.h"
 #include "gf/MsgObjectDead.h"
 #include "mm/Vec3.h"
+#include "gf/GfDataUtil.h"
 
 namespace gf {
 
@@ -90,7 +91,7 @@ void GfGamePad::checkEmergencyEscape() {
     if (cond) {
         return;
     }
-    if (GfDataBlade::fn_7100231884() == 1031 && GfFieldManager::getLandmarkPoint() != 39) {
+    if (GfDataUtil::getScenarioFlag() == 1031 && GfFieldManager::getLandmarkPoint() != 39) {
         GfFieldManager::setLandmarkPoint(39, mm::Vec3(-10.431001f, 0.998f, 0.000453f), 0.0f);
     }
     GfObj* obj = GfObjUtil::getObj(GfGameManager::getPartyLeader());

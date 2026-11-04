@@ -5,8 +5,8 @@ namespace gf { enum WEATYPE : int; enum WEATHERID : int; }
 
 namespace gf {
 
-// a map's record in the game data (0x20 bytes; GfDataBlade's fn_710024E1C8 finds it by m_mapId; GfFieldWeather keeps
-// each map's weather in it). The type name is 1.0.0's: GfFieldWeather::updateEvent hands fn_710024E1C8's record to
+// a map's record in the game data (0x20 bytes; GfDataBlade's GfDataMap::getWeatherParam finds it by m_mapId; GfFieldWeather keeps
+// each map's weather in it). The type name is 1.0.0's: GfFieldWeather::updateEvent hands GfDataMap::getWeatherParam's record to
 // createWeather(const WeatherParam&, float). The field names are not the original's. Its constructor clears the
 // name's first byte and the rest (GfDataBlade's static initialiser and function-static records).
 struct WeatherParam {
@@ -19,7 +19,7 @@ struct WeatherParam {
     float m_time;
     float m_timeMax;
     unsigned int m_mapId;
-    unsigned int m_cloudSea;  // fn_710024E8F4 stores (cloudSea != 0); GfFieldWeather::getCloudSea reads it
+    unsigned int m_cloudSea;  // GfDataMap::setCloudType stores (cloudSea != 0); GfFieldWeather::getCloudSea reads it
 };
 
 // the maps' weather records (0x800 bytes; the class and clear() are the symbols'): SDataGame keeps one at 0x10A53C
@@ -29,8 +29,8 @@ class SDataWeather {
 public:
     SDataWeather() { clear(); }
     void clear();
-    // the index of the first record whose m_mapId is map, else -1 (inlined in GfDataBlade's fn_710024E0D0 and
-    // fn_710024E1C8: the name is not the original's)
+    // the index of the first record whose m_mapId is map, else -1 (inlined in GfDataBlade's GfDataMap::getEmptyWeatherParam and
+    // GfDataMap::getWeatherParam: the name is not the original's)
     int find(unsigned int map) const {
         for (int i = 0; i < 64; i++) {
             if (m_params[i].m_mapId == map) {

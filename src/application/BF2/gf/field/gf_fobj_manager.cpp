@@ -125,7 +125,7 @@ void GfFobjManager::updateEnhanceEffect() {
         return;
     }
     mm::mtl::FixedVector<unsigned short, 64> enhances;
-    if (GfDataDriver::fn_7100247580(enhances, driver)) {
+    if (GfDataDriver::getEquipAcceEnahnce(enhances, driver)) {
         unsigned char* fp = GfDataBdat::getFP(0x2C);
         for (unsigned short id : enhances) {
             if (isLeaderBonus(Bdat::getValCheck(fp, "EnhanceEffect", id, 2))) {

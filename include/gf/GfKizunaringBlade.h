@@ -47,6 +47,11 @@ public:
     // other lines it does the same for levels 1-5 up to GfDataBlade::getKeyReleaseLevel, opening the first level's
     // quest with GfDataBlade::setSkillLineLevel(blade, line, 0).
     static void fn_71002FF034(unsigned int blade, unsigned int line);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+    // GfItemUtil's unit (no this). What it does: for a nonzero blade, walks its GfDataBlade::getAchievInfo entries 0..9
+    // (stops at one whose first short is 0) and runs GfQuestTask::refreshTaskParam on GfDataQuest::getListNextQuestA of
+    // each of the entry's five quest IDs. GfArenaParty::addFieldBlade calls it after GfDataBlade::setActivateReserver.
+    static void refreshAchievementCount(unsigned int blade);
 };
 }  // namespace gf
 

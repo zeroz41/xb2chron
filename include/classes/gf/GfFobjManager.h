@@ -32,7 +32,7 @@ public:
     static void update(const fw::UpdateInfo& info);
     // 2.0.0's symbols name it. What it does: sets m_leaderBonus from the party leader's driver: 0 for none; driver 12:
     // the table 0x7B member 0 row 0x5D float; else the sum of "Param1" over the driver's equipment enhances
-    // (GfDataDriver::fn_7100247580) whose "EnhanceEffect" (table 0x2C) is 0xFB, times 0.01.
+    // (GfDataDriver::getEquipAcceEnahnce) whose "EnhanceEffect" (table 0x2C) is 0xFB, times 0.01.
     void updateEnhanceEffect();
     static GfDropitemParams* getDropitemParams();
     // 2.0.0's symbols name it. What it does: m_seManager.rebuildForGameType() (looks the sound pack up again);

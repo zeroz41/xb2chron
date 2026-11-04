@@ -234,7 +234,7 @@ public:
     static void setDriverVirtualBladeID(unsigned int blade);
     static unsigned int getDriverVirtualBladeID();
     // 1.0.0 symbols (3.0.1's copies still carry placeholder names: fn_7100369404, fn_7100369424, fn_710036944C,
-    // fn_710036946C; same place among the accessors, same fields, moved 0x10 like their neighbours)
+    // getDriverVirtualEquipAcc; same place among the accessors, same fields, moved 0x10 like their neighbours)
     static void setDriverVirtualBladeSlot(unsigned int slot);
     static unsigned int getDriverVirtualBladeSlot();
     static void setDriverVirtualEquipAcc(unsigned int acc);
@@ -269,7 +269,7 @@ public:
     // 2.0.0's symbols name them. What they do: they read or write the singleton's word at 0x4CB84
     // (m_bladeChangeValue). setBattleMode stores it and, when it changed, calls GfMenuObjBladeChange::refreshBattleMode
     // (event 0x105 to the blade change object); getBattleMode returns it (callers BladeListener::reciveEvent,
-    // fn_7100391EF0, fn_71003C56C0).
+    // TUnk_B5FEE8::reciveEvent, GfMenuObjCharChange::MainListener::reciveEvent).
     static void setBattleMode(BTL_MODE value);
     static unsigned int getBattleMode();
     // an operation button (one of the four records below) and a button's state (one of a record's four flags); 2.0.0's
@@ -329,7 +329,7 @@ public:
     // GfMenuManager::gevPlayerControl, GfMenuObjMainMenu2::seqExecTerm); setIraSirenInfoGauge stores record
     // `index`'s (< 2) ratio at 0x4CFA4 clamped to 0..1; setIraSirenInfoLv its count byte (+4).
     // getIraOperationBtnCommand returns record `index`'s (< 4) value at 0x4CF70 (0 otherwise) and
-    // isIraOperationBtnState tests its flag `flag` (both from fn_71003C662C).
+    // isIraOperationBtnState tests its flag `flag` (both from GfMenuObjCharChange::CommandListener::reciveEvent).
     static void setIraSpecialArtsRecast(float ratio);
     static void setIraSpecialArtsLv(unsigned int index);
     static void setIraOperationDisp(bool flag);
@@ -351,7 +351,7 @@ public:
     static const LayerGimmick* getIraChainInfo(unsigned int index);
     static const OCGInfo* getOCGInfo();
     // a 0x10-byte record at 0x4CFD4 of the instance (the names are not the original's): three words and two bytes
-    // the combo route display (gf_menu_obj_combo_route_simple, fn_71003DC6FC) reads through getIraBladeComboInfo.
+    // the combo route display (gf_menu_obj_combo_route_simple, TUnk_B61450::reciveEvent) reads through getIraBladeComboInfo.
     // updateIraBladeCombo copies one in (an assignment copies its 14 data bytes), resetIraBladeCombo clears it; both
     // refresh the display (GfMenuObjComboRouteSimple::refresh) when it changed. 2.0.0's symbols name the type.
     struct IraBladeComboInfo {
@@ -380,7 +380,7 @@ public:
     // btl::UIManager::UpdateMenuData.
     static void updateIraBladeCombo(const IraBladeComboInfo& state);
     // getIraBladeComboInfo: m_comboRoute when isValidExpansion(3) holds and the singleton exists, else a zeroed static
-    // dummy; caller fn_71003DC6FC (gf_menu_obj_combo_route_simple).
+    // dummy; caller TUnk_B61450::reciveEvent (gf_menu_obj_combo_route_simple).
     static const IraBladeComboInfo* getIraBladeComboInfo();
     // openOCG / closeOCG: tail-call GfMenuObjOCG::openGear (open LAY_special of object 0x90) /
     // closeGear (close it); caller UpdateOCG (A48 also EndOCG).

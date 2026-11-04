@@ -14,7 +14,7 @@ public:
     static unsigned int getEnBoolId(unsigned int arrange);
     static unsigned int getDefeatNum(unsigned int arrange);  // local flag 0x20, the book row + 0x142
     // 2.0.0's symbols name it. What it does: getDefeatNum on the given game data (its local flags at +0xFBBC4): 0 for
-    // arrangement 0 or no book row. Caller: fn_71002E2F4C.
+    // arrangement 0 or no book row. Caller: GfGameUtil::setupPoweredNewGameParam.
     static unsigned int getDefeatNum(const SDataGame& game, unsigned int arrange);
     // local flag (1, book + 48590) of the arrangement's enemy book row; false for none
     static bool isAttackFlag(unsigned int arrange);

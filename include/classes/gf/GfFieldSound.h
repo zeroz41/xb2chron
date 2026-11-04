@@ -77,7 +77,7 @@ public:
     // 2.0.0's symbols name it. What it does: the DLC battle SE pack (m_dlcSound's) when it holds a source of that name
     // (SoundPack::findSource), else null.
     fw::SoundPack* getDlcSePack(const char* name);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because fn_71002EE5C0 calls it
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because GfGameUtil::getDlcSeName calls it
     // on GfFieldSound's instance (it then ignores this). What it does: maps "btl_spskill_001".."btl_spskill_004" to
     // "dlc_se_btl_bl40040116".."dlc_se_btl_bl40040119", null for any other name.
     const char* fn_710027CEA4(const char* name);
@@ -91,7 +91,7 @@ public:
     fw::SoundResource* m_commonResource;  // createCommonSound's
     fw::SoundPack* m_commonPack;
     SoundInfo m_mapSound;  // createMapSound's ("se_fld_<map>" or "dlc_<map>")
-    SoundInfo m_dlcSound;  // createMapSound's "dlc_se_btl_spskill" when fn_71002ED330 holds
+    SoundInfo m_dlcSound;  // createMapSound's "dlc_se_btl_spskill" when GfGameUtil::isEnableBladeElma holds
     GF_SE_CATEGORY_HANDLE* m_categoryHandle;
     GF_SE_CATEGORY_HANDLE* m_mapjumpCategoryHandle;  // the *ForMapjump fades use it
     GF_SE_CATEGORY_HANDLE* m_eventCategoryHandle;  // 1.0.0's setCategorySeFadeoutForEvent used it

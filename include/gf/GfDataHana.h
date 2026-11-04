@@ -99,6 +99,10 @@ public:
     // blade's game data slot. Callers: GfGameMercenaries::addTeamMember (setter), fn_71003014CC (both).
     static unsigned char getMercenaryUnuse(unsigned int hana);
     static void setMercenaryUnuse(unsigned int hana, unsigned char flag);
+    // 2.0.0's symbols name it. What it does: returns one of three blade ids (a table at 0x71009BA374) by which of three
+    // SDataGame shorts (0x7CBC, 0x8560, 0x8E04) is 2, else 0; ScriptPlayText's pt setDriverEnable takes the returned
+    // blade's mercenary team off its mission for driver 4.
+    static unsigned int getMercenary();  // (it loads the table's 16-bit id; callers use all 32 bits)
 };
 
 }  // namespace gf

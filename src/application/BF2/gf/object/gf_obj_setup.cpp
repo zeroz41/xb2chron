@@ -602,7 +602,7 @@ void GfInitParamDriver::setupForEventCS(unsigned int driverId, unsigned int blad
     m_bladeId = bladeId;
     pad_82 = 0;
     if (GfDataDriver::isIra(driverId)) {
-        m_bladeId = GfDataBlade::fn_7100237B70(driverId, -1);
+        m_bladeId = GfDataDriver::getIraBlade(driverId, -1);
     }
 }
 

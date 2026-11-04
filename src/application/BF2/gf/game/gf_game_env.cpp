@@ -25,6 +25,7 @@
 #include "gf/SDataGame.h"
 #include "gf/gf_data_aoc.h"
 #include "nn/oe.h"
+#include "gf/GfDataUtil.h"
 
 namespace gf {
 
@@ -261,7 +262,7 @@ WEATHERID GfGameEnv::getTempWeather() {
 }
 
 void GfGameAoc::fn_71002A7430(int mode) {
-    GfDataBlade::fn_71002324FC(GfDataManager::getDataGame(), mode == 1);
+    GfDataUtil::setIra(*GfDataManager::getDataGame(), mode == 1);
     m_mode = mode;
     refreshAocFlag();
 }

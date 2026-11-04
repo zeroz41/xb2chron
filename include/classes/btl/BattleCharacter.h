@@ -127,7 +127,7 @@ public:
     bool IsBattle() const;
     void BattleEndInitialize();
     // 1.0.0's names: 1.0.0's CharacterManager::PreUpdateProc and PostUpdateProc call them first on every character
-    // with their UpdateInfo, where 3.0.1's call fn_7100036084 and fn_7100039050
+    // with their UpdateInfo, where 3.0.1's call PreManagerUpdate and PostManagerUpdate
     void PreManagerUpdate(const fw::UpdateInfo& info);
     void ManagerUpdate(const fw::UpdateInfo& info);
     void ManagerUpdate_Attack();
@@ -476,7 +476,7 @@ public:
     void SetAnimation(ANIM_ID id, bool, int, int, bool, bool);
     // 1.0.0's UpdateBuffEffect(int) (0x7100036A18, right before UpdateTargetLockArrow as here): one buff id
     // updates the target lock arrow, the others their effect's position and scale (3.0.1's symbols spell
-    // fn_7100043CF4)
+    // UpdateBuffEffect)
     void UpdateBuffEffect(int id);
     void UpdateBladeGuardEffect(const mm::Vec3* pos);
     void UpdateTargetLockArrow();

@@ -6,9 +6,10 @@ namespace mm { namespace mtl { template <typename T, unsigned long N> class Fixe
 namespace mm { class Vec3; namespace mtl { template <int LEN> class FixStr; template <typename T, unsigned long N> class FixedList; } }
 namespace gmk { enum GmkType : int; }
 namespace gf { class GfFieldLocator; }
-namespace gf { class SDataBlade; }
+namespace gf { class SDataBlade; enum GFDIFF : int; }
 namespace mm { namespace mtl { template <typename T> class Vector; } }
 namespace mm { class Mat44; }
+namespace fw { class SoundPack; }
 
 namespace gf {
 
@@ -65,7 +66,7 @@ public:
     static void execEquipDriverDefaultAcce(unsigned int driver);
     // 2.0.0's symbols name it. What it does: when GfDataDriver::isIraFront(driver) holds and getEquipWpnAcce(driver) is
     // 0, takes the accessory GfBdatChrDr's getChrIrDefWpnAcce(getChrDrIraParam(driver)) names, adds it to the item box
-    // silently (if there is room) and hands it to GfItemUtil's unit's fn_71002FCD68 with an empty handle. Its one
+    // silently (if there is room) and hands it to GfItemUtil's unit's GfEquipUtil::equipIraWpnAcce with an empty handle. Its one
     // caller, GfGameScene::gevDriverActivate, calls it right after execEquipDriverDefaultAcce when a driver becomes
     // active.
     static void execEquipIraDefaultWpnAcce(unsigned int driver);
@@ -177,7 +178,7 @@ public:
     // 0x3FE's creator to 1050, marks its m_createEvent watched (setWatchedEvent) and calls GfEvent::callBladeActivate
     // from its previous activate type to 1; returns the new blade (0 for none)
     static unsigned int execAddRareBlade(const SDataBlade& data);
-    // 2.0.0's symbols name it. What it does: when GfDataBlade::fn_7100231FF8 holds and data's blade is
+    // 2.0.0's symbols name it. What it does: when GfDataUtil::isClearGame holds and data's blade is
     // GfDataBlade::getStartCommonBlade, re-activates it (setActivateReserver) and returns it; else sets data's blade to
     // getStartCommonBlade for item 45010 (0 otherwise), adds it (GfDataBlade::addCommonBlade) and does
     // execAddRareBlade's watched-event and callBladeActivate(blade, 0, 1) steps; returns the new blade.
@@ -292,6 +293,154 @@ public:
     // the object's formation index: its rebuilt driver's or blade's setup id when that is set, else its party
     // hierarchy - 1; -1 for a trinity blade or an object outside the party
     static int getFormationPlayerID(gf::GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name it. What it does: false for handle -1, a GfObjAcc with no object, a destroyed object
+    // (isDestroy) or one with flag 0x11 (testFlag); for an object of type 6 whose bound gimmick (gmk::getBindedGmkInst)
+    // has type 3 (its slot 2), whether the "flag" column of the gimmick's BDAT row (getBindedBdatFp, its row at 0x38)
+    // holds the flag named "HITONOWAGET" (Bdat::getFlagVal) is nonzero. GfMenuGfObjAdapter::update_IRA_NpcHitonowaIcon
+    // calls it.
+    static bool getUiGetHitonowa(GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name it. What they do: when the arena game mode (GfGameArena::sys()) exists, send it a
+    // MsgUnk_1000034 of type 0xE (GfGameUtil::addEtherCube), 0xF (GfGameUtil::addScore) or 0x10
+    // (GfGameUtil::applyClearTimeForArena) carrying value in its parameter word 0x30, 0x34 or 0x38. Callers: the exec
+    // of the requests SCOM_ADD_ECUBE and SCOM_ADD_SCORE (their value at 0x1C) and gf_req_scom's SCOM_CLEAR_TIME::create.
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+    // GfWeapon's unit among free placeholders and it takes only a handle. What it does: false unless the object is a
+    // driver (GfObjUtil::getObjType 3); true when it is driver 0x11 whose GfComAsm (component 2) plays a layer-0 state
+    // whose name holds "btstart", else whether GfMountManager::getMountType(handle, 0) is 1 or 3.
+    // PlayerCameraTarget::writeTargetInfo takes it as m_isRiding in a battle.
+    static bool isBattleWeapon(GF_OBJ_HANDLE* handle);
+    static void addEtherCube(unsigned int value);
+    static void addScore(unsigned int value);
+    static void applyClearTimeForArena(unsigned int value);
+    // 2.0.0's symbols name it. What it does: for a driver other than 0, lowers its experience (DataParamAcc(3,
+    // driver).getExp()) by exp, down to 0 (at most 999999999), stores it (GfDataDriver::setExp) and, for a DLC driver
+    // row (isIra), calls getIraFront on it; GfMenuObjBalloon::SelMoneyListener::reciveEvent calls it.
+    static void subExpInn(unsigned int driver, unsigned int exp);
+    // 2.0.0's symbols name it. What it does: a driver's class from the average trust rank (1..6) of the driver's active
+    // party blades (GfDataDriver::getIraBack, GfGameUtil::getTrustRank) through GfBdatChrDr::getChrDrIraParam,
+    // getChrIrGroupID and GfBdatBtl::getBTL_IrGroupRevGroupRev; GfMenuCharDataAdapter::update_DR_ClassBuffLv uses it
+    // for the add-on (isValidExpansion(3)) driver class.
+    static unsigned int getGroupClass(unsigned int driver);
+    // 2.0.0's symbols name it. What it does: returns GfGameUtil::fn_71002DEFBC(blade) (a tail call);
+    // GfAssetSetup::setRefResource calls it.
+    static const char* getAcceBladeModel(unsigned int blade);
+    // 2.0.0's symbols name it. What it does: the model name of driver id from GfBdatChrDr (getChrDrModel2,
+    // getChrDrCondition with GfGameCond::isGameCond, then BDAT columns by the driver's id), first trying
+    // fn_71002DF4C4(id, third argument); for driver 6 with the second argument set it also ORs in
+    // isInvalidMelefRetarget's result. GfAssetSetupDriver's getMdlFile/getArcFile pass (id, create type in {2, 3, 11},
+    // create type == 3), GfAssetSetupNpc::getMdlFile (id, false, create type == 3) for ids below 26.
+    static const char* getDriverModel(unsigned int driverId, bool createTypeIn2311, bool createType3);
+    // 2.0.0's symbols name it. What it does: fn_71002DF4C4(id, flag), where for driver 6 with the second argument set
+    // flag also takes GfDataEvent::isInvalidMelefRetarget of GfGameEvent::getStartEventId() (as
+    // GfGameUtil::getDriverModel does). GfAssetSetup::setRefResource calls it.
+    static const char* getAcceDriverModel(unsigned int driverId, bool check, bool flag);
+    // Placeholder name: GfWeapon's unit's function (callers GfGameObj::checkEnableGameObj, GfGameUtil::levelupForEnemy and
+    // GfGameScene::gevChangeGameDifficult, which calls it on every object of list 5). A free function: its class is not known.
+    static void refreshEnemyHp(GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name it. What it does: for blade 1001, else 1002 (the first GfDataBlade::fn_71002383C8 holds
+    // for), cancels the mission of the blade's mercenary team (GfGameMercenaries::cancelMission of
+    // GfDataMercenaries::getMissionIdByBlade) and clears that team's members (clearTeamMember of getTeamID);
+    // GfGameScene::gevChangeScenarioFlag calls it.
+    static void execClearMercenariesInHomuraHikari();
+    // 2.0.0's symbols name it. What it does: for a handle other than -1, sets the alpha of its "medal" extra mesh
+    // (GfObjAcc::getExtMeshIdx, setExtMeshAlpha) to 1 when show is set, else 0; fn_7100543F98 calls it.
+    static void dispLauraMedal(GF_OBJ_HANDLE* handle, bool show);
+    // 2.0.0's symbols name it. What it does: appends driver ids to the list: 17..25 for which GfDataDriver::isIraFront
+    // holds while GfDataUtil::isIra's flag is set, else 1..8 (5 left out while GfDataUtil::isVandammeDead holds);
+    // returns whether the list holds any.
+    static bool getDriverAcceList(mm::mtl::FixedVector<unsigned short, 32>& list);
+    // 2.0.0's symbols name it. What it does: when GfGameManager::isGameTypeIra holds, whether game condition 0xE86 does
+    // not hold (GfGameCond::isGameCond); else whether GfDataUtil::getScenarioFlag() is below 5048.
+    // GfMenuObjUtil::getFaceIconID and isIraSinMaskOff test it.
+    static bool isDispSinMask();
+    // 2.0.0's symbols name it. What it does: the address 0x4C bytes into the option data: tl::TitleMain's
+    // getOptionBuffer when GfManager::isExecModeAdvertize or isExecModeThater holds and TitleMain exists, else
+    // GfDataManager::getDataOption(). GfArenaBattle::mapjumpForReturnFieldForObjCleanup / execBattleSequence copy 0x3C bytes
+    // into it. Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions because their
+    // addresses are in GfWeapon's unit (no object). What they do: GfGameUtil::isDispLauraMedal: whether
+    // GfDataUtil::getScenarioFlag() lies in 11100..11130 (caller fn_7100543F98).
+    // GfGameUtil::isNeedRetargetDriverResource / GfGameUtil::getNeedRetargetDriverId: whether a model name contains
+    // "pc110601" (true / 6, else false / 0; GfAssetSetupEnemy::setup and GfAssetSetupNpc::setup call both).
+    // GfGameUtil::playSeForPartySwitch: plays menu sound effect 0x2E (GfMenuObjUtil::playSE;
+    // GfReqCommand::execChangeBladeWithBladeId calls it). GfGameUtil::getDlcSePack / GfGameUtil::getDlcSeName:
+    // GfFieldSound's getDlcSePack / fn_710027CEA4 for name when GfFieldSound is up (none otherwise;
+    // GfComSound::playSe2D calls both).
+    static bool isDispLauraMedal();
+    // 2.0.0's symbols name it. What it does: for drivers 1, 2, 3, 5 and 6 sets their blades back (mercenary blades by
+    // GfGameUtil::execEquipMercenariesBlade, then the equipped one) and answers whether one was equipped;
+    // GfArenaParty::removeFieldBlade passes (false, true).
+    static bool execPartyBladeFollow(bool, bool);
+    // 2.0.0's symbols name it. What it does: in the arena (GfGameArena::fn_7100291D54 holds)
+    // GfGameArena::getWeaponDamage(handle), else DataParamAcc(handle).getWeaponDamage(false), as
+    // GfGameUtil::getWpnStability does for the stability; btl::PlayerParameter::InitializeAttackParam calls it.
+    static unsigned int getWpnDamage(GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name it. What it does: DataParamAcc(handle).getWeaponStability(false);
+    // btl::PlayerParameter::InitializeAttackParam calls it.
+    static unsigned int getWpnStability(GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name it. What it does: false unless GfGameManager::isInstalledBattleArenaContents is true; then
+    // true when GfItemUtil::getItemBoxCount(25497) is non-zero, else whether any of the five ints at
+    // GfDataManager::getDataGame()+0x11AF18/0x11AF0C/0x11AF24/0x11AF30/0x11AF3C is non-zero.
+    // GfFieldSound::createMapSound loads the "dlc_se_btl_spskill" sound pack when it is true.
+    static bool isEnableBladeElma();
+    // 2.0.0's symbols name it. What it does: whether the add-on blade is unlocked: 0x451 asks
+    // GfGameAoc::fn_71002A75DC(0x20101), 0x452/0x453 GfGameManager::isInstalledBattleArenaContents, 0x457 that one too,
+    // item 25497 in the box and a first rule value set in row 25 of SDataGame's challenge rule table; every other blade
+    // is.
+    static bool isEnableBladeDlc(unsigned int blade);
+    // 2.0.0's symbols name it. What it does: the row of GfBdatChrEnArrange whose getBTL_NamedListIraEnemyID (when
+    // GfGameManager::isGameTypeIra holds, rows getBTL_NamedListIraStart up to getBTL_NamedListIraEnd) or
+    // getBTL_NamedListEnemyID (rows getBTL_NamedListStart up to getBTL_NamedListEnd) equals enemy; 0 when none does.
+    static unsigned int getNamedListIndex(unsigned int enemy);
+    // 2.0.0's symbols name it. What it does: false when GfGameUtil::getNamedListIndex(enemy) gives no record, else
+    // whether bit mode of that record's flag byte (0x14 bytes each in the game data, at 0x11B4DC) is set.
+    // gf_menu_obj_named_list's updateNamedIDList passes a named enemy's "EnemyID" and
+    // GfMenuObjOption::getDifficultyFromIndex's difficulty; its isDefeated passes GfGameManager::getBtlDifficult().
+    static bool isDefeatNamed(unsigned int enemy, GFDIFF mode);
+    // 2.0.0's symbols name it. What it does: GfGameUtil::getClearNamedTime with the record column chosen by mode
+    // (0/1/2/4) instead of getBtlDifficult(); GfMenuCharDataAdapter::update_EN_DefeatedTime passes
+    // GfMenuReference::getReferenceBtlchDifficulty().
+    static unsigned int getClearNamedTime(unsigned int enemy, GFDIFF mode);
+    // 2.0.0's symbols name it. What it does: -1 when GfGameUtil::getNamedListIndex(id) gives no record, else the int of
+    // that record (0x14 bytes each in the game data) at 0x11B4CC/D0/D4/D8 for getBtlDifficult() 0/1/2/4 (-1 for other
+    // values); GfMenuCharDataAdapter::update_EN_DefeatedTime2 shows it as minutes and seconds for an enemy (objType 5).
+    static unsigned int getClearNamedTime(unsigned int enemy);
+    // 2.0.0's symbols name it. What it does: unless GfGameManager::isEnableNamedRecord fails or isBattleArenaActive
+    // holds, for GfGameUtil::getNamedListIndex(enemy)'s record (0x14 bytes each in the game data) keeps the time in the
+    // column of mode (0/1/2/4, 0x11B4CC..) when the record's flag byte at 0x11B4DC has bit mode, else counts local flag
+    // 8/0xFAF up (to 0xFF) when GfGameManager::isGameTypeIra holds. SCOM_ENBOOK_BOSS_TIME::exec passes its enemy, its
+    // time and GfGameManager::getBtlDifficult() (1.0.0 called GfDataEnBook::setClearNamedTime(enemy, time) there).
+    static void setClearNamedTime(unsigned int enemy, unsigned int time, GFDIFF mode);
+    // 2.0.0's symbols name it. What they do: when GfGameScene is up, GfGameScene::fn_71002C4C0C(handle, target, flag)
+    // with kind 0 (GfGameUtil::setIraBoneMountR) or 1 (GfGameUtil::setIraBoneMountL); btl::BattleCharacter::SetAction /
+    // AsmCallback call them.
+    static void setIraBoneMountR(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag);
+    static void setIraBoneMountL(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag);
+    // 2.0.0's symbols name it. What they do: false when the int at 0x10D7C of GfDataManager::getDataGameIra() is 0,
+    // else whether GfBdatChrDr::getIRA_PartyGuest1 (GfGameUtil::isEnableIraSatahiko) / getIRA_PartyGuest2
+    // (GfGameUtil::isEnableIraMilto) of it is non-zero. GfMenuObjPartyForm3::initialize shows "LAY_guest@01" /
+    // "LAY_guest@02" by them (GfGameCond and event::ObjectList call them too).
+    static bool isEnableIraSatahiko();
+    static bool isEnableIraMilto();
+    // 2.0.0's symbols name it. What it does: whether a blade is available: true for most IDs; 0x451..0x453 and 0x457
+    // depend on GfGameAoc's content state and GfGameManager::isInstalledBattleArenaContents.
+    // GfArenaParty::addFieldBlade / removeFieldBlade test it for each blade of GfBdatChrBl's range.
+    static bool isEnableGameBlade(unsigned int blade);
+    // 2.0.0's symbols name it. What it does: for driver 6 only, whether GfGameUtil::getDriverModel(6, ...) gives a
+    // model name containing "pc110601" (false for other drivers); GfAssetSetupDriver::setup and
+    // GfAssetSetupDriverForUi::setup call it.
+    static bool isNeedRetargetDriver(unsigned int driverId, bool createTypeIn2311, bool createType3);
+    static bool isNeedRetargetDriverResource(const char* name);
+    static int getNeedRetargetDriverId(const char* name);
+    // 2.0.0's symbols name it. What it does: the twin of isAdvancedDifficulity (same code with item 25495 for 25496).
+    // Callers: TitleStateMainScreen::loadSaveDataForTitle, fn_7100154638 and GfMenuObjOption::initialize.
+    static bool isAdvancedGameOption();
+    // 2.0.0's symbols name it. What it does: takes GfDataManager::getDataGame (TitleMain's save buffer + 0x10 in the
+    // theater or advertise mode), and calls ItemCountLowLevel::getCount on its 0xE98D8 and 0x11D27C areas with 0x6398; GfMenuObjOption's
+    // difficulty lists use its answer to show all four difficulties.
+    static bool isAdvancedDifficulity();
+    static void playSeForPartySwitch();
+    static fw::SoundPack* getDlcSePack(const char* name);
+    static const char* getDlcSeName(const char* name);
 };
 
 }  // namespace gf

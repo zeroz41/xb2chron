@@ -27,6 +27,7 @@
 #include "plugin/Bdat.h"
 #include "ui/EventData.h"
 #include "ui/UIStr.h"
+#include "gf/GfGameUtil.h"
 
 namespace gf {
 
@@ -35,13 +36,13 @@ static inline unsigned char* getNamedTable() {
     return GfDataBdat::getFP(GfGameManager::isGameTypeIra() ? 0x2B : 0x2A);
 }
 
-// fn_71002ED5B0 of a row of the named enemy table (inline; the name is not the original's)
+// GfGameUtil::isDefeatNamed of a row of the named enemy table (inline; the name is not the original's)
 static inline bool hasNamedRecord(unsigned int row, unsigned int mode) {
     unsigned char* fp = getNamedTable();
     if (fp == nullptr) {
         return false;
     }
-    return fn_71002ED5B0((unsigned short)Bdat::getVal(fp, "EnemyID", row), mode);
+    return GfGameUtil::isDefeatNamed((unsigned short)Bdat::getVal(fp, "EnemyID", row), static_cast<GFDIFF>(mode));
 }
 
 GfMenuObjNamedList::GfMenuObjNamedList(unsigned int handle)

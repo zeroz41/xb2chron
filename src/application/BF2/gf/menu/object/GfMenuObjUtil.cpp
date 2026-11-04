@@ -66,6 +66,8 @@
 #include "classes/gf/GfAllocator.h"
 #include "gf/GfKizunaringBlade.h"
 #include "classes/gf/GfGameMercenaries.h"
+#include "gf/GfDataUtil.h"
+#include "gf/GfGameUtil.h"
 
 namespace gf {
 namespace {
@@ -484,7 +486,7 @@ bool GfMenuObjUtil::isExitDriver(unsigned int index) {
 }
 
 bool GfMenuObjUtil::isIraSinMaskOff() {
-    return ui::UIUtil::isEnableExpType(3) && GfGameManager::isGameTypeIra() && !fn_71002EB3C0();
+    return ui::UIUtil::isEnableExpType(3) && GfGameManager::isGameTypeIra() && !GfGameUtil::isDispSinMask();
 }
 
 bool GfMenuObjUtil::isValidExpansion(unsigned int layer) {
@@ -1277,7 +1279,7 @@ bool GfMenuObjUtil::isCustomEnableDriver(unsigned int driver) {
     if (GfDataDriver::isDriver(driver) && driver - 7 < 3) {
         return false;
     }
-    if (GfDataBlade::fn_7100231884() > 2000) {
+    if (GfDataUtil::getScenarioFlag() > 2000) {
         return true;
     }
     if (driver == 1) {

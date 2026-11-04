@@ -22,6 +22,7 @@
 #include "gf/GfDataBlade.h"
 #include "mm/mtl/Vector.h"
 #include "classes/fw/AssetData.h"
+#include "gf/GfDataNpc.h"
 
 namespace gf {
 
@@ -97,7 +98,7 @@ void GfMenuObjHitonowa::refreshNew() {
         for (unsigned int j = 0; j < ids->getSize(); j++) {
             unsigned int id = ids->getContents(j).m_id;
             ui::UIObjectAcc icon(m_selectLists[kind]->getObject(j), "TXT_icon_new");
-            icon.setAlpha(GfDataBlade::fn_710024DF88(id) ? 0.0f : 1.0f);
+            icon.setAlpha(GfDataNpc::isHitonowaNewFlag(id) ? 0.0f : 1.0f);
         }
     }
 }

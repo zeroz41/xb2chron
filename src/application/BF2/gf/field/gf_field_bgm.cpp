@@ -21,6 +21,7 @@
 #include "classes/event/SkipManager.h"
 #include "gf/GfDataBlade.h"
 #include "classes/gf/GfPlayComEventFade.h"
+#include "gf/GfDataUtil.h"
 
 namespace gf {
 namespace _gffsn {
@@ -170,9 +171,9 @@ float bgmvolFadeDisableEventBgm(ExecFadeParam& param) {
 }
 
 // 2.0.0's symbols name it. What it does: a volume fade check like the others: fades out while the game data's local
-// flag (GfDataBlade::fn_7100231884) is 11091 or 11116 and GfPlayComEventFade::s_start is set, else fades in.
+// flag (GfDataUtil::getScenarioFlag) is 11091 or 11116 and GfPlayComEventFade::s_start is set, else fades in.
 float bgmvolFadeEnableEvent1763(ExecFadeParam& param) {
-    bool fadeOut = (GfDataBlade::fn_7100231884() == 11091 || GfDataBlade::fn_7100231884() == 11116) &&
+    bool fadeOut = (GfDataUtil::getScenarioFlag() == 11091 || GfDataUtil::getScenarioFlag() == 11116) &&
                    GfPlayComEventFade::s_start != 0;
     return bgmvolControlFade(*param.m_updateInfo,
                              fadeOut ? param.m_fade->m_fadeOutTime : param.m_fade->m_fadeInTime, fadeOut);

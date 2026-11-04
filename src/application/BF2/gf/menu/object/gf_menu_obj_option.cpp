@@ -22,6 +22,8 @@
 #include "classes/ui/UICtrlCursorSelect.h"
 #include "ui/UIStr.h"
 #include "ui/EventData.h"
+#include "gf/GfGameUtil.h"
+#include "gf/GfGameUtilDiff.h"
 
 namespace gf {
 
@@ -126,7 +128,7 @@ void GfMenuObjOption::MainListener::reciveEvent(ui::EventData const& event, unsi
         if (!dirty) {
             dirty = save->m_soundUi.isDirty(option.m_soundUi);
         }
-        m_owner->m_option.fn_71002EEB0C();
+        GfGameUtilDiff::setCustomFollow(m_owner->m_option);
         unsigned int type = 2;
         if (dirty) {
             *save = m_owner->m_option;
@@ -201,7 +203,7 @@ bool GfMenuObjOption::attach(GfMenuCallContext* context) {
 }
 
 static inline bool isAllDifficulty() {
-    return (GfMenuObjUtil::isValidExpansion(3) && GfGameManager::isClearGame()) || GfGameUtilSaveData::fn_71002EDCEC();
+    return (GfMenuObjUtil::isValidExpansion(3) && GfGameManager::isClearGame()) || GfGameUtil::isAdvancedDifficulity();
 }
 
 // the index-th value of the list in use, of the two it is handed (the name is not the original's)

@@ -223,7 +223,7 @@ unsigned int GfEquipUtil::getEquipBladeOrb(unsigned int blade, unsigned int slot
     return GfDataBlade::getEquipOrb(blade, slot);
 }
 
-unsigned int GfItemUtil::fn_71002FCD64(unsigned int driver) {
+unsigned int GfEquipUtil::getEquipIraWpnAcce(unsigned int driver) {
     return GfDataDriver::getEquipWpnAcce(driver);
 }
 

@@ -266,7 +266,7 @@ unsigned int DataParamAcc::getSkillPoint() const {
     return 0;
 }
 
-unsigned int DataParamAcc::fn_71002208A4(unsigned int index, unsigned int index2, unsigned int index3) const {
+unsigned int DataParamAcc::getDriverArts(unsigned int index, unsigned int index2, PTPOS index3) const {
     if (isValid()) {
         return m_obj->getDriverArts(index, index2, index3);
     }

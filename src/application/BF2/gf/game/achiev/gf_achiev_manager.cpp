@@ -222,7 +222,7 @@ bool GfAchievManager::getBladeByAchievementSet(mm::mtl::FixedVector<unsigned sho
     }
     if (GfGameManager::isGameTypeIra()) {
         for (unsigned int driver = 17; driver < 26; ++driver) {
-            unsigned int blade = GfDataBlade::fn_7100237B70(driver, -1);
+            unsigned int blade = GfDataDriver::getIraBlade(driver, -1);
             if (fn_710028AA4C(blade, achievement)) {
                 list.push_back(blade);
             }

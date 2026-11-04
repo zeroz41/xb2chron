@@ -17,7 +17,7 @@ public:
     virtual ~GfDataStore();  // slot 0
     void initialize(const GfSetupParam& param);  // 1.0.0's, inline in 3.0.1's constructor
     static void build(const GfSetupParam& param);
-    static void destroy();  // fn_710022D040
+    static void destroy();  // destroy
     static void clear();
     static void initGameData();
     static void initOptionData();  // 1.0.0's, inline in 3.0.1's clear and constructor
@@ -30,7 +30,7 @@ public:
     // copies the three blocks and calls checkAndReplaceGameData: this is setGameData
     static void setGameData(const SDataSystem* system, const SDataGame* game, const SDataOption* option);
     // 2.0.0's symbols name it. What it does: takes no arguments; fixes up the game data after a load (Hikari current,
-    // clamps game+0x1176A8 to 100, version stamp at 0x117388 with a 0x306 memset, fn_71002322E0) and tail-calls
+    // clamps game+0x1176A8 to 100, version stamp at 0x117388 with a 0x306 memset, GfDataUtil::setupUi1868ForSDataGame) and tail-calls
     // fn_710022D55C.
     static void checkAndReplaceGameData();
     static void setupOptionData(const SDataOption& option);

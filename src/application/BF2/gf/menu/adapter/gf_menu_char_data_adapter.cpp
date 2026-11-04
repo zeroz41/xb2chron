@@ -59,6 +59,8 @@
 #include "classes/gf/GfGameEnv.h"
 #include "classes/gf/GfBdatChrBl.h"
 #include "classes/gf/GfBdatItem.h"
+#include "gf/GfDataNpc.h"
+#include "gf/GfGameUtil.h"
 
 namespace gf {
 
@@ -875,7 +877,7 @@ bool GfMenuCharDataAdapter::update_IRA_TypeBlade(const DataParamAcc& acc) {
 
 bool GfMenuCharDataAdapter::update_IRA_NpcFaceIcon(const DataParamAcc& acc) {
     if (GfMenuObjUtil::isValidExpansion(3) && acc.getObjType() == 6) {
-        unsigned int value = GfDataBlade::fn_710024DA88(getBladeId(acc));
+        unsigned int value = GfDataNpc::getHitonowaFlag2Index(getBladeId(acc));
         if (value != 0) {
             setNumber(value - 0xED03);
             return true;
@@ -916,7 +918,7 @@ bool GfMenuCharDataAdapter::update_EN_DefeatedTime2(const DataParamAcc& acc) {
         return false;
     }
     ui::uiDateTime time = {};
-    unsigned int sec = fn_71002ED6B8(getBladeId(acc));
+    unsigned int sec = GfGameUtil::getClearNamedTime(getBladeId(acc));
     time.minute = sec / 60;
     time.sec = sec % 60;
     setTime(time);
@@ -945,7 +947,7 @@ bool GfMenuCharDataAdapter::update_DR_ClassBuffLv(const DataParamAcc& acc) {
     }
     unsigned int driverClass;
     if (GfMenuObjUtil::isValidExpansion(3)) {
-        driverClass = fn_71002DC130(getDriverId(acc));
+        driverClass = GfGameUtil::getGroupClass(getDriverId(acc));
     } else {
         driverClass = acc.getClass(m_virtualMode == 1);
     }
@@ -1011,7 +1013,7 @@ bool GfMenuCharDataAdapter::update_EN_DefeatedTime(const DataParamAcc& acc) {
     }
     ui::uiDateTime time = {};
     unsigned int mode = GfMenuReference::getReferenceBtlchDifficulty();
-    unsigned int sec = fn_71002ED608(getBladeId(acc), mode);
+    unsigned int sec = GfGameUtil::getClearNamedTime(getBladeId(acc), static_cast<GFDIFF>(mode));
     time.minute = sec / 60;
     time.sec = sec % 60;
     setTime(time);
@@ -1156,7 +1158,7 @@ bool GfMenuCharDataAdapter::update_DR_ClassBuffName(const DataParamAcc& acc) {
     }
     unsigned int driverClass;
     if (GfMenuObjUtil::isValidExpansion(3)) {
-        driverClass = fn_71002DC130(getDriverId(acc));
+        driverClass = GfGameUtil::getGroupClass(getDriverId(acc));
     } else {
         driverClass = acc.getClass(m_virtualMode == 1);
     }
@@ -1701,7 +1703,7 @@ bool GfMenuCharDataAdapter::update_BL_WeaponIcon(const DataParamAcc& acc) {
     if (GfMenuObjUtil::isValidExpansion(3)) {
         unsigned int blade;
         if (acc.getObjType() == 3) {
-            blade = GfDataBlade::fn_7100237B70(getDriverId(acc), -1);
+            blade = GfDataDriver::getIraBlade(getDriverId(acc), -1);
         } else if (acc.getObjType() == 4) {
             blade = getBladeId(acc);
         } else {
@@ -2163,7 +2165,7 @@ void GfMenuCharDataAdapter::ReferenceBladeSetConverter::getCharData(unsigned cha
             GfDataDriver::getIraBack(drivers, getDriverId(acc));
             if (static_cast<unsigned long>(m_slot) < drivers.size()) {
                 objType = 4;
-                objId = GfDataDriver::isActivateUnuse(drivers[m_slot]) ? 0 : GfDataBlade::fn_7100237B70(drivers[m_slot], -1);
+                objId = GfDataDriver::isActivateUnuse(drivers[m_slot]) ? 0 : GfDataDriver::getIraBlade(drivers[m_slot], -1);
             }
         } else {
             unsigned int blade = GfMenuObjUtil::getBladeIDFromDriverSlot(getDriverId(acc), m_slot);

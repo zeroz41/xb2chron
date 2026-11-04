@@ -31,6 +31,8 @@
 #include "mm/mtl/FixStr.h"
 #include "ui/EventData.h"
 #include "ui/UIStr.h"
+#include "gf/GfDataUtil.h"
+#include "gf/GfGameUtilDiff.h"
 
 namespace gf {
 
@@ -196,7 +198,7 @@ bool GfMenuObjCampMenu::seqConfirmExit() {
 bool GfMenuObjCampMenu::seqClose() {
     m_seq.addJob(&GfMenuObjCampMenu::seqCloseSpecialFadeOut);
     m_seq.addJob(&GfMenuObjCampMenu::seqCloseSpecialFadeWait);
-    if (fn_71002EDA8C()) {
+    if (GfGameUtilDiff::isEnableAutoSave()) {
         m_seq.addJob(&GfMenuObjCampMenu::seqAutoSave);
         m_seq.addJob(&GfMenuObjCampMenu::seqAutoSaveWait);
     }
@@ -340,7 +342,7 @@ bool GfMenuObjCampMenu::seqWaitSleepFade() {
 bool GfMenuObjCampMenu::seqStartLevelUp() {
     GfMenuManager::openFullScreen(5, true, true);
     m_seq.addJob(&GfMenuObjCampMenu::seqWaitFSClose);
-    if (fn_71002EDA8C()) {
+    if (GfGameUtilDiff::isEnableAutoSave()) {
         m_seq.addJob(&GfMenuObjCampMenu::seqAutoSave);
         m_seq.addJob(&GfMenuObjCampMenu::seqAutoSaveWait);
     }
@@ -359,10 +361,10 @@ void GfMenuObjCampMenu::ShopListener::reciveEvent(const ui::EventData& event, un
         if (event.m_param0 == 2) {
             if (m_mode == 1) {
                 g_campMenuState = 1;
-                if (GfDataBlade::fn_7100231884() > 0x2AFE && GfDataBlade::fn_7100231884() < 0x2B01) {
+                if (GfDataUtil::getScenarioFlag() > 0x2AFE && GfDataUtil::getScenarioFlag() < 0x2B01) {
                     m_owner->m_seq.addJob(&GfMenuObjCampMenu::seqCloseSpecialFadeOut);
                     m_owner->m_seq.addJob(&GfMenuObjCampMenu::seqCloseSpecialFadeWait);
-                    if (fn_71002EDA8C()) {
+                    if (GfGameUtilDiff::isEnableAutoSave()) {
                         m_owner->m_seq.addJob(&GfMenuObjCampMenu::seqAutoSave);
                         m_owner->m_seq.addJob(&GfMenuObjCampMenu::seqAutoSaveWait);
                     }

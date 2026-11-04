@@ -42,6 +42,7 @@
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gmk/GmkRoutedNpc.h"
 #include "classes/gmk/Lvlb.h"
+#include "gf/GfDataNpc.h"
 
 namespace gf {
 
@@ -54,12 +55,12 @@ bool GfComBehaviorNpc::BdatInfo::isIconTalkBonus() const {
         return false;
     }
     unsigned char* fp = GfDataBdat::getFP(0xeb);
-    return !GfDataBlade::fn_710024D890(m_talkEventId + 41878 - Bdat::getIdTop(fp));
+    return !GfDataNpc::isTalkBonusFlag(m_talkEventId + 41878 - Bdat::getIdTop(fp));
 }
 
 void GfComBehaviorNpc::BdatInfo::setTalkBonusFlag() const {
     unsigned char* fp = GfDataBdat::getFP(0xeb);
-    GfDataBlade::fn_710024D86C(m_talkEventId + 41878 - Bdat::getIdTop(fp), 1);
+    GfDataNpc::setTalkBonusFlag(m_talkEventId + 41878 - Bdat::getIdTop(fp), 1);
 }
 
 bool GfComBehaviorNpc::LocalSteerIsTargetNotPlayer::operator()(const GfFieldLocalSteer& steer,

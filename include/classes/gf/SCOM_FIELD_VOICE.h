@@ -114,7 +114,7 @@ public:
 
     // Placeholder name: nothing names it (1.0.0 has it unnamed too, at 0x71005CFB94, called from the same three
     // create functions). A member because only SCOM_FIELD_VOICE's createMercenariesStart/End/Result call it, in this
-    // file. What it does: asks GfDataBlade's fn_7100238EC8(i, 0) for i = 0, 1, 2, keeps the non-zero answers
+    // file. What it does: asks GfDataBlade's GfDataParty::getDriver(i, 0) for i = 0, 1, 2, keeps the non-zero answers
     // (16-bit blade IDs) in a 32-entry mm::mtl::FixedVector on its stack, and returns one picked by
     // ml::mtRand(count), or 0 when none; the callers queue a second voice for that blade (ParamObj(3, blade)).
     static unsigned int fn_7100567A44();
@@ -133,11 +133,11 @@ public:
     // 2.0.0's symbols name them. Static members (no request is made; the callers are menu code). What createDriverForIra does: when GfGameManager::isGameTypeIra holds and
     // blade is a bdat id 0x11..0x19, plays one of names (ml::mtRand(size())) appended to the blade's name (table
     // 0x7100B6AB50) for the blade (GfGameVoice::playVoiceParty(3, blade, ...)); 0 otherwise (not recovered). The others
-    // pass it fixed lists: createCraftSelect "680101"/"680102" (caller fn_71003BD208), createArtsSetIra "700101".."700103"
+    // pass it fixed lists: createCraftSelect "680101"/"680102" (caller GfMenuObjCampMenu::CraftListener::reciveEvent), createArtsSetIra "700101".."700103"
     // (caller GfMenuObjDrArtsSet2::ArtsListListener::reciveEvent), createSkillGetIra "710101".."710103" (caller
     // GfMenuObjDrKizunaRing::seqSkillAnime).
     static GAME_VOICE_HANDLE* createDriverForIra(unsigned int blade, const VoiceList& names);
-    static GAME_VOICE_HANDLE* createCraftSelect(unsigned int blade);  // createDriverForIra's voice (fn_71003BD208 keeps it)
+    static GAME_VOICE_HANDLE* createCraftSelect(unsigned int blade);  // createDriverForIra's voice (GfMenuObjCampMenu::CraftListener::reciveEvent keeps it)
     // 2.0.0's symbols name it (caller GfMenuObjShop::seqWaitExchange): createDriverForIra with "680103" (left out for
     // blade 0x13 unless GfGameCond::isGameCond(0xE3F)), "680104", "680105".
     static void createCraftSuccess(unsigned int blade);

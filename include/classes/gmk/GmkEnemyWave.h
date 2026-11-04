@@ -19,18 +19,18 @@ class GmkSealedStone;
 class alignas(16) GmkEnemyWave : public ::gmk::AGmkBase {
 public:
     // weak (tail of the unit): emitted with the table, whose key function is create
-    virtual ~GmkEnemyWave() { dispose(); }  // slot 0 (fn_71005BC2DC; D0 fn_71005BC3D0)
-    virtual gmk::GmkType getGmkType() const { return TYPE; }  // slot 2 (fn_71005BC3F4)
-    virtual bool isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }  // slot 3 (fn_71005BC3FC)
-    virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4 (fn_71005B3A50, 0x314)
-    virtual void dispose();  // slot 5 (fn_71005B3FB0, 0x128; the destructor calls it out of line)
-    virtual void update(float);  // slot 6 (fn_71005B49A4, 0x254)
-    virtual void debugDraw() const;  // slot 7 (fn_71005B4DF0, empty)
-    virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9 (fn_71005B514C, 0x188)
+    virtual ~GmkEnemyWave() { dispose(); }  // slot 0 (~GmkEnemyWave; D0 ~GmkEnemyWave)
+    virtual gmk::GmkType getGmkType() const { return TYPE; }  // slot 2 (getGmkType)
+    virtual bool isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }  // slot 3 (isValid)
+    virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4 (create, 0x314)
+    virtual void dispose();  // slot 5 (dispose, 0x128; the destructor calls it out of line)
+    virtual void update(float);  // slot 6 (update, 0x254)
+    virtual void debugDraw() const;  // slot 7 (debugDraw, empty)
+    virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9 (onPlayerAccessed, 0x188)
     // its row (0x40 bytes: TGmkList::createGmk's stride; the names are not the original's)
     class BdatInfo {
     public:
-        // its row reader: out of line (create), called by initGmkBdatInfo (fn_7100634E2C) where the template
+        // its row reader: out of line (create), called by initGmkBdatInfo (initGmkBdatInfo) where the template
         // calls T1::create (so the name is the template's; the CBdatWrapper parameter as GmkElevator::BdatInfo's)
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         unsigned char pad_0[0x2c];

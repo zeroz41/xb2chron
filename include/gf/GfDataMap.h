@@ -3,6 +3,7 @@
 
 namespace gf { enum WEATYPE : int; }
 namespace gf { enum WEATHERID : int; }
+namespace gf { enum CLOUD_SEA : int; struct WeatherParam; }
 
 namespace gf {
 // the map data's helpers (functions, by their symbols)
@@ -37,6 +38,39 @@ public:
     static unsigned int getWeatherIdByWeaType(unsigned int mapId, WEATYPE type);
     // the time range's name in FLD_TimeInfo's msg (GfFieldTime::getTimeRangeName passes its range); false for none
     static bool getTimeRangeName(unsigned char*& bdat, unsigned int& id, unsigned int range);
+    // 2.0.0's symbols name it. What it does: a game data map record whose m_mapId is 0 (a free one);
+    // GfFieldWeather::setupGame copies a map's resource name into it and sets its m_mapId.
+    static WeatherParam* getEmptyWeatherParam();
+    // 2.0.0's symbols name it. What it does: the game data's record for the map (two 64-record arrays searched by
+    // m_mapId, the first in GfDataManager::getDataGame() + 0x10A53C, each only when
+    // GfBdatMaplist::getMaplistresource(map) is set), else a zeroed function-static record. Callers: GfFieldWeather
+    // (getCloudSea, setupGame, createWeather, updateEvent, updateWeather, applyNowMapWeather), GfDataMap::setCloudType,
+    // GfDataStore::initGameData.
+    static WeatherParam* getWeatherParam(unsigned int map);
+    // 2.0.0's symbols name it. What it does: whether the map's record (GfDataMap::getWeatherParam) has its cloud sea on
+    // (m_cloudSea != 0). Caller: GfFieldWeather::applyNowMapWeather, which hands it on as the cloud sea to set (it
+    // tests the whole word).
+    static CLOUD_SEA getCloudType(unsigned int map);
+    // 2.0.0's symbols name it. What it does: stores (cloudSea != 0) at 0x1C of the record GfDataMap::getWeatherParam
+    // returns for the map; GfGameUtilCloudSea::setInnCloudSea passes (GfGameManager::getMapID(), its cloud sea),
+    // GfPlayComPlayerDead::update calls it too.
+    static void setCloudType(unsigned int map, CLOUD_SEA cloudSea);
+    // 2.0.0's symbols name it. What it does: whether GfDataUtil::getScenarioFlag (local flag 1, type 16) is above
+    // 0x1F64.
+    static bool isArcadiaDestroy();
+    // 2.0.0's symbols name it. What it does: whether local flag 0xD862 (type 1) is set (GfGameFlag::getLocal(1,
+    // 0xD862)); GfDataMap::setIraLastMapCloud2 sets it.
+    static bool isIraLastMapCloud2();
+    // 2.0.0's symbols name it. What it does: sets local flag 0xD862 (type 1) to flag.
+    static void setIraLastMapCloud2(bool flag);
+    // 2.0.0's symbols name it. What it does: whether local flag 0xD863 (type 1) is set;
+    // GfDataMap::setIraOutoAttackCloud sets it.
+    static bool isIraOutoAttackCloud();
+    // 2.0.0's symbols name it. What it does: sets local flag 0xD863 (type 1) to flag.
+    static void setIraOutoAttackCloud(bool flag);
+    // 2.0.0's symbols name it. What it does: looks up the FLD_MapGimmick table (result unused) and counts the set local
+    // flags (type 1) 0xABFA and 0xAC00-0xAC08.
+    static unsigned int getErasedEthCloudNum();
 };
 }  // namespace gf
 

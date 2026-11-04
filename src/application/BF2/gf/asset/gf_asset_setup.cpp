@@ -108,7 +108,7 @@ GfAssetSetupDriver::GfAssetSetupDriver() : pad_1fc(-1) {}
 const char* GfAssetSetupDriver::getMdlFile(GfAssetType type) {
     RefResource* resource = findRefResource(getMdlSlot());
     if (resource == nullptr || resource->m_name.m_nLen == 0) {
-        const char* name = fn_71002DF39C(m_objId, isEventCreateType(m_param->m_createType), m_param->m_createType == 3);
+        const char* name = GfGameUtil::getDriverModel(m_objId, isEventCreateType(m_param->m_createType), m_param->m_createType == 3);
         if (name == nullptr || *name == '\0') {
             return nullptr;
         }
@@ -120,7 +120,7 @@ const char* GfAssetSetupDriver::getMdlFile(GfAssetType type) {
 const char* GfAssetSetupDriver::getArcFile(GfAssetType type) {
     RefResource* resource = findRefResource(getArcSlot());
     if (resource == nullptr || resource->m_name.m_nLen == 0) {
-        const char* name = fn_71002DF39C(m_objId, isEventCreateType(m_param->m_createType), m_param->m_createType == 3);
+        const char* name = GfGameUtil::getDriverModel(m_objId, isEventCreateType(m_param->m_createType), m_param->m_createType == 3);
         if (name == nullptr || *name == '\0') {
             return nullptr;
         }
@@ -256,7 +256,7 @@ namespace {
 // name is not the original's)
 const char* makeUiEventMotName(unsigned int driver) {
     DataParamAcc acc(3, driver, static_cast<GimmickType>(0));
-    const char* name = GfAssetSetup::validName(fn_71002DF39C(driver, false, false));
+    const char* name = GfAssetSetup::validName(GfGameUtil::getDriverModel(driver, false, false));
     static mm::mtl::FixStr<128> s_name;
     s_name.clear();
     s_name.format("%s_%d", name, 98);
@@ -307,7 +307,7 @@ void GfAssetSetupDriverForUi::setup(GF_ASSET_HANDLE* handle, const GfInitParamDr
         }
     }
 
-    if (fn_71002EDBD8(param.m_objId, false, false)) {
+    if (GfGameUtil::isNeedRetargetDriver(param.m_objId, false, false)) {
         const char* evtMot = makeUiEventMotName(param.m_objId);
         makeAssetNamePrefix(name, info.m_type, evtMot, "DR");
         GfAssetPack* pack = GfAssetManager::createAssetFiles(info);
@@ -616,7 +616,7 @@ const char* fn_71001BD044(const char* name, bool createType3) {
     GfBdatChrDr* chrDr = GfBdatChrDr::sys();
     for (unsigned int driver = 1; driver <= 6; driver++) {
         if (GfDataDriver::isAttachedParty(driver) && strcmp(name, chrDr->getChrDrModel(driver)) == 0) {
-            return fn_71002DF39C(driver, false, createType3);
+            return GfGameUtil::getDriverModel(driver, false, createType3);
         }
     }
     GfBdatChrBl* chrBl = GfBdatChrBl::sys();
@@ -796,7 +796,7 @@ const char* GfAssetSetupNpc::getMdlFile(GfAssetType type) {
         unsigned int id = m_objId;
         const char* name;
         if (id < 26) {
-            name = fn_71002DF39C(id, false, m_param->m_createType == 3);
+            name = GfGameUtil::getDriverModel(id, false, m_param->m_createType == 3);
         } else if (id <= 2000) {
             name = GfGameUtil::getBladeModel(id, false);
         } else {

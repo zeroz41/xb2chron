@@ -24,7 +24,7 @@ static const int s_keys6[] = {1523903846, 0};
 // lbl_7100B4C860 (the name is not the original's)
 static const int* s_keyTables[6] = {s_keys1, s_keys2, s_keys3, s_keys4, s_keys5, s_keys6};
 
-void GfDataAoc::fn_71002226F4() {
+void GfDataAoc::initialize(const GfSetupParam&) {
     for (int i = 0; i < 6; i++) {
         m_ids[i] = -1;
     }
@@ -71,9 +71,9 @@ void GfDataAoc::fn_71002226F4() {
 
 GfDataAoc::~GfDataAoc() {}
 
-void GfDataAoc::build(const GfSetupParam&) {
+void GfDataAoc::build(const GfSetupParam& param) {
 #line 43
-    new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfDataAoc;
+    new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfDataAoc(param);
 }
 
 void GfDataAoc::destroy() {
@@ -82,7 +82,7 @@ void GfDataAoc::destroy() {
     delete data;
 }
 
-int GfDataAoc::fn_71002229C0(unsigned int index) {
+int GfDataAoc::getContentVersion(AOC_TYPE index) {
     GfDataAoc* data = get();
     if (data == nullptr) {
         return -1;

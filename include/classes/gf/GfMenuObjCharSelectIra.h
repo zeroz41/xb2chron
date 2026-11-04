@@ -58,7 +58,7 @@ public:
     void refreshCharSelect(int);
     void updateDispDriver(unsigned int driver);
     void updateTopDriver(unsigned int driver);
-    // for the blade's driver (getIraDriver, GfDataDriver::fn_71002418CC): refills the list when m_driver changes,
+    // for the blade's driver (getIraDriver, GfDataDriver::getIraFromPos): refills the list when m_driver changes,
     // then selects the blade's row in m_driverList
     void changeBlade(unsigned int blade);
     // stops the control on each m_selectList object and updates its layout size, then the size of each
@@ -184,7 +184,7 @@ public:
 namespace mnu_chr_sel_ira {
 // sets the driver and blade references for the driver: when GfDataDriver::isIraFront holds, driver 0 and 1 are the
 // driver and blade 0 is 0; otherwise driver 0 is GfDataDriver::getIraFront's row and blade 0 the driver's
-// GfDataBlade::fn_7100237B70(driver, -1). Callers: GfMenuObjCharSelectIra::update, updateDriverList and its
+// GfDataDriver::getIraBlade(driver, -1). Callers: GfMenuObjCharSelectIra::update, updateDriverList and its
 // listeners. 2.0.0's symbols name it, a free function of this namespace
 void setReferenceChar(unsigned int driver);
 }  // namespace mnu_chr_sel_ira

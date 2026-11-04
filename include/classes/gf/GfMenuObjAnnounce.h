@@ -29,7 +29,7 @@ public:
     // is 1 (GfMenuFullScreen::registLayerParam).
     static void setCloseToDlcGift();
     // 2.0.0's symbols name it. What it does: false on menu layer 3 (GfMenuObjUtil::isValidExpansion(3)) or while
-    // lbl_7100C294C0 is 0; else true when gf::fn_71002229C0 answers >= 0 for any of 0..4. Callers: this class's
+    // lbl_7100C294C0 is 0; else true when gf::GfDataAoc::getContentVersion answers >= 0 for any of 0..4. Callers: this class's
     // initialize and its listener, GfMenuObjMainMenu2::initialize (which then drops contents id 8 when it is false, id
     // 9 when it is true).
     static bool hasAnyDLC();

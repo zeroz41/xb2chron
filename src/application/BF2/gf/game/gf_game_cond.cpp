@@ -5,6 +5,7 @@
 #include "classes/gf/GfFieldWeather.h"
 #include "classes/gf/GfGameFlag.h"
 #include "gf/GfDataBlade.h"
+#include "gf/GfDataUtil.h"
 
 namespace gf {
 
@@ -38,7 +39,7 @@ inline void GfGameCond::finalize() {
 }
 
 bool GfGameCond::isScenario(unsigned int condition) {
-    unsigned short scenario = GfDataBlade::fn_7100231884();
+    unsigned short scenario = GfDataUtil::getScenarioFlag();
     unsigned short min = s_bdatCond->getConditionScenarioScenarioMin(condition);
     unsigned short max = s_bdatCond->getConditionScenarioScenarioMax(condition);
     if (max != 0 && (min > scenario || scenario > max)) {

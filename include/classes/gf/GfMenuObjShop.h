@@ -61,7 +61,7 @@ public:
     // the "IMG_store_sell_filter_icon@NN" icons of "LAY_store_sell_filter": the current filter's gets "sys_select"
     void refreshFilterIcon();
     // the SHOP special-shop row (BDAT 0xF4) whose shop_id is that shop and whose scenario_flag is 0 or the current
-    // scenario value (GfDataBlade::fn_7100231884); 0 for none
+    // scenario value (GfDataUtil::getScenarioFlag); 0 for none
     static int getSpecialShop(unsigned int shopId);
     // "TXT_common_guide" shows that row's name (BDAT 0x146's "name", text BDAT 0x118) and fades in from the left
     void setGuideText(unsigned int id);

@@ -106,7 +106,7 @@ bool AI_IsKillChild();
 bool IsPause();
 // 2.0.0's symbols name StartChallengeBattleCallback, EndChallengeBattleCallback, RetryChallengeBattleCallback,
 // ChallengeBattleStartTelopCallback, IsBattleAutoHeal; the fn_ names are placeholders. What they do: call
-// ChallengeBattleManager (the challenge battle singleton) Start (enter calls it), End (fn_710028FFF4), Retry
+// ChallengeBattleManager (the challenge battle singleton) Start (enter calls it), End (StateArenaReturnBattle::onLeave), Retry
 // (execAfterBattle), NotifyStartTelop (execBattleStart), AddEtherCube(value) (GfFobjDropitem::applyGetItem) and
 // IsEnableAutoHeal (GfGameScene::updateAutoHeal).
 void StartChallengeBattleCallback();
@@ -125,7 +125,7 @@ bool IsEnableEnemyBattle();
 // (GfGameScene::updateAutoHeal).
 bool IsCharacterAutoHeal(gf::GF_OBJ_HANDLE* handle);
 // What they do: GetIraGroupDriverID maps ids 17-23 to a driver (17, 18, 19, 17, 17, 18, 18; else 19), GetIraBladeSlot ids
-// 20-25 to a slot (0, 1, 0, 1, 0, 1; else -1); GetIraDummyBladeID passes both to GfDataBlade::fn_7100237B70.
+// 20-25 to a slot (0, 1, 0, 1, 0, 1; else -1); GetIraDummyBladeID passes both to GfDataDriver::getIraBlade.
 // What it does: when the second handle is a battle character, 0 for a non-player, 2 for one of the controlled group,
 // 1 for another; else 2 when the first handle is an enemy object (GfObjUtil::getObjType 5) and 0 otherwise, the
 // other way round when the flag is set (the parameter names are not the original's).

@@ -38,6 +38,7 @@
 #include "mm/mtl/FixStr.h"
 #include "plugin/Bdat.h"
 #include "ui/UIStr.h"
+#include "gf/GfDataUtil.h"
 
 namespace gf {
 
@@ -458,7 +459,7 @@ bool GfMenuObjMainMenu2::seqExecTerm() {
             m_jobStarted = false;
         } else if (!GfGameManager::isEvent(false) && !GfGameManager::isTalking()) {
             if (!s_charMenuOpen ||
-                (GfDataBlade::fn_7100231884() != 0x2B38 && GfDataBlade::fn_7100231884() != 0x2B74)) {
+                (GfDataUtil::getScenarioFlag() != 0x2B38 && GfDataUtil::getScenarioFlag() != 0x2B74)) {
                 GfMenuObjPopup::continuePickup(0x14);
             }
         }

@@ -262,7 +262,7 @@ public:
     // GfDataBlade::fn_71002383C8 holds for blade 1005 or 1006, else whether the game data's short at 0x8E04 is 2.
     static bool isBladeHanaInMercenary();
     // 2.0.0's symbols name it. What it does: true when ui::UIUtil::isEnableExpType(3) and GfGameManager::isGameTypeIra
-    // hold and fn_71002EB3C0 does not; GfMenuCharDataAdapter::update_DR_BtlFace then shows face 0xB for driver 0x14.
+    // hold and GfGameUtil::isDispSinMask does not; GfMenuCharDataAdapter::update_DR_BtlFace then shows face 0xB for driver 0x14.
     static bool isIraSinMaskOff();
     // 2.0.0's symbols name it. What it does: whether blade is one of 1043..1049
     // (GfMenuObjBlWeapon2::ItemSelectListener::reciveEvent).
@@ -304,9 +304,9 @@ public:
     static unsigned short getMsgIDFromList(unsigned int list, unsigned short index);
     // (appended by wpntype) the arts the driver can use with the weapon type, and how many (0 for none). 1.0.0's name
     // (getEnableArts(mm::mtl::FixedArray<unsigned int, 4>&, unsigned int, unsigned int)): the symbols call it
-    // fn_7100493438 (1.0.0's GfMenuWeaponTypeAdapter::update_Arts* call getEnableArts at the same sites); 3.0.1
+    // getEnableArts (1.0.0's GfMenuWeaponTypeAdapter::update_Arts* call getEnableArts at the same sites); 3.0.1
     // added the last two arguments (with add-on menu layer 3 usable, mode 0 with the flag set, or mode 1, also take
-    // fn_7100249238's arts of mode 3 or 2); GfMenuWeaponTypeAdapter passes 0 and false
+    // GfDataDriverArts::getEnableArts's arts of mode 3 or 2); GfMenuWeaponTypeAdapter passes 0 and false
     static unsigned int getEnableArts(mm::mtl::FixedArray<unsigned int, 4>& arts, unsigned int driver,
                                       unsigned int wpnType, int mode, bool flag);
     // (appended by chardata) used by GfMenuCharDataAdapter::update_*

@@ -23,7 +23,7 @@ public:
     // the driver of the member at an index of a party (0: the game data's party at 0xE9884, 1 and 2 the other two
     // parties GfDataManager::getDataGameIra keeps at 0x10D04 and 0x10D40). The symbols spell it fn_7100238EC8: 1.0.0's
     // GfDataParty::getDriver(unsigned int) has the same body for party 0, sits next to GfDataDriver::getBlade as this
-    // does, and 1.0.0's GfMenuObjUtil::isBladeEnableOffset calls it where 3.0.1's calls fn_7100238EC8 (3.0.1 added the
+    // does, and 1.0.0's GfMenuObjUtil::isBladeEnableOffset calls it where 3.0.1's calls getDriver (3.0.1 added the
     // second parameter, as for getPartyMember; its name is not the original's)
     static unsigned int getDriver(unsigned int index, unsigned int party);
     // the party index of a driver (0.., -1 for 0 or a driver not in the party). The symbols spell it fn_710023B1D8:
@@ -45,7 +45,7 @@ public:
     // fn_71002AE6D4 too). A member because its only callers are isPartyMember and isPartyBattleMember, in this unit.
     // What it does: false for character 0; with mode 0 it looks the character up in the game data (drivers 1-16 at
     // 0x2C + (n - 1) * 0x5A0, 17-25 in GfDataManager::getDataGameIra's 0xDAC-byte records, blades 1001-1013 against
-    // GfBdatChrBl::getChrBlEnd) and tests the record's +0x20 short == 1 and fn_710023B1D8(chara); callers pass 10 and 3.
+    // GfBdatChrBl::getChrBlEnd) and tests the record's +0x20 short == 1 and getDriverPartyID(chara); callers pass 10 and 3.
     static bool fn_710024BF60(unsigned int chara, unsigned int mode);
     static bool isLeader(unsigned int chara);  // false for 0
     static mm::Vec3* getSavePos(unsigned int index, bool flag);
@@ -53,7 +53,7 @@ public:
     static bool empty();  // no driver in the first three members
     // 2.0.0's symbols name it. What it does: whether the driver of the game data's party member at index
     // (SDataParty::m_members) has blade in one of its getMaxSetBladeNum slots (GfDataDriver::getBlade). Callers:
-    // GfAssetSetupBlade::setup, GfDataBlade::fn_71002356BC and getListParty.
+    // GfAssetSetupBlade::setup, GfDataParty::isExistBlade and getListParty.
     static bool isExistBlade(unsigned int index, unsigned int blade);
     // 2.0.0's symbols name it. What it does: handle unchanged unless driver is a DLC driver (0x11..0x19); then
     // fn_710024BCEC(driver) 1 or 2 gives getFixedHandleForBlade(handle, 0 or 1). Caller: GfObjFactory::createDriver.
@@ -63,6 +63,9 @@ public:
     // its GroupID, then counts the CHR_Ir rows of that group before the row whose driverID is the driver
     // (0 for no row or no match).
     static unsigned int fn_710024BCEC(unsigned int driver);
+    // 2.0.0's symbols name it. What it does: false for blade 0, else whether one of the first three party members'
+    // drivers has the blade (isExistBlade for 0, 1, 2). Callers: GfAssetSetupDriver::setup, SCOM_PARTY_ADD::exec.
+    static bool isExistBlade(unsigned int blade);
 };
 
 // the party's part of the game data (GfDataParty::getSDataParty points at it); the name is not the original's

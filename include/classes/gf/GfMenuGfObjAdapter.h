@@ -101,8 +101,8 @@ public:
     bool update_BL_DispCurrent(GF_OBJ_HANDLE* handle);
     bool update_BL_DispComboReady(GF_OBJ_HANDLE* handle);
     // 2.0.0's symbols name them. What they do, when GfMenuObjUtil::isValidExpansion(3): update_IRA_NpcHitonowaIcon, for
-    // an object of type 6, sets the number to 1 for fn_710024DD94(its BDAT id) 1 or 3, to 0 for 0 or 2 when
-    // fn_71002D9B5C(handle); update_IRA_TemporaryHp sets the number to the UI HP plus the int at 0x8 of the property's
+    // an object of type 6, sets the number to 1 for GfDataNpc::getHitonowaFlag(its BDAT id) 1 or 3, to 0 for 0 or 2 when
+    // GfGameUtil::getUiGetHitonowa(handle); update_IRA_TemporaryHp sets the number to the UI HP plus the int at 0x8 of the property's
     // character, its max to the UI max HP.
     bool update_IRA_NpcHitonowaIcon(GF_OBJ_HANDLE* handle);
     bool update_IRA_TemporaryHp(GF_OBJ_HANDLE* handle);

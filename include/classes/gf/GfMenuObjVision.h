@@ -31,7 +31,7 @@ public:
     // 2.0.0's symbols name open; the fn_ names are placeholders. open: with the context started, event 0x21 with param
     // to the attached object (without isValidExpansion(1) it aborts the context as GfMenuCallContext::abort does).
     // fn_71004944B8 (GfMenuObjCharSelect::CharListener asks it): false for blade 0x412, else true once the game is
-    // cleared or GfDataBlade::fn_7100231884() is past 2000
+    // cleared or GfDataUtil::getScenarioFlag() is past 2000
     static bool fn_71004944B8(int blade);
     static void open(GfMenuCallContext* context, const OpenParam& param);
     // close: event 0x100 with value to the attached object, starting the context first when there is one

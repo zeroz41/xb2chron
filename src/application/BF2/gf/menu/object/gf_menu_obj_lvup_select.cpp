@@ -23,6 +23,7 @@
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedVector.h"
 #include "ui/EventData.h"
+#include "gf/GfDataUtil.h"
 
 namespace gf {
 
@@ -138,13 +139,13 @@ void GfMenuObjLvupSelect::updateBonusExp() {
                 unsigned int count = virtualLevel - level;
                 for (unsigned int i = 0; i < count; i++) {
                     level++;
-                    exp = exp - GfDataBlade::fn_71002326F0(level) + battleExp;
+                    exp = exp - GfDataUtil::getGrowLevelExp(level) + battleExp;
                     battleExp = 0;
                 }
             } else {
                 unsigned int count = level - virtualLevel;
                 for (unsigned int i = 0; i < count; i++) {
-                    exp += GfDataBlade::fn_71002326F0(level);
+                    exp += GfDataUtil::getGrowLevelExp(level);
                     level--;
                 }
             }
@@ -241,7 +242,7 @@ void GfMenuObjLvupSelect::SelectListener::reciveEvent(ui::EventData const& event
         unsigned int first = GfGameManager::isClearGame() ? 1 : GfDataDriver::getLevel(driver) + 1;
         unsigned int last;
         unsigned int value;
-        GfDataDriver::fn_7100245794(&last, &value, driver);
+        GfDataDriver::getEnableLevel(last, value, driver);
         if (last < first) {
             last = first;
         }

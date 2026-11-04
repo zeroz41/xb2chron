@@ -92,6 +92,7 @@
 #include "classes/gf/GfGameCond.h"
 #include "classes/gf/SCOM_POPUP.h"
 #include "classes/gf/GfQuestTarget.h"
+#include "gf/GfDataUtil.h"
 
 namespace gf {
 
@@ -624,7 +625,7 @@ void GfGameScene::gevChangeParty() {
 void GfGameScene::gevChangeGameDifficult() {
     mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>& list = *GfGameObj::getList(5);
     for (mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>::iterator it = list.begin(); it != list.end(); ++it) {
-        fn_71002E0F28(*it);
+        GfGameUtil::refreshEnemyHp(*it);
     }
 }
 
@@ -632,7 +633,7 @@ void GfGameScene::gevDriverActivate(unsigned int driver, ActivateType from, Acti
     if (from != 0 && to == 0) {
         switch (driver) {
         case 5:
-            if (GfDataBlade::fn_710023220C()) {
+            if (GfDataUtil::isVandammeDead()) {
                 GfGameUtil::execDriverDead(5);
             }
             break;
@@ -654,7 +655,7 @@ void GfGameScene::gevDriverActivate(unsigned int driver, ActivateType from, Acti
 
 void GfGameScene::gevBladeActivate(unsigned int blade, ActivateType from, ActivateType to) {
     if (blade == 1008 && from != 0 && to == 0) {
-        if (GfDataBlade::fn_7100231884() == 3048 && GfDataBlade::getEquipOrbMax(1008) != 0) {
+        if (GfDataUtil::getScenarioFlag() == 3048 && GfDataBlade::getEquipOrbMax(1008) != 0) {
             unsigned int slot = 0;
             do {
                 GfEquipUtil::equipBladeOrb(1008, 0, slot, GfItemHandle());
@@ -857,7 +858,7 @@ void GfGameScene::gevOpenMainMenu() {
     if (GfGameManager::isGameTypeIra()) {
         return;
     }
-    if (GfDataBlade::fn_7100231884() >= 8003 && GfGameFlag::getLocal(1, 52962) == 0) {
+    if (GfDataUtil::getScenarioFlag() >= 8003 && GfGameFlag::getLocal(1, 52962) == 0) {
         GfGameFlag::setLocal(1, 52962, 1);
     }
 }

@@ -95,11 +95,11 @@ public:
 };
 
 // a DLC driver's data, 0xDAC bytes: a driver's data and more (GfDataDriver::getSDataIra returns one;
-// DataObjDriver::setupVirtualParam allocates one). The type and field names are not the original's.
-struct SDataDriverDlc {
+// DataObjDriver::setupVirtualParam allocates one). 2.0.0's symbols name the type; the field names are not the original's.
+struct SDataIra {
     SDataDriver m_driver;
     // 0x5A0: an item handle and (0x5A4) a 16-bit item id, read and set by GfDataDriver::getEquipWpnAcceHandle/setEquipWpnAcceHandle and
-    // getEquipWpnAcce/fn_71002474F4 (GfItemUtil::getEquipChar reads the handle; the names are not the original's)
+    // getEquipWpnAcce/GfDataDriver::setEquipWpnAcce (GfItemUtil::getEquipChar reads the handle; the names are not the original's)
     GfItemHandle m_handle;
     unsigned short m_item;
     unsigned char pad_5a6[0xA];

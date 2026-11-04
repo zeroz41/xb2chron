@@ -96,7 +96,7 @@ public:
     static void callPlayerControl(GEV);  // each listener's gevPlayerControl
     static void callPartyMover(GF_OBJ_HANDLE*, bool);  // each listener's gevPartyMover
     // 2.0.0's symbols name it. What it does: calls IGfEvent slot 2 (gevHitonowaChanged) of every listener with its
-    // arguments. Caller: fn_710024DAD8.
+    // arguments. Caller: GfDataNpc::setHitonowaFlag.
     static void callHitonowaChanged(unsigned int);
     static void callExecBuy(unsigned int, unsigned int, unsigned int);  // each listener's gevExecBuy
     static void callGetArts(unsigned int, unsigned int, bool);  // each listener's gevGetArts

@@ -26,6 +26,7 @@
 #include "classes/gf/GfAllocator.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UIObjectPlugin.h"
+#include "gf/GfDataNpc.h"
 
 namespace gf {
 
@@ -695,10 +696,10 @@ bool GfMenuGfObjAdapter::update_IRA_NpcHitonowaIcon(GF_OBJ_HANDLE* handle) {
     if (acc.getType() != 6) {
         return false;
     }
-    switch (GfDataBlade::fn_710024DD94(acc.getNpcRscId())) {
+    switch (GfDataNpc::getHitonowaFlag(acc.getNpcRscId())) {
     case 0:
     case 2:
-        if (!fn_71002D9B5C(handle)) {
+        if (!GfGameUtil::getUiGetHitonowa(handle)) {
             return false;
         }
         setNumber(0);

@@ -6,7 +6,7 @@
 
 namespace gf {
 // the salvage camera: its RTTI's parent is fw::Camera's. Only the RTTI is recovered so far; its members are not
-// declared yet (fn_7100313330/313414/3134FC/3135E4 are not its functions: they are quest helpers of
+// declared yet (GfQuestUtil::applyNeedFollowQuestTask/313414/3134FC/3135E4 are not its functions: they are quest helpers of
 // QuestTaskParam.cpp, called by GfGameScene and GfQuestUtil::getMsgQuestTaskLog).
 class GfSalvageCam : public ::fw::Camera {
 public:

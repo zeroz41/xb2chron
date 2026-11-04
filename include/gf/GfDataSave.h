@@ -13,7 +13,7 @@ public:
     static void getSaveDataPath(mm::mtl::FixStr<256>& out);
     // "bf2savefile" (1.0.0's symbol; dropped by 3.0.1's linker, its string kept in the unit's .rodata)
     static const char* getSaveDataFileName();
-    // 2.0.0's symbols name it. What it does: returns "irasavefile"; fn_71002C235C calls it,
+    // 2.0.0's symbols name it. What it does: returns "irasavefile"; LoadIraSaveData::loadData calls it,
     // getFileNameForIraLoad/getFileNameForIraSave inline it.
     static const char* getIraSaveDataFileName();
     // "bf2option" (1.0.0's symbol; dropped by 3.0.1's linker, its string kept)

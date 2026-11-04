@@ -37,7 +37,7 @@ public:
     bool m_isState1;
     bool m_hasLink;
     bool m_hasGround;  // writeTargetInfo found a height under the object (either test of its component's flags)
-    bool m_isRiding;  // writeTargetInfo: mounted (or, in a battle, fn_71002DA394's answer)
+    bool m_isRiding;  // writeTargetInfo: mounted (or, in a battle, GfGameUtil::isBattleWeapon's answer)
     bool m_inWater;  // writeTargetInfo: the component's first flag (the height below the surface)
     float m_groundHeight;  // writeTargetInfo: the height found
     float m_surfaceHeight;  // writeTargetInfo: the component's height at 0x280

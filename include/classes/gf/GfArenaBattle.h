@@ -17,7 +17,7 @@ namespace gf {
 void fn_710029064C(unsigned int id);
 
 // table 0x7100B52C38 (no RTTI; a fw::MessageObject secondary table, slots 0x710028C998/CE38/CEB8): the 0xF8-byte
-// object GfGameArena's setup initialize makes with fn_710028CDC0 and keeps at +0xC0. Only what the arena
+// object GfGameArena's setup initialize makes with GfArenaBattle and keeps at +0xC0. Only what the arena
 // states use is declared; its bases and the rest of its layout are not recovered.
 class GfArenaBattle : public ::fw::MessageObject {
 public:
@@ -31,12 +31,12 @@ public:
         unsigned int m_value;
         unsigned int pad_C;
     };
-    // slots 1/2: fn_710028CE38 / fn_710028CEB8 (GfGameArena::finalize deletes the object through slot 2)
+    // slots 1/2: ~GfArenaBattle / ~GfArenaBattle (GfGameArena::finalize deletes the object through slot 2)
     virtual ~GfArenaBattle();
     // 2.0.0's symbols name it.
     explicit GfArenaBattle(GfGameArena* owner);
     // 2.0.0's symbols name them. The arena states call them on GfGameArena's +0xC0 object (code in GfAppendWire's unit
-    // range, next to its constructor fn_710028CDC0). mapjumpForReturnField: StateArenaReturnBattle::onStep calls it
+    // range, next to its constructor GfArenaBattle). mapjumpForReturnField: StateArenaReturnBattle::onStep calls it
     // each step before GfMenuManager::unloadBchUI; mapjumpForReturnFieldForObjCleanup:
     // StateArenaReturnBattle::gevMapjump calls it for GEV 4.
     void mapjumpForReturnField();
@@ -56,7 +56,7 @@ public:
     void execBattle(fw::UpdateInfo const& info);
     bool execAfterBattle();
 
-    // slot 3: the arena's messages (fn_710028C998): MsgUnk_1000034 goes to fn_710028C9CC
+    // slot 3: the arena's messages (recieveMessage): MsgUnk_1000034 goes to fn_710028C9CC
     virtual bool recieveMessage(::fw::MessageObject* sender, ::fw::Message& msg);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: recieveMessage calls it with its
     // arguments for MsgUnk_1000034 (code next to it).
@@ -90,7 +90,7 @@ public:
     // fn_710028C9CC's best values, kept with setupMenuInfoForCube / fn_71002904DC / fn_71002904F4 (the constructor zeroes it
     // as Rule() does; the name is not the original's)
     GfGameManager::BattleChallengeRecord::Rule m_best;
-    // 0x3C bytes mapjumpForReturnFieldForObjCleanup / execBattleSequence copy into the option data (fn_71002EE8C4's; the name is not the
+    // 0x3C bytes mapjumpForReturnFieldForObjCleanup / execBattleSequence copy into the option data (GfGameUtilDiff::getUseSoundUiOption's; the name is not the
     // original's); sizeof 0xF8 (the arena's setup allocates it)
     unsigned char m_option[0x3C];
 };

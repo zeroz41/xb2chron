@@ -37,7 +37,7 @@ public:
     static void fn_71002A0CDC(unsigned int id, unsigned int, unsigned int, const mm::Vec3* pos, float time);
     static void gevPause(unsigned int, unsigned int);
     // 2.0.0's symbols name it. What it does: returns the int at +0x1914 (pad_1914), 0 without an instance (the same
-    // shape as getPlayBladeId one field later); gf::fn_71002DF39C, fn_71002DF624 and fn_71002E1E9C call it.
+    // shape as getPlayBladeId one field later); gf::GfGameUtil::getDriverModel, GfGameUtil::getAcceDriverModel and GfGameUtil::dispSinMask call it.
     static int getStartEventId();
     // 2.0.0's symbols name it. What it does: GfFieldLod::findBdatIdByLodId(lodId), then (when found)
     // GfFieldLod::setLodSwitchId(bdatId, switchId); event::LodManager::OnEventProc calls it.

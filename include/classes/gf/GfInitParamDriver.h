@@ -15,7 +15,7 @@ public:
     virtual bool isAllWeapon() const { return m_isAllWeapon; }  // slot 0
     // 2.0.0's symbols name it. What it does: creation type 3, object id driverId, pad_40 = 7, pad_81/pad_82 cleared,
     // m_bladeId = bladeId; when GfDataDriver::isIra(driverId) accepts the driver, m_bladeId becomes
-    // GfDataBlade::fn_7100237B70(driverId, -1) instead.
+    // GfDataDriver::getIraBlade(driverId, -1) instead.
     void setupForEventCS(unsigned int driverId, unsigned int bladeId);
 
     // inline: no copy of it exists (event::ModelObj::setupModel builds one on the stack)

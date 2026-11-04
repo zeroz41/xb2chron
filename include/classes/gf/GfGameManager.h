@@ -64,9 +64,9 @@ public:
     // (GfGameUtil::incEnemySuppress skips counting while it holds, GfFieldWeather::updateWeather,
     // GfGameScene::setEnemyDead, GfMenuBattleAdapter).
     static bool isBattleArenaActive();
-    // 2.0.0's symbols name it. What it does: tail-calls fn_71002EC634, the byte 0x6F into the option data
+    // 2.0.0's symbols name it. What it does: tail-calls GfGameUtilDiff::getBtlDifficult, the byte 0x6F into the option data
     // (tl::TitleMain's getOptionBuffer in advertize/theater mode, else GfDataManager::getDataOption()). Callers:
-    // btl::BattleGlobal::PreUpdateProc, gf::fn_71002ED6B8 (picks a record column 0/1/2/4 with it),
+    // btl::BattleGlobal::PreUpdateProc, gf::GfGameUtil::getClearNamedTime (picks a record column 0/1/2/4 with it),
     // SCOM_ENBOOK_BOSS_TIME::exec.
     static unsigned int getBtlDifficult();
     // The record getBattleArenaMenuInfo() returns and fn_71002AC60C fills (the name and its fields' names are not the
@@ -212,7 +212,7 @@ public:
     // 2.0.0's symbols name it. What it does: when PtrSingleton<GfGameAoc> exists, passes it and its bool to
     // GfGameAoc::fn_71002A7430 (as GfGameManager::setupGame does); GfManager::resetGameType calls it
     static void resetGameType(bool flag);
-    // 2.0.0's symbols name it. What it does: tail-calls fn_710024DD88, which returns bits 16-19 of the u32 at 0x101D08
+    // 2.0.0's symbols name it. What it does: tail-calls GfDataHitonowa::getFlag4Level, which returns bits 16-19 of the u32 at 0x101D08
     // of GfDataManager::getDataGame(). Callers: updateCloud2ForIra and gf_menu_obj_hitonowa's GfMenuObjHitonowa::setupGame
     // (keeps it in a file static), initialize and seqNextGet.
     static unsigned int getHitonowaLevel();
@@ -292,7 +292,7 @@ public:
     static bool isLeaveGameForDebug();
     static bool isControlFree();
     // an event plays: GfGameScene::isPlayEvent() when there is a GfGameScene (the symbols still spell it
-    // fn_71002AA244; 1.0.0's isPlayEvent at 0x71003196DC has the same code, and SCOM_FIELD_VOICE's stop test calls it
+    // isPlayEvent; 1.0.0's isPlayEvent at 0x71003196DC has the same code, and SCOM_FIELD_VOICE's stop test calls it
     // in both)
     static bool isPlayEvent();
     static bool isScenarioGame();
@@ -303,9 +303,9 @@ public:
     static bool isLandmarkUiOK();
     static bool isEnemyChangeBattleOK();
     // 2.0.0's symbols name it. What it does: with PtrSingleton<GfGameAoc>'s instance in mode 1, whether
-    // GfDataBlade::fn_7100231884 (local flag 1, width 16) is in [11115, 11130); otherwise whether it is at least 10034
+    // GfDataUtil::getScenarioFlag (local flag 1, width 16) is in [11115, 11130); otherwise whether it is at least 10034
     // and its value / 64 is below 157. Callers: GfGameScene::checkFieldBladeChange / checkFieldBladeChangeForRide,
-    // GfPlayFactory::createPlayerDead, fn_71002B6A80.
+    // GfPlayFactory::createPlayerDead, GfSelectIra::update.
     static bool isGameOver();
     static bool isTalkOK();
     static bool isEnablePlayerDeadSequence();
@@ -327,10 +327,10 @@ public:
     // of 0xFD6D0). GfMenuManager's constructor tests it right after registering menu layer 3 for "menu_ira" (see
     // GfMenuObjUtil::isValidExpansion). 269 callers.
     static bool isGameTypeIra();
-    // 2.0.0's symbols name it. What it does: tail-calls fn_7100232754 and returns its bool. Callers: GfMenuManager's
+    // 2.0.0's symbols name it. What it does: tail-calls GfDataUtil::isVersion150 and returns its bool. Callers: GfMenuManager's
     // layer-72 opener (openNamedList), GfMenuCharDataAdapter, GfMenuObjCommonText::openWithNamed.
     static bool isEnableNamedRecord();
-    // 2.0.0's symbols name it. What it does: when fn_71002EDA8C answers true and PtrSingleton<GfGameScene> exists, sets
+    // 2.0.0's symbols name it. What it does: when GfGameUtilDiff::isEnableAutoSave answers true and PtrSingleton<GfGameScene> exists, sets
     // the scene's byte at 0x8B8 to 1. Callers: seqAutoSave and the sys plugin's autoSave (no arguments).
     static void reqestEventAutoSave();
     // 2.0.0's symbols name it. What it does: false when gf_game_env.cpp's 3.0.1 singleton (GfGameAoc) does not exist,
@@ -342,8 +342,8 @@ public:
     // GfGameScene's battle bit (0x148 bit 1, GfGameScene::isBattle) is set; false when there is no GfGameScene. Its
     // only caller is GfGamePlayerUniqueScheduler::update, which skips the scheduler while it is true.
     static bool isDisableUnieqIdle();
-    // 2.0.0's symbols name it. What it does: tail-calls gf::fn_71002EE904(value) (GfWeapon's unit: the option data's
-    // SSoundUiOption at +0x4C gets value through fn_7100254FDC).
+    // 2.0.0's symbols name it. What it does: tail-calls gf::GfGameUtilDiff::getBtlDifParam(value) (GfWeapon's unit: the option data's
+    // SSoundUiOption at +0x4C gets value through GfDataBtlDif::getBtlDifParam).
     static void getBtlDifParam(unsigned int value);
     // 2.0.0's symbols name it. What it does: the int at 0x100 of PtrSingleton<GfGameArena>'s instance (its record's
     // m_value28), 0 when there is none.
@@ -362,7 +362,7 @@ public:
     // driver 0 or the party's blade (getHandleBlade(party, -1)) is in battle, false without a driver.
     static bool fn_71002AC77C(unsigned int party);
     // 2.0.0's symbols name it. What it does: false unless GfGameAoc's instance exists, its mode is not 1 and
-    // fn_71002A75DC(0x30101) holds; then gf::fn_71002EE9A4() (option byte 0x84 is 0).
+    // fn_71002A75DC(0x30101) holds; then gf::GfGameUtilDiff::isEnableSpecialBgm() (option byte 0x84 is 0).
     static bool isEnableSpecialBgm();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
     // GfGameManager's functions and takes no instance. What it does: whether id is 0 or one of 30255..30258.
@@ -374,7 +374,7 @@ public:
     // btl::ChallengeBattleManager's instance exists and either its IsResult holds or its IsWaveFinished holds with
     // btl::Utility::AI_GetEnemyNum() == 0.
     static bool isDisableFieldDamage();
-    // 2.0.0's symbols name it. What it does: tail-call gf::fn_71002EE9EC / fn_71002EEA34 / fn_71002EEA7C (GfWeapon's
+    // 2.0.0's symbols name it. What it does: tail-call gf::GfGameUtilDiff::isEnableAutoBattle / GfGameUtilDiff::isEnableAutoButtonChallenge / GfGameUtilDiff::isEnableEnemyAgg (GfWeapon's
     // unit: the option data's bytes 0x7F / 0x80 / 0x81 are set).
     static bool isEnableAutoBattle();
     static bool isEnableAutoButtonChallenge();
@@ -465,7 +465,7 @@ public:
     static bool isDispPreciousMenu();
     static bool isDispQuestCompleteMenu();
     // isEnableInGameSF / isEnableInGameElma: whether GfItemUtil::getItemBoxCount of item 25472 / 25541 is not 0;
-    // GfMenuBladeList::setupFromTeam, removeFieldBlade and fn_71002E2F4C call both.
+    // GfMenuBladeList::setupFromTeam, removeFieldBlade and GfGameUtil::setupPoweredNewGameParam call both.
     static bool isEnableInGameSF();
     static bool isEnableInGameElma();
     // isVibrationDisable: GfGameScene::isPlayEvent() when there is a GfGameScene (the same code as isPlayEvent);

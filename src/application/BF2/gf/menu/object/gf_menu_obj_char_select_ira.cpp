@@ -173,7 +173,7 @@ void mnu_chr_sel_ira::setReferenceChar(unsigned int driver) {
     } else {
         GfMenuReference::setReferenceDriverID(0, GfDataDriver::getIraFront(driver));
         GfMenuReference::setReferenceDriverID(1, driver);
-        GfMenuReference::setReferenceBladeID(0, GfDataBlade::fn_7100237B70(driver, -1));
+        GfMenuReference::setReferenceBladeID(0, GfDataDriver::getIraBlade(driver, -1));
     }
 }
 
@@ -318,7 +318,7 @@ void GfMenuObjCharSelectIra::updateTopDriver(unsigned int driver) {
 
 void GfMenuObjCharSelectIra::changeBlade(unsigned int blade) {
     unsigned int driver = GfDataBlade::getIraDriver(blade);
-    unsigned int listDriver = GfDataDriver::fn_71002418CC(driver, 0);
+    unsigned int listDriver = GfDataDriver::getIraFromPos(driver, static_cast<PTPOS>(0));
     if (m_driver != listDriver) {
         updateTopDriver(listDriver);
         updateDriverList(m_driver, false);

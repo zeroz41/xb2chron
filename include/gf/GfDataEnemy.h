@@ -41,6 +41,18 @@ public:
     static void setSavedHp(unsigned int type, unsigned int hp);  // SDataGame::m_enemySavedHp[type - 1]
     static const char* getLoopEffect(unsigned int rsc);  // null for none or empty
     static unsigned int getRscIdByArrangeId(unsigned int arrange);  // the arrangement's param's GfBdatRsc row, 0 for none
+    // 2.0.0's symbols name it. What it does: nothing (an empty body; GfGameManager::setupGame calls it).
+    static void initializeEnemySuppress();
+    // 2.0.0's symbols name it. What it does: the count GfDataEnemy::incEnemySuppress raises (0 for enemy 0);
+    // GfGameUtil::incEnemySuppress, GmkEnemyInsts::PopInfo and GmkGrave::update read it.
+    static unsigned int getEnemySuppress(unsigned int enemy);
+    // 2.0.0's symbols name it. What it does: counts an enemy (arrange id) up by one: below 1500 local flag type 0x10
+    // (16 bits) index enemy + 0x2E, else the short at 0x11C084 + enemy * 2 of the game data; capped at 0xFFFF; false
+    // for enemy 0 or a full count, else true. GfGameUtil::incEnemySuppress passes its enemy.
+    static bool incEnemySuppress(unsigned int enemy);
+    // 2.0.0's symbols name it. What it does: counts local game flag type 8 index 0x874 up by one, up to 0xFF
+    // (GfGameFlag::getLocal/setLocal); GfGameUtil::incEnemySuppress calls it for a named enemy counted the first time.
+    static void incNamedDefeatNum();
 };
 }  // namespace gf
 

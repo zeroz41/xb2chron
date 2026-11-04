@@ -296,7 +296,7 @@ static int fn_7100653438(VMThread* th, ai::AiData* data) {
 static int fn_7100653484(VMThread* th, ai::AiData* data) {
     int index = argInt(th, 1);
     gf::DataParamAcc acc(data->getHandle());
-    int arts = acc.fn_71002208A4(acc.getWeaponType(-1, false), index, 0);
+    int arts = acc.DataParamAcc::getDriverArts(acc.getWeaponType(-1, false), index, static_cast<gf::PTPOS>(0));
     VMData ret;
     ret.type = VMDATA_INT;
     ret.v.i = arts;

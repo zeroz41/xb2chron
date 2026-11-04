@@ -26,7 +26,7 @@ public:
     virtual IGmkList* getBindedRoutePointList() const;  // slot 11
     virtual bool isPopCondMatched() const;  // slot 12
     virtual bool isDepopCondMatched() const;  // slot 13
-    // slots 14/15 (AGmkNpc slots 4/5; its overrides, originally fn_7100590868 / fn_71005909C0): measured from the
+    // slots 14/15 (AGmkNpc slots 4/5; its overrides, originally isPopDistCondMatched / isDepopDistCondMatched): measured from the
     // route's point nearest the player instead of the gimmick's position
     virtual bool isPopDistCondMatched() const;
     virtual bool isDepopDistCondMatched() const;

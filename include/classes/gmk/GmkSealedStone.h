@@ -12,13 +12,13 @@ class GmkSealedStoneGob;
 class GmkSealedStone : public ::gmk::AGmkBase {
 public:
     // the overrides its table holds (slot functions still carry their placeholder symbols, given per slot)
-    virtual ~GmkSealedStone();  // slot 0 (fn_71005C4120)
-    virtual gmk::GmkType getGmkType() const;  // slot 2 (fn_71005C41E8)
-    virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4 (fn_71005B9B7C)
-    virtual void dispose();  // slot 5 (fn_71005B9BEC)
+    virtual ~GmkSealedStone();  // slot 0 (~GmkSealedStone)
+    virtual gmk::GmkType getGmkType() const;  // slot 2 (getGmkType)
+    virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4 (create)
+    virtual void dispose();  // slot 5 (dispose)
     virtual void update(float);  // slot 6 (update)
-    virtual void debugDraw() const;  // slot 7 (fn_71005BA220)
-    virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8 (fn_71005BA890)
+    virtual void debugDraw() const;  // slot 7 (debugDraw)
+    virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8 (onGobEvent)
     // its bdat row: complete because TGmkList's inline constructor needs Vector<BdatInfo>; the size is not read
     // yet (placeholder: no fields declared)
     class BdatInfo {};

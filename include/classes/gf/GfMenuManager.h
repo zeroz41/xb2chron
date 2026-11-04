@@ -93,8 +93,8 @@ public:
     static bool isEnableVoiceChange();  // m_optionFlag, false without a manager (GfMenuObjOption's listeners, GfGameUtilSaveData::flushOptionSaveData)
     static void resetLatestCommonWinID();  // clears m_latestCommonWinID while m_initialized
     // 2.0.0's symbols name it. What it does: when the manager exists, GfMenuObjUtil::isValidExpansion(3) answers true,
-    // its 256-entry ushort list at 0x41A8 (count 0x43A8) is not full, fn_710024DAB0(id) is nonzero and
-    // GfDataBlade::fn_710024DE6C(id) answers true, appends the id to that list. Caller: the fld plugin's setNpcMeet
+    // its 256-entry ushort list at 0x41A8 (count 0x43A8) is not full, GfDataNpc::getHitonowaMeetsFlag1Index(id) is nonzero and
+    // GfDataNpc::isHitonowaMeetsFlag(id) answers true, appends the id to that list. Caller: the fld plugin's setNpcMeet
     // when the id's flag changed.
     static void requestNpcEntry(unsigned int id);
     // 1.0.0's startTutorial (0x71003C2F50: same caller btl::UIManager::UpdateTutorial, flag 0xC710 + id - the
@@ -126,7 +126,7 @@ public:
     // ui layer 102; unloadBchUI terminates it (terminateLayer(102, true)) and calls GfMenuObjPartyGauge::enableOpen().
     static void loadBchUI();
     static void unloadBchUI();
-    // 2.0.0's symbols name it. What it does: returns gf::fn_71002229C0(4) (gf_data_aoc); callers are menu objects at
+    // 2.0.0's symbols name it. What it does: returns gf::GfDataAoc::getContentVersion(4) (gf_data_aoc); callers are menu objects at
     // 0x710040BF88..0x710040E1E0.
     static int getGiftNumber();
     // with GfMenuObjUtil::isValidExpansion(3): when m_layer300Open already holds calls

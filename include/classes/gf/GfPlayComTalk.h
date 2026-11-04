@@ -36,7 +36,7 @@ public:
     unsigned int m_map;     // GfGameManager::getMapID when created
     QuestID m_quest;        // GfQuestManager::getProgressCurrentQuest(0) at the start
     QuestID m_lastOrder;    // GfQuestManager::getLastOrder at the start
-    bool m_newMeet;         // the talk set the NPC's met flag (GfDataBlade::fn_710024DE6C changed)
+    bool m_newMeet;         // the talk set the NPC's met flag (GfDataNpc::isHitonowaMeetsFlag changed)
 };
 }  // namespace gf
 #endif

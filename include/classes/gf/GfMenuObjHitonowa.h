@@ -31,7 +31,7 @@ public:
     virtual void update();  // slot 4
 
     // 2.0.0's symbols name it. What it does: registers full-screen layer 0x12F with a GfMenuTypes::Param whose menu is
-    // 1. Caller: fn_71004488A0 (gf_menu_obj_* code).
+    // 1. Caller: GfMenuObjNpcTelop::HitonowaListener::reciveEvent (gf_menu_obj_* code).
     static void setBootFromEvent();
     // 2.0.0's symbols name it. What it does: clears the stream-image bits of image (resetStreamImageEx), asks
     // getNpcChange about id, and sets setStreamImage2nd for 1 or setStreamImage3rd's bit for 2. Caller: fn_7100447D88.
@@ -47,8 +47,8 @@ public:
     static unsigned int s_CurLevel;
 
     // 2.0.0's symbols name it. A member: its code is in this unit and it reads this's lists; called by initialize.
-    // What it does: unless the list of kind (below 4) already holds an id of the same GfDataBlade::fn_710024DA88
-    // group, adds id with fn_7100255848's (kind 0) or fn_71002557C8's value, sorts the list ascending (sortFromWork)
+    // What it does: unless the list of kind (below 4) already holds an id of the same GfDataNpc::getHitonowaFlag2Index
+    // group, adds id with GfDataHitonowa::getEntryComplete's (kind 0) or GfDataHitonowa::getEntryOn's value, sorts the list ascending (sortFromWork)
     // and stores its size in m_refNums[kind].
     void addNpc(unsigned char kind, unsigned int id);
     // 2.0.0's symbols name it. A member: its code is in this unit, after refreshComplete. What it does: places list's
@@ -77,7 +77,7 @@ public:
     // m_seq jobs. 2.0.0's symbols name them; members of this class, as their code and their callers' addJob calls
     // show (Delegate<bool()>::memberFuncInvoker of this class).
     // 2.0.0's symbols name it. What it does: for the lists of kinds 1, 2 and 3, hides each entry's TXT_icon_new when
-    // GfDataBlade::fn_710024DF88 holds for its id (alpha 0, else 1).
+    // GfDataNpc::isHitonowaNewFlag holds for its id (alpha 0, else 1).
     void refreshNew();
     // start control 0 (seqStartGet) or 1 (seqStartLost) into m_busyCtrl, then add to m_seq: wait for it, 30 frames,
     // seqCloseTelop, wait again, then seqMoveGet (0) or seqMoveLost (1). Reached by address from the LAY_main

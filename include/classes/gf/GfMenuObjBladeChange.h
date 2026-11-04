@@ -30,7 +30,7 @@ public:
     static void pushGroupUp();
     // 2.0.0's symbols name it. What it does: sends event 0x105 to the attached object's sibling "LAY_dr_solo" while
     // that flag is set, else to the attached object itself. Callers: BladeListener::reciveEvent,
-    // TUnk_B5FEE8::reciveEvent, setBattleMode and fn_71003C56C0.
+    // TUnk_B5FEE8::reciveEvent, setBattleMode and GfMenuObjCharChange::MainListener::reciveEvent.
     static void refreshBattleMode();
     // 2.0.0's symbols name it. What it does: sends event 0x21 (open) to the attached object's sibling "LAY_dr_solo" and
     // sets s_soloOpen. Caller: GfMenuManager::updateHudState.

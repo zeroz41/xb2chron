@@ -5,32 +5,6 @@
 
 namespace gf {
 struct SSoundUiOption;
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address sits in
-// GfDataBlade.cpp's unit, among no class of its own, and it works on the option it is handed. What it does: stores 6
-// at the option's 0x23, then (when GfBdatBtl is up) fills the bytes from 0x24 from GfBdatBtl::getBTL_DifSettingDiff for the
-// type it is handed (type 4: fn_7100254DF0 instead); SSoundUiOption::clear passes type 0.
-void fn_7100254EF0(SSoundUiOption* option, unsigned int type);
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address sits in
-// GfDataBlade.cpp's unit next to fn_7100254EF0, among no class of its own. What it does: when GfBdatBtl is up, stores
-// 4 at the option's 0x23 and value at 0x24 + index - 1, then calls fn_7100254DF0 on the option;
-// GfMenuObjOption::initOptionData passes each difficulty bdat row's default level - 1.
-void fn_7100254DC4(SSoundUiOption* option, unsigned int index, unsigned char value);
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address sits in
-// GfDataBlade.cpp's unit next to fn_7100254DC4 (its only caller), among no class of its own. What it does: when
-// GfBdatBtl is up, stores (GfBdatBtl::getBTL_DifSettingDiff(11, 0) - getBTL_DifSettingParamMin(11)) / getBTL_DifSettingInterval(11) (0 when that
-// divisor is 0) at the option's 0x2E, and the same for row 12 at 0x2F.
-void fn_7100254DF0(SSoundUiOption* option);
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address sits in
-// GfDataBlade.cpp's unit after fn_71002550C0, among no class of its own, and it works on the option it is handed.
-// What it does: when GfBdatBtl is up, a value for index from the option's 0x23 (type 4: its byte at
-// 0x24 + index - 1, else from GfBdatBtl::getBTL_DifSettingDiff / getBTL_DifSettingParamMin / getBTL_DifSettingInterval of index), scaled by
-// getBTL_DifSettingParamMin / getBTL_DifSettingParamMax of index; 0 without GfBdatBtl. gf::fn_71002EE904 passes the option data's.
-unsigned int fn_7100254FDC(SSoundUiOption* option, unsigned int index);
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address sits in
-// GfDataBlade.cpp's unit after fn_7100254EF0 (before GfDataBlade's own functions), among no class of its own, and it
-// reads the bytes fn_7100254DC4 stores. What it does: when GfBdatBtl is up, the option's byte at 0x24 + index - 1
-// (m_list), else 0.
-unsigned char fn_71002550C0(const SSoundUiOption* option, unsigned int index);
 
 // the sound and screen part of the option settings, 0x3C bytes at SDataOption+0x4C (1.0.0's
 // SSoundUiOption::clear and isDirty)
@@ -38,12 +12,12 @@ struct SSoundUiOption {
     void clear();
     // the clear's last part, out of line in 3.0.1 (GfGameLoad::execOptionLoadWithMicroThread calls it).
     // 2.0.0's symbols name it. What it does: stores the 0xED 0xB0 0x1E 0x5F 0x06 bytes at 0x1F, clears 0x24..0x32 and
-    // 0x3B, calls fn_7100254EF0(this, 0), clears 0x33..0x38.
+    // 0x3B, calls GfDataBtlDif::setOptionGameDifficult(this, 0), clears 0x33..0x38.
     void initializeReserverArea();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads the bytes clear()
+    // 2.0.0's symbols name it. A member because it reads the bytes clear()
     // stores (GfGameLoad::execOptionLoadWithMicroThread calls it on the loaded option's). What it does: true unless
     // 0x1F..0x22 hold clear()'s 0xED 0xB0 0x1E 0x5F, 0x23 is at most 6 and 0x33..0x36 are at most 1 each.
-    bool fn_710022E380() const;
+    bool isUninitializeReserverArea() const;
     // 1.0.0's isDirty (GfMenuObjOption's unit holds it): true when other differs from it
     bool isDirty(const SSoundUiOption& other);
 
@@ -59,9 +33,9 @@ struct SSoundUiOption {
     unsigned char m_langType;
     // 0x1E-0x3C: what these hold is not known; the names are not the original's. clear() stores 0 at 0x1E;
     // initializeReserverArea stores the 0x1F-0x22 key (one 32-bit run of bitfields: a single unaligned store, separate loads in
-    // fn_710022E380), 6 at 0x23, clears m_list and 0x3B, and clears the flags after fn_7100254EF0. The flags
-    // 0x33-0x38 are plain bytes: gf::fn_71002EDA8C, fn_71002EE9A4..fn_71002EEAC4 load each with one ldrb.
-    // fn_710022E380 loads 0x22 and 0x23 with one ldrh, as if m_keyD were in the key's run; that layout breaks
+    // SSoundUiOption::isUninitializeReserverArea), 6 at 0x23, clears m_list and 0x3B, and clears the flags after GfDataBtlDif::setOptionGameDifficult. The flags
+    // 0x33-0x38 are plain bytes: gf::GfGameUtilDiff::isEnableAutoSave, GfGameUtilDiff::isEnableSpecialBgm..GfGameUtilDiff::isEnableHitonowaSkip load each with one ldrb.
+    // SSoundUiOption::isUninitializeReserverArea loads 0x22 and 0x23 with one ldrh, as if m_keyD were in the key's run; that layout breaks
     // initializeReserverArea's store order, so m_keyD stays a byte here
     unsigned char m_byte1E;
     unsigned int m_keyA : 8;
@@ -89,10 +63,6 @@ public:
     // GfDataStore's initOptionData (inline in 3.0.1's GfDataStore::clear and constructor) (the name is not the
     // original's)
     void clear();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it works on its own
-    // m_soundUi (its address sits in GfWeapon.cpp's unit next to GfGameUtilSaveData's functions). What it does:
-    // calls fn_7100254DF0 on m_soundUi; GfMenuObjOption::MainListener calls it on the option it saves.
-    void fn_71002EEB0C();
 
     // 0x3A15B as made, as SDataSystem's (the name is not the original's)
     unsigned int m_version;

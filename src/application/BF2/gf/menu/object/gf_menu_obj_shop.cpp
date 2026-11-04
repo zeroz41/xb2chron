@@ -234,7 +234,7 @@ int GfMenuObjShop::getSpecialShop(unsigned int shopId) {
     if (shopId != 0) {
         unsigned char* fp = GfDataBdat::getFP(0xF4);
         if (fp != nullptr) {
-            unsigned short scenario = GfDataBlade::fn_7100231884();
+            unsigned short scenario = GfDataUtil::getScenarioFlag();
             int top = Bdat::getIdTop(fp);
             for (int i = 0; i < Bdat::getIdCount(fp); ++i) {
                 int id = top + i;

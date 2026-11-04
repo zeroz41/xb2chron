@@ -10,7 +10,7 @@ void fn_710029064C(unsigned int id) {
     if (unsigned int map = btl->getBTL_ChBtlMapJump(id)) {
         unsigned int mapId = GfDataMap::getMapID(map);
         unsigned int weather = btl->getBTL_ChBtlWeather(id);
-        WeatherParam* env = GfDataBlade::fn_710024E1C8(mapId);
+        WeatherParam* env = GfDataMap::getWeatherParam(mapId);
         if (env->m_mapId == mapId) {
             env->m_id = static_cast<WEATHERID>(weather < 4 ? weather + 1 : 5);
             env->m_time = 0.0f;

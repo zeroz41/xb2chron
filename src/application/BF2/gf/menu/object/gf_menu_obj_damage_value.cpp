@@ -64,7 +64,7 @@ void GfMenuObjDamageValue::update() {
     GfMenuObject::update();
 }
 
-// 0x71003E634C open(const OpenParam&) (fn_71003E634C): not identical yet, candidate in wip/
+// 0x71003E634C open(const OpenParam&) (GfMenuObjDamageValue::open): not identical yet, candidate in wip/
 
 inline void GfMenuObjDamageValue::removeObject(ui::UIObjectAcc screen) {
     GfMenuManyObjects::remove<DamageInfo>(0, screen.m_handle);

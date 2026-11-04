@@ -77,7 +77,7 @@ public:
     // the sepia filter: a colour filter and effect "cmn_205_000" (its handle in m_value68C), unless it still exists
     void createSepiaFilter();
     // the sepia filter on (createSepiaFilter) in maps 7, 17 and 19 outside events while the scenario value
-    // (GfDataBlade::fn_7100231884) is 10012, 10014 or 10017, off (its effect killed, the colour filter reset) otherwise
+    // (GfDataUtil::getScenarioFlag) is 10012, 10014 or 10017, off (its effect killed, the colour filter reset) otherwise
     void updateSepia(const fw::UpdateInfo& info);
     void updateRideRequest(const fw::UpdateInfo& info);
     // an enemy with a saved hit-point value (its setup's word at 0xB4) gets it back once it is in battle, then the value is cleared
@@ -146,7 +146,7 @@ public:
     // 0x690 is below 30; isEnableOpenMainMenu answers false while it holds.
     bool isFullScreenMenuAfter() const;
     // 2.0.0's symbols name it. A member because its address is in
-    // gf_game_scene's unit and GfWeapon's unit's fn_71002ED96C / fn_71002ED99C call it on PtrSingleton<GfGameScene>'s
+    // gf_game_scene's unit and GfWeapon's unit's GfGameUtil::setIraBoneMountR / GfGameUtil::setIraBoneMountL call it on PtrSingleton<GfGameScene>'s
     // instance. What it does: keeps (handle, target, kind) records (0x20 bytes each from 0x6A8, count at 0x8A8);
     // with flag clear it looks for the record with that handle and kind, and it reads both objects (GfObjAcc, the
     // target's append handles by GfMountManager::getAppendHandles). kind is 0 or 1 (the two callers).
@@ -201,9 +201,9 @@ public:
     // order) forward to them on PtrSingleton<GfGameScene>'s instance, passing their arguments on. What they do:
     // gevHanaCondenser and gevOrbParam hand the value to the same file function fn_71002C5208 (which, when
     // GfGameManager::isFullScreenMenu answers true, builds "%s%s" ".wimdo" model paths); gevAcceParam does the same
-    // kind of work with its value; gevChangeGameDifficult calls fn_71002E0F28 on every object of GfGameObj::getList(5);
+    // kind of work with its value; gevChangeGameDifficult calls GfGameUtil::refreshEnemyHp on every object of GfGameObj::getList(5);
     // gevOpenPortal starts from the scene's byte at 0x6A0; gevOpenMainMenu, unless GfGameManager::isGameTypeIra answers
-    // true, sets local game flag 52962 (type 1) once GfDataBlade::fn_7100231884 reaches 8003.
+    // true, sets local game flag 52962 (type 1) once GfDataUtil::getScenarioFlag reaches 8003.
     void gevHanaCondenser(unsigned int value, bool flag, unsigned int slot);
     void gevOrbParam(unsigned int value, unsigned int value1);
     void gevAcceParam(unsigned int value, unsigned int value1);

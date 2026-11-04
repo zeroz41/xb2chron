@@ -19,6 +19,10 @@ public:
     // the elements first to last (GfMenuObjPartyForm3's destructor walks its numbers by pointer)
     T* begin() { return m_data; }
     T* end() { return m_data + N; }
+    const T* begin() const { return m_data; }
+    const T* end() const { return m_data + N; }
+    // N (gf::setupItemLists sizes an item type's list by its two arrays' lengths)
+    unsigned long size() const { return N; }
 
     T m_data[N];
 };

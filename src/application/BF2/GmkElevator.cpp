@@ -183,6 +183,7 @@
 #include "classes/gmk/GmkSquadNavi.h"
 #include "fw/FwDebug.h"
 #include "mm/mtl/Vector.h"
+#include "gf/GfDataUtil.h"
 
 namespace gf {
 // the resident sound sources' files, by index (getSoundSourceFileName reads it; bindGFSoundSource loads each)
@@ -4165,7 +4166,7 @@ void GmkElevator::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* 
 }
 
 bool ScenarioFlagCond::isMatch() const {
-    unsigned short flag = gf::GfDataBlade::fn_7100231884();
+    unsigned short flag = gf::GfDataUtil::getScenarioFlag();
     if (m_scenarioFlagMin > flag) {
         return false;
     }

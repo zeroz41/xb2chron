@@ -24,7 +24,7 @@ public:
 
     // 2.0.0's symbols name them. The arena states call them on the arena's +0xB8 object (StateArenaField's onEnter
     // addFieldBlade; StateArenaWait's onEnter and StateArenaLeave's enter removeFieldBlade). What they do: walk this
-    // object's party entries; removeFieldBlade ends with fn_71002EC268(0, 1).
+    // object's party entries; removeFieldBlade ends with GfGameUtil::execPartyBladeFollow(0, 1).
     void addFieldBlade();
     void removeFieldBlade();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x710028E4E8, GfAppendWire's unit

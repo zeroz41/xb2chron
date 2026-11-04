@@ -26,6 +26,7 @@
 #include "classes/gf/SCOM_ENBOOK_DEFEAT_ENEMY.h"
 #include "classes/gf/SCOM_ENBOOK_IN_BATTLE.h"
 #include "mm/mtl/FixedVector.h"
+#include "gf/GfDataDriver.h"
 
 namespace btl {
 
@@ -184,7 +185,7 @@ unsigned int Utility::GetTrustRank(int blade) {
 }
 
 unsigned int Utility::GetIraDummyBladeID(unsigned int blade) {
-    return gf::GfDataBlade::fn_7100237B70(GetIraGroupDriverID(blade), GetIraBladeSlot(blade));
+    return gf::GfDataDriver::getIraBlade(GetIraGroupDriverID(blade), GetIraBladeSlot(blade));
 }
 
 void Utility::FullCoolTime() {

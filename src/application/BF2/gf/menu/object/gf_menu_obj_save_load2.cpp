@@ -28,6 +28,7 @@
 #include "gf/GfReqCommand.h"
 #include "mm/mtl/FixStr.h"
 #include "ui/EventData.h"
+#include "gf/GfDataUtil.h"
 
 namespace gf {
 
@@ -206,9 +207,9 @@ void GfMenuObjSaveLoad2::MainListener::reciveEvent(const ui::EventData& event, u
             if (event.m_paramShort[4] != 0) {
                 GfMenuObject::enableInput(handle);
             } else if (m_owner->m_confirm == 0) {
-                bool close = GfDataBlade::fn_7100231884() > 10042;
+                bool close = GfDataUtil::getScenarioFlag() > 10042;
                 if (GfMenuObjUtil::isValidExpansion(3)) {
-                    close = GfDataBlade::fn_7100231884() > 11125;
+                    close = GfDataUtil::getScenarioFlag() > 11125;
                 }
                 m_owner->m_seq.clear();
                 m_owner->m_seq.addJob(&GfMenuObjSaveLoad2::seqSave);

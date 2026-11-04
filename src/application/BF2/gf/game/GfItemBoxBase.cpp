@@ -29,12 +29,12 @@ GfItemBoxBase::GfItemBoxBase() : m_favoriteItemType(nullptr), m_itemBox(nullptr)
 
 GfItemBoxBase::~GfItemBoxBase() {}
 
-template <ItemType::Type Type, size_t N, size_t M>
-void GfItemBoxBase::fn_71002F42F4(ItemBox* box, unsigned int index, ItemTypeInfo* infos,
-                                  ::mm::mtl::Array<GfItemInfo*>* lists, GfItemInfo (&items)[N],
-                                  GfItemInfo (&extra)[M], unsigned short maxStack, bool multi) {
+template <typename Items, typename Extra>
+void setupItemLists(ItemBox& box, unsigned int index, ::mm::mtl::FixedArray<ItemTypeInfo, 19>& infos,
+                    ::mm::mtl::FixedArray< ::mm::mtl::Array<GfItemInfo*>, 19>& lists, Items& items, Extra& extra,
+                    unsigned short maxStack, bool multi) {
     ::mm::mtl::Array<GfItemInfo*>& list = lists[index];
-    size_t count = multi ? N + M : N;
+    size_t count = multi ? items.size() + extra.size() : items.size();
     list.setAllocator(getAllocator(ALLOCATOR(1)));
     list.reserve(count);
     size_t i = 0;
@@ -53,32 +53,32 @@ void GfItemBoxBase::fn_71002F42F4(ItemBox* box, unsigned int index, ItemTypeInfo
     info.m_step = sizeof(GfItemInfo);
     info.m_maxStack = maxStack;
     info.m_multi = multi;
-    info.m_serial = &box->m_serials[index];
+    info.m_serial = &box.m_serials[index];
 }
 
-void GfItemBoxBase::fn_71002F3F98(ItemBox* box, SDataGame::ItemBoxEx* extra) {
-    m_favoriteItemType = box;
-    m_itemBox = extra;
-    memset(box, 0, sizeof(ItemBox));
-    memset(m_itemBox, 0, sizeof(SDataGame::ItemBoxEx));
-    fn_71002F42F4<ItemType::Type(1)>(box, 1, m_info, m_lists, box->m_type1, extra->m_type1, 99, true);
-    fn_71002F42F4<ItemType::Type(2)>(box, 2, m_info, m_lists, box->m_type2, extra->m_type2, 1, false);
-    fn_71002F42F4<ItemType::Type(3)>(box, 3, m_info, m_lists, box->m_type3, extra->m_type3, 1, false);
-    fn_71002F42F4<ItemType::Type(5)>(box, 4, m_info, m_lists, box->m_type5, extra->m_type5, 99, true);
-    fn_71002F42F4<ItemType::Type(6)>(box, 5, m_info, m_lists, box->m_type6, extra->m_type6, 99, true);
-    fn_71002F42F4<ItemType::Type(7)>(box, 8, m_info, m_lists, box->m_type7, extra->m_type7, 999, true);
-    fn_71002F42F4<ItemType::Type(8)>(box, 9, m_info, m_lists, box->m_type8, extra->m_type8, 99, true);
-    fn_71002F42F4<ItemType::Type(9)>(box, 10, m_info, m_lists, box->m_type9, extra->m_type9, 99, true);
-    fn_71002F42F4<ItemType::Type(10)>(box, 11, m_info, m_lists, box->m_type10, extra->m_type10, 99, true);
-    fn_71002F42F4<ItemType::Type(11)>(box, 12, m_info, m_lists, box->m_type11, extra->m_type11, 99, true);
-    fn_71002F42F4<ItemType::Type(12)>(box, 13, m_info, m_lists, box->m_type12, extra->m_type12, 99, true);
-    fn_71002F42F4<ItemType::Type(14)>(box, 6, m_info, m_lists, box->m_type14, extra->m_type14, 1, true);
-    fn_71002F42F4<ItemType::Type(15)>(box, 7, m_info, m_lists, box->m_type15, extra->m_type15, 1, true);
-    fn_71002F42F4<ItemType::Type(16)>(box, 14, m_info, m_lists, box->m_type16, extra->m_type16, 1, false);
-    fn_71002F42F4<ItemType::Type(17)>(box, 15, m_info, m_lists, box->m_type17, extra->m_type17, 1, false);
-    fn_71002F42F4<ItemType::Type(18)>(box, 16, m_info, m_lists, box->m_type18, extra->m_type18, 1, false);
-    fn_71002F42F4<ItemType::Type(19)>(box, 17, m_info, m_lists, box->m_type19, extra->m_type19, 1, false);
-    fn_71002F42F4<ItemType::Type(20)>(box, 18, m_info, m_lists, box->m_type20, extra->m_type20, 1, false);
+void GfItemBoxBase::setItemBox(ItemBox& box, ItemBoxEx& extra) {
+    m_favoriteItemType = &box;
+    m_itemBox = &extra;
+    memset(&box, 0, sizeof(ItemBox));
+    memset(m_itemBox, 0, sizeof(ItemBoxEx));
+    setupItemLists(box, 1, m_info, m_lists, box.m_type1, extra.m_type1, 99, true);
+    setupItemLists(box, 2, m_info, m_lists, box.m_type2, extra.m_type2, 1, false);
+    setupItemLists(box, 3, m_info, m_lists, box.m_type3, extra.m_type3, 1, false);
+    setupItemLists(box, 4, m_info, m_lists, box.m_type5, extra.m_type5, 99, true);
+    setupItemLists(box, 5, m_info, m_lists, box.m_type6, extra.m_type6, 99, true);
+    setupItemLists(box, 8, m_info, m_lists, box.m_type7, extra.m_type7, 999, true);
+    setupItemLists(box, 9, m_info, m_lists, box.m_type8, extra.m_type8, 99, true);
+    setupItemLists(box, 10, m_info, m_lists, box.m_type9, extra.m_type9, 99, true);
+    setupItemLists(box, 11, m_info, m_lists, box.m_type10, extra.m_type10, 99, true);
+    setupItemLists(box, 12, m_info, m_lists, box.m_type11, extra.m_type11, 99, true);
+    setupItemLists(box, 13, m_info, m_lists, box.m_type12, extra.m_type12, 99, true);
+    setupItemLists(box, 6, m_info, m_lists, box.m_type14, extra.m_type14, 1, true);
+    setupItemLists(box, 7, m_info, m_lists, box.m_type15, extra.m_type15, 1, true);
+    setupItemLists(box, 14, m_info, m_lists, box.m_type16, extra.m_type16, 1, false);
+    setupItemLists(box, 15, m_info, m_lists, box.m_type17, extra.m_type17, 1, false);
+    setupItemLists(box, 16, m_info, m_lists, box.m_type18, extra.m_type18, 1, false);
+    setupItemLists(box, 17, m_info, m_lists, box.m_type19, extra.m_type19, 1, false);
+    setupItemLists(box, 18, m_info, m_lists, box.m_type20, extra.m_type20, 1, false);
 }
 
 item_iterator GfItemBoxBase::begin(ItemType::Type type) {
@@ -247,7 +247,7 @@ bool GfItemBox::addItem(unsigned int item, unsigned int count) {
 }
 
 void GfItemBox::initialize() {
-    get()->fn_71002F3F98(GfDataItem::getFavoriteItemType(), GfDataItem::getItemBox());
+    get()->setItemBox(*GfDataItem::getFavoriteItemType(), *GfDataItem::getItemBox());
 }
 
 void GfItemBox::finalize() {

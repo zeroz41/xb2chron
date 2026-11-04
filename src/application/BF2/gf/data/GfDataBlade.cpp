@@ -109,6 +109,9 @@
 #include "classes/gf/GfGameManager.h"
 #include "btl/Utility.h"
 #include "classes/btl/BattleManager.h"
+#include "gf/GfDataBtlDif.h"
+#include "gf/GfDataFobj.h"
+#include "gf/GfDataHitonowa.h"
 
 namespace gf {
 
@@ -782,7 +785,7 @@ unsigned int GfDataMercenaries::getMissionMapID(unsigned int mission) {
             unsigned int hints = GfDataQuest::getListHintsID(quest);
             if (hints != 0) {
                 unsigned int zone = QuestListAcc::get()->getHintsZoneID(hints);
-                if (GfDataBlade::fn_7100231884() > 8036 && zone == 12) {
+                if (GfDataUtil::getScenarioFlag() > 8036 && zone == 12) {
                     return 14;
                 }
                 return zone;
@@ -1194,7 +1197,7 @@ unsigned int GfDataDriver::getIraGroup(unsigned int driver) {
     return bdat->getChrIrGroupID(row);
 }
 
-SDataDriverDlc* GfDataDriver::getSDataIra(unsigned int driver) {
+SDataIra* GfDataDriver::getSDataIra(unsigned int driver) {
     driver = driver - 0x11 < 9 ? driver : 0x11;
     unsigned int index;
     if (driver - 0x11 < 9) {
@@ -1270,7 +1273,7 @@ unsigned int GfDataDriver::getWeaponEfbFileIdx(int index) {
     return (index < 0 ? 0 : index) + 1277;
 }
 
-bool GfDataDriver::fn_7100247580(mm::mtl::FixedVector<unsigned short, 64>& enhances, int driver) {
+bool GfDataDriver::getEquipAcceEnahnce(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver) {
     return getEquipAcceEnhance(enhances, *getSDataDriver(driver));
 }
 
@@ -2642,22 +2645,22 @@ unsigned int GfDataNpc::getEyeRotControl(unsigned int npc) {
     return GfBdatRsc::get()->getRscNpcListEyeRot(npc);
 }
 
-bool GfDataBlade::fn_710024D82C(unsigned int id) {
+bool GfDataNpc::isEventRetarget(unsigned int id) {
     if (id <= 2000) {
         return false;
     }
     return GfBdatRsc::get()->getRscNpcListEvtRetarget(id) != 0;
 }
 
-void GfDataBlade::fn_710024D86C(unsigned int id, unsigned int value) {
+void GfDataNpc::setTalkBonusFlag(unsigned int id, unsigned int value) {
     GfGameFlag::setLocal(1, id > 43877 ? id + 11651 : id, value);
 }
 
-bool GfDataBlade::fn_710024D890(unsigned int id) {
+bool GfDataNpc::isTalkBonusFlag(unsigned int id) {
     return GfGameFlag::getLocal(1, id > 43877 ? id + 11651 : id) != 0;
 }
 
-bool GfDataBlade::fn_710024D8C4(unsigned char*& bdat, unsigned int& id, unsigned int blade) {
+bool GfDataNpc::getJobMsg(unsigned char*& bdat, unsigned int& id, unsigned int blade) {
     if (blade <= 2000) {
         return false;
     }
@@ -2666,7 +2669,7 @@ bool GfDataBlade::fn_710024D8C4(unsigned char*& bdat, unsigned int& id, unsigned
     return id != 0;
 }
 
-unsigned int GfDataBlade::fn_710024D92C(unsigned int id) {
+unsigned int GfDataNpc::getPlaceMsgId(unsigned int id) {
     if (id <= 2000) {
         return 0;
     }
@@ -2679,16 +2682,16 @@ unsigned int GfDataBlade::fn_710024D92C(unsigned int id) {
     return GfBdatRsc::get()->getRscNpcListMSGID(id);
 }
 
-bool GfDataBlade::fn_710024D9C4(unsigned char*& bdat, unsigned int& id, unsigned int rsc) {
+bool GfDataNpc::getPlaceMsg(unsigned char*& bdat, unsigned int& id, unsigned int rsc) {
     if (rsc <= 2000) {
         return false;
     }
     bdat = GfDataBdat::getFP(435);
-    id = fn_710024D92C(rsc);
+    id = GfDataNpc::getPlaceMsgId(rsc);
     return id != 0;
 }
 
-bool GfDataBlade::fn_710024DA20(unsigned char*& bdat, unsigned int& id, unsigned int rsc) {
+bool GfDataNpc::getResultMsg(unsigned char*& bdat, unsigned int& id, unsigned int rsc) {
     if (rsc <= 2000) {
         return false;
     }
@@ -2697,14 +2700,14 @@ bool GfDataBlade::fn_710024DA20(unsigned char*& bdat, unsigned int& id, unsigned
     return id != 0;
 }
 
-unsigned int GfDataBlade::fn_710024DA88(unsigned int id) {
+unsigned int GfDataNpc::getHitonowaFlag2Index(unsigned int id) {
     if (id <= 2000) {
         return 0;
     }
     return GfBdatRsc::get()->getRscNpcListHitonowaFlag(id);
 }
 
-unsigned int GfDataBlade::fn_710024DAB0(unsigned int id) {
+unsigned int GfDataNpc::getHitonowaMeetsFlag1Index(unsigned int id) {
     if (id <= 2000) {
         return 0;
     }
@@ -2955,8 +2958,8 @@ unsigned int GfDataDriver::getLevel(const SDataDriver& data) {
     return data.m_level;
 }
 
-bool GfDataDriver::fn_7100245794(unsigned int* level, unsigned int* value, unsigned int driver) {
-    return fn_7100245800(level, value, *getSDataDriver(driver));
+bool GfDataDriver::getEnableLevel(unsigned int& level, unsigned int& value, unsigned int driver) {
+    return GfDataDriver::getEnableLevel(level, value, *getSDataDriver(driver));
 }
 
 unsigned int GfDataDriver::getExp(const SDataDriver& data) {
@@ -2991,7 +2994,7 @@ unsigned int GfDataDriver::getBattleExpNextLevel(const SDataDriver& data) {
     }
     unsigned int level = getLevel(data);
     unsigned int exp = getBattleExp(data);
-    unsigned int next = GfDataBlade::fn_71002326F0(level + 1);
+    unsigned int next = GfDataUtil::getGrowLevelExp(level + 1);
     if (exp > next) {
         return next;
     }
@@ -3011,7 +3014,7 @@ unsigned int GfDataDriver::getExpNextLevel(const SDataDriver& data) {
     }
     unsigned int level = getLevel(data);
     unsigned int exp = getBattleExp(data);
-    unsigned int next = GfDataBlade::fn_71002326F0(level + 1);
+    unsigned int next = GfDataUtil::getGrowLevelExp(level + 1);
     if (exp > next) {
         return next;
     }
@@ -3031,7 +3034,7 @@ unsigned int GfDataDriver::getExpUsed(unsigned int driver) {
     unsigned int level = getLevel(*getSDataDriver(driver));
     unsigned int exp = 0;
     for (unsigned int i = 0; i < level; i++) {
-        exp += GfDataBlade::fn_71002326F0(i + 1);
+        exp += GfDataUtil::getGrowLevelExp(i + 1);
     }
     return exp;
 }
@@ -3274,7 +3277,7 @@ void GfDataDriver::setEquipAcce(SDataDriver& data, unsigned int slot, unsigned i
     data.m_equipAcceEx = (data.m_equipAcceEx & 0xFFFF0000) | accessory;
 }
 
-void GfDataDriver::fn_7100247ABC(unsigned int driver, unsigned int slot, const GfItemHandle& handle) {
+void GfDataDriver::setEquipAcceHandle(unsigned int driver, unsigned int slot, GfItemHandle handle) {
     if (driver == 0) {
         return;
     }
@@ -3324,7 +3327,7 @@ void GfDataDriver::getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enh
     getValidEnhance(enhances, *getSDataDriver(driver));
 }
 
-bool GfDataDriver::fn_7100248668(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriverDlc& data) {
+bool GfDataDriver::getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataIra& data) {
     unsigned int item = data.m_item;
     if (item != 0) {
         unsigned int enhance = GfBdatItem::get()->getPcEquipEnhance1(item);
@@ -3476,11 +3479,11 @@ unsigned int GfDataMercenaries::getTeamMax() {
     return max;
 }
 
-void GfDataBlade::fn_71002320AC(SDataGame* game, bool flag) {
-    GfGameFlag::setLocal(game->m_gameFlag, 1, 0xBDCD, flag);
+void GfDataUtil::setClearGame(SDataGame& game, bool flag) {
+    GfGameFlag::setLocal(game.m_gameFlag, 1, 0xBDCD, flag);
 }
 
-unsigned short GfDataBlade::fn_7100231884() {
+unsigned short GfDataUtil::getScenarioFlag() {
     return GfGameFlag::getLocal(GfDataManager::getDataGame()->m_gameFlag, 0x10, 1);
 }
 
@@ -3514,11 +3517,11 @@ struct EventBdat {
 
 static EventBdat s_eventBdats[5] = {EventBdat(0xE8, 100), EventBdat(0xEC, 100), EventBdat(0xE9, 100),
                                     EventBdat(0xEA, 100), EventBdat(0xEB, 100)};
-// the maps' weather records when the game data has no free or matching one (fn_710024E0D0, fn_710024E1C8; the
+// the maps' weather records when the game data has no free or matching one (GfDataMap::getEmptyWeatherParam, GfDataMap::getWeatherParam; the
 // name is not the original's)
 static SDataWeather s_weather;
 
-WeatherParam* GfDataBlade::fn_710024E0D0() {
+WeatherParam* GfDataMap::getEmptyWeatherParam() {
     SDataGame* game = GfDataManager::getDataGame();
     int i = game->m_weather.find(0);
     if (i >= 0) {
@@ -3532,7 +3535,7 @@ WeatherParam* GfDataBlade::fn_710024E0D0() {
     return &s_param;
 }
 
-WeatherParam* GfDataBlade::fn_710024E1C8(unsigned int map) {
+WeatherParam* GfDataMap::getWeatherParam(unsigned int map) {
     static WeatherParam s_param;
     if (map != 0) {
         SDataGame* game = GfDataManager::getDataGame();
@@ -3560,13 +3563,13 @@ unsigned int GfDataEvent::fn_710024EBD8(unsigned int event) {
     return 0;
 }
 
-void fn_7100254DC4(SSoundUiOption* option, unsigned int index, unsigned char value) {
+void GfDataBtlDif::setOptionGameDifficultCustom(SSoundUiOption& option, unsigned int index, unsigned char value) {
     if (GfBdatBtl::get() == nullptr) {
         return;
     }
-    option->m_keyD = 4;
-    option->m_list[index - 1] = value;
-    fn_7100254DF0(option);
+    option.m_keyD = 4;
+    option.m_list[index - 1] = value;
+    GfDataBtlDif::setCustomFollow(option);
 }
 
 // a BTL_DifSetting row's value for slot (0 without GfBdatBtl); every user inlines it, so the name is not the
@@ -3595,36 +3598,36 @@ static unsigned char getDifSettingLevel(unsigned int id, unsigned int value) {
     return (value - min) / interval;
 }
 
-void fn_7100254DF0(SSoundUiOption* option) {
-    option->m_list[11 - 1] = getDifSettingLevel(11, getDifSettingValue(11, 0));
-    option->m_list[12 - 1] = getDifSettingLevel(12, getDifSettingValue(12, 0));
+void GfDataBtlDif::setCustomFollow(SSoundUiOption& option) {
+    option.m_list[11 - 1] = getDifSettingLevel(11, getDifSettingValue(11, 0));
+    option.m_list[12 - 1] = getDifSettingLevel(12, getDifSettingValue(12, 0));
 }
 
-void fn_7100254EF0(SSoundUiOption* option, unsigned int type) {
-    option->m_keyD = 6;
+void GfDataBtlDif::setOptionGameDifficult(SSoundUiOption& option, GFDIFF type) {
+    option.m_keyD = 6;
     if (GfBdatBtl::get() == nullptr) {
         return;
     }
     if (type == 4) {
-        fn_7100254DF0(option);
+        GfDataBtlDif::setCustomFollow(option);
     } else {
         for (unsigned int i = 0; i < 0xF; i++) {
-            option->m_list[i] = getDifSettingLevel(i + 1, getDifSettingValue(i + 1, type));
+            option.m_list[i] = getDifSettingLevel(i + 1, getDifSettingValue(i + 1, type));
         }
     }
-    option->m_keyD = type;
+    option.m_keyD = type;
 }
 
-unsigned int fn_7100254FDC(SSoundUiOption* option, unsigned int index) {
+unsigned int GfDataBtlDif::getBtlDifParam(const SSoundUiOption& option, unsigned int index) {
     GfBdatBtl* bdat = GfBdatBtl::get();
     if (bdat == nullptr) {
         return 0;
     }
     unsigned char level;
-    if (option->m_keyD == 4) {
-        level = option->m_list[index - 1];
+    if (option.m_keyD == 4) {
+        level = option.m_list[index - 1];
     } else {
-        level = getDifSettingLevel(index, getDifSettingValue(index, option->m_keyD));
+        level = getDifSettingLevel(index, getDifSettingValue(index, option.m_keyD));
     }
     unsigned int min = bdat->getBTL_DifSettingParamMin(index);
     bdat->getBTL_DifSettingParamMax(index);
@@ -3632,48 +3635,40 @@ unsigned int fn_7100254FDC(SSoundUiOption* option, unsigned int index) {
     return min + interval * level;
 }
 
-unsigned char fn_71002550C0(const SSoundUiOption* option, unsigned int index) {
+unsigned char GfDataBtlDif::getBtlDifStep(const SSoundUiOption& option, unsigned int index) {
     if (GfBdatBtl::get() == nullptr) {
         return 0;
     }
-    return option->m_list[index - 1];
+    return option.m_list[index - 1];
 }
 
-// the hitonowa list with one NPC per hitonowa flag value (fn_7100255238 fills it): a function-static list whose
+// the hitonowa list with one NPC per hitonowa flag value (GfDataHitonowa::bdatRefresh fills it): a function-static list whose
 // accessor every user inlines (no copy of its own), so the name is not the original's
 static mm::mtl::FixedVector<unsigned short, 256>& getHitonowaFlagNpcList();
 
-// the NPC's hitonowa flag value (GfBdatRsc::getRscNpcListHitonowaFlag) for an id above 2000, else 0 (inlined: the name is not
-// the original's)
-static unsigned int getHitonowaFlag(unsigned int id) {
-    if (id <= 2000) {
-        return 0;
-    }
-    return GfBdatRsc::get()->getRscNpcListHitonowaFlag(id);
-}
 
-void GfDataBlade::fn_71002550E8() {
-    fn_71002554E4().clear();
+void GfDataHitonowa::initialize() {
+    GfDataHitonowa::getList().clear();
     getHitonowaFlagNpcList().clear();
 }
-void GfDataBlade::fn_7100255190() {
-    fn_71002554E4().clear();
+void GfDataHitonowa::finalize() {
+    GfDataHitonowa::getList().clear();
     getHitonowaFlagNpcList().clear();
 }
-void GfDataBlade::fn_7100255238() {
-    fn_71002554E4().clear();
+void GfDataHitonowa::bdatRefresh() {
+    GfDataHitonowa::getList().clear();
     getHitonowaFlagNpcList().clear();
     GfBdatRsc* bdat = GfBdatRsc::get();
     for (unsigned int id = bdat->getRscNpcListStart(), end = bdat->getRscNpcListEnd(); id < end; id++) {
-        unsigned int flag = getHitonowaFlag(id);
+        unsigned int flag = GfDataNpc::getHitonowaFlag2Index(id);
         if (flag == 0) {
             continue;
         }
-        fn_71002554E4().push_back(id);
+        GfDataHitonowa::getList().push_back(id);
         mm::mtl::FixedVector<unsigned short, 256>& list = getHitonowaFlagNpcList();
         bool found = false;
         for (unsigned short other : list) {
-            if (getHitonowaFlag(other) == flag) {
+            if (GfDataNpc::getHitonowaFlag2Index(other) == flag) {
                 found = true;
                 break;
             }
@@ -3683,7 +3678,7 @@ void GfDataBlade::fn_7100255238() {
         }
     }
 }
-mm::mtl::FixedVector<unsigned short, 256>& GfDataBlade::fn_71002554E4() {
+mm::mtl::FixedVector<unsigned short, 256>& GfDataHitonowa::getList() {
     static mm::mtl::FixedVector<unsigned short, 256> s_list;
     return s_list;
 }
@@ -3693,13 +3688,13 @@ static mm::mtl::FixedVector<unsigned short, 256>& getHitonowaFlagNpcList() {
     return s_list;
 }
 
-void GfDataBlade::fn_7100255550(int& set, int& total) {
+void GfDataHitonowa::getCompleteNum(unsigned int& set, unsigned int& total) {
     set = 0;
     total = 0;
     mm::mtl::FixedVector<unsigned short, 256>& list = getHitonowaFlagNpcList();
     for (const unsigned short& id : list) {
         total++;
-        unsigned int flag = getHitonowaFlag(id);
+        unsigned int flag = GfDataNpc::getHitonowaFlag2Index(id);
         if (flag != 0) {
             unsigned int state = GfGameFlag::getLocal(2, flag);
             if (state == 1 || state == 3) {
@@ -3709,7 +3704,7 @@ void GfDataBlade::fn_7100255550(int& set, int& total) {
     }
 }
 
-int GfDataBlade::fn_7100255638() {
+int GfDataHitonowa::getMeetsNum() {
     int count = 0;
     mm::mtl::FixedVector<unsigned short, 256>& list = getHitonowaFlagNpcList();
     for (unsigned short id : list) {
@@ -3723,11 +3718,11 @@ int GfDataBlade::fn_7100255638() {
     return count;
 }
 
-int GfDataBlade::fn_71002556FC() {
+int GfDataHitonowa::getHitonowaNum() {
     int count = 0;
     mm::mtl::FixedVector<unsigned short, 256>& list = getHitonowaFlagNpcList();
     for (unsigned short id : list) {
-        unsigned int flag = getHitonowaFlag(id);
+        unsigned int flag = GfDataNpc::getHitonowaFlag2Index(id);
         unsigned int state = flag != 0 ? GfGameFlag::getLocal(2, flag) : 0;
         if (state == 1) {
             count++;
@@ -3736,7 +3731,7 @@ int GfDataBlade::fn_71002556FC() {
     return count;
 }
 
-unsigned int GfDataBlade::fn_71002557C8(unsigned int id) {
+unsigned int GfDataHitonowa::getEntryOn(unsigned int id) {
     if (id <= 2000) {
         return 0;
     }
@@ -3752,7 +3747,7 @@ unsigned int GfDataBlade::fn_71002557C8(unsigned int id) {
     return 0;
 }
 
-unsigned int GfDataBlade::fn_7100255848(unsigned int id) {
+unsigned int GfDataHitonowa::getEntryComplete(unsigned int id) {
     if (id <= 2000) {
         return 0;
     }
@@ -3814,7 +3809,7 @@ const char* GfDataMap::getWeatherSndName(WEATYPE type) {
         return "";
     }
     GfBdatMaplist* maplist = GfBdatMaplist::get();
-    if (GfDataBlade::fn_71002324C8()) {
+    if (GfDataUtil::isIra()) {
         return maplist->getWeatherInfosnd_ira(type);
     }
     return maplist->getWeatherInfosnd(type);
@@ -3852,12 +3847,12 @@ unsigned int GfDataMap::getWeatherIdByWeaType(unsigned int mapId, WEATYPE type) 
     return 5;
 }
 
-CLOUD_SEA GfDataBlade::fn_710024E8D4(unsigned int map) {
-    return CLOUD_SEA(fn_710024E1C8(map)->m_cloudSea != 0);
+CLOUD_SEA GfDataMap::getCloudType(unsigned int map) {
+    return CLOUD_SEA(GfDataMap::getWeatherParam(map)->m_cloudSea != 0);
 }
 
-void GfDataBlade::fn_710024E8F4(unsigned int map, CLOUD_SEA cloudSea) {
-    fn_710024E1C8(map)->m_cloudSea = cloudSea != 0;
+void GfDataMap::setCloudType(unsigned int map, CLOUD_SEA cloudSea) {
+    GfDataMap::getWeatherParam(map)->m_cloudSea = cloudSea != 0;
 }
 
 bool GfDataBlade::isNeedAttributeResource(unsigned int blade) {
@@ -3903,8 +3898,8 @@ unsigned int GfDataWeapon::getEffWeaponType(unsigned int type) {
     return GfBdatItem::get()->getPcWpnTypeMotion(type);
 }
 
-const char* fn_710024FFF4(unsigned int id) {
-    unsigned char* fp = Bdat::getFP(GfDataBlade::fn_71002324C8() ? "RSC_dropitemListIra" : "RSC_dropitemList");
+const char* GfDataFobj::getFobjModelName(unsigned int id) {
+    unsigned char* fp = Bdat::getFP(GfDataUtil::isIra() ? "RSC_dropitemListIra" : "RSC_dropitemList");
     const char* model = nullptr;
     if (fp != nullptr) {
         model = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "mdo", id, 7));
@@ -3963,7 +3958,7 @@ void GfDataEnemy::setSavedHp(unsigned int type, unsigned int hp) {
     game->m_enemySavedHp[type - 1] = hp;
 }
 
-void GfDataBlade::fn_71002355AC() {
+void GfDataEnemy::incNamedDefeatNum() {
     unsigned int count = GfGameFlag::getLocal(8, 0x874);
     if (count > 0xFE) {
         return;
@@ -3972,7 +3967,7 @@ void GfDataBlade::fn_71002355AC() {
 }
 
 bool GfDataBlade::isDisableHomuraHikari(unsigned int blade) {
-    if (fn_71002356BC(1001) != fn_71002356BC(1002)) {
+    if (GfDataParty::isExistBlade(1001) != GfDataParty::isExistBlade(1002)) {
         return false;
     }
     SDataGame* game = GfDataManager::getDataGame();
@@ -3989,7 +3984,7 @@ bool GfDataBlade::isDisableHomuraHikari(unsigned int blade) {
     return false;
 }
 
-bool GfDataBlade::fn_71002356BC(unsigned int blade) {
+bool GfDataParty::isExistBlade(unsigned int blade) {
     if (blade == 0) {
         return false;
     }
@@ -4104,11 +4099,11 @@ void GfDataHana::setMercenaryUnuse(unsigned int hana, unsigned char flag) {
     }
 }
 
-unsigned int GfDataBlade::fn_7100253C98() {
+unsigned int GfDataHana::getMercenary() {
     // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BA374)
     static const unsigned short s_blades[3] = {1005, 1006, 1007};
     for (const unsigned short& blade : s_blades) {
-        if (getSDataBlade(blade)->m_dataType == 2) {
+        if (GfDataBlade::getSDataBlade(blade)->m_dataType == 2) {
             return blade;
         }
     }
@@ -4412,11 +4407,11 @@ int GfDataDriver::getSetIdByDummyBlade(unsigned int driver) {
     return -1;
 }
 
-int GfDataBlade::fn_710023B798(unsigned int driver, unsigned int blade, int slot) {
+int GfDataDriver::getRuleSetBlade(unsigned int driver, unsigned int blade, int slot) {
     if (driver == 1) {
         switch (blade) {
         case 0x3EA:
-            if (getDriverSetID(0x3E9) == 0) {
+            if (GfDataBlade::getDriverSetID(0x3E9) == 0) {
                 slot = 3;
             }
             break;
@@ -4475,7 +4470,7 @@ unsigned int GfDataDriver::getBattleExpNextLevel(unsigned int driver) {
 
 unsigned int GfDataDriver::getExpSetLevel(unsigned int driver, unsigned int level) {
     getSDataDriver(driver);
-    return GfDataBlade::fn_71002326F0(level);
+    return GfDataUtil::getGrowLevelExp(level);
 }
 
 unsigned int GfDataMap::getZoneIdForGameMap(unsigned int map) {
@@ -5857,15 +5852,15 @@ ItemBox* GfDataItem::getFavoriteItemType() {
     return &GfDataManager::getDataGame()->m_favoriteItemType;
 }
 
-SDataGame::ItemBoxEx* GfDataItem::getItemBox() {
+ItemBoxEx* GfDataItem::getItemBox() {
     return &GfDataManager::getDataGame()->m_itemBox;
 }
 
-unsigned short GfDataBlade::fn_7100231EB8(const SDataGame& game) {
+unsigned short GfDataUtil::getScenarioFlag(const SDataGame& game) {
     return GfGameFlag::getLocal(game.m_gameFlag, 0x10, 1);
 }
 
-bool GfDataBlade::fn_7100232244(const SDataGame& game) {
+bool GfDataUtil::isAdvanceSaved(const SDataGame& game) {
     return GfGameFlag::getLocal(game.m_gameFlag, 1, 0xD791) != 0;
 }
 
@@ -5873,59 +5868,59 @@ bool GfDataBlade::isHomuriNameHikari(const SDataGame& game) {
     return GfGameFlag::getLocal(game.m_gameFlag, 1, 0x89FB) != 0;
 }
 
-bool GfDataBlade::fn_7100232054(const SDataGame& game) {
+bool GfDataUtil::isClearGame(const SDataGame& game) {
     return GfGameFlag::getLocal(game.m_gameFlag, 1, 0xBDCD) != 0 || GfGameFlag::getLocal(game.m_gameFlag, 1, 0xD880) != 0;
 }
 
-bool GfDataBlade::fn_71002320C8(const SDataGame& game) {
+bool GfDataUtil::isClearTwiceGame(const SDataGame& game) {
     return GfGameFlag::getLocal(game.m_gameFlag, 1, 0xD793) != 0 || GfGameFlag::getLocal(game.m_gameFlag, 1, 0xD882) != 0;
 }
 
-bool GfDataBlade::fn_710023217C(const SDataGame& game) {
+bool GfDataUtil::isClearGameCheck(const SDataGame& game) {
     return GfGameFlag::getLocal(game.m_gameFlag, 1, 0xD77E) != 0 || GfGameFlag::getLocal(game.m_gameFlag, 1, 0xD87E) != 0;
 }
 
-bool GfDataBlade::fn_7100231FF8() {
-    return fn_7100232054(*GfDataManager::getDataGame());
+bool GfDataUtil::isClearGame() {
+    return GfDataUtil::isClearGame(*GfDataManager::getDataGame());
 }
 
-bool GfDataBlade::fn_7100232120() {
-    return fn_710023217C(*GfDataManager::getDataGame());
+bool GfDataUtil::isClearGameCheck() {
+    return GfDataUtil::isClearGameCheck(*GfDataManager::getDataGame());
 }
 
-bool GfDataBlade::fn_7100232290() {
+bool GfDataUtil::isAdvanceContinue() {
     return GfGameFlag::getLocal(GfDataManager::getDataGame()->m_gameFlag, 1, 0xD795) != 0;
 }
 
-bool GfDataBlade::fn_71002324C8() {
+bool GfDataUtil::isIra() {
     return GfGameFlag::getLocal(GfDataManager::getDataGame()->m_gameFlag, 1, 0xD860) != 0;
 }
 
-bool GfDataBlade::fn_710023220C() {
-    return fn_7100231884() > 0xBE7;
+bool GfDataUtil::isVandammeDead() {
+    return GfDataUtil::getScenarioFlag() > 0xBE7;
 }
 
-bool GfDataBlade::fn_710024E91C() {
-    return fn_7100231884() > 0x1F64;
+bool GfDataMap::isArcadiaDestroy() {
+    return GfDataUtil::getScenarioFlag() > 0x1F64;
 }
 
-bool GfDataBlade::fn_710024E9A8() {
+bool GfDataMap::isIraLastMapCloud2() {
     return GfGameFlag::getLocal(1, 0xD862) != 0;
 }
 
-bool GfDataBlade::fn_710024E9DC() {
+bool GfDataMap::isIraOutoAttackCloud() {
     return GfGameFlag::getLocal(1, 0xD863) != 0;
 }
 
-void GfDataBlade::fn_710024DAD8(unsigned int id, unsigned int value) {
-    unsigned int flag = getHitonowaFlag(id);
+void GfDataNpc::setHitonowaFlag(unsigned int id, unsigned int value) {
+    unsigned int flag = GfDataNpc::getHitonowaFlag2Index(id);
     if (flag == 0) {
         return;
     }
     unsigned int old = GfGameFlag::getLocal(2, flag);
     GfGameFlag::setLocal(2, flag, value);
-    fn_710024DB98(id, value);
-    unsigned int rank = fn_710024DCAC();
+    GfDataHitonowa::setHitonowaEntry(id, value);
+    unsigned int rank = GfDataHitonowa::getFlagLevel();
     if (GfGameFlag::getLocal(4, 652) < rank) {
         GfGameFlag::setLocal(4, 652, rank);
     }
@@ -5934,21 +5929,21 @@ void GfDataBlade::fn_710024DAD8(unsigned int id, unsigned int value) {
     }
 }
 
-void GfDataBlade::fn_710024DB98(unsigned int id, unsigned int mode) {
-    unsigned int flag = getHitonowaFlag(id);
+void GfDataHitonowa::setHitonowaEntry(unsigned int id, unsigned int mode) {
+    unsigned int flag = GfDataNpc::getHitonowaFlag2Index(id);
     if (flag == 0) {
         return;
     }
     int base;
     switch (mode) {
     case 0:
-        if (!fn_710024DE6C(id)) {
+        if (!GfDataNpc::isHitonowaMeetsFlag(id)) {
             return;
         }
         base = 0x10C4;
         break;
     case 1:
-        if (!fn_710024DE6C(id)) {
+        if (!GfDataNpc::isHitonowaMeetsFlag(id)) {
             return;
         }
         base = 0x11C5;
@@ -5975,10 +5970,10 @@ void GfDataBlade::fn_710024DB98(unsigned int id, unsigned int mode) {
     }
 }
 
-unsigned int GfDataBlade::fn_710024DCAC() {
-    int set;
-    int total;
-    fn_7100255550(set, total);
+unsigned int GfDataHitonowa::getFlagLevel() {
+    unsigned int set;
+    unsigned int total;
+    GfDataHitonowa::getCompleteNum(set, total);
     GfBdatBtl* btl = GfBdatBtl::get();
     if (btl->getWildcardDatavalueU2(95) <= set) {
         return 6;
@@ -6001,11 +5996,11 @@ unsigned int GfDataBlade::fn_710024DCAC() {
     return 0;
 }
 
-unsigned int GfDataBlade::fn_710024DD88() {
+unsigned int GfDataHitonowa::getFlag4Level() {
     return GfGameFlag::getLocal(4, 652);
 }
 
-unsigned int GfDataBlade::fn_710024DD94(unsigned int id) {
+unsigned int GfDataNpc::getHitonowaFlag(unsigned int id) {
     if (id > 2000) {
         unsigned int flag = GfBdatRsc::get()->getRscNpcListHitonowaFlag(id);
         if (flag != 0) {
@@ -6015,7 +6010,7 @@ unsigned int GfDataBlade::fn_710024DD94(unsigned int id) {
     return 0;
 }
 
-bool GfDataBlade::fn_710024DE6C(unsigned int id) {
+bool GfDataNpc::isHitonowaMeetsFlag(unsigned int id) {
     if (id <= 2000) {
         return false;
     }
@@ -6026,7 +6021,7 @@ bool GfDataBlade::fn_710024DE6C(unsigned int id) {
     return GfGameFlag::getLocal(1, flag) != 0;
 }
 
-bool GfDataBlade::fn_710024DED0(unsigned int id) {
+bool GfDataNpc::isDispHitonowa(unsigned int id) {
     if (id <= 2000) {
         return false;
     }
@@ -6038,7 +6033,7 @@ bool GfDataBlade::fn_710024DED0(unsigned int id) {
     return value == 1 || value == 3;
 }
 
-void GfDataBlade::fn_710024DF38(unsigned int id, bool value) {
+void GfDataNpc::setHitonowaNewFlag(unsigned int id, bool value) {
     unsigned int flag;
     if (id <= 2000) {
         flag = 0;
@@ -6048,7 +6043,7 @@ void GfDataBlade::fn_710024DF38(unsigned int id, bool value) {
     GfGameFlag::setLocal(1, flag + 2160, value);
 }
 
-bool GfDataBlade::fn_710024DF88(unsigned int id) {
+bool GfDataNpc::isHitonowaNewFlag(unsigned int id) {
     unsigned int flag;
     if (id <= 2000) {
         flag = 0;
@@ -6058,15 +6053,15 @@ bool GfDataBlade::fn_710024DF88(unsigned int id) {
     return GfGameFlag::getLocal(1, flag + 2160) != 0;
 }
 
-void GfDataBlade::fn_710024E9CC(bool flag) {
+void GfDataMap::setIraLastMapCloud2(bool flag) {
     GfGameFlag::setLocal(1, 0xD862, flag);
 }
 
-void GfDataBlade::fn_710024EA00(bool flag) {
+void GfDataMap::setIraOutoAttackCloud(bool flag) {
     GfGameFlag::setLocal(1, 0xD863, flag);
 }
 
-unsigned int GfDataBlade::fn_710024EA10() {
+unsigned int GfDataMap::getErasedEthCloudNum() {
     Bdat::getFP("FLD_MapGimmick");
     unsigned int count = 0;
     if (GfGameFlag::getLocal(1, 0xABFA) != 0) count++;
@@ -6084,39 +6079,39 @@ unsigned int GfDataEvent::getEventScenario(unsigned int event) {
     return static_cast<unsigned short>(Bdat::getValCheck(fp, "scenarioFlag", event, 2));
 }
 
-void GfDataBlade::fn_71002321D4(bool flag) {
+void GfDataUtil::setClearGameCheck(bool flag) {
     GfGameFlag::setLocal(1, 0xD77E, flag);
     GfGameFlag::setLocal(1, 0xD87E, flag);
 }
 
-void GfDataBlade::fn_7100232274(SDataGame* game, bool flag) {
-    GfGameFlag::setLocal(game->m_gameFlag, 1, 0xD791, flag);
+void GfDataUtil::setAdvanceSaved(SDataGame& game, bool flag) {
+    GfGameFlag::setLocal(game.m_gameFlag, 1, 0xD791, flag);
 }
 
-void GfDataBlade::fn_71002322C4(SDataGame* game, bool flag) {
-    GfGameFlag::setLocal(game->m_gameFlag, 1, 0xD795, flag);
+void GfDataUtil::setAdvanceContinue(SDataGame& game, bool flag) {
+    GfGameFlag::setLocal(game.m_gameFlag, 1, 0xD795, flag);
 }
 
-void GfDataBlade::fn_71002324FC(SDataGame* game, bool flag) {
-    GfGameFlag::setLocal(game->m_gameFlag, 1, 0xD860, flag);
+void GfDataUtil::setIra(SDataGame& game, bool flag) {
+    GfGameFlag::setLocal(game.m_gameFlag, 1, 0xD860, flag);
 }
 
-void GfDataBlade::fn_7100232518(SDataGame& game) {
-    game.m_aocIds[0] = GfDataAoc::fn_71002229C0(0) + 1;
-    game.m_aocIds[1] = GfDataAoc::fn_71002229C0(1) + 1;
-    game.m_aocIds[2] = GfDataAoc::fn_71002229C0(2) + 1;
-    game.m_aocIds[3] = GfDataAoc::fn_71002229C0(3) + 1;
-    game.m_aocIds[4] = GfDataAoc::fn_71002229C0(4) + 1;
+void GfDataUtil::saveAocVersion(SDataGame& game) {
+    game.m_aocIds[0] = GfDataAoc::getContentVersion(static_cast<AOC_TYPE>(0)) + 1;
+    game.m_aocIds[1] = GfDataAoc::getContentVersion(static_cast<AOC_TYPE>(1)) + 1;
+    game.m_aocIds[2] = GfDataAoc::getContentVersion(static_cast<AOC_TYPE>(2)) + 1;
+    game.m_aocIds[3] = GfDataAoc::getContentVersion(static_cast<AOC_TYPE>(3)) + 1;
+    game.m_aocIds[4] = GfDataAoc::getContentVersion(static_cast<AOC_TYPE>(4)) + 1;
 }
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BA04C)
 static const unsigned int s_componentValues[9] = {300, 4, 3, 1, 2, 0, 0, 0, 0};
 
-unsigned int GfDataBlade::fn_7100232650(unsigned int index) {
+unsigned int GfDataUtil::getPlayerColiPriority(unsigned int index) {
     return s_componentValues[index];
 }
 
-bool GfDataBlade::fn_7100232660(const DataParamAcc& acc) {
+bool GfDataUtil::isEffectKagutsuchi(const DataParamAcc& acc) {
     if (acc.getObjType() == 4 && acc.isValid() && acc.getBdatId() == 1009) {
         return true;
     }
@@ -6127,28 +6122,28 @@ bool GfDataBlade::fn_7100232660(const DataParamAcc& acc) {
     return false;
 }
 
-unsigned int GfDataBlade::fn_71002326F0(unsigned int id) {
+unsigned int GfDataUtil::getGrowLevelExp(unsigned int id) {
     GfBdatBtl* bdat = GfBdatBtl::get();
-    if (fn_71002324C8()) {
+    if (GfDataUtil::isIra()) {
         return bdat->getGrowLevelExp2(id);
     }
     return bdat->getGrowLevelExp(id);
 }
 
-bool GfDataBlade::fn_7100232754() {
+bool GfDataUtil::isVersion150() {
     if (GfGameFlag::getLocal(1, 0xD788) != 0) {
         return true;
     }
-    if (GfDataAoc::sys() != nullptr && GfDataAoc::fn_71002229C0(3) > 0) {
+    if (GfDataAoc::sys() != nullptr && GfDataAoc::getContentVersion(static_cast<AOC_TYPE>(3)) > 0) {
         return true;
     }
     return false;
 }
 
-bool GfDataBlade::fn_710023182C() {
+bool GfDataUtil::isStartChapterSave() {
     SDataGame* game = GfDataManager::getDataGame();
     unsigned short value = game->m_chapterSaveValue;
-    bool same = value == fn_7100231884();
+    bool same = value == GfDataUtil::getScenarioFlag();
     bool saved = game->m_eventChapterSave != 0;
     return same && saved;
 }
@@ -6174,10 +6169,10 @@ unsigned int GfDataBlade::fn_7100231754() {
     return 1397;
 }
 
-void GfDataBlade::fn_710023493C() {
+void GfDataEnemy::initializeEnemySuppress() {
 }
 
-unsigned int GfDataBlade::fn_7100234940(unsigned int enemy) {
+unsigned int GfDataEnemy::getEnemySuppress(unsigned int enemy) {
     if (enemy == 0) {
         return 0;
     }
@@ -6187,11 +6182,11 @@ unsigned int GfDataBlade::fn_7100234940(unsigned int enemy) {
     return GfGameFlag::getLocal(16, enemy + 0x2E);
 }
 
-bool GfDataBlade::fn_7100234998(unsigned int enemy) {
+bool GfDataEnemy::incEnemySuppress(unsigned int enemy) {
     if (enemy == 0) {
         return false;
     }
-    unsigned int count = fn_7100234940(enemy);
+    unsigned int count = GfDataEnemy::getEnemySuppress(enemy);
     if (count < 0xFFFF) {
         count++;
         if (enemy >= 1500) {
@@ -6204,7 +6199,7 @@ bool GfDataBlade::fn_7100234998(unsigned int enemy) {
     return false;
 }
 
-bool GfDataBlade::fn_71002327B0(unsigned int id) {
+bool GfDataItem::isValidPreciousIra(unsigned int id) {
     return id - 25501 < 499;
 }
 
@@ -6263,11 +6258,11 @@ const char* GfDataBlade::getName(const SDataBlade& data, unsigned int kind) {
     return name == nullptr ? "" : name;
 }
 
-bool GfDataBlade::fn_710024F258(unsigned int id) {
+bool GfDataEvent::isScenarioEvent(unsigned int id) {
     return id - 10001 < 744;
 }
 
-bool GfDataBlade::fn_710023384C(unsigned int id) {
+bool GfDataItem::isHomuraCookItem(unsigned int id) {
     switch (id) {
     case 40260: case 40261: case 40262: case 40263: case 40264: case 40265: case 40266: case 40267: case 40268:
     case 40312:
@@ -6294,19 +6289,19 @@ GfItemHandle GfDataDriver::getEquipWpnAcceHandle(unsigned int driver) {
     return GfItemHandle();
 }
 
-void GfDataDriver::fn_71002474F4(unsigned int driver, unsigned short item) {
+void GfDataDriver::setEquipWpnAcce(unsigned int driver, unsigned int item) {
     if (driver - 0x11 < 9) {
         GfDataManager::getDataGameIra()->m_drivers[driver - 0x11].m_item = item;
     }
 }
 
-void GfDataDriver::fn_710024752C(SDataDriverDlc& data, unsigned short item) {
+void GfDataDriver::setEquipWpnAcce(SDataIra& data, unsigned int item) {
     data.m_item = item;
 }
 
 void GfDataDriver::setEquipWpnAcceHandle(unsigned int driver, GfItemHandle handle) {
     if (driver - 0x11 < 9) {
-        SDataDriverDlc& data = GfDataManager::getDataGameIra()->m_drivers[driver - 0x11];
+        SDataIra& data = GfDataManager::getDataGameIra()->m_drivers[driver - 0x11];
         data.m_handle.m_handle = handle.m_handle;
     }
 }

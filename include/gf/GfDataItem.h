@@ -35,7 +35,12 @@ public:
     // SDataGame::m_favoriteItemType. No parameter: its body reads none and its one caller (GfItemBox::initialize)
     // passes none (1.0.0's getFavoriteItemType(unsigned int) is a different function: a GfBdatItem lookup).
     static ItemBox* getFavoriteItemType();
-    static SDataGame::ItemBoxEx* getItemBox();  // SDataGame::m_itemBox
+    static ItemBoxEx* getItemBox();  // SDataGame::m_itemBox
+    // 2.0.0's symbols name it. What it does: whether id is in 25501-25999 (GfItemUtil::getCountByItemCategory,
+    // getEnableStock, getProperty pass an item id).
+    static bool isValidPreciousIra(unsigned int id);
+    // 2.0.0's symbols name it. What it does: whether id is 40260-40268 or 40312.
+    static bool isHomuraCookItem(unsigned int id);
 };
 }  // namespace gf
 

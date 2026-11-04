@@ -51,7 +51,7 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in this class's
     // unit between setCloudSea and setMapWeatherID and only setMapWeatherID calls it (no this: its map in w0).
     // What it does: saves the newest weather on the list (its type, id, time and length) into the map's record
-    // (GfDataBlade::fn_710024E1C8), with a new length (10800 for weather id 5, else GfDataMap::getWeatherTimeEnd
+    // (GfDataMap::getWeatherParam), with a new length (10800 for weather id 5, else GfDataMap::getWeatherTimeEnd
     // times 300, plus up to as much again by ml::mtRandf1).
     static void fn_7100280F84(unsigned int map);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in this class's

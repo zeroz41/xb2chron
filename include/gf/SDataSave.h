@@ -24,7 +24,7 @@ public:
 // The member names are not the original's.
 class SDataSave {
 public:
-    SDataSave();  // fn_710014F8F0
+    SDataSave();  // SDataSave
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's makeNewGameSaveData builds the
     // save in place with SDataSave()'s code inline). A member because GfGameSave::makeNewGameSaveData calls it on
     // its own s_SDataSave and its code (in title_main's unit) works on its argument as SDataSave() does on this.
@@ -34,7 +34,7 @@ public:
 
     SDataSystem m_system;
     SDataGame m_game;  // 0x10
-    SDataDriverDlc m_dlcDrivers[16];  // 0x126D90; GfDataDriver::getSDataDriver reads rows 0x11 to 0x19 from them
+    SDataIra m_dlcDrivers[16];  // 0x126D90; GfDataDriver::getSDataDriver reads rows 0x11 to 0x19 from them
     // 0x134850: a word, 16 0x324-byte records (each 0x320 bytes copied bit for bit and a word copied with
     // algorithm.h's copy_n), 0x78 bytes, a word: SDataSave() clears it all, assigns a cleared record to the 16
     // and clears the 0x78 bytes again

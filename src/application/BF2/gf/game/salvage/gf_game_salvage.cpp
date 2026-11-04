@@ -51,6 +51,7 @@
 #include "classes/gmk/TGmkFormPcnpc.h"
 #include "classes/gf/GfDataBdat.h"
 #include "mm/Mat44.h"
+#include "gf/GfDataUtil.h"
 
 namespace gf {
 
@@ -702,11 +703,11 @@ void GfGameSalvage::addSalvagerPoint(unsigned int point) {
     }
 }
 
-// whether Kiku's chase runs in Supervia: map 10 with GfDataBlade::fn_7100231884()'s value in 0xFBD..0xFC9 (the name is the
+// whether Kiku's chase runs in Supervia: map 10 with GfDataUtil::getScenarioFlag()'s value in 0xFBD..0xFC9 (the name is the
 // original's)
 bool GfGameSalvage::isChaseKikuInSupervia() {
     if (GfGameManager::getMapID() == 10) {
-        unsigned short scenario = GfDataBlade::fn_7100231884();
+        unsigned short scenario = GfDataUtil::getScenarioFlag();
         if (scenario >= 0xFBD && scenario <= 0xFC9) {
             return true;
         }

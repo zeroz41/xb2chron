@@ -16,19 +16,19 @@ class GmkBattleChallengePortalGob;
 class GmkBattleChallengePortal : public ::gmk::AGmkBase {
 public:
     // the overrides its table holds (slot functions still carry their placeholder symbols, given per slot)
-    virtual ~GmkBattleChallengePortal();  // slot 0 (fn_71005C3F7C)
-    virtual gmk::GmkType getGmkType() const;  // slot 2 (fn_71005C3FF4)
-    virtual bool isValid() const;  // slot 3 (fn_71005C3FFC)
-    virtual void dispose();  // slot 5 (fn_71005B87E0)
-    virtual void update(float);  // slot 6 (fn_71005B896C)
+    virtual ~GmkBattleChallengePortal();  // slot 0 (~GmkBattleChallengePortal)
+    virtual gmk::GmkType getGmkType() const;  // slot 2 (getGmkType)
+    virtual bool isValid() const;  // slot 3 (isValid)
+    virtual void dispose();  // slot 5 (dispose)
+    virtual void update(float);  // slot 6 (update)
     virtual void debugDraw() const;  // slot 7 (debugDraw)
-    virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8 (fn_71005B91A0)
+    virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8 (onGobEvent)
     // its bdat row (TGmkList's inline constructor needs Vector<BdatInfo>). The fields are the ones
     // isPopCommonCondMatched, canPopGobInst and canDepopGobInst read, laid out as GmkNpc::BdatInfo's after its Group and
     // BattleReaction; the size is not read yet and the names are not the original's
     class BdatInfo {
     public:
-        // its row reader: out of line (create), called by initGmkBdatInfo (fn_71005D3388) where the template
+        // its row reader: out of line (create), called by initGmkBdatInfo (initGmkBdatInfo) where the template
         // calls T1::create (so the name is the template's; the CBdatWrapper parameter as GmkElevator::BdatInfo's)
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         // Placeholder name (new in 3.0.1): its row's pop conditions (scenario flag range, quest state range, time
@@ -47,7 +47,7 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(0x3d);
     // the step update calls while the gimmick is valid (the name is not the original's)
     void (GmkBattleChallengePortal::*m_seq)(float dt);
-    // fields: size from the stride 0x80: Vector<GmkBattleChallengePortal>::resize fn_71005D3180
+    // fields: size from the stride 0x80: Vector<GmkBattleChallengePortal>::resize resize
     void* m_portalEffect0;  // 0x58: seqValidateResHandle searches "ex_portal_01" in the field's effect pack (the name is not the original's)
     void* m_portalEffect1;  // 0x60: the same for "ex_portal_02" (the name is not the original's)
     unsigned int m_effectHandle0;  // 0x68: disposeGobInst kills or fades it out (the name is not the original's)

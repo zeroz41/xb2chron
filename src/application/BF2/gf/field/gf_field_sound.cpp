@@ -20,6 +20,7 @@
 #include "gf/GfSetupParam.h"
 #include "gf/GfUtil.h"
 #include <string.h>
+#include "gf/GfGameUtil.h"
 
 namespace gf {
 
@@ -231,7 +232,7 @@ void GfFieldSound::createMapSound() {
                                                            m_mapSound.m_path.m_str, info,
                                                            static_cast<fw::LOAD_PRIO>(10));
     }
-    if (fn_71002ED330()) {
+    if (GfGameUtil::isEnableBladeElma()) {
         m_dlcSound.fn_710027CB9C("dlc_se_btl_spskill");
     }
 }

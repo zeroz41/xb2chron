@@ -138,6 +138,7 @@
 #include "classes/gf/GfBdatItem.h"
 #include "mm/mtl/FixStr.h"
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "gf/GfGameUtilQuestArts.h"
 namespace gf {
 bool SCOM_ADD_MONEY::exec(fw::UpdateInfo const&) {
     GfGameUtil::addMoney(m_money);
@@ -168,7 +169,7 @@ bool SCOM_SET_MERCENARIES_LEVEL::exec(fw::UpdateInfo const&) {
 }
 
 bool SCOM_ADD_ECUBE::exec(fw::UpdateInfo const&) {
-    fn_71002DA4FC(m_value);
+    GfGameUtil::addEtherCube(m_value);
     return true;
 }
 
@@ -182,7 +183,7 @@ unsigned long SCOM_ADD_ECUBE::create(unsigned int value) {
 }
 
 bool SCOM_ADD_SCORE::exec(fw::UpdateInfo const&) {
-    fn_71002DA570(m_value);
+    GfGameUtil::addScore(m_value);
     return true;
 }
 
@@ -196,7 +197,7 @@ unsigned long SCOM_ADD_SCORE::create(unsigned int value) {
 }
 
 void SCOM_CLEAR_TIME::create(unsigned int value) {
-    fn_71002DA5E4(value);
+    GfGameUtil::applyClearTimeForArena(value);
 }
 
 bool SCOM_DESTROY_FIELD_OBJ::exec(fw::UpdateInfo const&) {
@@ -426,7 +427,7 @@ inline SCOM_BC_PARTICLE::SCOM_BC_PARTICLE(GF_OBJ_HANDLE* obj, float time)
     : SCOM(SCOM_TYPE(77)), m_obj(obj), m_step(0), m_time(time), m_totalTime(time), m_isStop(false) {
     DataParamAcc acc(obj);
     m_particle = acc.getAttribute(-1, false);
-    if (GfDataBlade::fn_7100232660(acc)) {
+    if (GfDataUtil::isEffectKagutsuchi(acc)) {
         m_particle = 0x11;
     }
 }
@@ -855,13 +856,13 @@ SCOM_OBJ_VFADE::SCOM_OBJ_VFADE(GF_SCOM_HANDLE* handle, GF_OBJ_HANDLE* obj, float
         m_time = m_keys.size() < 2 ? 0.0f : m_keys.at(m_keys.size() - 1)->m_time;
     }
     DataParamAcc param(obj);
-    if (GfDataBlade::fn_7100232660(param)) {
+    if (GfDataUtil::isEffectKagutsuchi(param)) {
         m_effect = VFEFF(16);
     } else if (param.getObjType() == 10) {
         unsigned int party = GfGameParty::getPartyId(obj);
         DataParamAcc blade(GfGameParty::getHandleBlade(party, -1));
         DataParamAcc driver(GfGameParty::getHandleDriver(party, 0));
-        if (GfDataBlade::fn_7100232660(blade) || GfDataBlade::fn_7100232660(driver)) {
+        if (GfDataUtil::isEffectKagutsuchi(blade) || GfDataUtil::isEffectKagutsuchi(driver)) {
             m_effect = VFEFF(16);
         }
     }
@@ -937,12 +938,12 @@ bool SCOM_OBJ_VFADE::exec(fw::UpdateInfo const& info) {
 }
 
 // the name is not the original's (inlined everywhere): the effect types a fade takes: 2..8 and 16 as they are, 1
-// becomes 16 for an object GfDataBlade::fn_7100232660 accepts; false for any other
+// becomes 16 for an object GfDataUtil::isEffectKagutsuchi accepts; false for any other
 static inline bool checkVFadeEffect(GF_OBJ_HANDLE* obj, unsigned int& effect) {
     switch (effect) {
     case 1: {
         DataParamAcc param(obj);
-        effect = GfDataBlade::fn_7100232660(param) ? 16 : 1;
+        effect = GfDataUtil::isEffectKagutsuchi(param) ? 16 : 1;
         break;
     }
     case 2:
@@ -1320,7 +1321,7 @@ unsigned long SCOM_ENBOOK_DEAD_PLAYER::create(GF_OBJ_HANDLE* handle) {
 }
 
 bool SCOM_ENBOOK_BOSS_TIME::exec(fw::UpdateInfo const&) {
-    fn_71002ED774(m_enemy, m_time, GfGameManager::getBtlDifficult());
+    GfGameUtil::setClearNamedTime(m_enemy, m_time, static_cast<GFDIFF>(GfGameManager::getBtlDifficult()));
     return true;
 }
 
@@ -1593,7 +1594,7 @@ unsigned long SCOM_ACHIEV_INC::createBladeArts(GF_OBJ_HANDLE* handle, unsigned i
         return -1;
     }
     unsigned int blade = acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0;
-    fn_71002EE784(blade, slot);
+    GfGameUtilQuestArts::calcQuestArtsCount(blade, slot);
     unsigned int type = slot + 0x5D;
 #line 3448
     SCOM_ACHIEV_INC* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
@@ -1670,7 +1671,7 @@ void SCOM_ACHIEV_INC::createChainAttack(GF_OBJ_HANDLE* handle) {
     if (GfDataDriver::isIraFront(acc.getDriverId())) {
         return;
     }
-    unsigned int blade = GfDataBlade::fn_7100237B70(acc.getDriverId(), -1);
+    unsigned int blade = GfDataDriver::getIraBlade(acc.getDriverId(), -1);
     addTotalCount(0x80, 1);
     create(0x80, 1, 0);
     create(0x81, 1, blade);

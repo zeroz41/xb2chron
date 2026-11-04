@@ -21,7 +21,7 @@ public:
     virtual void update();  // slot 4
     // 2.0.0's symbols name it. What it does: clears m_list, then adds each row of the named enemy table (0x2A, 0x2B
     // when GfGameManager::isGameTypeIra) whose enemy has a resource, is named, has the difficulty's record flag
-    // (fn_71002ED5B0), no blade and lies in the selected zone (all for zone 0); the entry's second id is the zone (8
+    // (GfGameUtil::isDefeatNamed), no blade and lies in the selected zone (all for zone 0); the entry's second id is the zone (8
     // shown as 6). Sorts the list with sortLevel and selects its first entry.
     void updateNamedIDList();
     // 2.0.0's symbols name it. What it does: the index of zone in the filter's zone table; with
@@ -37,7 +37,7 @@ public:
     // 2.0.0's symbols name it. What it does: orders by the enemies' level (GfBdatChrEnArrange::getChrEnArrangeLv)
     // ascending, then by row ascending.
     static bool sortLevel(const MenuID& a, const MenuID& b);
-    // 2.0.0's symbols name it. What it does: fn_71002ED5B0 of the row's "EnemyID" in the named enemy table with
+    // 2.0.0's symbols name it. What it does: GfGameUtil::isDefeatNamed of the row's "EnemyID" in the named enemy table with
     // GfGameManager::getBtlDifficult(); false without the table. TUnk_B638A8::reciveEvent calls it.
     static bool isDefeated(unsigned int row);
 
