@@ -19,31 +19,6 @@
 
 namespace btl {
 
-float Utility::AI_GetPartyGaugeNum() {
-    int gauge = DataManager::get()->GetPartyGauge();
-    return gauge > 299 ? 3.0f : gauge * 0.0033333334f;
-}
-
-float Utility::AI_GetEnemySirenSpGaugeRate() {
-    return SirenBattleManager::get()->m_sides[1].m_gauge;
-}
-
-void Utility::AI_AddEnemySirenSpGaugeRate(float ratio) {
-    SirenBattleManager::get()->AddSirenSpGaugeRate(ratio, false);
-}
-
-int Utility::AI_GetSirenBuffLevel(bool white) {
-    SirenBattleManager* siren = SirenBattleManager::get();
-    return siren->m_sides[!white].m_level;
-}
-
-int Utility::AI_GetChallengeID() {
-    if (ChallengeBattleManager::get()->IsProc()) {
-        return 0;
-    }
-    return ChallengeBattleManager::get()->pad_2a;
-}
-
 BladeArtsManager::BladeArtsManager() {
     m_procNum = 0;
 }

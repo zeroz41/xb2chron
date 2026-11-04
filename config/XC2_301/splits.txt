@@ -52,16 +52,16 @@ application/BF2/battle/battle_manager.cpp:
 	.bss         start:0x00B93A20 end:0x00B94308
 
 application/BF2/battle/BitArray.cpp:
-	.text        start:0x0000FB3C end:0x000152D0
+	.text        start:0x0000FB3C end:0x00015398
 	.rodata      start:0x0097C19A end:0x0097C214
+	.rodata      start:0x009B5188 end:0x009B518C
 	.rodata      start:0x009B5A84 end:0x009B5C08
 	.data        start:0x00B3A800 end:0x00B3A880
 	.bss         start:0x00B94308 end:0x00B94310
 
 application/BF2/battle/blade_arts_manager.cpp:
-	.text        start:0x000152D0 end:0x000163A4
+	.text        start:0x00015398 end:0x000163A4
 	.rodata      start:0x0097C214 end:0x0097C25B
-	.rodata      start:0x009B5188 end:0x009B518C
 	.rodata      start:0x009B5C08 end:0x009B5C28
 	.data        start:0x00B3A880 end:0x00B3A8C0
 
@@ -170,13 +170,13 @@ application/BF2/battle/EffectObject.cpp:
 	.rodata      start:0x009B5824 end:0x009B582C
 
 application/BF2/battle/formation_change_manager.cpp:
-	.text        start:0x0009D5F0 end:0x0009EF7C
+	.text        start:0x0009D5F0 end:0x0009EE10
 	.rodata      start:0x0097D93F end:0x0097D996
 	.rodata      start:0x009B7AE0 end:0x009B7B08
 	.data        start:0x00B3BC20 end:0x00B3BC60
 
 application/BF2/battle/EffectObject_710009EF7C.cpp:
-	.text        start:0x0009EF7C end:0x000A12CC
+	.text        start:0x0009EE10 end:0x000A12CC
 	.rodata      start:0x0097D996 end:0x0097D9C6
 	.rodata      start:0x009B5398 end:0x009B53A4
 	.rodata      start:0x009B7B08 end:0x009B7B28
@@ -639,13 +639,13 @@ application/BF2/framework/param/param_builder.cpp:
 	.data        start:0x00B42940 end:0x00B42960
 
 application/BF2/framework/PointerMap.cpp:
-	.text        start:0x00198694 end:0x001996F0
+	.text        start:0x00198694 end:0x00199740
 	.rodata      start:0x00981AF4 end:0x00981B0D
 	.rodata      start:0x009B544C end:0x009B5450
 	.data        start:0x00B42960 end:0x00B42980
 
 application/BF2/framework/CommonResource.cpp:
-	.text        start:0x001996F0 end:0x0019A188
+	.text        start:0x00199740 end:0x0019A188
 	.data        start:0x00B42980 end:0x00B429B8
 
 application/BF2/framework/LocalizeResource.cpp:
@@ -1497,12 +1497,9 @@ application/BF2/gf/game/sequential_play/gf_play_command.cpp:
 	.bss         start:0x00EA4990 end:0x00EA5130
 
 application/BF2/gf/game/sequential_play/GfPlayFactory.cpp:
-	.text        start:0x0031F7B0 end:0x003214F4
+	.text        start:0x0031F7B0 end:0x00321994
 	.rodata      start:0x0098C386 end:0x0098C38B
 	.bss         start:0x00EA5130 end:0x00EA5138
-
-application/BF2/gf/game/sequential_play/unit_71003214F4.cpp:
-	.text        start:0x003214F4 end:0x00321994
 
 application/BF2/gf/game/sequential_play/gf_sequential_play.cpp:
 	.text        start:0x00321994 end:0x003236FC

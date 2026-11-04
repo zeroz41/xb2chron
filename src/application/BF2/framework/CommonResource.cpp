@@ -17,11 +17,6 @@
 
 namespace fw {
 
-void RenderParam::setRenderTypeDlc(bool flag) {
-    ml::ScnRenderDrSysParmAcc acc(mm::mtl::PtrSingleton<Framework>::get()->m_scn->m_renderDrSys, 0);
-    acc.setRenderTexMode(flag);
-}
-
 CommonResource* CommonResource::search(mtl::ALLOC_HANDLE handle, const char* path) {
     return static_cast<CommonResource*>(mm::mtl::PtrSingleton<ResourceManager>::get()->searchResource(0, handle, path));
 }

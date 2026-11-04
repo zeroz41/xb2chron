@@ -240,4 +240,9 @@ void RenderParam::resetScene() {
     acc.resetScene();
 }
 
+void RenderParam::setRenderTypeDlc(bool flag) {
+    ml::ScnRenderDrSysParmAcc acc(mm::mtl::PtrSingleton<Framework>::get()->m_scn->m_renderDrSys, 0);
+    acc.setRenderTexMode(flag);
+}
+
 }  // namespace fw
