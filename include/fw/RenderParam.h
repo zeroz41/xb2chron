@@ -20,7 +20,9 @@ public:
     static void setMotionBlur(bool enable, CAMERA_TYPE type);
     // the time of day from hours and minutes
     static void setTime(unsigned int hour, unsigned int minute, CAMERA_TYPE type);
-    static void setWeather(unsigned int weather, CAMERA_TYPE type);
+    // the weather, changing over sec seconds (ml::ScnRenderDrSysParmAcc::setWeatherFrame gets sec over
+    // ml::DevGraph::getFrameSyncSec); 2.0.0's symbols spell the float
+    static void setWeather(unsigned int weather, float sec, CAMERA_TYPE type);
     static int getWindIndex(CAMERA_TYPE type);
     static void setGlobalWindPower(const mm::Vec3& power, CAMERA_TYPE type);
     static void setColorFilter(int num, int farNum, float time, CAMERA_TYPE type);

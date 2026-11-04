@@ -99,7 +99,7 @@ void GfMenuObjSort::update() {
     GfMenuObject::update();
 }
 
-void GfMenuObjSort::refreshItem(unsigned int, unsigned int) {
+void GfMenuObjSort::refreshItem() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     mm::mtl::FixStr<32> name;
     for (unsigned int i = 0; i < m_idList->getPageRowSize(); i++) {

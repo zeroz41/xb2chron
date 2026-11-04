@@ -86,9 +86,9 @@ public:
     // what startCtrl returned, so the object hears when that control ends
     static void hookCtrlEvent(unsigned int handle, int ctrl);
     // the same for an animation the handle's object plays: the object hears when it ends. 3.0.1's takes a third
-    // value, which UIAnimationManager keeps with the target (1.0.0's has two parameters; the name of the third is not
-    // the original's)
-    static void hookAnimationEvent(unsigned int handle, unsigned int target, unsigned int param);
+    // value, which UIAnimationManager keeps with the target (1.0.0's has two parameters; 2.0.0's symbols type the third
+    // int; its name is not the original's)
+    static void hookAnimationEvent(unsigned int handle, unsigned int target, int param);
     // game event 7 (UIManager::requestGameEvent) with the two flags
     static void closeFSLayer(unsigned int handle, bool, bool);
     // the menu's row (BDAT 0x173): its layer (1 for none), icon (0 for none), text and description (the message

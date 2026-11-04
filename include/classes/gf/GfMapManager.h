@@ -48,7 +48,8 @@ public:
     // the pack at 0x48 (the type: GfFieldManager::getEffectPack's callers hand it to fw::EffectManager::create)
     static fw::EffectPack* getEffectPack();
     static void setEnvTime(unsigned int hour, unsigned int min);  // GfFieldManager::update passes GfFieldTime's
-    static void setEnvWeather(unsigned int weather);
+    // 2.0.0's symbols spell the float, which goes on to fw::RenderParam::setWeather
+    static void setEnvWeather(unsigned int weather, float sec);
     static void setGlobalIBLReferencePos(const mm::Vec3& pos);
     virtual void gevMapjump(gf::GEV gev, gf::MapjumpCallbackInfo const& info);  // slot 3
     static const char* getMapName();  // the current map's name, none when there is none

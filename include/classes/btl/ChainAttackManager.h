@@ -69,7 +69,8 @@ public:
     float GetCriticalBonus() const;
     void AddTotalDamage(unsigned int damage);
     int GetGroupIndex() const;
-    bool IsStartWait() const;
+    // 2.0.0's symbols give it a bool, which it does not read (2.0.0's callers pass true)
+    bool IsStartWait(bool) const;
     bool IsSelectAction() const;
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this unit's
     // ChainAttackManager (BattleCharacter::AI_Move passes the singleton). What it does: true when the proc state

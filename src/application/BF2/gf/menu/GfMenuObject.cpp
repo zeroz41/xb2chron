@@ -391,7 +391,7 @@ void GfMenuObject::hookCtrlEvent(unsigned int handle, int ctrl) {
     ui::UICtrlManager::get()->changeEventHandleObject(ctrl, handle);
 }
 
-void GfMenuObject::hookAnimationEvent(unsigned int handle, unsigned int target, unsigned int param) {
+void GfMenuObject::hookAnimationEvent(unsigned int handle, unsigned int target, int param) {
     ui::UIAnimationManager::get()->changeEventHandleObject(target, handle, param);
 }
 

@@ -198,11 +198,11 @@ void GfMapManager::setEnvTime(unsigned int hour, unsigned int min) {
     fw::RenderParam::setTime(hour, min, fw::CAMERA_TYPE(0));
 }
 
-void GfMapManager::setEnvWeather(unsigned int weather) {
+void GfMapManager::setEnvWeather(unsigned int weather, float sec) {
     if (weather > 20) {
         weather = 0;
     }
-    fw::RenderParam::setWeather(weather, fw::CAMERA_TYPE(0));
+    fw::RenderParam::setWeather(weather, sec, fw::CAMERA_TYPE(0));
 }
 
 void GfMapManager::setGlobalIBLReferencePos(const mm::Vec3& pos) {

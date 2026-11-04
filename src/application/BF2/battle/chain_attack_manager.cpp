@@ -47,7 +47,7 @@ bool ChainAttackManager::IsProc(bool excludeStartWait) const {
     if (m_procState == 0) {
         return false;
     }
-    if (IsStartWait() && excludeStartWait) {
+    if (IsStartWait(true) && excludeStartWait) {
         return false;
     }
     return true;
@@ -101,7 +101,7 @@ int ChainAttackManager::GetGroupIndex() const {
     return group;
 }
 
-bool ChainAttackManager::IsStartWait() const {
+bool ChainAttackManager::IsStartWait(bool) const {
     return m_procState >= 1 && m_procState <= 3;
 }
 

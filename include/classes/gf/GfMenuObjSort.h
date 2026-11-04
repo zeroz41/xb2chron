@@ -16,8 +16,8 @@ public:
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
     // shows the list's page: each LAY_list_item@NN with its sort id's label, the selected one's TXT_list_name
-    // faded out and TXT_list_select in (the parameters are not used)
-    void refreshItem(unsigned int, unsigned int);
+    // faded out and TXT_list_select in
+    void refreshItem();
     // sends the sort menu (external call 0x83) its close event (0x22): 1.0.0's symbol; 3.0.1 only inlines it
     static void close();
     // 1.0.0 symbols (the parameter names are not the original's): GfMenuObjPouch2 sorts its stock list (menu 0x10)
