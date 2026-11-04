@@ -406,12 +406,12 @@ unsigned int GfDataDriverArts::getCaptionID(unsigned int arts) {
     return caption;
 }
 
-unsigned int GfDataDriverArts::getIconID(unsigned int arts) {
-    return GfBdatBtl::get()->getArtsDrUI(arts);
+unsigned int GfDataDriverArts::getTalentCaptionID(unsigned int arts) {
+    return GfBdatBtl::get()->getArtsDrTalentCap(arts);
 }
 
-unsigned int GfDataDriverArts::getDebugName(unsigned int arts) {
-    return GfBdatBtl::get()->getArtsDrDebugName(arts);
+unsigned int GfDataDriverArts::getCondTalentCaptionID(unsigned int arts) {
+    return GfBdatBtl::get()->getArtsDrCondCap(arts);
 }
 
 unsigned int GfDataDriverArts::getWpnType(unsigned int arts) {
@@ -5848,12 +5848,12 @@ int GfDataDriver::getMaxSetBladeNum(unsigned int driver) {
     return getMaxSetBladeNum(*getSDataDriver(driver));
 }
 
-ItemBox* GfDataItem::getFavoriteItemType() {
-    return &GfDataManager::getDataGame()->m_favoriteItemType;
+ItemBox* GfDataItem::getItemBox() {
+    return &GfDataManager::getDataGame()->m_itemBox;
 }
 
-ItemBoxEx* GfDataItem::getItemBox() {
-    return &GfDataManager::getDataGame()->m_itemBox;
+ItemBoxEx* GfDataItem::getItemBoxExtend() {
+    return &GfDataManager::getDataGame()->m_itemBoxExtend;
 }
 
 unsigned short GfDataUtil::getScenarioFlag(const SDataGame& game) {

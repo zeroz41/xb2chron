@@ -22,10 +22,10 @@ public:
     unsigned int getArtsDrCaption(unsigned int id) const;
     // 2.0.0's symbols name it. What it does: a row's CondCap column of BTL_Arts_Dr (value type 2); carried as
     // getArtsDrDebugName before, refuted: that is not the column it reads.
-    unsigned int getArtsDrDebugName(unsigned int id) const;
+    unsigned int getArtsDrCondCap(unsigned int id) const;
     // 2.0.0's symbols name it. What it does: a row's TalentCap column of BTL_Arts_Dr (value type 2); carried as
     // getArtsDrUI before, refuted: that is not the column it reads.
-    unsigned int getArtsDrUI(unsigned int id) const;
+    unsigned int getArtsDrTalentCap(unsigned int id) const;
     unsigned int getArtsDrDriver(unsigned int id) const;
     unsigned int getArtsDrWpnType(unsigned int id) const;
     // 2.0.0's symbols name it. What it does: a row's IrType column of BTL_Arts_Dr (value type 1); carried as

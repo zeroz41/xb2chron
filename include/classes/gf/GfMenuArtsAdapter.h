@@ -64,11 +64,13 @@ public:
     bool update_ArtsDispLvMax();
     bool update_ArtsTextIndex();
     // 2.0.0's symbols name it. What it does: with add-on menu layer 3 usable (GfMenuObjUtil::isValidExpansion(3)),
-    // shows the message GfDataDriverArts::getIconID (GfBdatBtl::getArtsDrUI, the TalentCap column) gives for m_artsId
+    // shows the message GfDataDriverArts::getTalentCaptionID (GfBdatBtl::getArtsDrTalentCap, the TalentCap column)
+    // gives for m_artsId
     // from GfDataBdat table 0x191; false otherwise or for message 0.
     bool update_IraArtsTalentCaption();
-    // 2.0.0's symbols name it. What it does: as update_IraArtsTalentCaption, with GfDataDriverArts::getDebugName
-    // (GfBdatBtl::getArtsDrDebugName, the CondCap column) for the message, also from table 0x191.
+    // 2.0.0's symbols name it. What it does: as update_IraArtsTalentCaption, with
+    // GfDataDriverArts::getCondTalentCaptionID (GfBdatBtl::getArtsDrCondCap, the CondCap column) for the message,
+    // also from table 0x191.
     bool update_IraArtsTalentCond();
     mm::mtl::Delegate<bool()> m_update;  // its type's update_*; update shows what it returns
     IConverter* m_converter;  // update takes the arts from it; owned

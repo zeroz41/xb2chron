@@ -9,8 +9,8 @@ namespace gf {
 class ItemCountLowLevel {
 public:
     // 2.0.0's symbols name it. What it does: GfDataItem::getItemType of item, then by the type (1..0x14, jump table
-    // 0x71009B9BCC) getLowLevelCount on the matching parts of the item box (SDataGame::m_favoriteItemType, an ItemBox)
-    // and the second entry area (SDataGame::m_itemBox); 0 for an unknown item. GfGameUtil::isAdvancedGameOption /
+    // 0x71009B9BCC) getLowLevelCount on the matching parts of the item box (SDataGame::m_itemBox, an ItemBox)
+    // and the second entry area (SDataGame::m_itemBoxExtend); 0 for an unknown item. GfGameUtil::isAdvancedGameOption /
     // isAdvancedDifficulity pass items 25495 / 25496 and test it against 0.
     static unsigned int getCount(const ItemBox& box, const ItemBoxEx& boxEx, unsigned int item);
 };

@@ -2926,7 +2926,7 @@ bool GfGameUtil::isAdvancedGameOption() {
             game = &title->getSaveBuffer()->m_game;
         }
     }
-    return ItemCountLowLevel::getCount(game->m_favoriteItemType, game->m_itemBox, 25495) != 0;
+    return ItemCountLowLevel::getCount(game->m_itemBox, game->m_itemBoxExtend, 25495) != 0;
 }
 
 bool GfGameUtil::isAdvancedDifficulity() {
@@ -2936,7 +2936,7 @@ bool GfGameUtil::isAdvancedDifficulity() {
             game = &title->getSaveBuffer()->m_game;
         }
     }
-    return ItemCountLowLevel::getCount(game->m_favoriteItemType, game->m_itemBox, 25496) != 0;
+    return ItemCountLowLevel::getCount(game->m_itemBox, game->m_itemBoxExtend, 25496) != 0;
 }
 
 void GfGameUtil::playSeForPartySwitch() {

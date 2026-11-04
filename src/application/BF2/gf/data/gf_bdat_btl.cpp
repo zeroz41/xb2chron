@@ -5616,11 +5616,11 @@ unsigned int GfBdatBtl::getArtsDrCaption(unsigned int id) const {
     return _gfbbt::getArtsDrCaption(*m_fpArtsDr, id);
 }
 
-unsigned int GfBdatBtl::getArtsDrDebugName(unsigned int id) const {
+unsigned int GfBdatBtl::getArtsDrCondCap(unsigned int id) const {
     return _gfbbt::getArtsDrCondCap(*m_fpArtsDr, id);
 }
 
-unsigned int GfBdatBtl::getArtsDrUI(unsigned int id) const {
+unsigned int GfBdatBtl::getArtsDrTalentCap(unsigned int id) const {
     return _gfbbt::getArtsDrTalentCap(*m_fpArtsDr, id);
 }
 

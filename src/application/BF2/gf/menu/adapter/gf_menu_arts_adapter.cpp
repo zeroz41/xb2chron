@@ -453,7 +453,7 @@ bool GfMenuArtsAdapter::update_IraArtsTalentCaption() {
     if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
-    unsigned short id = GfDataDriverArts::getIconID(m_artsId);
+    unsigned short id = GfDataDriverArts::getTalentCaptionID(m_artsId);
     if (id == 0) {
         return false;
     }
@@ -466,7 +466,7 @@ bool GfMenuArtsAdapter::update_IraArtsTalentCond() {
     if (!GfMenuObjUtil::isValidExpansion(3)) {
         return false;
     }
-    unsigned short id = GfDataDriverArts::getDebugName(m_artsId);
+    unsigned short id = GfDataDriverArts::getCondTalentCaptionID(m_artsId);
     if (id == 0) {
         return false;
     }

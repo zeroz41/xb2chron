@@ -25,7 +25,7 @@ item_iterator GfItemBoxBase::end(ItemType::Type type) {
     return item_iterator(this, info.m_end, info.m_step, info.m_multi, type);
 }
 
-GfItemBoxBase::GfItemBoxBase() : m_favoriteItemType(nullptr), m_itemBox(nullptr) {}
+GfItemBoxBase::GfItemBoxBase() : m_itemBox(nullptr), m_itemBoxExtend(nullptr) {}
 
 GfItemBoxBase::~GfItemBoxBase() {}
 
@@ -57,10 +57,10 @@ void setupItemLists(ItemBox& box, unsigned int index, ::mm::mtl::FixedArray<Item
 }
 
 void GfItemBoxBase::setItemBox(ItemBox& box, ItemBoxEx& extra) {
-    m_favoriteItemType = &box;
-    m_itemBox = &extra;
+    m_itemBox = &box;
+    m_itemBoxExtend = &extra;
     memset(&box, 0, sizeof(ItemBox));
-    memset(m_itemBox, 0, sizeof(ItemBoxEx));
+    memset(m_itemBoxExtend, 0, sizeof(ItemBoxEx));
     setupItemLists(box, 1, m_info, m_lists, box.m_type1, extra.m_type1, 99, true);
     setupItemLists(box, 2, m_info, m_lists, box.m_type2, extra.m_type2, 1, false);
     setupItemLists(box, 3, m_info, m_lists, box.m_type3, extra.m_type3, 1, false);
@@ -247,7 +247,7 @@ bool GfItemBox::addItem(unsigned int item, unsigned int count) {
 }
 
 void GfItemBox::initialize() {
-    get()->setItemBox(*GfDataItem::getFavoriteItemType(), *GfDataItem::getItemBox());
+    get()->setItemBox(*GfDataItem::getItemBox(), *GfDataItem::getItemBoxExtend());
 }
 
 void GfItemBox::finalize() {
@@ -255,8 +255,8 @@ void GfItemBox::finalize() {
     for (int i = 0; i < 19; i++) {
         box->m_lists[i].clear();
     }
+    box->m_itemBoxExtend = nullptr;
     box->m_itemBox = nullptr;
-    box->m_favoriteItemType = nullptr;
 }
 
 bool GfItemBox::decItem(unsigned int item, unsigned int count) {

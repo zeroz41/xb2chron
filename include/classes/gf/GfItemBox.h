@@ -108,8 +108,8 @@ public:
     void setItemBox(ItemBox& favoriteItemType, ItemBoxEx& itemBox);
 
     ::mm::mtl::FixedArray<ItemTypeInfo, 19> m_info;
-    ItemBox* m_favoriteItemType;  // GfDataItem::getFavoriteItemType
-    ItemBoxEx* m_itemBox;  // GfDataItem::getItemBox
+    ItemBox* m_itemBox;  // GfDataItem::getItemBox
+    ItemBoxEx* m_itemBoxExtend;  // GfDataItem::getItemBoxExtend
     ::mm::mtl::FixedArray< ::mm::mtl::Array<GfItemInfo*>, 19> m_lists;
 };
 
@@ -137,7 +137,7 @@ public:
     // reaches the object through get() again.
     void finalize();
     // 2.0.0's symbols name it. GfItemManager's initialize (inlined in its constructor) calls it on GfItemBox::get() and
-    // passes nothing else. It hands GfDataItem::getFavoriteItemType() and getItemBox() (the two SDataGame pointers) to
+    // passes nothing else. It hands GfDataItem::getItemBox() and getItemBoxExtend() (the two SDataGame pointers) to
     // the singleton's setItemBox.
     void initialize();
 };

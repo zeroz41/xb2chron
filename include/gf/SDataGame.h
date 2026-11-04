@@ -75,9 +75,9 @@ public:
     SDataBlade m_blades[422];
     SDataParty m_party;  // 0xE9884: GfDataParty::getSDataParty (the name is not the original's)
     unsigned char pad_E98D4[0x4];  // (m_party is 0x50 bytes: m_leader aligns it to 4)
-    // 0xE98D8: GfDataItem::getFavoriteItemType returns it; GfItemBox::initialize keeps it at +0x308 and clears its
+    // 0xE98D8: GfDataItem::getItemBox returns it; GfItemBox::initialize keeps it at +0x308 and clears its
     // 0x122EC bytes (the type is 1.0.0's, see ItemBox; named after its accessor, the name is not the original's)
-    ItemBox m_favoriteItemType;
+    ItemBox m_itemBox;
     GameFlag m_gameFlag;  // GfGameFlag's (the name is not the original's)
     QuestID m_scenario;  // 0x1097E4 (setScenario stores its halves one by one) (named after its accessors; the name is not the original's)
     QuestID m_select;  // 0x1097E8 (setSelect stores its halves one by one) (named after its accessors; the name is not the original's)
@@ -167,9 +167,9 @@ public:
     // (below 1500 the count is a 16-bit local flag; GfGameUtil::incEnemySuppress reads it through GfDataEnemy::getEnemySuppress). The
     // name is not the original's.
     unsigned short m_enemySuppressCount[800];
-    // 0x11D27C: GfDataItem::getItemBox returns it; GfItemBox::initialize keeps it at +0x310 and clears its 0x1B04
+    // 0x11D27C: GfDataItem::getItemBoxExtend returns it; GfItemBox::initialize keeps it at +0x310 and clears its 0x1B04
     // bytes (named after its accessor; the type and name are not the original's)
-    ItemBoxEx m_itemBox;
+    ItemBoxEx m_itemBoxExtend;
     unsigned char pad_11ED80[0x8000];
 };
 }  // namespace gf
