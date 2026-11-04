@@ -151,7 +151,7 @@ void TalkManager::StartBattleCallback() {
     }
 }
 
-bool TalkManager::fn_71000AEAB4(gf::GF_OBJ_HANDLE* handle, unsigned int id, bool noObject) {
+bool TalkManager::PlaySpWin(gf::GF_OBJ_HANDLE* handle, int id, bool noObject) {
     unsigned char* fp = gf::GfDataBdat::getFP(0x58 | BattleGlobal::sys()->m_challengeAnySuccess);
     unsigned int voiceId = Bdat::getArrayValCheck(fp, "Voice", id, 0, 3);
     gf::GAME_VOICE_HANDLE* voice;
@@ -261,7 +261,7 @@ unsigned long TalkManager::PlayVoice(int chr, const char* name) {
     return reinterpret_cast<unsigned long>(voice);
 }
 
-void TalkManager::fn_71000AF7FC(unsigned int index, float time) {
+void TalkManager::SetTriggerInterval(TRIGGER index, float time) {
     if (m_timeA[index] > time) {
         time = m_timeA[index];
     }

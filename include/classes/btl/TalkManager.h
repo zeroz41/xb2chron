@@ -16,7 +16,8 @@ namespace btl {
 class TalkManager : public ::mm::mtl::PtrSingleton< ::btl::TalkManager> {
 public:
     enum NARRATION_TYPE : int;
-    enum TRIGGER : int;
+    // unsigned: SetTriggerInterval indexes m_timeA with it zero-extended (uxtw)
+    enum TRIGGER : unsigned int;
     // the column GetBdatData reads, by the column's name in tables 0x55-0x58 (the enumerator names are not the
     // original's)
     enum BDAT_DATA_TYPE : int {
@@ -48,21 +49,21 @@ public:
 
     // a registered voice line, 0x20 bytes (the field names are not the original's)
     struct CHR_VOICE_DATA {
-        gf::GF_OBJ_HANDLE* m_handle;     // the speaker's object (fn_71000AEAB4 replaces its entry); -1 when UpdateProc
+        gf::GF_OBJ_HANDLE* m_handle;     // the speaker's object (PlaySpWin replaces its entry); -1 when UpdateProc
                                          // drops the entry
         gf::GAME_VOICE_HANDLE* m_voice;  // the playing voice (UpdateProc asks GfGameVoice::getResult)
         // the BDAT table the line comes from: 1-3 tables 0x55-0x57 (3: an enemy's), 4 table 0x58 or 0x59
         unsigned int m_type : 3;
         unsigned int m_voiceId : 10;   // the row of that table
         unsigned int m_chrIndex : 7;   // the speaker (IsTalk, GetPlayVoiceID compare it)
-        unsigned int pad_bits20 : 4;   // fn_71000AEAB4 sets 15 (meaning unknown)
+        unsigned int pad_bits20 : 4;   // PlaySpWin sets 15 (meaning unknown)
         unsigned int pad_bits24 : 8;   // UpdateProc clears the whole word with the entry (meaning unknown)
         unsigned int : 0;
         bool pad_bit0 : 1;
         bool pad_bit1 : 1;
         bool m_nextRegistered : 1;  // set before UpdateProc registers the next voice
-        bool pad_bit3 : 1;  // fn_71000AEAB4: the row's "Timer" is not 0
-        bool pad_bit4 : 1;  // fn_71000AEAB4: played without an object
+        bool pad_bit3 : 1;  // PlaySpWin: the row's "Timer" is not 0
+        bool pad_bit4 : 1;  // PlaySpWin: played without an object
         bool pad_bit5 : 1;  // IsTalkSirenSp tests it
         bool pad_bit6 : 1;
         bool pad_bit7 : 1;
@@ -88,7 +89,7 @@ public:
     };
     // StartBattleCallback counts m_count down and drops the entry at 0 (the names are not the original's)
     struct COUNT_DATA {
-        unsigned short m_voiceRow;  // the row fn_71000AEAB4 played (the name is not the original's)
+        unsigned short m_voiceRow;  // the row PlaySpWin played (the name is not the original's)
         unsigned char m_count;
         unsigned char pad_3;
     };
@@ -134,11 +135,11 @@ public:
     int DecideVoiceBdatID(int, int, int, int, int);
     void RegisterSpecialWin();
     bool IsBladeChangeCondition(int, int, BattleCharacter* chr) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because RegisterSpecialWin calls it
+    // 2.0.0's symbols name it. A member because RegisterSpecialWin calls it
     // on this. What it does: plays row id's "Voice" of BDAT table 0x58 (0x59 while BattleGlobal's
     // m_challengeAnySuccess) for handle (or, when the flag is set, without an object), puts it in m_voices in place
     // of handle's entry, and records id in m_counts (dropping the oldest when full). False when nothing plays.
-    bool fn_71000AEAB4(gf::GF_OBJ_HANDLE* handle, unsigned int id, bool);
+    bool PlaySpWin(gf::GF_OBJ_HANDLE* handle, int id, bool);
     const CHR_VOICE_DATA* GetRegisterDataConst(int chr) const {
         for (const CHR_VOICE_DATA* it = m_voices.begin(); it != m_voices.end(); ++it) {
             if (it->m_chrIndex == chr) {
@@ -163,10 +164,10 @@ public:
     unsigned long PlayVoice(int, int);
     unsigned long PlayVoice(int, const char*);
     void PlayNarrationVoice(NARRATION_TYPE type, int, int);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because SirenBattleManager's update
+    // 2.0.0's symbols name it. A member because SirenBattleManager's update
     // passes the TalkManager singleton and it sits in talk_manager_battle's range. What it does: raises
     // m_timeA[index] to time when it is below.
-    void fn_71000AF7FC(unsigned int index, float time);
+    void SetTriggerInterval(TRIGGER index, float time);
 
     gf::GAME_VOICE_HANDLE* m_narrationVoice;  // NotifyMapChange stops it (the name is not the original's)
     ::mm::mtl::FixedVector<CHR_VOICE_DATA, 90> m_voices;

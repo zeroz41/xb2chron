@@ -116,6 +116,10 @@ public:
     // entry's BGM stopped over time when GfSound exists and the handle is valid, then BGMCOND::clear), with the
     // fade time cut to 1 while a theater-mode event is skipped
     void stopCondBGM(float time, BGMCOND& cond);
+    // 2.0.0's symbols name it (a BgmTrack member). GfFieldBgm::playFieldBgmForce calls
+    // it on BgmField's instance. What it does: takes a BGM name (asserts `pszName != 0` as it copies it into a
+    // FixStr); its only caller passes GfPlayComEvent's BGM name.
+    void playForEventTheater(const char* name);
 
     // the four condition entries (1.0.0 has FixedArray<BGMCOND, 4>::assign; isPlaying reads 4 entries of 0x5C
     // from +8)

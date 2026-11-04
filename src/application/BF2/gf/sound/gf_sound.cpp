@@ -249,8 +249,8 @@ void GfSound::setPauseForBgmSuspend(SoundHandle handle, bool pause, float time) 
     setPauseType(handle, pause, time, 8);
 }
 
-bool GfSound::fn_71005701D8(SoundHandle handle) {
-    if (SeParam* param = getSeParam(handle.m_seIndex)) {
+bool GfSound::isPauseForBgmSuspend(SoundHandle handle) const {
+    if (const SeParam* param = getSeParam(handle.m_seIndex)) {
         return (param->m_pause >> 3) & 1;
     }
     return false;

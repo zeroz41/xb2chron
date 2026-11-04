@@ -150,13 +150,13 @@ GfMenuManager::GfMenuManager(const GfSetupParam& param)
     if (GfGameManager::isInstalledBattleArenaContents()) {
         ui::UIUtil::registEnableExpType(1);
     }
-    if (GfGameAoc::get()->fn_71002A75DC(0x101)) {
+    if (GfGameAoc::get()->isExistGameAoc(GAMEAOC(0x101))) {
         ui::UIUtil::registEnableExpType(3);
         if (GfGameManager::isGameTypeIra()) {
             ui::UIUtil::setResourceReplaceID(1);
         }
     }
-    if (GfGameAoc::get()->fn_71002A75DC(0x20301)) {
+    if (GfGameAoc::get()->isExistGameAoc(GAMEAOC(0x20301))) {
         m_baseGameFlag = true;
     }
     m_bladeBookFlag.reset();

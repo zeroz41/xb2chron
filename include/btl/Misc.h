@@ -75,6 +75,10 @@ bool GetNodePosition(gf::GF_OBJ_HANDLE* handle, const char* node, mm::Vec3& out)
 void GetKizunaMinMax(int stage, int& min, int& max);
 // whether a and b are within range of each other (in the XZ plane when xz)
 bool CheckInRange(const mm::Vec3& a, const mm::Vec3& b, float range, bool xz);
+// 2.0.0's symbols name it. It reads no object. What it does: returns the number of set bits of its argument (a
+// 32-bit population count); Utility::AI_GetResistantAttrNum passes CharacterParameter::pad_5d8,
+// EnemyParameter::SetupElementalAwakeParam calls it too.
+unsigned int GetFlagBitNum(unsigned int bits);
 
 }  // namespace Misc
 

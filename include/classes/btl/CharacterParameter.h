@@ -168,10 +168,10 @@ public:
     // 2.0.0's symbols name it. What it does: walks to the first non-blade (m_isNotBlade) up the driver chain (stops
     // when m_flags622_6 is set or a driver is missing) and adds the argument to its pad_5df, clamped to 0..255.
     void AddPerfectAvoid(int count);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it counts this
+    // 2.0.0's symbols name it (const: pad_5df is mutable). A member because it counts this
     // parameter's pad_5df down. What it does: while pad_5df is not zero, decrements it and answers true; else
     // answers BattleGlobal::UsePartyPerfectAvoid(IsPlayerParameter()) (BattleGlobal's per-side counters).
-    bool fn_7100081334();
+    bool UsePerfectAvoid() const;
     bool GetBlowRotAxis(mm::Vec3& axis) const;
     bool IsBlowRot() const;
     float GetBlowRotSpeed() const;
@@ -379,7 +379,8 @@ public:
     unsigned short pad_5d8;  // Utility::AI_GetResistantAttrNum passes it on
     unsigned short pad_5da;  // GetKizunaLinkBdatID answers it
     unsigned char pad_5dc[0x3];
-    unsigned char pad_5df;  // a counter: AddPerfectAvoid adds to it (0..255), fn_7100081334 counts it down
+    // a counter: AddPerfectAvoid adds to it (0..255), UsePerfectAvoid (const in 2.0.0's symbols) counts it down
+    mutable unsigned char pad_5df;
     // Utility::AI_GetElementalComboID returns it (the name is not the original's)
     unsigned char m_elementalComboID;
     unsigned char pad_5e1;

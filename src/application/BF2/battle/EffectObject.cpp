@@ -68,7 +68,7 @@ void EffectObject::SetIntervalHitData(float interval, float rate, bool flag0, fl
     m_fadeFrames = 5;
 }
 
-void EffectObject::fn_710009BA78(unsigned char a, unsigned char b, unsigned short c) {
+void EffectObject::SetSubEffectParam(int a, int b, int c) {
     m_circleParamA = a;
     m_circleParamB = b;
     m_circleParamC = c;

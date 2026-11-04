@@ -1737,7 +1737,7 @@ bool GfMenuCharDataAdapter::update_BL_WeaponIcon(const DataParamAcc& acc) {
                 type = 0x1C;
             }
         }
-        if (GfGameAoc::get()->fn_71002A75DC(0x20301)) {
+        if (GfGameAoc::get()->isExistGameAoc(GAMEAOC(0x20301))) {
             if (type == 0x24) {
                 type = 0x1D;
             } else if (type == 0x23) {

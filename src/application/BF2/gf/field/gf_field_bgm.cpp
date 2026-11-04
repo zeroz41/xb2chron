@@ -319,9 +319,9 @@ bool GfFieldBgm::isBossBgmCopied() const {
     return boss != nullptr ? boss->m_copied : false;
 }
 
-void GfFieldBgm::fn_7100262E58(const mm::mtl::FixStr<64>& name) {
+void GfFieldBgm::playFieldBgmForce(const char* name) {
     if (BgmField* field = BgmField::get()) {
-        field->fn_7100262E70(name.m_str);
+        field->playForEventTheater(name);
     }
 }
 

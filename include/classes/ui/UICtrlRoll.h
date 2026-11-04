@@ -13,11 +13,11 @@ namespace ui {
 // of its radius, its angle advancing by its speed every update. The names of the fields are not the original's.
 class UICtrlRoll : public ::ui::UICtrlObject {
 public:
-    // create's: where the entries' room comes from and how many entries it holds. A user constructor (the control's
-    // constructor zeroes it as 8 + 4 bytes, and create's copy is 12 bytes, not 16: an assignment copies a non-POD
-    // class's data size)
-    struct Setting {
-        Setting() : m_allocator(nullptr), m_count(0) {}
+    // create's: where the entries' room comes from and how many entries it holds (2.0.0's symbols name it: create
+    // takes a RollSetup). A user constructor (the control's constructor zeroes it as 8 + 4 bytes, and create's copy
+    // is 12 bytes, not 16: an assignment copies a non-POD class's data size)
+    struct RollSetup {
+        RollSetup() : m_allocator(nullptr), m_count(0) {}
         ::mm::mtl::IAllocator* m_allocator;
         unsigned int m_count;
     };
@@ -38,11 +38,11 @@ public:
     virtual ~UICtrlRoll();  // slot 0
     virtual void update(const fw::UpdateInfo& info);  // slot 2
 
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. Static: the control's creator (its only
+    // 2.0.0's symbols name it. Static: the control's creator (its only
     // caller GfMenuObjHitonowa::initialize passes a handle and a {allocator, count} pair). What it does: allocates 0x70 bytes from
     // UIUtil::getProgAllocator() (ui_ctrl_roll.cpp line 46), constructs the control on handle, copies the setting,
     // gives the entry list the setting's allocator and room for count entries, empties it.
-    static UICtrlRoll* fn_7100672020(unsigned int handle, const Setting& setting);
+    static UICtrlRoll* create(unsigned int handle, const RollSetup& setting);
     // 2.0.0's symbols name it. What it does: empties the entry list (size 0).
     void reset();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: works on this control's entry
@@ -54,7 +54,7 @@ public:
     // 2.0.0's symbols name it. What it does: stores the bool at 0x68; while it is set update moves nothing.
     void pause(bool paused);
 
-    Setting m_setting;
+    RollSetup m_setting;
     ::mm::mtl::Vector<Entry> m_entries;
     bool m_paused;
 };

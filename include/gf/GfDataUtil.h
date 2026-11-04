@@ -85,7 +85,7 @@ public:
     // GameFlag is set (GfDataUtil::setIra sets it).
     static bool isIra();
     // 2.0.0's symbols name it. What it does: sets local game flag 0xD860 (width 1) of game's GameFlag (+0xFBBC4) to
-    // flag; GfGameAoc::fn_71002A7430 passes getDataGame() and (mode == 1).
+    // flag; GfGameAoc::setupGame passes getDataGame() and (mode == 1).
     static void setIra(SDataGame& game, bool flag);
     // 2.0.0's symbols name it. What it does: stores GfDataAoc::getContentVersion(n) + 1 into the game's
     // SDataGame::m_aocIds[n] for n 0 to 4 (GfGameUtilSaveData::setupGameSaveData calls it).

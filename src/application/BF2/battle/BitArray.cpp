@@ -445,7 +445,7 @@ int Utility::AI_GetElementalComboID(gf::GF_OBJ_HANDLE* handle) {
 int Utility::AI_GetResistantAttrNum(gf::GF_OBJ_HANDLE* handle) {
     BattleCharacter* character = CharacterManager::sys()->GetCharacterConst(handle);
     if (character) {
-        return fn_71000A2B74(character->GetCharacterParameterConst(true)->pad_5d8);
+        return Misc::GetFlagBitNum(character->GetCharacterParameterConst(true)->pad_5d8);
     }
     return 0;
 }

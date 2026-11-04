@@ -1605,7 +1605,7 @@ bool ScnRenderDrSysParmAcc::isMdlAllMiddleTexStm() const { return m_drMan->isAll
 
 bool ScnRenderDrSysParmAcc::isSeamMapRead() const { return m_drMan->isSeamMapStmOk(); }
 
-bool ScnRenderDrSysParmAcc::fn_710070A0DC() { return m_drMan->fn_710071E77C(); }
+bool ScnRenderDrSysParmAcc::isSeamMapOn() const { return m_drMan->isSeamMapOn(); }
 
 void ScnRenderDrSysParmAcc::setToonDirLightScale(bool enable) { m_drMan->m_toonDirLightScale = enable; }
 

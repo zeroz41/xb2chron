@@ -392,7 +392,7 @@ void GfMenuObject::hookCtrlEvent(unsigned int handle, int ctrl) {
 }
 
 void GfMenuObject::hookAnimationEvent(unsigned int handle, unsigned int target, unsigned int param) {
-    ui::UIAnimationManager::get()->fn_710066B148(target, handle, param);
+    ui::UIAnimationManager::get()->changeEventHandleObject(target, handle, param);
 }
 
 void GfMenuObject::closeFSLayer(unsigned int handle, bool flag0, bool flag1) {

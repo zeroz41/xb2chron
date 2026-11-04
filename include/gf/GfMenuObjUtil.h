@@ -243,7 +243,7 @@ public:
     // of UIStr.cpp's layer mask (lbl_7100B75878; registEnableExpType sets a bit, isEnableExpType tests one,
     // getLayerBdat opens a set layer's "MNU_Layer_Dlc%02d" BDAT) is set; then layer 3 is GfGameManager::isGameTypeIra,
     // layer 2 is always usable, layer 1 is isInstalledBattleArenaContents (add-on content 0x01010003, checked by
-    // gf_game_env.cpp's fn_71002A75DC), any other layer is not. GfMenuManager's constructor sets bit 1 when
+    // gf_game_env.cpp's isExistGameAoc), any other layer is not. GfMenuManager's constructor sets bit 1 when
     // isInstalledBattleArenaContents holds, and bit 3 when "menu_ira/font/bf2.wisty" is present (it then gives UIStr
     // the font folder "menu_ira") or add-on content 0x101 is owned. 344 functions call it: 3 at 427 call sites and 1 at
     // 46.

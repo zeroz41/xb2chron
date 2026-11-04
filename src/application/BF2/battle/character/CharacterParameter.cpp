@@ -244,7 +244,7 @@ void CharacterParameter::AddPerfectAvoid(int count) {
     }
 }
 
-bool CharacterParameter::fn_7100081334() {
+bool CharacterParameter::UsePerfectAvoid() const {
     if (pad_5df != 0) {
         pad_5df -= 1;
         return true;

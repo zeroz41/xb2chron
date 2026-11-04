@@ -3444,7 +3444,7 @@ int UIManager::getPayoffUI() const {
     return m_payoffResult;
 }
 
-int UIManager::fn_7100104AE8() {
+int UIManager::getExperienceUI() const {
     return m_exResult;
 }
 

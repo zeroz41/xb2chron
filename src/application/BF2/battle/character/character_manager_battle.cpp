@@ -113,7 +113,7 @@ BattleCharacter* CharacterManager::GetCharacterConst(int index) const {
     return nullptr;
 }
 
-BattleCharacter* CharacterManager::fn_710007B5DC(bool isPlayer, int bdatID) const {
+BattleCharacter* CharacterManager::GetCharacterByBdatIDConst(bool isPlayer, unsigned int bdatID) const {
     int begin = isPlayer ? 0 : PLAYER_NUM;
     int last = isPlayer ? PLAYER_NUM - 1 : CHARACTER_NUM - 1;
     for (int i = begin; i <= last; i++) {
@@ -172,7 +172,7 @@ int CharacterManager::GetAliveBossNum() const {
     return num;
 }
 
-void CharacterManager::fn_710007C020(int count) {
+void CharacterManager::AddPartyGaugeLimit(unsigned int count) {
     int total = m_enhanceCount + count;
     m_enhanceCount = total < 0xFF ? total : 0xFF;
 }
@@ -229,7 +229,7 @@ void CharacterManager::UpdateProc(const fw::UpdateInfo& info) {
     if (global->m_challengeAnySuccess) {
         SirenBattleManager* siren = SirenBattleManager::sys();
         if (siren->pad_1cb && siren->m_sides[0].pad_12_0) {
-            fn_710007C020(3);
+            AddPartyGaugeLimit(3);
         }
     }
     int rest = 3 - m_enhanceCount;

@@ -32,11 +32,11 @@ public:
     static mm::mtl::RTTI m_rtti;
     static int m_activate;  // the symbol's own name
     unsigned int m_event;  // what isExistEvent compares (the name is not the original's)
-    // start passes them, with m_pos and m_time, to GfGameEvent::fn_71002A0CDC (the names are not the original's)
+    // start passes them, with m_pos and m_time, to GfGameEvent::play (the names are not the original's)
     unsigned int pad_1C;
     unsigned int pad_20;
     bool m_eventStarted;  // gevPlayEvent sets it on GEV 10 (the name is not the original's)
-    // the BGM gevPlayEvent hands to GfFieldBgm::fn_7100262E58 on GEV 14, then clears (the name is not the original's)
+    // the BGM gevPlayEvent hands to GfFieldBgm::playFieldBgmForce on GEV 14, then clears (the name is not the original's)
     mm::mtl::FixStr<64> m_bgm;
     mm::Vec3 m_pos;  // start passes its address (16 bytes on a 16-byte boundary: inferred a Vec3; the name is not the original's)
     float m_time;  // start passes it in s0 (the name is not the original's)

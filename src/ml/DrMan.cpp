@@ -843,7 +843,7 @@ void DrMan::setAllMiddelTexStmChk(bool check) { m_allMiddelTexStmChk[s_nDblIdx] 
 
 void DrMan::setSeamMapOn() { m_seamCalc[s_nDblIdx] = true; }
 
-bool DrMan::fn_710071E77C() { return m_seamCalc[s_nDblStockIdx]; }
+bool DrMan::isSeamMapOn() const { return m_seamCalc[s_nDblStockIdx]; }
 
 DrCreator::DrCreator() : m_pDrMan(DrMan::s_pTop) {}
 

@@ -54,10 +54,10 @@ public:
     // (GfDataMap::getWeatherParam), with a new length (10800 for weather id 5, else GfDataMap::getWeatherTimeEnd
     // times 300, plus up to as much again by ml::mtRandf1).
     static void fn_7100280F84(unsigned int map);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in this class's
-    // unit among its functions and applyNowMapWeather hands it this. What it does: brings the weather list to the
-    // map's record (0x6E0 bytes, not written yet). Caller: applyNowMapWeather with the new map's record.
-    void fn_710027F598(WeatherParam* data);
+    // 2.0.0's symbols name it. It lives in this class's unit among its functions and applyNowMapWeather hands it
+    // this. What it does: brings the weather list to the map's record (0x6E0 bytes, not written yet). Caller:
+    // applyNowMapWeather with the new map's record.
+    void execChangeWeather(const WeatherParam& data);
     void updateEvent(const fw::UpdateInfo& info);
     void updateWeather(const fw::UpdateInfo& info);
     static bool isDispWeather();  // whether the weather shows (WeatherEff and WeatherSnd play only then)  // the weather now (GfMenuBdat::getIconIDFromWeatherType takes it)

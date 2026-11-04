@@ -36,10 +36,10 @@ public:
     void SetBulletData(int bulletId, int param);
     void SetIntervalHitData(float interval, float rate, bool flag0, float count, float maxHit, bool flag1,
                             bool flag2, bool flag3);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits between
+    // 2.0.0's symbols name it. A member because it sits between
     // SetIntervalHitData and SetMoveParam in this unit. What it does: stores two bytes and a halfword into the
     // fields at 0x198. EffectManager::CreateCircleEffect calls it.
-    void fn_710009BA78(unsigned char a, unsigned char b, unsigned short c);
+    void SetSubEffectParam(int a, int b, int c);
     void SetMoveParam(const EffectMoveComponent::MOVE_PARAM& param);
     void SetEndEffect(const char* name);
     bool IsEnd() const;
@@ -91,7 +91,7 @@ public:
         ONE_SHOT_HIT m_oneShotHit;
         INTERVAL_HIT m_intervalHit;
     };
-    // fn_710009BA78 sets them; EffectManager::CreateCircleEffect calls it (the names are not the original's)
+    // SetSubEffectParam sets them; EffectManager::CreateCircleEffect calls it (the names are not the original's)
     unsigned char m_circleParamA;
     unsigned char m_circleParamB;
     unsigned short m_circleParamC;

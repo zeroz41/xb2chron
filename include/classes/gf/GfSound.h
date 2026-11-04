@@ -147,6 +147,13 @@ public:
         }
         return &m_seParams[index];
     }
+    // its const twin (2.0.0 has both, GfSound::getSeParam(unsigned short) and its const; isPauseForBgmSuspend's)
+    const SeParam* getSeParam(unsigned short index) const {
+        if (index == 0xFFFF) {
+            return nullptr;
+        }
+        return &m_seParams[index];
+    }
 
     // sets or clears type in the SE's pause bits and pauses or resumes it when that changes whether it is paused
     // (1.0.0's GfSound::setPauseType, inline in 3.0.1)
@@ -175,9 +182,9 @@ public:
     // 2.0.0's symbols name it. What it does: 1.0.0's setPauseType with type 8 (sets or clears pause bit 3 of the
     // handle's SE and calls fw::SoundManager::pause when its paused state changes).
     void setPauseForBgmSuspend(SoundHandle handle, bool pause, float time);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
-    // whether the handle's SE has pause bit 3 set (false when the handle has no SE).
-    bool fn_71005701D8(SoundHandle handle);
+    // 2.0.0's symbols name it. A member for the same reason. What it does: whether the handle's SE has pause bit 3
+    // set (false when the handle has no SE).
+    bool isPauseForBgmSuspend(SoundHandle handle) const;
     void setPauseGameSe(bool pause);
     void setPauseGameWeatherSe(bool pause);
     void setPauseEventSe(bool pause);

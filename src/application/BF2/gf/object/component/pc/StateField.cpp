@@ -243,7 +243,7 @@ void StateField::leave(GfComBehaviorPc* behavior, ai::State* next) {
 }
 
 void StateField::onDead(GfComBehaviorPc* behavior, MsgObjectNotifyDead& msg) {
-    if (!btl::BladeChangeManager::sys()->fn_7100019180(static_cast<GfObj*>(behavior->m_owner)->m_handle)) {
+    if (!btl::BladeChangeManager::sys()->IsEnableFieldDead(static_cast<GfObj*>(behavior->m_owner)->m_handle)) {
         return;
     }
     StateUtil::notifyDead(*behavior, msg, true);

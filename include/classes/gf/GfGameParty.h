@@ -11,6 +11,7 @@ namespace gf { class GfComTransform; }
 #include "classes/gf/GfStatusProperty.h"
 #include "gf/GfReqParam.h"
 #include "gf/GfSelectBlade.h"
+#include "gf/GfSelectIra.h"
 #include "mm/mtl/FixedArray.h"
 #include "mm/mtl/FixedVector.h"
 #include "mm/mtl/IntrusivePtr.h"
@@ -127,18 +128,14 @@ public:
     static unsigned short getPartyGauge();  // GfMenuBattleAdapter shows it in hundreds (300 full)
     static bool isLeaderBlade();
     // 2.0.0's symbols name them. They lie in gf_game_party's unit and GfGameManager's gevBattleStart / gevBattleEnd
-    // call them on PtrSingleton<GfGameParty>'s instance. What they do: gevBattleStart, unless the byte at 0x370 is set,
-    // stores getCurrentPartyInfo of the RQ_SETUP_PARTY at 0x130 and sets that byte (a party snapshot taken once when a
-    // battle starts); gevBattleEnd is empty.
+    // call them on PtrSingleton<GfGameParty>'s instance. What they do: gevBattleStart, unless m_selectIra's
+    // m_currentPartyValid (0x370) is set, stores getCurrentPartyInfo in its RQ_SETUP_PARTY (0x130) and sets that byte (a
+    // party snapshot taken once when a battle starts); gevBattleEnd is empty.
     void gevBattleStart();
     void gevBattleEnd();
-    // 2.0.0's symbols name it. What it does: for GEV 10 only, hands the RQ_SETUP_PARTY at 0x130 to fn_71002B8D88.
+    // 2.0.0's symbols name it. What it does: for GEV 10 only, calls GfSelectIra::restorePartyMember on m_selectIra
+    // (0x130).
     void gevPlayEvent(gf::GEV gev, unsigned int id);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: it lies in
-    // gf_game_party's unit and gevPlayEvent hands it the RQ_SETUP_PARTY at 0x130. What it does: fills a local
-    // RQ_SETUP_PARTY with getCurrentPartyInfo and compares it with the one given, working on the members'
-    // objects through GfObjUtil::getObj.
-    static void fn_71002B8D88(RQ_SETUP_PARTY& party);
     // 1.0.0's listenerGfObj hands these an object event's handle
     void entryHandle(gf::GF_OBJ_HANDLE* handle, unsigned int type);
     void destroyedObject(gf::GF_OBJ_HANDLE* handle);
@@ -148,8 +145,8 @@ public:
     // (GfObjManager::getFollowObj); BattleCharacter::SetAction and ChainAttackManager::UpdateProc call it too.
     static void setDispIraParty(gf::GF_OBJ_HANDLE* handle, bool flag);
     // 2.0.0's symbols name them. Static members: they lie in gf_game_party's unit and read PtrSingleton<GfGameParty>'s
-    // instance. What they do: isNeedResetBladeForIra returns m_currentPartyValid (false without an instance),
-    // getDummpMover returns m_warpObj (-1 without one).
+    // instance. What they do: isNeedResetBladeForIra returns m_selectIra's m_currentPartyValid (false without an
+    // instance), getDummpMover returns m_warpObj (-1 without one).
     static bool isNeedResetBladeForIra();
     static gf::GF_OBJ_HANDLE* getDummpMover();
     // 2.0.0's symbols name it. What it does: counts the party slots 0-2 whose driver handle GfObjUtil::isValid accepts.
@@ -172,9 +169,8 @@ public:
     unsigned char pad_101[0x3];
     GfSelectBlade m_selectBlade;
     unsigned char pad_124[0xC];
-    RQ_SETUP_PARTY m_currentParty;  // what getCurrentPartyInfo fills (the name is not the original's)
-    bool m_currentPartyValid;  // set once m_currentParty is filled (the name is not the original's)
-    unsigned char pad_371[0xF];
+    GfSelectIra m_selectIra;  // the name is not the original's
+    unsigned char pad_374[0xC];
     // frames since the party's objects got ready, counted to 100 (update announces callPartyMemberOK(true) at 2),
     // and the request to start over (update then announces callPartyMemberOK(false)); the names are not the
     // original's

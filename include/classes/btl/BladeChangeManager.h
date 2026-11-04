@@ -86,13 +86,13 @@ public:
     // clear.
     bool IsProcKakusei() const;
     bool IsProcHomuriEnd() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's StateField::onDead has no such call).
+    // 2.0.0's symbols name it (1.0.0's StateField::onDead has no such call).
     // A member because its address is in blade_change_manager's unit and StateField::onDead calls it on
     // PtrSingleton<BladeChangeManager>::sys(). What it does: finds the entry IsRegister would (driver with
     // m_isDriverDone clear, blade, or m_newBlade with m_isNewBladeDone clear); for that entry it returns true when
     // CharacterManager::GetCharacterConst(handle) is none, else the negation of fn_7100028D0C(character, false); true
     // when no entry holds it. StateField::onDead handles a death only when true.
-    bool fn_7100019180(gf::GF_OBJ_HANDLE* handle);
+    bool IsEnableFieldDead(gf::GF_OBJ_HANDLE* handle) const;
 
     PROC_DATA m_procs[10];
     int m_procNum;

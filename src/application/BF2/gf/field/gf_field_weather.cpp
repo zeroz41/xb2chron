@@ -115,7 +115,7 @@ void GfFieldWeather::applyNowMapWeather(unsigned int prevMap, unsigned int map) 
         return;
     }
     setupGame();
-    fn_710027F598(GfDataMap::getWeatherParam(map));
+    execChangeWeather(*GfDataMap::getWeatherParam(map));
     _gffwt::requestCloudSea(GfDataMap::getCloudType(map));
     if (map != prevMap) {
         unsigned char play = !GfManager::isExecModeThater();

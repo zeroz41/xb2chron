@@ -352,9 +352,9 @@ void GfGameParty::createdObject(GF_OBJ_HANDLE* handle) {
 }
 
 void GfGameParty::gevBattleStart() {
-    if (!m_currentPartyValid) {
-        getCurrentPartyInfo(m_currentParty);
-        m_currentPartyValid = true;
+    if (!m_selectIra.m_currentPartyValid) {
+        getCurrentPartyInfo(m_selectIra.m_currentParty);
+        m_selectIra.m_currentPartyValid = true;
     }
 }
 
@@ -362,7 +362,7 @@ void GfGameParty::gevBattleEnd() {}
 
 void GfGameParty::gevPlayEvent(GEV gev, unsigned int) {
     if (gev == GEV(10)) {
-        fn_71002B8D88(m_currentParty);
+        m_selectIra.restorePartyMember();
     }
 }
 
@@ -474,7 +474,7 @@ unsigned int GfGameParty::getDriverNum() {
 
 bool GfGameParty::isNeedResetBladeForIra() {
     GfGameParty* party = get();
-    return party != nullptr ? party->m_currentPartyValid : false;
+    return party != nullptr ? party->m_selectIra.m_currentPartyValid : false;
 }
 
 GF_OBJ_HANDLE* GfGameParty::getDummpMover() {

@@ -43,6 +43,7 @@ public:
         }
     }
     T0& operator[](unsigned int index) { return m_pData[index]; }
+    const T0& operator[](unsigned int index) const { return m_pData[index]; }  // gf::GfSound::getSeParam const's
     // a free element marked in use, null when all T1 are (DataParamAcc's setupObjHandle and setupObjId inline it;
     // the names are not the original's)
     T0* allocate() {

@@ -62,10 +62,9 @@ public:
     void setFade(int bdatId, bool flag0, bool flag1);
     void setPlaySpeed(int bdatId, float speed);
     void setLodSwitchId(int bdatId, unsigned int switchId);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads the object's
-    // LOD ids and model as setLodSwitchId does. What it does: the switch id (ScnObjAccPartsPos::getSwitchID) of
-    // the last switch part of the row's LOD id, -1 when none.
-    unsigned int fn_71002768BC(int bdatId);
+    // 2.0.0's symbols name it. It reads the object's LOD ids and model as setLodSwitchId does. What it does: the
+    // switch id (ScnObjAccPartsPos::getSwitchID) of the last switch part of the row's LOD id, -1 when none.
+    unsigned int getLodSwitchId(int bdatId) const;
     bool isFadeOut(int bdatId) const;  // GfGameEvent::isMapLodDisp's: not shown
     bool isAnimReverse(int bdatId) const;  // GfGameEvent::isMapLodAnimReverse's
     void createColiAnim(ml::ScnObjModel* model, bool flag);

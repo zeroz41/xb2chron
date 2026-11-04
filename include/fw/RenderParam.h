@@ -27,12 +27,16 @@ public:
     static void resetColorFilter(float time, CAMERA_TYPE type);
     static void setCloudSea(unsigned int num);
     static void resetScene();
+    // 2.0.0's symbols name it. It takes no object (it sits among RenderParam's, after finalize). What it does:
+    // whether the seam map is read (ml::ScnRenderDrSysParmAcc::isSeamMapRead for view 0 of the Framework's scene
+    // renderer).
+    static bool isSeamMapRead();
+    // 2.0.0's symbols name it. It takes no object, and it sits at the start of CommonResource.cpp's split (1.0.0's
+    // CommonResource.o starts at search; its code is RenderParam's pattern, so it likely ends the unit before). What
+    // it does: builds an ml::ScnRenderDrSysParmAcc for view 0 of the Framework's scene renderer and hands the flag
+    // to its setRenderTexMode (DrMan's word at 0x1D50). Called by gf::GfManager::initialize and resetGameType.
+    static void setRenderTypeDlc(bool flag);
 };
-
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function of the unit's namespace: it
-// takes no object (it sits among RenderParam's, after finalize). What it does: whether the seam map is read
-// (ml::ScnRenderDrSysParmAcc::isSeamMapRead for view 0 of the Framework's scene renderer).
-bool fn_7100199318();
 }  // namespace fw
 
 #endif

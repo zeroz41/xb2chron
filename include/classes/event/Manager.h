@@ -43,9 +43,9 @@ public:
     bool isDebugPlayOnetime() const;
     // plays the event sequence name (SeqManager::play) unless one is playing, keeping handle and the four words
     // (+0x280..+0x294) and, when GfGameManager::isGameTypeIra allows it, pos and the float; GfGameTalk::play and
-    // GfGameEvent::fn_71002A0CDC call it (the float's place among the parameters is not known)
-    void fn_71001486C0(const char* name, gf::GF_OBJ_HANDLE* handle, unsigned int, unsigned int, unsigned int,
-                       unsigned int, const mm::Vec3* pos, float);
+    // GfGameEvent::play call it
+    void play(const char* name, gf::GF_OBJ_HANDLE* handle, unsigned int, unsigned int, unsigned int, unsigned int,
+              const mm::Vec3& pos, float);
     bool end();  // returns whether an event was playing
     // GfGameEvent's: initialize creates it on its scene when there is none, finalize destroys it
     static Manager* create(ml::Scn* scn);  // returns the new manager (its callers ignore it)

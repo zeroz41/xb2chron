@@ -29,12 +29,12 @@ public:
     static void stop();
     // shows the object as the running events' display settings ask (GfGameObj::addInObj, listenerGfObj)
     static void applySetDispObject(GF_OBJ_HANDLE* handle);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its unit is gf_game_event and
-    // it reads GfGameEvent's and event::Manager's instances. What it does: finds the event id in EVT_listList's sheets,
-    // builds its evtName (+ "_link" when linkID is set and debug one-time play is off), stores the id and third
-    // argument at GfGameEvent+0x190C/0x1910 and starts the event; GfPlayComEvent::start passes its three ids, &m_pos
-    // and m_time (in s0).
-    static void fn_71002A0CDC(unsigned int id, unsigned int, unsigned int, const mm::Vec3* pos, float time);
+    // 2.0.0's symbols name it. A static member: its unit is gf_game_event and it reads GfGameEvent's and
+    // event::Manager's instances. What it does: finds the event id in EVT_listList's sheets, builds its evtName
+    // (+ "_link" when linkID is set and debug one-time play is off), stores the id and third argument at
+    // GfGameEvent+0x190C/0x1910 and starts the event; GfPlayComEvent::start passes its three ids, m_pos and m_time
+    // (in s0).
+    static void play(unsigned int id, unsigned int, unsigned int, const mm::Vec3& pos, float time);
     static void gevPause(unsigned int, unsigned int);
     // 2.0.0's symbols name it. What it does: returns the int at +0x1914 (pad_1914), 0 without an instance (the same
     // shape as getPlayBladeId one field later); gf::GfGameUtil::getDriverModel, GfGameUtil::getAcceDriverModel and GfGameUtil::dispSinMask call it.
@@ -43,7 +43,7 @@ public:
     // GfFieldLod::setLodSwitchId(bdatId, switchId); event::LodManager::OnEventProc calls it.
     static void setMapLodSwitch(unsigned int lodId, unsigned int switchId);
     // 2.0.0's symbols name it. What it does: GfFieldLod::findBdatIdByLodId(lodId), then (when found) returns
-    // GfFieldLod::fn_71002768BC(bdatId) (the model's switch id), else -1; event::LodManager::playAnm calls it.
+    // GfFieldLod::getLodSwitchId(bdatId) (the model's switch id), else -1; event::LodManager::playAnm calls it.
     static int getMapLodSwitch(unsigned int lodId);
     // 2.0.0's symbols name it. What it does: GfEvtBgm::get()->clear() when the instance exists;
     // GfPlayComEventFade::update calls it.

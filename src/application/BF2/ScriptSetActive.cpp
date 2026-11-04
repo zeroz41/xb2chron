@@ -226,8 +226,8 @@ static int fn_7100661864(VMThread* pThread) {
 
 // evt_ex.play
 static int fn_7100661898(VMThread* pThread) {
-    if (!mm::mtl::Singleton<event::UIManager>::getPtr()->fn_7100104130(s_exText, s_exEther, s_exExp, s_exSelect,
-                                                                         s_exItem, s_exCancel)) {
+    if (!mm::mtl::Singleton<event::UIManager>::getPtr()->openExperienceUI(s_exText, s_exEther, s_exExp, s_exSelect,
+                                                                            s_exItem, s_exCancel)) {
         vmWaitModeSet(pThread);
     }
     return 0;
@@ -235,7 +235,7 @@ static int fn_7100661898(VMThread* pThread) {
 
 // evt_ex.getResult
 static int fn_7100661940(VMThread* pThread) {
-    vmRetIntSet(pThread, mm::mtl::Singleton<event::UIManager>::getPtr()->fn_7100104AE8());
+    vmRetIntSet(pThread, mm::mtl::Singleton<event::UIManager>::getPtr()->getExperienceUI());
     return 1;
 }
 

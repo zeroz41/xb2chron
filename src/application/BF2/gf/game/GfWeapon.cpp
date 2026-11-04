@@ -2793,7 +2793,7 @@ bool GfGameUtil::isEnableBladeElma() {
 // call of its own to keep the original's block order. The name is not the original's.
 static inline bool isAocOwned(unsigned int id) {
     if (GfGameAoc* aoc = GfGameAoc::get()) {
-        return aoc->fn_71002A75DC(id);
+        return aoc->isExistGameAoc(GAMEAOC(id));
     }
     return false;
 }
@@ -2952,7 +2952,7 @@ fw::SoundPack* GfGameUtil::getDlcSePack(const char* name) {
 
 const char* GfGameUtil::getDlcSeName(const char* name) {
     if (GfFieldSound* sound = mm::mtl::PtrSingleton<GfFieldSound>::sys()) {
-        return sound->fn_710027CEA4(name);
+        return sound->getDlcSeName(name);
     }
     return nullptr;
 }

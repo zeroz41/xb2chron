@@ -5,6 +5,7 @@
 #include "classes/fw/AssetData.h"
 #include "classes/fw/AssetLoader.h"
 #include "classes/fw/CommonResource.h"
+#include "fw/RenderParam.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/fw/Framework.h"
 #include "classes/ml/Scn.h"
@@ -16,7 +17,7 @@
 
 namespace fw {
 
-void fn_71001996F0(bool flag) {
+void RenderParam::setRenderTypeDlc(bool flag) {
     ml::ScnRenderDrSysParmAcc acc(mm::mtl::PtrSingleton<Framework>::get()->m_scn->m_renderDrSys, 0);
     acc.setRenderTexMode(flag);
 }

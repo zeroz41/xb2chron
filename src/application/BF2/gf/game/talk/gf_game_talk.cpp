@@ -63,8 +63,8 @@ void GfGameTalk::play(const GfSetupPfTalk& talk) {
             }
             // the category is read and not used
             Bdat::getVal(seat, "category", talk.m_eventId);
-            event::Manager::get()->fn_71001486C0(name.m_str, talk.m_handle, talk.pad_10, talk.m_npcTurn, 0, 0,
-                                                 &mm::Vec3::zero, 0.0f);
+            event::Manager::get()->play(name.m_str, talk.m_handle, talk.pad_10, talk.m_npcTurn, 0, 0, mm::Vec3::zero,
+                                        0.0f);
             return;
         }
     }

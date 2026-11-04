@@ -24,6 +24,7 @@
 #include "classes/gf/GfScriptManager.h"
 #include "classes/gf/GfMovieManager.h"
 #include "classes/fw/CommonResource.h"
+#include "fw/RenderParam.h"
 #include "gf/GfParamIkReflection.h"
 #include "classes/gf/GfInfo.h"
 #include "classes/gf/GfMemManager.h"
@@ -78,7 +79,7 @@ void GfManager::initialize() {
         GfSleep(1);
     }
     btl::BattleManager::build(m_setupParam);
-    fw::fn_71001996F0(s_pThis->m_setupParam.m_dlcCameraParam);
+    fw::RenderParam::setRenderTypeDlc(s_pThis->m_setupParam.m_dlcCameraParam);
     m_initialized = true;
 }
 
@@ -228,7 +229,7 @@ void GfManager::resetGameType(bool flag) {
         sound->setupGameType(flag);
     }
     GfGameManager::resetGameType(flag);
-    fw::fn_71001996F0(flag);
+    fw::RenderParam::setRenderTypeDlc(flag);
 }
 
 bool GfManager::isExistSaveData() {

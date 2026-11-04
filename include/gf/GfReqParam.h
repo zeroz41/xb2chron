@@ -54,7 +54,8 @@ public:
     Driver m_drivers[10];
     unsigned char pad_C8[0x3C];  // the constructor zeroes 0xC8 to 0x115 (one memset)
     Extra m_extras[2];
-    // 0x240 bytes in all: GfGameParty's copy at 0x130 ends where its m_currentPartyValid (0x370) starts
+    // 0x240 bytes in all: GfSelectIra's copy (GfGameParty's at 0x130) ends where its m_currentPartyValid (0x240)
+    // starts
     unsigned char pad_114[0x12C];
 };
 

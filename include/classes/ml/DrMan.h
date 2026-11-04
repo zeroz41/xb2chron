@@ -68,13 +68,13 @@ public:
     // 2.0.0's symbols name it. What it does: sets the byte at 0x1CC0 + s_nDblStockIdx to 1 (a double-buffered bool
     // flag).
     void weatherFrmEnd();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: `this` is the DrMan
-    // (ScnRenderDrSysParmAcc::fn_710070A0DC passes its m_drMan), its code is in the DrMan unit. What it does: returns
-    // the byte at 0x1DBC + s_nDblStockIdx (a double-buffered bool flag).
-    bool fn_710071E77C();
+    // 2.0.0's symbols name it. A member: `this` is the DrMan (ScnRenderDrSysParmAcc::isSeamMapOn passes its
+    // m_drMan), its code is in the DrMan unit. What it does: returns the byte at 0x1DBC + s_nDblStockIdx (a
+    // double-buffered bool flag).
+    bool isSeamMapOn() const;
     // 2.0.0's symbols name it. What it does: returns the byte at 0x1CC0 + s_nDblIdx != 0 (the flag weatherFrmEnd sets).
     bool isWeatherFrmEnd();
-    // 2.0.0's symbols name it. What it does: sets the byte at 0x1DBC + s_nDblIdx to 1 (the flag fn_710071E77C reads).
+    // 2.0.0's symbols name it. What it does: sets the byte at 0x1DBC + s_nDblIdx to 1 (the flag isSeamMapOn reads).
     void setSeamMapOn();
     static CriticalSection* getCriticalSection();
     bool isTemporalUPSToGlobalIBL() const;
@@ -281,7 +281,7 @@ public:
     unsigned char pad_1DAA[0xE];
     bool m_allMiddelTexStmChk[2];       // 0x1DB8, by s_nDblStockIdx
     bool m_seamMapStmOk[2];             // 0x1DBA, setSeamMapStmOk writes [s_nDblIdx]
-    // 0x1DBC: setSeamMapOn (DrMdoCtlSeam::calcBegin's call) sets [s_nDblIdx], fn_710071E77C reads [s_nDblStockIdx]
+    // 0x1DBC: setSeamMapOn (DrMdoCtlSeam::calcBegin's call) sets [s_nDblIdx], isSeamMapOn reads [s_nDblStockIdx]
     // (the name is not the original's)
     bool m_seamCalc[2];
     bool m_cameraLight;

@@ -65,7 +65,7 @@ public:
     static void setBusyForChangeGame(bool flag);
     // 2.0.0's symbols name it. What it does: passes its bool to the framework's, the effect manager's and the sound
     // manager's setupThreadPostUpdate / setIra / setupGameType (each when it exists), GfGameManager::resetGameType and
-    // fw::fn_71001996F0
+    // fw::RenderParam::setRenderTypeDlc
     static void resetGameType(bool flag);
     static bool isExistSaveData();
     static void setSaveDataCreated();

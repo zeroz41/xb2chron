@@ -337,7 +337,7 @@ GfPlayComEvent::~GfPlayComEvent() { m_activate--; }
 void GfPlayComEvent::start() {
     GfEvent::addEventCallback(this);
     GfGameEvent::setAfterEventStartID(0);
-    GfGameEvent::fn_71002A0CDC(m_event, pad_1C, pad_20, &m_pos, m_time);
+    GfGameEvent::play(m_event, pad_1C, pad_20, m_pos, m_time);
 }
 
 void GfPlayComEvent::end() { GfEvent::removeEventCallback(this); }
@@ -362,7 +362,7 @@ void GfPlayComEvent::gevPlayEvent(GEV gev, unsigned int id) {
     } else if (gev == GEV(14)) {
         if (m_bgm.m_nLen != 0) {
             if (GfFieldBgm* bgm = mm::mtl::PtrSingleton<GfFieldBgm>::sys()) {
-                bgm->fn_7100262E58(m_bgm);
+                bgm->playFieldBgmForce(m_bgm.m_str);
             }
             m_bgm.clear();
         }

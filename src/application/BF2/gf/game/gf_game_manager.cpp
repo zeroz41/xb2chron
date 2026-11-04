@@ -887,7 +887,7 @@ bool GfGameManager::isAssetNumberInvalid() {
 
 void GfGameManager::resetGameType(bool flag) {
     if (GfGameAoc* aoc = GfGameAoc::get()) {
-        aoc->fn_71002A7430(flag);
+        aoc->setupGame(GAME_TYPE(flag));
     }
 }
 
@@ -908,7 +908,7 @@ bool GfGameManager::isBattleArenaActive() {
 
 bool GfGameManager::isInstalledBattleArenaContents() {
     if (GfGameAoc* aoc = GfGameAoc::get()) {
-        return aoc->fn_71002A75DC(0x30101);
+        return aoc->isExistGameAoc(GAMEAOC(0x30101));
     }
     return false;
 }
@@ -1016,7 +1016,7 @@ bool GfGameManager::fn_71002AC77C(unsigned int party) {
 
 bool GfGameManager::isEnableSpecialBgm() {
     GfGameAoc* aoc = GfGameAoc::get();
-    if (aoc && aoc->m_mode != 1 && aoc->fn_71002A75DC(0x30101)) {
+    if (aoc && aoc->m_mode != 1 && aoc->isExistGameAoc(GAMEAOC(0x30101))) {
         return GfGameUtilDiff::isEnableSpecialBgm();
     }
     return false;

@@ -179,7 +179,7 @@ bool GfMapManager::isExistObj() {
         return true;
     }
     ml::ScnRenderDrSysParmAcc acc;
-    return acc.fn_710070A0DC();
+    return acc.isSeamMapOn();
 }
 
 unsigned int GfMapManager::getMapJumpID() {

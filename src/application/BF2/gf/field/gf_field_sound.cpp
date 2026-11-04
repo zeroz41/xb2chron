@@ -35,7 +35,7 @@ const char* s_szDlcCommonName = "dlc_fld_allmap";
 bool s_isDlc;
 }  // namespace _gffsn
 
-inline void GfFieldSound::SoundInfo::destroy() {
+inline void GfFieldSound::SoundDlc::destroy() {
     m_pack = nullptr;
     if (m_resource != nullptr) {
         m_resource->release();
@@ -45,7 +45,7 @@ inline void GfFieldSound::SoundInfo::destroy() {
     m_name.clear();
 }
 
-inline void GfFieldSound::SoundInfo::fn_710027CB9C(const char* name) {
+inline void GfFieldSound::SoundDlc::setupWithMicroThread(const char* name) {
     destroy();
     m_path = "sound/se/";
     m_path += name;
@@ -233,7 +233,7 @@ void GfFieldSound::createMapSound() {
                                                            static_cast<fw::LOAD_PRIO>(10));
     }
     if (GfGameUtil::isEnableBladeElma()) {
-        m_dlcSound.fn_710027CB9C("dlc_se_btl_spskill");
+        m_dlcSound.setupWithMicroThread("dlc_se_btl_spskill");
     }
 }
 
@@ -272,7 +272,7 @@ fw::SoundPack* GfFieldSound::getDlcSePack(const char* name) {
     return pack;
 }
 
-const char* GfFieldSound::fn_710027CEA4(const char* name) {
+const char* GfFieldSound::getDlcSeName(const char* name) const {
     if (strcmp(name, "btl_spskill_001") == 0) {
         return "dlc_se_btl_bl40040116";
     }

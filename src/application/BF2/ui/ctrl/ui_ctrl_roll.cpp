@@ -15,7 +15,7 @@ UICtrlRoll::~UICtrlRoll() {
     }
 }
 
-UICtrlRoll* UICtrlRoll::fn_7100672020(unsigned int handle, const Setting& setting) {
+UICtrlRoll* UICtrlRoll::create(unsigned int handle, const RollSetup& setting) {
 #line 46
     UICtrlRoll* ctrl = new (UIUtil::getProgAllocator(), 16, __FILE__, __LINE__) UICtrlRoll(handle);
     if (ctrl == nullptr) {

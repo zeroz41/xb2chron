@@ -48,19 +48,19 @@ public:
     void PostUpdateProc(const fw::UpdateInfo& info);
     BattleCharacter* GetCharacterConst(int index) const;
     BattleCharacter* GetCharacterConst(gf::GF_OBJ_HANDLE* handle) const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it reads the slots. What it
+    // 2.0.0's symbols name it. A member: it reads the slots. What it
     // does: the first character in use among the players (isPlayer) or the enemies whose m_bdatID is bdatID, else
     // null (GROUP_BLADE_DATA::Initialize, GROUP_DATA::Update, TalkManager::RegisterSpecialWin call it).
-    BattleCharacter* fn_710007B5DC(bool isPlayer, int bdatID) const;
+    BattleCharacter* GetCharacterByBdatIDConst(bool isPlayer, unsigned int bdatID) const;
     gf::GF_OBJ_HANDLE* GetCharacterHandle(int index) const;  // the handle of the character at index
     BattleCharacter* GetControlCharacter();
     bool IsControlCharacter(gf::GF_OBJ_HANDLE* handle);
     // the first enemy in use in battle (IsBattle), with skipFn28D0C one fn_7100028D0C(false) refuses, with aliveOnly
     // one alive (IsDead(0) false); BattleCharacter::UpdateTarget calls it
     BattleCharacter* GetBattleEnemyCharacter(bool aliveOnly, bool skipFn28D0C);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it writes m_enhanceCount. What
+    // 2.0.0's symbols name it. A member: it writes m_enhanceCount. What
     // it does: adds count to m_enhanceCount, holding it at 255 (BattleCharacter::SetupSpecialEnhanceData calls it).
-    void fn_710007C020(int count);
+    void AddPartyGaugeLimit(unsigned int count);
     // the character index of an AI script's character id (Utility::AI_GetCharacterHandle passes the id less 100
     // and false for an enemy)
     int GetCharacterIDByAiChrID(int id, bool isPlayer) const;
@@ -112,7 +112,7 @@ public:
     AI_CHR_TABLE m_aiChrTable;
     // the slot of the character the player controls, CHARACTER_NUM for none (the name is not the original's)
     unsigned char m_controlIndex;
-    // fn_710007C020 adds to it, up to 255 (the name is not the original's)
+    // AddPartyGaugeLimit adds to it, up to 255 (the name is not the original's)
     unsigned char m_enhanceCount;
 };
 }  // namespace btl

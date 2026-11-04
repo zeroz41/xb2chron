@@ -210,7 +210,7 @@ public:
     // manager, gf_menu_obj_btl_time, gf_menu_btlch_adapter).
     static BattleChallengeRecord* getBattleArenaMenuInfo();
     // 2.0.0's symbols name it. What it does: when PtrSingleton<GfGameAoc> exists, passes it and its bool to
-    // GfGameAoc::fn_71002A7430 (as GfGameManager::setupGame does); GfManager::resetGameType calls it
+    // GfGameAoc::setupGame (as GfGameManager::setupGame does); GfManager::resetGameType calls it
     static void resetGameType(bool flag);
     // 2.0.0's symbols name it. What it does: tail-calls GfDataHitonowa::getFlag4Level, which returns bits 16-19 of the u32 at 0x101D08
     // of GfDataManager::getDataGame(). Callers: updateCloud2ForIra and gf_menu_obj_hitonowa's GfMenuObjHitonowa::setupGame
@@ -320,7 +320,7 @@ public:
     static GF_STATE getState();
     static bool isClearGame();  // the game has been cleared once (the story's end reached)
     // 2.0.0's symbols name it. What it does: whether the game runs in the mode the title screen switches on: true when
-    // gf_game_env.cpp's 3.0.1 singleton (GfGameAoc: 0x10 bytes, created by fn_71002A752C from initialize) exists and
+    // gf_game_env.cpp's 3.0.1 singleton (GfGameAoc: 0x10 bytes, created by build from initialize) exists and
     // its int at 0x8 is 1. Only resetGameType(flag & 1) writes that int; it is reached from title_main.cpp's update
     // through resetGameType and gf_manager.cpp's resetGameType, which hands the same flag to fw::Framework (byte
     // 0x459), fw::EffectManager (0x2FD8), fw::SoundManager (0x44C8), the render DrSys parameters and GfDataGame (bit 0
@@ -334,7 +334,7 @@ public:
     // the scene's byte at 0x8B8 to 1. Callers: seqAutoSave and the sys plugin's autoSave (no arguments).
     static void reqestEventAutoSave();
     // 2.0.0's symbols name it. What it does: false when gf_game_env.cpp's 3.0.1 singleton (GfGameAoc) does not exist,
-    // else tail-calls fn_71002A75DC(singleton, 0x30101) (an add-on content check). GfMenuObjUtil::isValidExpansion
+    // else tail-calls isExistGameAoc(singleton, 0x30101) (an add-on content check). GfMenuObjUtil::isValidExpansion
     // answers its add-on menu layer 1 with it; GfMenuManager's constructor and GfGameScene::setEnemyDead call it too.
     static bool isInstalledBattleArenaContents();
     // 2.0.0's symbols name it. What it does: true while an event of type 2 or more plays (GfGameEvent::getPlayEventId
@@ -362,7 +362,7 @@ public:
     // driver 0 or the party's blade (getHandleBlade(party, -1)) is in battle, false without a driver.
     static bool fn_71002AC77C(unsigned int party);
     // 2.0.0's symbols name it. What it does: false unless GfGameAoc's instance exists, its mode is not 1 and
-    // fn_71002A75DC(0x30101) holds; then gf::GfGameUtilDiff::isEnableSpecialBgm() (option byte 0x84 is 0).
+    // isExistGameAoc(0x30101) holds; then gf::GfGameUtilDiff::isEnableSpecialBgm() (option byte 0x84 is 0).
     static bool isEnableSpecialBgm();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
     // GfGameManager's functions and takes no instance. What it does: whether id is 0 or one of 30255..30258.

@@ -58,7 +58,7 @@ bool UIAnimationManager::registObject(unsigned int handle) {
     return true;
 }
 
-void UIAnimationManager::fn_710066B148(unsigned int handle, unsigned int eventHandle, unsigned int eventParam) {
+void UIAnimationManager::changeEventHandleObject(unsigned int handle, unsigned int eventHandle, int eventParam) {
     for (mm::mtl::IntrusiveList<ObjectNode>::iterator it = m_list.begin(); it != m_list.end(); ++it) {
         ObjectNode& node = *it;
         if (node.m_handle == handle) {

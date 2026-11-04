@@ -90,10 +90,10 @@ int getFlagVal(unsigned char* fp, const char* member, int id, const char* bitMem
 // getValCheck for an array member: element index of the row's value (1.0.0's gf::_gfbcd::getChrDrWpnType reads the
 // WpnType array so, type 1, keeping the low 8 bits)
 unsigned long getArrayValCheck(unsigned char* fp, unsigned char* member, int id, int index, int type);
-// getArrayValCheck by the column's name (bdat.cpp defines it; TalkManager::fn_71000AEAB4 reads "Voice" and "Timer" so)
+// getArrayValCheck by the column's name (bdat.cpp defines it; TalkManager::PlaySpWin reads "Voice" and "Timer" so)
 unsigned long getArrayValCheck(unsigned char* fp, const char* column, int id, int index, int type);
 // getArrayValCheck of a u16 array column, narrowed by an inline callee like getValCheckU16 (the name is not the
-// original's): TalkManager::fn_71000AEAB4 tests the "Timer" value in 32 bits (tst w0, #0xffff)
+// original's): TalkManager::PlaySpWin tests the "Timer" value in 32 bits (tst w0, #0xffff)
 inline unsigned short getArrayValCheckU16(unsigned char* fp, const char* column, int id, int index) {
     return getArrayValCheck(fp, column, id, index, 2);
 }

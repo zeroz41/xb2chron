@@ -29,16 +29,16 @@ public:
     UIManager();  // 0x71001024A0, out of line; Singleton<UIManager>::getPtr inlines it
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     void clear();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because the evt_ex plugin's
+    // 2.0.0's symbols name it. A member because the evt_ex plugin's
     // play (ScriptCamMotion) calls it on Singleton<UIManager>::getPtr(). What it does: takes the text, ether value,
     // exp/select/item lists and cancel text evt_ex's set* entries collected, checks MstxtManager's state and opens a
     // selection; returns false while the script must wait (play then calls vmWaitModeSet).
-    bool fn_7100104130(const char* text, int ether, const mm::mtl::FixedVector<unsigned int, 16>& exp,
-                       const mm::mtl::FixedVector<const char*, 16>& select,
-                       const mm::mtl::FixedVector<unsigned int, 16>& item, const char* cancel);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because evt_ex's getResult calls
+    bool openExperienceUI(const char* text, unsigned int ether, const mm::mtl::FixedVector<unsigned int, 16>& exp,
+                          const mm::mtl::FixedVector<const char*, 16>& select,
+                          const mm::mtl::FixedVector<unsigned int, 16>& item, const char* cancel);
+    // 2.0.0's symbols name it. A member because evt_ex's getResult calls
     // it on Singleton<UIManager>::getPtr(). What it does: returns the int at offset 0x48 (evt_ex.getResult's value).
-    int fn_7100104AE8();
+    int getExperienceUI() const;
     // evt_pay.play: returns false while the script has to wait
     bool openPayoffUI(const char* text, const mm::mtl::FixedVector<unsigned int, 16>& money,
                       const mm::mtl::FixedVector<const char*, 16>& select, const char* cancel);
@@ -87,7 +87,7 @@ public:
     int m_payoffResult;  // 0x38
     unsigned char pad_3c[0x40 - 0x3C];
     unsigned long pad_40;  // the constructor zeroes it
-    // evt_ex.getResult's value (fn_7100104AE8); the name is not the original's
+    // evt_ex.getResult's value (getExperienceUI); the name is not the original's
     int m_exResult;  // 0x48
     unsigned char pad_4c[0x50 - 0x4C];
     unsigned long pad_50;  // the constructor zeroes it

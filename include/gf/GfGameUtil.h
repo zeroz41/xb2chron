@@ -363,7 +363,7 @@ public:
     // "pc110601" (true / 6, else false / 0; GfAssetSetupEnemy::setup and GfAssetSetupNpc::setup call both).
     // GfGameUtil::playSeForPartySwitch: plays menu sound effect 0x2E (GfMenuObjUtil::playSE;
     // GfReqCommand::execChangeBladeWithBladeId calls it). GfGameUtil::getDlcSePack / GfGameUtil::getDlcSeName:
-    // GfFieldSound's getDlcSePack / fn_710027CEA4 for name when GfFieldSound is up (none otherwise;
+    // GfFieldSound's getDlcSePack / getDlcSeName for name when GfFieldSound is up (none otherwise;
     // GfComSound::playSe2D calls both).
     static bool isDispLauraMedal();
     // 2.0.0's symbols name it. What it does: for drivers 1, 2, 3, 5 and 6 sets their blades back (mercenary blades by
@@ -383,7 +383,7 @@ public:
     // GfFieldSound::createMapSound loads the "dlc_se_btl_spskill" sound pack when it is true.
     static bool isEnableBladeElma();
     // 2.0.0's symbols name it. What it does: whether the add-on blade is unlocked: 0x451 asks
-    // GfGameAoc::fn_71002A75DC(0x20101), 0x452/0x453 GfGameManager::isInstalledBattleArenaContents, 0x457 that one too,
+    // GfGameAoc::isExistGameAoc(0x20101), 0x452/0x453 GfGameManager::isInstalledBattleArenaContents, 0x457 that one too,
     // item 25497 in the box and a first rule value set in row 25 of SDataGame's challenge rule table; every other blade
     // is.
     static bool isEnableBladeDlc(unsigned int blade);

@@ -176,7 +176,7 @@ bool BladeChangeManager::IsProcHomuriEnd() const {
     return false;
 }
 
-bool BladeChangeManager::fn_7100019180(gf::GF_OBJ_HANDLE* handle) {
+bool BladeChangeManager::IsEnableFieldDead(gf::GF_OBJ_HANDLE* handle) const {
     for (int i = 0; i < m_procNum; i++) {
         if ((m_procs[i].m_driver == handle && !m_procs[i].m_isDriverDone) || m_procs[i].m_blade == handle ||
             (m_procs[i].m_newBlade == handle && !m_procs[i].m_isNewBladeDone)) {

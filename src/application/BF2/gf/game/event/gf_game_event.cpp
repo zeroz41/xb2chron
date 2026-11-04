@@ -397,7 +397,7 @@ void GfGameEvent::setMapLodSwitch(unsigned int lodId, unsigned int switchId) {
 int GfGameEvent::getMapLodSwitch(unsigned int lodId) {
     int bdatId = GfFieldLod::get()->findBdatIdByLodId(lodId);
     if (bdatId != 0) {
-        return GfFieldLod::get()->fn_71002768BC(bdatId);
+        return GfFieldLod::get()->getLodSwitchId(bdatId);
     }
     return -1;
 }

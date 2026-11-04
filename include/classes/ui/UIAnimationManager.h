@@ -23,13 +23,13 @@ public:
     virtual ~UIAnimationManager();  // slot 0
     void update(const fw::UpdateInfo& info);
     bool registObject(unsigned int handle);  // false unless the object is an image with an animation
-    // Placeholder name: 1.0.0 has nothing under this name, but in 1.0.0 the same caller
+    // 2.0.0's symbols name it, and in 1.0.0 the same caller
     // (gf::GfMenuObject::hookAnimationEvent, with the same first two arguments: its second and first) calls
     // ui::UIAnimationManager::changeEventHandleObject(unsigned int, unsigned int), at the same place in this unit,
     // which stores only the event handle; 3.0.1's takes a third argument (hookAnimationEvent's third). A member
     // because it walks m_list. What it does: for every node of the object handle, sets m_eventHandle and
     // m_eventParam.
-    void fn_710066B148(unsigned int handle, unsigned int eventHandle, unsigned int eventParam);
+    void changeEventHandleObject(unsigned int handle, unsigned int eventHandle, int eventParam);
 
     mm::mtl::IntrusiveList<ObjectNode> m_list;  // the name is not the original's
 };

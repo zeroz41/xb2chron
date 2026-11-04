@@ -14,10 +14,6 @@ public:
     virtual ~BgmField();  // slot 0
     virtual const char* getTrackName() const;  // slot 2
     virtual void update(fw::UpdateInfo const&);  // slot 4
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: GfFieldBgm::fn_7100262E58 calls
-    // it on BgmField's instance. What it does: takes a BGM name (asserts `pszName != 0` as it copies it into a
-    // FixStr); its only caller passes GfPlayComEvent's BGM name.
-    void fn_7100262E70(const char* name);
 };
 }  // namespace gf
 

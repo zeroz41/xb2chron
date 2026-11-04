@@ -102,9 +102,9 @@ const GROUP_BLADE_DATA* GROUP_DATA::GetBladeDataConst(int index) const {
     return &m_blades[index];
 }
 
-GROUP_BLADE_DATA* GROUP_DATA::fn_71000A03D4(unsigned int blade) {
+const GROUP_BLADE_DATA* GROUP_DATA::GetBladeDataByBdatIDConst(unsigned int blade) const {
     for (int i = 0; i < 5; i++) {
-        GROUP_BLADE_DATA& data = m_blades[i];
+        const GROUP_BLADE_DATA& data = m_blades[i];
         if (data.m_isValid && data.m_blade == blade) {
             return &data;
         }

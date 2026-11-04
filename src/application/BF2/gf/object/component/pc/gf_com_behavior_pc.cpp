@@ -31,8 +31,7 @@
 #include "classes/gf/pc/FallDamagePlugin.h"
 #include "classes/gf/GfComAsm.h"
 #include "gf/MsgPcFieldSetFallMaxHeight.h"
-#include "gf/MsgUnk_100001C.h"
-#include "gf/MsgUnk_100001C.h"
+#include "gf/MsgPcFieldChangeControlModeForIra.h"
 #include "fw/Allocator.h"
 #include "gf/MsgObjectNotifyDead.h"
 #include "gf/MsgObjectDamage.h"
@@ -347,7 +346,8 @@ void GfComBehaviorPc::procMsgPcFieldSetFallMaxHeight(fw::MessageObject* sender, 
     }
 }
 
-void GfComBehaviorPc::fn_710050EF90(fw::MessageObject*, MsgUnk_100001C& msg) {
+void GfComBehaviorPc::procMsgPcFieldChangeControlModeForIra(fw::MessageObject*,
+                                                            MsgPcFieldChangeControlModeForIra& msg) {
     GfComPropertyPc* property = m_owner->getComponent<GfComPropertyPc>(5);
     GfComAsm* asmCom = m_owner->getComponent<GfComAsm>(2);
     unsigned int flags = property->m_stateFlags;

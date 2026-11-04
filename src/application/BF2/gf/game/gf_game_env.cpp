@@ -261,13 +261,13 @@ WEATHERID GfGameEnv::getTempWeather() {
     return WEATHERID(0);
 }
 
-void GfGameAoc::fn_71002A7430(int mode) {
+void GfGameAoc::setupGame(GAME_TYPE mode) {
     GfDataUtil::setIra(*GfDataManager::getDataGame(), mode == 1);
     m_mode = mode;
     refreshAocFlag();
 }
 
-void GfGameAoc::fn_71002A752C() {
+void GfGameAoc::build(const GfSetupParam& param) {
 #line 1258
     new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfGameAoc();
 }

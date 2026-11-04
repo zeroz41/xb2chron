@@ -17,6 +17,11 @@ enum CLOUD_SEA_PRIO : int;
 enum WEATHERID : int;
 enum WEATHER_PRIO : int;
 enum WEATHER_HANDLE : int;
+// the game type GfGameAoc::setupGame takes (1: the mode GfGameManager::isGameTypeIra tests); 2.0.0's symbols name it
+enum GAME_TYPE : int {};
+// an encoded add-on item GfGameAoc::isExistGameAoc answers for (kind = bits 16-19, needed count = bits 8-15); 2.0.0's
+// symbols name it
+enum GAMEAOC : unsigned int {};
 class GfSetupParam;
 
 // a color filter request: createColorFilter's argument and GfGameEnv's queue entry, highest m_prio first; update
@@ -93,31 +98,31 @@ public:
 }  // namespace gf
 
 namespace gf {
-// Unnamed class (TUnk_<table low address>, counted as debt): the symbols leave it unnamed (its tables are lbl_7100B54858 and its
-// PtrSingleton base's lbl_7100B54878, its instance lbl_7100C23300). New in 3.0.1 (1.0.0 has no such object).
-// gf_game_env.cpp's fn_71002A752C creates it (0x10 bytes, line 1258) from GfGameManager::initialize. What it does:
+// 2.0.0's symbols name it (its tables are lbl_7100B54858 and its PtrSingleton base's lbl_7100B54878, its instance
+// lbl_7100C23300). 1.0.0 has no such object.
+// gf_game_env.cpp's build creates it (0x10 bytes, line 1258) from GfGameManager::initialize. What it does:
 // keeps the add-on content state: its functions refresh the local flags 0xD781-0xD787 from GfDataAoc's counts
-// (GfDataAoc::getContentVersion(1..3)), answer whether an encoded add-on item is owned (fn_71002A75DC) and hold the mode int that
+// (GfDataAoc::getContentVersion(1..3)), answer whether an encoded add-on item is owned (isExistGameAoc) and hold the mode int that
 // GfGameManager::isGameTypeIra tests for 1.
 class GfGameAoc : public ::mm::mtl::PtrSingleton< ::gf::GfGameAoc> {
 public:
     virtual ~GfGameAoc() {}  // slot 0 (its table's D2 slot holds the base's)
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: GfGameManager::resetGameType
+    // 2.0.0's symbols name it. A member: GfGameManager::resetGameType
     // passes the instance. What it does: sets GfDataGame's bit 0 of 0xFD6D0 to (mode == 1), stores mode at 0x8 and
     // refreshes the add-on flags 0xD781-0xD787 (as refreshAocFlag).
-    void fn_71002A7430(int mode);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: GfGameManager::isInstalledBattleArenaContents
+    void setupGame(GAME_TYPE mode);
+    // 2.0.0's symbols name it. A member: GfGameManager::isInstalledBattleArenaContents
     // passes the instance. What it does: decodes id (kind = bits 16-19, needed count = bits 8-15), true when
     // GfDataAoc's count of that kind reaches it; kind 4 (0x401xx/0x402xx) also asks GfBdatShop::getMNU_DlcGiftgetflag.
-    bool fn_71002A75DC(unsigned int id);
+    bool isExistGameAoc(GAMEAOC id) const;
     // 2.0.0's symbols name it. What it does: for id >= 35353 refreshes the add-on flags (refreshAocFlag).
     void gevChangeAocFlag(unsigned int id);
     // 2.0.0's symbols name it. What it does: sets local flags 0xD781-0xD784 (type 1) to whether GfDataAoc's count 1
     // (GfDataAoc::getContentVersion(1)) is above 0..3, 0xD785 to count 3 > 0, 0xD786 to 1 and 0xD787 to count 2 > 0.
     void refreshAocFlag();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it builds the instance
-    // (0x10 bytes, gf_game_env.cpp line 1258, m_mode 0) as build does for the other singletons of the file.
-    static void fn_71002A752C();
+    // 2.0.0's symbols name it. It builds the instance (0x10 bytes, gf_game_env.cpp line 1258, m_mode 0) as build does
+    // for the other singletons of the file.
+    static void build(const GfSetupParam& param);
     // 2.0.0's symbols name it. It deletes the instance when there is one, as destroy does for the other singletons of
     // the file.
     static void destroy();

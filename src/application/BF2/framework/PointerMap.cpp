@@ -172,7 +172,7 @@ void RenderParam::initialize() {}
 
 void RenderParam::finalize() {}
 
-bool fn_7100199318() {
+bool RenderParam::isSeamMapRead() {
     ml::ScnRenderDrSysParmAcc acc(mm::mtl::PtrSingleton<Framework>::get()->m_scn->m_renderDrSys, 0);
     return acc.isSeamMapRead();
 }
