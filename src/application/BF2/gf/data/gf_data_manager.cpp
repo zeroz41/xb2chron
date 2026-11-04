@@ -121,8 +121,9 @@ void GfDataManager::clear() {
     GfEvent::callChangeScenarioFlag(GfDataUtil::getScenarioFlag(), prevFlag);
 }
 
-void GfDataManager::setupGame(const SDataSystem* system, const SDataGame* game, const SDataOption* option) {
-    GfDataStore::setGameData(system, game, option);
+void GfDataManager::setupGame(const SDataSystem* system, const SDataGame* game, const SDataOption* option,
+                              const SDataGameIra* ira) {
+    GfDataStore::setGameData(system, game, option, ira);
     GfDataUtil::convertNewCollectFlagPatch();
     GfDataHitonowa::bdatRefresh();
 }

@@ -1,7 +1,7 @@
 #ifndef CLASSES_EVENT_ATTACHACTORBASE_H
 #define CLASSES_EVENT_ATTACHACTORBASE_H
 
-namespace event { enum ATTACH_TYPE : int; }
+enum EVT_attachtype : int;
 #include "mm/Mat44.h"
 #include "classes/event/IAttachActor.h"
 namespace mm { class Vec3; }
@@ -13,7 +13,7 @@ public:
     virtual ~AttachActorBase() {}  // slot 0
     virtual const char* getName() const;  // slot 2: returns m_name
     virtual void setEffectCaster(bool, unsigned int) = 0;  // slot 3
-    virtual void setEffectMount(bool, unsigned int, char const*, mm::Vec3 const&, bool, event::ATTACH_TYPE) = 0;  // slot 4
+    virtual void setEffectMount(bool, unsigned int, char const*, mm::Vec3 const&, bool, EVT_attachtype) = 0;  // slot 4
     virtual bool getMat(mm::Mat44&) const;  // slot 5: copies m_mat, returns true
     virtual bool getMtpMatGlobal(mm::Mat44&, char const*) const;  // slot 6
     virtual bool getMtpMat(mm::Mat44&, char const*) const = 0;  // slot 7

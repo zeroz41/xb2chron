@@ -2968,7 +2968,8 @@ unsigned long SCOM_PARTY_ADD::create() {
         return -1;
     }
 #line 2992
-    SCOM_PARTY_ADD* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_PARTY_ADD();
+    SCOM_PARTY_ADD* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        SCOM_PARTY_ADD(reinterpret_cast<GF_SCOM_HANDLE*>(GfReqSmallCom::sys()->newHandle()));
     return GfReqSmallCom::addRequest(request);
 }
 

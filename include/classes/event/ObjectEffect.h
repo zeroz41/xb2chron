@@ -6,7 +6,8 @@
 #include "classes/event/Object.h"
 
 namespace mm { class Col4; }
-namespace event { class IAttachActor; enum ATTACH_TYPE : int; }
+namespace event { class IAttachActor; }
+enum EVT_attachtype : int;  // 2.0.0's symbols name it, outside namespace event (1.0.0's EVT_attachtype)
 #include "classes/event/EffectObj.h"
 #include "classes/event/PosAxis.h"
 #include "classes/event/RotAxis.h"
@@ -36,7 +37,7 @@ public:
     void setRotAxis(const RotAxis& rot);
     void linerPosAxis(const PosAxis& pos, float time, CV_TYPE type);
     void linerRotAxis(const RotAxis& rot, float time, CV_TYPE type);
-    void setMount(IAttachActor* actor, const char* name, const mm::Vec3& pos, bool flag, ATTACH_TYPE type);
+    void setMount(IAttachActor* actor, const char* name, const mm::Vec3& pos, bool flag, EVT_attachtype type);
     // plays the effect and forgets the mount setMount stored (1.0.0's ObjectEffect::play 0x7100118C20, same
     // signature; 3.0.1 inlines it into ScriptEffectPlay::doit and redo)
     void play(const char* name, float a, float b, float c, int d, int e) {
@@ -46,7 +47,7 @@ public:
         m_mountName = "";
         m_mountPos = mm::Vec3::zero;
         m_mountFlag = false;
-        m_mountType = (ATTACH_TYPE)0;
+        m_mountType = (EVT_attachtype)0;
         m_mountMtx = mm::Mat44::identity;
         pad_150 = false;
         pad_190 = 0;
@@ -67,7 +68,7 @@ public:
     unsigned char pad_ec[0x4];
     mm::Vec3 m_mountPos;             // 0xf0
     bool m_mountFlag;                // 0x100
-    ATTACH_TYPE m_mountType;         // 0x104
+    EVT_attachtype m_mountType;         // 0x104
     unsigned char pad_108[0x8];
     // play resets it to the identity; the name is not the original's
     mm::Mat44 m_mountMtx;            // 0x110

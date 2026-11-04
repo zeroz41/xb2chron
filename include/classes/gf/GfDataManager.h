@@ -10,6 +10,7 @@ namespace gf { class GfSetupParam; }
 namespace gf { class GfDataManager; }
 namespace gf { class SDataGame; }
 namespace gf { class SDataSystem; }
+namespace gf { class SDataGameIra; }
 namespace gf { class SDataOption; }
 namespace gf { struct SDataDlc; }
 namespace gf { enum RELOAD_BDAT : int; }
@@ -27,7 +28,9 @@ public:
     // IGfEvent part has the same body)
     virtual void gevReloadBdat(RELOAD_BDAT type, unsigned int id);  // slot 2
     static void clear();
-    static void setupGame(const SDataSystem* system, const SDataGame* game, const SDataOption* option);
+    // 2.0.0's symbols spell the fourth parameter, which goes on to GfDataStore::setGameData
+    static void setupGame(const SDataSystem* system, const SDataGame* game, const SDataOption* option,
+                          const SDataGameIra* ira);
     static void setupOptionData(const SDataOption& option);
     static SDataSystem* getDataSystem();  // GfDataStore's
     static SDataGame* getDataGame();  // GfDataStore's

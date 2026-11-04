@@ -196,7 +196,7 @@ AttachActorCS::~AttachActorCS() {
         setEffectCaster(false, **m_casters.begin());
     }
     while (m_mounts.size() != 0) {
-        setEffectMount(false, (*m_mounts.begin())->m_handle, "", mm::Vec3::zero, false, static_cast<ATTACH_TYPE>(0));
+        setEffectMount(false, (*m_mounts.begin())->m_handle, "", mm::Vec3::zero, false, static_cast<EVT_attachtype>(0));
     }
 }
 
@@ -2667,7 +2667,7 @@ void ScriptEffectMount::doit(const event::Param& param) {
     ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
     if (obj != 0) {
         ObjectChara* chara = static_cast<ObjectChara*>(param.val(0).getUserdata());
-        ATTACH_TYPE type = static_cast<ATTACH_TYPE>(param.val(1).getS32());
+        EVT_attachtype type = static_cast<EVT_attachtype>(param.val(1).getS32());
         const char* name = param.val(2).getStr();
         mm::Vec3 pos(param.val(3).getF32(), param.val(4).getF32(), param.val(5).getF32());
         obj->setMount(chara->m_chara->m_attach, name, pos, param.val(6).getBool(), type);
@@ -2677,7 +2677,7 @@ void ScriptEffectMount::doit(const event::Param& param) {
 void ScriptEffectMount::undo(const event::Param&) {
     ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
     if (obj != 0) {
-        obj->setMount(nullptr, "", mm::Vec3::zero, false, static_cast<ATTACH_TYPE>(0));
+        obj->setMount(nullptr, "", mm::Vec3::zero, false, static_cast<EVT_attachtype>(0));
     }
 }
 

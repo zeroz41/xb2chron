@@ -7,6 +7,7 @@
 #include "mm/mtl/FixedQueue.h"
 
 namespace fw { class UpdateInfo; }
+namespace gf { class GF_SCOM_HANDLE; }
 
 namespace gf {
 // what GfGameParty::getPartyPosition fills: one record per party slot (0x20 bytes each; the member names are
@@ -39,7 +40,8 @@ public:
         int m_kind;             // 1 addBlade, 2 removeBlade, 3 addDriver, 4 removeDriver, 5 setCurrentBlade
     };
 
-    explicit SCOM_PARTY_ADD(unsigned long handle = GfReqSmallCom::sys()->newHandle());
+    // 2.0.0's symbols type the handle GF_SCOM_HANDLE*, as SCOM_OBJ_VFADE's constructor
+    explicit SCOM_PARTY_ADD(GF_SCOM_HANDLE* handle);
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
 
     static unsigned long create();

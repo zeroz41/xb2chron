@@ -6,7 +6,7 @@
 #include "gf/SDataSaveIra.h"
 #include "gf/SDataDlc.h"
 
-namespace gf { class GfDataStore; class GfSetupParam; }
+namespace gf { class GfDataStore; class GfSetupParam; class SDataGameIra; }
 
 namespace gf {
 // table 0x7100B50B18: the game's data (the system, the game, the options, the DLC drivers and the block after them,
@@ -26,9 +26,10 @@ public:
     static SDataOption& getDataOption();
     // 2.0.0's symbols name it. What it does: returns the DLC drivers (GfDataDriver::getSDataDriver's rows 0x11-0x19).
     static SDataDlc& getDataGameIra();
-    // 1.0.0's GfDataManager::setupGame calls setGameData; 3.0.1's calls fn_710022D7DC (the symbols spell it so), which
-    // copies the three blocks and calls checkAndReplaceGameData: this is setGameData
-    static void setGameData(const SDataSystem* system, const SDataGame* game, const SDataOption* option);
+    // 2.0.0's symbols name it, with a fourth parameter: add-on game data, whose 16 records of 0xDAC bytes it copies into
+    // its block at 0x126E28 unless null or that block; it copies the other blocks and calls checkAndReplaceGameData
+    static void setGameData(const SDataSystem* system, const SDataGame* game, const SDataOption* option,
+                            const SDataGameIra* ira);
     // 2.0.0's symbols name it. What it does: takes no arguments; fixes up the game data after a load (Hikari current,
     // clamps game+0x1176A8 to 100, version stamp at 0x117388 with a 0x306 memset, GfDataUtil::setupUi1868ForSDataGame) and tail-calls
     // fn_710022D55C.
