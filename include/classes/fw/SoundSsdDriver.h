@@ -201,6 +201,8 @@ public:
     // loads m_bgmVolumes: sound/ira_vol.csvb when the argument (SoundManager's m_dlc when negative) is set, else
     // sound/bgm_vol.csvb (the constructor's tail inlines it with a negative argument)
     void reloadBgmVolume(int dlc);
+    // updates each bank and releases the ones nothing references any more
+    void updateBank();
 
     // field names are not the original's
     ssd::SoundCore* m_core;  // 0x10 (ssd::SoundCore::NewInstance(&m_allocator))

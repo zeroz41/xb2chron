@@ -57,6 +57,7 @@ public:
     void setMaxSound(int maxSound);
     void destroy();
     void stopAll();
+    void update();
     mm::mtl::IntrusivePtr<SoundSsdSource> addWave(const WaveInfo& info);
 
     ssd::SoundBank m_bank;  // 0x10 (stopAll stops it; the name is not the original's)

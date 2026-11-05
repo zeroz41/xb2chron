@@ -274,6 +274,46 @@ void SoundSsdDriver::releaseHandle(ssd::SoundHandle* handle) {
     m_handleAllocator.free(handle);
 }
 
+void SoundSsdDriver::updateBank() {
+    ml::CS lock(m_cs);
+    for (mm::mtl::List<SoundSsdBank*>::iterator it = m_banks.begin(); it != m_banks.end();) {
+        SoundSsdBank* bank = *it;
+        bank->update();
+        if (bank->m_RefCount == 1 && bank->m_bank.GetReferenceCounter() == 0 && bank->m_bank.NumSoundEntry() == 0) {
+            it = m_banks.erase(it);
+            if (bank != nullptr) {
+                bank->release();
+            }
+        } else {
+            ++it;
+        }
+    }
+}
+
+void SoundSsdDriver::setListeningPoint(const mm::Mat44& point) {
+    if (!isValid() || m_listener == nullptr) {
+        return;
+    }
+    {
+        mm::Vec3 position = point.getTrans();
+        m_listener->SetPosition(reinterpret_cast<const ssd::Vec3&>(position));
+    }
+    mm::Vec3 front(point.m[0][0] * 0.0f + point.m[1][0] * 0.0f - point.m[2][0],
+                   point.m[0][1] * 0.0f + point.m[1][1] * 0.0f - point.m[2][1],
+                   point.m[0][2] * 0.0f + point.m[1][2] * 0.0f - point.m[2][2]);
+    float length = front.length();
+    if (length <= 1e-6f) {
+        front = mm::Vec3::zero;
+    } else {
+        float scale = 1.0f / length;
+        front.x = front.x * scale;
+        front.y = front.y * scale;
+        front.z = scale * front.z;
+    }
+    m_listener->SetOrientation(ssd::Vec3(reinterpret_cast<const ssd::Vec3&>(front)), ssd::Vec3{0.0f, 1.0f, 0.0f});
+    m_listeningPoint = point;
+}
+
 void SoundSsdDriver::updateDebugInfo(mm::mtl::FixedVector<SoundHandleDebugInfo, 128ul>&,
                                      mm::mtl::FixedVector<SoundCategoryDebugInfo, 18ul>&) {}
 
