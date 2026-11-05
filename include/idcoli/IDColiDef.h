@@ -23,8 +23,10 @@ public:
     bool pad_1;  // 0x1: the constructor sets it; ParticleManager's tests set it again
     bool pad_2;  // 0x2: the constructor sets it
     unsigned char pad_3;
-    int pad_4;    // 0x4: the constructor clears it
-    void* pad_8;  // 0x8: the constructor clears it
+    // 0x4: the constructor clears it; fw::ColiCheck's tests store the config's radius squared (the name is inferred)
+    float m_radiusSq;
+    // 0x8: the constructor clears it; fw::ColiCheck's tests point it at their ColiCheckCallback
+    fw::ColiCheckCallback* m_callback;
     IDColiResult m_result;  // 0x10
 };
 }  // namespace idcoli

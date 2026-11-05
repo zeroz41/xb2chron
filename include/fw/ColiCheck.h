@@ -4,6 +4,9 @@
 #include "mm/Vec3.h"
 #include "mm/mtl/FixedVector.h"
 
+namespace idcoli { class IDColiObj; }
+namespace fw { class ColiObject; }
+
 namespace fw {
 
 // what a collision test looks for (fw::ColiCheck::testCapsule reads it; StateFieldIdle::checkSpace and
@@ -20,7 +23,7 @@ struct ColiCheckConfig {
     unsigned int m_flags;  // bits 0, 1, 3: test the collision (IDColiDef); bit 2: test the phantoms
     unsigned int m_mask;   // the collision groups to hit (testCapsule hands on its complement)
     float m_radius;        // testCapsule hands on its square
-    unsigned char pad_c[0x4];
+    float pad_c;  // testObjectChara and testObjectPhantom hand it to the query's test*ColiObj
     unsigned int m_mode;   // 0, 1 or 2 (2: with result buffers)
     bool m_option;         // getSnapPos sets it, checkSpace clears it; testLine and testCapsule do not read it
     bool m_callbackParam;  // testLine and testCapsule copy it into their ColiCheckCallback
@@ -118,8 +121,22 @@ public:
     // testLine against the characters' collision (ColiCharactorProxy's unit)
     static bool testLineChara(TColiCheckResult<256>& result, const mm::Vec3& start, const mm::Vec3& end,
                               const ColiCheckConfig& config);
+    static bool testLineColi(TColiCheckResult<256>& result, const idcoli::IDColiObj* obj, const mm::Vec3& start,
+                             const mm::Vec3& end, const ColiCheckConfig& config);
+    static bool testSphere(TColiCheckResult<256>& result, const mm::Vec3& pos, float radius,
+                           const ColiCheckConfig& config);
+    static bool testSphereChara(TColiCheckResult<256>& result, const mm::Vec3& pos, float radius,
+                                const ColiCheckConfig& config);
+    static bool testSpherePhantom(TColiCheckResult<256>& result, const mm::Vec3& pos, float radius,
+                                  const ColiCheckConfig& config);
+    static bool testSphereColi(TColiCheckResult<256>& result, const idcoli::IDColiObj* obj, const mm::Vec3& pos,
+                               float radius, const ColiCheckConfig& config);
     static bool testCapsule(TColiCheckResult<256>& result, const mm::Vec3& start, const mm::Vec3& end, float radius,
                             const ColiCheckConfig& config);
+    static bool testCapsuleChara(TColiCheckResult<256>& result, const mm::Vec3& start, const mm::Vec3& end,
+                                 float radius, const ColiCheckConfig& config);
+    static bool testObjectChara(TColiCheckResult<256>& result, ColiObject* object, const ColiCheckConfig& config);
+    static bool testObjectPhantom(TColiCheckResult<256>& result, ColiObject* object, const ColiCheckConfig& config);
     // the ground below from (pos gets the hit when it returns true; FormManager::replace passes 6.0 and ~0)
     static bool getSnapPos(mm::Vec3& pos, const mm::Vec3& from, float, unsigned int);
 };
