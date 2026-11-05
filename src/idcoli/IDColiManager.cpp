@@ -12,6 +12,7 @@
 #include "idcoli/IDColiGrandObj.h"
 #include "idcoli/IDColiMove.h"
 #include "idcoli/IDColiParms.h"
+#include "idcoli/IDColiPrimitive.h"
 #include "idcoli/IDColiTreeTop.h"
 #include "classes/idcoli/IDColiObjChar.h"
 #include "classes/idcoli/IDColiObjCharCheck.h"
@@ -50,6 +51,38 @@ void IDColiMove::setShapeParms(float parm0, float parm1) {
 void IDColiMove::setFloor(float floor) { m_floor = floor; }
 
 void IDColiMove::setAccuracy(bool accuracy) { m_accuracy = accuracy; }
+
+bool IDColiMove::moveColi(IDColiObj* obj, const mm::Vec3& move) {
+    if (obj->m_state & (1 << 2)) {
+        m_result = move;
+        return true;
+    }
+    mm::Vec3 hitPos[32];
+    mm::Vec3 hitNormal[32];
+    unsigned int hitBits[3];
+    m_hitPos = hitPos;
+    pad_10 = 2;
+    m_hitCapacity = 32;
+    m_hitNormal = hitNormal;
+    m_baseObj = obj;
+    m_hitBits = hitBits;
+    m_obj = obj;
+    setupParms(move);
+    IDColiObjData* data = static_cast<IDColiObjData*>(obj);
+    m_offMaterialBit = data->m_offMaterialBit;
+    m_adsorption = data->m_adsorption;
+    calcCheckParams(m_move);
+    pad_1f5 = false;
+    if ((obj->m_state & (1 << 3)) && !(obj->m_attr & 1)) {
+        pad_1f5 = true;
+    }
+    if (obj->m_flags & 0x100) {
+        return moveDataColi();
+    }
+    IDColiPrimitive::s_CallBasePos[data->m_baseType](m_basePos, m_baseOffset, m_baseFlag, m_shapeParms[0],
+                                                     m_shapeParms[1], data->m_base);
+    return moveDefColi();
+}
 
 void* IDColiMemHandleAllocator::allocate(unsigned long size, unsigned long alignment) {
     return mtl::MemManager::allocate(m_allocHandle, size, alignment, false, "no name", 0);
