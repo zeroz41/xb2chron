@@ -42,6 +42,7 @@
 #include "ml/DrCalcMan.h"
 #include "ml/DrCalcViewWork.h"
 #include "ml/DrPixlMan.h"
+#include <math.h>
 #include "ml/DrPixlPostMan.h"
 #include "ml/DrPixlPostObjCubeMapMultiIBL.h"
 #include "ml/DrPixlPostObjExpStencil.h"
@@ -62,6 +63,41 @@ bool (DrCalcClipObj::*DrCalcClipObj::s_pColiCheck[5])(const unsigned char*, cons
 };
 
 void DrCalcClipWorkCone::debugDraw() {}
+
+// lbl_7100B7EAF8: the 2x2 Bayer matrix GenerateBayerDitherMatrix grows from (the name is not the original's)
+__attribute__((used)) static unsigned int s_ditherBase[4] = {0, 3, 2, 1};
+
+void DrCalcViewWork::GenerateBayerDitherMatrix(unsigned int* pDst, unsigned int size) {
+    double level = log2(size);
+    pDst[0] = s_ditherBase[0];
+    pDst[1] = s_ditherBase[1];
+    pDst[size] = s_ditherBase[2];
+    pDst[size + 1] = s_ditherBase[3];
+    unsigned int n = 2;
+    for (unsigned int i = 1; i < (unsigned int)level; i++) {
+        for (unsigned int y = 0; y < n; y++) {
+            for (unsigned int x = 0; x < n; x++) {
+                pDst[y * size + (x + n)] = pDst[y * size + x] * 4 + 3;
+            }
+        }
+        for (unsigned int y = 0; y < n; y++) {
+            for (unsigned int x = 0; x < n; x++) {
+                pDst[(y + n) * size + x] = pDst[y * size + x] * 4 + 2;
+            }
+        }
+        for (unsigned int y = 0; y < n; y++) {
+            for (unsigned int x = 0; x < n; x++) {
+                pDst[(y + n) * size + (x + n)] = pDst[y * size + x] * 4 + 1;
+            }
+        }
+        for (unsigned int y = 0; y < n; y++) {
+            for (unsigned int x = 0; x < n; x++) {
+                pDst[y * size + x] *= 4;
+            }
+        }
+        n *= 2;
+    }
+}
 
 int DrCalcViewWork::unistatic_view(float* pDst, bool) {
     grlib::ShdMat44TransposeMat34(pDst, m_view);
@@ -193,6 +229,18 @@ int DrCalcViewWork::unistatic_mpf_Fade(float* pDst) {
     return 0x30;
 }
 
+int DrCalcViewWork::unistatic_dither_matrix(float* pDst) {
+    mm::Mat44 mtx[4];
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            float v = m_ditherMatrix[y][x];
+            mtx[(y / 4) * 2 + x / 4].m[y % 4][x % 4] = (v + 1.0f) / 65.0f;
+        }
+    }
+    grlib::ShdMat44SetMat44Array(pDst, mtx, 4);
+    return 0x40;
+}
+
 int DrCalcViewWork::unistatic_dither_param(float* pDst) {
     mm::Vec4 v;
     v.x = 1.0f;
@@ -201,6 +249,18 @@ int DrCalcViewWork::unistatic_dither_param(float* pDst) {
     v.w = m_ditherParam[1];
     grlib::ShdVec4SetVec4(pDst, v);
     return 4;
+}
+
+int DrCalcViewWork::unistatic_inv_dither_matrix(float* pDst) {
+    mm::Mat44 mtx[4];
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            float v = 63 - m_ditherMatrix[y][x];
+            mtx[(y / 4) * 2 + x / 4].m[y % 4][x % 4] = (v + 1.0f) / 65.0f;
+        }
+    }
+    grlib::ShdMat44SetMat44Array(pDst, mtx, 4);
+    return 0x40;
 }
 
 int DrCalcViewWork::unistatic_inv_dither_param(float* pDst) {

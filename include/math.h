@@ -24,6 +24,7 @@ float fmodf(float x, float y);
 float modff(float x, float* integral);
 float ceilf(float x);
 float log2f(float x);
+double log2(double x);
 float logf(float x);
 float powf(float x, float y);
 float expf(float x);
