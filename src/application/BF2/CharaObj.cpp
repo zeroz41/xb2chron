@@ -1226,6 +1226,23 @@ void ObjectLight::play(const char* name, float frame) {
     m_light->play(name, frame);
 }
 
+// the camera is removed from CamManager's list (the current one cleared while its pad_64 is 0) and deleted
+ObjectCamera::~ObjectCamera() {
+    CamManager* mgr = mm::mtl::Singleton<CamManager>::getPtr();
+    CamObj* cam = m_cam;
+    for (CamObj** it = mgr->m_list.m_cams.begin(); it != mgr->m_list.m_cams.end(); ++it) {
+        if (*it == cam) {
+            if (cam->pad_64 == 0) {
+                mgr->m_cur = nullptr;
+            }
+            delete cam;
+            mgr->m_list.m_cams.erase(it);
+            break;
+        }
+    }
+    m_cam = nullptr;
+}
+
 void ObjectCamera::end() {
     if (m_cam) {
         m_cam->end();
@@ -1321,6 +1338,29 @@ void CamMotion::update(const FrameInfo& info) {
     }
 }
 
+// the angle is converted from a focal length (mm, 25.39 mm film) when the third value is set; at least 5 degrees
+int CamObj::SetFov::update(const ICmd::Param& param) {
+    unsigned int index = param.m_param.val(0).getS32();
+    float fov = param.m_param.val(1).getF32();
+    if (param.m_param.val(2).getBool()) {
+        fov = atanf(25.39f / (fov + fov));
+        fov = (fov + fov) * 180.0f / 3.1415f;
+    }
+    CamInterface* cam = mm::mtl::Singleton<CamManager>::getPtr()->m_interfaces[index];
+    cam->m_fov = fmaxf(fov, 5.0f);
+    return 1;
+}
+
+int CamObj::SetNearfar::update(const ICmd::Param& param) {
+    unsigned int index = param.m_param.val(0).getS32();
+    float nearClip = param.m_param.val(1).getF32();
+    float farClip = param.m_param.val(2).getF32();
+    CamInterface* cam = mm::mtl::Singleton<CamManager>::getPtr()->m_interfaces[index];
+    cam->m_nearClip = nearClip;
+    cam->m_farClip = farClip;
+    return 1;
+}
+
 CamObj::~CamObj() {
     changeActive(nullptr);
     m_cmdQueue.update();
@@ -1359,7 +1399,7 @@ void CamObj::tail() {
 }
 
 void CamManager::loadResource(const char* name) {
-    if (pad_10 & 1) {
+    if (m_list.pad_10 & 1) {
         return;
     }
     mm::mtl::Singleton<ResManager>::getPtr()->load(mm::mtl::Singleton<Extend>::getPtr()->eva(name), nullptr, false);
@@ -1367,9 +1407,9 @@ void CamManager::loadResource(const char* name) {
 
 void CamManager::setFocal(bool focal) {
     if (focal) {
-        pad_10 |= 4;
+        m_list.pad_10 |= 4;
     } else {
-        pad_10 &= ~4;
+        m_list.pad_10 &= ~4;
     }
 }
 
@@ -2181,10 +2221,10 @@ void MovieManager::OnEventProc(event::MSG_TYPE msg) {
 
 namespace event {
 
-CamManager::CamManager() : pad_10(0), pad_14(0), m_cur(nullptr) {}
+CamManager::CamManager() : m_cur(nullptr) {}
 
 void CamManager::init() {
-    pad_10 = 0;
+    m_list.pad_10 = 0;
     for (unsigned long i = 0; i < 4; i++) {
         CamInterface* cam = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
             CamInterface(static_cast<fw::CAMERA_TYPE>(i));

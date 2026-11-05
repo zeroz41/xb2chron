@@ -13,6 +13,7 @@ float sinf(float x);
 float cosf(float x);
 float acosf(float x);
 float asinf(float x);
+float atanf(float x);
 float atan2f(float y, float x);
 float tanf(float x);
 float fabsf(float x);

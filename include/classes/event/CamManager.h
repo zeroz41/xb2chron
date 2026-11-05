@@ -23,9 +23,21 @@ public:
     void clear();
     void update();
     void render();
-    unsigned int pad_10;  // 0x10: init clears it
-    unsigned int pad_14;
-    mm::mtl::FixedVector<CamObj*, 8> m_cams;  // 0x18 (the name is not the original's)
+    // 0x10: a member object, not three plain members: the original's inlined constructor (Singleton<CamManager>::getPtr
+    // in ObjectCamera's destructor and the other getPtr callers) stores the list's count before the two words, which
+    // only a sub-object whose constructor clears them in its body gives (fields in CamManager's own init list come
+    // before the list; a base class's stores come before the table stores). The type's and member's names are not
+    // the original's.
+    struct CamList {
+        CamList() {
+            pad_10 = 0;
+            pad_14 = 0;
+        }
+        unsigned int pad_10;  // 0x10: flags (loadResource tests bit 0, setFocal sets bit 2; init and clear zero it)
+        unsigned int pad_14;  // 0x14: flags (CamManager::update tests bit 1, clear drops it)
+        mm::mtl::FixedVector<CamObj*, 8> m_cams;  // 0x18 (the name is not the original's)
+    };
+    CamList m_list;  // 0x10
     mm::mtl::FixedVector<CamInterface*, 4> m_interfaces;  // 0x60: init creates 4 (the name is not the original's)
     CamObj* m_cur;  // 0x88 (the name is not the original's)
     CamFree m_free;  // 0x90 (the name is not the original's)
