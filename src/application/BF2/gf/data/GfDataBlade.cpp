@@ -95,6 +95,7 @@
 #include "classes/gf/GfBdatRsc.h"
 #include "gf/SDataGame.h"
 #include "classes/gf/GfDataManager.h"
+#include "gf/GfReqParam.h"
 #include "classes/gf/GfGameFlag.h"
 #include "classes/gf/GfGameCond.h"
 #include "ml/MtRand.h"
@@ -5020,6 +5021,26 @@ bool GfDataBlade::isActivateParty(unsigned int blade) {
     return static_cast<unsigned int>(GfDataParty::getDriverPartyID(driver)) < 3;
 }
 
+int GfDataParty::getDriverPartyID(unsigned int driver) {
+    if (driver == 0) {
+        return -1;
+    }
+    for (int i = 0; i < 10; i++) {
+        if (GfDataManager::getDataGame()->m_party.m_members[i].m_driver == driver) {
+            return i;
+        }
+    }
+    if (driver - 0x11 < 9) {
+        for (int i = 0; i < 10; i++) {
+            if (GfDataManager::getDataGameIra()->m_partyMembers[0][i].m_driver == driver ||
+                GfDataManager::getDataGameIra()->m_partyMembers[1][i].m_driver == driver) {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
 int GfDataDriver::getSetIdByDummyBlade(unsigned int driver) {
     SDataDriver* data = getSDataDriver(driver);
     for (int slot = 0; slot < 3; slot++) {
@@ -5192,6 +5213,36 @@ bool GfDataParty::isPartyBattleMember(unsigned int chara) {
     return fn_710024BF60(chara, 3);
 }
 
+bool GfDataParty::isActivateMember(unsigned int chara) {
+    if (chara <= 1000) {
+        return GfDataDriver::getSDataDriver(chara)->m_dataType != 0;
+    } else if (chara <= 2000) {
+        if (chara != 1011) {
+            unsigned int driver = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(chara)].m_setDriver;
+            if (driver == 0 || GfDataDriver::getSDataDriver(driver)->m_dataType == 0) {
+                return false;
+            }
+        }
+        if (GfDataBlade::isActivateMercenaryTeam(chara)) {
+            return false;
+        }
+        return GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(chara)].m_dataType != 0;
+    }
+    return false;
+}
+
+void GfDataParty::getIraParty(RQ_SETUP_PARTY& party, unsigned int id) {
+    if (id == 0) {
+        return;
+    }
+    GfBdatChrDr* bdat = GfBdatChrDr::get();
+    for (unsigned int i = 0; i < 3; i++) {
+        party.m_iraDrivers[i][0] = bdat->getIRA_PartyDriver(id, i);
+        party.m_iraDrivers[i][1] = bdat->getIRA_PartyBlade1(id, i);
+        party.m_iraDrivers[i][2] = bdat->getIRA_PartyBlade2(id, i);
+    }
+}
+
 void GfDataDriver::openDriverArtsForLevelup(unsigned int driver) {
     fn_7100244A44(driver, 0, true);
 }
@@ -5235,6 +5286,26 @@ bool GfDataBlade::getExtraParts(const SDataBlade& data, unsigned int part) {
 
 SDataParty* GfDataParty::getSDataParty() {
     return &GfDataManager::getDataGame()->m_party;
+}
+
+PTPOS GfDataParty::getDriverPartyPos(unsigned int driver) {
+    if (driver == 0 || !(driver - 0x11 < 9)) {
+        return static_cast<PTPOS>(0);
+    }
+    for (int i = 0; i < 10; i++) {
+        if (GfDataManager::getDataGame()->m_party.m_members[i].m_driver == driver) {
+            return static_cast<PTPOS>(0);
+        }
+    }
+    for (int i = 0; i < 10; i++) {
+        if (GfDataManager::getDataGameIra()->m_partyMembers[0][i].m_driver == driver) {
+            return static_cast<PTPOS>(1);
+        }
+        if (GfDataManager::getDataGameIra()->m_partyMembers[1][i].m_driver == driver) {
+            return static_cast<PTPOS>(2);
+        }
+    }
+    return static_cast<PTPOS>(0);
 }
 
 mm::mtl::FixedVector<TaskAchieve, 128>* GfDataQuest::getTaskAchieve() {

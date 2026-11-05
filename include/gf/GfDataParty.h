@@ -6,6 +6,7 @@ namespace mm { class Vec3; }
 namespace gf {
 enum PTPOS : unsigned int;
 struct SDataParty;
+class RQ_SETUP_PARTY;
 
 // the party's game data (functions, by 1.0.0's symbols)
 class GfDataParty {
@@ -32,6 +33,15 @@ public:
     // has the same shape (0 -> -1, then the game data's party records from 0xE9884 compared one by one) and the same
     // callers (GfAssetSetupBlade::setup, DataObjBlade::getBladeSet, GfDataBlade's party lists)
     static int getDriverPartyID(unsigned int driver);
+    // 2.0.0's symbols name it. What it does: puts driver in member index of a party (PTPOS 0-2, else false), clears
+    // the member's hierarchy fields and, for a DLC driver (0x11..0x19), records the party in its SDataIra; true when
+    // the member's driver changed. Callers: GfDataDriver::setActivateParty, setActivateReserver,
+    // GfGameParty::setupRequestDataIra.
+    static bool setDriver(unsigned int index, unsigned int driver, PTPOS party);
+    // 2.0.0's symbols name it. What it does: the party (PTPOS) holding a DLC driver (0x11..0x19): 1 or 2 when one
+    // of the parties GfDataManager::getDataGameIra keeps has it and party 0 does not, else 0 (also for driver 0 and
+    // other drivers). Caller: GfDataDriver::setActivateUnuse.
+    static PTPOS getDriverPartyPos(unsigned int driver);
     static bool isRideChar(unsigned int chara);
     // whether a driver is one of the first three party members' drivers
     static bool isExistDriver(unsigned int driver);
@@ -40,8 +50,19 @@ public:
     static bool isNiaByakko(unsigned int id);
     // a blade's fixed party handle: driver * 5 + index + 3
     static unsigned int getFixedHandleForBlade(unsigned int driver, int index);
+    // 2.0.0's symbols name it. What it does: while driver is a DLC driver (0x11..0x19) whose fn_710024BCEC is 1 or 2,
+    // takes that as the slot and GfDataDriver::getIraFront(driver) as the driver; returns
+    // handle * 40 + index + slot * 8 + 18. Caller: fn_710052AD9C.
+    static unsigned int getFixedHandleForWeapon(unsigned int handle, int slot, unsigned int index, unsigned int driver);
     static bool isPartyMember(unsigned int chara);        // fn_710024BF60(chara, 10)
     static bool isPartyBattleMember(unsigned int chara);  // fn_710024BF60(chara, 3)
+    // 2.0.0's symbols name it. What it does: a driver (<= 1000) is active when its SDataDriver's m_dataType is not 0;
+    // a blade (<= 2000) when its m_dataType is neither 0 nor 2 and (except blade 1011) it is set to an active driver.
+    // Caller: GfGameCond::isParty.
+    static bool isActivateMember(unsigned int chara);
+    // 2.0.0's symbols name it. What it does: for a nonzero id, fills party's m_iraDrivers[0..2] with the CHR_Dr IRA
+    // party's driver, blade 1 and blade 2 of each slot (GfBdatChrDr::getIRA_Party*). Caller: SCOM_PARTY_ADD::execForIra.
+    static void getIraParty(RQ_SETUP_PARTY& party, unsigned int id);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's isPartyMember tail-calls an unnamed
     // fn_71002AE6D4 too). A member because its only callers are isPartyMember and isPartyBattleMember, in this unit.
     // What it does: false for character 0; with mode 0 it looks the character up in the game data (drivers 1-16 at
@@ -71,9 +92,9 @@ public:
 
 // the party's part of the game data (GfDataParty::getSDataParty points at it); the name is not the original's
 struct SDataParty {
-    // its first members (GfDataParty::empty tests the first three's drivers; the count is not known)
-    GfDataParty::PartyMember m_members[3];
-    unsigned char pad_12[0x2A];
+    // its members (GfDataParty::empty tests the first three's drivers; getDriverPartyID and getDriverPartyPos look
+    // a driver up in all ten, as in the parties GfDataManager::getDataGameIra keeps)
+    GfDataParty::PartyMember m_members[10];
     // 0x3C: the kind of id m_leader holds (GfGameParty::getLeaderLevel: 4 looks the member up with getPartyId(4, id),
     // 3 takes it as the driver id); the name is not the original's
     unsigned int m_leaderType;
