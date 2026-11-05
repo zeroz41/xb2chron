@@ -61,6 +61,7 @@
 #include "classes/ml/DrResMdoSeamWrkInst.h"
 #include "classes/ml/DrResMdoSeamWrkBase.h"
 #include "ml/DrResMdoSeamWrkPosInst.h"
+#include "ml/DrMdoCtlSeamInstMap.h"
 #include "ml/DrPixlShadowCacheMan.h"
 #include "classes/ml/DrCalcStmListObj.h"
 #include "classes/ml/DrCalcTexStreamMan.h"
@@ -5162,6 +5163,178 @@ bool DrResMdoSeamWrkEnv::update(const mm::Vec3&, bool force) {
 }
 
 DrResMdoSeamWrkInst::~DrResMdoSeamWrkInst() { release(); }
+
+void DrResMdoSeamWrkInst::release() {
+    if (m_posInsts != nullptr) {
+        int num = m_header->m_etcNum;
+        for (int i = 0; i <= num; i++) {
+            DrResMdoSeamWrkPosInst& pos = m_posInsts[i];
+            if (pos.m_entryNum != 0) {
+                for (int j = 0; j < pos.m_entryNum; j++) {
+                    DrResMdoSeamWrkPosInst::Entry& entry = pos.m_entries[j];
+                    if (entry.m_user != nullptr) {
+                        entry.m_user->m_entry = nullptr;
+                        entry.m_user = nullptr;
+                    }
+                }
+                pos.m_entryNum = 0;
+            }
+            pos.m_memObj = nullptr;
+            if (pos.m_buf != nullptr) {
+                mtl::MemManager::deallocate(pos.m_buf, 0, false);
+                pos.m_buf = nullptr;
+            }
+        }
+        m_posInsts = nullptr;
+        m_posInstNum = 0;
+    }
+    if (m_pPair != nullptr) {
+        m_pPair->m_pPair = nullptr;
+    }
+    m_pPair = nullptr;
+    for (int i = 0; i < m_bufNum; i++) {
+        if (m_bufList[i] != nullptr) {
+            mtl::MemManager::deallocate(m_bufList[i], 0, false);
+            m_bufList[i] = nullptr;
+        }
+    }
+    m_bufNum = 0;
+    if (m_pWrkMatRes != nullptr) {
+        mtl::MemManager::deallocate(m_pWrkMatRes, 0, false);
+        m_pWrkMatRes = nullptr;
+    }
+    if (pad_58 != nullptr) {
+        mtl::MemManager::deallocate(pad_58, 0, false);
+        pad_58 = nullptr;
+    }
+    if (m_vertex != nullptr) {
+        delete m_vertex;
+        m_vertex = nullptr;
+    }
+    m_memObj = nullptr;
+    m_shadowCacheDone = 0;
+}
+
+void DrResMdoSeamWrkInst::releaseCache(DrMdoCtlSeamInstMap* ctl) {
+    int num = m_header->m_etcNum;
+    for (int i = 0; i < num; i++) {
+        if (m_etcBits[i >> 5] & (1 << (i & 0x1F))) {
+            DrResMdoSeamMemObj* memObj = m_posInsts[i + 1].m_memObj;
+            if (memObj != nullptr) {
+                ctl->releaseFreeSeamMemObj(memObj);
+            }
+            DrResMdoSeamWrkPosInst& pos = m_posInsts[i + 1];
+            if (pos.m_entryNum != 0) {
+                for (int j = 0; j < pos.m_entryNum; j++) {
+                    DrResMdoSeamWrkPosInst::Entry& entry = pos.m_entries[j];
+                    if (entry.m_user != nullptr) {
+                        entry.m_user->m_entry = nullptr;
+                        entry.m_user = nullptr;
+                    }
+                }
+                pos.m_entryNum = 0;
+            }
+            pos.m_memObj = nullptr;
+            if (pos.m_buf != nullptr) {
+                mtl::MemManager::deallocate(pos.m_buf, 0, false);
+                pos.m_buf = nullptr;
+            }
+        }
+    }
+    release();
+}
+
+void DrResMdoSeamWrkInst::changeMemCall() {
+    const MdsSeamInstMapHead* header = reinterpret_cast<const MdsSeamInstMapHead*>(m_memObj->m_pData);
+    m_header = header;
+    const unsigned char* top = reinterpret_cast<const unsigned char*>(header);
+    m_baseData = reinterpret_cast<const DrResMdoSeamWrkPosInst::BaseData*>(top + header->m_baseOfs);
+    const unsigned char* base = reinterpret_cast<const unsigned char*>(m_baseData);
+    pad_30 = base + *reinterpret_cast<const unsigned int*>(base + 0x8);
+    pad_38 = base + *reinterpret_cast<const unsigned int*>(base + 0x10);
+    if (header->m_vertexOfs != 0 && m_vertex != nullptr) {
+        m_vertex->changeMemVertex(top + header->m_vertexOfs);
+    }
+    DrResMdoSeamWrkPosInst* pos = m_posInsts;
+    const DrResMdoSeamWrkPosInst::BaseData* data = m_baseData;
+    const unsigned char* p = reinterpret_cast<const unsigned char*>(data);
+    pos->m_data = p;
+    pos->m_posTbl = reinterpret_cast<const DrResMdoSeamWrkPosInst::PosRecord*>(p + data->m_posOfs);
+    pos->m_tbl18 = p + data->m_ofs28;
+    pos->m_tbl10 = p + data->m_ofs20;
+    if (data->m_subOfs != 0) {
+        const DrResMdoSeamWrkPosInst::SubTbl* sub = reinterpret_cast<const DrResMdoSeamWrkPosInst::SubTbl*>(p + data->m_subOfs);
+        pos->m_sub = sub;
+        pos->m_subTbl10 = p + sub->m_ofs10;
+        pos->m_subTbl0 = p + sub->m_ofs0;
+        pos->m_subTbl8 = p + sub->m_ofs8;
+    }
+    [](DrResMdoSeamWrkPosInst* p) {
+        for (int j = 0; j < p->m_entryNum; j++) {
+            p->m_entries[j].m_pos = &p->m_posTbl[j];
+        }
+    }(pos);
+    unsigned int headOfs = data->m_headOfs;
+    if (headOfs != 0) {
+        DrResMdoSeamWrkPosInst::HeadBlock* head = pos->m_head;
+        const unsigned char* posData = pos->m_data;
+        head->m_data = posData;
+        head->m_body = posData + *reinterpret_cast<const unsigned int*>(posData + headOfs);
+    }
+}
+
+void DrResMdoSeamWrkInst::calcCacheInfo() {
+    for (int i = 1; i < m_posInstNum; i++) {
+        DrResMdoSeamWrkPosInst* pos = m_posInstList[i];
+        if (pos->m_memObj->m_flags & 2) {
+            const unsigned char* p = pos->m_memObj->m_pData;
+            const DrResMdoSeamWrkPosInst::EtcData* data = reinterpret_cast<const DrResMdoSeamWrkPosInst::EtcData*>(p);
+            pos->m_data = p;
+            pos->m_posTbl = reinterpret_cast<const DrResMdoSeamWrkPosInst::PosRecord*>(p + data->m_posOfs);
+            pos->m_tbl18 = p + data->m_ofs14;
+            pos->m_tbl10 = p + data->m_ofsC;
+            if (data->m_subOfs != 0) {
+                const DrResMdoSeamWrkPosInst::SubTbl* sub = reinterpret_cast<const DrResMdoSeamWrkPosInst::SubTbl*>(p + data->m_subOfs);
+                pos->m_sub = sub;
+                pos->m_subTbl10 = p + sub->m_ofs10;
+                pos->m_subTbl0 = p + sub->m_ofs0;
+                pos->m_subTbl8 = p + sub->m_ofs8;
+            }
+            [](DrResMdoSeamWrkPosInst* p) {
+                for (int j = 0; j < p->m_entryNum; j++) {
+                    p->m_entries[j].m_pos = &p->m_posTbl[j];
+                }
+            }(pos);
+            unsigned int headOfs = data->m_headOfs;
+            if (headOfs != 0) {
+                DrResMdoSeamWrkPosInst::HeadBlock* head = pos->m_head;
+                const unsigned char* top = pos->m_data;
+                head->m_data = top;
+                head->m_body = top + *reinterpret_cast<const unsigned int*>(top + headOfs);
+            }
+        }
+    }
+}
+
+bool DrResMdoSeamWrkInst::setEtcPosCache(mtl::ALLOC_HANDLE handle, int cacheIdx, DrResMdoSeamMemObj* memObj,
+                                         const DrResMdoInstAnmObj* anm) {
+    if (m_cacheFlags & 5) {
+        return false;
+    }
+    const MdsSeamInstMapHead* header = m_header;
+    const EtcInfo* info = reinterpret_cast<const EtcInfo*>(reinterpret_cast<const unsigned char*>(header) + header->m_etcOfs);
+    for (int i = 0; i < header->m_etcNum; i++, info++) {
+        if (info->m_cacheIdx == cacheIdx) {
+            m_etcBits[i >> 5] |= 1 << (i & 0x1F);
+            m_posInsts[i + 1].setupEtcInstPos(i, memObj, handle, anm);
+            m_posInstList[m_posInstNum] = &m_posInsts[i + 1];
+            m_posInstNum++;
+            m_shadowCacheDone = 0;
+            return true;
+        }
+    }
+    return false;
+}
 
 DrResMdoSeamWrkLight::DrResMdoSeamWrkLight()
     : m_prev(nullptr), m_next(nullptr), m_envObj(nullptr), m_memObj(nullptr), m_dataIdx(0), m_id(0), pad_38(0),
