@@ -16,6 +16,9 @@
 #include "gf/GfKizunaringUtil.h"
 #include "gf/GfQuestReward.h"
 #include "classes/gf/GfMenuObjCommonText.h"
+#include "classes/gf/GfMenuCharDataAdapter.h"
+#include "classes/gf/GfMenuObjOperationInfo.h"
+#include "classes/gf/GfMenuObjCharSelect.h"
 #include "classes/gf/GfMenuObjPopup.h"
 #include "classes/gf/SCOM_FIELD_VOICE.h"
 #include "gf/GfMenuObjUtil.h"
@@ -36,6 +39,8 @@
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UISelectObjList.h"
 #include "ui/EventData.h"
+#include "ui/UIStr.h"
+#include "mm/Rect.h"
 
 namespace gmo_bl_kizuna_ring {
 float rateTbl[2] = {1.0f, 0.5f};
@@ -269,6 +274,95 @@ bool GfMenuObjBlKizunaRing::seqWait() {
     ui::UIObjectAcc base(acc.searchChild("LAY_kizunaring_base"));
     GfMenuObject::enableInput(base.m_handle);
     return true;
+}
+
+void GfMenuObjBlKizunaRing::SkillDetailListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        setupSkillDetail(acc);
+        acc.setDisp(false);
+        break;
+    case 0x21: {
+        unsigned int blade = GfMenuReference::getReferenceBladeID(0);
+        unsigned int line = GfMenuReference::getReferenceNumber(0);
+        unsigned int level = GfMenuReference::getReferenceNumber(1);
+        const char* layout = line < 4 || line == 9 ? "blskillinfo2_2" : "blskillinfo2_1";
+        mm::Rect<short> rect;
+        ui::UIObjectAcc main(owner.searchChild("LAY_main"));
+        main.getLayoutRect(layout, rect);
+        mm::Pnt<short> pos;
+        pos.x = rect.x;
+        pos.y = rect.y;
+        acc.setPos(pos);
+        ui::UIObjectAcc title(acc.searchChild("LAY_questtitle"));
+        ui::UIObjectAcc title2(acc.searchChild("LAY_questtitle2"));
+        ui::UIObjectAcc clear(acc.searchChild("LAY_clear"));
+        ui::UIObjectAcc normal(acc.searchChild("LAY_normal"));
+        ui::UIObjectAcc small(acc.searchChild("LAY_small"));
+        unsigned char* bdat;
+        unsigned int id;
+        ui::UIObjectAcc icon(acc.searchChild("IMG_skill_icon@01"));
+        ui::UIObjectAcc base(acc.searchChild("IMG_skill_base@01"));
+        unsigned int state = GfKizunaringBlade::getReleaseAchievement(blade, line, level);
+        if (state == 4 || state == 5 || (GfMenuObjUtil::isValidExpansion(3) && state == 3)) {
+            title.setDisp(false);
+            bool text = false;
+            if (GfDataBlade::getTaskResultMessage(bdat, id, blade, line, level)) {
+                ui::UIStr str(bdat, id);
+                text = str.size() != 0;
+            }
+            title2.setDisp(text);
+            clear.setDisp(false);
+            if (text) {
+                normal.setDisp(true);
+                small.setDisp(false);
+            } else {
+                normal.setDisp(false);
+                small.setDisp(true);
+            }
+            icon.setMulColor("white");
+            base.setMulColor("white");
+        } else {
+            bool text = false;
+            if (GfDataBlade::getTaskTitleMessage(bdat, id, blade, line, level)) {
+                ui::UIStr str(bdat, id);
+                text = str.size() != 0;
+            }
+            title.setDisp(text);
+            title2.setDisp(false);
+            clear.setDisp(true);
+            if (text) {
+                normal.setDisp(true);
+                small.setDisp(false);
+            } else {
+                normal.setDisp(false);
+                small.setDisp(true);
+            }
+            if (line == 9 || state == 0 || state == 1) {
+                icon.setMulColor("white");
+            } else {
+                icon.setMulColor("black");
+            }
+            base.setMulColor("gray");
+        }
+        if (!m_owner->m_detailOpen) {
+            m_owner->m_detailOpen = true;
+            GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::setCommonFadeIn(handle, 1, 0));
+        }
+        break;
+    }
+    case 0x22:
+        if (m_owner->m_detailOpen) {
+            m_owner->m_detailOpen = false;
+            GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::setCommonFadeOut(handle, 2, 0));
+        }
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 void GfMenuObjBlKizunaRing::BladeSkillInfoListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
