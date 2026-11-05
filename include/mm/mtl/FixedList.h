@@ -186,8 +186,11 @@ public:
     T& front() { return *reinterpret_cast<T*>(node(node(0)->m_next)->m_value); }
 
     void clear() {
-        for (unsigned long i = node(0)->m_next; node(i) != node(0); i = node(i)->m_next) {
-            reinterpret_cast<T*>(node(i)->m_value)->~T();
+        unsigned long i = node(0)->m_next;
+        while (node(i) != node(0)) {
+            ListNode* n = node(i);
+            reinterpret_cast<T*>(n->m_value)->~T();
+            i = n->m_next;
         }
         unlink_end();
         m_num_nodes = 0;

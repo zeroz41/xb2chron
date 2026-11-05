@@ -6897,6 +6897,27 @@ void MemManager::Region::destroy() {
     }
 }
 
+void MemManager::Region::initialize(IMemAllocator* allocator, void* p, unsigned long size, const char* name, bool created,
+                                    bool locked) {
+    m_alignment = 1;
+    m_flags = !locked ? m_flags & ~FLAG_LOCKED : m_flags | FLAG_LOCKED;
+    m_flags = !created ? m_flags & ~FLAG_CREATED : m_flags | FLAG_CREATED;
+    m_flags |= FLAG_HALT_ALLOC;
+    m_flags |= FLAG_WARN_ALLOC;
+    m_flags |= FLAG_LOG_ALLOC;
+    m_parent.m_handle = 0;
+    m_handle.m_handle = 0;
+    m_top = p;
+    m_allocator = allocator;
+    m_memory = p;
+    m_size = size;
+    m_allocCount = 0;
+    m_name = name != nullptr ? name : "no name";
+    if (allocator != nullptr) {
+        allocator->create(p, size, name);
+    }
+}
+
 ALLOC_HANDLE MemManager::create(void* p, unsigned long size, const char* name, bool flag, AllocatorType type) {
     ml::CS cs(getHandleCS());
     ALLOC_HANDLE handle;

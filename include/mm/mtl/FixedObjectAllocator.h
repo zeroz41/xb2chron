@@ -44,8 +44,19 @@ public:
         m_used.resetAt(index);
         --m_allocated;
     }
-    // every slot given back (Region's copy 0x71006EB948); not written yet
-    void clear();
+    // every slot given back (Region's copy 0x71006EB948)
+    void clear() {
+        for (unsigned int i = 0; i < m_capacity; i++) {
+            if (m_used[i]) {
+                T* p = reinterpret_cast<T*>(reinterpret_cast<unsigned long*>(m_buffer) + i * static_cast<unsigned int>(sizeof(T)) / sizeof(unsigned long));
+                if (p != nullptr) {
+                    p->~T();
+                }
+                m_used.resetAt(i);
+            }
+        }
+        m_allocated = 0;
+    }
     // p's slot (deallocate's; the name is not the original's)
     unsigned int index_of(const T* p) const {
 #line 86 MM_MTL_FIXED_OBJECT_ALLOCATOR_PATH
