@@ -2554,7 +2554,7 @@ void DrMdoCtlSeamAll::releaseSeamAll() {
         m_pDrMan->m_pixlMan->m_shadowCacheMan->delShadowCacheUpdate();
     }
     for (DrResMdoSeamWrkBase* wrk = m_pBaseList; wrk != nullptr;) {
-        DrResMdoSeamWrkBase* next = wrk->m_pLink;
+        DrResMdoSeamWrkBase* next = wrk->m_prev;
         releaseFreeSeamBase(wrk);
         wrk = next;
     }
@@ -2594,7 +2594,7 @@ void DrMdoCtlSeamAll::releaseSeamAll() {
 
 void DrMdoCtlSeamAll::callShadowCacheUpdate(unsigned long bits) {
     m_baseShadowCacheDone &= ~bits;
-    for (DrResMdoSeamWrkBase* wrk = m_pBaseList; wrk != nullptr; wrk = wrk->m_pLink) {
+    for (DrResMdoSeamWrkBase* wrk = m_pBaseList; wrk != nullptr; wrk = wrk->m_prev) {
         if (wrk->m_matRes != nullptr) {
             wrk->callShadowCacheBaseUpdate(bits);
         }
@@ -3081,7 +3081,7 @@ void DrMdoCtlSeamBaseMap::callShadowMapRenderSeamBaseMap(DrPixlShadowObj* shadow
     grlib::ShdMat44TransposeMat44(static_cast<float*>(block.getBuff()), view->m_view);
     block.updateData(0x40);
     m_pEtcBlock = &block;
-    for (DrResMdoSeamWrkBase* wrk = m_pBaseList; wrk != nullptr; wrk = wrk->m_pLink) {
+    for (DrResMdoSeamWrkBase* wrk = m_pBaseList; wrk != nullptr; wrk = wrk->m_prev) {
         m_pWrkMatRes = wrk->m_matRes;
         if (m_pWrkMatRes != nullptr && (wrk->m_cacheFlags & 0x8)) {
             m_curShaderIdx = -1;

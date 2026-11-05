@@ -5085,6 +5085,11 @@ void DrResMdoSeamVertex::changeMemVertex() {
 
 int DrResMdoSeamVertex::SEAMRES_CNTMAX = 0x3C;
 
+DrResMdoSeamWrkBase::DrResMdoSeamWrkBase()
+    : m_matRes(nullptr), m_matWork(nullptr), m_vertexList(nullptr), m_shadowCacheDone(0), m_cacheFlags(0),
+      m_bufNum(0), m_bufReserved(0), m_nodeBits(nullptr), m_nodeWork(nullptr), m_readMask(0), m_instans(nullptr),
+      m_outFrame(0), m_fadeAlpha(0), m_vertexNum(0) {}
+
 DrResMdoSeamWrkBase::~DrResMdoSeamWrkBase() { release(); }
 
 void DrResMdoSeamWrkBase::release() {
@@ -5146,6 +5151,36 @@ void DrResMdoSeamWrkBase::releaseCache(DrMdoCtlSeamBaseMap* ctl) {
     m_nodeWork = nullptr;
     m_vertexNum = 0;
     release();
+}
+
+void DrResMdoSeamWrkBase::calcCacheInfo() {
+    for (int i = 0; i < m_vertexNum; i++) {
+        if (isVertexReady(i)) {
+            VertexEntry& entry = m_vertexList[i];
+            if (entry.memObj->m_flags & 2) {
+                const unsigned char* data = entry.memObj->m_pData;
+                entry.vertex->changeMemVertex(data);
+            }
+        }
+    }
+    if (!(m_cacheFlags & 0x200)) {
+        for (int i = 0; i < m_vertexNum; i++) {
+            if (isVertexReady(i)) {
+                m_nodeWork[i >> 5] |= 1 << (i & 31);
+            } else {
+                m_nodeWork[i >> 5] &= ~(1 << (i & 31));
+            }
+        }
+    } else {
+        const MdlCount* count = m_mdlCount;
+        for (int i = 0; i < count->m_num; i++) {
+            if (isVertexReady(i) || isVertexReady(i + count->m_num)) {
+                m_nodeWork[i >> 5] |= 1 << (i & 31);
+            } else {
+                m_nodeWork[i >> 5] &= ~(1 << (i & 31));
+            }
+        }
+    }
 }
 
 bool DrResMdoSeamWrkEnv::update(const mm::Vec3&, bool force) {
