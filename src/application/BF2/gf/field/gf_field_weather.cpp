@@ -17,6 +17,7 @@
 #include "classes/gf/GfManager.h"
 #include "gf/GfDataMap.h"
 #include "gf/SDataGame.h"
+#include "classes/gf/GfMapManager.h"
 #include <string.h>
 
 namespace gf {
@@ -156,6 +157,16 @@ bool GfFieldWeather::isDispWeather() {
         return get()->m_dispWeather;
     }
     return false;
+}
+
+void GfFieldWeather::clear() {
+    GfFieldWeather* weather = get();
+    _gffwt::destroyList();
+    GfMapManager::setEnvWeather(0, 4.0f);
+    if (weather->m_innCloudSea != 0) {
+        GfGameEnv::destroyCloudSea(weather->m_innCloudSea);
+        weather->m_innCloudSea = CLOUD_SEA_HANDLE(0);
+    }
 }
 
 void GfFieldWeather::build(const GfSetupParam& param) {
