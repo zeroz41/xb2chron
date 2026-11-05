@@ -86,6 +86,9 @@ void disposeGobInst(gf::GF_OBJ_HANDLE* handle, float time);
 // config; out takes the nearest hit whose y is not negative. False when nothing was hit (0x710057B63C; the pop
 // finders, GmkEffect::applyEffectParam and the gimmicks' validateIconPos call it)
 bool getYSnapPos(mm::Vec3& out, const mm::Vec3& from, float length, const fw::ColiCheckConfig& config);
+// the water surface height at pos: a line test (testLineChara, flags 9, all groups) range long centred on pos whose
+// first hit has material 1; false otherwise (PopPosSafeCond::isMatch and GmkEnemyInsts::PopInfo::validatePopPos)
+bool getWaterHeight(float& height, const mm::Vec3& pos, float range);
 // whether the navigation mesh has a point near pos (fw::NaviUtil::testNaviColi with 2, 2)
 bool isNaviMeshExist(const mm::Vec3& pos);
 // a gimmick's BDAT row and sheet names for debug output: "(null)" in this build
@@ -112,6 +115,13 @@ void fn_71005D3C54(const AGmkBase& gmk, bool, bool disp);
 // whether the gimmick's npc motion blinks (its row's Mot names a FLD_NpcMobMotionId row without notEyeBlink);
 // GfComBehaviorMob::setup and GfComBehaviorNpc::setup call it (defined in GmkElevator.cpp's unit)
 bool hasEyeBlink(const AGmkBase& gmk);
+// the gimmick's BDAT row "FSID" (u16) for gimmick types 0x21, 0x25 and 0x26; a treasure box (9) whose BdatInfo byte 2
+// is set reads "FSID2" while its progress flag is clear; 0 for any other type (GfGmkLocatorAtlas::seqWaitToCreateGmkSet
+// and GfGameUtil::getUiInfoIconBdatId call it)
+int getBindedFsId(const AGmkBase& gmk);
+// whether a squad member's object may pop: not waiting, transform valid, not destroyed, no flag 17, and its enemy
+// behaviour not in state 13 (GmkEnemyInsts::PopInfo::update calls it)
+bool canPopSquadMember(gf::GF_OBJ_HANDLE* handle);
 }  // namespace gmk
 
 #endif

@@ -75,6 +75,8 @@
 #include "gf/GfDataBlade.h"
 #include "gf/GfQuestInfo.h"
 #include "gf/GfObjAcc.h"
+#include "gf/GfGameUtil.h"
+#include "classes/gf/GfComBehaviorEnemy.h"
 #include "classes/gf/GfComBehaviorNpc.h"
 #include "classes/gf/GfComModel.h"
 #include "gf/GfObjUtil.h"
@@ -1059,6 +1061,20 @@ void setDispByGmkTypeAndBdatId(GmkType type, int bdatId, bool disp) {
     GmkManager::get()->traverseGmkInst(type, f);
 }
 
+void setDispByGmkTypeAndGmkIdx(int gmkSetId, GmkType type, unsigned int idx, bool disp) {
+    GmkSet* set = GmkManager::get()->findGmkSet(gmkSetId);
+    if (set == nullptr) {
+        return;
+    }
+    IGmkList* list = set->getGmkList(type);
+    if (list == nullptr || idx >= list->getInstNum()) {
+        return;
+    }
+    if (AGmkBase* inst = list->getInst(idx)) {
+        fn_71005D3C54(*inst, false, disp);
+    }
+}
+
 unsigned char* AGmkBase::getBindedBdatFp() const { return m_list->getBindedBdatFp(); }
 
 GmkGobEventListener::~GmkGobEventListener() { gf::GfObjManager::removeListener(this); }
@@ -2013,6 +2029,16 @@ bool isNaviMeshExist(const mm::Vec3& pos) {
 const char* debugGetGmkBdatRowName(const AGmkBase&) { return "(null)"; }
 const char* debugGetGmkBdatSheetName(const AGmkBase&) { return "(null)"; }
 
+void applyLodFade(unsigned short lodId, bool flag) {
+    if (const gf::GfFieldLod::BdatInfo* lodInfo = mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->findBdatInfo(lodId)) {
+        if (lodInfo->m_fadeInTime > 0.0f) {
+            mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->setFade(lodId, true, flag);
+        } else if (lodInfo->m_fadeOutTime > 0.0f) {
+            mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->setFade(lodId, false, flag);
+        }
+    }
+}
+
 // whether the gimmick's npc motion blinks: its bdat row's "Mot" (u16) names a FLD_NpcMobMotionId row whose
 // "notEyeBlink" flag is clear; false without a bound table or motion
 bool hasEyeBlink(const AGmkBase& gmk) {
@@ -2025,6 +2051,25 @@ bool hasEyeBlink(const AGmkBase& gmk) {
         return false;
     }
     return Bdat::getFlagVal(Bdat::getFP("FLD_NpcMobMotionId"), "flag", mot, "notEyeBlink") == 0;
+}
+
+bool canPopSquadMember(gf::GF_OBJ_HANDLE* handle) {
+    if (gf::GfGameUtil::isGameObjWait(handle)) {
+        return false;
+    }
+    gf::GfObjAcc acc(handle);
+    if (!acc.isValidTransform() || acc.isDestroy() || acc.testFlag(0x11)) {
+        return false;
+    }
+    gf::GfObj* obj = acc.getObj();
+    if (obj == nullptr) {
+        return false;
+    }
+    const gf::GfComBehaviorEnemy* behavior = obj->getComponent<gf::GfComBehaviorEnemy>(6);
+    if (behavior == nullptr) {
+        return false;
+    }
+    return behavior->getStateId() != 13;
 }
 
 int GmkTbox::getProgress() const { return gf::GfGameFlag::getLocal(2, m_createInfo.m_bdatId + 31765); }
