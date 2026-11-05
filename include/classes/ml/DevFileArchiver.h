@@ -58,6 +58,9 @@ public:
     virtual ~DevFileArchiver();  // slot 0
 
     bool getFileInfo(MEDIA media, const char* path, FileInfoResult& result) const;
+    // named by the symbols: adds the archive table data (size bytes) of a medium (DevFileTh::registArchive passes
+    // its last two arguments swapped; the return type and parameter names are not known)
+    void addArchive(MEDIA media, const void* data, unsigned long size, const char* root, const char* name);
 
     unsigned char pad_8[0x4];
     mtl::ALLOC_HANDLE m_handle;              // 0xC: the constructor's handle; addArchive allocates with it

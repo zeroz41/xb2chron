@@ -2510,6 +2510,37 @@ bool DevFileNxTh::readBlock(FileHandleTh* handle, const char* path) {
     return result;
 }
 
+void DevFileTh::makeMediaFileName(mm::mtl::FixStr<256>& out, const char* root, const char* path) {
+    if (getMediaType(path) != 0) {
+        out = path;
+        return;
+    }
+    out = root;
+    if (out.m_nLen != 0) {
+        for (int i = 0; i < out.m_nLen; i++) {
+            if (out.m_str[i] == '\\') {
+                out.m_str[i] = '/';
+            }
+        }
+        int last = out.m_nLen - 1;
+        if (out.m_str[last] == '/') {
+            out.m_str[last] = '\0';
+            out.m_nLen = last;
+        }
+    }
+    if (path[0] == '\\' || path[0] == '/') {
+        out += path;
+    } else {
+        out += "/";
+        out += path;
+    }
+    for (int i = 0; i < out.m_nLen; i++) {
+        if (out.m_str[i] == '\\') {
+            out.m_str[i] = '/';
+        }
+    }
+}
+
 int DevFileNxTh::addressAlignment() {
     return 0x10;
 }
@@ -2766,6 +2797,8 @@ bool DevFileArchiveNx::rfIsUsedChannel(unsigned int channel) {
 // only when set (the name is not the original's; `used` keeps it at its own address as in the original)
 __attribute__((used)) static bool s_useArchive;
 
+unsigned int DevFileTh::INVALID_FILE_CHANNEL;
+
 unsigned int DevFileTh::Impl::thFileLoader(void* arg) {
     Impl* impl = static_cast<Impl*>(arg);
     __atomic_fetch_add(&impl->m_loaderCount, 1, __ATOMIC_SEQ_CST);
@@ -3018,12 +3051,79 @@ bool DevFileTh::icbError(ml::CERR_STRUCT*) {
     return true;
 }
 
+void DevFileTh::registArchive(MEDIA media, const char* path, const char* name, const char* root) {
+    if (mm::mtl::PtrSingleton<DevFileTh>::get() == nullptr) {
+        dvfl_detail::ReserveArchiveParam param;
+        param.m_media = media;
+        param.m_path = path;
+        param.m_name = name;
+        param.m_root = root;
+        dvfl_detail::g_reserveArchives.push_back(param);
+        return;
+    }
+    DevFileParamTh param;
+    param.m_hMem = WorkRoot::getMemTMP();
+    param.m_path = path;
+    param.m_align = 0x10;
+    int size = 0;
+    void* data = readFileBlock(param, &size, nullptr);
+    if (data != nullptr && size > 0) {
+        mm::mtl::PtrSingleton<DevFileArchiver>::get()->addArchive(media, data, size, root, name);
+        operator delete(data);
+    }
+}
+
 FileHandleTh* DevFileTh::readFile(const DevFileParamTh& param) {
     DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
     if (dev != nullptr) {
         return dev->m_impl->readFile(param);
     }
     return nullptr;
+}
+
+FileHandleTh* DevFileTh::writeFile(const char* path, IWorkEvent* listener, const void* data, int size, int arg) {
+    DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+    if (dev != nullptr) {
+        return dev->m_impl->writeFile(path, listener, data, size, arg);
+    }
+    return nullptr;
+}
+
+int DevFileTh::getRealName(const char* path, mm::mtl::FixStr<256>& out) {
+    DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+    if (dev == nullptr) {
+        return -1;
+    }
+    MEDIA media = getMediaType(path);
+    if (media >= 1 && media <= 3) {
+        return -1;
+    }
+    for (const dvfl_detail::LoadMediaParam* it = dvfl_detail::g_loadMedia.begin(); it != dvfl_detail::g_loadMedia.end();
+         ++it) {
+        const dvfl_detail::LoadMediaParam& load = *it;
+        auto getSize = [&](DevFileAccessor* accessor) -> int {
+            if (accessor == nullptr) {
+                return -1;
+            }
+            return accessor->getFileSize(path, nullptr, load.m_path.m_str);
+        };
+        if (*(dev->m_impl->m_archives + load.m_media) != nullptr) {
+            int size = getSize(*(dev->m_impl->m_archives + load.m_media));
+            if (size >= 0) {
+                makeMediaFileName(out, load.m_path.m_str, path);
+                return size;
+            }
+        }
+        DevFileAccessor* accessor = *(dev->m_impl->m_accessors + load.m_media);
+        if (accessor != nullptr && accessor->isValid()) {
+            int size = accessor->getFileSize(path, nullptr, load.m_path.m_str);
+            if (size >= 0) {
+                makeMediaFileName(out, load.m_path.m_str, path);
+                return size;
+            }
+        }
+    }
+    return -1;
 }
 
 void* DevFileTh::checkValidFile(const char* path, IWorkEvent* listener) {
@@ -3056,6 +3156,55 @@ FileHandleTh* DevFileTh::rfOpen(const DevFileParamTh& param) {
         return dev->m_impl->rfOpen(param);
     }
     return nullptr;
+}
+
+inline bool DevFileTh::Impl::rfRead(FileHandleTh* handle, const DevFileParamTh& param) {
+    CS lock(m_handleCs);
+    unsigned int channel = handle->m_channel;
+    MEDIA media = DevFileTh::getMediaType(handle->m_path);
+    if (channel == DevFileTh::INVALID_FILE_CHANNEL) {
+        return false;
+    }
+    DevFileAccessor* accessor =
+        __atomic_load_n(&handle->pad_1fc, __ATOMIC_SEQ_CST) ? m_archives[media] : m_accessors[media];
+    if (accessor == nullptr || !handle->pad_1f4) {
+        return false;
+    }
+    return accessor->rfRead(handle, param);
+}
+
+bool DevFileTh::rfRead(FileHandleTh* handle, const DevFileParamTh& param) {
+    DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+    if (dev != nullptr) {
+        return dev->m_impl->rfRead(handle, param);
+    }
+    return false;
+}
+
+inline bool DevFileTh::Impl::rfIsBusy(FileHandleTh* handle) {
+    CS lock(m_handleCs);
+    unsigned int channel = handle->m_channel;
+    MEDIA media = DevFileTh::getMediaType(handle->m_path);
+    if (channel == DevFileTh::INVALID_FILE_CHANNEL) {
+        return false;
+    }
+    DevFileAccessor* accessor =
+        __atomic_load_n(&handle->pad_1fc, __ATOMIC_SEQ_CST) ? m_archives[media] : m_accessors[media];
+    if (accessor == nullptr) {
+        return false;
+    }
+    return accessor->rfIsBusy(handle);
+}
+
+bool DevFileTh::rfIsBusy(FileHandleTh* handle) {
+    DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+    if (dev != nullptr) {
+        Impl* impl = dev->m_impl.operator->();
+        if (handle != nullptr) {
+            return impl->rfIsBusy(handle);
+        }
+    }
+    return false;
 }
 
 int DevFileTh::rfClose(FileHandleTh* handle) {

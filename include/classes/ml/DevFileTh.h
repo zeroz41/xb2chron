@@ -7,6 +7,8 @@
 #include "mm/mtl/Bitflag.h"
 #include "mm/mtl/FixedList.h"
 #include "mm/mtl/FixedObjectAllocator.h"
+#include "mm/mtl/FixedVector.h"
+#include "mm/mtl/FixStr.h"
 #include "classes/ml/FileHandleTh.h"
 #include "ml/CriticalSection.h"
 #include <condition_variable>
@@ -23,6 +25,7 @@ namespace ml { class IDevFileEvent; }
 // MEDIA is unsigned: DevFileArchiver::getFileInfo zero-extends it to index m_medias (umaddl)
 namespace ml { enum MEDIA : unsigned int; }
 namespace mm { namespace mtl { template <int LEN> class FixStr; } }
+namespace ml { namespace dvfl_detail { struct LoadMediaParam; } }
 
 namespace ml {
 // a base of ml::DevFileTh no evidence names yet
@@ -67,6 +70,13 @@ public:
         // named by the symbols: starts writing size bytes of data to path through the medium's accessor; the request,
         // none when the medium cannot write
         FileHandleTh* writeFile(const char* path, IWorkEvent* listener, const void* data, int size, int);
+        // named by the symbols: reads the file a parameter names at once through one medium's accessor; the data,
+        // none (it does not use its object: DevFileTh::readFileBlock leaves x0 unset)
+        void* readFileBlock(const DevFileParamTh& param, int* size, mm::VAL64* value,
+                           const dvfl_detail::LoadMediaParam& media, DevFileAccessor* accessor);
+        // DevFileTh::rfRead/rfIsBusy's work under m_handleCs, inlined there (the names are not the original's)
+        bool rfRead(FileHandleTh* handle, const DevFileParamTh& param);
+        bool rfIsBusy(FileHandleTh* handle);
 
         // 0x0, 0x2D20, 0x5A40: three lists of jobs; appendRequest queues into the first, cancelRequest searches the
         // three in order (the name is not the original's)
@@ -121,6 +131,12 @@ public:
     static bool checkValidFileBlock(const char* path);
     // a file's size, negative when it has none (GfFileSizePool::execFileSizeJob passes no VAL64)
     static int getFileSize(const char* path, mm::VAL64*);
+    // named by the symbols: the media's path of the file at path into out, from the first search path whose
+    // accessor knows it; its size, negative when none does (the return type and parameter names are not known)
+    static int getRealName(const char* path, mm::mtl::FixStr<256>& out);
+    // named by the symbols: reads the archive at path and adds it to the DevFileArchiver for a medium; kept in
+    // dvfl_detail::g_reserveArchives while there is no object (the parameter names are not the original's)
+    static void registArchive(MEDIA media, const char* path, const char* name, const char* root);
     // starts reading the file a parameter names; the handle the answer to its listener's OnFileEvent carries, none
     static FileHandleTh* readFile(const DevFileParamTh& param);
     // reads the file a parameter names at once: its data, none; its size and VAL64 through the pointers
@@ -146,6 +162,10 @@ public:
     // named by the symbols: whether a handle rfOpen returned is busy (event::StmPackData calls it before rfClose; the
     // parameter name is not the original's)
     static bool rfIsBusy(FileHandleTh* handle);
+    // named by the symbols: reads a part of a file rfOpen opened (the parameter names are not the original's)
+    static bool rfRead(FileHandleTh* handle, const DevFileParamTh& param);
+    // named by the symbols: the channel a handle holds when it has none (rfRead, rfIsBusy compare against it)
+    static unsigned int INVALID_FILE_CHANNEL;
     // named by the symbols: called once a save's write ended (GfGameSave::OnFileEvent)
     static void flushSave();
     // named by the symbols: starts writing size bytes of data to path, listener gets the end event (GfGameSave)
@@ -174,14 +194,24 @@ void addMediaPath(MEDIA media, const char* path, int prio);
 // constructor writes up to 0x190, and 2.0.0's symbols give the FixedVector capacity 16, whose size sits at 0x1900;
 // fields not read yet)
 struct ReserveArchiveParam {
-    unsigned char pad_0[0x190];
+    MEDIA m_media;                 // 0x0: registArchive's medium
+    // registArchive's path, name and root (0x4, 0x88, 0x10C; the names are not the original's)
+    mm::mtl::FixStr<128> m_path;
+    mm::mtl::FixStr<128> m_name;
+    mm::mtl::FixStr<128> m_root;
 };
+// 0x7100ECBC10 (this unit): the archives registArchive keeps while there is no DevFileTh
+extern mm::mtl::FixedVector<ReserveArchiveParam, 16> g_reserveArchives;
 // named by the symbols: a search path addMediaPath inserts into g_loadMedia (0x8C bytes: FixedVector::insert
 // steps by 0x8C and checks the count against 16, as 2.0.0's symbols give; the size sits at 0x8C0; fields not
 // read yet)
 struct LoadMediaParam {
-    unsigned char pad_0[0x8C];
+    MEDIA m_media;  // 0x0: the medium (DevFileTh::getFileSize indexes the accessors with it; the name is not the original's)
+    int m_prio;  // 0x4: addMediaPath's prio (the name is not the original's)
+    mm::mtl::FixStr<128> m_path;  // 0x8: the search path (addMediaPath; the name is not the original's)
 };
+// 0x7100ECD518 (this unit): the search paths addMediaPath keeps
+extern mm::mtl::FixedVector<LoadMediaParam, 16> g_loadMedia;
 }  // namespace dvfl_detail
 }  // namespace ml
 
