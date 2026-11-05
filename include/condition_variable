@@ -1,0 +1,21 @@
+#ifndef CONDITION_VARIABLE_H
+#define CONDITION_VARIABLE_H
+
+// The C++ library's condition variable, as the SDK's libc++ names it (std::__1::condition_variable::notify_one,
+// which ml::DevFileTh::Impl::appendRequest calls): only what its callers use.
+namespace std { inline namespace __1 {
+
+class condition_variable {
+public:
+    void notify_one() noexcept;
+    void notify_all() noexcept;
+
+private:
+    // the SDK's condition variable (0x28 bytes: DevFileTh::Impl's constructor initialises 0x28 bytes at its 0x5CC78;
+    // checkValidFile's cursor follows at 0x5CCA0)
+    alignas(8) unsigned char __cv_[0x28];
+};
+
+}}  // namespace std::__1
+
+#endif

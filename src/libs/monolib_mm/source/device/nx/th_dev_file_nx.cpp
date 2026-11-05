@@ -11,6 +11,7 @@
 #include "classes/ml/DevFileArchiveNx.h"
 #include "classes/ml/DevFileNxTh.h"
 #include "classes/ml/DevFileTh.h"
+#include "ml/DevFileParamTh.h"
 #include "classes/ml/FileReadResult.h"
 #include "classes/ml/DevFileArchiver.h"
 #include "classes/ml/DevFileJob.h"
@@ -2566,7 +2567,7 @@ void DevFileNxTh::tail() {
                     EventFileTh event;
                     event.m_kind = 2;
                     event.m_handle = handle;
-                    event.pad_10 = handle->pad_2c;
+                    event.m_allocHandle = handle->m_allocHandle;
                     event.m_allocator = handle->m_allocator;
                     event.m_path = handle->m_path;
                     event.m_data = handle->m_data;
@@ -2594,7 +2595,7 @@ void DevFileNxTh::tail() {
                 EventFileTh event;
                 event.m_kind = 4;
                 event.m_handle = handle;
-                event.pad_10 = handle->pad_2c;
+                event.m_allocHandle = handle->m_allocHandle;
                 event.m_allocator = handle->m_allocator;
                 event.m_path = handle->m_path;
                 event.m_data = handle->m_data;
@@ -2759,6 +2760,147 @@ bool DevFileArchiveNx::rfClose(FileHandleTh* handle) {
 
 bool DevFileArchiveNx::rfIsUsedChannel(unsigned int channel) {
     return m_impl->m_params[channel].m_isOpen;
+}
+
+// lbl_7100ECDE30: DevFileTh::initializePath stores its bool argument; Impl::initialize starts the archive accessors
+// only when set (the name is not the original's; `used` keeps it at its own address as in the original)
+__attribute__((used)) static bool s_useArchive;
+
+unsigned int DevFileTh::Impl::thFileLoader(void* arg) {
+    Impl* impl = static_cast<Impl*>(arg);
+    __atomic_fetch_add(&impl->m_loaderCount, 1, __ATOMIC_SEQ_CST);
+    nn::os::SleepThread(nn::TimeSpan::FromMilliSeconds(100));
+    while (!__atomic_load_n(&impl->m_stop, __ATOMIC_SEQ_CST)) {
+        if (DevFileTh::isInitialized()) {
+            impl->thUpdate();
+        }
+    }
+    __atomic_fetch_sub(&impl->m_loaderCount, 1, __ATOMIC_SEQ_CST);
+    return 0;
+}
+
+void DevFileTh::Impl::releaseRequest(DevFileJobTh* job) {
+    FileHandleTh* handle = job->m_handle;
+    handle->releaseData();
+    delete job;
+    m_handles.deallocate(handle);
+}
+
+bool DevFileTh::Impl::initialize() {
+    bool result = true;
+    for (int i = 0; i < 8; i++) {
+        if (m_accessors[i] != nullptr && !m_accessorReady.test(i)) {
+            if (m_accessors[i]->initialize()) {
+                m_accessorReady.set(i);
+            } else {
+                result = false;
+            }
+        }
+    }
+    if (s_useArchive) {
+        for (int i = 0; i < 8; i++) {
+            if (m_archives[i] != nullptr) {
+                result &= m_archives[i]->initialize();
+            }
+        }
+    }
+    if (!result) {
+        return false;
+    }
+    loadBootArchive();
+    m_initialized = true;
+    return true;
+}
+
+bool DevFileTh::Impl::finalize() {
+    bool result = true;
+    for (int i = 0; i < 8; i++) {
+        if (m_archives[i] != nullptr) {
+            result &= m_archives[i]->finalize();
+        }
+    }
+    for (int i = 0; i < 8; i++) {
+        if (m_accessors[i] != nullptr) {
+            result &= m_accessors[i]->finalize();
+        }
+    }
+    return result;
+}
+
+void DevFileTh::Impl::updateCancel() {
+    for (mm::mtl::FixedList<DevFileJobTh*, 640>::iterator it = m_jobs[0].begin(); it != m_jobs[0].end();) {
+        DevFileJobTh* job = *it;
+        if (job->m_cancel) {
+            it = m_jobs[0].erase(m_jobs[0].find(job));
+            releaseRequest(job);
+        } else {
+            ++it;
+        }
+    }
+}
+
+void DevFileTh::Impl::appendRequest(DevFileJobTh* job) {
+    CS lock(m_jobCs);
+    bool inserted = false;
+    for (mm::mtl::FixedList<DevFileJobTh*, 640>::iterator it = m_jobs[0].begin(); it != m_jobs[0].end(); ++it) {
+        FileHandleTh* queued = (*it)->m_handle;
+        if (job->m_handle < queued) {
+            m_jobs[0].insert(it, job);
+            inserted = true;
+            break;
+        }
+    }
+    if (!inserted) {
+        m_jobs[0].push_back(job);
+    }
+    m_jobCond.notify_one();
+}
+
+FileHandleTh* DevFileTh::Impl::writeFile(const char* path, IWorkEvent* listener, const void* data, int size, int arg) {
+    CS lock(m_jobCs);
+    DevFileAccessor* accessor = m_accessors[DevFileTh::getMediaType(path)];
+    if (accessor == nullptr || !accessor->isValid()) {
+        return nullptr;
+    }
+    FileHandleTh* handle;
+    {
+        CS lock2(m_jobCs);
+        handle = m_handles.allocate();
+        if (handle != nullptr) {
+            handle->initWriter(path, const_cast<void*>(data), size, arg, listener);
+            handle->pad_1f4 = true;
+        }
+    }
+    if (handle == nullptr) {
+        return nullptr;
+    }
+    if (arg < 0) {
+        arg = 0;
+        __atomic_store_n(&handle->pad_1f9, true, __ATOMIC_SEQ_CST);
+    }
+    handle->pad_14 = arg;
+    if (handle->m_size == 0) {
+        handle->m_size = 0;
+    }
+    if (handle->pad_14 > 0 || handle->m_size > 0) {
+        __atomic_store_n(&handle->pad_1f5, true, __ATOMIC_SEQ_CST);
+    }
+    DevFileWriterTh* writer = accessor->createWriter(m_alloc);
+    writer->m_handle = handle;
+    appendRequest(writer);
+    return handle;
+}
+
+bool DevFileTh::Impl::rfClose(FileHandleTh* handle) {
+    CS lock(m_handleCs);
+    MEDIA media = DevFileTh::getMediaType(handle->m_path);
+    DevFileAccessor* accessor =
+        __atomic_load_n(&handle->pad_1fc, __ATOMIC_SEQ_CST) ? m_archives[media] : m_accessors[media];
+    if (accessor != nullptr) {
+        accessor->rfClose(handle);
+        handle->clear();
+    }
+    return false;
 }
 }  // namespace ml
 

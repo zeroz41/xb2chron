@@ -29,6 +29,9 @@ public:
 
     // a free slot's object, constructed (mtl::MemManager::Region's copy 0x71006E8910); not written yet
     T* allocate();
+    // the slot at index constructed, none when it is in use (DevFileTh::Impl::checkValidFile walks the slots from a
+    // cursor with it); not written yet
+    T* allocate(unsigned int index);
     // gives p's slot back: its object destroyed and its flag cleared (Region's copy 0x71006E8600)
     void deallocate(T* p) {
         if (p == nullptr) {

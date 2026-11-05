@@ -4,12 +4,20 @@
 #include "classes/ml/DevBase.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/mtl/UniquePtr.h"
+#include "mm/mtl/Bitflag.h"
+#include "mm/mtl/FixedList.h"
+#include "mm/mtl/FixedObjectAllocator.h"
+#include "classes/ml/FileHandleTh.h"
+#include "ml/CriticalSection.h"
+#include <condition_variable>
 
 namespace mm { class VAL64; }
 namespace ml { class CERR_STRUCT; }
 namespace ml { class IWorkEvent; }
 namespace ml { enum ERR_DECIDE : int; }
 namespace ml { class DevFileParamTh; }
+namespace ml { class DevFileAccessor; }
+namespace ml { class DevFileJobTh; }
 namespace ml { class FileHandleTh; }
 namespace ml { class IDevFileEvent; }
 // MEDIA is unsigned: DevFileArchiver::getFileInfo zero-extends it to index m_medias (umaddl)
@@ -35,18 +43,59 @@ public:
         ~Impl();
         void tail();
         FileHandleTh* readFile(const DevFileParamTh& param);
+        // the request that asks whether path exists (a FileHandleTh), none when no accessor can tell; void* as
+        // DevFileTh::checkValidFile tail-calls it without a conversion
         void* checkValidFile(const char* path, IWorkEvent* listener);
         FileHandleTh* rfOpen(const DevFileParamTh& param);
-        void rfClose(FileHandleTh* handle);
+        bool rfClose(FileHandleTh* handle);  // false (the return type is not known)
         void cancelRequest(FileHandleTh* handle);
         // named by the symbols: start and stop the thread's work (DevFileTh::wkStandbyLogin/wkStandbyLogout)
         bool initialize();
         bool finalize();
+        // named by the symbols: a loader thread's entry (arg is the Impl): runs thUpdate while the file thread is
+        // initialized, until m_stop
+        static unsigned int thFileLoader(void* arg);
+        // named by the symbols
+        void thUpdate();
+        void loadBootArchive();
+        // named by the symbols: drops a finished or canceled job, its request's data and the request
+        void releaseRequest(DevFileJobTh* job);
+        // named by the symbols: releases the queued jobs whose m_cancel is set
+        void updateCancel();
+        // named by the symbols: queues a job before the first one whose request is at a higher address, wakes a loader
+        void appendRequest(DevFileJobTh* job);
+        // named by the symbols: starts writing size bytes of data to path through the medium's accessor; the request,
+        // none when the medium cannot write
+        FileHandleTh* writeFile(const char* path, IWorkEvent* listener, const void* data, int size, int);
 
-        unsigned char pad_0[0x5B134];
+        // 0x0, 0x2D20, 0x5A40: three lists of jobs; appendRequest queues into the first, cancelRequest searches the
+        // three in order (the name is not the original's)
+        mm::mtl::FixedList<DevFileJobTh*, 640> m_jobs[3];
+        unsigned char pad_8760[0xF0];
+        // 0x8850: the requests' slots (releaseRequest gives one back; the name is not the original's)
+        mm::mtl::FixedObjectAllocator<FileHandleTh, 640> m_handles;
+        unsigned char pad_5b0a8[0x8];
+        // 0x5B0B0, 0x5B0F0: a medium's accessor and archive accessor (initialize, finalize, rfClose; the names are
+        // not the original's)
+        DevFileAccessor* m_accessors[8];
+        DevFileAccessor* m_archives[8];
+        mm::mtl::Bitflag<8> m_accessorReady;  // 0x5B130: initialize sets a medium's flag once its accessor started
         bool m_initialized;  // 0x5B134 (DevFileTh::isInitialized reads it; the name is not the original's)
-        unsigned char pad_5b135[0x1AE3];
+        unsigned char pad_5b135[0x1ADB];
+        mtl::ALLOC_HANDLE m_alloc;  // 0x5CC10: writeFile's accessor creates its writer job from it
+        unsigned char pad_5cc14[0x4];
         IWorkEvent* m_eventCb;  // 0x5CC18 (entryCb sets it, removeCb clears it; the name is not the original's)
+        // 0x5CC20: guards m_jobs (appendRequest); 0x5CC48: rfClose's (the names are not the original's)
+        CriticalSection m_jobCs;
+        CriticalSection m_handleCs;
+        bool m_stop;  // 0x5CC70: the loader threads end when set (thFileLoader; the name is not the original's)
+        int m_loaderCount;  // 0x5CC74: the loader threads running (thFileLoader; the name is not the original's)
+        // 0x5CC78: appendRequest wakes a loader through it (the name is not the original's)
+        std::condition_variable m_jobCond;
+        // 0x5CCA0: the slot of m_handles checkValidFile tries first, wrapping at its capacity (the name is not the
+        // original's)
+        unsigned int m_handleCursor;
+        unsigned char pad_5cca4[0xC];
     };
     // what setup copies for Impl's constructor (nnMain fills it)
     struct SetupParam {
