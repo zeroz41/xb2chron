@@ -20,6 +20,10 @@
 #include "ui/EventData.h"
 #include "classes/gf/GfMenuObjCharSelect.h"
 #include "gf/GfMenuObjUtil.h"
+#include "classes/gf/GfMenuItemAdapter.h"
+#include "mm/mtl/FixStr.h"
+#include "mm/Rect.h"
+#include "mm/Pnt.h"
 
 namespace gf {
 
@@ -199,12 +203,115 @@ void GfMenuObjDrEquip2::MainListener::reciveEvent(const ui::EventData& event, un
     }
 }
 
+void GfMenuObjDrEquip2::setupSlot(ui::UIObjectAcc& acc, GfMenuItemList* items, unsigned int reference) {
+    updateEquipItemList(items, reference);
+    mm::mtl::FixStr<32> name;
+    for (int i = 0; i < 3; i++) {
+        name.format("IMG_slot_icon@%02d", i + 1);
+        GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 2, items, i, false);
+    }
+    for (int i = 0; i < 3; i++) {
+        name.format("IMG_slot_select@%02d", i + 1);
+        GfMenuObjUtil::setChildDisp(acc.m_handle, name.m_str, false);
+        name.format("IMG_slot_hold@%02d", i + 1);
+        GfMenuObjUtil::setChildDisp(acc.m_handle, name.m_str, false);
+    }
+}
+
+void GfMenuObjDrEquip2::refreshEquipItemSlot(unsigned int handle, GfMenuItemList* items) {
+    ui::UIObjectAcc acc(handle);
+    {
+        mm::mtl::FixStr<32> name;
+        for (unsigned int i = 0; i < 3; i++) {
+            name.format("LAY_slot@%02d", i + 1);
+            ui::UIObjectAcc slot(handle, name.m_str);
+            if (slot.m_object != nullptr) {
+                slot.setDisp(i < static_cast<unsigned int>(items->getSize()));
+                slot.updateLayoutSize();
+            }
+            name.format("IMG_slot_select@%02d", i + 1);
+            ui::UIObjectAcc select(handle, name.m_str);
+            select.stopAnimation();
+            select.setDisp(false);
+        }
+    }
+    mm::Rect<short> center;
+    acc.getLayoutRect("slot_center", center);
+    mm::Rect<short> range;
+    acc.getLayoutRect("slot_range", range);
+    GfMenuObjUtil::placeObjectH(acc.m_handle, "LAY_slot@%02d", items->getSize(),
+                                mm::Pnt<short>(center.x + center.w / 2, center.y + center.h / 2), range.x - center.x);
+}
+
 void GfMenuObjDrEquip2::refreshExpandOperation() {
     bool enable = GfGameManager::isClearGame() &&
                   !GfEquipUtil::isEnableExtendDriverAcce(GfMenuReference::getReferenceDriverID(m_driver)) &&
                   GfItemUtil::getItemBoxCount(0x636A) != 0;
     ui::UIObjectAcc acc(m_handle, "LAY_equip_slot");
     GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 10, enable);
+}
+
+void GfMenuObjDrEquip2::updateEquipItemList(GfMenuItemList* items, unsigned int reference) {
+    unsigned int driver = GfMenuReference::getReferenceDriverID(reference);
+    items->clear();
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        MenuItemInfo info;
+        info.m_type = 2;
+        info.m_id = GfEquipUtil::getEquipIraWpnAcce(driver);
+        info.m_count = info.m_id != 0;
+        items->addContents(info);
+        for (int i = 0; i < 2; i++) {
+            MenuItemInfo info;
+            info.m_type = 2;
+            info.m_id = GfEquipUtil::getEquipDriverAcce(driver, i);
+            info.m_count = info.m_id != 0;
+            items->addContents(info);
+        }
+    } else {
+        unsigned int count = GfEquipUtil::isEnableExtendDriverAcce(driver) ? 3 : 2;
+        for (unsigned int i = 0; i < count; i++) {
+            MenuItemInfo info;
+            info.m_type = 2;
+            info.m_id = GfEquipUtil::getEquipDriverAcce(driver, i);
+            info.m_count = info.m_id != 0;
+            items->addContents(info);
+        }
+    }
+}
+
+void GfMenuObjDrEquip2::setupItemList(ui::UIObjectAcc& acc, GfMenuItemList* items, ui::UISelectObjList* selectList) {
+    selectList->pickupObject(acc.m_handle, "LAY_item@%02d", 1);
+    int count = selectList->getSize();
+    if (items == nullptr || count == 0) {
+        return;
+    }
+    GfMenuItemList::ItemBoxSetup setup;
+    setup.m_type = 2;
+    setup.pad_28 = 0;
+    setup.m_setup.m_pageRowSize = selectList->getSize();
+    setup.m_setup.m_pageScroll = true;
+    // the original points m_filter at a stack slot it never fills and that the name buffer below reuses (the
+    // filter's scope ends here)
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        GfMenuItemList::FiltertInfo filter;
+        setup.m_filter = &filter;
+    }
+    items->setupFromBox(setup);
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < selectList->getSize(); i++) {
+        name.format("IMG_item_tag_icon@%02d", i + 1);
+        GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 2, items, i, false);
+        name.format("TXT_item_tag@%02d", i + 1);
+        GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 0, items, i, false);
+        name.format("IMG_item_rarity@%02d", i + 1);
+        GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 7, items, i, false);
+        name.format("IMG_item_tag_select@%02d", i + 1);
+        GfMenuObjUtil::setChildDisp(acc.m_handle, name.m_str, false);
+    }
+    GfMenuItemAdapter::createFromList(acc.searchChild("TXT_item_list_info"), 9, items, -1, false);
+    if (GfMenuObjUtil::isValidExpansion(3) && acc.searchChild("IMG_item_list_elem") != 0) {
+        GfMenuItemAdapter::createFromList(acc.searchChild("IMG_item_list_elem"), 0x18, items, -1, false);
+    }
 }
 
 void GfMenuObjDrEquip2::EquipItemListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
@@ -214,6 +321,15 @@ void GfMenuObjDrEquip2::EquipItemListener::reciveEvent(const ui::EventData& even
         setupEquipItem(acc, m_owner->m_items);
     } else {
         ui::UIObjectListener::reciveEvent(event, handle);
+    }
+}
+
+void GfMenuObjDrEquip2::setupEquipItem(ui::UIObjectAcc& acc, GfMenuItemList* items) {
+    GfMenuItemAdapter::createFromList(acc.searchChild("TXT_equip_item_tag"), 0, items, -1, false);
+    GfMenuItemAdapter::createFromList(acc.searchChild("TXT_equip_item_info"), 9, items, -1, false);
+    GfMenuItemAdapter::createFromList(acc.searchChild("IMG_equip_item_reality_icon"), 7, items, -1, false);
+    if (GfMenuObjUtil::isValidExpansion(3) && acc.searchChild("IMG_equip_item_info_elem") != 0) {
+        GfMenuItemAdapter::createFromList(acc.searchChild("IMG_equip_item_info_elem"), 0x18, items, -1, false);
     }
 }
 

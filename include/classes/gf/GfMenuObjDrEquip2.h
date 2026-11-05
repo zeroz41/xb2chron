@@ -34,10 +34,20 @@ public:
     void refreshExpandOperation();
     // 1.0.0's setupEquipItem (0x71004569D8: same place after EquipItemListener::reciveEvent, the same arguments
     // and its first three createFromList calls); 2.0.0's symbols name it
-    static GfMenuItemAdapter* setupEquipItem(ui::UIObjectAcc& acc, GfMenuItemList* items);
+    // (returns nothing: its no-element path leaves the search result in w0)
+    static void setupEquipItem(ui::UIObjectAcc& acc, GfMenuItemList* items);
     // 2.0.0's symbols name it (not written yet): refills the list for a reference driver
     // (GfMenuReference::getReferenceDriverID; SlotListener::reciveEvent and setupSlot call it)
     static void updateEquipItemList(GfMenuItemList* items, unsigned int);
+    // 2.0.0's symbols name these
+    static void setupSlot(ui::UIObjectAcc& acc, GfMenuItemList* items, unsigned int);
+    static void refreshEquipItemSlot(unsigned int, GfMenuItemList* items);
+    static void refreshItemList(ui::UIObjectAcc& acc, GfMenuItemList* items, ui::UISelectObjList* selectList,
+                                GfMenuDriverList* drivers, unsigned int, unsigned int);
+    static bool removeItem(ui::UIObjectAcc& acc, GfMenuItemList* equipItems, GfMenuItemList* items,
+                           ui::UISelectObjList* selectList, GfMenuDriverList* drivers, unsigned int, unsigned int,
+                           unsigned int, GfMenuCallContext* context);
+    static void setupItemList(ui::UIObjectAcc& acc, GfMenuItemList* items, ui::UISelectObjList* selectList);
 
     // 0x24: the reference driver index (GfMenuReference::getReferenceDriverID); the constructor and initialize
     // clear it
