@@ -213,7 +213,7 @@ void GfObjAcc::setFrameSpeed(float speed) {
 
 void GfObjAcc::setCameraFade(bool on) { GfObjUtil::setFlag(m_info, 10, on); }
 
-void GfObjAcc::setFlag(unsigned int flag, bool on) { GfObjUtil::setFlag(m_info, flag, on); }
+bool GfObjAcc::setFlag(unsigned int flag, bool on) { return GfObjUtil::setFlag(m_info, flag, on); }
 
 bool GfObjAcc::testFlag(unsigned int flag) const { return GfObjUtil::testFlag(m_info, flag); }
 

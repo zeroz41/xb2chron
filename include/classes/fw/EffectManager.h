@@ -21,6 +21,7 @@
 #include <string>
 #include <unordered_map>
 
+namespace ml { struct MdlVtxParticle; }
 namespace effect { class SendParam; }
 namespace fw { class EffectData; }
 namespace fw { class EffectPack; }
@@ -302,7 +303,9 @@ public:
     // (BTL_VolumeFade's rows; gf::GfVolumeFade reads them)
     VolumeFadeParams* m_volumeFadeParams[32];
     RimBloomCalc m_rimBlooms[64];  // 0x30E0, the constructor clears them (the name is not the original's)
-    unsigned char pad_352e0[0x100];
+    // vertex particle parameters by index (GfObjUtil::setDeadParticle copies the first 0x30 bytes of one; the name
+    // is not the original's)
+    ml::MdlVtxParticle* m_particleParams[32];
     // one bond (kizuna) line effect: createKizunaLine takes the first of works 1..7 whose byte at 0x459 is clear (work
     // 0 stays unused: handle 0 is none); updateKizunaLine sets its two ends and its count (the names are not the
     // original's)

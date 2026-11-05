@@ -77,6 +77,11 @@ public:
     // m_worldTransform, synced first (inline: GfComEnvSensor::resolveTransform inlines it into a tail call of
     // syncWorldTransform; ReferenceFrame.cpp emits the out-of-line copy after syncLocalTransform, its first caller,
     // with syncWorldTransform inlined, so that copy and syncWorldTransform call it for the parent)
+    // the world transform becomes the current one and the local transform stale, the matrix's bit kept (inline: the
+    // name is not the original's; GfObjUtil::attachGfObj and dettachGfObject after re-parenting a frame)
+    void setWorldTransformCurrent() {
+        m_syncFlags = (m_syncFlags & ~3u) | 2;
+    }
     const Transform& getSyncedWorldTransform() {
         syncWorldTransform();
         return m_worldTransform;

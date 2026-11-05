@@ -47,7 +47,7 @@ public:
     ml::ScnObjModel* getScnModel() const;
     void setFrameSpeed(float speed);
     void setCameraFade(bool on);
-    void setFlag(unsigned int flag, bool on);
+    bool setFlag(unsigned int flag, bool on);  // whether it changed (GfObjUtil::destroy tests it)
     bool testFlag(unsigned int flag) const;
     bool isCameraFadeDisableForEvent() const;
     void setCameraFadeDisableForEvent(bool on);

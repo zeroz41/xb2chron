@@ -59,6 +59,9 @@ public:
     static bool isValid(gf::GF_OBJ_HANDLE* handle);
     // what the object behind handle has mounted at a point (its info's mount's), -1 without
     static gf::GF_MOUNT_HANDLE* getMountHandle(gf::GF_OBJ_HANDLE* handle, gf::GFATTACH attach);
+    // sends message 0x1000043 (option, else the mount's current one; the mount's handle for it) to each weapon of
+    // the object's mount at point 0
+    static void resetWeaponMotion(gf::GF_OBJ_HANDLE* handle, gf::OPTMNT option);
     // the objects appended to an object's mount point 1 (GfMountManager::getAppendHandles)
     static gf::GfAppendHandles* getExtraMountObject(gf::GF_OBJ_HANDLE* handle);
     static void destroy(gf::GF_OBJ_HANDLE* handle);
@@ -67,8 +70,8 @@ public:
     // 16 other callers call it at the same place with the same argument
     static void addDebugName(gf::GF_OBJ_HANDLE* handle);
     // attaches the object behind child to the one behind parent, and detaches it again
-    static void attachGfObj(gf::GF_OBJ_HANDLE* parent, gf::GF_OBJ_HANDLE* child);
-    static void dettachGfObject(gf::GF_OBJ_HANDLE* parent, gf::GF_OBJ_HANDLE* child);
+    static bool attachGfObj(gf::GF_OBJ_HANDLE* parent, gf::GF_OBJ_HANDLE* child);
+    static bool dettachGfObject(gf::GF_OBJ_HANDLE* parent, gf::GF_OBJ_HANDLE* child);
     // the kind of the object behind a handle (its info's setup's), 0 without one; 5 is what isActiveRangeLure lures
     static int getObjType(gf::GF_OBJ_HANDLE* handle);
     // whether an enemy object is a blade (DataParamAcc::setupObjHandle then makes a DataObjEnemyBlade)
@@ -90,8 +93,8 @@ public:
     static const char* getMotionResourceName(gf::GF_OBJ_HANDLE* handle);
     // reads a fade annotation's text into info: false when it is not one
     static bool parseFadeParam(const char* text, gf::GfFadeInfo* info);
-    static void unmountFromBone(gf::GF_OBJ_HANDLE* handle);
-    static void mountToBone(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* parent, const char* bone);
+    static bool unmountFromBone(gf::GF_OBJ_HANDLE* handle);
+    static bool mountToBone(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* parent, const char* bone);
     // the append at an object's point (its mount's current one), none without
     static gf::GfAppend* getAppend(gf::GF_OBJ_HANDLE* handle, gf::GFATTACH attach);
     static gf::GfAppendInfo* getAppendInfo(gf::GF_OBJ_HANDLE* handle, gf::GFATTACH attach);
@@ -123,6 +126,8 @@ public:
     static void setLimitHP(gf::GF_OBJ_HANDLE* handle, unsigned int hp);
     static void setInvincible(gf::GF_OBJ_HANDLE* handle, bool on, bool);
     static void setDisableAutoHeal(gf::GF_OBJ_HANDLE* handle, bool on);
+    // whether the object's status property (its GfComProperty's) is invincible (setInvincible's flag)
+    static bool testInvincible(gf::GF_OBJ_HANDLE* handle);
     static bool setFlag(gf::GF_OBJ_HANDLE* handle, unsigned int flag, bool on);  // whether it changed
     static bool testFlag(gf::GF_OBJ_HANDLE* handle, unsigned int flag);
     static int getSetupObjNumberByEnArrangeId(unsigned int arrangeId);  // the objects of an arrange id still set up
@@ -134,6 +139,9 @@ public:
     static gf::GfVolumeFade* getVolumeFade(gf::GF_OBJ_HANDLE* handle);
     static bool isVolumeFadeForUser(gf::GF_OBJ_HANDLE* handle);  // its info's flag 20
     static void setTalking(gf::GF_OBJ_HANDLE* handle, bool on);  // its info's flag 21
+    // a player's object: gives its collider's first collision object the priority of its player index
+    // (GfDataUtil::getPlayerColiPriority), kept at its info's 0xB0 (GfGameMoverSwitcher::switchMoverForIra calls it)
+    static void replaceColisionPrio(gf::GF_OBJ_HANDLE* handle);
     // the sound category of the object's sounds: 3 for create types 6, 7 and 12, else 13 (14 without slow)
     static unsigned int getSoundCategoryNormal(gf::GF_OBJ_HANDLE* handle);
     static unsigned int getSoundCategoryWithoutSlow(gf::GF_OBJ_HANDLE* handle);
@@ -141,6 +149,12 @@ public:
     static bool isSearchEmptyResource(gf::GF_OBJ_HANDLE* handle);
     static bool isStanbyTalkingPlayer(gf::GF_OBJ_HANDLE* handle);
     static unsigned int getEyeRotControl(gf::GF_OBJ_HANDLE* handle);
+    // the kind of the object's eye IK (its IK component's solver 6, else 7): 1 a TransLocalIkSolver, 2 a
+    // RotateLocalIkSolver, 0 none
+    static int getEyeIKType(gf::GF_OBJ_HANDLE* handle);
+    // moves the object's eyes (its IK component's solvers 6 and 7) by x and y, laid out by its data's eye rotation
+    // control for rotating eyes (getEyeIKType 2), as a translation for the others (1)
+    static void setMoveEyeIK(gf::GF_OBJ_HANDLE* handle, float x, float y);
     static void setEnableAllIK(gf::GF_OBJ_HANDLE* handle, bool enable, float time);
     static void setEnableBodyIK(gf::GF_OBJ_HANDLE* handle, bool enable, float time);
     static void setEnableBlowRotateIK(gf::GF_OBJ_HANDLE* handle, bool enable, float time);

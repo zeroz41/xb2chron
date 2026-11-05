@@ -51,6 +51,18 @@
 #include "classes/gf/GfComPropertyPc.h"
 #include "gf/GfAppend.h"
 #include "classes/gf/GfObjSetupWeapon.h"
+#include "classes/gf/GfComCollider.h"
+#include "classes/fw/ColiObject.h"
+#include "gf/GfDataUtil.h"
+#include "classes/gf/GfGameMount.h"
+#include "classes/gf/GfWeapon.h"
+#include "gf/MsgObjectForceWeaponMount.h"
+#include "classes/fw/TransLocalIkSolver.h"
+#include "classes/fw/RotateLocalIkSolver.h"
+#include "ml/MdlVtxParticle.h"
+#include "ml/ScnObjAccMdlParticle.h"
+#include "classes/fw/EffectManager.h"
+#include <string.h>
 
 namespace gf {
 
@@ -151,6 +163,30 @@ GF_ASSET_HANDLE* GfObjUtil::getAssetHandle(GF_OBJ_HANDLE* handle) {
     return info->m_assetHandle;
 }
 
+void GfObjUtil::destroy(GF_OBJ_HANDLE* handle) {
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    GfObjAcc acc(handle);
+    if (acc.m_obj == nullptr) {
+        return;
+    }
+    if (acc.setFlag(0, true)) {
+        if (GfObjManager* manager = GfObjManager::sys()) {
+            manager->addDestroyObj(handle, true);
+        }
+        applyExecUpdate(acc.getObj());
+    }
+    if (acc.m_obj == nullptr) {
+        return;
+    }
+    GfObj* obj = acc.getObj();
+    for (mm::mtl::IntrusiveList<fw::UpdatableObject>::iterator it = obj->m_children.begin();
+         it != obj->m_children.end(); ++it) {
+        destroy(mm::mtl::rttiCast<GfObj>(&*it)->m_handle);
+    }
+}
+
 void GfObjUtil::applyExecUpdate(GfObj* obj) {
     bool exec = false;
     if (obj->m_updateFlags & 2) {
@@ -182,6 +218,90 @@ GfObj* GfObjUtil::getParentObj(GfObj* obj) {
         return nullptr;
     }
     return mm::mtl::rttiCast<GfObj>(parent);
+}
+
+bool GfObjUtil::mountToBone(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* parent, const char* bone) {
+    GfObj* parentObj = getObj(parent);
+    if (parentObj == nullptr) {
+        return false;
+    }
+    if (GfComModel* model = parentObj->getComponent<GfComModel>(1)) {
+        GfComTransform* transform = GfObjManager::getObjInfo(handle)->m_obj->getComponent<GfComTransform>(0);
+        if (!model->addBoneReferenceFrame(bone, transform->m_frame)) {
+            return false;
+        }
+    }
+    GfObj* mountObj = getObj(parent);
+    GfObj* obj = getObj(handle);
+    if (mountObj != nullptr && obj != nullptr) {
+        mountObj->addChild(obj);
+    }
+    GfObjManager::getObjInfo(handle)->m_mountBoneName = bone;
+    return true;
+}
+
+bool GfObjUtil::unmountFromBone(GF_OBJ_HANDLE* handle) {
+    GfObj* obj = getObj(handle);
+    if (obj == nullptr) {
+        return false;
+    }
+    GfObj* parentObj = getParentObj(obj);
+    if (parentObj == nullptr) {
+        return false;
+    }
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (GfComModel* model = parentObj->getComponent<GfComModel>(1)) {
+        GfComTransform* transform = obj->getComponent<GfComTransform>(0);
+        if (transform->m_frame->m_parent != nullptr) {
+            model->removeBoneReferenceFrame(info->m_mountBoneName.m_str, transform->m_frame);
+        }
+    }
+    GfObj* mountObj = getObj(getParentHandle(handle));
+    GfObj* child = getObj(handle);
+    if (mountObj != nullptr && child != nullptr) {
+        mountObj->removeChild(child);
+    }
+    info->m_mountBoneName = "";
+    return true;
+}
+
+bool GfObjUtil::attachGfObj(GF_OBJ_HANDLE* parent, GF_OBJ_HANDLE* child) {
+    GfObj* parentObj = getObj(parent);
+    GfObj* childObj = getObj(child);
+    if (parentObj == nullptr || childObj == nullptr) {
+        return false;
+    }
+    const mm::mtl::IntrusivePtr<fw::ReferenceFrame>& parentFrame =
+        parentObj->getComponent<GfComTransform>(0)->getFrame();
+    GfComTransform* childTransform = childObj->findComponent<GfComTransform>(0);
+    if (childTransform->m_frame->m_parent != nullptr) {
+        return false;
+    }
+    parentFrame->addChild(*childTransform->m_frame);
+    childTransform->m_frame->setWorldTransformCurrent();
+    childTransform->m_frame->syncLocalTransform();
+    return true;
+}
+
+bool GfObjUtil::dettachGfObject(GF_OBJ_HANDLE* parent, GF_OBJ_HANDLE* child) {
+    GfObj* parentObj = getObj(parent);
+    GfObj* childObj = getObj(child);
+    if (parentObj == nullptr || childObj == nullptr) {
+        return false;
+    }
+    GfComTransform* parentTransform = parentObj->getComponent<GfComTransform>(0);
+    if (parentTransform == nullptr) {
+        return false;
+    }
+    const mm::mtl::IntrusivePtr<fw::ReferenceFrame>& parentFrame = parentTransform->getFrame();
+    GfComTransform* childTransform = childObj->findComponent<GfComTransform>(0);
+    if (childTransform->m_frame->m_parent != parentFrame.get()) {
+        return false;
+    }
+    parentFrame->removeChild(*childTransform->m_frame);
+    childTransform->m_frame->setWorldTransformCurrent();
+    childTransform->m_frame->syncLocalTransform();
+    return true;
 }
 
 unsigned int GfObjUtil::getLayerSection(unsigned int layer) {
@@ -234,6 +354,25 @@ const char* GfObjUtil::getMotionResourceName(GF_OBJ_HANDLE* handle) {
     return acc.getMotionResourceName();
 }
 
+void GfObjUtil::resetWeaponMotion(GF_OBJ_HANDLE* handle, OPTMNT option) {
+    GfGameMount* mount = GfMountManager::getMount(getMountHandle(handle, GFATTACH()));
+    if (mount == nullptr) {
+        return;
+    }
+    if (option == -1) {
+        option = mount->m_mountType;
+    }
+    GF_OBJ_HANDLE* owner = mount->getHandle(option);
+    for (unsigned int i = 0; i < 10; ++i) {
+        if (GfObj* obj = getObj(handle)) {
+            if (GfObj* weapon = getObj(mount->m_weapon->getObjHandles()[i])) {
+                MsgObjectForceWeaponMount msg(option, owner);
+                obj->sendMessage(weapon, msg);
+            }
+        }
+    }
+}
+
 GF_MOUNT_HANDLE* GfObjUtil::getMountHandle(GF_OBJ_HANDLE* handle, GFATTACH attach) {
     GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
     if (info == nullptr) {
@@ -268,6 +407,20 @@ void GfObjUtil::setInvincible(GF_OBJ_HANDLE* handle, bool on, bool value2) {
         MsgUnk_1000047 msg(on, value2);
         obj->sendMessage(obj, msg);
     }
+}
+
+bool GfObjUtil::testInvincible(GF_OBJ_HANDLE* handle) {
+    bool found = false;
+    bool invincible;
+    if (GfObj* obj = getObj(handle)) {
+        if (GfComProperty* property = obj->getComponent<GfComProperty>(5)) {
+            if (GfStatusProperty* status = property->m_status.get()) {
+                invincible = status->m_invincible;
+                found = true;
+            }
+        }
+    }
+    return found && invincible;
 }
 
 void GfObjUtil::setDisableAutoHeal(GF_OBJ_HANDLE* handle, bool on) {
@@ -595,6 +748,21 @@ void GfObjUtil::setEnableSPCIK(GF_OBJ_HANDLE* handle, bool enable) {
     }
 }
 
+int GfObjUtil::getEyeIKType(GF_OBJ_HANDLE* handle) {
+    if (GfObj* obj = getObj(handle)) {
+        if (const GfComIK* ik = obj->getComponent<GfComIK>(3)) {
+            size_t index = ik->m_solvers[6].get() != nullptr ? 6 : 7;
+            if (ik->getSolver<fw::TransLocalIkSolver>(index) != nullptr) {
+                return 1;
+            }
+            if (ik->getSolver<fw::RotateLocalIkSolver>(index) != nullptr) {
+                return 2;
+            }
+        }
+    }
+    return 0;
+}
+
 unsigned int GfObjUtil::getEyeRotControl(GF_OBJ_HANDLE* handle) {
     DataParamAcc acc(handle);
     return acc.getEyeRotControl();
@@ -633,6 +801,18 @@ GfVolumeFade* GfObjUtil::getVolumeFade(GF_OBJ_HANDLE* handle) {
         return nullptr;
     }
     return info->m_volumeFade;
+}
+
+bool GfObjUtil::isBattle(GF_OBJ_HANDLE* handle) {
+    bool found = false;
+    bool battle;
+    if (GfObjProperty* property = getProperty(handle)) {
+        if (GfObjPropertyCharacter* character = property->m_character) {
+            battle = character->pad_30;
+            found = true;
+        }
+    }
+    return found && battle;
 }
 
 bool GfObjUtil::isVolumeFadeForUser(GF_OBJ_HANDLE* handle) {
@@ -684,6 +864,36 @@ void GfObjUtil::setTalking(GF_OBJ_HANDLE* handle, bool on) {
 
 bool GfObjUtil::isTalking(GF_OBJ_HANDLE* handle) {
     return testFlag(GfObjManager::getObjInfo(handle), 21);
+}
+
+namespace {
+// whether a create type takes the sound category 3 (types 6, 7 and 12; the name is not the original's)
+inline bool isCategory3CreateType(int type) {
+    switch (type) {
+    case 6:
+    case 7:
+    case 12:
+        return true;
+    default:
+        return false;
+    }
+}
+}  // namespace
+
+unsigned int GfObjUtil::getSoundCategoryNormal(GF_OBJ_HANDLE* handle) {
+    GfObjSetup* setup = getObjSetup(handle);
+    if (setup != nullptr && isCategory3CreateType(setup->m_createType)) {
+        return 3;
+    }
+    return 13;
+}
+
+unsigned int GfObjUtil::getSoundCategoryWithoutSlow(GF_OBJ_HANDLE* handle) {
+    GfObjSetup* setup = getObjSetup(handle);
+    if (setup != nullptr && isCategory3CreateType(setup->m_createType)) {
+        return 3;
+    }
+    return 14;
 }
 
 bool GfObjUtil::getMobSlotHandle(mm::mtl::FixedVector<GF_SLOT_HANDLE*, 88>& slots, GF_OBJ_HANDLE* handle) {
@@ -743,6 +953,19 @@ void GfObjUtil::setWarpTransform(GF_OBJ_HANDLE* handle, const fw::Transform& tra
     }
 }
 
+void GfObjUtil::setDeadParticle(GF_OBJ_HANDLE* handle, bool on, unsigned int particle, float alpha) {
+    GfObjAcc acc(handle);
+    ml::ScnObjModel* model = acc.getScnModel();
+    if (particle != 0 && model != nullptr) {
+        ml::MdlVtxParticle params;
+        memcpy(&params, fw::EffectManager::sys()->m_particleParams[particle], 0x30);
+        params.m_alpha = alpha;
+        ml::ScnObjAccMdlParticle access(acc.getScnModel());
+        access.setParams(params);
+        access.setActive(on, 0x1000);
+    }
+}
+
 void GfObjUtil::applyExecUpdate(GF_OBJ_HANDLE* handle) {
     applyExecUpdate(getObj(handle));
 }
@@ -767,6 +990,25 @@ int GfObjUtil::fn_7100552C18(const GfObjManager::HandleList& list, unsigned int 
         }
     }
     return count;
+}
+
+void GfObjUtil::replaceColisionPrio(GF_OBJ_HANDLE* handle) {
+    GfGamePlayerFormation* formation = GfGamePlayerFormation::sys();
+    if (formation == nullptr) {
+        return;
+    }
+    unsigned int index = formation->findPlayer(handle);
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1) || index == static_cast<unsigned int>(-1)) {
+        return;
+    }
+    if (GfObj* obj = getObj(handle)) {
+        if (GfComCollider* collider = obj->getComponent<GfComCollider>(4)) {
+            if (fw::ColiObject* coli = collider->getColiObject(0)) {
+                obj->m_info->m_attachIndex = GfDataUtil::getPlayerColiPriority(index);
+                coli->setPriority(obj->m_info->m_attachIndex);
+            }
+        }
+    }
 }
 
 bool GfObjUtil::isIra(GF_OBJ_HANDLE* handle) {
