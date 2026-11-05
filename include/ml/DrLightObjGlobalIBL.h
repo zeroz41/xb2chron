@@ -22,8 +22,6 @@ public:
     // One mesh of the light (0x1E0 bytes; the copy constructor's member copies give the layout). The field names are
     // not the original's.
     struct MeshData {
-        ~MeshData() { m_pixlCounter.release(); }
-
         grlib::CGLibVtxVertex m_vertex;  // 0x0, bindVertex binds it
         grlib::CGLibVtxIndex m_index;  // 0x28, drawVertex draws it
         unsigned char pad_50[0xC0];

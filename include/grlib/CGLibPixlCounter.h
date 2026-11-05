@@ -9,6 +9,8 @@ namespace grlib {
 class CGLibPixlCounter {
 public:
     CGLibPixlCounter();
+    // inline: cloud::CloudObjReduction's destructor releases each counter again after its own releases
+    ~CGLibPixlCounter() { release(); }
     void release();
     void beginCounter();
     void endCounter();

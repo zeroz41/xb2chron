@@ -25,6 +25,14 @@
 #include "grlib/CGLibRenderTarget.h"
 #include "mm/Col4.h"
 #include "mtl/MemManager.h"
+#include "cloud/CloudVertexMan.h"
+#include "classes/ml/IDrDrawWorkInfo.h"
+#include "classes/grlib/context/CGLibSystemContext.h"
+#include "grlib/CGLibEtcUniformBlock.h"
+#include "grlib/CGLibState.h"
+#include "grlib/CGLibTexture.h"
+#include "grlib/CGLibUniBaseUtility.h"
+#include "nvn/nvn_FuncPtrInline.h"
 
 namespace cloud {
 
@@ -33,6 +41,8 @@ float CloudObjFlow::FLOW_TEX_SIZE = 128.0f;
 unsigned int CloudUniform::s_nUniformBlockSize[CLOUD_UNIFORM_NUM] = {
     0x150, 0x150, 0x70, 0x20, 0xE0, 0x20, 0x3000, 0x20, 0xD0, 0xA0, 0xF0, 0x60, 0xA0, 0xE0, 0x20, 0xA0, 0x140, 0x60,
 };
+
+unsigned int CloudObjReduction::s_nPixelOfs[8];
 
 void CloudUniform::createUniform(CloudUniformType type, unsigned int num) {
     releaseUniform();
@@ -83,6 +93,42 @@ bool CloudObjMan::isRender() const {
     return m_pCalcParams->m_pTarget != nullptr && m_isEnable;
 }
 
+void CloudObjReduction::update() {
+    CloudCalcParams* calc = CloudMan::sys()->m_pObjMan->m_pCalcParams;
+    const float* planes = calc->m_pInfo->m_planes;
+    float* buf = (float*)m_uniform0.getBuff();
+    grlib::ShdMat44TransposeMat44(buf, calc->m_invMat);
+    grlib::ShdF32SetF32Array(buf + 16, planes, 24);
+    m_uniform0.updateData();
+
+    unsigned int width = m_width;
+    unsigned int height = m_height;
+    calc = CloudMan::sys()->m_pObjMan->m_pCalcParams;
+    buf = (float*)m_uniform1.getBuff();
+    buf[0] = calc->m_far - calc->m_near;
+    buf[1] = calc->m_far * calc->m_near;
+    buf[2] = calc->m_far;
+    buf[3] = 0.0f;
+    grlib::CGLibRenderTarget* target = calc->m_pTarget;
+    float rateX = (float)target->m_width / (float)width;
+    float rateY = (float)target->m_height / (float)height;
+    buf[4] = -(rateX * 0.5f / (float)target->m_width);
+    buf[5] = -(rateY * 0.5f / (float)target->m_height);
+    float texelX = 1.0f / (float)width;
+    buf[6] = texelX;
+    buf[7] = 1.0f / (float)height;
+    buf[8] = texelX * 0.0f;
+    buf[9] = texelX * 0.0f;
+    buf[10] = texelX * 0.0f;
+    buf[11] = texelX * 1.0f;
+    buf[12] = texelX * 1.0f;
+    buf[13] = texelX * 0.0f;
+    buf[14] = texelX * 1.0f;
+    buf[15] = texelX * 1.0f;
+    m_isUpdate = 1;
+    m_uniform1.updateData();
+}
+
 void CloudObjMan::alphaRender(const ml::IDrDrawWorkInfo* info) {
     m_pReduction->alphaFastRender();
     for (CloudObj* obj = m_objList.m_pTop; obj != nullptr; obj = obj->m_pNext) {
@@ -124,6 +170,38 @@ void CloudObjMdl::counterRender() {
             parts->render();
         }
     }
+}
+
+void CloudObjReduction::renderUpScale(grlib::CGLibRenderTarget& target) {
+    CloudCalcParams* calc = CloudMan::sys()->m_pObjMan->m_pCalcParams;
+    float width = (float)target.m_width;
+    float height = (float)target.m_height;
+    grlib::CGLibEtcUniformBlock uniform;
+    float* buf = (float*)uniform.getBuff();
+    buf[0] = width;
+    buf[1] = height;
+    buf[2] = 1.0f / width;
+    buf[3] = 1.0f / height;
+    buf[4] = calc->m_far - calc->m_near;
+    buf[5] = calc->m_far * calc->m_near;
+    buf[6] = calc->m_far;
+    buf[7] = 0.0f;
+    uniform.updateData(0x20);
+    grlib::CGLibColorCtl::setBlendOffControl((GrlLogicType)3);
+    grlib::CGLibPolygon::setCullingOff();
+    m_upTarget.setRenderTarget();
+    CloudShaderMan* shd = CloudMan::sys()->m_pShaderMan;
+    CloudVertexMan* vtx = CloudMan::sys()->m_pVertexMan;
+    grlib::CGLibDecShader* shader = shd->setShader((CloudShaderType)15, 1, 1, 1);
+    uniform.setUniformBlock(shader->getCurrentShader().getUniformBlockOfs("U_POST"));
+    unsigned int depCol = shader->getCurrentShader().getTextureLocation("depCol");
+    unsigned int dwnDep = shader->getCurrentShader().getTextureLocation("dwnDep");
+    unsigned int orgDep = shader->getCurrentShader().getTextureLocation("orgDep");
+    shd->setTexture(dwnDep, *m_depth1.m_pSubTexture, (CloudSamplerType)1);
+    shd->setTexture(orgDep, *calc->m_pDepthTarget1->m_pSubTexture, (CloudSamplerType)1);
+    shd->setTexture(depCol, *target.m_pTexture, (CloudSamplerType)2);
+    vtx->bindVertexList((CloudVertexType)2);
+    vtx->renderIndexList((CloudVertexType)2);
 }
 
 CloudObjPlane::~CloudObjPlane() {}
@@ -168,8 +246,96 @@ void CloudObjSky::alphaRender() {
     }
 }
 
+CloudObjReduction::CloudObjReduction() {
+    m_uniform0.createUniform(CLOUD_UNIFORM_15, 0);
+    m_uniform1.createUniform(CLOUD_UNIFORM_16, 0);
+    m_height = -1;
+    m_width = -1;
+    m_isReady = false;
+}
+
+CloudObjReduction::~CloudObjReduction() {
+    m_counter[0].release();
+    m_counter[1].release();
+    m_counter[2].release();
+    m_counter[3].release();
+    m_skyTarget.release();
+    m_upTarget.release();
+    m_target0.release();
+    m_target1.release();
+    m_target2.release();
+    m_target3.release();
+    m_mdlTarget.release();
+    m_depth0.release();
+    m_depth1.release();
+    m_uniform0.releaseUniform();
+    m_uniform1.releaseUniform();
+}
+
 void CloudUniform::releaseUniform() {
     release();
+}
+
+unsigned int CloudObjReduction::getPixelMem(unsigned int& mem, unsigned int width, unsigned int height) {
+    unsigned int size;
+    unsigned int align;
+    unsigned int ofs;
+    grlib::CGLibTexture::getDepthPixelSize(size, align, width / 4, height / 2, (GrlDepthFormat)0x34);
+    ofs = (align - mem % align) % align + mem;
+    mem = size + ofs;
+    s_nPixelOfs[0] = ofs;
+    grlib::CGLibTexture::getDepthPixelSize(size, align, width / 4, height / 2, (GrlDepthFormat)0x34);
+    ofs = (align - mem % align) % align + mem;
+    mem = size + ofs;
+    s_nPixelOfs[1] = ofs;
+    grlib::CGLibTexture::getDefPixelSize(size, align, width / 4, height / 2, 0, (GrlSurfaceFormat)0x29);
+    ofs = (align - mem % align) % align + mem;
+    mem = size + ofs;
+    s_nPixelOfs[2] = ofs;
+    grlib::CGLibTexture::getDefPixelSize(size, align, width / 4, height / 2, 0, (GrlSurfaceFormat)0x29);
+    ofs = (align - mem % align) % align + mem;
+    mem = size + ofs;
+    s_nPixelOfs[3] = ofs;
+    grlib::CGLibTexture::getDefPixelSize(size, align, width / 4, height / 2, 0, (GrlSurfaceFormat)0x11);
+    ofs = (align - mem % align) % align + mem;
+    mem = size + ofs;
+    s_nPixelOfs[4] = ofs;
+    grlib::CGLibTexture::getDefPixelSize(size, align, width / 4, height / 2, 0, (GrlSurfaceFormat)0x29);
+    ofs = (align - mem % align) % align + mem;
+    mem = size + ofs;
+    s_nPixelOfs[5] = ofs;
+    grlib::CGLibTexture::getDefPixelSize(size, align, width / 4, height / 2, 0, (GrlSurfaceFormat)0xD);
+    ofs = (align - mem % align) % align + mem;
+    mem = size + ofs;
+    s_nPixelOfs[6] = ofs;
+    grlib::CGLibTexture::getDefPixelSize(size, align, width / 2, height / 2, 0, (GrlSurfaceFormat)0x29);
+    ofs = (align - mem % align) % align + mem;
+    mem = size + ofs;
+    s_nPixelOfs[7] = ofs;
+    return s_nPixelOfs[0];
+}
+
+void CloudObjReduction::stencilRender() {
+    CloudMan::sys()->m_pObjMan->m_pCalcParams->m_pDepthTarget0->setRenderTarget();
+    grlib::CGLibColorCtl::setColorBufferOff();
+    grlib::CGLibColorCtl::setBlendOffControl((GrlLogicType)3);
+    grlib::CGLibPolygon::setCullingOff();
+    grlib::CGLibDepthCtl::setDepthStencilControl(0, 0, (GrlCompare)7, 1, (GrlCompare)7, 0, 0x20, 0x20, (GrlStencil)3,
+                                                 (GrlStencil)1, (GrlStencil)1);
+    CloudVertexMan* vtx = CloudMan::sys()->m_pVertexMan;
+    CloudShaderMan* shd = CloudMan::sys()->m_pShaderMan;
+    vtx->bindVertexList((CloudVertexType)2);
+    grlib::CGLibDecShader* shader = shd->setShader((CloudShaderType)13, 4, 1, 1);
+    unsigned int count1 = shader->getCurrentShader().getUniformBlockOfs("U_COUNT1");
+    unsigned int count2 = shader->getCurrentShader().getUniformBlockOfs("U_COUNT2");
+    unsigned int count3 = shader->getCurrentShader().getUniformBlockOfs("U_COUNT3");
+    unsigned int count4 = shader->getCurrentShader().getUniformBlockOfs("U_COUNT4");
+    m_counter[0].setUniformBlock(count1);
+    m_counter[1].setUniformBlock(count2);
+    m_counter[2].setUniformBlock(count3);
+    m_counter[3].setUniformBlock(count4);
+    vtx->renderIndexList((CloudVertexType)2);
+    grlib::CGLibColorCtl::setColorBufferOn();
 }
 
 CloudUniform::CloudUniform() {}
