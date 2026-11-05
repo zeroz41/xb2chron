@@ -26,6 +26,9 @@ public:
     // reads enemy's WavePopInfo from its row while isInstalledBattleArenaContents or isGameTypeIra holds; its caller
     // is GmkEnemyWave::create
     void getWavePopInfo(const GmkEnemy* enemy, WavePopInfo& info) const;
+    // while isInstalledBattleArenaContents or isGameTypeIra holds, starts the escape action
+    // (btl::Utility::AI_StartActionEscape) of each of enemy's game objects
+    void backHome(const GmkEnemy* enemy);
     void* pad_0;  // size 8: GmkEnemy's size 0x1d8 (TGmkList::getInst's stride)
 };
 }  // namespace gmk

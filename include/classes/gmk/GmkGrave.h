@@ -1,6 +1,7 @@
 #ifndef CLASSES_GMK_GMKGRAVE_H
 #define CLASSES_GMK_GMKGRAVE_H
 
+#include "classes/gmk/DistHvCond.h"
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkAcc.h"
 
@@ -21,7 +22,9 @@ public:
         // what gf::GfFieldGrave::create passes the common window (GfMenuManager::openCommonWindowWithNamed) with message 51; the name is not
         // the original's
         unsigned short m_windowArg;
-        unsigned char pad_4[0x10];
+        // squared distances from the current map's row of BDAT 0x5D (create): ene_disp_r/h, and with ene_release_r/h added
+        DistHvCond m_eneDisp;
+        DistHvCond m_eneRelease;
     };
     // user-provided: Vector<GmkGrave>::resize stores the defaults below only (no zero fill of the element first)
     GmkGrave() {}
@@ -35,6 +38,8 @@ public:
     // reqPopEnemy's per-kind halves (out of line in the original: _ZNK3gmk8GmkGrave11reqPopEnemyINS_8GmkEnemyEEEbv)
     template <class T> bool reqPopEnemy() const;
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
+    // 2.0.0's symbols name them; update calls them (pop: m_gob unset, pad_48 set, the interest position inside the
+    // row's ene_disp_r/h; depop: m_gob set and pad_48 clear or outside ene_release_r/h)
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*) {}  // slot 9
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(35);

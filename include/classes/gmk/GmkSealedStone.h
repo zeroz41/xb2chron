@@ -46,6 +46,8 @@ public:
     // 2.0.0's symbols name it. What it does: reads the game object handle at 0x48 (nothing when it is -1) and, branches
     // on the flag first (size 0x10C).
     void disposeGobInst(bool);
+    // 2.0.0's symbols name them; update calls them (the row's Visible_XZ/Y and Invisible_XZ/Y distances)
+    bool canPopGobInst() const;
     // 2.0.0's symbols name seqValidateResHandle, seqUpdate. What they do: create installs seqValidateResHandle, which
     // installs seqUpdate (an empty step).
     void seqValidateResHandle(float);
@@ -56,7 +58,7 @@ public:
     // 0x58: the step update runs while the gimmick is valid (create installs seqValidateResHandle; the name is not the
     // original's)
     void (GmkSealedStone::*m_seq)(float) = nullptr;
-    unsigned int pad_68 = 0;
+    float pad_68 = 0.0f;  // canPopGobInst needs it below 1, canDepopGobInst answers true from 1 on
     unsigned char pad_6c = 0;
     unsigned int m_effectHandle = 0;  // 0x70: dispose removes it from fw::EffectManager when non-zero (the name is not the original's)
     unsigned char pad_74 = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment

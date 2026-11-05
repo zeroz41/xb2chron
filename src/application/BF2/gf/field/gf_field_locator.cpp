@@ -745,7 +745,7 @@ void LocatorGimmick::update() {
         if (!jump->getBdatInfo()->isPopCondMatched()) {
             return;
         }
-        const mm::Vec3NA& pos = jump->getData()->m_startPos;
+        const mm::Vec3& pos = jump->getData()->m_startPos;
         m_pos.x = pos.x;
         m_pos.y = pos.y;
         m_pos.z = pos.z;

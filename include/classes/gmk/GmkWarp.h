@@ -3,6 +3,7 @@
 
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/BootedGmkCond.h"
+#include "classes/gmk/DistHvCond.h"
 class CBdatWrapper;
 #include "mm/Vec3NA.h"
 
@@ -21,14 +22,15 @@ public:
         BdatInfo() {}
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         bool isPopCondCommonMatched() const;
+        // 2.0.0's symbols name them: the common conditions and the ene_disp_r/h (pop) / ene_release_r/h (depop) distances
+        bool isPopCondMatched(const mm::Vec3& pos) const;
+        bool isDepopCondMatched(const mm::Vec3& pos) const;
         unsigned short m_condition = 0;    // the row's "Condition" (a GfGameCond id; 0: none)
         unsigned short m_nameRadius = 10;  // the row's "nameRadius"
         BootedGmkCond m_bootedGmk;         // the row's OP_gimmickType/ID
         // squared distances from the current map's row of BDAT 0x5D: ene_disp_r/h, and with ene_release_r/h added
-        float m_eneDispRSq = 0.0f;
-        float m_eneDispHSq = 0.0f;
-        float m_eneReleaseRSq = 0.0f;
-        float m_eneReleaseHSq = 0.0f;
+        DistHvCond m_eneDisp = {0.0f, 0.0f};
+        DistHvCond m_eneRelease = {0.0f, 0.0f};
     };
     GmkWarp() {
         m_firstHandle = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);

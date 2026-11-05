@@ -155,6 +155,7 @@
 #include "classes/gmk/GmkRoutePoint.h"
 #include "classes/gmk/GmkTrigger.h"
 #include "classes/gmk/GmkWarp.h"
+#include "btl/Utility.h"
 #include "mm/Mat44.h"
 #include "classes/gmk/Lvlb.h"
 #include "classes/gf/GfFieldLod.h"
@@ -317,6 +318,15 @@ void GmkEnemyWaveExtension::getWavePopInfo(const GmkEnemy* enemy, WavePopInfo& i
         info.m_popTimerCond = Bdat::getValCheck(fp, "Wpop_TimerCond", row, 2);
         info.m_popNumCond = Bdat::getValCheck(fp, "Wpop_PopNumCond", row, 1);
         info.m_battleLockName = static_cast<short>(Bdat::getValCheck(fp, "battlelockname", row, 2)) - 1;
+    }
+}
+
+void GmkEnemyWaveExtension::backHome(const GmkEnemy* enemy) {
+    if (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) {
+        unsigned int num = enemy->getGobInstNum();
+        for (unsigned int i = 0; i < num; i++) {
+            btl::Utility::AI_StartActionEscape(enemy->getGobInst(i));
+        }
     }
 }
 
@@ -3196,6 +3206,16 @@ void GmkSealedStone::debugDraw() const { AGmkBase::debugDraw(); }
 
 void GmkSealedStone::seqUpdate(float) {}
 
+bool GmkSealedStone::canPopGobInst() const {
+    if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+        if (isInsideVisibleDist(*m_pos, info)) {
+            return !(pad_68 >= 1.0f);
+        }
+    }
+    return false;
+}
+
 void GmkSealedStone::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::GF_OBJ_HANDLE* handle) {
     if (event == gf::IGfObjListener::OBJEVT(3) && handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         gf::GfObjAcc acc(handle);
@@ -3237,6 +3257,15 @@ void GmkSealedStoneList::dispose() {
     TGmkList::dispose();
 }
 
+void GmkSealedStoneEnergyEffectManager::create() {
+    dispose();
+    if (fw::EffectPack* pack = gf::GfFieldManager::getEffectPack()) {
+        m_effectRes = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search("ma40a_01_140_dlc", pack);
+    }
+    m_entries.setAllocator(gf::getAllocator(gf::ALLOCATOR(0)));
+    m_entries.reserve(32, 16);
+}
+
 void GmkSealedStoneEnergyEffectManager::dispose() {
     if (m_entries.size() != 0) {
         for (EffectInfo& entry : m_entries) {
@@ -3245,6 +3274,14 @@ void GmkSealedStoneEnergyEffectManager::dispose() {
         m_entries.destroy();
     }
 }
+
+}  // namespace gmk
+// out of line in the original (update and createEffect call them; neither is written yet)
+template mm::mtl::Vector<gmk::GmkSealedStoneEnergyEffectManager::EffectInfo>::iterator
+mm::mtl::Vector<gmk::GmkSealedStoneEnergyEffectManager::EffectInfo>::erase(gmk::GmkSealedStoneEnergyEffectManager::EffectInfo*);
+template void mm::mtl::Vector<gmk::GmkSealedStoneEnergyEffectManager::EffectInfo>::push_back(
+    const gmk::GmkSealedStoneEnergyEffectManager::EffectInfo&);
+namespace gmk {
 
 GmkSealedStoneList::~GmkSealedStoneList() { dispose(); }
 
@@ -4075,6 +4112,25 @@ void GmkJump::dispose() {
     AGmkBase::dispose();
 }
 
+bool GmkJump::canPopGobInst() const {
+    bool result = false;
+    if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) && pad_50) {
+        if (m_eneDisp.isMatch(getData()->m_startPos)) {
+            result = true;
+        }
+    }
+    return result;
+}
+
+bool GmkJump::canDepopGobInst() const {
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        if (!pad_50 || !m_eneRelease.isMatch(getData()->m_startPos)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void GmkJump::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
     AGmkBase::onGobEvent(evt, handle);
     if (evt == gf::IGfObjListener::OBJEVT(3) && m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
@@ -4832,14 +4888,14 @@ void GmkWarp::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) 
         if (mapId >= Bdat::getIdTop(fp) && Bdat::getIdTop(fp) + Bdat::getIdCount(fp) > mapId) {
             unsigned char dispR = Bdat::getValCheck(fp, "ene_disp_r", mapId, 1);
             unsigned char dispH = Bdat::getValCheck(fp, "ene_disp_h", mapId, 1);
-            m_eneDispRSq = (float)dispR * (float)dispR;
-            m_eneDispHSq = (float)dispH * (float)dispH;
+            m_eneDisp.m_horizontalSq = (float)dispR * (float)dispR;
+            m_eneDisp.m_verticalSq = (float)dispH * (float)dispH;
             unsigned char releaseR = Bdat::getValCheck(fp, "ene_release_r", mapId, 1);
             unsigned char releaseH = Bdat::getValCheck(fp, "ene_release_h", mapId, 1);
             float r = (float)(dispR + releaseR);
             float h = (float)(dispH + releaseH);
-            m_eneReleaseRSq = r * r;
-            m_eneReleaseHSq = h * h;
+            m_eneRelease.m_horizontalSq = r * r;
+            m_eneRelease.m_verticalSq = h * h;
         }
     }
 }
@@ -4852,6 +4908,26 @@ bool GmkWarp::BdatInfo::isPopCondCommonMatched() const {
         return false;
     }
     return true;
+}
+
+bool GmkWarp::BdatInfo::isPopCondMatched(const mm::Vec3& pos) const {
+    if (!isPopCondCommonMatched()) {
+        return false;
+    }
+    if (!m_eneDisp.isMatch(pos)) {
+        return false;
+    }
+    return true;
+}
+
+bool GmkWarp::BdatInfo::isDepopCondMatched(const mm::Vec3& pos) const {
+    if (!isPopCondCommonMatched()) {
+        return true;
+    }
+    if (!m_eneRelease.isMatch(pos)) {
+        return true;
+    }
+    return false;
 }
 
 void GmkWarp::create(const CreateInfo& info) {
@@ -5200,6 +5276,21 @@ void GmkCtrlVolSe::create(const CreateInfo& info) {
     m_info = info;
     m_curPos = info.m_pos;
     createInst();
+}
+
+bool DistHvCond::isMatch(const mm::Vec3& pos) const {
+    if (!isInterestPosExist()) {
+        return false;
+    }
+    const mm::Vec3& interest = getInterestPos();
+    float dy = interest.y - pos.y;
+    if (m_verticalSq < dy * dy) {
+        return false;
+    }
+    float dx = interest.x - pos.x;
+    float dz = interest.z - pos.z;
+    float xzSq = dx * dx + dz * dz;
+    return !(m_horizontalSq < xzSq);
 }
 
 ScenarioFlagCond::ScenarioFlagCond(const CBdatWrapper& bdat, int row, const char* prefix) {

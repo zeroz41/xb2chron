@@ -1,6 +1,7 @@
 #ifndef CLASSES_GMK_GMKSEALEDSTONEENERGYEFFECTMANAGER_H
 #define CLASSES_GMK_GMKSEALEDSTONEENERGYEFFECTMANAGER_H
 
+#include "mm/Vec3.h"
 #include "mm/mtl/Vector.h"
 
 namespace gmk {
@@ -9,10 +10,13 @@ namespace gmk {
 // of 0x60-byte entries, each holding an fw::EffectManager handle at 0x40. The field names are not the original's.
 class GmkSealedStoneEnergyEffectManager {
 public:
+    // the layout of copy_construct_n<EffectInfo> (four Vec3s, 8 bytes copied as one, a Vec3), as
+    // gf::GfFobjGottenEffectManager::EffectInfo's
     struct EffectInfo {
-        unsigned char pad_0[0x40];
+        mm::Vec3 m_points[4];         // update moves the effect along them (the name is not the original's)
         unsigned int m_effectHandle;  // 0x40: dispose kills it
-        unsigned char pad_44[0x1c];
+        float m_time;                 // 0x44: update adds its time step; past 0.8 the entry ends (the name is not the original's)
+        mm::Vec3 m_targetPos;         // 0x50: update reads it against m_points[3] (the name is not the original's)
     };
     // the original's constructor stores only the vector (nothing at 0x0)
     GmkSealedStoneEnergyEffectManager() {}
@@ -24,7 +28,9 @@ public:
     // allocated. What it does: fills the entries from the field's effect pack (gf::GfFieldManager::getEffectPack,
     // fw::EffectManager::search; asserts; calls dispose and Vector<EffectInfo>::expand).
     void create();
-    void* pad_0;
+    // what create finds as "ma40a_01_140_dlc" in the field's effect pack (fw::EffectManager::search; the name is not
+    // the original's)
+    void* m_effectRes;
     mm::mtl::Vector<EffectInfo> m_entries;  // 0x8
 };
 }  // namespace gmk

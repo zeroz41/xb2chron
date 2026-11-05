@@ -4,6 +4,7 @@
 #include "classes/gmk/AGmkBase.h"
 #include "plugin/Bdat.h"
 #include "mm/Vec3NA.h"
+#include "classes/gmk/DistHvCond.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
@@ -32,10 +33,10 @@ public:
     };
     // what AGmkBase::m_data points at for a jump gimmick (GfFieldJump::onFsSucceeded reads it; the struct and field
     // names are not the original's)
-    struct alignas(8) Data {
-        // where the jump gimmick stands: LocatorGimmick::update shows it on the compass (the name is not the original's)
-        mm::Vec3NA m_startPos;
-        unsigned char pad_c[0x4];
+    struct Data {
+        // where the jump gimmick stands: LocatorGimmick::update shows it on the compass; canPopGobInst passes it to
+        // DistHvCond::isMatch as an mm::Vec3 (the name is not the original's)
+        mm::Vec3 m_startPos;
         mm::Vec3NA m_pos;  // where the jump lands
         float m_param[3];  // passed on in MsgPcFieldNotifyBigJump (meaning not known)
     };
@@ -64,13 +65,18 @@ public:
     void reqRecreateIcon();
     // sets the flag reqRecreateIcon tests and removes the icon effect (fw::EffectManager::dead)
     void reqDeadIcon();
+    // 2.0.0's symbols name them; update calls them (pop: m_gob unset, pad_50 set, the interest position inside
+    // ene_disp_r/h of the data's start position; depop: m_gob set and pad_50 clear or outside ene_release_r/h)
+    bool canPopGobInst() const;
+    bool canDepopGobInst() const;
     static const gmk::GmkType TYPE = gmk::GmkType(37);
     void* pad_48 = nullptr;
     unsigned char pad_50 = 0;
     unsigned char pad_51[0x7];
     gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);  // dispose destroys it (-1: none; the name is not the original's)
-    void* pad_60 = nullptr;
-    void* pad_68 = nullptr;
+    // squared distances from the current map's row of BDAT 0x5D (create): ene_disp_r/h, and with ene_release_r/h added
+    DistHvCond m_eneDisp = {0.0f, 0.0f};
+    DistHvCond m_eneRelease = {0.0f, 0.0f};
     unsigned int m_effectHandle;  // dispose removes it from fw::EffectManager (the name is not the original's)
     unsigned int pad_74 = 0;
     unsigned char pad_78 = 0;  // reqRecreateIcon clears it and makes the icon again when it was set
