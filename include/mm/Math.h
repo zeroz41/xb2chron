@@ -12,6 +12,9 @@
 #elif defined(MM_LIB_FROM_MONOLIB_MM)
 // monolib_mm's (mtl::DlAllocator::allocate's clamp cites it so)
 #define MM_MATH_PATH "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../../MCL/mm_lib/source\\mm_math/mm_math.h"
+#elif defined(MM_LIB_FROM_EFLIB)
+// eflib's (ptlib::emitter::ParticleObj::move_common_check_begin_end_fin_fout's clamp cites it so)
+#define MM_MATH_PATH "D:/Monolithsoft/BF2/prog/libs/eflib/proj/windows/../../../mcl/mm_lib/source\\mm_math/mm_math.h"
 #elif defined(MM_LIB_FROM_XBRD)
 // xbrd's (DrShdLgtClustered::planeVsCone's acos cites it so)
 #define MM_MATH_PATH "D:/Monolithsoft/BF2/prog/libs/xbrd/proj/windows/../../../mcl/mm_lib/source\\mm_math/mm_math.h"

@@ -7,6 +7,8 @@
 #include "ptlib/ParticleSystem.h"
 #include "ptlib/renderer/RendererStream.h"
 #include "mm/MMStdBase.h"
+#include "mm/Math.h"
+#include "ptlib/Utility.h"
 #include <new>
 
 namespace ptlib { namespace emitter {
@@ -107,6 +109,30 @@ int EmitterObj::move_func(float frame, int flag) {
     return 0;
 }
 
+void ParticleObj::move01_common_keyframe(EmitterObj* pEmitter, float rate, int flag) {
+    math::KeyFrameIP kf;
+    float frame = m_frame * m_frameSpeed;
+    if (m_life == 0x7FFF) {
+        if (pEmitter->m_fadeFrames != 0 && pEmitter->m_fadeState != 0) {
+            frame = 0x10000 + pEmitter->m_fadeFrames - pEmitter->m_fadeCount;
+        }
+        if (m_frame > 32768.0f) {
+            m_frame -= 16384.0f;
+        }
+    }
+    float emitterFrame = pEmitter->m_frame;
+    calcSpeedKeyframe(pEmitter, kf, frame, emitterFrame);
+    calcParSize(flag, pEmitter, kf, frame, emitterFrame, true);
+    calcParRot(kf, frame, pEmitter, true, rate);
+    if (pEmitter->m_pData->m_vecKfCount != 0) {
+        pEmitter->m_pData->get_kf(&kf, pEmitter->m_pData->m_vecKfCount, 6, frame, m_pWork->m_vecKeyIndex,
+                                  &m_pWork->m_vecKey, &m_pVecKf, pEmitter->m_pKfTable);
+        kf.keyrand_get_ip3(&m_keyVec, &m_pWork->m_vecKey, pEmitter->m_seed);
+    }
+    move_common_keyframe_uv1_full(pEmitter, frame, rate);
+    calcMatColor(frame, kf, pEmitter, emitterFrame, true);
+}
+
 void* EmitterObj::lockStream(const DrDrawWorkInfoEF* pDrInfo) {
     return m_pStream->lockStream(pDrInfo);
 }
@@ -127,6 +153,29 @@ void EmitterObj::releaseParticleAll() {
         ParticleObj* pParticle = it.get();
         m_particleList.erase(it);
         EmitterManager::get()->m_particleFreeList.push_front(*pParticle);
+    }
+}
+
+void ParticleObj::emitter_create_local_common_grav_wind(EmitterObj* pEmitter) {
+    const GravityParam* pGravity = pEmitter->m_pGravity;
+    if (pGravity != nullptr) {
+        m_pWork->m_gravity = pGravity->m_speed + pGravity->m_speedRange * math::randf2(pEmitter->m_seed);
+        m_pWork->m_gravityVec = mm::Vec3::zero;
+    }
+    const WindParam* pWind = pEmitter->m_pWind;
+    if (pWind != nullptr) {
+        mm::Vec3 dir(pWind->m_dir.x, pWind->m_dir.y, pWind->m_dir.z);
+        float strength = pWind->m_strength;
+        if (pWind->m_type != 0 && pWind->m_type != 8 && pWind->m_type != 10 && pWind->m_type != 11) {
+            const mm::Mat44& mtx = pEmitter->m_pCas->m_mtx;
+            dir = mm::Vec3(dir.x * mtx.m[0][0] + dir.y * mtx.m[1][0] + dir.z * mtx.m[2][0],
+                           dir.x * mtx.m[0][1] + dir.y * mtx.m[1][1] + dir.z * mtx.m[2][1],
+                           dir.x * mtx.m[0][2] + dir.y * mtx.m[1][2] + dir.z * mtx.m[2][2]);
+        }
+        m_pWork->m_wind = mm::Vec3(strength * dir.x, strength * dir.y, strength * dir.z);
+    }
+    if (pEmitter->m_pNoise != nullptr) {
+        m_pWork->m_noise = mm::Vec3::zero;
     }
 }
 
@@ -364,6 +413,50 @@ ParticleObj* EmitterManager::createCommon(EmitterObj* pEmitter) {
         pParticle->getExtParam().m_pMdl = nullptr;
     }
     return pParticle;
+}
+
+void ParticleObj::calcIsFit(int isFit, EmitterObj* pEmitter, mm::Vec3& dir) {
+    if (isFit == 0) {
+        return;
+    }
+    EmitterArg* pData = pEmitter->m_pData;
+    if (pData != nullptr && pData->m_type == 4) {
+        return;
+    }
+    if (pData->m_fitType != 8 && pData->m_fitType != 9) {
+        return;
+    }
+    ParticleObj* pParent;
+    EmitterObj* pParentEmitter;
+    if (pData->m_fitParent && (pParent = pEmitter->m_pAttach) != nullptr &&
+        (pParentEmitter = pParent->m_pWork->m_pEmParent) != nullptr && pEmitter->m_attachId == pParent->m_id &&
+        pParentEmitter->m_pData != nullptr && (pParentEmitter->m_pData->m_fitType & 8) != 0) {
+        m_rotX = pParent->m_rotX;
+        m_rotY = pEmitter->m_pAttach->m_rotY;
+    } else {
+        m_rotX = -atan2f(dir.y, sqrtf(dir.x * dir.x + dir.z * dir.z));
+        m_rotY = atan2f(dir.x, dir.z);
+    }
+}
+
+void ParticleObj::calcExternalColor(mm::Vec3& color, EmitterObj* pEmitter, float& alpha, int setColor,
+                                    int setColor2) {
+    if (pEmitter->m_pData->m_externalColor) {
+        color.x = m_pWork->m_color.x * pEmitter->m_colorR;
+        color.y = m_pWork->m_color.y * pEmitter->m_colorG;
+        color.z = m_pWork->m_color.z * pEmitter->m_colorB;
+        alpha = m_pWork->m_alpha * pEmitter->m_alpha;
+        m_pWork->m_rgba = Utility::conv_rgba(&color, alpha);
+    } else if (setColor != 0) {
+        m_pWork->m_rgba = Utility::conv_rgba(&m_pWork->m_color, m_pWork->m_alpha);
+    }
+    if (setColor2 != 0) {
+        mm::Vec3 color2;
+        color2.x = m_pWork->m_color2.x * pEmitter->m_colorR;
+        color2.y = m_pWork->m_color2.y * pEmitter->m_colorG;
+        color2.z = m_pWork->m_color2.z * pEmitter->m_colorB;
+        m_pWork->m_rgba2 = Utility::conv_rgba(&color2, m_pWork->m_alpha * pEmitter->m_alpha);
+    }
 }
 
 ComputeManager*& ComputeManager::getPtr() {
