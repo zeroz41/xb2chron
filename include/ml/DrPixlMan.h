@@ -119,6 +119,12 @@ public:
     grlib::CGLibRenderTarget* getSpecIBLObj();
     grlib::CGLibRenderTarget* getDeactivePixlObj(int index);
     void setupCate(int cate);
+    void renderDownBaseColor();
+    void offScreenAlphaRender();
+    void debugIlluminanceRender();
+    void toneMapRender(bool depth);
+    void gammaRender(bool depth);
+    void captureMainFrameBuffer(grlib::CGLibTextureBuffer* tex, unsigned int width, unsigned int height);
 
     float m_rate;  // 0x0, the constructor sets 1.0f; no reader in this unit is known (name inferred)
     unsigned char pad_4[0x4];

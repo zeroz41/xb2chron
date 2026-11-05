@@ -169,7 +169,10 @@ public:
     // are not the original's)
     float m_skyLumColorRate;  // 0x468
     float m_skyLumAmbRate;  // 0x46C
-    unsigned char pad_470[0x1A];
+    unsigned char pad_470[0x14];
+    float m_illuminanceScale;  // 0x484, DrPixlMan::debugIlluminanceRender passes 1 / it to its shader (name inferred)
+    bool m_dbgGBuff;  // 0x488, DrPixlMan::fastDeferredRender calls debugGBuffRender while set (name inferred)
+    unsigned char pad_489[0x1];
     bool m_ssr;  // 0x48A, getSSROn (name inferred)
     unsigned char pad_48B[0x45];
     bool m_glassBr;  // 0x4D0
@@ -190,7 +193,7 @@ public:
     float m_ssaoBlur;  // 0xF94, DrPixlPostObjTSSAO::render_beforeTemporal's passBlur_Sub value (name inferred)
     unsigned char pad_F98[0x19];
     bool m_ssaoQuaterNormal;  // 0xFB1, render_beforeTemporal runs passQuaterNormal first while set (name inferred)
-    unsigned char pad_FB2[0x1];
+    bool m_hdrFilter;  // 0xFB2, DrPixlMan::gammaRender/toneMapRender sample the HDR buffer linearly while set (name inferred)
     bool m_reduction;  // 0xFB3, calcReductionBuffer scales by m_reductionScale when set
     unsigned char pad_FB4[0x4];
     // 0xFB8: DrPixlPostObjBloom::resetColorBuff's buffer scale while m_reduction is set (the names are not the original's)
