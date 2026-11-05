@@ -68,6 +68,13 @@ public:
 
     TColiCheckResult() : m_count(0), m_hit(false) {}
 
+    // empties the result before a test (gf::PlayerCamera::getHitPosition; the name is not the original's)
+    void clear() {
+        m_hit = false;
+        m_hits.clear();
+        m_count = 0;
+    }
+
     // the accessors' names are not the original's (1.0.0 names getMaterial; GfComEnvSensor::flushGroundSingle
     // inlines them all)
     unsigned int getHitNum() const { return m_hits.size(); }
@@ -108,6 +115,9 @@ class ColiCheck {
 public:
     static bool testLine(TColiCheckResult<256>& result, const mm::Vec3& start, const mm::Vec3& end,
                          const ColiCheckConfig& config);
+    // testLine against the characters' collision (ColiCharactorProxy's unit)
+    static bool testLineChara(TColiCheckResult<256>& result, const mm::Vec3& start, const mm::Vec3& end,
+                              const ColiCheckConfig& config);
     static bool testCapsule(TColiCheckResult<256>& result, const mm::Vec3& start, const mm::Vec3& end, float radius,
                             const ColiCheckConfig& config);
     // the ground below from (pos gets the hit when it returns true; FormManager::replace passes 6.0 and ~0)

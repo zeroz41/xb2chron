@@ -46,7 +46,7 @@ public:
     static float getSavePitch();
     static float getSaveDistance();
     static float getSaveHeight();
-    static bool getSaveSide();
+    static unsigned char getSaveSide();  // GfDataUtil::setCameraSide takes it (unsigned char)
     static bool isSaveFreeMode();
     // out of line in 1.0.0; inline in 3.0.1
     void procMsgPcResetCamera(fw::MessageObject* sender, MsgPcResetCamera& msg) {

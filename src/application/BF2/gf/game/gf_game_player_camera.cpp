@@ -136,7 +136,7 @@ float GfGamePlayerCamera::getSaveHeight() {
     return 0.0f;
 }
 
-bool GfGamePlayerCamera::getSaveSide() {
+unsigned char GfGamePlayerCamera::getSaveSide() {
     if (PlayerCamera* camera = getPlayerCamera()) {
         return camera->getSaveSide();
     }

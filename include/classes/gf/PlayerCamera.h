@@ -26,7 +26,31 @@ public:
     // its parameter block; the names are 1.0.0's createReflection's (snake_case there), at the offsets it registers
     struct Param {
         float m_fov;  // degrees (1.0.0's getFov returns it)
-        unsigned char pad_4[0x60];
+        // 0x4-0x60: createReflection's float names in their order, one word each from 0x4 to the flag at 0x64
+        float m_collisionSize;
+        float m_distanceMinimum;
+        float m_distanceMaximum;
+        float m_distanceDefault;  // reset, resetClimb and resetLoad aim the default pitch from it
+        float m_cameraHeight;
+        float m_lookHeight;
+        float m_heightMin;
+        float m_heightMax;
+        float m_pitchLimitUpper;
+        float m_pitchLimitLower;
+        float m_dampHorizontalRevise;
+        float m_dampVerticalRevise;
+        float m_zoomSpeed;
+        float m_yawSpeed;
+        float m_pitchSpeed;
+        float m_heightSpeed;
+        float m_rotateRevise;
+        float m_rotateReviseAtManual;  // getRotateRevise's in manual mode
+        float m_rotateReviseAtReset;
+        float m_rotateReviseAtSlope;
+        float m_distanceRevise;
+        float m_targetRangeWidth;
+        float m_targetRangeHeight;
+        float m_targetRangeOffsetY;
         // "flag", a bitset: slope_revise_enable 0x10 ... ship_random 0x200
         unsigned int : 4;
         unsigned int m_slopeReviseEnable : 1;
@@ -43,6 +67,12 @@ public:
         float m_shipPitchMin;
         float m_shipPitchMax;
         float m_shipPitchMove;
+        // createReflection's look_bone, side_distance_min/max and side_distance1-3 (assumed one word each: resetLoad
+        // reads side_distance1 + side * 4 at 0x90)
+        int m_lookBone;
+        float m_sideDistanceMin;
+        float m_sideDistanceMax;
+        float m_sideDistance[3];
     };
     // a manual-control speed set, one per row of BDAT table 0x18A (the constructor reads its percent and degree
     // columns: ZoomSpeed, YawRotSpeed, PitchRotSpeed, RevReset, RevAuto; the names are not the original's)
@@ -64,9 +94,15 @@ public:
     static mm::mtl::RTTI m_rtti;
     static mm::mtl::IntrusivePtr<PlayerCamera> create();
     void updateCollision2(mm::Vec3& eye, mm::Vec3& target);
+    void resetClimb();
+    float getRotateRevise();
+    void updateCollisionUp(const mm::Vec3& target, mm::Vec3& look, mm::Vec3& eye);
     void reset();
-    void resetClimb(ResetCameraWallTiming timing);
     void resetLoad();
+    void resetClimb(ResetCameraWallTiming timing);
+    float getYaw(const mm::Vec3& dir, const mm::Vec3& front);
+    float getPitch(const mm::Vec3& dir, const mm::Vec3& front);
+    bool getHitPosition(const fw::ColiCheckConfig& config, const mm::Vec3& start, const mm::Vec3& end, mm::Vec3& hit);
     void resetBattleWarp();
     void setTarget(GF_OBJ_HANDLE* handle);
     bool isManual();
@@ -74,7 +110,7 @@ public:
     float getSavePitch() const;
     float getSaveDistance() const;
     float getSaveHeight() const;
-    bool getSaveSide() const;
+    unsigned char getSaveSide() const;  // GfDataUtil::setCameraSide takes it (unsigned char)
     bool isSaveFreeMode() const;
 
     GF_OBJ_HANDLE* m_targetHandle;  // setTarget's (the name is not the original's)
@@ -86,15 +122,19 @@ public:
     float m_yaw;
     float m_curPitch;
     float m_pitch;
-    unsigned char pad_c8[0x8];
+    float m_defaultPitch;  // the resets' getPitch of the parameters' default view (the name is not the original's)
+    unsigned char pad_cc[0x4];
     float m_curDistance;
     float m_distance;
-    unsigned char pad_d8[0x4];
+    float m_curHeight;
     float m_height;
-    unsigned char pad_e0[0x8];
-    bool m_side;  // the constructor sets it
+    // the side distance as applied and as aimed for: resetLoad sets both to the parameters' side_distance of the saved
+    // side (the names are not the original's)
+    float m_curSideDistance;
+    float m_sideDistance;
+    unsigned char m_side;  // the constructor sets it; resetLoad from GfDataUtil::getCameraSide (unsigned char)
     unsigned char pad_e9[0x3];
-    unsigned char pad_ec[0x4];
+    float m_slopeRevise;  // getRotateRevise's (at most 0.1) while m_sloping (the name is not the original's)
     float m_rotateRevise;  // resetClimb sets it from its timing (the name is not the original's)
     unsigned char pad_f4[0x8];
     unsigned char pad_fc[0x4];
@@ -102,7 +142,11 @@ public:
     mm::Vec3 m_targetPos;
     mm::Vec3 m_lookPos;
     bool m_manual;  // isManual and isSaveFreeMode (the name is not the original's)
-    unsigned char pad_121[0x3];
+    // getRotateRevise's other two modes: the RevReset speed set's rate and m_slopeRevise; the resets clear both (the
+    // names are not the original's)
+    bool m_resetting;
+    bool m_sloping;
+    unsigned char pad_123[0x1];
     bool m_resetClimb;  // resetClimb sets it (the name is not the original's)
     unsigned char pad_125[0x3];
     unsigned char pad_128[0x4];
