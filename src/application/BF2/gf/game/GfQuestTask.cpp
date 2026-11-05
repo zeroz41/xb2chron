@@ -32,6 +32,7 @@
 #include "classes/gf/GfBdatChrEnArrange.h"
 #include "classes/gf/GfBdatChrEnParam.h"
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "gf/GfObjAcc.h"
 #include <algorithm>
 
 namespace gf {
@@ -554,6 +555,49 @@ void GfQuestTask::refreshTaskCounters() {
          it != acc->end(QTYPE(0)) && GfDataQuest::getListQuestCategory(it.getQuestID()) != 6; ++it) {
         refreshTaskCounter(it.getQuestID());
     }
+}
+
+unsigned int GfQuestTask::getReduceHpObj(QuestID id, GF_OBJ_HANDLE* handle) {
+    unsigned int purposeId = GfDataQuest::getListPurposeID(id);
+    if (purposeId == 0) {
+        return 0;
+    }
+    GfObjAcc obj(handle);
+    if (obj.getType() == 5) {
+        unsigned int enemy = obj.getEnArrangeId();
+        QuestListAcc* acc = QuestListAcc::get();
+        for (unsigned int task = 0; task < 4; ++task) {
+            QuestTaskParam param(id, task, purposeId, TASK_STATE(0));
+            if (param.m_taskType != 1) {
+                continue;
+            }
+            unsigned int group = acc->getBattleEnemyGroupID(param.m_taskId);
+            if (group != 0) {
+                GfBdatChrEnParam* enParam = ::mm::mtl::PtrSingleton<GfBdatChrEnParam>::sys();
+                for (unsigned int slot = 0; slot < 12; ++slot) {
+                    if (enemy == enParam->getEnemyGroupEnemyID(group, slot)) {
+                        return acc->getBattleReduceEnemyHP(param.m_taskId);
+                    }
+                }
+            }
+            if (enemy == acc->getBattleEnemyID(param.m_taskId)) {
+                return acc->getBattleReduceEnemyHP(param.m_taskId);
+            }
+        }
+    } else if (GfGameManager::getPartyLeaderDriver() == handle) {
+        QuestListAcc* acc = QuestListAcc::get();
+        for (unsigned int task = 0; task < 4; ++task) {
+            QuestTaskParam param(id, task, purposeId, TASK_STATE(0));
+            if (param.m_taskType != 1) {
+                continue;
+            }
+            unsigned int hp = acc->getBattleReducePCHP(param.m_taskId);
+            if (hp != 0) {
+                return hp;
+            }
+        }
+    }
+    return 0;
 }
 
 bool GfQuestTask::isReduceHpQuest(QuestID id) {

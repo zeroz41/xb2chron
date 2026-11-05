@@ -1,9 +1,13 @@
 #include "btl/EffectMoveComponent.h"
 
+#include <math.h>
 #include "anm/QsTransform.h"
 #include "btl/Misc.h"
+#include "fw/Transform.h"
 #include "fw/TransformUtil.h"
 #include "fw/UpdateInfo.h"
+#include "gf/GfObjAcc.h"
+#include "mm/Mat44.h"
 
 namespace btl {
 
@@ -67,6 +71,38 @@ void EffectMoveComponent::UpdateNormal(float dt, float frame, const mm::Vec3& po
 }
 
 void EffectMoveComponent::UpdateBounce(float dt, float frame, const mm::Vec3& pos) {}
+
+void EffectMoveComponent::UpdateLinkObj(float dt, float frame, const mm::Vec3& pos) {
+    mm::Vec3 target = mm::Mat44::identity.getTrans();
+    gf::GfObjAcc acc(m_linkObj.m_obj);
+    int bone = acc.getBoneIdx(m_linkObj.m_bone);
+    if (bone >= 0) {
+        fw::Transform transform;
+        acc.getBoneTransform(transform, bone);
+        target = transform.position;
+    }
+    float rate;
+    if (m_linkObj.m_time <= frame) {
+        m_linkObj.m_time = 0.0f;
+        rate = 1.0f;
+    } else {
+        rate = frame / m_linkObj.m_time;
+        m_linkObj.m_time -= frame;
+    }
+    mm::Vec3 next = (1.0f - rate) * pos + target * rate;
+    m_velocity.x = next.x - pos.x;
+    m_velocity.y = next.y - pos.y;
+    m_velocity.z = next.z - pos.z;
+    if (rate < 1.0f && m_gravity != 0.0f) {
+        float speed = m_speed * frame;
+        float y = m_dir.y * speed;
+        float prev = m_gravityTime;
+        m_gravityTime += dt;
+        float time = m_gravityTime;
+        y -= m_gravity * (time * time - prev * prev);
+        m_velocity.y = m_velocity.y + fmaxf(y, 0.0f);
+    }
+}
 
 void EffectMoveComponent::UpdateUp(float dt, float frame, const mm::Vec3& pos) {
     float time = m_up.m_time;
