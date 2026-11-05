@@ -19,7 +19,10 @@ public:
     // the binding of the reference pose to the skeleton
     Binding* createBinding();
 
-    unsigned char pad_48[0x8];  // Factory::createReferencePoseAnimation allocates 0x50 bytes
+    // the skeleton whose reference pose it plays, counted (the constructor adds a reference, the destructor
+    // releases it; createBinding binds its bone count). Factory::createReferencePoseAnimation allocates 0x50 bytes.
+    // The name is not the original's.
+    const Skeleton* m_pSkeleton;
 };
 }  // namespace anm
 

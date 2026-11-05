@@ -280,6 +280,17 @@ void SoundManager::setupGameType(bool flag) {
     m_dlc = flag;
 }
 
+void SoundManager::registPack(SoundPack* pack) {
+    m_packs.push_back(pack);
+}
+
+void SoundManager::destroyCommonSe() {
+    if (m_commonSe != nullptr) {
+        m_commonSe->release();
+        m_commonSe = nullptr;
+    }
+}
+
 bool SoundManager::isCommonLoaded() const {
     if (m_commonSe != nullptr) {
         return m_commonSe->valid();

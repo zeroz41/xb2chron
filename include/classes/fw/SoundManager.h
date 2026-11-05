@@ -81,6 +81,8 @@ public:
     void setupGameType(bool flag);
     void registPack(SoundPack* pack);
     void removePack(SoundPack* pack);
+    // releases m_commonSe (tl::TitleStateChangeGameType::update, when the game type changes)
+    void destroyCommonSe();
     bool isCommonLoaded() const;
     bool isBattleLoaded() const;
     void detachPoolMemory(void* memory, unsigned int size);

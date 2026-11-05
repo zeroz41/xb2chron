@@ -22,6 +22,11 @@ public:
     class TopListener;
     class SubListener;
     class FilterListener;
+    // an item seqGetItemAll got: 4 bytes (Vector<AddedItem>::expand's stride), its first word the item id it
+    // handed execGetItem (the field name is not the original's)
+    struct AddedItem {
+        unsigned int m_id;
+    };
     GfMenuObjGiftBox(unsigned int handle);
     virtual ~GfMenuObjGiftBox();  // slot 0
     virtual void initialize();  // slot 2
@@ -64,8 +69,10 @@ public:
     GfMenuSequence<GfMenuObjGiftBox, 8> m_seq;  // 0xE8: update runs it
     unsigned int pad_378;
     mm::mtl::IntrusivePtr<GfMenuReferenceItem> m_refItem;  // 0x380
-    mm::mtl::Vector<unsigned int> m_ids;      // 0x388: compared with the BDAT rows' ids
-    mm::mtl::Vector<unsigned int> m_counts;   // 0x3B0: compared with the BDAT rows' "releasecount"
+    mm::mtl::Vector<AddedItem> m_ids;  // 0x388: compared with the BDAT rows' ids (seqGetItemAll grows it through
+                                       // Vector<AddedItem>::expand)
+    mm::mtl::Vector<int> m_counts;     // 0x3B0: compared with the BDAT rows' "releasecount" (initialize grows it
+                                       // through Vector<int>::expand)
     unsigned int m_menuId;  // 0x3D8: the layer parameter's menu id (setCloseToAnnounce / setCloseToAnnounceEx)
     bool m_hasMenuId;       // 0x3DC: initialize found a layer parameter
     bool m_noMenuId;        // 0x3DD: !m_hasMenuId

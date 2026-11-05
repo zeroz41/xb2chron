@@ -135,3 +135,7 @@ bool GfMenuObjGiftBox::seqReturnSub() {
 }
 
 }  // namespace gf
+
+// the item and count vectors' growth (their users, initialize and seqGetItemAll, are not written yet)
+template void mm::mtl::Vector<int>::expand(size_t, size_t);
+template void mm::mtl::Vector<gf::GfMenuObjGiftBox::AddedItem>::expand(size_t, size_t);

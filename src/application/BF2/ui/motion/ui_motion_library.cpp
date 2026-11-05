@@ -32,6 +32,14 @@ void UIMotionLibrary::reset() {
 
 // update (0x710067EFC4) is not here yet: 15 words apart (the latch's ++it is placed differently)
 
+}  // namespace ui
+
+// the motion list's erase (its user, update, is not written yet)
+template mm::mtl::Vector<ui::UIMotionLibrary::MotionInfo>::iterator mm::mtl::Vector<ui::UIMotionLibrary::MotionInfo>::erase(
+    ui::UIMotionLibrary::MotionInfo*);
+
+namespace ui {
+
 bool UIMotionLibrary::add(const char* name) {
     unsigned int hash = mm::mtl::hashStrCrc(name);
     if (m_motions.capacity() == 0) {

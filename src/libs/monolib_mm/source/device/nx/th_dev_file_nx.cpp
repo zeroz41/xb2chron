@@ -2663,6 +2663,14 @@ int DevPad::getPadMax() {
     return 11;
 }
 
+bool DevPad::isInitialized() {
+    DevPad* dev = get();
+    if (dev == nullptr) {
+        return false;
+    }
+    return dev->isLoggedIn();
+}
+
 bool DevPad::isConnectPad(int pad) {
     DevPad* dev = get();
     if (dev != nullptr) {

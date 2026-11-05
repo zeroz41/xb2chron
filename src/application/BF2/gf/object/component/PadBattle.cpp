@@ -44,6 +44,8 @@
 #include "mm/mtl/Delegate.h"
 #include "classes/gf/npc/StateWalk.h"
 #include "classes/gf/GfComBehaviorNpc.h"
+#include "classes/gf/GfComAsm.h"
+#include "classes/gf/TFieldExecCmd.h"
 
 namespace gf { namespace npc {
 
@@ -51,6 +53,24 @@ void StateWalk::enter(GfComBehaviorNpc* owner, ai::State* prev) {
     updateGoalPos(*owner);
     owner->execTurnCmdToGoal();
     m_seq = &StateWalk::seqWaitTurnEnd;
+}
+
+void StateWalk::seqWaitTurnEnd(GfComBehaviorNpc& owner, const fw::UpdateInfo&) {
+    if (owner.m_turnCmd.pad_6c) {
+        m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, "C_move"));
+        m_seq = &StateWalk::seqUpdateMove;
+    }
+}
+
+void StateWalk::update(GfComBehaviorNpc* owner, const fw::UpdateInfo& info) {
+    updateGoalPos(*owner);
+    if (owner->isStateCondMatch(static_cast<STATE_ID>(4))) {
+        requestState(4);
+        return;
+    }
+    if (m_seq) {
+        (this->*m_seq)(*owner, info);
+    }
 }
 
 void StateWalk::leave(GfComBehaviorNpc* owner, ai::State* next) {}

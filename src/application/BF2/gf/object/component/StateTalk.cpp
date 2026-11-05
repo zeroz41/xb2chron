@@ -55,6 +55,13 @@ void StateApproachPc::update(GfComBehaviorNpc* owner, const fw::UpdateInfo& info
     }
 }
 
+void StateApproachPc::seqWaitTurnEnd(GfComBehaviorNpc& owner, const fw::UpdateInfo&) {
+    if (owner.m_turnCmd.pad_6c) {
+        m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, "C_move"));
+        m_seq = &StateApproachPc::seqApproachPc;
+    }
+}
+
 inline bool StateIdle::isExecEndScheduleCondMatched(GfComBehaviorNpc& owner, ai::State* state) const {
     if (state == nullptr) {
         return false;

@@ -24,6 +24,11 @@ struct ExtraTruckSlot {
     const char* m_name;  // getExtraTruckSlotID finds a slot by it
     // the index of the truck named `name`, -1 when none is (AnimPoseModifier.cpp's unit; it lower_bounds m_truckNames)
     short getTruckID(const char* name) const;
+    // orders the truck names (std::lower_bound's comparator in getTruckID: the symbol of its __lower_bound
+    // instantiation names it)
+    struct CompTruck {
+        bool operator()(const char* truck, const char* name) const { return strcmp(truck, name) < 0; }
+    };
     // the name of a value's truck (inline: SimpleMapper's constructor indexes the names with a 16-bit index; the name
     // is not the original's)
     const char* getTruckName(unsigned short truck) const { return m_truckNames[truck]; }

@@ -1,5 +1,24 @@
 #include "classes/fw/AnimPoseModifier.h"
 #include "mm/mtl/Vector.h"
+#include "classes/anm/Skeleton.h"
+#include "anm/Array.h"
+#include "algorithm"
+#include "string.h"
+
+namespace anm {
+
+short ExtraTruckSlot::getTruckID(const char* name) const {
+    if (m_truckNames.size() != 0) {
+        ArrayIterartor<const char* const> it =
+            std::lower_bound(m_truckNames.begin(), m_truckNames.end(), name, CompTruck());
+        if (it != m_truckNames.end() && strcmp(*it, name) == 0) {
+            return std::distance(m_truckNames.begin(), it);
+        }
+    }
+    return -1;
+}
+
+}  // namespace anm
 
 namespace fw {
 

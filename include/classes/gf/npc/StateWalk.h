@@ -33,6 +33,7 @@ public:
     void update(GfComBehaviorNpc* owner, const fw::UpdateInfo& info);
     void updateGoalPos(GfComBehaviorNpc& owner);
     void seqWaitTurnEnd(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
+    void seqUpdateMove(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
     TFieldExecCmd<GfComAsm> m_execCmd;
     Seq m_seq;
     unsigned int pad_60;
