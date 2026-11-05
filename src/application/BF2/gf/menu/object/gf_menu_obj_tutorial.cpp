@@ -61,6 +61,20 @@ bool GfMenuObjTutorial::isWaiting() {
     return s_context != nullptr && s_context->isActive();
 }
 
+void GfMenuObjTutorial::openFocus(unsigned int index, const FocusParam& param) {
+    ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x7A));
+    if (acc.m_object != nullptr) {
+        ui::EventData event;
+        event.m_type = 0x102;
+        event.m_paramShort[0] = index;
+        event.m_paramShort[1] = 1;
+        event.m_paramShort[2] = param.m_value[2];
+        event.m_paramShort[3] = param.m_value[0];
+        event.m_paramShort[4] = param.m_value[1];
+        GfMenuObject::sendEvent(acc.m_handle, event, 0.0f);
+    }
+}
+
 void GfMenuObjTutorial::closeFocus(unsigned int index) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x7A));
     if (acc.m_object != nullptr) {
@@ -68,6 +82,19 @@ void GfMenuObjTutorial::closeFocus(unsigned int index) {
         event.m_type = 0x102;
         event.m_paramShort[0] = index;
         event.m_paramShort[1] = 0;
+        GfMenuObject::sendEvent(acc.m_handle, event, 0.0f);
+    }
+}
+
+void GfMenuObjTutorial::openIcon(unsigned int index, const IconParam& param) {
+    ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x7A));
+    if (acc.m_object != nullptr) {
+        ui::EventData event;
+        event.m_type = 0x103;
+        event.m_paramShort[0] = index;
+        event.m_paramShort[1] = 1;
+        event.m_paramShort[3] = param.m_value[0];
+        event.m_paramShort[4] = param.m_value[1];
         GfMenuObject::sendEvent(acc.m_handle, event, 0.0f);
     }
 }

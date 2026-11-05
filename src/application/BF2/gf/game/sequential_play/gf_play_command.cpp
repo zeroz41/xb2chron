@@ -879,6 +879,15 @@ void GfPlayComSalvage::end() {
     }
 }
 
+GfPlayComSalvage* GfPlayComSalvage::create(GF_OBJ_HANDLE* handle) {
+#line 2063
+    GfPlayComSalvage* com = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComSalvage(handle);
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        com->m_pause = scene->createPlayerPause();
+    }
+    return com;
+}
+
 // hand5: begin void GfPlayComGmkCameraSeq::start() {}
 GfPlayComGmkCameraSeq::~GfPlayComGmkCameraSeq() {
     s_activate--;

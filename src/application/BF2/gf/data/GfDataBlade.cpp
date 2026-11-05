@@ -2496,6 +2496,18 @@ bool GfDataDriverSkill::isSkillUnlock(unsigned int driver, unsigned int line, un
     return need <= getValidSkillNum(driver, round);
 }
 
+unsigned int GfDataDriverSkill::getSkillLevel(unsigned int driver, unsigned int line, bool round) {
+    SDataDriver* data = GfDataDriver::getSDataDriver(driver);
+    unsigned int id = data->m_id;
+    if (id - 1 >= 6 && id - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(id)) != 0) {
+            return 0;
+        }
+    }
+    return (round ? data->m_roundSkills : data->m_skills)[line][4];
+}
+
 bool GfDataWeapon::getWeaponTypeName(unsigned char*& bdat, unsigned int& id, unsigned int row) {
     id = GfBdatItem::get()->getPcWpnTypeName(row);
     bdat = GfBdatMsg::getFpPcWpnType();

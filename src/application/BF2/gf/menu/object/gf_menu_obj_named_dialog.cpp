@@ -1,6 +1,10 @@
 #include "classes/gf/GfMenuObjNamedDialog.h"
 #include "classes/gf/GfMenuObject.h"
 #include "classes/gf/GfMenuIDList.h"
+#include "classes/gf/GfGameManager.h"
+#include "gf/GfMenuObjUtil.h"
+#include "gf/GfGameUtil.h"
+#include "classes/ui/UIObjectAcc.h"
 
 namespace gf {
 
@@ -15,8 +19,21 @@ GfMenuObjNamedDialog::~GfMenuObjNamedDialog() {
     }
 }
 
-// open (0x71004451D0) and close (the open and close calls) and initialize (0x71004452C4) are not here yet: see the
-// report
+void GfMenuObjNamedDialog::open(unsigned int row) {
+    bool enable = GfMenuObjUtil::isValidExpansion(3) ? GfGameManager::isClearGame() : GfGameManager::isEnableNamedRecord();
+    if (!enable) {
+        return;
+    }
+    ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x8A));
+    if (acc.m_object != nullptr) {
+        int index = GfGameUtil::getNamedListIndex(row);
+        if (index != 0) {
+            GfMenuObject::sendOpenEvent(acc.m_handle, index, 0.0f);
+        }
+    }
+}
+
+// close (0x7100445258) and initialize (0x71004452C4) are not here yet: see the report
 
 void GfMenuObjNamedDialog::finalize() {
     GfMenuObject::finalize();

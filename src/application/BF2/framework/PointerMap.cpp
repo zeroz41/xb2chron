@@ -200,9 +200,11 @@ void RenderParam::setTime(unsigned int hour, unsigned int minute, CAMERA_TYPE ty
     acc.setTimeVal(static_cast<float>(hour * 60 + minute) / 1440.0f);
 }
 
-// setWeather (0x71001994C0) is not written: 3.0.1's takes a float in s0 besides the weather and the camera type
-// (the weather frame it divides by DevGraph::getFrameSyncSec), so the symbol's (unsigned int, CAMERA_TYPE), 1.0.0's
-// 0x54-byte function's, no longer fits it; nothing calls it directly to show where the float goes.
+void RenderParam::setWeather(unsigned int weather, float sec, CAMERA_TYPE type) {
+    ml::ScnRenderDrSysParmAcc acc(mm::mtl::PtrSingleton<Framework>::get()->m_scn->m_renderDrSys, type);
+    acc.setWeather(weather);
+    acc.setWeatherFrame(sec / ml::DevGraph::getFrameSyncSec());
+}
 
 int RenderParam::getWindIndex(CAMERA_TYPE type) {
     ml::ScnRenderDrEnvColi coli(type);
