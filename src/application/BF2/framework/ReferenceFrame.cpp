@@ -11,8 +11,10 @@ ReferenceFrame::ReferenceFrame() : m_syncFlags(0), m_parent(nullptr) {
     m_worldTransform.rotation = mm::Quat::identity;
     m_worldMatrix = mm::Mat44::identity;
     m_syncFlags |= 7;
-    pad_c8 = nullptr;
-    pad_d0 = nullptr;
+    m_scaleX = 0.0f;
+    m_scaleY = 0.0f;
+    m_scaleZ = 0.0f;
+    pad_d4 = 0;
 }
 
 // the body stores the table (an empty one would not): a statement the build compiles away

@@ -115,8 +115,12 @@ public:
     // the frames linked under this one (addChild/removeChild; unlinkChild empties it; the name is not the
     // original's)
     mm::mtl::IntrusiveList<ReferenceFrame> m_children;
-    void* pad_c8;  // the constructor clears it
-    void* pad_d0;  // the constructor clears it
+    // the bone's scale AnimPoseModifier copies with the bone's transform (apply; bindReferenceFrameToBone sets
+    // 1.0f); the constructor clears them (the names are not the original's)
+    float m_scaleX;
+    float m_scaleY;
+    float m_scaleZ;
+    unsigned int pad_d4;  // the constructor clears it
     unsigned char pad_d8[0x8];  // to 0xe0, the size GfComTransform::setup allocates
 };
 }  // namespace fw
