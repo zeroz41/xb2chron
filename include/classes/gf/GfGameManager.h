@@ -38,6 +38,7 @@ public:
     static bool isValidCollisionVelocity();
     // whether a map jump may start (neither the state nor the reserved one is 8 or 9)
     static bool isMapjumpOK();
+    static bool isElevatorMoveOK(unsigned short lodId);
     // GfGameScene has player stop flag 1, 3, 4 or 5 set (false without a GfGameScene)
     static bool isGmkTutorialSequenceOK();
     // not in battle, not in theater mode, and the control is free

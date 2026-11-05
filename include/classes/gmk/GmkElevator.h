@@ -96,8 +96,16 @@ public:
         return -1;
     }
     void clearGobInsts();
+    // makes m_gobs[type] targetable or not (its LOD switch follows on 0 and 2)
+    void setTargetableByItemType(ItemType type, bool targetable);
     void seqInit(float dt);
     void seqWaitToValidate_GfFieldLod(float dt);
+    void seqDownIdle(float dt);
+    void seqUpIdle(float dt);
+    void seqWaitToArriveDownFloor(float dt);
+    void seqWaitToArriveUpFloor(float dt);
+    void seqWaitToCloseDownShutter(float dt);
+    void seqWaitToCloseUpShutter(float dt);
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(42);
     // 0x50..0x288: four phantoms, 0x2b0: four sound controls; the destructor destroys them in reverse
@@ -108,7 +116,9 @@ public:
     // the name is not the original's)
     gf::GF_OBJ_HANDLE* m_gobs[4];
     mm::mtl::FixedArray<GmkCtrlVolSe, 4> m_ctrlVolSes;
-    long pad_4b0;  // dispose sets it to -1 (meaning unknown)
+    // dispose sets it to -1; seqWaitToValidate_GfFieldLod sets it to the LOD animation object (a GF_OBJ_HANDLE*)
+    // of the lift's LOD, createSe makes the lift loop sound follow it (meaning inferred)
+    long pad_4b0;
     // the step update runs (symbols name them seqInit, seqUpIdle, ...; the name is not the original's)
     void (GmkElevator::*m_seq)(float dt);
     // set when the player accesses m_gobs[0], [2], [3], [1] (onPlayerAccessed); dispose clears them (the names
