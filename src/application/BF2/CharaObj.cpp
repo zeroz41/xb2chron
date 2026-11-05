@@ -5745,6 +5745,145 @@ inline void OutsiderManager::update() {
     }
 }
 
+void MovieManager::clear() {
+    close();
+    captureScreen(false);
+    pad_10 = 0;
+}
+
+// bit 7: the scene render is in capture mode
+void MovieManager::captureScreen(bool enable) {
+    if (enable) {
+        if (!(pad_10 & 0x80)) {
+            ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+            acc.setCaptureMode(true);
+            pad_10 |= 0x80;
+        }
+    } else {
+        if (pad_10 & 0x80) {
+            ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+            acc.setCaptureMode(false);
+            pad_10 &= ~0x80;
+        }
+    }
+}
+
+void MovieManager::update() {
+    if ((pad_10 & 0x14) == 0x14) {
+        if (!mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->isplaying()) {
+            stop();
+        }
+    }
+    if (pad_10 & 0x20) {
+        if (pad_228-- <= 0) {
+            pad_10 &= ~0x20;
+        }
+    }
+    if (pad_10 & 0x40) {
+        if (pad_22c-- <= 0) {
+            close();
+        }
+    }
+}
+
+// the debug overlay: the preloading movie's file (pad_14) or the playing one's (pad_11c) and its length in frames
+void MovieManager::render() {
+    int x = (ml::DevGraph::getRootWidth() - 210) >> 1;
+    if (pad_10 & 2) {
+        fw::debug::drawFontColor(mm::Col4(0.8f, 0.8f, 1.0f, 1.0f));
+        fw::debug::drawFont(x + 25, 105, "MOVIE PRELOADING");
+        fw::debug::drawFont(x + 150, 105, pad_118 ? "(OBJ)" : "");
+        fw::debug::drawFont(x + 25, 120, mm::mtl::Singleton<Extend>::getPtr()->filename(pad_14.m_str));
+    } else if (pad_10 & 4) {
+        fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFont(x + 25, 105, "MOVIE PLAYING");
+        fw::debug::drawFont(x + 150, 105, pad_118 ? "(OBJ)" : "");
+        fw::debug::drawFont(x + 25, 120, mm::mtl::Singleton<Extend>::getPtr()->filename(pad_11c.m_str));
+        float frame = mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->get_length() * 30.0f;
+        fw::debug::drawFont(x + 190, 120, "FR:%.2f", frame);
+    }
+}
+
+// "/stream/movie/mv" + the name without its "bf", "qst", "fev" and "deb" parts; bf10480100 gets "_h" or "_s" by
+// StatusManager's homuri flag, and "_us" in region 1
+bool MovieManager::makePath(mm::mtl::FixStr<256>& path, const char* name) {
+    mm::mtl::FixStr<256> work(name);
+    auto cut = [&work](const char* part, int len) {
+        const char* found = strstr(work.m_str, part);
+        if (found != nullptr) {
+            int index = found - work.m_str;
+            if (work.m_nLen > index) {
+                int end = index + len;
+                if (!(end < work.m_nLen)) {
+                    end = work.m_nLen;
+                }
+                strcpy(work.m_str + index, work.m_str + end);
+                work.m_nLen = strlen(work.m_str);
+            }
+        }
+    };
+    cut("bf", 2);
+    cut("qst", 3);
+    cut("fev", 3);
+    cut("deb", 3);
+    path.format("/stream/movie/mv%s", work.m_str);
+    if (strcmp(name, "bf10480100") == 0) {
+        if (mm::mtl::Singleton<StatusManager>::getPtr()->getHomuriFlag() == 0) {
+            path += "_h";
+            mm::mtl::Singleton<DebugManager>::getPtr()->playMessage("call HOMURA movie");
+        } else {
+            path += "_s";
+            mm::mtl::Singleton<DebugManager>::getPtr()->playMessage("call HIKARI movie");
+        }
+        if (gf::GfMenuManager::getRegion() == 1) {
+            path += "_us";
+        }
+    }
+    return true;
+}
+
+// opens the movie (1280x720 for an object movie) and sets its file, unless it is the one already preloading;
+// closes everything while the scene is skipped
+void MovieManager::preload(const char* name, bool obj) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkip()) {
+        close();
+        return;
+    }
+    if ((pad_10 & 2) && isSame(pad_14.m_str, name) && pad_118 == obj) {
+        return;
+    }
+    mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->stop();
+    mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->close();
+    if (obj) {
+        mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->open(gf::getAllocator(gf::ALLOCATOR(10)), 1280, 720);
+    } else {
+        mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->open(gf::getAllocator(gf::ALLOCATOR(10)));
+    }
+    if (!mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->set_file(mm::mtl::Singleton<Extend>::getPtr()->webm(name))) {
+        mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->close();
+        return;
+    }
+    pad_10 = (pad_10 & ~0x43) | 3;
+    pad_14 = name;
+    pad_118 = obj;
+}
+
+bool MovieManager::isSame(const char* a, const char* b) {
+    mm::mtl::FixStr<256> pathA;
+    if (a[0] != '\0' && a[0] != '/') {
+        pathA = "/";
+        pathA += a;
+        a = pathA.m_str;
+    }
+    mm::mtl::FixStr<256> pathB;
+    if (b[0] != '\0' && b[0] != '/') {
+        pathB = "/";
+        pathB += b;
+        b = pathB.m_str;
+    }
+    return strcmp(a, b) == 0;
+}
+
 bool MovieManager::isLoading() const {
     if (pad_10 & 2) {
         if (mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->isstandby() == false) {
@@ -5752,6 +5891,50 @@ bool MovieManager::isLoading() const {
         }
     }
     return false;
+}
+
+// plays the preloaded movie when it is this one, else opens and plays it; everything is cleared while the scene is
+// skipped
+void MovieManager::play(const char* name, bool obj, bool arg) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkip()) {
+        clear();
+        return;
+    }
+    if ((pad_10 & 2) && isSame(pad_14.m_str, name) && pad_118 == obj) {
+        mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->play();
+        pad_11c = name;
+        pad_10 &= ~2;
+        pad_14 = "";
+        pad_118 = false;
+    } else {
+        mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->stop();
+        mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->close();
+        if (obj) {
+            mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->open(gf::getAllocator(gf::ALLOCATOR(10)), 1280, 720);
+        } else {
+            mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->open(gf::getAllocator(gf::ALLOCATOR(10)));
+        }
+        if (!mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->set_file(mm::mtl::Singleton<Extend>::getPtr()->webm(name))) {
+            mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->close();
+            return;
+        }
+        mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->play();
+        pad_11c = name;
+    }
+    pad_10 |= 5;
+    if (arg) {
+        pad_10 |= 0x10;
+    } else {
+        pad_10 &= ~0x10;
+    }
+    pad_10 &= ~0x60;
+    // an object movie has no countdown (the original stores the flags again on this path)
+    if (obj) {
+        pad_10 &= ~0x20;
+    } else {
+        pad_228 = 1;
+        pad_10 |= 0x28;
+    }
 }
 
 void MovieManager::setScriptFlag(bool enable) {

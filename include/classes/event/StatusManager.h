@@ -5,6 +5,7 @@
 #include "mm/mtl/FixedVector.h"
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
+#include "classes/gf/GfGameFlag.h"
 
 namespace event { enum MSG_TYPE : int; }
 // evt_status.judge's and evt_status.change's first argument (the script passes an int)
@@ -36,6 +37,9 @@ public:
     // false while the change still waits (evt_status.change then waits)
     bool change(EVT_change type, int param1, int param2, int param3, int param4, const char* name);
     unsigned int getDriverByBladeId(unsigned int bladeId) const;
+    // 2.0.0's StatusManager::getHomuriFlag (non-const, no parameters); 3.0.1 inlines it (MovieManager::makePath):
+    // local game flag 0x89fb, which picks the HOMURA (0) or HIKARI movie; the return type is not known
+    unsigned int getHomuriFlag() { return gf::GfGameFlag::getLocal(1, 0x89fb); }
 
 private:
     // bit 0 makes changeFromBdat do nothing; the name is not the original's

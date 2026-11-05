@@ -6,6 +6,8 @@ namespace event { enum MSG_TYPE : int; }
 #include "mm/mtl/FixStr.h"
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
+#include "classes/mm/mtl/PtrSingleton.h"
+#include "classes/gf/GfMovieManager.h"
 
 namespace event {
 // table 0x7100B3D308; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::MovieManager>
@@ -26,8 +28,8 @@ public:
     void setScriptFlag(bool enable);
     bool isLoadedAuto(const char* name, bool obj) const;
     // builds the movie's file path for name (0x71000F9EA4; isLoadedAuto passes its own path and the name in x0/x1,
-    // so it takes no this); the return type is not known
-    static void makePath(mm::mtl::FixStr<256>& path, const char* name);
+    // so it takes no this); returns true (w0 = 1 on its only path)
+    static bool makePath(mm::mtl::FixStr<256>& path, const char* name);
     // setScriptFlag's bit; the name is not the original's
     bool isScriptFlag() const { return (pad_10 & 0x100) != 0; }
     // 2.0.0's MovieManager::stop (0x7100111C14, 0x38 bytes); 3.0.1 inlines it everywhere (clear, update,
@@ -42,6 +44,18 @@ public:
             pad_10 = (pad_10 & ~0x66) | 0x40;
         }
     }
+    // 2.0.0's MovieManager::close (stop, then the GfMovieManager movie stopped and closed when bit 0 is set, bits 0
+    // and 6 dropped); 3.0.1 inlines it (clear, update)
+    void close() {
+        stop();
+        if (pad_10 & 1) {
+            mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->stop();
+            mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->close();
+        }
+        pad_10 &= ~0x41;
+    }
+    // true when both names are the same path, each given a leading '/' when it has none
+    static bool isSame(const char* a, const char* b);
     // fields the constructor initializes; what they hold is not known yet
     unsigned int pad_10;
     mm::mtl::FixStr<256> pad_14;
