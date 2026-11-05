@@ -124,6 +124,8 @@ public:
     // record lays out its LAY_result@%02d rows so)
     static void placeObjectV(unsigned int handle, const char* format, unsigned int count, const mm::Pnt<short>& pos,
                              unsigned int spacing);
+    // places the list's objects in a column around center, spacing apart (GfMenuObjTitle::initialize)
+    static void placeObjectV(ui::UISelectObjList* list, const mm::Pnt<short>& center, unsigned int spacing);
     // how createFitPlugin's UIObjectFitPlugin fits: its flags and sizes (the names are UIObjectFitPlugin's fields')
     struct FitOption {
         FitOption()
