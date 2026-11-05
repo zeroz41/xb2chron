@@ -34,7 +34,7 @@ public:
         m_val100 = 1.0f;
         m_val12C = 1.0f;
         m_val130 = 1.0f;
-        m_val98 = 0;
+        m_time = 0;
         m_valE8 = 0.0f;
         m_valF8 = 0.0f;
         m_val128 = 0.6f;
@@ -51,6 +51,11 @@ public:
     // DrMdoCtlNom::callZSortNomRender, with whether the model has nodes
     void stmRender(bool);
     void setActive(bool active, unsigned int index);
+    // DrMdoCtlNom::dispOffUpdate/updateEtcMdl, with the model matrix and the frame's step
+    void update(const mm::Mat44& mtx, float step, float, float);
+    void updateInit(const mm::Mat44& mtx, float step);
+    void updateCount(float step);
+    void updateUniform(const mm::Mat44& mtx, float step, float, float);
     // the work bytes one object takes (a constant 0x140)
     static unsigned int calcWorkSize(const unsigned char* data);
 
@@ -60,14 +65,14 @@ public:
     grlib::CGLibDblUniformBlock m_dblBlock;    // 0x38
     bool m_active;                             // 0x70: setActive(true) does nothing while set
     unsigned int m_flags;                      // 0x74: bit 0 render; 0x10000/0x40000 << double-buffer index
-    void* m_buf;                               // 0x78: freed by release
+    float* m_buf;                              // 0x78: per-slot life times (updateCount), freed by release
     unsigned int m_vtxNum;                     // 0x80: m_vertex->m_num
     unsigned int m_countMax;                   // 0x84: setActive's count
     unsigned int m_count0;                     // 0x88
     unsigned int m_count1;                     // 0x8C: isRender when nonzero
     unsigned int m_count2;                     // 0x90
     unsigned int m_count3;                     // 0x94: isRender when nonzero
-    unsigned int m_val98;                      // 0x98
+    float m_time;                              // 0x98: updateCount's spawn timer (wrapped by fmodf at m_val100)
     unsigned char pad_9C[0x4];
     mm::Mat44 m_mtx;                           // 0xA0
     float m_valE0;                             // 0xE0

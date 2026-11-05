@@ -116,6 +116,8 @@
 #include "ml/DrResMdoTexList.h"
 #include "ml/DrResMdoPntAlphaMan.h"
 #include "ml/DrMdoMorphing.h"
+#include "ml/DrShdMan.h"
+#include "classes/ml/DrAPCache.h"
 
 namespace ml {
 
@@ -5700,6 +5702,119 @@ void DrResMdoVtxMeshObj::resourceInit(DrResMdoVertex* vertex) {
     m_vtxNum = num;
 }
 
+void DrResMdoVtxMeshObj::update(const mm::Mat44& mtx, float a, float step, float scale) {
+    updateInit(mtx, scale);
+    if ((m_flags & 1) && m_vtxNum != 0) {
+        updateCount(step);
+        updateUniform(mtx, a, step, scale);
+        m_mtx = mtx;
+    }
+}
+
+void DrResMdoVtxMeshObj::updateInit(const mm::Mat44& mtx, float scale) {
+    if (m_flags & (0x10000 << DrMan::s_nDblIdx)) {
+        m_flags &= ~(0x10000 << DrMan::s_nDblIdx);
+        m_active = true;
+    }
+    if (m_flags & (0x40000 << DrMan::s_nDblIdx)) {
+        m_flags &= ~(0x40000 << DrMan::s_nDblIdx);
+        m_active = false;
+    }
+    if (m_vtxNum == 0) {
+        m_active = false;
+    }
+    if (m_vtxNum != 0 && m_active && m_val130 * scale > 0.01f) {
+        m_flags = (m_flags & ~0xD) | 1;
+    } else if (m_flags & 1) {
+        m_flags |= 8;
+        if (m_flags & 4) {
+            m_flags &= ~1;
+        }
+    }
+    if (m_flags & 1) {
+        if (!(m_flags & 2)) {
+            m_oneBlock.setup(m_countMax * 0x20);
+            m_oneBlock.updateData();
+            m_dblBlock.setup(0x130);
+            m_buf = static_cast<float*>(
+                mtl::MemManager::allocate(DrMan::get()->m_allocHandle, m_countMax * 8UL, 4, false, "no name", 0));
+            m_flags |= 2;
+            m_mtx = mtx;
+        }
+    } else {
+        if (m_flags & 2) {
+            m_oneBlock.release();
+            m_dblBlock.release();
+            if (m_buf != nullptr) {
+                mtl::MemManager::deallocate(m_buf, 0, false);
+                m_buf = nullptr;
+            }
+        }
+        m_flags &= ~0xF;
+    }
+}
+
+void DrResMdoVtxMeshObj::stmRender(bool hasNode) {
+    if (!(m_flags & 1) || (m_count1 == 0 && m_count3 == 0)) {
+        return;
+    }
+    DrShdDataList* list = DrMan::getIns()->m_shdMan->m_dataList;
+    DrResShdStreamOut* stm = list->getStmOutObj(7);
+    grlib::CGLibPolygon::setRasterizer(1);
+    unsigned int num = m_vtxNum < m_val110 ? m_vtxNum : m_val110;
+    if (m_count3 != 0) {
+        m_count3 = 0;
+        DrShdDataObj* data = stm->m_data;
+        unsigned int mode = hasNode ? 2 : 1;
+        data->setDeclarationIdx(data->getDeclarationOfs("CALC_MODE"), mode);
+        stm->m_data->setupShader(0u);
+        if (hasNode) {
+            list->m_boneStmOut.setStorageBuffer(1);
+            list->m_oldBoneStmOut.setStorageBuffer(2);
+        }
+        m_uniform->setUniformBlock(stm->m_shaderSel[1]);
+        m_dblBlock.setUniformBlock(stm->m_shaderSel[0]);
+        if (m_count2 + num > m_vtxNum) {
+            unsigned int count = m_vtxNum - m_count2;
+            m_oneBlock.setStorageBuffer(0);
+            grlib::CGLibCtlVertex::setVertex(*m_vertex, m_vertex->m_stride * m_count2);
+            grlib::CGLibCtlVertex::renderVertex(static_cast<GrlPrimitiveType>(0), count);
+            count = m_count2 + num - m_vtxNum;
+            m_oneBlock.setStorageBuffer(0);
+            grlib::CGLibCtlVertex::setVertex(*m_vertex);
+            grlib::CGLibCtlVertex::renderVertex(static_cast<GrlPrimitiveType>(0), count);
+        } else {
+            m_oneBlock.setStorageBuffer(0);
+            grlib::CGLibCtlVertex::setVertex(*m_vertex, m_vertex->m_stride * m_count2);
+            grlib::CGLibCtlVertex::renderVertex(static_cast<GrlPrimitiveType>(0), num);
+        }
+        m_count2 = (m_count2 + num) % m_vtxNum;
+        grlib::CGLibCtlShader::setMemoryBarrierBit(1);
+    }
+    if (m_count1 != 0) {
+        DrShdDataObj* data = stm->m_data;
+        data->setDeclarationIdx(data->getDeclarationOfs("CALC_MODE"), 3);
+        stm->m_data->setupShader(1u);
+        m_dblBlock.setUniformBlock(stm->m_shaderSel[0]);
+        if (m_count0 + m_count1 > m_countMax) {
+            unsigned int count = m_countMax - m_count0;
+            m_oneBlock.setStorageBuffer(0, m_count0 * 0x20, count * 0x20);
+            grlib::CGLibCtlVertex::setUniformVertex(m_oneBlock, 0x20, m_count0 * 0x20, 0, 0);
+            grlib::CGLibCtlVertex::renderVertex(static_cast<GrlPrimitiveType>(0), count);
+            count = m_count0 + m_count1 - m_countMax;
+            m_oneBlock.setStorageBuffer(0);
+            grlib::CGLibCtlVertex::setUniformVertex(m_oneBlock, 0x20, 0, 0, 0);
+            grlib::CGLibCtlVertex::renderVertex(static_cast<GrlPrimitiveType>(0), count);
+        } else {
+            m_oneBlock.setStorageBuffer(0, m_count0 * 0x20, m_count1 * 0x20);
+            grlib::CGLibCtlVertex::setUniformVertex(m_oneBlock, 0x20, m_count0 * 0x20, 0, 0);
+            grlib::CGLibCtlVertex::renderVertex(static_cast<GrlPrimitiveType>(0), m_count1);
+        }
+        grlib::CGLibCtlShader::setMemoryBarrierBit(1);
+    }
+    grlib::CGLibPolygon::setRasterizer(0);
+}
+
 bool DrResMdoVtxMeshObj::isRender() const {
     if (!(m_flags & 1)) {
         return false;
@@ -5708,6 +5823,38 @@ bool DrResMdoVtxMeshObj::isRender() const {
         return false;
     }
     return true;
+}
+
+void DrResMdoVtxMeshObj::alpRender() {
+    if (!(m_flags & 1) || m_count1 == 0) {
+        return;
+    }
+    DrAPCache* cache = DrMan::get()->m_apCache;
+    DrShdDataList* list = DrMan::get()->m_shdMan->m_dataList;
+    DrShdDataObj* shader = list->getPostShdObj(0x3F);
+    cache->setupCulling(static_cast<DrApCullType>(2));
+    cache->setupDepthStencil(0, 0, 0, 2);
+    cache->setupAlphaBlend(2);
+    DrMan::get()->m_pixlMan->selectGBuffRenderTarget(0xC0);
+    list->bindShdEffVtx();
+    shader->setupShader(0u);
+    DrCalcViewWork* view = DrMan::get()->m_calcMan->m_pViewWork;
+    unsigned int ofs = shader->getCurrentShader().getUniformBlockOfs("U_Static");
+    view->m_staticBlock.setUniformBlock(ofs);
+    ofs = shader->getCurrentShader().getUniformBlockOfs("U_Pam");
+    m_dblBlock.setUniformBlock(ofs);
+    unsigned int max = m_countMax;
+    if (m_count0 + m_count1 > max) {
+        unsigned int num = max - m_count0;
+        grlib::CGLibCtlVertex::setUniformVertex(m_oneBlock, 0x20, m_count0 * 0x20, 1, 1);
+        list->renderEffVtx(num);
+        num = m_count0 + m_count1 - m_countMax;
+        grlib::CGLibCtlVertex::setUniformVertex(m_oneBlock, 0x20, 0, 1, 1);
+        list->renderEffVtx(num);
+    } else {
+        grlib::CGLibCtlVertex::setUniformVertex(m_oneBlock, 0x20, m_count0 * 0x20, 1, 1);
+        list->renderEffVtx(m_count1);
+    }
 }
 
 void DrResMdoVtxMeshObj::release(DrResMdoVtxMeshObj*& obj) {
