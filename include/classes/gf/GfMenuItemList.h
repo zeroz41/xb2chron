@@ -31,6 +31,10 @@ public:
         unsigned char m_rarity;         // filterRarity keeps this rarity, filterRarityMore the ones below it
         unsigned char m_collectionKey;  // filterCollectionType keeps type 7 items of this ItemProperty key
         unsigned char m_favoriteKey;    // filterFavoriteType keeps type 10 items of this ItemProperty key
+        // more than 8 bytes: GfMenuObjPouch2::updateItemList keeps it below its ItemBoxSetup, not in the 8-byte hole
+        // by its callee-saved register (no reader of these bytes known)
+        unsigned char pad_07;
+        unsigned int pad_08;
     };
     // what setupFromBox lists: the items of one type in the item box (the names are not the original's)
     struct ItemBoxSetup {

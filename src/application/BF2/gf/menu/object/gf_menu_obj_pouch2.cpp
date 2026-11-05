@@ -11,8 +11,17 @@
 #include "classes/gf/GfMenuObjPouch2/FilterListener2.h"
 #include "classes/gf/GfMenuObjPouch2/PartyInfoListener.h"
 #include "classes/gf/GfMenuObjPouch2/ResultListener.h"
+#include "classes/gf/DataParamAcc.h"
 #include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfGameVoice.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfDataItem.h"
 #include "classes/gf/GfMenuBladeList.h"
+#include "gf/GfMenuItemUtil.h"
+#include "classes/gf/GfMenuCharDataAdapter.h"
+#include "classes/gf/GfMenuObjMainMenu2.h"
+#include "classes/ui/UICtrlCursorSelect.h"
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuItemList.h"
 #include "classes/gf/GfMenuObjCharSelect.h"
@@ -104,6 +113,21 @@ inline int setFadeOut(unsigned int handle, unsigned int type) {
     }
     GfMenuObject::hookCtrlEvent(handle, ctrl);
     return ctrl;
+}
+// Proposed names, not the original's: the symbols leave them unnamed (lbl_71009C39E4, lbl_71009C3A18). The stock
+// filters' item kinds (getIconNumber's id for item type 10; filter 0 is all items) and, with the expansion, the
+// filters shown in their place.
+const unsigned int s_filterItemKinds[13] = {0, 0xC, 0xD, 0xE, 0xF, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17};
+const unsigned int s_filterExpansionKinds[10] = {0, 1, 2, 3, 4, 5, 8, 9, 0xB, 0xC};
+
+// Proposed names, not the original's: the symbols leave them unnamed (lbl_7100B641E8, lbl_7100B64208). procFavFlag's
+// images of each FAVORITE: the flash effect and the heart animation (read through getFavImage so they stay in .data).
+__attribute__((used)) const char* s_favEffectImages[4] = {"IMG_chr_fvicon01eff@%02d", "IMG_chr_fvicon02eff@%02d",
+                                                         "IMG_chr_fviconit01eff@%02d", "IMG_chr_fviconit02eff@%02d"};
+__attribute__((used)) const char* s_favAnimImages[4] = {"IMG_chr_fvicon01anm@%02d", "IMG_chr_fvicon02anm@%02d",
+                                                       "IMG_chr_fviconit01anm@%02d", "IMG_chr_fviconit02anm@%02d"};
+inline const char* getFavImage(const char** table, unsigned int favorite) {
+    return table[favorite];
 }
 }  // namespace
 
@@ -293,6 +317,205 @@ void GfMenuObjPouch2::updateSlotList(GfMenuItemList* items) {
     }
 }
 
+void GfMenuObjPouch2::refreshSlot(ui::UIObjectAcc& acc, unsigned int index) {
+    unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+    unsigned int count = GfPouchUtil::getOpenCount(driver);
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < 3; i++) {
+        SDataPouch& pouch = GfPouchUtil::getPouch(driver, i);
+        if (i < count) {
+            mm::mtl::FixStr<32> slot;
+            slot.format("IMG_eqpouch_slbase@%02d", i + 1);
+            ui::UIObjectAcc base(acc.searchChild(slot.m_str));
+            base.startAnimation(pouch.itemId == 0 ? "porch1_idle" : "porch_full", false);
+            slot.format("TXT_eqpouch_no@%02d", i + 1);
+            ui::UIObjectAcc no(acc.searchChild(slot.m_str));
+            no.setDisp(pouch.itemId == 0);
+        }
+    }
+    SDataPouch& current = GfPouchUtil::getPouch(driver, index);
+    ui::UIObjectAcc cursor(acc.searchChild("IMG_slotcursor"));
+    cursor.setImageIndex(current.itemId != 0);
+    for (unsigned int i = 0; i < 3; i++) {
+        name.format("LAY_eqpouch_slot@%02d", i + 1);
+        ui::UIObjectAcc slot(acc.searchChild(name.m_str));
+        if (i < count) {
+            slot.setDisp(true);
+        } else {
+            slot.setDisp(false);
+        }
+    }
+    ui::UISelectObjList::CreateParam param;
+    param.m_allocator = getAllocator(ALLOCATOR(0));
+    ui::UISelectObjList* list = ui::UISelectObjList::create(param);
+    for (unsigned int i = 0; i < count;) {
+        mm::mtl::FixStr<32> slot;
+        slot.format("LAY_eqpouch_slot@%02d", ++i);
+        unsigned int handle = acc.searchChild(slot.m_str);
+        list->addContents(handle);
+    }
+    mm::Rect<short> rect;
+    acc.getLayoutRect("fev_slot02", rect);
+    mm::Rect<short> range;
+    acc.getLayoutRect("fev_slot03", range);
+    GfMenuObjUtil::placeObjectH(list, mm::Pnt<short>(rect.x + rect.w / 2, rect.y + rect.h / 2), range.x - rect.x - 1);
+    if (list != nullptr) {
+        list->release();
+    }
+}
+
+void GfMenuObjPouch2::updateItemList(GfMenuItemList* items, ui::UISelectObjList* select, unsigned int filter,
+                                     unsigned int sort) {
+    items->clear();
+    GfMenuItemList::ItemBoxSetup setup;
+    setup.m_type = 10;
+    setup.m_setup.m_pageRowSize = 8;
+    setup.m_setup.m_pageScroll = true;
+    setup.pad_28 = 0;
+    setup.pad_29 = 0;
+    GfMenuItemList::FiltertInfo info;
+    if (filter != 0) {
+        info.m_flags = 8;
+        info.m_favoriteKey = s_filterItemKinds[filter];
+        setup.m_filter = &info;
+    }
+    items->setupFromBox(setup);
+    items->sort(GfMenuObjSort::getSortID(0x10, sort), false);
+    items->setIndex(0);
+}
+
+void GfMenuObjPouch2::setupItemList(ui::UIObjectAcc& acc, GfMenuItemList* items) {
+    mm::mtl::FixStr<32> name;
+    for (int i = 0; i < 8; i++) {
+        name.format("IMG_fvstock_iticon@%02d", i + 1);
+        GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 2, items, i, false);
+        name.format("TXT_fvstock_itname@%02d", i + 1);
+        GfMenuItemAdapter* adapter = GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 0, items, i, false);
+        name.format("LAY_fvstock_listtag@%02d", i + 1);
+        if (adapter != nullptr) {
+            adapter->m_rowHandle = acc.searchChild(name.m_str);
+        }
+        name.format("IMG_fvstock_reaicon@%02d", i + 1);
+        GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 7, items, i, false);
+        name.format("TXT_fvstock_stcknum@%02d", i + 1);
+        GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 3, items, i, false);
+        name.format("IMG_fvstock_tagsellct@%02d", i + 1);
+        GfMenuObjUtil::setChildDisp(acc.m_handle, name.m_str, false);
+    }
+    name.format("TXT_fvstock_info_eff@%02d", 1);
+    GfMenuItemAdapter* adapter = GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 0xE, items, -1, false);
+    if (adapter != nullptr) {
+        adapter->m_subIndex = 0;
+    }
+    name.format("TXT_fvstock_info_eff@%02d", 2);
+    adapter = GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 0xE, items, -1, false);
+    if (adapter != nullptr) {
+        adapter->m_subIndex = 1;
+    }
+    name.format("TXT_fvstock_info_eff@%02d", 3);
+    adapter = GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 0xE, items, -1, false);
+    if (adapter != nullptr) {
+        adapter->m_subIndex = 2;
+    }
+    GfMenuItemAdapter::createFromList(acc.searchChild("TXT_fvstock_info_time_num"), 0xD, items, -1, false);
+}
+
+void GfMenuObjPouch2::refreshItemList(ui::UIObjectAcc& acc, GfMenuItemList* items, ui::UISelectObjList* select,
+                                      unsigned int index) {
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < static_cast<unsigned int>(select->getSize());) {
+        bool selected = items->getContents(items->getPageIndex(i)).m_id == index;
+        if (!(i < static_cast<unsigned int>(items->getSize()))) {
+            selected = false;
+        }
+        i++;
+        name.format("IMG_fvstock_tagsellct@%02d", i);
+        GfMenuObjUtil::setChildDisp(acc.m_handle, name.m_str, selected);
+        name.format("TXT_fvstock_itname@%02d", i);
+        ui::UIObjectAcc text(acc.searchChild(name.m_str));
+        GfMenuObjUtil::setColMulandAdd(text.m_handle, "txt_normal2");
+        name.format("IMG_fvstock_eqicon@%02d", i);
+        ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+        icon.setDisp(false);
+    }
+}
+
+void GfMenuObjPouch2::setFavFlag(unsigned int driver, unsigned int chr, mm::mtl::FixedArray<FavoriteFlag, 4>& flags,
+                                 const GfMenuBladeList* blades) {
+    flags[0].m_id = driver;
+    flags[0].m_chr = chr;
+    flags[0].m_stat[0] = GfMenuObjUtil::getFavoriteStat(3, driver, FAVORITE(0));
+    flags[0].m_stat[1] = GfMenuObjUtil::getFavoriteStat(3, driver, FAVORITE(1));
+    flags[0].m_stat[2] = GfMenuObjUtil::getFavoriteStat(3, driver, FAVORITE(2));
+    flags[0].m_stat[3] = GfMenuObjUtil::getFavoriteStat(3, driver, FAVORITE(3));
+    DataParamAcc param(3, driver, GimmickType(0));
+    for (unsigned int i = 0; i < 3; i++) {
+        if (i < static_cast<unsigned int>(blades->getSize())) {
+            unsigned int blade = blades->getContents(i).m_blade;
+            flags[i + 1].m_id = blade;
+            flags[i + 1].m_chr = chr;
+            if (blade != 0) {
+                flags[i + 1].m_stat[0] = GfMenuObjUtil::getFavoriteStat(4, blade, FAVORITE(0));
+                flags[i + 1].m_stat[1] = GfMenuObjUtil::getFavoriteStat(4, blade, FAVORITE(1));
+                flags[i + 1].m_stat[2] = GfMenuObjUtil::getFavoriteStat(4, blade, FAVORITE(2));
+                flags[i + 1].m_stat[3] = GfMenuObjUtil::getFavoriteStat(4, blade, FAVORITE(3));
+            }
+        } else {
+            flags[i + 1].m_id = 0;
+            flags[i + 1].m_chr = chr;
+        }
+    }
+}
+
+bool GfMenuObjPouch2::seqFavLoop() {
+    ui::UIObjectAcc acc(m_handle);
+    if (m_voice != nullptr && GfMenuObjUtil::isVoiceSkip()) {
+        GfGameVoice::playStop(m_voice);
+        m_voice = nullptr;
+        return true;
+    }
+    if (m_favVoice) {
+        switch (GfGameVoice::getResult(m_voice)) {
+        case CV_RESULT(1):
+        case CV_RESULT(2):
+            break;
+        default:
+            m_favVoice = false;
+            break;
+        }
+        return false;
+    }
+    for (; m_favIndex < 4; m_favIndex++) {
+        for (; m_favKind < 4; m_favKind++) {
+            if (m_favBefore[m_favIndex].m_stat[m_favKind] != m_favAfter[m_favIndex].m_stat[m_favKind] &&
+                m_favAfter[m_favIndex].m_stat[m_favKind] == 0) {
+                m_voice = procFavFlag(acc, m_favAfter[m_favIndex], m_favIndex, m_favKind);
+                m_favVoice = true;
+                m_favKind++;
+                return false;
+            }
+            unsigned int favorite = m_favIndex == 0
+                                        ? GfDataDriver::getFavorite(m_favAfter[m_favIndex].m_id, FAVORITE(m_favKind))
+                                        : GfDataBlade::getFavorite(m_favAfter[m_favIndex].m_id, FAVORITE(m_favKind));
+            if (m_favKind < 2) {
+                if (favorite == GfDataItem::getCategory(m_favAfter[m_favIndex].m_chr)) {
+                    m_voice = SCOM_FIELD_VOICE::createFavorite(m_favAfter[m_favIndex].m_id, FAVORITE(m_favKind));
+                    m_favVoice = true;
+                    m_favKind++;
+                    return false;
+                }
+            } else if (favorite == m_favAfter[m_favIndex].m_chr) {
+                m_voice = SCOM_FIELD_VOICE::createFavorite(m_favAfter[m_favIndex].m_id, FAVORITE(m_favKind));
+                m_favVoice = true;
+                m_favKind++;
+                return false;
+            }
+        }
+        m_favKind = 0;
+    }
+    return true;
+}
+
 bool GfMenuObjPouch2::seqFavClose() {
     ui::UIObjectAcc acc(m_handle);
     sendEvent(acc.searchChild("LAY_fvstock_fevitem"), 0x22, 0);
@@ -301,6 +524,58 @@ bool GfMenuObjPouch2::seqFavClose() {
     sendEvent(acc.searchChild("LAY_eqp_fevitem"), 0x101, 1);
     m_favIndex = 0;
     m_favKind = 0;
+    return true;
+}
+
+bool GfMenuObjPouch2::seqFavPouchIn() {
+    ui::UIObjectAcc acc(m_handle);
+    int index = m_number->m_value;
+    mm::mtl::FixStr<32> name;
+    name.format("IMG_eqpouch_slbase@%02d", index + 1);
+    ui::UIObjectAcc base(acc.searchChild(name.m_str));
+    name.format("IMG_eqpouch_slicon@%02d", index + 1);
+    ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+    m_slotActive = true;
+    switch (m_favIndex) {
+    case 0: {
+        name.format("TXT_eqpouch_no@%02d", index + 1);
+        ui::UIObjectAcc no(acc.searchChild(name.m_str));
+        no.setDisp(false);
+        if (m_favKind < 5) {
+            m_favKind++;
+        } else {
+            m_favIndex++;
+        }
+        return false;
+    }
+    case 1: {
+        base.startAnimation("porch1_itemin", false);
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "mnu070_item";
+        param.m_motion = "item_throw";
+        param.m_setDefault = true;
+        param.m_startFlags = 8;
+        GfMenuObjUtil::startCtrl(icon.m_handle, param, nullptr);
+        GfMenuObjUtil::playSE(0x39);
+        m_favIndex++;
+        return false;
+    }
+    case 2: {
+        if (base.isPlayingAnimation()) {
+            return false;
+        }
+        unsigned int slot = acc.searchChild("LAY_eqp_fevitem");
+        GfMenuObjMainMenu2::openCharChange(slot, 0, false);
+        ui::UIObjectAcc slotAcc(acc.searchChild("LAY_eqp_fevitem"));
+        refreshSlot(slotAcc, m_slotItems->getIndex(false));
+        GfMenuObject::enableInput(slot);
+        m_slotActive = false;
+        m_slotCursor->setAlpha(1.0f);
+        m_slotCursor->setDisp(true);
+        return true;
+    }
+    }
     return true;
 }
 
@@ -345,6 +620,46 @@ void GfMenuObjPouch2::ResultListener::reciveEvent(ui::EventData const& event, un
     }
 }
 
+void GfMenuObjPouch2::setupFilter(ui::UIObjectAcc& acc, unsigned int filter) {
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < 13; i++) {
+        name.format("IMG_ficon@%02d", i + 1);
+        ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+        if (icon.m_object == nullptr) {
+            continue;
+        }
+        if (i < (GfMenuObjUtil::isValidExpansion(3) ? sizeof(s_filterExpansionKinds) / sizeof(s_filterExpansionKinds[0])
+                                                     : sizeof(s_filterItemKinds) / sizeof(s_filterItemKinds[0]))) {
+            unsigned int number = 0;
+            if (i == 0) {
+                number = 14;
+            } else {
+                unsigned int kind = i;
+                if (GfMenuObjUtil::isValidExpansion(3)) {
+                    kind = s_filterExpansionKinds[i];
+                }
+                GfMenuItemUtil::getIconNumber(ItemType::Type(10), s_filterItemKinds[kind], number, false);
+            }
+            icon.setImageIndex(number);
+        } else {
+            icon.setDisp(false);
+        }
+    }
+    {
+        mm::Rect<short> rect;
+        acc.getLayoutRect("all_item", rect);
+        mm::Rect<short> range;
+        acc.getLayoutRect("all_item_range", range);
+        unsigned int count = GfMenuObjUtil::isValidExpansion(3) ? 10 : 13;
+        GfMenuObjUtil::placeObjectH(acc.m_handle, "LAY_icon@%02d", count,
+                                    mm::Pnt<short>(rect.x + rect.w / 2, rect.y + rect.h / 2), range.x - rect.x);
+    }
+    ui::UIStr text;
+    getFilterText(filter, text);
+    ui::UIObjectAcc index(acc.searchChild("TXT_fvstock_index"));
+    index.setText(text);
+}
+
 void GfMenuObjPouch2::getFilterText(unsigned int filter, ui::UIStr& text) {
     if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIStr str(GfDataBdat::getFP(0x11D), GfMenuObjUtil::getMsgIDFromList(0x14D, filter + 1));
@@ -353,6 +668,91 @@ void GfMenuObjPouch2::getFilterText(unsigned int filter, ui::UIStr& text) {
         ui::UIStr str(GfDataBdat::getFP(0x11D), GfMenuObjUtil::getMsgIDFromList(0x14C, filter + 1));
         text.copy(str);
     }
+}
+
+void GfMenuObjPouch2::setupPartyInfo(ui::UIObjectAcc& acc) {
+    GfMenuCharDataAdapter::createFromReferenceDriver(acc.searchChild("IMG_chr_fiface@01"), 3, 0, false);
+    GfMenuCharDataAdapter* adapter =
+        GfMenuCharDataAdapter::createFromReferenceDriver(acc.searchChild("IMG_chr_fvicon01@01"), 10, 0, true);
+    if (adapter != nullptr) {
+        adapter->m_index = 0;
+    }
+    adapter = GfMenuCharDataAdapter::createFromReferenceDriver(acc.searchChild("IMG_chr_fvicon02@01"), 10, 0, true);
+    if (adapter != nullptr) {
+        adapter->m_index = 1;
+    }
+    adapter = GfMenuCharDataAdapter::createFromReferenceDriver(acc.searchChild("IMG_chr_fviconit@01"), 0xC, 0, true);
+    if (adapter != nullptr) {
+        adapter->m_index = 0;
+    }
+    adapter = GfMenuCharDataAdapter::createFromReferenceDriver(acc.searchChild("TXT_chr_fvitnameit@01"), 0xB, 0, true);
+    if (adapter != nullptr) {
+        adapter->m_index = 0;
+    }
+    adapter = GfMenuCharDataAdapter::createFromReferenceDriver(acc.searchChild("IMG_chr_fviconit2@01"), 0xC, 0, true);
+    if (adapter != nullptr) {
+        adapter->m_index = 1;
+    }
+    adapter = GfMenuCharDataAdapter::createFromReferenceDriver(acc.searchChild("TXT_chr_fvitnameit2@01"), 0xB, 0, true);
+    if (adapter != nullptr) {
+        adapter->m_index = 1;
+    }
+    mm::mtl::FixStr<32> name;
+    for (int i = 0; i < 3; i++) {
+        name.format("IMG_chr_fiface@%02d", i + 2);
+        adapter = GfMenuCharDataAdapter::createFromReferenceBladeSet(acc.searchChild(name.m_str), 3, 0, i, false);
+        if (adapter != nullptr) {
+            name.format("LAY_chr_fi@%02d", i + 2);
+            adapter->m_rowHandle = acc.searchChild(name.m_str);
+        }
+        name.format("IMG_chr_fvicon01@%02d", i + 2);
+        adapter = GfMenuCharDataAdapter::createFromReferenceBladeSet(acc.searchChild(name.m_str), 10, 0, i, true);
+        if (adapter != nullptr) {
+            adapter->m_index = 0;
+        }
+        name.format("IMG_chr_fvicon02@%02d", i + 2);
+        adapter = GfMenuCharDataAdapter::createFromReferenceBladeSet(acc.searchChild(name.m_str), 10, 0, i, true);
+        if (adapter != nullptr) {
+            adapter->m_index = 1;
+        }
+        name.format("IMG_chr_fviconit@%02d", i + 2);
+        adapter = GfMenuCharDataAdapter::createFromReferenceBladeSet(acc.searchChild(name.m_str), 0xC, 0, i, true);
+        if (adapter != nullptr) {
+            adapter->m_index = 0;
+        }
+        name.format("TXT_chr_fvitnameit@%02d", i + 2);
+        adapter = GfMenuCharDataAdapter::createFromReferenceBladeSet(acc.searchChild(name.m_str), 0xB, 0, i, true);
+        if (adapter != nullptr) {
+            adapter->m_index = 0;
+        }
+        name.format("IMG_chr_fviconit2@%02d", i + 2);
+        adapter = GfMenuCharDataAdapter::createFromReferenceBladeSet(acc.searchChild(name.m_str), 0xC, 0, i, true);
+        if (adapter != nullptr) {
+            adapter->m_index = 1;
+        }
+        name.format("TXT_chr_fvitnameit2@%02d", i + 2);
+        adapter = GfMenuCharDataAdapter::createFromReferenceBladeSet(acc.searchChild(name.m_str), 0xB, 0, i, true);
+        if (adapter != nullptr) {
+            adapter->m_index = 1;
+        }
+    }
+}
+
+GAME_VOICE_HANDLE* GfMenuObjPouch2::procFavFlag(ui::UIObjectAcc& acc, FavoriteFlag& flag, unsigned int index,
+                                                unsigned int favorite) {
+    mm::mtl::FixStr<32> name;
+    name.format(getFavImage(s_favEffectImages, favorite), index + 1);
+    ui::UIObjectAcc effect(acc.searchChild(name.m_str));
+    effect.startAnimation("flash", false);
+    name.format(getFavImage(s_favAnimImages, favorite), index + 1);
+    ui::UIObjectAcc anim(acc.searchChild(name.m_str));
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x10000000;
+    param.m_motionLib = "mnu070_heart";
+    param.m_motion = "fadein_a";
+    param.m_eventId = 1;
+    GfMenuObjUtil::startCtrl(anim.m_handle, param, nullptr);
+    return SCOM_FIELD_VOICE::createFavorite(flag.m_id, FAVORITE(favorite));
 }
 }  // namespace gf
 
