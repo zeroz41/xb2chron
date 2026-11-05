@@ -35,6 +35,8 @@ public:
     // opens the quest of a chart level: line 9 (key line) when it is neither finished nor ordered, the other lines
     // up to the blade's key release level when it is not ordered (GfQuestInfo::isQuestNotOrder)
     static void orderAchievement(unsigned int blade, unsigned int line, unsigned int level);
+    // GfMenuObjBlKizunaRing::seqAchieve calls it for a released (state 3) chart level, orderAchievement for the others
+    static void releaseAchievement(unsigned int blade, unsigned int line, unsigned int level);
     static void qevCompleteQuest(const QuestCompleteParam& param);
     // the levels of a blade's chart line up to level that are done
     static int getSkillLevel(unsigned int blade, unsigned int line, unsigned int level);

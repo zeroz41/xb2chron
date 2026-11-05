@@ -11,10 +11,18 @@
 #include "gf/GfDataAchievement.h"
 #include "mm/Pnt.h"
 #include "gf/GfKizunaringBlade.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfItemUtil.h"
+#include "gf/GfKizunaringUtil.h"
+#include "gf/GfQuestReward.h"
+#include "classes/gf/GfMenuObjCommonText.h"
+#include "classes/gf/GfMenuObjPopup.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
 #include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfGameVoice.h"
 #include "classes/gf/GfMenuAchievementAdapter.h"
+#include "classes/gf/GfMenuAdapterManager.h"
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuFullScreen.h"
 #include "classes/gf/GfMenuItemList.h"
@@ -178,6 +186,70 @@ bool GfMenuObjBlKizunaRing::seqWaitVoice() {
     return true;
 }
 
+bool GfMenuObjBlKizunaRing::seqComplete() {
+    unsigned int blade = GfMenuReference::getReferenceBladeID(0);
+    if (GfDataBlade::isKizunaringComplete(blade)) {
+        return true;
+    }
+    unsigned int max = GfDataBlade::getKizunaringMax(blade);
+    if (max > GfDataBlade::getKizunaringCompleteNum(blade)) {
+        return true;
+    }
+    ui::UIObjectAcc root(m_handle);
+    ui::UIObjectAcc complete(root.searchChild("LAY_complete"));
+    switch (m_completeStep) {
+    case 0: {
+        complete.setDisp(true);
+        ui::UIObjectAcc image(complete.searchChild("IMG_complete"));
+        image.startAnimation("fade_in", false);
+        ui::UIObjectAcc text(complete.searchChild("TXT_complete"));
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "mnu89_complete_telop";
+        param.m_motion = "fade_in";
+        param.m_startFlags = 10;
+        GfMenuObjUtil::startCtrl(text.m_handle, param, nullptr);
+        GfMenuObjUtil::playJingle(0x10);
+        m_voiceRequest = SCOM_FIELD_VOICE::createAchievementAll(blade);
+        m_completeStep++;
+        break;
+    }
+    case 1: {
+        ui::UIObjectAcc image(complete.searchChild("IMG_complete"));
+        if (!image.isPlayingAnimation()) {
+            complete.setDisp(false);
+            m_itemList->clear();
+            GfQuestReward reward;
+            if (!GfKizunaringUtil::getCompleteKizunaringReward(reward, blade)) {
+                return true;
+            }
+            for (int i = 8; i < 12; i++) {
+                unsigned short id = reward.m_items[i].m_low;
+                if (id != 0) {
+                    MenuItemInfo info;
+                    info.m_type = GfItemUtil::getType(id);
+                    info.m_id = id;
+                    info.m_count = reward.m_items[i].m_high;
+                    m_itemList->addContents(info);
+                }
+            }
+            m_callContext->reset();
+            GfMenuObjCommonText::openGetItem(m_callContext, m_itemList);
+            m_completeStep++;
+        }
+        break;
+    }
+    case 2:
+        if (m_callContext->isTerm()) {
+            GfDataBlade::setKizunaringComplete(blade);
+            m_completeStep = 0;
+            return true;
+        }
+        break;
+    }
+    return false;
+}
+
 bool GfMenuObjBlKizunaRing::seqEnd() {
     ui::UIObjectAcc acc(m_handle);
     refreshRing(acc);
@@ -270,6 +342,159 @@ unsigned int GfMenuObjBlKizunaRing::getAchievementList(mm::mtl::FixedVector<Achi
         }
     }
     return list.size();
+}
+
+bool GfMenuObjBlKizunaRing::seqAchieve() {
+    ui::UIObjectAcc root(m_handle);
+    mm::mtl::FixStr<32> name;
+    unsigned int blade = GfMenuReference::getReferenceBladeID(0);
+    switch (m_achieveStep) {
+    case 1:
+        if (m_achievements.empty()) {
+            if (getAchievementList(m_achievements, m_achieveKind, m_achieveFlags) == 0) {
+                m_achieveStep = 0;
+                sendEvent(root.searchChild("LAY_main"), 0x21, 0);
+                return true;
+            }
+            m_achieveStep = 1;
+        } else {
+            const Achievement& achievement = m_achievements.back();
+            short state = achievement.m_state;
+            unsigned short line = achievement.m_line;
+            unsigned int index = line * 5 + (achievement.m_level - 1);
+            if (state != 1 || index < 45) {
+                m_achieveIndex = index;
+                if (index <= 44) {
+                    name.format("IMG_node_eff@%02d", index + 6);
+                } else {
+                    name.format("IMG_lock_eff@%02d", index - 44);
+                }
+                ui::UIObjectAcc eff(root.searchChild(name.m_str));
+                eff.startAnimation(state == 1 ? "skill_open" : "skill_learn", false);
+                if (state == 3) {
+                    GfMenuObjUtil::playSE(0xF);
+                    if (line != 9) {
+                        m_voiceBlade = line;
+                    }
+                }
+            }
+            m_achieveStep = 2;
+        }
+        return false;
+    case 2: {
+        unsigned int index = m_achieveIndex;
+        if (index <= 44) {
+            name.format("IMG_node_eff@%02d", index + 6);
+        } else {
+            name.format("IMG_lock_eff@%02d", index - 44);
+        }
+        ui::UIObjectAcc eff(root.searchChild(name.m_str));
+        if (m_achievements.size() != 1 || !eff.isPlayingAnimation()) {
+            const Achievement& achievement = m_achievements.back();
+            unsigned short line = achievement.m_line;
+            unsigned short level = achievement.m_level;
+            short state = achievement.m_state;
+            m_achievements.pop_back();
+            if (m_achieveIndex > 44 && state == 3) {
+                const char* anims[] = {"linea", "lineb", "linec", "lined", "linee"};
+                unsigned int ring = m_achieveIndex - 45;
+                if (ring < 5) {
+                    ui::UIObjectAcc bg(root.searchChild("IMG_kizunabg_eff"));
+                    bg.startAnimation(anims[ring], false);
+                }
+                GfMenuObjUtil::playSE(0x10);
+            }
+            if (state == 3) {
+                GfKizunaringBlade::releaseAchievement(blade, line, level);
+                GfMenuObjPopup::OpenParam param;
+                param.m_type = 4;
+                param.m_value[0] = blade;
+                param.m_value[1] = line;
+                param.m_value[2] = level;
+                GfMenuObjPopup::remove(param);
+            } else {
+                GfKizunaringBlade::orderAchievement(blade, line, level);
+            }
+            refreshRing(root);
+            m_achieveStep = 1;
+        }
+        return false;
+    }
+    default:
+        return true;
+    }
+}
+
+void GfMenuObjBlKizunaRing::setupRing(ui::UIObjectAcc& acc) {
+    mm::mtl::FixStr<32> name;
+    GfMenuAdapterManager::beginAddAfter();
+    for (int level = 0; level < 5; level++) {
+        for (int line = 0; line < 10; line++) {
+            int node = level + line * 5 + 1;
+            name.format("IMG_node_icon@%02d", node);
+            if (acc.searchChild(name.m_str) != 0) {
+                unsigned int handle = acc.searchChild(name.m_str);
+                unsigned short kizunaLine = line == 0 ? 9 : line - 1;
+                GfMenuAchievementAdapter::createFromReferenceBlade(handle, 0xB, 0, kizunaLine, level + 1, true);
+                name.format("IMG_node_base@%02d", node);
+                if (acc.searchChild(name.m_str) != 0) {
+                    GfMenuAchievementAdapter* adapter = GfMenuAchievementAdapter::createFromReferenceBlade(
+                        acc.searchChild(name.m_str), 0xC, 0, kizunaLine, level + 1, true);
+                    name.format("IMG_node_frame@%02d", node);
+                    adapter->m_rowHandle = acc.searchChild(name.m_str);
+                }
+            }
+        }
+    }
+    for (int level = 1; level <= 5; level++) {
+        name.format("IMG_lock_icon@%02d", level);
+        GfMenuAchievementAdapter::createFromReferenceBlade(acc.searchChild(name.m_str), 0x18, 0, 9, level, true);
+    }
+    GfMenuAdapterManager::endAddAfter();
+}
+
+void GfMenuObjBlKizunaRing::setupRingList(ui::UIObjectAcc& acc, ui::UISelectObjList* list) {
+    mm::mtl::FixStr<32> name;
+    list->clear();
+    for (int level = 0; level < 5; level++) {
+        for (int line = 0; line < 10; line++) {
+            name.format("LAY_spot@%02d", level + line * 5 + 1);
+            unsigned int handle = acc.searchChild(name.m_str);
+            if (handle != 0) {
+                list->addObject(handle);
+            }
+        }
+    }
+}
+
+void GfMenuObjBlKizunaRing::refreshRing(ui::UIObjectAcc& acc) {
+    unsigned int blade = GfMenuReference::getReferenceBladeID(0);
+    mm::mtl::FixStr<32> name;
+    for (int level = 0; level < 5; level++) {
+        for (int line = 0; line < 10; line++) {
+            int node = level + line * 5 + 1;
+            name.format("IMG_node_icon@%02d", node);
+            ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+            if (icon.m_object != nullptr) {
+                name.format("IMG_node_base@%02d", node);
+                ui::UIObjectAcc base(acc.searchChild(name.m_str));
+                if (base.m_object != nullptr) {
+                    unsigned int state =
+                        GfKizunaringBlade::getReleaseAchievement(blade, line == 0 ? 9 : line - 1, level + 1);
+                    if (state == 0 || state == 1) {
+                        icon.setMulColor("white");
+                        base.setMulColor("gray");
+                    } else if (state == 4 || state == 5) {
+                        icon.setMulColor("white");
+                        base.setMulColor("white");
+                    } else {
+                        icon.setMulColor("black");
+                        base.setMulColor("gray");
+                    }
+                }
+            }
+        }
+    }
 }
 
 void GfMenuObjBlKizunaRing::dispDetail(ui::UIObjectAcc& acc, unsigned int blade) {
@@ -409,6 +634,38 @@ void GfMenuObjBlKizunaRing::RingPadListener::reciveEvent(ui::EventData const& ev
         ui::UIObjectListener::reciveEvent(event, handle);
         break;
     }
+}
+
+void GfMenuObjBlKizunaRing::setupSkillDetail(ui::UIObjectAcc& acc) {
+    GfMenuAdapterManager::beginAddAfter();
+    GfMenuAchievementAdapter::createFromReferenceBladeLineLevel(acc.searchChild("TXT_questtitle"), 0x16, 0, 0, 1, false);
+    GfMenuAchievementAdapter::createFromReferenceBladeLineLevel(acc.searchChild("TXT_questtitle2"), 0x17, 0, 0, 1, false);
+    GfMenuAchievementAdapter::createFromReferenceBladeLineLevel(acc.searchChild("TXT_achinum"), 0x12, 0, 0, 1, false);
+    GfMenuAchievementAdapter* count =
+        GfMenuAchievementAdapter::createFromReferenceBladeLineLevel(acc.searchChild("TXT_achimax"), 0x13, 0, 0, 1, false);
+    if (count != nullptr) {
+        count->m_rowHandle = acc.searchChild("LAY_count");
+    }
+    GfMenuAchievementAdapter::createFromReferenceBladeLineLevel(acc.searchChild("LAY_neta"), 0x19, 0, 0, 1, false);
+    mm::mtl::FixStr<32> name;
+    for (int i = 1; i < 3; i++) {
+        name.format("TXT_questinfo2@%02d", i);
+        GfMenuAchievementAdapter::createFromReferenceBladeLineLevel(acc.searchChild(name.m_str), 3, 0, 0, 1, false);
+        name.format("TXT_skillname@%02d", i);
+        GfMenuAchievementAdapter::createFromReferenceBladeLineLevel(acc.searchChild(name.m_str), 2, 0, 0, 1, false);
+        name.format("IMG_skill_icon@%02d", i);
+        GfMenuAchievementAdapter::createFromReferenceBladeLineLevel(acc.searchChild(name.m_str), 0xB, 0, 0, 1, false);
+        name.format("IMG_skill_base@%02d", i);
+        GfMenuAchievementAdapter::createFromReferenceBladeLineLevel(acc.searchChild(name.m_str), 0xC, 0, 0, 1, false);
+        name.format("IMG_idea_icon@%02d", i);
+        GfMenuAchievementAdapter* idea = GfMenuAchievementAdapter::createFromReferenceBladeLineLevel(
+            acc.searchChild(name.m_str), 0x15, 0, 0, 1, false);
+        if (idea != nullptr) {
+            name.format("LAY_idea@%02d", i);
+            idea->m_rowHandle = acc.searchChild(name.m_str);
+        }
+    }
+    GfMenuAdapterManager::endAddAfter();
 }
 
 void GfMenuObjBlKizunaRing::openForMercenary(unsigned int handle, unsigned int value, unsigned short group) {
