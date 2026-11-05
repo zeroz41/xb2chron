@@ -99,6 +99,8 @@ public:
         }
     };
 
+    // the symbols name it (Update calls it after CheckChangeAttr)
+    void HateProc(fw::UpdateInfo const& info, bool);
     void ResetHate(int index, bool clearFlag);
     void MulHate(int index, int kind, float rate);
     void AddHate(int index, int kind, float add);
@@ -106,6 +108,10 @@ public:
     void AngryInfection(float range);
     // 2.0.0's symbols name it. What it does: see EnemyParameter.cpp.
     void SetupElementalAwakeParam();
+    // the symbols name it. What it does: for a non-negative hate index other than the hate target's, raises both
+    // kinds of that entry's hate toward the target's (BattleGlobal pad_5c34/pad_5c38), then adds BattleGlobal
+    // pad_5c3c of recast to random arts palette slots (SetResistantAttr calls it)
+    void AddEnhanceBallHateCallback(int index);
 
     unsigned char pad_624[0x4];
     ARTS_PALETTE_DATA m_artsPaletteData;  // GetArtsPaletteDataConst (the name is not the original's)
@@ -113,7 +119,7 @@ public:
     int m_hateTarget;  // GetHateTarget (the name is not the original's)
     int pad_894;  // 0 after construction; meaning unknown
     float pad_898;  // -1 after construction; meaning unknown
-    int pad_89c;  // 0 after construction; meaning unknown
+    float pad_89c;  // 0 after construction; Update counts seconds without a hate target in it, angry ends at 1
     unsigned short m_angryAuraID;  // GetAngryAuraID (the name is not the original's)
     unsigned char m_angryAttr;  // GetAngryAttr answers it without a driver to ask (the name is not the original's)
     unsigned char pad_8a3_0 : 4;  // slot 38 (GetElementalAwakeLevel) answers it; meaning unknown
@@ -123,7 +129,9 @@ public:
     unsigned short pad_8a8;  // slot 41 (GetElementalAwakeReduceElmComboFrame) answers it as a float; meaning unknown
     unsigned short pad_8aa;  // returned by slot 55 (GetChallengeScore); meaning unknown
     unsigned short pad_8ac;  // returned by slot 56 (GetChallengeEtherCube); meaning unknown
-    unsigned short pad_8ae;  // BattleEndInitialize clears it; meaning unknown
+    // BattleEndInitialize clears it; GetBGMID keeps the special BGM it picked there (mutable: GetBGMID is const;
+    // meaning unknown)
+    mutable unsigned short pad_8ae;
     unsigned char m_deadSEID;  // GetDeadSEID (the name is not the original's)
     unsigned char m_overwriteAttr;  // set by the slot 1.0.0 named SetOverwriteAttr; above 8 when not overwritten
     // the attribute CheckChangeAttr last told the characters about; 9 when none (the name is not the original's)

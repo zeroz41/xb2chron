@@ -387,16 +387,28 @@ public:
     // by stage 1-2 and index, what ELEMENTAL_COMBO_FLOW_DATA::GetNextID returns for an empty step
     unsigned char pad_5bf0[2][9];
     unsigned char pad_5c02;  // ELEMENTAL_COMBO_FLOW_DATA::GetNextID reads pad_5bf0 while it is 2
-    unsigned char pad_5c03[0x19];
+    unsigned char pad_5c03[0x1];
+    // EnemyParameter::SetResistantAttr adds (it - 1) * 0.08 to a nonzero elemental awake chance unless pad_5c58 is
+    // set (meaning unknown)
+    float pad_5c04;
+    unsigned char pad_5c08[0x14];
     // DataManager::AddPartyGauge multiplies every gain by it (the name is not the original's)
     float m_partyGaugeRate;
-    unsigned char pad_5c20[0x2C];
+    unsigned char pad_5c20[0x14];
+    // EnemyParameter::AddEnhanceBallHateCallback: the least hate it adds, the rate of the hate gap to the hate
+    // target it adds, and the recast it adds to random palette slots (meanings inferred, not the original's names)
+    float pad_5c34;
+    float pad_5c38;
+    float pad_5c3c;
+    unsigned char pad_5c40[0xC];
     // EnemyParameter::ApplyStatusEnhanceAndDifficulty scales every enhanced value by it (the name is not the
     // original's)
     float m_statusEnhanceRate;
     // the challenge battle unit's GetDropEtherCubeRate returns it; meaning unknown
     float pad_5c50;
-    unsigned char pad_5c54[0x8];
+    unsigned char pad_5c54[0x4];
+    bool pad_5c58;  // EnemyParameter::SetResistantAttr skips its pad_5c04 term while it is set (meaning unknown)
+    unsigned char pad_5c59[0x3];
     // the lever gacha's input state (the fields of LEVER_GACHA_DATA, declared above; field names are not the original's)
     // per button, the time before it counts again (InputLeverGachaButton)
     float m_leverGachaButtonTime[4];
@@ -546,7 +558,8 @@ public:
     // while set, CharacterParameter::IsSuspendFightComboTimer holds for the character m_controlTargetHandle names
     // (meaning unknown)
     bool pad_bit26 : 1;
-    unsigned char : 2;
+    bool pad_bit27 : 1;  // EnemyParameter::BattleStart sets it for a boss (IsBoss); meaning unknown
+    bool pad_bit28 : 1;  // EnemyParameter::BattleStart sets it for a named enemy (IsNamed); meaning unknown
     // CharacterManager::PostUpdateProc sets it to whether an enemy answers BattleCharacter::IsScout (meaning
     // unknown)
     bool pad_bit29 : 1;
@@ -561,7 +574,11 @@ public:
     bool m_killChild : 1;
     unsigned char : 1;
     bool pad_bit35 : 1;  // IsButtonChallengeAutoSuccess holds while it is set
-    unsigned char : 4;
+    unsigned char : 2;
+    // EnemyParameter::BattleStart sets it for an enemy whose ChrEnArrange row has the Hikari flag; meaning unknown
+    bool pad_bit38 : 1;
+    // EnemyParameter::BattleStart sets it for an enemy with m_isInvalidWarp; meaning unknown
+    bool pad_bit39 : 1;
     // GfGameTarget's selectRight/selectLeft change no target while it is clear (the name is not the original's)
     bool pad_bit40 : 1;
     // NotifyShiftTimeOver sets it while UIManager's pad_bit15 is set; NotifyShiftNone clears it with pad_bit40
@@ -569,7 +586,10 @@ public:
     // while set, Utility::IsSatisfyCondition holds for its conditions 0-2, 5-7, 10, 11, 14, 15 and 19 (1, 2, 16-19 with
     // m_challengeAnySuccess) without asking FLD_ConditionList (meaning unknown)
     bool pad_bit42 : 1;
-    unsigned char : 4;
+    unsigned char : 3;
+    // EnemyParameter::BattleStart sets it for an enemy whose ChrEnArrange row has the PGMax flag, unless pad_bit1 is
+    // set (then it fills party gauge group 10003 instead); meaning unknown
+    bool pad_bit46 : 1;
     // set once PlayErrorSE played its sound, which it then does not play again (the name is not the original's)
     bool m_errorSePlayed : 1;
     bool pad_bit48 : 1;

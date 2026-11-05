@@ -27,6 +27,9 @@
 #include "classes/gf/GfBdatChrEnArrange.h"
 #include "classes/gf/GfBdatRsc.h"
 #include "ml/MTRand.h"
+#include "btl/challenge_battle_manager.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfMenuObjDamageBuff.h"
 
 namespace btl {
 
@@ -410,6 +413,39 @@ inline CharacterParameter* GetDriverParameter(gf::GF_OBJ_HANDLE* handle) {
     BattleCharacter* driver = CharacterManager::sys()->GetCharacterConst(handle);
     return driver != nullptr ? driver->GetCharacterParameterConst(true) : nullptr;
 }
+
+// whether UpdateLadyTarget may pick the character: its own gender is 2, it has no buddy, or its buddy's gender is 2
+// (an inferred helper: the name is not the original's)
+inline bool IsLadyCharacter(const CharacterParameter* param) {
+    {
+        gf::DataParamAcc acc(param->m_handle);
+        if (acc.getGender() == 2) {
+            return true;
+        }
+    }
+    if (param->m_driverHandle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return true;
+    }
+    gf::DataParamAcc acc(param->m_driverHandle);
+    return acc.getGender() == 2;
+}
+
+// what CharacterParameter::GetSpecialEnhanceRate(type, nullptr) answers, walking up to the driver's parameter while
+// slot 64 (IsDriver(false)) holds. PostUpdate's original reads it inline (an inferred helper: the name is not the
+// original's)
+inline float GetSpecialEnhanceRateInline(const CharacterParameter* param, int type) {
+    while (param->IsDriver(false)) {
+        BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(param->m_driverHandle);
+        if (chr == nullptr) {
+            return 0.0f;
+        }
+        param = chr->GetCharacterParameter(true);
+        if (param == nullptr) {
+            return 0.0f;
+        }
+    }
+    return param->m_specialEnhanceRate[type];
+}
 }  // namespace
 
 EnemyParameter::~EnemyParameter() {
@@ -487,6 +523,86 @@ const gf::SDataEnemy* EnemyParameter::GetEnemyData() const {
     return acc.getSDataEnemy();
 }
 
+void EnemyParameter::BattleStart(int) {
+    InitializeArtsPalette(0);
+    if (pad_20 != BattleGlobal::sys()->pad_a9c && !BladeChangeManager::sys()->IsRegister(m_handle) &&
+        !FormationChangeManager::sys()->IsRegister(m_handle)) {
+        ResetRecast();
+    }
+    pad_20 = BattleGlobal::sys()->pad_a9c;
+    m_hasHateTarget = true;
+    unsigned int id = m_enArrangeID;
+    if (IsBoss()) {
+        BattleGlobal::sys()->pad_bit27 = true;
+    }
+    if (IsNamed()) {
+        BattleGlobal::sys()->pad_bit28 = true;
+    }
+    if (BtlSystemBalanceAccess::sys()->IsSpPlayerZombieEnemy(id)) {
+        BattleGlobal::sys()->pad_bit25 = true;
+    }
+    gf::GfBdatChrEnArrange* arrange = gf::GfBdatChrEnArrange::sys();
+    if (arrange->isChrEnArrangeFlagHikari(id)) {
+        BattleGlobal::sys()->pad_bit38 = true;
+    }
+    if (arrange->isChrEnArrangeFlagPGMax(id)) {
+        if (BattleGlobal::sys()->pad_bit1) {
+            DataManager::sys()->FluctuatePartyGauge(10003, -1);
+        } else {
+            BattleGlobal::sys()->pad_bit46 = true;
+        }
+    }
+    BattleGlobal* global = BattleGlobal::sys();
+    if (global->m_challengeAnySuccess && pad_bit14) {
+        global->pad_bit2 = true;
+    }
+    if (m_isInvalidWarp) {
+        global->pad_bit39 = true;
+    }
+    pad_8ae = 0;
+    SetupBGM();
+}
+
+void EnemyParameter::Update(fw::UpdateInfo const& info, bool flag) {
+    if (!m_flags622_0) {
+        return;
+    }
+    if (IsAngry() && !IsBlade(false)) {
+        bool end = false;
+        if (!m_hasHateTarget) {
+            pad_89c += info.m_deltaTime;
+            if (pad_89c >= 1.0f) {
+                end = true;
+            }
+        } else {
+            pad_89c = 0.0f;
+        }
+        if (pad_898 > 0.0f) {
+            pad_898 -= info.m_deltaTime;
+            end |= pad_898 <= 0.0f;
+        }
+        if (end) {
+            SetAngry(false, -1.0f);
+        }
+    }
+    CheckChangeAttr();
+    HateProc(info, flag);
+    if ((IsDriver(false) || IsBlade(false)) && m_flags622_6) {
+        mm::mtl::FixedVector<unsigned char, 90> list;
+        Utility::GetCharacterList(list, m_handle, static_cast<Utility::CHECK_CHR_NUM_MODE>(1), 0x40);
+        CharacterManager* manager = CharacterManager::sys();
+        for (unsigned char index : list) {
+            BattleCharacter* chr = manager->GetCharacterConst(index);
+            const CharacterParameter* param = chr->GetCharacterParameterConst(true);
+            if (param != nullptr && param->m_driverHandle == m_handle) {
+                SetBuddy(chr->m_handle, false);
+                break;
+            }
+        }
+    }
+    CharacterParameter::Update(info, false);
+}
+
 void EnemyParameter::CheckChangeAttr() {
     if (!m_hasHateTarget) {
         m_notifiedAttr = 9;
@@ -502,6 +618,30 @@ void EnemyParameter::CheckChangeAttr() {
             }
         }
         m_notifiedAttr = attr;
+    }
+}
+
+void EnemyParameter::PostUpdate(fw::UpdateInfo const&) {
+    if (m_flags622_0 && m_hasHateTarget) {
+        for (unsigned int i = 0; i < 3; i++) {
+            gf::GF_OBJ_HANDLE* handle = gf::GfGameParty::getHandleDriver(i, static_cast<gf::PTPOS>(0));
+            if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+                continue;
+            }
+            BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+            if (chr == nullptr) {
+                continue;
+            }
+            CharacterParameter* param = chr->GetCharacterParameter(true);
+            if (param == nullptr) {
+                continue;
+            }
+            float add = GetSpecialEnhanceRateInline(param, 2);
+            if (add != 0.0f) {
+                m_hateData[i].Set(0, m_hateData[i].m_hate[0] + add);
+            }
+            m_hateData[i].m_rate = GetSpecialEnhanceRateInline(param, 1) + 1.0f;
+        }
     }
 }
 
@@ -693,6 +833,27 @@ bool EnemyParameter::IsAngry() const {
         }
     }
     return m_isAngry;
+}
+
+void EnemyParameter::SetResistantAttr(int attr, int index, bool addHate) {
+    pad_5d8 |= 1 << attr;
+    if (addHate && index >= 0) {
+        AddEnhanceBallHateCallback(index);
+    }
+    if (!pad_bit1 && pad_8a3_0 != 0) {
+        unsigned char* fp = gf::GfDataBdat::getFP(0x25);
+        unsigned int percent = (unsigned char)Bdat::getValCheck(fp, IsAngry() ? "AngryProb" : "NormalProb", pad_8a3_0, 1);
+        float chance = percent * 0.01f;
+        if (percent != 0) {
+            const BattleGlobal* global = BattleGlobal::sys();
+            if (!global->pad_5c58) {
+                chance += (global->pad_5c04 - 1.0f) * 0.08f;
+            }
+        }
+        if (chance >= 1.0f || ml::mtRandf1() <= chance) {
+            SetupElementalAwakeParam();
+        }
+    }
 }
 
 // slot 22's base body sits here, between EnemyParameter's own slot bodies (after 0x7100088A44's place)
@@ -892,6 +1053,39 @@ int CharacterParameter::GetDeadSEID() const {
 }  // namespace btl
 
 namespace btl {
+void EnemyParameter::UpdateLadyTarget() {
+    if (!pad_bit12) {
+        return;
+    }
+    int count = 0;
+    int indices[3];
+    for (unsigned int i = 0; i != 3; i++) {
+        gf::GF_OBJ_HANDLE* handle = gf::GfGameParty::getHandleDriver(i, static_cast<gf::PTPOS>(0));
+        if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            continue;
+        }
+        BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+        if (chr == nullptr || chr->IsDead(0)) {
+            continue;
+        }
+        const CharacterParameter* param = chr->GetCharacterParameterConst(true);
+        if (param == nullptr) {
+            continue;
+        }
+        if (!IsLadyCharacter(param)) {
+            continue;
+        }
+        indices[count++] = i;
+    }
+    int index;
+    if (count <= 0) {
+        index = -1;
+    } else {
+        index = count == 1 ? indices[0] : indices[ml::mtRand(count)];
+    }
+    pad_8b5 = index;
+}
+
 void EnemyParameter::UpdateBuddy() {
     gf::GF_OBJ_HANDLE* handle = m_handle;
     gf::GF_OBJ_HANDLE* mount = gf::GfMountManager::getHandle(handle, static_cast<gf::GFATTACH>(0),
@@ -905,6 +1099,40 @@ void EnemyParameter::UpdateBuddy() {
     }
     bool self = mount == handle;
     SetBuddy(self ? reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) : mount, self || dummy);
+}
+}  // namespace btl
+
+namespace btl {
+int EnemyParameter::GetBGMID() const {
+    if (IsNamed() && !BattleGlobal::sys()->m_challengeAnySuccess && gf::GfGameManager::isEnableSpecialBgm() &&
+        !ChallengeBattleManager::sys()->IsProc()) {
+        if (pad_8ae != 0) {
+            return pad_8ae;
+        }
+        int bgm = fn_7100087A34(0);
+        if (bgm < 0) {
+            int count = 0;
+            int rows[2];
+            for (unsigned int party = 1; party < 3; party++) {
+                int row = fn_7100087A34(party);
+                if (row >= 0) {
+                    rows[count++] = row;
+                }
+            }
+            if (count > 0) {
+                bgm = count == 1 ? rows[0] : rows[ml::mtRand(count)];
+            }
+        }
+        if (bgm >= 0) {
+            pad_8ae = bgm;
+            return bgm;
+        }
+    }
+    const gf::SDataEnemy* data = GetEnemyData();
+    if (data == nullptr) {
+        return 0;
+    }
+    return gf::GfBdatChrEnArrange::sys()->getChrEnArrangeBGMID(data->m_id);
 }
 }  // namespace btl
 
@@ -944,6 +1172,15 @@ int fn_7100087A34(unsigned int party) {
         }
     }
     return -1;
+}
+}  // namespace btl
+
+namespace btl {
+void EnemyParameter::SetupBGM() {
+    unsigned int bgm = GetBGMID();
+    if (BattleGlobal::sys()->SetBGM(bgm) && ChallengeBattleManager::sys()->IsProc()) {
+        ChallengeBattleManager::sys()->SetBGMID(bgm);
+    }
 }
 }  // namespace btl
 
