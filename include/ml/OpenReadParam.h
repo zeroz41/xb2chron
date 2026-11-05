@@ -5,7 +5,7 @@
 #include "mm/threading/ReadWriteLock.h"
 #include "nn/fs.h"
 
-namespace ml { class DevFileNxTh; }
+namespace ml { class DevFileAccessor; }
 namespace ml { class FileHandleTh; }
 namespace ml { class Thread; }
 
@@ -41,7 +41,7 @@ struct OpenReadParam {
 
     OpenReadParam()
         : m_handle(), m_isOpen(false), pad_10D(), pad_10E(), pad_10F(), pad_110(0), pad_118(nullptr), pad_120(0), pad_128(0), pad_130(0),
-          pad_158(), pad_178(1), pad_17C(0), pad_180(0), pad_188(10), pad_18C(true), pad_18D(), m_thread(), m_owner() {}
+          pad_158(), pad_178(1), pad_17C(0), pad_180(0), pad_188(10), pad_18C(true), pad_18D(), pad_190(0), m_thread(), m_owner() {}
 
     nn::fs::FileHandle m_handle;
     mm::mtl::FixStr<256> m_path;
@@ -61,9 +61,12 @@ struct OpenReadParam {
     unsigned long pad_180;
     int pad_188;
     bool pad_18C;
-    unsigned char pad_18D[0xB];
+    unsigned char pad_18D[3];
+    unsigned long pad_190;  // DevFileArchiveNx: the channel's file offset in the archive (thUpdate adds it)
     Thread* m_thread;      // 0x198: the channel's loader thread (DevFileNxTh::initialize creates it)
-    DevFileNxTh* m_owner;  // 0x1A0: the device whose channel it is (DevFileNxTh::initialize sets it)
+    // 0x1A0: the device whose channel it is (DevFileNxTh::initialize and DevFileArchiveNx::initialize set it; the
+    // pointee type is inferred)
+    DevFileAccessor* m_owner;
     mm::threading::ReadWriteLock m_lock;
 };
 

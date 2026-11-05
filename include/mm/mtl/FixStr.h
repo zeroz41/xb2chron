@@ -179,6 +179,8 @@ public:
     // n characters of pszStr inserted at index (fixstr.h asserts `pszStr`, `newSize < capacity()` and
     // `index <= nowSize`; the name is the symbol's)
     FixStr& insert(int index, const char* pszStr, int n);
+    // n copies of c inserted at index (named by the symbol; out of line in the original, return type not known)
+    FixStr& insert(int index, int n, char c);
 
     char m_str[LEN];  // the text: format() copies what it formats here
     int m_nLen;  // fixstr.h asserts `m_nLen < LEN` as it stores a new text's length

@@ -41,6 +41,16 @@ public:
 
     DevFileArchiveNx(mtl::ALLOC_HANDLE handle);
 
+    // named by the symbols: a read channel's thread entry (arg is its OpenReadParam); waits for DevFileTh's setup,
+    // then runs thUpdate
+    static unsigned int thFileLoader(void* arg);
+    // named by the symbols: a read channel's loop; thFileLoader calls it with no object set up, so it reads only its
+    // argument
+    void thUpdate(void* arg);
+    // named by the symbols: turns '\\' into '/', adds a leading '/' and lowercases the last path element (when it is
+    // plain ASCII); rfOpen calls it with no object set up
+    void normalizeFileName(mm::mtl::FixStr<256>& name);
+
     // the device's state (0x2A48), built by the constructor with the handle it is given; DevFileNxTh::Impl's
     // members first
     struct Param {
