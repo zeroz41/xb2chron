@@ -25,9 +25,12 @@ public:
         unsigned int m_pointEnd;    // 0x4: one past its last point
         float pad_8;                // 0x8: GmkRouteNavi::init moves on a curve when it is above 0
         unsigned int m_flags;       // 0xC: bit 0: closed (isClosed); GmkRouteNavi::create: bit 1 forwards, bit 2
-                                    // backwards, both: either at random
+                                    // backwards, both: either at random; bit 3: GmkRoutedEnemy::isPopPointRouteEnd
+                                    // counts a pop point at either end
         signed char m_offsetMode;   // 0x10: how GmkRouteNavi offsets its points sideways (0: by m_offset, 1: by its
                                     // size outwards, 2: inwards; turned with the direction)
+        unsigned int m_popPointIndx;  // 0x14: GmkRoutedEnemy::isPopPointRouteEnd compares it with the first and
+                                      // last point (the name is inferred from that function's name)
     };
     const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     unsigned int getRoutePointNum() const;

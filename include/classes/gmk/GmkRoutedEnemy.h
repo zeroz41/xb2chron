@@ -30,6 +30,15 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(1);
     // the route navigation of one of its objects (GfBehaviorEnemyField::getGmkRouteNavi asks it)
     GmkRouteNavi* findRouteNavi(gf::GF_OBJ_HANDLE* handle) const;
+    // whether the navigator starts at the route's pop point and that point is the end it moves away from
+    // (gf::enemy::StateFieldWalk::enter asks)
+    bool isPopPointRouteEnd(const GmkRouteNavi& navi) const;
+    // gives navi to handle (PopXformFinder::onPopGob), freeing the navigator handle held before
+    void bindRouteNavi(gf::GF_OBJ_HANDLE* handle, GmkRouteNavi& navi);
+    // one unbound navigator per object (PopXformFinder::onCreateGobInsts passes the count)
+    void createRouteNavis(unsigned int num);
+    // GfComBehaviorEnemy::procMsgObjectNotifyDead calls it
+    void onEnemyDead(gf::GF_OBJ_HANDLE* handle);
 
     GmkEnemyInsts m_insts;  // (the name is not the original's)
     // its game objects, as GmkManager::collectGameObjsUnbound<T> reads them inline (the names are not the

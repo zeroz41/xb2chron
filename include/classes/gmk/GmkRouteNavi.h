@@ -46,7 +46,7 @@ public:
         InitResult* m_initResult;  // 0x20: create calls initAtRandom(*m_initResult) when set
     };
 
-    GmkRouteNavi(const CreateInfo* info);
+    GmkRouteNavi(const CreateInfo* info = nullptr);  // the default: Vector<pair<GF_OBJ_HANDLE*, GmkRouteNavi>>::resize
     ~GmkRouteNavi() { dispose(); }
     void create(const CreateInfo& info);
     void dispose();

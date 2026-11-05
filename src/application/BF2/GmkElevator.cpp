@@ -187,6 +187,7 @@
 #include "fw/FwDebug.h"
 #include "mm/mtl/Vector.h"
 #include "gf/GfDataUtil.h"
+#include "classes/gmk/GmkRoutedEnemy/PopXformFinder.h"
 
 namespace gf {
 // the resident sound sources' files, by index (getSoundSourceFileName reads it; bindGFSoundSource loads each)
@@ -1715,6 +1716,81 @@ void GmkRoute::debugDraw() const {
     }
 }
 
+void GmkRoutedEnemy::bindRouteNavi(gf::GF_OBJ_HANDLE* handle, GmkRouteNavi& navi) {
+    if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        for (std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi>* it = m_navis.begin(); it != m_navis.end(); ++it) {
+            if (it->first == handle) {
+                it->first = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+                it->second.dispose();
+                break;
+            }
+        }
+    }
+    for (std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi>* it = m_navis.begin(); it != m_navis.end(); ++it) {
+        if (&it->second == &navi) {
+            it->first = handle;
+            return;
+        }
+    }
+}
+
+// with no row only disposes; else creates the route and the insts from the row's distances (the list's defaults
+// where the row has none)
+void GmkRoutedEnemy::create(const AGmkBase::CreateInfo& info) {
+    if (info.m_bdatInfo == nullptr) {
+        dispose();
+        return;
+    }
+    GmkRoute::create(info);
+    GmkEnemyInsts::CreateInfo createInfo;
+    const GmkEnemy::BdatInfo* bdat = static_cast<const GmkEnemy::BdatInfo*>(info.m_bdatInfo);
+    const GmkRoutedEnemyList* list = static_cast<const GmkRoutedEnemyList*>(m_list);
+    createInfo.m_gmk = this;
+    createInfo.m_bdatFp = list->getBindedBdatFp();
+    createInfo.m_bdatId = m_createInfo.m_bdatId;
+    createInfo.m_popHeight = bdat->m_dispH != 0 ? bdat->m_dispH : list->m_bdatInfo.m_dispH;
+    createInfo.m_depopHeight = createInfo.m_popHeight + list->m_bdatInfo.m_releaseH;
+    createInfo.m_popRange = bdat->m_dispR != 0 ? bdat->m_dispR : list->m_bdatInfo.m_dispR;
+    createInfo.m_depopRange = createInfo.m_popRange + list->m_bdatInfo.m_releaseR;
+    createInfo.m_repopTime = list->m_bdatInfo.m_repopTime * 60.0f;
+    m_insts.create(createInfo);
+}
+
+// the insts pop and depop by the route position nearest to the player
+void GmkRoutedEnemy::update(float dt) {
+    AGmkBase::update(dt);
+    if (isValid() && isPlayerExist()) {
+        mm::Vec3 pos;
+        if (getNearestPos(pos, getPlayerPos())) {
+            GmkEnemyInsts::UpdateInfo updateInfo;
+            PopXformFinder finder(this);
+            updateInfo.m_dt = dt;
+            updateInfo.m_pos = &pos;
+            updateInfo.m_finder = &finder;
+            if (m_insts.isValid()) {
+                m_insts.updatePopDepopCond(updateInfo);
+                if (m_insts.m_seq) {
+                    (m_insts.*m_insts.m_seq)(updateInfo);
+                }
+            }
+        }
+    }
+}
+
+void GmkRoutedEnemy::createRouteNavis(unsigned int num) {
+    if (m_navis.size() != 0) {
+        m_navis.destroy();
+    }
+    m_navis.setAllocator(gf::getAllocator(gf::ALLOCATOR(0)));
+    m_navis.reserve(num);
+    m_navis.resize(num);
+    if (m_navis.size() != 0) {
+        for (std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi>* it = m_navis.begin(); it != m_navis.end(); ++it) {
+            it->first = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        }
+    }
+}
+
 // the route point list of each routed kind in the gimmick set that made its list (GmkSet::createGmkLists passes the
 // set as the list's CreateInfo::m_param); kinds 5, 8 and 20 have no class in the headers yet
 IGmkList* GmkRoutedEnemy::getBindedRoutePointList() const {
@@ -1728,6 +1804,37 @@ GmkRouteNavi* GmkRoutedEnemy::findRouteNavi(gf::GF_OBJ_HANDLE* handle) const {
         }
     }
     return nullptr;
+}
+
+void GmkRoutedEnemy::onEnemyDead(gf::GF_OBJ_HANDLE* handle) {
+    if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        for (std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi>* it = m_navis.begin(); it != m_navis.end(); ++it) {
+            if (it->first == handle) {
+                it->first = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+                it->second.dispose();
+                break;
+            }
+        }
+    }
+    m_insts.onEnemyDead(handle);
+}
+
+void GmkRoutedEnemy::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3)) {
+        if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            for (std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi>* it = m_navis.begin(); it != m_navis.end(); ++it) {
+                if (it->first == handle) {
+                    it->first = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+                    break;
+                }
+            }
+        }
+        m_insts.m_popInfo.removeGobInst(handle, false);
+        if (m_insts.m_popInfo.getGobInstNum() == 0) {
+            m_insts.pad_159 = 0;
+        }
+    }
 }
 gf::GF_OBJ_HANDLE* GmkNpc::getGobInst() const {
     if (m_npcIdInfo == nullptr) {

@@ -166,6 +166,28 @@ public:
         const mm::Vec3* m_pos;  // 0x8: updatePopDepopCond measures from it to getInterestPos
         const IPopXformFinder* m_finder;  // 0x10
     };
+    // what create takes (GmkRoutedEnemy::create builds it on the stack: the gimmick, its list's BDAT table, its row,
+    // then four distances from the row or the list's defaults and the repop time; 0x38 bytes; the names are not the
+    // original's). The defaults are the insts' own (100, 50, 110, 55, then zeros).
+    class CreateInfo {
+    public:
+        CreateInfo()
+            : m_popRange(100.0f), m_popHeight(50.0f), m_depopRange(110.0f), m_depopHeight(55.0f), m_repopTime(0.0f),
+              pad_28(0), pad_2c(0), pad_30(0), pad_34(0) {}
+        const AGmkBase* m_gmk;    // 0x0
+        unsigned char* m_bdatFp;  // 0x8: the list's getBindedBdatFp
+        int m_bdatId;             // 0x10: the gimmick's row
+        float m_popRange;         // 0x14: "ene_disp_r"
+        float m_popHeight;        // 0x18: "ene_disp_h"
+        float m_depopRange;       // 0x1c: "ene_disp_r" + "ene_release_r"
+        float m_depopHeight;      // 0x20: "ene_disp_h" + "ene_release_h"
+        float m_repopTime;        // 0x24: "e_repoptime" * 60
+        unsigned int pad_28;
+        unsigned int pad_2c;
+        unsigned int pad_30;
+        unsigned int pad_34;
+    };
+    void create(const CreateInfo& info);
     // GmkEnemy's and GmkRoutedEnemy's dispose inline it (the name is not the original's): the flags' low three bits,
     // the objects, the counted reference at 0x150 and the distances back to their defaults
     void dispose() {
