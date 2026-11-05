@@ -126,7 +126,7 @@ public:
     List<SoundActor> actors_;  // 0x440: ConnectActor / DisconnectActor
     Array<SoundCategory> categories_;  // 0x468: GetCategory (the first one is the default)
     SoundGroup group_;  // 0x480: the constructor builds it with the defaults (id 0, 256 sounds)
-    void* pad_4a0;  // the constructor zeroes it
+    SoundActor* pad_4a0;  // the constructor zeroes it; SoundHandle::Start plays on it when given no actor
     unsigned char pad_4a8[0x8];
     Array<SoundListener*> listeners_;  // 0x4B0
     Array<SoundEffecter*> effecters_;  // 0x4C8

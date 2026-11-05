@@ -55,18 +55,28 @@ public:
 
     // a value Set* moves to its target over a fade time (the type's and the field names are not the original's)
     struct FadeValue {
+        // holds value with no fade (the name is not the original's)
+        void Reset(float value) {
+            target = value;
+            start = value;
+            current = value;
+            delta = 0.0f;
+            fadeTime = 0.0f;
+            elapsed = 0.0f;
+        }
         // starts a move to target over fadeTime (at once when it is 0)
         void Set(float value, float time) {
+            float from = current;
+            float* to = &target;
             fadeTime = time;
             if (time == 0.0f) {
+                from = value;
                 target = value;
-                start = value;
-                current = value;
-            } else {
-                start = current;
-                target = value;
+                to = &current;
             }
-            delta = target - start;
+            start = from;
+            *to = value;
+            delta = target - from;
             elapsed = 0.0f;
         }
         // moves on by frameTime

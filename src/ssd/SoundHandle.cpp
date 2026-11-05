@@ -40,6 +40,23 @@ void SoundHandle::Quit() {
     delegates_.data_ = nullptr;
 }
 
+void SoundHandle::Init() {
+    pitch_.Reset(1.0f);
+    volume_.Reset(1.0f);
+    pan_.Reset(0.0f);
+    pad_b4 = 1.0f;
+    volume2_ = 1.0f;
+    pad_bc = 0.0f;
+    startTime_ = 0.0;
+    pad_68 = 0.0f;
+    pad_c0 = false;
+    pad_c4.Reset(1.0f);
+    pad_dc = false;
+    pad_e0.Reset(1.0f);
+    ClearDelegate();
+    valid_ = true;
+}
+
 bool SoundHandle::IsValidHandle() const {
     if (!valid_) {
         return false;
@@ -92,6 +109,78 @@ Result SoundHandle::Stop(float fadeTime) {
         return Result(-29);
     }
     return set_result(voice->Stop(fadeTime));
+}
+
+Result SoundHandle::Play(const SoundEntry* entry, SoundActor* actor, float volume, float fadeTime) {
+    if (!valid_) {
+        Init();
+    } else if (entry_ != nullptr) {
+        return Result(-33);
+    }
+    SystemCore* core = static_cast<SystemCore*>(SoundCore::instance_);
+    if (core == nullptr) {
+        return Result(-12);
+    }
+    VoiceHandle* voice = core->GetVoiceHandle(voiceId_);
+    if (voice != nullptr) {
+        voice->Stop(0.0f);
+    }
+    Result result = Prepare(entry);
+    if (result >= 0) {
+        result = Start(actor, volume, fadeTime);
+    }
+    return set_result(result);
+}
+
+Result SoundHandle::Prepare(const SoundEntry* entry) {
+    if (!valid_) {
+        Init();
+    } else if (entry_ != nullptr) {
+        return Result(-33);
+    }
+    if (SoundCore::instance_ == nullptr) {
+        return Result(-12);
+    }
+    VoiceHandle* voice;
+    static_cast<SystemCore*>(SoundCore::instance_)->AllocVoiceHandle(0, &voice);
+    if (voice == nullptr) {
+        return Result(-50);
+    }
+    entry_ = entry;
+    Result result = voice->Prepare(entry, this, &voiceId_);
+    if (result < 0) {
+        static_cast<SystemCore*>(SoundCore::instance_)->FreeVoiceHandle(voice);
+    }
+    return set_result(result);
+}
+
+Result SoundHandle::Start(SoundActor* actor, float volume, float fadeTime) {
+    SystemCore* core = static_cast<SystemCore*>(SoundCore::instance_);
+    if (core == nullptr) {
+        return Result(-12);
+    }
+    if (entry_ == nullptr) {
+        return Result(-20);
+    }
+    VoiceHandle* voice = core->GetVoiceHandle(voiceId_);
+    if (voice == nullptr) {
+        return Result(-29);
+    }
+    if (actor == nullptr) {
+        actor = core->pad_4a0;
+    }
+    actor_ = actor;
+    const SoundGroup* group = entry_->GetSoundGroup();
+    if (group == nullptr) {
+        group = &core->group_;
+    }
+    groupId_ = group->id_;
+    category_ = *core->GetCategory(entry_->param_.flag4e_);
+    pitch_.Reset(1.0f);
+    pan_.Reset(0.0f);
+    volume_.Reset(volume);
+    startTime_ = SystemCorePlatform::GetSystemTime();
+    return set_result(voice->Start(fadeTime, pad_68 != 0.0f));
 }
 
 Result SoundHandle::Pause(bool pause, float fadeTime) {
@@ -159,6 +248,33 @@ void SoundHandle::SetCategoryId(int id) {
     if (core != nullptr) {
         category_ = *core->GetCategory(id);
     }
+}
+
+void SoundHandle::SetPitch(float pitch, float fadeTime) {
+    pitch_.Set(pitch, fadeTime);
+}
+
+void SoundHandle::SetVolume(float volume, float fadeTime) {
+    volume_.Set(volume, fadeTime);
+}
+
+void SoundHandle::SetPan(float pan, float fadeTime) {
+    pan_.Set(pan, fadeTime);
+}
+
+Result SoundHandle::GetDataTime(float* time) const {
+    *time = 0.0f;
+    SystemCore* core = static_cast<SystemCore*>(SoundCore::instance_);
+    if (core == nullptr) {
+        return Result(-12);
+    }
+    VoiceHandle* voice = core->GetVoiceHandle(voiceId_);
+    if (voice == nullptr) {
+        return Result(-29);
+    }
+    const WaveSource* source = voice->stream_ != nullptr ? &voice->stream_->source_ : voice->source_;
+    *time = source->loaded_ ? source->format_.data.pad_14 / source->format_.data.sampleRate : 0.0f;
+    return set_result(Result(0));
 }
 
 float SoundHandle::GetDistanceVolume() const {
