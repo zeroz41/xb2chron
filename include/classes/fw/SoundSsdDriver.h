@@ -62,7 +62,7 @@ public:
     SoundSsdDriver(mm::mtl::IAllocator* allocator, unsigned int handleCount);
     virtual ~SoundSsdDriver();  // slot 0
     virtual void update(fw::UpdateInfo const&);  // slot 2
-    virtual void finalize();  // slot 3
+    virtual bool finalize();  // slot 3
     virtual void updateDebugInfo(mm::mtl::FixedVector<fw::SoundHandleDebugInfo, 128ul>&, mm::mtl::FixedVector<fw::SoundCategoryDebugInfo, 18ul>&);  // slot 4
     virtual void setListeningPoint(mm::Mat44 const&);  // slot 5
     virtual const mm::Mat44& getListeningPoint() const;  // slot 6

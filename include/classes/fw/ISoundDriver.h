@@ -31,7 +31,7 @@ class ISoundDriver {
 public:
     virtual ~ISoundDriver() {}  // slot 0
     virtual void update(fw::UpdateInfo const&) = 0;  // slot 2
-    virtual void finalize() = 0;  // slot 3
+    virtual bool finalize() = 0;  // slot 3 (SoundManager::finalize tests the result)
     virtual void updateDebugInfo(mm::mtl::FixedVector<fw::SoundHandleDebugInfo, 128ul>&, mm::mtl::FixedVector<fw::SoundCategoryDebugInfo, 18ul>&) = 0;  // slot 4
     virtual void setListeningPoint(mm::Mat44 const&) = 0;  // slot 5
     virtual const mm::Mat44& getListeningPoint() const = 0;  // slot 6

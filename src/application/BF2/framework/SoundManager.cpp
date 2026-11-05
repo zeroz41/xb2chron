@@ -5,6 +5,9 @@
 #include "classes/fw/FrameworkMemory.h"
 #include "fw/UpdateInfo.h"
 #include "mm/Math.h"
+#include "classes/fw/SoundPack.h"
+#include "ml/PathUtil.h"
+#include <string.h>
 
 namespace fw {
 SoundManager::UniqueID SoundManager::m_uniqueID = {0, 1, 0xFFFFFFFF};
@@ -41,6 +44,90 @@ void SoundManager::attachPoolMemory(void* memory, unsigned int size) {
     }
 }
 
+void SoundManager::loadBattleSe() {
+    if (m_battleWeaponSe != nullptr) {
+        m_battleWeaponSe->release();
+        m_battleWeaponSe = nullptr;
+    }
+    if (m_battleElemSe != nullptr) {
+        m_battleElemSe->release();
+        m_battleElemSe = nullptr;
+    }
+    if (m_battleSystemSe != nullptr) {
+        m_battleSystemSe->release();
+        m_battleSystemSe = nullptr;
+    }
+    SoundResource::SetupInfo info;
+    info.pad_0 = 3;
+    info.pad_4 = 0;
+    info.pad_8 = 0x20;
+    m_battleSystemSe = SoundResource::request(FrameworkMemory::getAllocator(6), "/sound/se/se_btl_system.xsp", info,
+                                              static_cast<LOAD_PRIO>(10));
+    info.pad_8 = 8;
+    m_battleElemSe = SoundResource::request(FrameworkMemory::getAllocator(6), "/sound/se/se_btl_elem.xsp", info,
+                                            static_cast<LOAD_PRIO>(10));
+    info.pad_8 = 8;
+    m_battleWeaponSe = SoundResource::request(FrameworkMemory::getAllocator(6), "/sound/se/se_btl_weapon.xsp", info,
+                                              static_cast<LOAD_PRIO>(10));
+}
+
+void SoundManager::loadCommonSe() {
+    if (m_commonSe != nullptr) {
+        m_commonSe->release();
+        m_commonSe = nullptr;
+    }
+    SoundResource::SetupInfo info;
+    info.pad_0 = 3;
+    info.pad_4 = 0;
+    info.pad_8 = 0x20;
+    const char* path = "/sound/se/common.xsp";
+    if (mm::mtl::PtrSingleton<Framework>::get() != nullptr && m_dlc) {
+        path = "/sound/se/dlc_common.xsp";
+    }
+    m_commonSe = SoundResource::request(FrameworkMemory::getAllocator(6), path, info, static_cast<LOAD_PRIO>(10));
+}
+
+bool SoundManager::finalize() {
+    if (m_battleWeaponSe != nullptr) {
+        m_battleWeaponSe->release();
+        m_battleWeaponSe = nullptr;
+    }
+    if (m_battleElemSe != nullptr) {
+        m_battleElemSe->release();
+        m_battleElemSe = nullptr;
+    }
+    if (m_battleSystemSe != nullptr) {
+        m_battleSystemSe->release();
+        m_battleSystemSe = nullptr;
+    }
+    if (m_commonSe != nullptr) {
+        m_commonSe->release();
+        m_commonSe = nullptr;
+    }
+    if (m_driver != nullptr) {
+        if (m_pauseCount > 0) {
+            do {
+                pauseAll(false, 0.0f);
+            } while (m_pauseCount > 0);
+        }
+        for (int i = 0; i < m_references.size(); ++i) {
+            if (m_references[i] != nullptr) {
+                m_references[i]->release();
+                m_references[i] = nullptr;
+            }
+        }
+        m_references.clear();
+        if (!m_driver->finalize()) {
+            return false;
+        }
+        if (m_driver != nullptr) {
+            delete m_driver;
+            m_driver = nullptr;
+        }
+    }
+    return true;
+}
+
 void SoundManager::pauseAll(bool pause, float fade) {
     if (isDriverEnable()) {
         if (pause) {
@@ -56,6 +143,19 @@ void SoundManager::pauseAll(bool pause, float fade) {
     }
 }
 
+void SoundManager::update(const UpdateInfo& info) {
+    if (isFinalized() || m_driver == nullptr) {
+        return;
+    }
+    float volume = m_volume.current * m_volume2.current;
+    m_volume.update(info.m_deltaTime);
+    m_volume2.update(info.m_deltaTime);
+    if (mm::fabs(m_volume.current * m_volume2.current - volume) > 1e-06f) {
+        m_driver->setMasterVolume(m_volume.current * m_volume2.current);
+    }
+    m_driver->update(info);
+}
+
 void SoundManager::tail(const UpdateInfo&) {
     if (isFinalized()) {
         return;
@@ -64,6 +164,16 @@ void SoundManager::tail(const UpdateInfo&) {
 
 mm::mtl::IAllocator* SoundManager::getProcAllocator() {
     return FrameworkMemory::getAllocator(7);
+}
+
+unsigned int SoundManager::getUniqueID(SoundCategory category) {
+    m_uniqueID.current++;
+    if (m_uniqueID.current > m_uniqueID.max) {
+        m_uniqueID.current = m_uniqueID.min;
+    } else if (m_uniqueID.current < m_uniqueID.min) {
+        m_uniqueID.current = m_uniqueID.min;
+    }
+    return m_uniqueID.current | (category << 24);
 }
 
 void SoundManager::setListeningPoint(const mm::Mat44& mtx) {
@@ -137,6 +247,52 @@ SoundPack* SoundManager::getCommonPack() {
         return findPack("dlc_common", nullptr);
     }
     return findPack("common", nullptr);
+}
+
+SoundPack* SoundManager::findPack(const char* name, mm::mtl::IAllocator* allocator) {
+    mm::mtl::FixStr<256> path(name);
+    mm::mtl::FixStr<64> fileName = ml::PathUtil::getNoPathExtName(path.m_str);
+    if (fileName.m_nLen == path.m_nLen) {
+        for (mm::mtl::List<SoundPack*>::iterator it = m_packs.begin(); it != m_packs.end(); ++it) {
+            SoundPack* pack = *it;
+            if (strcasecmp(pack->m_fileName.m_str, fileName.m_str) == 0 &&
+                (allocator == nullptr || pack->m_allocator == allocator)) {
+                return pack;
+            }
+        }
+    } else {
+        for (mm::mtl::List<SoundPack*>::iterator it = m_packs.begin(); it != m_packs.end(); ++it) {
+            SoundPack* pack = *it;
+            if (strcasecmp(pack->m_name.m_str, name) == 0 && (allocator == nullptr || pack->m_allocator == allocator)) {
+                return pack;
+            }
+        }
+    }
+    return nullptr;
+}
+
+unsigned int SoundManager::playSe(unsigned int id, SoundPack* pack, float volume, SoundCategory category) {
+    if (!isDriverEnable()) {
+        return 0;
+    }
+    if (pack == nullptr) {
+        pack = getCommonPack();
+    } else {
+        mm::mtl::List<SoundPack*>::iterator it = m_packs.begin();
+        for (; it != m_packs.end(); ++it) {
+            if (*it == pack) {
+                break;
+            }
+        }
+        if (it == m_packs.end()) {
+            return 0;
+        }
+    }
+    unsigned int handle = m_driver->playSe(id, pack, volume, category);
+    if (handle != 0 && isDriverEnable() && m_pauseCount != 0) {
+        m_driver->pause(handle, true, 0.0f);
+    }
+    return handle;
 }
 
 void SoundManager::stopSe(unsigned int handle, float fade) {

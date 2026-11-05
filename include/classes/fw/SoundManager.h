@@ -33,7 +33,10 @@ public:
     virtual void tail(fw::UpdateInfo const&);  // slot 9
 
     void attachPoolMemory(void* memory, unsigned int size);
-    bool loadBattleSe();
+    void loadBattleSe();
+    // releases m_commonSe and requests it again (dlc_common.xsp when m_dlc); tl::TitleStateChangeGameType::update
+    // calls it
+    void loadCommonSe();
     void pauseAll(bool pause, float fade);
     // a member: fw::SoundSsdDriver calls it on the instance (its this unused)
     mm::mtl::IAllocator* getProcAllocator();
@@ -112,7 +115,7 @@ public:
                 timer = time;
                 current = target;
             } else {
-                current = start + (timer / time) * (target - start);
+                current = start + (target - start) * (timer / time);
             }
         }
         float current;
