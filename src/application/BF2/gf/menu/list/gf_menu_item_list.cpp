@@ -13,6 +13,9 @@
 #include "classes/gf/SCOM_ADD_ITEM.h"
 #include "plugin/Bdat.h"
 #include "classes/gf/GfMenuIDList.h"
+#include "gf/GfQuestUtil.h"
+#include "gf/GfQuestReward.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace gf {
 
@@ -84,6 +87,34 @@ void GfMenuItemList::updateCount() {
         MenuItemInfo& item = getContents(i);
         if (GfMenuItemUtil::canCountStack(item.m_type) && item.m_id != 0) {
             item.m_count = GfItemUtil::getItemBoxCount(item.m_id);
+        }
+    }
+}
+
+void GfMenuItemList::setupFromQuestReward(const QuestRewardSetup& setup) {
+    mm::mtl::FixedVector<MenuItemInfo, 4> items;
+    GfQuestReward reward;
+    if (setup.m_reward == 0 || !GfQuestUtil::getReward(reward, setup.m_reward, false)) {
+        return;
+    }
+    for (unsigned int i = 8; i < 12; ++i) {
+        unsigned short id = reward.m_items[i].m_low;
+        if (id != 0) {
+            MenuItemInfo item;
+            item.m_type = GfDataItem::getItemType(id);
+            item.m_id = id;
+            item.m_count = reward.m_items[i].m_high;
+            items.push_back(item);
+        }
+    }
+    if (items.empty()) {
+        clear();
+        return;
+    }
+    UIListInfo<MenuItemInfo>::setup(getAllocator(ALLOCATOR(0)), setup.m_setup);
+    if (isValid()) {
+        for (unsigned int i = 0; i < items.size(); ++i) {
+            addContents(items[i]);
         }
     }
 }
