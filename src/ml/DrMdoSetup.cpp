@@ -119,6 +119,126 @@ void DrMdoCtl::setOffsetPos(const mm::Vec3& pos) {
     m_offsetPos = pos;
 }
 
+void DrMdoCtl::partsShadowBaseRender(const MdsMdlTopHeader* top) {
+    int num = top->m_infoNum;
+    if (num <= 0) {
+        return;
+    }
+    DrShdDataList* list = m_pDrMan->m_shdMan->m_dataList;
+    const MdsMdlInfoHeader* info = reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs);
+    for (int i = 0; i < num; i++, info++) {
+        if ((info->m_shadowFlags & 0x40) && !(info->m_flags & 0x20000)) {
+            if (!((m_pWrkMatRes->m_pMatInfo + info->m_matIdx)->m_shdFlags & 0x4)) {
+                const MdsMatInfoHeader* mat = &m_pWrkMatRes->m_pMatInfo[info->m_matIdx];
+                m_pWrkMatRes->m_pVertex->setVertexBind(info->m_vtxBindIdx);
+                int matIdx = info->m_matIdx;
+                DrMdoShdSetShadow shd;
+                shd.m_pMdl = this;
+                (shd.*DrMdoShdSetShadow::s_pShwMaterial[3])(3, mat, 0, matIdx, list);
+                DrResMdoVertex* vtx = m_pWrkMatRes->m_pVertex;
+                if (info->m_flags & 0x2000) {
+                    vtx->render(info->m_renderIdx[1]);
+                } else {
+                    vtx->render(info->m_renderIdx[0]);
+                }
+            }
+        }
+    }
+}
+
+void DrMdoCtl::partsShadowNukiBaseRender(const MdsMdlTopHeader* top) {
+    int num = top->m_infoNum;
+    if (num <= 0) {
+        return;
+    }
+    DrShdDataList* list = m_pDrMan->m_shdMan->m_dataList;
+    const MdsMdlInfoHeader* info = reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs);
+    for (int i = 0; i < num; i++, info++) {
+        if ((info->m_shadowFlags & 0x40) && !(info->m_flags & 0x20000)) {
+            const MdsMatInfoHeader* mat = m_pWrkMatRes->m_pMatInfo + info->m_matIdx;
+            if (mat->m_shdFlags & 0x4) {
+                m_pWrkMatRes->m_pVertex->setVertexBind(info->m_vtxBindIdx);
+                int matIdx = info->m_matIdx;
+                if (mat->m_shdFlags & 0x8) {
+                    DrMdoShdSetShadow shd;
+                    shd.m_pMdl = this;
+                    (shd.*DrMdoShdSetShadow::s_pShwMaterial[5])(5, mat, 0, matIdx, list);
+                } else {
+                    DrMdoShdSetShadow shd;
+                    shd.m_pMdl = this;
+                    (shd.*DrMdoShdSetShadow::s_pShwMaterial[4])(4, mat, 0, matIdx, list);
+                }
+                DrResMdoVertex* vtx = m_pWrkMatRes->m_pVertex;
+                if (info->m_flags & 0x2000) {
+                    vtx->render(info->m_renderIdx[1]);
+                } else {
+                    vtx->render(info->m_renderIdx[0]);
+                }
+            }
+        }
+    }
+}
+
+void DrMdoCtl::partsPosShadowRender(const MdsMdlTopHeader* top) {
+    int num = top->m_infoNum;
+    if (num <= 0) {
+        return;
+    }
+    DrShdDataList* list = m_pDrMan->m_shdMan->m_dataList;
+    DrAPCache* cache = m_pDrMan->m_apCache;
+    const MdsMdlInfoHeader* info = reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs);
+    for (int i = 0; i < num; i++, info++) {
+        if (info->m_shadowFlags & 0x40) {
+            const MdsMatInfoHeader* mat = m_pWrkMatRes->m_pMatInfo + info->m_matIdx;
+            if (!(mat->m_shdFlags & 0x4) && !(info->m_flags & 0x20000)) {
+                m_pWrkMatRes->m_pVertex->setVertexBind(info->m_vtxBindIdx);
+                cache->setupCulling(static_cast<DrApCullType>((m_mdlFlags & 0x80) ? 2 : mat->m_cullType));
+                int matIdx = info->m_matIdx;
+                DrMdoShdSetShadow shd;
+                shd.m_pMdl = this;
+                (shd.*DrMdoShdSetShadow::s_pShwMaterial[3])(3, mat, 0, matIdx, list);
+                DrResMdoVertex* vtx = m_pWrkMatRes->m_pVertex;
+                if (info->m_flags & 0x2000) {
+                    vtx->render(info->m_renderIdx[1]);
+                } else {
+                    vtx->render(info->m_renderIdx[0]);
+                }
+            }
+        }
+    }
+}
+
+void DrMdoCtl::partsPosNukiShadowRender(const MdsMdlTopHeader* top) {
+    int num = top->m_infoNum;
+    if (num <= 0) {
+        return;
+    }
+    DrShdDataList* list = m_pDrMan->m_shdMan->m_dataList;
+    DrAPCache* cache = m_pDrMan->m_apCache;
+    const MdsMdlInfoHeader* info = reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs);
+    for (int i = 0; i < num; i++, info++) {
+        if (info->m_shadowFlags & 0x40) {
+            const MdsMatInfoHeader* mat = m_pWrkMatRes->m_pMatInfo + info->m_matIdx;
+            if ((mat->m_shdFlags & 0x4) && !(info->m_flags & 0x20000) && m_pWrkMatRes->m_ppTexture != nullptr &&
+                mat->m_texEntryNum != 0) {
+                m_pWrkMatRes->m_pVertex->setVertexBind(info->m_vtxBindIdx);
+                cache->setupCulling(static_cast<DrApCullType>((m_mdlFlags & 0x80) ? 2 : mat->m_cullType));
+                int shdIdx = (mat->m_shdFlags & 0x8) ? 5 : 4;
+                int matIdx = info->m_matIdx;
+                DrMdoShdSetShadow shd;
+                shd.m_pMdl = this;
+                (shd.*DrMdoShdSetShadow::s_pShwMaterial[shdIdx])(shdIdx, mat, 0, matIdx, list);
+                DrResMdoVertex* vtx = m_pWrkMatRes->m_pVertex;
+                if (info->m_flags & 0x2000) {
+                    vtx->render(info->m_renderIdx[1]);
+                } else {
+                    vtx->render(info->m_renderIdx[0]);
+                }
+            }
+        }
+    }
+}
+
 void DrMdoCtlDammy::resourceInit() {}
 
 void DrMdoCtlDammy::update() {}
@@ -4060,7 +4180,7 @@ const unsigned char* DrMdoShdSetShadow::s_pShwFethcTbl[2] = {s_pShwFethcDef, s_p
 
 void DrMdoShdSetShadow::shwShd_Obj(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list) {
     DrResShdShw* obj = list->getShwObj(s_pShwUseShdader[shd]);
-    DrMdlObj* mdl = m_pMdl;
+    DrMdoCtl* mdl = m_pMdl;
     if (info->m_shdFlags & 0x8000) {
         if (mdl->m_bindFlags[1] != 1) {
             mdl->m_bindFlags[1] = 1;
@@ -4298,7 +4418,7 @@ void DrMdoShdSetMpf::mpfshd_cull_fade_mdl(DrResShdMpf*, DrShdDataList*, const Md
 void DrMdoShdSetPrePass::preshd_Obj(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list,
                                     PrePassType type) {
     DrResShdPrePass* obj = list->getPrePassObj(shd);
-    DrMdlObj* mdl = m_pMdl;
+    DrMdoCtl* mdl = m_pMdl;
     if (info->m_shdFlags & 0x8000) {
         if (mdl->m_bindFlags[1] != 1) {
             mdl->m_bindFlags[1] = 1;

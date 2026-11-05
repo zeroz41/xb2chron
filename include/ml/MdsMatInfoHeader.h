@@ -18,7 +18,13 @@ struct MdsMatInfoHeader {
     // 0x20, from MdoWrkMatRes::m_pMatData: this material's MdsMatTexEntry list; DrMdoSetup::unimate_DollTexWork
     // indexes it by MdsMatVariableTbl::m_valIdx (name inferred)
     unsigned int m_texEntryOfs;
-    unsigned char pad_24[0x1C];
+    // 0x24: DrMdoCtl::partsPosNukiShadowRender skips materials where it is 0 (name inferred: the m_texEntryOfs
+    // list's length)
+    int m_texEntryNum;
+    unsigned char pad_28[0x2];
+    // 0x2A: the DrApCullType DrMdoCtl's parts passes give DrAPCache::setupCulling (name inferred)
+    unsigned char m_cullType;
+    unsigned char pad_2B[0x15];
     unsigned int m_uniformOfs;  // 0x40, this material's first slot in MdoWrkMatRes::m_pUniformVal
     unsigned char pad_44[0x12];
     // 0x56: this material's entry in MdoWrkMatRes::m_pAvatarMap (DrMdoSetup::unimate_AvatarMapWrk; name inferred)

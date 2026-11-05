@@ -125,7 +125,14 @@ struct MdsMdlInfoHeader {
     // 0x4: the passes the part is drawn in; DrMdoCtlSeamEnvMap's passes test bit 0 (render), 3 (gbuffer),
     // 5 (light pre-pass), 1 (alpha), 6 (sp alpha), 2 (refraction). The name is not the original's.
     unsigned char m_passFlags;
-    unsigned char pad_5[0x9];
+    // 0x5, bit 6: the part casts a shadow (DrMdoCtl::partsShadowBaseRender and the partsPos*ShadowRender passes
+    // draw only these; the name is not the original's)
+    unsigned char m_shadowFlags;
+    unsigned char pad_6[0x2];
+    // 0x8: the DrResMdoVertex bind entry (setVertexBind's index); 0xA/0xC: the DrResMdoVertex::render index, 0xC
+    // while m_flags bit 13 is set (the names are not the original's)
+    unsigned short m_vtxBindIdx;
+    unsigned short m_renderIdx[2];
     // 0xE: index into MdoWrkMatRes::m_pResMat; the part is drawn while that material's alpha is above 0 (the name
     // is not the original's)
     unsigned short m_matIdx;
@@ -205,7 +212,9 @@ struct MdoWrkMatRes {
     unsigned char pad_98[0x8];
     // 0xA0: DrResMdoSeamWrkEnv::setupWork hands it the triangle uniform array; the name is not the original's
     grlib::CGLibTriUniformArray* m_pTriUniformArray;
-    unsigned char pad_A8[0x8];
+    // 0xA8: DrMdoCtl::partsShadowRender binds it through DrResMdoVertex::setMofBlendVertexBind for parts with
+    // MdsMdlInfoHeader::m_flags bit 24 (the name is not the original's)
+    grlib::CGLibOneUniformArray* m_pMofBlendArray;
     // 0xB0 and 0xB8: DrMdoSetup::uniformBlock_VolTexCalc and uniformBlock_RimBloomCalc bind one of their blocks
     // (the names are not the original's)
     grlib::CGLibUniformArray<grlib::CGLibDblUniformBlock>* m_pVolTexUniformArray;
