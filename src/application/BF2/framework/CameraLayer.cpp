@@ -94,6 +94,12 @@ void CameraLayer::popPlugin(mm::mtl::IntrusivePtr<CameraPlugin>& plugin) {
     plugin->release();
 }
 
+mm::Vec3 CameraLayer::getCameraPosition() const {
+    mm::Mat44 mtx(m_viewMtx);
+    mtx.inverse();
+    return mtx.getTrans();
+}
+
 }  // namespace fw
 
 mm::mtl::RTTI fw::CameraTarget::m_rtti("CameraTarget", nullptr, nullptr);

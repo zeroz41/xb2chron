@@ -24,6 +24,8 @@
 
 // the alignment a matrix keeps (its copy asserts it of the source)
 #define MM_MAT_ALIGN 16
+// the smallest magnitude mm treats as nonzero (Mat44::inverse's determinant assertion)
+#define MM_FLOAT_EPSILON 1e-6f
 
 namespace mm {
 
@@ -140,6 +142,65 @@ public:
     }
     // its translation row (the name is not the original's)
     Vec3 getTrans() const { return Vec3(m[3][0], m[3][1], m[3][2]); }
+    // this matrix inverted in place by its signed cofactors: each 3x3 minor expanded along its first row, the
+    // determinant from row 0's asserted first (mm_mat44.h line 2993), then the others in the order of the rows
+    // they fill (the original's fneg of row 0's odd cofactors stays before the assertion; fw::CameraLayer::
+    // getCameraPosition inlines it, as do getMtx, event::PosAxis::calcOrigMatInv and about 25 more; the name is
+    // not the original's)
+    __attribute__((always_inline)) void inverse() {
+        float c00 = m[1][1] * (m[2][2] * m[3][3] - m[2][3] * m[3][2]) - m[1][2] * (m[2][1] * m[3][3] - m[2][3] * m[3][1]) +
+                    m[1][3] * (m[2][1] * m[3][2] - m[2][2] * m[3][1]);
+        float c01 = -(m[1][0] * (m[2][2] * m[3][3] - m[2][3] * m[3][2]) - m[1][2] * (m[2][0] * m[3][3] - m[2][3] * m[3][0]) +
+                    m[1][3] * (m[2][0] * m[3][2] - m[2][2] * m[3][0]));
+        float c02 = m[1][0] * (m[2][1] * m[3][3] - m[2][3] * m[3][1]) - m[1][1] * (m[2][0] * m[3][3] - m[2][3] * m[3][0]) +
+                    m[1][3] * (m[2][0] * m[3][1] - m[2][1] * m[3][0]);
+        float c03 = -(m[1][0] * (m[2][1] * m[3][2] - m[2][2] * m[3][1]) - m[1][1] * (m[2][0] * m[3][2] - m[2][2] * m[3][0]) +
+                    m[1][2] * (m[2][0] * m[3][1] - m[2][1] * m[3][0]));
+        float det = m[0][0] * c00 + m[0][1] * c01 + m[0][2] * c02 + m[0][3] * c03;
+#line 2993 MM_MAT44_PATH
+        MM_ASSERT(mm::abs(det) > MM_FLOAT_EPSILON);
+        float c10 = -(m[0][1] * (m[2][2] * m[3][3] - m[2][3] * m[3][2]) - m[0][2] * (m[2][1] * m[3][3] - m[2][3] * m[3][1]) +
+                    m[0][3] * (m[2][1] * m[3][2] - m[2][2] * m[3][1]));
+        float c20 = m[0][1] * (m[1][2] * m[3][3] - m[1][3] * m[3][2]) - m[0][2] * (m[1][1] * m[3][3] - m[1][3] * m[3][1]) +
+                    m[0][3] * (m[1][1] * m[3][2] - m[1][2] * m[3][1]);
+        float c30 = -(m[0][1] * (m[1][2] * m[2][3] - m[1][3] * m[2][2]) - m[0][2] * (m[1][1] * m[2][3] - m[1][3] * m[2][1]) +
+                    m[0][3] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]));
+        float c11 = m[0][0] * (m[2][2] * m[3][3] - m[2][3] * m[3][2]) - m[0][2] * (m[2][0] * m[3][3] - m[2][3] * m[3][0]) +
+                    m[0][3] * (m[2][0] * m[3][2] - m[2][2] * m[3][0]);
+        float c21 = -(m[0][0] * (m[1][2] * m[3][3] - m[1][3] * m[3][2]) - m[0][2] * (m[1][0] * m[3][3] - m[1][3] * m[3][0]) +
+                    m[0][3] * (m[1][0] * m[3][2] - m[1][2] * m[3][0]));
+        float c31 = m[0][0] * (m[1][2] * m[2][3] - m[1][3] * m[2][2]) - m[0][2] * (m[1][0] * m[2][3] - m[1][3] * m[2][0]) +
+                    m[0][3] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]);
+        float c12 = -(m[0][0] * (m[2][1] * m[3][3] - m[2][3] * m[3][1]) - m[0][1] * (m[2][0] * m[3][3] - m[2][3] * m[3][0]) +
+                    m[0][3] * (m[2][0] * m[3][1] - m[2][1] * m[3][0]));
+        float c22 = m[0][0] * (m[1][1] * m[3][3] - m[1][3] * m[3][1]) - m[0][1] * (m[1][0] * m[3][3] - m[1][3] * m[3][0]) +
+                    m[0][3] * (m[1][0] * m[3][1] - m[1][1] * m[3][0]);
+        float c32 = -(m[0][0] * (m[1][1] * m[2][3] - m[1][3] * m[2][1]) - m[0][1] * (m[1][0] * m[2][3] - m[1][3] * m[2][0]) +
+                    m[0][3] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]));
+        float c13 = m[0][0] * (m[2][1] * m[3][2] - m[2][2] * m[3][1]) - m[0][1] * (m[2][0] * m[3][2] - m[2][2] * m[3][0]) +
+                    m[0][2] * (m[2][0] * m[3][1] - m[2][1] * m[3][0]);
+        float c23 = -(m[0][0] * (m[1][1] * m[3][2] - m[1][2] * m[3][1]) - m[0][1] * (m[1][0] * m[3][2] - m[1][2] * m[3][0]) +
+                    m[0][2] * (m[1][0] * m[3][1] - m[1][1] * m[3][0]));
+        float c33 = m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
+                    m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+        float invDet = 1.0f / det;
+        m[0][0] = c00 * invDet;
+        m[0][1] = c10 * invDet;
+        m[0][2] = c20 * invDet;
+        m[0][3] = c30 * invDet;
+        m[1][0] = c01 * invDet;
+        m[1][1] = c11 * invDet;
+        m[1][2] = c21 * invDet;
+        m[1][3] = c31 * invDet;
+        m[2][0] = c02 * invDet;
+        m[2][1] = c12 * invDet;
+        m[2][2] = c22 * invDet;
+        m[2][3] = c32 * invDet;
+        m[3][0] = c03 * invDet;
+        m[3][1] = c13 * invDet;
+        m[3][2] = c23 * invDet;
+        m[3][3] = c33 * invDet;
+    }
     // this = ma * mb (the name is not the original's)
     __attribute__((always_inline)) void mul(const Mat44& ma, const Mat44& mb) { *this = ma * mb; }
     void addTrans(float x, float y, float z) {

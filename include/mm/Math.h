@@ -70,6 +70,11 @@ inline float normalizeRadian(float r) {
     return r;
 }
 
+// a float's magnitude by fabsf (Mat44::inverse's determinant assertion compiles to fabs, not a select)
+inline float abs(float x) {
+    return ::fabsf(x);
+}
+
 // a value's magnitude in its own type: a short's comes back as a short (UIObjectOffsetPlugin::execute)
 template <typename T>
 inline T abs(T x) {
