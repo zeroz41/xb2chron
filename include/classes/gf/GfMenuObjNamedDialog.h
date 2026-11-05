@@ -13,6 +13,7 @@ namespace gf {
 // TXT_en_record_time, TXT_en_diff)
 class GfMenuObjNamedDialog : public ::gf::GfMenuObject {
 public:
+    class MainListener;
     GfMenuObjNamedDialog(unsigned int handle);
     virtual ~GfMenuObjNamedDialog();  // slot 0
     virtual void initialize();  // slot 2
@@ -31,14 +32,17 @@ public:
     GfMenuIDList* m_list;  // the enemy shown, as a one-entry list for the adapters (the name is not the original's)
 };
 
-// table 0x7100B638A8: GfMenuObjNamedDialog's listener (nothing names the class yet)
-class TUnk_B638A8 : public ::ui::UIObjectListener {
+// table 0x7100B638A8: GfMenuObjNamedDialog's listener (2.0.0's symbols name it)
+class GfMenuObjNamedDialog::MainListener : public ::ui::UIObjectListener {
 public:
     // its code zeroes 0xC-0x1B after storing its table: its own fields, as other menus' listeners use theirs
-    TUnk_B638A8(GfMenuObjNamedDialog* owner) : pad_0C(), m_owner(owner) {}
-    virtual ~TUnk_B638A8() {}  // slot 0: its D1 slot is the base's destructor
-    virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
-    unsigned char pad_0C[0x10];
+    MainListener(GfMenuObjNamedDialog* owner) : m_state(), pad_10(), m_owner(owner) {}
+    virtual ~MainListener() {}  // slot 0: its D1 slot is the base's destructor
+    // slot 2. 1 hides the object; 3 with parameter 2 clears the owner's list; 0x21 (open's open, the event's
+    // first parameter the named row) shows that enemy, the difficulty and its record and fades in; 0x22 fades out
+    virtual void reciveEvent(ui::EventData const&, unsigned int);
+    int m_state;  // 1 while shown (set by the open event, cleared by close); the name is not the original's
+    unsigned char pad_10[0xC];
     GfMenuObjNamedDialog* m_owner;  // what initialize makes it for
 };
 }  // namespace gf

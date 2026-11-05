@@ -24,6 +24,8 @@ void GfMenuObjQuestReward::open(GfMenuCallContext* context, bool flag) {
     }
 }
 
+// create (0x710046E440): wip only, its listener construction stores 0x30/0x38 before 0xC-0x23 in the original
+
 void GfMenuObjQuestReward::initialize() {
     ui::UIObjectAcc acc(m_handle, "LAY_main");
     if (acc.m_object != nullptr) {
@@ -32,6 +34,8 @@ void GfMenuObjQuestReward::initialize() {
         acc.setSuspend(true);
     }
 }
+
+GfMenuObjQuestReward::RewardListener::~RewardListener() {}
 
 void GfMenuObjQuestReward::finalize() {
     GfMenuObject::finalize();
