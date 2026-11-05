@@ -15,6 +15,8 @@ struct ElapseTime {
     unsigned int min : 6;
     unsigned int hour : 20;
 };
+// the time from b to a, zero when b is later (gf_field_time.cpp)
+ElapseTime operator-(const ElapseTime& a, const ElapseTime& b);
 
 // the console's date and time in 64 bits, as GfMenuGameAdapter's update_RealYear and update_RealTime read them
 struct RealTime {

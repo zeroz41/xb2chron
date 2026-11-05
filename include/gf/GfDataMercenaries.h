@@ -49,8 +49,8 @@ public:
     static bool isTeamStateEmpty(unsigned int teamId);
     static bool isTeamStateReward(unsigned int teamId);  // the team is back with a reward to collect
     // the teams on a zone's missions, working on them or done with them
-    static void getTeamByZoneMissionWorking(mm::mtl::FixedVector<unsigned short, 3>& teams, unsigned int zone);
-    static void getTeamByZoneMissionComplete(mm::mtl::FixedVector<unsigned short, 3>& teams, unsigned int zone);
+    static bool getTeamByZoneMissionWorking(mm::mtl::FixedVector<unsigned short, 3>& teams, unsigned int zone);
+    static bool getTeamByZoneMissionComplete(mm::mtl::FixedVector<unsigned short, 3>& teams, unsigned int zone);
     static bool isTeamStateExpedition(unsigned int teamId);  // the team is away on a mission
     static int getMissionCategory(unsigned int mission);
     static bool isNewMission(unsigned int mission);
@@ -73,6 +73,8 @@ public:
     static QuestID getMissionQuestID(unsigned int mission);
     static unsigned int getMissionTime(unsigned int mission);
     static bool getRequestCondition(GfRequestBladeData& data, unsigned int mission, unsigned int slot);
+    // the first blade (1001-1422) a party condition of the task after the mission's quest names, 0 for none
+    static unsigned int getBladeWithLeader(unsigned int mission);
     static bool isValidTeamID(unsigned int teamId);
     static unsigned int getTeamLeader(unsigned int teamId);  // the team's leader blade, 0 for none
     static unsigned int getTeamMission(unsigned int teamId);  // the mission the team is on, 0 for none
@@ -96,7 +98,8 @@ public:
     static bool getReserver(mm::mtl::FixedVector<unsigned short, 422>& list);  // false for none
     static unsigned int getTeamMax();
     static void addTeam();
-    static void decTeamMissionTime(unsigned int teamId, float time);
+    // counts the frame time toward the team's mission time; true when that time just ran out
+    static bool decTeamMissionTime(unsigned int teamId, float time);
     static void setMissionFlag(unsigned int mission, unsigned int flag);
     static int getMissionTaskType(unsigned int mission);
     // the reward set of the mission's quest: B once the mission was completed and is repeatable, else A

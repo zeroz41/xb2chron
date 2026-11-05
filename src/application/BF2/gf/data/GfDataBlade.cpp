@@ -36,6 +36,8 @@
 #include "classes/gf/GfBdatChrEnParam.h"
 #include "classes/gf/GfBdatBlade.h"
 #include "string.h"
+#include "math.h"
+#include "classes/gf/GfBdatCond.h"
 #include "classes/gf/GfBdatBtl.h"
 #include "classes/gf/GfBdatItem.h"
 #include "classes/gf/GfBdatMaplist.h"
@@ -786,6 +788,20 @@ unsigned int GfDataMercenaries::getMissionFlag(unsigned int mission) {
     return GfGameFlag::getLocal(4, mission + 5);
 }
 
+bool GfDataMercenaries::getTeamByZoneMissionWorking(mm::mtl::FixedVector<unsigned short, 3>& teams, unsigned int zone) {
+    SDataGame* game = GfDataManager::getDataGame();
+    for (Team* team = game->m_teams.begin(); team != game->m_teams.end(); ++team) {
+        if (team->m_mission == 0 || GfGameFlag::getLocal(4, team->m_mission + 5) != 2) {
+            continue;
+        }
+        unsigned int map = getMissionMapID(team->m_mission);
+        if (map != 0 && GfDataMap::getZoneIdForGameMap(map) == zone) {
+            teams.push_back(team->m_teamId);
+        }
+    }
+    return teams.size() != 0;
+}
+
 unsigned int GfDataMercenaries::getMissionMapID(unsigned int mission) {
     if (mission != 0) {
         QuestID quest = getMissionQuestID(mission);
@@ -803,12 +819,70 @@ unsigned int GfDataMercenaries::getMissionMapID(unsigned int mission) {
     return 0;
 }
 
+bool GfDataMercenaries::getTeamByZoneMissionComplete(mm::mtl::FixedVector<unsigned short, 3>& teams, unsigned int zone) {
+    SDataGame* game = GfDataManager::getDataGame();
+    for (Team* team = game->m_teams.begin(); team != game->m_teams.end(); ++team) {
+        if (!isTeamStateReward(team->m_teamId)) {
+            continue;
+        }
+        unsigned int map = getMissionMapID(team->m_mission);
+        if (map != 0 && GfDataMap::getZoneIdForGameMap(map) == zone) {
+            teams.push_back(team->m_teamId);
+        }
+    }
+    return teams.size() != 0;
+}
+
 bool GfDataMercenaries::isMissionCompleteFlag(unsigned int mission) {
     return GfGameFlag::getLocal(1, mission + 46285) != 0;
 }
 
 void GfDataMercenaries::setMissionCompleteFlag(unsigned int mission) {
     GfGameFlag::setLocal(1, mission + 46285, 1);
+}
+
+unsigned int GfDataMercenaries::getTeamMissionTime(unsigned int teamId, unsigned int mission) {
+    unsigned int time = QuestListAcc::get()->getFLD_MercenariesMissionRequestPerformance(mission);
+    if (time == 0) {
+        return 0;
+    }
+    float result = time;
+    unsigned short* members = getTeamMember(teamId);
+    if (members != nullptr) {
+        float level = 0.0f;
+        for (unsigned int slot = 0; slot < 3; slot++) {
+            unsigned int skill = getFieldSkill(mission, slot);
+            if (skill == 0) {
+                continue;
+            }
+            for (int i = 0; i < 6; i++) {
+                if (members[i] == 0) {
+                    continue;
+                }
+                float bladeLevel = 0.0f;
+                {
+                    DataParamAcc acc(4, members[i], GimmickType(0));
+                    if (acc.isValid()) {
+                        if (acc.getFieldSkill(0, false) == skill) {
+                            bladeLevel = acc.getFieldSkillLevel(0, false);
+                        }
+                        if (acc.getFieldSkill(1, false) == skill) {
+                            bladeLevel += acc.getFieldSkillLevel(1, false);
+                        }
+                        if (acc.getFieldSkill(2, false) == skill) {
+                            bladeLevel += acc.getFieldSkillLevel(2, false);
+                        }
+                    }
+                }
+                level += bladeLevel;
+            }
+        }
+        float shortened = time * (100.0f - level * 6.0f) * 0.01f;
+        float least = time * (QuestListAcc::get()->getFLD_MercenariesConfigValue(17) * 0.01f + 0.001f);
+        result = shortened < least ? least : shortened;
+        result = result < 1.0f ? 1.0f : result;
+    }
+    return result;
 }
 
 bool GfDataMercenaries::isMissionComplete(unsigned int mission) {
@@ -2104,6 +2178,18 @@ GfDataMercenaries::Team* GfDataMercenaries::getTeamByTeamID(unsigned int teamId)
     return nullptr;
 }
 
+unsigned int GfDataMercenaries::getTeamPower(unsigned int teamId) {
+    Team* team = getTeamByTeamID(teamId);
+    if (team == nullptr) {
+        return 0;
+    }
+    unsigned int power = 0;
+    for (int i = 0; i < 6; i++) {
+        power += GfDataBlade::getBladePower(team->m_members[i]);
+    }
+    return power;
+}
+
 bool GfDataMercenaries::isValidTeamID(unsigned int teamId) {
     return getTeamByTeamID(teamId) != nullptr;
 }
@@ -2134,6 +2220,32 @@ unsigned int GfDataMercenaries::getTeamIDByMissionID(unsigned int mission) {
         return 0;
     }
     return team->m_teamId;
+}
+
+bool GfDataMercenaries::decTeamMissionTime(unsigned int teamId, float time) {
+    Team* team = getTeamByTeamID(teamId);
+    if (team == nullptr) {
+        return false;
+    }
+    if (team->m_missionTime.hour == 0 && team->m_missionTime.min == 0 && team->m_missionTime.sec == 0) {
+        return false;
+    }
+    team->m_secondCount += time;
+    float second = team->m_secondCount;
+    unsigned int hour = second / 3600.0f;
+    second = fmodf(second, 3600.0f);
+    unsigned int min = second / 60.0f;
+    second = fmodf(second, 60.0f);
+    unsigned int sec = second;
+    team->m_secondCount = fmodf(second, 1.0f);
+    ElapseTime dec;
+    dec.sec = sec;
+    dec.hour = hour;
+    dec.min = min;
+    ElapseTime remain = team->m_missionTime;
+    team->m_missionTime = team->m_missionTime - dec;
+    bool end = team->m_missionTime.hour == 0 && team->m_missionTime.min == 0 && team->m_missionTime.sec == 0;
+    return !(remain.hour == 0 && remain.min == 0 && remain.sec == 0) && end;
 }
 
 unsigned short* GfDataMercenaries::getTeamMember(unsigned int teamId) {
@@ -3408,6 +3520,26 @@ int GfDataMercenaries::getTeamFemaleNum(unsigned int teamId) {
             SDataGame* game = GfDataManager::getDataGame();
             SDataBlade& data = game->m_blades[index];
             if (data.m_gender == 2 && data.m_questRace == 1) {
+                num++;
+            }
+        }
+    }
+    return num;
+}
+
+int GfDataMercenaries::getTeamAnimalNum(unsigned int teamId) {
+    Team* team = getTeamByTeamID(teamId);
+    if (team == nullptr) {
+        return 0;
+    }
+    int num = 0;
+    for (int i = 0; i < 6; i++) {
+        unsigned int blade = team->m_members[i];
+        if (blade != 0) {
+            unsigned int index = GfDataBlade::getBladeIndex(blade);
+            SDataGame* game = GfDataManager::getDataGame();
+            SDataBlade& data = game->m_blades[index];
+            if (data.m_questRace == 2) {
                 num++;
             }
         }
@@ -5585,6 +5717,95 @@ bool GfDataMercenaries::getMsgSummaryName(unsigned char*& bdat, unsigned int& id
     }
     bdat = GfBdatMsg::getFpQuest(quest);
     return true;
+}
+
+bool GfDataMercenaries::getRequestCondition(GfRequestBladeData& data, unsigned int mission, unsigned int slot) {
+    QuestListAcc* acc = QuestListAcc::get();
+    unsigned int purpose = getMissionPurposeID(mission);
+    if (slot >= 4 || purpose == 0) {
+        return false;
+    }
+    if (acc->getTaskTaskType(purpose, slot) != 9) {
+        return false;
+    }
+    unsigned int id = acc->getTaskTaskID(purpose, slot);
+    if (id == 0) {
+        return false;
+    }
+    data.m_count = acc->getRequestBladeRequestNumber(id);
+    int value = acc->getRequestBladeRequestCategory(id);
+    if (value != 0) {
+        data.m_type = 1;
+        data.m_param = value;
+        return true;
+    }
+    value = acc->getRequestBladeRequestAtr(id);
+    if (value != 0) {
+        data.m_type = 7;
+        data.m_param = value;
+        return true;
+    }
+    value = acc->getRequestBladeRequestPerformance(id);
+    if (value != 0) {
+        data.m_type = 2;
+        data.m_level = value;
+        return true;
+    }
+    value = acc->getRequestBladeRequestRace(id);
+    if (value != 0) {
+        data.m_param = value > 2 ? 1 : value;
+        data.m_type = 3;
+        return true;
+    }
+    value = acc->getRequestBladeRequestGender(id);
+    if (value != 0) {
+        data.m_type = 4;
+        data.m_param = value;
+        return true;
+    }
+    value = acc->getRequestBladeRequestArts(id);
+    int level = acc->getRequestBladeRequestArtsLevel(id);
+    if (value != 0) {
+        data.m_type = 5;
+        data.m_param = value;
+        data.m_level = level;
+        return true;
+    }
+    value = acc->getRequestBladeRequestFSkill(id);
+    level = acc->getRequestBladeRequestFSLevel(id);
+    if (value != 0) {
+        data.m_type = 6;
+        data.m_param = value;
+        data.m_level = level;
+        return true;
+    }
+    return false;
+}
+
+unsigned int GfDataMercenaries::getBladeWithLeader(unsigned int mission) {
+    QuestListAcc* acc = QuestListAcc::get();
+    QuestID quest = acc->getFLD_MercenariesMissionQuestID(mission);
+    unsigned int purpose = acc->getListPurposeID(GfDataQuest::getListNextQuestA(quest));
+    for (unsigned int i = 0; i < 4; i++) {
+        unsigned int cond = acc->getTaskTaskCondition(purpose, i);
+        GfBdatCond* bdat = GfBdatCond::get();
+        for (unsigned int j = 0; j < 8; j++) {
+            if (bdat->getConditionListConditionType(cond, j) != 6) {
+                continue;
+            }
+            unsigned int pt = bdat->getConditionListCondition(cond, j);
+            if (bdat->getConditionPTCategory(pt) != 4) {
+                continue;
+            }
+            for (unsigned int k = 0; k < 3; k++) {
+                unsigned int blade = bdat->getConditionPTPCID(pt, k);
+                if (GfDataBlade::isBladeID(blade)) {
+                    return blade;
+                }
+            }
+        }
+    }
+    return 0;
 }
 
 void GfDataBlade::setCreator(unsigned int blade, unsigned int creator) {
