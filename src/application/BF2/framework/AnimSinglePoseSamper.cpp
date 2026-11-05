@@ -87,8 +87,8 @@ void AnimSinglePoseSamper::samplePose() {
     anm::Util::samplePoseSmartFromControl(m_control, m_pose, m_sampleFlag);
     anm::ExtraTruckBuffer* extra = m_extra;
     if (extra != nullptr) {
-        m_control->sampleExtraTrucks(m_extraIndex, extra->m_count, extra->m_pValues);
-        anm::Util::clampLimitExtraTruck(*m_extra->m_pSlot, extra->m_count, extra->m_pValues);
+        m_control->sampleExtraTrucks(m_extraIndex, static_cast<unsigned int>(extra->m_values.size()), extra->m_values.data());
+        anm::Util::clampLimitExtraTruck(*m_extra->m_pSlot, static_cast<unsigned int>(extra->m_values.size()), extra->m_values.data());
     }
 }
 
@@ -142,7 +142,7 @@ void AnimPoseSamper::samplePose() {
             m_blender->sampleTrucksMS(out.size(), out.data());
         }
         if (m_extra != nullptr) {
-            m_blender->sampleExtraTrucks(m_extraIndex, m_extra->m_count, m_extra->m_pValues);
+            m_blender->sampleExtraTrucks(m_extraIndex, static_cast<unsigned int>(m_extra->m_values.size()), m_extra->m_values.data());
         }
     }
 }
@@ -195,7 +195,7 @@ void AnimAsmPoseSampler::samplePose() {
         m_control->sampleTrucksMS(out.size(), out.data());
     }
     if (m_extra != nullptr) {
-        m_control->sampleExtraTrucks(m_extraIndex, m_extra->m_count, m_extra->m_pValues);
+        m_control->sampleExtraTrucks(m_extraIndex, static_cast<unsigned int>(m_extra->m_values.size()), m_extra->m_values.data());
     }
 }
 
@@ -257,7 +257,7 @@ void AnimEventAsmPoseSampler::samplePose() {
         }
         m_pose->syncModelSpace();
         if (m_extra != nullptr) {
-            m_control->sampleExtraTrucks(m_extraIndex, m_extra->m_count, m_extra->m_pValues);
+            m_control->sampleExtraTrucks(m_extraIndex, static_cast<unsigned int>(m_extra->m_values.size()), m_extra->m_values.data());
         }
     }
 }

@@ -540,3 +540,6 @@ grlib::CGLibOneUniformBlock* DrShdDataList::getAlphaTestUniform(float alpha) {
 }
 
 }  // namespace ml
+
+// DrShdDataList::createWork's list (not written yet)
+template class grlib::CGLibShdListBase<ml::DrShdDataObj>;

@@ -26,11 +26,25 @@ struct ColiCheckConfig {
     bool m_callbackParam;  // testLine and testCapsule copy it into their ColiCheckCallback
 };
 
-// a collision test's hits: room for N in place, their count, how many were found and whether any was
-// (testCapsule clears all three first). The element's layout is not known; the field names are not the original's.
-template <unsigned int N>
-class TColiCheckResult {
-public:
+// one hit of a collision test (the name is the original's: std::sort sorts fw::ContactInfo in
+// EnviromentSensor::searchVertical; the field names are not). Its first 0x30 bytes copy as one unit after a
+// self test, the rest as plain bytes (the sort's swaps).
+struct ContactPoint {
+    ContactPoint() {}
+    ContactPoint(const ContactPoint& other) { *this = other; }
+    ContactPoint& operator=(const ContactPoint& other) {
+        if (this != &other) {
+            m_position = other.m_position;
+            m_normal = other.m_normal;
+            pad_20 = other.pad_20;
+        }
+        return *this;
+    }
+    mm::Vec3 m_position;  // where the test hit (the field names are not the original's)
+    mm::Vec3 m_normal;    // the surface's normal there
+    mm::Vec3 pad_20;
+};
+struct ContactInfo : ContactPoint {
     // the surface a hit found (GfComEnvSensor::flushGroundSingle copies it into its GfEnvProperty::Ground; the
     // field names are not the original's)
     struct Material {
@@ -40,13 +54,17 @@ public:
         unsigned char pad_8[0x10];
         unsigned char m_params[4];  // the ground takes them as floats
     };
-    struct Hit {
-        mm::Vec3 m_position;  // where the test hit (the field names are not the original's)
-        mm::Vec3 m_normal;    // the surface's normal there
-        unsigned char pad_20[0x10];
-        const Material* m_material;  // none: getMaterial gives a zeroed one
-        unsigned char pad_38[0x18];
-    } __attribute__((aligned(16)));
+    const Material* m_material;  // none: getMaterial gives a zeroed one
+    unsigned char pad_38[0x14];
+};
+
+// a collision test's hits: room for N in place, their count, how many were found and whether any was
+// (testCapsule clears all three first). The field names are not the original's.
+template <unsigned int N>
+class TColiCheckResult {
+public:
+    typedef ContactInfo::Material Material;
+    typedef ContactInfo Hit;
 
     TColiCheckResult() : m_count(0), m_hit(false) {}
 

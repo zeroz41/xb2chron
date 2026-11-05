@@ -23,8 +23,14 @@
 #include "mm/mtl/Vector.h"
 #include "classes/fw/AssetData.h"
 #include "gf/GfDataNpc.h"
+#include "gf/GfDataHitonowa.h"
+#include "algorithm"
 
 namespace gf {
+
+inline bool GfMenuObjHitonowa::CompareEntry::operator()(const unsigned int& a, const unsigned int& b) const {
+    return GfDataHitonowa::getEntryOn(a) < GfDataHitonowa::getEntryOn(b);
+}
 
 unsigned int GfMenuObjHitonowa::s_CurLevel;
 
@@ -349,3 +355,11 @@ template mm::mtl::Vector<gf::MenuID>::iterator mm::mtl::Vector<gf::MenuID>::eras
 namespace gf {
 
 }  // namespace gf
+
+// initialize's std::sort (not written yet) instantiates the libc++ sort core for the id lists.
+template void std::__sort<gf::GfMenuObjHitonowa::CompareEntry&, unsigned int*>(unsigned int*, unsigned int*,
+                                                                              gf::GfMenuObjHitonowa::CompareEntry&);
+
+template bool gf::GfMenuSequence<gf::GfMenuObjHitonowa, 16>::wait();
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuSequence<gf::GfMenuObjHitonowa, 16>>(const mm::mtl::Delegate<bool()>*);

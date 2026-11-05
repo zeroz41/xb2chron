@@ -567,3 +567,5 @@ template mm::mtl::Vector<unsigned int>::iterator mm::mtl::Vector<unsigned int>::
 namespace gf {
 
 }  // namespace gf
+
+template bool mm::mtl::Delegate<bool(unsigned int)>::memberFuncInvoker<gf::GfMenuObjEvTheater>(const mm::mtl::Delegate<bool(unsigned int)>*, unsigned int);

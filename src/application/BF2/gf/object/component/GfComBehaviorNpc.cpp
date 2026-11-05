@@ -43,6 +43,7 @@
 #include "classes/gmk/GmkRoutedNpc.h"
 #include "classes/gmk/Lvlb.h"
 #include "gf/GfDataNpc.h"
+#include "fw/NaviUtil.h"
 
 namespace gf {
 
@@ -306,6 +307,33 @@ void StateAreaMove<T>::onEnter(void* p, ai::State*) {
     requestState(0);
 }
 
+// a goal inside the bound gimmick's shape, snapped onto the ground and reachable on the navigation mesh within half
+// the shape's height (m_pos[2] is the gimmick's scale, see AGmkBase::getYSnapRayLength)
+template <typename T>
+void StateAreaMove<T>::seqInitGoalPos(T& owner, const fw::UpdateInfo&) {
+    gmk::AGmkBase* gmk = owner.getBindedGmkInst();
+    if (gmk == nullptr) {
+        return;
+    }
+    mm::Vec3 pos;
+    gmk::AGmkBase* shape = owner.getBindedGmkInst();
+    if (shape == nullptr) {
+        return;
+    }
+    shape->getPositionInShape(pos, false);
+    if (!shape->getPositionAppliedYSnap(pos, pos, true)) {
+        return;
+    }
+    float range = gmk->m_pos[2].y * 0.5f;
+    if (fw::NaviUtil::testNaviFindPos(owner.getPos(), range, range, 0.1f, pos, range, range, 0.1f, 0) != 3) {
+        return;
+    }
+    owner.init(true);
+    owner.setGoalPos(pos);
+    owner.execTurnCmdToPos(pos);
+    m_seq = &StateAreaMove::seqWaitTurnEnd;
+}
+
 template <typename T>
 void StateAreaMove<T>::seqWaitTurnEnd(T& owner, const fw::UpdateInfo&) {
     if (owner.m_turnCmd.pad_6c) {
@@ -395,6 +423,31 @@ void StateReaction<T>::endReaction(const T& owner) {
         Bdat::getFP("FLD_NpcMobMotionId"), "cmdName", owner.m_bdatInfo.m_reactionMot, 7)));
     name.m_str[name.length() - 1] = '2';
     m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, name.m_str));
+}
+
+// turns back to the bound gimmick's facing: a point one unit ahead of it along its rotation (m_pos[1] is the
+// gimmick's euler rotation, m_pos[0] its position), or toward the origin when it is bound to none
+template <typename T>
+void StateReaction<T>::seqTurnToPrev(T& owner, const fw::UpdateInfo&) {
+    if (m_execCmd.m_done) {
+        mm::Vec3 pos = mm::Vec3::zero;
+        if (gmk::AGmkBase* gmk = owner.getBindedGmkInst()) {
+            mm::Vec3 front = mm::Vec3::unitZ;
+            mm::Vec3 rot = gmk->m_pos[1];
+            mm::Vec3 half = rot * 0.5f;
+            float sx = sinf(half.x);
+            float cx = cosf(half.x);
+            float sy = sinf(half.y);
+            float cy = cosf(half.y);
+            float sz = sinf(half.z);
+            float cz = cosf(half.z);
+            mm::Quat q(sx * cy * cz - cx * sy * sz, cx * sy * cz + sx * cy * sz, cx * cy * sz - sx * sy * cz,
+                       cx * cy * cz + sx * sy * sz);
+            pos = gmk->m_pos[0] + q.rotate(front);
+        }
+        owner.execTurnCmdToPos(pos);
+        m_seq = &StateReaction::seqWaitTurnToPrevEnd;
+    }
 }
 
 template <typename T>

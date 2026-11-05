@@ -204,3 +204,5 @@ void GfMenuObjBtlchOrder::LimitListener::reciveEvent(const ui::EventData& event,
 }
 
 }  // namespace gf
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuObjBtlchOrder>(const mm::mtl::Delegate<bool()>*);

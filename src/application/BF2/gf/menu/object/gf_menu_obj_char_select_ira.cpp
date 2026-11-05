@@ -478,3 +478,9 @@ bool GfMenuObjCharSelectIra::seqOpenDriver() {
 }
 
 }  // namespace gf
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuObjCharSelectIra>(const mm::mtl::Delegate<bool()>*);
+
+template bool gf::GfMenuSequence<gf::GfMenuObjCharSelectIra, 8>::wait();
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuSequence<gf::GfMenuObjCharSelectIra, 8>>(const mm::mtl::Delegate<bool()>*);

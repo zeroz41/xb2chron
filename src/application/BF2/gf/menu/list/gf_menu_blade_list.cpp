@@ -419,3 +419,5 @@ void GfMenuBladeList::updateOwner() {
 }
 
 }  // namespace gf
+
+template void ui::UIListInfo<gf::MenuBladeInfo>::addContents(const gf::MenuBladeInfo&);

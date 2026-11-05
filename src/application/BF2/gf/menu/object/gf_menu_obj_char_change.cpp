@@ -285,3 +285,11 @@ void GfMenuObjCharChange::finalize() {
 }
 
 }  // namespace gf
+
+template void gf::GfMenuSequence<gf::GfMenuObjCharChange, 4>::addAnimJob(unsigned int, const char*);
+
+template bool gf::GfMenuSequence<gf::GfMenuObjCharChange, 4>::wait_anim();
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuSequence<gf::GfMenuObjCharChange, 4>>(const mm::mtl::Delegate<bool()>*);
+
+template void ui::UIListInfo<gf::MenuArtsInfo>::addContents(const gf::MenuArtsInfo&);

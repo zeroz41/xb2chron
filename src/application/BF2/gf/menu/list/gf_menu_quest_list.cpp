@@ -21,3 +21,5 @@ GfMenuQuestList* GfMenuQuestList::create() {
 }
 
 }  // namespace gf
+
+template void ui::UIListInfo<gf::QuestID>::addContents(const gf::QuestID&);

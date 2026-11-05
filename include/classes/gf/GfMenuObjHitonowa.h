@@ -51,6 +51,11 @@ public:
     // group, adds id with GfDataHitonowa::getEntryComplete's (kind 0) or GfDataHitonowa::getEntryOn's value, sorts the list ascending (sortFromWork)
     // and stores its size in m_refNums[kind].
     void addNpc(unsigned char kind, unsigned int id);
+    // the order addNpc's std::sort gives a list: ascending GfDataHitonowa::getEntryOn (the name is the original's, from
+    // the sort's template arguments; stateless)
+    struct CompareEntry {
+        bool operator()(const unsigned int& a, const unsigned int& b) const;
+    };
     // 2.0.0's symbols name it. A member: its code is in this unit, after refreshComplete. What it does: places list's
     // objects on a grid of columns columns from origin, each cell width - 14 wide and height - 14 high
     // (setPosCenter).
