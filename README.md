@@ -11,10 +11,10 @@ repository contains no game code or assets; you need your own copy of the game.
 <!-- progress -->
 | | Matched | Linked |
 |:--|--:|--:|
-| Code | 50.32% | 14.57% |
-| Data | 24.74% | 13.31% |
-| Functions | 30,220 of 35,531 | |
-| Units | | 465 of 868 |
+| Code | 51.10% | 14.65% |
+| Data | 24.79% | 13.36% |
+| Functions | 30,383 of 35,531 | |
+| Units | | 466 of 868 |
 <!-- /progress -->
 
 ## Target
