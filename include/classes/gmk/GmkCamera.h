@@ -55,7 +55,7 @@ public:
     CreateInfo m_info;
     // released by the destructor; isLoaded/isEnd ask it (gf::GimmickCamera::isLoaded/isPlayEnd; the name is not the
     // original's)
-    mm::mtl::IntrusivePtr<gf::GimmickCamera> m_camera;
+    mm::mtl::IntrusivePtr<fw::Camera> m_camera;  // a gf::GimmickCamera (GimmickCamera::create returns the base type)
     void (GmkCamera::*m_seq)(float);  // the sequence step (play() sets seqWaitToPlay; the name is not the original's)
     unsigned char pad_158[0x8];
 };

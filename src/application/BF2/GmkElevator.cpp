@@ -1310,18 +1310,18 @@ void GmkCamera::create(const CreateInfo& info) {
     } else {
         m_camera = gf::GimmickCamera::create(info.m_name.m_str);
     }
-    m_camera.get()->setAuto(info.pad_105);
+    static_cast<gf::GimmickCamera*>(m_camera.get())->setAuto(info.pad_105);
     m_seq = &GmkCamera::seqWaitToLoaded;
     gf::GfGameManager::setStopMainMenuOpenForGimmick(true);
 }
 
-bool GmkCamera::isLoaded() const { return m_camera.get()->isLoaded(); }
+bool GmkCamera::isLoaded() const { return static_cast<gf::GimmickCamera*>(m_camera.get())->isLoaded(); }
 
 bool GmkCamera::isEnd() const {
     if (m_camera.get() == nullptr) {
         return true;
     }
-    return m_camera.get()->isPlayEnd();
+    return static_cast<gf::GimmickCamera*>(m_camera.get())->isPlayEnd();
 }
 
 void GmkCamera::update(float dt) {

@@ -68,6 +68,12 @@ public:
     virtual ~GfMenuModelView();  // slot 0
     void update();
     bool isLoading() const;  // its models still load (GfMenuObjBladeCreate::seqWaitLoading waits for false)
+    // each creates the object of that id (the map object: the row's "obj_model%02d" column) placed at transform
+    // in the view and keeps it (up to 16)
+    void addDriverObject(unsigned int id, const fw::Transform& transform);
+    void addBladeObject(unsigned int id, const fw::Transform& transform);
+    void addEnemyObject(unsigned int id, const fw::Transform& transform);
+    void addMapObjObject(unsigned int index);
 
     static fw::Transform& getObjectTransformLocal(GF_OBJ_HANDLE* handle);
     static fw::Transform& getObjectTransform(GF_OBJ_HANDLE* handle);
@@ -89,6 +95,13 @@ public:
     void popCamera(float time);
     void pushCamera(unsigned int index, float time);
     void resetCamera(unsigned int index, float time);
+    // the position / turn of camera index when it is a GfMenuModelViewCamera (zero otherwise)
+    mm::Vec3 getCameraPos(unsigned int index);
+    void setCameraPos(unsigned int index, const mm::Vec3& pos);
+    mm::Vec3 getCameraRot(unsigned int index);
+    void setCameraRotY(unsigned int index, float rotY);
+    // a GimmickCamera of the camera file's entry name at pos turned by rotY, pushed on the view's layer
+    bool playCameraMotion(const char* name, const mm::Vec3& pos, float rotY);
     void stopCameraMotion();  // GfMenuObjBladeCreate::seqResultEnd calls it before popCamera
     void playEffect(unsigned int slot, const char* name, const mm::Vec3& pos, GF_OBJ_HANDLE* handle);
     void playEffectFromCAS(unsigned int slot, const char* name, GF_OBJ_HANDLE* handle);

@@ -14,7 +14,7 @@ namespace gf {
 
 GimmickCamera::~GimmickCamera() {}
 
-mm::mtl::IntrusivePtr<GimmickCamera> GimmickCamera::create(const char* name) {
+mm::mtl::IntrusivePtr<fw::Camera> GimmickCamera::create(const char* name) {
 #line 119
     GimmickCamera* camera = new (fw::Framework::getAllocator(), 16, __FILE__, __LINE__) GimmickCamera(fw::CAMERA_PRIO(0x37));
     camera->m_readKind = 1;
@@ -60,7 +60,7 @@ void GimmickCamera::setReadFile(const char* name) {
     }
 }
 
-mm::mtl::IntrusivePtr<GimmickCamera> GimmickCamera::create(const char* name, GF_OBJ_HANDLE* target) {
+mm::mtl::IntrusivePtr<fw::Camera> GimmickCamera::create(const char* name, GF_OBJ_HANDLE* target) {
 #line 130
     GimmickCamera* camera = new (fw::Framework::getAllocator(), 16, __FILE__, __LINE__) GimmickCamera(fw::CAMERA_PRIO(0x37));
     camera->m_readKind = 1;
@@ -70,7 +70,7 @@ mm::mtl::IntrusivePtr<GimmickCamera> GimmickCamera::create(const char* name, GF_
     return camera;
 }
 
-mm::mtl::IntrusivePtr<GimmickCamera> GimmickCamera::create(const char* name, const mm::Vec3& pos, float rotY) {
+mm::mtl::IntrusivePtr<fw::Camera> GimmickCamera::create(const char* name, const mm::Vec3& pos, float rotY) {
 #line 142
     GimmickCamera* camera = new (fw::Framework::getAllocator(), 16, __FILE__, __LINE__) GimmickCamera(fw::CAMERA_PRIO(0x37));
     camera->m_readKind = 1;

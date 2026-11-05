@@ -19,10 +19,17 @@
 #include "classes/gf/EffectCaster.h"
 #include "classes/gf/GfComModel.h"
 #include "classes/gf/GfComTransform.h"
+#include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfInitParamUiObj.h"
+#include "classes/gf/GfMenuModelViewCamera.h"
+#include "classes/gf/GimmickCamera.h"
 #include "classes/gf/GfObj.h"
 #include "gf/GfObjAcc.h"
 #include "gf/GfObjFactory.h"
+#include "gf/GfMenuBdat.h"
 #include "gf/GfObjUtil.h"
+#include "mm/mtl/FixStr.h"
+#include "plugin/Bdat.h"
 #include "ml/ScnObjAccVolumeFade.h"
 #include "mm/mtl/Vector.h"
 
@@ -49,6 +56,33 @@ void GfMenuModelView::setVanishRatio(GF_OBJ_HANDLE* handle, float ratio) {
             fade.setRatio(ratio, -1);
         }
     }
+}
+
+void GfMenuModelView::addMapObjObject(unsigned int index) {
+    if (m_objs.size() == 16) {
+        return;
+    }
+    unsigned int id = getMapObjID(index);
+    if (id == 0) {
+        return;
+    }
+    GfInitParamUiObj param;
+    param.m_createType = 6;
+    param.m_objId = id;
+    param.pad_81 = true;
+    param.pad_24 = 1;
+    GF_OBJ_HANDLE* handle = GfObjFactory::createUiObj(param);
+    ObjEntry entry;
+    entry.m_handle = handle;
+    m_objs.push_back(entry);
+}
+
+unsigned int GfMenuModelView::getMapObjID(unsigned int index) {
+    unsigned char* bdat = GfDataBdat::getFP(0xFC);
+    GfMenuBdat::isValidBdatID(bdat, m_bdatId);
+    mm::mtl::FixStr<16> column;
+    column.format("obj_model%02d", index);
+    return Bdat::getMember(bdat, column.m_str) != nullptr ? static_cast<unsigned short>(Bdat::getVal(bdat, column.m_str, m_bdatId)) : 0;
 }
 
 void GfMenuModelView::sendObjectCommand(GF_OBJ_HANDLE* handle, const char* cmd) {
@@ -78,6 +112,17 @@ fw::Transform& GfMenuModelView::getObjectTransform(GF_OBJ_HANDLE* handle) {
         return transform->getFrame()->getWorldTransformForWrite();
     }
     return s_transform;
+}
+
+bool GfMenuModelView::getObjectEffectPoint(GF_OBJ_HANDLE* handle, const char* name, mm::Vec3& pos) {
+    GfObjAcc acc(handle);
+    fw::EffectPoint* point = acc.getObj()->getComponent<GfComEffectCaster>(7)->getEffectPoint();
+    int index = point->getPointIndex(name);
+    if (index == -1) {
+        return false;
+    }
+    pos = point->getPointTransform(index).getTrans();
+    return true;
 }
 
 void GfMenuModelView::setObjectScale(GF_OBJ_HANDLE* handle, const mm::Vec3& scale) {
@@ -155,6 +200,108 @@ unsigned int GfMenuModelView::addCamera(mm::mtl::IntrusivePtr<fw::Camera> camera
     unsigned int index = m_cameras.size();
     m_cameras.push_back(camera);
     return index;
+}
+
+void GfMenuModelView::pushCamera(unsigned int index, float time) {
+    if (index < m_cameras.size()) {
+        if (m_cameras[index]->m_pushed) {
+            return;
+        }
+        if (fw::CameraManager* manager = fw::CameraManager::sys()) {
+            unsigned int view = m_renderIndex + 1;
+            mm::mtl::IntrusivePtr<fw::Camera>& camera = m_cameras[index];
+            manager->m_layers[view].push(camera, time);
+            m_cameraStack.push_back(index);
+        }
+    }
+}
+
+void GfMenuModelView::popCamera(float time) {
+    if (fw::CameraManager* manager = fw::CameraManager::sys()) {
+        unsigned int view = m_renderIndex + 1;
+        mm::mtl::IntrusivePtr<fw::Camera>& camera = m_cameras[m_cameraStack.back()];
+        manager->m_layers[view].pop(camera, time);
+        m_cameraStack.pop_back();
+    }
+}
+
+void GfMenuModelView::resetCamera(unsigned int index, float time) {
+    if (fw::CameraManager* manager = fw::CameraManager::sys()) {
+        fw::CameraLayer& layer = manager->m_layers[m_renderIndex + 1];
+        for (unsigned int i = 0; i < m_cameras.size(); i++) {
+            if (m_cameras[i]->m_pushed) {
+                layer.pop(m_cameras[i], 0.0f);
+            }
+        }
+    }
+    m_cameraStack.clear();
+    pushCamera(index, time);
+}
+
+mm::Vec3 GfMenuModelView::getCameraPos(unsigned int index) {
+    if (index < m_cameras.size()) {
+        fw::Camera* camera = m_cameras[index].get();
+        if (camera != nullptr && camera->getRTTI()->isKindOf(&GfMenuModelViewCamera::m_rtti)) {
+            return static_cast<GfMenuModelViewCamera*>(camera)->m_pos;
+        }
+    }
+    return mm::Vec3::zero;
+}
+
+void GfMenuModelView::setCameraPos(unsigned int index, const mm::Vec3& pos) {
+    if (index < m_cameras.size()) {
+        fw::Camera* camera = m_cameras[index].get();
+        if (camera != nullptr && camera->getRTTI()->isKindOf(&GfMenuModelViewCamera::m_rtti)) {
+            static_cast<GfMenuModelViewCamera*>(camera)->setPos(pos);
+        }
+    }
+}
+
+mm::Vec3 GfMenuModelView::getCameraRot(unsigned int index) {
+    if (index < m_cameras.size()) {
+        fw::Camera* camera = m_cameras[index].get();
+        if (camera != nullptr && camera->getRTTI()->isKindOf(&GfMenuModelViewCamera::m_rtti)) {
+            return static_cast<GfMenuModelViewCamera*>(camera)->m_rot;
+        }
+    }
+    return mm::Vec3::zero;
+}
+
+void GfMenuModelView::setCameraRotY(unsigned int index, float rotY) {
+    if (index < m_cameras.size()) {
+        fw::Camera* camera = m_cameras[index].get();
+        if (camera != nullptr && camera->getRTTI()->isKindOf(&GfMenuModelViewCamera::m_rtti)) {
+            static_cast<GfMenuModelViewCamera*>(camera)->setRotY(rotY);
+        }
+    }
+}
+
+bool GfMenuModelView::playCameraMotion(const char* name, const mm::Vec3& pos, float rotY) {
+    if (name == nullptr || *name == '\0') {
+        return false;
+    }
+    mm::mtl::IntrusivePtr<fw::Camera> camera = GimmickCamera::create(name, pos, rotY);
+    if (camera.get() == nullptr) {
+        return false;
+    }
+    if (GimmickCamera* gimmick = mm::mtl::rttiCast<GimmickCamera>(camera.get())) {
+        gimmick->setNearClip(0.01f);
+        gimmick->play();
+    }
+    if (fw::CameraManager::sys() != nullptr) {
+        fw::CameraManager::sys()->m_layers[m_renderIndex + 1].push(camera, 0.5f);
+        m_motionCamera = camera;
+    }
+    return true;
+}
+
+void GfMenuModelView::stopCameraMotion() {
+    if (m_motionCamera.get() != nullptr) {
+        if (mm::mtl::rttiCast<GimmickCamera>(m_motionCamera.get()) != nullptr && fw::CameraManager::sys() != nullptr) {
+            fw::CameraManager::sys()->m_layers[m_renderIndex + 1].pop(m_motionCamera, 0.5f);
+            m_motionCamera = nullptr;
+        }
+    }
 }
 
 void GfMenuModelView::playEffect(unsigned int slot, const char* name, const mm::Vec3& pos, GF_OBJ_HANDLE* handle) {

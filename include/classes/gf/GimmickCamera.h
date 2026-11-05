@@ -58,11 +58,11 @@ public:
     static mm::mtl::RTTI m_rtti;
 
     // the camera file's entry of that name, as the file places it
-    static mm::mtl::IntrusivePtr<GimmickCamera> create(const char* name);
+    static mm::mtl::IntrusivePtr<fw::Camera> create(const char* name);
     // the camera file's entry of that name, placed relative to the object
-    static mm::mtl::IntrusivePtr<GimmickCamera> create(const char* name, GF_OBJ_HANDLE* target);
+    static mm::mtl::IntrusivePtr<fw::Camera> create(const char* name, GF_OBJ_HANDLE* target);
     // the camera file's entry of that name, placed at pos turned by rotY
-    static mm::mtl::IntrusivePtr<GimmickCamera> create(const char* name, const mm::Vec3& pos, float rotY);
+    static mm::mtl::IntrusivePtr<fw::Camera> create(const char* name, const mm::Vec3& pos, float rotY);
     void setReadFile(const char* name);
     void play();
     void updatePlayCamera(const fw::UpdateInfo& info);
