@@ -1,6 +1,8 @@
 #ifndef GF_GFDATADRIVERARTS_H
 #define GF_GFDATADRIVERARTS_H
 
+#include "mm/mtl/FixedArray.h"
+
 namespace gf {
 enum PTPOS : unsigned int;
 
@@ -37,6 +39,15 @@ public:
     // 1.0.0's name: the symbols call it fn_71002498F8 (it follows getWp; 1.0.0's DataObjDriver::addWeaponPoint calls
     // addWp at the same site with the same arguments; 3.0.1 added the DLC drivers' records)
     static void addWp(unsigned int driver, unsigned int wpnType, int point);
+    // the symbols name them. getEnableArts: up to 4 ArtsDr rows of the driver and weapon type (not flagged normal;
+    // for a DLC driver only those of the mode's IrType), true when any. getSlotArts/setSlotArts: the 3 arts of
+    // the driver's weapon type record of the mode (GfDataDriver::getDriverWeaponType and its DLC variants)
+    static bool getEnableArts(mm::mtl::FixedArray<unsigned int, 4>& list, unsigned int driver, unsigned int wpnType,
+                              PTPOS mode);
+    static void getSlotArts(mm::mtl::FixedArray<unsigned int, 3>& list, unsigned int driver, unsigned int wpnType,
+                            PTPOS mode);
+    static void setSlotArts(unsigned int driver, unsigned int wpnType, const mm::mtl::FixedArray<unsigned int, 3>& list,
+                            PTPOS mode);
     static unsigned int getWpnType(unsigned int arts);
 };
 

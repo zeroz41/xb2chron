@@ -2407,6 +2407,112 @@ bool GfDataDriver::getName(unsigned char*& bdat, unsigned int& id, unsigned int 
     return id != 0;
 }
 
+bool GfDataDriverArts::getEnableArts(mm::mtl::FixedArray<unsigned int, 4>& list, unsigned int driver,
+                                     unsigned int wpnType, PTPOS mode) {
+    list.assign(0);
+    GfBdatBtl* bdat = GfBdatBtl::get();
+    unsigned int start = bdat->getArtsDrStart();
+    unsigned int end = bdat->getArtsDrEnd();
+    unsigned int count = 0;
+    for (unsigned int arts = start; arts < end; arts++) {
+        if (bdat->getArtsDrDriver(arts) != driver) {
+            continue;
+        }
+        if (bdat->getArtsDrWpnType(arts) != wpnType) {
+            continue;
+        }
+        if (bdat->isArtsDrFlagNormal(arts)) {
+            continue;
+        }
+        if (GfDataDriver::isIra(driver) && bdat->getArtsDrIrType(arts) != mode) {
+            continue;
+        }
+        list[count++] = arts;
+        if (count >= 4) {
+            break;
+        }
+    }
+    return count != 0;
+}
+
+void GfDataDriverArts::getSlotArts(mm::mtl::FixedArray<unsigned int, 3>& list, unsigned int driver,
+                                   unsigned int wpnType, PTPOS mode) {
+    unsigned int* arts;
+    switch (mode) {
+    case 1:
+        arts = GfDataDriver::getDriverWeaponTypeIraBack(driver, wpnType);
+        break;
+    case 2:
+        arts = GfDataDriver::getDriverWeaponTypeIraSwitch(driver, wpnType);
+        break;
+    default:
+        arts = GfDataDriver::getDriverWeaponType(driver, wpnType);
+        break;
+    }
+    memcpy(list.begin(), arts, sizeof(unsigned int) * 3);
+}
+
+void GfDataDriverArts::setSlotArts(unsigned int driver, unsigned int wpnType,
+                                   const mm::mtl::FixedArray<unsigned int, 3>& list, PTPOS mode) {
+    unsigned int* arts;
+    switch (mode) {
+    case 1:
+        arts = GfDataDriver::getDriverWeaponTypeIraBack(driver, wpnType);
+        break;
+    case 2:
+        arts = GfDataDriver::getDriverWeaponTypeIraSwitch(driver, wpnType);
+        break;
+    default:
+        arts = GfDataDriver::getDriverWeaponType(driver, wpnType);
+        break;
+    }
+    memcpy(arts, list.begin(), sizeof(unsigned int) * 3);
+}
+
+int GfDataDriverArts::getWp(unsigned int driver, unsigned int wpnType, PTPOS mode) {
+    unsigned int* arts;
+    switch (mode) {
+    case 1:
+        arts = GfDataDriver::getDriverWeaponTypeIraBack(driver, wpnType);
+        break;
+    case 2:
+        arts = GfDataDriver::getDriverWeaponTypeIraSwitch(driver, wpnType);
+        break;
+    default:
+        arts = GfDataDriver::getDriverWeaponType(driver, wpnType);
+        break;
+    }
+    return arts[3];
+}
+
+void GfDataDriverArts::addWp(unsigned int driver, unsigned int wpnType, int point) {
+    int count = GfDataDriver::isIra(driver) ? 3 : 1;
+    for (int mode = 0; mode < count; mode++) {
+        unsigned int* arts;
+        switch (mode) {
+        case 1:
+            arts = GfDataDriver::getSDataIra(driver)->m_dlcArts[wpnType];
+            break;
+        case 2:
+            arts = GfDataDriver::getSDataIra(driver)->m_dlcArts2[wpnType];
+            break;
+        default:
+            arts = GfDataDriver::getDriverWeaponType(driver, wpnType);
+            break;
+        }
+        unsigned int wp = arts[3] + point;
+        if (point < 0 && static_cast<int>(wp) < 0) {
+            arts[3] = 0;
+        } else {
+            arts[3] = wp < 10000000 ? wp : 9999999;
+            if (point > 0) {
+                int total = arts[4] + point;
+                arts[4] = total < 0 ? 0x7FFFFFFF : total;
+            }
+        }
+    }
+}
+
 bool GfDataBladeArts::getCaption(unsigned char*& bdat, unsigned int& id, unsigned int row) {
     id = GfBdatBtl::get()->getArtsBlCaption(row);
     bdat = GfBdatMsg::getFpBlArtsMs();
