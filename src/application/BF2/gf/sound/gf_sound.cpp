@@ -12,6 +12,7 @@
 #include "classes/gf/GfFieldSound.h"
 #include "classes/gf/GfAssetResource.h"
 #include "gf/GfObjUtil.h"
+#include "fw/UpdateInfo.h"
 
 namespace gf {
 
@@ -95,6 +96,26 @@ void GfSound::finalize() {
     m_masterVolume.finalize();
     GfEvent::removeEventCallback(this);
     m_isEnable = false;
+}
+
+void GfSound::update(const fw::UpdateInfo& info) {
+    calcCategoryVolume(info);
+    updateSeParamList(info);
+    m_isVolumeDirty = false;
+}
+
+void GfSound::updateSeParamList(const fw::UpdateInfo& info) {
+    if (fw::SoundManager* manager = fw::SoundManager::get()) {
+        mm::mtl::FixedList<unsigned short, 512>::iterator it = m_seList.begin();
+        while (it != m_seList.end()) {
+            if (manager->isValid(m_seParams[*it].m_handle.m_id)) {
+                ++it;
+            } else {
+                deAllocateSeParam(*it);
+                it = m_seList.erase(it);
+            }
+        }
+    }
 }
 
 GF_SE_CATEGORY_HANDLE* GfSound::createCategoryHandle() {
@@ -183,6 +204,52 @@ void GfSound::stopVoice(SoundHandle handle, float time) {
     if (fw::SoundManager* manager = fw::SoundManager::get()) {
         manager->stopVoice(handle.m_id, time);
     }
+}
+
+SoundHandle GfSound::playSe(const SoundParam& param) {
+    if (fw::SoundManager* manager = fw::SoundManager::get()) {
+        mm::mtl::FixedVector<fw::SoundPack*, 4> packs;
+        if (param.m_packKind != 0) {
+            if (getSePack(packs, param)) {
+                return playSeWithPack(param, packs, static_cast<SEINFO>(param.m_packKind));
+            }
+            return SoundHandle();
+        }
+        SoundHandle handle;
+        if (GfObjUtil::getSePackAll(packs, param.m_obj)) {
+            handle = playSeWithPack(param, packs, static_cast<SEINFO>(4));
+            if (handle.isValid()) {
+                return handle;
+            }
+        }
+        if (manager->getCommonPack() != nullptr) {
+            packs.clear();
+            packs.push_back(manager->getCommonPack());
+            handle = playSeWithPack(param, packs, static_cast<SEINFO>(1));
+            if (handle.isValid()) {
+                return handle;
+            }
+        }
+        if (GfFieldSound* field = GfFieldSound::get()) {
+            if (field->getCommonPack() != nullptr) {
+                packs.clear();
+                packs.push_back(field->getCommonPack());
+                handle = playSeWithPack(param, packs, static_cast<SEINFO>(2));
+                if (handle.isValid()) {
+                    return handle;
+                }
+            }
+            if (field->getMapPack() != nullptr) {
+                packs.clear();
+                packs.push_back(field->getMapPack());
+                handle = playSeWithPack(param, packs, static_cast<SEINFO>(3));
+                if (handle.isValid()) {
+                    return handle;
+                }
+            }
+        }
+    }
+    return SoundHandle();
 }
 
 bool GfSound::getSePack(mm::mtl::FixedVector<fw::SoundPack*, 4>& packs, const SoundParam& param) {
@@ -332,7 +399,7 @@ void GfSound::destroyObjSePack(fw::SoundPack*& pack) {
 }
 }  // namespace gf
 
-// instantiated for gf::GfSound::updateSeParamList (not written yet)
+// instantiated for gf::GfSound::updateSeParamList
 template mm::mtl::FixedList<unsigned short, 512>::iterator mm::mtl::FixedList<unsigned short, 512>::erase(mm::mtl::FixedList<unsigned short, 512>::iterator);
 
 namespace gf {
