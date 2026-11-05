@@ -337,6 +337,8 @@ public:
     // 2.0.0's symbols name it (callers GfGameObj::checkEnableGameObj, GfGameUtil::levelupForEnemy and
     // GfGameScene::gevChangeGameDifficult, which calls it on every object of list 5).
     static void refreshEnemyHp(GF_OBJ_HANDLE* handle);
+    // GfGameObj::updateObjectProperty calls it on every driver, blade, enemy (or enemy blade) and type 0 object
+    static void flushProperty(GF_OBJ_HANDLE* handle);
     // 2.0.0's symbols name it. What it does: for blade 1001, else 1002 (the first GfDataBlade::isActivateMercenaryTeam holds
     // for), cancels the mission of the blade's mercenary team (GfGameMercenaries::cancelMission of
     // GfDataMercenaries::getMissionIdByBlade) and clears that team's members (clearTeamMember of getTeamID);

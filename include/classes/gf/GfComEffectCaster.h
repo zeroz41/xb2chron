@@ -73,6 +73,35 @@ public:
         bool pad_42;
     };
 
+    // what effectStart starts (0x50 bytes, built on the stack by its callers; the layout is what
+    // GfGameObj::setupForLoopEffect fills, the field names are not the original's)
+    struct EffectSetUp {
+        EffectSetUp()
+            : pad_20(nullptr), m_name(nullptr), pad_3c(-1.0f), pad_40(1.0f), pad_44(0), pad_46(0), pad_48(false),
+              pad_49(false), pad_4a(false), pad_4b(false), pad_4c(false), pad_4d(false), pad_4e(1) {
+            m_pos = mm::Vec3::zero;
+            m_rot = mm::Vec3::zero;
+        }
+
+        mm::Vec3 m_pos;
+        mm::Vec3 m_rot;
+        void* pad_20;
+        const char* m_name;  // the effect's name
+        EffectCaster* m_caster;
+        float m_scale;
+        float pad_3c;
+        float pad_40;
+        unsigned short pad_44;
+        unsigned short pad_46;
+        bool pad_48;
+        bool pad_49;
+        bool pad_4a;
+        bool pad_4b;
+        bool pad_4c;
+        bool pad_4d;
+        unsigned short pad_4e;
+    };
+
     // what setup and setupEfp read (the layout is what setupEfp shows; the names are not the original's)
     struct SetupInfo {
         unsigned char pad_0[0x8];
@@ -99,6 +128,7 @@ public:
     int calcFollowAnnotetionTag(Param* param, effect::SendParam& sendParam);
     // kills the running effect with the handle (its Param's pad_ba set); defined inline in gf_com_effect_caster.cpp
     void effectEnd(unsigned int handle);
+    void effectStart(const EffectSetUp& setup, const char*);
     // hands the effect its parameters, or kills it (the parameter names are not the original's)
     void updateParam(GfComEffectCaster* caster, Param* param, float rate, bool flag);
     fw::EffectPoint* getEffectPoint();

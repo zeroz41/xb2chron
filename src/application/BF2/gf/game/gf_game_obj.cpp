@@ -21,6 +21,18 @@
 #include "mm/mtl/RTTI.h"
 #include "classes/gf/GfPause.h"
 #include "classes/gf/GfInfo.h"
+#include "fw/UpdateInfo.h"
+#include "gf/GfDataEnemy.h"
+#include "classes/gf/GfComEffectCaster.h"
+#include "classes/gf/GfObjSetupEnemy.h"
+#include "classes/gf/SCOM_OBJ_WARP_POS.h"
+#include "gf/GfObjAlpha.h"
+#include "gf/GfUtil.h"
+#include "mm/Math.h"
+#include "gf/SDataEnemy.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/gf/GfAssetManager.h"
+#include <math.h>
 
 namespace gf {
 
@@ -85,6 +97,25 @@ void GfGameObj::calcCameraFade(const ObjList& list, const mm::Vec3& camPos) {
 
 void GfGameObj::postUpdate(const fw::UpdateInfo& info) {
     get()->updateObjectProperty();
+}
+
+void GfGameObj::updateObjectProperty() {
+    ObjList* list = getListType(3, reinterpret_cast<GF_OBJ_HANDLE*>(-1));
+    for (ObjList::iterator it = list->begin(); it != list->end(); ++it) {
+        GfGameUtil::flushProperty(*it);
+    }
+    list = getListType(4, reinterpret_cast<GF_OBJ_HANDLE*>(-1));
+    for (ObjList::iterator it = list->begin(); it != list->end(); ++it) {
+        GfGameUtil::flushProperty(*it);
+    }
+    list = getListType(5, reinterpret_cast<GF_OBJ_HANDLE*>(-1));
+    for (ObjList::iterator it = list->begin(); it != list->end(); ++it) {
+        GfGameUtil::flushProperty(*it);
+    }
+    list = getListType(0, reinterpret_cast<GF_OBJ_HANDLE*>(-1));
+    for (ObjList::iterator it = list->begin(); it != list->end(); ++it) {
+        GfGameUtil::flushProperty(*it);
+    }
 }
 
 void GfGameObj::listenerGfObj(IGfObjListener::OBJEVT evt, GF_OBJ_HANDLE* handle, unsigned int) {
@@ -162,6 +193,17 @@ GfGameObj::ObjList* GfGameObj::getListEnemyBlade() {
     return &get()->m_listEnemyBlade;
 }
 
+void GfGameObj::getList(mm::mtl::FixedVector<GF_OBJ_HANDLE*, 1024>& out, unsigned int kind) {
+    GfGameObj* self = get();
+    if (self == nullptr) {
+        return;
+    }
+    ObjList* list = self->getListType(kind, reinterpret_cast<GF_OBJ_HANDLE*>(-1));
+    for (ObjList::iterator it = list->begin(); it != list->end(); ++it) {
+        out.push_back(*it);
+    }
+}
+
 void GfGameObj::enableGameObj(GfObjAcc& acc, bool on) {
     acc.setFlag(14, on);
     acc.setCollisionChar(on);
@@ -200,9 +242,116 @@ void GfGameObj::flushEvent() {
     m_leaveObjs.clear();
 }
 
+namespace _gfgob {
+// an enemy's setup when its info holds one of its own kind (5), as DataParamAcc.cpp's _gfdac::getEnemySetup (inline,
+// the name is not the original's)
+static inline GfObjSetupEnemy* getEnemySetup(GF_OBJ_HANDLE* handle) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info != nullptr && info->m_setup != nullptr && info->m_setup->m_type == info->m_obj->m_type &&
+        info->m_obj->m_type == 5) {
+        return mm::mtl::rttiCast<GfObjSetupEnemy>(info->m_setup);
+    }
+    return nullptr;
+}
+}  // namespace _gfgob
+
+// a ground point beside an enemy's initial position, at angle (radians, from its initial y rotation) and 3.0 down
+// to 0.2 away, written to pos; false when no ground is found (checkEnableGameObj places an entering enemy blade)
+static bool fn_71002B5A34(float angle, mm::Vec3& pos, const GfObjSetupEnemy* setup);
+
+void GfGameObj::checkEnableGameObj(INOUT& inout, GfObjAcc& acc) {
+    if (inout.pad_14) {
+        return;
+    }
+    inout.pad_14 = true;
+    enableGameObj(acc, true);
+    if (acc.isCameraFadeAllOK() && GfObjAlpha::isNearCamera(acc)) {
+        acc.setAlphaCamera(0.0f);
+    }
+    setupForLoopEffect(acc);
+    if (acc.isEnemyBlade()) {
+        GfObjSetupEnemy* setup =
+            _gfgob::getEnemySetup(GfMountManager::getHandle(acc.getHandle(), GFATTACH(0), OPTMNT(2)));
+        mm::Vec3 pos;
+        mm::Vec3 rot = setup->pad_30;
+        if (!fn_71002B5A34(2.09439516f, pos, setup) && !fn_71002B5A34(-2.09439516f, pos, setup)) {
+            pos = setup->m_initialPos + mm::Vec3(0.1f, 0.01f, 0.1f);
+        }
+        SCOM_OBJ_WARP_POS::create(acc.getHandle(), pos, rot, false);
+    }
+    if (acc.getType() == 5) {
+        GfGameUtil::refreshEnemyHp(acc.getHandle());
+    }
+}
+
+void GfGameObj::setupForLoopEffect(GfObjAcc& acc) {
+    if (acc.getType() == 5) {
+        const char* effect = GfDataEnemy::getLoopEffect(acc.getEnRscId());
+        if (effect != nullptr) {
+            GfComEffectCaster* caster = acc.getObj()->getComponent<GfComEffectCaster>(7);
+            if (caster != nullptr) {
+                GfComEffectCaster::EffectSetUp setup;
+                setup.m_name = effect;
+                setup.m_scale = acc.getModelScale();
+                setup.m_caster = caster->m_caster;
+                setup.pad_44 = 1;
+                caster->effectStart(setup, nullptr);
+            }
+        }
+    }
+}
+
+bool GfGameObj::fadeoutGameObj(INOUT& inout, GfObjAcc& acc, const fw::UpdateInfo& info) {
+    inout.pad_c += info.m_deltaTime;
+    float step;
+    if (inout.pad_16) {
+        step = 0.0f;
+    } else {
+        step = inout.m_fadeTime > 0.0f ? -1.0f / inout.m_fadeTime * info.m_deltaTime : 0.0f;
+        inout.m_alpha += step;
+    }
+    if (inout.pad_15 && inout.m_alpha < 1.0f && inout.m_alpha - step >= 1.0f) {
+        inout.pad_15 = false;
+        setupEffectFadeout(inout, acc, info);
+    }
+    if (inout.m_alpha <= 0.0f || (inout.pad_16 && acc.m_obj != nullptr && inout.m_fadeTime < inout.pad_c)) {
+        inout.m_alpha = 0.0f;
+        if (inout.pad_14) {
+            inout.pad_14 = false;
+            enableGameObj(acc, false);
+        }
+        acc.setFlag(17, false);
+        if (acc.testFlag(8) && !acc.isRebuild()) {
+            GfObjUtil::rebuild(inout.m_handle);
+        } else if (!acc.isDestroy()) {
+            GfObjUtil::destroy(inout.m_handle);
+        }
+        return true;
+    }
+    float alpha = inout.m_alpha;
+    if (alpha > 1.0f) {
+        alpha = 1.0f;
+    }
+    acc.setAlphaLife(alpha);
+    return false;
+}
+
 void GfGameObj::destroyGameObj(GF_OBJ_HANDLE* handle, float fadeTime) {
     if (GfObjUtil::getObj(handle) != nullptr) {
         if (!get()->addOutObj(handle, fadeTime, true)) {
+            GfObjUtil::destroy(handle);
+        }
+    }
+}
+
+void GfGameObj::destroyGameObjWithAttribute(GF_OBJ_HANDLE* handle, float fadeTime, unsigned int attr) {
+    if (GfObjUtil::getObj(handle) != nullptr) {
+        GfGameObj* self = get();
+        if (attr != 0) {
+            ObjMsg msg = {handle, attr};
+            self->m_msgs.push_back(msg);
+        }
+        if (!self->addOutObj(handle, fadeTime, true)) {
             GfObjUtil::destroy(handle);
         }
     }
@@ -383,6 +532,74 @@ GfObj* GfGameObj::getObj(GF_OBJ_HANDLE* handle) {
     }
     return GfObjUtil::getObj(handle);
 }
+
+void GfGameObj::bdatReload() {
+    GfGameObj* self = get();
+    if (self == nullptr) {
+        return;
+    }
+    for (mm::mtl::FixedList<INOUT, 1024>::iterator it = self->m_inList.begin(); it != self->m_inList.end(); ++it) {
+        GfObjAcc acc((*it).m_handle);
+        if (acc.getType() == 5) {
+            GfObjSetupEnemy* setup = _gfgob::getEnemySetup((*it).m_handle);
+            if (setup != nullptr) {
+                SDataEnemy* data = setup->m_sdata;
+                GfDataEnemy::setupSDataEnemy(*data, data->m_id, data->m_level);
+            }
+        }
+    }
+    for (mm::mtl::FixedList<INOUT, 1024>::iterator it = self->m_outList.begin(); it != self->m_outList.end(); ++it) {
+        GfObjAcc acc((*it).m_handle);
+        if (acc.getType() == 5) {
+            GfObjSetupEnemy* setup = _gfgob::getEnemySetup((*it).m_handle);
+            if (setup != nullptr) {
+                SDataEnemy* data = setup->m_sdata;
+                GfDataEnemy::setupSDataEnemy(*data, data->m_id, data->m_level);
+            }
+        }
+    }
+    for (ObjList::iterator it = self->m_listEnemy.begin(); it != self->m_listEnemy.end(); ++it) {
+        GfObjSetupEnemy* setup = _gfgob::getEnemySetup(*it);
+        if (setup != nullptr) {
+            SDataEnemy* data = setup->m_sdata;
+            GfDataEnemy::setupSDataEnemy(*data, data->m_id, data->m_level);
+        }
+    }
+    for (ObjList::iterator it = self->m_listEnemyBlade.begin(); it != self->m_listEnemyBlade.end(); ++it) {
+        GfObjSetupEnemy* setup = _gfgob::getEnemySetup(*it);
+        if (setup != nullptr) {
+            SDataEnemy* data = setup->m_sdata;
+            GfDataEnemy::setupSDataEnemy(*data, data->m_id, data->m_level);
+        }
+    }
+}
+
+int GfGameObj::getObjNumberByEnArrangeId(unsigned int arrangeId) {
+    if (arrangeId == 0) {
+        return 0;
+    }
+    int count = 0;
+    ObjList* list = getList(5);
+    for (ObjList::iterator it = list->begin(); it != list->end(); ++it) {
+        DataParamAcc acc(*it);
+        if ((acc.isValid() ? acc.getBdatId() : 0) == arrangeId) {
+            ++count;
+        }
+    }
+    for (mm::mtl::FixedList<INOUT, 1024>::iterator it = m_inList.begin(); it != m_inList.end(); ++it) {
+        DataParamAcc acc((*it).m_handle);
+        if (acc.getObjType() == 5 && (acc.isValid() ? acc.getBdatId() : 0) == arrangeId) {
+            ++count;
+        }
+    }
+    for (mm::mtl::FixedList<INOUT, 1024>::iterator it = m_outList.begin(); it != m_outList.end(); ++it) {
+        DataParamAcc acc((*it).m_handle);
+        if (acc.getObjType() == 5 && (acc.isValid() ? acc.getBdatId() : 0) == arrangeId) {
+            ++count;
+        }
+    }
+    return count;
+}
 }  // namespace gf
 
 // instantiated for gf::GfGameObjEnemy::leaveEnemyObj, gf::GfObjManager::checkTerminate (not written yet)
@@ -397,5 +614,24 @@ template mm::mtl::FixedList<gf::GfGameObjEnemy::GINFO, 64>::iterator mm::mtl::Fi
 namespace gf {
 
 GfGameObjEnemy::~GfGameObjEnemy() {}
+
+}  // namespace gf
+
+namespace gf {
+
+static bool fn_71002B5A34(float angle, mm::Vec3& pos, const GfObjSetupEnemy* setup) {
+    float r = mm::normalizeRadian(setup->pad_30.y + angle);
+    float dist = 3.0f;
+    do {
+        mm::Vec3 hit;
+        mm::Vec3 from = setup->m_initialPos + mm::Vec3(dist * sinf(r), 2.0f, dist * cosf(r));
+        if (gf::util::getUnderHitCollision(hit, from, 10.0f)) {
+            pos = hit + mm::Vec3(0.0f, 0.01f, 0.0f);
+            return true;
+        }
+        dist -= 0.1f;
+    } while (dist >= 0.2f);
+    return false;
+}
 
 }  // namespace gf

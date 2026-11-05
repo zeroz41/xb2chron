@@ -68,12 +68,19 @@ public:
     // false when the object is not faded out but must be destroyed at once (destroyGameObj)
     bool addOutObj(GF_OBJ_HANDLE* handle, float fadeTime, bool);
     void removeGameObj(GF_OBJ_HANDLE* handle);
+    // the object joins its type's list (always true)
+    bool addGameObj(GF_OBJ_HANDLE* handle);
     // on: the object is in the game (flag 14, collision, components) and joins the entered list, else the left one
     void enableGameObj(GfObjAcc& acc, bool on);
     // the list of a type's objects (5: the enemies', or the enemy blades' when handle is one)
     ObjList* getListType(unsigned int kind, GF_OBJ_HANDLE* handle);
     static ObjList* getListEnemyBlade();
     void flushEvent();
+    // an in/out entry's step: true when the faded-out object left the game (rebuilt or destroyed)
+    bool fadeoutGameObj(INOUT& inout, GfObjAcc& acc, const fw::UpdateInfo& info);
+    void setupEffectFadeout(INOUT& inout, GfObjAcc& acc, const fw::UpdateInfo& info);
+    void checkEnableGameObj(INOUT& inout, GfObjAcc& acc);
+    void setupForLoopEffect(GfObjAcc& acc);
     // whether the object behind handle exists (with checkLoad, also loaded); error takes a reason when given
     static bool isValidGameObj(gf::GF_OBJ_HANDLE* handle, bool checkLoad, mm::mtl::FixStr<128>* error);
     static bool isEnterGameObj(gf::GF_OBJ_HANDLE* handle);
@@ -89,6 +96,8 @@ public:
     static bool isDestroyGameObj(gf::GF_OBJ_HANDLE* handle);
     static GfObj* getObj(GF_OBJ_HANDLE* handle);
     static mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 1024>* getList(unsigned int kind);
+    // a type's objects appended to out (as getList(kind) picks the list); nothing without an instance
+    static void getList(mm::mtl::FixedVector<GF_OBJ_HANDLE*, 1024>& out, unsigned int kind);
 
     // the objects by type, as getListType picks them (the names are not the original's)
     ObjList m_listDriver;       // type 3

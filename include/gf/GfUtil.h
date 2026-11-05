@@ -19,6 +19,8 @@ mm::mtl::FixStr<64> getNoPathExtName(const char* path);
 bool getHitCollision(mm::Vec3& hit, const mm::Vec3& from, const mm::Vec3& to);
 // a collision hit above `from` (up to `height`), written to `hit`; false when nothing is hit
 bool getUpperHitCollision(mm::Vec3& hit, const mm::Vec3& from, float height);
+// a collision hit below `from` (down to `depth`), written to `hit`; false when nothing is hit
+bool getUnderHitCollision(mm::Vec3& hit, const mm::Vec3& from, float depth);
 
 }}  // namespace gf::util
 

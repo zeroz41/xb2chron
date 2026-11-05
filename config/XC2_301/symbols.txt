@@ -11652,7 +11652,7 @@ _ZN2mm3mtl9FixedListIPN2gf13GF_OBJ_HANDLEELm64EE5eraseENS5_13node_iteratorIS4_PN
 _ZN2mm3mtl9FixedListIN2gf14GfGameObjEnemy5GINFOELm64EE5eraseENS5_13node_iteratorIS4_PNS5_8ListNodeEEE = .text:0x002B5454; // type:function size:0xF4 scope:weak
 _ZN2gf14GfGameObjEnemy11isGenusLinkEPNS_13GF_OBJ_HANDLEE = .text:0x002B5548; // type:function size:0xE8 scope:global
 _ZN2gf14GfGameObjEnemy13calcGenusLinkERNS0_4PairE = .text:0x002B5630; // type:function size:0x404 scope:global
-fn_71002B5A34 = .text:0x002B5A34; // type:function size:0x184 scope:global
+_ZN2gfL13fn_71002B5A34EfRN2mm4Vec3EPKNS_15GfObjSetupEnemyE = .text:0x002B5A34; // type:function size:0x184 scope:global
 _ZN2mm3mtl12PtrSingletonIN2gf9GfGameObjEED2Ev = .text:0x002B5BB8; // type:function size:0x20 scope:weak
 _ZN2mm3mtl12PtrSingletonIN2gf9GfGameObjEED0Ev = .text:0x002B5BD8; // type:function size:0x20 scope:weak
 _ZN2mm3mtl12PtrSingletonIN2gf14GfGameObjEnemyEED2Ev = .text:0x002B5BF8; // type:function size:0x20 scope:weak
