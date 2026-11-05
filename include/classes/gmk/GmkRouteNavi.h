@@ -3,6 +3,7 @@
 
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkAcc.h"
+#include "classes/gmk/GmkRoute.h"
 #include "mm/Vec3.h"
 #include "mm/Vec3NA.h"
 
@@ -14,7 +15,13 @@ class GmkRoute;
 // Field names are not the original's.
 class GmkRouteNavi {
 public:
-    class InitResult;
+    // where init puts the mover: the position and direction on the route at the chosen point (the class and
+    // field names are not the original's)
+    class InitResult {
+    public:
+        mm::Vec3 m_pos;  // 0x0
+        mm::Vec3 m_dir;  // 0x10
+    };
     // what update takes: the mover's position as three floats, zero by default (12 bytes: the field states copy the
     // three components; the field's name is not the original's)
     class UpdateInfo {
@@ -35,7 +42,7 @@ public:
         float m_offset;            // 0xC: GmkRoutedNpc::create passes mtRandf1(-1, 1)
         float pad_10;              // 1.0f
         float pad_14;              // 2.0f
-        int pad_18;                // 0x10; isValid wants it non-zero
+        unsigned int pad_18;       // 0x10; isValid wants it non-zero (init scales it by a float: unsigned)
         InitResult* m_initResult;  // 0x20: create calls initAtRandom(*m_initResult) when set
     };
 
@@ -43,17 +50,72 @@ public:
     ~GmkRouteNavi() { dispose(); }
     void create(const CreateInfo& info);
     void dispose();
-    void initAtRandom(InitResult& result);
+    bool initAtRandom(InitResult& result);
     void seqInit(const UpdateInfo& info);
-    void init(InitResult& result, unsigned int index, float offset);
-    void getPosDirOnCurve(mm::Vec3& pos, mm::Vec3& dir, unsigned int index, float t) const;
-    void getPosDirOnLine(mm::Vec3& pos, mm::Vec3& dir, unsigned int index, float t) const;
+    bool init(InitResult& result, unsigned int index, float offset);
+    bool getPosDirOnCurve(mm::Vec3& pos, mm::Vec3& dir, unsigned int index, float t) const;
+    bool getPosDirOnLine(mm::Vec3& pos, mm::Vec3& dir, unsigned int index, float t) const;
     void update(const UpdateInfo& info);
     void updateNextPos();
     bool isArrived(const mm::Vec3& pos, const mm::Vec3& target) const;
     void updateNextPointIndx();
     void seqUpdateOnCurve(const UpdateInfo& info);
     void seqUpdateOnLine(const UpdateInfo& info);
+    // inline (no symbol; the names are not the original's): its info names a route kind and the route it reached
+    // is valid
+    bool isValid() const { return m_info.isValid() && m_acc.isValid(); }
+    const GmkRoute* getRoute() const { return static_cast<const GmkRoute*>(m_acc.m_gmk); }
+    // the sideways offset of its points (along each point's pad_10) by the route's offset mode (inline; the name is
+    // not the original's)
+    float getPointOffset() const {
+        float offset = 0.0f;
+        const GmkRoute* route = getRoute();
+        if (route != nullptr) {
+            switch (route->getData()->m_offsetMode) {
+            case 0:
+                offset = m_info.m_offset;
+                break;
+            case 1:
+                offset = m_info.m_offset > 0.0f ? m_info.m_offset : -m_info.m_offset;
+                if (pad_a4) {
+                    offset = -offset;
+                }
+                break;
+            case 2:
+                offset = m_info.m_offset > 0.0f ? -m_info.m_offset : m_info.m_offset;
+                if (pad_a4) {
+                    offset = -offset;
+                }
+                break;
+            }
+        }
+        return offset;
+    }
+    // a point index brought back onto the route: a closed route goes round, an open one turns back at its ends
+    // (reverse: going backwards; inline, the name is not the original's)
+    int wrapPointIndx(int indx, bool& reverse) const {
+        const GmkRoute* route = getRoute();
+        bool closed = route->isClosed();
+        int num = route->getRoutePointNum();
+        if (indx < 0) {
+            indx %= num;
+            if (closed) {
+                indx += num;
+            } else {
+                indx = -indx;
+                reverse = (indx / num) & 1;
+            }
+        }
+        if (num <= indx) {
+            if (closed) {
+                indx %= num;
+            } else {
+                indx = num - 2;
+                reverse = !((indx / num) & 1);
+            }
+        }
+        return indx;
+    }
 
     CreateInfo m_info;  // 0x0
     GmkAcc m_acc;       // 0x28: the route it follows (create fills it from m_info)
@@ -64,7 +126,7 @@ public:
     mm::Vec3 pad_90;
     int pad_a0;            // create stores 1
     bool pad_a4;
-    int pad_a8;
+    unsigned int pad_a8;  // init: pad_18 scaled by its offset, plus 1
     int pad_ac;
 };
 }  // namespace gmk

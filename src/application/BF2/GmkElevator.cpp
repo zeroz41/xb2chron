@@ -1545,6 +1545,87 @@ GmkRouteNavi::GmkRouteNavi(const CreateInfo* info)
     }
 }
 
+// a quadratic curve through the corner at the point: from the radius (the route's pad_8, at most half of each side)
+// before it to the radius after it
+bool GmkRouteNavi::getPosDirOnCurve(mm::Vec3& pos, mm::Vec3& dir, unsigned int indx, float t) const {
+    const GmkRoute* route = getRoute();
+    if (route == nullptr) {
+        return false;
+    }
+    int step = pad_a4 ? -1 : 1;
+    bool reverse = pad_a4;
+    int prev = wrapPointIndx(indx - step, reverse);
+    int next = wrapPointIndx(step + indx, reverse);
+    const GmkRoutePoint* from = route->getRoutePoint(prev);
+    const GmkRoutePoint* corner = route->getRoutePoint(indx);
+    const GmkRoutePoint* to = route->getRoutePoint(next);
+    if (from == nullptr || corner == nullptr || to == nullptr) {
+        return false;
+    }
+    const GmkRoutePoint::Data* fromData = from->getData();
+    const GmkRoutePoint::Data* cornerData = corner->getData();
+    const GmkRoutePoint::Data* toData = to->getData();
+    float offset = getPointOffset();
+    mm::Vec3 a(offset * fromData->pad_10.x, offset * fromData->pad_10.y, offset * fromData->pad_10.z);
+    a += fromData->m_pos;
+    mm::Vec3 b(offset * cornerData->pad_10.x, offset * cornerData->pad_10.y, offset * cornerData->pad_10.z);
+    b += cornerData->m_pos;
+    mm::Vec3 c(offset * toData->pad_10.x, offset * toData->pad_10.y, offset * toData->pad_10.z);
+    c += toData->m_pos;
+    mm::Vec3 in = b - a;
+    mm::Vec3 out = c - b;
+    float inLen = in.length();
+    float outLen = out.length();
+    float radius = route->getData()->pad_8;
+    float inRadius = radius < inLen * 0.5 ? radius : inLen * 0.5f;
+    float outRadius = radius < outLen * 0.5 ? radius : outLen * 0.5f;
+    mm::Vec3 begin = b - in * (inRadius / inLen);
+    mm::Vec3 end = b + out * (outRadius / outLen);
+    mm::Vec3 q0 = begin + (b - begin) * t;
+    mm::Vec3 q1 = b + (end - b) * t;
+    dir = q1 - q0;
+    pos = q0 + dir * t;
+    return true;
+}
+
+bool GmkRouteNavi::getPosDirOnLine(mm::Vec3& pos, mm::Vec3& dir, unsigned int indx, float t) const {
+    const GmkRoute* route = getRoute();
+    if (route == nullptr) {
+        return false;
+    }
+    bool reverse = pad_a4;
+    int prev = wrapPointIndx(indx - (pad_a4 ? -1 : 1), reverse);
+    const GmkRoutePoint* from = route->getRoutePoint(prev);
+    const GmkRoutePoint* to = route->getRoutePoint(indx);
+    if (from == nullptr || to == nullptr) {
+        return false;
+    }
+    const GmkRoutePoint::Data* fromData = from->getData();
+    const GmkRoutePoint::Data* toData = to->getData();
+    float offset = getPointOffset();
+    mm::Vec3 a(offset * fromData->pad_10.x + fromData->m_pos.x, offset * fromData->pad_10.y + fromData->m_pos.y,
+               offset * fromData->pad_10.z + fromData->m_pos.z);
+    mm::Vec3 b(offset * toData->pad_10.x + toData->m_pos.x, offset * toData->pad_10.y + toData->m_pos.y,
+               offset * toData->pad_10.z + toData->m_pos.z);
+    dir = b - a;
+    pos = a + dir * t;
+    return true;
+}
+
+void GmkRouteNavi::update(const UpdateInfo& info) {
+    if (isValid() && m_seq) {
+        (this->*m_seq)(info);
+    }
+}
+
+void GmkRouteNavi::updateNextPos() {
+    UpdateInfo info;
+    info.m_pos.x = pad_90.x;
+    info.m_pos.y = pad_90.y;
+    info.m_pos.z = pad_90.z;
+    update(info);
+}
+
 bool GmkRouteNavi::isArrived(const mm::Vec3& pos, const mm::Vec3& target) const {
     mm::Vec3 d = pos - target;
     if (pad_6c < d.y) {
@@ -1555,6 +1636,45 @@ bool GmkRouteNavi::isArrived(const mm::Vec3& pos, const mm::Vec3& target) const 
         return false;
     }
     return true;
+}
+
+void GmkRouteNavi::updateNextPointIndx() {
+    if (pad_a4) {
+        pad_a0 = wrapPointIndx(pad_a0 - 1, pad_a4);
+    } else {
+        pad_a0 = wrapPointIndx(pad_a0 + 1, pad_a4);
+    }
+}
+
+void GmkRouteNavi::create(const CreateInfo& info) {
+    dispose();
+    m_info = info;
+    pad_68 = info.pad_10;
+    pad_6c = info.pad_14;
+    pad_a0 = 1;
+    pad_a8 = 0;
+    {
+        GmkAcc::CreateInfo accInfo;
+        accInfo.m_bdatId = info.m_bdatId;
+        accInfo.m_type = info.m_type;
+        accInfo.pad_8 = info.m_routeIndx;
+        m_acc.create(accInfo);
+    }
+    if (isValid()) {
+        unsigned int flags = getRoute()->getData()->m_flags;
+        if ((flags & 6) == 6) {
+            pad_a4 = ml::mtRandf1() > 0.5f;
+        } else if (flags & 2) {
+            pad_a4 = false;
+        } else if (flags & 4) {
+            pad_a4 = true;
+        }
+    }
+    if (info.m_initResult != nullptr) {
+        initAtRandom(*info.m_initResult);
+    } else {
+        m_seq = &GmkRouteNavi::seqInit;
+    }
 }
 
 void GmkRouteNavi::dispose() {
