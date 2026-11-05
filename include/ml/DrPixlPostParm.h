@@ -215,7 +215,11 @@ public:
     unsigned char pad_1026[0x1];
     bool m_dbgDeferred;  // 0x1027
     bool m_dbgShadowCache;  // 0x1028
-    unsigned char pad_1029[0x15];
+    unsigned char pad_1029[0x3];
+    // 0x102C: DrPixlShadowCacheMan::debugShadowCacheRender draws the work table this selects, from 1 (the name is
+    // not the original's)
+    float m_dbgShadowCacheLevel;
+    unsigned char pad_1030[0xE];
     bool m_shadowAddObjPos;  // 0x103E, DrPixlShadowMan::setAddObjPos forwards only when set (name inferred)
     unsigned char pad_103F[0x22];
     bool m_iblSel;  // 0x1061, DrPixlMan::getSpecIBLObj/getDiffIBLObj pick the second IBL pair when set (name inferred)

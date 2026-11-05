@@ -66,6 +66,8 @@ public:
     void debugRenderCube(const grlib::CGLibTextureBuffer& tex, unsigned int face, unsigned int mip, bool, int x, int y,
                          int width, int height, bool, float scale);
     void callFgShadowCacheUpdate();
+    void debugRender(const grlib::CGLibTextureBuffer& tex, int x, int y, int width, int height, bool, bool, float scale,
+                     bool);
     void setMainSRGBRenderTarget();
     void resetRenderTarget();
     void alphaRenderTarget();

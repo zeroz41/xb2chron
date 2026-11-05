@@ -521,6 +521,34 @@ void DrPixlMan::lastRender() {
     }
 }
 
+void DrPixlShadowCacheMan::debugShadowCacheRender() {
+    DrMan* drMan = DrMan::get();
+    int level = (int)(drMan->m_postParm[drMan->m_postParmIdx]->m_dbgShadowCacheLevel - 1.0f);
+    if (level < 0) {
+        level = 0;
+    }
+    if (level > 3) {
+        level = 3;
+    }
+    int size = DrMan::get()->m_curViewInfo->m_width / 8;
+    int x = 0;
+    int y = 0;
+    int col = 0;
+    for (int i = 0; i < m_cacheNum; i++) {
+        DrMan::get()->m_pixlMan->debugRender(*m_workTbl[level].m_cacheObj[i].m_depth.m_pSubTexture, x, y, size, size, false, false,
+                                             1.0f, true);
+        col++;
+        if (col < m_cacheCols) {
+            x += size;
+        } else {
+            x = 0;
+            y += size;
+            col = 0;
+        }
+    }
+    m_pixlMan->debugRender(*m_workTbl[level].m_dirDepth.m_pSubTexture, x, y, size, size, false, false, 1.0f, true);
+}
+
 void DrPixlMan::gammaRender(bool depth) {
     DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
     grlib::CGLibRenderTarget* downDepth = *(m_objTbl->m_postMan->m_downDepth + DrMan::s_nDblIdx);
@@ -670,7 +698,7 @@ void DrPixlMan::callShadowCacheVariance() { m_shadowCacheMan->m_flags |= 0x400; 
 void DrPixlMan::pixelEndMode() { m_shadowCacheMan->m_flags |= 0x40; }
 
 void DrPixlMan::setupShadowUnifrom(int index) {
-    m_shadowUniform = &m_shadowCacheMan->m_uniforms[(unsigned int)index];
+    m_shadowUniform = &m_shadowCacheMan->m_uniforms.m_pArray[(unsigned int)index];
 }
 
 void DrPixlMan::callFgShadowCacheUpdate() {}
