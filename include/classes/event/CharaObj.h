@@ -36,7 +36,7 @@
 
 namespace gf { class GF_OBJ_HANDLE; class GfEvtModel; }
 
-namespace event { class AttachActorBase; class TarAxis; class ModelObj; }
+namespace event { class AttachActorBase; class TarAxis; class ModelObj; enum CHARA_TYPE : int; }
 
 // the kinds CharaObj::setTar takes (the mangled names spell global enums); their values are not known
 enum EVT_tarcvtype : int;
@@ -53,6 +53,7 @@ enum WPNHIDEID : int {};
 // table 0x7100B3CAF8
 class CharaObj {
 public:
+    CharaObj(const char* name);
     virtual ~CharaObj();  // slot 0
     void playMotion(const char* name, float a, float b, float c);
     // out of line (0x71000DDE48, not written yet); playMotion calls it in state 4 or 5
@@ -90,6 +91,9 @@ public:
                         int f, float g);
     void stopVolumeFade(CharaEffectPlayer::VF_TYPE type);
     void resetDynamics(int type);
+    void createGfObj(gf::GF_OBJ_HANDLE* handle);
+    void createGfObj(CHARA_TYPE type, unsigned int id, unsigned int, unsigned int);
+    void createModel(const char* name, unsigned int, unsigned int);
     void createGhost();
     void setScaleWeapon(float scale);
     void setDispJiji(bool disp);
@@ -106,6 +110,8 @@ public:
     }
     void start();
     void end();
+    void update(const FrameInfo& info);
+    void tail(const FrameInfo& info);
 
     // the command setPos queues (CharaObj's constructor builds it); the name is not the original's
     CharaSetPos m_setPos;  // 0x8

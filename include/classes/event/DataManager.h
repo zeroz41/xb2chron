@@ -3,6 +3,8 @@
 
 #include "mm/Vec3.h"
 
+namespace mm { class Mat44; }
+
 namespace event { enum MSG_TYPE : int; }
 
 #include "mm/mtl/FixStr.h"
@@ -23,6 +25,13 @@ public:
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // whether the target id's values are angles (evt_chara's setTar then converts degrees to radians)
     bool checkRadianTar(unsigned int id);
+    // the position or rotation an axis (PosAxis/RotAxis type and value) gives (ObjectChara::setPosAxis/setRotAxis);
+    // axis2rot's vector is the character's current position
+    mm::Vec3 axis2pos(unsigned int type, float x, float y, float z);
+    mm::Vec3 axis2rot(unsigned int type, float x, float y, float z, const mm::Vec3& pos);
+    // the frame of axis type (0..3, then one per character of the current scene)
+    mm::Mat44 getPosAxis(unsigned int type);
+    float getRotOfsY(unsigned int type, const mm::Vec3& pos);
 
     // the 0x170-byte scene 1.0.0's createScene news; the name is not the original's
     struct Scene {

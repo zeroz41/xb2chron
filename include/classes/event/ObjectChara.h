@@ -18,6 +18,7 @@ namespace event {
 // table 0x7100B3DD70 (its first slots are event::Object's)
 class ObjectChara : public ::event::Object {
 public:
+    ObjectChara(const char* name);
     virtual ~ObjectChara();  // slot 0
     virtual bool OnBouRectSelect(event::IBouCallback::SelectParam const&);  // slot 2
     virtual void OnBouRender(event::IBouCallback::RenderParam const&);  // slot 3
@@ -41,8 +42,16 @@ public:
     void linerRotAxis(const RotAxis& rot, float time, CV_TYPE type);
     void walkPosAxis(const PosAxis& pos, EVT_poscvtype type, bool flag);
     void turnRotAxis(const RotAxis& rot, EVT_rotcvtype type, float time);
+    // each allocates m_chara (0x3060 bytes from MemoryManager) and has it create its object; createModel clears
+    // bit 0 of m_flags, the others set it
+    void createGfObj(gf::GF_OBJ_HANDLE* handle);
+    void createGfObj(CHARA_TYPE type, unsigned int id, unsigned int, unsigned int);
+    void createModel(const char* name, unsigned int, unsigned int);
+    void createGhost();
 
-    unsigned char pad_68[0x8];
+    // bit 0: set by createGfObj and createGhost, cleared by createModel; the name is not the original's
+    unsigned int m_flags;  // 0x68
+    unsigned char pad_6c[0x4];
     CharaObj* m_chara;  // 0x70; the character the commands drive; the name is not the original's
     unsigned char pad_78[0x8];
     // the position and rotation setPosAxis/setRotAxis store (the script commands save and restore them); the

@@ -1,6 +1,7 @@
 #ifndef CLASSES_EVENT_POSAXIS_H
 #define CLASSES_EVENT_POSAXIS_H
 
+#include "mm/Mat44.h"
 #include "mm/Vec3.h"
 
 namespace event {
@@ -11,6 +12,9 @@ public:
     PosAxis();
     PosAxis(unsigned int type, float x, float y, float z);
     virtual ~PosAxis() {}  // slot 0
+    // the inverse of the matrix of the origin m_type names (the OnManiSetPos slots map the manipulator's
+    // position through it into m_value)
+    mm::Mat44 calcOrigMatInv() const;
     // how the position is given (1.0.0's getOrigName names the origin from it); the name is not the original's
     unsigned int m_type;  // 0x8
     mm::Vec3 m_value;     // 0x10; the name is not the original's

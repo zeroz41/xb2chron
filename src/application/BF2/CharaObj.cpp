@@ -28,6 +28,7 @@
 #include "classes/event/EffectObj.h"
 #include "classes/event/CamObj.h"
 #include "classes/event/ObjectChara.h"
+#include "classes/event/DataManager.h"
 #include "classes/event/ObjectEffect.h"
 #include "classes/event/ObjectCamera.h"
 #include "classes/event/ObjectUtil.h"
@@ -600,6 +601,17 @@ void AnmCol::update(float step) {
     if (pad_8 & 2) {
         m_value = calcEvalute(pad_68, pad_70);
     }
+}
+
+mm::Vec3 DataManager::axis2rot(unsigned int type, float x, float y, float z, const mm::Vec3& pos) {
+    if (type < 4) {
+        return mm::Vec3(x, getRotOfsY(type, pos) + y, z);
+    }
+    ObjectList* list;
+    if (type < ((list = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current) ? list->m_counts[0] + 4ul : 4)) {
+        return mm::Vec3(x, getRotOfsY(type, pos) + y, z);
+    }
+    return mm::Vec3(x, y, z);
 }
 
 int EffectLinearCol::update(const ICmd::Param& param) {
@@ -2094,11 +2106,38 @@ int CharaStopAction::update(const ICmd::Param&) {
     return true;
 }
 
+ObjectChara::ObjectChara(const char* name)
+    : Object(static_cast<OBJTYPE>(2), name), m_flags(0), m_chara(nullptr) {}
+
 ObjectChara::~ObjectChara() {
     if (m_chara) {
         delete m_chara;
         m_chara = nullptr;
     }
+}
+
+void ObjectChara::createGfObj(gf::GF_OBJ_HANDLE* handle) {
+    m_chara = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) CharaObj(m_name.m_str);
+    m_chara->createGfObj(handle);
+    m_flags |= 1;
+}
+
+void ObjectChara::createGfObj(CHARA_TYPE type, unsigned int id, unsigned int a, unsigned int b) {
+    m_chara = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) CharaObj(m_name.m_str);
+    m_chara->createGfObj(type, id, a, b);
+    m_flags |= 1;
+}
+
+void ObjectChara::createModel(const char* name, unsigned int a, unsigned int b) {
+    m_chara = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) CharaObj(m_name.m_str);
+    m_chara->createModel(name, a, b);
+    m_flags &= ~1u;
+}
+
+void ObjectChara::createGhost() {
+    m_chara = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) CharaObj(m_name.m_str);
+    m_chara->createGhost();
+    m_flags |= 1;
 }
 
 void ObjectChara::clear() {
@@ -2125,14 +2164,88 @@ void ObjectChara::end() {
 
 void Object::end() {}
 
+void ObjectChara::update() {
+    const FrameInfo& info = mm::mtl::Singleton<FrameManager>::getPtr()->frameInfo();
+    if (m_chara) {
+        m_chara->update(info);
+    }
+}
+
 void Object::update() {}
 
 void Object::render(const mm::Col4&) {}
+
+void ObjectChara::tail() {
+    const FrameInfo& info = mm::mtl::Singleton<FrameManager>::getPtr()->frameInfo();
+    if (m_chara) {
+        m_chara->tail(info);
+    }
+}
 
 void Object::tail() {}
 
 bool ObjectChara::isLoading() const {
     return !(m_chara->m_flags & 8);
+}
+
+void ObjectChara::turnRotAxis(const RotAxis& rot, EVT_rotcvtype type, float time) {
+    m_rot = rot;
+    CharaObj* chara = m_chara;
+    const mm::Vec3& pos = (chara->m_cmdQueue0.contains(&chara->m_walkPos) ||
+                           chara->m_cmdQueue1.contains(&chara->m_walkPos) ||
+                           chara->m_cmdQueue1.contains(&chara->m_linerPos))
+                              ? chara->m_posGoal
+                              : chara->m_pos;
+    chara->turnRot(mm::mtl::Singleton<DataManager>::getPtr()->axis2rot(rot.m_type, rot.m_value.x, rot.m_value.y,
+                                                                        rot.m_value.z, pos),
+                   type, time);
+    m_chara->mount(nullptr, "", mm::Vec3::zero, mm::Vec3::zero);
+}
+
+void ObjectChara::linerRotAxis(const RotAxis& rot, float time, CV_TYPE type) {
+    m_rot = rot;
+    CharaObj* chara = m_chara;
+    const mm::Vec3& pos = (chara->m_cmdQueue0.contains(&chara->m_walkPos) ||
+                           chara->m_cmdQueue1.contains(&chara->m_walkPos) ||
+                           chara->m_cmdQueue1.contains(&chara->m_linerPos))
+                              ? chara->m_posGoal
+                              : chara->m_pos;
+    chara->linerRot(mm::mtl::Singleton<DataManager>::getPtr()->axis2rot(rot.m_type, rot.m_value.x, rot.m_value.y,
+                                                                         rot.m_value.z, pos),
+                    time, type);
+    m_chara->mount(nullptr, "", mm::Vec3::zero, mm::Vec3::zero);
+}
+
+void ObjectChara::OnManiSetPos(IManiCallback::SetParam& param) {
+    mm::Vec3 trans = param.m_mtx.getTrans();
+    PosAxis pos = m_pos;
+    mm::Mat44 inv = pos.calcOrigMatInv();
+    pos.m_value = mm::Vec3(trans.x * inv.m[0][0] + trans.y * inv.m[1][0] + trans.z * inv.m[2][0] + inv.m[3][0],
+                           trans.x * inv.m[0][1] + trans.y * inv.m[1][1] + trans.z * inv.m[2][1] + inv.m[3][1],
+                           trans.x * inv.m[0][2] + trans.y * inv.m[1][2] + trans.z * inv.m[2][2] + inv.m[3][2]);
+    setPosAxis(pos);
+}
+
+void ObjectChara::OnManiSetRot(IManiCallback::SetParam& param) {
+    const mm::Mat44& mtx = param.m_mtx;
+    mm::Vec3 r;
+    r.x = mm::asin(-mtx.m[2][1]);
+    if (r.x < 1.57079637f) {
+        if (r.x > -1.57079637f) {
+            r.z = ::atan2f(mtx.m[0][1], mtx.m[1][1]);
+            r.y = ::atan2f(mtx.m[2][0], mtx.m[2][2]);
+        } else {
+            r.z = ::atan2f(mtx.m[0][2], mtx.m[0][0]);
+            r.y = 0.0f;
+        }
+    } else {
+        r.z = ::atan2f(mtx.m[0][2], mtx.m[0][0]);
+        r.y = 0.0f;
+    }
+    RotAxis rot = m_rot;
+    mm::Vec3 pos = m_chara->m_pos;
+    rot.m_value = mm::Vec3(0.0f, r.y - mm::mtl::Singleton<DataManager>::getPtr()->getRotOfsY(rot.m_type, pos), 0.0f);
+    setRotAxis(rot);
 }
 
 ObjectEffect::~ObjectEffect() {
@@ -2535,6 +2648,19 @@ bool FormManager::replace(unsigned int id, const mm::Mat44& mtx) {
         }
     }
     return true;
+}
+
+void ObjectChara::setRotAxis(const RotAxis& rot) {
+    m_rot = rot;
+    CharaObj* chara = m_chara;
+    const mm::Vec3& pos = (chara->m_cmdQueue0.contains(&chara->m_walkPos) ||
+                           chara->m_cmdQueue1.contains(&chara->m_walkPos) ||
+                           chara->m_cmdQueue1.contains(&chara->m_linerPos))
+                              ? chara->m_posGoal
+                              : chara->m_pos;
+    chara->setRot(mm::mtl::Singleton<DataManager>::getPtr()->axis2rot(rot.m_type, rot.m_value.x, rot.m_value.y,
+                                                                       rot.m_value.z, pos));
+    m_chara->mount(nullptr, "", mm::Vec3::zero, mm::Vec3::zero);
 }
 
 inline bool FormManager::replace(unsigned int id, int npc) {

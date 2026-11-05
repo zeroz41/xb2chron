@@ -1,6 +1,8 @@
 #ifndef CLASSES_EVENT_IMANICALLBACK_H
 #define CLASSES_EVENT_IMANICALLBACK_H
 
+#include "mm/Mat44.h"
+
 namespace event {
 // table none (its derived classes')
 class IManiCallback {
@@ -18,6 +20,15 @@ public:
     virtual bool OnManiStartTar(event::IManiCallback::StartParam&) { return false; }  // slot 6
     virtual void OnManiSetTar(event::IManiCallback::SetParam&) {}  // slot 7
     virtual void OnManiRender(event::IManiCallback::RenderParam&) {}  // slot 8
+};
+
+// what the manipulator passes the OnManiSet* slots: a matrix at 0x80 whose last row is the position
+// (ObjectChara/ObjectEffect::OnManiSetPos take that row; ObjectChara::OnManiSetRot reads the axis rows); the
+// field name is not the original's
+class IManiCallback::SetParam {
+public:
+    unsigned char pad_0[0x80];
+    mm::Mat44 m_mtx;  // 0x80
 };
 }  // namespace event
 
