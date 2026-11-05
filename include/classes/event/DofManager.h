@@ -20,6 +20,10 @@ public:
     void play(int type, float p0, float p1, float p2, float p3, float p4, float p5, int frame, bool flag,
               const char* name);
     void playSimple(int type, int frame);
+    // update's focus distance for play's type (static: the type comes in w0, the distance in s0)
+    static float calcDist(int type, float dist);
+    // render's label for an axis (static: the axis comes in w0)
+    static const char* getAxisName(int axis);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // 1.0.0's clear() (0x71000D88D4) only calls stop()
     void clear();
@@ -41,8 +45,8 @@ public:
     float pad_24;
     bool pad_28;  // cleared by play
     unsigned char pad_29[0x3];
-    float pad_2c;  // the constructor's 0 (the type is not known; play does not set it)
-    float pad_30;  // the constructor's 0.1 (play does not set it)
+    int pad_2c;  // the constructor's 0; playSimple's first argument (update and stop hand it to setDOFFocusNum)
+    float pad_30;  // the constructor's 0.1; playSimple's "foMin" (update and stop hand it to setDOFFocusMin)
     float pad_34;
     float pad_38;
     float pad_3c;

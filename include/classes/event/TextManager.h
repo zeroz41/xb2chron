@@ -49,7 +49,8 @@ public:
     unsigned char pad_3c9[0x1ff];
     unsigned int pad_5c8;
     unsigned char pad_5cc[0x4];
-    unsigned long pad_5d0;
+    // DofManager::calcDist's type 2 measures to this character when it is set
+    CharaObj* pad_5d0;
     unsigned char pad_5d8[0x8];
     unsigned char pad_5e0;
     unsigned char pad_5e1[0x1f];

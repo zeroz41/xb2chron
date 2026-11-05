@@ -3180,16 +3180,142 @@ void StatusManager::OnEventProc(event::MSG_TYPE msg) {
 
 #include "classes/event/DofManager.h"
 #include "classes/event/FadeManager.h"
+#include "classes/event/TextManager.h"
+#include "fw/FwDebug.h"
+#include "ml/ScnRenderDrSysParmAcc.h"
 #include "classes/event/SkipManager.h"
 #include "classes/gf/GfGameManager.h"
 
 namespace event {
 
 DofManager::DofManager()
-    : pad_10(0), pad_14(0), pad_18(1), pad_1c(0.0f), pad_20(0.0f), pad_24(5.0f), pad_28(false), pad_2c(0.0f),
+    : pad_10(0), pad_14(0), pad_18(1), pad_1c(0.0f), pad_20(0.0f), pad_24(5.0f), pad_28(false), pad_2c(0),
       pad_30(0.1f), pad_34(5.0f), pad_38(0.6f), pad_3c(4.0f), pad_40(1.0f), pad_44(0), pad_48(false), pad_50("") {}
 
 DofManager::~DofManager() {}
+
+void DofManager::update() {
+    if (!(pad_14 & 1)) return;
+    if (pad_28) {
+        ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+        acc.setDOF(true);
+        acc.setDOFOverride(true);
+        acc.setDoFDistance(0.0f);
+        acc.setDoFRange(0.0f);
+        acc.setDOFAutoFocus(true);
+        acc.setDOFFocusNum(pad_2c);
+        acc.setDOFFocusMin(pad_30);
+        acc.setDoFPixlRatio(pad_34);
+        acc.setDoFLens(pad_38);
+        acc.setDoFStrength(pad_3c);
+        acc.setDoFBlend(pad_40);
+        acc.setDofPixlLv(pad_44);
+        acc.setDofHLvMode(pad_48);
+        pad_14 &= ~2;
+    } else {
+        if (pad_18 == 0) return;
+        if (pad_14 & 2) pad_20 = calcDist(pad_18, pad_1c);
+        ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+        acc.setDOF(true);
+        acc.setDOFOverride(true);
+        acc.setDoFDistance(pad_20);
+        acc.setDoFRange(pad_24);
+        acc.setDOFAutoFocus(false);
+        acc.setDOFFocusNum(0);
+        acc.setDOFFocusMin(0.0f);
+        acc.setDoFPixlRatio(pad_34);
+        acc.setDoFLens(pad_38);
+        acc.setDoFStrength(pad_3c);
+        acc.setDoFBlend(pad_40);
+        acc.setDofPixlLv(pad_44);
+        acc.setDofHLvMode(pad_48);
+        pad_14 &= ~2;
+    }
+}
+
+float DofManager::calcDist(int type, float dist) {
+    if (type < 3) {
+        if (type == 2) {
+            CharaObj* chara = mm::mtl::Singleton<TextManager>::getPtr()->pad_5d0;
+            if (chara != nullptr) return calcDistSub(chara, dist);
+        }
+        return dist;
+    }
+    ObjectList* cur = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+    unsigned int num = cur != nullptr ? cur->m_counts[0] + 3 : 3;
+    if (num < (unsigned int)type) return dist;
+    ObjectManager* mgr = mm::mtl::Singleton<ObjectManager>::getPtr();
+    mgr->updateCurrent();
+    Object* cat = mgr->m_current->m_categories[0];
+    if (cat == nullptr || cat->m_child == nullptr) return dist;
+    int index = type - 3;
+    for (Object* obj = cat->m_child; obj != nullptr; obj = obj->m_next) {
+        if (index == 0) return calcDistSub(static_cast<ObjectChara*>(obj)->m_chara, dist);
+        index--;
+    }
+    return dist;
+}
+
+void DofManager::render() {
+    if (!(pad_10 & 1)) return;
+    ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+    int x = ml::DevGraph::getRootWidth() - 200;
+    int y = ml::DevGraph::getRootHeight() - 275;
+    fw::debug::drawSquare2D(mm::Rect<int>(x, y, 180, 210), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+    fw::debug::drawLineSquare2D(mm::Rect<int>(x, y, 180, 210), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFont(x + 5, y + 5, "DOF");
+    if (acc.isDOFAutoFocus()) {
+        fw::debug::drawFont(x + 5, y + 5, "         [simple]");
+    } else {
+        fw::debug::drawFont(x + 5, y + 5, "         [distance]");
+    }
+    if (acc.isDOF()) {
+        int px = x + 10;
+        int py = y + 22;
+        if (acc.isDOFAutoFocus()) {
+            if (!(acc.getDOFFocusNum() > 0)) {
+                fw::debug::drawFont(px, py, "foNo:     AUTO");
+            } else {
+                fw::debug::drawFont(px, py, "foNo:     %d", acc.getDOFFocusNum());
+            }
+            fw::debug::drawFont(px, py + 17, "foMin:    %.2f", acc.getDOFFocusMin());
+        } else {
+            fw::debug::drawFont(px, py, "axis:     %s", getAxisName(pad_18));
+            fw::debug::drawFont(px, py + 17, "dist:     %.2f", acc.getDoFDistance());
+            fw::debug::drawFont(px, py + 34, "range:    %.2f", acc.getDoFRange());
+        }
+        fw::debug::drawFont(x + 5, y + 85, "DETAIL");
+        if (pad_50[0] != '\0') fw::debug::drawFont(x + 5, y + 85, "         [%s]", pad_50);
+        fw::debug::drawFont(x + 10, y + 102, "pixel:    %.2f", acc.getDoFPixlRatio());
+        fw::debug::drawFont(x + 10, y + 119, "lens:     %.2f", acc.getDoFLens());
+        fw::debug::drawFont(x + 10, y + 136, "strength: %.2f", acc.getDoFStrength());
+        fw::debug::drawFont(x + 10, y + 153, "blend:    %.2f", acc.getDoFBlend());
+        fw::debug::drawFont(x + 10, y + 170, "pixelLv:  %d", acc.getDofPixlLv());
+        fw::debug::drawFont(x + 10, y + 187, "hlv:  %s", acc.isDofHLvMode() ? "ON" : "OFF");
+    }
+}
+
+const char* DofManager::getAxisName(int axis) {
+    if (axis < 3) {
+        if (axis == 1) return "CAM";
+        if (axis == 2) return "SAY";
+        return "NONE";
+    }
+    ObjectList* cur = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+    unsigned int num = cur != nullptr ? cur->m_counts[0] + 3 : 3;
+    if (num < (unsigned int)axis) return "NONE";
+    ObjectManager* mgr = mm::mtl::Singleton<ObjectManager>::getPtr();
+    mgr->updateCurrent();
+    Object* cat = mgr->m_current->m_categories[0];
+    if (cat == nullptr || cat->m_child == nullptr) return "ERR";
+    int index = axis - 3;
+    for (Object* obj = cat->m_child; obj != nullptr; obj = obj->m_next) {
+        if (index == 0) return obj->m_name.m_str;
+        index--;
+    }
+    return "ERR";
+}
 
 float DofManager::calcDistSub(CharaObj* chara, float) {
     mm::Vec3 eye = mm::mtl::Singleton<CamManager>::getPtr()->m_interfaces[0]->m_eye;
@@ -3200,6 +3326,45 @@ float DofManager::calcDistSub(CharaObj* chara, float) {
     mm::Vec3 dir = mm::Vec3(tar) - mm::Vec3(eye);  // the copies give the original's operand order (zkit sweep)
     dir.normalize();
     return dist * vec.dot(dir);
+}
+
+void DofManager::play(int type, int id) {
+    unsigned char* fp = Bdat::getFP("EVT_dof");
+    Bdat::uVal dist, range, pixel, lens, strength, blend;
+    dist.ulong = Bdat::getValCheck(fp, "dist", id, 8);
+    range.ulong = Bdat::getValCheck(fp, "range", id, 8);
+    pixel.ulong = Bdat::getValCheck(fp, "pixel", id, 8);
+    lens.ulong = Bdat::getValCheck(fp, "lens", id, 8);
+    strength.ulong = Bdat::getValCheck(fp, "strength", id, 8);
+    blend.ulong = Bdat::getValCheck(fp, "blend", id, 8);
+    int pixelLv = (short)Bdat::getValCheck(fp, "pixelLv", id, 5);
+    bool hlv = (short)Bdat::getValCheck(fp, "hlv", id, 5) > 0;
+    const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "name", id, 7));
+    play(type, dist.real, range.real, pixel.real, lens.real, strength.real, blend.real, pixelLv, hlv, name);
+}
+
+void DofManager::playSimple(int type, int id) {
+    unsigned char* fp = Bdat::getFP("EVT_dof");
+    Bdat::uVal foMin, pixel, lens, strength, blend;
+    foMin.ulong = Bdat::getValCheck(fp, "foMin", id, 8);
+    pixel.ulong = Bdat::getValCheck(fp, "pixel", id, 8);
+    lens.ulong = Bdat::getValCheck(fp, "lens", id, 8);
+    strength.ulong = Bdat::getValCheck(fp, "strength", id, 8);
+    blend.ulong = Bdat::getValCheck(fp, "blend", id, 8);
+    int pixelLv = (short)Bdat::getValCheck(fp, "pixelLv", id, 5);
+    bool hlv = (short)Bdat::getValCheck(fp, "hlv", id, 5) > 0;
+    const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "name", id, 7));
+    pad_14 |= 3;
+    pad_28 = true;
+    pad_2c = type;
+    pad_30 = foMin.real;
+    pad_34 = pixel.real;
+    pad_38 = lens.real;
+    pad_3c = strength.real;
+    pad_40 = blend.real;
+    pad_44 = pixelLv;
+    pad_48 = hlv;
+    pad_50 = name;
 }
 
 FadeManager::~FadeManager() {}
@@ -5651,6 +5816,49 @@ void DofManager::play(int type, float p0, float p1, float p2, float p3, float p4
     pad_44 = frame;
     pad_48 = flag;
     pad_50 = name;
+}
+
+void DofManager::stop() {
+    unsigned char* fp = Bdat::getFP("EVT_dof");
+    pad_14 = 0;
+    pad_18 = 1;
+    Bdat::uVal val;
+    val.ulong = Bdat::getValCheck(fp, "dist", Bdat::getIdTop(fp), 8);
+    pad_1c = val.real;
+    val.ulong = Bdat::getValCheck(fp, "dist", Bdat::getIdTop(fp), 8);
+    pad_20 = val.real;
+    val.ulong = Bdat::getValCheck(fp, "range", Bdat::getIdTop(fp), 8);
+    pad_24 = val.real;
+    pad_28 = false;
+    pad_2c = 0;
+    pad_30 = 0.1f;
+    val.ulong = Bdat::getValCheck(fp, "pixel", Bdat::getIdTop(fp), 8);
+    pad_34 = val.real;
+    val.ulong = Bdat::getValCheck(fp, "lens", Bdat::getIdTop(fp), 8);
+    pad_38 = val.real;
+    val.ulong = Bdat::getValCheck(fp, "strength", Bdat::getIdTop(fp), 8);
+    pad_3c = val.real;
+    val.ulong = Bdat::getValCheck(fp, "blend", Bdat::getIdTop(fp), 8);
+    pad_40 = val.real;
+    pad_44 = (short)Bdat::getValCheck(fp, "pixelLv", Bdat::getIdTop(fp), 5);
+    pad_48 = (short)Bdat::getValCheck(fp, "hlv", Bdat::getIdTop(fp), 5) > 0;
+    pad_50 = "";
+    if (Manager::get()->m_scn != nullptr) {
+        ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+        acc.setDOF(false);
+        acc.setDOFOverride(true);
+        acc.setDoFDistance(pad_20);
+        acc.setDoFRange(pad_24);
+        acc.setDOFAutoFocus(pad_28);
+        acc.setDOFFocusNum(pad_2c);
+        acc.setDOFFocusMin(pad_30);
+        acc.setDoFPixlRatio(pad_34);
+        acc.setDoFLens(pad_38);
+        acc.setDoFStrength(pad_3c);
+        acc.setDoFBlend(pad_40);
+        acc.setDofPixlLv(pad_44);
+        acc.setDofHLvMode(pad_48);
+    }
 }
 
 SelectManager::SelectManager() : pad_10(0), pad_14(0), pad_38(0), m_result(0) {}
