@@ -166,16 +166,36 @@ public:
     unsigned char m_type;
     unsigned char pad_1[0x8];
     bool m_fitParent;  // 0x9: ParticleObj::calcIsFit takes the parent particle's rotation (the name is not the original's)
-    unsigned char pad_a[0xBA];
+    unsigned char pad_a[0x8A];
+    unsigned char m_constParam;  // 0x94: RenderGrObj::draw_common_uconst's fourth constant (the name is not the original's)
+    unsigned char pad_95[0x2F];
     // 0xC4: 8 and 9 turn the particles along their motion (ParticleObj::calcIsFit; the name is not the original's)
     unsigned char m_fitType;
-    unsigned char pad_c5[0x1D];
+    unsigned char pad_c5[0x1B];
+    // 0xE0: RenderGrObj::draw_common_uconst's thirteenth constant (the name is not the original's)
+    unsigned char m_constParam2;
+    unsigned char pad_e1[0x1];
     unsigned short m_vecKfCount;  // 0xE2: move01_common_keyframe's get_kf count (the name is not the original's)
     unsigned char pad_e4[0x19];
     unsigned char m_hashValue;  // 0xFD: HashManager::build records it with the handle (the name is not the original's)
-    unsigned char pad_fe[0xB];
+    unsigned char pad_fe[0x6];
+    // 0x104: the draw type: 0x9X and 0xD, 4 and 5 pick draw_common_uparam's values (the name is not the original's)
+    unsigned char m_drawType;
+    unsigned char pad_105[0x3];
+    // 0x108: draw_common_uparam's flags: 4 a constant, 0x10 and 0x20 its flag bits (the name is not the original's)
+    unsigned char m_drawFlags;
     bool m_externalColor;  // 0x109: ParticleObj::calcExternalColor tints by the emitter (the name is not the original's)
-    unsigned char pad_10a[0x142];
+    unsigned char pad_10a[0x12];
+    // 0x11C..0x138: draw_common_uconst's and draw_common_uparam's values (the names are not the original's)
+    float m_drawDist;    // 0x11C: 1000 when negative or without a draw type
+    float m_uconst14;    // 0x120
+    float m_uparam9;     // 0x124
+    float m_drawDepth;   // 0x128: -3 replaces it while the emitter's m_drawLayer is 0xFF
+    float m_uparamScale; // 0x12C
+    float m_uparamRate;  // 0x130
+    float m_uparam8;     // 0x134: only for draw types 4 and 5
+    float m_uparam10;    // 0x138
+    unsigned char pad_13c[0x110];
     char m_name[4];  // 0x24C: HashManager::build's entry name; the length is not known yet
 };
 
@@ -269,7 +289,8 @@ public:
     unsigned char pad_150[0x1];
     unsigned char m_disp;    // emitter_set_disp's
     unsigned char m_nowait;  // emitter_set_nowait's
-    unsigned char pad_153[0x5];
+    unsigned char pad_153[0x4];
+    bool m_drawFlag;  // 0x157: sets draw_common_uparam's flag bit 1 (the name is not the original's)
     float m_speed;  // emitter_set_speed's
     unsigned char pad_15c[0x14];
     unsigned int m_category;  // emitter_set_category's; indexes EmitterManager::m_categorySpeed
@@ -286,7 +307,8 @@ public:
     const WindParam* m_pWind;  // 0x1F0 (the name is not the original's)
     // 0x1F8: the particles' noise (ParticleObj::calcNoise; the type and name are not the original's)
     const NoiseParam* m_pNoise;
-    unsigned char pad_200[0x61];
+    unsigned char pad_200[0x60];
+    unsigned char m_drawLayer;  // 0x260: 0xFF gives the draw constants -3 (the name is not the original's)
     // 0x261: low four bits; 1 makes createCommon link the particle in first (the name is not the original's)
     unsigned char m_allocMode : 4;
     unsigned char pad_262[0x2];

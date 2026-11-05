@@ -23,7 +23,9 @@ public:
     grlib::CGLibRenderTarget* m_pDepthBloom;  // "depBlm", none without bloom
     unsigned char pad_78[0x158];
     unsigned int m_effectBufOfs;  // 0x1D0: where BackBuffer::createAll puts its textures in the pool
-    unsigned char pad_1D4[0x37C];
+    unsigned char pad_1D4[0x370];
+    float m_fadeFrames;  // 0x544: RenderGrObj::draw_common_uparam's divisor (the name is not the original's)
+    unsigned char pad_548[0x8];
     unsigned int m_screenWidth;
     unsigned int m_screenHeight;
     unsigned char pad_558[0x8];

@@ -2,11 +2,12 @@
 #define PTLIB_RENDERER_RENDEREROBJ_H
 
 #include "grlib/CGLibRenderTarget.h"
+#include "grlib/CGLibTexture.h"
 #include "ptlib/renderer/ShaderManager.h"
 #include "mm/Vec3.h"
 
 namespace ptlib { class DrDrawWorkInfoEF; class FxParam; class StaticAllocObj; }
-namespace ptlib { namespace emitter { class EmitterManager; } }
+namespace ptlib { namespace emitter { class EmitterManager; class EmitterObj; } }
 
 namespace ptlib { namespace renderer {
 
@@ -49,6 +50,21 @@ public:
     }
     void createAll(StaticAllocObj* pAlloc, float width, float height, float width2, float height2,
                    unsigned int offset);
+    // gives the half-size targets half of width x height, their pixels from offset in the pool (createAll and
+    // RenderGrObj::fxcore_setup_target_update inline it; the name is not the original's)
+    void resizeHalf(float width, float height, unsigned int offset) {
+        width *= 0.5f;
+        height *= 0.5f;
+        unsigned int size;
+        unsigned int align;
+        grlib::CGLibTexture::getDefPixelSize(size, align, width, height, 0, static_cast<GrlSurfaceFormat>(0x3F));
+        unsigned int depthOffset = offset + (align - offset % align) % align;
+        offset = size + depthOffset;
+        m_pHalfDepth->setTextureInfo(width, height, static_cast<GrlSurfaceFormat>(0x3F), true, depthOffset);
+        grlib::CGLibTexture::getDefPixelSize(size, align, width, height, 0, static_cast<GrlSurfaceFormat>(5));
+        offset += (align - offset % align) % align;
+        m_pHalfColor->setTextureInfo(width, height, static_cast<GrlSurfaceFormat>(5), true, offset);
+    }
 
     grlib::CGLibRenderTarget* m_pHalfColor;  // 0x00: half the screen, format 5
     unsigned char pad_8[0x8];
@@ -66,8 +82,8 @@ public:
         m_backBuffer.reset();
         pad_260 = 0;
         m_blendState = 0;
-        for (int i = 0; i < 6; i++) {
-            pad_80[i] = nullptr;
+        for (int i = 0; i < 12; i++) {
+            m_screenParam[i] = 0.0f;
         }
     }
     ~RenderGrObj();
@@ -87,9 +103,14 @@ public:
     BackBuffer* getBackBuffer();
     void fxcore_setup_target_update(int view);
     void draw(emitter::EmitterManager& manager, FxParam& param, int view, int pass);
+    void myGX2SetBlendControl(int mode);
     void drawKizunaLine(int view);
     void drawSortAndNormal(emitter::EmitterManager& manager, int view, FxParam& param, int pass);
     void draw_capture();
+    void draw_common_uconst(float* pOut, emitter::EmitterObj* pEmitter);
+    void draw_common_uparam(float* pOut, unsigned int* pFlags, emitter::EmitterObj* pEmitter);
+    void setEffectRenderTarget(grlib::CGLibRenderTarget* pTarget, grlib::CGLibDepthBuffer* pDepth,
+                               grlib::CGLibRenderTarget* pTarget1, grlib::CGLibRenderTarget* pTarget2);
 
     BackBuffer m_backBuffer;  // 0x0
     unsigned char pad_30[0x10];
@@ -100,7 +121,9 @@ public:
     mm::Vec3 pad_60;           // 0x60: zero after the constructor and init
     void* pad_70;              // 0x70: cleared by the constructor and init
     unsigned char pad_78[0x8];
-    void* pad_80[6];           // 0x80: cleared by the constructor
+    // 0x80: three float4s of screen sizes draw fills: 1/size, 1, ratio; size, 1/size; size, 1/size (the name is not
+    // the original's)
+    float m_screenParam[12];
     ShaderManager m_shaderManager;  // 0xB0: the effect shaders (the name is not the original's)
     unsigned char pad_250[0x8];
     const DrDrawWorkInfoEF* m_pDrInfo;  // 0x258: RenderManager::setDrInfo writes it
