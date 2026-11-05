@@ -13,6 +13,7 @@
 #include "classes/fw/SoundUpdater.h"
 #include "classes/gf/GfComponent.h"
 namespace fw { class Message; }
+namespace fw { struct ResSoundTriggerInfo; }
 namespace fw { class MessageObject; }
 namespace gf { class GfComAsm; }
 namespace gf { class GfComEvtAnim; }
@@ -41,14 +42,13 @@ public:
     // table 0x7100B69CF8
     class ViewerListener {
     public:
-        explicit ViewerListener(GfComSound* owner) : m_pOwner(owner) {}
         // slot 0 (inline: emitted after the class's own functions)
         virtual void onWkStandbyLogout() {
             if (m_pOwner != nullptr) {
                 m_pOwner->m_pViewer = nullptr;
             }
         }
-        GfComSound* m_pOwner;  // (the name is not the original's)
+        GfComSound* m_pOwner;  // GfComSound's constructor sets it in its body (the name is not the original's)
     };
     typedef mm::mtl::_reslist_iterator<SoundInfo, SoundInfo&, SoundInfo*> CacheIterator;
 
@@ -63,9 +63,14 @@ public:
     unsigned int flush();
     void cleanup();
     // answers true (whether it played; BattleCharacter::PlaySE returns it)
-    bool playSe(const char* name, float volume, const mm::Vec3& offset, bool follow);
-    void playSeBone(const char* name, const char* bone, float volume, const mm::Vec3& offset, bool follow);
-    void playSe2D(const char* name, float volume, bool, bool);  // not written yet: what the two flags do is not read
+    // withoutSlow picks the category GfObjUtil::getSoundCategoryWithoutSlow gives (the parameter name is not the
+    // original's)
+    bool playSe(const char* name, float volume, const mm::Vec3& offset, bool withoutSlow);
+    // answers whether it played (as playSe)
+    bool playSeBone(const char* name, const char* bone, float volume, const mm::Vec3& offset, bool withoutSlow);
+    // answers whether it played; withoutSlow picks the category GfObjUtil::getSoundCategoryWithoutSlow gives, keep
+    // stores the sound in m_cache (the parameter names are not the original's)
+    bool playSe2D(const char* name, float volume, bool withoutSlow, bool keep);
     bool stopSe(const char* name);
     CacheIterator eraseCache(CacheIterator it);
     void setAttributeVariable(int value);
@@ -79,7 +84,9 @@ public:
     // linked into SoundLayerManager's list of its layer; its delegate is setup's: flush (the name is not the
     // original's)
     fw::SoundUpdater m_soundUpdater;
-    void* pad_128;  // the constructor clears it
+    // asked before callbackAnimImpl acts on a sound trigger; it skips the trigger when this answers false
+    // (gf::checkSoundTriggerPlayer has this signature; the name is not the original's)
+    bool (*m_triggerFilter)(GfComSound*, const fw::ResSoundTriggerInfo&);
     // what the sound resources call back with for a resource's custom info (GfComBehaviorPc::setup sets
     // callbackSound; the name is not the original's)
     mm::mtl::Delegate<void(const fw::ResSoundData&, fw::SoundResSourceManager::CustomInfo*)> m_customInfoCallback;

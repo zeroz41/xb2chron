@@ -31,7 +31,9 @@ public:
         float m_height;  // the surface's height (GfEffectGround::calcSwimEffectParam places the swim effect at it)
         unsigned char pad_4[0xC];
         mm::Plane m_plane;  // its surface (GfEffectGround projects the object's position onto it)
-        unsigned char pad_30[0x4];
+        // GfComSound::flushVariables sets water_depth to 1 while it is not below the water_th sound variable
+        // (in hundredths; the name is not the original's)
+        float m_level;
         // how deep the object is (GfEffectGround compares it with the caster's limit)
         float m_depth;
         unsigned int m_material;  // the water's material

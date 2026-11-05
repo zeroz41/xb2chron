@@ -11,6 +11,7 @@ namespace fw {
 // GfComSound::flush). The field names are not the original's.
 class SoundUpdater : public mm::mtl::IntrusiveListNodeBase {
 public:
+    SoundUpdater() : m_keep(false), m_linked(false) {}
     mm::mtl::Delegate<unsigned int()> m_delegate;  // called each frame of its layer
     bool m_keep;  // the last call's result was not 0; update unlinks the updater when it is false
     bool m_linked;  // whether the updater is linked into a layer's list
