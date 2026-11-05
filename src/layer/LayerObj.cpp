@@ -1,4 +1,5 @@
 #include "math.h"
+#include "stdio.h"
 #include "classes/layer/LayerObj.h"
 #include "classes/layer/LayerObjFont.h"
 #include "layer/LayerObjUtil.h"
@@ -35,6 +36,7 @@
 #include "grlib/CGLibUniformArray.h"
 #include "grlib/CGLibDblUniformBlock.h"
 #include "grlib/CGLibVtxOneInstans.h"
+#include "grlib/CGLibVtxInstans.h"
 #include "layer/LayerObjUtil.h"
 #include "classes/layer/LayerObjTopMaskObj.h"
 #include "layer/LayerTextureObj.h"
@@ -608,10 +610,63 @@ void LayerObjManager::finalRender(const ml::IDrDrawWorkInfo* info) {
     m_sortMan->finalRender();
 }
 void LayerObjManager::end() {}
+void LayerObjMesh::updateMeshUniformBlock(LayerArgMdlRenInf& arg) {
+    if ((arg.m_node->m_flags & 1) != 0) {
+        *arg.m_dispFlags &= ~1u;
+        return;
+    }
+    *arg.m_dispFlags |= 1;
+    arg.m_buff = reinterpret_cast<float*>(arg.m_uniformBlock->getBuff());
+    (this->*s_pCallUniform[arg.m_meshInfo[3]])(arg);
+    float* buff = arg.m_buff;
+    float r = arg.m_node->m_color.m_mulCol.r * arg.m_color->m_mulCol.r;
+    buff[0] = r;
+    float g = arg.m_node->m_color.m_mulCol.g * arg.m_color->m_mulCol.g;
+    buff[1] = g;
+    float b = arg.m_node->m_color.m_mulCol.b * arg.m_color->m_mulCol.b;
+    buff[2] = b;
+    float a = arg.m_node->m_color.m_mulCol.a * arg.m_color->m_mulCol.a;
+    buff[3] = a;
+    buff[4] = arg.m_node->m_color.m_addCol.r + arg.m_color->m_addCol.r;
+    buff[5] = arg.m_node->m_color.m_addCol.g + arg.m_color->m_addCol.g;
+    buff[6] = arg.m_node->m_color.m_addCol.b + arg.m_color->m_addCol.b;
+    buff[7] = 0.0f;
+    arg.m_buff += 8;
+    if ((arg.m_meshInfo[0] & 0x20) != 0) {
+        if (m_gauge != 0) {
+            float* gauge = arg.m_buff;
+            for (int i = 0; i < 8; i++) {
+                gauge[i] = 0.0f;
+            }
+            switch (m_gauge) {
+            case 1:
+                gauge[0] = m_param;
+                gauge[2] = -1.0f;
+                gauge[4] = 1.0f;
+                break;
+            case 2:
+                gauge[1] = m_param;
+                gauge[3] = -1.0f;
+                gauge[5] = 1.0f;
+                break;
+            case 3:
+                gauge[0] = m_param;
+                gauge[2] = 1.0f;
+                break;
+            case 4:
+                gauge[1] = m_param;
+                gauge[3] = 1.0f;
+                break;
+            }
+        }
+        arg.m_buff += 8;
+    }
+    arg.m_uniformBlock->updateData();
+}
 void LayerObjMesh::call_uniform_win_ga_X(LayerArgMdlRenInf& arg) { setUniformWinGaX(arg, false); }
 void LayerObjMesh::call_uniform_win_ga_Y(LayerArgMdlRenInf& arg) { setUniformWinGaY(arg, false); }
 void LayerObjMesh::call_uniform_icon(LayerArgMdlRenInf& arg) {
-    LayerObjUtil::updatePosMatrixUniformBlock(arg.m_buff, arg.m_matrix, *arg.m_viewMatrix, m_posZ,
+    LayerObjUtil::updatePosMatrixUniformBlock(arg.m_buff, &arg.m_node->m_matrix, *arg.m_viewMatrix, m_posZ,
                                               (m_stateFlags & STATE_RAW_POS) != 0);
     arg.m_buff += 8;
     if (m_iconNum >= m_iconMax) m_iconNum = m_iconMax - 1;
@@ -630,8 +685,56 @@ void LayerObjMesh::call_uniform_icon(LayerArgMdlRenInf& arg) {
     buff[7] = info->m_uv[3];
     arg.m_buff += 8;
 }
+void LayerObjMesh::call_uniform_number(LayerArgMdlRenInf& arg) {
+    LayerObjUtil::updatePosMatrixUniformBlock(arg.m_buff, &arg.m_node->m_matrix, *arg.m_viewMatrix, m_posZ,
+                                              (m_stateFlags & STATE_RAW_POS) != 0);
+    arg.m_buff += 8;
+    m_texRefs->m_number->m_num = 0;
+    const ResData* res = static_cast<const ResData*>(m_resData);
+    const IconData* icons = reinterpret_cast<const IconData*>(reinterpret_cast<const unsigned char*>(res) + res->m_iconOfs);
+    const IconInfo* infos =
+        reinterpret_cast<const IconInfo*>(reinterpret_cast<const unsigned char*>(icons) + icons->m_infoOfs);
+    char str[32];
+    snprintf(str, sizeof(str), "%.2f", m_param);
+    m_texRefs->m_number->m_instans->beginInstansBuff();
+    NumberInstance* inst = static_cast<NumberInstance*>(m_texRefs->m_number->m_instans->getNextInstansBuff());
+    float width = 0.0f;
+    int size = 0;
+    for (int i = 0; i < 32; i++) {
+        int idx;
+        if (str[i] == '.') {
+            idx = 11;
+        } else if (str[i] >= '0' && str[i] <= '9') {
+            idx = str[i] - '0';
+        } else {
+            break;
+        }
+        const IconInfo* info = &infos[idx];
+        NumberInstance* p = &inst[i];
+        float w = info->m_pos[0];
+        p->m_size[0] = w;
+        p->m_size[1] = info->m_pos[1];
+        p->m_pos[0] = i * info->m_pos[0];
+        p->m_pos[1] = 0.0f;
+        p->m_uv[0] = info->m_uv[0];
+        p->m_uv[1] = info->m_uv[1];
+        p->m_uv[2] = info->m_uv[2];
+        p->m_uv[3] = info->m_uv[3];
+        p->m_color = 0xFFFFFFFF;
+        width += w;
+        m_texRefs->m_number->m_num++;
+        size += sizeof(NumberInstance);
+    }
+    NumberInstance* p = inst;
+    for (unsigned int i = 0; i < m_texRefs->m_number->m_num; i++) {
+        p->m_pos[0] -= width;
+        p++;
+    }
+    m_texRefs->m_number->m_instans->m_offset += size;
+    m_texRefs->m_number->m_instans->updateInstansBuff();
+}
 void LayerObjMesh::call_uniform_noImage(LayerArgMdlRenInf& arg) {
-    LayerObjUtil::updatePosMatrixUniformBlock(arg.m_buff, arg.m_matrix, *arg.m_viewMatrix, m_posZ,
+    LayerObjUtil::updatePosMatrixUniformBlock(arg.m_buff, &arg.m_node->m_matrix, *arg.m_viewMatrix, m_posZ,
                                               (m_stateFlags & STATE_RAW_POS) != 0);
     arg.m_buff += 8;
 }

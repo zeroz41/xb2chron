@@ -171,6 +171,9 @@ public:
         STATE_NO_DRAW = 0x90000,
         // LayerObjTopDef::resourceInit sets it when its first texture has one of the formats 0x4D, 0x4F or 0x50
         STATE_TEX_FORMAT = 0x400000,
+        // LayerObjMesh's uv uniform mirrors u / v (scale negated, offset moved by 1)
+        STATE_FLIP_U = 0x100000,
+        STATE_FLIP_V = 0x200000,
     };
     // what setPos/setRot/setScale/setMulCol/setAddCol write, one per m_flags entry and a third the getters fall
     // back to (the layout is not the original's)
@@ -226,7 +229,12 @@ public:
     // the original's)
     LayerResDispInfo m_dispInfo;
     LayerResRenderInfo m_renderInfo;  // 0x180
-    unsigned char pad_19C[0x3C];  // the render info is 4-aligned (floats at 0x188)
+    unsigned char pad_19C[0x28];  // the render info is 4-aligned (floats at 0x188)
+    // the uv transform LayerObjMesh's call_uniform_def/uvscl/hdr write (offset, scale, rotation about the scaled
+    // center; the names are not the original's)
+    float m_uvOfs[2];  // 0x1C4
+    float m_uvScl[2];  // 0x1CC
+    float m_uvRot;     // 0x1D4
     unsigned short m_runningActIdx[2];  // LayerAccAction::getRunningActIdx, indexed by LayerManager::s_nDebIdx
     LayerResMatrix m_localMatrix;  // 0x1DC: applyEnd multiplies it by its parent's (the name is not the original's)
     float m_ctrlSpd;  // LayerActBase::actcmd_ctrlspd (the name is not the original's)
