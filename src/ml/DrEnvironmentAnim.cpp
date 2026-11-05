@@ -449,6 +449,54 @@ DrEnvironmentObjLgt::~DrEnvironmentObjLgt() {
     releaseLgt();
 }
 
+void DrEnvironmentObjLgt::releaseLgt() {
+    if (m_lgtNum != 0) {
+        if (m_lgtArrayNum[0] != 0 && m_ambLgt != nullptr) {
+            for (int i = 0; i < m_lgtArrayNum[0]; i++) {
+                m_ambLgt[i].~DrLightObjAmb();
+            }
+        }
+        if (m_lgtArrayNum[1] != 0 && m_dirLgt != nullptr) {
+            for (int i = 0; i < m_lgtArrayNum[1]; i++) {
+                m_dirLgt[i].~DrLightObjDir();
+            }
+        }
+        if (m_lgtArrayNum[2] != 0 && m_pntLgt != nullptr) {
+            for (int i = 0; i < m_lgtArrayNum[2]; i++) {
+                m_pntLgt[i].~DrLightObjPnt();
+            }
+        }
+        if (m_lgtArrayNum[3] != 0 && m_sptLgt != nullptr) {
+            for (int i = 0; i < m_lgtArrayNum[3]; i++) {
+                m_sptLgt[i].~DrLightObjSpt();
+            }
+        }
+        if (m_lgtArrayNum[4] != 0 && m_iblLgt != nullptr) {
+            for (int i = 0; i < m_lgtArrayNum[4]; i++) {
+                m_iblLgt[i].~DrLightObjLocalIBL();
+            }
+        }
+        m_lgtNum = 0;
+    }
+    if (m_fogObjNum != 0) {
+        for (int i = 0; i < m_fogObjNum; i++) {
+            m_fogObj[i].~DrFogObjGbl();
+        }
+        m_fogObjNum = 0;
+    }
+    if (m_texBufNum != 0) {
+        for (int i = 0; i < m_texBufNum; i++) {
+            m_texBuf[i].release();
+        }
+        m_texBufNum = 0;
+        m_texBuf = nullptr;
+    }
+    if (m_work4 != nullptr) {
+        mtl::MemManager::deallocate(m_work4, 0, false);
+        m_work4 = nullptr;
+    }
+}
+
 void DrEnvironmentObjLgt::resourceInit() {
     setupLgt(m_lgtArg);
 }
@@ -479,6 +527,103 @@ void DrEnvironmentObjLgt::setupPoint(DrEnvironmentLgtList* list, DrLightObjPnt* 
         light->m_flags |= DrLightObj::FLAG_SUBTRACT;
     }
     list->m_light = light;
+}
+
+void DrEnvironmentObjLgt::setupSpot(DrEnvironmentLgtList* list, DrLightObjSpt* light, const LgtObjData* data,
+                                    const LgtPosData* pos) {
+    mm::Col3 col(data->m_color[0], data->m_color[1], data->m_color[2]);
+    float g = col.g * data->m_intensity;
+    float r = col.r * data->m_intensity;
+    float b = col.b * data->m_intensity;
+    const LgtParamData* param =
+        reinterpret_cast<const LgtParamData*>(static_cast<const char*>(m_resource) + data->m_paramOfs);
+    light->m_color[0] = r;
+    light->m_color[1] = g;
+    light->m_color[2] = b;
+    light->setMat(pos->m_mat);
+    light->m_size = pos->m_range;
+    light->m_angle = param->m_angle;
+    light->m_paramC = param->m_paramC;
+    float falloff = param->m_falloff;
+    if (falloff <= 0.0f) {
+        falloff = 4.0f;
+    }
+    light->m_falloff = falloff;
+    light->m_lightParam = data->m_param == 0.0f ? 1.0f : data->m_param;
+    if (data->m_flags & 0x10) {
+        light->m_flags |= 0x800;
+    }
+    if (param->m_kind == 1) {
+        light->m_flags |= 2;
+    }
+    if (data->m_flagBits & 0x1000) {
+        light->m_flags |= DrLightObj::FLAG_CHAR_SHADOW;
+    }
+    if (data->m_flagBits & 0x2000) {
+        light->m_flags |= DrLightObj::FLAG_BASE_MAP_SHADOW;
+    }
+    if (data->m_flagBits & 0x4000) {
+        light->m_flags |= DrLightObj::FLAG_INST_MAP_SHADOW;
+    }
+    if (data->m_flagBits & 0x8000) {
+        light->m_flags |= DrLightObj::FLAG_INST_SEL_MAP_SHADOW;
+    }
+    if (data->m_flagBits & 0x10000000) {
+        light->m_flags |= DrLightObj::FLAG_SUBTRACT;
+    }
+    light->m_lightParam2 = param->m_lightParam2;
+    light->pad_e0 = param->m_speIntensity;
+    light->m_spotParam = param->m_spotParam;
+    list->m_light = light;
+}
+
+void DrEnvironmentObjLgt::changeMemCall(const void* resource) {
+    m_resource = resource;
+    const char* res = static_cast<const char*>(resource);
+    const LgtResHeader* header = static_cast<const LgtResHeader*>(resource);
+    if (header->m_lgtOfs != 0) {
+        const LgtResLgtSection* lgt = reinterpret_cast<const LgtResLgtSection*>(res + header->m_lgtOfs);
+        const LgtObjData* data = reinterpret_cast<const LgtObjData*>(res + lgt->m_dataOfs);
+        m_lgtData = data;
+        auto setAnim = [&](const LgtResAnimSection* anim) {
+            m_anim.m_frameRange = reinterpret_cast<const EnvFrameRange*>(res + anim->m_table[0].m_ofs);
+            m_anim.m_animInf = reinterpret_cast<const LgtAnimInf*>(res + anim->m_table[1].m_ofs);
+            m_anim.m_hermiteKeys = reinterpret_cast<const LgtAnimKey*>(res + anim->m_table[2].m_ofs);
+            m_anim.m_animData3 = res + anim->m_table[3].m_ofs;
+            m_anim.m_animData4 = res + anim->m_table[4].m_ofs;
+        };
+        if (header->m_animOfs != 0) {
+            setAnim(reinterpret_cast<const LgtResAnimSection*>(res + header->m_animOfs));
+        } else if (lgt->m_animOfs != 0) {
+            setAnim(reinterpret_cast<const LgtResAnimSection*>(res + lgt->m_animOfs));
+        }
+        const LgtResPosSection* posSection = reinterpret_cast<const LgtResPosSection*>(res + header->m_posOfs);
+        const LgtPosData* pos = reinterpret_cast<const LgtPosData*>(res + posSection->m_posOfs);
+        m_posTree = reinterpret_cast<const LgtPosTreeRange*>(res + posSection->m_treeOfs);
+        int num = posSection->m_num;
+        for (int i = 0; i < num; i++, data++, pos++) {
+            m_lgtList[i].m_data = data;
+            m_lgtList[i].m_posData = pos;
+        }
+    }
+    if (header->m_fogOfs != 0) {
+        const char* base = static_cast<const char*>(m_resource);
+        m_fogData = reinterpret_cast<const LgtGlbFogObj*>(
+            base + *reinterpret_cast<const unsigned int*>(base + header->m_fogOfs));
+    }
+    if (header->m_flags & 1) {
+        m_work2->changeMemCall(static_cast<const unsigned char*>(m_resource), header->m_clipNum);
+    }
+    if (header->m_timeOfs != 0) {
+        const char* base = static_cast<const char*>(m_resource);
+        const LgtResOfsSection* time = reinterpret_cast<const LgtResOfsSection*>(base + header->m_timeOfs);
+        m_time.m_timeSection = time;
+        m_time.m_timeData = reinterpret_cast<const char*>(time) + time->m_ofs;
+    }
+    if (header->m_ofs24 != 0) {
+        const char* base = static_cast<const char*>(m_resource);
+        m_work3 = base + reinterpret_cast<const LgtResOfsSection*>(base + header->m_ofs24)->m_ofs;
+    }
 }
 
 void DrEnvironmentObjLgt::setFrame(float frame) {
@@ -731,6 +876,20 @@ bool DrEnvironmentObjLgt::callback_Calc_LocalIBL(DrEnvironmentLgtList*, DrCalcVi
 void DrEnvironmentObjLgt::callback_Ren_Non(DrLightObj*, DrShdLgtMan*) {}
 
 void DrEnvironmentObjLgt::callback_Ren2D_Non(DrLightObj*, DrShdLgtMan*) {}
+
+// draws the six faces of the light's cube texture along the bottom of the screen
+void DrEnvironmentObjLgt::callback_Ren2D_LocalIBL(DrLightObj* light, DrShdLgtMan*) {
+    int height = m_drMan->m_curViewInfo->m_height;
+    float scale =
+        m_drMan->m_postParm[m_drMan->m_postParmIdx]->getToneMapOn() ? m_drMan->m_pixlMan->m_objTbl->m_toneMapVal[0] : 1.0f;
+    const grlib::CGLibTextureBuffer* tex = static_cast<DrLightObjLocalIBL*>(light)->m_cubeTex;
+    if (tex != nullptr) {
+        int y = height - 0x85;
+        for (int i = 0; i < 6; i++) {
+            m_drMan->m_pixlMan->debugRenderCube(*tex, i, 0, false, 5 + i * 0x81, y, 0x80, 0x80, false, scale);
+        }
+    }
+}
 
 void DrEnvironmentObjLgt::callback_Relase_Non(DrLightObj*) {}
 
@@ -1057,6 +1216,10 @@ void (DrEnvironmentObjLgt::*DrEnvironmentObjLgt::s_pCallLgtRender2D[7])(DrLightO
     &DrEnvironmentObjLgt::callback_Ren2D_Non,
     &DrEnvironmentObjLgt::callback_Ren2D_Non,
     &DrEnvironmentObjLgt::callback_Ren2D_LocalIBL,
+};
+
+void (DrEnvironmentObjLgt::*DrEnvironmentObjLgt::s_pCallFogCall[1])(DrFogObjGbl*, DrCalcViewWork*, const LgtGlbFogObj*) = {
+    &DrEnvironmentObjLgt::callback_Fog_Gbl,
 };
 
 // --- DrGlobalIBLPack ---

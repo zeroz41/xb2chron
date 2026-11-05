@@ -10,6 +10,14 @@ namespace grlib { class CGLibTextureBuffer; }
 
 namespace ml {
 class DrEnvironmentLgtList;
+struct LgtObjData;
+struct LgtGlbFogObj;
+class DrLightObjAmb;
+class DrLightObjDir;
+class DrLightObjPnt;
+class DrLightObjSpt;
+class DrLightObjLocalIBL;
+class DrFogObjGbl;
 struct LgtPosTreeRange;
 class DrResWrkClipList;
 class DrFogMan;
@@ -31,7 +39,10 @@ public:
     void setWeatherNum(DrMan* drMan, bool changed, int);
 
     // DrEnvironmentObjLgt's constructor clears 0x0..0x17; no reader of 0x0..0x13 found yet
-    unsigned long m_reserve[2];  // 0x0
+    // 0x0, 0x8: DrEnvironmentObjLgt::changeMemCall points them at the resource's time section and the data its
+    // second word gives (types and names not known)
+    const void* m_timeSection;
+    const void* m_timeData;
     int m_reserve2;              // 0x10
     int m_hour;                  // 0x14, DrEnvironmentObjLgt::update copies DrMan's +0x1CAC
     float m_blendRate;        // 0x18, setWeatherNum stores 1 / m_weatherFrame
@@ -73,10 +84,10 @@ public:
         m_texBuf = nullptr;
         m_time.m_weatherFrame = 0.0f;
         m_texBufNum = 0;
-        m_time.m_reserve[1] = 0;
+        m_time.m_timeData = nullptr;
         m_time.m_reserve2 = 0;
         m_time.m_hour = 0;
-        m_time.m_reserve[0] = 0;
+        m_time.m_timeSection = nullptr;
         m_time.m_blendRate = 0.06f;
         m_time.m_blendRate2 = 0.2f;
         m_time.m_weatherNum = 0;
@@ -135,10 +146,12 @@ public:
     int m_lgtArg;  // 0x150, DrEnvironmentMan's m_lgtArg; resourceInit passes it to setupLgt
     unsigned char pad_154[0x4];
     const void* m_resource;  // 0x158, createObj's resource
-    void* m_work[2];         // 0x160 (the names are not the original's)
+    // 0x160, 0x168: the resource's light records and global fog records (changeMemCall; names inferred)
+    const LgtObjData* m_lgtData;
+    const LgtGlbFogObj* m_fogData;
     // 0x170, the light position tree's nodes; updatePosLgt walks it from node 0 with calcTreePos (name inferred)
     const LgtPosTreeRange* m_posTree;
-    void* m_work3;           // 0x178
+    const void* m_work3;     // 0x178, changeMemCall points it into the resource (type not known)
     void* m_work4;           // 0x180, releaseLgt deallocates it
     // 0x188, a bit per light: calcLgtObj sets the bits of the lights it adds to m_renderList (updatePosLgt clears
     // them each frame; the name is not the original's)
@@ -149,14 +162,19 @@ public:
     // 0x1A8, the previous frame's m_renderList: updatePosLgt swaps the two and releases the lights it no longer
     // calculates (the name is not the original's)
     DrEnvironmentLgtList** m_prevRenderList;
-    // light object arrays by type and their counts (releaseLgt destroys each element through its table; elements
-    // 0x40, 0xA0, 0xC0, 0xF0, 0x250 and 0x68 bytes; the names are not the original's)
-    void* m_lgtArray[6];     // 0x1B0
+    // light object arrays by type and their counts (setupLgt constructs them, releaseLgt destroys each element through
+    // its table; the names are not the original's)
+    DrLightObjAmb* m_ambLgt;  // 0x1B0
+    DrLightObjDir* m_dirLgt;  // 0x1B8
+    DrLightObjPnt* m_pntLgt;  // 0x1C0
+    DrLightObjSpt* m_sptLgt;  // 0x1C8
+    DrLightObjLocalIBL* m_iblLgt;  // 0x1D0
+    DrFogObjGbl* m_fogObj;  // 0x1D8
     int m_renderLgtNum;  // 0x1E0, renderLgt's light count
     int m_prevRenderLgtNum;  // 0x1E4, m_prevRenderList's count (the name is not the original's)
     int m_lgtArrayNum[5];    // 0x1E8
     int m_lgtNum;  // 0x1FC, setupLgt reads it from the resource; debugRenderLgt2D's light count
-    int m_lgtArray5Num;      // 0x200, m_lgtArray[5]'s count
+    int m_fogObjNum;         // 0x200, m_fogObj's count
     int m_updateReq;         // 0x204, the constructor sets 1, update clears it (the name is not the original's)
     int m_weatherNum;        // 0x208, update compares DrPixlPostParm's +0x107C with it
     unsigned char pad_20c[0x4];

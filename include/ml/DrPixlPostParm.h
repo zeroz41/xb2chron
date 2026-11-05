@@ -219,7 +219,9 @@ public:
     bool m_shadowAddObjPos;  // 0x103E, DrPixlShadowMan::setAddObjPos forwards only when set (name inferred)
     unsigned char pad_103F[0x22];
     bool m_iblSel;  // 0x1061, DrPixlMan::getSpecIBLObj/getDiffIBLObj pick the second IBL pair when set (name inferred)
-    unsigned char pad_1062[0x22];
+    unsigned char pad_1062[0x1A];
+    int m_weatherNum;  // 0x107C, DrEnvironmentObjLgt::update passes setWeatherNum whether it changed (name inferred)
+    unsigned char pad_1080[0x4];
     int m_weather;  // 0x1084
     float m_weatherFrame[2];  // 0x1088, set by DrMan::s_nDblStockIdx, read by s_nDblIdx; reset to 60
     unsigned char pad_1090[0x6E];

@@ -20,6 +20,7 @@ public:
     // 0x90: 1.0.0's initDir sets 1.0f; update picks shadow cache flag 0x4 when it is above 0, else 0x20 (the name
     // is not the original's)
     float m_shadowRate;
+    unsigned char pad_94[0xC];  // setupLgt's array stride is 0xA0
 };
 }  // namespace ml
 

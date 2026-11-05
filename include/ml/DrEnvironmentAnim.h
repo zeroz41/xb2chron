@@ -110,9 +110,13 @@ public:
     // DrEnvironmentObj embeds one at 0xE0; DrEnvironmentObjLgt::setFrame clamps the frame to each range's end into
     // m_rangeFrame (the names are not the original's)
     const EnvFrameRange* m_frameRange;  // 0x0
-    unsigned char pad_8[0x8];
+    // 0x8, the attribute runs; callback_Calc_Ambient walks them with s_pCallAmb (name inferred)
+    const LgtAnimInf* m_animInf;
     const LgtAnimKey* m_hermiteKeys;  // 0x10, filled by setupAnim
-    unsigned char pad_18[0x10];
+    // 0x18, 0x20: DrEnvironmentObjLgt::changeMemCall points them into the resource's animation section (type and
+    // names not known)
+    const void* m_animData3;
+    const void* m_animData4;
     int m_rangeNum;  // 0x28
     unsigned char pad_2c[0x4];
     float* m_rangeFrame;  // 0x30

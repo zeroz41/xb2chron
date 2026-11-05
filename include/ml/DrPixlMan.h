@@ -63,6 +63,8 @@ public:
     void releaseColorBuffer();
     void occRenderEnd();
     void depCheckEnd();
+    void debugRenderCube(const grlib::CGLibTextureBuffer& tex, unsigned int face, unsigned int mip, bool, int x, int y,
+                         int width, int height, bool, float scale);
     void callFgShadowCacheUpdate();
     void setMainSRGBRenderTarget();
     void resetRenderTarget();

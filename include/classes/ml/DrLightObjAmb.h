@@ -8,6 +8,8 @@ namespace ml {
 class DrLightObjAmb : public ::ml::DrLightObj {
 public:
     virtual ~DrLightObjAmb();  // slot 0
+
+    unsigned char pad_30[0x10];  // setupLgt's array stride is 0x40
 };
 }  // namespace ml
 

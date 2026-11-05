@@ -12,6 +12,9 @@ namespace ml { struct LgtObjData; }
 namespace ml { struct LgtPosTreeRange; }
 namespace ml { struct LgtPosData; }
 namespace ml { class DrLightObjPnt; }
+namespace ml { class DrLightObjSpt; }
+namespace ml { class DrFogObjGbl; }
+namespace ml { struct LgtGlbFogObj; }
 
 namespace ml {
 // table 0x7100B7B270
@@ -23,15 +26,15 @@ public:
         m_lgtArg = lgtArg;
         m_work2 = nullptr;
         m_captureMode = 0;
-        m_lgtArray[0] = nullptr;
+        m_ambLgt = nullptr;
         m_work3 = nullptr;
         m_work4 = nullptr;
-        m_work[1] = nullptr;
+        m_fogData = nullptr;
         m_posTree = nullptr;
         m_resource = resource;
         m_weatherNum = 0;
-        m_work[0] = nullptr;
-        memset(&m_lgtArray[1], 0, 0x20);
+        m_lgtData = nullptr;
+        memset(&m_dirLgt, 0, 0x20);
         memset(m_lgtArrayNum, 0, 0x20);
         m_updateReq = 1;
     }
@@ -47,6 +50,7 @@ public:
     void releaseLgt();
     void setupLgt(int);
     void setupPoint(DrEnvironmentLgtList* list, DrLightObjPnt* light, const LgtObjData* data, const LgtPosData* pos);
+    void setupSpot(DrEnvironmentLgtList* list, DrLightObjSpt* light, const LgtObjData* data, const LgtPosData* pos);
     void updatePosLgt();
     void setupOfsPos();
     void setupCalcMatrix();
@@ -73,6 +77,7 @@ public:
     void callback_Ren_Spot(DrLightObj* light, DrShdLgtMan* shdLgtMan);
     void callback_Ren2D_Non(DrLightObj* light, DrShdLgtMan* shdLgtMan);
     void callback_Ren2D_LocalIBL(DrLightObj* light, DrShdLgtMan* shdLgtMan);
+    void callback_Fog_Gbl(DrFogObjGbl* fog, DrCalcViewWork* work, const LgtGlbFogObj* data);
 
     // indexed by LgtObjData::m_type (7 light types)
     static void (DrEnvironmentObjLgt::*s_pCallEnvRelase[7])(DrLightObj*);
@@ -80,6 +85,8 @@ public:
     static bool (DrEnvironmentObjLgt::*s_pCallCalcEnv[7])(DrEnvironmentLgtList*, DrCalcViewWork*);
     static void (DrEnvironmentObjLgt::*s_pCallLgtRender[7])(DrLightObj*, DrShdLgtMan*);
     static void (DrEnvironmentObjLgt::*s_pCallLgtRender2D[7])(DrLightObj*, DrShdLgtMan*);
+    // indexed by LgtGlbFogObj::m_type
+    static void (DrEnvironmentObjLgt::*s_pCallFogCall[1])(DrFogObjGbl*, DrCalcViewWork*, const LgtGlbFogObj*);
 };
 }  // namespace ml
 
