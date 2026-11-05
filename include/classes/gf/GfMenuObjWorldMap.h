@@ -116,6 +116,7 @@ public:
     static bool isEnableJump(const MenuZoneMapInfo& info);
     static void getFloorAABB(unsigned int mapId, unsigned int floor, mm::Aabb& aabb, mm::Pnt<short>& center);
     int getTotalFieldSkillLv(unsigned int fieldSkill);
+    static unsigned int getFieldSkillFromGimmik(unsigned char* bdat, unsigned int row, unsigned int type);
     void refreshIconFilter();
     // when the floor shown changed: queues the floor image's reload (seqTexDelete .. seqNext)
     void loadTex();

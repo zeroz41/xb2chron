@@ -73,6 +73,15 @@ public:
         MM_ASSERT(m_element);
         return m_element + m_size;
     }
+    // sets every element to value (gf::GfMenuObjWorldMap::seqTexDelete inlines it: array.h asserts the elements
+    // exist at its line 144, once before the loop; the name is not the original's)
+    void fill(const T& value) {
+#line 144 MM_MTL_ARRAY_PATH
+        MM_ASSERT(m_element);
+        for (size_t i = 0; i < m_size; i++) {
+            m_element[i] = value;
+        }
+    }
     // the same of a const array (fw::PointerMap::begin and end; array.h's lines 44 and 46)
     const T* begin() const {
 #line 44 MM_MTL_ARRAY_PATH

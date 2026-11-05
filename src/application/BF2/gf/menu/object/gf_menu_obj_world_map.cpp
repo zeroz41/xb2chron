@@ -35,6 +35,7 @@
 #include "ui/EventData.h"
 #include "ui/UIStr.h"
 #include "gf/GfMenuFlag.h"
+#include "gf/GfDataFieldSkill.h"
 #include "gf/GfMenuObjUtil.h"
 #include "mm/mtl/FixStr.h"
 #include "plugin/Bdat.h"
@@ -188,6 +189,43 @@ void GfMenuObjWorldMap::refreshIconFilter() {
             acc.setDispChild(!on, name.m_str);
         }
     }
+}
+
+bool GfMenuObjWorldMap::seqTexDelete() {
+    ui::UIObjectAcc main(ui::UIObjectAcc(m_handle).searchChild("LAY_main"));
+    if (m_floorLoaded) {
+        [&] {
+            GfMenuObjUtil::setChildDisp(main.m_handle, m_floorImage.m_str, false);
+            m_iconSelectList->clear();
+            for (mm::mtl::FixedVector<unsigned int, 256>& icons : m_iconTables) {
+                for (unsigned int* it = icons.begin(); it != icons.end(); ++it) {
+                    ui::UIObjectAcc icon(*it);
+                    if (icon.m_object != nullptr && !icon.isTerm()) {
+                        icon.setTerm();
+                    }
+                }
+                icons.clear();
+            }
+            m_jumpInfos.fill(MapJumpInfo());
+            mm::mtl::PtrSingleton<GfFieldGimmick>::sys()->m_locatorAtlas.dispose();
+            if (m_list2E0 != nullptr) {
+                m_list2E0->release();
+                m_list2E0 = nullptr;
+            }
+            if (m_floorLoaded && m_floorImage.m_nLen != 0) {
+                ui::UIObjectAcc acc(m_handle);
+                mm::mtl::PtrSingleton<ui::UIStreamManager>::sys()->deleteImage(m_floorImage, acc.searchChild("LAY_floor"));
+                m_floorLoaded = false;
+                m_floorImage.clear();
+            }
+            if (GfMenuObjUtil::isValidExpansion(3)) {
+                ui::UIObjectAcc npc(main.m_handle, "LAY_icon_npc");
+                npc.setDisp(false);
+            }
+        }();
+    }
+    ui::UIObjectAcc(main.searchChild("LAY_floor")).setDisp(false);
+    return true;
 }
 
 bool GfMenuObjWorldMap::seqTexDeleteWait() {
@@ -654,6 +692,32 @@ void GfMenuObjWorldMap::getFloorAABB(unsigned int mapId, unsigned int floor, mm:
             center.y = static_cast<short>((min.z + max.z) * 0.5f);
         }
     }
+}
+
+// the field skill a gimmick row asks for: for types 3 and 4 the first of FSID1..FSID5 that is set, accessed and not
+// complete (0 for none); else FSID, unless FSID2 is set and not complete
+unsigned int GfMenuObjWorldMap::getFieldSkillFromGimmik(unsigned char* bdat, unsigned int row, unsigned int type) {
+    if (type == 3 || type == 4) {
+        mm::mtl::FixStr<32> name;
+        for (int i = 1; i <= 5; i++) {
+            name.format("FSID%d", i);
+            if (Bdat::getMember(bdat, name.m_str) != nullptr) {
+                unsigned short skill = Bdat::getValCheckU16(bdat, name.m_str, row);
+                if (skill != 0 && GfDataFieldSkill::isFieldSkillSettingAccessed(skill) &&
+                    !GfDataFieldSkill::isFieldSkillSettingComplete(skill)) {
+                    return skill;
+                }
+            }
+        }
+        return 0;
+    }
+    int skill = Bdat::getValCheckU16(bdat, "FSID2", row);
+    if (Bdat::getMember(bdat, "FSID") != nullptr) {
+        if (skill == 0 || GfDataFieldSkill::isFieldSkillSettingComplete(skill)) {
+            return Bdat::getValCheckU16(bdat, "FSID", row);
+        }
+    }
+    return skill;
 }
 
 bool GfMenuObjWorldMap::isShopMinstrel(const gmk::AGmkBase& gmk) {
