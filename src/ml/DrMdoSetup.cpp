@@ -1438,6 +1438,84 @@ void DrMdoCtlMpfAuto::setBuffTbl(_wkMpfAutoBuff** buffTbl, int buffNum) {
     m_buffNum = buffNum;
 }
 
+void DrMdoCtlMpfAuto::getMemWork(_MPFWorkAutoInf* inf) {
+    DrMdoMpfMan* man = m_pMpfMan;
+    unsigned int used = inf->m_num * 0x20;
+    unsigned int need = used + 0x1C0;
+    if (inf->m_size < need) {
+        _MPFWorkAutoInf* next = inf->m_pNext;
+        _MPFWorkAutoInf* prev = inf->m_pPrev;
+        if (next == nullptr) {
+            if (prev == nullptr) {
+                man->m_pFreeHead = nullptr;
+                man->m_pFreeTail = nullptr;
+            } else {
+                man->m_pFreeTail = prev;
+                prev->m_pNext = nullptr;
+            }
+        } else if (prev == nullptr) {
+            man->m_pFreeHead = next;
+            next->m_pPrev = nullptr;
+        } else {
+            next->m_pPrev = prev;
+            inf->m_pPrev->m_pNext = inf->m_pNext;
+        }
+    } else {
+        used += 0x60;
+        _MPFWorkAutoInf* rest = reinterpret_cast<_MPFWorkAutoInf*>(reinterpret_cast<unsigned char*>(inf) + used);
+        memset(rest, 0, sizeof(_MPFWorkAutoInf));
+        _MPFWorkAutoInf* blockNext = inf->m_pBlockNext;
+        rest->m_pBlockNext = blockNext;
+        rest->m_pBlockPrev = inf;
+        if (blockNext != nullptr) {
+            blockNext->m_pBlockPrev = rest;
+        }
+        inf->m_pBlockNext = rest;
+        rest->m_size = inf->m_size - used;
+        inf->m_size = used;
+        _MPFWorkAutoInf* prev = inf->m_pPrev;
+        if (prev == nullptr) {
+            man->m_pFreeHead = rest;
+        } else {
+            rest->m_pPrev = prev;
+            prev->m_pNext = rest;
+        }
+        _MPFWorkAutoInf* next = inf->m_pNext;
+        if (next == nullptr) {
+            man->m_pFreeTail = rest;
+        } else {
+            rest->m_pNext = next;
+            next->m_pPrev = rest;
+        }
+    }
+    inf->m_flags = 2;
+    inf->m_scale = 0.0f;
+    if (m_pWorkTbl[m_workIdx] == nullptr) {
+        m_pWorkTbl[m_workIdx] = inf;
+        inf->m_pPrev = nullptr;
+    } else {
+        m_pWorkLast[m_workIdx]->m_pNext = inf;
+        inf->m_pPrev = m_pWorkLast[m_workIdx];
+    }
+    m_pWorkLast[m_workIdx] = inf;
+    inf->m_pNext = nullptr;
+    if (m_autoFlags & 2) {
+        inf->m_flags |= 0x200;
+    } else if (m_autoFlags & 4) {
+        inf->m_flags |= 0x20;
+    } else if (m_autoFlags & 8) {
+        inf->m_flags |= 0x40;
+    }
+    if (m_autoFlags & 0x80) {
+        inf->m_scale = 1.0f;
+    } else {
+        inf->m_flags |= 0x80;
+    }
+    if (m_autoFlags & 0x400) {
+        inf->m_flags |= 0x400;
+    }
+}
+
 void DrMdoCtlMpfAuto::gridInstColiCalc() {
     m_hitNum = 0;
     for (int i = 0; i < m_buffNum; i++) {

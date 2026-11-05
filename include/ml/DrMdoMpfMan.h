@@ -41,7 +41,13 @@ public:
     grlib::CGLibDblUniformBlock m_ambBlock;
     grlib::CGLibDblUniformBlock pad_98;  // 0x98: only constructed, released and destroyed here
     int m_listCount;  // 0xD0, cleared by begin()
-    unsigned char pad_D4[0x2C];
+    unsigned char pad_D4[0x4];
+    // 0xD8: free work blocks (_MPFWorkAutoInf::m_pNext/m_pPrev), DrMdoCtlMpfAuto::getMemWork takes from it
+    _MPFWorkAutoInf* m_pFreeHead;
+    _MPFWorkAutoInf* m_pFreeTail;  // 0xE0
+    unsigned char pad_E8[0x8];
+    _MPFWorkAutoInf* m_pFreeLargest;  // 0xF0: setHeMemWork's largest too-small block when none fits
+    unsigned char pad_F8[0x8];
     DrMdoCtlMpfWindCalc m_windCalc[64];  // 0x100: the constructor inits each, update runs calcUpdate on each
     unsigned char pad_3D00[0x10];
     char* m_pFrameWork;  // 0x3D10
