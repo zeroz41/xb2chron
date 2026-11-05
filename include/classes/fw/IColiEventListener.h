@@ -1,6 +1,8 @@
 #ifndef CLASSES_FW_ICOLIEVENTLISTENER_H
 #define CLASSES_FW_ICOLIEVENTLISTENER_H
 
+#include "mm/Vec3.h"
+
 namespace fw { class ColiObject; }
 
 namespace fw {
@@ -9,10 +11,13 @@ class IColiEventListener {
 public:
     // an event between two collision objects (GfComCollider's handlers read the other one; the names are not
     // the original's)
+    // fw::ColiManager::Impl::sendContactEvent fills one per side: the contact's position and normal follow
     class EnterInfo {
     public:
         fw::ColiObject* m_self;
         fw::ColiObject* m_other;
+        mm::Vec3 m_pos;
+        mm::Vec3 m_normal;
     };
     class LeaveInfo {
     public:

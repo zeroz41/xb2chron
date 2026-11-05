@@ -6,6 +6,7 @@
 
 #include "classes/fw/ColiManager/Impl.h"
 #include "classes/mm/mtl/List.h"
+#include "fw/ColiCheck.h"
 
 namespace fw {
 
@@ -54,6 +55,143 @@ ColiManager::Impl::Impl(mm::mtl::IAllocator* allocator, unsigned int count)
     : m_grand(nullptr), m_coli(nullptr), m_frame(1), m_allocator(allocator) {
     m_handles.reserve(allocator, count);
     m_handles.setRange(1, 0x7FFFFFFF, 0x7FFFFFFF);
+    m_contactTable.clear();
+}
+
+void ColiManager::Impl::updateContact() {
+    TColiCheckResult<256> result;
+    for (mm::mtl::IntrusiveList<ColiObject>::iterator it = m_objects.begin(); it != m_objects.end(); ++it) {
+        ColiObject* object = it.m_node;
+        if (!object->isChar()) {
+            continue;
+        }
+        mm::mtl::List<ContactParam>* contacts = nullptr;
+        unsigned int handle = object->m_objUserData.m_handle;
+        for (mm::mtl::FixedList<ListParam, 512>::iterator param = m_contactTable.begin();
+             param != m_contactTable.end(); ++param) {
+            if (param->m_handle == handle) {
+                contacts = param->m_contacts;
+                break;
+            }
+        }
+        if (object->m_RefCount == 1) {
+            if (contacts != nullptr) {
+                for (mm::mtl::List<ContactParam>::iterator contact = contacts->begin(); contact != contacts->end();
+                     ++contact) {
+                    if (contact->m_flags & 8) {
+                        contact->m_flags |= 4;
+                    }
+                    contact->m_flags &= ~0xA;
+                }
+            }
+        } else {
+            ColiCheckConfig config;
+            config.m_mode = 2;
+            config.m_flags = 2;
+            config.m_mask = 0xFFEFFFFF;
+            config.pad_c = 0.1f;
+            result.clear();
+            if (ColiCheck::testObjectChara(result, object, config)) {
+                makeContactList(object, result, contacts);
+            }
+            result.clear();
+            if (ColiCheck::testObjectPhantom(result, object, config)) {
+                makeContactList(object, result, contacts);
+            }
+        }
+    }
+}
+
+void ColiManager::Impl::sendContactEvent() {
+    for (mm::mtl::FixedList<ListParam, 512>::iterator param = m_contactTable.begin(); param != m_contactTable.end();
+         ++param) {
+        mm::mtl::List<ContactParam>* contacts = param->m_contacts;
+        ColiObject* self = static_cast<ColiObject*>(m_handles.getPtr(param->m_handle));
+        for (mm::mtl::List<ContactParam>::iterator it = contacts->begin(); it != contacts->end();) {
+            ContactParam& contact = *it;
+            ColiObject* other = static_cast<ColiObject*>(m_handles.getPtr(contact.m_other));
+            if (other == nullptr) {
+                it = contacts->erase(it);
+                continue;
+            }
+            IColiEventListener::EnterInfo enter;
+            enter.m_self = self;
+            enter.m_other = other;
+            enter.m_pos = contact.m_pos;
+            enter.m_normal = contact.m_normal;
+            IColiEventListener::EnterInfo otherEnter;
+            otherEnter.m_self = other;
+            otherEnter.m_other = self;
+            otherEnter.m_pos = contact.m_pos;
+            otherEnter.m_normal = contact.m_normal;
+            IColiEventListener::LeaveInfo leave;
+            leave.m_self = self;
+            leave.m_other = other;
+            IColiEventListener::LeaveInfo otherLeave;
+            otherLeave.m_self = other;
+            otherLeave.m_other = self;
+            if ((contact.m_flags & 5) == 1) {
+                contact.m_flags |= 0x10;
+            }
+            if ((contact.m_flags & 0x1A) == 0x18) {
+                contact.m_flags |= 4;
+            }
+            if (contact.m_flags & 1) {
+                self->enter(enter);
+                if (!other->isChar()) {
+                    other->enter(otherEnter);
+                }
+            }
+            if (contact.m_flags & 2) {
+                self->contact(enter);
+                if (!other->isChar()) {
+                    other->contact(otherEnter);
+                }
+            }
+            if (contact.m_flags & 4) {
+                self->leave(leave);
+                if (!other->isChar()) {
+                    other->leave(otherLeave);
+                }
+            }
+            if (contact.m_flags & 2) {
+                contact.m_flags |= 8;
+            } else {
+                contact.m_flags &= ~8;
+            }
+            contact.m_flags &= ~1;
+            if (contact.m_flags & 4) {
+                it = contacts->erase(it);
+            } else {
+                ++it;
+            }
+            contact.m_flags &= ~7;
+        }
+    }
+}
+
+void ColiManager::Impl::postUpdate() {
+    for (mm::mtl::IntrusiveList<ColiObject>::iterator it = m_objects.begin(); it != m_objects.end();) {
+        ColiObject* object = it.m_node;
+        ++it;
+        if (object != nullptr && object->m_RefCount == 1) {
+            object->release();
+        }
+    }
+    for (mm::mtl::IntrusiveList<ColiObject>::iterator it = m_objects.begin(); it != m_objects.end(); ++it) {
+        (*it).postUpdate();
+    }
+    if (m_coli != nullptr) {
+        m_coli->consistentUpdate();
+    }
+}
+
+void ColiManager::Impl::destroyContactTable() {
+    for (mm::mtl::FixedList<ListParam, 512>::iterator it = m_contactTable.begin(); it != m_contactTable.end(); ++it) {
+        mm::mtl::List<ContactParam>* contacts = it->m_contacts;
+        contacts->clear();
+        delete contacts;
+    }
     m_contactTable.clear();
 }
 

@@ -4,6 +4,7 @@
 #include "classes/fw/ColiManager.h"
 #include "classes/fw/ColiObject.h"
 #include "classes/fw/PointerMap.h"
+#include "fw/ColiCheck.h"
 #include "classes/fw/Framework.h"
 #include "classes/fw/FrameworkMemory.h"
 #include "classes/idcoli/IDColiManager.h"
@@ -18,19 +19,19 @@ namespace fw {
 // original's.
 class ColiManager::Impl {
 public:
-    // a contact between two objects (addContactList fills it): 0x40 bytes, two Vec3s at 0 and 0x20 (copied
-    // component by component), the word at 0x38 its constructor zeroes; the meaning of the fields is not known yet
+    // a contact between two objects (makeContactList and addContactList fill it, sendContactEvent hands it to
+    // both objects as an EnterInfo): 0x40 bytes. m_flags: bit 0 entered, bit 1 touching this frame, bit 2 left,
+    // bit 3 touching the last frame (sendContactEvent's), bit 4 set with an enter while not leaving. The field
+    // names are not the original's.
     class ContactParam {
     public:
-        ContactParam() : pad_38(0) {}
-        mm::Vec3 pad_0;
-        unsigned int pad_10;
-        unsigned char pad_14[0xC];
-        mm::Vec3 pad_20;
-        unsigned int pad_30;
-        unsigned int pad_34;
-        unsigned int pad_38;
-        unsigned char pad_3c[0x4];
+        ContactParam() : m_flags(0) {}
+        mm::Vec3 m_pos;        // the hit's position
+        unsigned int m_frame;  // the update (m_frame) that saw it
+        mm::Vec3 m_normal;     // the hit's normal
+        unsigned int m_self;   // the list owner's handle
+        unsigned int m_other;  // the other object's handle
+        unsigned int m_flags;
     };
     // a character's contacts, by its handle (registObject adds one per character, removeObject erases it)
     struct ListParam {
@@ -44,6 +45,8 @@ public:
     void sendContactEvent();
     void postUpdate();
     void destroyContactTable();
+    void makeContactList(ColiObject* object, TColiCheckResult<256>& result, mm::mtl::List<ContactParam>* contacts);
+    void addContactList(ColiObject* object, ColiObject* other, const ContactParam& param);
     void registObject(ColiObject* object);
     void removeObject(ColiObject* object);
     // ColiManager's initialize, finalize, update and tail (the destructor finalizes too): the collision system
