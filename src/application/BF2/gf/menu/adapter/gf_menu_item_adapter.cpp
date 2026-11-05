@@ -24,6 +24,8 @@
 #include "classes/gf/GfAllocator.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UIObjectPlugin.h"
+#include "plugin/Bdat.h"
+#include "mm/mtl/FixStr.h"
 
 namespace gf {
 
@@ -94,6 +96,42 @@ bool GfMenuItemAdapter::update_Name(const MenuItemInfo& item) {
         return true;
     }
     return false;
+}
+
+bool GfMenuItemAdapter::update_IconAll(const MenuItemInfo& item) {
+    if (m_item.m_id == 0 || m_item.m_type == 0 || item.m_type == 0) {
+        return false;
+    }
+    unsigned int key = 0;
+    unsigned int icon;
+    switch (item.m_type) {
+    case 10: {
+        ItemProperty property;
+        GfItemUtil::getProperty(property, item.m_id, 0);
+        key = property.m_favoriteKey;
+        if (key == 0) {
+            return false;
+        }
+        break;
+    }
+    case 2: {
+        ItemProperty property;
+        GfItemUtil::getProperty(property, item.m_id, 0);
+        key = property.m_iconIndex + 1;
+        break;
+    }
+    case 7: {
+        ItemProperty property;
+        GfItemUtil::getProperty(property, item.m_id, 0);
+        key = property.m_collectionKey;
+        break;
+    }
+    }
+    if (!GfMenuItemUtil::getIconNumber(ItemType::Type(item.m_type), key, icon, false)) {
+        return false;
+    }
+    setNumber(icon);
+    return true;
 }
 
 bool GfMenuItemAdapter::update_Count(const MenuItemInfo& item) {
@@ -186,6 +224,64 @@ bool GfMenuItemAdapter::update_CategoryIcon(const MenuItemInfo& item) {
     return false;
 }
 
+bool GfMenuItemAdapter::update_GetAreaText(const MenuItemInfo& item) {
+    if (m_item.m_id == 0 || m_item.m_type == 0) {
+        return false;
+    }
+    unsigned char* msg = GfDataBdat::getFP(0x1B4);
+    unsigned short zone;
+    switch (item.m_type) {
+    case 1: {
+        const char* column = m_subIndex == 0 ? "Zone" : "Zone2";
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            column = m_subIndex == 0 ? "IraZone" : "IraZone2";
+        }
+        zone = Bdat::getVal(GfDataBdat::getFP(0x95), column, item.m_id);
+        break;
+    }
+    case 2: {
+        const char* column = m_subIndex == 0 ? "Zone" : "Zone2";
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            column = m_subIndex == 0 ? "IraZone" : "IraZone2";
+        }
+        zone = Bdat::getVal(GfDataBdat::getFP(0x97), column, item.m_id);
+        break;
+    }
+    case 7:
+        if (m_subIndex != 0) {
+            return false;
+        }
+        zone = Bdat::getVal(GfDataBdat::getFP(0x93), "Zone", item.m_id);
+        break;
+    case 8:
+        if (m_subIndex != 0) {
+            return false;
+        }
+        zone = Bdat::getVal(GfDataBdat::getFP(0x94), "Zone", item.m_id);
+        break;
+    case 10:
+        if (m_subIndex != 0) {
+            return false;
+        }
+        zone = Bdat::getVal(GfDataBdat::getFP(0xA3), "Zone", item.m_id);
+        break;
+    default:
+        return false;
+    }
+    if (zone == 0) {
+        return false;
+    }
+    unsigned short name = Bdat::getVal(GfDataBdat::getFP(0x5D), "nameID", zone);
+    {
+        ui::UIStr text(msg, name);
+        if (text.c_str() == nullptr || *text.c_str() == '\0') {
+            return false;
+        }
+        setText(text);
+    }
+    return true;
+}
+
 bool GfMenuItemAdapter::update_SubCategoryText(const MenuItemInfo& item) {
     if (m_item.m_id != 0 && m_item.m_type != 0 && item.m_type == 10) {
         ItemProperty property;
@@ -211,6 +307,33 @@ bool GfMenuItemAdapter::update_EffectTime(const MenuItemInfo& item) {
     time.hour = property.m_favoriteTime / 60;
     time.minute = property.m_favoriteTime % 60;
     setTime(time);
+    return true;
+}
+
+bool GfMenuItemAdapter::update_EffectText(const MenuItemInfo& item) {
+    if (m_item.m_id == 0 || m_item.m_type == 0 || item.m_type != 10 || m_subIndex > 2) {
+        return false;
+    }
+    ItemProperty property;
+    GfItemUtil::getProperty(property, item.m_id, 0);
+    unsigned short type = property.m_favoriteType;
+    if (type == 0) {
+        return false;
+    }
+    unsigned char* buffBdat = GfDataBdat::getFP(0x39);
+    unsigned char* nameBdat = GfDataBdat::getFP(0x38);
+    unsigned char* msg = GfDataBdat::getFP(0x1A0);
+    mm::mtl::FixStr<32> column;
+    column.format("PBuff%d", m_subIndex + 1);
+    unsigned char buff = Bdat::getVal(buffBdat, column.m_str, type);
+    if (buff == 0) {
+        return false;
+    }
+    unsigned char name = Bdat::getVal(nameBdat, "Name", buff);
+    unsigned short owner = (m_subIndex & 3) | (type << 2);
+    ui::UIStr text(msg, name);
+    text.m_ownerId = owner;
+    setText(text);
     return true;
 }
 
@@ -263,6 +386,33 @@ bool GfMenuItemAdapter::update_EArmor(const MenuItemInfo& item) {
 }
 
 
+
+bool GfMenuItemAdapter::update_dispRevise(const MenuItemInfo& item) {
+    if (m_item.m_id == 0 || m_item.m_type == 0 || item.m_type != 16) {
+        return false;
+    }
+    ItemProperty property;
+    GfItemUtil::getProperty(property, item.m_id, 0);
+    if (property.m_revise[0] != 0 && m_subIndex == 0) {
+        return true;
+    }
+    if (property.m_revise[1] != 0 && m_subIndex == 1) {
+        return true;
+    }
+    if (property.m_revise[2] != 0 && m_subIndex == 2) {
+        return true;
+    }
+    if (property.m_revise[3] != 0 && m_subIndex == 3) {
+        return true;
+    }
+    if (property.m_revise[4] != 0 && m_subIndex == 4) {
+        return true;
+    }
+    if (property.m_revise[5] != 0 && m_subIndex == 5) {
+        return true;
+    }
+    return false;
+}
 
 bool GfMenuItemAdapter::update_roleText(const MenuItemInfo& item) {
     if (m_item.m_id == 0 || m_item.m_type == 0 || item.m_type != 16) {
