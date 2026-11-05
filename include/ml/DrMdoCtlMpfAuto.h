@@ -84,7 +84,7 @@ struct _wkMpfAutoBuff {
     float m_max[2];  // 0x0: x, z; gridInstColiCalc skips the buffer when the position lies past it
     float m_min[2];  // 0x8: x, z
     const MdsMpfAutoPoli* m_pPoli;  // 0x10: polygons (0x24 bytes each) the cell lists name
-    unsigned char pad_18[0x20];
+    const unsigned char* m_pTbl[4];  // 0x18..0x30: four more tables (DrResMdoSeamWrkMpf::setupMpfPoliWork)
     const MdsMpfAutoTree* m_pTree;  // 0x38, null when the head has no tree
     // 0x40: polygon lists a negative cell names (bit 31 cleared): a count, then that many m_pPoli entries
     const unsigned int* m_pPoliList;
@@ -103,6 +103,7 @@ public:
     DrMdoCtlMpfAuto();
     ~DrMdoCtlMpfAuto();
     static int calcWorkSize(const unsigned char* data);
+    void changeMemAutoMpf(const unsigned char* data, const unsigned char* autoData);
     void setBuffTbl(_wkMpfAutoBuff** buffTbl, int buffNum);
     void autoMpfRelease();
     void resetPrePos();

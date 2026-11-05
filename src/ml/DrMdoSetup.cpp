@@ -2984,7 +2984,7 @@ void DrMdoCtlSeamAll::releaseSeamAll() {
         wrk = next;
     }
     for (DrResMdoSeamWrkMpf* wrk = m_mpfPool.m_list; wrk != nullptr;) {
-        DrResMdoSeamWrkMpf* next = wrk->m_pLink;
+        DrResMdoSeamWrkMpf* next = wrk->m_prev;
         releaseFreeSeamMpf(wrk);
         wrk = next;
     }
@@ -3714,22 +3714,22 @@ void DrMdoCtlSeamRead::callMpfMdlStream(_wkSeamReadWait* wait) {
     if (memObj != nullptr) {
         DrResMdoSeamWrkMpf* wrk = m_mpfPool.m_freeHead;
         if (wrk != nullptr) {
-            DrResMdoSeamWrkMpf* next = wrk->m_pLink;
+            DrResMdoSeamWrkMpf* next = wrk->m_prev;
             if (next == nullptr) {
                 m_mpfPool.m_freeHead = nullptr;
                 m_mpfPool.m_freeTail = nullptr;
             } else {
                 m_mpfPool.m_freeHead = next;
-                next->m_pBackLink = nullptr;
+                next->m_next = nullptr;
             }
             if (m_mpfPool.m_usedTail != nullptr) {
-                m_mpfPool.m_usedTail->m_pLink = wrk;
+                m_mpfPool.m_usedTail->m_prev = wrk;
             }
             if (m_mpfPool.m_list == nullptr) {
                 m_mpfPool.m_list = wrk;
             }
-            wrk->m_pBackLink = m_mpfPool.m_usedTail;
-            wrk->m_pLink = nullptr;
+            wrk->m_next = m_mpfPool.m_usedTail;
+            wrk->m_prev = nullptr;
             m_mpfPool.m_freeNum--;
             m_mpfPool.m_usedNum++;
             m_mpfPool.m_usedTail = wrk;

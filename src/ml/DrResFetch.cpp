@@ -105,6 +105,9 @@
 #include "ml/DrResMdoTexSimple.h"
 #include "classes/ml/DrResMdoSeamWrkMpf.h"
 #include "ml/DrMdoCtlMpfAuto.h"
+#include "ml/DrMdoCtlSeamMpfMap.h"
+#include "ml/DrMdoCtlMpfWork.h"
+#include "ml/DrMdoCtlMpfInst.h"
 #include "ml/DrResMdoInstMdlInfo.h"
 #include "ml/DrResMdoVtxMeshObj.h"
 #include "ml/DrResMdoTexList.h"
@@ -647,6 +650,12 @@ DrResMdoPosInstAnm::AnmInsPosFunc DrResMdoPosInstAnm::s_pCallAnmInsPos[9] = {
     &DrResMdoPosInstAnm::anmInsPosParm_SclZ,
 };
 
+
+DrResMdoSeamWrkMpf::DrResMdoSeamWrkMpf()
+    : m_memObj(nullptr), m_dataIdx(0), m_dispNum(0), m_readCnt(0),
+      m_poliNum(0), m_cacheFlags(0), m_renderNum(), m_matRes(nullptr), m_workBuf(nullptr), m_mpfWork(nullptr),
+      m_mpfAuto(nullptr), m_mpfInst(nullptr), m_etcWork(nullptr), m_readSize(0) {}
+
 DrResMdoSeamWrkMpf::~DrResMdoSeamWrkMpf() {
     if (m_matRes != nullptr) {
         m_mpfAuto->autoMpfRelease();
@@ -665,6 +674,103 @@ DrResMdoSeamWrkMpf::~DrResMdoSeamWrkMpf() {
     }
     m_memObj = nullptr;
     m_dispNum = 0;
+}
+
+void DrResMdoSeamWrkMpf::releaseCache(DrMdoCtlSeamMpfMap* ctl) {
+    for (int i = 0; i < m_etcNum; i++) {
+        if ((m_etcBits[i >> 5] & (1 << (i & 0x1F))) && m_etcWork[i].m_work != nullptr) {
+            ctl->releaseFreeSeamMemObj(static_cast<DrResMdoSeamMemObj*>(m_etcWork[i].m_work));
+            m_etcWork[i].m_work = nullptr;
+        }
+    }
+    for (int i = 0; i < m_poliNum; i++) {
+        ctl->releaseFreeSeamMemObj(m_poliMemTbl[i]);
+    }
+    m_poliNum = 0;
+    if (m_matRes != nullptr) {
+        m_mpfAuto->autoMpfRelease();
+        m_mpfAuto->~DrMdoCtlMpfAuto();
+        m_mpfAuto = nullptr;
+        m_mpfInst = nullptr;
+        m_mpfWork = nullptr;
+        if (m_matRes != nullptr) {
+            mtl::MemManager::deallocate(m_matRes, 0, false);
+            m_matRes = nullptr;
+        }
+        if (m_workBuf != nullptr) {
+            mtl::MemManager::deallocate(m_workBuf, 0, false);
+            m_workBuf = nullptr;
+        }
+    }
+    m_memObj = nullptr;
+    m_dispNum = 0;
+}
+
+void DrResMdoSeamWrkMpf::setEtcMpfCache(int id, DrResMdoSeamMemObj* mem) {
+    const EtcEntry* entry = m_etcEntry;
+    for (int i = 0; i < m_etcNum; i++, entry++) {
+        if (entry->m_id == id) {
+            m_etcBits[i >> 5] |= 1 << (i & 0x1F);
+            DrResMdoSeamWrkPosMpf* work = &m_etcWork[i];
+            work->m_work = mem;
+            work->m_workNum = i;
+            const unsigned char* data = mem->m_pData;
+            const EtcData* head = reinterpret_cast<const EtcData*>(data);
+            work->m_data = data;
+            work->m_pos = data + head->m_posOfs;
+            work->m_info = data + head->m_infoOfs;
+            work->m_posNum = head->m_posNum;
+            m_etcWorkTbl[m_dispNum] = &m_etcWork[i];
+            m_dispNum++;
+            return;
+        }
+    }
+}
+
+void DrResMdoSeamWrkMpf::setMpfPoliCache(int id, DrResMdoSeamMemObj* mem) {
+    const unsigned char* data = reinterpret_cast<const unsigned char*>(m_mpfAuto->m_pHeader);
+    const PoliHead* head = reinterpret_cast<const PoliHead*>(data + m_mpfAuto->m_pHeader->m_poliOfs);
+    const PoliEntry* entry = reinterpret_cast<const PoliEntry*>(reinterpret_cast<const unsigned char*>(head) + head->m_entryOfs);
+    for (int i = 0; i < head->m_entryNum; i++, entry++) {
+        if (entry->m_id == id) {
+            m_poliBits[i >> 5] |= 1 << (i & 0x1F);
+            m_poliMemTbl[m_poliNum] = mem;
+            m_poliIdx[m_poliNum] = i;
+            setupMpfPoliWork(m_poliNum);
+            m_poliNum++;
+            return;
+        }
+    }
+}
+
+void DrResMdoSeamWrkMpf::setupMpfPoliWork(int idx) {
+    _wkMpfAutoBuff* buff = m_buffTbl[idx];
+    const unsigned char* data = m_poliMemTbl[idx]->m_pData;
+    const PoliData* head = reinterpret_cast<const PoliData*>(data);
+    buff->m_max[0] = head->m_max[0];
+    buff->m_min[0] = head->m_min[0];
+    buff->m_max[1] = head->m_max[1];
+    buff->m_min[1] = head->m_min[1];
+    buff->m_pPoli = reinterpret_cast<const MdsMpfAutoPoli*>(data + head->m_poliOfs);
+    buff->m_pTbl[0] = data + head->m_tblOfs[0];
+    buff->m_pTbl[1] = data + head->m_tblOfs[1];
+    buff->m_pTbl[2] = data + head->m_tblOfs[2];
+    buff->m_pTbl[3] = data + head->m_tblOfs[3];
+    if (head->m_treeOfs != 0) {
+        buff->m_pTree = reinterpret_cast<const MdsMpfAutoTree*>(data + head->m_treeOfs);
+    } else {
+        buff->m_pTree = nullptr;
+    }
+    buff->m_pPoliList = reinterpret_cast<const unsigned int*>(data + head->m_poliListOfs);
+    buff->m_pCell = reinterpret_cast<const unsigned int*>(data + head->m_cellOfs);
+    buff->m_pGrid = reinterpret_cast<const float(*)[2]>(data + head->m_gridOfs);
+    if (head->m_instOfs != 0) {
+        buff->m_pInstData = reinterpret_cast<const _wkMpfAutoBuff::Inst*>(data + head->m_instOfs);
+        buff->m_pPosTree = reinterpret_cast<const MdsMpfAutoPosTree*>(data + head->m_posTreeOfs);
+        buff->m_pIdxTbl = reinterpret_cast<const unsigned int*>(data + head->m_idxTblOfs);
+    } else {
+        buff->m_pInstData = nullptr;
+    }
 }
 
 inline void DrResMdoTexList::releaseTexInfo() {
@@ -4720,7 +4826,7 @@ void DrResMdoInstAnmObj::setupLink(DrResMdoPos* pos) const {
     }
 }
 
-DrResMdoSeamParmRead::DrResMdoSeamParmRead() : m_flags(0), pad_50(), pad_58(), pad_62C() { m_posCnt = 0; }
+DrResMdoSeamParmRead::DrResMdoSeamParmRead() : m_flags(0), m_readPos(0.0f, 0.0f, 0.0f), pad_62C() { m_posCnt = 0; }
 
 DrResMdoSeamParmRead::~DrResMdoSeamParmRead() {}
 
