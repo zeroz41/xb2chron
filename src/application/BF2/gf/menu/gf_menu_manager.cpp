@@ -114,6 +114,23 @@
 #include "classes/gf/GfMenuObjBtlchTutorial.h"
 #include "classes/gf/GfMenuObjTips.h"
 #include "gf/GfDataNpc.h"
+#include "gf/GfItemUtil.h"
+#include "gf/GfGameUtilDiff.h"
+#include "classes/gf/GfMenuObjArtsPalette.h"
+#include "classes/gf/GfMenuObjSpecialGauge.h"
+#include "classes/gf/GfMenuObjTargetCursor.h"
+#include "classes/gf/GfMenuObjFieldIcon.h"
+#include "classes/gf/GfMenuObjOtherCursor.h"
+#include "classes/gf/GfMenuObjCompass.h"
+#include "classes/gf/GfMenuObjMinimap2.h"
+#include "classes/gf/GfMenuObjHelpHud.h"
+#include "classes/gf/GfMenuObjBladeSwitch.h"
+#include "classes/gf/GfMenuObjPartyStatus2.h"
+#include "classes/gf/GfMenuObjLocationTelop.h"
+#include "classes/gf/GfMenuObjOCG.h"
+#include "classes/gf/GfMenuObjBladeChange.h"
+#include "classes/gf/GfMenuObjHitonowa.h"
+#include "classes/gf/GfMenuObjPopup.h"
 
 namespace gf {
 
@@ -125,11 +142,11 @@ GfMenuManager::GfMenuManager(const GfSetupParam& param)
     : m_objs(), m_initialized(false), m_locked(false), pad_4092(0), m_list(), pad_40B0(0), m_targetObjHandle((GF_OBJ_HANDLE*)-1),
       m_accessObjHandle((GF_OBJ_HANDLE*)-1), m_targetChanged(false), m_accessChanged(false), m_battleStateEnable(false),
       m_curCameraType(0), m_callContext(nullptr), m_commonWindowResult(0), m_battleState(), pad_40E0(), m_dispHud(),
-      pad_40E8(0), pad_40F0(0), m_updateDT(0.0f), m_comboRouteOpen(), m_openBtlModelView(false), m_openNameSelect(false),
+      m_dispHudPrev(), pad_40F0(0), m_updateDT(0.0f), m_comboRouteOpen(), m_openBtlModelView(false), m_openNameSelect(false),
       m_openOpeningTelop(false), m_hideAll(false), m_enableQuestOpen(false), m_evTheaterFlag(false), m_layer101Open(false),
       m_layer72Open(false), m_layer300Open(false), m_region(0), m_optionFlag(false), m_onlyIra(false),
       m_baseGameFlag(false), pad_4113(1), m_bladeBookFlag(), pad_4118(0), pad_4120(), m_latestCommonWinID(0),
-      m_mapjumpAtlasInfo(), m_titleValue(0), m_titleCount(0), m_npcMeetIds(), pad_43B0(0) {
+      m_mapjumpAtlasInfo(), m_titleValue(0), m_titleCount(0), m_npcMeetIds(), m_npcEntryCreated(false) {
     bool jp = ml::DevFileTh::checkValidFileBlock("bdat/jp.bin");
     m_region = !jp;
     if (!jp && ml::DevFileTh::checkValidFileBlock("stream/voice/jp/01/01010101.nop")) {
@@ -215,6 +232,247 @@ bool GfMenuManager::isOnlyIra() {
 
 void GfMenuManager::initOptionData(SDataOption& option) {
     GfMenuObjOption::initOptionData(option);
+}
+
+void GfMenuManager::changeBattleState(unsigned int state, bool on) {
+    switch (state) {
+    case 0:
+        if (on) {
+            m_dispHud.set(0, true);
+            m_dispHud.set(2, false);
+            m_dispHud.set(3, false);
+        } else {
+            m_dispHud.set(0, false);
+            if (!m_battleState.test(1) && m_battleStateEnable) {
+                m_dispHud.set(2, true);
+                m_dispHud.set(3, true);
+            }
+            if (GfMenuObjUtil::isValidExpansion(3)) {
+                GfMenuReference::setIraOperationDisp(false);
+            }
+        }
+        break;
+    case 1:
+        if (on) {
+            m_dispHud.set(2, false);
+            m_dispHud.set(3, false);
+        } else if (!m_battleState.test(0) && m_battleStateEnable) {
+            m_dispHud.set(2, true);
+            m_dispHud.set(3, true);
+        }
+        break;
+    case 3:
+        m_dispHud.set(4, on);
+        break;
+    case 4:
+        if (on) {
+            GfMenuObjBladeChange::enableAwakening(true);
+        } else {
+            GfMenuObjBladeChange::enableAwakening(false);
+        }
+        break;
+    case 6:
+        if (on) {
+            m_dispHud.set(0, false);
+        } else if (m_battleState.test(0)) {
+            m_dispHud.set(0, true);
+        }
+        break;
+    case 7:
+        m_dispHud.set(5, on);
+        break;
+    case 8:
+        if (GfMenuObjUtil::isValidExpansion(1)) {
+            if (on) {
+                m_dispHud.set(0, false);
+                m_dispHud.set(6, true);
+            } else {
+                if (m_battleState.test(0)) {
+                    m_dispHud.set(0, true);
+                }
+                m_dispHud.set(6, false);
+            }
+        }
+        break;
+    }
+}
+
+void GfMenuManager::updateHudState() {
+    if (get()->m_locked) {
+        return;
+    }
+    for (int i = 0; i < 7; i++) {
+        bool on = m_dispHud.test(i);
+        if (on == m_dispHudPrev.test(i)) {
+            continue;
+        }
+        switch (i) {
+        case 0:
+            if (on) {
+                GfMenuObjArtsPalette::open();
+                GfMenuObjPartyGauge::open();
+                if (GfMenuObjUtil::isLeaderBladeEnable()) {
+                    GfMenuObjBladeChange::open();
+                    GfMenuObjSpecialGauge::open();
+                } else {
+                    GfMenuObjBladeChange::openDrSolo();
+                }
+                GfMenuObjPartyStatus::open(true);
+            } else {
+                GfMenuObjArtsPalette::close();
+                if (!m_battleStateEnable || !m_battleState.test(6)) {
+                    GfMenuObjPartyGauge::close();
+                }
+                if (GfMenuObjUtil::isLeaderBladeEnable()) {
+                    GfMenuObjBladeChange::close();
+                    GfMenuObjSpecialGauge::close();
+                } else {
+                    GfMenuObjBladeChange::closeDrSolo();
+                }
+                GfMenuObjPartyStatus::close(false);
+            }
+            break;
+        case 1:
+            if (on) {
+                GfMenuObjPartyStatus::open(false);
+                GfMenuObjTargetInfo::disp(true);
+                GfMenuObjTargetCursor::disp(true);
+                GfMenuObjFieldIcon::dispAll(true);
+                GfMenuObjOtherCursor::disp(true);
+                GfMenuObjActionWindow::disp(true);
+                GfMenuObjEnemyStatus::disp(true);
+            } else {
+                GfMenuObjPartyStatus::close(true);
+                GfMenuObjTargetInfo::disp(false);
+                GfMenuObjTargetCursor::disp(false);
+                GfMenuObjFieldIcon::dispAll(false);
+                GfMenuObjOtherCursor::disp(false);
+                GfMenuObjActionWindow::disp(false);
+                GfMenuObjEnemyStatus::disp(false);
+                GfMenuObjLocationTelop::close();
+            }
+            break;
+        case 2:
+            if (on) {
+                GfMenuObjCompass::open();
+                GfMenuObjMinimap2::open();
+                GfMenuObjEnvironmentInfo::open();
+                GfMenuObjTargetInfo::dispAllOther(true);
+                GfMenuObjTargetInfo::dispAllSymbol(true);
+                GfMenuObjFieldIcon::dispAll(true);
+                GfMenuObjHelpHud::enable();
+            } else {
+                GfMenuObjCompass::close();
+                GfMenuObjMinimap2::close();
+                GfMenuObjEnvironmentInfo::close();
+                GfMenuObjTargetInfo::dispAllOther(false);
+                GfMenuObjTargetInfo::dispAllSymbol(false);
+                GfMenuObjFieldIcon::dispAll(false);
+                GfMenuObjHelpHud::disable();
+            }
+            break;
+        case 3:
+            if (on) {
+                GfMenuObjQuestLog::openLog();
+                GfMenuObjBladeSwitch::setActive(true);
+                if (GfMenuObjUtil::isValidExpansion(3) && m_npcEntryCreated) {
+                    m_npcEntryCreated = false;
+                } else {
+                    GfMenuObjPopup::continuePickup(0);
+                }
+            } else {
+                GfMenuObjQuestLog::closeLog();
+                GfMenuObjBladeSwitch::setActive(false);
+                GfMenuObjPopup::pausePickup();
+            }
+            break;
+        case 4:
+            if (m_battleState.test(0) || m_battleState.test(1)) {
+                if (!on) {
+                    GfMenuObjTargetInfo::disp(true);
+                    if (!m_battleState.test(7)) {
+                        GfMenuObjComboRoute::disp(true);
+                        GfMenuObjPartyGauge::disp(true);
+                    }
+                } else {
+                    GfMenuObjTargetInfo::disp(false);
+                    GfMenuObjComboRoute::disp(false);
+                    GfMenuObjPartyGauge::disp(false);
+                }
+            } else if (!on && m_battleStateEnable) {
+                GfMenuObjTargetInfo::disp(true);
+            }
+            break;
+        case 5:
+            if (m_battleState.test(0) || m_battleState.test(1)) {
+                if (!on) {
+                    GfMenuObjEnemyStatus::disp(true);
+                    GfMenuObjComboRoute::disp(true);
+                    GfMenuObjPartyStatus2::disp(true);
+                    GfMenuObjPartyGauge::disp(true);
+                    if (GfMenuObjUtil::isValidExpansion(3)) {
+                        GfMenuObjCharChange::disp(true);
+                    }
+                    if (isEnableExpBlade3()) {
+                        GfMenuObjOCG::disp(true);
+                    }
+                } else {
+                    GfMenuObjEnemyStatus::disp(false);
+                    GfMenuObjComboRoute::disp(false);
+                    GfMenuObjPartyStatus2::disp(false);
+                    GfMenuObjPartyGauge::disp(false);
+                    if (GfMenuObjUtil::isValidExpansion(3)) {
+                        GfMenuObjCharChange::disp(false);
+                        GfMenuObjComboRoute::disp(true);
+                    }
+                    if (isEnableExpBlade3()) {
+                        GfMenuObjOCG::disp(false);
+                    }
+                }
+            } else {
+                GfMenuObjEnemyStatus::disp(false);
+                GfMenuObjComboRoute::disp(false);
+                GfMenuObjPartyStatus2::disp(false);
+                GfMenuObjPartyGauge::disp(false);
+                if (GfMenuObjUtil::isValidExpansion(3)) {
+                    GfMenuObjCharChange::disp(!on);
+                }
+                if (isEnableExpBlade3()) {
+                    GfMenuObjOCG::disp(false);
+                }
+            }
+            break;
+        case 6:
+            if (GfMenuObjUtil::isValidExpansion(1)) {
+                if (m_battleState.test(0) || m_battleState.test(1)) {
+                    if (!on) {
+                        GfMenuObjComboRoute::disp(true);
+                        GfMenuObjPartyStatus2::disp(true);
+                        GfMenuObjPartyGauge::disp(true);
+                        if (isEnableExpBlade3()) {
+                            GfMenuObjOCG::disp(true);
+                        }
+                    } else {
+                        GfMenuObjComboRoute::disp(false);
+                        GfMenuObjPartyStatus2::disp(false);
+                        GfMenuObjPartyGauge::disp(false);
+                        if (isEnableExpBlade3()) {
+                            GfMenuObjOCG::disp(false);
+                        }
+                    }
+                } else {
+                    GfMenuObjComboRoute::disp(false);
+                    GfMenuObjPartyStatus2::disp(false);
+                    GfMenuObjPartyGauge::disp(false);
+                    if (isEnableExpBlade3()) {
+                        GfMenuObjOCG::disp(false);
+                    }
+                }
+            }
+            break;
+        }
+    }
+    m_dispHudPrev = m_dispHud;
 }
 
 void GfMenuManager::applyGammaCorrectValue(float value) {
@@ -1132,6 +1390,58 @@ void GfMenuManager::update(const fw::UpdateInfo&) {
     }
 }
 
+void GfMenuManager::setupGame() {
+    GfMenuManager* mgr = get();
+    if (mgr == nullptr) {
+        return;
+    }
+    if (GfMenuFlag::get1(49) == 0) {
+        GfMenuFlag::set1(40, 1);
+        GfMenuFlag::set1(41, 1);
+        GfMenuFlag::set1(42, 0);
+        GfMenuFlag::set1(43, 1);
+        GfMenuFlag::set1(44, 1);
+        GfMenuFlag::set1(45, 0);
+        GfMenuFlag::set1(46, 1);
+        GfMenuFlag::set1(47, 1);
+        GfMenuFlag::set1(48, 1);
+        GfMenuFlag::set1(49, 1);
+    }
+    for (int type = 1; type <= 21; type++) {
+        ::mm::mtl::FixedVector<GfItem, 1024> items;
+        GfItemUtil::getInfo(items, static_cast<ItemType::Type>(type), false);
+        if (!items.empty()) {
+            GfMenuFlag::set1(type + 0x3A, 1);
+        }
+    }
+    GfMenuObjPopup::closeAll();
+    bool ira;
+    if (GfGameManager::isGameTypeIra()) {
+        ira = true;
+        ui::UIUtil::setResourceReplaceID(1);
+        GfMenuHUD::switchExpansionLayer(3);
+        ui::UIManager::get()->terminateLayer(104, true);
+        ui::UIManager::get()->createLayer(304);
+        GfMenuObjHitonowa::setupGame();
+    } else {
+        ira = false;
+        ui::UIUtil::setResourceReplaceID(0);
+        GfMenuHUD::switchExpansionLayer(0);
+        ui::UIManager::get()->terminateLayer(304, true);
+        if (isEnableExpBlade3()) {
+            ui::UIManager::get()->createLayer(104);
+        }
+    }
+    if (mgr->pad_4113 != ira) {
+        ui::UIManager::get()->clearPreload();
+        ui::UIManager::get()->preloadLayer(15);
+        GfMenuMapInfo::setupMapInfo();
+        GfMenuLocation::reset();
+        mgr->pad_4113 = ira;
+    }
+    GfMenuReference::resetReferenceParam();
+}
+
 bool GfMenuManager::isOpenBtlchOrder() {
     GfMenuManager* mgr = get();
     if (mgr == nullptr) {
@@ -1282,6 +1592,59 @@ void GfMenuManager::gevChangeParty() {
     }
     if (changed2) {
         GfMenuObjCharChange::changeBlade();
+    }
+}
+
+void GfMenuManager::gevPlayerControl(gf::GEV gev) {
+    switch (static_cast<int>(gev)) {
+    case 16:
+        GfMenuReference::clearPartyStatusLock();
+        m_dispHud.set(1, false);
+        m_dispHud.set(2, false);
+        m_dispHud.set(3, false);
+        m_battleStateEnable = false;
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            GfMenuObjCharChange::close();
+        }
+        break;
+    case 15:
+        GfMenuMapInfo::setCurrentMap(GfGameManager::getMapID());
+        m_dispHud.set(1, true);
+        if (!m_battleState.test(0)) {
+            m_dispHud.set(3, true);
+        }
+        if (!m_battleState.test(0) && !m_battleState.test(1)) {
+            m_dispHud.set(2, true);
+        }
+        m_battleStateEnable = true;
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            GfMenuReference::setIraFlag(6, false);
+            if (!m_npcMeetIds.empty()) {
+                if (!GfGameUtilDiff::isEnableHitonowaSkip()) {
+                    for (unsigned short* it = m_npcMeetIds.begin(); it != m_npcMeetIds.end();) {
+                        if (GfDataNpc::getHitonowaMeetsFlag1Index(*it) == 0 || !GfDataNpc::isHitonowaMeetsFlag(*it)) {
+                            it = m_npcMeetIds.erase(it);
+                        } else if (GfDataNpc::getHitonowaFlag(*it) != 0) {
+                            it = m_npcMeetIds.erase(it);
+                        } else {
+                            ++it;
+                        }
+                    }
+                    if (!m_npcMeetIds.empty()) {
+                        GfPlayFactory::createNpcEntry(m_npcMeetIds);
+                        m_npcEntryCreated = true;
+                        GfMenuReference::setIraFlag(6, true);
+                    }
+                }
+                m_npcMeetIds.clear();
+            }
+            GfMenuObjCharChange::open();
+        }
+        GfMenuObjPartyStatus2::disp(true);
+        if (ui::UIInputManager* input = ui::UIInputManager::get()) {
+            input->enable();
+        }
+        break;
     }
 }
 

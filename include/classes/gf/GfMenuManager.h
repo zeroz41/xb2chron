@@ -57,6 +57,10 @@ public:
     static bool isFading(unsigned int layer);  // the fade of that layer runs
     static void update(const fw::UpdateInfo& info);
     void postUpdate(const fw::UpdateInfo& info);
+    // the symbols name them (postUpdate's callees): changeBattleState applies a battle state change to m_dispHud's
+    // flags; updateHudState opens or closes the HUD objects m_dispHud asks for
+    void changeBattleState(unsigned int state, bool on);
+    void updateHudState();
     // 2.0.0's symbols name it. What it does: with a target (getTargetObjHandle) that is an enemy (GfObjAcc type 5),
     // opens or closes GfMenuObjComboRoute when whether the enemy has an elemental combo
     // (GfObjPropertyEnemy::m_elementComboId) differs from m_comboRouteOpen and records it; without a target, closes it
@@ -243,7 +247,9 @@ public:
     mm::mtl::Bitflag<32> m_battleState;  // 0x40DC isBattleState, setBattleState (the name is not the original's)
     unsigned char pad_40E0[0x4];
     mm::mtl::Bitflag<32> m_dispHud;  // 0x40E4 isDispHud (the name is not the original's)
-    unsigned int pad_40E8;  // the constructor clears it
+    // 0x40E8 the m_dispHud flags updateHudState last applied (it opens or closes the HUD objects of the flags that
+    // differ, then copies m_dispHud here; the name is not the original's)
+    mm::mtl::Bitflag<32> m_dispHudPrev;
     unsigned char pad_40EC[0x4];
     unsigned long pad_40F0;  // the constructor clears it
     float m_updateDT;  // 0x40F8 getUpdateDT
@@ -285,7 +291,9 @@ public:
     // 0x41A8 requestNpcEntry appends the ids the fld plugin's setNpcMeet reports (fixed_vector.h's push_back asserts);
     // hasNpcEntry tests it for elements, the destructor clears it (the name is not the original's)
     mm::mtl::FixedVector<unsigned short, 256> m_npcMeetIds;
-    unsigned char pad_43B0;  // the constructor clears it
+    // 0x43B0 gevPlayerControl sets it after GfPlayFactory::createNpcEntry; updateHudState clears it (in place of
+    // GfMenuObjPopup::continuePickup) when the quest log opens (the name is not the original's)
+    bool m_npcEntryCreated;
     unsigned char pad_43B1[0xF];
 };
 }  // namespace gf
