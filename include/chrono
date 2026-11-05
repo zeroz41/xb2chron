@@ -1,0 +1,49 @@
+#ifndef CHRONO_H
+#define CHRONO_H
+
+// The C++ library's system clock, as the SDK's libc++ names it (std::__1::chrono::system_clock::now, which
+// ml::WorkCpu's constructor calls): only what its callers use. now() counts microseconds, as libc++ defines
+// system_clock's duration.
+namespace std { inline namespace __1 {
+
+template <long long _Num, long long _Den = 1> class ratio {};
+typedef ratio<1LL, 1000000LL> micro;
+
+namespace chrono {
+
+template <class _Rep, class _Period = ratio<1> > class duration {
+public:
+    typedef _Rep rep;
+    constexpr duration() : __rep_() {}
+    constexpr explicit duration(const rep& __r) : __rep_(__r) {}
+    constexpr rep count() const { return __rep_; }
+
+private:
+    rep __rep_;
+};
+
+typedef duration<long long, micro> microseconds;
+
+template <class _Clock, class _Duration = typename _Clock::duration> class time_point {
+public:
+    typedef _Duration duration;
+    constexpr time_point() : __d_() {}
+    constexpr explicit time_point(const duration& __d) : __d_(__d) {}
+    constexpr duration time_since_epoch() const { return __d_; }
+
+private:
+    duration __d_;
+};
+
+class system_clock {
+public:
+    typedef microseconds duration;
+    typedef duration::rep rep;
+    typedef chrono::time_point<system_clock> time_point;
+    static time_point now() noexcept;
+};
+
+}  // namespace chrono
+}}  // namespace std::__1
+
+#endif

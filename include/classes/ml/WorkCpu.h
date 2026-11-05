@@ -29,7 +29,8 @@ public:
     // a job group createGroupHandle hands out and releaseGroupHandle takes back (0x20 bytes, 8-aligned: its
     // FixedList node is 0x28)
     struct GRPLIST {
-        unsigned long pad_0;
+        int m_handle;  // 0x0 createGroupHandle's handle (the name is not the original's)
+        unsigned char pad_4[0x4];
         // 0x8 the group's jobs on each CPU, by the CPU less one (wkTail moves each job to its own CPU's; the name is
         // not the original's)
         reslist<TJOB*>* m_job[3];
@@ -47,11 +48,18 @@ public:
     static void wakeup(int group);
     static void sync(int group, WKCPU_SYNC sync, CPUID cpu);
     // the undoing of a job group's entryAutoExecGrp and createGroupHandle (navi::NvmshManager's destructor)
-    static void removeAutoExecGrp(int group);
+    // false when the CPU work does not exist or the group is not entered
+    static bool removeAutoExecGrp(int group);
     // enters a job group in the groups beginUpdate wakes, on cpu (Scn's constructor: its thUpAfter group on CPU 1,
     // 0xF; the unnamed parameter is not known yet)
     static void entryAutoExecGrp(int group, CPUID cpu, unsigned int);
-    static void releaseGroupHandle(int group);
+    // the group's jobs freed and its lists released once it is synced and no job of it is busy (false when the
+    // CPU work does not exist)
+    static bool releaseGroupHandle(int group);
+    // the result of the group's job, 0 when it has none
+    static int getResult(int group);
+    // a job of the group still waiting on or held by a CPU thread
+    static bool isBusyJob(int group);
     // a job group of count threads' room (Device::wkStandbyLogin makes one for its jobUpdate; the parameter name is
     // not the original's)
     static int createGroupHandle(unsigned int count);

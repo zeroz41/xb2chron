@@ -57,6 +57,7 @@
 #include "classes/ml/TJOB.h"
 #include <algorithm>
 #include "classes/ml/reslist.h"
+#include <chrono>
 
 namespace ml {
 
@@ -76,6 +77,13 @@ struct PAUSEQ {
 mm::mtl::FixedQueue<PAUSEQ, 16> s_quePause;
 mm::mtl::FixedQueue<PAUSEQ, 16> s_quePauseS;
 
+// the lock the pause queues are changed under (pause; the name is not the original's)
+CriticalSection& getPauseCriticalSection() {
+    // Proposed name, not the original's: the symbols leave it and its guard unnamed (lbl_7100ECFFB0, lbl_7100ECFFD8)
+    static CriticalSection s_cs;
+    return s_cs;
+}
+
 }  // namespace _wkcnt
 
 namespace _mlwcpu {
@@ -94,15 +102,44 @@ static const CriticalSection& getSwapCriticalSection() {
     return s_cs;
 }
 
-// the lock the job groups are changed and walked under (inline in each user; the name is not the original's)
-static CriticalSection& getGroupCriticalSection() {
+// the beat endFrame stamps (getClockNow into [0]); the constructor zeroes all three
+long s_aHearBeat[3];
+// each CPU's infinite-loop flag, cleared by WorkCpu's constructor
+bool s_aInfinite[3];
+
+// The locks below are external functions inlined into every user (no out-of-line copy is left in the binary):
+// their guards form one merged block (lbl_7100ED09F0: group, job, first, auto-exec) in this definition order,
+// which eagerly emitted (non-inline, external) definitions give; the constructor reaches them in another order.
+
+// the lock the job groups are changed and walked under (the name is not the original's)
+CriticalSection& getGroupCriticalSection() {
     // Proposed name, not the original's: the symbols leave it and its guard unnamed (lbl_7100ED0030, lbl_7100ED09F0)
     static CriticalSection s_cs;
     return s_cs;
 }
 
-// the beat endFrame stamps (getClockNow into [0]); the constructor zeroes all three
-long s_aHearBeat[3];
+// the lock jobs are allocated and freed under (allocJob, freeJob; the name is not the original's)
+CriticalSection& getJobCriticalSection() {
+    // Proposed name, not the original's: the symbols leave it and its guard unnamed (lbl_7100ED0058, lbl_7100ED09F8)
+    static CriticalSection s_cs;
+    return s_cs;
+}
+
+// a lock only WorkCpu's constructor reaches in this unit (the name is not the original's)
+CriticalSection& getFirstCriticalSection() {
+    // Proposed name, not the original's: unnamed in the symbols (lbl_7100ED00B0, guard lbl_7100ED0A00)
+    static CriticalSection s_cs;
+    return s_cs;
+}
+
+// the lock the auto-exec groups are changed under (entryAutoExecGrp, removeAutoExecGrp; the name is not the
+// original's)
+CriticalSection& getAutoExecCriticalSection() {
+    // Proposed name, not the original's: unnamed in the symbols (lbl_7100ED00D8, guard lbl_7100ED0A08)
+    static CriticalSection s_cs;
+    return s_cs;
+}
+
 bool s_bEnableLib;
 bool s_bStallRender;
 bool s_bBackGround;
@@ -644,6 +681,14 @@ bool WorkControl::setFlowSetup() {
     return true;
 }
 
+void WorkControl::pause(bool pause, const char* name) {
+    CS lock(_wkcnt::getPauseCriticalSection());
+    _wkcnt::PAUSEQ request;
+    request.m_pause = pause;
+    request.m_name = name;
+    _wkcnt::s_quePause.push_back(request);
+}
+
 bool WorkControl::wkStandbyLogin() {
     if (WorkCpu::isInitialized()) {
         return false;
@@ -886,6 +931,79 @@ void WorkCpu::resumeThread() {
             }
         }
     }
+}
+
+WorkCpu::WorkCpu(const char* name, WorkObj* parent)
+    : WorkObj(name, parent, 16), m_flags(0), m_cpuNum(0), pad_1738(1), pad_173c(1), m_renderGroup(-1), m_swapGroup(-1),
+      m_rendering(false), m_bank(0), pad_1798(0), pad_1958(0), pad_195c(0), m_mainThreadId(0), m_renderTime(0), pad_2034(0),
+      pad_2038(0), pad_203c(0), pad_2040(false), pad_2088(0), m_frameCount(0), pad_2098(0) {
+    m_bankCount[0] = m_bankCount[1] = 0;
+    for (int i = 0; i < 3; i++) {
+        m_thread[i] = nullptr;
+    }
+    for (int i = 0; i < 8; i++) {
+        m_beginClock[i] = 0;
+    }
+    for (int i = 0; i < 3; i++) {
+        _mlwcpu::s_aHearBeat[i] = 0;
+    }
+    _mlwcpu::s_aInfinite[0] = false;
+    _mlwcpu::s_aInfinite[1] = false;
+    _mlwcpu::s_aInfinite[2] = false;
+    m_mainThreadId = reinterpret_cast<unsigned long>(ThreadUtil::getCurrentID());
+    _mlwcpu::getFirstCriticalSection().setCostIgnore(true);
+    _mlwcpu::getGroupCriticalSection().setCostIgnore(true);
+    _mlwcpu::getJobCriticalSection().setCostIgnore(true);
+    _mlwcpu::getAutoExecCriticalSection().setCostIgnore(true);
+    pad_2098 = std::chrono::system_clock::now().time_since_epoch().count();
+}
+
+namespace _mlwcpu {
+
+// the job group with the handle, null for none; the caller holds the group lock (inline in its users; the name is
+// not the original's)
+static WorkCpu::GRPLIST* findGroup(WorkCpu* cpu, int group) {
+    getGroupCriticalSection().isLocked();
+    for (mm::mtl::FixedList<WorkCpu::GRPLIST, 128>::iterator it = cpu->m_group.begin(); it != cpu->m_group.end();
+         ++it) {
+        WorkCpu::GRPLIST* grp = it.operator->();
+        if (grp->m_handle == group) {
+            return grp;
+        }
+    }
+    return nullptr;
+}
+
+}  // namespace _mlwcpu
+
+bool WorkCpu::removeAutoExecGrp(int group) {
+    WorkCpu* cpu = get();
+    if (cpu == nullptr) {
+        return false;
+    }
+    CS lock(_mlwcpu::getAutoExecCriticalSection());
+    for (mm::mtl::FixedList<AUTO_EXEC, 32>::iterator it = cpu->m_autoExec.begin(); it != cpu->m_autoExec.end();
+         ++it) {
+        if ((*it).m_group == group) {
+            cpu->m_autoExec.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+
+int WorkCpu::getResult(int group) {
+    CS lock(_mlwcpu::getGroupCriticalSection());
+    GRPLIST* grp = _mlwcpu::findGroup(get(), group);
+    for (unsigned int i = 0; i < get()->m_cpuNum; i++) {
+        reslist<TJOB*>* list = grp->m_job[i];
+        for (reslist<TJOB*>::iterator it = list->begin(); it != list->end(); ++it) {
+            if ((*it)->m_group == group) {
+                return (*it)->m_result;
+            }
+        }
+    }
+    return 0;
 }
 
 WorkCpu* WorkCpu::create(WorkObj* parent) {
