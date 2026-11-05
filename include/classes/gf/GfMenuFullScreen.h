@@ -35,7 +35,7 @@ public:
     explicit GfMenuFullScreen(const GfSetupParam& param)
         : m_initialized(false), m_screen(0), m_nextScreen(0), m_layers(), m_pushHistory(true), m_switching(false),
           m_fadeInTime(0), m_fadeOutTime(0), m_inputBorder(0), m_enableEvent(true), m_fadeOut(true), m_fadeIn(true),
-          m_nextLayer(0), m_waitFrames(0), m_subLayer(0), m_subGroup(0), m_inputSwitcher(8) {}
+          m_nextLayer(0), m_waitFrames(0), m_sub(), m_inputSwitcher(8) {}
     virtual ~GfMenuFullScreen();  // slot 0
     static void build(const GfSetupParam& param);
     // 1.0.0's: sets m_initialized (3.0.1 has no copy: build inlines it)
@@ -120,8 +120,13 @@ public:
     unsigned int m_nextLayer;               // 0x130: the layer the switch opens; the name is not the original's
     unsigned short m_waitFrames;            // 0x134: switchLayerWaitScreen's frames; the name is not the original's
     mm::mtl::Delegate<void()> m_subSeq;     // 0x138: the sub layer's current step (postUpdate runs it)
-    unsigned int m_subLayer;                // 0x158: the sub layer to open; the name is not the original's
-    unsigned short m_subGroup;              // 0x15C: its group; the name is not the original's
+    // 0x158: the sub layer to open and its group. One 8-byte value: build zeroes it with one 8-byte store. The
+    // names are not the original's.
+    struct SubLayer {
+        unsigned int m_layer;
+        unsigned short m_group;
+    };
+    SubLayer m_sub;
     ui::UIInputSwitcher m_inputSwitcher;    // 0x160
     mm::mtl::FixedVector<LayerParam, 8> m_layerParams;  // 0x188
 };

@@ -51,7 +51,15 @@ unsigned int GfMenuFlag::get4(int id) {
 
 GfMenuFullScreen::~GfMenuFullScreen() {}
 
-// build is not here yet (a candidate a few words off is in the worker notes)
+void GfMenuFullScreen::build(const GfSetupParam& param) {
+#line 89
+    GfMenuFullScreen* screen = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfMenuFullScreen(param);
+    screen->initialize(param);
+    screen->resetLayer(0);
+    screen->resetLayer(1);
+    screen->resetLayer(2);
+    screen->resetLayer(3);
+}
 
 void GfMenuFullScreen::destroy() {
     GfMenuFullScreen* screen = get();
@@ -164,7 +172,21 @@ void GfMenuFullScreen::disableInput() {
     }
 }
 
-// registLayerParam is not here yet (a candidate a few words off is in the worker notes)
+void GfMenuFullScreen::registLayerParam(unsigned int layer, const GfMenuTypes::Param& param) {
+    GfMenuFullScreen* screen = get();
+    if (screen != nullptr) {
+        for (LayerParam* it = screen->m_layerParams.begin(); it != screen->m_layerParams.end(); ++it) {
+            if (it->m_layer == layer) {
+                it->m_param = param;
+                return;
+            }
+        }
+        if (screen->m_layerParams.size() != screen->m_layerParams.capacity()) {
+            LayerParam entry = {layer, param};
+            screen->m_layerParams.push_back(entry);
+        }
+    }
+}
 
 // getLayerParam is not here yet (a candidate a few words off is in the worker notes)
 
@@ -319,7 +341,7 @@ void GfMenuFullScreen::switchLayerWaitFadeIn() {
 }
 
 void GfMenuFullScreen::subLayerWaitRelease() {
-    for (unsigned short i = m_subGroup; i < 4; ++i) {
+    for (unsigned short i = m_sub.m_group; i < 4; ++i) {
         if (m_layers[i].m_id != 0) {
             return;
         }
@@ -333,8 +355,8 @@ void GfMenuFullScreen::subLayerWaitOpen() {
     if (ui::UIManager::get()->isLoading()) {
         return;
     }
-    if (m_subLayer == 0) {
-        unsigned long group = m_subGroup;
+    if (m_sub.m_layer == 0) {
+        unsigned long group = m_sub.m_group;
         if (group != 0) {
             unsigned int object = m_layers[group - 1].m_object;
             if (object != 0) {
@@ -346,8 +368,8 @@ void GfMenuFullScreen::subLayerWaitOpen() {
         }
     }
     m_subSeq.m_invoker = nullptr;
-    m_subLayer = 0;
-    m_subGroup = 0;
+    m_sub.m_layer = 0;
+    m_sub.m_group = 0;
     ui::UIInputManager* input = ui::UIInputManager::get();
     if (input != nullptr) {
         if (m_inputBorder == 0) {

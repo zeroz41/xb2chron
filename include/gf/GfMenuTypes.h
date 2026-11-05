@@ -20,7 +20,9 @@ struct Param {
     // reads it back (the name is not the original's)
     unsigned int m_value;
     unsigned char pad_8[8];
-    alignas(8) unsigned char pad_10[0x10];
+    // 8-byte words: GfMenuFullScreen::registLayerParam's temporary keeps its copy of the Param 8-aligned (a byte
+    // array with alignas(8) put it 4 bytes lower)
+    unsigned long pad_10[2];
 };
 
 }}  // namespace gf::GfMenuTypes
