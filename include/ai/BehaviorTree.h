@@ -6,6 +6,7 @@
 #include "classes/mm/mtl/IAllocator.h"
 #include "mm/MMStdBase.h"
 #include "mm/mtl/IntrusivePtr.h"
+#include "mm/mtl/RTTI.h"
 #include "mm/mtl/UniquePtr.h"
 #include "mm/mtl/Vector.h"
 
@@ -69,6 +70,13 @@ public:
     }
 
     BehaviorNode* getNode(unsigned int index) const { return m_pNodes[index].get(); }
+    // the blackboard as a T, none when there is none or it is not one (inline: AIAgentField's message handlers
+    // test the blackboard pointer before its type; the name is not the original's)
+    template <typename T>
+    T* getBlackBoard() const {
+        BlackBoard* blackBoard = m_blackBoard.get();
+        return blackBoard != nullptr ? mm::mtl::rttiCast<T>(blackBoard) : nullptr;
+    }
 
     RootNode m_root;
     mm::mtl::UniquePtr<BlackBoard> m_blackBoard;

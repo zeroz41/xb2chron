@@ -54,6 +54,12 @@ struct FollowMainPcParam {    // entries 0 and 1 (in water)
     float adjustDist;
     float walkDistStopFollower;
 };
+// entries 6 and 7 (7 for the water warps): how long the field AI waits before acting on a notice
+// (AIAgentField's high jump and water warp handlers); 2.0.0's name and field names, by its createReflection
+struct ForceWarpAiParam {
+    float baseWaitTime;
+    float waitTimeRange;  // up to this much more, at random
+};
 struct FollowBuddyPcParam {   // entries 2 and 3 (in water)
     float stopDist;
     float powMinDist;

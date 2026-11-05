@@ -63,6 +63,16 @@
 #include "gf/pc/StateUtil.h"
 #include "gf/pc/StateUtilBattle.h"
 #include "classes/navi/NvmshAcObj.h"
+#include "gf/MsgPcFieldNotifyHighJump.h"
+#include "gf/MsgPcFieldNotifyBigJump.h"
+#include "gf/MsgPcFieldNotifyWaterWarp.h"
+#include "gf/MsgPcFieldNotifyWaterWarpBuddy.h"
+#include "gf/MsgPcFieldNotifyWarp.h"
+#include "gf/pc/AgentUtilField.h"
+#include "fw/Transform.h"
+#include "mm/Quat.h"
+#include "ml/MTRand.h"
+#include "math.h"
 
 namespace gf { namespace pc {
 
@@ -203,6 +213,77 @@ void AIAgentField::onActivate(GfComPropertyPc& property) {
 void AIAgentField::onDeactivate(GfComPropertyPc& property) {
     if (m_nvmshAcObj != nullptr) {
         m_nvmshAcObj->m_flags &= ~2;
+    }
+}
+
+void AIAgentField::procMsgPcFieldHighJump(fw::MessageObject* sender, MsgPcFieldNotifyHighJump& msg) {
+    BlackBoardField* bb = m_tree.getBlackBoard<BlackBoardField>();
+    GfComPropertyPc* property = bb->m_property;
+    if (property->m_field.m_statusFlags & 4) {
+        const MsgPcFieldNotifyBigJump* jump = msg.m_jump;
+        fw::Transform transform;
+        transform.position = jump->m_pos;
+        float half = jump->m_param0 * 0.5f;
+        transform.rotation.y = sinf(half);
+        transform.rotation.w = cosf(half);
+        transform.rotation.x = 0.0f;
+        transform.rotation.z = 0.0f;
+        GfGamePlayerFormation* formation = GfGamePlayerFormation::sys();
+        MsgPcFieldNotifyBigJump notice;
+        notice = *jump;
+        formation->calcTargetTransform(transform, property->m_setupKind, &notice.m_pos);
+        property->m_field.setBigJumpInfo(&notice);
+        const ForceWarpAiParam* param = m_paramList->getAdapter(6).get<ForceWarpAiParam>();
+        bb->m_flags |= 0x40;
+        bb->m_noticeTimer = param->baseWaitTime + ml::mtRandf1() * param->waitTimeRange;
+    }
+}
+
+void AIAgentField::procMsgPcFieldNotifyWaterWarp(fw::MessageObject* sender, MsgPcFieldNotifyWaterWarp& msg) {
+    BlackBoardField* bb = m_tree.getBlackBoard<BlackBoardField>();
+    GfComPropertyPc* property = bb->m_property;
+    GfPropertyField& field = property->m_field;
+    if (property->m_stateFlags & 0x20) {
+        const MsgPcFieldNotifyWarp* warp = msg.m_warp;
+        fw::Transform transform;
+        transform.position = warp->m_pos;
+        float half = warp->m_param * 0.5f;
+        transform.rotation.y = sinf(half);
+        transform.rotation.w = cosf(half);
+        transform.rotation.x = 0.0f;
+        transform.rotation.z = 0.0f;
+        GfGamePlayerFormation* formation = GfGamePlayerFormation::sys();
+        MsgPcFieldNotifyWarp notice;
+        notice = *warp;
+        formation->calcTargetTransform(transform, property->m_setupKind, &notice.m_pos);
+        field.setWarpInfo(&notice);
+        const ForceWarpAiParam* param = m_paramList->getAdapter(7).get<ForceWarpAiParam>();
+        bb->m_flags |= 0x80;
+        bb->m_noticeTimer = param->baseWaitTime + ml::mtRandf1() * param->waitTimeRange;
+    }
+}
+
+void AIAgentField::procMsgPcFieldNotifyWaterWarpBuddy(fw::MessageObject* sender, MsgPcFieldNotifyWaterWarpBuddy& msg) {
+    BlackBoardField* bb = m_tree.getBlackBoard<BlackBoardField>();
+    GfComPropertyPc* property = bb->m_property;
+    GfPropertyField& field = property->m_field;
+    if (property->m_stateFlags & 0x20) {
+        const MsgPcFieldNotifyWarp* warp = msg.m_warp;
+        fw::Transform transform;
+        transform.position = warp->m_pos;
+        float half = warp->m_param * 0.5f;
+        transform.rotation.y = sinf(half);
+        transform.rotation.w = cosf(half);
+        transform.rotation.x = 0.0f;
+        transform.rotation.z = 0.0f;
+        GfGamePlayerFormation* formation = GfGamePlayerFormation::sys();
+        MsgPcFieldNotifyWarp notice;
+        notice = *warp;
+        formation->calcTargetTransform(transform, property->m_setupKind, &notice.m_pos);
+        field.setWarpInfo(&notice);
+        const ForceWarpAiParam* param = m_paramList->getAdapter(7).get<ForceWarpAiParam>();
+        bb->m_flags |= 0x200;
+        bb->m_noticeTimer = param->baseWaitTime + ml::mtRandf1() * param->waitTimeRange;
     }
 }
 
