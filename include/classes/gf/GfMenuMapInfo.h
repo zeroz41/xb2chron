@@ -114,6 +114,9 @@ public:
     // 2.0.0's symbols name it (not written yet): reads MNU_MapInfoFile (MNU_MapInfoFile_ira with isValidExpansion(3))
     // (GfMenuManager::setupGame)
     static void setupMapInfo();
+    // 2.0.0's symbols name it. What it does: with GfMenuObjUtil::isValidExpansion(3), whether pos lies in the
+    // dlc3_ma40a_f01/f03 overlap that counts as the other floor (GfGmkLocatorAtlas::isBelongToCurMap)
+    static bool isIraSpecialAreaCheckForGimmick(const mm::Vec3& pos, const char* mapName, const char* otherName);
 
     bool m_initialized;                                    // set by initialize
     mm::mtl::Vector<fw::CommonResource*> m_mapResources;   // per map info: its resource

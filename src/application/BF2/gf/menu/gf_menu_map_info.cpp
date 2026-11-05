@@ -1,6 +1,7 @@
 #include "classes/gf/GfMenuMapInfo.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/fw/CommonResource.h"
+#include "gf/GfMenuObjUtil.h"
 #include <string.h>
 
 namespace gf {
@@ -174,6 +175,52 @@ unsigned int GfMenuMapInfo::getCurMapInfoID() {
         }
     }
     return 0;
+}
+
+bool GfMenuMapInfo::isIraSpecialAreaCheckForGimmick(const mm::Vec3& pos, const char* mapName, const char* otherName) {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
+        return false;
+    }
+    if (strcmp(mapName, "dlc3_ma40a_f01") == 0 && strcmp(otherName, "dlc3_ma40a_f03") == 0) {
+        if (pos.y > -47.0f) {
+            return true;
+        }
+        if (pos.x < -350.0f || pos.x > -250.0f) {
+            if (pos.y > -54.0f) {
+                return true;
+            }
+        } else {
+            unsigned char outside = pos.z < 150.0f || pos.z > 360.0f;
+            if (pos.y > -54.0f && outside) {
+                return true;
+            }
+        }
+    }
+    if (strcmp(mapName, "dlc3_ma40a_f03") == 0 && strcmp(otherName, "dlc3_ma40a_f01") == 0) {
+        if (pos.y > -47.0f) {
+            return true;
+        }
+        if (pos.x < -350.0f || pos.x > -250.0f) {
+            if (pos.y > -54.0f) {
+                return true;
+            }
+        } else {
+            unsigned char outside = pos.z < 150.0f || pos.z > 360.0f;
+            if (pos.y > -54.0f && outside) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool GfMenuMapInfo::getMiniIconList(unsigned int kind, const mm::mtl::Vector<MiniIcon>** list) {
+    GfMenuMapInfo* info = get();
+    if (kind < 15 && info != nullptr) {
+        *list = &info->m_miniIcons[kind];
+        return true;
+    }
+    return false;
 }
 
 bool GfMenuMapInfo::getMapRatio(float& x, float& y) {
