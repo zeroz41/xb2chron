@@ -49,6 +49,12 @@ public:
         unsigned short m_end;
         unsigned short m_pushSweetFrame;
     };
+    // one button's ring: its scale control and the updater running it (0x48 bytes; seqRunningV2 reads the
+    // control's value as setRingScaleV2's scale; the name is not the original's)
+    struct Ring {
+        ui::UICtrlSimple<1> m_ctrl;
+        ui::UICtrlSimpleUpdater<ui::UICtrlSimple<1> > m_updater;
+    };
     struct OpenParam {
         OpenParam() : m_speed(0), m_wait(0), m_type(0), m_buttons(), m_option(false, true, false, 0.25f) {}
         unsigned short m_speed;
@@ -120,12 +126,7 @@ public:
     ui::UICtrlSimpleUpdater<ui::UICtrlSimple<1> > m_updater0;  // 0x390
     short m_hitSize;                 // 0x3B0: POL_challenge_hit_a@01's size
     short m_ringSize;                // 0x3B2: POL_ring_v2@01's size
-    ui::UICtrlSimple<1> m_ctrl1;     // 0x3B8
-    ui::UICtrlSimpleUpdater<ui::UICtrlSimple<1> > m_updater1;  // 0x3E0
-    ui::UICtrlSimple<1> m_ctrl2;     // 0x400
-    ui::UICtrlSimpleUpdater<ui::UICtrlSimple<1> > m_updater2;  // 0x428
-    ui::UICtrlSimple<1> m_ctrl3;     // 0x448
-    ui::UICtrlSimpleUpdater<ui::UICtrlSimple<1> > m_updater3;  // 0x470
+    Ring m_rings[3];                 // 0x3B8: LAY_challenge_v2@01-03 (seqRunningV2 indexes them by button)
     unsigned int pad_490;            // 0x490: seqWaitMashingV2 counts frames in it up to pad_498
     float pad_494;
     unsigned int pad_498;

@@ -24,18 +24,18 @@ namespace gf {
 unsigned int GfMenuObjButtonChallenge2::s_DefRootPrio;
 
 GfMenuObjButtonChallenge2::~GfMenuObjButtonChallenge2() {
-    if (m_updater1.m_ctrl != nullptr) {
-        ui::UICtrlManager::get()->delUpdater(m_updater1);
+    if (m_rings[0].m_updater.m_ctrl != nullptr) {
+        ui::UICtrlManager::get()->delUpdater(m_rings[0].m_updater);
     }
-    m_updater1.m_ctrl = nullptr;
-    if (m_updater2.m_ctrl != nullptr) {
-        ui::UICtrlManager::get()->delUpdater(m_updater2);
+    m_rings[0].m_updater.m_ctrl = nullptr;
+    if (m_rings[1].m_updater.m_ctrl != nullptr) {
+        ui::UICtrlManager::get()->delUpdater(m_rings[1].m_updater);
     }
-    m_updater2.m_ctrl = nullptr;
-    if (m_updater3.m_ctrl != nullptr) {
-        ui::UICtrlManager::get()->delUpdater(m_updater3);
+    m_rings[1].m_updater.m_ctrl = nullptr;
+    if (m_rings[2].m_updater.m_ctrl != nullptr) {
+        ui::UICtrlManager::get()->delUpdater(m_rings[2].m_updater);
     }
-    m_updater3.m_ctrl = nullptr;
+    m_rings[2].m_updater.m_ctrl = nullptr;
 }
 
 void GfMenuObjButtonChallenge2::initialize() {
@@ -96,6 +96,51 @@ void GfMenuObjButtonChallenge2::open(GfMenuCallContext* context, unsigned int id
     param.m_option.m_flag0 = flag0;
     param.m_option.m_flag1 = flag1;
     open(context, param, 0);
+}
+
+void GfMenuObjButtonChallenge2::importOpenParam(OpenParam& param, unsigned int id) {
+    unsigned char* challenge = GfDataBdat::getFP(0xF8);
+    unsigned char* button = GfDataBdat::getFP(0xFA);
+    if (!GfMenuBdat::isValidBdatID(challenge, id)) {
+        return;
+    }
+    param.m_speed = (unsigned char)Bdat::getVal(challenge, "Speed", id);
+    param.m_wait = Bdat::getVal(challenge, "Wait", id);
+    param.m_type = Bdat::getMember(challenge, "Type") != nullptr ? Bdat::getVal(challenge, "Type", id) : 0;
+    param.m_buttons.clear();
+    for (int i = 1; i != 4; i++) {
+        mm::mtl::FixStr<32> column;
+        column.format("Param%d", i);
+        unsigned char buttonId = Bdat::getVal(challenge, column.m_str, id);
+        if (!GfMenuBdat::isValidBdatID(button, buttonId)) {
+            continue;
+        }
+        column.format("BtnType%d", i);
+        unsigned char btnType = Bdat::getVal(challenge, column.m_str, id);
+        column.format("Point%d", i);
+        unsigned char point = Bdat::getVal(challenge, column.m_str, id);
+        column.format("Start%d", i);
+        unsigned int start = Bdat::getMember(challenge, column.m_str) != nullptr ? static_cast<unsigned int>(Bdat::getVal(challenge, column.m_str, id)) : 0;
+        column.format("Hit%d", i);
+        unsigned int hit = Bdat::getMember(challenge, column.m_str) != nullptr ? static_cast<unsigned int>(Bdat::getVal(challenge, column.m_str, id)) : 0;
+        column.format("End%d", i);
+        unsigned int end = Bdat::getMember(challenge, column.m_str) != nullptr ? static_cast<unsigned int>(Bdat::getVal(challenge, column.m_str, id)) : 0;
+        unsigned int sweetFrame =
+            Bdat::getMember(button, "PushSweetFrame") != nullptr ? static_cast<unsigned int>(Bdat::getVal(button, "PushSweetFrame", buttonId)) : 0;
+        Button entry;
+        entry.m_btnType = btnType;
+        entry.m_inputType = Bdat::getVal(button, "InputType", buttonId);
+        entry.m_point = point;
+        entry.m_pushRange = Bdat::getVal(button, "PushRange", buttonId);
+        entry.m_pushSweetRange = Bdat::getVal(button, "PushSweetRange", buttonId);
+        entry.m_mashingCount = Bdat::getVal(button, "MashingCount", buttonId);
+        entry.m_mashingTime = Bdat::getVal(button, "MashingTime", buttonId);
+        entry.m_start = start;
+        entry.m_hit = hit;
+        entry.m_end = end;
+        entry.m_pushSweetFrame = sweetFrame;
+        param.m_buttons.push_back(entry);
+    }
 }
 
 void GfMenuObjButtonChallenge2::open(GfMenuCallContext* context, unsigned int id, const OptionParam& option) {
@@ -184,6 +229,68 @@ void GfMenuObjButtonChallenge2::setupV2(const OpenParam& param) {
         pad_490 = 0;
         pad_494 = 0.0f;
     }
+}
+
+bool GfMenuObjButtonChallenge2::seqRunningV2() {
+    ui::UIObjectAcc main(m_handle, "LAY_challenge_v2");
+    mm::mtl::FixStr<32> name;
+    ui::EventData event;
+    event.m_type = 0x103;
+    pad_494 += GfMenuManager::getUpdateDT() * m_speedFactor;
+    float frames = pad_494 * 30.0f;
+    pad_490 = static_cast<int>(frames + (frames > 0.0f ? 0.5f : -0.5f));
+    unsigned int done = 0;
+    for (unsigned int i = 0; i < m_param.m_buttons.size(); i++) {
+        if (m_rings[i].m_ctrl.isBusy()) {
+            setRingScaleV2(i, m_rings[i].m_ctrl.m_value[0]);
+        } else {
+            done++;
+            unsigned int bit = 1 << i;
+            if (!(pad_49C & bit)) {
+                if (m_param.m_buttons[i].m_inputType != 2) {
+                    m_index++;
+                }
+                name.format("LAY_challenge_v2@%02d", i + 1);
+                GfMenuObject::sendEvent(main.searchChild(name.m_str), event, 0.0f);
+                pad_49C |= bit;
+            }
+        }
+    }
+    unsigned int index = m_index;
+    if (index < m_param.m_buttons.size() && m_param.m_buttons[index].m_inputType == 2) {
+        if (m_param.m_buttons[index].m_end < pad_490) {
+            ui::EventData next(0x104);
+            name.format("LAY_challenge_v2@%02d", index + 1);
+            GfMenuObject::sendEvent(main.searchChild(name.m_str), next, 0.0f);
+            m_index++;
+        }
+    }
+    if (GfMenuManager::isBattleState(8)) {
+        GfMenuReference::setVisionTimeRatio(1.0f - static_cast<float>(pad_498) / static_cast<float>(pad_490));
+    }
+    if (done < m_param.m_buttons.size()) {
+        return false;
+    }
+    if (pad_498 > pad_490) {
+        m_seq.addJob(&GfMenuObjButtonChallenge2::seqWaitMashingV2);
+    } else {
+        event.m_type = 0x104;
+        for (unsigned int i = 0; i < m_param.m_buttons.size(); i++) {
+            name.format("LAY_challenge_v2@%02d", i + 1);
+            GfMenuObject::sendEvent(main.searchChild(name.m_str), event, 0.0f);
+        }
+        if (!m_resultSent) {
+            unsigned int handle = GfMenuObject::getAttachedObject(0x4B);
+            unsigned int score = m_score;
+            if (pad_90 != 0) {
+                score = m_score / (pad_94 + 1);
+            }
+            GfMenuObject::addResultCallContext(handle, 2, score);
+            m_resultSent = true;
+        }
+    }
+    m_seq.addJob(&GfMenuObjButtonChallenge2::seqCheckSequence);
+    return true;
 }
 
 bool GfMenuObjButtonChallenge2::seqClose() {
@@ -405,6 +512,79 @@ bool GfMenuObjButtonChallenge2::seqWaitRestartV2() {
     setupV2(m_param);
     m_seq.addJob(&GfMenuObjButtonChallenge2::seqRunningV2);
     pad_4A0 = false;
+    return true;
+}
+
+bool GfMenuObjButtonChallenge2::seqResultStart() {
+    if (pad_330.empty()) {
+        {
+            ui::UIObjectAcc main(m_handle, "LAY_main");
+            GfMenuObject::disableInput(main.m_handle);
+        }
+        unsigned char* fp = GfDataBdat::getFP(0xFB);
+        if (fp != nullptr) {
+            int top = Bdat::getIdTop(fp);
+            unsigned int score = m_score;
+            if (pad_90 != 0) {
+                score = m_score / (pad_94 + 1);
+            }
+            int i = 0;
+            int rank = 0;
+            unsigned int text = 0;
+            for (; i < Bdat::getIdCount(fp); i++) {
+                if (score >= (unsigned char)Bdat::getVal(fp, "Point", i + top)) {
+                    text = Bdat::getVal(fp, "Text", i + top);
+                    rank = i + 1;
+                }
+            }
+            if (text != 0) {
+                ui::UIObjectAcc result(m_handle, "LAY_result");
+                ui::UIObjectAcc resultText(m_handle, "LAY_result_text");
+                ui::UIObjectAcc eff(result.m_handle, "IMG_result_eff");
+                {
+                    ui::UIObjectAcc txt(result.m_handle, "TXT_result");
+                    ui::UIObjectAcc shadow(result.m_handle, "TXT_result_shadow");
+                    txt.setText(ui::UIStr(GfDataBdat::getFP(0xF5), text));
+                    shadow.setText(ui::UIStr(GfDataBdat::getFP(0xF5), text));
+                    if (rank == 3) {
+                        txt.setTextFacePattern("element01");
+                        txt.setAddColor("txt_bch_result_exc_add");
+                        GfMenuObjUtil::setColMulandAdd(shadow.m_handle, "txt_bch_result_exc");
+                    } else {
+                        txt.setTextFacePattern("element03");
+                        txt.setAddColor("txt_bch_result_good_add");
+                        GfMenuObjUtil::setColMulandAdd(shadow.m_handle, "txt_bch_result_good");
+                    }
+                }
+                result.setDisp(true);
+                resultText.setDisp(true);
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_motionLib = "cmn_fade_motion_zoom_2";
+                param.m_motion = "fade_in";
+                param.m_setDefault = true;
+                param.m_startFlags = 8;
+                pad_330.push_back(GfMenuObjUtil::startCtrl(resultText.m_handle, param, nullptr));
+                GfMenuObject::addResultCallContext(GfMenuObject::getAttachedObject(0x4B), 3, rank);
+                eff.startAnimation("start", false);
+            }
+        }
+        if (pad_330.empty()) {
+            m_resultWait = 30;
+            return true;
+        }
+    }
+    for (unsigned int* it = pad_330.begin(); it != pad_330.end();) {
+        if (GfMenuObjUtil::isBusyCtrl(*it)) {
+            ++it;
+        } else {
+            it = pad_330.erase(it);
+        }
+    }
+    if (pad_330.begin() != pad_330.end()) {
+        return false;
+    }
+    m_resultWait = 30;
     return true;
 }
 
