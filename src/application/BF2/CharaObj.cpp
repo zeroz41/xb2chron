@@ -3631,6 +3631,7 @@ void DebugManager::OnEventProc(event::MSG_TYPE msg) {
 #include "classes/event/SeamlessManager.h"
 #include "classes/event/SkipManager.h"
 #include "classes/event/BgmManager.h"
+#include "classes/gf/GfEvtBgm.h"
 #include "classes/event/HideManager.h"
 #include "classes/event/DebugManager.h"
 #include "classes/event/MovieManager.h"
@@ -3745,6 +3746,42 @@ SeamlessManager::~SeamlessManager() {}
 SkipManager::SkipManager() : m_flags(0), pad_14(0), m_endFrame(-1.0f) {}
 
 BgmManager::BgmManager() : pad_10(0), pad_14(0), pad_7c(0) {}
+
+// 1.0.0 has it out of line (event::BgmManager::clear); 3.0.1 keeps only OnEventProc's inlined copies
+inline void BgmManager::clear() {
+    if (pad_10 & 0x22) {
+        gf::EventBgmSetup setup;
+        float fade = mm::mtl::Singleton<FrameManager>::getPtr()->pad_18 != 0 ? 0.0f : (1.0f / 3.0f);
+        bool flag = pad_10 & 1;
+        setup.pad_4c = fade;
+        setup.pad_62 = true;
+        setup.pad_63 = false;
+        setup.pad_61 = flag;
+        gf::GfGameEvent::stopBgm(setup);
+        pad_10 &= ~0x22;
+    }
+    pad_18 = "";
+    pad_7c = 0;
+    pad_10 = 0;
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void BgmManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 1:
+        clear();
+        break;
+    case 2:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    case 16:
+        render();
+        break;
+    }
+}
 
 HideManager::HideManager() : pad_10(0), m_group(), m_firstList(), m_secondList(), m_objs() {}
 

@@ -15,6 +15,9 @@ public:
     BgmManager();  // out of line (Singleton<BgmManager>::getPtr calls it)
     void play(const char*, float, float, float, float, float, float, float, bool, float);
     void changeVolume(float, float);
+    void clear();  // 1.0.0 symbol; 3.0.1 keeps only OnEventProc's inlined copies
+    void update();  // OnEventProc runs it (3.0.1 symbol)
+    void render();  // OnEventProc runs it (3.0.1 symbol)
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // fields the constructor initializes; what they hold is not known yet
     unsigned int pad_10;

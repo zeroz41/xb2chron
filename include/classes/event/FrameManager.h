@@ -48,7 +48,11 @@ private:
     // the fields below up to m_frame are set by the constructor; no reader seen yet
     int pad_10;
     int pad_14;
-    int pad_18;
+
+public:
+    int pad_18;  // event::BgmManager's stop reads it: non-zero stops the BGM without a fade
+
+private:
     unsigned char pad_1c[0x4];
     // each set to -1 (an invalid handle); the type is inferred: FrameManager::OnEventProc destroys pause handles
     gf::GF_PAUSE_HANDLE* pad_20[22];
