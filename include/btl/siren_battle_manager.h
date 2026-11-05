@@ -3,6 +3,7 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/mtl/IntrusivePtr.h"
+#include "mm/Vec3.h"
 
 // The class of application/BF2/battle/siren_battle_manager.cpp (table 0x7100B3BD68,
 // singleton 0x7100B939D0; not in 1.0.0). 2.0.0's symbols name SirenBattleManager and its functions.
@@ -38,6 +39,11 @@ public:
         unsigned char m_shotFrame;   // "ShotFrame" (GetShootBulletIntrevalSec returns it in seconds)
         unsigned char pad_3d[0x3];
     };
+    // GetSituationPointData's result; the field names are not the original's
+    struct SITUATION_POINT_DATA {
+        ::mm::Vec3 m_pos;  // the gimmick point's position
+        ::mm::Vec3 m_dir;  // unit Z turned by the point's rotation
+    };
     // One per side, indexed like m_params (by !flag); the name is not the original's.
     struct Side {
         gf::GF_OBJ_HANDLE* m_handle;  // the BattleCharacter's handle; (GF_OBJ_HANDLE*)-1 while none
@@ -53,11 +59,22 @@ public:
         unsigned char pad_12_2 : 6;
         unsigned char pad_13[0x5];
 
-        void reset() {
-            m_handle = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        // The constructor stores pad_c before pad_d, reset() the other way round (Create's and Finalize's store order).
+        Side() {
             m_gauge = 0.0f;
             pad_c = 1;
             pad_d = false;
+            m_handle = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+            pad_10 = 90;
+            m_level = 0;
+            pad_12_0 = 0;
+            pad_12_1 = 0;
+        }
+        void reset() {
+            m_gauge = 0.0f;
+            pad_d = false;
+            pad_c = 1;
+            m_handle = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
             pad_10 = 90;
             m_level = 0;
             pad_12_0 = 0;
@@ -65,10 +82,7 @@ public:
         }
     };
 
-    SirenBattleManager() : pad_c0(0), pad_c4(-1.0f), pad_d0(0), pad_1c8(0xFF), pad_1c9(0xFF), pad_1ca(0), pad_1cb(0), pad_1cc(0) {
-        m_sides[0].reset();
-        m_sides[1].reset();
-    }
+    SirenBattleManager() : pad_c0(0), pad_c4(-1.0f), pad_d0(0), pad_1c8(0xFF), pad_1c9(0xFF), pad_1ca(0), pad_1cb(0), pad_1cc(0) {}
     virtual ~SirenBattleManager();  // slot 0
 
     // 2.0.0's symbols name them. What they do: Initialize: fills m_params from BDAT table 0x3C (one row each) and the
@@ -78,6 +92,16 @@ public:
     //   again (GfMenuManager::setDispAll(true)); BattleManager::gevMapjump runs it through NotifyMapChange
     void Finalize();
     void NotifyMapChange();
+    // NotifyInputSpAttack: when IsEnableSpAttack(true), has TalkManager voice trigger 0x37 by the character of BDAT id
+    //   0x16 seen from the controlled character, else by a random driver of them; pad_d0 = 13
+    bool NotifyInputSpAttack();
+    // IsEnableSpAttack: the side's gauge is full, pad_d0 is 11 and nothing else runs (battle on, no game over, no
+    //   pause, no unite/elemental combo or special attack camera, no chain attack); with flag the driver of party
+    //   member pad_1c9 must also be alive
+    bool IsEnableSpAttack(bool flag) const;
+    // NotifyLodFieldBreak: once per side (pad_1ca bit 0x8 with flag, else 0x10), fades the field LOD 0xFCB (flag) or
+    //   0xFCC and plays "cmn_500_010" / "cmn_500_011" at its position
+    void NotifyLodFieldBreak(bool flag);
     // NotifyDownEnd: clears the side's pad_12_0
     void NotifyDownEnd(bool flag);
     // PreUpdate / Update: BattleManager::update calls them with its UpdateInfo, the first beside the
@@ -109,6 +133,8 @@ public:
     // AddSirenSpGaugeRate: unless IsCameraProc holds or pad_12_0 is set, adds (int)(value * gauge rate) + 1 to the side's
     //   gauge (DataManager::SetPartyGauge(gauge * 300) with pad_e), kept at 0 or above
     void AddSirenSpGaugeRate(float value, bool flag);
+    // GetSituationPointData: the situation's W/B gimmick point (GmkType 0x35) as a position and a direction
+    bool GetSituationPointData(SITUATION_POINT_DATA& data, int situation, bool flag) const;
 
     Param m_params[2];
     Side m_sides[2];
@@ -119,13 +145,10 @@ public:
     int pad_d0;  // state: 1 once both sides have characters; 11..18 later
     unsigned char pad_d4[0x4];
     const char* m_cameraNames[20];  // by situation ("camera")
-    struct {
-        unsigned short m_wpos;  // "Wpos"
-        unsigned short m_bpos;  // "Bpos"
-    } m_positions[20];  // by situation
+    unsigned short m_positions[20][2];  // by situation, then by !flag: [0] "Wpos", [1] "Bpos"
     unsigned char pad_1c8;
     unsigned char pad_1c9;  // GfGameParty::getHandleDriver's first argument (IsEnableSpAttack)
-    unsigned char pad_1ca;
+    unsigned char pad_1ca;  // NotifyLodFieldBreak's once-only bits: 0x8 with flag, else 0x10
     unsigned char pad_1cb;  // set while a siren battle runs (most functions test it)
     unsigned char pad_1cc;
     unsigned char pad_1cd[0x3];

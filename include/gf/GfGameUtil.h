@@ -34,6 +34,9 @@ public:
     // whether the game can be saved at a point (GfFieldGimmick::update asks it for the player's position)
     static bool isPointSavable(const mm::Vec3& pos);
     static bool getGmkTargetPointPos(mm::Vec3& pos, unsigned int id);
+    // the position and rotation of a gimmick of a type by its index (SirenBattleManager::GetSituationPointData asks
+    // type 0x35 for a situation's "Wpos"/"Bpos" row)
+    static bool getGmkPointPosRot(gmk::GmkType type, unsigned int idx, mm::Vec3& pos, mm::Vec3& rot);
     // the matrix of the current map's npc gimmick of a BDAT row (the first gimmick set of the map's RSC_GmkSetList row);
     // false when there is none
     static bool findNpcMat44(mm::Mat44& mtx, int bdatId);
