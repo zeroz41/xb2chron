@@ -92,6 +92,9 @@ public:
     void CreateCircleEffect(int, gf::GF_OBJ_HANDLE*, gf::GF_OBJ_HANDLE*);
     // 2.0.0's symbols name it (1.0.0's function in this place was IsExistChrHitEffect)
     bool IsExistChrCircle(gf::GF_OBJ_HANDLE* handle) const;
+    // whether an effect of the owner with hit data plays (with the flag, not one with m_bit3) or one is registered
+    // to be created. ChainAttackManager::UpdateProc calls it.
+    bool IsExistChrHitEffect(gf::GF_OBJ_HANDLE* handle, bool flag) const;
     // 2.0.0's symbols name it. What it does: adds the value to m_rates[index], clamped to 0..0xFFFF, and sets
     // m_ratesDirty so UpdateProc clears them all next frame. EffectObject::UpdateSubEffect calls it.
     void AddCircleDamageBonus(int index, int value);
