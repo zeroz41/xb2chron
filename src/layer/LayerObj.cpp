@@ -28,6 +28,8 @@
 #include "layer/LayerVertexObj.h"
 #include "layer/LayerVertexMan.h"
 #include "grlib/CGLibTextureBuffer.h"
+#include "layer/LayerResViewPortInfo.h"
+#include "layer/LayerViewPort.h"
 #include "classes/layer/LayerObjMesh.h"
 #include "classes/layer/LayerObjTopDef.h"
 #include "grlib/CGLibUniformArray.h"
@@ -844,6 +846,37 @@ void LayerObjTopLayout::applyEnd(LayerResUpdateInfo& info, const LayerRenderView
     m_dispInfo.m_minX = m_dispInfo.m_minY = -100000.0f;
     m_dispInfo.m_maxX = m_dispInfo.m_maxY = 100000.0f;
     LayerObjUtil::calcLayoutDispInfo(m_dispInfo, matrix, m_renderInfo);
+}
+void LayerObjUtil::calcLayerRenderView(LayerRenderView& view, LayerResViewPortInfo& info,
+                                       grlib::CGLibDblUniformBlock*& uniform, const LayerViewPort& vp,
+                                       const LayerRenderView* parent, const LayerResMatrix* matrix) {
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    view = *parent;
+    float posX = matrix->m_transX * shdManager->m_screenWidth;
+    float posY = matrix->m_transY * shdManager->m_screenHeight * (1.0f / shdManager->m_viewPortDivY);
+    info.m_viewPort.m_x = posX + vp.m_x;
+    info.m_viewPort.m_y = posY + vp.m_y;
+    info.m_viewPort.m_height = vp.m_height;
+    info.m_viewPort.m_width = vp.m_width;
+    if (uniform == nullptr) {
+        uniform = new (mm::mtl::PtrSingleton<LayerManager>::sys()->m_gxHandle, nullptr, 0, 4, false)
+            grlib::CGLibDblUniformBlock();
+        uniform->setup(0x40);
+    }
+    float* buff = reinterpret_cast<float*>(uniform->getBuff());
+    float vx = info.m_viewPort.m_x;
+    float scale = shdManager->m_viewPortScale;
+    float x = vx * scale / shdManager->m_screenWidth;
+    float y = scale * info.m_viewPort.m_y / shdManager->m_screenHeight;
+    float sclX = 1.0f / (scale * info.m_viewPort.m_width / shdManager->m_screenWidth);
+    float sclY = 1.0f / (scale * info.m_viewPort.m_height / shdManager->m_screenHeight);
+    buff[0] = sclX;
+    buff[1] = sclY;
+    buff[2] = sclX - 1.0f + x * -2.0f * sclX;
+    buff[3] = -((sclY - 1.0f) - (y + y) * sclY);
+    uniform->updateData();
+    info.m_pUniform = uniform;
+    view.m_viewData = &info;
 }
 void LayerObjUtil::getLayoutInfo(float* pos, const LyrLayoutPosData* data, LayerCenterType type, float sclX, float sclY) {
     s_CallDataPos[mm::mtl::PtrSingleton<LayerManager>::sys()->m_coordinate](pos, data, type, sclX, sclY);

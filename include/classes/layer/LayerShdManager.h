@@ -184,7 +184,12 @@ public:
     float m_viewPortScale;  // 0x558, layout units to pixels (setViewPort/setShaderMaskMode)
     float m_viewPortSclWidth;   // 0x55C, resetViewPort's width scale
     float m_viewPortSclHeight;  // 0x560
-    unsigned char pad_564[0x14];
+    // 0x564/0x568: LayerObjUtil::updatePosMatrixUniformBlock scales a position matrix's x/y rows by them before
+    // moving it by -1/+1 (screen to clip space; the names are not the original's)
+    float m_clipSclX;
+    float m_clipSclY;
+    unsigned char pad_56C[0x8];
+    float m_viewPortDivY;  // 0x574, LayerObjUtil::calcLayerRenderView divides the y offset by it (the name is not the original's)
     float m_gamma;  // LayerAccManager::setGamma
     unsigned char pad_57C[0x4];
 };

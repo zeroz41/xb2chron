@@ -4,6 +4,8 @@
 namespace layer { class LayerResMatrix; }
 namespace layer { class LayerResDispInfo; }
 namespace layer { class LayerResRenderInfo; }
+namespace layer { class LayerRenderView; class LayerResViewPortInfo; class LayerViewPort; }
+namespace grlib { class CGLibDblUniformBlock; }
 #include "layer/LayerAccObjBase.h"
 
 namespace layer {
@@ -15,7 +17,7 @@ class LayerBasePos {
 public:
     float m_posX;  // calcPos_*_Up scale it by the screen width (the name is not the original's)
     float m_posY;  // calcPos_*_Up scale it by the screen height (the name is not the original's)
-    unsigned char pad_8[0x4];
+    float m_rot;  // calcLayerTransRotScale*Matrix rotate by it (radians; the name is not the original's)
     float m_sclX;  // calcScl_*_Up multiply the scaled size by it (the name is not the original's)
     float m_sclY;  // calcScl_*_Up multiply the scaled size by it (the name is not the original's)
     float m_alignX;
@@ -85,12 +87,25 @@ extern void (*s_CallPos[2])(float*, const LayerBasePos&);
 extern void (*s_CallMdl[3])(float*, float*, const float*, const LayerBasePos&);
 extern void (*s_CallSwfScl[2])(float*, const LayerBasePos&, const LayerResRenderInfo&);
 extern void (*s_CallDataPos[2])(float*, const LyrLayoutPosData*, LayerCenterType, float, float);
+// mtx = the base's rotation, scale and position (moved by the render info's alignment and center type); Laout
+// scales by the base's scale only, SWF uses the s_CallSwfScl scale
+void calcLayerTransRotScaleFontMatrix(LayerResMatrix& mtx, const LayerBasePos& base, const LayerResRenderInfo& info);
+void calcLayerTransRotScaleSWFMatrix(LayerResMatrix& mtx, const LayerBasePos& base, const LayerResRenderInfo& info);
+void calcLayerTransRotScaleMatrix(LayerResMatrix& mtx, const LayerBasePos& base, const LayerResRenderInfo& info);
+void calcLayerTransRotScaleLaoutMatrix(LayerResMatrix& mtx, const LayerBasePos& base, const LayerResRenderInfo& info);
 // writes a position matrix (8 floats) to buff: z at [2]; raw leaves out the LayerManager's screen scale
 // the screen bounds of an object drawn with the matrix and render info
 void calcDispInfo(LayerResDispInfo& disp, const LayerResMatrix& matrix, const LayerResRenderInfo& info);
 // the screen bounds of a layout drawn with the matrix and render info
 void calcLayoutDispInfo(LayerResDispInfo& disp, const LayerResMatrix& matrix, const LayerResRenderInfo& info);
 void updatePosMatrixUniformBlock(float* buff, const LayerResMatrix* matrix, const LayerResMatrix& view, float z, bool raw);
+// the same, keeping the combined matrix (matrix then view) in out
+void updatePosMatrixUniformBlock(float* buff, LayerResMatrix& out, const LayerResMatrix* matrix, const LayerResMatrix& view,
+                                 float z, bool raw);
+// view = parent's view drawn into info's viewport: vp moved by the matrix's translation; uniform (created on first
+// use) gets the viewport's scale and offset
+void calcLayerRenderView(LayerRenderView& view, LayerResViewPortInfo& info, grlib::CGLibDblUniformBlock*& uniform,
+                         const LayerViewPort& vp, const LayerRenderView* parent, const LayerResMatrix* matrix);
 }  // namespace LayerObjUtil
 }  // namespace layer
 
