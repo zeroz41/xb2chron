@@ -208,6 +208,154 @@ void* MultimediaReallocate(void* address, unsigned long size, void* userPtr) {
     return mtl::MemManager::reallocate(address, size, false);
 }
 
+int MovieDecoderPlayer::Initialize(unsigned long coreMask) {
+    movie::SetAllocator(MultimediaAllocate, MultimediaFree, MultimediaReallocate, nullptr);
+    m_inputEos = false;
+    m_loopCount = 0;
+    m_inputQueueSize = 0x80;
+    m_done = false;
+    m_clearedLong1 = 0;
+    m_clearedLong0 = 0;
+    if (coreMask != 0) {
+        movie::SetCoreMask(coreMask);
+    }
+    nn::os::InitializeEvent(&m_workerExitEvent, false, nn::os::EventClearMode_ManualClear);
+    nn::os::InitializeMultiWaitHolder(&m_workerExitHolder, &m_workerExitEvent);
+    nn::os::InitializeMultiWait(&m_multiWait);
+
+    // per decoder, one event set and then its holders: the original computes each set's start address ahead of the
+    // set's first call (an inlined helper's argument); the helpers' names are inferred
+    auto initializeEvents = [](DecoderEventTypes* types, DecoderEvents* events) {
+        nn::os::InitializeEvent(&types->m_errorEvent, false, nn::os::EventClearMode_ManualClear);
+        nn::os::InitializeEvent(&types->m_formatChangedEvent, false, nn::os::EventClearMode_ManualClear);
+        nn::os::InitializeEvent(&types->m_inputBufferAvailableEvent, false, nn::os::EventClearMode_ManualClear);
+        nn::os::InitializeEvent(&types->m_outputBufferAvailableEvent, false, nn::os::EventClearMode_ManualClear);
+        events->m_errorEvent = &types->m_errorEvent;
+        events->m_formatChangedEvent = &types->m_formatChangedEvent;
+        events->m_inputBufferAvailableEvent = &types->m_inputBufferAvailableEvent;
+        events->m_outputBufferAvailableEvent = &types->m_outputBufferAvailableEvent;
+    };
+    auto initializeHolders = [](DecoderMultiWaitHolders* holders, DecoderEventTypes* types) {
+        nn::os::InitializeMultiWaitHolder(&holders->m_errorHolder, &types->m_errorEvent);
+        nn::os::InitializeMultiWaitHolder(&holders->m_formatChangedHolder, &types->m_formatChangedEvent);
+        nn::os::InitializeMultiWaitHolder(&holders->m_inputBufferAvailableHolder, &types->m_inputBufferAvailableEvent);
+        nn::os::InitializeMultiWaitHolder(&holders->m_outputBufferAvailableHolder, &types->m_outputBufferAvailableEvent);
+    };
+    initializeEvents(&m_audioDecoderEventTypes, &m_audioDecoderEvents);
+    initializeHolders(&m_audioDecoderHolders, &m_audioDecoderEventTypes);
+    initializeEvents(&m_videoDecoderEventTypes, &m_videoDecoderEvents);
+    initializeHolders(&m_videoDecoderHolders, &m_videoDecoderEventTypes);
+
+    m_videoInputQueueBuffer =
+        static_cast<unsigned long*>(MultimediaAllocate(m_inputQueueSize * sizeof(unsigned long), 0x1000, nullptr));
+    if (m_videoInputQueueBuffer == nullptr) {
+        return 0x1002;
+    }
+    m_audioInputQueueBuffer =
+        static_cast<unsigned long*>(MultimediaAllocate(m_inputQueueSize * sizeof(unsigned long), 0x1000, nullptr));
+    if (m_audioInputQueueBuffer == nullptr) {
+        return 0x1002;
+    }
+    nn::os::InitializeMessageQueue(&m_videoInputQueue, m_videoInputQueueBuffer, m_inputQueueSize);
+    nn::os::InitializeMessageQueue(&m_audioInputQueue, m_audioInputQueueBuffer, m_inputQueueSize);
+
+    int status = 0x1002;
+    m_videoInputThreadStack = aligned_alloc(0x1000, m_threadStackSize);
+    if (m_videoInputThreadStack != nullptr) {
+        m_videoInputThreadDone = false;
+        if (nn::os::CreateThread(&m_videoInputThread, VideoInputReadThreadFunction, this, m_videoInputThreadStack,
+                                 m_threadStackSize, 15)
+                .IsFailure()) {
+            status = 0x100D;
+        } else {
+            nn::os::SetThreadName(&m_videoInputThread, "VideoInputReadThread");
+            m_videoInputThreadCreated = true;
+            m_audioInputThreadStack = aligned_alloc(0x1000, m_threadStackSize);
+            if (m_audioInputThreadStack != nullptr) {
+                m_audioInputThreadDone = false;
+                if (nn::os::CreateThread(&m_audioInputThread, AudioInputReadThreadFunction, this,
+                                         m_audioInputThreadStack, m_threadStackSize, 15)
+                        .IsFailure()) {
+                    status = 0x100D;
+                } else {
+                    nn::os::SetThreadName(&m_audioInputThread, "AudioInputReadThread");
+                    m_audioInputThreadCreated = true;
+                    m_workerThreadStack = aligned_alloc(0x1000, m_threadStackSize);
+                    if (m_workerThreadStack != nullptr) {
+                        m_workerThreadDone = false;
+                        if (nn::os::CreateThread(&m_workerThread, AudioVideoWorkerThreadFunction, this,
+                                                 m_workerThreadStack, m_threadStackSize, 15)
+                                .IsFailure()) {
+                            status = 0x100D;
+                        } else {
+                            nn::os::SetThreadName(&m_workerThread, "AudioVideoWorkerThread");
+                            status = 0;
+                            m_workerThreadCreated = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    m_mediaClock = new MediaClock();
+    return status;
+}
+
+void MovieDecoderPlayer::Finalize() {
+    if (m_workerThreadCreated) {
+        m_workerThreadDone = true;
+        nn::os::SignalEvent(&m_workerExitEvent);
+        nn::os::WaitThread(&m_workerThread);
+        nn::os::DestroyThread(&m_workerThread);
+        m_workerThreadCreated = false;
+    }
+    if (m_workerThreadStack != nullptr) {
+        MultimediaFree(m_workerThreadStack, nullptr);
+        m_workerThreadStack = nullptr;
+    }
+    if (m_videoInputThreadStack != nullptr) {
+        MultimediaFree(m_videoInputThreadStack, nullptr);
+        m_videoInputThreadStack = nullptr;
+    }
+    if (m_audioInputThreadStack != nullptr) {
+        MultimediaFree(m_audioInputThreadStack, nullptr);
+        m_audioInputThreadStack = nullptr;
+    }
+    nn::os::FinalizeEvent(&m_workerExitEvent);
+    // per decoder (video first), as in Initialize: inlined helpers, names inferred
+    auto finalizeEvents = [](DecoderEventTypes* types) {
+        nn::os::FinalizeEvent(&types->m_errorEvent);
+        nn::os::FinalizeEvent(&types->m_formatChangedEvent);
+        nn::os::FinalizeEvent(&types->m_inputBufferAvailableEvent);
+        nn::os::FinalizeEvent(&types->m_outputBufferAvailableEvent);
+    };
+    auto finalizeHolders = [](DecoderMultiWaitHolders* holders) {
+        nn::os::FinalizeMultiWaitHolder(&holders->m_errorHolder);
+        nn::os::FinalizeMultiWaitHolder(&holders->m_formatChangedHolder);
+        nn::os::FinalizeMultiWaitHolder(&holders->m_inputBufferAvailableHolder);
+        nn::os::FinalizeMultiWaitHolder(&holders->m_outputBufferAvailableHolder);
+    };
+    finalizeEvents(&m_videoDecoderEventTypes);
+    finalizeHolders(&m_videoDecoderHolders);
+    finalizeEvents(&m_audioDecoderEventTypes);
+    finalizeHolders(&m_audioDecoderHolders);
+    nn::os::FinalizeMultiWait(&m_multiWait);
+    nn::os::FinalizeMutex(&m_videoInputMutex);
+    nn::os::FinalizeMutex(&m_audioInputMutex);
+    nn::os::FinalizeMessageQueue(&m_videoInputQueue);
+    if (m_videoInputQueueBuffer != nullptr) {
+        MultimediaFree(m_videoInputQueueBuffer, nullptr);
+    }
+    nn::os::FinalizeMessageQueue(&m_audioInputQueue);
+    if (m_audioInputQueueBuffer != nullptr) {
+        MultimediaFree(m_audioInputQueueBuffer, nullptr);
+    }
+    if (m_mediaClock != nullptr) {
+        delete m_mediaClock;
+        m_mediaClock = nullptr;
+    }
+}
+
 void VideoInputReadThreadFunction(void* arg) {
     MovieDecoderPlayer* player = static_cast<MovieDecoderPlayer*>(arg);
     for (;;) {
@@ -234,6 +382,17 @@ void AudioInputReadThreadFunction(void* arg) {
         }
     }
     player->m_audioInputThreadDone = true;
+}
+
+void MovieDecoderPlayer::DestroypAudioVideoRenderer() {
+    if (m_audioOutRenderer != nullptr) {
+        delete m_audioOutRenderer;
+        m_audioOutRenderer = nullptr;
+    }
+    if (m_videoRenderer != nullptr) {
+        delete m_videoRenderer;
+        m_videoRenderer = nullptr;
+    }
 }
 
 namespace CMovieNX {

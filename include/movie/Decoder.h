@@ -18,6 +18,13 @@ public:
 
 class Decoder;
 
+// the library's allocator hooks (MovieDecoderPlayer::Initialize installs MultimediaAllocate/Free/Reallocate) and the
+// cores its threads may run on
+void SetAllocator(void* (*allocate)(unsigned long size, unsigned long alignment, void* userPtr),
+                  void (*free)(void* address, void* userPtr),
+                  void* (*reallocate)(void* address, unsigned long size, void* userPtr), void* userPtr);
+void SetCoreMask(unsigned long coreMask);
+
 }  // namespace movie
 
 #endif

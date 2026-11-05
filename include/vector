@@ -77,11 +77,11 @@ protected:
     }
     _LIBCPP_INLINE_VISIBILITY size_type capacity() const noexcept { return static_cast<size_type>(__end_cap_ - __begin_); }
     _LIBCPP_INLINE_VISIBILITY void clear() noexcept { __destruct_at_end(__begin_); }
+    // libc++ 3.9.1's form: steps __end_ itself (DestroypAudioVideoRenderer's inlined ~VideoRenderer keeps the
+    // computed end store)
     _LIBCPP_INLINE_VISIBILITY void __destruct_at_end(pointer __new_last) noexcept {
-        pointer __soon_to_be_end = __end_;
-        while (__new_last != __soon_to_be_end)
-            (--__soon_to_be_end)->~_Tp();
-        __end_ = __new_last;
+        while (__new_last != __end_)
+            (--__end_)->~_Tp();
     }
 };
 

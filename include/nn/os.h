@@ -50,9 +50,18 @@ struct alignas(8) ThreadType {
     unsigned char pad_0[0x1C0];  // mm::threading::ThreadNx holds one at 0x30, its EventWait follows at 0x1F0
 };
 
-// 8-aligned (it holds pointers); 0x50 bytes: MovieDecoderPlayer keeps its video and audio input queues 0x50 apart
+// 8-aligned (it holds pointers); 0x48 bytes: MovieDecoderPlayer::Initialize sets the audio queue's buffer pointer at
+// 0xAB0, right after the video queue at 0xA68
 struct alignas(8) MessageQueueType {
-    unsigned char pad_0[0x50];
+    unsigned char pad_0[0x48];
+};
+// 0x30 bytes: MovieDecoderPlayer::Initialize's multi-wait at 0x80 is followed by its event pointers at 0xB0
+struct alignas(8) MultiWaitType {
+    unsigned char pad_0[0x30];
+};
+// 0x40 bytes: MovieDecoderPlayer::Initialize sets up its holders 0x40 apart
+struct alignas(8) MultiWaitHolderType {
+    unsigned char pad_0[0x40];
 };
 
 typedef void (*ThreadFunction)(void* argument);
@@ -93,6 +102,13 @@ void SignalEvent(EventType* event);
 void ClearEvent(EventType* event);
 void WaitEvent(EventType* event);
 bool TimedWaitEvent(EventType* event, TimeSpan timeout);
+
+void InitializeMultiWait(MultiWaitType* multiWait);
+void FinalizeMultiWait(MultiWaitType* multiWait);
+void InitializeMultiWaitHolder(MultiWaitHolderType* holder, EventType* event);
+void FinalizeMultiWaitHolder(MultiWaitHolderType* holder);
+void LinkMultiWaitHolder(MultiWaitType* multiWait, MultiWaitHolderType* holder);
+MultiWaitHolderType* WaitAny(MultiWaitType* multiWait);
 
 // the SDK's timer event (ml::pad_detail::g_TimerEvent drives the vibration node thread; its size is not known
 // here: the .bss leaves it up to 0xAC0 bytes before the next global's 0x1000-aligned start; 0x60 is the SDK's)
@@ -146,6 +162,8 @@ bool IsMutexLockedByCurrentThread(const MutexType* mutex);
 
 void SendMessageQueue(MessageQueueType* queue, unsigned long data);
 void ReceiveMessageQueue(unsigned long* data, MessageQueueType* queue);
+void InitializeMessageQueue(MessageQueueType* queue, unsigned long* buffer, unsigned long count);
+void FinalizeMessageQueue(MessageQueueType* queue);
 
 void InitializeReaderWriterLock(ReaderWriterLockType* lock);
 void FinalizeReaderWriterLock(ReaderWriterLockType* lock);
