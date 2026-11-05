@@ -11,7 +11,11 @@ namespace gf {
 // manager's list first); the field names are not the original's. Its size is not proven (0x41 bytes are used)
 class GfGameDepopMeter : public ::mm::mtl::IntrusiveListNodeBase {
 public:
-    struct CreateInfo;
+    // what create takes (GfComBehaviorNpc::setup builds one on the stack); the field names are not the original's
+    struct CreateInfo {
+        GF_OBJ_HANDLE* m_handle;  // create keeps it as m_handle
+        bool pad_8;               // create keeps it as pad_18
+    };
     explicit GfGameDepopMeter(const CreateInfo* info);
     ~GfGameDepopMeter() { dispose(); }
     void create(const CreateInfo& info);

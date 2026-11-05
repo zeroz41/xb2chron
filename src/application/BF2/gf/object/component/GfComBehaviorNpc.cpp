@@ -44,6 +44,24 @@
 #include "classes/gmk/Lvlb.h"
 #include "gf/GfDataNpc.h"
 #include "fw/NaviUtil.h"
+#include "gf/MsgPcGetLookPoint.h"
+#include "gf/MsgPcFieldGetAccessType.h"
+#include "gf/MsgPcFieldNotifyAction.h"
+#include "gf/MsgGameTalkAction.h"
+#include "gf/MsgUnk_1000030.h"
+#include "gf/MsgObjectGetVelocity.h"
+#include "classes/gf/GfObjManager.h"
+#include "classes/gf/GfObjSetupNpc.h"
+#include "gf/GfObjInfo.h"
+#include "gf/GfMenuBdat.h"
+#include "gf/GfGameUtil.h"
+#include "gf/MenuOffset.h"
+#include "classes/gf/EyeBlinkPlugin.h"
+#include "gf/GfObjUtil.h"
+#include "classes/ai/State.h"
+#include "classes/gmk/GmkNpc.h"
+#include "classes/gmk/GmkBlade.h"
+#include "classes/gmk/GmkBattleChallengePortal.h"
 
 namespace gf {
 
@@ -71,6 +89,127 @@ bool GfComBehaviorNpc::LocalSteerIsTargetNotPlayer::operator()(const GfFieldLoca
 
 gmk::AGmkBase* GfComBehaviorNpc::getBindedGmkInst() const {
     return gmk::getBindedGmkInst(static_cast<GfObj*>(m_owner)->m_handle);
+}
+
+bool GfComBehaviorNpc::recieveMessage(fw::MessageObject* from, fw::Message& msg) {
+    bool result = false;
+    switch (msg.m_id) {
+    case 0x1000003:
+        result = true;
+        break;
+    case 0x1000008:
+        result = true;
+        if (fw::ReferenceFrame* frame = pad_1b8.get()) {
+            static_cast<MsgPcGetLookPoint&>(msg).m_point = frame->getWorldTransform().position;
+            static_cast<MsgPcGetLookPoint&>(msg).m_found = true;
+        }
+        break;
+    case 0x100000C:
+        procMsgPcFieldGetAccessType(from, static_cast<MsgPcFieldGetAccessType&>(msg));
+        result = true;
+        break;
+    case 0x100000D: {
+        MsgPcFieldNotifyAction& action = static_cast<MsgPcFieldNotifyAction&>(msg);
+        switch (action.m_action) {
+        case 0:
+            if (!pad_100 && GfGameManager::isTalkOK() &&
+                (m_hfsm.m_pState == nullptr || m_hfsm.m_pState->m_stateID != 6)) {
+                pad_100 = true;
+                m_depopMeter.pad_20 = false;
+                if (m_hfsm.m_pState == nullptr || m_hfsm.m_pState->m_stateID != 6) {
+                    m_hfsm.setState(6);
+                    validateLocalSteer(static_cast<npc::STATE_ID>(6));
+                }
+            }
+            break;
+        case 1:
+            if (pad_100) {
+                pad_100 = false;
+                m_depopMeter.pad_20 = true;
+            }
+            break;
+        }
+        result = true;
+        break;
+    }
+    case 0x100002E:
+        procMsgGameTalkAction(from, static_cast<MsgGameTalkAction&>(msg));
+        result = true;
+        break;
+    case 0x100002F:
+        procMsgGameLipAction(from, static_cast<MsgGameLipAction&>(msg));
+        result = true;
+        break;
+    case 0x1000030:
+        if (LipSyncPlugin* lipSync = getPlugin<LipSyncPlugin>(2)) {
+            lipSync->setWeight(static_cast<MsgUnk_1000030&>(msg).m_weight);
+        }
+        result = true;
+        break;
+    case 0x1000049:
+        static_cast<MsgObjectGetVelocity&>(msg).m_velocity = pad_f0;
+        result = true;
+        break;
+    }
+    return result;
+}
+
+void GfComBehaviorNpc::procMsgPcFieldGetAccessType(fw::MessageObject* from, MsgPcFieldGetAccessType& msg) {
+    msg.m_type = 2;
+    msg.m_enable = false;
+    if (pad_100 || !GfGameManager::isTalkOK()) {
+        return;
+    }
+    if (m_hfsm.m_pState != nullptr && m_hfsm.m_pState->m_stateID == 6) {
+        return;
+    }
+    gmk::AGmkBase* gmk = getBindedGmkInst();
+    if (gmk == nullptr) {
+        return;
+    }
+    switch (gmk->getGmkType()) {
+    case 3:
+        msg.m_enable = static_cast<gmk::GmkNpc*>(gmk)->isPopCondMatchedExceptDist();
+        break;
+    case 4:
+        msg.m_enable = static_cast<gmk::GmkRoutedNpc*>(gmk)->isPopCondMatchedExceptDist();
+        break;
+    case 0x2F:
+        msg.m_enable = gmk->isValid()
+                           ? static_cast<const gmk::GmkBlade::BdatInfo*>(gmk->m_createInfo.m_bdatInfo)
+                                 ->isPopCommonCondMatched()
+                           : false;
+        break;
+    case 0x3D:
+        msg.m_enable = static_cast<gmk::GmkBattleChallengePortal*>(gmk)->isPopCondMatchedExceptDist();
+        break;
+    }
+}
+
+// the talk motions MsgGameTalkAction's action picks (the same strings as StateFieldTalk's tables)
+static const char* const sTalkStateNames[4] = {"S_talkA_00", "S_talkA_01", "S_talkA_02", "S_idle"};
+static const char* const sTalkCmdNames[4] = {"C_talkA_00", nullptr, "C_talkA_02", nullptr};
+
+void GfComBehaviorNpc::procMsgGameTalkAction(fw::MessageObject* from, MsgGameTalkAction& msg) {
+    GfComAsm* com = m_owner->getComponent<GfComAsm>(2);
+    if (com == nullptr) {
+        return;
+    }
+    if (msg.m_setState) {
+        msg.m_result = com->setState(sTalkStateNames[msg.m_action], AnimLayer(0));
+        return;
+    }
+    if (sTalkCmdNames[msg.m_action] != nullptr) {
+        msg.m_result = com->execCmd(sTalkCmdNames[msg.m_action], AnimLayer(0));
+    }
+    if (!msg.m_result) {
+        if (com->getStateName(AnimLayer(0)) != nullptr) {
+            com->getStateName(AnimLayer(0));
+        }
+        if (sTalkCmdNames[msg.m_action] != nullptr) {
+            msg.m_result = com->setState(sTalkStateNames[msg.m_action], AnimLayer(0));
+        }
+    }
 }
 
 void GfComBehaviorNpc::procMsgGameLipAction(fw::MessageObject* from, MsgGameLipAction& msg) {
@@ -159,6 +298,89 @@ void GfComBehaviorNpc::updateNaviMeshObj(float deltaTime) {
     }
 }
 
+void GfComBehaviorNpc::update(const fw::UpdateInfo& info) {
+    if (!pad_100) {
+        m_lookIk.update(info.m_deltaTime);
+    }
+    pad_f0.z = 0.0f;
+    pad_f0.x = 0.0f;
+    fw::ColiMoveObject* coli = getColiObject();
+    if (coli != nullptr && !coli->testAttribute(static_cast<fw::ColiAtrr>(0)) && coli->m_followType != 0) {
+        pad_f0.y += info.m_deltaTime * -9.8f;
+    } else {
+        pad_f0.y = 0.0f;
+    }
+    if (gmk::isPlayerExist()) {
+        GfObjAcc acc(static_cast<GfObj*>(m_owner));
+        const mm::Vec3& pos = acc.getWorldTransform().position;
+        mm::Vec3 diff = gmk::getPlayerPos() - pos;
+        m_playerDistYSq = diff.y * diff.y;
+        diff.y = 0.0f;
+        m_playerDistSq = diff.dot(diff);
+    }
+    if (npc::StateBattle<GfComBehaviorNpc>::isCondMatch(*this) &&
+        (m_hfsm.m_pState == nullptr || m_hfsm.m_pState->m_stateID != 5)) {
+        m_hfsm.setState(5);
+        validateLocalSteer(static_cast<npc::STATE_ID>(5));
+    }
+    if (GfGameManager::isBattle() && m_bdatInfo.m_battleReaction == 1) {
+        GfObjAcc acc(static_cast<GfObj*>(m_owner)->m_handle);
+        if (!acc.testFlag(0x11)) {
+            SCOM_DESTROY_GAME_OBJ::create(static_cast<GfObj*>(m_owner)->m_handle, 1.0f, 0);
+        }
+    }
+    m_hfsm.update(&info);
+    if (fw::ColiMoveObject* moving = getColiObject()) {
+        moving->setDir(info.m_deltaTime * pad_f0);
+    }
+    m_stuckMeter.update(info.m_deltaTime);
+    m_turnCmd.update(info.m_deltaTime);
+    m_pluginManager.update(info);
+    if (pad_f0.x != 0.0f && pad_f0.z != 0.0f) {
+        GfFieldLocalSteer::UpdateInfo steerInfo;
+        steerInfo.pad_0 = m_goalPos;
+        steerInfo.pad_10 = info.m_deltaTime;
+        m_localSteer.castRay(m_goalPos);
+        m_localSteer.update(steerInfo);
+    } else {
+        m_localSteer.m_angle.m_from = 0.0f;
+        m_localSteer.m_angle.m_to = 0.0f;
+        m_localSteer.m_angle.m_duration = 0.0f;
+        m_localSteer.m_angle.m_time = 0.0f;
+    }
+    updateNaviMeshObj(info.m_deltaTime);
+}
+
+void GfComBehaviorNpc::setup() {
+    cleanup();
+    m_pluginManager.beginSetup(*this, 4);
+    m_pluginManager.setCreator(1, &EyeBlinkPlugin::create, true);
+    m_pluginManager.setCreator(2, &LipSyncPlugin::create, true);
+    m_pluginManager.endSetup();
+    if (Plugin* lipSync = m_pluginManager.m_plugins[2]) {
+        lipSync->setActivate(true);
+    }
+    gmk::AGmkBase* gmk = getBindedGmkInst();
+    if (gmk != nullptr && gmk::hasEyeBlink(*gmk)) {
+        GfObjUtil::setEnableEyeBlink(static_cast<GfObj*>(m_owner)->m_handle, true);
+    }
+    init(false);
+    createFsm();
+    m_moveSpeed.create({static_cast<GfObj*>(m_owner)->m_handle});
+    validateBindedGmkInstInfo(false);
+    if (fw::ColiMoveObject* coli = getColiObject()) {
+        GfGameStuckMeter::CreateInfo stuckInfo;
+        stuckInfo.m_minSpeedSq = 0.0f;  // the original stores 0 before setColiObj, then the square below
+        stuckInfo.setColiObj(coli);
+        stuckInfo.m_minSpeedSq = stuckInfo.pad_0 * stuckInfo.pad_0;
+        m_stuckMeter.create(stuckInfo);
+    }
+    GfGameDepopMeter::CreateInfo depopInfo;
+    depopInfo.pad_8 = true;
+    depopInfo.m_handle = static_cast<GfObj*>(m_owner)->m_handle;
+    m_depopMeter.create(depopInfo);
+}
+
 void GfComBehaviorNpc::init(bool moving) {
     if (fw::ColiMoveObject* coli = getColiObject()) {
         coli->setState(static_cast<fw::ColiState>(1));
@@ -189,6 +411,52 @@ void GfComBehaviorNpc::validateLocalSteer(npc::STATE_ID state) {
     info.m_handle = static_cast<GfObj*>(m_owner)->m_handle;
     info.pad_18 = state == 3 ? &m_steerFilter : nullptr;
     m_localSteer.create(info);
+}
+
+// walks toward m_goalPos as GfComBehaviorMob::moveToGoal does: the speed and navigation object first, the
+// velocity's ground part into pad_f0, then a tenth of the way turned into m_reactionRot, which goes to the frame
+void GfComBehaviorNpc::moveToGoal(float deltaTime) {
+    m_moveSpeed.update(deltaTime);
+    updateNaviMeshObj(deltaTime);
+    mm::Vec3 dir(0.0f, 0.0f, 0.0f);
+    if (!getMoveVec(dir, pad_b8)) {
+        const mm::Vec3& pos = getPos();
+        dir = m_goalPos - pos;
+        dir.y = 0.0f;
+    }
+    if (!dir.isZero()) {
+        float length = dir.length();
+        if (length <= 1e-6f) {
+            dir = mm::Vec3::zero;
+        } else {
+            float scale = 1.0f / length;
+            dir.x = scale * dir.x;
+            dir.y = scale * dir.y;
+            dir.z = scale * dir.z;
+        }
+        GfObjSetup* setup = GfObjManager::getObjInfo(static_cast<GfObj*>(m_owner)->m_handle)->m_setup;
+        const GfObjSetupNpc* npc =
+            setup->getRTTI()->isKindOf(&GfObjSetupNpc::m_rtti) ? static_cast<GfObjSetupNpc*>(setup) : nullptr;
+        float speed = m_moveSpeed.m_speed * 0.2777778f * npc->m_initialScale.x;
+        dir.x *= speed;
+        dir.y *= speed;
+        dir.z *= speed;
+    }
+    pad_f0.x = dir.x;
+    pad_f0.z = dir.z;
+    if (m_localSteer.m_info.m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        m_localSteer.apply(pad_f0, pad_f0);
+    }
+    float goal = atan2f(pad_f0.x, pad_f0.z);
+    fw::Transform& transform = m_owner->getComponent<GfComTransform>(0)->getFrame()->getWorldTransformForWrite();
+    mm::Vec3 front = transform.rotation.rotate(mm::Vec3::unitZ);
+    float cur = atan2f(front.x, front.z);
+    float half = (cur + mm::normalizeRadian(goal - cur) * 0.1f) * 0.5f;
+    m_reactionRot.y = sinf(half);
+    m_reactionRot.w = cosf(half);
+    m_reactionRot.x = 0.0f;
+    m_reactionRot.z = 0.0f;
+    m_owner->getComponent<GfComTransform>(0)->getFrame()->getWorldTransformForWrite().rotation = m_reactionRot;
 }
 
 void GfComBehaviorNpc::createFsm() {

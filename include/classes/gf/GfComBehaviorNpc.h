@@ -19,6 +19,8 @@ namespace fw { class MessageObject; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GfComAsm; }
 namespace gf { class MsgGameLipAction; }
+namespace gf { class MsgGameTalkAction; }
+namespace gf { class MsgPcFieldGetAccessType; }
 namespace gf { class GfMenuCallContext; }
 namespace fw { class ReferenceFrame; }
 namespace navi { class NvmshAcObj; }
@@ -60,6 +62,8 @@ public:
               m_reactionMot(0), m_battleReaction(0), m_battleMot(0), m_talkEventId(0), pad_1a(false) {}
         // how far above or below an npc a target may be (2): static or not, the symbol cannot tell
         static float getDistYThreshold();
+        // fills the fields from the row id of bdat (validateBindedGmkInstInfo passes its gimmick's sheet and row)
+        void create(const CBdatWrapper& bdat, int id, const GfComBehaviorNpc& owner);
         // whether a talk with the npc earns a bonus, and marks it earned (StateTalk::seqWaitTalkEnd)
         bool isIconTalkBonus() const;
         void setTalkBonusFlag() const;
@@ -88,6 +92,9 @@ public:
     GfComBehaviorNpc();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComBehaviorNpc();  // slot 1
+    // makes its plugins (eye blink, lip sync), state machine, move speed, stuck and depop meters (GfObjFactory's
+    // createComponent calls it)
+    void setup();
     // releases what setup made: the state machine, the menu, the bone frame, the plugins
     void cleanup();
     // takes the state machine down once (createFsm's first step; inline: no copy in 3.0.1)
@@ -108,6 +115,11 @@ public:
     // whether it reached m_goalPos: its steering timed out, or the goal is within its collision's height and radius
     bool isArrivedToGoal() const;
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
+    // answers the PC's access query: a talk (2), possible while it is not talking and its gimmick's pop conditions
+    // hold
+    void procMsgPcFieldGetAccessType(fw::MessageObject* from, MsgPcFieldGetAccessType& msg);
+    // sets the talk motion msg asks for on its asm component (the command first for actions 0 and 2)
+    void procMsgGameTalkAction(fw::MessageObject* from, MsgGameTalkAction& msg);
     // MsgGameLipAction's action 0 forces the lip sync plugin to play, 1 stops forcing it (recieveMessage's)
     void procMsgGameLipAction(fw::MessageObject* from, MsgGameLipAction& msg);
     virtual void update(fw::UpdateInfo const&);  // slot 5
@@ -134,6 +146,8 @@ public:
     void init(bool keep);
     void setGoalPos(const mm::Vec3& pos);
     void moveToGoal(float dt);
+    // (re)opens the target info menu over the npc: its name and its shop (validateBindedGmkInstInfo's)
+    void createMenuObj();
     // the state its schedule asks for next, -1 for none (StateIdle requests it)
     int getNexStateId();
     static mm::mtl::RTTI m_rtti;
