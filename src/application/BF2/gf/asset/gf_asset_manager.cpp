@@ -11,8 +11,15 @@
 #include "classes/ml/WinView.h"
 #include "mtl/MemManager.h"
 #include "classes/ml/fixed_size_alloc_inside.h"
+#include "classes/gf/GfInitParam.h"
+#include "classes/gf/GfInfo.h"
+#include "classes/gf/GfManager.h"
 
 namespace gf {
+
+GfAssetManager::GfAssetManager(const GfSetupParam& param) : m_serial(0), m_slotMapping(nullptr), m_initialized(false), pad_3CCC1(false) {
+    initialize(param);
+}
 
 void GfAssetManager::initialize(const GfSetupParam& param) {
 #line 101
@@ -37,6 +44,56 @@ void GfAssetManager::destroy() {
 
 GfAssetManager::~GfAssetManager() {}
 
+void GfAssetManager::finalize() {
+    pad_3CCC1 = true;
+    GfFileSizePool::destroy();
+    while (m_loadingHandles.size() != 0) {
+        GfSleep(1);
+    }
+    for (mm::mtl::FixedList<GF_ASSET_HANDLE*, 1024>::iterator it = m_loadedHandles.begin(); it != m_loadedHandles.end();
+         ++it) {
+        AssetPackInfo* info = getAssetPackInfo(*it);
+        if (info != nullptr) {
+            info->~AssetPackInfo();
+            m_packInfos.deallocate(info);
+        }
+    }
+    m_loadedHandles.clear();
+    m_destroyHandles.clear();
+    for (;;) {
+        bool cached = true;
+        for (mm::mtl::FixedList<GfAssetPack*, 2048>::iterator it = m_assetPacks.begin(); it != m_assetPacks.end();
+             ++it) {
+            if (!(*it)->isCached()) {
+                cached = false;
+                break;
+            }
+        }
+        if (cached) {
+            break;
+        }
+        GfSleep(1);
+    }
+    for (mm::mtl::FixedList<GfAssetPack*, 2048>::iterator it = m_assetPacks.begin(); it != m_assetPacks.end(); ++it) {
+        (*it)->releaseResource();
+    }
+    GfSleep(5);
+    for (mm::mtl::FixedList<GfAssetPack*, 2048>::iterator it = m_assetPacks.begin(); it != m_assetPacks.end(); ++it) {
+        if (*it != nullptr) {
+            (*it)->release();
+            *it = nullptr;
+        }
+    }
+    m_assetPacks.clear();
+    m_slotMapping->destroy();
+    GfManager::getSetupParam().m_view->detachWorkEvent(this);
+    if (m_slotMapping != nullptr) {
+        delete m_slotMapping;
+        m_slotMapping = nullptr;
+    }
+    m_initialized = false;
+}
+
 AssetPackInfo* GfAssetManager::getAssetPackInfo(GF_ASSET_HANDLE* handle) {
     unsigned int index = static_cast<unsigned int>(reinterpret_cast<unsigned long>(handle));
     ml::fixed_size_alloc_inside<AssetPackInfo, 1024>& infos = get()->m_packInfos;
@@ -52,6 +109,25 @@ template ml::fixed_size_alloc_inside<gf::AssetPackInfo, 1024>::~fixed_size_alloc
 
 namespace gf {
 
+void GfAssetManager::destroy(GF_ASSET_HANDLE* handle) {
+    AssetPackInfo* info = getAssetPackInfo(handle);
+    if (info != nullptr && !info->m_destroy) {
+        info->setDestroy();
+        GfAssetManager* self = get();
+        mm::mtl::FixedList<GF_ASSET_HANDLE*, 1024>::iterator it = self->m_loadedHandles.find(handle);
+        if (it == self->m_loadedHandles.end()) {
+            it = self->m_loadingHandles.find(handle);
+            if (it == self->m_loadingHandles.end()) {
+                return;
+            }
+        }
+        self->m_destroyHandles.push_back(*it);
+    }
+}
+}  // namespace gf
+
+namespace gf {
+
 void GfAssetManager::enableGameResource(GF_ASSET_HANDLE* handle) {
     AssetPackInfo* info = getAssetPackInfo(handle);
     if (info != nullptr && !info->m_usingGame) {
@@ -64,6 +140,21 @@ void GfAssetManager::disableGameResource(GF_ASSET_HANDLE* handle) {
     if (info != nullptr && info->m_usingGame) {
         info->setUsingGame(false);
     }
+}
+
+GF_ASSET_HANDLE* GfAssetManager::createAssetHandle(const GfInitParam& param) {
+    GfAssetManager* self = get();
+    unsigned int index;
+    AssetPackInfo* info = self->m_packInfos.allocate(index);
+    new (info) AssetPackInfo(param.pad_c);
+    unsigned int serial = self->m_serial++;
+    if (serial >= 0xFFFFF) {
+        serial = self->m_serial++;
+    }
+    GF_ASSET_HANDLE* handle = reinterpret_cast<GF_ASSET_HANDLE*>(static_cast<unsigned long>((index & 0x3FF) | serial << 10));
+    info->m_handle = handle;
+    self->m_loadingHandles.push_back(handle);
+    return handle;
 }
 
 void GfAssetManager::loadStart(GfAssetPack* pack, mm::mtl::IAllocator* allocator) {
@@ -178,6 +269,13 @@ void GfAssetManager::setExtendResource(GF_ASSET_HANDLE* handle, unsigned int ind
     getAssetPackInfo(handle)->setExtendResource(index, resource);
 }
 
+void GfAssetManager::destroySlotCache(GfAssetType type) {
+    mm::mtl::FixedList<GfAssetType, 32>& types = get()->m_list3C940;
+    if (types.find(type) == types.end()) {
+        types.push_back(type);
+    }
+}
+
 GfExtendResource* GfAssetManager::getExtentResource(GF_ASSET_HANDLE* handle, unsigned int index) {
     AssetPackInfo* info = getAssetPackInfo(handle);
     if (info != nullptr) {
@@ -271,10 +369,36 @@ const char* GfAssetManager::getMotionInfo(GF_ASSET_HANDLE* handle) {
 }
 }  // namespace gf
 
-// instantiated for gf::GfAssetManager::updateCheckCacheReload, gf::GfAssetManager::updateCheckDestroy, gf::GfAssetManager::updateCheckLoading (not written yet)
+// instantiated for gf::GfAssetManager::updateCheckCacheReload, gf::GfAssetManager::updateCheckDestroy (not written yet), gf::GfAssetManager::updateCheckLoading
 template mm::mtl::FixedList<gf::GF_ASSET_HANDLE*, 1024>::iterator mm::mtl::FixedList<gf::GF_ASSET_HANDLE*, 1024>::erase(mm::mtl::FixedList<gf::GF_ASSET_HANDLE*, 1024>::iterator);
 
 namespace gf {
+
+void GfAssetManager::updateCheckLoading() {
+    for (mm::mtl::FixedList<GfAssetPack*, 2048>::iterator it = m_assetPacks.begin(); it != m_assetPacks.end(); ++it) {
+        if (!(*it)->isPreSizeSizeValid()) {
+            (*it)->applyPreFileSize();
+        }
+    }
+    for (mm::mtl::FixedList<GF_ASSET_HANDLE*, 1024>::iterator it = m_loadingHandles.begin();
+         it != m_loadingHandles.end();) {
+        GF_ASSET_HANDLE*& handle = *it;
+        AssetPackInfo* info = getAssetPackInfo(handle);
+        if (info == nullptr) {
+            it = m_loadingHandles.erase(it);
+        } else if (info->m_destroy) {
+            m_loadedHandles.push_back(handle);
+            it = m_loadingHandles.erase(it);
+        } else if (info->isLoaded(nullptr) && info->isPreSizeSizeValid()) {
+            info->releaseEmptySlot();
+            info->setLoadComplete();
+            m_loadedHandles.push_back(handle);
+            it = m_loadingHandles.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
 
 void GfAssetManager::releaseRefResource(void* resource) {
     for (mm::mtl::FixedList<GfAssetPack*, 2048>::iterator it = m_assetPacks.begin(); it != m_assetPacks.end(); ++it) {

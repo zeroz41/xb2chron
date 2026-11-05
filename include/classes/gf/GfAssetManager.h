@@ -112,26 +112,30 @@ public:
     // handles updateCheckLoading walks (it moves them to m_loadedHandles; updateCheckCacheReload moves them back)
     // (the name is not the original's)
     mm::mtl::FixedList<GF_ASSET_HANDLE*, 1024> m_loadingHandles;
-    // a third list of 1024 eight-byte elements, its element type not yet read from finalize (the name is not the
-    // original's)
-    mm::mtl::FixedList<GF_ASSET_HANDLE*, 1024> m_handles2A8D8;
+    // handles destroy(handle) queues once their info is set to destroy (finalize waits until it is empty) (the name
+    // is not the original's)
+    mm::mtl::FixedList<GF_ASSET_HANDLE*, 1024> m_destroyHandles;
     // handles updateCheckLoading has finished loading (updateCheckCacheReload walks them) (the name is not the
     // original's)
     mm::mtl::FixedList<GF_ASSET_HANDLE*, 1024> m_loadedHandles;
-    unsigned char pad_33918[0x8];
+    // createAssetHandle's serial: a handle is the info's slot | serial << 10 (the name is not the original's)
+    unsigned int m_serial;
+    unsigned char pad_3391C[0x4];
     // the loaded asset packs (releaseRefResource and isExistSameAsset walk them; updateCheckDestroy and
     // updateCheckCacheReload erase from them: the erase's offsets prove 2048 nodes) (the name is not the original's)
     mm::mtl::FixedList<GfAssetPack*, 2048> m_assetPacks;
-    // 32 four-byte elements updateCheckDestroy walks and clears, element type not yet read (the name is not the
-    // original's)
-    mm::mtl::FixedList<unsigned int, 32> m_list3C940;
+    // the asset types destroySlotCache was asked for, each once (updateCheckDestroy walks and clears them) (the name
+    // is not the original's)
+    mm::mtl::FixedList<GfAssetType, 32> m_list3C940;
     // made by the constructor (the name is not the original's)
     GfSlotMapping* m_slotMapping;
     // the listeners callEventAssetPack calls (1.0.0's addEvent/removeEvent fill it; 3.0.1 dropped both) (the name is
     // not the original's)
     mm::mtl::FixedList<IGfAssetEvent*, 32> m_events;
     bool m_initialized;  // initialize sets it last (1.0.0 has isInitialized()) (the name is not the original's)
-    unsigned char pad_3CCC1[0x7];
+    // the constructor clears it, finalize sets it first; updateCheckCacheReload reads it
+    bool pad_3CCC1;
+    unsigned char pad_3CCC2[0x6];
 };
 }  // namespace gf
 

@@ -21,6 +21,8 @@ namespace gf {
 class AssetPackInfo {
 public:
     // drops the info's use of each pack and its reference to it (table 0x7100B43628, 1.0.0's symbols name it)
+    // GfAssetManager::createAssetHandle builds one in the slot it allocates, passing the init param's pad_c
+    AssetPackInfo(unsigned int kind);
     virtual ~AssetPackInfo();
     // the pack of one of the asset's files (1.0.0's symbols name it; GfAssetManager::getAssetPack forwards to it)
     GfAssetPack* getAssetPack(GfFileIdx file) const;
