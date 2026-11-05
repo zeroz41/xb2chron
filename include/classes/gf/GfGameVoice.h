@@ -23,6 +23,25 @@ public:
     // PJOB's as in PJOB_STOP's and PJOB_WAIT_STOP's tables
     ~GfVoiceName() {}
     void getVoicePath(mm::mtl::FixStr<16>& path) const;
+    // the name holds a character ID (1.0.0's gf::GfVoiceName::isValid() const, 0x71003599EC; 3.0.1 inlines it)
+    bool isValid() const { return m_number != 0; }
+    // the number the name's first m_number digits spell (1.0.0's gf::GfVoiceName::getCharaId() const, 0x710035B8D0;
+    // 3.0.1 inlines it)
+    int getCharaId() const {
+        int id = 0;
+        int scale = 1;
+        for (long i = m_number; i > 0; --i) {
+            id += (m_name.m_str[i - 1] - '0') * scale;
+            scale *= 10;
+        }
+        return id;
+    }
+    // the character ID is an enemy's, 101 to 158 (1.0.0's gf::GfVoiceName::isEnemyVoice() const, 0x710035AB1C;
+    // 3.0.1 inlines it into GfGameVoice::isPlayEnemyVoice)
+    bool isEnemyVoice() const {
+        int id = getCharaId();
+        return id >= 101 && id < 159;
+    }
 
     mm::mtl::FixStr<16> m_name;
     int m_kind;
@@ -40,7 +59,7 @@ public:
         PJOB(VoiceInfo* info) : m_info(info) {}
         virtual ~PJOB() {}  // slot 0
         virtual bool exec() = 0;  // slot 2
-        virtual const char* getName() { return nullptr; }  // slot 3
+        virtual const GfVoiceName* getName() { return nullptr; }  // slot 3
         virtual GAME_VOICE_HANDLE* getVoiceHandle() const { return nullptr; }  // slot 4
 
         VoiceInfo* m_info;
@@ -53,7 +72,7 @@ public:
             : PJOB(info), m_voice(voice), m_obj(obj), m_name(name), m_prio(prio) {}
         virtual ~PJOB_PLAY() {}  // slot 0
         virtual bool exec();  // slot 2
-        virtual const char* getName() { return m_name.m_name.m_str; }  // slot 3
+        virtual const GfVoiceName* getName() { return &m_name; }  // slot 3
         virtual GAME_VOICE_HANDLE* getVoiceHandle() const { return m_voice; }  // slot 4
 
         GAME_VOICE_HANDLE* m_voice;
@@ -106,6 +125,10 @@ public:
         }
         return false;
     }
+    // the voice name of the first job that has one, else an empty name (1.0.0's gf::VoiceInfo::getName() const,
+    // 0x710035AA84; 3.0.1 inlines it into GfGameVoice::isPlayEnemyVoice: defined in gf_game_voice.cpp, its empty name
+    // shares one .bss block with its guard)
+    const GfVoiceName& getName() const;
     // nothing plays and no job is queued (1.0.0's gf::VoiceInfo::isEmpty() const, 0x7100358E44; 3.0.1 inlines it)
     bool isEmpty() const { return !m_sound.isValid() && m_jobs.empty(); }
 
@@ -164,6 +187,16 @@ public:
     static GAME_VOICE_HANDLE* playVoiceParty(GF_OBJ_HANDLE* handle, const char* name, CV_PRIO prio);
     // plays the named voice ("702870101"), handing back its handle for getResult
     static GAME_VOICE_HANDLE* playVoice(const char* name);
+    // plays a narration voice (TalkManager::PlayNarrationVoice), handing back its handle
+    static GAME_VOICE_HANDLE* playNarrationVoice(const char* name);
+    // the next voice handle, never 0 (1.0.0's gf::GfGameVoice::createHandle(), 0x71003599FC; 3.0.1 inlines it)
+    GAME_VOICE_HANDLE* createHandle() {
+        ++m_voiceCount;
+        if (m_voiceCount == 0) {
+            ++m_voiceCount;
+        }
+        return reinterpret_cast<GAME_VOICE_HANDLE*>(m_voiceCount);
+    }
     static CV_RESULT getResult(GAME_VOICE_HANDLE* voice);
     static CV_RESULT getResult(GF_OBJ_HANDLE* handle);  // the voice of an object (GfGameUtil::isPlayVoice: 2 playing)
     // the slot playing obj's voice (1.0.0's gf::GfGameVoice::getPlayInfo(ParamObj const&), 0x71003590C0; 3.0.1

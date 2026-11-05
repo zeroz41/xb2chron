@@ -92,6 +92,66 @@ void VoiceInfo::addPlay(GAME_VOICE_HANDLE* voice, const ParamObj& obj, const GfV
     }
 }
 
+GAME_VOICE_HANDLE* GfGameVoice::playNarrationVoice(const char* name) {
+    GfVoiceName voiceName(name);
+    GfSound* sound = GfSound::get();
+    if (sound != nullptr) {
+        const char* folder = fw::LangUtil::getVoiceFolder();
+        mm::mtl::FixStr<16> path;
+        {
+            GfVoiceName pathName(voiceName.m_name.m_str);
+            pathName.getVoicePath(path);
+        }
+        mm::mtl::FixStr<128> file;
+        file.format("%s%s/%s%s%s", _gfgvo::s_szVoicePath, folder, path.m_str, voiceName.m_name.m_str,
+                    _gfgvo::s_szVoiceExt);
+        GfGameVoice* self = get();
+        if (self != nullptr && !self->m_freeList.empty()) {
+            GAME_VOICE_HANDLE* voice = self->createHandle();
+            VoiceInfo* info = self->m_freeList.front();
+            self->m_freeList.pop_front();
+            self->m_playList.push_back(info);
+            SoundHandle handle = sound->playVoice(file.m_str, 1.0f, false, fw::SoundCategory(16));
+            info->m_obj = ParamObj(3, 0xffff);
+            info->m_prio = CV_PRIO(5);
+            info->m_sound = handle;
+            info->m_voice = voice;
+            return voice;
+        }
+    }
+    return nullptr;
+}
+
+GAME_VOICE_HANDLE* GfGameVoice::playVoice(const char* name) {
+    GfVoiceName voiceName(name);
+    GfSound* sound = GfSound::get();
+    if (sound != nullptr) {
+        const char* folder = fw::LangUtil::getVoiceFolder();
+        mm::mtl::FixStr<16> path;
+        {
+            GfVoiceName pathName(voiceName.m_name.m_str);
+            pathName.getVoicePath(path);
+        }
+        mm::mtl::FixStr<128> file;
+        file.format("%s%s/%s%s%s", _gfgvo::s_szVoicePath, folder, path.m_str, voiceName.m_name.m_str,
+                    _gfgvo::s_szVoiceExt);
+        GfGameVoice* self = get();
+        if (self != nullptr && !self->m_freeList.empty()) {
+            GAME_VOICE_HANDLE* voice = self->createHandle();
+            VoiceInfo* info = self->m_freeList.front();
+            self->m_freeList.pop_front();
+            self->m_playList.push_back(info);
+            SoundHandle handle = sound->playVoice(file.m_str, 1.0f, false, fw::SoundCategory(2));
+            info->m_obj = ParamObj(3, 0xfffe);
+            info->m_prio = CV_PRIO(3);
+            info->m_sound = handle;
+            info->m_voice = voice;
+            return voice;
+        }
+    }
+    return nullptr;
+}
+
 GAME_VOICE_HANDLE* GfGameVoice::playVoice(GF_OBJ_HANDLE* handle, const char* name, CV_PRIO prio) {
     return playVoice(ParamObj(handle), name, prio, false);
 }
@@ -156,6 +216,28 @@ void GfGameVoice::gevMapjump(GEV gev, const MapjumpCallbackInfo& info) {
     if (gev == GEV(2)) {
         destroyVoiceAll();
     }
+}
+
+bool GfGameVoice::isPlayEnemyVoice() const {
+    GfGameVoice* self = const_cast<GfGameVoice*>(this);
+    for (mm::mtl::FixedList<VoiceInfo*, 6>::iterator it = self->m_playList.begin(); it != self->m_playList.end();
+         ++it) {
+        if ((*it)->getName().isEnemyVoice()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+const GfVoiceName& VoiceInfo::getName() const {
+    static GfVoiceName s_none("");
+    typedef mm::mtl::FixedQueue<PJOB*, 16>::const_iterator iterator;
+    for (iterator it = m_jobs.begin(), end = m_jobs.end(); it != end; ++it) {
+        if (const GfVoiceName* name = (*it)->getName()) {
+            return *name;
+        }
+    }
+    return s_none;
 }
 
 bool GfGameVoice::isPlayVoice(GF_OBJ_HANDLE* handle) const {
