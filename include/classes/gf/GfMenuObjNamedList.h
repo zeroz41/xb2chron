@@ -40,7 +40,7 @@ public:
     // ascending, then by row ascending.
     static bool sortLevel(const MenuID& a, const MenuID& b);
     // 2.0.0's symbols name it. What it does: GfGameUtil::isDefeatNamed of the row's "EnemyID" in the named enemy table with
-    // GfGameManager::getBtlDifficult(); false without the table. TUnk_B638A8::reciveEvent calls it.
+    // GfGameManager::getBtlDifficult(); false without the table. GfMenuObjNamedDialog::MainListener::reciveEvent calls it.
     static bool isDefeated(unsigned int row);
 
     unsigned char pad_24[4];
