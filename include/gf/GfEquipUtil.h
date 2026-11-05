@@ -22,11 +22,21 @@ public:
     // the accessory in a driver's slot
     static unsigned int getEquipDriverAcce(unsigned int driver, unsigned int slot);
     // equips an accessory in a driver's slot (GfGameUtil::execEquipDriverDefaultAcce: slot 0, an empty handle)
-    static void equipDriverAcce(unsigned int driver, unsigned int slot, unsigned int accessory, GfItemHandle handle);
+    // (returns true: its bool result, w0 = 1 on every path)
+    static bool equipDriverAcce(unsigned int driver, unsigned int slot, unsigned int accessory, GfItemHandle handle);
     static unsigned int getEquipOrbMax(unsigned int blade);
     // equips an orb on a blade (GfGameScene::gevBladeActivate empties every slot of blade 1008 so: item 0, each slot
     // index, an empty handle)
-    static void equipBladeOrb(unsigned int blade, unsigned int, unsigned int, GfItemHandle);
+    // (returns true on every path)
+    static bool equipBladeOrb(unsigned int blade, unsigned int orb, unsigned int slot, GfItemHandle handle);
+    // whether an orb may go in a blade's slot: 0 yes, 1 not an orb (item type 3), 6 none in the box, 3 an orb of the
+    // same enhance category in another slot, 4 one with the same enhance effect, 2 a free choice (slot -1) on a full
+    // blade (GfMenuItemUtil::canEquipOrb calls it)
+    static unsigned int getEquipOrbResult(unsigned int blade, unsigned int orb, unsigned int slot);
+    // uses a weapon-point item (precious items 0x633D-0x633F): adds its precious type value as WP to the driver's
+    // weapon type, takes one from the box; 0 done, 1 not such an item, 6 none in the box
+    // (GfMenuObjDrArtsSet2::seqConfirmItem calls it)
+    static unsigned int execWpUpItem(unsigned int driver, unsigned int item, unsigned int wpnType);
     static unsigned int getEquipBladeOrb(unsigned int blade, unsigned int slot);
     // 2.0.0's symbols name it. A member because it lies among GfItemUtil's
     // functions (its unit). What it does: forwards to getEquipWpnAcce, which for a DLC driver (0x11-0x19) gives the

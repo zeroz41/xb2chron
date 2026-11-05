@@ -34,6 +34,9 @@
 #include "gf/GfDataFieldSkill.h"
 #include "gf/GfDataUtil.h"
 #include "gf/OwnerBonus.h"
+#include "classes/gf/GfBdatBtl.h"
+#include "gf/GfDataDriverArts.h"
+#include "classes/gf/SCOM_ADD_MONEY.h"
 
 namespace gf {
 
@@ -493,6 +496,33 @@ unsigned int GfEquipUtil::getEquipDriverAcce(unsigned int driver, unsigned int s
     return GfDataDriver::getEquipAcce(driver, slot);
 }
 
+bool GfEquipUtil::equipDriverAcce(unsigned int driver, unsigned int slot, unsigned int accessory, GfItemHandle handle) {
+    GfDataItem::getItemType(accessory);  // its result is not used
+    unsigned int old = GfDataDriver::getEquipAcce(driver, slot);
+    if (old != 0) {
+        GfItemHandle oldHandle = GfDataDriver::getEquipAcceHandle(driver, slot);
+        GfDataDriver::setEquipAcce(driver, slot, 0);
+        GfDataDriver::setEquipAcceHandle(driver, slot, GfItemHandle());
+        if (oldHandle.m_handle == 0) {
+            if (GfItemUtil::isEnableAddItemBox(old, 1)) {
+                GfItemUtil::addItemBox(old, 1);
+            } else if (GfDataItem::isEnableSell(old)) {
+                SCOM_ADD_MONEY::create(GfDataItem::getPrice(old));
+            }
+        } else {
+            GfItemUtil::setEquipFlag(old, oldHandle, false);
+        }
+    }
+    if (handle.m_handle == 0) {
+        handle = GfItemBox::get()->getNoEquipItemHandle(accessory);
+    }
+    GfItemUtil::setEquipFlag(accessory, handle, true);
+    GfDataDriver::setEquipAcce(driver, slot, accessory);
+    GfDataDriver::setEquipAcceHandle(driver, slot, handle);
+    GfEvent::callAcceParam(driver, slot);
+    return true;
+}
+
 unsigned int GfEquipUtil::getEquipAcceResult(unsigned int driver, unsigned int slot, unsigned int accessory) {
     return getEquipAcceResult(*GfDataDriver::getSDataDriver(driver), slot, accessory);
 }
@@ -505,8 +535,111 @@ unsigned int GfEquipUtil::getEquipBladeOrb(unsigned int blade, unsigned int slot
     return GfDataBlade::getEquipOrb(blade, slot);
 }
 
+bool GfEquipUtil::equipBladeOrb(unsigned int blade, unsigned int orb, unsigned int slot, GfItemHandle handle) {
+    unsigned short old = GfDataBlade::getEquipOrb(blade, slot);
+    if (old != 0) {
+        GfItemHandle oldHandle = GfDataBlade::getEquipOrbHandle(blade, slot);
+        if (oldHandle.m_handle == 0) {
+            GfDataBlade::setEquipOrb(blade, 0, slot);
+            if (GfItemUtil::isEnableAddItemBox(old, 1)) {
+                GfItemUtil::addItemBox(old, 1);
+            } else if (GfDataItem::isEnableSell(old)) {
+                SCOM_ADD_MONEY::create(GfDataItem::getPrice(old));
+            }
+        } else {
+            GfItemUtil::setEquipFlag(old, oldHandle, false);
+        }
+    }
+    if (handle.m_handle == 0) {
+        handle = GfItemBox::get()->getNoEquipItemHandle(orb);
+    } else {
+        unsigned int owner = GfItemUtil::getEquipChar(handle);
+        if (owner != 0 && owner != blade) {
+            handle = GfItemBox::get()->getNoEquipItemHandle(orb);
+        }
+    }
+    GfItemUtil::setEquipFlag(orb, handle, true);
+    GfDataBlade::setEquipOrb(blade, orb, slot);
+    GfDataBlade::setEquipOrbHandle(blade, handle, slot);
+    GfEvent::callOrbParam(blade, slot);
+    return true;
+}
+
+unsigned int GfEquipUtil::getEquipOrbResult(unsigned int blade, unsigned int orb, unsigned int slot) {
+    if (GfDataItem::getItemType(orb) != 3) {
+        return 1;
+    }
+    if (GfItemBox::get()->countItem(orb) == 0) {
+        return 6;
+    }
+    GfBdatItem* bdat = GfBdatItem::get();
+    GfBdatBtl* btl = GfBdatBtl::get();
+    unsigned int category = bdat->getEquipOrbEnhanceCategory(orb);
+    unsigned int max = GfDataBlade::getEquipOrbMax(blade);
+    for (unsigned int i = 0; i < max; i++) {
+        unsigned short other = GfDataBlade::getEquipOrb(blade, i);
+        if (slot != i && other != 0 && bdat->getEquipOrbEnhanceCategory(other) == category) {
+            return 3;
+        }
+    }
+    unsigned int effect = btl->getBTL_EnhanceEnhanceEffect(bdat->getEquipOrbEnhance(orb));
+    max = GfDataBlade::getEquipOrbMax(blade);
+    for (unsigned int i = 0; i < max; i++) {
+        unsigned short other = GfDataBlade::getEquipOrb(blade, i);
+        if (slot != i && other != 0 && effect == btl->getBTL_EnhanceEnhanceEffect(bdat->getEquipOrbEnhance(other))) {
+            return 4;
+        }
+    }
+    if (slot == 0xFFFFFFFF && GfDataBlade::isEquipOrbFull(blade)) {
+        return 2;
+    }
+    return 0;
+}
+
+unsigned int GfEquipUtil::execWpUpItem(unsigned int driver, unsigned int item, unsigned int wpnType) {
+    if (item - 0x633D < 3) {
+        if (GfItemBox::get()->countItem(item) == 0) {
+            return 6;
+        }
+        GfBdatItem* bdat = GfBdatItem::get();
+        GfDataDriverArts::addWp(driver, wpnType,
+                                GfDataItem::isValidPreciousIra(item) ? bdat->getPreciousIraType(item) : bdat->getPreciousType(item));
+        if (GfItemBox::decItem(item, 1)) {
+            GfEvent::callItemAdd(item, -1);
+        }
+        return 0;
+    }
+    return 1;
+}
+
 unsigned int GfEquipUtil::getEquipIraWpnAcce(unsigned int driver) {
     return GfDataDriver::getEquipWpnAcce(driver);
+}
+
+bool GfEquipUtil::equipIraWpnAcce(unsigned int driver, unsigned int item, GfItemHandle handle) {
+    GfDataItem::getItemType(item);  // its result is not used
+    unsigned int old = GfDataDriver::getEquipWpnAcce(driver);
+    if (old != 0) {
+        GfItemHandle oldHandle = GfDataDriver::getEquipWpnAcceHandle(driver);
+        GfDataDriver::setEquipWpnAcce(driver, 0);
+        GfDataDriver::setEquipWpnAcceHandle(driver, GfItemHandle());
+        if (oldHandle.m_handle == 0) {
+            if (GfItemUtil::isEnableAddItemBox(old, 1)) {
+                GfItemUtil::addItemBox(old, 1);
+            } else if (GfDataItem::isEnableSell(old)) {
+                SCOM_ADD_MONEY::create(GfDataItem::getPrice(old));
+            }
+        } else {
+            GfItemUtil::setEquipFlag(old, oldHandle, false);
+        }
+    }
+    if (handle.m_handle == 0) {
+        handle = GfItemBox::get()->getNoEquipItemHandle(item);
+    }
+    GfItemUtil::setEquipFlag(item, handle, true);
+    GfDataDriver::setEquipWpnAcce(driver, item);
+    GfDataDriver::setEquipWpnAcceHandle(driver, handle);
+    return true;
 }
 
 unsigned int GfRecipeOrbUtil::getRecipeID(unsigned int item) {
