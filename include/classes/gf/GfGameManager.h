@@ -321,6 +321,9 @@ public:
     static bool isWaitGimmickPopForMapjump();
     static bool isBattleStop();
     static const mm::Vec3& getControlMoverPosition();
+    // the controlled mover's world rotation as euler angles (x = asin of the -m[2][1] term, then y and z by atan2;
+    // Vec3::zero without a valid transform). Callers: GfGameParty, GfMenuObjMinimap2
+    static mm::Vec3 getControlMoverRotation();
     // 2.0.0's symbols name them. Statics of GfGameManager: their addresses lie in gf_game_manager's unit among
     // GfGameManager's functions and they use no instance. What they do: isDispPreciousMenu and isDispQuestCompleteMenu
     // (the same code) answer whether GfPlayComQuestCompleteUI::s_disp is above 0; btl::BattleGlobal::PreUpdateProc

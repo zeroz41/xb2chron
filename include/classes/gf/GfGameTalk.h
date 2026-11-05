@@ -18,7 +18,7 @@ public:
     static void destroy();
     void finalize();
     static bool isInitialized();
-    void update(const fw::UpdateInfo& info);
+    static void update(const fw::UpdateInfo& info);  // empty; GfGameManager::update calls it without an object
     // starts the talk the setup describes (GfPlayComTalk::start)
     static void play(const GfSetupPfTalk& talk);
     static bool isPlaying();

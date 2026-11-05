@@ -24,6 +24,8 @@ enum EVTDISP : unsigned int {};
 // table 0x7100B54448
 class GfGameEvent : public ::mm::mtl::PtrSingleton< ::gf::GfGameEvent> {
 public:
+    // runs the singleton's event work (GfGameManager::update calls it; symbol _ZN2gf11GfGameEvent6updateERKN2fw10UpdateInfoE)
+    static void update(const fw::UpdateInfo& info);
     static void postUpdate(const fw::UpdateInfo& info);
     static void finishNewGameWait();
     static void stop();

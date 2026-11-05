@@ -36,6 +36,8 @@ public:
     static void addDevelopPoint(unsigned int, unsigned int);
     static void setHp(GF_OBJ_HANDLE* handle, unsigned int hp);
     static void incGameClearCount();
+    // what GfGameManager::setupGame runs for a new game setup (symbol _ZN2gf10GfGameUtil19setupGameDataFollowEv)
+    static void setupGameDataFollow();
     // whether the object's weapon (mount 2) holds an object in slot 1 or 2 of its set in use
     static bool hasBelonging(gf::GF_OBJ_HANDLE* handle, unsigned int slot);
     // a turn of an object: execTurnCmd hands the four floats to the object's behavior component's

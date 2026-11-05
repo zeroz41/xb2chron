@@ -17,7 +17,7 @@ public:
     static void destroy();
     void finalize() { m_initialized = false; }
     static void orderAchievement(unsigned int id);
-    void setupGame();
+    static void setupGame();  // empty; GfGameManager::setupGame calls it without an object
     void qevCompleteQuest(const QuestCompleteParam& param);
     bool m_initialized;  // set by initialize, cleared by finalize
 };

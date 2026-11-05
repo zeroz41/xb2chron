@@ -90,6 +90,8 @@ public:
     static int getItemBoxCount(unsigned int item);  // how many of the item the party has
     // count of the item into the party's box (an event call follows); false when it could not be added
     static bool addItemBox(unsigned int item, int count);
+    // GfGameManager::setupGame calls it (symbol _ZN2gf10GfItemUtil19setupItemDataFollowEv)
+    static void setupItemDataFollow();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's addItemBox, 168 bytes, did this
     // inline). A member because addItemBox and addItemBoxWithSilent of this unit call it. What it does: refuses a
     // positive count of an item GfDataItem::isNoMultiple marks; adds (GfItemBox::addItem) or removes

@@ -38,7 +38,9 @@ public:
     // 2.0.0's symbols name it. What it does: when the byte at 0x8B9 is set, clears it and calls
     // GfEvent::callPlayerControl(15).
     void eventTutorialSequence();
+    void setupGame();  // GfGameManager::setupGame calls it on the scene
     QuestID getQuestIdForTaskLog() const;  // 1.0.0 symbol
+    void update(const fw::UpdateInfo& info);  // GfGameManager::update runs it while the game is not paused
     void postUpdate(const fw::UpdateInfo& info);
     void setEnemyDead(GF_OBJ_HANDLE* handle);  // SCOM_CHAR_DEAD::exec passes the dead object
     void gevChangeWeather(unsigned int, unsigned int);

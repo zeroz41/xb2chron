@@ -46,6 +46,8 @@ public:
     // the constructor's language choice, retried until it answers true (named by the symbols)
     bool selectLanguage();
     static void destroy();
+    // GfGameManager::setupGame calls it without an object (it loads the singleton itself)
+    static void setupGame();
     void finalize();
     // the gamma of both the layer and the scene renderer: value * 2 + 1.2 (applyOptionData passes the option's
     // 0..255 setting / 255)
