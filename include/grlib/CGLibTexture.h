@@ -23,7 +23,9 @@ struct CGLibTexSwizzle {
 // the end of an image file, its last 0x38 bytes: the image's size, target, format and levels are its last 0x20
 // (the struct and field names are not the original's; the code reaches the fields from the struct's start)
 struct CGLibTexImageFooter {
-    unsigned char pad_0[0x18];
+    unsigned char pad_0[0x10];
+    unsigned int m_dataSize;  // 0x10: the bytes a memory pool over the image takes (createTextureImagePtrs)
+    unsigned char pad_14[0x4];
     unsigned int m_width;     // 0x18
     unsigned int m_height;    // 0x1C
     unsigned int m_depth;     // 0x20
@@ -56,6 +58,8 @@ public:
     // frees the buffer's descriptor ids, takes a texture id (and an image id when image is set) and binds the
     // texture to them (1.0.0 names it; 3.0.1's callers inline it)
     static void allocTextureID(CGLibTextureBuffer& buffer, bool image);
+    // the cube map layer of each of the six faces (symbol name; holds 0, 1, 3, 2, 4, 5)
+    static const int s_CubeMapFaceTable[6];
 };
 
 class CGLibTexture {

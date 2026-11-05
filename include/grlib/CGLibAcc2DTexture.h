@@ -17,6 +17,8 @@ public:
     void unlock();
     // the texel at x, y set to value
     void setInt(int value, unsigned int x, unsigned int y);
+    // the first channel of the texel at x, y (2.0.0 names it; 3.0.1's callers inline it)
+    void getFloat(float& value, unsigned int x, unsigned int y);
 
     void* m_pUnused[2];                // 0x90: zeroed by the constructor, read by nothing (3.0.1 or 1.0.0)
     bool m_isLock;                     // 0xA0

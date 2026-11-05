@@ -20,6 +20,8 @@ public:
     typedef void (CGLibAccUtilTexture::*WriteIntChannelFunc)(const int*);
 
     void setInt(const int* value, unsigned int x, unsigned int y);
+    // the texel at x, y as floats, into out (2.0.0 names it; 3.0.1's callers inline it)
+    void getF32(float* out, unsigned int x, unsigned int y);
     void setup2DTexutreInfo(CGLibTextureBuffer& buffer, unsigned int mipLevel);
     // the block-linear (GOB) layout's parameters for m_texelSize
     void setupFormatParam();

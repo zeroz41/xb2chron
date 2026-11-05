@@ -285,6 +285,36 @@ void CGLibAcc2DTexture::setInt(int value, unsigned int x, unsigned int y) {
     m_isWrite = true;
 }
 
+// 2.0.0 has these three out of line; 3.0.1 inlined them into get1PixelTextureInfo and dropped them.
+unsigned int CGLibAccUtilTexture::getOfsPixelPos(unsigned int x, unsigned int y) const {
+    if (m_isLinear) {
+        return y * m_width + x;
+    }
+    // block-linear: blocks of 2 x 16 GOBs, a GOB of 2 x 2 sectors
+    unsigned int gobsPerRow = m_width / m_gobWidth;
+    unsigned int gobX = x / m_gobWidth;
+    unsigned int gobY = y / m_gobHeight;
+    unsigned int block = (gobY & ~0xF) * gobsPerRow + ((gobX >> 1) << 5 | (gobY & 0xF) << 1 | (gobX & 1));
+    unsigned int gobNum = m_gobWidth * m_gobHeight;
+    unsigned int inY = y % m_gobHeight;
+    unsigned int inX = x % m_gobWidth;
+    unsigned int sector = inX / m_sectorWidth + (inY / m_sectorHeight) * m_sectorHeight;
+    return x % m_sectorWidth + (y % m_sectorHeight) * m_sectorWidth + sector * (m_sectorWidth * m_sectorHeight) +
+           block * gobNum;
+}
+
+void CGLibAccUtilTexture::getF32(float* out, unsigned int x, unsigned int y) {
+    unsigned int ofs = getOfsPixelPos(x, y) * m_texelSize;
+    m_pTexel = m_pData + ofs;
+    (this->*s_pReadF32Channel[m_channelIdx])(out);
+}
+
+void CGLibAcc2DTexture::getFloat(float& value, unsigned int x, unsigned int y) {
+    float texel[4];
+    getF32(texel, x, y);
+    value = texel[0];
+}
+
 void CGLibAccUtilTexture::texaccread_f32_r(float* out) {
     out[0] = (this->*m_pReadF32)(0);
 }
@@ -1427,6 +1457,59 @@ void CGLibTexture_plf::setupCubeMapTextureArrayBuff(CGLibTextureBuffer& buffer, 
     allocTextureID(buffer, true);
 }
 
+const int CGLibTexture_plf::s_CubeMapFaceTable[6] = {0, 1, 3, 2, 4, 5};
+
+void CGLibTexture::createArrayCubemapColorTextureBuff(CGLibColorBuffer* buffers, CGLibTextureBuffer& texture,
+                                                      unsigned int width, unsigned int height, unsigned int arrayNum,
+                                                      unsigned int mipNum, GrlSurfaceFormat format) {
+    unsigned int faceNum = arrayNum + mipNum * arrayNum;
+    for (unsigned int face = 0; face < 6; face++) {
+        unsigned int top = face * faceNum;
+        for (unsigned int i = 0; i < arrayNum; i++) {
+            CGLibColorBuffer& buffer = buffers[top + i];
+            buffer.m_width = width;
+            buffer.m_height = height;
+            buffer.m_level = 0;
+            buffer.m_layer = face + i * 6;
+            buffer.m_format = format;
+            buffer.m_flags = 1;
+            buffer.m_pNvnTexture = texture.m_pNvnTexture;
+            nvnTextureViewSetDefaults(&buffer.m_view);
+            nvnTextureViewSetFormat(&buffer.m_view, static_cast<NVNformat>(format));
+            nvnTextureViewSetTarget(&buffer.m_view, NVN_TEXTURE_TARGET_2D);
+            nvnTextureViewSetLayers(&buffer.m_view, CGLibTexture_plf::s_CubeMapFaceTable[face] + i * 6, 1);
+        }
+        unsigned int w = width;
+        unsigned int h = height;
+        for (unsigned int level = 1; level <= mipNum; level++) {
+            w >>= 1;
+            h >>= 1;
+            if (w == 0) {
+                w = 1;
+            }
+            if (h == 0) {
+                h = 1;
+            }
+            unsigned int index = level * arrayNum + top;
+            for (unsigned int i = 0; i < arrayNum; i++, index++) {
+                CGLibColorBuffer& buffer = buffers[index];
+                buffer.m_width = w;
+                buffer.m_height = h;
+                buffer.m_level = level;
+                buffer.m_layer = face + i * 6;
+                buffer.m_format = format;
+                buffer.m_flags = 1;
+                buffer.m_pNvnTexture = texture.m_pNvnTexture;
+                nvnTextureViewSetDefaults(&buffer.m_view);
+                nvnTextureViewSetFormat(&buffer.m_view, static_cast<NVNformat>(format));
+                nvnTextureViewSetTarget(&buffer.m_view, NVN_TEXTURE_TARGET_2D);
+                nvnTextureViewSetLayers(&buffer.m_view, CGLibTexture_plf::s_CubeMapFaceTable[face] + i * 6, 1);
+                nvnTextureViewSetLevels(&buffer.m_view, level, 1);
+            }
+        }
+    }
+}
+
 // ---- small accessors ----
 
 void CGLibRenderTargetBase::setColorInvalidate() {}
@@ -1530,6 +1613,13 @@ bool CGLibTextureBuffer::isInitialized() const {
     return m_flags & 1;
 }
 
+void CGLibTexture::get1PixelTextureInfo(float* pValue, CGLibTextureBuffer& buffer) {
+    CGLibAcc2DTexture acc;
+    acc.lock(buffer);
+    acc.getFloat(*pValue, 0, 0);
+    acc.unlock();
+}
+
 float CGLibTextureBuffer::get1PixelTextureInfo() {
     float value;
     CGLibTexture::get1PixelTextureInfo(&value, *this);
@@ -1560,6 +1650,66 @@ void CGLibTexture::getDepthPixelSize(unsigned int& size, unsigned int& align, un
 void CGLibDepthBuffer::invalidate() {}
 
 
+void CGLibTexture::createTextureImagePtrs(CGLibTextureBuffer& buffer, unsigned int size, CGLibVtlMemPool& pool,
+                                          unsigned int offset, bool flag, const CGLibTexSwizzle* swizzle,
+                                          bool flag2) {
+    buffer.release();
+    unsigned char* image = pool.m_pMem + offset;
+    const CGLibTexImageFooter* footer = reinterpret_cast<const CGLibTexImageFooter*>(
+        reinterpret_cast<unsigned long>(image) + size - sizeof(CGLibTexImageFooter));
+    unsigned long storageOffset = pool.m_offset + offset;
+    buffer.m_type = 0;
+    buffer.m_width = footer->m_width;
+    buffer.m_height = footer->m_height;
+    buffer.m_depth = footer->m_depth;
+    buffer.m_arrayNum = 0;
+    buffer.m_mipmap = footer->m_levels - 1;
+    buffer.m_format = static_cast<GrlSurfaceFormat>(footer->m_format);
+    buffer.m_flags |= 1;
+    NVNtextureBuilder builder;
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetTarget(&builder, static_cast<NVNtextureTarget>(footer->m_target));
+    // flag: the sRGB format of an RGBA8, BC1 or BC3 image (the BC ones are then set back to the image's format)
+    if (flag) {
+        switch (footer->m_format) {
+        case 0x42:
+            nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(0x46));
+            break;
+        case 0x44:
+            nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(0x48));
+            break;
+        case 0x25:
+            nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(0x38));
+            goto next;
+        }
+        nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(footer->m_format));
+    } else {
+        nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(footer->m_format));
+    }
+next:
+    nvnTextureBuilderSetSize2D(&builder, footer->m_width, footer->m_height);
+    nvnTextureBuilderSetDepth(&builder, footer->m_depth);
+    nvnTextureBuilderSetLevels(&builder, footer->m_levels);
+    nvnTextureBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
+    nvnTextureBuilderSetPackagedTextureData(&builder, image);
+    nvnTextureBuilderSetStorage(&builder, pool.m_pPool, storageOffset);
+    if (swizzle != nullptr) {
+        nvnTextureBuilderSetSwizzle(&builder, static_cast<NVNtextureSwizzle>(swizzle->r),
+                                    static_cast<NVNtextureSwizzle>(swizzle->g),
+                                    static_cast<NVNtextureSwizzle>(swizzle->b),
+                                    static_cast<NVNtextureSwizzle>(swizzle->a));
+    } else if (footer->m_format == 0x49 || footer->m_format == 1) {
+        nvnTextureBuilderSetSwizzle(&builder, NVN_TEXTURE_SWIZZLE_R, NVN_TEXTURE_SWIZZLE_R, NVN_TEXTURE_SWIZZLE_R,
+                                    NVN_TEXTURE_SWIZZLE_ONE);
+    }
+    context::CGLibSystemContext* ctx = context::CGLibSystemContext::sys();
+    unsigned int textureIdx = ctx->m_textureAlloc.allocID();
+    buffer.m_pNvnTexture = reinterpret_cast<NVNtexture*>(ctx->m_textureAlloc.m_pTop) + textureIdx;
+    buffer.m_pStorage = reinterpret_cast<void*>(pool.m_gpuAddress + storageOffset);
+    nvnTextureInitialize(buffer.m_pNvnTexture, &builder);
+    CGLibTexture_plf::allocTextureID(buffer, false);
+}
+
 void CGLibTexture::changeTextureImagePtrs(CGLibTextureBuffer& buffer, unsigned int size, CGLibVtlMemPool& pool,
                                           unsigned int offset) {
     unsigned char* image = pool.m_pMem + offset;
@@ -1582,6 +1732,80 @@ void CGLibTexture::changeTextureImagePtrs(CGLibTextureBuffer& buffer, unsigned i
     unsigned int textureIdx = ctx->m_textureAlloc.allocID();
     buffer.m_pNvnTexture = reinterpret_cast<NVNtexture*>(ctx->m_textureAlloc.m_pTop) + textureIdx;
     buffer.m_pStorage = reinterpret_cast<void*>(pool.m_gpuAddress + storageOffset);
+    nvnTextureInitialize(buffer.m_pNvnTexture, &builder);
+    CGLibTexture_plf::allocTextureID(buffer, false);
+}
+
+void CGLibTexture::changeTextureImagePtrs(CGLibTextureBuffer& buffer, const void* image, unsigned int size) {
+    const CGLibTexImageFooter* footer = reinterpret_cast<const CGLibTexImageFooter*>(
+        reinterpret_cast<unsigned long>(image) + size - sizeof(CGLibTexImageFooter));
+    context::CGLibSystemContext* ctx = context::CGLibSystemContext::sys();
+    CGLibMemPool* pool = ctx->m_memPoolAdder.getMemPool(image);
+    unsigned long storageOffset;
+    if (pool != nullptr) {
+        storageOffset = static_cast<const unsigned char*>(image) - static_cast<unsigned char*>(pool->m_pBuffer);
+    } else {
+        buffer.m_memPool.setupBuffer(const_cast<void*>(image), footer->m_dataSize);
+        storageOffset = 0;
+    }
+    buffer.delayRelease();
+    buffer.m_flags |= 1;
+    NVNtextureBuilder builder;
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetTarget(&builder, static_cast<NVNtextureTarget>(footer->m_target));
+    nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(footer->m_format));
+    nvnTextureBuilderSetSize2D(&builder, footer->m_width, footer->m_height);
+    nvnTextureBuilderSetDepth(&builder, footer->m_depth);
+    nvnTextureBuilderSetLevels(&builder, footer->m_levels);
+    nvnTextureBuilderSetPackagedTextureData(&builder, image);
+    nvnTextureBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
+    if (pool != nullptr) {
+        nvnTextureBuilderSetStorage(&builder, pool->m_pPool, storageOffset);
+        buffer.m_pStorage = reinterpret_cast<void*>(nvnMemoryPoolGetBufferAddress(pool->m_pPool) + storageOffset);
+    } else {
+        nvnTextureBuilderSetStorage(&builder, buffer.m_memPool.m_pPool, storageOffset);
+        buffer.m_pStorage = reinterpret_cast<void*>(buffer.m_memPool.m_gpuAddress + storageOffset);
+    }
+    unsigned int textureIdx = ctx->m_textureAlloc.allocID();
+    buffer.m_pNvnTexture = reinterpret_cast<NVNtexture*>(ctx->m_textureAlloc.m_pTop) + textureIdx;
+    nvnTextureInitialize(buffer.m_pNvnTexture, &builder);
+    CGLibTexture_plf::allocTextureID(buffer, false);
+}
+
+void CGLibTexture::changeMixTextureImagePtrs(CGLibTextureBuffer& buffer, const void* image, unsigned int size,
+                                             unsigned int size2) {
+    unsigned int totalSize = size + size2;
+    const CGLibTexImageFooter* footer = reinterpret_cast<const CGLibTexImageFooter*>(
+        reinterpret_cast<unsigned long>(image) + totalSize - sizeof(CGLibTexImageFooter));
+    context::CGLibSystemContext* ctx = context::CGLibSystemContext::sys();
+    CGLibMemPool* pool = ctx->m_memPoolAdder.getMemPool(image);
+    unsigned long storageOffset;
+    if (pool != nullptr) {
+        storageOffset = static_cast<const unsigned char*>(image) - static_cast<unsigned char*>(pool->m_pBuffer);
+    } else {
+        buffer.m_memPool.setupBuffer(const_cast<void*>(image), totalSize);
+        storageOffset = 0;
+    }
+    buffer.delayRelease();
+    buffer.m_flags |= 1;
+    NVNtextureBuilder builder;
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetTarget(&builder, static_cast<NVNtextureTarget>(footer->m_target));
+    nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(footer->m_format));
+    nvnTextureBuilderSetSize2D(&builder, footer->m_width * 2, footer->m_height * 2);
+    nvnTextureBuilderSetDepth(&builder, footer->m_depth);
+    nvnTextureBuilderSetLevels(&builder, footer->m_levels + 1);
+    nvnTextureBuilderSetPackagedTextureData(&builder, image);
+    nvnTextureBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
+    if (pool != nullptr) {
+        nvnTextureBuilderSetStorage(&builder, pool->m_pPool, storageOffset);
+        buffer.m_pStorage = reinterpret_cast<void*>(nvnMemoryPoolGetBufferAddress(pool->m_pPool) + storageOffset);
+    } else {
+        nvnTextureBuilderSetStorage(&builder, buffer.m_memPool.m_pPool, storageOffset);
+        buffer.m_pStorage = reinterpret_cast<void*>(buffer.m_memPool.m_gpuAddress + storageOffset);
+    }
+    unsigned int textureIdx = ctx->m_textureAlloc.allocID();
+    buffer.m_pNvnTexture = reinterpret_cast<NVNtexture*>(ctx->m_textureAlloc.m_pTop) + textureIdx;
     nvnTextureInitialize(buffer.m_pNvnTexture, &builder);
     CGLibTexture_plf::allocTextureID(buffer, false);
 }
