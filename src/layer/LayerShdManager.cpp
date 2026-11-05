@@ -21,6 +21,9 @@
 #include "layer/LayerVertexMan.h"
 #include "ml/DevFileParamTh.h"
 #include "ml/EventFileTh.h"
+#include "layer/LayerPolyVertex.h"
+#include "grlib/CGLibTexture.h"
+#include <string.h>
 
 namespace layer {
 
@@ -75,6 +78,186 @@ void LayerShdManager::readShader() {
     m_hShdFile = ml::DevFileTh::readFile(param);
     param.m_path = "/monolib/shader/layer_lut.witx";
     m_hLutFile = ml::DevFileTh::readFile(param);
+}
+
+namespace {
+
+// a vertex of colour only (0xC bytes; the type's name is not the original's)
+struct ColorVertex {
+    float x;
+    float y;
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+    unsigned char a;
+};
+
+// createRenderWork's default vertex buffers (m_defVertices by LayerDefVertType); the names are not the original's
+// a unit quad of white vertices (lbl_71009D513C)
+const ColorVertex s_colorQuad[4] = {
+    {0.0f, 1.0f, 0xFF, 0xFF, 0xFF, 0xFF},
+    {1.0f, 1.0f, 0xFF, 0xFF, 0xFF, 0xFF},
+    {1.0f, 0.0f, 0xFF, 0xFF, 0xFF, 0xFF},
+    {0.0f, 0.0f, 0xFF, 0xFF, 0xFF, 0xFF},
+};
+// the same with texture coordinates (lbl_71009D516C)
+const LayerPolyVertex s_colorTexQuad[4] = {
+    {0.0f, 1.0f, 0xFF, 0xFF, 0xFF, 0xFF, 0.0f, 1.0f},
+    {1.0f, 1.0f, 0xFF, 0xFF, 0xFF, 0xFF, 1.0f, 1.0f},
+    {1.0f, 0.0f, 0xFF, 0xFF, 0xFF, 0xFF, 1.0f, 0.0f},
+    {0.0f, 0.0f, 0xFF, 0xFF, 0xFF, 0xFF, 0.0f, 0.0f},
+};
+// x, y, u, v per vertex (lbl_71009D51BC)
+const float s_texQuad[4][4] = {
+    {0.0f, 1.0f, 0.0f, 1.0f},
+    {1.0f, 1.0f, 1.0f, 1.0f},
+    {1.0f, 0.0f, 1.0f, 0.0f},
+    {0.0f, 0.0f, 0.0f, 0.0f},
+};
+// a full-screen quad (lbl_71009D51FC)
+const float s_screenQuad[4][4] = {
+    {-1.0f, -1.0f, 0.0f, 1.0f},
+    {1.0f, -1.0f, 1.0f, 1.0f},
+    {1.0f, 1.0f, 1.0f, 0.0f},
+    {-1.0f, 1.0f, 0.0f, 0.0f},
+};
+// (lbl_71009D523C)
+const float s_texQuad2[4][4] = {
+    {0.0f, 1.0f, 0.0f, 1.0f},
+    {1.0f, 1.0f, 1.0f, 1.0f},
+    {1.0f, 0.0f, 1.0f, 0.0f},
+    {0.0f, 0.0f, 0.0f, 0.0f},
+};
+// the quads' indices: a strip of 4, a closed outline of 5 (lbl_71009D527C)
+const unsigned char s_quadIndices[6] = {0, 1, 2, 3, 0, 0};
+
+}  // namespace
+
+bool LayerShdManager::setupUpdate() {
+    if (m_pShdData == nullptr || m_pLutData == nullptr) {
+        return false;
+    }
+    if (m_pDeclOfs == nullptr) {
+        m_shdList.createPacShader(m_pShdData, 1002, true);
+        unsigned int size = m_shdList.m_num * sizeof(LayerShdDeclOfs);
+        m_pDeclOfs = static_cast<LayerShdDeclOfs*>(
+            mtl::MemManager::allocate(m_pManager->m_gxHandle, size, 16, false, "no name", 0));
+        memset(m_pDeclOfs, 0xFF, size);
+        int num = m_shdList.m_num;
+        if (num > 0) {
+            int i = 0;
+            do {
+                (this->*s_CallSetup[i])(i);
+            } while (++i != num);
+        }
+    }
+    if (!m_renderWorkCreated) {
+        createRenderWork();
+    }
+    grlib::CGLibTexture::createTextureImagePtrs(m_lut, m_pLutData, m_lutSize, false, nullptr, true);
+    return true;
+}
+
+void LayerShdManager::createRenderWork() {
+    grlib::CGLibVtxAttr attrs[5];
+    attrs[0].format = 0x16;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 0x25;
+    attrs[1].location = 1;
+    attrs[1].offset = 8;
+    attrs[1].stream = 0;
+    m_fetches[0].createFetchObj(attrs, 2);
+    attrs[0].format = 0x16;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 0x25;
+    attrs[1].location = 1;
+    attrs[1].offset = 8;
+    attrs[1].stream = 0;
+    attrs[2].format = 0x16;
+    attrs[2].location = 2;
+    attrs[2].offset = 0xC;
+    attrs[2].stream = 0;
+    m_fetches[1].createFetchObj(attrs, 3);
+    attrs[0].format = 0x16;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 0x16;
+    attrs[1].location = 1;
+    attrs[1].offset = 8;
+    attrs[1].stream = 0;
+    attrs[2].format = 0x2E;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    attrs[3].format = 0x2E;
+    attrs[3].location = 3;
+    attrs[3].offset = 0x10;
+    attrs[3].stream = 1;
+    attrs[4].format = 0x25;
+    attrs[4].location = 4;
+    attrs[4].offset = 0x20;
+    attrs[4].stream = 1;
+    m_fetches[2].createFetchObj(attrs, 5);
+    attrs[0].format = 0x22;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 0x25;
+    attrs[1].location = 1;
+    attrs[1].offset = 0xC;
+    attrs[1].stream = 0;
+    attrs[2].format = 0x16;
+    attrs[2].location = 2;
+    attrs[2].offset = 0x10;
+    attrs[2].stream = 0;
+    m_fetches[3].createFetchObj(attrs, 3);
+    attrs[0].format = 0x16;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 0x16;
+    attrs[1].location = 1;
+    attrs[1].offset = 8;
+    attrs[1].stream = 0;
+    m_fetches[4].createFetchObj(attrs, 2);
+
+    m_samplers[0].initSampler(GrlTexClamp(0), GrlTexMagFilterType(0));
+    m_samplers[0].updateData();
+    m_samplers[1].initSampler(GrlTexClamp(0), GrlTexMagFilterType(1));
+    m_samplers[1].updateData();
+    m_samplers[3].initSampler(GrlTexClamp(2), GrlTexMagFilterType(1));
+    m_samplers[3].updateData();
+    m_samplers[2].initSampler(GrlTexClamp(2), GrlTexMagFilterType(0));
+    m_samplers[2].updateData();
+    m_samplers[5].initSampler(GrlTexClamp(2), GrlTexMagFilterType(1));
+    m_samplers[5].setFilter(GrlTexMagFilterType(1), GrlTexMinFilterType(5), GrlTexTexAnisoRatio(0));
+    m_samplers[5].updateData();
+    m_samplers[4].initSampler(GrlTexClamp(2), GrlTexMagFilterType(0));
+    m_samplers[4].setFilter(GrlTexMagFilterType(0), GrlTexMinFilterType(2), GrlTexTexAnisoRatio(0));
+    m_samplers[4].updateData();
+    m_samplers[6].initSampler(GrlTexClamp(6), GrlTexMagFilterType(1));
+    m_samplers[6].setBorderType(GrlTexBorderType(0));
+    m_samplers[6].updateData();
+    m_samplers[7].initSampler(GrlTexClamp(2), GrlTexMagFilterType(1));
+    m_samplers[7].setClamp(GrlTexClamp(0), GrlTexClamp(2), GrlTexClamp(2));
+    m_samplers[7].updateData();
+    m_samplers[8].initSampler(GrlTexClamp(2), GrlTexMagFilterType(1));
+    m_samplers[8].setClamp(GrlTexClamp(2), GrlTexClamp(0), GrlTexClamp(2));
+    m_samplers[8].updateData();
+
+    m_defVertices[0].createCopyVertexBuff(s_colorQuad, sizeof(s_colorQuad), sizeof(s_colorQuad[0]));
+    m_defVertices[1].createCopyVertexBuff(s_colorTexQuad, sizeof(s_colorTexQuad), sizeof(s_colorTexQuad[0]));
+    m_defVertices[2].createCopyVertexBuff(s_texQuad, sizeof(s_texQuad), sizeof(s_texQuad[0]));
+    m_defVertices[3].createCopyVertexBuff(s_screenQuad, sizeof(s_screenQuad), sizeof(s_screenQuad[0]));
+    m_defVertices[4].createCopyVertexBuff(s_texQuad2, sizeof(s_texQuad2), sizeof(s_texQuad2[0]));
+    m_quadIndex.createCopyIndexBuff(s_quadIndices, 4, GrlPrimitiveType(7), GrlIndexFormat(0));
+    m_quadIndex2.createCopyIndexBuff(s_quadIndices, 5, GrlPrimitiveType(3), GrlIndexFormat(0));
+    m_renderWorkCreated = true;
 }
 
 void LayerShdManager::resetViewPort() {
@@ -394,16 +577,195 @@ void LayerShdManager::initTest(unsigned int idx) {
     ofs.m_option = shader.getDeclarationOfs("MENU_USE_TEX");
 }
 
+grlib::CGLibDecShader* LayerShdManager::selectColor() {
+    unsigned int type = m_select.m_shaderType;
+    grlib::CGLibDecShader& shader = *(m_shdList.m_pList + type);
+    const LayerShdDeclOfs& ofs = m_pDeclOfs[m_select.m_shaderType];
+    if (m_select.m_shaderType != m_curShaderType ||
+        m_curGaugeType != m_select.m_gaugeType ||
+        m_select.m_worldType != m_curWorldType ||
+        m_curMaskObjType != m_select.m_maskObjType ||
+        m_curOption != m_select.m_option ||
+        m_curSecTexType != m_select.m_secTexType) {
+        shader.setDeclarationIdx(ofs.m_gaugeType, m_select.m_gaugeType);
+        shader.setDeclarationIdx(ofs.m_worldType, m_select.m_worldType);
+        shader.setDeclarationIdx(ofs.m_maskObjType, m_select.m_maskObjType);
+        shader.setDeclarationIdx(ofs.m_option, m_select.m_option);
+        shader.setDeclarationIdx(ofs.m_secTexType, m_select.m_secTexType);
+        grlib::CGLibCtlShader::setShader(shader, m_fetches[s_eFetchTbl[m_select.m_shaderType]]);
+        if (m_p3DSpaceBlock != nullptr) {
+            m_p3DSpaceBlock->setUniformBlock(1);
+        }
+        m_curShaderType = m_select.m_shaderType;
+        m_curGaugeType = m_select.m_gaugeType;
+        m_curWorldType = m_select.m_worldType;
+        m_curMaskObjType = m_select.m_maskObjType;
+        m_curOption = m_select.m_option;
+        m_curSecTexType = m_select.m_secTexType;
+    }
+    return &shader;
+}
+
+grlib::CGLibDecShader* LayerShdManager::selectTex() {
+    unsigned int type = m_select.m_shaderType;
+    grlib::CGLibDecShader& shader = *(m_shdList.m_pList + type);
+    const LayerShdDeclOfs& ofs = m_pDeclOfs[m_select.m_shaderType];
+    if (m_select.m_shaderType != m_curShaderType ||
+        m_curGaugeType != m_select.m_gaugeType ||
+        m_select.m_worldType != m_curWorldType ||
+        m_curMaskObjType != m_select.m_maskObjType ||
+        m_curOption != m_select.m_option ||
+        m_curSecTexType != m_select.m_secTexType) {
+        shader.setDeclarationIdx(ofs.m_gaugeType, m_select.m_gaugeType);
+        shader.setDeclarationIdx(ofs.m_worldType, m_select.m_worldType);
+        shader.setDeclarationIdx(ofs.m_maskObjType, m_select.m_maskObjType);
+        shader.setDeclarationIdx(ofs.m_option, m_select.m_option);
+        shader.setDeclarationIdx(ofs.m_secTexType, m_select.m_secTexType);
+        grlib::CGLibCtlShader::setShader(shader, m_fetches[s_eFetchTbl[m_select.m_shaderType]]);
+        if (m_p3DSpaceBlock != nullptr) {
+            m_p3DSpaceBlock->setUniformBlock(1);
+        }
+        m_curShaderType = m_select.m_shaderType;
+        m_curGaugeType = m_select.m_gaugeType;
+        m_curWorldType = m_select.m_worldType;
+        m_curMaskObjType = m_select.m_maskObjType;
+        m_curOption = m_select.m_option;
+        m_curSecTexType = m_select.m_secTexType;
+    }
+    return &shader;
+}
+
+grlib::CGLibDecShader* LayerShdManager::selectFont() {
+    unsigned int type = m_select.m_shaderType;
+    grlib::CGLibDecShader& shader = *(m_shdList.m_pList + type);
+    const LayerShdDeclOfs& ofs = m_pDeclOfs[m_select.m_shaderType];
+    if (m_select.m_shaderType != m_curShaderType ||
+        m_curIconType != m_select.m_iconType ||
+        m_select.m_worldType != m_curWorldType ||
+        m_curMaskObjType != m_select.m_maskObjType) {
+        shader.setDeclarationIdx(ofs.m_worldType, m_select.m_worldType);
+        shader.setDeclarationIdx(ofs.m_iconType, m_select.m_iconType);
+        shader.setDeclarationIdx(ofs.m_maskObjType, m_select.m_maskObjType);
+        grlib::CGLibCtlShader::setShader(shader, m_fetches[s_eFetchTbl[m_select.m_shaderType]]);
+        if (m_p3DSpaceBlock != nullptr) {
+            m_p3DSpaceBlock->setUniformBlock(1);
+        }
+        m_curShaderType = m_select.m_shaderType;
+        m_curWorldType = m_select.m_worldType;
+        m_curIconType = m_select.m_iconType;
+        m_curMaskObjType = m_select.m_maskObjType;
+    }
+    return &shader;
+}
+
+grlib::CGLibDecShader* LayerShdManager::selectWin() {
+    unsigned int type = m_select.m_shaderType;
+    grlib::CGLibDecShader& shader = *(m_shdList.m_pList + type);
+    const LayerShdDeclOfs& ofs = m_pDeclOfs[m_select.m_shaderType];
+    if (m_select.m_shaderType != m_curShaderType ||
+        m_curGaugeType != m_select.m_gaugeType ||
+        m_select.m_worldType != m_curWorldType ||
+        m_curMaskObjType != m_select.m_maskObjType ||
+        m_curSecTexType != m_select.m_secTexType) {
+        shader.setDeclarationIdx(ofs.m_gaugeType, m_select.m_gaugeType);
+        shader.setDeclarationIdx(ofs.m_worldType, m_select.m_worldType);
+        shader.setDeclarationIdx(ofs.m_maskObjType, m_select.m_maskObjType);
+        shader.setDeclarationIdx(ofs.m_secTexType, m_select.m_secTexType);
+        grlib::CGLibCtlShader::setShader(shader, m_fetches[s_eFetchTbl[m_select.m_shaderType]]);
+        if (m_p3DSpaceBlock != nullptr) {
+            m_p3DSpaceBlock->setUniformBlock(1);
+        }
+        m_curShaderType = m_select.m_shaderType;
+        m_curGaugeType = m_select.m_gaugeType;
+        m_curWorldType = m_select.m_worldType;
+        m_curMaskObjType = m_select.m_maskObjType;
+        m_curSecTexType = m_select.m_secTexType;
+    }
+    return &shader;
+}
+
+grlib::CGLibDecShader* LayerShdManager::selectIcon() {
+    unsigned int type = m_select.m_shaderType;
+    grlib::CGLibDecShader& shader = *(m_shdList.m_pList + type);
+    const LayerShdDeclOfs& ofs = m_pDeclOfs[m_select.m_shaderType];
+    if (m_select.m_shaderType != m_curShaderType ||
+        m_curGaugeType != m_select.m_gaugeType ||
+        m_select.m_worldType != m_curWorldType ||
+        m_curMaskObjType != m_select.m_maskObjType ||
+        m_curSecTexType != m_select.m_secTexType) {
+        shader.setDeclarationIdx(ofs.m_gaugeType, m_select.m_gaugeType);
+        shader.setDeclarationIdx(ofs.m_worldType, m_select.m_worldType);
+        shader.setDeclarationIdx(ofs.m_maskObjType, m_select.m_maskObjType);
+        shader.setDeclarationIdx(ofs.m_secTexType, m_select.m_secTexType);
+        grlib::CGLibCtlShader::setShader(shader, m_fetches[s_eFetchTbl[m_select.m_shaderType]]);
+        if (m_p3DSpaceBlock != nullptr) {
+            m_p3DSpaceBlock->setUniformBlock(1);
+        }
+        m_curShaderType = m_select.m_shaderType;
+        m_curGaugeType = m_select.m_gaugeType;
+        m_curWorldType = m_select.m_worldType;
+        m_curMaskObjType = m_select.m_maskObjType;
+        m_curSecTexType = m_select.m_secTexType;
+    }
+    return &shader;
+}
+
+grlib::CGLibDecShader* LayerShdManager::selectNumber() {
+    unsigned int type = m_select.m_shaderType;
+    grlib::CGLibDecShader& shader = *(m_shdList.m_pList + type);
+    const LayerShdDeclOfs& ofs = m_pDeclOfs[m_select.m_shaderType];
+    if (m_select.m_shaderType != m_curShaderType ||
+        m_select.m_worldType != m_curWorldType ||
+        m_curMaskObjType != m_select.m_maskObjType ||
+        m_curSecTexType != m_select.m_secTexType) {
+        shader.setDeclarationIdx(ofs.m_worldType, m_select.m_worldType);
+        shader.setDeclarationIdx(ofs.m_maskObjType, m_select.m_maskObjType);
+        shader.setDeclarationIdx(ofs.m_secTexType, m_select.m_secTexType);
+        grlib::CGLibCtlShader::setShader(shader, m_fetches[s_eFetchTbl[m_select.m_shaderType]]);
+        if (m_p3DSpaceBlock != nullptr) {
+            m_p3DSpaceBlock->setUniformBlock(1);
+        }
+        m_curShaderType = m_select.m_shaderType;
+        m_curWorldType = m_select.m_worldType;
+        m_curMaskObjType = m_select.m_maskObjType;
+        m_curSecTexType = m_select.m_secTexType;
+    }
+    return &shader;
+}
+
+grlib::CGLibDecShader* LayerShdManager::selectPoly() {
+    unsigned int type = m_select.m_shaderType;
+    grlib::CGLibDecShader& shader = *(m_shdList.m_pList + type);
+    const LayerShdDeclOfs& ofs = m_pDeclOfs[m_select.m_shaderType];
+    if (m_select.m_shaderType != m_curShaderType ||
+        m_select.m_worldType != m_curWorldType ||
+        m_curOption != m_select.m_option ||
+        m_curMaskObjType != m_select.m_maskObjType ||
+        m_curSecTexType != m_select.m_secTexType) {
+        shader.setDeclarationIdx(ofs.m_worldType, m_select.m_worldType);
+        shader.setDeclarationIdx(ofs.m_option, m_select.m_option);
+        shader.setDeclarationIdx(ofs.m_maskObjType, m_select.m_maskObjType);
+        shader.setDeclarationIdx(ofs.m_secTexType, m_select.m_secTexType);
+        grlib::CGLibCtlShader::setShader(shader, m_fetches[s_eFetchTbl[m_select.m_shaderType]]);
+        m_curShaderType = m_select.m_shaderType;
+        m_curWorldType = m_select.m_worldType;
+        m_curOption = m_select.m_option;
+        m_curMaskObjType = m_select.m_maskObjType;
+        m_curSecTexType = m_select.m_secTexType;
+    }
+    return &shader;
+}
+
 grlib::CGLibDecShader* LayerShdManager::selectGsBlur() {
     unsigned int type = m_select.m_shaderType;
     grlib::CGLibDecShader& shader = *(m_shdList.m_pList + type);
     const LayerShdDeclOfs& ofs = m_pDeclOfs[m_select.m_shaderType];
-    if (m_select.m_shaderType != m_current.m_shaderType ||
-        m_select.m_option != m_current.m_option) {
+    if (m_select.m_shaderType != m_curShaderType ||
+        m_select.m_option != m_curOption) {
         shader.setDeclarationIdx(ofs.m_option, m_select.m_option);
         grlib::CGLibCtlShader::setShader(shader, m_fetches[s_eFetchTbl[m_select.m_shaderType]]);
-        m_current.m_shaderType = m_select.m_shaderType;
-        m_current.m_option = m_select.m_option;
+        m_curShaderType = m_select.m_shaderType;
+        m_curOption = m_select.m_option;
     }
     return &shader;
 }
@@ -411,9 +773,22 @@ grlib::CGLibDecShader* LayerShdManager::selectGsBlur() {
 grlib::CGLibDecShader* LayerShdManager::selectFlowMap() {
     unsigned int type = m_select.m_shaderType;
     grlib::CGLibDecShader& shader = *(m_shdList.m_pList + type);
-    if (m_select.m_shaderType != m_current.m_shaderType) {
+    if (m_select.m_shaderType != m_curShaderType) {
         grlib::CGLibCtlShader::setShader(shader, m_fetches[s_eFetchTbl[m_select.m_shaderType]]);
-        m_current.m_shaderType = m_select.m_shaderType;
+        m_curShaderType = m_select.m_shaderType;
+    }
+    return &shader;
+}
+
+grlib::CGLibDecShader* LayerShdManager::selectMemWrite() {
+    unsigned int type = m_select.m_shaderType;
+    grlib::CGLibDecShader& shader = *(m_shdList.m_pList + type);
+    if (m_select.m_shaderType != m_curShaderType ||
+        m_curOption != m_select.m_option) {
+        shader.setDeclarationIdx(m_pDeclOfs[m_select.m_shaderType].m_option, m_select.m_option);
+        grlib::CGLibCtlShader::setShader(shader, m_fetches[s_eFetchTbl[m_select.m_shaderType]]);
+        m_curShaderType = m_select.m_shaderType;
+        m_curOption = m_select.m_option;
     }
     return &shader;
 }
@@ -421,9 +796,39 @@ grlib::CGLibDecShader* LayerShdManager::selectFlowMap() {
 grlib::CGLibDecShader* LayerShdManager::selectGamma() {
     unsigned int type = m_select.m_shaderType;
     grlib::CGLibDecShader& shader = *(m_shdList.m_pList + type);
-    if (m_select.m_shaderType != m_current.m_shaderType) {
+    if (m_select.m_shaderType != m_curShaderType) {
         grlib::CGLibCtlShader::setShader(shader, m_fetches[s_eFetchTbl[m_select.m_shaderType]]);
-        m_current.m_shaderType = m_select.m_shaderType;
+        m_curShaderType = m_select.m_shaderType;
+    }
+    return &shader;
+}
+
+grlib::CGLibDecShader* LayerShdManager::selectDebug() {
+    unsigned int type = m_select.m_shaderType;
+    grlib::CGLibDecShader& shader = *(m_shdList.m_pList + type);
+    const LayerShdDeclOfs& ofs = m_pDeclOfs[m_select.m_shaderType];
+    if (m_select.m_shaderType != m_curShaderType ||
+        m_select.m_worldType != m_curWorldType ||
+        m_curOption != m_select.m_option) {
+        shader.setDeclarationIdx(ofs.m_worldType, m_select.m_worldType);
+        shader.setDeclarationIdx(ofs.m_option, m_select.m_option);
+        grlib::CGLibCtlShader::setShader(shader, m_fetches[s_eFetchTbl[m_select.m_shaderType]]);
+        m_curShaderType = m_select.m_shaderType;
+        m_curWorldType = m_select.m_worldType;
+        m_curOption = m_select.m_option;
+    }
+    return &shader;
+}
+
+grlib::CGLibDecShader* LayerShdManager::selectTest() {
+    unsigned int type = m_select.m_shaderType;
+    grlib::CGLibDecShader& shader = *(m_shdList.m_pList + type);
+    const LayerShdDeclOfs& ofs = m_pDeclOfs[m_select.m_shaderType];
+    if (m_select.m_shaderType != m_curShaderType ||
+        m_curOption != m_select.m_option) {
+        shader.setDeclarationIdx(ofs.m_option, m_select.m_option);
+        grlib::CGLibCtlShader::setShader(shader, m_fetches[s_eFetchTbl[m_select.m_shaderType]]);
+        m_curShaderType = m_select.m_shaderType;
     }
     return &shader;
 }

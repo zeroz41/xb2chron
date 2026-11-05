@@ -39,7 +39,7 @@ struct LayerShdDeclOfs {
 };
 
 // the shader type and declaration values a draw selects (LayerShdManager's select functions compare m_select with
-// m_current field by field and set the changed declarations; the names are not the original's)
+// the m_cur* members field by field and set the changed declarations; the names are not the original's)
 struct LayerShdSelect {
     short m_shaderType;
     short m_gaugeType;
@@ -142,7 +142,8 @@ public:
     const LayerObjTopMaskObj* m_pMaskObj;  // 0x50, setShaderMaskMode
     grlib::CGLibTextureBuffer* m_pSecTexture;  // 0x58, setSecTexture (null: none)
     grlib::CGLibDblUniformBlock* m_pSecUniform;  // 0x60, the LayerResSecTexture's block
-    unsigned char pad_68[0x8];
+    bool m_renderWorkCreated;  // 0x68, createRenderWork sets it (setupUpdate creates the work once)
+    unsigned char pad_69[0x7];
     grlib::CGLibVtxFetch m_fetches[5];  // 0x70
     grlib::CGLibSampler m_samplers[9];  // 0xC0, setupTexture by LayerSamplerType
     grlib::CGLibShdListData m_shdList;  // 0x1E0, the shaders (the init functions read their declarations)
@@ -155,7 +156,15 @@ public:
     grlib::CGLibTextureBuffer m_lut;  // 0x368, shaderRelease releases it
     unsigned char pad_3D8[0x118];
     LayerShdSelect m_select;   // 0x4F0, what the next draw asks for (setupShader selects by its shader type)
-    LayerShdSelect m_current;  // 0x4FE, what the select functions last set the shader up with
+    // 0x4FE, what the select functions last set the shader up with (LayerShdSelect's values; plain members, not a
+    // LayerShdSelect: the select functions read 0x500 and 0x508 as 32-bit loads, so those fields are 4-aligned)
+    short m_curShaderType;   // 0x4FE
+    short m_curGaugeType;    // 0x500
+    short m_curWorldType;    // 0x502
+    short m_curIconType;     // 0x504
+    short m_curOption;       // 0x506
+    short m_curMaskObjType;  // 0x508
+    short m_curSecTexType;   // 0x50A
     LayerShdViewPort m_viewPort;  // 0x50C, the last viewport set (layout units)
     unsigned char pad_51C[0xC];
     bool m_viewPortSet;  // 0x528, a viewport other than the full screen is set (resetViewPort resets it)
