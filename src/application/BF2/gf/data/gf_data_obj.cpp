@@ -52,6 +52,9 @@
 #include "classes/gf/GfObjSetupWeapon.h"
 #include "classes/gf/GfGameParty.h"
 #include "gf/GfDataUtil.h"
+#include "classes/gf/GfObj.h"
+#include "classes/gf/GfComProperty.h"
+#include "classes/gf/GfBdatChrDr.h"
 
 namespace gf {
 
@@ -83,6 +86,16 @@ DataObjDriver::~DataObjDriver() {
     }
 }
 
+void DataObjDriver::setVirtualLevel(unsigned int level) {
+    setupVirtualParam();
+    SDataDriver* data = m_sdata;
+    if (GfDataDriver::isIra(getBdatId())) {
+        *data = *GfDataDriver::getSDataDriver(GfDataDriver::getIraFront(getBdatId()));
+    }
+    GfDataDriver::setLevel(*data, level);
+    GfDataDriver::calcDriverBaseParamByLevel(*data);
+}
+
 void DataObjDriver::setVirtualEquipWpn(unsigned int weapon, int slot) {
     setupVirtualParam();
     if (slot < 0) {
@@ -98,6 +111,38 @@ void DataObjDriver::setVirtualEquipAcc(unsigned int slot, unsigned int accessory
     if (GfDataItem::getItemType(accessory) == 2) {
         GfDataDriver::setEquipAcce(*m_sdata, slot, accessory);
     }
+}
+
+void DataObjDriver::setVirtualSetBlade(unsigned int blade, int slot) {
+    setupVirtualParam();
+    SDataDriver* data = m_sdata;
+    int set = GfDataDriver::getRuleSetBlade(getBdatId(), blade, slot);
+    int num = GfDataDriver::getMaxSetBladeNum(*data);
+    for (int i = 0; i < num; i++) {
+        if (getBlade(true, i) == blade) {
+            data->m_blades[set] = 0;
+            break;
+        }
+    }
+    data->m_blades[set] = blade;
+    if (data->m_bladeSet < 0) {
+        data->m_bladeSet = set;
+    }
+    for (int i = 0; i < 3; i++) {
+        if (data->m_blades[i] == 1001) {
+            data->m_altBlades[0] = 1002;
+            data->m_altBlades[1] = 1003;
+            return;
+        }
+        if (data->m_blades[i] == 1002) {
+            data->m_blades[i] = 1001;
+            data->m_altBlades[0] = 1002;
+            data->m_altBlades[1] = 1003;
+            return;
+        }
+    }
+    data->m_altBlades[0] = 0;
+    data->m_altBlades[1] = 0;
 }
 
 void DataObjDriver::setVirtualEquipWpnAcce(unsigned int item) {
@@ -165,6 +210,34 @@ unsigned short DataObjDriver::getDataType() const {
 // GEN-HPMAX-BEGIN
 void fn_71002255EC(unsigned int& value, const SDataDriver& data, unsigned int rateEffect, unsigned int addEffect);
 void fn_710022571C(unsigned int& value, const SDataIra& data, unsigned int rateEffect, unsigned int addEffect);
+
+unsigned int DataObjDriver::getHp() const {
+    if (GfDataDriver::isIra(getBdatId())) {
+        unsigned int group = GfDataDriver::getIraGroup(getBdatId());
+        GfBdatChrDr* chrDr = GfBdatChrDr::sys();
+        unsigned int start = chrDr->getChrIrStart();
+        unsigned int end = chrDr->getChrIrEnd();
+        for (unsigned int i = start; i < end; i++) {
+            if (group != chrDr->getChrIrGroupID(i)) {
+                continue;
+            }
+            GF_OBJ_HANDLE* handle = GfGameParty::getHandleDriverByBdatID(chrDr->getChrIrdriverID(i));
+            if (!GfObjUtil::isValid(handle)) {
+                continue;
+            }
+            unsigned int hp = GfObjUtil::getHp(handle);
+            if (hp != 0) {
+                return hp;
+            }
+            GfObj* obj = GfObjUtil::getObj(handle);
+            if (obj->m_components[5] != nullptr && obj->m_components[5]->getRTTI()->isKindOf(&GfComProperty::m_rtti)) {
+                return 0;
+            }
+            return getHpMax(false);
+        }
+    }
+    return GfObjUtil::getHp(m_handle);
+}
 
 unsigned int DataObjDriver::getHpMax(bool virtualParam) const {
     if (GfDataDriver::isIra(getBdatId()) && !GfDataDriver::isIraFront(getBdatId())) {
@@ -400,6 +473,41 @@ unsigned int DataObjDriver::getDriverArts(unsigned int index, unsigned int slot,
         return 0;
     }
     return arts[slot];
+}
+
+bool DataObjDriver::setDriverArts(unsigned int index, int slot, unsigned int arts) {
+    auto set = [&](unsigned int* list) {
+        if (arts != 0) {
+            if (list[0] == arts || list[1] == arts || list[2] == arts) {
+                return;
+            }
+        }
+        if (slot < 0) {
+            for (int i = 0; i < 3; i++) {
+                if (list[i] == 0) {
+                    list[i] = arts;
+                    return;
+                }
+            }
+        } else if (static_cast<unsigned int>(slot) < 3) {
+            list[slot] = arts;
+        }
+    };
+    switch (GfBdatBtl::sys()->getArtsDrIrType(arts)) {
+    case 0:
+        set(GfDataDriver::getDriverWeaponType(m_bdatId, index));
+        break;
+    case 1:
+        set(GfDataDriver::getDriverWeaponTypeIraBack(m_bdatId, index));
+        break;
+    case 2:
+        set(GfDataDriver::getDriverWeaponTypeIraSwitch(m_bdatId, index));
+        break;
+    case 3:
+        set(GfDataDriver::getDriverWeaponTypeIraSwitch(m_bdatId, index));
+        break;
+    }
+    return false;
 }
 
 unsigned int DataObjDriver::getDriverArtsLevel(unsigned int arts) const {
@@ -697,6 +805,21 @@ unsigned int DataObjBlade::getWeaponDamage(bool virtualParam) const {
     return 0;
 }
 
+unsigned int DataObjDriver::getWeaponStability(bool virtualParam) const {
+    if (GfDataDriver::isIraFront(getBdatId())) {
+        return GfDataWeapon::getStabilityForIra(getBdatId());
+    }
+    DataObjBlade blade(getBlade(virtualParam, -1));
+    if (blade.getBdatId() == 0 || blade.m_sdata->m_bladeId == 0) {
+        return 0;
+    }
+    int slot = getBladeSet(virtualParam);
+    if (slot >= 0) {
+        blade.setVirtualEquipWpn(m_virtualWeapons[slot], slot);
+    }
+    return blade.getWeaponStability(virtualParam);
+}
+
 unsigned int DataObjBlade::getWeaponStability(bool virtualParam) const {
     GfBdatItem* item = GfBdatItem::sys();
     unsigned int weapon = getEquipWeapon(virtualParam, -1);
@@ -704,6 +827,60 @@ unsigned int DataObjBlade::getWeaponStability(bool virtualParam) const {
         return item->getPcWpnStability(weapon);
     }
     return 0;
+}
+
+unsigned int DataObjDriver::getNorAtkDmgMin(bool virtualParam) const {
+    if (GfDataDriver::isIra(getBdatId()) && GfDataDriver::isIraFront(getBdatId())) {
+        unsigned int damage = getWeaponDamage(virtualParam);
+        float spread = 1.0f - getWeaponStability(virtualParam) * 0.01f;
+        unsigned int strength = getStrength(virtualParam);
+        return static_cast<unsigned int>(damage * spread) + strength;
+    }
+    DataObjBlade blade(getBlade(virtualParam, -1));
+    if (blade.getBdatId() == 0 || blade.m_sdata->m_bladeId == 0) {
+        return 0;
+    }
+    unsigned int strength = getStrength(virtualParam);
+    return blade.getNorAtkDmgMin(virtualParam) + strength;
+}
+
+unsigned int DataObjBlade::getNorAtkDmgMin(bool virtualParam) const {
+    unsigned int damage = getWeaponDamage(virtualParam);
+    GfBdatBlade* bdat = GfBdatBlade::sys();
+    float base = damage * static_cast<float>(bdat->getFLD_IdeaTableWpnRatio(GfDataBlade::getTrustRank(getBdatId()))) * 0.01f;
+    float spread = 1.0f - getWeaponStability(virtualParam) * 0.01f;
+    if (GfDataBlade::isIra(getBdatId()) && m_menuParam) {
+        DataParamAcc acc(3, GfDataBlade::getIraDriver(getBdatId()), static_cast<GimmickType>(0));
+        return static_cast<unsigned int>(base * spread) + acc.getStrength(false);
+    }
+    return base * spread;
+}
+
+unsigned int DataObjDriver::getNorAtkDmgMax(bool virtualParam) const {
+    if (GfDataDriver::isIra(getBdatId()) && GfDataDriver::isIraFront(getBdatId())) {
+        unsigned int damage = getWeaponDamage(virtualParam);
+        float spread = 1.0f + getWeaponStability(virtualParam) * 0.01f;
+        unsigned int strength = getStrength(virtualParam);
+        return static_cast<unsigned int>(damage * spread) + strength;
+    }
+    DataObjBlade blade(getBlade(virtualParam, -1));
+    if (blade.getBdatId() == 0 || blade.m_sdata->m_bladeId == 0) {
+        return 0;
+    }
+    unsigned int strength = getStrength(virtualParam);
+    return blade.getNorAtkDmgMax(virtualParam) + strength;
+}
+
+unsigned int DataObjBlade::getNorAtkDmgMax(bool virtualParam) const {
+    unsigned int damage = getWeaponDamage(virtualParam);
+    GfBdatBlade* bdat = GfBdatBlade::sys();
+    float base = damage * static_cast<float>(bdat->getFLD_IdeaTableWpnRatio(GfDataBlade::getTrustRank(getBdatId()))) * 0.01f;
+    float spread = 1.0f + getWeaponStability(virtualParam) * 0.01f;
+    if (GfDataBlade::isIra(getBdatId()) && m_menuParam) {
+        DataParamAcc acc(3, GfDataBlade::getIraDriver(getBdatId()), static_cast<GimmickType>(0));
+        return static_cast<unsigned int>(base * spread) + acc.getStrength(false);
+    }
+    return base * spread;
 }
 
 unsigned int DataObjDriver::getEquipAcce(unsigned int slot, bool virtualParam) const {
