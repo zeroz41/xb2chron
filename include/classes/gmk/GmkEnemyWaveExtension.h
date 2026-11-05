@@ -1,8 +1,11 @@
 #ifndef CLASSES_GMK_GMKENEMYWAVEEXTENSION_H
 #define CLASSES_GMK_GMKENEMYWAVEEXTENSION_H
 
+namespace gf { class GF_OBJ_HANDLE; }
+
 namespace gmk {
 class GmkEnemy;
+class GmkEnemyWave;
 
 // 2.0.0's symbols name it and its members (getWavePopInfo, getBindedGmkEnemyWave, createSealedEnergyEffect,
 // backHome; all in GmkElevator.cpp's unit, each taking the enemy). GmkEnemy holds one at 0x1d0:
@@ -29,6 +32,11 @@ public:
     // while isInstalledBattleArenaContents or isGameTypeIra holds, starts the escape action
     // (btl::Utility::AI_StartActionEscape) of each of enemy's game objects
     void backHome(const GmkEnemy* enemy);
+    // GmkEnemy::onEnemyDead calls it on Ira with the dead object
+    void createSealedEnergyEffect(gf::GF_OBJ_HANDLE* handle) const;
+    // the enemy wave gimmick binding enemy (its list's wave list), none outside the battle arena and Ira
+    // (GfQuestTarget::getIconTypeBattle asks)
+    GmkEnemyWave* getBindedGmkEnemyWave(const GmkEnemy* enemy) const;
     void* pad_0;  // size 8: GmkEnemy's size 0x1d8 (TGmkList::getInst's stride)
 };
 }  // namespace gmk

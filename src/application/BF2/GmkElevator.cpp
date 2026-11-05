@@ -188,6 +188,7 @@
 #include "mm/mtl/Vector.h"
 #include "gf/GfDataUtil.h"
 #include "classes/gmk/GmkRoutedEnemy/PopXformFinder.h"
+#include "classes/gmk/GmkEnemy/PopXformFinder.h"
 
 namespace gf {
 // the resident sound sources' files, by index (getSoundSourceFileName reads it; bindGFSoundSource loads each)
@@ -322,6 +323,58 @@ void GmkEnemyWaveExtension::getWavePopInfo(const GmkEnemy* enemy, WavePopInfo& i
         info.m_popNumCond = Bdat::getValCheck(fp, "Wpop_PopNumCond", row, 1);
         info.m_battleLockName = static_cast<short>(Bdat::getValCheck(fp, "battlelockname", row, 2)) - 1;
     }
+}
+
+// the enemy wave gimmick (in the enemy's list's wave list) that binds enemy, none outside the battle arena and Ira
+GmkEnemyWave* GmkEnemyWaveExtension::getBindedGmkEnemyWave(const GmkEnemy* enemy) const {
+    if (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) {
+        IGmkList* list = enemy->m_list;
+        bool enabled = gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra();
+        if (list == nullptr || !enabled) {
+            return nullptr;
+        }
+        if (list->getGmkType() == GmkEnemy::TYPE) {
+            IGmkList* waves = &static_cast<GmkEnemyList*>(list)->m_waveList;
+            for (unsigned int i = 0; i < waves->getInstNum(); i++) {
+                GmkEnemyWave* wave = static_cast<GmkEnemyWave*>(waves->getInst(i));
+                if (wave != nullptr) {
+                    unsigned int num = wave->getBindedEnemyNum();
+                    for (unsigned int j = 0; j < num; j++) {
+                        if (wave->getBindedEnemy(j) == enemy) {
+                            return wave;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return nullptr;
+}
+
+// on Ira, the progress of the wave binding the object's enemy is updated at the object's position
+void GmkEnemyWaveExtension::createSealedEnergyEffect(gf::GF_OBJ_HANDLE* handle) const {
+    bool ira = gf::GfGameManager::isGameTypeIra();
+    if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) || !ira) {
+        return;
+    }
+    AGmkBase* gmk = getBindedGmkInst(handle);
+    if (gmk == nullptr || gmk->getGmkType() != GmkEnemy::TYPE) {
+        return;
+    }
+    GmkEnemyWave* wave = getBindedGmkEnemyWave(static_cast<GmkEnemy*>(gmk));
+    if (wave == nullptr) {
+        return;
+    }
+    gf::GfObjAcc acc(handle);
+    gf::GfObj* obj = acc.getObj();
+    if (obj == nullptr) {
+        return;
+    }
+    gf::GfComBehaviorEnemy* behavior = obj->getComponent<gf::GfComBehaviorEnemy>(6);
+    if (behavior == nullptr) {
+        return;
+    }
+    wave->updateProgress(behavior->getTransform().position);
 }
 
 void GmkEnemyWaveExtension::backHome(const GmkEnemy* enemy) {
@@ -6435,9 +6488,86 @@ void GmkEnemy::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk)
                   : static_cast<unsigned char>(Bdat::getValCheck(bdat.m_fp, "ene_disp_h", row, 1));
 }
 
+// with no row only disposes; else keeps the CreateInfo and creates the insts from the row's distances (the list's
+// defaults where the row has none)
+void GmkEnemy::create(const AGmkBase::CreateInfo& info) {
+    if (info.m_bdatInfo == nullptr) {
+        dispose();
+        return;
+    }
+    AGmkBase::create(info);
+    GmkEnemyInsts::CreateInfo createInfo;
+    const BdatInfo* bdat = static_cast<const BdatInfo*>(info.m_bdatInfo);
+    const GmkEnemyList* list = static_cast<const GmkEnemyList*>(m_list);
+    createInfo.m_gmk = this;
+    createInfo.m_bdatFp = list->getBindedBdatFp();
+    createInfo.m_bdatId = m_createInfo.m_bdatId;
+    createInfo.m_popHeight = bdat->m_dispH != 0 ? bdat->m_dispH : list->m_bdatInfo.m_dispH;
+    createInfo.m_depopHeight = createInfo.m_popHeight + list->m_bdatInfo.m_releaseH;
+    createInfo.m_popRange = bdat->m_dispR != 0 ? bdat->m_dispR : list->m_bdatInfo.m_dispR;
+    createInfo.m_depopRange = createInfo.m_popRange + list->m_bdatInfo.m_releaseR;
+    createInfo.m_repopTime = list->m_bdatInfo.m_repopTime * 60.0f;
+    m_insts.create(createInfo);
+}
+
+// the insts pop and depop by the gimmick's position
+void GmkEnemy::update(float dt) {
+    AGmkBase::update(dt);
+    if (isValid()) {
+        GmkEnemyInsts::UpdateInfo updateInfo;
+        PopXformFinder finder(this);
+        updateInfo.m_dt = dt;
+        updateInfo.m_pos = m_pos;
+        updateInfo.m_finder = &finder;
+        if (m_insts.isValid()) {
+            m_insts.updatePopDepopCond(updateInfo);
+            if (m_insts.m_seq) {
+                (m_insts.*m_insts.m_seq)(updateInfo);
+            }
+        }
+    }
+}
+
+// a point at a random angle in [angleMin, angleMax) and a random share in [rateMin, rateMax) of the random walk
+// radius around the gimmick's position (StateFieldAreaWalk::getGoalPosRandom; the parameter names are not the
+// original's)
+mm::Vec3& GmkEnemy::getPositionInRandomWalk(mm::Vec3& out, float angleMin, float angleMax, float rateMin,
+                                            float rateMax) const {
+    mm::Mat44 rot;
+    rot.setRotY(ml::mtRandf1(angleMin, angleMax));
+    mm::Vec3 in(0.0f, 0.0f, getData()->m_randomWalkRadius * ml::mtRandf1(rateMin, rateMax));
+    out = mm::Vec3(in.x * rot.m[0][0] + in.y * rot.m[1][0] + in.z * rot.m[2][0],
+                   in.x * rot.m[0][1] + in.y * rot.m[1][1] + in.z * rot.m[2][1],
+                   in.x * rot.m[0][2] + in.y * rot.m[1][2] + in.z * rot.m[2][2]);
+    out += *m_pos;
+    return out;
+}
+
 bool GmkEnemy::isPointInsideRandomWalk(const mm::Vec3& pos) const {
     mm::Vec3 d = *m_pos - pos;
     return d.dot(d) <= getData()->m_randomWalkRadius * getData()->m_randomWalkRadius;
+}
+
+// on Ira the wave extension leaves a sealed energy effect where the object died
+void GmkEnemy::onEnemyDead(gf::GF_OBJ_HANDLE* handle) {
+    if (gf::GfGameManager::isGameTypeIra()) {
+        pad_1d0.createSealedEnergyEffect(handle);
+    }
+    m_insts.onEnemyDead(handle);
+}
+
+void GmkEnemy::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    bool ira = gf::GfGameManager::isGameTypeIra();
+    if (evt == gf::IGfObjListener::OBJEVT(3) && ira) {
+        m_insts.m_waveFlags |= 4;
+    }
+    if (evt == gf::IGfObjListener::OBJEVT(3)) {
+        m_insts.m_popInfo.removeGobInst(handle, false);
+        if (m_insts.m_popInfo.getGobInstNum() == 0) {
+            m_insts.pad_159 = 0;
+        }
+    }
 }
 
 bool GmkBlade::BdatInfo::isPopCommonCondMatched() const {

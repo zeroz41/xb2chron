@@ -36,6 +36,11 @@ public:
     const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     // whether pos lies within the random walk radius of its position (1.0.0 name)
     bool isPointInsideRandomWalk(const mm::Vec3& pos) const;
+    // a point at a random angle and a random share of the random walk radius around its position; returns out
+    // (StateFieldAreaWalk::getGoalPosRandom asks)
+    mm::Vec3& getPositionInRandomWalk(mm::Vec3& out, float angleMin, float angleMax, float rateMin, float rateMax) const;
+    // GfComBehaviorEnemy::procMsgObjectNotifyDead calls it
+    void onEnemyDead(gf::GF_OBJ_HANDLE* handle);
     GmkEnemy() {}  // inline: Vector<GmkEnemy>::resize/extend construct in place with its members' defaults
     virtual ~GmkEnemy();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
