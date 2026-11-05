@@ -21,7 +21,8 @@ void executeApplyDetectJob(anm::Job& job) {
     mm::Vec3 push = mm::Vec3::zero;
     float count = 0.0f;
     for (DetectInfo** it = applyJob.m_infos.begin(); it != applyJob.m_infos.end(); ++it) {
-        push += (*it)->m_push;
+        DetectInfo* info = *it;
+        push += info->m_push;
         count += 1.0f;
     }
     if (count > 1.1920928955078125e-07F) {

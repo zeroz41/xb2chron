@@ -58,9 +58,7 @@ float IkFadeSolver::calcBezier(float t, float from, float to) {
     float u = 1.0f - t;
     float tt = t * t;
     float uu = u * u;
-    float fromPart = (u * uu + 3.0f * uu * t) * from;
-    float toPart = (3.0f * u * tt + t * tt) * to;
-    return fromPart + toPart;
+    return (u * uu + 3.0f * uu * t) * from + (3.0f * u * tt + t * tt) * to;
 }
 
 void IkFadeSolver::fadeIn(float time) {

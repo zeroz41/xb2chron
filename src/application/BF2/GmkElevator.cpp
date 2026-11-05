@@ -51,6 +51,7 @@
 #include "classes/gf/GfGameCond.h"
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfMenuObjFieldIcon.h"
+#include "gf/GfDataEnemy.h"
 #include "gf/GfItemUtil.h"
 #include "classes/gmk/GmkTutorial.h"
 #include "classes/gmk/GmkBattleChallengeReward.h"
@@ -5061,13 +5062,9 @@ void GmkJump::createIcon() {
     const char* name;
     fw::EffectPack* pack;
     if (getBdatInfo()->m_type == 1) {
-        if (gf::GfGameManager::isGameTypeIra()) {
-            name = "ma40a_01_100_dlc";
-            pack = gf::GfFieldManager::getEffectPack();
-        } else {
-            pack = nullptr;
-            name = "cmn_100_106";
-        }
+        bool ira = gf::GfGameManager::isGameTypeIra();
+        name = ira ? "ma40a_01_100_dlc" : "cmn_100_106";
+        pack = ira ? gf::GfFieldManager::getEffectPack() : nullptr;
     } else {
         pack = nullptr;
         name = "cmn_100_103";
@@ -7011,6 +7008,17 @@ void GmkEnemyInsts::PopInfo::PopEnemyInfo::dispose() {
         pad_18 = nullptr;
     }
     pad_24 = 0;
+}
+
+void GmkEnemyInsts::PopInfo::removeDefeatedNamedEnemyInfo() {
+    unsigned char* fp = gf::GfDataBdat::getFP(0x8b);
+    for (unsigned int i = 0; i < 4; i++) {
+        PopEnemyInfo& info = m_enemyInfos[i];
+        if (info.pad_10 != nullptr && info.pad_18 != nullptr && Bdat::getFlagVal(fp, "Flag", info.m_eneId, "Named") != 0 &&
+            gf::GfDataEnemy::getEnemySuppress(info.m_eneId) != 0) {
+            info.dispose();
+        }
+    }
 }
 
 gf::GF_OBJ_HANDLE* GmkEnemyInsts::getGobInst(unsigned int index) const {

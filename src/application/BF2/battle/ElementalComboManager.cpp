@@ -364,8 +364,7 @@ void ElementalComboManager::MulRestTimeSpeed(float rate) {
     for (int i = 0; i < 3; ++i) {
         ELEMENTAL_COMBO_DATA& data = m_combos[i];
         if (data.m_comboID != 0) {
-            float speed = data.m_restTimeSpeed * 0.0005f * rate;
-            unsigned short value = speed * 2000.0f;
+            unsigned short value = data.m_restTimeSpeed * 0.0005f * rate * 2000.0f;
             if (value > 64000) {
                 value = 64000;
             }

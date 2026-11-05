@@ -71,9 +71,9 @@ void UICtrlRadarGraph::update(const fw::UpdateInfo& info) {
             rate = 0.05f;
         }
         float x = cosf(angle) * rate;
-        float y = -(sinf(angle) * rate);
+        float y = sinf(angle) * rate;
         vertex.x = x;
-        vertex.y = y;
+        vertex.y = -y;
         face->writeFaceVertex(&vertex, 1, i);
         angle += step;
     }

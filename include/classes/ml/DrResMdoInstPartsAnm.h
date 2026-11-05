@@ -30,8 +30,7 @@ public:
     virtual float getNodeMaxFrame() const { return m_nodeFrameMax * m_frameScale; }  // slot 10
     virtual float getNodeStartFrame() const {
         if (m_nodeFrameMax && m_info->startFrame) {
-            float rate = m_info->startFrame * (1.0f / 255.0f);
-            return m_nodeFrameMax * rate;
+            return m_info->startFrame * (1.0f / 255.0f) * m_nodeFrameMax;
         }
         return 0.0f;
     }  // slot 11

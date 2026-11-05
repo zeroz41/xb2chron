@@ -50,11 +50,8 @@ StateFieldSquadMember::~StateFieldSquadMember() {}
 const char* StateFieldSquadMember::getName() const { return "StateFieldSquadMember"; }
 
 void StateFieldSquadMember::onEnter(void* owner, ai::State*) {
-    TFieldExecCmd<GfComAsm>::CreateInfo info;
-    info.handle = static_cast<GfObj*>(static_cast<GfComBehaviorEnemy*>(owner)->m_owner)->m_handle;
-    info.cmdName = "C_idle";
-    info.timeout = 5.0f;
-    m_execCmd.create(info);
+    m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(
+        static_cast<GfObj*>(static_cast<GfComBehaviorEnemy*>(owner)->m_owner)->m_handle, "C_idle"));
     m_seq = &StateFieldSquadMember::seqUpdateIdle;
 }
 

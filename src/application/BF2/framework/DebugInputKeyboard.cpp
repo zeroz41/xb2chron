@@ -79,7 +79,10 @@ bool drawBoxLine(const mm::Mat44& mtx, const mm::Vec3& size, const mm::Col4& col
     ml::CacheDraw* cache = ml::DebDraw::getCacheDraw();
     bool ok = cache->setCol(col);
     ok &= cache->setMatrix(mtx);
-    ok &= cache->renderCube(size * -0.5f, size * 0.5f);
+    mm::Vec3 min = size * -0.5f;
+    mm::Vec3 max;
+    max.setNeg(min);
+    ok &= cache->renderCube(min, max);
     return ok;
 }
 

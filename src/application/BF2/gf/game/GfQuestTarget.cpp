@@ -106,6 +106,32 @@ void GfQuestTarget::qevChangeTaskCondition(const QuestTaskParam& param) {
     destroyTargetQuest(param.m_questId);
 }
 
+// the icon type of a reach task (task id) for the info's reach target: its map, category and place must match
+// (inline: the analog of the collect tasks' fn_710030AB00; the name is not the original's)
+static inline unsigned int getIconTypeReachTask(unsigned int taskId, const TargetInfo* info) {
+    if (info->m_reachCategory != 0) {
+        QuestListAcc* acc = QuestListAcc::get();
+        if (acc->getReachMapID(taskId) == info->m_mapId) {
+            unsigned int reachCategory = acc->getReachCategory(taskId);
+            unsigned int reachPlace = acc->getReachPlaceID(taskId);
+            if (reachCategory == 1) {
+                if (info->m_reachCategory == 1 && reachPlace == info->m_id) {
+                    return fn_710030C150(info);
+                }
+            } else if (reachCategory == 2) {
+                if (info->m_reachCategory == 2 && reachPlace == info->m_id) {
+                    return fn_710030C150(info);
+                }
+            } else if (reachCategory == 3) {
+                if (info->m_reachCategory == 3 && reachPlace == info->m_id) {
+                    return fn_710030C150(info);
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 unsigned int GfQuestTarget::getIconTypeReachPlace(unsigned int category, unsigned int placeId, QuestID questId,
                                                   unsigned int mapId, bool flag) {
     TargetInfo info;
@@ -117,28 +143,7 @@ unsigned int GfQuestTarget::getIconTypeReachPlace(unsigned int category, unsigne
     if (fn_710030A840(tasks, &info)) {
         typedef ::mm::mtl::FixedVector<QuestTaskParam, 4>::iterator iterator;
         for (iterator it = tasks.begin(), end = tasks.end(); it != end; ++it) {
-            unsigned int type = 0;
-            if (info.m_reachCategory != 0) {
-                unsigned int taskId = it->m_taskId;
-                QuestListAcc* acc = QuestListAcc::get();
-                if (acc->getReachMapID(taskId) == info.m_mapId) {
-                    unsigned int reachCategory = acc->getReachCategory(taskId);
-                    unsigned int reachPlace = acc->getReachPlaceID(taskId);
-                    if (reachCategory == 1) {
-                        if (info.m_reachCategory == 1 && reachPlace == info.m_id) {
-                            type = fn_710030C150(&info);
-                        }
-                    } else if (reachCategory == 2) {
-                        if (info.m_reachCategory == 2 && reachPlace == info.m_id) {
-                            type = fn_710030C150(&info);
-                        }
-                    } else if (reachCategory == 3) {
-                        if (info.m_reachCategory == 3 && reachPlace == info.m_id) {
-                            type = fn_710030C150(&info);
-                        }
-                    }
-                }
-            }
+            unsigned int type = getIconTypeReachTask(it->m_taskId, &info);
             if (type != 0) {
                 return type;
             }
