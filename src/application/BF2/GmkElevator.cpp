@@ -84,6 +84,7 @@
 #include "classes/gmk/GmkRoutedEnemy.h"
 #include "classes/gmk/GmkSalvage.h"
 #include "classes/gmk/GmkMob/PopXformFinder.h"
+#include "classes/gmk/GmkRoutedMob/PopXformFinder.h"
 #include "fw/ColiCheck.h"
 #include "classes/gmk/GameFlagCond.h"
 #include "classes/gf/GfManager.h"
@@ -4198,6 +4199,42 @@ static inline bool getYSnapPosForPop(mm::Vec3& pos, const mm::Vec3& from, float 
     return getYSnapPos(pos, from, length, config);
 }
 
+// the row's pop conditions (the flag, time and condition columns only for a row with no group); the gimmick is
+// not read
+void GmkMobInsts::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+    m_group = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Group", row, 2);
+    m_squadId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "squadId", row, 2);
+    if (m_group == 0) {
+        m_scenarioFlag = ScenarioFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2),
+                                          (unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMax", row, 2));
+        m_questFlag = QuestFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "QuestFlag", row, 2),
+                                    (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMin", row, 1),
+                                    (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMax", row, 1));
+        m_timeRange.m_time = (unsigned short)Bdat::getValCheck(bdat.m_fp, "TimeRange", row, 2);
+        m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", row, 2);
+    }
+    m_mot = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Mot", row, 2);
+    m_collision = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Collision", row, 2);
+    m_reactionRange = (unsigned short)Bdat::getValCheck(bdat.m_fp, "ReactionRange", row, 2);
+    m_reactionPercent = (unsigned short)Bdat::getValCheck(bdat.m_fp, "ReactionPercent", row, 2);
+    m_reactionMot = (unsigned short)Bdat::getValCheck(bdat.m_fp, "ReactionMot", row, 2);
+    m_battleReaction = (unsigned short)Bdat::getValCheck(bdat.m_fp, "BattleReaction", row, 2);
+    unsigned int visibleXZ = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Visible_XZ", row, 2);
+    unsigned short visibleY = Bdat::getValCheck(bdat.m_fp, "Visible_Y", row, 2);
+    m_visibleXZSq = (float)visibleXZ * (float)visibleXZ;
+    m_visibleYSq = (float)visibleY * (float)visibleY;
+    unsigned short invisibleXZ = Bdat::getValCheck(bdat.m_fp, "Invisible_XZ", row, 2);
+    if (invisibleXZ <= visibleXZ) {
+        invisibleXZ = visibleXZ + 1;
+    }
+    unsigned short invisibleY = Bdat::getValCheck(bdat.m_fp, "Invisible_Y", row, 2);
+    if (invisibleY <= visibleY) {
+        invisibleY = visibleY + 1;
+    }
+    m_invisibleXZSq = (float)invisibleXZ * (float)invisibleXZ;
+    m_invisibleYSq = (float)invisibleY * (float)invisibleY;
+}
+
 // a squad with room places the objects; else the gimmick's position (m_popInfo.m_popNum 1) or a point in its
 // shape; the rotation is the gimmick's; snapped on the ground when its data's first byte says so
 bool GmkMob::PopXformFinder::findPosRot(mm::Vec3& pos, mm::Vec3& rot) const {
@@ -4230,12 +4267,58 @@ bool GmkMob::PopXformFinder::findPosRot(mm::Vec3& pos, mm::Vec3& rot) const {
     return true;
 }
 
+inline void GmkMobInsts::create(AGmkBase* gmk, unsigned char* bdatFp, int bdatId) {
+    dispose();
+    m_gmk = gmk;
+    m_bdatFp = bdatFp;
+    m_bdatId = bdatId;
+    m_bdatInfo.create(bdatFp, bdatId, *gmk);
+#line 513 "D:/Monolithsoft/BF2/prog/application/BF2\\gmk/gmk_mob/gmk_mob_impl.h"
+    m_gobInsts = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) mm::mtl::Vector<gf::GF_OBJ_HANDLE*>();
+    createSquad(m_bdatInfo.m_squadId);
+    m_seq = &GmkMobInsts::seqUpdatePopDepop;
+}
+
+// with a row: the insts from the list's table and the row
+void GmkMob::create(const AGmkBase::CreateInfo& info) {
+    if (info.m_bdatInfo != nullptr) {
+        AGmkBase::create(info);
+        unsigned char* bdatFp = m_list->getBindedBdatFp();
+        m_insts.create(this, bdatFp, info.m_bdatId);
+    }
+}
+
 void GmkMob::dispose() {
     m_insts.dispose();
     AGmkBase::dispose();
 }
 
 GmkMob::~GmkMob() { dispose(); }
+
+// the insts pop and depop around the gimmick's position
+void GmkMob::update(float dt) {
+    AGmkBase::update(dt);
+    if (isValid()) {
+        GmkMobInsts::UpdateInfo updateInfo;
+        PopXformFinder finder(this);
+        updateInfo.m_dt = dt;
+        updateInfo.m_pos = m_pos;
+        updateInfo.m_finder = &finder;
+        if (m_insts.isValid()) {
+            if (m_insts.m_seq) {
+                (m_insts.*m_insts.m_seq)(updateInfo);
+            }
+        }
+    }
+}
+
+// a destroyed object leaves the insts' objects
+void GmkMob::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3) && handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        m_insts.removeGobInst(handle);
+    }
+}
 
 void GmkMobInsts::validateDisp(gf::GF_OBJ_HANDLE* handle) const {
     if (AGmkBase* gmk = getBindedGmkInst(handle)) {
@@ -4248,6 +4331,39 @@ void GmkMobInsts::validateDisp(gf::GF_OBJ_HANDLE* handle) const {
     }
 }
 
+void GmkRoutedMob::PopXformFinder::onPopGob(gf::GF_OBJ_HANDLE* handle) const {
+    if (m_navi != nullptr) {
+        m_gmk->bindRouteNavi(handle, *m_navi);
+    }
+}
+
+void GmkRoutedMob::bindRouteNavi(gf::GF_OBJ_HANDLE* handle, GmkRouteNavi& navi) {
+    if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        for (std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi>* it = m_navis.begin(); it != m_navis.end(); ++it) {
+            if (it->first == handle) {
+                it->first = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+                it->second.dispose();
+                break;
+            }
+        }
+    }
+    for (std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi>* it = m_navis.begin(); it != m_navis.end(); ++it) {
+        if (&it->second == &navi) {
+            it->first = handle;
+            return;
+        }
+    }
+}
+
+// with a row: the route, then the insts from the list's table and the row
+void GmkRoutedMob::create(const AGmkBase::CreateInfo& info) {
+    if (info.m_bdatInfo != nullptr) {
+        GmkRoute::create(info);
+        unsigned char* bdatFp = m_list->getBindedBdatFp();
+        m_insts.create(this, bdatFp, info.m_bdatId);
+    }
+}
+
 void GmkRoutedMob::dispose() {
     if (m_navis.size() != 0) {
         m_navis.destroy();
@@ -4257,6 +4373,55 @@ void GmkRoutedMob::dispose() {
 }
 
 GmkRoutedMob::~GmkRoutedMob() { dispose(); }
+
+// the insts pop and depop by the route position nearest to the player
+void GmkRoutedMob::update(float dt) {
+    AGmkBase::update(dt);
+    if (isValid() && isPlayerExist()) {
+        mm::Vec3 pos;
+        if (getNearestPos(pos, getPlayerPos())) {
+            GmkMobInsts::UpdateInfo updateInfo;
+            PopXformFinder finder(this);
+            updateInfo.m_dt = dt;
+            updateInfo.m_pos = &pos;
+            updateInfo.m_finder = &finder;
+            if (m_insts.isValid()) {
+                if (m_insts.m_seq) {
+                    (m_insts.*m_insts.m_seq)(updateInfo);
+                }
+            }
+        }
+    }
+}
+
+void GmkRoutedMob::createRouteNavis(unsigned int num) {
+    if (m_navis.size() != 0) {
+        m_navis.destroy();
+    }
+    m_navis.setAllocator(gf::getAllocator(gf::ALLOCATOR(0)));
+    m_navis.reserve(num);
+    m_navis.resize(num);
+    if (m_navis.size() != 0) {
+        for (std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi>* it = m_navis.begin(); it != m_navis.end(); ++it) {
+            it->first = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        }
+    }
+}
+
+// a destroyed object leaves its route navigator and the insts' objects
+void GmkRoutedMob::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3) && handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        for (std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi>* it = m_navis.begin(); it != m_navis.end(); ++it) {
+            if (it->first == handle) {
+                it->first = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+                it->second.dispose();
+                break;
+            }
+        }
+        m_insts.removeGobInst(handle);
+    }
+}
 
 void GmkLandmark::dispose() {
     disposeGmkPhantom();

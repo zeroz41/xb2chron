@@ -6,6 +6,7 @@
 #include "classes/gmk/ScenarioFlagCond.h"
 #include "classes/gmk/QuestFlagCond.h"
 #include "classes/gmk/TimeCond.h"
+#include "classes/gmk/GmkSquad.h"
 
 class CBdatWrapper;
 namespace gf { class GF_OBJ_HANDLE; }
@@ -76,8 +77,14 @@ public:
         int m_popNum = 0;
         bool m_hasSquad = false;  // 0x44: "squadId" is set
     };
-    // what update and the sequence steps are given
-    class UpdateInfo;
+    // what update and the sequence steps are given (GmkRoutedMob::update builds it on the stack; the names are not
+    // the original's)
+    class UpdateInfo {
+    public:
+        float m_dt;                       // 0x0
+        const mm::Vec3* m_pos;            // 0x8
+        const IPopXformFinder* m_finder;  // 0x10
+    };
     // inline (no symbol in 1.0.0 or 3.0.1): GmkMob's destructor runs dispose again after its own dispose; the
     // members' destructors then empty m_popInfo's id list
     ~GmkMobInsts() {
@@ -87,10 +94,34 @@ public:
     // shows or hides one of its objects by pad_a0 (display bit 8) when the object is bound to a gimmick
     void validateDisp(gf::GF_OBJ_HANDLE* handle) const;
     void disposeGobInsts(bool);
-    // dispose clears these three (the names are not known)
-    unsigned long pad_0 = 0;
-    unsigned long pad_8 = 0;
-    int pad_10 = -1;
+    // inline (no symbol; GmkMob::create and GmkRoutedMob::create): the row's conditions, an empty object list
+    // (allocated at gmk_mob_impl.h line 513), the squad and the first sequence step (the name is not the original's)
+    void create(AGmkBase* gmk, unsigned char* bdatFp, int bdatId);
+    // inline (no symbol; GmkMob::onGobEvent and GmkRoutedMob::onGobEvent): drops a destroyed object from the list
+    // (the name is not the original's)
+    void removeGobInst(gf::GF_OBJ_HANDLE* handle) {
+        if (m_gobInsts->size() != 0) {
+            for (gf::GF_OBJ_HANDLE** it = m_gobInsts->begin(); it != m_gobInsts->end(); ++it) {
+                if (*it == handle) {
+                    m_gobInsts->erase(it);
+                    break;
+                }
+            }
+        }
+    }
+    void createSquad(unsigned short squadId);
+    void seqUpdatePopDepop(const UpdateInfo& info);
+    // inline (GmkMob::isValid, GmkRoutedMob::isValid and update): it has objects, and a squad that is valid when its
+    // row names one (the name is not the original's)
+    bool isValid() const {
+        return m_gobInsts != nullptr &&
+               (m_bdatInfo.m_squadId == 0 || (m_squad != nullptr && m_squad->isValid()));
+    }
+    // dispose clears these three; create sets them: the gimmick, its list's BDAT table and its row (the names are
+    // not the original's)
+    AGmkBase* m_gmk = nullptr;
+    unsigned char* m_bdatFp = nullptr;
+    int m_bdatId = -1;
     unsigned char pad_14[0x4];  // not set by the constructor; the copy copies it with pad_0..pad_10
     BdatInfo m_bdatInfo;  // 0x18 (the name is not the original's)
     PopInfo m_popInfo;    // 0x58 (the name is not the original's)

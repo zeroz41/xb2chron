@@ -27,6 +27,10 @@ public:
     virtual void debugDraw() const;  // slot 7
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual IGmkList* getBindedRoutePointList() const;  // slot 11
+    // binds an object to a route navigator, after freeing the navigator it had (PopXformFinder::onPopGob)
+    void bindRouteNavi(gf::GF_OBJ_HANDLE* handle, GmkRouteNavi& navi);
+    // makes num free route navigators (PopXformFinder::onCreateGobInsts)
+    void createRouteNavis(unsigned int num);
     // the route navigation of one of its objects (null when the object has none)
     GmkRouteNavi* findRouteNavi(gf::GF_OBJ_HANDLE* handle) const;
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
