@@ -348,7 +348,9 @@ public:
     ShakeCameraManager* m_shakeCamera;  // ApplyBattleCameraAdjustment (the name is not the original's)
     // the button challenge in progress (the destructor destroys it in place; the name is not the original's)
     ButtonChallenge m_buttonChallenge;
-    unsigned char pad_778[0x8];
+    // the debuff mask: bit n - 1 for buff n (CharacterParameter::CheckDebuff walks it with IsBuff; meaning
+    // otherwise unknown)
+    unsigned long pad_778;
     // an enemy that joined through a link (NotifyLinkJoinBattle; the names are not the original's)
     struct LinkJoinEnemy {
         gf::GF_OBJ_HANDLE* handle;
@@ -535,7 +537,10 @@ public:
     bool m_gameOver : 1;
     // BattleCharacter::CreateDeadEffect creates no dead effect while it or m_removeEffect is set (meaning unknown)
     bool pad_bit25 : 1;
-    unsigned char : 3;
+    // while set, CharacterParameter::IsSuspendFightComboTimer holds for the character m_controlTargetHandle names
+    // (meaning unknown)
+    bool pad_bit26 : 1;
+    unsigned char : 2;
     // CharacterManager::PostUpdateProc sets it to whether an enemy answers BattleCharacter::IsScout (meaning
     // unknown)
     bool pad_bit29 : 1;

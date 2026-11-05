@@ -178,6 +178,7 @@ public:
     // trigger 0x31; then fades out (or, with BattleGlobal's flag bit 0, removes) the effect whose id it keeps at 0x15C
     // and clears the id.
     void NotifyMindEyeEnd(bool);
+    void NotifyBuffEnd(int buff, float effect, bool);
     // 2.0.0's symbols name it; 1.0.0's ResultProc calls GetWeaponAttack(bool, bool) const in its place, with one argument
     // fewer. A member: as IsBlade. What it does: gives the attack ButtonChallenge adds to the stat for its
     // damage; ButtonChallenge passes its param's flag, false, false.

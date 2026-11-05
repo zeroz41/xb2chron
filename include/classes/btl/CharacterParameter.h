@@ -157,9 +157,13 @@ public:
     float GetBuffEffect(int buff) const;
     // 2.0.0's symbols name it. What it does: removes the buff from the list (the last entry moves into its place),
     // clears its bit, and when notify is set tells the character at pad_5e9 and the driver
-    // BattleCharacter::NotifyBuffEnd(buff, time, the first bool); then recomputes m_flags622_7 from BattleGlobal's buff
+    // BattleCharacter::NotifyBuffEnd(buff, its m_effect, the first bool); then recomputes m_flags622_7 from BattleGlobal's buff
     // mask.
     void ClearBuff(int buff, bool, bool notify);
+    // What it does: sets m_flags622_7 while IsBuff holds for a buff of BattleGlobal's
+    // debuff mask (pad_778)
+    void CheckDebuff();
+    int GetClass() const;
     // 2.0.0's symbols name it. What it does: from this parameter up through its drivers
     // (GetBuddyCharacterParameterConst) while slot 65 (IsBlade(false)) does not hold, answers the first holder's
     // pad_5da (0 when the chain ends); BattleCharacter::NotifyBattleStart/AI_Move/GetBladeMovePos and
@@ -176,6 +180,7 @@ public:
     bool IsBlowRot() const;
     float GetBlowRotSpeed() const;
     bool IsProgressCoolTime() const;
+    bool IsSuspendFightComboTimer() const;
     unsigned int GetGender() const;
     typedef ::btl::ARTS_PALETTE_DATA ARTS_PALETTE_DATA;
     virtual void Reset();  // slot 0
@@ -405,7 +410,8 @@ public:
     // CharacterManager::GetCharacterConst's index of the character this parameter belongs to (AngryInfection
     // measures from it; the name is not the original's)
     unsigned char m_charaIndex;
-    unsigned char pad_5ea[0x38];
+    signed char pad_5ea;  // GetClass answers it when it is not negative (meaning unknown)
+    unsigned char pad_5eb[0x37];
     unsigned short m_flags622_0 : 1;  // unknown
     // GetHateTarget answers -1 while it is clear (the name is not the original's)
     bool m_hasHateTarget : 1;
@@ -416,7 +422,8 @@ public:
     // a blade that GetDriverType does not answer its driver's type for (bit 6; unknown, the name is not the
     // original's)
     unsigned short m_flags622_6 : 1;
-    unsigned short m_flags622_7 : 2;  // unknown
+    unsigned short m_flags622_7 : 1;  // CheckDebuff sets it while a buff of BattleGlobal's debuff mask holds
+    unsigned short m_flags622_8 : 1;  // unknown
     unsigned short m_flags622_9 : 1;  // GetFightComboDataConst answers the second fight combo while set (unknown)
     unsigned short m_flags622_10 : 1;  // unknown
     // TailInitialize sets it (a dummy blade's or a scenario-masked character's; meaning unknown)

@@ -6,6 +6,7 @@
 #include "classes/btl/DataManager.h"
 #include "classes/btl/CharacterManager.h"
 #include "classes/btl/EnemyParameter.h"
+#include "classes/btl/SpAttackManager.h"
 #include "classes/gf/DataParamAcc.h"
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfComProperty.h"
@@ -13,11 +14,14 @@
 #include "classes/gf/GfStatusProperty.h"
 #include "btl/Utility.h"
 #include "btl/formation_change_manager.h"
+#include "btl/siren_battle_manager.h"
 #include "gf/GfDataBlade.h"
 #include "gf/GfGameUtil.h"
 #include "gf/GfObjUtil.h"
 #include "mm/Vec3.h"
 #include "plugin/Bdat.h"
+
+#include <float.h>
 
 namespace btl {
 
@@ -95,6 +99,21 @@ void CharacterParameter::ResetSpecialEnhanceRate(bool all) {
     }
 }
 
+int CharacterParameter::GetClass() const {
+    int cls = pad_5ea;
+    if (cls < 0) {
+        if (!BattleGlobal::sys()->m_challengeAnySuccess) {
+            gf::DataParamAcc acc(IsBlade(true) ? m_driverHandle : m_handle);
+            cls = acc.getClass(false);
+        } else if (IsPlayerParameter()) {
+            return gf::GfGameUtil::getGroupClass(m_enArrangeID);
+        } else {
+            cls = 0;
+        }
+    }
+    return cls;
+}
+
 float CharacterParameter::GetHPRate() const {
     int hp = GetHP();
     int maxHp = GetMaxHP();
@@ -167,9 +186,49 @@ bool CharacterParameter::IsBuff(int buff) const {
     return (param->m_buffFlags[buff >> 3] & (1 << (buff & 7))) != 0;
 }
 
+void CharacterParameter::ClearBuff(int buff, bool flag, bool notify) {
+    float effect = FLT_MAX;
+    for (int i = 0; i < m_buffNum; i++) {
+        if (m_buffs[i].m_id == buff) {
+            effect = m_buffs[i].m_effect;
+            BUFF_DATA& last = m_buffs[m_buffNum - 1];
+            m_buffs[i] = last;
+            last = BUFF_DATA();
+            m_buffNum--;
+            break;
+        }
+    }
+    unsigned char& flags = m_buffFlags[buff >> 3];
+    flags &= ~(1 << (buff & 7));
+    if (notify) {
+        CharacterManager* manager = CharacterManager::sys();
+        if (BattleCharacter* chara = manager->GetCharacterConst(m_charaIndex)) {
+            chara->NotifyBuffEnd(buff, effect, flag);
+        }
+        if (!BattleGlobal::sys()->m_challengeAnySuccess || m_isNotBlade) {
+            if (BattleCharacter* driver = manager->GetCharacterConst(m_driverHandle)) {
+                driver->NotifyBuffEnd(buff, effect, flag);
+            }
+        }
+    }
+    CheckDebuff();
+}
+
 unsigned int CharacterParameter::GetWeakAttributeFlag() const {
     int attr = Utility::GetAntiAttribute(GetAttribute());
     return attr >= 0 ? 1 << attr : 0;
+}
+
+bool CharacterParameter::IsSuspendFightComboTimer() const {
+    const BattleGlobal* global = BattleGlobal::sys();
+    if ((global->pad_bit26 && global->m_controlTargetHandle == m_handle) || global->pad_bit12) {
+        return true;
+    }
+    if (global->m_elementalCombo.m_camera || SpAttackManager::sys()->m_camera ||
+        SirenBattleManager::sys()->IsCameraProc()) {
+        return true;
+    }
+    return ChainAttackManager::sys()->IsStopTime();
 }
 
 const CharacterParameter::FIGHT_COMBO_DATA* CharacterParameter::GetFightComboDataConst() const {
@@ -184,6 +243,20 @@ void EnemyParameter::AddHate(int index, int kind, float add) {
         HATE_DATA& data = m_hateData[(unsigned int)index < 3 ? index : 0];
         data.Set(kind, data.m_hate[kind] + add);
     }
+}
+
+void CharacterParameter::CheckDebuff() {
+    bool debuff = false;
+    if (m_buffNum != 0) {
+        int buff = 1;
+        for (unsigned long mask = BattleGlobal::sys()->pad_778; mask != 0; mask >>= 1, buff++) {
+            if ((mask & 1) && IsBuff(buff)) {
+                debuff = true;
+                break;
+            }
+        }
+    }
+    m_flags622_7 = debuff;
 }
 
 float CharacterParameter::GetBuffEffect(int buff) const {
