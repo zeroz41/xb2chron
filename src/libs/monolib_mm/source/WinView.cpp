@@ -1613,7 +1613,7 @@ void WinView::destroyCtrlMemory() {
 }
 
 bool WinView::evtFocusOff() {
-    m_renderInfo.m_cpu->m_focusState = 8;
+    m_renderInfo.m_cpu->m_frame.m_focusState = 8;
     return true;
 }
 
@@ -1624,6 +1624,74 @@ mm::Pnt<int> WinView::getClientSize(bool cpu) const {
     const RENDER_INFO* info = cpu ? m_renderInfo.m_cpu : m_renderInfo.m_render;
     return mm::Pnt<int>(info->m_size.x - info->m_viewOfs[0] - info->m_viewOfs[2],
                         info->m_size.y - info->m_viewOfs[1] - info->m_viewOfs[3]);
+}
+
+bool WinView::detachRenderWork(const WorkObj* work) {
+    unsigned int wid = work->m_wid;
+    reslist<unsigned int>::iterator end = m_renderWorks.end();
+    for (reslist<unsigned int>::iterator it = m_renderWorks.begin(); it != end;) {
+        reslist<unsigned int>::iterator cur = it++;
+        if (*cur == wid) {
+            m_renderWorks.erase(cur);
+        }
+    }
+    if (WinViewRoot::get() != nullptr) {
+        if (WinViewRoot::getView(m_renderInfo.m_cpu->m_splitFrame.m_viewWid[0]) != nullptr) {
+            WinViewRoot::getView(m_renderInfo.m_cpu->m_splitFrame.m_viewWid[0])->detachRenderWork(work);
+        }
+        if (WinViewRoot::getView(m_renderInfo.m_cpu->m_splitFrame.m_viewWid[1]) != nullptr) {
+            WinViewRoot::getView(m_renderInfo.m_cpu->m_splitFrame.m_viewWid[1])->detachRenderWork(work);
+        }
+    }
+    detachWorkEvent(work);
+    return true;
+}
+
+bool WinView::detachWorkEvent(const IWorkEvent* event) {
+    CS lock(m_cs2);
+    reslist<IWorkEvent*>::iterator end = m_workEvents.end();
+    for (reslist<IWorkEvent*>::iterator it = m_workEvents.begin(); it != end;) {
+        reslist<IWorkEvent*>::iterator cur = it++;
+        if (*cur == event) {
+            m_workEvents.erase(cur);
+        }
+    }
+    if (WinViewRoot::get() != nullptr) {
+        if (WinViewRoot::getView(m_renderInfo.m_cpu->m_splitFrame.m_viewWid[0]) != nullptr) {
+            WinViewRoot::getView(m_renderInfo.m_cpu->m_splitFrame.m_viewWid[0])->detachWorkEvent(event);
+        }
+        if (WinViewRoot::getView(m_renderInfo.m_cpu->m_splitFrame.m_viewWid[1]) != nullptr) {
+            WinViewRoot::getView(m_renderInfo.m_cpu->m_splitFrame.m_viewWid[1])->detachWorkEvent(event);
+        }
+    }
+    return true;
+}
+
+mm::Pnt<int> WinView::getFrameAbsPos(bool cpu) const {
+    const RENDER_INFO* info = cpu ? m_renderInfo.m_cpu : m_renderInfo.m_render;
+    mm::Pnt<int> pos = info->m_frame.m_pos;
+    WinViewRoot* root = WinViewRoot::get();
+    WorkObj* parent = m_parent;
+    if (root != parent && parent != nullptr) {
+        do {
+            const WinView* view = static_cast<const WinView*>(parent);
+            int y;
+            int x;
+            if (!view->m_fullScreen) {
+                const RENDER_INFO* parentInfo = cpu ? view->m_renderInfo.m_cpu : view->m_renderInfo.m_render;
+                mm::Pnt<int> ofs = parentInfo->m_frame.getClientOfs();
+                x = parentInfo->m_frame.m_pos.x + ofs.x;
+                y = parentInfo->m_frame.m_pos.y + ofs.y;
+            } else {
+                x = 0;
+                y = 0;
+            }
+            pos.x += x;
+            pos.y += y;
+            parent = root != view->m_parent ? view->m_parent : nullptr;
+        } while (parent != nullptr);
+    }
+    return pos;
 }
 
 void WinView::wkTail() {
@@ -1740,6 +1808,30 @@ mm::Rect<int> WinView::getClientScissorAbsRect(bool cpu) const {
         rect.h = 0;
     }
     return rect;
+}
+
+void WinView::setFullScreen() {
+    if (m_fullScreen) {
+        m_fullScreen = 0;
+        updateViewPort(m_windowRect);
+        if (m_copyRender) {
+            memcpy(m_renderInfo.m_render, m_renderInfo.m_cpu, sizeof(RENDER_INFO));
+        }
+    } else {
+        const RENDER_INFO* info = m_renderInfo.m_render;
+        mm::Pnt<int> ofs = info->m_frame.getClientOfs();
+        mm::Pnt<int> pos = info->m_frame.m_pos;
+        mm::Pnt<int> size = info->m_size;
+        m_windowRect.x = pos.x + ofs.x;
+        m_windowRect.y = pos.y + ofs.y;
+        m_windowRect.w = size.x;
+        m_windowRect.h = size.y;
+        m_fullScreen = 1;
+        updateViewPort(mm::Rect<int>(0, 0, DevGraph::getRootWidth(), DevGraph::getRootHeight()));
+        if (m_copyRender) {
+            memcpy(m_renderInfo.m_render, m_renderInfo.m_cpu, sizeof(RENDER_INFO));
+        }
+    }
 }
 
 }  // namespace ml

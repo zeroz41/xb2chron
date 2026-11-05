@@ -35,6 +35,26 @@ public:
     unsigned char pad_1c[0x4];
 };
 
+// the frame drawn around a view, kept in each bank of WinView's RENDER_INFO at 0x48 (WinViewFrame::renderTitle reads
+// its view's render bank and the frame width at 0x60 = RENDER_INFO 0xA8)
+class WinViewFrame {
+public:
+    void render(WinView* view) const;
+    // the client's offset inside the frame: none while the view has no frame or is full screen, else the frame width
+    // across and the width (plus twice it and the 22-pixel title bar while the view has one) down (inline: written
+    // out in getFrameAbsPos, getClientAbsRect and setFullScreen; the name is not the original's)
+    inline mm::Pnt<int> getClientOfs() const;
+    WinView* m_view;  // 0x00 the view framed (the name is not the original's)
+    unsigned char pad_08[0x30];
+    int m_focusState;  // 0x38 (RENDER_INFO 0x80) the constructor and evtFocusOff set 8
+    unsigned char pad_3c[0x1C];
+    mm::Pnt<int> m_pos;  // 0x58 (RENDER_INFO 0xA0) the frame's corner in its parent view (the name is not the original's)
+    // 0x60 (RENDER_INFO 0xA8) the frame's width (WinSplitFrame::apply and getScissorRect2 skip it between split views;
+    // the name is not the original's)
+    short m_frameWidth;
+    unsigned char pad_62[0x6];
+};
+
 // table 0x7100B78828; base FontLayer at 0x1A8 (the font commands' flushes print through getView(false) + 0x1A8 as
 // FontLayer::font's this)
 class WinView : public ::ml::WorkObj, public ::ml::FontLayer {
@@ -52,13 +72,7 @@ public:
         // applyRect stores getViewOfs's w, x, h, y into [0], [1], [2], [3]
         int m_viewOfs[4];
         WinSplitFrame m_splitFrame;  // 0x28 applyRect applies it
-        unsigned char pad_48[0x38];
-        int m_focusState;  // 0x80 the constructor and evtFocusOff set 8
-        unsigned char pad_84[0x24];
-        // 0xA8 the frame's width between split views (WinSplitFrame::apply and getScissorRect2 skip it; the name is
-        // not the original's)
-        unsigned short m_frameWidth;
-        unsigned char pad_aa[0x6];
+        WinViewFrame m_frame;  // 0x48 the frame renderView draws (WinViewFrame::render's this)
     };
     static void setInitialBackCol(const mm::Col4& col);
     void updateViewPort(const mm::Rect<int>& rect);
@@ -68,8 +82,10 @@ public:
     virtual bool wkStandbyLogout();  // slot 15
     virtual bool evtFocusOn();  // slot 17 (returns true)
     virtual bool evtFocusOff();  // slot 18 (returns true)
-    virtual void detachRenderWork(ml::WorkObj const*);  // slot 19
-    virtual void detachWorkEvent(ml::IWorkEvent const*);  // slot 20
+    // removes the work from the view's render works and from both views of its split (returns true)
+    virtual bool detachRenderWork(ml::WorkObj const* work);  // slot 19
+    // removes the listener from the view and from both views of its split (returns true)
+    virtual bool detachWorkEvent(ml::IWorkEvent const* event);  // slot 20
     virtual void destroyCtrlMemory();  // slot 21
     virtual void applyRect();  // slot 22
     virtual void getViewOfs(mm::Rect<int>&, bool);  // slot 23
@@ -86,24 +102,39 @@ public:
     bool isSplit(bool cpu) const;
     void applyPrio();
     void renderView();
+    void setFullScreen();
+    // the frame's corner from the root: its own frame position plus each parent view's frame position and client
+    // offset, from the calculation bank when cpu is set
+    mm::Pnt<int> getFrameAbsPos(bool cpu) const;
+    // clips rect (absolute) to the view's client area and to each parent view's up to the root
+    void normalizeAbsRect(mm::Rect<int>& rect, bool cpu) const;
 
     threadval<RENDER_INFO> m_renderInfo;  // 0x1B8 (the name is not the original's)
     reslist<unsigned int> m_renderWorks;  // 0x338 wkTail sends event 0 only once it is empty (the name is not the original's)
     reslist<IWorkEvent*> m_workEvents;    // 0x378 (the name is not the original's)
     // 0x3B8 one word of flags (setFullScreen reads and sets bit 0 as a word; ProcDesktop::wkStandbyLogin sets 0x100)
     unsigned int m_fullScreen : 1;  // getClientSize returns the root's size while it is set (the name is not the original's)
-    unsigned int : 6;
+    // bit 1: drops the frame like m_fullScreen (WinViewFrame::getClientOfs; the name is not the original's)
+    unsigned int m_frameOff : 1;
+    unsigned int : 5;
     // bit 7: wkStandbyLogout detaches the render works and logs out even while some remain (the name is not the
     // original's)
     unsigned int m_forceLogout : 1;
     unsigned int : 24;
-    unsigned char pad_3bc[0x4];
+    // 0x3BC the frame's style, a word of its own (the names are not the original's)
+    unsigned int : 0;
+    unsigned int m_framed : 1;    // bit 0: the view has a frame (WinViewFrame::getClientOfs)
+    unsigned int m_titleBar : 1;  // bit 1: the frame has a title bar (WinViewFrame::getClientOfs)
+    unsigned int : 30;
     MsgParam<10> m_msg;  // 0x3C0 (the name is not the original's)
     unsigned char pad_4c8[0x4C];
     // 0x514 the constructor copies setInitialBackCol's colour into it; tl::TitleApplet::initialize sets it black
     // (the name is not the original's)
     mm::Col4 m_backCol;
-    unsigned char pad_524[0x18];
+    unsigned char pad_524[0x8];
+    // 0x52C the frame's corner and the view's size setFullScreen keeps while the view is full screen and restores
+    // after it (the name is not the original's)
+    mm::Rect<int> m_windowRect;
     // 0x53C WinSplitFrame::apply copies the calculation bank into the render bank after updateViewPort while it is
     // set (the name is not the original's)
     bool m_copyRender;
@@ -111,6 +142,17 @@ public:
     CriticalSection m_cs;      // 0x540 getViewOfs holds it (the name is not the original's)
     CriticalSection m_cs2;     // 0x568 (the name is not the original's)
 };
+inline mm::Pnt<int> WinViewFrame::getClientOfs() const {
+    if (!m_view->m_framed || m_view->m_fullScreen || m_view->m_frameOff) {
+        return mm::Pnt<int>(0, 0);
+    }
+    int width = m_frameWidth;
+    int height = width;
+    if (m_view->m_titleBar) {
+        height = width * 2 + 22;
+    }
+    return mm::Pnt<int>(width, height);
+}
 }  // namespace ml
 
 #endif
