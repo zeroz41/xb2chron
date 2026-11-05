@@ -128,6 +128,8 @@ public:
     // empties the four arts caches (the counts at 0x73D8, 0xCEB0, 0xF7A0, 0x112F8, as the destructor does) and resets
     // their entries' bitfields.
     void ClearCache();
+    // the original's symbol names it; BattleManager::gevMapjump calls it on a map change (GEV 2)
+    void NotifyMapChange();
     void SetPartyGauge(int value, bool flag);  // GfGameUtil::setMaxPartyGauge passes (300, false)
     // Create: 1.0.0's name (fn_710009028C in 3.0.1): 1.0.0's BattleManager::Initialize calls it fourth, as 3.0.1's does
     static void Create();

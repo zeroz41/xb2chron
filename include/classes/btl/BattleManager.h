@@ -6,6 +6,7 @@
 
 namespace gf { class GfSetupParam; }
 namespace fw { class UpdateInfo; }
+namespace gf { class GF_OBJ_HANDLE; }
 
 namespace btl {
 // table 0x7100B3A5A0; the base at 0x8 is gf::IGfEvent (its table at +0x48 holds IGfEvent's 63 slots, with
@@ -21,6 +22,13 @@ public:
     void Finalize();
     void Update(const fw::UpdateInfo& info);
     void postUpdate(const fw::UpdateInfo& info);
+    // the original's symbols name these; Update calls them in this order
+    bool CheckGameOver(const fw::UpdateInfo& info);
+    static void CheckBattle();
+    void CheckInBattle();
+    // the original's symbol names it (a member that never reads this; its callers pass x0 unset). Sends a
+    // MsgPcBattleStart(0) to the object of a character not yet in battle when it may join (force skips the target-state checks)
+    void CheckInBattleCharacter(gf::GF_OBJ_HANDLE* handle, bool force);
     virtual ~BattleManager();  // slot 0
     virtual void gevBattleStart();  // slot 2
     virtual void gevBattleEnd();  // slot 3

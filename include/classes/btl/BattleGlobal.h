@@ -36,6 +36,8 @@ public:
     void PreUpdateProc(const fw::UpdateInfo& info);
     void UpdateProc(const fw::UpdateInfo& info);
     void PostUpdateProc(const fw::UpdateInfo& info);
+    // the original's symbol names it; BattleManager::gevMapjump calls it on a map change (GEV 2)
+    void NotifyMapChange();
     void Tutorial(BTL_TUTORIAL_COND cond, int, void*);
     // reads the anti-blade area's revision row (Bdat 0x35) into m_mapRev when the area changes
     void UpdateMapRev();
@@ -377,7 +379,9 @@ public:
     unsigned char pad_a5c[0x40];
     // PlayerParameter::BattleStart copies it into CharacterParameter's pad_20; meaning unknown
     int pad_a9c;
-    unsigned char pad_aa0[0x8];
+    unsigned char pad_aa0[0x4];
+    // BattleManager::Update stores its game-over timer (pad_10) divided by 15 there each frame (meaning unknown)
+    float pad_aa4;
     unsigned int m_nextAttackId;  // CreateAttackData's next id, never 0 (the name is not the original's)
     unsigned char pad_aac[0x4];
     // the attack records (the name is not the original's); full, AddAttackDamage drops the oldest
@@ -587,7 +591,9 @@ public:
     // m_challengeAnySuccess) without asking FLD_ConditionList (meaning unknown)
     bool pad_bit42 : 1;
     bool pad_bit43 : 1;  // while set, UIManager::UpdateTutorial shows no queued tutorial (meaning unknown)
-    unsigned char : 2;
+    // BattleManager::update stops the battle's time (a zero time step) while pad_bit43 or one of these is set
+    bool pad_bit44 : 1;
+    bool pad_bit45 : 1;
     // EnemyParameter::BattleStart sets it for an enemy whose ChrEnArrange row has the PGMax flag, unless pad_bit1 is
     // set (then it fills party gauge group 10003 instead); meaning unknown
     bool pad_bit46 : 1;

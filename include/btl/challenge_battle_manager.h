@@ -31,6 +31,9 @@ public:
     // CharacterManager::Update and BladeArtsManager::Update (the managers' static Update(const fw::UpdateInfo&) slot).
     // What it does: the singleton's UpdateProc(info).
     static void Update(const fw::UpdateInfo& info);
+    // the original's symbol names it; btl::BattleManager::update calls it between CharacterManager::PreUpdate and
+    // BladeArtsManager::PreUpdate
+    static void PreUpdate(const fw::UpdateInfo& info);
     // 2.0.0's symbols name it (a const member that reads no ChallengeBattleManager). What it does: BattleGlobal's pad_5c50
     // (BattleCharacter::DropItem).
     float GetDropEtherCubeRate() const;

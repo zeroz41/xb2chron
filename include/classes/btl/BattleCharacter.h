@@ -112,6 +112,8 @@ public:
     // whether the two characters' heights (from m_pos.y up by their parameters' pad_30) overlap
     bool IsOverlapVert(const BattleCharacter* other) const;
     bool IsControlCharacter() const;
+    // the original's symbol names it; BattleManager::QuestTaskProc passes a quest task's ReduceEnemyHP / ReducePCHP
+    void SetLimitHP(int hp);
     bool IsControlCharacterGroup() const;
     void SetWeaponType(int type);
     void NotifyDirectDamage(const DIRECT_DAMAGE_DATA& data);
