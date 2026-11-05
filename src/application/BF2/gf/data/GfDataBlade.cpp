@@ -2645,6 +2645,101 @@ const char* GfDataNpc::getName(unsigned int npc) {
     return nullptr;
 }
 
+bool GfDataItem::getName(unsigned char*& bdat, unsigned int& id, unsigned int item) {
+    GfBdatItem* data = GfBdatItem::get();
+    bdat = nullptr;
+    id = 0;
+    switch (getItemType(item)) {
+    case 1:
+        id = data->getPcWpnChipName(item);
+        bdat = GfBdatMsg::getFpPcWpnChip();
+        break;
+    default:
+        break;
+    case 2:
+        id = data->getPcEquipName(item);
+        bdat = GfBdatMsg::getFpPcEquip();
+        break;
+    case 3:
+        id = data->getEquipOrbName(item);
+        bdat = GfBdatMsg::getFpOrb();
+        break;
+    case 4:
+        id = data->getPcWpnName(item);
+        bdat = GfBdatMsg::getFpPcWpn();
+        break;
+    case 5:
+        id = data->getSalvageName(item);
+        bdat = GfBdatMsg::getFpSalvage();
+        break;
+    case 6:
+        if (isValidPreciousIra(item)) {
+            id = data->getPreciousIraName(item);
+        } else {
+            id = data->getPreciousName(item);
+        }
+        bdat = GfBdatMsg::getFpPrecious();
+        break;
+    case 7:
+        id = data->getCollectionListName(item);
+        bdat = GfBdatMsg::getFpCollection();
+        break;
+    case 8:
+        id = data->getTresureName(item);
+        bdat = GfBdatMsg::getFpTresure();
+        break;
+    case 9:
+        id = data->getEmptyOrbName(item);
+        bdat = GfBdatMsg::getFpOrb();
+        break;
+    case 10:
+        id = data->getFavoriteName(item);
+        bdat = GfBdatMsg::getFpFavorite();
+        break;
+    case 11:
+        id = data->getCrystalListName(item);
+        bdat = GfBdatMsg::getFpCrystal();
+        break;
+    case 12:
+        id = data->getBoosterName(item);
+        bdat = GfBdatMsg::getFpBooster();
+        break;
+    case 13:
+        id = 0;
+        bdat = nullptr;
+        break;
+    case 14:
+        id = data->getInfoName(item);
+        bdat = GfBdatMsg::getFpInfo();
+        break;
+    case 15:
+        id = data->getEventName(item);
+        bdat = GfBdatMsg::getFpEvent();
+        break;
+    case 16:
+        id = GfBdatItem::get()->getITM_HanaRoleName(item);
+        bdat = GfBdatMsg::getFpBtlHanaRole();
+        break;
+    case 17:
+        id = GfBdatItem::get()->getITM_HanaAtrName(item);
+        bdat = GfBdatMsg::getFpBtlHanaAtr();
+        break;
+    case 18:
+        id = GfBdatItem::get()->getITM_HanaArtsEnhName(item);
+        bdat = GfBdatMsg::getFpOrb();
+        break;
+    case 19:
+        id = GfBdatItem::get()->getITM_HanaNArtsSetName(item);
+        bdat = GfBdatMsg::getFpBtlHanaNArts();
+        break;
+    case 20:
+        id = GfBdatItem::get()->getITM_HanaAssistName(item);
+        bdat = GfBdatMsg::getFpOrb();
+        break;
+    }
+    return id != 0 && bdat != nullptr;
+}
+
 const char* GfDataItem::getName(unsigned int item) {
     unsigned char* bdat;
     unsigned int id;
@@ -4046,6 +4141,68 @@ bool GfDataItem::isMusubiCookItem(unsigned int item) {
     return false;
 }
 
+void GfDataItem::addCraftFlag(unsigned int item) {
+    static const unsigned int s_items[] = {108, 109, 110, 111, 112, 113};
+    for (int i = 0; i < 6; i++) {
+        if (s_items[i] == item) {
+            int flag = 2166 + i;
+            unsigned int count = GfGameFlag::getLocal(8, flag);
+            if (count >= 255) {
+                return;
+            }
+            GfGameFlag::setLocal(8, flag, count + 1);
+            return;
+        }
+    }
+}
+
+void GfDataItem::setCraftFlag(unsigned int item, bool set) {
+    // each group's first item id (lbl_71009BA398; the name is inferred)
+    static const unsigned short s_groupTop[] = {739, 750, 765, 780, 795, 805, 820, 829, 839, 854};
+    if (item < 739 || item >= 854) {
+        return;
+    }
+    unsigned int group;
+    if (item < 750) {
+        group = 0;
+    } else if (item < 765) {
+        group = 1;
+    } else if (item < 780) {
+        group = 2;
+    } else if (item < 795) {
+        group = 3;
+    } else if (item < 805) {
+        group = 4;
+    } else if (item < 820) {
+        group = 5;
+    } else if (item < 829) {
+        group = 6;
+    } else if (item < 839) {
+        group = 7;
+    } else if (item < 854) {
+        group = 8;
+    } else {
+        return;
+    }
+    int flag = item + group * 32 + 56736 - s_groupTop[group];
+    if (flag == 0) {
+        return;
+    }
+    if ((GfGameFlag::getLocal(1, flag) != 0) != set) {
+        GfGameFlag::setLocal(1, flag, set);
+    }
+    for (int i = 0; i < 9; i++) {
+        unsigned int count = 0;
+        for (int j = 0; j < 32; j++) {
+            if (GfGameFlag::getLocal(1, 56736 + i * 32 + j) != 0) {
+                count++;
+            }
+        }
+        unsigned int value = count > 255 ? 255 : count;
+        GfGameFlag::setLocal(8, 4275 + i, value);
+    }
+}
+
 
 bool GfDataBlade::isHomuriNameHikari() {
     return GfGameFlag::getLocal(GfDataManager::getDataGame()->m_gameFlag, 1, 0x89FB) != 0;
@@ -4082,10 +4239,307 @@ unsigned int GfDataItem::getItemType(unsigned int item) {
     return getItemType(type, index, item) ? type : 0;
 }
 
+bool GfDataItem::getCaption(unsigned char*& bdat, unsigned int& id, unsigned int item) {
+    GfBdatItem* data = GfBdatItem::get();
+    switch (getItemType(item)) {
+    case 5:
+        id = data->getSalvageCaption(item);
+        bdat = GfBdatMsg::getFpSalvage();
+        break;
+    case 6:
+        if (isValidPreciousIra(item)) {
+            id = data->getPreciousIraCaption(item);
+        } else {
+            id = data->getPreciousCaption(item);
+        }
+        bdat = GfBdatMsg::getFpPrecious();
+        return true;
+    case 7:
+        id = data->getCollectionListCaption(item);
+        bdat = GfBdatMsg::getFpCollection();
+        break;
+    case 8:
+        id = data->getTresureCaption(item);
+        bdat = GfBdatMsg::getFpTresure();
+        break;
+    case 10:
+        id = data->getFavoriteCaption(item);
+        bdat = GfBdatMsg::getFpFavorite();
+        break;
+    case 12:
+        id = data->getBoosterCaption(item);
+        bdat = GfBdatMsg::getFpBooster();
+        break;
+    case 14:
+        id = data->getInfoCaption(item);
+        bdat = GfBdatMsg::getFpInfo();
+        return true;
+    case 15:
+        id = data->getEventCaption(item);
+        bdat = GfBdatMsg::getFpEvent();
+        return true;
+    }
+    return id != 0 && bdat != nullptr;
+}
+
+bool GfDataItem::getItemType(ItemType::Type& type, unsigned int& index, unsigned int item) {
+    if (item == 0) {
+        return false;
+    }
+    GfBdatItem* data = GfBdatItem::get();
+    if (item < data->getPcEquipEnd()) {
+        unsigned int armor = GfBdatItem::get()->getPcEquipArmorType(item);
+        if (armor == 0) {
+            type = static_cast<ItemType::Type>(2);
+        } else if (armor == 2) {
+            type = static_cast<ItemType::Type>(2);
+        }
+        index = item - data->getPcEquipStart();
+    } else if (item < data->getPcWpnEnd()) {
+        type = static_cast<ItemType::Type>(4);
+        index = item - data->getPcWpnStart();
+    } else if (item < data->getPcWpnChipEnd()) {
+        type = static_cast<ItemType::Type>(1);
+        index = item - data->getPcWpnChipStart();
+    } else if (item < data->getEmptyOrbEnd()) {
+        type = static_cast<ItemType::Type>(9);
+        index = item - data->getEmptyOrbStart();
+    } else if (item < data->getEquipOrbEnd()) {
+        type = static_cast<ItemType::Type>(3);
+        index = item - data->getEquipOrbStart();
+    } else if (item < data->getSalvageEnd()) {
+        type = static_cast<ItemType::Type>(5);
+        index = item - data->getSalvageStart();
+    } else if (item < data->getPreciousIraEnd()) {
+        type = static_cast<ItemType::Type>(6);
+        index = item - data->getPreciousStart();
+    } else if (item < data->getInfoEnd()) {
+        type = static_cast<ItemType::Type>(14);
+        index = item - data->getInfoStart();
+    } else if (item < data->getEventEnd()) {
+        type = static_cast<ItemType::Type>(15);
+        index = item - data->getEventStart();
+    } else if (item < data->getCollectionListEnd()) {
+        type = static_cast<ItemType::Type>(7);
+        index = item - data->getCollectionListStart();
+    } else if (item < data->getTresureEnd()) {
+        type = static_cast<ItemType::Type>(8);
+        index = item - data->getTresureStart();
+    } else if (item < data->getFavoriteEnd()) {
+        type = static_cast<ItemType::Type>(10);
+        index = item - data->getFavoriteStart();
+    } else if (item < data->getCrystalListEnd()) {
+        type = static_cast<ItemType::Type>(11);
+        index = item - data->getCrystalListStart();
+    } else if (item < data->getBoosterEnd()) {
+        type = static_cast<ItemType::Type>(12);
+        index = item - data->getBoosterStart();
+    } else if (item < data->getHealPotEnd()) {
+        type = static_cast<ItemType::Type>(13);
+        index = item - data->getHealPotStart();
+    } else if (item < data->getITM_HanaRoleEnd()) {
+        type = static_cast<ItemType::Type>(16);
+        index = item - data->getITM_HanaRoleStart();
+    } else if (item < data->getITM_HanaAtrEnd()) {
+        type = static_cast<ItemType::Type>(17);
+        index = item - data->getITM_HanaAtrStart();
+    } else if (item < data->getITM_HanaArtsEnhEnd()) {
+        type = static_cast<ItemType::Type>(18);
+        index = item - data->getITM_HanaArtsEnhStart();
+    } else if (item < data->getITM_HanaNArtsSetEnd()) {
+        type = static_cast<ItemType::Type>(19);
+        index = item - data->getITM_HanaNArtsSetStart();
+    } else if (item < data->getITM_HanaAssistEnd()) {
+        type = static_cast<ItemType::Type>(20);
+        index = item - data->getITM_HanaAssistStart();
+    } else {
+        return false;
+    }
+    index++;
+    return true;
+}
+
+bool GfDataItem::isEnableSell(unsigned int item) {
+    ItemType::Type type;
+    unsigned int index;
+    int kind = getItemType(type, index, item) ? static_cast<int>(type) : 0;
+    GfBdatItem* data = GfBdatItem::get();
+    bool enable = true;
+    switch (kind) {
+    case 1:
+        enable = !data->isPcWpnChipFlagNoSell(item);
+        break;
+    case 2:
+        enable = !data->isPcEquipFlagNoSell(item);
+        break;
+    case 3:
+        enable = !data->isEquipOrbFlagNoSell(item);
+        break;
+    default:
+    case 4:
+    case 6:
+        enable = false;
+        break;
+    case 5:
+        enable = data->getSalvageNoSell(item) == 0;
+        break;
+    case 7:
+    case 8:
+    case 10:
+    case 12:
+        break;
+    case 9:
+        enable = !data->isEmptyOrbFlagNoSell(item);
+        break;
+    case 11:
+        enable = data->getCrystalListNoMultiple(item) == 0;
+        break;
+    }
+    return enable;
+}
+
 unsigned int GfDataItem::getItemStartID(ItemType::Type type) {
     unsigned int begin;
     unsigned int end;
     return getItemBdatCount(begin, end, type) ? begin : 0;
+}
+
+bool GfDataItem::getItemBdatCount(unsigned int& begin, unsigned int& end, ItemType::Type type) {
+    begin = 0;
+    end = 0;
+    GfBdatItem* data = GfBdatItem::get();
+    switch (static_cast<int>(type)) {
+    case 1:
+        end = data->getPcWpnChipEnd();
+        begin = data->getPcWpnChipStart();
+        break;
+    case 2:
+        end = data->getPcEquipEnd();
+        begin = data->getPcEquipStart();
+        break;
+    case 3:
+        end = data->getEquipOrbEnd();
+        begin = data->getEquipOrbStart();
+        break;
+    case 5:
+        end = data->getSalvageEnd();
+        begin = data->getSalvageStart();
+        break;
+    case 6:
+        end = data->getPreciousIraEnd();
+        begin = data->getPreciousStart();
+        break;
+    case 7:
+        end = data->getCollectionListEnd();
+        begin = data->getCollectionListStart();
+        break;
+    case 8:
+        end = data->getTresureEnd();
+        begin = data->getTresureStart();
+        break;
+    case 9:
+        end = data->getEmptyOrbEnd();
+        begin = data->getEmptyOrbStart();
+        break;
+    case 10:
+        end = data->getFavoriteEnd();
+        begin = data->getFavoriteStart();
+        break;
+    case 11:
+        end = data->getCrystalListEnd();
+        begin = data->getCrystalListStart();
+        break;
+    case 12:
+        end = data->getBoosterEnd();
+        begin = data->getBoosterStart();
+        break;
+    case 14:
+        end = data->getInfoEnd();
+        begin = data->getInfoStart();
+        break;
+    case 15:
+        end = data->getEventEnd();
+        begin = data->getEventStart();
+        break;
+    case 16:
+        end = data->getITM_HanaRoleEnd();
+        begin = data->getITM_HanaRoleStart();
+        break;
+    case 17:
+        end = data->getITM_HanaAtrEnd();
+        begin = data->getITM_HanaAtrStart();
+        break;
+    case 18:
+        end = data->getITM_HanaArtsEnhEnd();
+        begin = data->getITM_HanaArtsEnhStart();
+        break;
+    case 19:
+        end = data->getITM_HanaNArtsSetEnd();
+        begin = data->getITM_HanaNArtsSetStart();
+        break;
+    case 20:
+        end = data->getITM_HanaAssistEnd();
+        begin = data->getITM_HanaAssistStart();
+        break;
+    default:
+        return false;
+    }
+    return true;
+}
+
+unsigned int GfDataItem::getPrice(unsigned int item) {
+    ItemType::Type type;
+    unsigned int index;
+    int kind = getItemType(type, index, item) ? static_cast<int>(type) : 0;
+    GfBdatItem* data = GfBdatItem::get();
+    unsigned int price = 0;
+    switch (kind) {
+    case 1:
+        if (GfGameFlag::getLocal(GfDataManager::getDataGame()->m_gameFlag, 1, 55392) != 0) {
+            price = data->getPcWpnChipPriceIra(item);
+        } else {
+            price = data->getPcWpnChipPrice(item);
+        }
+        break;
+    case 2:
+        price = data->getPcEquipPrice(item);
+        break;
+    case 3:
+        price = data->getEquipOrbPrice(item);
+        break;
+    case 5:
+        price = data->getSalvagePrice(item);
+        break;
+    case 6:
+        if (isValidPreciousIra(item)) {
+            price = data->getPreciousIraPrice(item);
+        } else {
+            price = data->getPreciousPrice(item);
+        }
+        break;
+    case 7:
+        price = data->getCollectionListPrice(item);
+        break;
+    case 8:
+        price = data->getTresurePrice(item);
+        break;
+    case 9:
+        price = data->getEmptyOrbPrice(item);
+        break;
+    case 10:
+        price = data->getFavoritePrice(item);
+        break;
+    case 11:
+        price = data->getCrystalListPrice(item);
+        break;
+    case 12:
+        price = data->getBoosterPrice(item);
+        break;
+    case 14:
+        price = data->getInfoPrice(item);
+        break;
+    }
+    return price;
 }
 
 float GfDataItem::getFavoriteItemTime(unsigned int item) {

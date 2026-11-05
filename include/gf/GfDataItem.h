@@ -30,6 +30,11 @@ public:
     static bool isTukiItem(unsigned int item);
     static bool isMusubiCookItem(unsigned int item);
     static bool isYuohCookItem(unsigned int item);
+    // items 108-113: local 8-bit flags 2166-2171 count up, capped at 255 (GfGameUtilShop::execChangeItem)
+    static void addCraftFlag(unsigned int item);
+    // items 739-853 (nine groups): sets the item's 1-bit local flag from 56736 on, then stores each group's count
+    // of set flags (capped at 255) in the 8-bit local flags 4275-4283
+    static void setCraftFlag(unsigned int item, bool set);
     static unsigned int getItemStartID(ItemType::Type type);  // the type's first BDAT row, 0 for none
     static float getFavoriteItemTime(unsigned int item);  // GfBdatItem::getFavoriteTime in seconds (x 60)
     // the item type of an item category: 11 below 4, 7 below 12, 10 below 24, 8 below 28, 6 below 30, else 0
