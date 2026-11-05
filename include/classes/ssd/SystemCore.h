@@ -119,7 +119,9 @@ public:
     List<VoiceHandle> playVoices_;  // 0x3A0: GetNumPlaySound counts it
     List<VoiceHandle> freeVoices_;  // 0x3C8: FreeVoiceHandle links a voice back in
     VoiceHandle* voices_;  // 0x3F0: Init allocates them
-    unsigned char pad_3f8[0x20];
+    unsigned char pad_3f8[0x18];
+    int pad_410;  // VoiceHandle::UpdateAudioInternal takes a released channel's pad_b4 off it
+    unsigned char pad_414[0x4];
     List<SoundBank> banks_;  // 0x418: AddBank / RemoveBank
     List<SoundActor> actors_;  // 0x440: ConnectActor / DisconnectActor
     Array<SoundCategory> categories_;  // 0x468: GetCategory (the first one is the default)

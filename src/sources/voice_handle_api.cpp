@@ -115,6 +115,45 @@ void VoiceHandle::UpdateAudioFrame(float frameTime) {
     }
 }
 
+void VoiceHandle::UpdateAudioInternal(float frameTime) {
+    switch (state_) {
+    case 6:
+        state_ = 8;
+        // falls through
+    case 8:
+        if (pad_31) {
+            AcquireBuffer();
+            if (nn::audio::IsVoiceValid(&channels_[0].voice)) {
+                UpdateOutputParam(0.0f);
+            }
+            if (!pad_33) {
+                for (int i = 0; i < channelCount_; i++) {
+                    if (nn::audio::IsVoiceValid(&channels_[i].voice)) {
+                        nn::audio::SetVoicePlayState(&channels_[i].voice, nn::audio::VoiceType::PlayState_Started);
+                    }
+                }
+            }
+        }
+        break;
+    }
+    pad_3d = true;
+    UpdateAudioVoice(frameTime);
+    if (state_ == 4) {
+        allocated_ = 0;
+        state_ = 3;
+        if (nn::audio::IsVoiceValid(&channels_[0].voice)) {
+            for (int i = 0; i < channelCount_; i++) {
+                if (nn::audio::IsVoiceValid(&channels_[i].voice)) {
+                    nn::audio::ReleaseVoiceSlot(&platform_->config_, &channels_[i].voice);
+                    SystemCore* core = static_cast<SystemCore*>(SoundCore::instance_);
+                    core->pad_410 -= channels_[i].pad_b4;
+                    channels_[i].pad_b4 = 0;
+                }
+            }
+        }
+    }
+}
+
 void VoiceHandle::DeleteStream() {
     if (stream_ != nullptr) {
         stream_->QuitStream();

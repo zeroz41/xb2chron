@@ -9,6 +9,7 @@
 
 namespace ssd { class SoundEntry; }
 namespace ssd { class StreamController; }
+namespace ssd { class SystemCorePlatform; }
 namespace ssd { class WaveSource; }
 
 namespace ssd {
@@ -27,7 +28,7 @@ public:
         void* pad_a0;
         void* pad_a8;
         int pad_b0;
-        unsigned char pad_b4[0x4];
+        int pad_b4;  // UpdateAudioInternal gives it back to SystemCore's pad_410 when it releases the voice
     };
 
     VoiceHandle();
@@ -77,7 +78,8 @@ public:
     bool pad_3b;  // FreeVoice clears it
     bool pad_3c;
     bool pad_3d;  // the constructor and Stop set it
-    unsigned char pad_3e[0x2];
+    bool pad_3e;  // UpdateAudioVoice: the renderer still holds buffers
+    unsigned char pad_3f;
     bool endOfStream_;  // 0x40: StreamingBufferProcess sets it once no buffer is queued
     int state_;  // 0x44: SoundHandle::GetState: 8 once ready to start; 5, 6 and 7 while preparing
     int pad_48;
@@ -92,7 +94,7 @@ public:
     int queuedBuffers_;  // 0x88: StreamingBufferProcess counts released buffers off it
     int releasedBuffers_;  // 0x8C: StreamingBufferProcess counts them; AddStreamingBuffer refills them
     Channel channels_[8];  // 0x90
-    unsigned char pad_650[0x8];
+    SystemCorePlatform* platform_;  // 0x650: AcquireBuffer's SoundCore::instance_ (its renderer config)
     void* audioData_;  // 0x658: SystemCorePlatform::AllocAudioDataBuffer's (Quit frees it)
     int pad_660;
     unsigned char pad_664[0x4];

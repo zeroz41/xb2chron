@@ -138,10 +138,18 @@ struct WaveBuffer {
     unsigned long contextSize;
 };
 struct VoiceType {
+    // SetVoicePlayState's states (VoiceHandle::UpdateAudioInternal starts its channels with 0)
+    enum PlayState { PlayState_Started, PlayState_Stopped, PlayState_Paused };
+
     void* _pVoiceInfo;
 };
 // the oldest buffer the renderer has finished with, or null
 const WaveBuffer* GetReleasedWaveBuffer(VoiceType* voice);
+bool IsVoiceValid(const VoiceType* voice);
+long GetVoicePlayedSampleCount(const VoiceType* voice);
+int GetWaveBufferCount(const VoiceType* voice);
+void SetVoicePlayState(VoiceType* voice, VoiceType::PlayState state);
+void ReleaseVoiceSlot(AudioRendererConfig* config, VoiceType* voice);
 
 }}  // namespace nn::audio
 
