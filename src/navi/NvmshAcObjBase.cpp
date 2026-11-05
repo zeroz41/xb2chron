@@ -219,6 +219,43 @@ int NvmshAcObjBase::seachWideAreaNaviMesh(_NaviTempColiResl& result, _NaviCalcRe
     return 6;
 }
 
+int NvmshAcObjBase::findPosRoot(_NaviCalcResTbl* tbl, _NaviCalcResInfo* info, const _NaviTempColiResl& result) {
+    m_route50 = 0;
+    m_route52 = 0;
+    m_flag5E = 0;
+    m_route54 = 0;
+    m_route5A = 0;
+    m_route5C = -1;
+    if (result.m_mesh[0].m_id == result.m_mesh[1].m_id) {
+        return 1;
+    }
+    NvmshAStarResult aStar;
+    aStar.m_startPos = result.m_pos[0];
+    aStar.m_goalPos = result.m_pos[1];
+    aStar.m_start = result.m_mesh[0];
+    aStar.m_goal = result.m_mesh[1];
+    aStar.m_tbl = tbl;
+    aStar.m_info = info;
+    aStar.m_route = m_workCur;
+    aStar.m_routeMax = (m_workSize - m_route56 * sizeof(short)) / sizeof(_NaviStMeshId);
+    aStar.m_cells = m_readCells;
+    NvmshUtilSeach seach;
+    if (m_status & 0x20000) {
+        seach.m_option0 = true;
+    }
+    if (m_status & 0x40000) {
+        seach.m_option1 = true;
+    }
+    if (!seach.seachAStar(&aStar)) {
+        return 4;
+    }
+    m_route52 = 0;
+    m_route50 = aStar.m_routeNum;
+    m_flag5E = aStar.m_count;
+    m_route54 = 0;
+    return 1;
+}
+
 // to length 1, or zero when shorter than 1e-6 (Vec3::normalize without its isZero test; the name is not the
 // original's)
 static inline void normalizeVec(mm::Vec3& vec) {
@@ -263,6 +300,45 @@ void NvmshAcObjBase::calcTargetVecLine(const mm::Vec3& from, const mm::Vec3& to)
         normalizeVec(vec);
     }
     setMoveVec(vec);
+}
+
+void NvmshAcObjBase::createPosRootReadInfo(const _NaviCalcResTbl* tbl) {
+    const NaviCalcGrid* info = tbl->m_info;
+    unsigned int bits = 0;
+    const _NaviStMeshId* id = &m_workCur[m_route52];
+    for (int i = m_route52; i < m_route50; i++, id++) {
+        NaviCalcGrid::Cell base = info->getBase();
+        bits |= 1 << ((id->m_cellX - base.x) + (id->m_cellY - base.y) * 5);
+    }
+    int num = 0;
+    for (int y = 0; y < 5; y++) {
+        for (int x = 0; x < 5; x++) {
+            if (bits & (1 << (y * 5 + x))) {
+                m_readCells[num].x = info->m_base.x + x;
+                m_readCells[num].y = info->m_base.y + y;
+                num++;
+            }
+        }
+    }
+    m_flag5E = num;
+}
+
+void NvmshAcObjBase::calcWayPointOptimization(_NaviCalcResTbl* tbl) {
+    const _NvMhWayPoint* wayPoint = reinterpret_cast<const _NvMhWayPoint*>(tbl->m_treeBlocks[1]) + m_route5A;
+    // every field of an end is compared with the route mesh's cell x
+    const _NaviStMeshId* route = m_workCur;
+    if (wayPoint->m_ends[0].m_cellX == route[0].m_cellX && wayPoint->m_ends[0].m_cellY == route[0].m_cellX &&
+        wayPoint->m_ends[0].m_mesh == route[0].m_cellX) {
+        if (!(wayPoint->m_ends[1].m_cellX == route[1].m_cellX && wayPoint->m_ends[1].m_cellY == route[1].m_cellX &&
+              wayPoint->m_ends[1].m_mesh == route[1].m_cellX)) {
+            return;
+        }
+    } else if (!(wayPoint->m_ends[0].m_cellX == route[1].m_cellX && wayPoint->m_ends[0].m_cellY == route[1].m_cellX &&
+                 wayPoint->m_ends[0].m_mesh == route[1].m_cellX)) {
+        return;
+    }
+    m_route52 = 1;
+    createPosRootReadInfo(tbl);
 }
 
 void NvmshAcObjBaseDef::stateUpdate() {

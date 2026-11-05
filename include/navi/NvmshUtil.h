@@ -3,6 +3,7 @@
 
 #include "mm/Vec3.h"
 #include "navi/NvmshResData.h"
+#include "classes/navi/NvmshAcObjBase.h"
 
 namespace navi { class NvmshConectResult; }
 
@@ -176,8 +177,19 @@ public:
 // original's)
 class NvmshAStarResult {
 public:
-    unsigned char pad_0[0x48];
-    int m_count;
+    // the layout is NvmshAcObjBase::findPosRoot's setup and read back (the member names are not the original's)
+    mm::Vec3 m_startPos;
+    mm::Vec3 m_goalPos;
+    _NaviCalcResTbl* m_tbl;
+    _NaviCalcResInfo* m_info;
+    _NaviStMeshId* m_route;  // the route's meshes (NvmshAcObjBase's route buffer)
+    int m_routeNum;  // the route's length (read back into NvmshAcObjBase::m_route50)
+    int m_routeMax;  // the room in m_route
+    NvmshAcObjBase::ReadCell* m_cells;  // the cells the route crosses (NvmshAcObjBase::m_readCells)
+    int m_count;  // m_cells' count
+    _NaviStMeshId m_start;
+    _NaviStMeshId m_goal;
+    unsigned char pad_54[0xC];
 };
 
 // A* searches over the navigation mesh (no table, made on the stack)
@@ -188,7 +200,11 @@ public:
     bool calcAStar();
 
     NvmshAStarResult* m_result;
-    short m_count;  // cleared by the constructor (the name is not the original's)
+    // NvmshAcObjBase::findPosRoot sets them from its status bits 17 and 18; the constructor clears them (the names
+    // are not the original's)
+    bool m_option0;
+    bool m_option1;
+    unsigned char pad_A[0x126];  // the object is 0x130 bytes (findPosRoot's stack)
 };
 
 }  // namespace navi

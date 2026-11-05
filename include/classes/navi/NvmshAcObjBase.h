@@ -100,6 +100,8 @@ public:
     // one search (0: from m_beginPos etc., 1: from m_endPos etc.)
     bool seachNaviMesh(NvmshColiResult& result, int idx);
     bool stockWayPointMesh(_NaviTempColiResl& result, _NaviCalcResTbl* tbl);
+    // the route from the start mesh to the end mesh (NvmshUtilSeach's A* search): 1, or 4 when there is none
+    int findPosRoot(_NaviCalcResTbl* tbl, _NaviCalcResInfo* info, const _NaviTempColiResl& result);
     // the move vector toward vec: taken as it is when it turns less than about 28.8 degrees in the xz plane, else a
     // quarter of it is added to the current one, normalized (callers: calcTargetVecLine, calcTargetVecColi)
     void setMoveVec(const mm::Vec3& vec);
@@ -114,10 +116,13 @@ public:
     // mesh's navi's block 6); with checkObj a mesh outside the 5x5 cells or of a missing navi uses the target cell's
     // navi (callers: checkConectRoot, NvmshAccUtil::checkNaviFindPos); the parameter names are not the original's
     static unsigned short getGblConectId(const _NaviCalcResTbl* tbl, _NaviStMeshId id, bool checkObj, bool wide);
+    // m_readCells (m_flag5E of them): the 5x5 cells the route from m_route52 to m_route50 crosses, in cell order
+    void createPosRootReadInfo(const _NaviCalcResTbl* tbl);
+    void calcWayPointOptimization(_NaviCalcResTbl* tbl);
 
     // the work buffer NvmshAcMan's constructor hands each object (a slice of the resource's); the name is not the
     // original's
-    void setWork(int* work, int size) {
+    void setWork(_NaviStMeshId* work, int size) {
         m_work = work;
         m_workSize = size;
         m_workCur = work;
@@ -136,11 +141,12 @@ public:
     NvmshAcObjBase* m_next;
     unsigned int m_status;  // status bits stateUpdate sets and masks; the name is not the original's
     unsigned char pad_2C[0x4];
-    int* m_work;
+    _NaviStMeshId* m_work;
     int m_workSize;
     unsigned char pad_3C[0x4];
-    int* m_workCur;
-    int* m_workEnd;
+    // the route's meshes (m_route52 the current one, m_route50 the count; createPosRootReadInfo, findPosRoot)
+    _NaviStMeshId* m_workCur;
+    _NaviStMeshId* m_workEnd;
     // The field names follow the accessors that read and write them; the others are not the original's.
     short m_route50;
     short m_route52;
@@ -158,7 +164,13 @@ public:
     bool m_isMeshNum;  // setMeshNum: whether the number it was given is positive
     // bit 0: NvmshAcMan::releaseObj asks for the object's release; the name is not the original's
     unsigned char m_request;
-    unsigned char pad_66[0x4A];
+    // a grid cell to read (the name is not the original's)
+    struct ReadCell {
+        unsigned char x;
+        unsigned char y;
+    };
+    ReadCell m_readCells[25];  // createPosRootReadInfo's cells (m_flag5E of them); the name is not the original's
+    unsigned char pad_98[0x18];
     mm::Vec3 m_beginPos;  // setBeginPos
     float m_beginHeight[2];  // setBeginHeight
     float m_beginRadius;  // setBeginRadius

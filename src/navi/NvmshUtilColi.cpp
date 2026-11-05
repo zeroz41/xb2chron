@@ -501,7 +501,7 @@ int NvmshUtilConect::stockFastResult(unsigned short* route, int node, int num) {
 }
 
 
-NvmshUtilSeach::NvmshUtilSeach() : m_count(0) {}
+NvmshUtilSeach::NvmshUtilSeach() : m_option0(false), m_option1(false) {}
 
 bool NvmshUtilSeach::seachAStar(NvmshAStarResult* result) {
     m_result = result;

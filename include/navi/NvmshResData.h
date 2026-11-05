@@ -394,9 +394,27 @@ struct _NvMhMeshTree {
 // a mesh of a navi in the 5x5 cells (the type name is the mangled signatures', the member names are not the
 // original's): the mesh index and its navi's grid cell (read as one halfword)
 struct _NaviStMeshId {
-    unsigned short m_mesh;
-    unsigned short m_cellX : 8;
-    unsigned short m_cellY : 8;
+    union {
+        struct {
+            unsigned short m_mesh;
+            unsigned short m_cellX : 8;
+            unsigned short m_cellY : 8;
+        };
+        // the three as one word (NvmshAcObjBase::findPosRoot compares two ids as one word; the name is not the
+        // original's)
+        unsigned int m_id;
+    };
+};
+
+// a way point between two meshes (8 bytes, _NaviCalcResTbl::m_treeBlocks[1]; the type and member names are not the
+// original's): its two ends' meshes, cell first
+struct _NvMhWayPoint {
+    struct End {
+        unsigned char m_cellX;
+        unsigned char m_cellY;
+        unsigned short m_mesh;
+    };
+    End m_ends[2];
 };
 
 }  // namespace navi
