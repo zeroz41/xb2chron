@@ -235,7 +235,7 @@ GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitPara
 }
 
 GfObjSetupMapLodAnim::GfObjSetupMapLodAnim(const GfInitParamMapLodAnim& param)
-    : GfObjSetup(2, param), pad_6c(false), pad_6d(false) {}
+    : GfObjSetup(2, param), m_lodId(0) {}
 
 #line 214
 GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamEnemy& param) {

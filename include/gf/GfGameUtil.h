@@ -142,8 +142,9 @@ public:
     // the field skill check of an FSID row for an object of name message nameMsId: whether the party passes it
     // (AFieldSeq::seqCheckFs, GfFieldTbox::seqCheckFs)
     static bool evalSumFs(int fsId, unsigned int nameMsId);
-    // the name message id of the object behind handle, into out
-    static void getNameMsId(unsigned int& out, gf::GF_OBJ_HANDLE* handle);
+    // the name message id of the object behind handle, into out; whether it has one (GfComBehaviorGmk::createMenuObj
+    // tests the answer)
+    static bool getNameMsId(unsigned int& out, gf::GF_OBJ_HANDLE* handle);
     static bool isPlayVoice(gf::GF_OBJ_HANDLE* handle);
     static int getObjAttribute(gf::GF_OBJ_HANDLE* handle);
     // the object takes field damage (GfGameScene::setDamageCharacter)

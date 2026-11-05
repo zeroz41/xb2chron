@@ -14,8 +14,9 @@ public:
     static mm::mtl::RTTI m_rtti;
     GfObjSetupMapLodAnim(const GfInitParamMapLodAnim& param);
 
-    bool pad_6c;
-    bool pad_6d;
+    // its LOD id: GfComBehaviorGmk::procMsgPcGetElvLift collects the objects whose id is an elevator's lift LOD's
+    // (the name is not the original's)
+    unsigned short m_lodId;
 };
 }  // namespace gf
 

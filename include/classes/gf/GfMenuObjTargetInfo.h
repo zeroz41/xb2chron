@@ -55,6 +55,10 @@ struct GfMenuObjTargetInfo::OpenSymbolParam {
 // what openOther shows the other menu with, or openSymbol when m_symbol is set (the field names are not the
 // original's)
 struct GfMenuObjTargetInfo::OpenOtherParam {
+    // inline: GfComBehaviorGmk::createMenuObj's zeroing stores are its (all but m_obj and m_nameBdat)
+    OpenOtherParam()
+        : m_offset{mm::Vec3(0.0f, 0.0f, 0.0f), nullptr}, m_nameId(0), m_symbol(false), m_shopId(0),
+          m_pointBdat(nullptr), m_pointId(0), m_collect(0) {}
     GF_OBJ_HANDLE* m_obj;
     MenuOffset m_offset;
     unsigned char* m_nameBdat;  // TXT_other_name's text, when both are set
