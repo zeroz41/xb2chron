@@ -35,6 +35,13 @@ public:
         z = z + v.z;
         return *this;
     }
+    // likewise (CalcUtil::addForceSpring loads, subtracts and stores each component in turn)
+    Vec3& operator-=(const Vec3& v) {
+        x = x - v.x;
+        y = y - v.y;
+        z = z - v.z;
+        return *this;
+    }
     Vec3 operator+(const Vec3& v) const { return Vec3(x + v.x, y + v.y, z + v.z); }
     Vec3 operator-(const Vec3& v) const { return Vec3(x - v.x, y - v.y, z - v.z); }
     Vec3 operator*(float s) const { return Vec3(x * s, y * s, z * s); }

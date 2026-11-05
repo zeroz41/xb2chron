@@ -27,6 +27,18 @@ struct ResStickConstraint {
     ResConeLimit m_cone;
 };
 
+// a spring constraint of a solver resource (0x20 bytes, the stride addForceSpring and applySpringConstraints walk):
+// its two nodes' constraint, how far the nodes may stretch past its length (addForceSpring also scales the force
+// by it) and how far they may close in (applySpringConstraints clamps the distance's change to
+// [-m_shrink, m_stretch]). The names are not the original's.
+struct ResSpringConstraint {
+    ResConstraint m_constraint;
+    float m_stretch;
+    unsigned char pad_14[0x4];
+    float m_shrink;
+    unsigned char pad_1c[0x4];
+};
+
 // a hinge constraint of a solver resource (0x30 bytes, the stride applyHingeConstraints walks), its two nodes'
 // constraint first (applyHingeConstraints passes it to limitDistance)
 struct ResHingeConstraint {
@@ -38,12 +50,17 @@ struct ResHingeConstraint {
 // jobs read is named, and the name is not the original's: bit 0 of m_flags set means the node takes no
 // collision response (addDetectSphereJob gives it no DetectInfo).
 struct ResNode {
-    unsigned char pad_0[0x18];
+    unsigned char pad_0[0x8];
+    const char* m_boneName;  // CalcUtil::initNodes finds the node's bone by it (the name is not the original's)
+    // CalcUtil::addForceTransform's rates: of the pull toward the animated position, and of the pull toward the
+    // node's local position under its parent (the names are not the original's)
+    float m_animStiffness;
+    float m_localStiffness;
     float m_damping;  // integrate keeps (1 - m_damping) of the node's velocity (the name is not the original's)
     float m_windRate;  // fw::WindForceCalculator::calcForce scales the wind by it (the name is not the original's)
     float m_mass;  // applyAccel divides the node's force by it (the name is not the original's)
-    unsigned char m_flags;
-    unsigned char pad_25[0x3];
+    unsigned short m_flags;  // read as 16 bits (CalcUtil::applySpringConstraints' ldrh)
+    unsigned char pad_26[0x2];
 
     bool isFixed() const { return m_flags & 1; }
 };

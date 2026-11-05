@@ -17,8 +17,11 @@
 // anmlib's anm_array.h, the same way: ArrayIterartor's dereference asserts `m_pData` at line 58, its increment at
 // line 69 (1.0.0's std::__lower_bound<..., anm::ArrayIterartor<...>> instances and GfExtendPacking::registerSoundTrigger),
 // stepping back at 83, forward at 97, and the distance between two asserts both at 123 and 124 (3.0.1's
-// std::__upper_bound<..., anm::ArrayIterartor<...>> instances and their callers)
-#ifdef MM_LIB_FROM_LIBS
+// std::__upper_bound<..., anm::ArrayIterartor<...>> instances and their callers); skdlib's files name it from their
+// folder (skd::CalcUtil::buildDetectCollisionJobs cites it so)
+#if defined(SKD_LIB_PROJECT)
+#define ANM_ARRAY_H_PATH "../../../anmlib/src\\anmlib/base/anm_array.h"
+#elif defined(MM_LIB_FROM_LIBS)
 #define ANM_ARRAY_H_PATH "../../src\\anmlib/base/anm_array.h"
 #else
 #define ANM_ARRAY_H_PATH "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/anmlib/src\\anmlib/base/anm_array.h"

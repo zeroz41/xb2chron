@@ -13,6 +13,44 @@
 
 namespace skd {
 
+void CalcUtil::addForceTransform(const NodeArray& nodes, mm::mtl::Vector<mm::Vec3>* forces) {
+    unsigned int count = nodes.m_nodes.size();
+    for (unsigned int i = 0; i < count; i++) {
+        const ResNode& res = (*nodes.m_pResNodes)[i];
+        const Node& node = nodes.m_nodes[i];
+        mm::Vec3 offset = node.m_pos - node.m_parentPos;
+        mm::Quat parentRot = node.m_parentRot;
+        mm::Vec3 local = mm::Quat::inverse(parentRot).rotate(offset);
+        mm::Vec3 force = (node.m_localPos - local) * res.m_localStiffness;
+        mm::Vec3 worldForce = node.m_parentRot.rotate(force);
+        (*forces)[i] += worldForce;
+    }
+    for (unsigned int i = 0; i < count; i++) {
+        const ResNode& res = (*nodes.m_pResNodes)[i];
+        const Node& node = nodes.m_nodes[i];
+        mm::Vec3 force = (node.m_animPos - node.m_pos) * res.m_animStiffness;
+        (*forces)[i] += force;
+    }
+}
+
+void CalcUtil::addForceSpring(const NodeArray& nodes, const anm::Array<ResSpringConstraint>& constraints,
+                              mm::mtl::Vector<mm::Vec3>* forces) {
+    unsigned int count = constraints.size();
+    for (unsigned int i = 0; i < count; i++) {
+        const ResSpringConstraint& constraint = constraints[i];
+        const Node& node0 = nodes.m_nodes[constraint.m_constraint.m_node0];
+        const Node& node1 = nodes.m_nodes[constraint.m_constraint.m_node1];
+        mm::Vec3 dir = node0.m_pos - node1.m_pos;
+        float length = dir.length();
+        if (length > 1.1920928955078125e-07F) {
+            dir = dir * (1.0f / length);
+        }
+        mm::Vec3 force = dir * ((length - constraint.m_constraint.m_length) * constraint.m_stretch);
+        (*forces)[constraint.m_constraint.m_node0] -= force;
+        (*forces)[constraint.m_constraint.m_node1] += force;
+    }
+}
+
 void CalcUtil::applyAccel(mm::mtl::Vector<mm::Vec3>& forces, NodeArray* nodes) {
     unsigned int count = nodes->m_nodes.size();
     for (unsigned int i = 0; i < count; i++) {
@@ -71,6 +109,27 @@ void CalcUtil::detectCollision(const CollionArray& collisions, NodeArray* nodes)
         detectCollisionSpheres(collision, collisions, 0, nodes);
         detectCollisionCapsules(collision, collisions, 0, nodes);
         detectCollisionPlanes(collision, collisions, 0, nodes);
+    }
+}
+
+void CalcUtil::buildDetectCollisionJobs(const CollionArray& collisions, const NodeArray& nodes,
+                                        DetectInfoBuffer* buffer, anm::JobQueue* queue) {
+    const anm::Array<ResNodeCollision>& resCollisions = *nodes.m_pResCollisions;
+    anm::ArrayIterartor<const ResNodeCollision> end = resCollisions.end();
+    for (anm::ArrayIterartor<const ResNodeCollision> it = resCollisions.begin(); it != end; ++it) {
+        const ResNodeCollision& collision = *it;
+        const Node& node0 = nodes.m_nodes[collision.m_node0];
+        const Node& node1 = nodes.m_nodes[collision.m_node1];
+        mm::Vec3 center = (1.0f - collision.m_weight) * node0.m_nextPos + collision.m_weight * node1.m_nextPos;
+        for (const ShpereCollObj& sphere : collisions.m_spheres) {
+            addDetectSphereJob(&sphere, &*it, &nodes, center, buffer, queue);
+        }
+        for (const CapsuleCollObj& capsule : collisions.m_capsules) {
+            addDetectCapsuleJob(&capsule, &*it, &nodes, center, buffer, queue);
+        }
+        for (const PlaneCollObj& plane : collisions.m_planes) {
+            addDetectPlaneJob(&plane, &*it, &nodes, center, buffer, queue);
+        }
     }
 }
 
