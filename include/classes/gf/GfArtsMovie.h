@@ -21,7 +21,8 @@ public:
     // what GfPlayComArtsMovie runs: setup with the movie's name when it starts, update until it ends, destroy
     void startSetup(const char* name);
     void update(const fw::UpdateInfo& info);
-    unsigned int getState() const;
+    // int: SpAttackManager::MovieProc compares it signed (b.ge 2)
+    int getState() const;
     virtual void gevPause(unsigned int, unsigned int);  // slot 2
 
     // the update steps update runs through m_update: wait for the movie to stand by (then play it), wait for it to

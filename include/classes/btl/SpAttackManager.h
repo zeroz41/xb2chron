@@ -35,12 +35,19 @@ public:
         // the step NotifyProgress moves the attack to (4, 5 or 7; the name is not the original's)
         int m_state;
         int pad_44;
-        unsigned long pad_48;
-        unsigned char pad_50;
+        unsigned short pad_48;
+        // the arts SlowProc reads the slow-motion row of (GetArtsData type 3; meaning unknown)
+        unsigned short pad_4A;
+        // a slow BattleGlobal::DeleteSlow ends when the attack stops (the name is not the original's)
+        unsigned int m_slowId;
+        // SlowProc's step through the slow-motion row (1-based columns are this + 1; 0xFF when done; the name is not
+        // the original's)
+        unsigned char m_slowStep;
         // two bytes reset as one (0xFF, 0): a 2-byte member assigned whole (the names are not the original's)
         struct Pair51 {
-            Pair51() : pad_0(0xff), pad_1(0) {}
-            unsigned char pad_0;
+            Pair51() : pad_0(-1), pad_1(0) {}
+            // MovieProc compares it signed with BattleCharacter::pad_CD4, then pad_1 - 6 with the animation frame
+            signed char pad_0;
             unsigned char pad_1;
         } m_pair51;
         // the attack's phase: IsMovie is true while it is 3 or 4 (the name is not the original's)
@@ -54,7 +61,9 @@ public:
             unsigned char m_slot;
             unsigned char pad_7;
         } m_info54;
-        unsigned char pad_5C_0 : 2;
+        unsigned char pad_5C_0 : 1;
+        // SlowProc runs only while it is set (meaning unknown)
+        unsigned char pad_5C_1 : 1;
         // FinishUpdateAttackData clears it (the name is not the original's)
         unsigned char m_isUpdateAttackData : 1;
         // IsLastAttackDriver returns it (the name is not the original's)
@@ -65,7 +74,7 @@ public:
         // IsDispThirdChr returns it for the first three-character attack (the name is not the original's)
         unsigned char m_isDispThirdChr : 1;
         unsigned char pad_5C_7 : 1;
-        unsigned char pad_5D[0x3];
+        // (0x5D..0x5F is tail padding: UpdateProc's copy of a PROC_DATA moves 0x5D bytes)
     };
 
     SpAttackManager();
@@ -79,11 +88,13 @@ public:
     static void PreUpdate(const fw::UpdateInfo& info);
     static void Update(const fw::UpdateInfo& info);
     void UpdateProc(const fw::UpdateInfo& info);
-    void MirrorCopyProc(PROC_DATA& data);
-    void SeparatelyProc(PROC_DATA& data);
+    // MirrorCopyProc and SeparatelyProc return true when the attack is over (UpdateProc then resets it)
+    bool MirrorCopyProc(PROC_DATA& data);
+    bool SeparatelyProc(PROC_DATA& data);
     void VoiceProc(PROC_DATA& data, bool flag);
     void SlowProc(PROC_DATA& data, bool flag);
-    void MovieProc(PROC_DATA& data);
+    // true once the movie step is over (its caller goes on only then)
+    bool MovieProc(PROC_DATA& data);
     bool RegisterSpAttack(gf::GF_OBJ_HANDLE* attacker, gf::GF_OBJ_HANDLE* partner, gf::GF_OBJ_HANDLE* target,
                           bool flag0, bool flag1);
     bool IsRegister(gf::GF_OBJ_HANDLE* handle) const;
@@ -101,8 +112,9 @@ public:
     PROC_DATA m_procs[5];
     // above zero while a special attack runs: Utility::AI_IsProcSpAttack tests it (the name is not the original's)
     int m_procCount;
-    // DeleteCamera clears it (the name is not the original's)
-    int m_cameraState;
+    // seconds the camera has waited to start (UpdateProc adds the frame time while the camera has not started and
+    // deletes it at 1; DeleteCamera clears it; the name is not the original's)
+    float m_cameraWait;
     // DeleteCamera's pop time in 30ths of a second (the name is not the original's)
     unsigned char m_cameraFrames;
     unsigned char pad_211[0x7];

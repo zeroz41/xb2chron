@@ -8,7 +8,13 @@
 #include "classes/fw/CameraManager.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfArtsMovie.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfTrinityAttack.h"
+#include "classes/gf/GimmickCamera.h"
+#include "classes/gf/SCOM_FADE.h"
+#include "mm/Col4.h"
+#include "mm/mtl/RTTI.h"
 
 namespace btl {
 
@@ -30,8 +36,11 @@ inline void SpAttackManager::PROC_DATA::Reset() {
     m_state = 0;
     pad_44 = 0;
     pad_48 = 0;
-    pad_50 = 0;
+    pad_4A = 0;
+    m_slowId = 0;
+    m_slowStep = 0;
     pad_5C_0 = 0;
+    pad_5C_1 = 0;
     m_isUpdateAttackData = 0;
     m_progressPair = 0;
     m_progressThird = 0;
@@ -64,7 +73,7 @@ void SpAttackManager::DeleteCamera(bool interpolate) {
         float time = interpolate ? m_cameraFrames * (1.0f / 30.0f) : 0.0f;
         fw::CameraManager::get()->m_layers[0].pop(m_camera, time);
         m_camera = nullptr;
-        m_cameraState = 0;
+        m_cameraWait = 0;
     }
     for (int i = 0; i < 3; i++) {
         gf::GF_OBJ_HANDLE* handle = m_cameraCharas[i];
@@ -80,6 +89,77 @@ void SpAttackManager::PreUpdate(const fw::UpdateInfo& info) {}
 
 void SpAttackManager::Update(const fw::UpdateInfo& info) {
     get()->UpdateProc(info);
+}
+
+bool SpAttackManager::MovieProc(PROC_DATA& data) {
+    bool result = true;
+    int phase = data.m_phase;
+    switch (phase) {
+    case 1: {
+        BattleCharacter* chara = CharacterManager::get()->GetCharacterConst(data.m_partner);
+        if (!chara || chara->pad_CD4 < data.m_pair51.pad_0) {
+            break;
+        }
+        if (chara->pad_CD4 == data.m_pair51.pad_0) {
+            float limit = data.m_pair51.pad_1 - 6;
+            if (chara->GetAnimationFrame() < limit) {
+                break;
+            }
+        }
+        gf::SCOM_FADE::create(2, 6, mm::Col4::black);
+        phase = 2;
+        result = false;
+        break;
+    }
+    case 2: {
+        if (gf::GfGameManager::isFading(-1)) {
+            result = false;
+            break;
+        }
+        gf::GfArtsMovie* movie = gf::GfArtsMovie::createSiren();
+        if (movie) {
+            data.m_artsMovie = movie;
+            {
+                ::mm::mtl::IntrusivePtr<fw::Camera> camera = m_camera;
+                if (camera) {
+                    ::mm::mtl::rttiCast<gf::GimmickCamera>(camera.get())->setPause(true);
+                }
+                gf::GfMenuManager::setDispAll(false);
+            }
+            phase = 3;
+            result = false;
+            break;
+        }
+        phase = 5;
+        gf::SCOM_FADE::create(2, 5, mm::Col4(mm::Col3::black.r, mm::Col3::black.g, mm::Col3::black.b, 0.0f));
+        break;
+    }
+    case 3:
+        if (data.m_artsMovie->getState() < 2) {
+            result = false;
+            break;
+        }
+        gf::SCOM_FADE::create(2, 5, mm::Col4(mm::Col3::black.r, mm::Col3::black.g, mm::Col3::black.b, 0.0f));
+        phase = 4;
+    case 4:
+        if (data.m_artsMovie->getState() != 3) {
+            result = false;
+            break;
+        }
+        gf::GfArtsMovie::destroy();
+        data.m_artsMovie = nullptr;
+        {
+            ::mm::mtl::IntrusivePtr<fw::Camera> camera = m_camera;
+            if (camera) {
+                ::mm::mtl::rttiCast<gf::GimmickCamera>(camera.get())->setPause(false);
+            }
+            gf::GfMenuManager::setDispAll(true);
+        }
+        phase = 5;
+        break;
+    }
+    data.m_phase = phase;
+    return result;
 }
 
 inline bool SpAttackManager::PROC_DATA::IsMember(gf::GF_OBJ_HANDLE* handle) const {

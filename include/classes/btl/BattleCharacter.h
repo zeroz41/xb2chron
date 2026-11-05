@@ -543,7 +543,10 @@ public:
     // the animation state names GetAnimationStateName formats (the names are not the original's)
     mutable mm::mtl::FixStr<20> m_animStateName;
     mutable mm::mtl::FixStr<24> m_animName;
-    unsigned char pad_CD0[0x10];
+    unsigned char pad_CD0[0x4];
+    // SpAttackManager::MovieProc compares it with PROC_DATA::m_pair51.pad_0 (signed; meaning unknown)
+    int pad_CD4;
+    unsigned char pad_CD8[0x8];
     // ManagerUpdate_Attack counts its timers down by pad_CE0 * pad_EC8 (pad_107C by pad_CE4; meaning unknown)
     float pad_CE0;
     float pad_CE4;

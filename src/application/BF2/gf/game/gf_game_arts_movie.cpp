@@ -71,7 +71,7 @@ void GfArtsMovie::destroy() {
     }
 }
 
-unsigned int GfArtsMovie::getState() const {
+int GfArtsMovie::getState() const {
     return m_state;
 }
 
