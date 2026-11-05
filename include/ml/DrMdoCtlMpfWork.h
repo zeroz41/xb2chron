@@ -86,7 +86,10 @@ struct MdsMpfObjData {
     unsigned short pad_0;
     // 0x2: in hundredths; createAutoList/createPosList hand the render list builders m_range * 0.01f
     unsigned short m_range;
-    unsigned char pad_4[0x14];
+    unsigned char pad_4[0x8];
+    // 0xC: DrMdoCtlMpf::calcMpfRenderList hands it to DrMdoCtlMpfInst::calcMpfObjTree (the name is not the original's)
+    float m_treeParam;
+    unsigned char pad_10[0x8];
 };
 
 // Placed at the start of DrResMdoSeamWrkMpf's work memory (0x48 bytes, no vtable).
@@ -97,6 +100,9 @@ public:
     static int calcRenderListWork(int objNum, const MdsMpfObjData* objData);
     void changeMemWork(const MdsMpfObjData* objData);
     int getObjChk(int idx);
+    // returns the bytes of buf it used (DrMdoCtlMpf::setupMpf)
+    int setupRenderListWork(unsigned char* buf, int objNum, const MdsMpfObjData* objData, DrMdoMpfMan* mpfMan);
+    void beginList();
 
     void auto_fastSet(_wkMpfObjBuff* buff, const _MPFWorkAutoInf* inf, int idx);
     void auto_alpha_fastSet(_wkMpfAlphaObjBuff* buff, const _MPFWorkAutoInf* inf, int idx);

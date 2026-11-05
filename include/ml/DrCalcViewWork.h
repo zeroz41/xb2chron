@@ -131,7 +131,9 @@ public:
     // DrGpuCheckObj::setWorldPos/update treat every check object as visible while it is set (the name is not the
     // original's)
     bool m_gpuCheckAllVisible;      // 0x9AA
-    unsigned char pad_9AB[0x2];
+    // 0x9AB: DrMdoCtlMpf::calcMpfRenderList passes it as DrMdoCtlMpfAuto::autoMpfCalc's first flag
+    bool pad_9AB;
+    unsigned char pad_9AC[0x1];
     bool m_renderReq;               // 0x9AD: DrCalcMan::renderEnd clears it (the name is not the original's)
     unsigned char pad_9AE[0x132];
     float m_jitter[2];              // 0xAE0

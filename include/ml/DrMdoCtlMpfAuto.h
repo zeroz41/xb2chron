@@ -2,7 +2,7 @@
 #define ML_DRMDOCTLMPFAUTO_H
 
 namespace mm { class Vec3; }
-namespace ml { class DrMdoMpfMan; }
+namespace ml { class DrMdoMpfMan; class DrCalcViewWork; class DrMdoCtlMpfWork; }
 
 namespace ml {
 // The auto-placement data header DrMdoCtlMpfAuto::m_pHeader points to (DrResMdoSeamWrkMpf::seachMpfPoliPos takes
@@ -103,6 +103,8 @@ public:
     DrMdoCtlMpfAuto();
     ~DrMdoCtlMpfAuto();
     static int calcWorkSize(const unsigned char* data);
+    void setupAutoMpf(const unsigned char* data, const unsigned char* autoData, unsigned char* work);
+    void autoMpfCalc(bool, bool, DrCalcViewWork* view, DrMdoCtlMpfWork* work, DrMdoMpfMan* mpfMan);
     void changeMemAutoMpf(const unsigned char* data, const unsigned char* autoData);
     void setBuffTbl(_wkMpfAutoBuff** buffTbl, int buffNum);
     void autoMpfRelease();

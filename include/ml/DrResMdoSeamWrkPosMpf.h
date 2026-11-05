@@ -19,7 +19,7 @@ public:
     const unsigned char* m_pos;   // 0x0: data + m_posOfs
     const unsigned char* m_info;  // 0x8: data + m_infoOfs
     const unsigned char* m_data;  // 0x10
-    unsigned int m_posNum;        // 0x18
+    int m_posNum;                 // 0x18: also the count of m_info's 0x20-byte MdsMpfObjTreeData entries
     unsigned char pad_1C[0x4];
     void* m_work;                 // 0x20: cleared by setupMpfBasePos
     unsigned int m_workNum;       // 0x28: cleared by setupMpfBasePos

@@ -74,7 +74,10 @@ struct MdoMdlData {
     unsigned int m_flags;  // 0x0, 0x2000: DrMdoMat::getVanishEffectMax reads m_vanishEffectMax
     unsigned char pad_4[0x24];
     unsigned int m_nodeTblOfs;  // 0x28, from this header (the name is not the original's)
-    unsigned char pad_2C[0x38];
+    unsigned char pad_2C[0x28];
+    // 0x54: DrMdoCtlMpf::setupMpf keeps a 4-byte render list entry per one (the name is not the original's)
+    unsigned int m_infoTotal;
+    unsigned char pad_58[0xC];
     unsigned int m_subMeshOfs;  // 0x64
     unsigned char pad_68[0x2C];
     unsigned char m_vanishEffectMax;  // 0x94, DrMdoMat::getVanishEffectMax returns at least 1

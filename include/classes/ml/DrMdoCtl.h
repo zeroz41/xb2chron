@@ -10,6 +10,7 @@ namespace grlib { class CGLibVtxInstans; }
 namespace ml {
 struct MdsMdlInfoHeader;
 struct MdsMdlTopHeader;
+class DrMdoCtlMpfWork;
 
 // What DrMdoCtl::partsInstance*Render draw one top header's parts with (the type name is the symbols'; 0x28 bytes,
 // DrMdoCtlSeamInstMap's passes fill it on the stack). The field names are not the original's: m_count, m_first and
@@ -52,6 +53,9 @@ public:
     // parameter names are not the original's)
     void partsPosNoamShadowRender(const MdsMdlTopHeader* top, grlib::CGLibVtxInstans* inst, unsigned int count,
                                   unsigned int first, unsigned int instances);
+    // DrMdoCtlMpf::defMpfZPreRender/defMpfrender call them for each part of an object's render list
+    void mpfZPrePassRender(int idx, const MdsMdlInfoHeader* info, DrMdoCtlMpfWork* work, grlib::CGLibVtxInstans* inst);
+    void mpfDrawRender(int idx, const MdsMdlInfoHeader* info, DrMdoCtlMpfWork* work, grlib::CGLibVtxInstans* inst);
 };
 }  // namespace ml
 

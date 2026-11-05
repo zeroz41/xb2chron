@@ -4,6 +4,9 @@
 #include "classes/ml/DrMdoCtlCldMdl.h"
 #include "classes/ml/DrMdoCtlDammy.h"
 #include "classes/ml/DrMdoCtlMpf.h"
+#include "classes/ml/DrResMdoSortMpf.h"
+#include "ml/DrResMdoSeamWrkPosMpf.h"
+#include <new>
 #include "classes/cloud/CloudMan.h"
 #include "cloud/CloudObjMan.h"
 #include "cloud/CloudMdlDataObj.h"
@@ -1466,12 +1469,186 @@ void DrMdoCtlCldMdl::dispOffUpdate() {
     }
 }
 
+DrMdoCtlMpf::DrMdoCtlMpf(const void* data, const char* name, DrMan* drMan, int viewNum)
+    : DrMdlObj(viewNum), m_pWorkBuf(nullptr), pad_1B8(nullptr), pad_1C0(0), m_pMpfWork(nullptr), m_pMpfAuto(nullptr),
+      m_pMpfInst(nullptr), m_pPosMpf(nullptr), m_pSortMpf(nullptr) {
+    m_mdlType = 2;
+    drMan->m_mdlMan->addMpfObj();
+    m_pDrMan = drMan;
+    const unsigned char* top = static_cast<const unsigned char*>(data);
+    const DataHeader* head = static_cast<const DataHeader*>(data);
+    if (head->m_dataOfs[5] != 0) {
+        initMpfMaterial(top + head->m_dataOfs[1], top + head->m_dataOfs[3], top + head->m_dataOfs[0],
+                        top + head->m_dataOfs[5], false);
+    } else {
+        initMpfMaterial(top + head->m_dataOfs[1], top + head->m_dataOfs[3], top + head->m_dataOfs[0], nullptr, false);
+    }
+    setupMpf(top + head->m_mpfOfs);
+}
+
+void DrMdoCtlMpf::setupMpf(const unsigned char* data) {
+    if (m_pWorkBuf != nullptr) {
+        mtl::MemManager::deallocate(m_pWorkBuf, 0, false);
+        m_pWorkBuf = nullptr;
+    }
+    const DrResMdoSeamWrkMpf::MpfData* mpf = reinterpret_cast<const DrResMdoSeamWrkMpf::MpfData*>(data);
+    m_objNum = mpf->m_objNum;
+    m_pObjData = reinterpret_cast<const MdsMpfObjData*>(data + mpf->m_objOfs);
+    int size = DrMdoCtlMpfWork::calcRenderListWork(m_objNum, m_pObjData) + m_pWrkMatRes->m_pMdlData->m_infoTotal * 4 +
+               m_pWrkMatRes->m_mdlTopNum * 0x40 + 0x220;
+    if (mpf->m_autoOfs != 0) {
+        size += (0x10 - size % 0x10) % 0x10;
+        size += DrMdoCtlMpfAuto::calcWorkSize(data + mpf->m_autoOfs);
+    }
+    m_pWorkBuf = static_cast<unsigned char*>(
+        mtl::MemManager::allocate(m_pDrMan->m_allocHandle, size, 0x20, false, "no name", 0));
+    m_pMpfWork = reinterpret_cast<DrMdoCtlMpfWork*>(m_pWorkBuf);
+    m_pMpfAuto = reinterpret_cast<DrMdoCtlMpfAuto*>(m_pWorkBuf + 0x48);
+    new (m_pMpfWork) DrMdoCtlMpfWork();
+    new (m_pMpfAuto) DrMdoCtlMpfAuto();
+    m_pMpfInst = reinterpret_cast<DrMdoCtlMpfInst*>(m_pWorkBuf + 0x1B8);
+    m_pPosMpf = reinterpret_cast<DrResMdoSeamWrkPosMpf*>(m_pWorkBuf + 0x1D0);
+    new (m_pMpfInst) DrMdoCtlMpfInst();
+    m_pMpfInst->setupInstMpf(data);
+    m_pPosMpf->setupMpfBasePos(data);
+    DrMdoMpfMan* mpfMan = m_pDrMan->m_mdlMan->m_mpfMan;
+    int used = m_pMpfWork->setupRenderListWork(m_pWorkBuf + 0x200, m_objNum, m_pObjData, mpfMan);
+    m_pSortMpf = reinterpret_cast<DrResMdoSortMpf*>(used + 0x200 + m_pWorkBuf);
+    new (m_pSortMpf) DrResMdoSortMpf(this);
+    m_pRenderEntry = reinterpret_cast<RenderEntry*>(m_pWorkBuf + (used + 0x220));
+    m_pRenderList = reinterpret_cast<RenderEntry**>(m_pRenderEntry + m_pWrkMatRes->m_pMdlData->m_infoTotal);
+    if (mpf->m_autoOfs != 0) {
+        int ofs = used + 0x220 + m_pWrkMatRes->m_pMdlData->m_infoTotal * 4 + m_pWrkMatRes->m_mdlTopNum * 0x40;
+        ofs += (0x10 - ofs % 0x10) % 0x10;
+        m_pMpfAuto->setupAutoMpf(data, data + mpf->m_autoOfs, m_pWorkBuf + ofs);
+    }
+}
+
 DrMdoCtlMpf::~DrMdoCtlMpf() {
     releaseMpf();
 }
 
+void DrMdoCtlMpf::releaseMpf() {
+    m_pMpfAuto->autoMpfRelease();
+    m_pMpfAuto->~DrMdoCtlMpfAuto();
+    m_pSortMpf->~DrResMdoSortMpf();
+    if (m_pWorkBuf != nullptr) {
+        mtl::MemManager::deallocate(m_pWorkBuf, 0, false);
+        m_pWorkBuf = nullptr;
+    }
+    if (pad_1B8 != nullptr) {
+        mtl::MemManager::deallocate(pad_1B8, 0, false);
+        pad_1B8 = nullptr;
+    }
+    releaseMat();
+    m_pDrMan->m_mdlMan->delMpfObj();
+}
+
 void DrMdoCtlMpf::resourceInit() {
     setupMpfResource();
+}
+
+void DrMdoCtlMpf::update() {
+    if (m_ctlFlags2 & 0x40000) {
+        m_ctlFlags2 &= ~0x30000;
+    } else {
+        int idx = DrMan::s_nDblIdx;
+        unsigned int bit = 0x10000 << idx;
+        if (bit & m_ctlFlags2) {
+            m_ctlFlags2 &= ~bit;
+            m_singleAlpha = m_alpha[idx];
+        }
+    }
+    m_aabbMax.x = 1.0f;
+    m_aabbMax.y = 1.0f;
+    m_aabbMax.z = 1.0f;
+    m_aabbMin.x = -1.0f;
+    m_aabbMin.y = -1.0f;
+    m_aabbMin.z = -1.0f;
+    m_length = 100000.0f;
+    m_stateFlags = 0;
+    m_mdlFlags = 0;
+    m_center.x = 0.0f;
+    m_center.y = 0.0f;
+    m_center.z = 0.0f;
+    DrMdoMpfMan* mpfMan = m_pDrMan->m_mdlMan->m_mpfMan;
+    if (mpfMan != nullptr) {
+        mpfMan->m_windScale = m_speed;
+    }
+    calcMpfRenderList();
+    updateMpfMatUniformBlock();
+    if (m_stateFlags & 0x8000) {
+        m_pDrMan->m_mdlMan->m_pPassReq[0] = true;
+    }
+    if (m_stateFlags & 0x10000) {
+        m_pDrMan->m_mdlMan->m_pPassReq[1] = true;
+    }
+}
+
+void DrMdoCtlMpf::defMpfrender() {
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    m_pWrkMatRes->m_pVertex->beginVertexSetup();
+    grlib::CGLibVtxInstans* inst = m_pDrMan->m_mdlMan->m_vertexMan->m_instans;
+    DrAPCache* cache = m_pDrMan->m_apCache;
+    cache->setupCulling(static_cast<DrApCullType>(2));
+    m_pDrMan->m_pixlMan->selectGBuffRenderTarget(0x1F);
+    cache->setupDepthStencil(0x18, 1, 0, 3);
+    cache->setupAlphaBlend(0);
+    for (int i = 0; i < m_objNum; i++) {
+        if (m_pMpfWork->getObjChk(i) == 0) {
+            continue;
+        }
+        RenderEntry* entry = *(i * 8 + m_pRenderList + m_renderPass);
+        if (entry == nullptr) {
+            continue;
+        }
+        const MdsMdlTopHeader* top = &m_pWrkMatRes->m_pMdlTop[i];
+        const MdsMdlInfoHeader* infos = reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs);
+        for (;;) {
+            mpfDrawRender(i, &infos[entry->m_infoIdx], m_pMpfWork, inst);
+            unsigned int next = entry->m_next;
+            if (next == 0) {
+                break;
+            }
+            entry = &m_pRenderEntry[next - 1];
+        }
+    }
+    cache->setupAlphaBlend(0);
+}
+
+void DrMdoCtlMpf::defMpfZPreRender() {
+    m_renderPass = 0;
+    m_renderTech = 0;
+    m_curTriBlockIdx = -1;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    m_pWrkMatRes->m_pVertex->beginVertexSetup();
+    grlib::CGLibVtxInstans* inst = m_pDrMan->m_mdlMan->m_vertexMan->m_instans;
+    m_pDrMan->m_apCache->setupCulling(static_cast<DrApCullType>(2));
+    for (int i = 0; i < m_objNum; i++) {
+        if (m_pMpfWork->getObjChk(i) == 0) {
+            continue;
+        }
+        RenderEntry* entry = *(i * 8 + m_pRenderList + m_renderPass);
+        if (entry == nullptr) {
+            continue;
+        }
+        const MdsMdlTopHeader* top = &m_pWrkMatRes->m_pMdlTop[i];
+        const MdsMdlInfoHeader* infos = reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs);
+        for (;;) {
+            mpfZPrePassRender(i, &infos[entry->m_infoIdx], m_pMpfWork, inst);
+            unsigned int next = entry->m_next;
+            if (next == 0) {
+                break;
+            }
+            entry = &m_pRenderEntry[next - 1];
+        }
+    }
 }
 
 void DrMdoCtlMpf::callZPrepassRender() {
@@ -1501,7 +1678,7 @@ int DrMdoCtlMpfWork::getObjChk(int idx) {
 }
 
 void DrMdoCtlMpfInst::setupInstMpf(const unsigned char* data) {
-    m_pInstData = data + reinterpret_cast<const ResHeader*>(data)->m_instOfs;
+    m_pInstData = reinterpret_cast<const MdsMpfObjData*>(data + reinterpret_cast<const ResHeader*>(data)->m_instOfs);
 }
 
 DrMdoCtlMpfInst::DrMdoCtlMpfInst() {}
