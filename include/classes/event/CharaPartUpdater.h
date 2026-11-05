@@ -6,6 +6,9 @@ namespace event {
 class CharaPartUpdater {
 public:
     virtual ~CharaPartUpdater();  // slot 0
+    void setExtDisp(const char* name, bool disp);
+    void setExtParam(const char* name, float value);
+    void updateRequest();
 };
 }  // namespace event
 

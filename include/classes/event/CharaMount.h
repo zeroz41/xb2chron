@@ -8,8 +8,8 @@
 namespace gf { class GfEvtModel; }
 
 namespace event {
-// table 0x7100B3E798
-class CharaMount {
+// table 0x7100B3E798; base event::ICmd (its slots; CharaObj queues it as a command)
+class CharaMount : public ::event::ICmd {
 public:
     virtual ~CharaMount() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
     virtual void init();  // slot 2

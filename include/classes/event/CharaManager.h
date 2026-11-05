@@ -24,6 +24,8 @@ public:
     bool isStreamMode() const { return m_modeFlags & 1; }
     // 1.0.0 0x71000C5718; 3.0.1 inlines it
     bool isAutoTalkMode() const { return m_modeFlags & 4; }
+    // inlined in 3.0.1 (CharaObj::setTar tests bit 4, which 1.0.0's accessors do not name); the name is not the original's
+    unsigned int getModeFlags() const { return m_modeFlags; }
 
 private:
     // 1.0.0's accessors name the bits: 0 stream mode (isStreamMode), 1 offscreen mode (isOffscrMode), 2 auto talk

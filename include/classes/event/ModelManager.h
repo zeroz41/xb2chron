@@ -30,6 +30,8 @@ public:
         }
     }
 
+    ModelObj* createModel(int id);
+
     // the models createModel made (1024: the count sits at 0x2010); the name is not the original's
     mm::mtl::FixedVector<ModelObj*, 1024> m_objs;  // 0x10
 };

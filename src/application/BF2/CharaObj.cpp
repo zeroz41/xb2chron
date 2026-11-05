@@ -1516,6 +1516,19 @@ void CamManager::setFocal(bool focal) {
     }
 }
 
+}  // namespace event
+
+#include "classes/event/ModelManager.h"
+
+namespace event {
+
+void CharaObj::createGhost() {
+    if (!mm::mtl::Singleton<CharaManager>::getPtr()->isStreamMode()) {
+        m_ghost = mm::mtl::Singleton<ModelManager>::getPtr()->createModel(m_modelId);
+    }
+    m_state = 6;
+}
+
 void CharaObj::playWink(int a, float b, bool c, float d, float e, int f, bool g, bool h) {
     if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
         return;
@@ -1562,6 +1575,96 @@ void CharaObj::setRot(const mm::Vec3& rot) {
     param.val(1).setF32(rot.y);
     param.val(2).setF32(rot.z);
     m_cmdQueue2.push_back(&m_setRot, param);
+}
+
+void CharaObj::turnRot(const mm::Vec3& rot, EVT_rotcvtype type, float time) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    m_rot = rot;
+    m_rotGoal = rot;
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setF32(rot.x);
+    param.val(2).setF32(rot.y);
+    param.val(3).setF32(rot.z);
+    param.val(4).setS32(type);
+    param.val(5).setF32(time);
+    CmdQueue<8, 0>* queue = &m_cmdQueue0;
+    if (type == 0) {
+        if (m_cmdQueue0.contains(&m_turnRot)) {
+            m_cmdQueue0.erase(&m_turnRot);
+        }
+        queue = &m_cmdQueue1;
+    }
+    queue->push_back(&m_turnRot, param);
+}
+
+void CharaObj::linerRot(const mm::Vec3& rot, float time, CV_TYPE cvType) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    if (time == 0.0f) {
+        m_rot = rot;
+        m_rotGoal = rot;
+        m_cmdQueue1.erase(&m_linerRot);
+    } else {
+        m_rotGoal = rot;
+    }
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setF32(rot.x);
+    param.val(2).setF32(rot.y);
+    param.val(3).setF32(rot.z);
+    param.val(4).setF32(time);
+    param.val(5).setS32(cvType);
+    m_cmdQueue1.push_back(&m_linerRot, param);
+}
+
+}  // namespace event
+
+#include "classes/event/CharaFacialUtil.h"
+
+namespace event {
+
+void CharaObj::setTar(const TarAxis& tar, float time, EVT_tarcvtype cvType, EVT_aimtype aimType, float a, float b) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    if (mm::mtl::Singleton<CharaManager>::getPtr()->getModeFlags() & 0x10) {
+        gf::GF_OBJ_HANDLE* handle = m_gfHandle;
+        if (gf::GfObj* obj = gf::GfObjUtil::getObj(handle)) {
+            gf::GfObjAcc acc(handle);
+            unsigned int type = obj->m_type;
+            if (CharaFacialUtil::transferGroup(acc.getBdatId(), type) == 3 && acc.getBdatId() == 2) {
+                // a queued action 6 or 11 keeps its own target
+                for (unsigned int i = 0; i < m_cmdQueue0.m_items.size(); i++) {
+                    if (m_cmdQueue0.m_items[i].m_cmd == &m_playAction) {
+                        if (m_playAction.m_id == 6) {
+                            return;
+                        }
+                        if (m_playAction.m_id == 11) {
+                            return;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    m_cmdQueue2.erase(&m_setTar);
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setS32(tar.m_type);
+    param.val(2).setF32(tar.m_value.x);
+    param.val(3).setF32(tar.m_value.y);
+    param.val(4).setF32(tar.m_value.z);
+    param.val(5).setF32(time);
+    param.val(6).setS32(cvType);
+    param.val(7).setS32(aimType);
+    param.val(8).setF32(a);
+    param.val(9).setF32(b);
+    m_cmdQueue2.push_back(&m_setTar, param);
 }
 
 void CharaObj::setIdle(int id) {
@@ -1613,6 +1716,45 @@ void CharaObj::playMotionABC(const char* a, const char* b, const char* c, float 
     m_cmdQueue1.push_back(&m_playMotionABC, param);
 }
 
+void CharaObj::playAction(int id, float time, bool a, bool b) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    // bit 3 of the mode flags: 1.0.0 names it seamless action
+    if (mm::mtl::Singleton<CharaManager>::getPtr()->getModeFlags() & 8) {
+        for (unsigned int i = 0; i < m_cmdQueue0.m_items.size(); i++) {
+            if (m_cmdQueue0.m_items[i].m_cmd == &m_playAction) {
+                if (m_playAction.m_id == id) {
+                    m_playAction.m_flags |= 2;
+                    mm::mtl::Singleton<DebugManager>::getPtr()->playMessage("action seamless");
+                }
+                break;
+            }
+        }
+    }
+    if (mm::mtl::Singleton<CharaManager>::getPtr()->getModeFlags() & 0x10) {
+        gf::GF_OBJ_HANDLE* handle = m_gfHandle;
+        if (gf::GfObj* obj = gf::GfObjUtil::getObj(handle)) {
+            gf::GfObjAcc acc(handle);
+            unsigned int type = obj->m_type;
+            if (CharaFacialUtil::transferGroup(acc.getBdatId(), type) == 3 && acc.getBdatId() == 2 &&
+                (id == 11 || id == 6)) {
+                m_cmdQueue2.erase(&m_setTar);
+            }
+        }
+    }
+    m_cmdQueue0.erase(&m_setIdle);
+    m_cmdQueue0.erase(&m_playActionAuto);
+    m_cmdQueue0.erase(&m_playAction);
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setS32(id);
+    param.val(2).setF32(time);
+    param.val(3).setBool(a);
+    param.val(4).setBool(b);
+    m_cmdQueue0.push_back(&m_playAction, param);
+}
+
 void CharaObj::stopAction() {
     if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
         return;
@@ -1621,6 +1763,47 @@ void CharaObj::stopAction() {
         m_cmdQueue0.erase(&m_playAction);
         CmdParam param;
         m_cmdQueue0.push_back(&m_stopAction, param);
+    }
+}
+
+void CharaObj::playMotion(const char* name, float a, float b, float c) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    if (mm::mtl::Singleton<DebugManager>::getPtr()->testFlag(8)) {
+        return;
+    }
+    if (m_state == 4 || m_state == 5) {
+        initModelStream();
+        m_flags |= 0x40;
+        m_motionParam = a;
+    }
+    m_cmdQueue1.erase(&m_playMotion);
+    m_cmdQueue1.erase(&m_playMotionABC);
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setStr(name);
+    param.val(2).setF32(a);
+    param.val(3).setF32(b);
+    param.val(4).setF32(c);
+    m_cmdQueue1.push_back(&m_playMotion, param);
+    if (mm::mtl::Singleton<CharaManager>::getPtr()->isStreamMode()) {
+        m_cmdQueue1.erase(&m_playEva);
+        m_cmdQueue1.erase(&m_playEvaEff);
+        m_cmdQueue1.erase(&m_hideWpn);
+        param.val(0).setUserdata(this);
+        param.val(1).setStr(name);
+        param.val(2).setF32(a);
+        param.val(3).setF32(b);
+        m_cmdQueue1.push_back(&m_playEva, param);
+        param.val(0).setUserdata(this);
+        param.val(1).setStr(name);
+        param.val(2).setF32(a);
+        param.val(3).setF32(b);
+        m_cmdQueue1.push_back(&m_playEvaEff, param);
+        param.val(0).setUserdata(this);
+        param.val(1).setF32(a);
+        m_cmdQueue1.push_back(&m_hideWpn, param);
     }
 }
 
@@ -1715,6 +1898,42 @@ void CharaObj::playTalk(bool a, float b, bool c, bool d, float e, float f, float
     m_cmdQueue1.push_back(cmd, param);
 }
 
+void CharaObj::mount(CharaObj* parent, const char* name, const mm::Vec3& pos, const mm::Vec3& rot) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    m_cmdQueue1.erase(&m_mount);
+    if (parent != nullptr) {
+        CmdParam param;
+        param.val(0).setUserdata(parent->m_model);
+        param.val(1).setStr(name);
+        param.val(2).setF32(pos.x);
+        param.val(3).setF32(pos.y);
+        param.val(4).setF32(pos.z);
+        param.val(5).setF32(rot.x);
+        param.val(6).setF32(rot.y);
+        param.val(7).setF32(rot.z);
+        m_cmdQueue1.push_back(&m_mount, param);
+        m_flags |= 0x10;
+    } else {
+        CmdParam param;
+        param.val(0).setUserdata(nullptr);
+        param.val(1).setStr("");
+        param.val(2).setF32(0.0f);
+        param.val(3).setF32(0.0f);
+        param.val(4).setF32(0.0f);
+        param.val(5).setF32(0.0f);
+        param.val(6).setF32(0.0f);
+        param.val(7).setF32(0.0f);
+        m_cmdQueue1.push_back(&m_mount, param);
+        m_flags &= ~0x10;
+    }
+}
+
+void CharaObj::resetDynamics(int type) {
+    m_dysUpdater.resetDynamics(type);
+}
+
 void CharaObj::playFade(bool a, float b) {
     if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
         return;
@@ -1777,6 +1996,36 @@ void CharaObj::playRimBloom(int type) {
 
 void CharaObj::stopRimBloom() {
     m_effectPlayer.stopRimBloom();
+}
+
+void CharaObj::setExtDisp(const char* name, bool disp) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    m_partUpdater.setExtDisp(name, disp);
+}
+
+void CharaObj::setExtParam(const char* name, float value) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    m_partUpdater.setExtParam(name, value);
+}
+}  // namespace event
+
+#include "classes/gf/GfEvtModelDriver.h"
+#include "classes/gf/GfEvtModelWeapon.h"
+
+namespace event {
+
+void CharaObj::setScaleWeapon(float scale) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    m_weaponScale = scale;
+    if (m_model != nullptr && m_model->m_modelType == 2) {
+        static_cast<gf::GfEvtModelWeapon*>(m_model)->setScale(scale);
+    }
 }
 
 CharaWpnAsm::~CharaWpnAsm() {}

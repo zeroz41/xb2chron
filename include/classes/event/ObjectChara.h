@@ -12,10 +12,7 @@ namespace mm { class Col4; }
 #include "classes/event/TarAxis.h"
 #include "event/CvType.h"
 
-// the curve kind ObjectChara::walkPosAxis takes (the mangled name spells a global enum); its values are not known
-enum EVT_poscvtype {};
-// how turnRotAxis turns (ScriptCharaTurnRot::doit passes val 4); no enumerator is named
-enum EVT_rotcvtype : int {};
+// EVT_poscvtype and EVT_rotcvtype: classes/event/CharaObj.h (CharaObj::walkPos and turnRot take them too)
 
 namespace event {
 // table 0x7100B3DD70 (its first slots are event::Object's)
