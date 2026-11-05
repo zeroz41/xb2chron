@@ -23,6 +23,11 @@ namespace gf {
 // bytes, the quest (getOrderQuest(unsigned) returns it)
 class QuestData {
 public:
+    // setupAchievementTaskCheck finds the quest in a queue before it pushes it
+    bool operator==(const QuestData& other) const {
+        return m_id == other.m_id;
+    }
+
     QuestID m_id;  // the name is not the original's
 };
 
@@ -37,6 +42,20 @@ public:
     void initialize(const GfSetupParam& param);
     static void build(const GfSetupParam& param);
     static void destroy();
+    // empties the order, complete and link lists and the queued event parameters, then rebuilds the order list
+    static void setupGame();
+    static void removeOrder(QuestID id);
+    // resets the quest and its chain of next quests when its cancel condition holds
+    static void cancelCondition(QuestID id);
+    // the parent quest of next takes state; pad_2E160 gets id
+    static void setCompleteState(QuestID id, QuestID next, QSTATE state);
+    static void updateQuestTask(const QuestData& data);
+    // updates the tasks of pad_3E418's quests, taking up to 8 a call unless m_requestOrderQuest is set
+    void updateParallelTask();
+    // updates the tasks of the ordered quests (category 3 first), checking the completions each pass queues
+    void updateSortQuestTask();
+    // adds id to the link list of its linked quest, making one when there is none
+    void reqistLinkQuest(QuestID id);
     static void resetQuest(QuestID id);
     // orders the quest
     void acceptOrder(QuestID id);
@@ -141,6 +160,11 @@ public:
     ::mm::mtl::FixedQueue<QuestID, 128> pad_2E160;  // setCompleteState pushes the quest
     // a quest and its state (updateOrderQuest passes each to checkQuestComplete; the names are not the original's)
     struct CompleteCheck {
+        // updateQuestTask finds the pair in the queue before it pushes it
+        bool operator==(const CompleteCheck& other) const {
+            return m_id == other.m_id && m_state == other.m_state;
+        }
+
         QuestID m_id;
         QSTATE m_state;
     };

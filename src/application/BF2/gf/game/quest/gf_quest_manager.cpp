@@ -27,6 +27,9 @@
 #include "gf/QuestStateParam.h"
 #include "gf/QuestTaskParam.h"
 #include "gf/AchievQuest.h"
+#include "classes/gf/GfGameCond.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/SCOM_ACHIEV_INC.h"
 
 namespace gf {
 
@@ -73,6 +76,23 @@ void GfQuestManager::destroy() {
     delete self;
 }
 
+void GfQuestManager::setupGame() {
+    if (s_pThis == nullptr) {
+        return;
+    }
+    s_pThis->m_orderQuest.clear();
+    s_pThis->m_orderAchievementQuest.clear();
+    s_pThis->m_completeQuest.clear();
+    s_pThis->pad_2F9A8.clear();
+    s_pThis->pad_3E418.clear();
+    s_pThis->m_reduceHpQuest.clear();
+    s_pThis->m_linkQuest.clear();
+    s_pThis->refreshOrderQuestList();
+    s_pThis->destroyEvent();
+    s_pThis->m_lastOrder = QuestID();
+    GfQuestTask::initializeParams();
+}
+
 void GfQuestManager::destroyEvent() {
     while (!m_eventParams.empty()) {
         delete m_eventParams.front();
@@ -104,6 +124,36 @@ void GfQuestManager::update(const fw::UpdateInfo& info) {
     }
 }
 
+
+void GfQuestManager::setupAchievementTaskCheck() {
+    for (QuestData& data : m_orderAchievementQuest) {
+        if (::mm::mtl::find(pad_2F9A8.begin(), pad_2F9A8.end(), data) == pad_2F9A8.end()) {
+            pad_2F9A8.push_back(data);
+        }
+    }
+}
+
+void GfQuestManager::cancelCondition(QuestID id) {
+    unsigned int condition = QuestListAcc::get()->getListCancelCondition(id);
+    if (condition == 0 || GfGameCond::isGameCond(condition)) {
+        return;
+    }
+    QuestID quest = GfDataQuest::getListNextQuestA(id);
+    while (!quest.empty()) {
+        if (GfQuestInfo::getState(quest) != 0) {
+            resetQuest(quest);
+        }
+        if (GfQuestInfo::getState(GfDataQuest::getListNextQuestA(quest)) != 0) {
+            quest = GfDataQuest::getListNextQuestA(quest);
+        } else {
+            quest = GfDataQuest::getListNextQuestB(quest);
+        }
+    }
+    resetQuest(id);
+    GfQuestUtil::removeOrderParentQuest(id);
+    requestRefreshQuestTaskState();
+}
+
 void GfQuestManager::requestRefreshQuestTaskState() {
     if (s_pThis != nullptr) {
         s_pThis->m_requestRefreshQuestTaskState = true;
@@ -119,6 +169,69 @@ void GfQuestManager::eventCompleteChildQuest(QuestID id) {
             self->m_eventParams.push_back(param);
         }
     }
+}
+
+void GfQuestManager::setCompleteQuest(QuestID id, QuestID next, QSTATE state) {
+    if (!next.empty()) {
+        setCompleteState(id, next, state);
+    }
+    GfQuestUtil::questCompleteItem(id);
+    removeOrder(id);
+    if (GfGameMercenaries::isQuestMission(id)) {
+        return;
+    }
+    // the original keeps the reward in the frame slot an inlined callee's local gets (above next): a helper whose
+    // name is unknown, written as a local lambda
+    [](QuestID quest) {
+        GfQuestReward reward;
+        if (getRewardItem(reward, quest, false)) {
+            if (quest.m_achieveId != 0) {
+                if (AchievQuest* achiev = GfDataQuest::getAchievQuest(quest)) {
+                    reward.m_trustBlade = achiev->m_blade;
+                }
+            }
+            GfQuestUtil::execReward(reward);
+            GfGameManager::reqestCraftPopupForIra();
+        }
+    }(next);
+}
+
+void GfQuestManager::setCompleteState(QuestID id, QuestID next, QSTATE state) {
+    QuestID parent = GfDataQuest::getListPRTQuestID(next);
+    if (!parent.empty()) {
+        GfQuestInfo::setState(parent, state);
+        eventCompleteQuest(parent, state);
+    }
+    s_pThis->pad_2E160.push_back(id);
+    unsigned int category = GfDataQuest::getListQuestCategory(id);
+    if (id.m_achieveId == 0 && category != 1) {
+        SCOM_ACHIEV_INC::addTotalCount(1, 1);
+        SCOM_ACHIEV_INC::create(1, 1, 0);
+    }
+}
+
+bool GfQuestManager::getRewardItem(GfQuestReward& reward, QuestID id, bool flag) {
+    QuestListAcc* acc = QuestListAcc::get();
+    if (id.empty() && id.m_achieveId == 0) {
+        id = getPrevCompleteQuest();
+    }
+    QuestID quest = GfDataQuest::getListPRTQuestID(id);
+    if (quest.empty()) {
+        quest = id;
+    }
+    unsigned int set;
+    if (!GfQuestInfo::isQuestFin(quest)) {
+        set = acc->getListRewardSetA(quest);
+        if (set == 0) {
+            set = acc->getListRewardSetB(quest);
+        }
+    } else {
+        set = GfQuestInfo::getState(quest) == 2 ? acc->getListRewardSetA(quest) : 0;
+        if (GfQuestInfo::getState(quest) == 3) {
+            set = acc->getListRewardSetB(quest);
+        }
+    }
+    return GfQuestUtil::getReward(reward, set, flag);
 }
 
 QuestID GfQuestManager::getPrevCompleteQuest() {
@@ -234,6 +347,27 @@ bool GfQuestManager::compEntryQuest::operator()(const QuestData& data) const {
     }
     return m_id.m_id < data.m_id.m_id;
 }
+
+void GfQuestManager::reqistLinkQuest(QuestID id) {
+    if (id.m_achieveId != 0) {
+        return;
+    }
+    QuestID link = QuestListAcc::get()->getListLinkedQuestID(id);
+    if (link.empty()) {
+        return;
+    }
+    for (::mm::mtl::FixedVector<QuestID, 16>& quests : m_linkQuest) {
+        if (quests[0] == link) {
+            quests.push_back(id);
+            return;
+        }
+    }
+    ::mm::mtl::FixedVector<QuestID, 16> quests;
+    quests.push_back(link);
+    quests.push_back(id);
+    m_linkQuest.push_back(quests);
+}
+
 
 void GfQuestManager::entryOrderAchievQuest(QuestID id) {
     if (GfQuestInfo::isParent(id)) {
@@ -359,6 +493,13 @@ void GfQuestManager::gevReloadBdat(RELOAD_BDAT type, unsigned int) {
         s_pThis->refreshOrderQuestList();
         GfQuestTask::refreshTaskCounters();
     }
+}
+
+void GfQuestManager::addCompleteQuest(QuestID id) {
+    if (s_pThis->m_completeQuest.full()) {
+        s_pThis->m_completeQuest.pop();
+    }
+    s_pThis->m_completeQuest.push_back(id);
 }
 
 void GfQuestManager::requestOrderAchievementQuestForce() {

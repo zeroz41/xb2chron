@@ -150,8 +150,11 @@ public:
 #line 633 MM_MTL_FIXED_QUEUE_PATH
         MM_ASSERT(!full());
         // by the element's own storage: GfEvtBgm's pushes address the slot from the owner (its index times the
-        // element size plus the queue's offset), where data()[i] keeps the ring's start in a register
-        new (static_cast<void*>(&m_buffer[(m_head + m_size) % N * kWords])) T(value);
+        // element size plus the queue's offset), where data()[i] keeps the ring's start in a register. The value is
+        // assigned, not copy-constructed: GfQuestManager's queues of QuestID (setCompleteState, addCompleteQuest) store
+        // it as two halfwords, as QuestID::operator= does; the slot is taken before the value is read
+        T* slot = reinterpret_cast<T*>(&m_buffer[(m_head + m_size) % N * kWords]);
+        *slot = value;
         ++m_size;
     }
     // the element index places after the first (fixed_queue.h asserts `index < N` at line 376: ml::LibMain::
