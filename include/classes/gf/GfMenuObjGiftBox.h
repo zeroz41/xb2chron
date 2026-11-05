@@ -40,6 +40,10 @@ public:
     // GfMenuObjMainMenu2's setupMainMenu and main listener (they show "LAY_gift_icon" with hasGetableGift(true)),
     // GfMenuObjPopup's main listener.
     static bool hasGetableGift(bool);
+    // 2.0.0's symbols name them. hasGetableFreeGift: hasGetableGift over the rows with "releasecount" bit 7 only
+    // (GfMenuObjAnnounce::initialize); hasGetableGiftFromFilter: over the rows the filter keeps.
+    static bool hasGetableFreeGift(bool);
+    bool hasGetableGiftFromFilter(bool);
     static void setCloseToAnnounce();
     static void setCloseToAnnounceEx();
     // 2.0.0's symbols name them. seqWaitCommonDialog waits for the common window to close; seqReturnTop / seqReturnSub
@@ -49,6 +53,10 @@ public:
     bool seqReturnTop();
     bool seqGetItem();
     bool seqReturnSub();
+    // 2.0.0's symbols name them. getAddedItemValue: what seqGetItemAll hands canGetItem as the row's second argument
+    // (it reads m_ids, the rows already taken); seqGetItemAll takes every row of the top list's titles it can.
+    unsigned int getAddedItemValue(unsigned int row);
+    bool seqGetItemAll();
     // 2.0.0's symbols name them. canGetItem: the row's local flag (type 1) is clear, its game condition holds and
     // isGetItemFull(row, arg) is false. hasFreeGift: add-on 5 is present (gf::GfDataAoc::getContentVersion(5) >= 0) and some row's
     // "releasecount" has bit 7 set. isGetItemFull (not written yet) is called with the row and the caller's second
@@ -62,12 +70,22 @@ public:
     void refreshSubList();
     // 2.0.0's symbols name it (not written yet): fills m_topList from table 0x10A (initialize, TopListener)
     void updateTopList();
+    // 2.0.0's symbols name them.
+    void updateSubList();
+    int ctrlTopItem(bool);
+    int ctrlSubItem(bool);
 
     GfMenuMsgList* m_topList;  // 0x28: "LAY_top_list"'s list (initialize: setBdat(0, 0x139))
     GfMenuIDList* m_subList;   // 0x30: seqGetItem reads its selected id
     mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_numbers[22];  // 0x38
     GfMenuSequence<GfMenuObjGiftBox, 8> m_seq;  // 0xE8: update runs it
-    unsigned int pad_378;
+    unsigned char pad_378;
+    // 0x379-0x37B: the top list's filter (FilterListener sets them; hasGetableGiftFromFilter / updateTopList test
+    // m_counts[m_filterIndex] against the rows' "releasecount" when m_filterIndex and m_filterOn are set). The names
+    // are not the original's.
+    bool m_filterOn;               // 0x379
+    unsigned char m_filterIndex;   // 0x37A
+    unsigned char m_filterCursor;  // 0x37B: refreshFilter / FilterListener
     mm::mtl::IntrusivePtr<GfMenuReferenceItem> m_refItem;  // 0x380
     mm::mtl::Vector<AddedItem> m_ids;  // 0x388: compared with the BDAT rows' ids (seqGetItemAll grows it through
                                        // Vector<AddedItem>::expand)
