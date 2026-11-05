@@ -12,6 +12,7 @@ public:
     ~DrPixlPostObjToneMap();
     void updateByRenderTarget();
     void updateByCompute();
+    void fastRender();
 
     unsigned char pad_18[0x9C];
     unsigned char m_flags;  // 0xB4, DrPixlPostMan::update runs updateByCompute while bit 4 is set

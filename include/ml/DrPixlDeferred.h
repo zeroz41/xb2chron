@@ -14,6 +14,7 @@ public:
     grlib::CGLibTextureBuffer* getShadowMapTexture() const;
     void displayUpdate();
     void lastDeferredRender();
+    void fastDeferredRender(int);
 
     // the constructor stores the fields below and creates the three render targets (the field names are not the
     // original's)

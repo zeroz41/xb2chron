@@ -73,6 +73,28 @@ DrPixlDeferred::~DrPixlDeferred() {
     }
 }
 
+void DrPixlDeferred::lastDeferredRender() {
+    lgtCalcRender();
+    if (m_pixlMan->m_drMan->m_postParm[m_pixlMan->m_drMan->m_postParmIdx]->m_toneMap) {
+        m_pixlMan->m_objTbl->m_obj[6][0]->setColorInvalidate();
+    }
+    DrPixlPostMan* postMan = m_pixlMan->m_objTbl->m_postMan;
+    if (postMan->m_toneMap != nullptr) {
+        postMan->m_toneMap->fastRender();
+    }
+    if (postMan->m_histgram != nullptr) {
+        postMan->m_histgram->render();
+    }
+    DrAPGxType::setupBlend(0);
+    m_pixlMan->setMainViewPort();
+    m_pixlMan->m_renderTarget = 0;
+    if (m_pixlMan->m_objTbl->m_flags & 2) {
+        DrAPGxType::setupScreenQuads(false);
+        m_pixlMan->setMainRenderTarget();
+        m_pixlMan->toneMapRender(false);
+    }
+}
+
 void DrPixlDeferred::lgtCalcRender() {
     DrPixlMan* pixlMan = m_pixlMan;
     pixlMan->m_renderTarget = 6;
