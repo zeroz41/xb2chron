@@ -986,6 +986,27 @@ unsigned int DrCalcTexStreamMan::jobUpdate(void* man, void*) {
     return 0;
 }
 
+void DrCalcTexStreamMan::update() {
+    calcUpdateList();
+    m_errReadSize = 0;
+    pad_249C = pad_2498;
+    pad_2498 = 3;
+    for (DrCalcStmListObj* p = m_stmLists[0].m_head; p != nullptr; p = p->m_pNext) {
+        if (p->m_flags & (0x1000000 << DrMan::s_nDblIdx)) {
+            p->m_curUseMode = p->m_useMode[DrMan::s_nDblIdx];
+            p->m_flags &= ~(0x1000000 << DrMan::s_nDblIdx);
+            p->m_useMode[DrMan::s_nDblIdx] = 0;
+        }
+        if (p->m_useCount == 0) {
+            p->m_curUseMode = 0;
+        }
+        while ((p->*p->m_func)()) {
+        }
+    }
+    calcMemOptimization();
+    afterUpdate();
+}
+
 void DrCalcTexStreamMan::entryJob() { WorkCpu::wakeup(m_jobGroup); }
 
 void DrCalcTexStreamMan::jobWait() { WorkCpu::sync(m_jobGroup, static_cast<WKCPU_SYNC>(0), static_cast<CPUID>(0)); }

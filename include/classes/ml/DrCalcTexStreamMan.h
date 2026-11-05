@@ -44,6 +44,14 @@ public:
     static unsigned int MEM_4K_ALIGNMENT;
     // while bit 0 of pad_2068 is set: the m_memCache entries not in use (bit 1 of their flags) given back
     void cntMemUpdate();
+    // the stream lists' update steps (update calls them in this order)
+    void calcUpdateList();
+    void calcMemOptimization();
+    void afterUpdate();
+    // obj's data moved into the first free memory object if it fits, else into one cut from the end (copyMemObj):
+    // the two objects swap their memory and list places (calcMemOptimization)
+    DrCalcTexStmObj* copyTempBuff(DrCalcTexStmObj* obj);
+    DrCalcTexStmObj* copyMemObj(DrCalcTexStmObj* obj);
 
     // (the list names are not the original's) 0x8: the memory objects covering m_mem; 0x18: the spare ones
     DrResChankList<DrCalcTexStmObj> m_memList;
