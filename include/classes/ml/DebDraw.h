@@ -103,6 +103,17 @@ public:
     void renderLine(const mm::Vec3& start, const mm::Vec3& end);
     void renderLine(const mm::Pnt<int>& start, const mm::Pnt<int>& end);
     void fontColor(const mm::Col4& col);
+    // named by the symbols: stores the flag here and in the cache; turning it off closes the cache's odd bank group
+    // (the parameter name is not the original's)
+    void setForceRenderQueue(bool on);
+    // named by the symbols: pos through the view (0x40) and projection (0x100) matrices to screen pixels; false
+    // behind the camera (the parameter names are not the original's)
+    bool getScreenPos(mm::Vec3& out, const mm::Vec3& pos);
+    // named by the symbols: an arrow (or cube arrow) of size pixels along mtx's x, y or z axis from its
+    // translation, red, green or blue unless col is given (the parameter names are not the original's)
+    void renderArrowAxisX(const mm::Mat44& mtx, int size, const mm::Col4* col, bool cube);
+    void renderArrowAxisY(const mm::Mat44& mtx, int size, const mm::Col4* col, bool cube);
+    void renderArrowAxisZ(const mm::Mat44& mtx, int size, const mm::Col4* col, bool cube);
     void font(int x, int y, const char* text);
 
     unsigned int m_flags;                 // 0x08 (the name is not the original's)
@@ -112,9 +123,10 @@ public:
     int pad_024;
     int pad_028;
     mm::Vec3 m_pos;                       // 0x30 zero from the constructor (the name is not the original's)
-    unsigned char pad_040[0x80];
+    mm::Mat44 pad_040;                    // 0x40 identity from clear
+    mm::Mat44 pad_080;                    // 0x80 identity from clear
     mm::Mat44 m_mtx;                      // 0xC0 identity from the constructor (the name is not the original's)
-    unsigned char pad_100[0x40];
+    mm::Mat44 pad_100;                    // 0x100 getScreenPos projects the view-space point with it
     int pad_140;
     unsigned int m_lineWidth;             // 0x144 setLineWidth's (the name is not the original's)
     int pad_148;

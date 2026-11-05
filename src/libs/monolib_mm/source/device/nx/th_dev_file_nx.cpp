@@ -219,6 +219,20 @@ inline bool DebDraw::isNotRender() {
     return s_debDraw->m_cacheOnRender;
 }
 
+// the point v through mtx, translation included (inlined into the DebDraw shapes; the name is not the original's)
+static inline mm::Vec3 mulPos(const mm::Mat44& mtx, const mm::Vec3& v) {
+    return mm::Vec3(v.x * mtx.m[0][0] + v.y * mtx.m[1][0] + v.z * mtx.m[2][0] + mtx.m[3][0],
+                    v.x * mtx.m[0][1] + v.y * mtx.m[1][1] + v.z * mtx.m[2][1] + mtx.m[3][1],
+                    v.x * mtx.m[0][2] + v.y * mtx.m[1][2] + v.z * mtx.m[2][2] + mtx.m[3][2]);
+}
+
+// the direction v through mtx's rotation (inlined into the DebDraw shapes; the name is not the original's)
+static inline mm::Vec3 mulDir(const mm::Mat44& mtx, const mm::Vec3& v) {
+    return mm::Vec3(v.x * mtx.m[0][0] + v.y * mtx.m[1][0] + v.z * mtx.m[2][0],
+                    v.x * mtx.m[0][1] + v.y * mtx.m[1][1] + v.z * mtx.m[2][1],
+                    v.x * mtx.m[0][2] + v.y * mtx.m[1][2] + v.z * mtx.m[2][2]);
+}
+
 // ---- ml::CacheDraw: queueing a command (one per DebDraw call) ----
 
 CacheDraw::~CacheDraw() {
@@ -229,6 +243,28 @@ CacheDraw::~CacheDraw() {
         delete m_section;
         m_section = nullptr;
     }
+}
+
+DebDraw* DebDraw::get(unsigned int wid) {
+    if (isNotRender()) {
+        CacheDraw* cache = s_debDraw->m_cache;
+        if (wid != 0xFFFFFFFF) {
+            cache->m_wid = wid;
+        }
+        if (cache->m_prim >= 0) {
+            // closes the current bank's group when it holds commands and opens the next one
+            CacheDraw::BUF* buf = cache->getBuf(false);
+            if (buf->m_group[buf->m_groupNum].m_begin != buf->m_group[buf->m_groupNum].m_end) {
+                buf->m_groupNum++;
+            }
+            buf->m_group[buf->m_groupNum].m_end = buf->m_cur;
+            buf->m_group[buf->m_groupNum].m_begin = buf->m_cur;
+            buf->m_group[buf->m_groupNum].m_prim = cache->m_prim;
+        }
+    } else if (s_debDraw != nullptr) {
+        s_debDraw->clear();
+    }
+    return s_debDraw;
 }
 
 bool CacheDraw::clear() {
@@ -708,12 +744,66 @@ void CacheDraw::DRCUBE::flush(DebDraw* draw) {
     draw->renderCube(vec(m_min), vec(m_max));
 }
 
+void DebDraw::renderCube(const mm::Vec3& min, const mm::Vec3& max) {
+    if (m_cache->renderCube(min, max)) {
+        return;
+    }
+    m_flags &= ~4;
+    begin(3, 10);
+    add(min);
+    add(mm::Vec3(max.x, min.y, min.z));
+    add(mm::Vec3(max.x, max.y, min.z));
+    add(mm::Vec3(min.x, max.y, min.z));
+    add(min);
+    add(mm::Vec3(min.x, min.y, max.z));
+    add(mm::Vec3(max.x, min.y, max.z));
+    add(mm::Vec3(max.x, max.y, max.z));
+    add(mm::Vec3(min.x, max.y, max.z));
+    add(mm::Vec3(min.x, min.y, max.z));
+    end();
+    begin(2, 3);
+    add(mm::Vec3(max.x, min.y, min.z), mm::Vec3(max.x, min.y, max.z));
+    add(mm::Vec3(max.x, max.y, min.z), mm::Vec3(max.x, max.y, max.z));
+    add(mm::Vec3(min.x, max.y, min.z), mm::Vec3(min.x, max.y, max.z));
+    end();
+}
+
 void CacheDraw::DRCIRCLE_MAT::flush(DebDraw* draw) {
     draw->renderCircle(mat(), m_radius, m_div);
 }
 
+void DebDraw::renderCircle(const mm::Mat44& mtx, float radius, int div) {
+    if (m_cache->renderCircle(mtx, radius, div)) {
+        return;
+    }
+    if (!(m_flags & 8)) {
+        return;
+    }
+    begin(3, div + 1);
+    float step = 6.2831855f / div;
+    for (int i = 0; i <= div; i++) {
+        float angle = step * i;
+        add(mulPos(mtx, mm::Vec3(sinf(angle) * radius, 0.0f, cosf(angle) * radius)));
+    }
+    end();
+}
+
 void CacheDraw::DRAXIS::flush(DebDraw* draw) {
     draw->renderAxis(m_length);
+}
+
+void DebDraw::renderAxis(float length) {
+    if (m_cache->renderAxis(length)) {
+        return;
+    }
+    mm::Col4 col = m_col;
+    setCol(mm::Col3::red, 1.0f);
+    renderLine(mm::Vec3::zero, mm::Vec3(length, 0.0f, 0.0f));
+    setCol(mm::Col3::green, 1.0f);
+    renderLine(mm::Vec3::zero, mm::Vec3(0.0f, length, 0.0f));
+    setCol(mm::Col3::blue, 1.0f);
+    renderLine(mm::Vec3::zero, mm::Vec3(0.0f, 0.0f, length));
+    setCol(col);
 }
 
 void CacheDraw::DRARROW::flush(DebDraw* draw) {
@@ -728,16 +818,129 @@ void CacheDraw::DRSPHERE_REAL::flush(DebDraw* draw) {
     draw->renderRealSphere(m_radius, m_div);
 }
 
+void DebDraw::renderRealSphere(float radius, int div) {
+    if (m_cache->renderRealSphere(radius, div)) {
+        return;
+    }
+    for (int i = 0; i < div; i++) {
+        mm::Mat44 rot;
+        rot.setRotY(i * 3.1415927f / div);
+        begin(3, div + 1);
+        for (int j = 0; j <= div; j++) {
+            float angle = j * 6.2831855f / div;
+            add(mulDir(rot, mm::Vec3(sinf(angle) * radius, cosf(angle) * radius, 0.0f)));
+        }
+        end();
+    }
+}
+
 void CacheDraw::DRCONE_FILL::flush(DebDraw* draw) {
     draw->renderConeFill(m_radius, m_height, m_div);
+}
+
+void DebDraw::renderConeFill(float radius, float height, unsigned int div) {
+    if (m_cache->renderConeFill(radius, height, div)) {
+        return;
+    }
+    mm::Vec3 top(0.0f, radius, 0.0f);
+    if (div < 8) {
+        div = 8;
+    }
+    begin(5, div);
+    float step = 6.2831855f / div;
+    for (unsigned int i = 0; i < div; i++) {
+        float angle0 = step * i;
+        float angle1 = step * (i == div - 1 ? 0 : i + 1);
+        float s0 = sinf(angle0);
+        float c0 = cosf(angle0);
+        float s1 = sinf(angle1);
+        float c1 = cosf(angle1);
+        mm::Vec3 p0(s0 * height, 0.0f, c0 * height);
+        mm::Vec3 p1(s1 * height, 0.0f, c1 * height);
+        add(top, p0, p1);
+    }
+    end();
 }
 
 void CacheDraw::DRCONE::flush(DebDraw* draw) {
     draw->renderCone(m_radius, m_height, m_div);
 }
 
+void DebDraw::renderCone(float radius, float height, unsigned int div) {
+    // the original asks the cache for a filled cone here
+    if (m_cache->renderConeFill(radius, height, div)) {
+        return;
+    }
+    mm::Vec3 top(0.0f, radius, 0.0f);
+    mm::Vec3 p;
+    if (div < 8) {
+        div = 8;
+    }
+    begin(3, div + 1);
+    float step = 6.2831855f / div;
+    for (unsigned int i = 0; i <= div; i++) {
+        float angle = step * ((i + 1) % div);
+        float sn = sinf(angle);
+        float cs = cosf(angle);
+        p = mm::Vec3(sn * height, 0.0f, cs * height);
+        add(p);
+    }
+    end();
+    begin(2, div);
+    for (unsigned int i = 0; i < div; i++) {
+        float angle = step * i;
+        float sn = sinf(angle);
+        float cs = cosf(angle);
+        p = mm::Vec3(sn * height, 0.0f, cs * height);
+        add(top, p);
+    }
+    end();
+}
+
 void CacheDraw::DRCYLINDER::flush(DebDraw* draw) {
     draw->renderCylinder(m_radius, m_height, m_div);
+}
+
+void DebDraw::renderCylinder(float radius, float height, unsigned int div) {
+    if (m_cache->renderCylinder(radius, height, div)) {
+        return;
+    }
+    mm::Vec3 p0;
+    mm::Vec3 p1;
+    if (div < 8) {
+        div = 8;
+    }
+    begin(3, div + 1);
+    float step = 6.2831855f / div;
+    float top = radius * 0.5f;
+    for (unsigned int i = 0; i <= div; i++) {
+        float angle = step * ((i + 1) % div);
+        float sn = sinf(angle);
+        float cs = cosf(angle);
+        p0 = mm::Vec3(sn * height, top, cs * height);
+        add(p0);
+    }
+    end();
+    begin(3, div + 1);
+    float bottom = radius * -0.5f;
+    for (unsigned int i = 0; i <= div; i++) {
+        float angle = step * ((i + 1) % div);
+        float sn = sinf(angle);
+        float cs = cosf(angle);
+        p0 = mm::Vec3(sn * height, bottom, cs * height);
+        add(p0);
+    }
+    end();
+    begin(2, div);
+    for (unsigned int i = 0; i < div; i++) {
+        float angle = step * i;
+        float sn = sinf(angle);
+        float cs = cosf(angle);
+        p0 = mm::Vec3(sn * height, top, cs * height);
+        p1 = mm::Vec3(sn * height, bottom, cs * height);
+        add(p0, p1);
+    }
+    end();
 }
 
 void CacheDraw::DRCAPSULE::flush(DebDraw* draw) {
@@ -746,6 +949,23 @@ void CacheDraw::DRCAPSULE::flush(DebDraw* draw) {
 
 void CacheDraw::DRSQUARE::flush(DebDraw* draw) {
     draw->renderSquare(m_width, m_height);
+}
+
+void DebDraw::renderSquare(float width, float height) {
+    if (m_cache->renderSquare(width, height)) {
+        return;
+    }
+    mm::Vec3 p0(width * -0.5f, height * 0.5f, 0.0f);
+    mm::Vec3 p1(width * 0.5f, height * 0.5f, 0.0f);
+    mm::Vec3 p2(width * -0.5f, height * -0.5f, 0.0f);
+    mm::Vec3 p3(width * 0.5f, height * -0.5f, 0.0f);
+    begin(3, 5);
+    add(p0);
+    add(p1);
+    add(p3);
+    add(p2);
+    add(p0);
+    end();
 }
 
 // ---- debug draw commands (ml::CacheDraw::D*) and the DebDraw setters their flushes inline ----
@@ -1319,6 +1539,24 @@ DebDraw::~DebDraw() {
         m_cache = nullptr;
     }
     s_debDraw = nullptr;
+}
+
+void DebDraw::setForceRenderQueue(bool on) {
+    CacheDraw* cache = m_cache;
+    m_cacheOnRender = on;
+    cache->m_forceRenderQueue = on;
+    if (on || cache->m_suspendSwap != 0) {
+        return;
+    }
+    // closes the odd bank's open group
+    unsigned int bank = WorkCpu::getOdd();
+    CacheDraw::BUF* buf = &cache->m_buf[bank];
+    if (buf->m_top < buf->m_cur) {
+        buf->m_groupNum++;
+        buf->m_group[buf->m_groupNum].m_end = buf->m_cur;
+        buf->m_group[buf->m_groupNum].m_begin = buf->m_cur;
+        buf->m_group[buf->m_groupNum].m_prim = cache->m_prim;
+    }
 }
 
 int DebDraw::getCacheDrawWID() {
@@ -3099,6 +3337,25 @@ void DebDraw::renderRectFill(int x, int y, int w, int h) {
         return;
     }
     renderRectFill(mm::Rect<int>(x, y, w, h));
+}
+
+bool DebDraw::getScreenPos(mm::Vec3& out, const mm::Vec3& pos) {
+    mm::Vec3 view;
+    view = mulPos(pad_040, pos - m_pos);
+    if (view.z >= 0.0f) {
+        return false;
+    }
+    float x = view.x * pad_100.m[0][0] + view.y * pad_100.m[1][0] + view.z * pad_100.m[2][0] + pad_100.m[3][0];
+    float y = view.x * pad_100.m[0][1] + view.y * pad_100.m[1][1] + view.z * pad_100.m[2][1] + pad_100.m[3][1];
+    float z = view.x * pad_100.m[0][2] + view.y * pad_100.m[1][2] + view.z * pad_100.m[2][2] + pad_100.m[3][2];
+    float w = view.x * pad_100.m[0][3] + view.y * pad_100.m[1][3] + view.z * pad_100.m[2][3] + pad_100.m[3][3];
+    x /= w;
+    y /= w;
+    z /= w;
+    out.x = (x + 1.0f) * (DevGraph::get()->pad_230 * 0.5f);
+    out.y = (1.0f - y) * (DevGraph::get()->pad_234 * 0.5f);
+    out.z = z;
+    return true;
 }
 
 void DebDraw::renderRect(int x, int y, int w, int h) {

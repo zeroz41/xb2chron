@@ -133,7 +133,10 @@ public:
     reslist<DevGraphCB*> m_cbList;  // 0x1B8
     unsigned char pad_1f8[0x10];
     mm::Rect<int> m_viewport;  // 0x208 getViewport returns it (the name is not the original's)
-    unsigned char pad_218[0xFC];
+    unsigned char pad_218[0x18];
+    int pad_230;          // 0x230 DebDraw::getScreenPos scales x by half of it (a screen width?)
+    int pad_234;          // 0x234 DebDraw::getScreenPos scales y by half of it (a screen height?)
+    unsigned char pad_238[0xDC];
     RSTAT m_renderState;  // 0x314 setRenderState stores it under its lock (the name is not the original's)
     // grSetClearCol copies the colour in and sets 0x328 to 1 (the names are not the original's)
     mm::Col4 m_clearCol;  // 0x318

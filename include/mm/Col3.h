@@ -21,6 +21,9 @@ public:
     static const Col3 yellow;
     static const Col3 salmon;
     static const Col3 cyan;
+    static const Col3 red;
+    static const Col3 green;
+    static const Col3 blue;
 
     float r;
     float g;
