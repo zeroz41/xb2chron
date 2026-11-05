@@ -7,7 +7,7 @@
 #include "mm/mtl/FixedVector.h"
 #include "mm/Pnt.h"
 
-namespace gf { class GfMenuCallContext; class GfMenuDriverList; class GfMenuBladeList; class GfMenuItemList; }
+namespace gf { class GfMenuCallContext; class GfMenuDriverList; class GfMenuBladeList; class GfMenuItemList; class GAME_VOICE_HANDLE; }
 namespace ui { class UIListInfoBase; class UIObjectAcc; struct EventData; }
 
 namespace gf {
@@ -46,6 +46,11 @@ public:
     // opens the blade customize menu for a blade over a layer group (GfMenuObjBladeRelease::seqSubMenuOpenCustomize)
     static void openBladeCustomize(unsigned int handle, unsigned int blade, unsigned short layerGroup);
     bool seqConfSpecialWaitError();
+    // a special operation's confirmation (pad_748 0-3: Homura/Hikari swap, Nia blade/driver): its common window, then
+    // the operation's job, a two-frame wait, seqSpUpdateParty and seqReturnChange (seqReturn when declined)
+    bool seqConfSpecial();
+    // selects the driver in the list (the first when absent) and shows its blades, status icon and layout
+    void refreshCharSelect(unsigned int driver);
     // 1.0.0's names, called where 3.0.1 calls fn_71003D0F84 and fn_71003D0FF8 (GfMenuObjHanaSubmenu's listeners)
     static void dispOnChar(unsigned int);
     static void dispOffChar(unsigned int);
@@ -94,6 +99,13 @@ public:
     bool seqSpUpdateParty();
     // waits for the driver's layout and the three blade images to stream in, then fades LAY_main in (unless pad_768)
     bool seqStreamWait();
+    // the sub menu icons: the driver's (five), blade (three) and special (four) menus' BDAT icons, the rest hidden
+    // after a party change: refills the party data and blade lists, selects the driver in the list and shows its
+    // blades' layouts and status; returns how many valid blades it has
+    int refreshDriver(ui::UIObjectAcc acc, unsigned int driver);
+    static void setupCharSubMenu(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 5>& drMenus,
+                                 mm::mtl::FixedVector<unsigned int, 3>& blMenus,
+                                 mm::mtl::FixedVector<unsigned int, 4>& spMenus);
 
     unsigned char pad_24[4];
     GfMenuDriverList* m_driverList;                        // initialize creates them
@@ -134,7 +146,8 @@ public:
     bool pad_768;
     GfMenuItemList* m_itemList;
     GfMenuCallContext* m_subContext;
-    void* pad_780;
+    // the voice seqConfirmItem plays (it stops the last one first; the name is not the original's)
+    GAME_VOICE_HANDLE* m_voice;
 };
 }  // namespace gf
 

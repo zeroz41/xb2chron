@@ -37,6 +37,14 @@
 #include "mm/mtl/FixStr.h"
 #include "gf/GfMenuSequence.h"
 #include "mm/mtl/Delegate.h"
+#include "classes/gf/GfMenuObjCharSelectIra.h"
+#include "classes/gf/GfMenuFullScreen.h"
+#include "classes/gf/GfDataBdat.h"
+#include "plugin/Bdat.h"
+#include "classes/gf/GfGameVoice.h"
+#include "classes/gf/GfBdatItem.h"
+#include "classes/gf/SCOM_ADD_IDEA.h"
+#include "ml/MTRand.h"
 
 namespace gf {
 
@@ -77,6 +85,10 @@ bool s_selectBusy;
 // the character layouts seqStreamWaitSelect fades in: the driver, then the three blades
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B60FD0)
 const char* s_charLayouts[] = {"LAY_char_dr", "LAY_char_bl@01", "LAY_char_bl@02", "LAY_char_bl@03"};
+// the image layouts setCharPosScale shows the character in: the driver's, then the three blades
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B60FF0); used: kept out of GlobalMerge
+// (the original keeps it apart from s_charLayouts)
+__attribute__((used)) const char* s_charImages[] = {"dr_img", "bl_img01", "bl_img02", "bl_img03"};
 
 // a layout table's entry (the name is not the original's). The original's s_charLayouts (and lbl_7100B60FF0) are
 // writable data (.data): clang 3.9 makes a static table constant unless its address is passed on before inlining, so
@@ -90,7 +102,7 @@ inline const char* getLayoutName(const char* (&table)[N], unsigned int index) {
 GfMenuObjCharSelect::GfMenuObjCharSelect(unsigned int handle)
     : GfMenuObject(handle), m_driverList(nullptr), m_unusedList(nullptr), m_driverNum(0), m_driverNum2(0), pad_428(0),
       m_seq(this), pad_6C0(false), pad_6D8(0), pad_6E8(-1), pad_740(true), pad_741(false), pad_742(0), pad_744(0),
-      pad_748(0xFF), pad_768(false), m_itemList(nullptr), m_subContext(nullptr), pad_780(nullptr) {
+      pad_748(0xFF), pad_768(false), m_itemList(nullptr), m_subContext(nullptr), m_voice(nullptr) {
     m_subMenuPos.assign(-1);
     for (int i = 0; i < 3; i++) {
         m_bladeLists[i] = nullptr;
@@ -177,6 +189,43 @@ bool GfMenuObjCharSelect::seqStreamWaitStatDr() {
     return true;
 }
 
+unsigned int GfMenuObjCharSelect::setCharPosScale(unsigned int kind, unsigned int id, unsigned int slot, bool solo) {
+    ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x61));
+    unsigned int handle = 0;
+    if (acc.m_object != nullptr && slot < 5) {
+        const char* layout;
+        const char* image;
+        if (slot == 4) {
+            layout = kind == 0 ? "LAY_char_dr_move" : "LAY_char_bl_move";
+            image = "character";
+        } else {
+            image = getLayoutName(s_charImages, slot);
+            layout = solo ? "LAY_char_dr_solo" : getLayoutName(s_charLayouts, slot);
+        }
+        GfMenuObjUtil::ImageParam param;
+        GfMenuObjUtil::getImageParam(kind, id, param, slot);
+        ui::UIObjectAcc chr(acc.searchChild(layout));
+        if (solo) {
+            chr.setLayout(chr.m_handle, "dr_img_solo");
+            mm::Vec2 scale(param.m_scale, param.m_scale);
+            chr.setScale(scale);
+        } else {
+            chr.setLayout(chr.m_handle, image);
+            {
+                mm::Vec2 scale(param.m_scale, param.m_scale);
+                chr.setScale(scale);
+            }
+            mm::Pnt<short> pos;
+            chr.getPosCenter(pos);
+            pos.x += param.m_x;
+            pos.y += param.m_y;
+            chr.setPosCenter(pos);
+        }
+        handle = chr.m_handle;
+    }
+    return handle;
+}
+
 bool GfMenuObjCharSelect::seqStreamWaitStatBl() {
     s_charBusy = true;
     ui::UIObjectAcc acc(m_handle);
@@ -186,6 +235,50 @@ bool GfMenuObjCharSelect::seqStreamWaitStatBl() {
     }
     ui::UIObjectAcc move(acc.searchChild("LAY_char_bl_move"));
     GfMenuObject::hookCtrlEvent(move.m_handle, startFadeIn(move.m_handle, 1));
+    return true;
+}
+
+bool GfMenuObjCharSelect::seqConfSpecial() {
+    ui::UIObjectAcc acc(m_handle, "LAY_char");
+    if (!pad_6C0) {
+        if (pad_748 == 3 && GfMenuObjUtil::isBladeLastOneInSlot(0x3F3, nullptr)) {
+            GfMenuManager::openCommonWindow(0xDF);
+            m_seq.addJob(&GfMenuObjCharSelect::seqConfSpecialWaitError);
+            return true;
+        }
+        const unsigned int windows[] = {0xB9, 0xBA, 0xBB, 0xBC};
+        GfMenuManager::openCommonWindow(windows[pad_748]);
+        pad_6C0 = true;
+        return false;
+    }
+    if (GfMenuManager::isOpenCommonWindow()) {
+        return false;
+    }
+    unsigned short result = GfMenuManager::getCommonWindowResult();
+    if (result == 0) {
+        switch (pad_748) {
+        case 0:
+            m_seq.addJob(&GfMenuObjCharSelect::seqSpHomuraToHikari);
+            break;
+        case 1:
+            m_seq.addJob(&GfMenuObjCharSelect::seqSpHikariToHomura);
+            break;
+        case 2:
+            m_seq.addJob(&GfMenuObjCharSelect::seqSpNiaChangeBl);
+            break;
+        case 3:
+            m_seq.addJob(&GfMenuObjCharSelect::seqSpNiaChangeDr);
+            break;
+        default:
+            m_seq.addJob(&GfMenuObjCharSelect::seqReturn);
+            return true;
+        }
+        m_seq.addWait(2);
+        m_seq.addJob(&GfMenuObjCharSelect::seqSpUpdateParty);
+        m_seq.addJob(&GfMenuObjCharSelect::seqReturnChange);
+        return true;
+    }
+    m_seq.addJob(&GfMenuObjCharSelect::seqReturn);
     return true;
 }
 
@@ -217,6 +310,47 @@ bool GfMenuObjCharSelect::seqConfSpecialSelect() {
     m_seq.addJob(&GfMenuObjCharSelect::seqReturn);
     pad_6C0 = false;
     return true;
+}
+
+void GfMenuObjCharSelect::refreshCharSelect(unsigned int driver) {
+    ui::UIObjectAcc acc(m_handle, "LAY_main");
+    m_driverList->getIndex(false);
+    unsigned int index = 0;
+    for (unsigned int i = 0; i < m_driverList->getSize(); i++) {
+        if (m_driverList->getContents(i).m_driver == driver) {
+            index = i;
+            break;
+        }
+    }
+    m_driverList->setIndex(index);
+    unsigned int selected = m_driverList->getContents(m_driverList->getIndex(false)).m_driver;
+    adjustBladeList(m_drivers, m_blades, m_bladeLists, selected);
+    const char* charLayouts[] = {"LAY_char_bl@01", "LAY_char_bl@02", "LAY_char_bl@03"};
+    const char* statusLayouts[] = {"LAY_status_bl@01", "LAY_status_bl@02", "LAY_status_bl@03"};
+    int num = 0;
+    for (int i = 0; i < 3; i++) {
+        unsigned int blade = m_drivers[index].m_blades[i];
+        ui::UIObjectAcc chr(acc.searchChild(charLayouts[i]));
+        ui::UIObjectAcc status(acc.searchChild(statusLayouts[i]));
+        if (GfMenuObjUtil::isValidBlade(blade)) {
+            chr.setDisp(true);
+            status.setDisp(true);
+            num++;
+        } else {
+            chr.setDisp(false);
+            status.setDisp(false);
+        }
+    }
+    requestEvent(acc.searchChild("LAY_char"), 0x101, num);
+    ui::UIObjectAcc icon(acc.searchChild("LAY_status_dr"), "IMG_status_dr_icon");
+    if (GfDataParty::isPartyBattleMember(selected)) {
+        icon.setImageIndex(GfDataParty::getDriverPartyID(selected));
+        icon.setDisp(true);
+    } else {
+        icon.setDisp(false);
+    }
+    GfMenuReference::setReferenceDriverID(0, selected);
+    setDriverPos(acc, m_drivers, selected);
 }
 
 bool GfMenuObjCharSelect::seqStreamWaitSelectBefore() {
@@ -514,6 +648,36 @@ void GfMenuObjCharSelect::execCharPosScale(unsigned int param) {
     }
 }
 
+void GfMenuObjCharSelect::dispOnChar(unsigned int blade) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        GfMenuObjCharSelectIra::dispOnChar(blade);
+        return;
+    }
+    ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x61));
+    if (acc.m_object != nullptr) {
+        dispOnCopyChar(acc, blade);
+    }
+}
+
+void GfMenuObjCharSelect::dispOffChar(unsigned int blade) {
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        GfMenuObjCharSelectIra::dispOffChar(blade);
+        return;
+    }
+    ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x61));
+    if (acc.m_object != nullptr) {
+        dispOffCopyChar(acc, blade);
+    }
+}
+
+void GfMenuObjCharSelect::openBladeCustomize(unsigned int handle, unsigned int blade, unsigned short layerGroup) {
+    GfMenuTypes::Param param;
+    param.m_halves.m_type = 1;
+    param.m_value = blade;
+    GfMenuFullScreen::registLayerParam(0x27, param);
+    GfMenuObject::changeFSSubLayer(handle, layerGroup, 0x27, true);
+}
+
 bool GfMenuObjCharSelect::attach(GfMenuCallContext* context) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x61));
     if (acc.m_object != nullptr) {
@@ -551,6 +715,35 @@ void GfMenuObjCharSelect::dispOffCopyChar(ui::UIObjectAcc& acc, unsigned int bla
         GfMenuObjUtil::startCtrl(move, param, nullptr);
         GfMenuObjCmnStatus::closeDrStatus();
     }
+}
+
+int GfMenuObjCharSelect::refreshDriver(ui::UIObjectAcc acc, unsigned int driver) {
+    setPartyData(m_drivers, m_driverList);
+    adjustBladeList(m_drivers, m_blades, m_bladeLists, driver);
+    for (unsigned int i = 0; i < m_driverList->getSize(); i++) {
+        if (m_driverList->getContents(i).m_driver == driver) {
+            m_driverList->setIndex(i);
+            break;
+        }
+    }
+    unsigned int index = m_driverList->getIndex(false);
+    const char* charLayouts[] = {"LAY_char_bl@01", "LAY_char_bl@02", "LAY_char_bl@03"};
+    const char* statusLayouts[] = {"LAY_status_bl@01", "LAY_status_bl@02", "LAY_status_bl@03"};
+    int num = 0;
+    for (int i = 0; i < 3; i++) {
+        unsigned int blade = m_drivers[index].m_blades[i];
+        ui::UIObjectAcc chr(acc.searchChild(charLayouts[i]));
+        ui::UIObjectAcc status(acc.searchChild(statusLayouts[i]));
+        if (GfMenuObjUtil::isValidBlade(blade)) {
+            chr.setDisp(true);
+            status.setDisp(true);
+            num++;
+        } else {
+            chr.setDisp(false);
+            status.setDisp(false);
+        }
+    }
+    return num;
 }
 
 void GfMenuObjCharSelect::dispOnCopyChar(ui::UIObjectAcc& acc, unsigned int blade) {
