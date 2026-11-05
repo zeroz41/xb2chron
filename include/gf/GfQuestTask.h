@@ -12,7 +12,7 @@ namespace gf {
 class GfQuestTask {
 public:
     static void initializeParams();
-    static void setCompleteFlag(const QuestTaskParam& param, bool complete);
+    static bool setCompleteFlag(const QuestTaskParam& param, bool complete);
     static bool isEnableTaskCondition(const QuestTaskParam& param);
     static bool isEnableTaskConditionWithoutEnv(const QuestTaskParam& param);
     static void refreshTaskParam(QuestID id);
@@ -23,8 +23,9 @@ public:
     static void incSuppressEnemy(unsigned int enemy);  // SCOM_CHAR_DEAD::exec passes the dead enemy's arrange id
     // SCOM_QUEST_GIMMICK passes its request's gimmick type and id
     static void completeGimmickTask(gmk::GmkType, unsigned int);
-    // SCOM_ITEM_USE's request: its item and count (the names are not the original's)
-    static void completeItemUseTask(unsigned int item, unsigned int count);
+    // SCOM_ITEM_USE's request: its item and the driver who uses it (isIra / getListBlade take it; the names are not
+    // the original's)
+    static void completeItemUseTask(unsigned int item, unsigned int driver);
     // completes a quest's task (GfQuestEvent::setQuestComp)
     static void completeTask(const QuestTaskParam& param);
     static bool isCompleteFlag(const QuestTaskParam& param);
@@ -33,6 +34,10 @@ public:
     // it from 2 on)
     static QSTATE updateQuestTask(QuestID id);
     static void completeEventTask(unsigned int id);
+    static void clearTask(QuestID id);
+    // completes the talk tasks whose NPC is npc in every ordered quest but except (parameter names are not the
+    // original's)
+    static void completeTalkTask(unsigned int npc, QuestID except);
     static void applyGetItem(unsigned int item, bool add);
     static void refreshTaskCounters();
     static void refreshTaskCounter(QuestID id);

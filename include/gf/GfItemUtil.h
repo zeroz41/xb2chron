@@ -88,6 +88,9 @@ public:
     // the items of a type the party has (each item id of the type counted in the box)
     static int getCountByType(ItemType::Type type);
     static int getItemBoxCount(unsigned int item);  // how many of the item the party has
+    // how many items of the category the party has (GfQuestTask::refreshTaskParam counts a collect task's category
+    // with it)
+    static int getCountByItemCategory(unsigned int category);
     // count of the item into the party's box (an event call follows); false when it could not be added
     static bool addItemBox(unsigned int item, int count);
     // GfGameManager::setupGame calls it (symbol _ZN2gf10GfItemUtil19setupItemDataFollowEv)
