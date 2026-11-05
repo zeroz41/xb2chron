@@ -6,6 +6,8 @@
 namespace ml {
 class DrResMdoSeamWrkInst;
 struct wkSeamReadPacDataInf;
+struct _wkSeamReadWait;
+struct _wkSeamReadCall;
 
 // The read parameters of the seamless map: the positions to read around and the models to keep. 0x638 bytes
 // (begin stores the pack data at 0x630). Field and type names are not the original's.
@@ -32,6 +34,10 @@ public:
     void setStockLowMdl(int no);
     void setStockLight(int no);
     void resetHeightLvTexture();
+    // fills waits with the streams to start (DrMdoCtlSeamRead::updateReadCall), given the ones being read; returns
+    // how many (the parameter names are not the original's)
+    int calcReadParms(_wkSeamReadWait* waits, bool& errOn, bool& failed, int errMode, const _wkSeamReadCall* calls,
+                      int callNum);
     void addPos(const mm::Vec3& pos);
 
     unsigned int m_flags;                                // 0x0

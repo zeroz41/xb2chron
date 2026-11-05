@@ -13,6 +13,7 @@ namespace ml {
 class DrResMdoSeamMemObj;
 class DrResMdoSeamWrkInst;
 class DrResMdoSeamVertex;
+class DrResMdoSeamTexture;
 class DrResMdoSeamWrkLow;
 class DrResMdoSeamWrkMpf;
 class DrResMdoSeamWrkEnv;
@@ -58,48 +59,97 @@ public:
     struct MapHead {
         // a vertex or texture list entry (8 bytes); m_size is the memory it takes
         struct ResSize {
-            unsigned int pad_0;
+            unsigned int m_ofs;   // 0x0: where the data starts (call*Stream read it from there)
             unsigned int m_size;  // 0x4
         };
         // a texture entry (0x14 bytes); m_heightSize is the height texture's memory
+        struct MdlEntry {
+            unsigned char pad_0[0x34];
+            unsigned int m_ofs;   // 0x34
+            unsigned int m_size;  // 0x38
+        };
+        struct LowEntry {
+            unsigned char pad_0[0x28];
+            unsigned int m_ofs;   // 0x28
+            unsigned int m_size;  // 0x2C
+            unsigned char pad_30[0x18];
+        };
         struct TexSize {
             unsigned int pad_0;
             unsigned int m_size;        // 0x4
-            unsigned int pad_8;
+            unsigned int m_heightOfs;   // 0x8: where the height image starts
             unsigned int m_heightSize;  // 0xC
             unsigned int pad_10;
         };
-        unsigned char pad_0[0x54];
+        unsigned char pad_0[0x1C];
+        unsigned int m_baseMapTblOfs;     // 0x1C: BaseMapEntry entries (callBaseMapStream)
+        unsigned char pad_20[0x4];
+        unsigned int m_instMapTblOfs;     // 0x24 (callInstMapStream)
+        unsigned char pad_28[0xC];
+        unsigned int m_envMdlTblOfs;      // 0x34: MdlEntry entries (callEnvMdlStream)
+        unsigned char pad_38[0x1C];
         unsigned int m_vertexTblOfs;   // 0x54: ResSize entries, by DrResMdoSeamVertex::m_dataIdx
         unsigned char pad_58[0x4];
         unsigned int m_textureTblOfs;  // 0x5C: TexSize entries, by DrResMdoSeamTexture::m_dataIdx
-        unsigned char pad_60[0x2C];
+        unsigned char pad_60[0x8];
+        unsigned int m_mpfMdlTblOfs;      // 0x68: MdlEntry entries (callMpfMdlStream, waitMpfMdlStream)
+        unsigned char pad_6C[0x4];
+        unsigned int m_instPosTblOfs;     // 0x70: ResSize entries (callInstPosStream)
+        unsigned char pad_74[0x4];
+        unsigned int m_mpfEtcTblOfs;      // 0x78: ResSize entries (callMpfEtclStream)
+        unsigned char pad_7C[0x10];
         unsigned int m_lightTblOfs;    // 0x8C: MdsSeamLgtMapData entries, by DrResMdoSeamWrkLight::m_dataIdx
         unsigned char pad_90[0x4];
         unsigned int m_texListTblOfs;  // 0x94: ResSize entries, by DrResMdoSeamTexList::m_dataIdx
+        unsigned char pad_98[0x24];
+        unsigned int m_lowMdlTblOfs;      // 0xBC (callLowMdlStream)
+        unsigned char pad_C0[0x8];
+        unsigned int m_mpfPoliTblOfs;     // 0xC8: ResSize entries (callMpfPolilStream)
+        unsigned char pad_CC[0x4];
+        unsigned int m_baseVertexTblOfs;  // 0xD0: ResSize entries (callBaseVertexStream)
     };
 
     // the names are not the original's
     unsigned char pad_18C[0x1C];
     const MapHead* m_pMapHead;  // 0x1A8
-    unsigned char pad_1B0[0x80];
+    unsigned char pad_1B0[0x20];
+    // 0x1D0: the texture resources, by DrResMdoSeamTexture::m_no (m_pTextureNo holds m_no + 1; the name is not the
+    // original's)
+    DrResMdoSeamTexture* m_pTextures;
+    unsigned char pad_1D8[0x58];
     // 0x230: the vertex resources in use; updateVertexSeam walks them through DrResMdoSeamVertex::m_prev (0x08), so
     // by DrResChankList's naming this is a list's tail (the name is not the original's)
     DrResMdoSeamVertex* m_pVertexList;
     unsigned char pad_238[0x68];
     // 0x2A0: the base works in use (DrMdoCtlSeamAll::callShadowCacheUpdate walks them; the name is not the original's)
     DrResMdoSeamWrkBase* m_pBaseList;
-    unsigned char pad_2A8[0x30];
+    unsigned char pad_2A8[0x20];
+    // 0x2C8..0x2F4, 0x370..0x39C: the low and env work pools around their lists in use: the free works, the last
+    // work in use, the work array and the counts in use and free (DrMdoCtlSeamRead::callLowMdlStream and
+    // callEnvMdlStream take a free work; the original keeps each pool in a 0x38-byte type whose name is unknown, the
+    // field names are not the original's)
+    DrResMdoSeamWrkLow* m_lowFreeHead;
+    DrResMdoSeamWrkLow* m_lowFreeTail;
     // 0x2D8, 0x348, 0x380, 0x3B8: the low, mpf, env and light works in use, each walked through the work's 0x08
     // (DrMdoCtlSeamAll::releaseSeamAll; the names are not the original's)
     DrResMdoSeamWrkLow* m_pLowList;
-    unsigned char pad_2E0[0x30];
+    DrResMdoSeamWrkLow* m_lowUsedTail;  // 0x2E0
+    DrResMdoSeamWrkLow* m_lowWorks;     // 0x2E8
+    int m_lowUsedNum;                   // 0x2F0
+    int m_lowFreeNum;                   // 0x2F4
+    unsigned char pad_2F8[0x18];
     DrResMdoSeamWrkInst* m_pInstList;  // 0x310: the instance works in use (DrMdoCtlSeamAll::occRender walks them)
     unsigned char pad_318[0x30];
     DrResMdoSeamWrkMpf* m_pMpfList;  // 0x348
-    unsigned char pad_350[0x30];
+    unsigned char pad_350[0x20];
+    DrResMdoSeamWrkEnv* m_envFreeHead;  // 0x370
+    DrResMdoSeamWrkEnv* m_envFreeTail;  // 0x378
     DrResMdoSeamWrkEnv* m_pEnvList;  // 0x380
-    unsigned char pad_388[0x30];
+    DrResMdoSeamWrkEnv* m_envUsedTail;  // 0x388
+    DrResMdoSeamWrkEnv* m_envWorks;  // 0x390
+    int m_envUsedNum;  // 0x398
+    int m_envFreeNum;  // 0x39C
+    unsigned char pad_3A0[0x18];
     DrResMdoSeamWrkLight* m_pLightList;  // 0x3B8
     unsigned char pad_3C0[0x2D8];
     DrResMdoInstAnmObj m_instAnm;  // 0x698: releaseSeam releases it; ScnObjAccSeamPos reads it (m_mdlType 3)
@@ -123,7 +173,15 @@ public:
     unsigned short m_lightNum;       // 0xC0C: waitLightStream counts the lights in
     unsigned char pad_C0E[0x8];
     short m_offScreenCnt;            // 0xC16: DrMdoCtlSeamAll::noOffScreenUpdate counts its calls
-    unsigned char pad_C18[0x1C];
+    unsigned char pad_C18[0x2];
+    // 0xC1A, 0xC1E, 0xC20: DrMdoCtlSeamRead::updateReadCall clears m_readSkip while reading is off and counts the
+    // others down; callHeightTexutreStream sets m_heightReadWait to 60 when it cannot start (the names are not the
+    // original's)
+    short m_readSkip;
+    unsigned char pad_C1C[0x2];
+    short m_readWaitCnt;
+    short m_heightReadWait;
+    unsigned char pad_C22[0x12];
     int m_textureMemSize;            // 0xC34: the texture memory read in
     int m_vertexMemSize;             // 0xC38: the vertex memory read in
     unsigned char pad_C3C[0x4];
@@ -143,7 +201,10 @@ public:
     // 0xC7C: DrMdoCtlSeamRead::wait*Stream set bit 16 when a stream ends without its data (and bit 10 while
     // DrMan::m_seamReadErrMode is high enough); DrMdoCtlSeamAll::callRenderSeamAll tests bit 3
     unsigned int m_seamFlags;
-    unsigned char pad_C80[0x8];
+    unsigned char pad_C80[0x4];
+    // 0xC84: a bit per stream kind (_wkSeamReadCall::m_type) started or still waiting (the name is not the
+    // original's)
+    unsigned int m_readTypeBits;
     int m_lightGroup;                // 0xC88: 1 from the constructor; waitLightStream gives it to the light's object
     unsigned char pad_C8C[0x4];
     // 0xC90/0xC98: one bit per shadow cache already rendered, for the base and the instance works:
@@ -151,7 +212,13 @@ public:
     // waitInstPosStream clear all once their stream is in (the names are not the original's)
     unsigned long m_baseShadowCacheDone;
     unsigned long m_instShadowCacheDone;
-    unsigned char pad_CA0[0x28];
+    unsigned char pad_CA0[0xC];
+    // 0xCAC..0xCC4: the last 4 streams DrMdoCtlSeamRead::call*Stream could not start (no memory or no read): their
+    // kind and size, m_readErrIdx the next slot (the names are not the original's)
+    short m_readErrIdx;
+    short m_readErrType[4];
+    unsigned char pad_CB6[0x2];
+    unsigned int m_readErrSize[4];
     // 0xCC8: updateVertexSeam frees every vertex resource while it is set (the name is not the original's)
     bool m_releaseVertexAll;
     unsigned char pad_CC9[0x7];

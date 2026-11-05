@@ -43,7 +43,8 @@ public:
     void* m_work0;                        // 0x38: released by release
     void* m_work1;                        // 0x40: released by release
     void* m_work2;                        // 0x48: cleared by release
-    unsigned char pad_50[0x8];
+    unsigned int m_dataIdx;  // 0x50: its MapHead::m_envMdlTblOfs entry (callEnvMdlStream)
+    unsigned char pad_54[0x4];
     MdoWrkMatRes* m_matRes;               // 0x58: released by release
     DrResMdoSeamMemObj* m_memObj;         // 0x60: cleared by release; update tests its read-in flag
     unsigned int m_type;                  // 0x68 (setInfo)

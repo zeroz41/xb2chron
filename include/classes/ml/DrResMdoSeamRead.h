@@ -4,6 +4,7 @@
 #include "classes/ml/IWorkEvent.h"
 
 namespace ml { class EventFileTh; }
+namespace ml { class DrResMdoSeamMemObj; }
 
 namespace ml {
 // table 0x7100B7DA28
@@ -18,6 +19,10 @@ public:
     virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
     // sets FLAG_READ_ASYNC when async, else FLAG_READ_SYNC (the flag names are not the original's)
     void setup(bool async);
+    // starts reading size bytes at ofs into obj; idx gets the read's bit in m_readWaitBits (the parameter names are
+    // not the original's)
+    bool read(int& idx, unsigned int ofs, unsigned int size, DrResMdoSeamMemObj* obj);
+    int getReadMax();
 
     enum {
         FLAG_READ_ASYNC = 1 << 2,
@@ -27,7 +32,9 @@ public:
     // 0x48: a bit per _wkSeamReadCall::m_readIdx, cleared when that stream is in (DrMdoCtlSeamRead::wait*Stream);
     // inside the block the constructor zeroes (the name is not the original's)
     unsigned short m_readWaitBits;
-    unsigned char pad_4A[0x2];
+    // 0x4A: a bit per _wkSeamReadCall::m_readIdx whose read has finished (DrMdoCtlSeamRead::updateReadList tests
+    // it; the name is not the original's)
+    unsigned short m_readDoneBits;
     unsigned int m_flags;  // 0x4C (the name is not the original's)
     unsigned char pad_50[0x8];  // the constructor zeroes 0x8-0x58
 };

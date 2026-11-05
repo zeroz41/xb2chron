@@ -4953,7 +4953,7 @@ void DrResMdoSeamMemMan::releaseFreeObj(DrResMdoSeamMemObj* obj) {
 }
 
 // Zeroes 0x8-0x58 as one block, then sets the flags.
-DrResMdoSeamRead::DrResMdoSeamRead() : pad_8(), m_readWaitBits(0), pad_4A(), m_flags(0), pad_50() {
+DrResMdoSeamRead::DrResMdoSeamRead() : pad_8(), m_readWaitBits(0), m_readDoneBits(0), m_flags(0), pad_50() {
     m_flags = FLAG_READ_ASYNC;
 }
 
@@ -5379,7 +5379,7 @@ void DrResMdoSeamWrkLow::release() {
         m_buf2 = nullptr;
     }
     m_num = 0;
-    pad_30 = nullptr;
+    m_memObj = nullptr;
 }
 
 
