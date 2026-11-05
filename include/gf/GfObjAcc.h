@@ -116,6 +116,9 @@ public:
     const char* getExtMeshName(int mesh) const;
     const char* getDebugName() const;
     bool isBattle() const;
+    // hides or shows the model's extra parts (ExtraPartsA..F) as its data's initial display asks; 4 parts for an enemy
+    // whose RSC row has neither ExtraParts5 nor ExtraParts6
+    void setupExtraParts();
     void setEtcParam(int index, float value);
     int getEtcParamIndex(const char* name) const;
     bool isPartyObj() const;

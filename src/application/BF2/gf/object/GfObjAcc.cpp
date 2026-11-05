@@ -40,6 +40,9 @@
 #include "classes/btl/CharacterParameter.h"
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkCamp.h"
+#include "gf/GfTargetProperty.h"
+#include "classes/gf/GfBdatRsc.h"
+#include "classes/gf/DataParamAcc.h"
 
 namespace gf {
 
@@ -316,6 +319,27 @@ const mm::Vec3& GfObjAcc::getModelScaleXYZ() const {
 
 float GfObjAcc::getModelScale() const { return getModelScaleXYZ().x; }
 
+void GfObjAcc::setRenderCameraFade(bool on) {
+    if (m_obj != nullptr) {
+        if (GfComModel* model = m_obj->getComponent<GfComModel>(1)) {
+            if (model->m_model != nullptr) {
+                if (ml::ScnObjModel* scn = model->m_model->getInterface()) {
+                    ml::ScnObjAccResMdlInfo info(scn);
+                    info.setSpAlphaMode(on);
+                }
+            }
+        }
+    }
+    mm::mtl::IntrusiveList<fw::UpdatableObject>& children = m_obj->m_children;
+    for (mm::mtl::IntrusiveList<fw::UpdatableObject>::iterator it = children.begin(), end = children.end(); it != end;
+         ++it) {
+        fw::UpdatableObject& child = *it;
+        GfObj* obj = child.getRTTI()->isKindOf(&GfObj::m_rtti) ? static_cast<GfObj*>(&child) : nullptr;
+        GfObjAcc acc(obj->m_handle);
+        acc.setRenderCameraFade(on);
+    }
+}
+
 // empty in 3.0.1
 void GfObjAcc::setGravity(bool on) {}
 
@@ -422,6 +446,17 @@ bool GfObjAcc::isMultiBindWaiting() const {
 
 GF_ASSET_HANDLE* GfObjAcc::getAssetHandle() const {
     return m_info != nullptr ? m_info->m_assetHandle : reinterpret_cast<GF_ASSET_HANDLE*>(-1);
+}
+
+GF_OBJ_HANDLE* GfObjAcc::getTarget() const {
+    if (m_obj != nullptr) {
+        if (GfComProperty* property = m_obj->getComponent<GfComProperty>(5)) {
+            if (property->m_target.get() != nullptr) {
+                return property->m_target->m_target;
+            }
+        }
+    }
+    return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
 }
 
 void GfObjAcc::setUserData(GfObjUserData kind, unsigned long data) {
@@ -605,6 +640,51 @@ bool GfObjAcc::isBattle() const {
     }
     btl::CharacterParameter* param = chr->GetCharacterParameter(false);
     return param != nullptr && param->m_hasHateTarget;
+}
+
+void GfObjAcc::setupExtraParts() {
+    // Proposed names, not the original's: the symbols leave both unnamed (lbl_7100B69E80, lbl_7100B69EB0); the first
+    // serves the enemy of RSC row 0x106 (its fourth part is ExtraPartsE, not ExtraPartsD)
+    static const char* const s_extraPartsEn106[] = {
+        "ExtraPartsA", "ExtraPartsB", "ExtraPartsC", "ExtraPartsE", "ExtraPartsE", "ExtraPartsF",
+    };
+    static const char* const s_extraParts[] = {
+        "ExtraPartsA", "ExtraPartsB", "ExtraPartsC", "ExtraPartsD", "ExtraPartsE", "ExtraPartsF",
+    };
+    if (m_obj == nullptr) {
+        return;
+    }
+    GfComModel* model = m_obj->getComponent<GfComModel>(1);
+    if (model == nullptr || model->m_model == nullptr) {
+        return;
+    }
+    ml::ScnObjModel* scn = model->m_model->getInterface();
+    if (scn == nullptr) {
+        return;
+    }
+    ml::ScnObjAccResSubMesh subMesh(scn);
+    subMesh.getExtMax();
+    DataParamAcc param(getType(), getBdatId(), static_cast<GimmickType>(0));
+    const char* const* names = getEnRscId() == 0x106 ? s_extraPartsEn106 : s_extraParts;
+    int num = 6;
+    if (param.getObjType() == 5) {
+        GfBdatRsc* rsc = GfBdatRsc::get();
+        if (rsc->getRscEnExtraParts5(getEnRscId()) == 0 && rsc->getRscEnExtraParts6(getEnRscId()) == 0) {
+            num = 4;
+        } else {
+            num = 6;
+        }
+    }
+    for (int i = 0; i < num; i++) {
+        int index = subMesh.getExtIdx(names[i]);
+        if (index >= 0) {
+            if (param.isHideInitExtraParts(i)) {
+                subMesh.setExtAlpha(index, 0.0f);
+            } else {
+                subMesh.setExtAlpha(index, param.isDispInitExtraParts(i) ? 1.0f : 0.0f);
+            }
+        }
+    }
 }
 
 void GfObjAcc::setEtcParam(int index, float value) {
