@@ -16,6 +16,7 @@
 #include "classes/ssd/StreamController.h"
 #include "classes/ssd/SoundActor.h"
 #include "ssd/Debug.h"
+#include "classes/ssd/FileStream.h"
 
 namespace ssd {
 
@@ -72,7 +73,7 @@ SoundParam::Name& SoundParam::Name::operator=(const TextRef& text) {
     return *this;
 }
 
-SystemCore::SystemCore() : pad_2e8(), pad_4a0(nullptr) {}
+SystemCore::SystemCore() : pad_4a0(nullptr) {}
 
 SystemCore::~SystemCore() {}
 
@@ -134,6 +135,89 @@ void SystemCore::UnlockAudio() const {
 
 const SoundCore::DebugInfo* SystemCore::GetDebugInfo() const {
     return &debugInfo_;
+}
+
+Result SystemCore::Quit() {
+    if (playVoices_.count_ != 0) {
+        return Result(-120);
+    }
+    set_result(Result(0));
+    {
+        ScopedLock lock(audioLock_);
+        for (VoiceHandle* voice = static_cast<VoiceHandle*>(playVoices_.head_.next);
+             voice != static_cast<VoiceHandle*>(&playVoices_.head_); voice = static_cast<VoiceHandle*>(voice->next)) {
+            if (voice->handle_ != nullptr) {
+                voice->handle_->Stop(0.0f);
+            }
+        }
+    }
+    if (banks_.count_ != 0) {
+        return Result(-121);
+    }
+    if (pad_4a0 != nullptr) {
+        pad_4a0->Quit();
+        SoundActor* actor = pad_4a0;
+        SoundMemory::allocator_->DeleteInstance(actor);
+        pad_4a0 = nullptr;
+    }
+    audioThread_.CloseThread();
+    streamThread_.CloseThread();
+    VoiceHandle::FreeAdpcmSplitBuffer();
+    // the first playing voice, none once the list is empty
+    auto firstVoice = [this]() -> VoiceHandle* {
+        if (playVoices_.head_.next == &playVoices_.head_) {
+            return nullptr;
+        }
+        return static_cast<VoiceHandle*>(playVoices_.head_.next);
+    };
+    while (VoiceHandle* voice = firstVoice()) {
+        voice->ForceStop();
+        voice->FreeVoice();
+        if (voice->stream_ != nullptr) {
+            voice->DeleteStream();
+        }
+    }
+    for (int i = 0; i < voiceCount_; i++) {
+        voices_[i].Quit();
+    }
+    if (delegates_.data_ != nullptr) {
+        SoundMemory::allocator_->DeleteInstance(delegates_.data_);
+    }
+    delegates_.data_ = nullptr;
+    delegates_.size_ = 0;
+    delegates_.capacity_ = 0;
+    delegateLock_.Finalize();
+    for (VoiceHandle* voice = static_cast<VoiceHandle*>(playVoices_.head_.next);
+         voice != static_cast<VoiceHandle*>(&playVoices_.head_);) {
+        VoiceHandle* next = static_cast<VoiceHandle*>(voice->next);
+        playVoices_.Remove(voice);
+        voice = next;
+    }
+    for (VoiceHandle* voice = static_cast<VoiceHandle*>(freeVoices_.head_.next);
+         voice != static_cast<VoiceHandle*>(&freeVoices_.head_);) {
+        VoiceHandle* next = static_cast<VoiceHandle*>(voice->next);
+        freeVoices_.Remove(voice);
+        voice = next;
+    }
+    VoiceHandle** activeVoices = activeVoices_;
+    SoundMemory::allocator_->DeleteInstance(activeVoices);
+    SoundMemory::allocator_->DeleteInstance(freedVoices_);
+    VoiceHandle* voices = voices_;
+    SoundMemory::allocator_->DeleteInstance(voices);
+    voices_ = nullptr;
+    activeVoices_ = nullptr;
+    freedVoices_ = nullptr;
+    if (categories_.data_ != nullptr) {
+        SoundMemory::allocator_->DeleteInstance(categories_.data_);
+    }
+    categories_.data_ = nullptr;
+    categories_.size_ = 0;
+    categories_.capacity_ = 0;
+    QuitAudioDevice();
+    commands_.Quit();
+    FileStream::Finalize();
+    audioLock_.Finalize();
+    return set_result(Result(0));
 }
 
 Result SystemCore::SetCategory(const SoundCategory& category) {
@@ -354,7 +438,7 @@ void SystemCore::AudioThreadEntry(SystemCore* core, void* userData) {
     while (!core->audioThread_.closing_) {
         nn::os::WaitSystemEvent(core->systemEvent_.GetBase());
         double time = core->audioFrameCount_ / core->audioFrameRate_;
-        core->appliedFrameRate_ = core->audioFrameRate_;
+        core->audioDeltaTime_ = core->audioFrameRate_;
         core->audioTime_ = time;
         core->AudioFrameProcess();
         core->audioFrameCount_++;
@@ -398,6 +482,57 @@ Result SystemCore::AddSoundEffecter(unsigned char bus, SoundEffecter* effect) {
 Result SystemCore::RemoveSoundEffecter(SoundEffecter* effect) {
     ScopedLock lock(audioLock_);
     return QuitEffect(effect);
+}
+
+void SystemCore::UpdateGameFrame(float frameTime) {
+    gameFrameTime_ = frameTime;
+    double now = GetSystemTime();
+    double last = gameTime_;
+    gameDeltaTime_ = now - last;
+    gameTime_ = now;
+    float deltaTime = gameDeltaTime_;
+    double processStart = GetSystemTime();
+    {
+        ScopedLock lock(audioLock_);
+        commands_.SwitchBuffer();
+        commands_.ExecuteCommands();
+        for (SoundListener* listener : listeners_) {
+            listener->UpdateGameFrame(deltaTime);
+        }
+        for (SoundActor* actor = static_cast<SoundActor*>(actors_.head_.next);
+             actor != static_cast<SoundActor*>(&actors_.head_); actor = static_cast<SoundActor*>(actor->next)) {
+            actor->UpdateGameFrame(deltaTime);
+        }
+        VoiceHandle* voice = static_cast<VoiceHandle*>(playVoices_.head_.next);
+        if (voice != static_cast<VoiceHandle*>(&playVoices_.head_)) {
+            int freed = 0;
+            for (; voice != static_cast<VoiceHandle*>(&playVoices_.head_);
+                 voice = static_cast<VoiceHandle*>(voice->next)) {
+                voice->UpdateGameFrame(deltaTime);
+                if (!voice->allocated_) {
+                    freedVoices_[freed++] = voice;
+                }
+            }
+            for (int i = 0; i < freed; i++) {
+                freedVoices_[i]->FreeVoice();
+            }
+        }
+        activeVoiceCount_ = 0;
+        for (VoiceHandle* voice = static_cast<VoiceHandle*>(playVoices_.head_.next);
+             voice != static_cast<VoiceHandle*>(&playVoices_.head_); voice = static_cast<VoiceHandle*>(voice->next)) {
+            activeVoices_[activeVoiceCount_] = voice;
+            activeVoiceCount_++;
+        }
+        gameFrameCount_++;
+        cpuLoadIndex_ = 1 - cpuLoadIndex_;
+        cpuLoad_[cpuLoadIndex_].frameTime = 0.0;
+        cpuLoad_[cpuLoadIndex_].processTime = 0.0;
+        debugInfo_.gameFrameTime = (GetSystemTime() - processStart) * 1000.0;
+        if (debugInfo_.gameFrameTimeMax < debugInfo_.gameFrameTime) {
+            debugInfo_.gameFrameTimeMax = debugInfo_.gameFrameTime;
+        }
+    }
+    set_result(Result(0));
 }
 
 SoundCore::DebugInfo SystemCore::debugInfo_;

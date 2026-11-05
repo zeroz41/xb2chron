@@ -45,7 +45,12 @@ public:
     // what GetDebugInfo hands out (SystemCore::debugInfo_): 0x10 bytes SystemCore::UpdateGameFrame and
     // AudioFrameProcess fill. The type's name is not the original's.
     struct DebugInfo {
-        unsigned char pad_0[0x10];
+        // AudioFrameProcess's time for one audio frame in milliseconds and the longest one
+        float audioFrameTime;
+        float audioFrameTimeMax;
+        // UpdateGameFrame's time for one game frame in milliseconds and the longest one
+        float gameFrameTime;
+        float gameFrameTimeMax;
     };
 
     SoundCore();

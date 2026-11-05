@@ -8,6 +8,7 @@
 #include "classes/ssd/Array.h"
 #include "classes/ssd/SoundCategory.h"
 #include "classes/ssd/SoundGroup.h"
+#include "classes/ssd/CommandManager.h"
 #include "ssd/Mutex.h"
 #include "ssd/Thread.h"
 
@@ -99,27 +100,34 @@ public:
 
     // SoundCore::NewInstance allocates 0xA28 bytes for the instance; SystemCorePlatform's fields end at 0x270.
     // The field names are not the original's.
-    unsigned char pad_270[0x8];
+    unsigned long gameFrameCount_;  // 0x270: UpdateGameFrame counts the game frames
     unsigned long audioFrameCount_;  // 0x278: AudioThreadEntry counts the frames it processes
     double audioTime_;  // 0x280: audioFrameCount_ / audioFrameRate_, before each frame
-    unsigned char pad_288[0x8];
+    unsigned long audioFrameProcessCount_;  // 0x288: AudioFrameProcess counts the frames it processes
     double audioFrameRate_;  // 0x290
-    unsigned char pad_298[0x8];
-    double appliedFrameRate_;  // 0x2A0: AudioThreadEntry copies audioFrameRate_ to it before each frame
-    double startTime_;  // 0x2A8: the system time the audio thread starts at
-    unsigned char pad_2b0[0x38];
-    void* pad_2e8[2];  // the constructor zeroes both
-    unsigned char pad_2f8[0x8];
+    double audioFrameLength_;  // 0x298: AudioFrameProcess adds it to the frame's cpu load frame time
+    // 0x2A0: AudioThreadEntry copies audioFrameRate_ to it before each frame, AudioFrameProcess then sets it to the
+    // time since the last frame (the time the voices and the master behaviors move by)
+    double audioDeltaTime_;
+    double startTime_;  // 0x2A8: the system time the audio thread starts at, then the last audio frame's
+    double gameTime_;  // 0x2B0: the system time of the last UpdateGameFrame
+    double gameDeltaTime_;  // 0x2B8: the system time since the UpdateGameFrame before
+    float gameFrameTime_;  // 0x2C0: UpdateGameFrame's frame time
+    unsigned char pad_2c4[0x4];
+    CommandManager commands_;  // 0x2C8: UpdateGameFrame executes the commands queued since the last game frame
     OutputMode::Type outputMode_;
     unsigned char pad_304[0x4];
     BehaviorInstance<SystemCore> masterVolume_;  // 0x308
     BehaviorInstance<SystemCore> masterPitch_;  // 0x350
-    unsigned char pad_398[0x4];
+    int voiceCount_;  // 0x398: how many voices_ Init allocated (Quit quits each)
     int voiceSerial_;  // 0x39C: AllocVoiceHandle builds a voice's id from it (1..0xFFFFF)
     List<VoiceHandle> playVoices_;  // 0x3A0: GetNumPlaySound counts it
     List<VoiceHandle> freeVoices_;  // 0x3C8: FreeVoiceHandle links a voice back in
     VoiceHandle* voices_;  // 0x3F0: Init allocates them
-    unsigned char pad_3f8[0x18];
+    int activeVoiceCount_;  // 0x3F8: UpdateGameFrame lists the playing voices for AudioFrameProcess
+    unsigned char pad_3fc[0x4];
+    VoiceHandle** activeVoices_;  // 0x400
+    VoiceHandle** freedVoices_;  // 0x408: UpdateGameFrame collects the voices that stopped, then frees them
     int pad_410;  // VoiceHandle::UpdateAudioInternal takes a released channel's pad_b4 off it
     unsigned char pad_414[0x4];
     List<SoundBank> banks_;  // 0x418: AddBank / RemoveBank

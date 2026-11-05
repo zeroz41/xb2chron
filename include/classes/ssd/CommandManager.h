@@ -28,6 +28,9 @@ public:
         int count;
     };
 
+    // SystemCore's constructor zeroes the two list pointers only
+    CommandManager() : write_(), execute_() {}
+
     void Init(int capacity);
     // 2.0.0's symbols name it. What it does: makes the list other than the one write_ points to the written one
     // (write_), the other the executed one (execute_), and empties the newly written list.
