@@ -586,7 +586,8 @@ public:
     // while set, Utility::IsSatisfyCondition holds for its conditions 0-2, 5-7, 10, 11, 14, 15 and 19 (1, 2, 16-19 with
     // m_challengeAnySuccess) without asking FLD_ConditionList (meaning unknown)
     bool pad_bit42 : 1;
-    unsigned char : 3;
+    bool pad_bit43 : 1;  // while set, UIManager::UpdateTutorial shows no queued tutorial (meaning unknown)
+    unsigned char : 2;
     // EnemyParameter::BattleStart sets it for an enemy whose ChrEnArrange row has the PGMax flag, unless pad_bit1 is
     // set (then it fills party gauge group 10003 instead); meaning unknown
     bool pad_bit46 : 1;

@@ -26,6 +26,9 @@ public:
     // what open shows (1.0.0's open(OpenParam const&) names the type; btl::UIManager::DispBuffUI fills it; the field
     // names are not the original's)
     struct OpenParam {
+        // everything but the position zeroed (btl::UIManager's Disp*UI build one so)
+        OpenParam()
+            : m_type(0), m_resist(false), m_resist2(false), m_text(nullptr), m_bdat(nullptr), m_nameId(0), m_icon(0) {}
         int m_type;  // the background's colour: 0 dmg_buff, 1 dmg_debuff, 2 dmg_combo (white past them)
         bool m_resist;  // shows TXT_resist's first text (DispBuffUI passes its flag)
         bool m_resist2;  // shows TXT_resist's second text, before m_resist

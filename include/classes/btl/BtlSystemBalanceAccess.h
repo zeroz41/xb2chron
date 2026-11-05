@@ -70,7 +70,9 @@ public:
     unsigned short pad_CC;
     // compared with an enemy ID by IsExWeaponAlphaProcEnemy; meaning unknown
     unsigned short pad_CE[4];
-    unsigned char pad_D6[0x16];
+    // btl::UIManager::DispSystemMessageUI shows entry <its type> as a message id of BDAT table 0x196 (meaning of
+    // the entries unknown)
+    unsigned short pad_D6[0xB];
     // the HP rate below which a character counts as dying: Utility::GetDyingHpRate reads it (the name is not
     // the original's)
     float m_dyingHpRate;
