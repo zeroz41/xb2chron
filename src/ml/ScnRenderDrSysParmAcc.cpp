@@ -1305,7 +1305,7 @@ float ScnObjAccPartsPos::getNodeFrame() const { return m_obj->getNodeFrame(); }
 float ScnObjAccPartsPos::getNodeMaxFrame() const { return m_obj->getNodeMaxFrame(); }
 float ScnObjAccPartsPos::getNodeStartFrame() const { return m_obj->getNodeStartFrame(); }
 void ScnObjAccPartsPos::getAnmMatrix(mm::Mat44* mat) const { m_obj->getAnmMatrix(*mat); }
-unsigned char ScnObjAccPartsPos::getSwitchID() const { return m_obj->getSwitchID(); }
+unsigned int ScnObjAccPartsPos::getSwitchID() const { return m_obj->getSwitchID(); }
 void ScnObjAccPartsPos::setSwitchID(unsigned int id) { m_obj->setSwitchID(id); }
 
 ScnObjAccSeamEtcPos::ScnObjAccSeamEtcPos(ScnObjModel* model) : m_list(nullptr) {

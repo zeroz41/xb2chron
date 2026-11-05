@@ -7,6 +7,9 @@
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfGameFlag.h"
 #include "classes/gf/GfManager.h"
+#include "classes/gf/GfMapManager.h"
+#include "classes/fw/ModelObject.h"
+#include "classes/fw/ColiObject.h"
 #include "classes/fw/EffectManager.h"
 #include "ml/ScnObjAccSeamPos.h"
 #include "ml/ScnObjAccPartsPos.h"
@@ -99,6 +102,20 @@ void GfFieldLod::BdatInfo::dirtyCache() {
     }
 }
 
+bool GfFieldLod::setAnimReverse(int bdatId, bool reverse, bool immediate) {
+    GfGameFlag::setLocal(1, bdatId + 0x9631 - m_idTop, reverse);
+    if (m_coliAnim.m_info.m_model == nullptr || m_coliAnim.m_info.m_lod == nullptr) {
+        return false;
+    }
+    if (!m_updating) {
+        BdatInfo* info = _findBdatInfo(bdatId);
+        if (info != nullptr) {
+            info->dirtyCache();
+        }
+    }
+    return m_coliAnim.play(m_lodIds[bdatId - m_idTop], reverse, immediate);
+}
+
 GfFieldLod::GfFieldLod(const GfSetupParam& param)
     : m_idTop(0), m_initialized(false), m_updateIndex(0), m_updating(false), m_eventPlaying(false) {
     initialize(param);
@@ -143,6 +160,36 @@ float GfFieldLod::getAnimEndTime(int bdatId) const {
     return m_coliAnim.getAnimEndTime(lodId);
 }
 
+void GfFieldLod::gevMapjump(GEV gev, const MapjumpCallbackInfo& info) {
+    switch (gev) {
+    case GEV(2): {
+        size_t size = m_bdatInfos.size();
+        for (size_t i = 0; i < size; i++) {
+            m_bdatInfos[i].update();
+        }
+        break;
+    }
+    case GEV(3):
+        disposeBdatInfos();
+        disposeColiAnim();
+        break;
+    case GEV(5): {
+        validateBySaveData();
+        fw::ModelObject* obj = GfMapManager::getModelObject();
+        if (obj != nullptr) {
+            ml::ScnObjModel* model = obj->getInterface();
+            if (model != nullptr) {
+                createColiAnim(model, false);
+            }
+        }
+        validateVeSe();
+        break;
+    }
+    default:
+        break;
+    }
+}
+
 void GfFieldLod::validateBySaveData() {
     unsigned char* fp = GfDataBdat::getFP(0x72);
     int top = Bdat::getIdTop(fp);
@@ -154,6 +201,23 @@ void GfFieldLod::validateBySaveData() {
         unsigned int reverse = GfGameFlag::getLocal(1, 0x9631 + i);
         get()->setAnimReverse(id, reverse != 0, true);
     }
+}
+
+void GfFieldLod::createColiAnim(ml::ScnObjModel* model, bool flag) {
+    if (model == nullptr) {
+        return;
+    }
+    disposeBdatInfos();
+    disposeColiAnim();
+    GfFieldLodColiAnim::CreateInfo info;
+    info.m_model = model;
+    fw::ColiObject* coli = GfMapManager::getColiObject();
+    info.m_coli = coli != nullptr ? coli->m_coliObj : nullptr;
+    info.m_lod = this;
+    info.m_flag = flag;
+    m_coliAnim.create(info);
+    createBdatInfos();
+    m_coliAnim.validateVeSe(*this);
 }
 
 void GfFieldLod::gevPlayEvent(GEV gev, unsigned int eventId) {
@@ -211,6 +275,23 @@ void GfFieldLod::setLodSwitchId(int bdatId, unsigned int switchId) {
             parts.setSwitchID(switchId);
         }
     }
+}
+
+unsigned int GfFieldLod::getLodSwitchId(int bdatId) const {
+    if (m_coliAnim.m_info.m_model == nullptr || m_coliAnim.m_info.m_lod == nullptr) {
+        return -1;
+    }
+    unsigned short lodId = m_lodIds[bdatId - m_idTop];
+    ml::ScnObjAccSeamPos seam(m_coliAnim.m_info.m_model);
+    int max = seam.getMax();
+    unsigned int switchId = -1;
+    for (int i = 0; i < max; i++) {
+        ml::ScnObjAccPartsPos parts = seam.getObj(i);
+        if (lodId == parts.getID() && parts.isSwitch()) {
+            switchId = parts.getSwitchID();
+        }
+    }
+    return switchId;
 }
 
 void GfFieldLod::validateByInitData() {

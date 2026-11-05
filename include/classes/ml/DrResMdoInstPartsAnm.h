@@ -35,7 +35,7 @@ public:
         }
         return 0.0f;
     }  // slot 11
-    virtual unsigned char getSwitchID() const { return m_switchID; }  // slot 12
+    virtual unsigned int getSwitchID() const { return m_switchID; }  // slot 12
     virtual void setSwitchID(unsigned char);  // slot 13
     virtual unsigned char getSwitchMax() const { return m_switchMax; }  // slot 14
     virtual unsigned char getSwitchIndex(unsigned int) const;  // slot 15

@@ -22,6 +22,8 @@ public:
     public:
         // one condition of the row (1.0.0's isCondMatched tests the three; the field names are not the original's)
         struct CondInfo {
+            // (createBdatInfos's pushed row: all zero but m_matched)
+            CondInfo() : m_gameCond(0), m_cached(false) {}
             bool isCondMatched() const;
 
             gmk::ScenarioFlagCond m_scenarioFlag;  // 0x0
@@ -30,13 +32,21 @@ public:
             bool m_cached;                         // 0xa: dirtyCache clears it
             bool m_matched;                        // 0xb
         };
+        // 1.0.0's symbols have it out of line (3.0.1 inlines it into createBdatInfos, which pushes BdatInfo(0)):
+        // every field zero but the conditions' m_matched, then create when an id is given
+        BdatInfo(unsigned short bdatId) : m_lodId(0), m_fadeInTime(0.0f), m_fadeOutTime(0.0f), m_bdatId(0) {
+            if (bdatId != 0) {
+                create(bdatId);
+            }
+        }
         ~BdatInfo() { dispose(); }
         void create(unsigned short bdatId);
         void dispose();
         void update();
         void dirtyCache();
 
-        unsigned char pad_0[4];
+        unsigned short m_lodId;  // 0x00: (inferred: GmkElevator reads it as the LOD id; the name is not the original's)
+        unsigned char pad_2[2];
         float m_fadeInTime;     // 0x04: setFade's time when shown (the name is not the original's)
         float m_fadeOutTime;    // 0x08: setFade's time when hidden (the name is not the original's)
         unsigned short m_bdatId;  // 0x0c

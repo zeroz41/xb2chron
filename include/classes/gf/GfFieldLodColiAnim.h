@@ -64,11 +64,13 @@ public:
     void disposePosInfos();
     void update(fw::UpdateInfo const& info);
     void validateVeSe(GfFieldLod const& lod);
-    void play(unsigned short lodId, bool reverse, bool immediate);
+    bool play(unsigned short lodId, bool reverse, bool immediate);
     bool isPlayEnd(unsigned short lodId) const;
     void setPlaySpeed(unsigned short lodId, float speed);
     float getAnimEndTime(unsigned short lodId) const;
     void setFade(unsigned short lodId, bool visible, float time);
+    // 1.0.0's symbols name it (3.0.1 inlines it into GfFieldLod::createBdatInfos): a seam part of the model has the id
+    bool isLodIdExist(unsigned short lodId) const;
 
     CreateInfo m_info;                    // 0x00
     mm::mtl::Vector<PosInfo> m_posInfos;  // 0x20

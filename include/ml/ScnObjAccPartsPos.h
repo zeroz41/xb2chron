@@ -33,7 +33,7 @@ public:
     float getNodeMaxFrame() const;
     float getNodeStartFrame() const;
     void getAnmMatrix(mm::Mat44* mat) const;
-    unsigned char getSwitchID() const;
+    unsigned int getSwitchID() const;  // 32-bit: GfFieldLod::getLodSwitchId uses the result unmasked
     void setSwitchID(unsigned int id);
 
     DrResMdoInstPartsObj* m_obj;  // the name is not the original's

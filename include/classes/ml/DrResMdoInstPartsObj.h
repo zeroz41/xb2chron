@@ -18,7 +18,7 @@ public:
     virtual float getCalcOldNodeFrame() const { return 0.0f; }  // slot 9
     virtual float getNodeMaxFrame() const { return 0.0f; }  // slot 10
     virtual float getNodeStartFrame() const { return 0.0f; }  // slot 11
-    virtual unsigned char getSwitchID() const { return 0; }  // slot 12
+    virtual unsigned int getSwitchID() const { return 0; }  // slot 12
     virtual void setSwitchID(unsigned char) {}  // slot 13
     virtual unsigned char getSwitchMax() const { return 0; }  // slot 14
     virtual unsigned char getSwitchIndex(unsigned int) const { return 1; }  // slot 15
