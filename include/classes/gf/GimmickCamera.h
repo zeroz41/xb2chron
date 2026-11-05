@@ -74,6 +74,18 @@ public:
     void setNearClip(float clip);
     void setPause(bool on);
     void updateParamsByCoordinateType();
+    float getPitch(const mm::Vec3& dir, const mm::Vec3& front);
+    float getYaw(const mm::Vec3& dir, const mm::Vec3& front);
+    // the moves between key a and key b, m_keyTime into a's m_duration, by a's m_speedType (the float is not used)
+    void calcSpeedTypeLinearSpacingAxisRotate(const Param& a, const Param& b, float, mm::Vec3& pos, mm::Vec3& rot, float& fov);
+    void calcSpeedTypeSlowOutAxisRotate(const Param& a, const Param& b, float, mm::Vec3& pos, mm::Vec3& rot, float& fov);
+    void calcSpeedTypeFastOutAxisRotate(const Param& a, const Param& b, float, mm::Vec3& pos, mm::Vec3& rot, float& fov);
+    void calcSpeedTypeFastInFastOutAxisRotate(const Param& a, const Param& b, float, mm::Vec3& pos, mm::Vec3& rot, float& fov);
+    void calcSpeedTypeSlowInSlowOutAxisRotate(const Param& a, const Param& b, float, mm::Vec3& pos, mm::Vec3& rot, float& fov);
+    void calcSpeedTypeSlowInSlowOut(const Param& a, const Param& b, float, mm::Vec3& pos, mm::Vec3& rot, float& fov);
+    // from and to turned about the y axis: the radius (distance from the axis) and the point move by
+    // offset + scale * t of the way (the parameter names are not the original's)
+    mm::Vec3 calcAxisRotatePosition(const mm::Vec3& from, const mm::Vec3& to, float t, float scale, float offset);
     // where the camera looks: unit z turned by m_rot's x and y (half angles, a quaternion; m_rot's z is the roll
     // setLookAt takes), as gf::ScriptCameraEntity's. Inline; the name is not the original's
     __attribute__((always_inline)) mm::Vec3 getDirection() const {
