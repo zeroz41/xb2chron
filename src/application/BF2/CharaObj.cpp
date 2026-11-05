@@ -2260,6 +2260,20 @@ void ObjectChara::OnManiSetRot(IManiCallback::SetParam& param) {
     setRotAxis(rot);
 }
 
+ObjectEffect::ObjectEffect(const char* name)
+    : Object(static_cast<OBJTYPE>(4), name), pad_150(false), pad_190(0) {
+    m_effect = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) EffectObj(name);
+    m_caster = 0;
+    m_mountActor = 0;
+    m_mountName = "";
+    m_mountPos = mm::Vec3::zero;
+    m_mountFlag = false;
+    m_mountType = (EVT_attachtype)0;
+    m_mountMtx = mm::Mat44::identity;
+    pad_150 = false;
+    pad_190 = 0;
+}
+
 ObjectEffect::~ObjectEffect() {
     if (m_effect) {
         delete m_effect;
@@ -2282,6 +2296,89 @@ template CmdQueue<6, 0>::~CmdQueue();
 
 void ObjectEffect::tail() {
     m_effect->m_ctrl.update();
+}
+
+void ObjectEffect::OnManiSetPos(IManiCallback::SetParam& param) {
+    mm::Vec3 trans = param.m_mtx.getTrans();
+    PosAxis pos = m_pos;
+    mm::Mat44 inv = pos.calcOrigMatInv();
+    pos.m_value = mm::Vec3(trans.x * inv.m[0][0] + trans.y * inv.m[1][0] + trans.z * inv.m[2][0] + inv.m[3][0],
+                           trans.x * inv.m[0][1] + trans.y * inv.m[1][1] + trans.z * inv.m[2][1] + inv.m[3][1],
+                           trans.x * inv.m[0][2] + trans.y * inv.m[1][2] + trans.z * inv.m[2][2] + inv.m[3][2]);
+    setPosAxis(pos);
+}
+
+void ObjectEffect::setPosAxis(const PosAxis& pos) {
+    m_pos = pos;
+    EffectObj* effect = m_effect;
+    mm::Vec3 value = mm::mtl::Singleton<DataManager>::getPtr()->axis2pos(pos.m_type, pos.m_value.x, pos.m_value.y,
+                                                                          pos.m_value.z);
+    if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        effect->m_ctrl.m_pos = value;
+    }
+}
+
+void ObjectEffect::OnManiSetRot(IManiCallback::SetParam& param) {
+    const mm::Mat44& mtx = param.m_mtx;
+    mm::Vec3 r;
+    r.x = mm::asin(-mtx.m[2][1]);
+    if (r.x < 1.57079637f) {
+        if (r.x > -1.57079637f) {
+            r.z = ::atan2f(mtx.m[0][1], mtx.m[1][1]);
+            r.y = ::atan2f(mtx.m[2][0], mtx.m[2][2]);
+        } else {
+            r.z = -::atan2f(mtx.m[0][2], mtx.m[0][0]);
+            r.y = 0.0f;
+        }
+    } else {
+        r.z = ::atan2f(mtx.m[0][2], mtx.m[0][0]);
+        r.y = 0.0f;
+    }
+    RotAxis rot = m_rot;
+    mm::Vec3 pos = m_effect->m_ctrl.m_pos;
+    rot.m_value = mm::Vec3(r.x, r.y - mm::mtl::Singleton<DataManager>::getPtr()->getRotOfsY(rot.m_type, pos), r.z);
+    setRotAxis(rot);
+}
+
+void ObjectEffect::setRotAxis(const RotAxis& rot) {
+    m_rot = rot;
+    EffectObj* effect = m_effect;
+    const mm::Vec3& pos = effect->m_ctrl.m_pos;
+    mm::Vec3 value = mm::mtl::Singleton<DataManager>::getPtr()->axis2rot(rot.m_type, rot.m_value.x, rot.m_value.y,
+                                                                          rot.m_value.z, pos);
+    if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        effect->m_ctrl.m_rot = value;
+    }
+}
+
+void ObjectEffect::linerPosAxis(const PosAxis& pos, float time, CV_TYPE type) {
+    m_pos = pos;
+    m_effect->moveTo(mm::mtl::Singleton<DataManager>::getPtr()->axis2pos(pos.m_type, pos.m_value.x, pos.m_value.y,
+                                                                          pos.m_value.z),
+                     time, type);
+}
+
+void ObjectEffect::linerRotAxis(const RotAxis& rot, float time, CV_TYPE type) {
+    m_rot = rot;
+    EffectObj* effect = m_effect;
+    const mm::Vec3& pos = effect->m_ctrl.m_pos;
+    effect->turnTo(mm::mtl::Singleton<DataManager>::getPtr()->axis2rot(rot.m_type, rot.m_value.x, rot.m_value.y,
+                                                                        rot.m_value.z, pos),
+                   time, type);
+}
+
+void ObjectEffect::setMount(IAttachActor* actor, const char* name, const mm::Vec3& pos, bool flag,
+                            EVT_attachtype type) {
+    EffectObj* effect = m_effect;
+    if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        effect->m_ctrl.setMount(actor, name, pos, flag, type);
+    }
+    m_caster = 0;
+    m_mountActor = actor;
+    m_mountName = name;
+    m_mountPos = pos;
+    m_mountFlag = flag;
+    m_mountType = type;
 }
 
 // the walks to the end of the first three categories come first and use nothing (as in startPage)

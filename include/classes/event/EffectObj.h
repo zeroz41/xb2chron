@@ -14,6 +14,7 @@ namespace event {
 // table 0x7100B3CE90
 class EffectObj {
 public:
+    EffectObj(const char* name);
     virtual ~EffectObj();  // slot 0
     void playAnim(const char* name, float frame);
     void play(const char* name, float a, float b, float c, int d, int e);

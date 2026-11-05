@@ -5,6 +5,7 @@
 #include "mm/Vec3.h"
 
 namespace event { class IAttachActor; }
+enum EVT_attachtype : int;
 
 namespace event {
 // table 0x7100B3CE50
@@ -14,6 +15,7 @@ public:
     void kill();
     void update();
     void setCaster(IAttachActor* caster);
+    void setMount(IAttachActor* actor, const char* name, const mm::Vec3& pos, bool flag, EVT_attachtype type);
 
     unsigned char pad_8[0x108];
     // non-null while the effect is alive: 1.0.0's ObjectList::isUsingEffect tests it, EffectCtrl::dead reads it
