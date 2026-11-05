@@ -248,12 +248,14 @@ public:
         --m_size;
         // by the slots' own storage (as at()), the slot written indexed before the count moves on: the original's loop
         // recomputes the ring's start each pass and is entered at its test (GfFieldZone::removeEvent,
-        // GfEvent::removeEventCallback)
+        // GfEvent::removeEventCallback); the next slot is read before the slot it goes to is addressed (GfGameEnv's
+        // destroy functions, queues of structs)
         unsigned long index = it._index;
         while (index < m_head + m_size) {
             unsigned long slot = index % N;
             ++index;
-            at(slot) = at(index % N);
+            const T& from = at(index % N);
+            at(slot) = from;
         }
     }
 
@@ -290,6 +292,24 @@ inline Iterator find(Iterator first, Iterator last, const T& value) {
             if (*it == value) {
                 return it;
             }
+        }
+    }
+    return last;
+}
+
+// the first element pred accepts, or last (find with a predicate: GfGameEnv's destroy functions look their entries
+// up by handle with it; the name is not the original's)
+template <typename Iterator, typename Pred>
+inline Iterator find_if(Iterator first, Iterator last, Pred pred) {
+    unsigned long n = last - first;
+    if (n != 0) {
+        unsigned long i = 0;
+        while (i != n) {
+            if (pred(*first)) {
+                return first;
+            }
+            ++i;
+            ++first;
         }
     }
     return last;

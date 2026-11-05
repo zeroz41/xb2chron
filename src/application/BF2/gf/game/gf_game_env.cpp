@@ -174,6 +174,27 @@ found:
     return entry.m_handle;
 }
 
+void GfGameEnv::destroyColorFilter(CFILTER_HANDLE handle) {
+    GfGameEnv* env = get();
+    mm::mtl::FixedQueue<ColorFilter, 16>::iterator it =
+        mm::mtl::find_if(env->m_colorFilters.begin(), env->m_colorFilters.end(),
+                         [handle](const ColorFilter& filter) { return filter.m_handle == handle; });
+    if (it == env->m_colorFilters.end()) {
+        return;
+    }
+    if ((*it).m_handle == env->m_colorFilters.first().m_handle) {
+        env->m_colorFilters.pop();
+        if (!env->m_colorFilters.empty()) {
+            fw::RenderParam::setColorFilter(env->m_colorFilters.front().m_num, env->m_colorFilters.front().m_farNum,
+                                            env->m_colorFilters.front().m_time, fw::CAMERA_TYPE(0));
+        } else {
+            fw::RenderParam::resetColorFilter(1.0f, fw::CAMERA_TYPE(0));
+        }
+    } else {
+        env->m_colorFilters.erase(it);
+    }
+}
+
 CLOUD_SEA_HANDLE GfGameEnv::createCloudSea(CLOUD_SEA type, CLOUD_SEA_PRIO prio) {
     GfGameEnv* env = get();
     CloudSea sea;
@@ -192,6 +213,22 @@ CLOUD_SEA_HANDLE GfGameEnv::createCloudSea(CLOUD_SEA type, CLOUD_SEA_PRIO prio) 
 found:
     fw::RenderParam::setCloudSea(type);
     return sea.m_handle;
+}
+
+void GfGameEnv::destroyCloudSea(CLOUD_SEA_HANDLE handle) {
+    GfGameEnv* env = get();
+    mm::mtl::FixedQueue<CloudSea, 16>::iterator it =
+        mm::mtl::find_if(env->m_cloudSeas.begin(), env->m_cloudSeas.end(),
+                         [handle](const CloudSea& sea) { return sea.m_handle == handle; });
+    if (it == env->m_cloudSeas.end()) {
+        return;
+    }
+    if ((*it).m_handle == env->m_cloudSeas.first().m_handle) {
+        env->m_cloudSeas.pop();
+        fw::RenderParam::setCloudSea(env->m_cloudSeas.empty() ? CLOUD_SEA(0) : env->m_cloudSeas.front().m_type);
+    } else {
+        env->m_cloudSeas.erase(it);
+    }
 }
 
 CLOUD_SEA GfGameEnv::getCurrentCloudSea() {
@@ -308,6 +345,16 @@ WEATHER_HANDLE GfGameEnv::createTempWeather(WEATHERID weather, WEATHER_PRIO prio
     }
     env->m_weathers.push_front(set);
     return set.m_handle;
+}
+
+void GfGameEnv::destroyTempWeather(WEATHER_HANDLE handle) {
+    GfGameEnv* env = get();
+    mm::mtl::FixedQueue<WeatherSet, 16>::iterator it =
+        mm::mtl::find_if(env->m_weathers.begin(), env->m_weathers.end(),
+                         [handle](const WeatherSet& set) { return set.m_handle == handle; });
+    if (it != env->m_weathers.end()) {
+        env->m_weathers.erase(it);
+    }
 }
 
 WEATHERID GfGameEnv::getTempWeather() {
