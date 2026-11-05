@@ -13,6 +13,7 @@ namespace fw { class Message; }
 namespace fw { class MessageObject; }
 namespace fw { class UpdateInfo; }
 namespace fw { class Transform; }
+namespace fw { class ColiObject; }
 namespace mm { class Vec3; }
 namespace gf { class CallBackCache; }
 namespace gf { class GfComAsm; }
@@ -51,6 +52,12 @@ public:
     virtual void procAnimCallback(gf::GfComAsm*, gf::CallBackCache const&);  // slot 6
     // the asm and sound callbacks, the pad or AI agent, the plugins, the field and battle states and the head frame
     void setup(const SetupInfo& info);
+    // the head frame's bone frame destroyed and dropped, the Hfsm and plugins cleaned up, the agent cleaned up and
+    // dropped (GfObjFactory::destroyComponent)
+    void cleanup();
+    // the fall damage (quietly off in deep water), fall distance and slide plugins switched for the ground the PC
+    // landed on
+    void notifyGround();
     // the field's animation callback: does nothing (defined in PadField's unit, as 1.0.0's)
     void callbackField(gf::GfComAsm* asmCom, const gf::CallBackCache& cache);
     // the battle's animation callback: does nothing (defined in PadBattle's unit)
@@ -74,6 +81,12 @@ public:
     // after a warp in battle: the frame synced, the environment and property flushed, m_stateFlags bit 7 and the
     // move speed cleared, the movement reset and the fall damage and fall distance plugins' heights reset
     void onWarpBattle(gf::GfComPropertyPc& property);
+    // the warps update runs for the property's warp request (m_warpPos, m_warpRot): the transform frame's world
+    // transform set to it, the collision object put there and the head collision position recomputed
+    bool warpNormal(gf::GfComPropertyPc& property);
+    bool warpWall(gf::GfComPropertyPc& property);
+    bool warpBattle(gf::GfComPropertyPc& property);
+    bool warpExternal(gf::GfComPropertyPc& property, const fw::Transform& transform);
     void integrateMoveNormal(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
     void integrateMoveChildHeight(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
     void integrateMoveWall(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
@@ -99,6 +112,9 @@ public:
     // death flag is set (kind 4, or kind 3 from a MsgObjectDamage of at least the maximum HP), or the party gauge
     // reset outside battle; then btl::Utility::NotifyDead
     void procMsgObjectNotifyDead(fw::MessageObject* sender, gf::MsgObjectNotifyDead& msg);
+    // the head's capsule (m_stateFlags bit 14, a character shape on coli) moved after the PC's move by move: what
+    // it hits pushes the transform back, then m_headColiPos is recomputed
+    void detectHead(gf::GfComPropertyPc& property, fw::ColiObject* coli, const mm::Vec3& move, fw::Transform* transform);
     void calcHeadColiPos(float height, const fw::Transform& transform, mm::Vec3* pos);
     // switch the PC's agent's field and battle AI (StateUtil hands them on)
     void setEnableAgentField(bool enable);

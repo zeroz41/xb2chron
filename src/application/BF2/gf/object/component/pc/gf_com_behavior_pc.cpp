@@ -72,6 +72,8 @@
 #include "classes/gf/GfComEffectCaster.h"
 #include "classes/gf/GfComModel.h"
 #include "classes/gf/GfComTransform.h"
+#include "classes/gf/GfComCollider.h"
+#include "classes/fw/ColiObject.h"
 #include "classes/gf/GfObj.h"
 #include "classes/gf/GfGamePlayerFormation.h"
 #include "classes/gf/FootStepPlugin.h"
@@ -196,6 +198,25 @@ void GfComBehaviorPc::callbackSound(const fw::ResSoundData& data, fw::SoundResSo
     }
 }
 
+void GfComBehaviorPc::cleanup() {
+    if (m_headFrame.get() != nullptr) {
+        GfComModel* model = m_owner->getComponent<GfComModel>(1);
+        if (model->getBoneReferenceFrame("JU_neck").get() != nullptr) {
+            model->destroyBoneReferenceFrame("JU_neck");
+        } else if (model->getBoneReferenceFrame("JU_spA").get() != nullptr) {
+            model->destroyBoneReferenceFrame("JU_spA");
+        }
+        m_headFrame = nullptr;
+    }
+    m_hfsm.cleanup();
+    m_pluginManager.cleanup();
+    if (m_agent) {
+        GfComPropertyPc* property = m_owner->getComponent<GfComPropertyPc>(5);
+        m_agent->cleanup(*property);
+        m_agent.reset();
+    }
+}
+
 void GfComBehaviorPc::resetHeadColPosition(const fw::Transform& transform) {
     GfComPropertyPc* property = m_owner->getComponent<GfComPropertyPc>(5);
     if (property->m_headColiHeight > 1.1920929e-07f) {
@@ -314,6 +335,106 @@ void GfComBehaviorPc::onWarpBattle(GfComPropertyPc& property) {
     if (pc::FallDistancePlugin* plugin = getPlugin<pc::FallDistancePlugin>(pc::FallDistancePlugin::PLUGIN_ID)) {
         plugin->cacheMaxHeight(true);
     }
+}
+
+bool GfComBehaviorPc::warpBattle(GfComPropertyPc& property) {
+    fw::ReferenceFrame* frame = m_owner->findComponent<GfComTransform>(0)->m_frame.operator->();
+    fw::Transform& world = frame->getWorldTransformForWrite();
+    world.position = property.m_warpPos;
+    world.rotation = property.m_warpRot;
+    const GfComCollider* collider = m_owner->getComponent<GfComCollider>(4);
+    if (fw::ColiObject* coli = collider->getColiObject(0)) {
+        const mm::Quat& q = frame->m_worldTransform.rotation;
+        const float x2 = q.x + q.x;
+        const float y2 = q.y + q.y;
+        const float z2 = q.z + q.z;
+        const float xx = q.x * x2;
+        const float xy = q.x * y2;
+        const float xz = q.x * z2;
+        const float yy = q.y * y2;
+        const float yz = q.y * z2;
+        const float zz = q.z * z2;
+        const float wx = q.w * x2;
+        const float wy = q.w * y2;
+        const float wz = q.w * z2;
+        mm::Mat44 mtx;
+        mtx.m[0][0] = 1.0f - (yy + zz);
+        mtx.m[0][1] = xy + wz;
+        mtx.m[0][2] = xz - wy;
+        mtx.m[1][0] = xy - wz;
+        mtx.m[1][1] = 1.0f - (xx + zz);
+        mtx.m[1][2] = yz + wx;
+        mtx.m[2][0] = xz + wy;
+        mtx.m[2][1] = yz - wx;
+        mtx.m[2][2] = 1.0f - (xx + yy);
+        mtx.m[0][3] = 0.0f;
+        mtx.m[1][3] = 0.0f;
+        mtx.m[2][3] = 0.0f;
+        mtx.m[3][0] = 0.0f;
+        mtx.m[3][1] = 0.0f;
+        mtx.m[3][2] = 0.0f;
+        mtx.m[3][3] = 1.0f;
+        const mm::Vec3 pos = frame->m_worldTransform.position;
+        mtx.m[3][0] = pos.x;
+        mtx.m[3][1] = pos.y;
+        mtx.m[3][2] = pos.z;
+        coli->setInstantlyMatrix(mtx);
+    }
+    resetHeadColPosition(frame->m_worldTransform);
+    return true;
+}
+
+bool GfComBehaviorPc::warpExternal(GfComPropertyPc& property, const fw::Transform& transform) {
+    if (pc::AttachPlugin* attach = getPlugin<pc::AttachPlugin>(pc::AttachPlugin::PLUGIN_ID)) {
+        attach->setActivate(false);
+    }
+    fw::ReferenceFrame* frame = m_owner->findComponent<GfComTransform>(0)->m_frame.operator->();
+    fw::Transform& world = frame->getWorldTransformForWrite();
+    world.position = transform.position;
+    world.rotation = transform.rotation;
+    const GfComCollider* collider = m_owner->getComponent<GfComCollider>(4);
+    if (fw::ColiObject* coli = collider->getColiObject(0)) {
+        const mm::Quat& q = transform.rotation;
+        const float x2 = q.x + q.x;
+        const float y2 = q.y + q.y;
+        const float z2 = q.z + q.z;
+        const float xx = q.x * x2;
+        const float xy = q.x * y2;
+        const float xz = q.x * z2;
+        const float yy = q.y * y2;
+        const float yz = q.y * z2;
+        const float zz = q.z * z2;
+        const float wx = q.w * x2;
+        const float wy = q.w * y2;
+        const float wz = q.w * z2;
+        mm::Mat44 mtx;
+        mtx.m[0][0] = 1.0f - (yy + zz);
+        mtx.m[0][1] = xy + wz;
+        mtx.m[0][2] = xz - wy;
+        mtx.m[1][0] = xy - wz;
+        mtx.m[1][1] = 1.0f - (xx + zz);
+        mtx.m[1][2] = yz + wx;
+        mtx.m[2][0] = xz + wy;
+        mtx.m[2][1] = yz - wx;
+        mtx.m[2][2] = 1.0f - (xx + yy);
+        mtx.m[0][3] = 0.0f;
+        mtx.m[1][3] = 0.0f;
+        mtx.m[2][3] = 0.0f;
+        mtx.m[3][0] = 0.0f;
+        mtx.m[3][1] = 0.0f;
+        mtx.m[3][2] = 0.0f;
+        mtx.m[3][3] = 1.0f;
+        const mm::Vec3 pos = transform.position;
+        mtx.m[3][0] = pos.x;
+        mtx.m[3][1] = pos.y;
+        mtx.m[3][2] = pos.z;
+        coli->setInstantlyMatrix(mtx);
+    }
+    resetHeadColPosition(transform);
+    if (pc::AttachPlugin* attach = getPlugin<pc::AttachPlugin>(pc::AttachPlugin::PLUGIN_ID)) {
+        attach->setActivate(true);
+    }
+    return true;
 }
 
 void GfComBehaviorPc::procMsgGameChangeTarget(fw::MessageObject* sender, MsgGameChangeTarget& msg) {
