@@ -99,13 +99,7 @@ public:
         }
         m_capacity = 0;
     }
-    void pop_front() {
-        Node* node = static_cast<Node*>(m_pEnd->m_next);
-        node->m_prev->m_next = node->m_next;
-        node->m_next->m_prev = node->m_prev;
-        node->m_next = nullptr;
-        m_size--;
-    }
+    void pop_front() { erase(begin()); }
     // unlinks every node (a free node has no next); the end's next is stored through the node the walk stops on,
     // as mm_lib's list.h clear() does
     // unlinks every node (a free node has no next) and empties the list; the walk ends on the end node, whose next

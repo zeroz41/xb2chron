@@ -16,6 +16,8 @@ public:
 
     // the system is off or going off (WorkRootState::renderWork asks it)
     static bool isOff();
+    // the system work made (WorkRootState::initialize; the return type is not in the symbols)
+    static WorkSystem* create();
 
     // 0x1B0 the system's own allocator: wkStandbyLogin creates it in the product memory, wkStandbyLogout erases it
     // (the name is not the original's)
