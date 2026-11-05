@@ -22,6 +22,8 @@ public:
     // a file given to the setup ahead of loading: setupReference reads its data (0x88), size (0x90) and file
     // index (0x94) (the names are not the original's)
     struct RefResource {
+        // setRefResource's new one: empty name, no data, file index 0
+        RefResource() : m_data(nullptr), m_size(0), m_fileIdx(static_cast<GfFileIdx>(0)) {}
         mm::mtl::FixStr<128> m_name;  // the file's name: the file getters return it when it is not empty
         unsigned char pad_84[0x88 - 0x84];
         void* m_data;
@@ -98,6 +100,8 @@ public:
     static void makeAssetNamePrefix(mm::mtl::FixStr<128>& name, GfAssetType type, const char* file, const char* suffix);
     // the foot step sound pack request (1.0.0's symbols name it; the return type is not known)
     static void requestFootStepSePackFile(GfAssetFilesInfo& info, unsigned int footStep, GfFileIdx idx0, GfFileIdx idx1);
+    // the weapon type's sound pack request (the symbol names it; the return type is not known)
+    static void requestWpnSePackFile(GfAssetFilesInfo& info, unsigned int weaponType, GfFileIdx idx);
 
     // a name, none when it is empty (inline; the name is not the original's)
     static const char* validName(const char* name) {

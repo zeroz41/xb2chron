@@ -22,13 +22,15 @@ namespace gf {
 class GfAssetFilesInfo {
 public:
     // the setups build it on the stack with these values (GfAssetSetupDriverForUi::setup)
-    GfAssetFilesInfo() : m_type(GfAssetType(0)), pad_20(0), pad_28(0), m_name(nullptr), pad_38(0), pad_3c(1) {}
+    GfAssetFilesInfo() : m_type(GfAssetType(0)), m_name(nullptr), pad_38(0), pad_3c(1), pad_40(0) {}
 
     GF_ASSET_HANDLE* m_handle;  // the setup's handle (the name is not the original's)
     GfAssetType m_type;  // the pack's asset type
-    unsigned char pad_c[0x20 - 0xC];
-    unsigned long pad_20;
-    unsigned long pad_28;
+    unsigned char pad_c[0x10 - 0xC];
+    // the asset types the pack falls back to: GfAssetSetup::requestWpnSePackFile and requestFootStepSePackFile
+    // clear it and push type 18 (inline FixedQueue clear/push_back stores at +0x10/+0x20/+0x28; the name is not
+    // the original's)
+    mm::mtl::FixedQueue<GfAssetType, 4> m_backupTypes;
     const char* m_name;  // the pack's name (its CRC is the pack's key)
     unsigned int pad_38;
     unsigned int pad_3c;
@@ -94,7 +96,8 @@ public:
     // the file's path, an empty name for a file the pack does not have (1.0.0's symbols name it)
     const mm::mtl::FixStr<128>& getFileName(GfFileIdx idx) const;
     // the file path under the index (1.0.0's symbols name it; the return type is not known)
-    void addResource(GfFileIdx idx, const char* path);
+    // false when it adds no file (GfAssetSetup::requestCoreResource logs the pack then)
+    bool addResource(GfFileIdx idx, const char* path);
     // the replacement index the file map gives a file, -1 for none (1.0.0's symbols name it; inline: this build has
     // no copy of it)
     int getCommonResource(GfFileIdx idx) const {

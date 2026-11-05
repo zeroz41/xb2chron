@@ -63,6 +63,8 @@
 #include "gf/GfDataWeapon.h"
 #include <string.h>
 #include "classes/gf/GfObjSetup.h"
+#include "classes/gf/GfAssetResource.h"
+#include "gf/GfDataSound.h"
 
 namespace gf {
 
@@ -88,6 +90,212 @@ void GfAssetSetup::setupParam(GF_ASSET_HANDLE* handle, const GfInitParam& param)
 #line 102
         m_paramCopy = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) unsigned char*(*param.pad_18);
     }
+}
+
+void GfAssetSetup::requestCoreResource(GfAssetPack* pack, GF_ASSET_HANDLE* handle, GfAssetType type) {
+    if (pack == nullptr) {
+        return;
+    }
+    GfAssetFiles& files = pack->m_files;
+    const char* mdl = getMdlFile(type);
+    if (mdl != nullptr) {
+        if (!setupReference(pack, mdl, static_cast<GfFileIdx>(getMdlSlot()))) {
+            GfAssetManager::setModelInfo(handle, mdl);
+            mm::mtl::FixStr<128> path;
+            path.format("%s%s%s", getPath(), mdl, ".wimdo");
+            files.addResource(static_cast<GfFileIdx>(getMdlSlot()), path.m_str);
+        }
+    }
+    const char* arc = getArcFile(type);
+    if (arc != nullptr) {
+        if (!setupReference(pack, arc, static_cast<GfFileIdx>(getArcSlot()))) {
+            mm::mtl::FixStr<128> path;
+            path.format("%s%s%s", getPath(), arc, ".arc");
+            files.addResource(static_cast<GfFileIdx>(getArcSlot()), path.m_str);
+        }
+    }
+    const char* mot = getMotFile(type);
+    if (mot != nullptr) {
+        if (!setupReference(pack, mot, static_cast<GfFileIdx>(getMotSlot()))) {
+            GfAssetManager::setMotionInfo(handle, mot);
+            mm::mtl::FixStr<128> path;
+            path.format("%s%s%s", getPath(), mot, ".mot");
+            files.addResource(static_cast<GfFileIdx>(getMotSlot()), path.m_str);
+        }
+    }
+    const char* evtMot = getEvtMotFile(type);
+    if (evtMot != nullptr) {
+        if (!setupReference(pack, evtMot, static_cast<GfFileIdx>(getEvtMotSlot()))) {
+            mm::mtl::FixStr<128> path;
+            path.format("%s%s%s", getEvtPath(), evtMot, ".mot");
+            files.addResource(static_cast<GfFileIdx>(getEvtMotSlot()), path.m_str);
+        }
+    }
+    const char* efp = getEfpFile(type);
+    if (efp != nullptr) {
+        if (!setupReference(pack, efp, static_cast<GfFileIdx>(getEfpSlot()))) {
+            mm::mtl::FixStr<128> path;
+            path.format("%s%s%s", getPath(), efp, ".wiefp");
+            if (!files.addResource(static_cast<GfFileIdx>(getEfpSlot()), path.m_str)) {
+                pack->dispAssetLogForDebug();
+            }
+        }
+    }
+    const char* eab = getEabFile(type);
+    if (eab != nullptr) {
+        if (!setupReference(pack, eab, static_cast<GfFileIdx>(getEabSlot()))) {
+            mm::mtl::FixStr<128> path;
+            path.format("%s%s%s", getEffPath(), eab, ".wieab");
+            files.addResource(static_cast<GfFileIdx>(getEabSlot()), path.m_str);
+        }
+    }
+    const char* efb = getEfbFile(type);
+    if (efb != nullptr) {
+        if (!setupReference(pack, efb, static_cast<GfFileIdx>(getEfbSlot()))) {
+            mm::mtl::FixStr<128> path;
+            path.format("%s%s%s", getEffPath(), efb, ".wiefb");
+            files.addResource(static_cast<GfFileIdx>(getEfbSlot()), path.m_str);
+        }
+    }
+    const char* stp = getStpFile(type);
+    if (stp != nullptr) {
+        mm::mtl::FixStr<128> name;
+        GfAssetFilesInfo info;
+        info.m_handle = handle;
+        info.m_type = static_cast<GfAssetType>(12);
+        info.m_name = name.m_str;
+        makeAssetNamePrefix(name, info.m_type, stp, "Stp");
+        GfAssetPack* stpPack = GfAssetManager::createAssetFiles(info);
+        if (!setupReference(stpPack, stp, static_cast<GfFileIdx>(getStpSlot()))) {
+            mm::mtl::FixStr<128> path;
+            path.format("%s%s%s", getStpPath(), stp, ".stp");
+            stpPack->m_files.addResource(static_cast<GfFileIdx>(getStpSlot()), path.m_str);
+        }
+    }
+    const char* evtStp = getEvtStpFile(type);
+    if (evtStp != nullptr) {
+        mm::mtl::FixStr<128> name;
+        GfAssetFilesInfo info;
+        info.m_handle = handle;
+        info.m_type = static_cast<GfAssetType>(12);
+        info.m_name = name.m_str;
+        makeAssetNamePrefix(name, info.m_type, evtStp, "EvtStp");
+        GfAssetPack* stpPack = GfAssetManager::createAssetFiles(info);
+        if (!setupReference(stpPack, evtStp, static_cast<GfFileIdx>(getEvtStpSlot()))) {
+            mm::mtl::FixStr<128> path;
+            path.format("%s%s%s", getEvtPath(), evtStp, ".stp");
+            stpPack->m_files.addResource(static_cast<GfFileIdx>(getEvtStpSlot()), path.m_str);
+        }
+    }
+}
+
+bool GfAssetSetup::setupReference(GfAssetPack* pack, const char* name, GfFileIdx idx) {
+    RefResource* resource = findRefResource(idx);
+    if (resource == nullptr || resource->m_data == nullptr) {
+        return false;
+    }
+    if (pack->getResource(idx) == nullptr) {
+        GfAssetResource* res =
+            GfAssetResource::create(pack->getAssetName()->m_str, name, resource->m_data, resource->m_size);
+        pack->m_files.addResource(idx, name);
+        pack->setResource(idx, res);
+    }
+    return true;
+}
+
+void GfAssetSetup::makeAssetNamePrefix(mm::mtl::FixStr<128>& name, GfAssetType type, const char* file,
+                                       const char* suffix) {
+    name.format("%2d", type);
+    if (file != nullptr) {
+        name += util::getNoPathExtName(file).m_str;
+    }
+    if (suffix != nullptr) {
+        name += util::getNoPathExtName(suffix).m_str;
+    }
+}
+
+void GfAssetSetup::setRefResource(unsigned int index, const char* name, void* data, unsigned int size) {
+    mm::mtl::FixStr<128> file;
+    bool event = m_param != nullptr && m_param->m_createType == 3;
+    const char* model = nullptr;
+    if (strstr(name, ".wimdo") != nullptr) {
+        GfBdatChrDr* chrDr = mm::mtl::PtrSingleton<GfBdatChrDr>::sys();
+        for (unsigned int driver = 1; driver < 7; driver++) {
+            if (GfDataDriver::isAttachedParty(driver) && strstr(name, chrDr->getChrDrModel(driver)) != nullptr) {
+                model = GfGameUtil::getAcceDriverModel(driver, true, event);
+                if (model != nullptr) {
+                    break;
+                }
+            }
+        }
+        if (model == nullptr) {
+            GfBdatChrBl* chrBl = mm::mtl::PtrSingleton<GfBdatChrBl>::sys();
+            for (unsigned int blade = chrBl->getChrBlStart(); blade < chrBl->getChrBlEnd(); blade++) {
+                if (GfDataBlade::isAttachedParty(blade) && strstr(name, chrBl->getChrBlModel(blade)) != nullptr) {
+                    model = GfGameUtil::getAcceBladeModel(blade);
+                    if (model != nullptr) {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    if (model != nullptr) {
+        file.format("model/%s%s", model, ".wimdo");
+    } else {
+        file = name;
+    }
+    RefResource* resource = findRefResource(index);
+    if (resource == nullptr) {
+#line 333
+        resource = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) RefResource;
+        m_refResources.push_back(resource);
+        resource->m_fileIdx = static_cast<GfFileIdx>(index);
+    }
+    resource->m_name = file.m_str;
+    resource->m_data = data;
+    resource->m_size = size;
+    pad_f0 = 1;
+}
+
+void GfAssetSetup::requestFootStepSePackFile(GfAssetFilesInfo& info, unsigned int footStep, GfFileIdx idx0,
+                                             GfFileIdx idx1) {
+    mm::mtl::FixedVector<const char*, 2> files;
+    if (GfDataSound::getFootStepSePackFile(files, footStep)) {
+        mm::mtl::FixStr<128> name;
+        info.m_type = static_cast<GfAssetType>(19);
+        info.m_backupTypes.clear();
+        info.m_backupTypes.push_back(static_cast<GfAssetType>(18));
+        info.m_name = name.m_str;
+        for (unsigned int i = 0; i < files.size(); i++) {
+            makeAssetNamePrefix(name, info.m_type, *files.at(i), "");
+            GfAssetPack* pack = GfAssetManager::createAssetFiles(info);
+            GfFileIdx idx = i == 0 ? idx0 : idx1;
+            mm::mtl::FixStr<128> path;
+            path.format("%s%s%s", GfAssetPath::getSePack(), files[i], ".xsp");
+            pack->m_files.addResource(idx, path.m_str);
+            pack->m_sePackId = idx;
+        }
+    }
+}
+
+void GfAssetSetup::requestWpnSePackFile(GfAssetFilesInfo& info, unsigned int weaponType, GfFileIdx idx) {
+    const char* file = GfDataSound::getSeFileByWeaponType(weaponType);
+    if (file == nullptr) {
+        return;
+    }
+    mm::mtl::FixStr<128> name;
+    info.m_type = static_cast<GfAssetType>(19);
+    info.m_backupTypes.clear();
+    info.m_backupTypes.push_back(static_cast<GfAssetType>(18));
+    info.m_name = name.m_str;
+    makeAssetNamePrefix(name, info.m_type, file, "");
+    GfAssetPack* pack = GfAssetManager::createAssetFiles(info);
+    GfFileIdx packIdx = static_cast<GfFileIdx>(weaponType + idx - 1);
+    mm::mtl::FixStr<128> path;
+    path.format("%s%s%s", GfAssetPath::getSePack(), file, ".xsp");
+    pack->m_files.addResource(packIdx, path.m_str);
+    pack->m_sePackId = packIdx;
 }
 
 GfAssetSetupDriver::GfAssetSetupDriver() : pad_1fc(-1) {}
