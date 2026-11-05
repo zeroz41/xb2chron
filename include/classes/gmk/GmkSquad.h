@@ -4,6 +4,7 @@
 #include "classes/gmk/GmkAcc.h"
 #include "classes/gmk/GmkSquadLeader.h"
 #include "classes/gmk/IGmkList.h"
+#include "classes/mm/mtl/ReferenceObject.h"
 #include "mm/Vec3.h"
 #include "mm/mtl/IntrusiveList.h"
 #include "mm/mtl/Vector.h"
@@ -12,9 +13,21 @@ namespace gmk {
 class GmkSquadLeader;
 class GmkSquadNavi;
 // table 0x7100B6CD10
-class GmkSquad {
+// counted (GmkEnemyInsts::createSquad takes a reference, `m_RefCount > 0` as it releases one) and linked into
+// GmkSquadManager's list through its node at 0x10 (create links it, dispose unlinks it)
+class GmkSquad : public ::mm::mtl::ReferenceObject, public ::mm::mtl::IntrusiveListNodeBase {
 public:
+    // what GmkEnemyInsts::createSquad builds (the gimmick set's row, its squad id less one, a count); the names are
+    // not the original's
+    class CreateInfo {
+    public:
+        CreateInfo() : m_gmkSetId(-1), pad_4(-1), pad_8(1) {}
+        int m_gmkSetId;  // create finds the gimmick set (GmkManager::findGmkSet) and reaches its squad leader in it
+        int pad_4;       // the leader's row (GmkAcc::CreateInfo's pad_8)
+        unsigned int pad_8;
+    };
     virtual ~GmkSquad();  // slot 0
+    void create(const CreateInfo& info);
     void dispose();
     void seqInit(float);
     // runs while the squad is valid: updatePosRotY(false); else back to seqInit
@@ -39,8 +52,11 @@ public:
     // 1.0.0's names: GmkSquadNavi::create joins its squad through addGmkSquadNavi, dispose leaves through
     // removeGmkSquadNavi
     void addGmkSquadNavi(GmkSquadNavi* navi);
+    // member index placed at random within the leader's circle around member 0, facing as member 0 does (1.0.0 name)
+    void updateMemberPosRotY_MemberDef_Circle(unsigned int index);
     void removeGmkSquadNavi(GmkSquadNavi* navi);
-    unsigned char pad_8[0x28];
+    CreateInfo m_info;  // 0x20: the name is not the original's
+    float pad_2c;       // 1.0 at construction; GmkEnemyInsts::createSquad stores its float argument
     // 0x30: the destructor ends this access after dispose (GmkAcc's table and GmkAccManager::removeGmkAcc); the name
     // is not the original's
     GmkAcc m_acc;

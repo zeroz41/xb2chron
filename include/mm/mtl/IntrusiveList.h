@@ -144,6 +144,19 @@ public:
         MM_ASSERT(m_size >= 0);
     }
     bool empty() const { return m_root.m_next == &m_root; }
+    // the element ptr, end() when it is not in the list (GmkSquad::create and dispose inline it; the name is not
+    // known to be the original's)
+    iterator find(T* ptr) const {
+        iterator it = begin();
+#line 317 MM_MTL_INTRUSIVE_LIST_PATH
+        MM_ASSERT(ptr);
+        for (; it != end(); ++it) {
+            if (it.m_node == ptr) {
+                return it;
+            }
+        }
+        return end();
+    }
     // ptr linked before pos (UIInputManager::registInputLayer keeps its layers sorted so; the name is not known to
     // be the original's). The original compares the root first (`cmp root, pos`) and keeps the test after its
     // search loop: `end() == pos` with a push_back arm gives that; `pos == end()` lets the loop exits skip the test.

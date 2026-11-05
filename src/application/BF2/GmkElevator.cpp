@@ -1218,10 +1218,10 @@ AGmkBase::~AGmkBase() {
 }
 }  // namespace gmk
 
-// instantiated for gmk::GmkSquad::seqInit, mm::mtl::Vector<mm::Vec3>::push_back (not written yet)
+// instantiated for gmk::GmkSquad::seqInit, mm::mtl::Vector<mm::Vec3>::push_back
 template void mm::mtl::Vector<mm::Vec3>::expand(unsigned long, unsigned long);
 
-// instantiated for anm::Control::Control, gmk::GmkSquad::seqInit (not written yet)
+// instantiated for anm::Control::Control (not written yet), gmk::GmkSquad::seqInit
 template void mm::mtl::Vector<float>::expand(unsigned long, unsigned long);
 
 namespace gmk {
@@ -6210,9 +6210,68 @@ void GmkWarp::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* hand
         }
     }
 }
+
+void GmkSquad::create(const CreateInfo& info) {
+    dispose();
+    if (GmkManager::sys()->findGmkSet(info.m_gmkSetId) == nullptr) {
+        return;
+    }
+    m_info = info;
+    GmkAcc::CreateInfo accInfo;
+    accInfo.m_bdatId = info.m_gmkSetId;
+    accInfo.m_type = GmkSquadLeader::TYPE;
+    accInfo.pad_8 = info.pad_4;
+    m_acc.create(accInfo);
+    m_seq = &GmkSquad::seqInit;
+    mm::mtl::IntrusiveList<GmkSquad>& list = GmkSquadManager::sys()->m_list;
+    if (list.end() == list.find(this)) {
+        list.push_back(this);
+    }
+}
+
+void GmkSquad::seqInit(float) {
+    if (!m_acc.isValid()) {
+        return;
+    }
+    GmkSquadLeader* leader = static_cast<GmkSquadLeader*>(m_acc.m_gmk);
+    if (leader == nullptr) {
+        return;
+    }
+    IGmkList* members = leader->getBindedSquadMemberList();
+    if (members == nullptr || members->getInstNum() == 0) {
+        return;
+    }
+    const GmkSquadLeader::Data* data = leader->getData();
+    if (data->m_memberDefType == 1) {
+        pad_70 = data->m_lastMember + 1 - data->m_firstMember;
+    } else if (data->m_memberDefType == 2) {
+        pad_70 = m_info.pad_8;
+    }
+    m_vec3s.destroy();
+    m_vec3s.setAllocator(fw::FrameworkMemory::getAllocator(5));
+    m_vec3s.reserve(pad_70);
+    for (unsigned int i = 0; i < pad_70; ++i) {
+        m_vec3s.push_back(mm::Vec3::zero);
+    }
+    m_floats.destroy();
+    m_floats.setAllocator(fw::FrameworkMemory::getAllocator(5));
+    m_floats.reserve(pad_70);
+    for (unsigned int i = 0; i < pad_70; ++i) {
+        m_floats.push_back(0.0f);
+    }
+    updatePosRotY(false);
+    m_bools.destroy();
+    m_bools.setAllocator(fw::FrameworkMemory::getAllocator(5));
+    m_bools.reserve(pad_70);
+    for (unsigned int i = 0; i < pad_70; ++i) {
+        m_bools.push_back(false);
+    }
+    m_seq = &GmkSquad::seqUpdate;
+}
+
 }  // namespace gmk
 
-// instantiated for gmk::GmkSquad::seqInit, mm::mtl::Vector<mm::Vec3>::resize (not written yet)
+// instantiated for mm::mtl::Vector<mm::Vec3>::resize (not written yet), gmk::GmkSquad::seqInit
 template void mm::mtl::Vector<mm::Vec3>::push_back(mm::Vec3 const&);
 
 namespace gmk {
