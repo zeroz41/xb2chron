@@ -39,7 +39,10 @@ public:
     unsigned char m_buttonChallengeRate1;
     unsigned char m_buttonChallengeRate2;
     unsigned char m_buttonChallengeRate3;
-    unsigned char pad_5F[0x51];
+    unsigned char pad_5F[0x1B];
+    // ChainAttackManager::GetBonusRate's base rate, in percent (meaning unknown)
+    unsigned short pad_7A;
+    unsigned char pad_7C[0x34];
     // while BattleGlobal's pad_bit30 is set, the distance every enemy's GfEnemyBattleProperty returns home at (the
     // name is not the original's)
     unsigned short m_returnHomeDistance;

@@ -1,8 +1,21 @@
 #include "classes/btl/ChainAttackManager.h"
 #include "classes/btl/ChainAttackManager.h"
+#include "classes/btl/BattleCharacter.h"
+#include "classes/btl/BattleGlobal.h"
+#include "classes/btl/BtlSystemBalanceAccess.h"
+#include "classes/btl/CharacterManager.h"
+#include "classes/btl/CharacterParameter.h"
+#include "classes/btl/TalkManager.h"
+#include "classes/gf/GfMenuCallContext.h"
+#include "classes/gf/GfMenuObjChainAttack.h"
+#include "classes/gf/GfGameParty.h"
+#include "classes/gf/GfGameInsideBattleLock.h"
+#include "btl/Utility.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfFobjDropitem.h"
 #include "mm/mtl/Vector.h"
+#include "mm/Math.h"
+#include <math.h>
 
 namespace btl {
 
@@ -28,6 +41,54 @@ void ChainAttackManager::Update(const fw::UpdateInfo& info) {
     sys()->UpdateProc(info);
 }
 
+int ChainAttackManager::GetIraChainAttackSlotByBdatID(int index, unsigned int bdatId) const {
+    const SP_ATTACK_DATA& data = m_spAttacks[index];
+    for (int i = 0; i < 3; i++) {
+        const SP_ATTACK_DATA::ENTRY& entry = data.entries[i];
+        if (entry.IsValid() && entry.id == bdatId) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void ChainAttackManager::ModifyPosition() {
+    int count = m_groupCount;
+    for (int i = 0; i < count; i++) {
+        unsigned char group = m_groups[i];
+        gf::GF_OBJ_HANDLE* driver = gf::GfGameParty::getHandleDriver(group, gf::PTPOS(0));
+        ModifyPositionForward(driver);
+        gf::GF_OBJ_HANDLE* other;
+        if (BattleGlobal::sys()->m_challengeAnySuccess) {
+            other = gf::GfGameParty::getHandleDriver(group, gf::PTPOS(1));
+        } else {
+            other = gf::GfGameParty::getHandleBlade(group, -1);
+        }
+        ModifyPositionBackward(driver, other);
+    }
+}
+
+float ChainAttackManager::GetBonusRate(gf::GF_OBJ_HANDLE* handle) const {
+    if (m_procState > 3 && !(m_procState > 50 && pad_1940 >= 0.2f)) {
+        BattleCharacter* character = CharacterManager::sys()->GetCharacterConst(handle);
+        if (character == nullptr || character->IsDead(2)) {
+            union {
+                float f;
+                int i;
+            } rate;
+            rate.f = BtlSystemBalanceAccess::sys()->pad_7A * 0.01f;
+            if (pad_8 == handle && m_overkillMaxHp != 0) {
+                float ratio = static_cast<float>(m_overkillDamage) / static_cast<float>(m_overkillMaxHp) * 100.0f + 1.0f;
+                rate.f += (ratio * 0.33333334f + logf(ratio) / logf(1.02f)) * 0.01f;
+            }
+            rate.f = fminf(rate.f, 9.0f);
+            rate.i += 1;
+            return rate.f;
+        }
+    }
+    return 0.0f;
+}
+
 bool ChainAttackManager::IsStartDirectionAfterFadeOut() const {
     return m_startStep > 1;
 }
@@ -36,11 +97,43 @@ unsigned char ChainAttackManager::GetSpAttackLevel(int index) const {
     return m_spAttacks[index].level;
 }
 
+float ChainAttackManager::GetSpAttackRecast(int index, int attr) const {
+    const SP_ATTACK_DATA& data = m_spAttacks[index];
+    for (int i = 0; i < 3; i++) {
+        const SP_ATTACK_DATA::ENTRY& entry = data.entries[i];
+        if (entry.IsValid() && entry.attr == attr) {
+            return entry.recast;
+        }
+    }
+    return 0.0f;
+}
+
+int ChainAttackManager::GetAttrOrder(int attr) const {
+    for (int i = 0; i < 9; i++) {
+        if (m_orderAttrs[i] == 0) {
+            break;
+        }
+        if (m_orderAttrs[i] == attr) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 int ChainAttackManager::GetOrderAttr(int index) const {
     if (static_cast<unsigned int>(index) <= 8) {
         return m_orderAttrs[index];
     }
     return 0;
+}
+
+void ChainAttackManager::Start(gf::GF_OBJ_HANDLE* handle) {
+    Reset(1);
+    pad_8 = handle;
+    BattleGlobal::sys()->pad_bit10 = true;
+    pad_1A15 = 0;
+    pad_1A13 = 0;
+    pad_1A14 = 0;
 }
 
 bool ChainAttackManager::IsProc(bool excludeStartWait) const {
@@ -90,6 +183,41 @@ void ChainAttackManager::AddTotalDamage(unsigned int damage) {
     }
 }
 
+void ChainAttackManager::AddOverKillDamage(unsigned int damage) {
+    if (m_procState >= 1 && m_procState <= 50) {
+        if (BattleGlobal::sys()->pad_bit5) {
+            BattleCharacter* character = CharacterManager::sys()->GetCharacterConst(pad_8);
+            if (character != nullptr) {
+                CharacterParameter* param = character->GetCharacterParameterConst(true);
+                if (param != nullptr && param->pad_5de != 0) {
+                    unsigned int limit = static_cast<unsigned int>(param->GetMaxHP() * (param->pad_5de * 0.01f));
+                    if (limit != 0) {
+                        return;
+                    }
+                }
+            }
+        }
+        if (!m_flags.overkill) {
+            m_flags.overkill = true;
+            m_overkillDamage = 0;
+            unsigned int maxHp = 0;
+            BattleCharacter* character = CharacterManager::sys()->GetCharacterConst(pad_8);
+            if (character != nullptr) {
+                CharacterParameter* param = character->GetCharacterParameterConst(true);
+                maxHp = param != nullptr ? param->GetMaxHP() : 0;
+            }
+            m_overkillMaxHp = maxHp;
+            m_menuContext = gf::GfMenuCallContext::create();
+            gf::GfMenuObjChainAttack::openOverkill(m_menuContext);
+            m_slowId = BattleGlobal::sys()->RegisterSlow(0.02f, -1.0f, 0.0f);
+            TalkManager::sys()->PlayNarrationVoice(TalkManager::NARRATION_TYPE(3), 3, 0);
+            m_flags.narrationPlayed = true;
+        } else {
+            m_overkillDamage += damage;
+        }
+    }
+}
+
 int ChainAttackManager::GetGroupIndex() const {
     if (m_groupSlot > 2) {
         return -1;
@@ -109,8 +237,30 @@ bool ChainAttackManager::IsSelectAction() const {
     return m_procState == 9;
 }
 
+bool ChainAttackManager::IsIraChange() const {
+    if (!IsProc(false)) {
+        return false;
+    }
+    return m_procState == 12 || m_procState == 13;
+}
+
 bool ChainAttackManager::IsStopTime() const {
     return m_procState == 9;
+}
+
+int ChainAttackManager::GetIraChainAttackSlot(int index, int n) const {
+    static const unsigned char s_bladeIDs[3][3] = {{0x14, 0x15, 0x11}, {0x16, 0x17, 0x12}, {0x18, 0x19, 0x13}};
+    gf::GF_OBJ_HANDLE* driver = gf::GfGameParty::getHandleDriver(index, gf::PTPOS(0));
+    int driverID = Utility::GetIraGroupDriverID(CharacterManager::sys()->GetCharacterConst(driver)->m_bdatID);
+    int row;
+    if (driverID == 17) {
+        row = 0;
+    } else if (driverID == 18) {
+        row = 1;
+    } else {
+        row = 2;
+    }
+    return GetIraChainAttackSlotByBdatID(index, s_bladeIDs[row][n]);
 }
 
 }  // namespace btl

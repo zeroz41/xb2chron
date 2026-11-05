@@ -515,12 +515,15 @@ public:
     bool pad_bit2 : 1;
     bool m_challengeAnySuccess : 1;  // ButtonChallenge's results 1-3 (not only 3) achieve its condition 0xC
     // the rest of the unit: IsButtonChallengeAutoSuccess reads bits 35, 49 and 50, IsPlayerAutoOperate bits 49 and 50
-    unsigned char : 2;
+    unsigned char : 1;
+    bool pad_bit5 : 1;  // while set, ChainAttackManager::AddOverKillDamage starts no overkill on a target CharacterParameter::pad_5de protects
     // CharacterManager::PreUpdateProc sets it once an enemy in battle belongs to a quest with an active task
     // (gf::GfQuestUtil::getCurrentEnemyWithEvent; meaning unknown)
     bool pad_bit6 : 1;
     bool pad_bit7 : 1;  // Utility::NotifyNeedPutAwayWeapon sets it
-    unsigned char : 4;
+    unsigned char : 2;
+    bool pad_bit10 : 1;  // ChainAttackManager::Start sets it
+    unsigned char : 1;
     bool pad_bit12 : 1;  // DeleteElementalComboCamera clears it
     unsigned char : 3;
     bool pad_bit16 : 1;  // IsKakuseiOrder holds while it is set

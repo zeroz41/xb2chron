@@ -504,7 +504,11 @@ public:
     float pad_D0[3];
     unsigned char pad_DC[0x4];
     float pad_E0[2];
-    unsigned char pad_E8[0x30];
+    unsigned char pad_E8[0x4];
+    // while m_isFly is set, ChainAttackManager::IsExitChainAttack allows the driver this much more below it (meaning
+    // unknown)
+    float pad_EC;
+    unsigned char pad_F0[0x28];
     // the character's object: Utility::AI_GetCharacterHandle returns it (the name is not the original's)
     gf::GF_OBJ_HANDLE* m_handle;
     // the object the character targets, (GF_OBJ_HANDLE*)-1 for none: Utility::AI_GetTargetCharacterID reads it
@@ -688,7 +692,9 @@ public:
     // CharacterManager::NotifyChallengeNextWave sets it on every dead enemy that does not have it yet (run bit 65; meaning
     // unknown)
     unsigned int pad_F06_1 : 1;
-    unsigned int pad_F06_2 : 6;
+    unsigned int pad_F06_2 : 3;
+    unsigned int pad_F06_5 : 1;  // ChainAttackManager::IsExitChainAttack ends the chain attack of a driver with it set
+    unsigned int pad_F06_6 : 2;
     // while set, ManagerUpdate_Attack counts its timers down by 0 (run bit 72; meaning unknown)
     unsigned int pad_F07_0 : 1;
     // the name is not the original's: IsEnableRescueTarget treats the character as out of battle while it is set

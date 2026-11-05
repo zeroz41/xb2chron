@@ -386,7 +386,10 @@ public:
     unsigned char pad_5d6[0x2];
     unsigned short pad_5d8;  // Utility::AI_GetResistantAttrNum passes it on
     unsigned short pad_5da;  // GetKizunaLinkBdatID answers it
-    unsigned char pad_5dc[0x3];
+    unsigned char pad_5dc[0x2];
+    // a percentage of the max HP: ChainAttackManager::AddOverKillDamage starts no overkill while it is set and
+    // BattleGlobal's pad_bit5 is (meaning unknown)
+    unsigned char pad_5de;
     // a counter: AddPerfectAvoid adds to it (0..255), UsePerfectAvoid (const in 2.0.0's symbols) counts it down
     mutable unsigned char pad_5df;
     // Utility::AI_GetElementalComboID returns it (the name is not the original's)
