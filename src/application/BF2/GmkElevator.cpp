@@ -2576,6 +2576,8 @@ void GmkSalvageLocator::onEnemyDead(gf::GF_OBJ_HANDLE*) { pad_f1 = 1; }
 void GmkSalvageLocator::onEnemyHomeToPlayerAccess(gf::GF_OBJ_HANDLE*) { pad_f2 = 1; }
 
 // ---- GmkEnemyWave (GmkEnemyList's wave; placeholder slot symbols: see its header)
+GmkEnemyWave::ProgressInfo GmkEnemyWave::sm_progressInfo;
+
 unsigned int GmkEnemyWave::getBindedEnemyNum() const {
     const Data* data = getData();
     return data->m_enemyEnd - data->m_enemyBegin;
@@ -2656,6 +2658,37 @@ void GmkEnemyWave::create(const CreateInfo& info) {
     seqWaitToValidLinkGmkList(0.0f);
 }
 
+// false while one of its enemies is not ready; a battle challenge's wave pops once started, the others by their row's
+// conditions
+bool GmkEnemyWave::isPopCondMatched() const {
+    for (const Entry& entry : m_entries) {
+        const GmkEnemy* enemy = entry.m_enemy;
+        if (enemy == nullptr || !enemy->isValid() || !enemy->m_insts.isValid() || !enemy->m_insts.m_popInfo.pad_2) {
+            return false;
+        }
+    }
+    if (m_isChallenge) {
+        return m_isStarted;
+    }
+    const BdatInfo* bdat = getBdatInfo();
+    if (gf::GfGameManager::isGameTypeIra() && gf::GfGameManager::isPlayEvent()) {
+        return false;
+    }
+    if (bdat->m_condition != 0 && !gf::GfGameCond::isGameCond(bdat->m_condition)) {
+        return false;
+    }
+    if (bdat->m_popTime.m_time != 0 && !bdat->m_popTime.isMatch()) {
+        return false;
+    }
+    if (bdat->m_questFlag.isSet() && !bdat->m_questFlag.isMatch()) {
+        return false;
+    }
+    if (bdat->m_scenarioFlag.m_scenarioFlagMax != 0 && !bdat->m_scenarioFlag.isMatch()) {
+        return false;
+    }
+    return true;
+}
+
 // the index-th sealed stone of the gimmick set's list (an inferred helper: the original reaches the element through a
 // pointer, not a reference, and re-reads the index; the name is not the original's)
 static inline GmkSealedStone* getSealedStone(GmkSealedStoneList* stones, unsigned int index) { return &stones->m_gmks[index]; }
@@ -2705,9 +2738,164 @@ void GmkEnemyWave::seqWaitToValidLinkGmkList(float dt) {
     reset();
 }
 
+// its step, phantom, access and game object released
+void GmkEnemyWave::dispose() {
+    m_seq = nullptr;
+    m_phantom.dispose();
+    m_acc.dispose();
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    AGmkBase::dispose();
+}
+
+// the wave is over: the quest is told (Ira), its map gimmick shown, its flag kept when the row says once only
+void GmkEnemyWave::seqFinish(float) {
+    if (gf::GfGameManager::isGameTypeIra()) {
+        if (!m_isCleared) {
+            int bdatId = m_createInfo.m_bdatId;
+            gf::GfQuestUtil::getGimmickTaskEndCheck(TYPE, bdatId);
+            gf::SCOM_QUEST_GIMMICK::createEnemyWave(bdatId, 0.0f);
+            if (m_secondAcc.isValid()) {
+                GmkMapGimmick* gimmick = static_cast<GmkMapGimmick*>(m_secondAcc.m_gmk);
+                gimmick->pad_a8 = true;
+                gimmick->pad_a9 = true;
+            }
+        }
+        if (getBdatInfo()->m_onlyOnce) {
+            gf::GfGameFlag::setLocal(1, m_createInfo.m_bdatId + 0xd796, 1);
+        }
+    }
+    releaseAccCount();
+    applyPopCondMatchedEnemies(false);
+    m_isCleared = true;
+    m_seq = nullptr;
+    sm_progressInfo.m_restNum = -1;
+    gf::GfGameManager::setStopMainMenuOpenForGimmick(false);
+}
+
 void GmkEnemyWave::seqWaitAccessing(float) {}
 
+// once its conditions hold: its invincible enemies marked (Ira, once), then, with the player in its phantom, its
+// enemies reset and the update step started
+void GmkEnemyWave::seqWaitPlayerIntoPhantom(float) {
+    if (!isPopCondMatched()) {
+        return;
+    }
+    if (gf::GfGameManager::isGameTypeIra() && !m_isInvincibleMarked) {
+        for (Entry& entry : m_entries) {
+            GmkEnemy* enemy = entry.m_enemy;
+            const GmkEnemyInsts::BdatInfo& bdat = enemy->m_insts.m_bdatInfo;
+            if (bdat.m_mutekiCondition != 0 || bdat.m_mutekiQuestFlag.isSet()) {
+                enemy->m_insts.pad_158 = 1;
+                enemy->m_insts.pad_159 = 1;
+            }
+        }
+        m_isInvincibleMarked = true;
+    }
+    if (m_phantom.m_coliObject == nullptr || m_phantom.pad_83) {
+        for (Entry& entry : m_entries) {
+            GmkEnemy* enemy = entry.m_enemy;
+            enemy->m_insts.reqClearRepopCounter();
+            if (gf::GfGameManager::isGameTypeIra()) {
+                enemy->m_insts.m_waveFlags &= ~4;
+            }
+            entry.pad_e = 0;
+            entry.pad_8 = 0;
+        }
+        m_seq = &GmkEnemyWave::seqUpdate;
+        if (gf::GfGameManager::isGameTypeIra() && m_sealedStone != nullptr) {
+            m_sealedStone->pad_6c = 1;
+        }
+        gf::GfGameManager::setStopMainMenuOpenForGimmick(true);
+    }
+}
+
+// how many game objects its enemies hold
+unsigned int GmkEnemyWave::getEnemyGobInstNum() const {
+    unsigned int num = 0;
+    for (const Entry* it = m_entries.begin(); it != m_entries.end(); ++it) {
+        num += it->m_enemy->getGobInstNum();
+    }
+    return num;
+}
+
 void GmkEnemyWave::debugDraw() const {}
+
+void GmkEnemyWave::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {
+    if (!isValid() || m_entries.size() == 0) {
+        return;
+    }
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    unsigned short condition = getBdatInfo()->m_opCondition;
+    if (condition != 0 && !gf::GfGameCond::isGameCond(condition)) {
+        const BdatInfo* bdat = getBdatInfo();
+        gf::MenuCommonWindowParam param;
+        param.m_bdat = gf::GfDataBdat::getFP(0x1b1);
+        param.m_msgId = bdat->m_missMsgId;
+        gf::GfPlayFactory::createCommonMessage(param);
+        return;
+    }
+    if (getData()->m_accessType != 1) {
+        return;
+    }
+    for (Entry& entry : m_entries) {
+        GmkEnemy* enemy = entry.m_enemy;
+        enemy->m_insts.reqClearRepopCounter();
+        if (gf::GfGameManager::isGameTypeIra()) {
+            enemy->m_insts.m_waveFlags &= ~4;
+        }
+        entry.pad_e = 0;
+        entry.pad_8 = 0;
+    }
+    m_seq = &GmkEnemyWave::seqUpdate;
+    if (gf::GfGameManager::isGameTypeIra() && m_sealedStone != nullptr) {
+        m_sealedStone->pad_6c = 1;
+    }
+    gf::GfGameManager::setStopMainMenuOpenForGimmick(true);
+}
+
+void GmkEnemyWave::seqAbort(float) {
+    if (gf::GfGameManager::isGameTypeIra() && m_sealedStone != nullptr) {
+        m_sealedStone->pad_6c = 0;
+    }
+    if (gf::GfGameManager::isGameTypeIra()) {
+        for (Entry& entry : m_entries) {
+            entry.m_enemy->pad_1d0.backHome(entry.m_enemy);
+        }
+    }
+    applyPopCondMatchedEnemies(false);
+    m_seq = &GmkEnemyWave::seqAbortWait;
+}
+
+// waits until its enemies (but the invincible ones) hold no game object, then resets
+void GmkEnemyWave::seqAbortWait(float) {
+    int num = 0;
+    for (const Entry* it = m_entries.begin(); it != m_entries.end(); ++it) {
+        const GmkEnemyInsts::BdatInfo& bdat = it->m_enemy->m_insts.m_bdatInfo;
+        if (bdat.m_mutekiCondition == 0 && !bdat.m_mutekiQuestFlag.isSet()) {
+            unsigned int gobNum = it->m_enemy->getGobInstNum();
+            num += it->m_popInfo.m_partyFlag == 0 ? (gobNum != 0 ? 1 : 0) : gobNum;
+        }
+    }
+    if (num != 0) {
+        return;
+    }
+    reset();
+    gf::GfGameManager::setStopMainMenuOpenForGimmick(false);
+}
 
 void GmkEnemyWave::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
     m_scenarioFlag = ScenarioFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2), (unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMax", row, 2));

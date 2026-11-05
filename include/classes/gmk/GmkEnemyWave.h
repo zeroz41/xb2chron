@@ -5,6 +5,7 @@
 #include "plugin/Bdat.h"
 #include "classes/gmk/GmkAcc.h"
 #include "classes/gmk/GmkPhantom.h"
+#include "classes/gmk/GmkBattleLock.h"
 #include "mm/mtl/FixedVector.h"
 #include "classes/gmk/GmkEnemyWaveExtension.h"
 #include "classes/gmk/ScenarioFlagCond.h"
@@ -59,7 +60,11 @@ public:
     // its data (m_createInfo.m_data): the range of enemies (GmkEnemy, the gimmick set's enemy list) it holds, by
     // index (the names are not the original's)
     struct Data {
-        unsigned char pad_0[0xc];
+        // how the player starts it: 2 by entering its phantom (seqWaitPlayerIntoPhantom), 1 by accessing it
+        // (seqWaitAccessing) (reset's test)
+        unsigned int m_accessType;
+        float m_popRange;  // 0x4: seqUpdate pops while the player is closer than this (the name is not the original's)
+        unsigned char pad_8[0x4];
         unsigned int m_enemyBegin;  // 0xC
         unsigned int m_enemyEnd;    // 0x10
     };
@@ -100,6 +105,45 @@ public:
     void reset();
     // 2.0.0's symbols name it.
     void seqWaitAccessing(float dt);
+    // 2.0.0's symbols name the next ones (defined in GmkElevator.cpp's unit; the steps m_seq runs).
+    void seqFinish(float dt);
+    void seqWaitPlayerIntoPhantom(float dt);
+    void seqUpdate(float dt);
+    void seqAbort(float dt);
+    void seqAbortWait(float dt);
+    // 2.0.0's symbols name it (seqUpdate calls it with the status counts and the free instance slots).
+    void requestPopWaveEnemy(unsigned short gobNum, unsigned short popingNum, unsigned short freeNum, float dt);
+    // 2.0.0's symbols name it (and getWavePopStatus). What its enemies are doing, counted by getWavePopStatus over its
+    // entries (the field names are not the original's)
+    struct WavePopStatus {
+        unsigned int m_gobNum;      // objects (one per enemy unless its party flag is set) of the entries not popping
+        unsigned int m_popingNum;   // the same for the entries popping (state 1 or 2), counted by what they pop
+        unsigned int m_waitNum;     // entries that have not popped (state 0)
+        unsigned int m_popNum;      // what all entries pop (arena and Ira only)
+        unsigned int m_defeatNum;   // what the finished entries (state 3) popped and no longer hold
+        bool m_isFlagged;           // an enemy has its wave flag 0x4 set
+    };
+    void getWavePopStatus(WavePopStatus& status) const;
+    // 2.0.0's symbols name it. What it does (Ira, with a sealed stone): sends the stone an energy effect from pos and
+    // posts its progress (the finished share of what the wave pops) to the stone's list
+    void updateProgress(const mm::Vec3& pos) const;
+    // how many game objects its enemies hold (the sum of their getGobInstNum)
+    unsigned int getEnemyGobInstNum() const;
+    // the remaining wave count seqUpdate keeps (reset, seqFinish: -1; 2.0.0's symbols name the static; it is
+    // initialized at run time, so a type with a constructor: the type and member names are not the original's)
+    struct ProgressInfo {
+        ProgressInfo() : m_restNum(-1) {}
+        int m_restNum;
+    };
+    static ProgressInfo sm_progressInfo;
+    // the access count of the battle lock m_acc reaches, taken once (seqUpdate) and given back (reset, seqFinish)
+    // (an inferred helper; the name is not the original's)
+    void releaseAccCount() {
+        if (m_isAccCounted && m_acc.isValid()) {
+            static_cast<GmkBattleLock*>(m_acc.m_gmk)->pad_c4--;
+            m_isAccCounted = false;
+        }
+    }
     gf::GF_OBJ_HANDLE* m_gob;  // 0x48: dispose destroys it unless it is -1 (the name is not the original's)
     float m_accessDistSq;  // 0x50: create squares the "0x7B" table's row 0 column 0x1E (the name is not the original's)
     unsigned char pad_54[0xc];
@@ -111,7 +155,9 @@ public:
     bool m_isCleared;     // 0x141: seqWaveUpdate counts the waves up to the last one set
     bool m_isChallenge;   // 0x142: GmkBattleChallenge::create sets it
     bool m_isStarted;     // 0x143: GmkBattleChallenge::seqWaveStart sets it
-    unsigned char pad_144;
+    // 0x144: seqWaitPlayerIntoPhantom sets it once it has marked its invincible enemies (Ira); reset clears it (the
+    // name is not the original's)
+    bool m_isInvincibleMarked;
     bool m_isPaused;      // 0x145: GmkBattleChallenge::suspendAll sets it
     unsigned char pad_146[0x2];
     mm::mtl::FixedVector<Entry, 32> m_entries;  // 0x148, size at 0x448 (the name is not the original's)
