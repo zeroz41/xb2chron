@@ -5,15 +5,17 @@
 #include "gf/GfMenuSequence.h"
 #include "mm/mtl/IntrusivePtr.h"
 #include "mm/mtl/FixedVector.h"
+#include "mm/mtl/Delegate.h"
+#include "gf/SDataOption.h"
 
 namespace gf {
 class GfMenuCallContext;
 class GfMenuMsgList;
 class GfMenuReferenceNumber;
 class GfMenuIDList;
-class SDataOption;
+class SDataGame;
 }  // namespace gf
-namespace ui { class UISelectObjList; }
+namespace ui { class UISelectObjList; class UICtrlCursorSelect; }
 namespace gf {
 
 // table 0x7100B62040
@@ -53,6 +55,7 @@ public:
     void getDefaultLevel(unsigned int category, mm::mtl::FixedVector<Level, 32>& levels);
     // convOptionDataToLevelList: refills m_levels with getDefaultLevel, then sets them from option (the inverse of convLevelListToOptionData).
     void convOptionDataToLevelList(unsigned int category, const SDataOption& option);
+    GfMenuObjEvTheater(unsigned int handle);
     virtual ~GfMenuObjEvTheater();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
@@ -98,10 +101,16 @@ public:
     // getEvthIDList's last parameter is (TopListener passes 0; it is passed on) are not known. getEvthIDList masks its
     // last two parameters with 0xffff on entry (and w20/w27, #0xffff): unsigned short.
     void updateSubMsgList(unsigned int title);
-    void getEvthIDList(GfMenuIDList* list, unsigned short title, unsigned short);
+    // getEvthIDList returns how many events it listed (updateSubMsgList keeps a message only when it is not 0); list
+    // may be null (count only).
+    int getEvthIDList(GfMenuIDList* list, unsigned short category, unsigned short value);
     // 2.0.0's symbols name it (its only caller is this class's listener). What it does (not written yet): shows
     // m_levels row by row.
     void refreshLevel(unsigned int);
+    // 2.0.0's symbols name it. What it does: copies m_option into m_appliedOption, its volumes 1, 2, 5, 7, 8, 10 and 11
+    // blended toward 255 (m_volumeBase above m_volumeLevel) or toward 0 (below) by the two, then sets volumes 0 and 3
+    // to 7/8 of volume 1 and copies 2, 5, 8, 11 into 4, 6, 9, 12.
+    void applySoundOption();
 
     // the names of the fields below are not the original's
     int m_title;  // 0x24: which TXT_header_title@%02d / TXT_header_input@%02d (from 1) HeaderListener shows
@@ -114,41 +123,59 @@ public:
     ui::UISelectObjList* m_subObjList;
     GfMenuIDList* m_selectIdList;          // 0x60: the constructor creates it; its page index is the selected row
     ui::UISelectObjList* m_selectObjList;  // 0x68: the rows refreshSelctList animates
-    unsigned char pad_70[0xA8 - 0x70];
-    // 0xA8: 8-byte entries; updateWeather stores the selected event's timezone into entry 0's second word (what the
-    // entries hold is not known; the names are not the original's)
-    struct Choice {
-        unsigned char pad_0[0x4];
+    // 0x70: the constructor creates it with 3 rows a page (the name is not the original's)
+    GfMenuIDList* m_settingIdList;
+    // 0x78: initialize creates it after m_selectObjList; setupSetting clears it (the name is not the original's)
+    ui::UISelectObjList* m_settingObjList;
+    SDataGame* m_game;  // 0x80: the constructor's TitleMain save buffer's game data (the name is not the original's)
+    // 0x88: setupSetting pushes one per setting row: the update member it runs with a value, the value count and the
+    // value (updateWeather stores the selected event's timezone into entry 0's value); the names are not the original's
+    struct Setting {
+        mm::mtl::Delegate<bool(unsigned int)> m_update;
+        unsigned int m_count;
         unsigned int m_value;
     };
-    mm::mtl::FixedVector<Choice, 11> m_choices;
+    mm::mtl::FixedVector<Setting, 3> m_settings;
     // 0x108: the events' weather and timezone, by row (updateWeather; the names are not the original's)
     struct Weather {
         unsigned short m_weather;   // GfMenuBdat::getIconIDFromWeatherType's type
         unsigned short m_timezone;  // 0: none; else updateTimezone's value
     };
     mm::mtl::FixedVector<Weather, 22> m_weathers;
-    unsigned char pad_168[0x16C - 0x168];
+    unsigned int pad_168;
     // updateTimezone shows timezone image m_timezone - 1 when it is set (the name is not the original's)
     unsigned int m_timezone;  // 0x16C
-    unsigned char pad_170[0x178 - 0x170];
+    unsigned int pad_170;
+    unsigned int pad_174;  // setupSetting's index into the m_faceIcon table
     // updateCommonParts's base icon id for "IMG_select_set_bl_face"; setupSetting sets it from a 4-entry table by
     // the entry at 0x174 (the name is not the original's)
     unsigned int m_faceIcon;  // 0x178
-    unsigned char pad_17C[0x180 - 0x17C];
+    unsigned int pad_17C;
     mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_number;  // 0x180: the constructor creates it (the name is not the original's)
     // updateTimezone does nothing while it is set; setupSetting clears it (the name is not the original's)
     bool m_timezoneLocked;  // 0x188
     // updateTimezone clears it when it shows the list's timezone (the name is not the original's)
     bool m_timezoneFromList;  // 0x189
-    unsigned char pad_18A[0x2C0 - 0x18A];
+    unsigned char pad_18A[0x2];
+    unsigned int pad_18C;  // bit flags initialize sets (1, 3, 7) and SelectListener tests
+    unsigned int pad_190;  // bit flags setupSetting clears and SelectListener toggles
+    bool pad_194;          // setupSetting clears it
+    // 0x198: initialize copies GfDataManager's option data into both; applySoundOption makes m_appliedOption from
+    // m_option with the volumes blended by m_volumeLevel (the names are not the original's)
+    SDataOption m_option;
+    SDataOption m_appliedOption;  // 0x220
+    GfMenuCallContext* m_callContext;      // 0x2A8: the constructor creates it (the name is not the original's)
+    ui::UISelectObjList* m_levelObjList;   // 0x2B0: initialize creates it (the name is not the original's)
+    ui::UICtrlCursorSelect* m_cursor;      // 0x2B8: ItemListListener shows it (the name is not the original's)
     unsigned char* m_capBdat;  // 0x2C0: the table updateInfo reads "cap_id" from (the name is not the original's)
     unsigned int m_capHandle;  // 0x2C8: the UI object updateInfo sets the text of (the name is not the original's)
-    unsigned char pad_2CC[0x2D0 - 0x2CC];
+    unsigned int m_levelHandle;  // 0x2CC: ItemListListener opens and closes it (the name is not the original's)
     mm::mtl::FixedVector<Level, 32> m_levels;  // 0x2D0: the sound settings' rows (the name is not the original's)
     // 0x318: getDefaultLevel's 0..255 value for the second row (0xFF: max_level) (the name is not the original's)
     unsigned int m_volumeLevel;
-    unsigned char pad_31C[0x320 - 0x31C];
+    // 0x31C: initialize sets it with m_volumeLevel; applySoundOption blends the volumes by the two (the name is not
+    // the original's)
+    unsigned int m_volumeBase;
     GfMenuSequence<GfMenuObjEvTheater, 4> m_seq;  // 0x320: update runs it (the name is not the original's)
     // seqWaitStreaming's seconds since the preview started loading (the name is not the original's)
     float m_previewTime;  // 0x480

@@ -23,6 +23,9 @@
 #include "ui/UIStr.h"
 #include "ui/EventData.h"
 #include "mm/mtl/Vector.h"
+#include "classes/tl/TitleMain.h"
+#include "gf/SDataSaveIra.h"
+#include "classes/ui/UICtrlCursorSelect.h"
 
 namespace gf {
 
@@ -42,6 +45,66 @@ static unsigned char volumeToLevel(unsigned char volume, unsigned char max) {
     float step = 255.0f / static_cast<unsigned int>(max);
     float level = static_cast<unsigned int>(volume) / step;
     return static_cast<int>(level + (level > 0.0f ? 0.5f : -0.5f));
+}
+
+GfMenuObjEvTheater::GfMenuObjEvTheater(unsigned int handle)
+    : GfMenuObject(handle), m_title(1), m_msgList(nullptr), m_subObjList(nullptr), m_selectIdList(nullptr),
+      m_selectObjList(nullptr), m_settingIdList(nullptr), m_settingObjList(nullptr), m_game(nullptr), pad_168(0),
+      m_timezone(0), pad_170(0), pad_174(0), m_faceIcon(0), m_timezoneLocked(false), m_timezoneFromList(false),
+      pad_18C(0), pad_190(0), pad_194(false), m_callContext(nullptr), m_levelObjList(nullptr), m_cursor(nullptr),
+      m_capBdat(nullptr), m_capHandle(0), m_levelHandle(0), m_volumeLevel(0), m_volumeBase(0), m_seq(this),
+      m_previewTime(0.0f) {
+    m_game = &mm::mtl::PtrSingleton<tl::TitleMain>::sys()->getSaveBuffer()->m_game;
+    m_msgList = GfMenuMsgList::create();
+    m_selectIdList = GfMenuIDList::create();
+    m_settingIdList = GfMenuIDList::create();
+    {
+        ui::UIListInfoBase::SetupParam param;
+        param.m_pageRowSize = 3;
+        m_settingIdList->setup(getAllocator(ALLOCATOR(0)), param);
+    }
+    m_number = GfMenuReferenceNumber::create();
+    m_callContext = GfMenuCallContext::create();
+}
+
+GfMenuObjEvTheater::~GfMenuObjEvTheater() {
+    m_number = nullptr;
+    if (m_callContext != nullptr) {
+        m_callContext->release();
+        m_callContext = nullptr;
+    }
+    if (m_cursor != nullptr) {
+        m_cursor->release();
+        m_cursor = nullptr;
+    }
+    if (m_levelObjList != nullptr) {
+        m_levelObjList->release();
+        m_levelObjList = nullptr;
+    }
+    if (m_subObjList != nullptr) {
+        m_subObjList->release();
+        m_subObjList = nullptr;
+    }
+    if (m_msgList != nullptr) {
+        m_msgList->release();
+        m_msgList = nullptr;
+    }
+    if (m_settingIdList != nullptr) {
+        m_settingIdList->release();
+        m_settingIdList = nullptr;
+    }
+    if (m_settingObjList != nullptr) {
+        m_settingObjList->release();
+        m_settingObjList = nullptr;
+    }
+    if (m_selectObjList != nullptr) {
+        m_selectObjList->release();
+        m_selectObjList = nullptr;
+    }
+    if (m_selectIdList != nullptr) {
+        m_selectIdList->release();
+        m_selectIdList = nullptr;
+    }
 }
 
 bool GfMenuObjEvTheater::attach(GfMenuCallContext* context) {
@@ -104,7 +167,7 @@ bool GfMenuObjEvTheater::updateWeather(unsigned int index) {
             m_timezoneLocked = false;
         } else {
             updateTimezone(m_weathers[index].m_timezone);
-            m_choices[0].m_value = m_weathers[index].m_timezone;
+            m_settings[0].m_value = m_weathers[index].m_timezone;
             m_timezoneLocked = true;
         }
         ui::UIObjectAcc input(m_handle, "LAY_select_set_ev_input@01");
@@ -425,6 +488,29 @@ void GfMenuObjEvTheater::updateInfo(unsigned int index) {
         ui::UIStr text(messages, static_cast<unsigned short>(
                                      Bdat::getVal(m_capBdat, "cap_id", s_capRows[index])));
         acc.setText(text);
+    }
+}
+
+void GfMenuObjEvTheater::refreshLevel(unsigned int) {
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < m_levels.size(); i++) {
+        if (m_levels[i].m_max == 2) {
+            name.format("TXT_%s_item_param_on@%02d", "snd", i + 1);
+            ui::UIObjectAcc on(m_handle, name.m_str);
+            name.format("TXT_%s_item_param_off@%02d", "snd", i + 1);
+            ui::UIObjectAcc off(m_handle, name.m_str);
+            on.setDisp(m_levels[i].m_level == 1);
+            off.setDisp(m_levels[i].m_level == 2);
+        } else {
+            name.format("IMG_%s_item_param_base@%02d", "snd", i + 1);
+            ui::UIObjectAcc base(m_handle, name.m_str);
+            name.format("IMG_%s_item_param_point@%02d", "snd", i + 1);
+            ui::UIObjectAcc point(m_handle, name.m_str);
+            if (base.m_object != nullptr && point.m_object != nullptr) {
+                float ratio = static_cast<float>(m_levels[i].m_level - 1) / static_cast<float>(m_levels[i].m_max - 1);
+                GfMenuObjUtil::placeObjectHRatio(base.m_handle, point.m_handle, mm::clamp(ratio, 0.0f, 1.0f), -4);
+            }
+        }
     }
 }
 
