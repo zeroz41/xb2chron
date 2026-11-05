@@ -27,6 +27,13 @@
 #include "classes/gf/GfPlayComBattleStart.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "gf/GfMenuObjUtil.h"
+#include "classes/gf/GfGameArena.h"
+#include "gf/GfDataEvent.h"
+#include "gf/MapJumpForBattleStart.h"
+#include "gf/MapJumpForReturnBattle.h"
+#include "gf/EvtTheaterParam.h"
+#include "gf/MsgGameBtlArena.h"
+#include "classes/gf/GfPlayComPlayerDead.h"
 
 namespace gf {
 
@@ -93,6 +100,29 @@ bool GfPlayFactory::createOpenMenu2(unsigned int menu, MAINMENU main, GfSequenti
     GfSequentialPlay::addOpenMenu2(menu, main);
     GfSequentialPlay::popPause();
     GfSequentialPlay::popState();
+    GfSequentialPlay::play();
+    return true;
+}
+
+bool GfPlayFactory::createStartTutorial(unsigned int id, GfSequentialPlaySignal* signal) {
+    if (GfGameManager::isLeaveGameForDebug()) {
+        return false;
+    }
+    if (GfSequentialPlay::isInnerState(GF_STATE(9))) {
+        return false;
+    }
+    if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
+        if (arena->isInvalidTutorial()) {
+            return true;
+        }
+    }
+    GfSequentialPlay::beginCommand(GfSequentialPlay::TYPE(1));
+    GfSequentialPlay::startSignal(signal);
+    GfSequentialPlay::addBattleStartEnd();
+    GfSequentialPlay::pushPause(1);
+    GfSequentialPlay::addStartTutorial(id);
+    GfSequentialPlay::popPause();
+    GfSequentialPlay::endSignal(signal);
     GfSequentialPlay::play();
     return true;
 }
@@ -285,6 +315,31 @@ bool GfPlayFactory::createGmkCamera(mm::mtl::IntrusivePtr<fw::Camera> camera) {
     return true;
 }
 
+bool GfPlayFactory::createPlayerDead(GfPlayerDead type) {
+    if (GfGameManager::isBattleArenaActive()) {
+        if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
+            MsgGameBtlArena msg(2);
+            static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
+        }
+        return false;
+    }
+    if (GfPlayComPlayerDead::replaceDeadType(type)) {
+        return true;
+    }
+    if (!GfGameManager::isEnablePlayerDeadSequence()) {
+        return false;
+    }
+    if (GfGameManager::isGameOver()) {
+        return createGameOver();
+    }
+    GfSequentialPlay::beginCommand(GfSequentialPlay::TYPE(0));
+    GfSequentialPlay::pushState(GF_STATE(10));
+    GfSequentialPlay::addPlayerDead(type);
+    GfSequentialPlay::popState();
+    GfSequentialPlay::play();
+    return true;
+}
+
 bool GfPlayFactory::createGameOver() {
     if (!GfGameManager::isEnablePlayerDeadSequence()) {
         return false;
@@ -357,6 +412,135 @@ bool GfPlayFactory::createOneEventForGimmick(unsigned int id) {
         return false;
     }
     return createOneEvent(id);
+}
+
+bool GfPlayFactory::createOneEvent(unsigned int id) {
+    if (id == 0) {
+        return true;
+    }
+    if (GfGameManager::isLeaveGameForDebug()) {
+        return false;
+    }
+    if (GfSequentialPlay::isInnerState(GF_STATE(9))) {
+        return false;
+    }
+    GfSequentialPlay* seqPlay = mm::mtl::PtrSingleton<GfSequentialPlay>::sys();
+    if (seqPlay != nullptr && seqPlay->isExistEvent(id) && id != 10001) {
+        return true;
+    }
+    GfSequentialPlay::beginCommand(GfSequentialPlay::TYPE(0));
+    GfSequentialPlay::pushState(GF_STATE(0x14));
+    GfSequentialPlay::addCallbackEventSequence(id, true);
+    GfSequentialPlay::addWaitBattleEnd(id);
+    GfSequentialPlay::addEventPlayerStop(true);
+    GfSequentialPlay::pushPause(GfDataEvent::getEventType(id) == 2 ? 0x30 : 0x20);
+    GfSequentialPlay::addEvent(id, 0, 0, nullptr, nullptr, 0.0f);
+    GfSequentialPlay::popPause();
+    GfSequentialPlay::addEventFade();
+    GfSequentialPlay::addCallbackEventSequence(id, false);
+    GfSequentialPlay::addIraCampSaveForEvent();
+    GfSequentialPlay::popState();
+    GfSequentialPlay::addEventPlayerStop(false);
+    GfSequentialPlay::play();
+    return true;
+}
+
+bool GfPlayFactory::createCampEvent(unsigned int id, const mm::Vec3& pos, float time) {
+    if (id == 0) {
+        return true;
+    }
+    if (GfGameManager::isLeaveGameForDebug()) {
+        return false;
+    }
+    if (GfSequentialPlay::isInnerState(GF_STATE(9))) {
+        return false;
+    }
+    GfSequentialPlay* seqPlay = mm::mtl::PtrSingleton<GfSequentialPlay>::sys();
+    if (seqPlay != nullptr && seqPlay->isExistEvent(id) && id != 10001) {
+        return true;
+    }
+    GfSequentialPlay::beginCommand(GfSequentialPlay::TYPE(0));
+    GfSequentialPlay::pushState(GF_STATE(0x14));
+    GfSequentialPlay::addCallbackEventSequence(id, true);
+    GfSequentialPlay::addWaitBattleEnd(id);
+    GfSequentialPlay::addEventPlayerStop(true);
+    GfSequentialPlay::pushPause(GfDataEvent::getEventType(id) == 2 ? 0x30 : 0x20);
+    GfSequentialPlay::addEvent(id, 0, 0, nullptr, &pos, time);
+    GfSequentialPlay::popPause();
+    GfSequentialPlay::addEventFade();
+    GfSequentialPlay::addCallbackEventSequence(id, false);
+    GfSequentialPlay::addIraCampSaveForEvent();
+    GfSequentialPlay::popState();
+    GfSequentialPlay::addEventPlayerStop(false);
+    GfSequentialPlay::play();
+    return true;
+}
+
+bool GfPlayFactory::createBlEvent(unsigned int event, unsigned int first, unsigned int blade, GfSequentialPlaySignal* signal) {
+    if (GfGameManager::isLeaveGameForDebug()) {
+        return false;
+    }
+    GfSequentialPlay::beginCommand(GfSequentialPlay::TYPE(1));
+    GfSequentialPlay::startSignal(signal);
+    GfSequentialPlay::pushState(GF_STATE(0x14));
+    GfSequentialPlay::addCallbackEventSequence(event, true);
+    GfSequentialPlay::pushPause(GfDataEvent::getEventType(event) == 2 ? 0x30 : 0x20);
+    GfSequentialPlay::addEvent(event, first, blade, nullptr, nullptr, 0.0f);
+    GfSequentialPlay::popPause();
+    GfSequentialPlay::addEventFade();
+    GfSequentialPlay::addCallbackEventSequence(event, false);
+    GfSequentialPlay::popState();
+    GfSequentialPlay::endSignal(signal);
+    GfSequentialPlay::play();
+    return true;
+}
+
+bool GfPlayFactory::createTheaterEvent(const EvtTheaterParam& param) {
+    if (param.m_eventId == 0) {
+        return true;
+    }
+    if (GfGameManager::isLeaveGameForDebug()) {
+        return false;
+    }
+    GfSequentialPlay* seqPlay = mm::mtl::PtrSingleton<GfSequentialPlay>::sys();
+    if (seqPlay != nullptr && seqPlay->isExistEvent(param.m_eventId) && param.m_eventId != 10001) {
+        return true;
+    }
+    unsigned int bladeCreate = 0;
+    if (GfDataEvent::isBladeCreateEvent(param.m_eventId)) {
+        bladeCreate = 1;
+    }
+    GfSequentialPlay::beginCommand(GfSequentialPlay::TYPE(0));
+    GfSequentialPlay::pushState(GF_STATE(0x14));
+    GfSequentialPlay::addCallbackEventSequence(param.m_eventId, true);
+    GfSequentialPlay::addEventWeather(WEATYPE(param.m_weather));
+    GfSequentialPlay::addWaitBattleEnd(0);
+    GfSequentialPlay::pushPause(GfDataEvent::getEventType(param.m_eventId) == 2 ? 0x30 : 0x20);
+    GfSequentialPlay::addEvent(param.m_eventId, bladeCreate, param.pad_2, param.pad_10, nullptr, 0.0f);
+    GfSequentialPlay::popPause();
+    GfSequentialPlay::addEventFade();
+    GfSequentialPlay::addCallbackEventSequence(param.m_eventId, false);
+    GfSequentialPlay::popState();
+    GfSequentialPlay::play();
+    return true;
+}
+
+bool GfPlayFactory::createReserveEvent(const char* name) {
+    unsigned int id = GfDataEvent::getEventID(name);
+    if (id == 0) {
+        return false;
+    }
+    GfSequentialPlay::beginCommand(GfSequentialPlay::TYPE(0));
+    GfSequentialPlay::pushState(GF_STATE(0x14));
+    GfSequentialPlay::addEventPlayerStop(true);
+    GfSequentialPlay::pushPause(GfDataEvent::getEventType(id) == 2 ? 0x30 : 0x20);
+    GfSequentialPlay::addEvent(id, 0, 0, nullptr, nullptr, 0.0f);
+    GfSequentialPlay::popPause();
+    GfSequentialPlay::addEventFade();
+    GfSequentialPlay::popState();
+    GfSequentialPlay::addEventPlayerStop(false);
+    GfSequentialPlay::play();
+    return true;
 }
 
 bool GfPlayFactory::createEventAfterScript(int id) {
@@ -555,6 +739,20 @@ void GfPlayFactory::createOpenDummyTutorial(unsigned int id) {
     GfSequentialPlay::play();
 }
 
+bool GfPlayFactory::createNpcEntry(const mm::mtl::FixedVector<unsigned short, 256>& entries) {
+    if (GfGameManager::isLeaveGameForDebug()) {
+        return false;
+    }
+    GfSequentialPlay::beginCommand(GfSequentialPlay::TYPE(0));
+    GfSequentialPlay::pushPause(0x11);
+    GfSequentialPlay::pushState(GF_STATE(6));
+    GfSequentialPlay::addOpenNpcEntry(entries);
+    GfSequentialPlay::popState();
+    GfSequentialPlay::popPause();
+    GfSequentialPlay::play();
+    return true;
+}
+
 void GfPlayFactory::createBattleStart(bool flag) {
     int enable = !GfGameManager::isLeaveGameForDebug();
     if (mm::mtl::PtrSingleton<GfPlayComBattleStart>::sys() == nullptr && enable) {
@@ -604,6 +802,16 @@ bool GfPlayFactory::createArtsMovie(const char* name) {
     GfSequentialPlay::popPause();
     GfSequentialPlay::play();
     return true;
+}
+
+void GfPlayFactory::createSkipTravel(unsigned int map) {
+    if (GfGameManager::isLeaveGameForDebug()) {
+        return;
+    }
+    GfMapjumpInfo info(map);
+    info.m_flags = GfMapjumpInfo::Flags();
+    info.m_flags.m_stopPlayer = true;
+    createMapjump(info);
 }
 
 bool GfPlayFactory::createResetBladeForBattleEnd(unsigned int slot, int setId, bool stopPlayer) {
@@ -765,6 +973,88 @@ bool GfPlayFactory::createHoodHomuraBattou() {
     GfSequentialPlay::addHoodHomuraBattou();
     GfSequentialPlay::popState();
     return GfSequentialPlay::play();
+}
+
+bool GfPlayFactory::createLeaveBattleArena(bool force) {
+    if (!force) {
+        if (GfGameManager::isLeaveGameForDebug()) {
+            return false;
+        }
+        if (!GfGameManager::isEnableOpenMainMenu() || !GfGameManager::isBattleArenaActive()) {
+            return false;
+        }
+    }
+    GfMapjumpInfo info(0);
+    info.m_flags = GfMapjumpInfo::Flags();
+    info.m_map = 0x7AC;
+    info.pad_4 = 0;
+    GfSequentialPlay::beginCommand(GfSequentialPlay::TYPE(0));
+    GfSequentialPlay::addEventPlayerStop(true);
+    GfSequentialPlay::pushState(GF_STATE(8));
+    GfSequentialPlay::addWaitBattleEnd(0);
+    GfSequentialPlay::addMapjumpForLeaveArena(info);
+    GfSequentialPlay::popState();
+    GfSequentialPlay::addEventPlayerStop(false);
+    GfSequentialPlay::play();
+    return true;
+}
+
+void GfPlayFactory::createMapJumpForBattleStart(const MapJumpForBattleStart& param) {
+    GfMapjumpInfo info(0);
+    info.m_flags = GfMapjumpInfo::Flags();
+    info.m_map = param.m_mapjumpId;
+    info.pad_4 = 0;
+    info.m_flags.pad_165 = param.pad_4;
+    info.m_flags.pad_166 = param.pad_5;
+    GfSequentialPlay::beginCommand(GfSequentialPlay::TYPE(1));
+    GfSequentialPlay::addEventPlayerStop(true);
+    GfSequentialPlay::pushState(GF_STATE(8));
+    GfSequentialPlay::addWaitBattleEnd(0);
+    GfSequentialPlay::addMapjumpForBattleMapFromArena(info);
+    GfSequentialPlay::popState();
+    GfSequentialPlay::addEventPlayerStop(false);
+    GfSequentialPlay::play();
+}
+
+void GfPlayFactory::createMapJumpForReturnBattle(const MapJumpForReturnBattle& param) {
+    GfMapjumpInfo info(param.m_mapjumpId);
+    info.m_flags = GfMapjumpInfo::Flags();
+    GfSequentialPlay::beginCommand(GfSequentialPlay::TYPE(0));
+    GfSequentialPlay::addEventPlayerStop(true);
+    GfSequentialPlay::pushState(GF_STATE(8));
+    GfSequentialPlay::pushPause(0x10);
+    GfSequentialPlay::addWaitBattleEnd(0);
+    GfSequentialPlay::addMapjumpForBattleMapFromArena(info);
+    GfSequentialPlay::addWaitArenaStateField();
+    GfSequentialPlay::popPause();
+    GfSequentialPlay::popState();
+    GfSequentialPlay::addEventPlayerStop(false);
+    GfSequentialPlay::play();
+}
+
+void GfPlayFactory::createChallengeBattleStart(unsigned int id, GFDIFF diff) {
+    ArenaBattleStart start;
+    start.m_id = id;
+    start.m_mode = diff;
+    GfSequentialPlay::beginCommand(GfSequentialPlay::TYPE(0));
+    GfSequentialPlay::pushState(GF_STATE(0x14));
+    GfSequentialPlay::addStartChallengeBattle(start);
+    GfSequentialPlay::popState();
+    GfSequentialPlay::play();
+}
+
+void GfPlayFactory::createTutorialScript(const char* name, unsigned int id) {
+    if (!GfGameManager::isScenarioGame() || GfGameManager::isLeaveGameForDebug()) {
+        return;
+    }
+    GfSequentialPlay::beginCommand(GfSequentialPlay::TYPE(0));
+    GfSequentialPlay::pushState(GF_STATE(6));
+    GfSequentialPlay::addEventPlayerStop(true);
+    GfSequentialPlay::addTutorialScript(name, id);
+    GfSequentialPlay::addIraCampSaveForTutorial();
+    GfSequentialPlay::addEventPlayerStop(false);
+    GfSequentialPlay::popState();
+    GfSequentialPlay::play();
 }
 
 }  // namespace gf

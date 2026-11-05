@@ -14,8 +14,13 @@ namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { enum MAINMENU : int; }
 namespace gf { class MenuCommonWindowParam; }
 namespace gf { struct MapJumpForReturnBattle; }
+namespace gf { struct MapJumpForBattleStart; }
+namespace gf { struct EvtTheaterParam; }
 namespace gmk { enum GmkType : int; }
 namespace gf { enum GfPlayerDead : int; }
+namespace gf { enum GFDIFF : int; }
+#include "mm/mtl/FixedVector.h"
+#include "mm/Vec3.h"
 #include "classes/gf/GfMenuObjCommonText.h"
 
 namespace gf {
@@ -41,7 +46,8 @@ public:
     static bool createGmkTutorial(const char* name, unsigned int id);
     static bool createStartTutorial(unsigned int id, GfSequentialPlaySignal* signal);
     // 2.0.0's symbols name it. Caller: the sys plugin's playTutorial (a string and an int from the script).
-    static bool createTutorialScript(const char* name, unsigned int id);
+    // returns nothing: its early exits leave the scenario/leave-game check's result in the return register
+    static void createTutorialScript(const char* name, unsigned int id);
     static bool createGmkCamera(mm::mtl::IntrusivePtr<fw::Camera> camera);
     // queues the player's death of a kind (StateUtil::notifyDead's); true when queued or a running one took the kind
     static bool createPlayerDead(GfPlayerDead type);
@@ -51,6 +57,10 @@ public:
     static bool createEventMapjump(const GfMapjumpInfo& info);
     static bool createOneEventForGimmick(unsigned int id);
     static bool createOneEvent(unsigned int id);
+    // GmkCamp::onPlayerAccessed's: createOneEvent's command list with the camp's position and time for addEvent
+    static bool createCampEvent(unsigned int id, const mm::Vec3& pos, float time);
+    // GfManager::startEventTheater's: an event replayed from the theater, with its weather
+    static bool createTheaterEvent(const EvtTheaterParam& param);
     static bool createReserveEvent(const char* name);  // the sys plugin's reserveEvent (a script name)
     // whether a common message window is open, and its result (GfPlayComMenuCommon's)
     static bool createEventWait(float time, GF_OBJ_HANDLE* handle);
@@ -68,6 +78,8 @@ public:
     static void createBattleStart(bool flag);
     static void createGimmickTaskComplete(gmk::GmkType type, unsigned int id, float time);
     static bool createArtsMovie(const char* name);
+    // a map jump to a map that stops the player (createMapjump), unless the game is left for debugging
+    static void createSkipTravel(unsigned int map);
     // 2.0.0's symbols name it (1.0.0's unit ends at createResetBladeForBladeSwitch). What it does: when the game
     // condition in row 0x2F of BDAT table 0x17E's "cond" column holds, no party slot's blade reset runs or is queued
     // (GfPlayComResetBlade::isPlaying, GfSequentialPlay::isExistResetBladeParty, slots 0-2) and no state 0x14 or
@@ -95,15 +107,22 @@ public:
     static bool createMenuPrecious(unsigned int id, bool flag);
     // queues a quest's completion UI; GfQuestEvent::openResult keeps the result as its result UI's flag
     static bool createQuestUIComplete(QuestID id);
-    // 2.0.0's symbols name it (code in sequential_play's unit_71003214F4, which has no source yet). StateArenaField's
-    // onStep calls it with true and moves to state 2 when it answers true. What it does: unless the bool is set,
-    // answers false when GfGameManager::isLeaveGameForDebug, else needs isEnableOpenMainMenu and isBattleArenaActive;
-    // then builds a map-jump request on the stack.
+    // 2.0.0's symbols name it. StateArenaField's onStep calls it with true and moves to state 2 when it answers true.
+    // What it does: unless the bool is set, answers false when GfGameManager::isLeaveGameForDebug, else needs
+    // isEnableOpenMainMenu and isBattleArenaActive; then queues addMapjumpForLeaveArena to map jump 0x7AC.
     static bool createLeaveBattleArena(bool force);
-    // 2.0.0's symbols name it (code in unit_71003214F4). GfGameArena::procMsgGameBtlArena (message type 2) and
+    // 2.0.0's symbols name it. GfGameArena::procMsgGameBtlArena (message type 2) and
     // GfArenaBattle::mapjumpForReturnField call it. What it does: builds a GfMapjumpInfo from param's m_mapjumpId and
     // the defaults.
+    // GfArenaBattle::mapjumpForBattleStart's: a map jump to the challenge's battle map
+    // (addMapjumpForBattleMapFromArena) in state 8 with the player stopped
+    static void createMapJumpForBattleStart(const MapJumpForBattleStart& param);
     static void createMapJumpForReturnBattle(const MapJumpForReturnBattle& param);
+    // GfMenuManager::gevPlayerControl's: queues addOpenNpcEntry in state 6 under pause 0x11; false while the game is
+    // left for debugging
+    static bool createNpcEntry(const mm::mtl::FixedVector<unsigned short, 256>& entries);
+    // queues addStartChallengeBattle with the challenge's id and difficulty in state 0x14
+    static void createChallengeBattleStart(unsigned int id, GFDIFF diff);
 };
 }  // namespace gf
 
