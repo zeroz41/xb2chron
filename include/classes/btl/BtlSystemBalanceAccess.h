@@ -42,7 +42,11 @@ public:
     unsigned char pad_5F[0x1B];
     // ChainAttackManager::GetBonusRate's base rate, in percent (meaning unknown)
     unsigned short pad_7A;
-    unsigned char pad_7C[0x34];
+    unsigned char pad_7C[0xE];
+    // DataManager::AddPartyGauge scales a gain by the percentage of the gauge's level (hundreds, 0-2; the name is
+    // not the original's)
+    unsigned char m_partyGaugeLevelRate[3];
+    unsigned char pad_8D[0x23];
     // while BattleGlobal's pad_bit30 is set, the distance every enemy's GfEnemyBattleProperty returns home at (the
     // name is not the original's)
     unsigned short m_returnHomeDistance;

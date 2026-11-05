@@ -387,7 +387,10 @@ public:
     // by stage 1-2 and index, what ELEMENTAL_COMBO_FLOW_DATA::GetNextID returns for an empty step
     unsigned char pad_5bf0[2][9];
     unsigned char pad_5c02;  // ELEMENTAL_COMBO_FLOW_DATA::GetNextID reads pad_5bf0 while it is 2
-    unsigned char pad_5c03[0x49];
+    unsigned char pad_5c03[0x19];
+    // DataManager::AddPartyGauge multiplies every gain by it (the name is not the original's)
+    float m_partyGaugeRate;
+    unsigned char pad_5c20[0x2C];
     // EnemyParameter::ApplyStatusEnhanceAndDifficulty scales every enhanced value by it (the name is not the
     // original's)
     float m_statusEnhanceRate;
@@ -569,7 +572,9 @@ public:
     bool pad_bit48 : 1;
     bool pad_bit49 : 1;  // IsValidAutoMode returns it; IsPlayerAutoOperate asks for it with pad_bit50
     bool pad_bit50 : 1;
-    unsigned char : 3;
+    // while set, DataManager::SetPartyGauge does not raise the party gauge (meaning unknown)
+    bool pad_bit51 : 1;
+    unsigned char : 2;
     bool pad_bit54 : 1;  // GROUP_DATA::ProgressCoolTime advances the group's own cool time while it is set
     bool pad_bit55 : 1;  // Utility::AI_IsUseSirenSp returns it
 };

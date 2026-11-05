@@ -143,6 +143,8 @@ public:
     // CharacterParameter::SetAdditionalEnhance asks it for the driver's parameter when CharacterManager has no
     // character for the handle
     CharacterParameter* SearchCharacterParameterConst(gf::GF_OBJ_HANDLE* handle, bool) const;
+    // values below 10000 are rows of BDAT table 0x37 ("Param"; row 5 shrinks by owner bonus 12), 10000-10003 fixed
+    // amounts
     void FluctuatePartyGauge(int value, int groupIndex);
     // BattleCharacter::AddPartyGauge passes its value, its group index and true
     void AddPartyGauge(float value, int groupIndex, bool);
@@ -150,6 +152,12 @@ public:
     // GROUP_DATA::GetBladeDataConst of every blade (0-4) of the three groups at +0x12E30, +0x12F50 and +0x13070, or,
     // with engagedOnly, only on each group's engaged blade (index -1).
     void SetKizunaStage(int stage, bool engagedOnly);
+    void UnregisterCharacterParameter(int id);
+    void RegisterUpdateAttackParam(bool players, bool enemies);
+    bool IsExistRequestPermit() const;
+    void RequestPermit(int group, gf::GF_OBJ_HANDLE* handle);
+    // counts each party group's pouch buff timer (m_params[12]) up while params 4 or 9 are set, in 30-unit steps
+    void UpdatePouchBuff(float dt);
 
     ml::CriticalSection m_criticalSection;  // the destructor destroys it (the name is not the original's)
     // GetCharacterParameterConst answers ids below 1000 from here (the name is not the original's)
@@ -160,7 +168,10 @@ public:
     GROUP_DATA m_groups[38];  // BattleCharacter::GetGroupDataConst indexes it by group (the name is not the original's)
     ENEMY_GROUP m_enemyGroups[35];   // the name is not the original's
     POUCH_BUFF m_pouchBuffs[3];      // indexed by group (the name is not the original's)
-    unsigned char pad_15CEC[0x14];
+    unsigned char pad_15CEC[0xC];
+    // AddPartyGauge keeps the gain's fraction below one point here (the name is not the original's)
+    float m_partyGaugeFraction;
+    unsigned char pad_15CFC[0x4];
     // InitializeComboRequestUI creates it, Destroy releases it (the name is not the original's)
     gf::GfMenuCallContext* m_comboRequestContext;
     // ElementalComboManager::GetElementalComboID answers pad_15D11 for this character (meaning unknown)

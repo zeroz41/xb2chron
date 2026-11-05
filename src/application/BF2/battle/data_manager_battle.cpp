@@ -5,6 +5,21 @@
 #include "classes/gf/GfGameParty.h"
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuObjPartyStatus.h"
+#include "btl/Utility.h"
+#include "btl/siren_battle_manager.h"
+#include "btl/challenge_battle_manager.h"
+#include "classes/btl/ChainAttackManager.h"
+#include "classes/btl/TalkManager.h"
+#include "classes/btl/BattleCharacter.h"
+#include "classes/btl/CharacterManager.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/btl/BattleGlobal.h"
+#include "classes/btl/BtlSystemBalanceAccess.h"
+#include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfGameManager.h"
+#include "gf/GfDataBlade.h"
+#include "gf/OwnerBonus.h"
+#include "plugin/Bdat.h"
 
 namespace btl {
 
@@ -27,6 +42,27 @@ void DataManager::Destroy() {
     }
 }
 
+void DataManager::UnregisterCharacterParameter(int id) {
+    if (!(id >= 1000)) {
+        PlayerParameter& parameter = m_playerParameters[id];
+        if (Utility::IsThirdCharacter(parameter.m_handle) ||
+            (parameter.IsBlade(true) && gf::GfDataBlade::isDummyBlade(m_playerParameters[id].m_enArrangeID))) {
+            parameter.Reset();
+        } else {
+            m_playerParameters[id].m_flags622_0 = false;
+        }
+        return;
+    }
+    int index = id - 1000;
+    if (index >= 0 && index < 70) {
+        CharacterParameter*& parameter = m_enemyParameters[index];
+        if (parameter != nullptr) {
+            delete parameter;
+            parameter = nullptr;
+        }
+    }
+}
+
 // The negated test is the original's form: written as `id >= 1000` (or `id < 1000`) clang puts the enemy block
 // first and compares against 1000 instead of 999.
 CharacterParameter* DataManager::GetCharacterParameterConst(int id) const {
@@ -43,6 +79,83 @@ void DataManager::InitializeComboRequestUI() {
             gf::GfMenuObjPartyStatus::attachComboRequest(m_comboRequestContext);
         }
     }
+}
+
+CharacterParameter* DataManager::SearchCharacterParameterConst(gf::GF_OBJ_HANDLE* handle, bool) const {
+    if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return nullptr;
+    }
+    for (const PlayerParameter& parameter : m_playerParameters) {
+        if (parameter.m_handle == handle) {
+            return const_cast<PlayerParameter*>(&parameter);
+        }
+    }
+    for (int i = 0; i < 70; i++) {
+        CharacterParameter* parameter = m_enemyParameters[i];
+        if (parameter != nullptr && parameter->m_handle == handle) {
+            return parameter;
+        }
+    }
+    return nullptr;
+}
+
+void DataManager::RegisterUpdateAttackParam(bool players, bool enemies) {
+    if (players) {
+        for (int i = 0; i < 18; i++) {
+            CharacterParameter& parameter = m_playerParameters[i];
+            if (parameter.m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+                parameter.pad_f0_7 = true;
+            }
+        }
+    }
+    if (enemies) {
+        for (int i = 0; i < 70; i++) {
+            CharacterParameter* parameter = m_enemyParameters[i];
+            if (parameter != nullptr && parameter->m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+                parameter->pad_f0_7 = true;
+            }
+        }
+    }
+}
+
+void DataManager::FluctuatePartyGauge(int id, int groupIndex) {
+    float value;
+    bool flag;
+    if (id < 10000) {
+        value = static_cast<short>(Bdat::getValCheck(gf::GfDataBdat::getFP(0x37), "Param", id, 5));
+        if (id == 5) {
+            float rate = gf::GfGameManager::getOwnerBonus().m_values[12] * 0.01f;
+            if (rate < 0.0f) {
+                rate = 0.0f;
+            } else if (rate > 1.0f) {
+                rate = 1.0f;
+            }
+            value *= 1.0f / (rate + 1.0f);
+            flag = false;
+        } else {
+            flag = true;
+        }
+    } else {
+        switch (id) {
+        case 10000:
+            value = -100.0f;
+            break;
+        case 10001:
+            value = -300.0f;
+            break;
+        case 10002:
+            value = 300.0f;
+            break;
+        case 10003:
+            value = 300.0f;
+            break;
+        default:
+            value = -300.0f;
+            break;
+        }
+        flag = false;
+    }
+    AddPartyGauge(value, groupIndex, flag);
 }
 
 int DataManager::GetPartyGauge() const {
@@ -137,6 +250,70 @@ void DataManager::Update(const fw::UpdateInfo& info) {
 
 void DataManager::SetSpecialEffects(int effect, bool enable) {
     m_specialEffects[effect] = enable;
+}
+
+void DataManager::UpdatePouchBuff(float dt) {
+    if (!BattleGlobal::sys()->pad_bit1) {
+        for (int i = 0; i < 3; i++) {
+            m_pouchBuffs[i].m_params[12] = 0.0f;
+            m_pouchBuffs[i].m_isTiming = false;
+        }
+        return;
+    }
+    for (int i = 0; i < 3; i++) {
+        POUCH_BUFF& buff = m_pouchBuffs[i];
+        if (buff.m_params[4] <= 0.0f && buff.m_params[9] <= 0.0f) {
+            buff.m_params[12] = 0.0f;
+            buff.m_isTiming = false;
+        } else {
+            float time = buff.m_params[12] + dt;
+            if (time < 30.0f) {
+                buff.m_isTiming = false;
+            } else {
+                time -= 30.0f;
+                buff.m_isTiming = true;
+            }
+            buff.m_params[12] = time;
+        }
+    }
+}
+
+bool DataManager::IsExistRequestPermit() const {
+    if (pad_15D10 >= 0) {
+        return true;
+    }
+    for (int i = 0; i < 3; i++) {
+        const GROUP_DATA& group = m_groups[i];
+        if (group.m_needPermit && (group.m_requestPermit & 1) && group.m_isValid) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void DataManager::RequestPermit(int group, gf::GF_OBJ_HANDLE* handle) {
+    if (!m_groups[group].pad_bit0) {
+        return;
+    }
+    bool flag = false;
+    if (!BattleGlobal::sys()->m_challengeAnySuccess) {
+        gf::GF_OBJ_HANDLE* bladeHandle = gf::GfGameParty::getHandleBlade(group, -1);
+        BattleCharacter* blade = CharacterManager::sys()->GetCharacterConst(bladeHandle);
+        if (blade != nullptr) {
+            if (blade->CheckInvalidSpAttack()) {
+                return;
+            }
+            flag = blade->m_bdatID == 1003;
+        }
+    }
+    pad_15D10 = group;
+    gf::DataParamAcc acc(gf::GfGameParty::getHandleDriver(group, gf::PTPOS(0)));
+    int attribute = acc.getAttribute(-1, false);
+    int id = CharacterManager::sys()->GetCharacterConst(handle)->m_elementalCombo.GetNextElementalComboID(attribute, false, flag);
+    pad_15D11 = id;
+    pad_15D12 = BattleGlobal::sys()->GetElementalComboStage(id);
+    pad_15D08 = handle;
+    m_specialEffects[3] = false;
 }
 
 void DataManager::PostUpdate(const fw::UpdateInfo& info) {

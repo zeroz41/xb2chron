@@ -371,7 +371,13 @@ public:
     // none) is in weapon distance (the names are not the original's)
     unsigned char m_weaponMinRange;
     unsigned char m_weaponRange;
-    unsigned char pad_ed[0x7];
+    unsigned char pad_ed[0x2];
+    // one 16-bit storage unit from 0xEF (DataManager::RegisterUpdateAttackParam sets its bit 15 with a halfword load
+    // and store; meaning unknown)
+    unsigned char pad_ef : 8;
+    unsigned char pad_f0_0 : 7;
+    bool pad_f0_7 : 1;  // DataManager::RegisterUpdateAttackParam sets it on every valid character (meaning unknown)
+    unsigned char pad_f1[0x3];
     // GetFightComboDataConst answers the second while m_flags622_9 is set and its id is not 0 (the name is not the
     // original's)
     FIGHT_COMBO_DATA m_fightCombos[2];

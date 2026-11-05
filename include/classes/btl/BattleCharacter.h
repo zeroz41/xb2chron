@@ -92,6 +92,8 @@ public:
     // m_challengeAnySuccess is set it needs the parameter's slot 64 (IsDriver(false)) to hold first. Answers whether
     // the buff was on.
     bool CheckPowerCharge(unsigned int id);
+    // DataManager::RequestPermit grants no permit to a blade for which it holds
+    bool CheckInvalidSpAttack();
     // 2.0.0's symbols name it (carried as CheckPowerCharge before). What it does: for a non-blade with buff 0x20 on,
     // adds its effect / 100 to BattleGlobal's damage rate of the id and marks it (SetTalentMinochiAttack)
     bool CheckTalentMinochi(unsigned int id);
