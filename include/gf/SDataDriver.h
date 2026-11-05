@@ -38,7 +38,7 @@ public:
     short m_bladeSet;  // the slot of its engaged blade, -1 for none (DataObjDriver::setBladeSet)
     unsigned short m_blades[3];  // the blade in each slot (DataObjDriver::getBlade); the count is not known
     // 0x2C: 1002 and 1003 while blade 1001 or 1002 is set in a slot, else 0 (DataObjDriver::setVirtualSetBlade; the
-    // ids are inferred to be Pyra/Mythra/Pneuma, the name is not the original's)
+    // name is not the original's)
     unsigned short m_altBlades[2];
     // 0x30: the learned skill of each skill tree line's three levels (0x62: the same for round, the tree a second
     // playthrough uses); GfDataDriverSkill::getSkill reads them (the names are not the original's; 5 x 5 halves
