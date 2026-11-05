@@ -925,6 +925,20 @@ void LipsyncRes::OnResEvent(const IResEvent::PARAM& param) {
     m_flags &= ~1;
 }
 
+void LipsyncManager::load(const char* name) {
+    LipsyncRes* found = nullptr;
+    for (unsigned long i = 0; i < m_res.size(); i++) {
+        if (strcmp(name, m_res[i]->m_name.m_str) == 0) {
+            found = m_res[i];
+            break;
+        }
+    }
+    if (found != nullptr) {
+        return;
+    }
+    m_res.push_back(new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) LipsyncRes(name));
+}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void LipsyncManager::OnEventProc(event::MSG_TYPE msg) {
     if (msg == 4) {
@@ -3692,6 +3706,20 @@ void EffectRes::OnResEvent(const IResEvent::PARAM& param) {
 
 EffectManager::EffectManager() : m_flags(0), m_dispFlags(0), pad_a0(0), m_offscrID(0), pad_ac(0) {}
 
+void EffectManager::load(const char* name) {
+    EffectRes* found = nullptr;
+    for (unsigned long i = 0; i < m_entries.size(); i++) {
+        if (strcmp(name, m_entries[i]->m_name.m_str) == 0) {
+            found = m_entries[i];
+            break;
+        }
+    }
+    if (found != nullptr) {
+        return;
+    }
+    m_entries.push_back(new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) EffectRes(name));
+}
+
 void EffectManager::loadResource(const char* name) {
     if (m_flags & 1) {
         return;
@@ -3702,6 +3730,13 @@ void EffectManager::loadResource(const char* name) {
 LightManager::LightManager() : m_flags(0), m_modeFlags(0), m_offScrLights(), m_evtLight(nullptr) {}
 
 LightManager::~LightManager() {}
+
+void LightManager::loadResource(const char* name) {
+    if (m_modeFlags & 1) {
+        return;
+    }
+    mm::mtl::Singleton<ResManager>::getPtr()->load(mm::mtl::Singleton<Extend>::getPtr()->lgt(name), nullptr, true);
+}
 
 SeamlessManager::SeamlessManager() : pad_10(0), m_firstKeys(), m_keys() {}
 

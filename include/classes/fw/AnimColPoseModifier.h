@@ -2,6 +2,7 @@
 #define CLASSES_FW_ANIMCOLPOSEMODIFIER_H
 
 #include "mm/mtl/IntrusivePtr.h"
+#include "mm/mtl/Vector.h"
 #include "classes/fw/AnimAfterModifierInterface.h"
 #include "classes/fw/ColiObject.h"
 
@@ -19,11 +20,15 @@ public:
     void bind(fw::ModelObject* model, fw::ColiObject* coli, mm::mtl::IAllocator* allocator);
     void unbind();
     // whether bind gave it both (inline: the name is not the original's)
-    bool isBound() const { return m_model.get() != nullptr && m_coli.get() != nullptr; }
+    bool isBound() const { return m_model != nullptr && m_coli != nullptr; }
 
-    mm::mtl::IntrusivePtr<fw::ModelObject> m_model;  // bind's; unbind releases it (the name is not the original's)
-    mm::mtl::IntrusivePtr<fw::ColiObject> m_coli;    // bind's; unbind releases it (the name is not the original's)
-    unsigned char pad_28[0x28];
+    // bind's, referenced; unbind releases them. Plain pointers: the destructor does not release them (the names
+    // are not the original's)
+    fw::ModelObject* m_model;
+    fw::ColiObject* m_coli;
+    // per bone of the collision object, bind resizes it to the bone count filled with 0xffff; unbind clears it
+    // (the name is not the original's)
+    mm::mtl::Vector<short> m_boneIndices;
 };
 }  // namespace fw
 

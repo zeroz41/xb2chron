@@ -388,6 +388,14 @@ bool GfDataDriver::isAttachedParty(unsigned int driver) {
     return getSDataDriver(driver)->m_stateFlag != 0;
 }
 
+unsigned int GfDataDriverArts::getNeedLevelupWp(unsigned int driver, unsigned int arts) {
+    unsigned int level = getArtsLevel(driver, arts);
+    if (level >= 5) {
+        return 0;
+    }
+    return GfBdatBtl::get()->getArtsDrNeedWP(arts, level + 1);
+}
+
 unsigned int GfDataDriverArts::getLevelCap(unsigned int arts, unsigned int index) {
     return GfBdatBtl::get()->getArtsDrReleaseLv(arts, index);
 }
@@ -2984,6 +2992,23 @@ unsigned int GfDataDriver::getBattleExp(const SDataDriver& data) {
     return data.m_battleExp;
 }
 
+bool GfDataDriver::isEnableLevelUp(const SDataDriver& data) {
+    unsigned int driver = data.m_id;
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
+            return isEnableLevelUp(*getSDataDriver(getIraFront(data.m_id)));
+        }
+    }
+    unsigned int level = getLevel(data);
+    unsigned int end = GfBdatBtl::get()->getGrowEnd();
+    if (level >= 99 || level >= end - 1) {
+        return false;
+    }
+    unsigned int exp = getExp(data) + getBattleExp(data);
+    return exp >= GfDataUtil::getGrowLevelExp(level + 1);
+}
+
 unsigned int GfDataDriver::getBattleExpNextLevel(const SDataDriver& data) {
     unsigned int driver = data.m_id;
     if (driver - 0x11 < 9) {
@@ -4452,6 +4477,10 @@ SDataIdea* GfDataDriver::getSDataIdea(unsigned int driver) {
     return &getSDataDriver(driver)->m_idea;
 }
 
+unsigned short GfDataDriver::getDefaultWpnType(unsigned int driver) {
+    return getDefaultWpnType(*getSDataDriver(driver));
+}
+
 bool GfDataDriver::isEnableLevelUp(unsigned int driver) {
     return isEnableLevelUp(*getSDataDriver(driver));
 }
@@ -5168,6 +5197,36 @@ int GfDataItem::getRarity(unsigned int item) {
         break;
     }
     return rarity;
+}
+
+unsigned int GfDataItem::getCategory(unsigned int item) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    unsigned int category = 0;
+    switch (getItemType(item)) {
+    case 6:
+        if (item >= 25501 && item <= 25999) {
+            category = bdat->getPreciousIraCategory(item);
+        } else {
+            category = bdat->getPreciousCategory(item);
+        }
+        break;
+    case 7:
+        category = bdat->getCollectionListCategory(item);
+        break;
+    case 8:
+        category = bdat->getTresureCategory(item);
+        break;
+    case 10:
+        category = bdat->getFavoriteCategory(item);
+        break;
+    case 11:
+        category = bdat->getPreciousCategory(item);
+        break;
+    case 12:
+        category = bdat->getBoosterCategory(item);
+        break;
+    }
+    return category;
 }
 
 unsigned int GfDataItem::getTypeByItemCategory(unsigned int category) {

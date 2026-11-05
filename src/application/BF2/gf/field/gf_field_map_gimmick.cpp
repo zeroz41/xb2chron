@@ -398,6 +398,21 @@ void GfFieldMapGimmick::seqMapObj_nextwait(float dt) {
     }
 }
 
+void GfFieldMapGimmick::seqEffect_nextwait(float dt) {
+    m_elapsedTime += dt;
+    if (m_elapsedTime < m_waitTime) {
+        return;
+    }
+    m_seqOther = nullptr;
+    if (m_bdatInfo.m_nowaitGmkCam && m_isFsSucceeded) {
+        if (gmk::GmkMapGimmick* gmk = static_cast<gmk::GmkMapGimmick*>(m_gmkAcc.m_gmk)) {
+            SCOM_QUEST_GIMMICK::createMapGimmick(gmk->m_createInfo.m_bdatId, 0.0f);
+            gmk->setSolved();
+            m_solveState = 2;
+        }
+    }
+}
+
 void GfFieldMapGimmick::BdatInfo::create(CBdatWrapper bdat, int row) {
     m_opCondition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "OP_Condition", row, 2);
     m_bootedGmk = gmk::BootedGmkCond(bdat, row, "OP_");

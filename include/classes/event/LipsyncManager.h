@@ -16,6 +16,8 @@ public:
     virtual ~LipsyncManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     void clear();
+    // named by the symbols: makes and keeps a LipsyncRes for name unless one of that name is kept
+    void load(const char* name);
     unsigned char pad_10[0x8];
     // the loaded lip-sync resources (LipsyncManager::load pushes each new LipsyncRes); the name is not the original's
     mm::mtl::FixedVector<LipsyncRes*, 8> m_res;  // 0x18

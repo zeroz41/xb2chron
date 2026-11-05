@@ -623,5 +623,7 @@ void StateAreaMove<T>::seqIdle(T&, const fw::UpdateInfo& info) {
         m_seq = &StateAreaMove::seqInitGoalPos;
     }
 }
+// Emitted in the original; StateBattle<GfComBehaviorMob>::seqTurnPc, which takes its address, is not matched yet.
+template void StateBattle<GfComBehaviorMob>::seqWaitTurnEnd(GfComBehaviorMob&, const fw::UpdateInfo&);
 }  // namespace npc
 }  // namespace gf

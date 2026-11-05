@@ -107,8 +107,23 @@ void GfMenuObjNamedList::update() {
     GfMenuObject::update();
 }
 
-// ListListener::reciveEvent, FilterListener::reciveEvent and refreshFilterIcon are not identical yet (the listeners'
-// tables and destructors come with their reciveEvent): $W/wip/full_draft.cpp (session 27 namedlist)
+// ListListener::reciveEvent and FilterListener::reciveEvent are not identical yet (the listeners' tables and
+// destructors come with their reciveEvent): $W/wip/full_draft.cpp (session 27 namedlist)
+
+void GfMenuObjNamedList::refreshFilterIcon() {
+    ui::UIObjectAcc filter(m_handle, "LAY_list_filter");
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < m_zones.size(); ++i) {
+        bool select = i == m_zoneIndex;
+        name.format("IMG_ficon@%02d", i + 1);
+        ui::UIObjectAcc icon(filter.searchChild(name.m_str));
+        if (select) {
+            icon.setMulColor("sys_select");
+        } else {
+            icon.loadDefColor();
+        }
+    }
+}
 
 bool GfMenuObjNamedList::sortLevel(const MenuID& a, const MenuID& b) {
     unsigned char* fp = getNamedTable();

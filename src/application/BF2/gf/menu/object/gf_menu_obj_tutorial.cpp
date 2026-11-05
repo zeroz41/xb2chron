@@ -128,6 +128,14 @@ void GfMenuObjTutorial::update() {
     m_seq.update();
     GfMenuObject::update();
 }
+
+bool GfMenuObjTutorial::seqEnd() {
+    ui::UIObjectAcc main(m_handle, "LAY_main");
+    ui::EventData event;
+    event.m_type = 0x105;
+    GfMenuObject::sendEvent(main.m_handle, event, 0.0f);
+    return true;
+}
 }  // namespace gf
 
 template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuObjTutorial>(const mm::mtl::Delegate<bool()>*);

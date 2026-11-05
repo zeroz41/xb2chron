@@ -206,6 +206,9 @@ public:
     // (appended by chardata) 1.0.0's names: its GfMenuCharDataAdapter::update_DR_LevelUpEnable / update_DR_IdeaPoint
     // call them at the same sites (the symbols call them fn_7100245C44 / fn_71002422C4)
     static bool isEnableLevelUp(unsigned int driver);
+    // the weapon type of the driver's data (found the getSDataDriver way); named by the symbols
+    static unsigned short getDefaultWpnType(unsigned int driver);
+    static unsigned short getDefaultWpnType(const SDataDriver& data);  // named by the symbols (not written yet)
     static SDataIdea* getSDataIdea(unsigned int driver);
     static unsigned int getExpUsed(unsigned int driver);  // (appended by chardata)
     // takes the blade off the driver it is set to (GfGameUtil::execActivateReserverForBlade)

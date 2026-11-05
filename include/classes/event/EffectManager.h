@@ -2,6 +2,7 @@
 #define CLASSES_EVENT_EFFECTMANAGER_H
 
 namespace event { enum MSG_TYPE : int; }
+namespace event { class EffectRes; }
 
 #include "mm/mtl/FixedVector.h"
 #include "classes/event/IManager.h"
@@ -17,15 +18,15 @@ public:
     void loadResource(const char* name);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 
-    // what load() makes (1.0.0's clear() calls each one's slot 2); the name is not the original's
-    struct Entry;
+    // named by the symbols: makes and keeps an EffectRes for name unless one of that name is kept
+    void load(const char* name);
     // bit 0: stream mode (1.0.0's isStreamMode), bit 1: offscreen mode (setOffscrMode); the name is not the original's
     unsigned int m_flags;  // 0x10
     // bit 0: effects shown (1.0.0's setEffectDisp/isEffectDisp); the name is not the original's
     unsigned int m_dispFlags;  // 0x14
-    mm::mtl::FixedVector<Entry*, 16> m_entries;  // 0x18 (size 0x98); the name is not the original's
+    mm::mtl::FixedVector<EffectRes*, 16> m_entries;  // 0x18 (size 0x98); the name is not the original's
     // 1.0.0's getResPack returns its +0x50
-    Entry* pad_a0;  // 0xa0
+    EffectRes* pad_a0;  // 0xa0
     // 1.0.0's getOffscrID returns it, setOffscrMode stores it; the name is not the original's
     unsigned int m_offscrID;  // 0xa8
     unsigned int pad_ac;
