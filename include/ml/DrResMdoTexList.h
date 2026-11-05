@@ -59,10 +59,12 @@ public:
         FLAG_STM_READ_ALL = 0x20000,
     };
 
-    void* pad_0;
+    DrResMdoTexList* m_pPrev;          // 0x0: DrMdoTextureMan's list link
     DrResMdoTexList* m_pNext;          // 0x8: DrMdoTextureMan's list link
     const unsigned char* m_res;        // 0x10: the constructor's data
-    int pad_18;                        // 0x18: 1 from the constructors
+    // 0x18: 1 from the constructors; DrMdoMat::setupMpfResource adds a reference (the name is not the
+    // original's)
+    int m_refCount;
     unsigned char pad_1C[0x4];
     grlib::CGLibTextureBuffer* m_texBuf;  // 0x20: m_texNum buffers in m_texAlloc
     grlib::CGLibVtlMemPool m_pool;     // 0x28: over the texture memory

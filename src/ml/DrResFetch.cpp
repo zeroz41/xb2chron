@@ -713,7 +713,7 @@ void DrResMdoSeamWrkPosMpf::setupMpfBasePos(const unsigned char* data) {
 }
 
 DrResMdoTexList::DrResMdoTexList(const unsigned char* data)
-    : pad_0(nullptr), m_pNext(nullptr), m_res(data), pad_18(1), m_texBuf(nullptr), m_stmList(nullptr),
+    : m_pPrev(nullptr), m_pNext(nullptr), m_res(data), m_refCount(1), m_texBuf(nullptr), m_stmList(nullptr),
       m_texAlloc(nullptr), m_texNum(0), m_flags(0), m_stmState(0), m_data(data), m_mem(data), pad_90(nullptr),
       pad_98(nullptr) {
     createTexInfoList();
@@ -753,7 +753,7 @@ void DrResMdoTexList::createTexList(const unsigned char* data, const unsigned ch
 
 DrResMdoTexList::DrResMdoTexList(const unsigned char* data, DrCalcStmListObj* stm, const unsigned char* mem,
                                  const MdsTexHeader* stmTex)
-    : pad_0(nullptr), m_pNext(nullptr), m_res(data), pad_18(1), m_texBuf(nullptr), m_stmList(stm),
+    : m_pPrev(nullptr), m_pNext(nullptr), m_res(data), m_refCount(1), m_texBuf(nullptr), m_stmList(stm),
       m_texAlloc(nullptr), m_texNum(0), m_flags(0), m_stmState(0), m_data(data), m_mem(mem), pad_90(nullptr),
       pad_98(nullptr) {
     createStmTexInfoList(stm, reinterpret_cast<const unsigned char*>(stmTex), true);
@@ -808,7 +808,7 @@ void DrResMdoTexList::createStmTexInfoList(DrCalcStmListObj* stm, const unsigned
 
 DrResMdoTexList::DrResMdoTexList(const unsigned char* data, DrCalcStmListObj* stm, const unsigned char* mem,
                                  const unsigned short* stmIdx)
-    : pad_0(nullptr), m_pNext(nullptr), m_res(data), pad_18(1), m_texBuf(nullptr), m_stmList(stm),
+    : m_pPrev(nullptr), m_pNext(nullptr), m_res(data), m_refCount(1), m_texBuf(nullptr), m_stmList(stm),
       m_texAlloc(nullptr), m_texNum(0), m_flags(0), m_stmState(0), m_data(data), m_mem(mem), pad_90(nullptr),
       pad_98(nullptr) {
     createStmTexInfoList(stm, reinterpret_cast<const unsigned char*>(stmIdx), false);
@@ -4092,7 +4092,7 @@ void DrResUseQueryObj::begin(DrPixlOccQuery* occ) {
 }
 
 DrResMdoSampler::DrResMdoSampler(const unsigned char* data)
-    : pad_0(nullptr), m_pNext(nullptr), m_data(data), pad_18(1), m_samplerBuf(nullptr), m_samplerNum(0) {
+    : m_pPrev(nullptr), m_pNext(nullptr), m_data(data), pad_18(1), m_samplerBuf(nullptr), m_samplerNum(0) {
     setupSampler(data);
 }
 

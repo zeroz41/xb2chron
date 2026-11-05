@@ -86,18 +86,23 @@
 #include "ml/DrResMdoLight.h"
 #include "ml/DrResMdoPntAlphaMan.h"
 #include "ml/DrResMdoVertex.h"
+#include "ml/DrResMdoTexList.h"
 #include "ml/DrResMdoVtxMeshObj.h"
 #include "ml/DrShdDataList.h"
 #include "ml/DrShdLgtMan.h"
 #include "ml/DrShdMan.h"
+#include "ml/DrShdMdoMan.h"
 #include "ml/DrShdMdoDecExtTbl.h"
 #include "ml/MdoWrkMatRes.h"
 #include "ml/MdsMatInfoHeader.h"
+#include "ml/MdsMatTopHeader.h"
 #include "ml/MdsMatVariableTbl.h"
 #include "ml/DrResMdoUniformBlock.h"
 #include "grlib/CGLibUniBaseUtility.h"
 #include "ml/MdsMatValShaderCate.h"
+#include "mm/Col4.h"
 #include "mm/Math.h"
+#include "ml/MTRand.h"
 #include "mtl/MemManager.h"
 #include "string.h"
 
@@ -162,6 +167,100 @@ MdoVanishEffectWrk* DrMdoMat::getVanishEffectWrk(unsigned int index, unsigned in
         return nullptr;
     }
     return &m_pWrkMatRes->m_pVanishEffectWrk[index * 3 + bank];
+}
+
+void DrMdoMat::setupMpfResource() {
+    if (m_pWrkMatRes == nullptr) {
+        return;
+    }
+    m_pWrkMatRes->m_pVertex = m_pDrMan->m_mdlMan->m_vertexMan->createVertexObj(m_pWrkMatRes->m_pVertexData);
+    if (m_pWrkMatRes->m_texNum != 0) {
+        DrMdoTextureMan* man = m_pDrMan->m_mdlMan->m_textureMan;
+        const unsigned char* data = m_pWrkMatRes->m_pTexData;
+        DrResMdoTexList* list;
+        for (list = man->m_texList.m_pHead; list != nullptr; list = list->m_pNext) {
+            if (list->m_res == data) {
+                list->m_refCount++;
+                goto found;
+            }
+        }
+        list = new (man->m_pDrMan->m_resHandle, nullptr, 0, 4, false) DrResMdoTexList(data);
+        if (list != nullptr) {
+            man->m_texList.pushBack(list);
+        }
+    found:
+        m_pWrkMatRes->m_pTexList = list;
+        for (int i = 0; i < m_pWrkMatRes->m_pTexList->m_texNum; i++) {
+            m_pWrkMatRes->m_ppTexture[i] = m_pWrkMatRes->m_pTexList->getTexObj(i);
+        }
+    }
+}
+
+void DrMdoMat::releaseBaseMapSeamMat(MdoWrkMatRes* res) {
+    if (res->m_pVertex != nullptr) {
+        delete res->m_pVertex;
+        res->m_pVertex = nullptr;
+    }
+    if (res->m_pTexList != nullptr) {
+        delete res->m_pTexList;
+        res->m_pTexList = nullptr;
+    }
+    res->m_ppTexture = nullptr;
+    DrResMdoSampler* sampler = res->m_pSampler;
+    if (sampler != nullptr) {
+        m_pDrMan->m_mdlMan->m_samplerMan->m_samplerList.remove(sampler);
+        delete sampler;
+        res->m_pSampler = nullptr;
+    }
+    if (res->m_pDecShdObj != nullptr) {
+        delete res->m_pDecShdObj;
+        res->m_pDecShdObj = nullptr;
+    }
+    res->m_pDecShdData = nullptr;
+    if (res->m_pMatUniformArray != nullptr) {
+        res->m_pMatUniformArray->release();
+        res->m_pMatUniformArray = nullptr;
+    }
+    if (res->m_pVolTexUniformArray != nullptr) {
+        res->m_pVolTexUniformArray->release();
+        res->m_pVolTexUniformArray = nullptr;
+    }
+    if (res->m_pRimBloomUniformArray != nullptr) {
+        res->m_pRimBloomUniformArray->release();
+        res->m_pRimBloomUniformArray = nullptr;
+    }
+    if (res->m_pExtUniform != nullptr && res->m_pExtUniform->m_pUniformArray != nullptr) {
+        res->m_pExtUniform->m_pUniformArray->release();
+        res->m_pExtUniform->m_pUniformArray = nullptr;
+    }
+}
+
+void DrMdoMat::releaseMpfMapSeamMat(MdoWrkMatRes* res) {
+    if (res->m_pVertex != nullptr) {
+        delete res->m_pVertex;
+        res->m_pVertex = nullptr;
+    }
+    if (res->m_pMpfSampler != nullptr) {
+        for (unsigned int i = 0; i < res->m_matNum; i++) {
+            res->m_pMpfSampler[i].~DrResMpfSampler();
+        }
+        res->m_pMpfSampler = nullptr;
+    }
+    DrResMdoSampler* sampler = res->m_pSampler;
+    if (sampler != nullptr) {
+        m_pDrMan->m_mdlMan->m_samplerMan->m_samplerList.remove(sampler);
+        delete sampler;
+        res->m_pSampler = nullptr;
+    }
+    if (res->m_pTexList != nullptr) {
+        delete res->m_pTexList;
+        res->m_pTexList = nullptr;
+    }
+    if (res->m_pMatUniformArray != nullptr) {
+        res->m_pMatUniformArray->release();
+        res->m_pMatUniformArray = nullptr;
+    }
+    res->m_ppTexture = nullptr;
 }
 
 void DrMdoMat::updateMatCallBack(const unsigned int* dispBits) {
@@ -402,6 +501,31 @@ void DrMdoMat::matCall_BaseVal(const MdsMatInfoHeader* info, int slot, int matId
 
 void DrMdoMat::matCall_TransVal(const MdsMatInfoHeader* info, int slot, int matIdx) {
     m_pWrkMatRes->m_pResMat[matIdx].setAlpha(m_pWrkMatRes->m_pAce->m_val[slot]);
+}
+
+// Fades with the model's up axis: the matrix's Y axis, normalised; 1 when it lies flat, 0 when it points up or down.
+void DrMdoMat::matCall_CalcPrjAlpha(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    const mm::Mat44& mtx = m_matrix;
+    mm::Vec3 up(mtx.m[0][0] * 0.0f + mtx.m[1][0] + mtx.m[2][0] * 0.0f,
+                mtx.m[0][1] * 0.0f + mtx.m[1][1] + mtx.m[2][1] * 0.0f,
+                mtx.m[0][2] * 0.0f + mtx.m[1][2] + mtx.m[2][2] * 0.0f);
+    float length = up.length();
+    if (length <= 1e-6f) {
+        up = mm::Vec3::zero;
+    } else {
+        float scale = 1.0f / length;
+        up.y = up.y * scale;
+    }
+    float alpha = (1.0f - ::fabsf(up.y)) * 6.0f;
+    if (alpha > 1.0f) {
+        alpha = 1.0f;
+    }
+    if (alpha < 0.0f) {
+        alpha = 0.0f;
+    }
+    *dst = alpha;
 }
 
 void (DrMdoMat::*DrMdoMat::s_pCallMatVal[35])(const MdsMatInfoHeader*, int, int) = {

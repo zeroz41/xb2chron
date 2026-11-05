@@ -13,7 +13,11 @@ namespace grlib { class CGLibSampler; }
 
 namespace ml {
 class DrResMdoMat;
+class DrResMdoSampler;
+class DrResMdoTexList;
 class DrResMdoVertex;
+class DrResMpfSampler;
+class DrShdMdoDecShdObj;
 struct MdsMatInfoHeader;
 
 // The material callback list DrMdoMat::updateMatCallBack walks; offsets are from MdoWrkMatRes::m_pMatData. The
@@ -42,9 +46,14 @@ struct MdoWrkAvatarTbl {
     grlib::CGLibTextureBuffer* m_faceTex[2];  // 0x8, varStTex_AvatarFaceMap1/2
     unsigned char pad_18[0x10];
     grlib::CGLibTextureBuffer* m_eyeTex;  // 0x28, varStTex_AvatarEyeTex
-    unsigned char pad_30[0x10];
+    unsigned char pad_30[0x8];
+    // 0x38: while set, DrMdoMat::updateAvatarTbl writes alpha 0 into the doll colours instead of 1 (the name is
+    // not the original's)
+    unsigned char m_dollAlphaOff;
+    unsigned char pad_39[0x7];
     grlib::CGLibOneUniformBlock* m_charBlock;  // 0x40, DrMdoSetup::uniformBlock_AvatarChar binds it
     grlib::CGLibOneUniformBlock* m_dollBlock;  // 0x48, DrMdoSetup::uniformBlock_AvatarDoll binds it
+    // m_charBlock and m_dollBlock each hold sixteen mm::Col4 (DrMdoMat::setupAvatarTbl fills them)
 };
 
 // The model data MdoWrkMatRes+0x20 points to: ScnObjAccResSubMesh's constructor adds m_subMeshOfs to its address.
@@ -142,17 +151,27 @@ struct MdsMatTexEntry {
     unsigned short m_samplerNoMip;  // 0x4
     unsigned short pad_6;
 };
-// What MdoWrkMatRes+0xD8 points to: only the sampler table DrMdoShdSet::setOneTexShaderSet indexes is known. The
-// type and field names are not the original's.
-struct MdoWrkSamplerTbl {
-    unsigned char pad_0[0x30];
-    grlib::CGLibSampler* m_pSampler;  // 0x30, by MdsMatTexEntry::m_samplerMip/m_samplerNoMip
-};
 // One material's avatar map entry, 4 bytes: three indices into DrMdoMat::m_pAvatarColor (DrMdoSetup::
 // unimate_AvatarMapWrk). The type and field names are not the original's.
 struct MdsMatAvatarMap {
     unsigned char m_colorIdx[3];
     unsigned char pad_3;
+};
+// The flag wave data DrMdoMat::getFlagWaveRes reads (the type and field names are not the original's).
+struct MdsFlagWaveHeader {
+    unsigned int m_dataOfs;  // 0x0, from the header's base
+    unsigned int m_paramOfs;  // 0x4, m_num 0x30-byte wave parameters
+    int m_num;  // 0x8
+};
+// The flag wave work DrMdoMat::getFlagWaveRes builds in its buffer: this, m_num phases and the uniform array (one
+// triple-buffered block per wave); updateFlagWaveTbl animates it. The type and field names are not the original's.
+struct MdoFlagWaveRes {
+    const unsigned char* m_pData;  // 0x0
+    const unsigned char* m_pParam;  // 0x8
+    int m_num;  // 0x10
+    bool m_first;  // 0x14, updateFlagWaveTbl copies the first frame into the old buffer too
+    grlib::CGLibTriUniformArray* m_pUniformArray;  // 0x18, after the phases
+    float* m_pPhase;  // 0x20, at 0x28: a random phase in [0, 100) per wave
 };
 struct MdoWrkMatRes {
     const MdsMatTexEntry* getTexEntries() const {
@@ -160,7 +179,10 @@ struct MdoWrkMatRes {
             m_pMatData + reinterpret_cast<const MdsMatDataHeader*>(m_pMatData)->m_texEntryOfs);
     }
 
-    unsigned char pad_0[0x10];
+    // 0x0 and 0x8: the vertex and texture data DrMdoMat::setupMpfResource gets the resources of (the names are not
+    // the original's)
+    const unsigned char* m_pVertexData;
+    const unsigned char* m_pTexData;
     const unsigned char* m_pMatData;  // 0x10, base of the offsets in m_pCallBackTbl
     // 0x18: base of MdsMdlTopHeader::m_infoOfs (the name is not the original's)
     const unsigned char* m_pMdlInfo;
@@ -173,7 +195,11 @@ struct MdoWrkMatRes {
     // 0x48, by MdsMatInfoHeader::m_avatarMapIdx: DrMdoSetup::unimate_AvatarMapWrk's colour indices (the name is not
     // the original's)
     const MdsMatAvatarMap* m_pAvatarMap;
-    unsigned char pad_50[0x40];
+    unsigned char pad_50[0x30];
+    // 0x80: the material's shader object; DrMdoMat::release*SeamMat delete it (the name is not the original's)
+    DrShdMdoDecShdObj* m_pDecShdObj;
+    // 0x88: cleared together with m_pDecShdObj (the name and the type are not the original's)
+    const void* m_pDecShdData;
     // 0x90, per-material blocks: DrMdoSetup::uniformBlock_Material binds the material's (the name is not the original's)
     grlib::CGLibUniformArray<grlib::CGLibDblUniformBlock>* m_pMatUniformArray;
     unsigned char pad_98[0x8];
@@ -188,18 +214,32 @@ struct MdoWrkMatRes {
     // 0xC8: the vertex resource being set up; DrResMdoSeamWrkBase::selectVertex switches it (the name is not the
     // original's)
     DrResMdoVertex* m_pVertex;
-    unsigned char pad_D0[0x8];
-    MdoWrkSamplerTbl* m_pSamplerTbl;  // 0xD8 (the name is not the original's)
-    unsigned char pad_E0[0x8];
+    DrResMdoTexList* m_pTexList;  // 0xD0 (the name is not the original's)
+    // 0xD8: in DrMdoSamplerMan's list (DrMdoMat::release*SeamMat unlink and delete it); DrMdoShdSet::
+    // setOneTexShaderSet indexes its samplers by MdsMatTexEntry::m_samplerMip/m_samplerNoMip (the name is not the
+    // original's)
+    DrResMdoSampler* m_pSampler;
+    // 0xE0: one per material (m_matNum), destroyed in place by DrMdoMat::releaseMpfMapSeamMat (the name is not the
+    // original's)
+    DrResMpfSampler* m_pMpfSampler;
     // 0xE8: one texture per index; DrMdoShdSetMpf::mpfshd_drw_* bind MdsMpfMatInfoHeader::m_texIdx's (the name is
     // not the original's)
     grlib::CGLibTextureBuffer** m_ppTexture;
-    unsigned char pad_F0[0x8];
+    int m_texNum;  // 0xF0, setupMpfResource gets the texture list only when it is set (the name is not the original's)
+    unsigned char pad_F4[0x4];
     float* m_pUniformVal;  // 0xF8, the uniform values the callbacks write
     unsigned char pad_100[0x10];
     MdoWrkAvatarTbl* m_pAvatarTbl;  // 0x110, DrMdoSetup::varStTex_Avatar* bind its textures
     MdoWrkMatAce* m_pAce;  // 0x118
-    unsigned char pad_120[0x38];
+    // 0x120: DrMdoMat::release*SeamMat release the uniform array at its +8 (the type and the name are not the
+    // original's)
+    struct ExtUniform {
+        void* pad_0;
+        grlib::CGLibUniformArray<grlib::CGLibDblUniformBlock>* m_pUniformArray;  // 0x8
+    }* m_pExtUniform;
+    unsigned char pad_128[0x18];
+    MdoFlagWaveRes* m_pFlagWave;  // 0x140, DrMdoMat::getFlagWaveRes (the name is not the original's)
+    unsigned char pad_148[0x10];
     MdoVanishEffectWrk* m_pVanishEffectWrk;  // 0x158, three banks per material (DrMdoMat::getVanishEffectWrk)
     MdoRimBloomWrk* m_pRimBloomWrk;  // 0x160, DrMdlObj::getRimBloomWrk (the name is not the original's)
     unsigned char pad_168[0x8];

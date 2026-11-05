@@ -12,6 +12,7 @@ namespace ml { class DrMdoSmlShadowObj; }
 namespace ml { struct MdoWrkMatRes; }
 namespace ml { struct MdoVanishEffectWrk; }
 namespace ml { struct MdsMatInfoHeader; }
+namespace ml { struct MdsMatTopHeader; }
 
 namespace ml {
 // table 0x7100B7BD30
@@ -81,6 +82,16 @@ public:
     // DrMdoCtlMpf::resourceInit
     void setupMpfResource();
     MdoVanishEffectWrk* getVanishEffectWrk(unsigned int index, unsigned int bank);
+    // updates the avatar colour blocks: doll alphas and m_colorScale
+    void updateAvatarTbl();
+    // fills the avatar colour blocks with their defaults (and the header's first colour)
+    void setupAvatarTbl(const MdsMatTopHeader* top);
+    // free a seam material's resources: vertex, textures, samplers, shader object and uniform arrays
+    void releaseBaseMapSeamMat(MdoWrkMatRes* res);
+    void releaseInstMapSeamMat(MdoWrkMatRes* res);
+    void releaseMpfMapSeamMat(MdoWrkMatRes* res);
+    // builds the flag wave work of data + ofs in buf (when given) and hands it to res; returns the bytes it takes
+    int getFlagWaveRes(const unsigned char* data, unsigned int ofs, unsigned char* buf, MdoWrkMatRes* res);
 
     static void (DrMdoMat::*s_pCallMatVal[35])(const MdsMatInfoHeader*, int, int);
 

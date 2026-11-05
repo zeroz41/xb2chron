@@ -12,7 +12,7 @@ public:
     void setupSampler(const unsigned char* data);
     void setup();
 
-    void* pad_0;
+    DrResMdoSampler* m_pPrev;  // 0x0: DrMdoSamplerMan's list link (the name is not the original's)
     DrResMdoSampler* m_pNext;  // 0x8: DrMdoSamplerMan's list link (the name is not the original's)
     // Field names below are not the original's.
     const unsigned char* m_data;      // 0x10: the constructor's data
