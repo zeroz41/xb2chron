@@ -6,6 +6,7 @@
 #include "classes/gmk/ScenarioFlagCond.h"
 #include "classes/gmk/QuestFlagCond.h"
 #include "classes/gmk/TimeCond.h"
+#include "classes/gmk/DistHvCond.h"
 #include "classes/gmk/GmkSquad.h"
 
 class CBdatWrapper;
@@ -47,11 +48,10 @@ public:
         ScenarioFlagCond m_scenarioFlag;       // 0x12: "ScenarioFlagMin"/"ScenarioFlagMax"
         QuestFlagCond m_questFlag;             // 0x16: "QuestFlag"/Min/Max
         TimeCond m_timeRange;                  // 0x20: "TimeRange"
-        // squared "Visible_XZ"/"Visible_Y" and "Invisible_XZ"/"Invisible_Y" (each at least the visible one + 1)
-        float m_visibleXZSq = 0.0f;    // 0x30
-        float m_visibleYSq = 0.0f;     // 0x34
-        float m_invisibleXZSq = 0.0f;  // 0x38
-        float m_invisibleYSq = 0.0f;   // 0x3c
+        // squared "Visible_XZ"/"Visible_Y" and "Invisible_XZ"/"Invisible_Y" (each at least the visible one + 1):
+        // isPopDistCondMatched and updatePopDepopCond inline DistHvCond::isMatch on them
+        DistHvCond m_visible = DistHvCond();    // 0x30
+        DistHvCond m_invisible = DistHvCond();  // 0x38
     };
     // how its objects pop (create 0x7100597488 reads the row; 0x48 bytes). The field names are not the
     // original's: the columns create reads into them.
@@ -109,8 +109,28 @@ public:
             }
         }
     }
+    // inline (disposeGobInsts and seqUpdatePopDepop test it before going through the list): whether one of its
+    // objects is a live handle (the name is not the original's)
+    bool hasGobInst() const {
+        if (m_gobInsts != nullptr) {
+            unsigned long num = m_gobInsts->size();
+            for (unsigned long i = 0; i < num; i++) {
+                if ((*m_gobInsts)[i] != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    // inline: how many objects it holds (as GmkMob::getGobInstNum; the name is inferred from it)
+    unsigned int getGobInstNum() const { return m_gobInsts->size(); }
     void createSquad(unsigned short squadId);
+    void createGobInsts();
+    void updatePopDepopCond(const UpdateInfo& info);
     void seqUpdatePopDepop(const UpdateInfo& info);
+    void seqWaitToFadeOutOfGobInst(const UpdateInfo& info);
+    // validateDisp(handle) for each of its objects while it is valid
+    void validateDisp() const;
     // inline (GmkMob::isValid, GmkRoutedMob::isValid and update): it has objects, and a squad that is valid when its
     // row names one (the name is not the original's)
     bool isValid() const {

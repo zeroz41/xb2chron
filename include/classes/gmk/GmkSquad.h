@@ -56,13 +56,14 @@ public:
     void updateMemberPosRotY_MemberDef_Circle(unsigned int index);
     void removeGmkSquadNavi(GmkSquadNavi* navi);
     CreateInfo m_info;  // 0x20: the name is not the original's
-    float pad_2c;       // 1.0 at construction; GmkEnemyInsts::createSquad stores its float argument
+    float pad_2c = 1.0f;  // 1.0 at construction (GmkMobInsts::createSquad); GmkEnemyInsts::createSquad stores its float argument
     // 0x30: the destructor ends this access after dispose (GmkAcc's table and GmkAccManager::removeGmkAcc); the name
     // is not the original's
     GmkAcc m_acc;
-    unsigned int pad_70;  // how many members it has (GmkSquadNavi::getMemberDefType, GfComBehaviorMob::isSquadMember)
+    unsigned int pad_70 = 0;  // how many members it has (GmkSquadNavi::getMemberDefType, GfComBehaviorMob::isSquadMember)
     unsigned char pad_74[0x4];
-    void (GmkSquad::*m_seq)(float);  // 0x78: the step to run (seqUpdate sets seqInit; the name is not the original's)
+    void (GmkSquad::*m_seq)(float) = nullptr;  // 0x78: the step to run (seqUpdate sets seqInit; the name is not the
+    // original's)
     // 0x88: the navis that joined it (addGmkSquadNavi links one, removeGmkSquadNavi unlinks it; the name is not the
     // original's)
     ::mm::mtl::IntrusiveList<GmkSquadNavi> m_navis;

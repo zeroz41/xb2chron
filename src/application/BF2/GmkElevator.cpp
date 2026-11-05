@@ -4353,8 +4353,8 @@ void GmkMobInsts::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& g
     m_battleReaction = (unsigned short)Bdat::getValCheck(bdat.m_fp, "BattleReaction", row, 2);
     unsigned int visibleXZ = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Visible_XZ", row, 2);
     unsigned short visibleY = Bdat::getValCheck(bdat.m_fp, "Visible_Y", row, 2);
-    m_visibleXZSq = (float)visibleXZ * (float)visibleXZ;
-    m_visibleYSq = (float)visibleY * (float)visibleY;
+    m_visible.m_horizontalSq = (float)visibleXZ * (float)visibleXZ;
+    m_visible.m_verticalSq = (float)visibleY * (float)visibleY;
     unsigned short invisibleXZ = Bdat::getValCheck(bdat.m_fp, "Invisible_XZ", row, 2);
     if (invisibleXZ <= visibleXZ) {
         invisibleXZ = visibleXZ + 1;
@@ -4363,8 +4363,8 @@ void GmkMobInsts::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& g
     if (invisibleY <= visibleY) {
         invisibleY = visibleY + 1;
     }
-    m_invisibleXZSq = (float)invisibleXZ * (float)invisibleXZ;
-    m_invisibleYSq = (float)invisibleY * (float)invisibleY;
+    m_invisible.m_horizontalSq = (float)invisibleXZ * (float)invisibleXZ;
+    m_invisible.m_verticalSq = (float)invisibleY * (float)invisibleY;
 }
 
 // a squad with room places the objects; else the gimmick's position (m_popInfo.m_popNum 1) or a point in its
@@ -4459,6 +4459,120 @@ void GmkMobInsts::validateDisp(gf::GF_OBJ_HANDLE* handle) const {
         gf::GfObjAcc acc(handle);
         if (acc.m_obj != nullptr) {
             acc.setDisp(gf::OBJDISP(8), disp);
+        }
+    }
+}
+
+// the squad released, the objects destroyed and their list freed; the sequence and flag bits 0..2 cleared
+void GmkMobInsts::dispose() {
+    m_seq = nullptr;
+    m_flags &= ~7UL;
+    if (m_squad != nullptr) {
+        m_squad->release();
+        m_squad = nullptr;
+    }
+    disposeGobInsts(false);
+    if (m_gobInsts != nullptr) {
+        delete m_gobInsts;
+        m_gobInsts = nullptr;
+    }
+    m_gmk = nullptr;
+    m_bdatFp = nullptr;
+    m_bdatId = -1;
+}
+
+// a squad for the row's squadId (its gimmick set's row and the id less one)
+void GmkMobInsts::createSquad(unsigned short squadId) {
+    if (m_squad != nullptr) {
+        m_squad->release();
+        m_squad = nullptr;
+    }
+    if (squadId != 0) {
+        GmkSquad::CreateInfo info;
+        info.m_gmkSetId = static_cast<const GmkSet*>(m_gmk->m_list->getCreateInfo().m_param)->m_createInfo.m_bdatId;
+        info.pad_4 = squadId - 1;
+#line 716 "D:/Monolithsoft/BF2/prog/application/BF2\\gmk/gmk_mob/gmk_mob_impl.h"
+        GmkSquad* squad = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) GmkSquad;
+        squad->create(info);
+        m_squad = squad;
+        squad->addRef();
+    }
+}
+
+// while the interest position exists: the objects pop when the row's conditions hold within the visible range and
+// fade out when the conditions fail or the position leaves the invisible range; one more pops while it is in range
+void GmkMobInsts::seqUpdatePopDepop(const UpdateInfo& info) {
+    if (!isInterestPosExist()) {
+        return;
+    }
+    updatePopDepopCond(info);
+    if (!hasGobInst() && (m_flags & 3) == 3) {
+        createGobInsts();
+        unsigned int capacity = m_gobInsts->capacity();
+        info.m_finder->onCreateGobInsts(capacity);
+    } else if (hasGobInst() && (m_flags & 5) != 5) {
+        disposeGobInsts(true);
+    }
+    if (m_flags & 2) {
+        m_popInfo.update(*this, *m_gobInsts, *info.m_finder);
+    }
+}
+
+// fade: the live objects fade out and the sequence waits for them; else they are destroyed at once and the list is
+// freed
+void GmkMobInsts::disposeGobInsts(bool fade) {
+    if (hasGobInst()) {
+        unsigned long num = m_gobInsts->size();
+        for (unsigned long i = 0; i < num; i++) {
+            gf::GF_OBJ_HANDLE* handle = (*m_gobInsts)[i];
+            if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+                gf::GfObjAcc acc(handle);
+                if (fade) {
+                    if (acc.getObj() != nullptr && !acc.isDestroy() && !acc.testFlag(0x11)) {
+                        gf::SCOM_DESTROY_GAME_OBJ::create(handle, 1.0f, 0);
+                    }
+                } else {
+                    if (acc.m_obj != nullptr) {
+                        acc.setUserData(gf::GfObjUserData(0), 0);
+                    }
+                    gf::GfObjUtil::destroy(handle);
+                }
+            }
+        }
+        if (fade) {
+            m_seq = &GmkMobInsts::seqWaitToFadeOutOfGobInst;
+            return;
+        }
+        m_gobInsts->destroy();
+        m_popInfo.m_popNum = 0;
+        m_popInfo.m_mobIds.clear();
+    }
+}
+
+// the pop row read again and the list made room for its count
+void GmkMobInsts::createGobInsts() {
+    disposeGobInsts(false);
+    m_popInfo.create(m_bdatFp, m_bdatId);
+    m_gobInsts->destroy();
+    m_gobInsts->setAllocator(gf::getAllocator(gf::ALLOCATOR(0)));
+    m_gobInsts->reserve(static_cast<unsigned int>(m_popInfo.m_popNum));
+}
+
+// back to popping once every object has faded out
+void GmkMobInsts::seqWaitToFadeOutOfGobInst(const UpdateInfo& info) {
+    if (getGobInstNum() == 0) {
+        m_gobInsts->destroy();
+        m_popInfo.m_popNum = 0;
+        m_popInfo.m_mobIds.clear();
+        m_seq = &GmkMobInsts::seqUpdatePopDepop;
+    }
+}
+
+void GmkMobInsts::validateDisp() const {
+    if (isValid()) {
+        unsigned int num = getGobInstNum();
+        for (unsigned int i = 0; i < num; i++) {
+            validateDisp((*m_gobInsts)[i]);
         }
     }
 }
