@@ -78,7 +78,9 @@ struct SDataParty {
     // 3 takes it as the driver id); the name is not the original's
     unsigned int m_leaderType;
     unsigned int m_leader;  // 0x40: GfDataParty::isLeader compares a character with it (the name is not the original's)
-    unsigned char pad_44[0x8];
+    // GfGameParty::getCurrentPartyInfo copies them with m_leaderType and m_leader (RQ_SETUP_PARTY's m_extras[1])
+    unsigned int pad_44;
+    unsigned int pad_48;
     unsigned short m_partyGauge;  // GfGameParty::getPartyGauge and setPartyGauge (300 full)
 };
 }  // namespace gf

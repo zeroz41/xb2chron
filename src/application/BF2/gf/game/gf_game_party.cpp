@@ -38,6 +38,11 @@
 #include "gf/GfAppend.h"
 #include "gf/GfObjInfo.h"
 #include "mm/mtl/RTTI.h"
+#include "classes/gf/SCOM_OBJ_ALPHA.h"
+#include "classes/gf/SCOM_PARTY_ADD.h"
+#include "gf/SDataDriver.h"
+#include "algorithm"
+#include "classes/gf/GfDataManager.h"
 
 namespace gf {
 
@@ -113,6 +118,45 @@ unsigned int GfGameParty::getBladeBdatId(unsigned int index, int slot) {
     return acc.getBlade(slot, false);
 }
 
+unsigned int GfGameParty::getHierarchyMax() {
+    GfGameParty* self = get();
+    unsigned int max = 0;
+    for (unsigned int i = 0; i < 3; ++i) {
+        for (unsigned int& party : self->m_hierarchy) {
+            GfDataParty::PartyMember* member = GfDataParty::getPartyMember(i, static_cast<PTPOS>(party));
+            max = std::max<unsigned int>(max, member->m_hierarchyDriver);
+            max = std::max<unsigned int>(max, member->m_hierarchyBlade);
+        }
+    }
+    return max;
+}
+
+bool GfGameParty::isExistObj() {
+    GfGameParty* self = get();
+    for (unsigned int i = 0; i < 3; ++i) {
+        for (unsigned int& party : self->m_hierarchy) {
+            GF_OBJ_HANDLE* handle = self->m_members[i].m_handles[party];
+            if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                GfObjAcc acc(handle);
+                if (acc.isDestroy()) {
+                    return true;
+                }
+            }
+        }
+        int set = getBladeSetId(i, -1);
+        if (set >= 0) {
+            GF_OBJ_HANDLE* handle = self->m_members[i].m_handles[3 + set];
+            if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                GfObjAcc acc(handle);
+                if (acc.isDestroy()) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 GF_OBJ_HANDLE* GfGameParty::getHandleDriverByBdatID(unsigned int driver) {
     GfGameParty* self = get();
     for (unsigned int i = 0; i < 3; ++i) {
@@ -123,6 +167,34 @@ GF_OBJ_HANDLE* GfGameParty::getHandleDriverByBdatID(unsigned int driver) {
         }
     }
     return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+}
+
+int GfGameParty::getPartyMemberNum() {
+    GfDataManager::getDataGame();
+    GfGameParty* self = get();
+    int count = 0;
+    for (unsigned int i = 0; i < 3; ++i) {
+        for (unsigned int& party : self->m_hierarchy) {
+            if (GfDataParty::getPartyMember(i, static_cast<PTPOS>(party))->m_driver == 0) {
+                continue;
+            }
+            ++count;
+            if (GfGameManager::isGameTypeIra()) {
+                continue;
+            }
+            int set = getBladeSetId(i, -1);
+            if (set >= 0) {
+                ++count;
+            }
+            int num = GfDataDriver::getMaxSetBladeNum(getDriverBdatId(i, static_cast<PTPOS>(0)));
+            for (int slot = 0; slot < num; ++slot) {
+                if (slot != set && getBladeBdatId(i, slot) != 0) {
+                    ++count;
+                }
+            }
+        }
+    }
+    return count;
 }
 
 GF_OBJ_HANDLE* GfGameParty::getHandleBladeByBdatID(unsigned int blade) {
@@ -248,6 +320,48 @@ void GfGameParty::switchFormationForIraBR(unsigned int slot) {
     MsgUnk_1000033 msg(slot, 1, 2);
     // sent through the switcher's fw::MessageObject base
     static_cast<fw::MessageObject*>(switcher)->recieveMessage(obj, msg);
+}
+
+void GfGameParty::setupChangePartyPos(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    if (acc.isBattle()) {
+        return;
+    }
+    unsigned int pos = GfObjUtil::getPartyPos(handle);
+    bool disp = acc.isDisp(OBJDISP(0x40));
+    if (pos == 2) {
+        if (disp) {
+            setDispIraParty(handle, false);
+        }
+    } else if (!disp) {
+        DataParamAcc param(handle);
+        setDispIraParty(handle, true);
+        acc.setAlphaNormal(0.0f);
+        SCOM_OBJ_ALPHA::create(handle, 1.0f, 1.0f);
+        unsigned int driver = param.isValid() && param.getObjType() == 3 ? param.getBdatId() : 0;
+        if (GfDataDriver::isIraHideWeaponOnField(driver)) {
+            SCOM_OBJ_ALPHA::createWeapon(acc.getHandle(), 0.0f, 0.0f);
+        }
+    }
+}
+
+void GfGameParty::swapMemberForIra(unsigned int index, PTPOS a, PTPOS b) {
+    GfDataParty::PartyMember* memberA = GfDataParty::getPartyMember(index, a);
+    GfDataParty::PartyMember* memberB = GfDataParty::getPartyMember(index, b);
+    unsigned short driver = memberA->m_driver;
+    memberA->m_driver = memberB->m_driver;
+    memberB->m_driver = driver;
+    SDataIra* dataA = GfDataDriver::getSDataIra(memberA->m_driver);
+    SDataIra* dataB = GfDataDriver::getSDataIra(memberB->m_driver);
+    dataA->m_partyIndex = a;
+    dataB->m_partyIndex = b;
+    GF_OBJ_HANDLE** handles = m_members[index].m_handles;
+    GF_OBJ_HANDLE* handle = handles[a];
+    handles[a] = handles[b];
+    handles[b] = handle;
+    if (index == 0 && a == 0) {
+        m_leader = handles[a];
+    }
 }
 
 int GfSelectBlade::getStartBattleSetId(unsigned int slot) {
@@ -400,6 +514,35 @@ void GfGameParty::buildObjWeapon(GF_OBJ_HANDLE* handle) {
     }
 }
 
+void GfGameParty::getCurrentPartyInfo(RQ_SETUP_PARTY& info) {
+    GfGameParty* self = get();
+    if (self == nullptr) {
+        return;
+    }
+    if (GfGameManager::isGameTypeIra()) {
+        for (unsigned int i = 0; i < 10; ++i) {
+            for (unsigned int& party : self->m_hierarchy) {
+                info.m_iraDrivers[i][party] = GfDataParty::getPartyMember(i, static_cast<PTPOS>(party))->m_driver;
+            }
+        }
+    } else {
+        for (unsigned int i = 0; i < 10; ++i) {
+            RQ_SETUP_PARTY::Driver& driver = info.m_drivers[i];
+            driver.m_driver = getDriverBdatId(i, static_cast<PTPOS>(0));
+            driver.m_activeIndex = getBladeSetId(i, -1);
+            int num = GfDataDriver::getMaxSetBladeNum(driver.m_driver);
+            for (int slot = 0; slot < num; ++slot) {
+                driver.m_blades[slot] = getBladeBdatId(i, slot);
+            }
+        }
+    }
+    SDataParty* data = GfDataParty::getSDataParty();
+    info.m_extras[0].m_type = data->m_leaderType;
+    info.m_extras[1].m_type = data->pad_44;
+    info.m_extras[0].m_id = data->m_leader;
+    info.m_extras[1].m_id = data->pad_48;
+}
+
 void GfGameParty::getCurrentPartyInfo(RQ_SETUP_PARTY_DRIVER& info) {
     for (unsigned int i = 0; i < 10; ++i) {
         info.m_drivers[i] = GfDataParty::getPartyMember(i, static_cast<PTPOS>(0))->m_driver;
@@ -432,6 +575,15 @@ unsigned int GfGameParty::getLeaderLevel() {
     }
     DataParamAcc acc(3, driver, GimmickType(0));
     return acc.getLevel(false);
+}
+
+void GfGameParty::getPartyPosition(GfPartyPosInfo& info) {
+    info = GfPartyPosInfo();
+    for (unsigned int hierarchy = 1; hierarchy <= (GfGameManager::isGameTypeIra() ? 9u : 6u); ++hierarchy) {
+        GfObjAcc acc(getHandleByHierarchy(hierarchy));
+        GfPartyPosInfo::Pos& pos = info.m_pos[hierarchy - 1];
+        pos.m_isValid = acc.getObjPosRot(pos.m_pos, pos.m_rotY);
+    }
 }
 
 GfWeapon* GfGameParty::getHandleWeapon(unsigned int index, int set) {

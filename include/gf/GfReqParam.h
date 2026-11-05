@@ -52,7 +52,9 @@ public:
     };
 
     Driver m_drivers[10];
-    unsigned char pad_C8[0x3C];  // the constructor zeroes 0xC8 to 0x115 (one memset)
+    // the constructor zeroes 0xC8 to 0x115 (one memset). For an Ira game GfGameParty::getCurrentPartyInfo fills these
+    // in place of m_drivers: each member's driver in the parties 0-2 (by PTPOS); the name is not the original's
+    unsigned short m_iraDrivers[10][3];
     Extra m_extras[2];
     // 0x240 bytes in all: GfSelectIra's copy (GfGameParty's at 0x130) ends where its m_currentPartyValid (0x240)
     // starts

@@ -160,11 +160,28 @@ public:
     // GfGameManager::isGameTypeIra answers true.
     void setupGame();
     static void setupPartyPositionByPartyPosition(const GfPartyPosInfo& info);
+    // the symbols name it. What it does: the position and y rotation of every hierarchy's object (1-6, 1-9 in an
+    // Ira game) into its record, valid when the object has a transform
+    static void getPartyPosition(GfPartyPosInfo& info);
     static gf::GfWeapon* getHandleWeapon(unsigned int index, int set);
     // 2.0.0's symbols name it. What it does: for a driver object, its weapon: its own mount
     // (GfMountManager::getGfWeapon) when GfDataDriver::isIra accepts its driver id, else its party slot's
     // (getHandleWeapon with set -1); null for others (BattleCharacter::AttackTimingProc calls it).
     static gf::GfWeapon* getHandleWeaponDriver(gf::GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name them (update calls checkPartyObjReady, which asks isReadyAllObjDisplay)
+    void checkPartyObjReady();
+    // 2.0.0's symbols name them. getPartyMemberNum counts the party's drivers and (outside an Ira game) their engaged
+    // blades; isExistObj answers whether one of the members' objects is being destroyed (the return types are not
+    // proven)
+    static int getPartyMemberNum();
+    static bool isExistObj();
+    bool isReadyAllObjDisplay(bool);
+    // 2.0.0's symbols name it. What it does: for an object outside battle, hides it (setDispIraParty false) at party
+    // position 2, else shows and fades it in (and its weapon for a driver GfDataDriver::isIraHideWeaponOnField takes)
+    static void setupChangePartyPos(gf::GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name it. What it does: swaps the drivers of two parties' members at an index (their DLC records'
+    // party index too) and the member's handles at those positions; the leader follows slot 0 of party 0
+    void swapMemberForIra(unsigned int index, PTPOS a, PTPOS b);
 
     mm::mtl::FixedArray<GfMemberInfo, 3> m_members;  // by party slot
     bool m_initialized;  // 1.0.0's initialize sets it, finalize clears it, isInitialized reads it
