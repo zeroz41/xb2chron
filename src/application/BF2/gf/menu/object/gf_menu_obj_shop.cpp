@@ -5,6 +5,7 @@
 #include "classes/gf/SCOM_ACHIEV_INC.h"
 #include "classes/gf/SCOM_RANDOM_INN.h"
 #include "classes/gf/GfMenuItemList.h"
+#include "classes/gf/GfMenuIDList.h"
 #include "classes/gf/GfMenuObjCommonText.h"
 #include "gf/GfItemUtil.h"
 #include "classes/gf/GfAllocator.h"
@@ -37,12 +38,100 @@
 #include "gf/GfMenuBdat.h"
 #include "gf/GfQuestUtil.h"
 #include "gf/GfQuestReward.h"
+#include "gf/GfQuestTask.h"
 
 namespace gf {
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009C4748). The item type of each sell
 // filter (m_filters' values index it).
 static const unsigned int s_filterItemType[13] = {0, 12, 7, 11, 10, 14, 9, 3, 2, 1, 6, 5, 8};
+
+GfMenuObjShop::GfMenuObjShop(unsigned int handle)
+    : GfMenuObject(handle), m_shopId(0), pad_34(0), m_guideTextId(0), m_selectList(nullptr), m_sellItemList(nullptr),
+      m_sellObjList(nullptr), m_useFilterItemType(false), m_refreshItemList(false), m_stockNumDirty(false),
+      m_filterIndex(0), m_cursor(nullptr), pad_D0(0), pad_D8(nullptr), pad_E0(nullptr), pad_E8(nullptr),
+      m_getItemId(0), pad_14C(0), m_seq(this), m_seqStarted(false), pad_4F0(nullptr), pad_504(-1),
+      pad_548(QuestID(), 0, 0, TASK_STATE(0)), pad_568(0), m_blWeaponContext(nullptr), m_callContext(nullptr),
+      pad_584(0), pad_588(false), pad_589(false) {
+    pad_130.setAllocator(getAllocator(ALLOCATOR(0)));
+    for (int i = 0; i < 8; ++i) {
+        pad_508[i] = nullptr;
+    }
+    m_callContext = GfMenuCallContext::create();
+}
+
+GfMenuObjShop::~GfMenuObjShop() {
+    pad_238 = nullptr;
+    for (int i = 0; i < 26; ++i) {
+        m_numbers[i] = nullptr;
+    }
+    if (pad_150 != nullptr) {
+        pad_150->release();
+        pad_150 = nullptr;
+    }
+    if (pad_158 != nullptr) {
+        pad_158->release();
+        pad_158 = nullptr;
+    }
+    if (m_itemList != nullptr) {
+        m_itemList->release();
+        m_itemList = nullptr;
+    }
+    if (pad_F0 != nullptr) {
+        pad_F0->release();
+        pad_F0 = nullptr;
+    }
+    if (pad_E8 != nullptr) {
+        pad_E8->release();
+        pad_E8 = nullptr;
+    }
+    if (pad_E0 != nullptr) {
+        pad_E0->release();
+        pad_E0 = nullptr;
+    }
+    if (pad_D8 != nullptr) {
+        pad_D8->release();
+        pad_D8 = nullptr;
+    }
+    if (m_selectList != nullptr) {
+        m_selectList->release();
+        m_selectList = nullptr;
+    }
+    if (m_cursor != nullptr) {
+        m_cursor->release();
+        m_cursor = nullptr;
+    }
+    if (m_sellItemList != nullptr) {
+        m_sellItemList->release();
+        m_sellItemList = nullptr;
+    }
+    if (m_sellObjList != nullptr) {
+        m_sellObjList->release();
+        m_sellObjList = nullptr;
+    }
+    if (pad_4E8 != nullptr) {
+        pad_4E8->release();
+        pad_4E8 = nullptr;
+    }
+    if (pad_4F0 != nullptr) {
+        pad_4F0->release();
+        pad_4F0 = nullptr;
+    }
+    for (int i = 0; i < 8; ++i) {
+        if (pad_508[i] != nullptr) {
+            pad_508[i]->release();
+            pad_508[i] = nullptr;
+        }
+    }
+    if (m_blWeaponContext != nullptr) {
+        m_blWeaponContext->release();
+        m_blWeaponContext = nullptr;
+    }
+    if (m_callContext != nullptr) {
+        m_callContext->release();
+        m_callContext = nullptr;
+    }
+}
 
 void GfMenuObjShop::finalize() {
     for (int i = 0; i < 26; ++i) {
@@ -251,6 +340,40 @@ int GfMenuObjShop::getSpecialShop(unsigned int shopId) {
     return 0;
 }
 
+void GfMenuObjShop::setupExcItem() {
+    ui::UIObjectAcc acc(m_handle, "LAY_exc_objective");
+    mm::mtl::FixStr<32> name;
+    GfMenuItemList::ItemShopExcSetup setup;
+    setup.m_id = pad_150->getContents(pad_150->getIndex(false)).m_id;
+    setup.m_setup.m_pageRowSize = 5;
+    pad_158->clear();
+    pad_158->setupFromShopExcTask(setup);
+    unsigned int owned = 0;
+    unsigned int need = 0;
+    for (unsigned int i = 0; i < pad_158->getSize(); i++) {
+        const MenuItemInfo& item = pad_158->getContents(i);
+        m_numbers[17 + i]->setValue(GfMenuItemUtil::getItemNum(item.m_type, item.m_id));
+        m_numbers[i + 17]->m_min = 0;
+        m_numbers[i + 17]->m_max = 999;
+        int have = m_numbers[i + 17]->m_value;
+        need += item.m_count;
+        owned += have >= item.m_count ? item.m_count : have;
+        name.format("TXT_exc_obj_item_cost@%02d", i + 1);
+        ui::UIObjectAcc cost(acc.m_handle, name.m_str);
+        if (cost.m_object != nullptr) {
+            if (m_numbers[i + 17]->m_value < item.m_count) {
+                GfMenuObjUtil::setColMulandAdd(cost.m_handle, "txt_warning");
+            } else {
+                GfMenuObjUtil::setColDefault(cost.m_handle);
+            }
+        }
+    }
+    unsigned int got = owned > need ? need : owned;
+    m_numbers[6]->m_max = need;
+    m_numbers[6]->m_value = got;
+    m_numbers[7]->m_value = need;
+}
+
 void GfMenuObjShop::CommonListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
@@ -301,6 +424,58 @@ void GfMenuObjShop::CommonListener::reciveEvent(const ui::EventData& event, unsi
     }
     }
     UIObjectListener::reciveEvent(event, handle);
+}
+
+void GfMenuObjShop::refreshExcReward() {
+    if (pad_150 == nullptr) {
+        return;
+    }
+    ui::UIObjectAcc item(m_handle, "LAY_exc_reward_item");
+    ui::UIObjectAcc quest(m_handle, "LAY_exc_reward_quest");
+    unsigned int task = pad_150->getContents(pad_150->getIndex(false)).m_id;
+    unsigned int value;
+    bool hide = false;
+    if (getExcTaskReward(task, value, m_itemList, hide)) {
+        m_numbers[23]->setValue(value);
+        item.setDisp(!hide);
+        quest.setDisp(false);
+    } else {
+        unsigned char* fp = GfDataBdat::getFP(0xF2);
+        if (fp != nullptr && GfMenuBdat::isValidBdatID(fp, task)) {
+            value = static_cast<unsigned char>(Bdat::getVal(fp, "AddFlagValue", task));
+            item.setDisp(false);
+            quest.setDisp(!hide);
+            unsigned int limit;
+            unsigned int count;
+            unsigned int itemCount;
+            unsigned int itemLimit;
+            if (!pad_548.m_questId.empty() && GfQuestTask::getTaskCount(pad_548, limit, count, itemCount, itemLimit)) {
+                m_numbers[24]->setMax(limit);
+                m_numbers[24]->setValue(count);
+                m_numbers[25]->setValue(limit);
+            }
+        } else {
+            item.setDisp(false);
+            quest.setDisp(false);
+        }
+    }
+    ui::UIObjectAcc(m_handle, "TXT_exc_reward_quest_index").setDisp(quest.isDisp());
+    ui::UIObjectAcc(m_handle, "TXT_exc_reward_item_index").setDisp(item.isDisp());
+    if (GfMenuObjUtil::isValidExpansion(3) && GfMenuManager::isOpenCampMenu()) {
+        ui::UIObjectAcc(m_handle, "LAY_exc_reward_item").setDisp(false);
+        ui::UIObjectAcc(m_handle, "LAY_exc_reward_quest").setDisp(false);
+        ui::UIObjectAcc(m_handle, "LAY_exc_reward_secret").setDisp(false);
+        ui::UIObjectAcc(m_handle, "LAY_exc_reward_camp").setDisp(true);
+        bool normal = true;
+        if (m_itemList->getSize() != 0) {
+            normal = m_itemList->getContents(0).m_type != 10;
+        }
+        ui::UIObjectAcc(m_handle, "LAY_exc_reward_camp_normal").setDisp(normal);
+        ui::UIObjectAcc(m_handle, "LAY_exc_reward_camp_pouch").setDisp(!normal);
+    } else {
+        ui::UIObjectAcc(m_handle, "LAY_exc_reward_secret").setDisp(hide);
+        ui::UIObjectAcc(m_handle, "LAY_exc_reward_camp").setDisp(false);
+    }
 }
 
 void GfMenuObjShop::refreshFilterIcon() {

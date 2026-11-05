@@ -36,6 +36,8 @@ struct RecipeInfo {
         unsigned short m_item;
         unsigned short m_number;
     };
+    // empty (GfMenuObjShop's constructor and updateOrbRecipe zero the four values and empty the items)
+    RecipeInfo() : m_recipe(0), m_recipeType(0), m_resultRarity(), m_resultColleCategory() {}
     const Result& getResultRarity() const;
     const Result& getResultColleCategory() const;
     const ::mm::mtl::FixedVector<Item, 8>& getResultItems() const;

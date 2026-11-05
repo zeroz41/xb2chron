@@ -6,6 +6,11 @@
 #include "mm/mtl/FixedVector.h"
 #include "mm/mtl/IntrusivePtr.h"
 #include "classes/gf/GfMenuReferenceNumber.h"
+#include "classes/gf/GfMenuReferenceItem.h"
+#include "classes/gf/GfItemManager.h"
+#include "classes/mm/mtl/ReferenceObject.h"
+#include "mm/mtl/Array.h"
+#include "gf/QuestTaskParam.h"
 
 namespace ui {
 class UICtrlCursorSelect;
@@ -14,6 +19,7 @@ class UISelectObjList;
 
 namespace gf {
 class GfMenuCallContext;
+class GfMenuIDList;
 class GfMenuItemList;
 
 // table 0x7100B64738
@@ -38,6 +44,7 @@ public:
         // GfMenuManager::isOpenCampMenu() answer true (new in 3.0.1; the name is not the original's)
         bool m_option;
     };
+    GfMenuObjShop(unsigned int handle);
     virtual ~GfMenuObjShop();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
@@ -53,6 +60,16 @@ public:
     // with GfMenuReference::getReferenceShopID() to the shop layer's child "LAY_exc_task_list".
     static void changeCraft();
 
+    // the exchange task's items (pad_150's selected row, GfMenuItemList::setupFromShopExcTask into pad_158): numbers
+    // 17 on get the box counts, "TXT_exc_obj_item_cost@NN" warns when short; numbers 6 and 7 the totals
+    void setupExcItem();
+    // the selected exchange task's reward ("LAY_exc_reward_item"/"_quest"/"_secret"/"_camp" and their texts)
+    void refreshExcReward();
+    // the exchange's common window answered: the task is exchanged (GfGameUtilShop::execChangeItem) and the lists redrawn
+    bool seqWaitExchange();
+    // m_recipeInfo becomes the orb recipe (GfRecipeOrbUtil::getRecipeInfo) of the orb list's selected item, or empty;
+    // "LAY_orb_rcp" gets event 0x43
+    void updateOrbRecipe();
     // redraws the shop's item lists (1.0.0's update calls it at the same flag; 3.0.1 adds the exchange tasks)
     void refreshItemList();
     // 2.0.0's symbols name it. What it does: shows "LAY_stock_num" by the mode at 0x28 and
@@ -108,7 +125,9 @@ public:
     // the shop's mode: 3 moves "LAY_stock_num" up by 0x27, 0 shows it by the filter's item type (refreshStock;
     // the name is not the original's)
     int m_mode;  // 0x28
-    unsigned char pad_2C[0x38 - 0x2C];
+    unsigned char pad_2C[0x30 - 0x2C];
+    unsigned int pad_30;  // seqWaitExchange hands it to GfGameUtilShop::execChangeItem with the task
+    int pad_34;  // the constructor clears it
     // the guide text "TXT_common_guide" shows (setGuideText; the name is not the original's)
     unsigned int m_guideTextId;  // 0x38
     unsigned char pad_3C[0x40 - 0x3C];
@@ -133,15 +152,31 @@ public:
     // the inn action list's cursor ("LAY_inn_action_cursor"): InnActListener creates it on event 0x40 and
     // releases it when an action ends (the name is not the original's)
     ui::UICtrlCursorSelect* m_cursor;  // 0xC8
-    unsigned char pad_D0[0x148 - 0xD0];
+    int pad_D0;  // the constructor clears it
+    unsigned char pad_D4[0xD8 - 0xD4];
+    // initialize creates it (ui::UISelectObjList::create); the destructor releases it
+    ui::UISelectObjList* pad_D8;
+    // the constructor clears it, the destructor releases it; what it holds is unknown
+    mm::mtl::ReferenceObject* pad_E0;
+    // initialize creates them (GfMenuItemList::create); the destructor releases them
+    GfMenuItemList* pad_E8;
+    GfMenuItemList* pad_F0;
+    // the orb recipe updateOrbRecipe reads (GfRecipeOrbUtil::getRecipeInfo; the name is not the original's)
+    RecipeInfo m_recipeInfo;  // 0xF8
+    // the constructor sets its allocator (getAllocator(0)); its element type is unknown
+    mm::mtl::Array<unsigned int> pad_130;
     // the item seqItemGet shows as got in mode 3, then clears (the name is not the original's)
     unsigned int m_getItemId;  // 0x148
-    unsigned char pad_14C[0x160 - 0x14C];
+    unsigned int pad_14C;  // the constructor clears it
+    // initialize creates it (GfMenuIDList::create); the destructor releases it
+    GfMenuIDList* pad_150;
+    // initialize creates it (GfMenuItemList::create); the destructor releases it
+    GfMenuItemList* pad_158;
     // the items seqItemGet shows as got (the name is not the original's)
     GfMenuItemList* m_itemList;  // 0x160
     // initialize creates them, finalize releases them (the name is not the original's)
     mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_numbers[26];  // 0x168
-    unsigned char pad_238[0x240 - 0x238];  // 0x238: initialize's IntrusivePtr<GfMenuReferenceItem>
+    mm::mtl::IntrusivePtr<GfMenuReferenceItem> pad_238;  // initialize's
     // seqStartLevelUp switches the inn's cloud sea (raised when it is 0) once and clears it (the name is not the
     // original's)
     bool m_switchInnCloudSea;  // 0x240
@@ -156,21 +191,33 @@ public:
     // seqEnd hands them to the main layer's call context when the result is set (the names are not the original's)
     unsigned int m_result;  // 0x4E0
     int m_resultParam;  // 0x4E4
-    unsigned char pad_4E8[0x4F8 - 0x4E8];
+    // initialize creates it (ui::UISelectObjList::create); the destructor releases it
+    ui::UISelectObjList* pad_4E8;
+    // the constructor clears it, the destructor releases it; what it holds is unknown
+    mm::mtl::ReferenceObject* pad_4F0;
     // a UI object seqEndDialog closes with event 0x42 when it is set (the name is not the original's)
     unsigned int m_dialog;  // 0x4F8
     unsigned char pad_4FC[0x500 - 0x4FC];
     // seqItemGet shows the got items only when it is 1 (the name is not the original's)
     int m_itemGetState;  // 0x500
-    unsigned char pad_504[0x570 - 0x504];
+    int pad_504;  // the constructor sets -1
+    // the constructor clears them, the destructor releases them; what they hold is unknown
+    mm::mtl::ReferenceObject* pad_508[8];
+    QuestTaskParam pad_548;  // the constructor's QuestTaskParam(QuestID(), 0, 0, 0)
+    int pad_568;  // the constructor clears it
+    unsigned char pad_56C[0x570 - 0x56C];
     // the blade weapon menu's call context (seqWaitLoadBlWeapon, seqWaitEndBlWeapon; the name is not the original's)
     GfMenuCallContext* m_blWeaponContext;  // 0x570
     // the constructor creates it; seqItemGet opens the got-item text with it (the name is not the original's)
     GfMenuCallContext* m_callContext;  // 0x578
     // refreshStock adds it to "LAY_stock_num"'s y position (the name is not the original's)
     int m_stockNumOffsetY;  // 0x580
-    // later fields (from the constructor): 0x4F0 pointer, 0x504 int -1, 0x508..0x540 eight pointers, 0x548
-    // QuestTaskParam, 0x568 int, 0x570 pointer, 0x578 GfMenuCallContext*, 0x584 int, 0x588 short
+    int pad_584;  // the constructor clears it
+    // the constructor clears them; seqWaitExchange's craft step reads pad_588 and sets pad_589 from the task's
+    // "forcequit"
+    bool pad_588;
+    bool pad_589;
+    unsigned char pad_58A[0x590 - 0x58A];  // GfMenuManager::reciveEvent allocates 0x590 bytes
 };
 }  // namespace gf
 

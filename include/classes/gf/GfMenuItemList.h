@@ -61,6 +61,7 @@ public:
     // what setupFromShopExcTask lists: the SetItem/SetNumber columns of a row of BDAT file 0xF2 (the names are not
     // the original's)
     struct ItemShopExcSetup {
+        ItemShopExcSetup() : m_id(0) {}  // GfMenuObjShop::setupExcItem's clears the row
         ui::UIListInfoBase::SetupParam m_setup;  // the list's
         unsigned int m_id;                       // the row
     };

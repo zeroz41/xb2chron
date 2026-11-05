@@ -30,6 +30,9 @@ public:
     // sets the value (GfMenuObjBtlchTelop::MainListener::reciveEvent: the object is asserted before the new value is loaded, so a call;
     // the name is not the original's)
     void setValue(int value) { m_value = value; }
+    // sets the maximum (GfMenuObjShop::refreshExcReward: the object is asserted before the new maximum is loaded, so a
+    // call; the name is not the original's)
+    void setMax(int max) { m_max = max; }
 };
 }  // namespace gf
 
