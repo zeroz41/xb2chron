@@ -24,6 +24,13 @@ public:
         MOVE_TYPE_LINK_OBJ = 5,
         MOVE_TYPE_UP = 6,
     };
+    // one end condition's value: IsEnd reads it as a character index (CharacterManager::GetCharacterConst(int)) or
+    // as a float; EffectObject::StartNextAttack stores a character's index into the first (the type's and the
+    // field names are not the original's)
+    union END_PARAM {
+        float m_value;
+        int m_index;
+    };
     // what EffectObject::SetMoveParam passes on to Initialize (0x64 bytes; the tail by m_type)
     struct MOVE_PARAM {
         mm::Vec3 m_dir;
@@ -31,7 +38,7 @@ public:
         float m_speedLimit;
         float m_accel;
         float m_accelWait;
-        float m_endParam[6];  // IsEnd's per-condition values, copied to the component
+        END_PARAM m_endParam[6];  // IsEnd's per-condition values, copied to the component
         unsigned char m_endFlags;
         unsigned char m_type;  // MOVE_TYPE
         union {
@@ -110,7 +117,7 @@ public:
     float m_accelTimer;
     float m_gravity;
     float m_gravityTime;
-    float m_endParam[6];
+    END_PARAM m_endParam[6];
     unsigned char m_endFlags;
     unsigned char m_type;  // MOVE_TYPE
     unsigned char pad_a6[0xA];

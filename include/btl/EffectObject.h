@@ -44,7 +44,8 @@ public:
     void SetEndEffect(const char* name);
     bool IsEnd() const;
     void Update(const fw::UpdateInfo& info);
-    void CheckEnd();
+    // whether the effect is over (the owner gone or out of battle, the hit data spent, the effect or object gone)
+    bool CheckEnd();
     void EndProc();
     void UpdateHit(float a, float b);
     // 2.0.0's symbols name it (1.0.0's ReturnLinkObj, which nothing calls, is gone from 3.0.1)
@@ -101,9 +102,9 @@ public:
     EffectMoveComponent m_move;
     unsigned int m_id;  // Initialize's
     unsigned int m_artsParam;
-    unsigned int pad_278;
+    float pad_278;  // CheckEnd compares it with the interval hit's m_maxHit; meaning unknown
     float m_remainTime;  // IsEnd: over at 0 or below once m_isTimed (the name is not the original's)
-    short m_bulletId;
+    unsigned short m_bulletId;
     short m_bulletParam;
     unsigned char m_artsKind;
     unsigned char m_fadeFrames;  // fw::EffectManager::fadeOutDead's, none for 0

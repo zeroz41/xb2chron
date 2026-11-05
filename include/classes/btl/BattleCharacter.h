@@ -532,7 +532,9 @@ public:
     navi::NvmshAcObj* m_nvmshAcObj;
     // constructed by the constructor, destroyed by the destructor (the name is not the original's)
     ElementalComboManager m_elementalCombo;
-    unsigned char pad_C50[0x28];
+    // a node name: EffectObject::StartNextAttack aims at the node of that name (Misc::GetNodePosition) and
+    // UpdateEffectPositionScale falls back to it (meaning unknown)
+    char pad_C50[0x28];
     // the character's voice code as text: Utility::AI_GetVoiceCode returns it through atoi and
     // AI_SearchVoiceCodeCharacter compares it so (the name is not the original's; its 0x24 bytes reach the next field)
     char m_voiceCode[0x24];
