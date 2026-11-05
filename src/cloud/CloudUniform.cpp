@@ -204,6 +204,53 @@ void CloudObjReduction::renderUpScale(grlib::CGLibRenderTarget& target) {
     vtx->renderIndexList((CloudVertexType)2);
 }
 
+// the planes to draw, back one first; a plane whose uniform update is skipped is left out (inferred helper, no
+// symbol: inlined into renderPlaneDef; alphaRenderSec builds the same list)
+static inline int getPlaneList(unsigned int* list) {
+    CloudObjMan* man = CloudMan::sys()->m_pObjMan;
+    int num = 0;
+    if (!man->m_planeUniSkip) {
+        if (!man->m_planeUniSkip2) {
+            list[0] = 1;
+            list[1] = 0;
+            num = 2;
+        } else {
+            list[0] = 0;
+            list[1] = 1;
+            num = 1;
+        }
+    } else {
+        list[0] = 1;
+        list[1] = 0;
+        num = 1;
+    }
+    return num;
+}
+
+CloudObjPlane::CloudObjPlane() {
+    m_planeUniform2.createUniform(CLOUD_UNIFORM_BLUR, 0);
+    m_planeUniform3.createUniform(CLOUD_UNIFORM_BLUR, 0);
+    for (int i = 0; i < 2; i++) {
+        m_planeUniform0[i].createUniform(CLOUD_UNIFORM_DEF, 0);
+        m_planeUniform1[i].createUniform(CLOUD_UNIFORM_COLOR, 0);
+        m_color0[i] = mm::Vec3(0.0f, 0.0f, 0.0f);
+        m_color1[i] = mm::Vec3(0.0f, 0.0f, 0.0f);
+        m_color2[i] = mm::Vec3(0.0f, 0.0f, 0.0f);
+        m_color3[i] = mm::Vec3(0.0f, 0.0f, 0.0f);
+        m_color4[i] = mm::Vec3(0.0f, 0.0f, 0.0f);
+        m_scale0[i] = 1.0f;
+        m_scale1[i] = 1.0f;
+        m_scale2[i] = 1.0f;
+        m_scale3[i] = 1.0f;
+    }
+    m_planeParam1 = 0.5f;
+    m_planeParam0 = 0.0f;
+    m_uniParam = 0;
+    m_farDist = 0.0f;
+    m_uniRate = 0.0f;
+    m_planeFlag = true;
+}
+
 CloudObjPlane::~CloudObjPlane() {}
 
 void CloudObjPlane::update() {
@@ -223,6 +270,37 @@ void CloudObjPlane::alphaRender() {
         if (!man->m_planeUniSkip || !man->m_planeUniSkip2) {
             renderPlaneDef();
         }
+    }
+}
+
+void CloudObjPlane::updateUniform() {
+    // the three unnamed floats are never set by the original (createColorUniform's s0-s2 are left as they are)
+    float unset0, unset1, unset2;
+    for (unsigned int i = 0; i < 2; i++) {
+        m_planeUniform0[i].createDefUniform(i, m_uniParam, (i == 0 && m_farDist != 0.0f) ? m_farDist : 20000.0f,
+                                            m_uniRate);
+        m_planeUniform0[i].updateData();
+        m_planeUniform1[i].createColorUniform(m_color0[i], m_color1[i], m_color2[i], m_color3[i], m_color4[i], unset0,
+                                              unset1, unset2, i, m_uniParam, m_uniRate);
+        m_planeUniform1[i].updateData();
+    }
+    m_planeUniform2.createBlurUniform(false);
+    m_planeUniform2.updateData();
+    m_planeUniform3.createBlurUniform(true);
+    m_planeUniform3.updateData();
+}
+
+void CloudObjPlane::renderPlaneDef() {
+    CloudObjReduction* reduction = CloudMan::sys()->m_pObjMan->m_pReduction;
+    reduction->m_target1.clearTexture(mm::Col4(0.0f, 0.0f, 0.0f, 0.0f), (GrlClaerMask)0xF);
+    reduction->m_target2.clearTexture(mm::Col4(0.0f, 0.0f, 0.0f, 0.0f), (GrlClaerMask)0xF);
+    reduction->m_target3.clearTexture(mm::Col4(0.0f, 0.0f, 0.0f, 0.0f), (GrlClaerMask)0xF);
+    unsigned int list[2];
+    int num = getPlaneList(list);
+    for (int i = 0; i < num; i++) {
+        renderPlanePoli(list[i]);
+        renderBlur(list[i]);
+        renderDepth(list[i]);
     }
 }
 

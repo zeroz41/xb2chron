@@ -3,6 +3,7 @@
 
 #include "classes/cloud/CloudObj.h"
 #include "cloud/CloudUniform.h"
+#include "mm/Vec3.h"
 
 namespace cloud {
 
@@ -28,6 +29,24 @@ public:
     CloudUniform m_planeUniform1[2];  // 0x90, CLOUD_UNIFORM_COLOR
     CloudUniform m_planeUniform2;  // 0x100, CLOUD_UNIFORM_BLUR
     CloudUniform m_planeUniform3;  // 0x138, CLOUD_UNIFORM_BLUR
+    // per plane, passed to createColorUniform in this order; the constructor zeroes them
+    mm::Vec3 m_color0[2];  // 0x170
+    mm::Vec3 m_color1[2];  // 0x190
+    mm::Vec3 m_color2[2];  // 0x1B0
+    mm::Vec3 m_color3[2];  // 0x1D0
+    mm::Vec3 m_color4[2];  // 0x1F0
+    float m_planeParam0;  // 0x210, 0 from the constructor (name inferred)
+    float m_planeParam1;  // 0x214, 0.5 from the constructor (name inferred)
+    bool m_planeFlag;  // 0x218, true from the constructor, updateParams reads it (name inferred)
+    float m_farDist;  // 0x21C, plane 0's createDefUniform distance when not 0 (20000 otherwise)
+    unsigned int m_uniParam;  // 0x220, passed to createDefUniform/createColorUniform
+    // per plane, 1 from the constructor
+    float m_scale0[2];  // 0x224
+    float m_scale1[2];  // 0x22C
+    float m_scale2[2];  // 0x234
+    float m_scale3[2];  // 0x23C
+    bool m_plane1CountSkip;  // 0x244, renderDepth draws plane 1 like a skipped plane 0 while set
+    float m_uniRate;  // 0x248, last argument of createDefUniform/createColorUniform
 };
 
 }  // namespace cloud

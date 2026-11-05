@@ -47,6 +47,11 @@ public:
     void createMdlPolyUniform(const CloudMdlParts* parts, const mm::Vec3& scroll, const mm::Vec3& detailScroll,
                               const CMLObjData* data);
 
+    void createDefUniform(unsigned int idx, unsigned int param, float dist, float rate);
+    void createColorUniform(const mm::Vec3& color0, const mm::Vec3& color1, const mm::Vec3& color2,
+                            const mm::Vec3& color3, const mm::Vec3& color4, float, float, float, unsigned int idx,
+                            unsigned int param, float rate);
+    void createBlurUniform(bool second);
     static unsigned int s_nUniformBlockSize[CLOUD_UNIFORM_NUM];
 };
 
