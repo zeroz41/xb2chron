@@ -126,7 +126,10 @@ public:
     // not the original's)
     unsigned int m_enemySavedHp[6];
     float m_cameraHeight;  // 0x10AD70 (named after its accessors; the name is not the original's)
-    unsigned char pad_10AD74[0x100];
+    // 0x10AD74: the tora minigame's saved block (minigame::finalize copies its 0xD0-byte m_save here and clears
+    // the 0x30 bytes after it; the names are not the original's)
+    unsigned char m_toraSave[0xD0];
+    unsigned char m_toraSaveExtra[0x30];  // 0x10AE44
     float m_cameraYaw;  // 0x10AE74 (named after its accessors; the name is not the original's)
     float m_cameraPitch;  // 0x10AE78 (named after its accessors; the name is not the original's)
     unsigned char m_cameraFreeMode;  // 0x10AE7C (named after its accessors; the name is not the original's)

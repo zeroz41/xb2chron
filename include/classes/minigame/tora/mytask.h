@@ -6,17 +6,29 @@ namespace minigame { namespace tora {
 // one task of the minigame (200 bytes each in mytask's pool, minigame::initialize): a doubly linked node with its
 // move and draw callbacks (mytask::executeMove/executeDraw call them with the node). The kinds (player, enemy, item,
 // effect) keep their own work from 0x40 on. Field names are not the original's.
+// a task's hit box (8 bytes; check_map, check_dmg_map_obj, check_atk_obj). Names are not the
+// original's.
+struct _sHit {
+    unsigned char m_kind;  // 0x0: the kinds it hits (anded with the other's)
+    unsigned char m_hit;   // 0x1: set when hit (0: can be hit)
+    short m_x;             // 0x2: pixels from the task's position
+    short m_y;             // 0x4
+    unsigned char m_w;     // 0x6: pixels
+    unsigned char m_h;     // 0x7
+};
+
 struct _sTask {
     _sTask* m_next;               // 0x00
     _sTask* m_prev;               // 0x08
     void (*m_move)(void* task);   // 0x10
     void (*m_draw)(void* task);   // 0x18
-    unsigned char pad_20[0x8];
+    const char* m_name;           // 0x20: the kind's name ("item", enemy_damage)
     unsigned char m_attr;         // 0x28: bit 0 flips the sprite horizontally, bit 1 vertically (draw_obj)
     unsigned char pad_29[0x3];
     int m_x;                      // 0x2C: 24.8 fixed point
     int m_y;                      // 0x30: 24.8 fixed point
-    unsigned char pad_34[0xC];
+    _sHit m_hit;                  // 0x34
+    unsigned char pad_3C[0x4];
 };
 
 // the minigame's task pool (minigame::m_task; 0x30 bytes, built with (200, 0x100)): m_count nodes of m_size bytes in

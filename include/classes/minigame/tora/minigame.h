@@ -6,6 +6,7 @@
 namespace minigame { namespace tora { class minigame; }}
 namespace minigame { namespace tora { struct _sTask; }}
 namespace minigame { namespace tora { class mytask; }}
+namespace fw { class SoundResource; }
 
 namespace minigame { namespace tora {
 // table 0x7100B72080
@@ -47,7 +48,12 @@ public:
         unsigned char pad_0[0x1C];
         short m_ofsX;           // 0x1C: added to every sprite's position
         short m_ofsY;           // 0x1E
-        unsigned char pad_20[0x210E0];
+        unsigned char pad_20[0x6];
+        short m_scrollY;        // 0x26: pixels; check_map's map row is m_scrollY / 16
+        unsigned char pad_28[0xD8];
+        // 0x100: the character tiles, 32 bytes (8 rows of 8 4bpp pixels) each (decode_4bpp_sprt's first argument
+        // picks the first; tora_cell_anime rewrites 0x40 from 0x140)
+        unsigned int m_chr[0x1080][8];
         Oam m_oam[64];          // 0x21100: m_oamNum used
         unsigned char pad_21500[0x2A800];
     };
@@ -65,20 +71,103 @@ public:
         };
     };
 
+    // the map check_map reads: a 0x10-byte head, then rows of 16 cells (a negative cell is solid)
+    struct MapData {
+        unsigned char m_head[0x10];
+        signed char m_rows[1][16];  // 0x10
+    };
+    // an id and its count, as getResult reports them
+    struct ResultItem {
+        unsigned short m_id;
+        unsigned short m_num;
+    };
+    // what getResult fills: the best score, then id/count pairs ended by a zero pair
+    struct _sResult {
+        unsigned int m_score;
+        ResultItem m_items[0x83];
+    };
+    // one ranking row (8 bytes)
+    struct RankEntry {
+        unsigned int m_score : 31;
+        unsigned int m_flag : 1;
+        unsigned char pad_4[0x4];
+    };
+    // the tile animation tora_cell_anime_setup picks and tora_cell_anime plays 
+    struct CellAnime {
+        const unsigned char* m_data;  // 0x0: two 0x800-byte frames of 0x40 tiles from 0x40
+        unsigned char m_frame;        // 0x8: the frame shown (0/1)
+        unsigned char m_wait;         // 0x9: frames until the next flip
+        unsigned char m_frameWait[2]; // 0xA: each frame's wait (the csvb row's columns 0/1)
+    };  // 0x10 bytes
+    // a 4bpp sprite file's head (decode_4bpp_sprt)
+    struct SprtData {
+        unsigned char pad_0[0x2];
+        unsigned short m_palSize;  // 0x2: palette bytes at m_data (none: the file has no palette)
+        unsigned short m_width;    // 0x4: pixels per row (0: m_count whole tiles)
+        unsigned short m_count;    // 0x6: rows (or tiles)
+        unsigned char pad_8[0x8];
+        unsigned char m_data[1];   // 0x10: the palette, then the pixels
+    };
+    // the totals of SaveData (0xA0 bytes)
+    struct Record {
+        unsigned long long m_score;  // 0x00: enemy_damage adds the points
+        unsigned char pad_8[0x14];
+        unsigned int m_kills[0x21];  // 0x1C: enemies beaten per enemy type (enemy_damage)
+    };
+    // the block finalize saves into the game data (0xD0 bytes)
+    struct SaveData {
+        unsigned char pad_0[0x8];
+        RankEntry m_rank[5];        // 0x08: getResult takes the best
+        Record m_record;            // 0x30
+    };
+
     virtual ~minigame();  // slot 0
+
+    void finalize();
+    void getResult(_sResult* result);
+    unsigned char check_map(_sTask* task);
+    void tora_cell_anime_setup(int no);
+    void tora_cell_anime();
+    void enemy_damage(_sTask* task, int kind);
+    unsigned int decode_4bpp_sprt(unsigned int no, const unsigned char* data);
 
     void update_pad();
     void draw_obj(int sprt, int cell, const _sTask* task, unsigned char prio);
 
-    unsigned char pad_8[0x8];
+    unsigned char pad_8[0x4];
+    unsigned int m_rand;      // 0xC: the random seed (x * 0x41C64E6D + 12345, enemy_damage)
     PadBits m_padHold;        // 0x10: the buttons and stick directions held
     PadBits m_padTrig;        // 0x14: those pressed this frame
     Screen* m_screen;         // 0x18
-    unsigned char pad_20[0x10];
+    // 0x20: the game's resource file: [0] the header size (the data starts 16-aligned after it), [7]/[8] the csvb
+    // table's start/end offsets in the data, [8 + n] cell animation n's (tora_cell_anime_setup)
+    unsigned int* m_res;
+    fw::SoundResource* m_sound;  // 0x28: none, no sound effects
     SprtSet m_sprt[65];       // 0x30
-    unsigned char pad_648[0x2F10];
+    unsigned char pad_648[0x14];
+    unsigned char m_pal[16][0x30];  // 0x65C: 16 palettes of 16 RGB colours (decode_4bpp_sprt's argument >> 12)
+    unsigned char pad_95C[0x904];
+    const MapData* m_map;     // 0x1260: none, check_map hits nothing
+    unsigned char pad_1268[0x2178];
+    unsigned char m_resultSub;    // 0x33E0: getResult reports it (| 0x100) with id 0xFFFE when m_resultFlag is set
+    unsigned char pad_33E1[0x28];
+    unsigned char m_scoreShow;    // 0x3409: enemy_damage sets 30 (frames)
+    unsigned char pad_340A;
+    unsigned char m_killCount;    // 0x340B: enemy_damage counts the enemies beaten
+    unsigned short m_resultFlag;  // 0x340C
+    unsigned char pad_340E[0x2];
+    unsigned int m_stageScore;    // 0x3410: enemy_damage adds the points
+    unsigned char pad_3414[0x4];
+    unsigned short m_resultNum;   // 0x3418: getResult reports it with id 0xFFFF
+    unsigned char pad_341A[0x130];
+    unsigned short m_itemRate[2];  // 0x354A: an item drop's chance per 10000, of kind 0 and kind 1 (enemy_damage)
+    unsigned char pad_354E[0xA];
     int m_scrollSpd;          // 0x3558: 24.8 fixed point; effects drift down by it
-    unsigned char pad_355C[0xB54];
+    unsigned char pad_355C[0x81C];
+    CellAnime m_cellAnime;    // 0x3D78
+    unsigned char pad_3D88[0x58];
+    ResultItem m_resultItems[0x80];  // 0x3DE0: getResult reports those with a count
+    SaveData m_save;          // 0x3FE0: finalize copies it into the game data
     unsigned char m_oamNum;   // 0x40B0: sprites queued in m_screen->m_oam
     unsigned char pad_40B1[0x7];
     mytask* m_task;           // 0x40B8
