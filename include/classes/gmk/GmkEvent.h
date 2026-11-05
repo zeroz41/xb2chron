@@ -34,6 +34,8 @@ public:
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
+    // its step while in TGmkActiveList<GmkEvent> (GmkManager::seqUpdate calls it for each)
+    void updateInActiveList(float);
     virtual void debugDraw() const;  // slot 7
     // AGmkBase's row as this kind's BdatInfo; the name is not the original's
     const BdatInfo* getBdatInfo() const {

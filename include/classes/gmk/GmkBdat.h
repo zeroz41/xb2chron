@@ -22,6 +22,8 @@ public:
     // inline: GmkManager's constructor inlines it (no symbol)
     GmkBdat() : m_resource(nullptr), m_assetData(nullptr), m_seq(nullptr) {}
     virtual ~GmkBdat();  // slot 0
+    // requests the BDAT file and starts seqWaitResourceLoaded (GmkManager::create calls it)
+    void create(const CreateInfo& info);
     // not virtual: the destructor and its callers call it directly
     void dispose();
     // the step create sets: waits for m_resource, then loads its data into BDAT slot m_createInfo.m_param

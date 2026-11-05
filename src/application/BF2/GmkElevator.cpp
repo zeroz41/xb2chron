@@ -167,6 +167,7 @@
 #include "gf/GfPlayFactory.h"
 #include "classes/gf/SCOM_DESTROY_GAME_OBJ.h"
 #include "classes/gf/SCOM_QUEST_GIMMICK.h"
+#include "classes/gf/SCOM_QUEST_REACH.h"
 #include "classes/gf/GfFieldSound.h"
 #include "gf/GfQuestUtil.h"
 #include "ml/ScnObjAccSeamPos.h"
@@ -561,6 +562,66 @@ bool GmkManager::updateImmediate() {
     return true;
 }
 
+void GmkManager::seqUpdate(float dt) {
+    m_phantomManager.update(dt);
+    for (mm::mtl::IntrusiveList<GmkSquad>::iterator it = m_squadManager.m_list.begin(); it != m_squadManager.m_list.end(); ++it) {
+        GmkSquad& squad = *it;
+        if (squad.m_seq) {
+            (squad.*squad.m_seq)(dt);
+        }
+    }
+    TGmkActiveList<GmkPrecious>::sys()->pad_20 = true;
+    {
+        TGmkActiveList<GmkPrecious>* list = TGmkActiveList<GmkPrecious>::sys();
+        for (mm::mtl::IntrusiveList<GmkPrecious>::iterator it = list->m_list.begin(); it != list->m_list.end(); ++it) {
+            (*it).updateInActiveList(dt);
+        }
+    }
+    TGmkActiveList<GmkPrecious>::sys()->pad_20 = false;
+    TGmkActiveList<GmkSe>::sys()->pad_20 = true;
+    {
+        TGmkActiveList<GmkSe>* list = TGmkActiveList<GmkSe>::sys();
+        for (mm::mtl::IntrusiveList<GmkSe>::iterator it = list->m_list.begin(); it != list->m_list.end(); ++it) {
+            (*it).updateInActiveList(dt);
+        }
+    }
+    TGmkActiveList<GmkSe>::sys()->pad_20 = false;
+    TGmkActiveList<GmkSeLine>::sys()->pad_20 = true;
+    {
+        TGmkActiveList<GmkSeLine>* list = TGmkActiveList<GmkSeLine>::sys();
+        for (mm::mtl::IntrusiveList<GmkSeLine>::iterator it = list->m_list.begin(); it != list->m_list.end(); ++it) {
+            (*it).updateInActiveList(dt);
+        }
+    }
+    TGmkActiveList<GmkSeLine>::sys()->pad_20 = false;
+    TGmkActiveList<GmkEvent>::sys()->pad_20 = true;
+    {
+        TGmkActiveList<GmkEvent>* list = TGmkActiveList<GmkEvent>::sys();
+        for (mm::mtl::IntrusiveList<GmkEvent>::iterator it = list->m_list.begin(); it != list->m_list.end(); ++it) {
+            (*it).updateInActiveList(dt);
+        }
+    }
+    TGmkActiveList<GmkEvent>::sys()->pad_20 = false;
+    TGmkActiveList<GmkTutorial>::sys()->pad_20 = true;
+    {
+        TGmkActiveList<GmkTutorial>* list = TGmkActiveList<GmkTutorial>::sys();
+        for (mm::mtl::IntrusiveList<GmkTutorial>::iterator it = list->m_list.begin(); it != list->m_list.end(); ++it) {
+            GmkTutorial& tutorial = *it;
+            if (tutorial.m_phantom.pad_83 && gf::GfGameFlag::getLocal(1, tutorial.getGameFlagId()) == 0 &&
+                gf::GfGameManager::isGmkTutorialOK()) {
+                tutorial.beginTutorial();
+            }
+        }
+    }
+    TGmkActiveList<GmkTutorial>::sys()->pad_20 = false;
+    size_t num = m_gmkSets.size();
+    for (size_t i = 0; i < num; ++i) {
+        if (GmkSet* set = m_gmkSets[i]) {
+            set->update(dt);
+        }
+    }
+}
+
 void GmkManager::update(float dt) {
     if (m_bdat.m_seq) {
         (m_bdat.*m_bdat.m_seq)(dt);
@@ -574,15 +635,58 @@ bool GmkManager::isValid() const {
     return m_bdat.m_assetData != 0 && fw::BdatManager::isEnableBdat(m_bdat.m_createInfo.m_param) && m_bdatFp != nullptr;
 }
 
+void GmkManager::create(const CreateInfo& info) {
+    dispose();
+    m_createInfo = info;
+    GmkBdat::CreateInfo bdatInfo;
+    bdatInfo.m_handle = info.m_handle;
+    bdatInfo.m_path = m_createInfo.m_bdatPath.m_str;
+    bdatInfo.m_param = 3;
+    m_bdat.create(bdatInfo);
+    m_gmkSets.setAllocator(fw::FrameworkMemory::getAllocator(5));
+    m_gmkSets.reserve(static_cast<unsigned int>(info.m_param));
+    m_seq = &GmkManager::seqWaitValidateResDefBdatFp;
+}
+
 void GmkManager::seqWaitValidateResDefBdatFp(float) {
     if (m_bdat.m_assetData != 0 && fw::BdatManager::isEnableBdat(m_bdat.m_createInfo.m_param)) {
         m_bdatFp = Bdat::getFP(m_createInfo.m_tableName.m_str);
         m_seq = &GmkManager::seqUpdate;
     }
 }
+
+void GmkManager::createGmkSet(mtl::ALLOC_HANDLE handle, int bdatId, const mm::Vec3& pos, float rot) {
+    if (m_gmkSets.size() != 0) {
+        for (GmkSet** it = m_gmkSets.begin(); it != m_gmkSets.end(); ++it) {
+            if ((*it)->m_createInfo.m_bdatId == bdatId) {
+                return;
+            }
+        }
+    }
+    GmkSet::CreateInfo info;
+    info.m_allocHandle = handle;
+    info.m_bdatId = bdatId;
+    info.m_pos = pos;
+    info.m_rotY = rot;
+    GmkSet* set = new (fw::FrameworkMemory::getMem(5), nullptr, 0, 4, false) GmkSet(&info);
+    m_gmkSets.push_back(set);
+}
+
+void GmkManager::disposeGmkSet(int bdatId) {
+    if (m_gmkSets.size() == 0) {
+        return;
+    }
+    for (GmkSet** it = m_gmkSets.begin(); it != m_gmkSets.end(); ++it) {
+        if ((*it)->m_createInfo.m_bdatId == bdatId) {
+            delete *it;
+            m_gmkSets.erase(it);
+            return;
+        }
+    }
+}
 }  // namespace gmk
 
-// instantiated for gmk::GmkManager::disposeGmkSet (not written yet)
+// instantiated for gmk::GmkManager::disposeGmkSet
 template mm::mtl::Vector<gmk::GmkSet*>::iterator mm::mtl::Vector<gmk::GmkSet*>::erase(gmk::GmkSet**);
 
 namespace gmk {
@@ -4058,6 +4162,23 @@ void GmkTutorial::disposeGmkPhantom() {
     m_phantom.dispose();
 }
 
+void GmkEvent::updateInActiveList(float) {
+    if (!m_phantom.pad_83) {
+        return;
+    }
+    if (!getBdatInfo()->isCondMatched()) {
+        return;
+    }
+    if (!gf::GfGameManager::isPlayEventOK() || gf::GfManager::isExecModeThater() || pad_f1) {
+        return;
+    }
+    if (gf::GfPlayFactory::createOneEventForGimmick(getBdatInfo()->m_eventId)) {
+        pad_f1 = true;
+        pad_f2 = false;
+        gf::SCOM_QUEST_REACH::createArrivePlace(m_createInfo.m_bdatId);
+    }
+}
+
 void GmkEvent::dispose() {
     pad_f2 = false;
     pad_f1 = false;
@@ -6982,7 +7103,7 @@ void GmkEnemy::dispose() {
 }
 }  // namespace gmk
 
-// instantiated for gmk::GmkManager::create, gmk::GmkManager::createGmkSet (not written yet)
+// instantiated for gmk::GmkManager::create, gmk::GmkManager::createGmkSet
 template void mm::mtl::Vector<gmk::GmkSet*>::expand(unsigned long, unsigned long);
 
 namespace gmk {
