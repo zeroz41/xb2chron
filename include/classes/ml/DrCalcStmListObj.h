@@ -2,6 +2,7 @@
 #define CLASSES_ML_DRCALCSTMLISTOBJ_H
 
 #include "classes/ml/IWorkEvent.h"
+#include "mm/mtl/FixStr.h"
 
 namespace ml { class EventFileTh; }
 namespace ml { class FileHandleTh; }
@@ -35,9 +36,10 @@ public:
     // the original's; getResLowTexObj picks entry 0x78 of the 0x18-byte array at 0x30 by DrMan::s_nDblStockIdx)
     struct ResTexObj {
         const unsigned char* m_pData;  // 0x0: DrResMdoTexList::texStmUpdate moves its textures here
-        unsigned char pad_8[0x8];
-        unsigned char m_flags;         // 0x10: bit 0 = the memory is ready
-        unsigned char pad_11[0x7];
+        int m_size;                    // 0x8: the memory object's size (texstm_fastReadWait; the name is not the original's)
+        unsigned int pad_c;            // 0xC: zeroed with m_flags
+        unsigned int m_flags;          // 0x10: bit 0 = the memory is ready
+        unsigned char pad_14[0x4];
     };
     ResTexObj* getResLowTexObj();
     // the streamed vertex resource (same shape: DrResMdoVertex::update reloads its buffers from m_pData once bit 0
@@ -54,7 +56,15 @@ public:
     // inline in the error waits: the frames counted, the retry state after 60 (the name is not the original's)
     bool errWait(StmFunc retry);
 
+    bool texstm_stmchk_topheader();
+    bool texstm_stmchk_topWait();
     bool texstm_checkTexStm();
+    bool texstm_fastReadWait();
+    bool texstm_defReadWait();
+    bool texstm_defMidTexWait();
+    bool texstm_defMidTexUpdate();
+    bool texstm_defHeightWait();
+    bool texstm_defHeightRelease();
     bool texstm_defRead();
     bool texstm_deTexCheck();
     bool texstm_notfileWait();
@@ -85,24 +95,56 @@ public:
     // (field names are not the original's)
     unsigned char pad_8[0x8];
     DrCalcStmListObj* m_pNext;   // 0x10: DrCalcTexStreamMan::update walks the list from the manager's 0x28
-    unsigned char pad_18[0x18];
+    unsigned char pad_18[0x10];
+    // 0x28: one memory object per entry (the name is not the original's)
+    DrCalcTexStmObj** m_texObjs;
     ResTexObj* m_pResObj[2];     // 0x30: by DrMan::s_nDblStockIdx, the 0x18-byte resource entries getResVertexObj,
                                  // getResShaderObj and getResLowTexObj index
     FileHandleTh* m_pFile;       // 0x40: the read OnFileEvent waits for
     DrCalcTexStmObj* m_pAddMemObj;  // 0x48: given back by release like m_pMemObj; getAdder returns its memory
     DrCalcTexStmObj* m_pMemObj;  // 0x50: given back by DrCalcTexStreamMan::clearMemObj when the stream ends
-    unsigned char pad_58[0x1C];
+    // 0x58: frames texstm_defHeightWait counted (the name is not the original's)
+    signed char m_heightWait;
+    unsigned char pad_59[0x1];
+    short m_heightIdx;           // 0x5A: the m_texObjs entry texstm_defHeightWait flags (the name is not the original's)
+    unsigned char pad_5c[0x4];
+    // 0x60: 12-byte entries setupInfo copies; m_offset is where an entry's data ends in the read (the struct's and
+    // fields' names are not the original's)
+    struct TexInfo {
+        unsigned int m_offset;
+        unsigned int pad_4;
+        unsigned short pad_8;
+        unsigned char pad_a;
+    };
+    TexInfo* m_texInfo;
+    // 0x68: where in the file each read starts and its size (the struct's and fields' names are not the original's)
+    struct ReadInfo {
+        unsigned int m_offset;
+        unsigned int m_size;
+    };
+    ReadInfo* m_readInfo;
+    unsigned short m_readIdx;    // 0x70: texstm_defRead's m_readInfo entry (the name is not the original's)
+    unsigned short m_midTexIdx;  // 0x72: texstm_deTexCheck's m_readInfo entry (the name is not the original's)
     unsigned short m_vertexIdx;  // 0x74: getResVertexObj's entry
     unsigned short m_shaderIdx;  // 0x76: getResShaderObj's entry
     unsigned short m_lowTexIdx;  // 0x78: getResLowTexObj's entry
-    unsigned char pad_7a[0x6];
+    // 0x7A..0x7C: the m_texObjs entries texstm_defHeightRelease splits (the names are not the original's)
+    unsigned short m_heightBegin;
+    unsigned short m_heightEnd;
+    unsigned char pad_7e[0x2];
     unsigned int m_flags;        // 0x80
     int m_readSize;              // 0x84: added to the manager's m_errReadSize while an error waits
     int m_stateNo;               // 0x88: the state running (each state stores its number)
     // 0x8C: frames the stream went unused (counted while m_curUseMode is 0, clamped to 0x707 and 0xE0F;
     // the ctor sets those, texstm_defupdate clears both once the stream is used)
     short m_idleFrame[2];
-    unsigned char pad_90[0x14];
+    short pad_90;                // 0x90: zeroed as texstm_defMidTexUpdate starts
+    unsigned char pad_92[0x2];
+    int pad_94;                  // 0x94: texstm_defReadWait stores the read memory's size
+    int pad_98;                  // 0x98: the size of the memory a read filled
+    unsigned char pad_9c[0x4];
+    short m_entryNum;            // 0xA0: the entries of m_texObjs, m_pResObj and m_texInfo (the name is not the original's)
+    short pad_a2;                // 0xA2: texstm_defReadWait's count of split memory objects
     short m_texNum;              // 0xA4: the stream's textures (DrResMdoTexList::createStmTexInfoList; the name is not the original's)
     // 0xA6: release counts it down to 0; DrCalcTexStreamMan::update clears m_curUseMode while it is 0 (the name is
     // not the original's)
@@ -114,7 +156,9 @@ public:
     unsigned char pad_b8[0x10];
     int m_curUseMode;            // 0xC8: DrCalcTexStreamMan::update moves m_useMode of the frame here (0 if no texture)
     int m_useMode[2];            // 0xCC: by DrMan::s_nDblStockIdx
-    unsigned char pad_d4[0x10C];
+    mm::mtl::FixStr<256> m_name;  // 0xD4: the file the stream reads (the constructor's name; the field name is not the original's)
+    unsigned int pad_1d8;        // 0x1D8: the constructor's third argument
+    unsigned char pad_1dc[0x4];
     StmFunc m_func;              // 0x1E0: the state DrCalcTexStreamMan::update runs
     StmFunc m_endFunc;           // 0x1F0: the state after the stream ends
     StmFunc m_reqFunc;           // 0x200: the state after texstm_requestWait

@@ -34,6 +34,8 @@
 #include "ml/DrCalcCpPlaneObj.h"
 #include "ml/CriticalSection.h"
 #include "ml/EventFileTh.h"
+#include "ml/DevFileParamTh.h"
+#include "classes/ml/DevFileTh.h"
 #include "ml/DrAPGxType.h"
 #include "ml/DrCalcClipMan.h"
 #include "ml/DrCalcGpuCost.h"
@@ -970,6 +972,8 @@ void DrCalcMan::renderEnd() {
 
 void DrCalcMan::shadowEnd() { m_pViewWork->m_billboard = m_pViewWork->m_saveBillboard; }
 
+unsigned int DrCalcTexStreamMan::MEM_4K_ALIGNMENT = 0x1000;
+
 CriticalSection& DrCalcTexStreamMan::getCriticalSection() {
     static CriticalSection s_cs;  // Proposed name, not the original's (lbl_71015E9BF8)
     return s_cs;
@@ -1026,6 +1030,49 @@ void DrCalcTexStreamMan::cntMemUpdate() {
             pad_248C = 0;
         }
     }
+}
+
+bool DrCalcStmListObj::texstm_stmchk_topheader() {
+    m_stateNo = 0;
+    m_idleFrame[0] = 0;
+    m_idleFrame[1] = 0;
+    if (!(m_flags & FLAG_KEEPMEM)) {
+        end();
+    } else {
+        DrCalcTexStreamMan* pMan = DrCalcTexStreamMan::get();
+        if (pMan->pad_2498 >= 0) {
+            pMan->pad_2498 = 0;
+        }
+        if (!(pMan->pad_2068 & 0x20)) {
+            m_pMemObj = pMan->createReadFreeObj(0x1000);
+            if (m_pMemObj == nullptr) {
+                DrCalcTexStreamMan::get()->m_errReadSize += 0x1000;
+            } else {
+                DevFileParamTh param;
+                param.pad_4c = 0;
+                param.pad_50 = 0x40;
+                param.m_buffer = m_pMemObj->m_pMem;
+                param.m_size = 0x1000;
+                param.m_listener = this;
+                param.m_path = m_name.m_str;
+                m_pFile = DevFileTh::readFile(param);
+                if (m_pFile == nullptr) {
+                    if (m_pMemObj) {
+                        DrCalcTexStreamMan::get()->clearMemObj(m_pMemObj);
+                        m_pMemObj = nullptr;
+                    }
+                    m_func = &DrCalcStmListObj::texstm_notfileWait;
+                    m_endFunc = &DrCalcStmListObj::texstm_notfileWait;
+                } else {
+                    m_pMemObj->m_flags |= 0x24;
+                    m_func = &DrCalcStmListObj::texstm_stmchk_topWait;
+                    m_flags |= FLAG_READ;
+                    DrMan::get()->setAllMiddelTexStmChk(true);
+                }
+            }
+        }
+    }
+    return false;
 }
 
 bool DrCalcStmListObj::isResTex() const { return (m_flags & (FLAG_RESTEX << DrMan::s_nDblStockIdx)) != 0; }
@@ -1091,6 +1138,74 @@ bool DrCalcStmListObj::texstm_notfileWait() {
     return false;
 }
 
+bool DrCalcStmListObj::texstm_stmchk_topWait() {
+    m_stateNo = 1;
+    m_idleFrame[0] = 0;
+    m_idleFrame[1] = 0;
+    DrCalcTexStreamMan* pMan = DrCalcTexStreamMan::get();
+    if (pMan->pad_2498 >= 0) {
+        pMan->pad_2498 = 0;
+    }
+    if (m_flags & FLAG_READ) {
+        DrMan::get()->setAllMiddelTexStmChk(true);
+    } else if (!(m_flags & FLAG_KEEPMEM)) {
+        end();
+    } else if (!(m_flags & FLAG_READERR)) {
+        if (pMan->pad_2068 & 0x20) {
+            return false;
+        }
+        DrCalcTexStmObj* pObj = m_pMemObj;
+        const unsigned int* pHead = static_cast<const unsigned int*>(pObj->m_pMem);
+        if (pHead[0] == 0x4D535244 || pHead[1] == 10001) {
+            unsigned int size = pHead[2];
+            unsigned int readSize;
+            if (size > 0x1000) {
+                unsigned int align = DrCalcTexStreamMan::MEM_4K_ALIGNMENT;
+                readSize = (align - size % align) % align + size;
+                pObj = pMan->createReadFreeObj(readSize);
+                pMan = DrCalcTexStreamMan::get();
+                if (pObj == nullptr) {
+                    pMan->m_errReadSize += readSize;
+                    return false;
+                }
+                if (m_pMemObj) {
+                    pMan->clearMemObj(m_pMemObj);
+                    m_pMemObj = nullptr;
+                }
+                m_pMemObj = pObj;
+            } else {
+                readSize = 0x1000;
+            }
+            DevFileParamTh param;
+            param.pad_4c = pHead[3];
+            param.pad_50 = pHead[2];
+            param.m_buffer = pObj->m_pMem;
+            param.m_size = readSize;
+            param.m_path = m_name.m_str;
+            param.m_listener = this;
+            m_pFile = DevFileTh::readFile(param);
+            m_pMemObj->m_flags |= 0x24;
+            m_func = &DrCalcStmListObj::texstm_stmchk_topLast;
+            m_flags |= FLAG_READ;
+            DrMan::get()->setAllMiddelTexStmChk(true);
+        } else {
+            m_func = &DrCalcStmListObj::texstm_oldVerWait;
+            if (pObj) {
+                pMan->clearMemObj(pObj);
+                m_pMemObj = nullptr;
+            }
+        }
+    } else {
+        m_flags &= ~FLAG_READERR;
+        if (m_pMemObj) {
+            DrCalcTexStreamMan::get()->clearMemObj(m_pMemObj);
+            m_pMemObj = nullptr;
+        }
+        m_func = &DrCalcStmListObj::texstm_notfileWait;
+    }
+    return false;
+}
+
 bool DrCalcStmListObj::texstm_stmchk_topLast() {
     m_stateNo = 2;
     m_idleFrame[0] = 0;
@@ -1129,6 +1244,91 @@ bool DrCalcStmListObj::texstm_stmchk_setWait() {
     return false;
 }
 
+// the memory object cut from obj's end after size bytes: a spare object takes the rest and is linked after obj;
+// null when obj is smaller or no spare is left (inline in the reads' waits; the name is not the original's)
+inline DrCalcTexStmObj* DrCalcTexStreamMan::splitMemObj(DrCalcTexStmObj* obj, unsigned int size) {
+    if (static_cast<unsigned int>(obj->m_size) < size) {
+        return nullptr;
+    }
+    DrCalcTexStreamMan* pMan = get();
+    DrCalcTexStmObj* pSpare = pMan->m_spareList.m_head;
+    if (pSpare != nullptr) {
+        pMan->m_spareList.remove(pSpare);
+        int total = obj->m_size;
+        obj->m_size = size;
+        pSpare->m_size = total - size;
+        pSpare->m_pMem = static_cast<unsigned char*>(obj->m_pMem) + size;
+        pSpare->m_flags = 1;
+        pMan->m_memList.insertNext(obj, pSpare);
+    }
+    return pSpare;
+}
+
+bool DrCalcStmListObj::texstm_defReadWait() {
+    m_stateNo = 6;
+    m_idleFrame[0] = 0;
+    m_idleFrame[1] = 0;
+    DrCalcTexStreamMan* pMan = DrCalcTexStreamMan::get();
+    if (pMan->pad_2498 >= 0) {
+        pMan->pad_2498 = 0;
+    }
+    if (m_flags & FLAG_READ) {
+        DrMan::get()->setAllMiddelTexStmChk(true);
+        return false;
+    }
+    if (m_flags & FLAG_READERR) {
+        m_flags &= ~FLAG_READERR;
+        if (m_pAddMemObj) {
+            DrCalcTexStreamMan::get()->clearMemObj(m_pAddMemObj);
+            m_pAddMemObj = nullptr;
+        }
+        m_reqFunc = &DrCalcStmListObj::texstm_defRead;
+        m_reqWait = 90;
+        m_func = &DrCalcStmListObj::texstm_requestWait;
+        return false;
+    }
+    DrCalcTexStmObj* pObj = m_pAddMemObj;
+    pad_94 = pObj->m_size;
+    pObj->m_flags &= ~0x24;
+    int num = 0;
+    if (m_flags & 0x100) {
+        m_texObjs[0] = m_pAddMemObj;
+        num = 1;
+    }
+    unsigned int prev = 0;
+    if (m_flags & 0x200) {
+        if (num == 0) {
+            m_texObjs[0] = m_pAddMemObj;
+        } else {
+            m_texObjs[num] = DrCalcTexStreamMan::splitMemObj(m_texObjs[num - 1], m_texInfo[m_shaderIdx].m_offset);
+            prev = m_texInfo[m_shaderIdx].m_offset;
+        }
+        num++;
+    }
+    if (m_flags & 0x400) {
+        if (num == 0) {
+            m_texObjs[0] = m_pAddMemObj;
+        } else {
+            m_texObjs[num] = DrCalcTexStreamMan::splitMemObj(m_texObjs[num - 1], m_texInfo[m_lowTexIdx].m_offset - prev);
+        }
+        num++;
+    }
+    m_pAddMemObj = nullptr;
+    pad_a2 = num;
+    for (int i = 0; i < num; i++) {
+        ResTexObj* pRes0 = &m_pResObj[0][i];
+        ResTexObj* pRes1 = &m_pResObj[1][i];
+        pRes0->m_pData = pRes1->m_pData = static_cast<const unsigned char*>(m_texObjs[i]->m_pMem);
+        pRes0->m_size = pRes1->m_size = m_texObjs[i]->m_size;
+        pRes0->m_flags = pRes1->m_flags = 0;
+        pRes0->pad_c = pRes1->pad_c = 0;
+        m_texObjs[i]->m_flags |= 8;
+    }
+    m_flags |= 8;
+    m_func = &DrCalcStmListObj::texstm_deTexCheck;
+    return false;
+}
+
 bool DrCalcStmListObj::texstm_defErrWait() {
     m_stateNo = 7;
     return errWait(&DrCalcStmListObj::texstm_defRead);
@@ -1142,9 +1342,148 @@ bool DrCalcStmListObj::texstm_requestWait() {
     return false;
 }
 
+bool DrCalcStmListObj::texstm_defMidTexWait() {
+    m_stateNo = 9;
+    m_idleFrame[0] = 0;
+    m_idleFrame[1] = 0;
+    DrCalcTexStreamMan* pMan = DrCalcTexStreamMan::get();
+    if (pMan->pad_2498 > 0) {
+        pMan->pad_2498 = 1;
+    }
+    if (m_flags & FLAG_READ) {
+        DrMan::get()->setAllMiddelTexStmChk(true);
+        return false;
+    }
+    DrCalcTexStmObj* pObj = m_pAddMemObj;
+    pad_98 = pObj->m_size;
+    pObj->m_flags &= ~0x24;
+    m_texObjs[m_heightBegin] = m_pAddMemObj;
+    unsigned int prev = 0;
+    for (unsigned int i = m_heightBegin + 1; i < m_heightEnd; i++) {
+        m_texObjs[i] = DrCalcTexStreamMan::splitMemObj(m_texObjs[i - 1], m_texInfo[i].m_offset - prev);
+        prev = m_texInfo[i].m_offset;
+    }
+    m_pAddMemObj = nullptr;
+    for (unsigned int i = m_heightBegin; i < m_heightEnd; i++) {
+        ResTexObj* pRes0 = &m_pResObj[0][i];
+        ResTexObj* pRes1 = &m_pResObj[1][i];
+        pRes0->m_pData = pRes1->m_pData = static_cast<const unsigned char*>(m_texObjs[i]->m_pMem);
+        pRes0->m_size = pRes1->m_size = m_texObjs[i]->m_size;
+        pRes0->m_flags = pRes1->m_flags = 0;
+        pRes0->pad_c = pRes1->pad_c = 0;
+    }
+    pad_90 = 0;
+    m_func = &DrCalcStmListObj::texstm_defMidTexUpdate;
+    m_flags |= 0x10;
+    return false;
+}
+
 bool DrCalcStmListObj::texstm_defMidtexErrWait() {
     m_stateNo = 10;
     return errWait(&DrCalcStmListObj::texstm_deTexCheck);
+}
+
+bool DrCalcStmListObj::texstm_defHeightWait() {
+    m_stateNo = 12;
+    m_idleFrame[0] = 0;
+    m_idleFrame[1] = 0;
+    DrCalcTexStreamMan* pMan = DrCalcTexStreamMan::get();
+    if (pMan->pad_2498 >= 2) {
+        pMan->pad_2498 = 2;
+    }
+    if (++m_heightWait >= 2) {
+        m_heightWait = 3;
+        if (m_pAddMemObj) {
+            pMan->clearMemObj(m_pAddMemObj);
+            m_pAddMemObj = nullptr;
+        }
+    }
+    if (!(m_flags & FLAG_READ) && m_heightWait >= 2) {
+        m_heightWait = 0;
+        m_texObjs[m_heightIdx]->m_flags &= ~0xA4;
+        m_texObjs[m_heightIdx]->m_flags |= 0x310;
+        m_func = &DrCalcStmListObj::texstm_defMidTexUpdate;
+        pad_90 = 0;
+        return true;
+    }
+    return false;
+}
+
+bool DrCalcStmListObj::texstm_defHeightRelease() {
+    m_stateNo = 13;
+    m_idleFrame[0] = 0;
+    m_idleFrame[1] = 0;
+    if (++m_errWait >= 2) {
+        m_errWait = 0;
+        m_func = &DrCalcStmListObj::texstm_defMidTexUpdate;
+        pad_90 = 0;
+        for (unsigned int i = m_heightBegin; i < m_heightEnd; i++) {
+            DrCalcTexStmObj* pObj = m_texObjs[i];
+            if (pObj->m_flags & 0x80) {
+                DrCalcTexStreamMan* pMan = DrCalcTexStreamMan::get();
+                unsigned int size = pObj->pad_28;
+                DrCalcTexStmObj* pSpare = pMan->m_spareList.m_head;
+                pMan->m_spareList.remove(pSpare);
+                int total = pObj->m_size;
+                pObj->m_size = size;
+                pSpare->m_size = total - size;
+                pSpare->m_pMem = static_cast<unsigned char*>(pObj->m_pMem) + size;
+                pSpare->m_flags = 1;
+                pMan->m_memList.insertNext(pObj, pSpare);
+                pSpare->m_flags = (m_texObjs[i]->m_flags | pSpare->m_flags) & ~0x1A0;
+                DrCalcTexStmObj* pOld = m_texObjs[i];
+                m_texObjs[i] = pSpare;
+                if (pOld) {
+                    DrCalcTexStreamMan::get()->clearMemObj(pOld);
+                }
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+bool DrCalcStmListObj::texstm_fastReadWait() {
+    m_stateNo = 18;
+    m_idleFrame[0] = 0;
+    m_idleFrame[1] = 0;
+    DrCalcTexStreamMan* pMan = DrCalcTexStreamMan::get();
+    if (pMan->pad_2498 > 0) {
+        pMan->pad_2498 = 1;
+    }
+    if (m_flags & FLAG_READ) {
+        return false;
+    }
+    if (m_flags & FLAG_READERR) {
+        m_flags &= ~FLAG_READERR;
+        if (m_pAddMemObj) {
+            DrCalcTexStreamMan::get()->clearMemObj(m_pAddMemObj);
+            m_pAddMemObj = nullptr;
+        }
+        m_reqFunc = &DrCalcStmListObj::texstm_checkTexStm;
+        m_reqWait = 90;
+        m_func = &DrCalcStmListObj::texstm_requestWait;
+        return false;
+    }
+    DrCalcTexStmObj* pObj = m_pAddMemObj;
+    pad_98 = pObj->m_size;
+    pObj->m_flags &= ~0x24;
+    m_texObjs[0] = m_pAddMemObj;
+    for (int i = 1; i < m_entryNum; i++) {
+        m_texObjs[i] = DrCalcTexStreamMan::splitMemObj(m_texObjs[i - 1], m_texInfo[i].m_offset);
+    }
+    m_pAddMemObj = nullptr;
+    for (int i = 0; i < m_entryNum; i++) {
+        ResTexObj* pRes0 = &m_pResObj[0][i];
+        ResTexObj* pRes1 = &m_pResObj[1][i];
+        pRes0->m_pData = pRes1->m_pData = static_cast<const unsigned char*>(m_texObjs[i]->m_pMem);
+        pRes0->m_size = pRes1->m_size = m_texObjs[i]->m_size;
+        pRes0->m_flags = pRes1->m_flags = 0;
+        pRes0->pad_c = pRes1->pad_c = 0;
+    }
+    m_func = &DrCalcStmListObj::texstm_defupdate;
+    m_flags |= 0x10;
+    return true;
 }
 
 bool DrCalcStmListObj::texstm_fastErrWait() {

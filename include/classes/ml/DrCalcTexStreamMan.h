@@ -37,6 +37,11 @@ public:
     // the stream lists stocked this frame (s_nDblStockIdx's) run their API updates, the stock emptied
     void apiUpdate();
     void clearMemObj(DrCalcTexStmObj* obj);
+    DrCalcTexStmObj* createReadFreeObj(unsigned int size);
+    // obj cut after size bytes: a spare object takes the rest (inline; the name is not the original's)
+    static DrCalcTexStmObj* splitMemObj(DrCalcTexStmObj* obj, unsigned int size);
+    // the reads' sizes are rounded up to it (0x1000)
+    static unsigned int MEM_4K_ALIGNMENT;
     // while bit 0 of pad_2068 is set: the m_memCache entries not in use (bit 1 of their flags) given back
     void cntMemUpdate();
 
