@@ -70,6 +70,10 @@ public:
         U& operator[](unsigned long n) const {
             return _pArray[(_index + n) % M];
         }
+        fixed_queue_iterator& operator--() {
+            --_index;
+            return *this;
+        }
         friend bool operator==(const fixed_queue_iterator& a, const fixed_queue_iterator& b) {
 #line 230 MM_MTL_FIXED_QUEUE_PATH
             MM_ASSERT(a._pArray == b._pArray);
@@ -209,6 +213,34 @@ public:
         m_head = (m_head + 1) % N;
         --m_size;
         at(index);
+    }
+    // value before pos, the later elements shifted one on (fixed_queue.h asserts `!full()` at line 856;
+    // GfGameEnv's create functions keep their queues ordered by it)
+    iterator insert(iterator pos, const T& value) {
+#line 856 MM_MTL_FIXED_QUEUE_PATH
+        MM_ASSERT(!full());
+        if (pos == iterator(data(), m_head + m_size)) {
+            push_back(value);
+            return pos;
+        }
+        new (static_cast<void*>(&m_buffer[(m_head + m_size) % N * kWords])) T();
+        if (!empty()) {
+            for (iterator it = end(); it != pos; --it) {
+                // each slot from the one before, wrapping to the ring's end: the original takes the index as an int
+                // (FixedQueue<GfMenuOrderMgr::sLog, 20>::insert sign-extends both)
+                int index = it._index;
+                int prev = index - 1;
+                if (prev < 0) {
+                    prev = it._index + N - 1;
+                }
+                unsigned long from = prev % N;
+                unsigned long to = index % N;
+                data()[to] = data()[from];
+            }
+        }
+        *pos = value;
+        ++m_size;
+        return pos;
     }
     void erase(iterator it) {
 #line 683 MM_MTL_FIXED_QUEUE_PATH

@@ -155,6 +155,45 @@ void GfGameEnv::setMapID(unsigned int jumpID, unsigned int mapID) {
     env->m_mapJumpID = jumpID;
 }
 
+CFILTER_HANDLE GfGameEnv::createColorFilter(const ColorFilter& filter) {
+    GfGameEnv* env = get();
+    ColorFilter entry = filter;
+    CFILTER_HANDLE handle = CFILTER_HANDLE((env->m_colorFilters.size() + 1) | (env->m_colorFilterSerial << 8));
+    ++env->m_colorFilterSerial;
+    entry.m_handle = handle;
+    for (mm::mtl::FixedQueue<ColorFilter, 16>::iterator it = env->m_colorFilters.begin(); it != env->m_colorFilters.end(); ++it) {
+        if ((*it).m_prio <= entry.m_prio) {
+            env->m_colorFilters.insert(it, entry);
+            goto found;
+        }
+    }
+    env->m_colorFilters.push_front(entry);
+found:
+    fw::RenderParam::setColorFilter(env->m_colorFilters.first().m_num, env->m_colorFilters.first().m_farNum,
+                                    env->m_colorFilters.first().m_time, fw::CAMERA_TYPE(0));
+    return entry.m_handle;
+}
+
+CLOUD_SEA_HANDLE GfGameEnv::createCloudSea(CLOUD_SEA type, CLOUD_SEA_PRIO prio) {
+    GfGameEnv* env = get();
+    CloudSea sea;
+    sea.m_type = type;
+    sea.m_prio = prio;
+    CLOUD_SEA_HANDLE handle = CLOUD_SEA_HANDLE((env->m_cloudSeas.size() + 1) | (env->m_cloudSeaSerial << 8));
+    ++env->m_cloudSeaSerial;
+    sea.m_handle = handle;
+    for (mm::mtl::FixedQueue<CloudSea, 16>::iterator it = env->m_cloudSeas.begin(); it != env->m_cloudSeas.end(); ++it) {
+        if ((*it).m_prio <= prio) {
+            env->m_cloudSeas.insert(it, sea);
+            goto found;
+        }
+    }
+    env->m_cloudSeas.push_front(sea);
+found:
+    fw::RenderParam::setCloudSea(type);
+    return sea.m_handle;
+}
+
 CLOUD_SEA GfGameEnv::getCurrentCloudSea() {
     GfGameEnv* env = get();
     if (!env->m_cloudSeas.empty()) {
@@ -251,6 +290,24 @@ bool GfGameEnv::isRoom() {
 
 void GfGameEnv::sendPlayerPositionToRender(const mm::Vec3& pos) {
     fw::RenderParam::setPlayerPosition(pos, fw::CAMERA_TYPE(0));
+}
+
+WEATHER_HANDLE GfGameEnv::createTempWeather(WEATHERID weather, WEATHER_PRIO prio) {
+    GfGameEnv* env = get();
+    WeatherSet set;
+    set.m_weather = weather;
+    set.m_prio = prio;
+    WEATHER_HANDLE handle = WEATHER_HANDLE((env->m_weathers.size() + 1) | (env->m_weatherSerial << 8));
+    ++env->m_weatherSerial;
+    set.m_handle = handle;
+    for (mm::mtl::FixedQueue<WeatherSet, 16>::iterator it = env->m_weathers.begin(); it != env->m_weathers.end(); ++it) {
+        if ((*it).m_prio <= prio) {
+            env->m_weathers.insert(it, set);
+            return set.m_handle;
+        }
+    }
+    env->m_weathers.push_front(set);
+    return set.m_handle;
 }
 
 WEATHERID GfGameEnv::getTempWeather() {

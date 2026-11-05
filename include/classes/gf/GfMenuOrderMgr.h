@@ -16,6 +16,9 @@ public:
     // not): setOrder copies its first 0x24 bytes
     struct sLog {
         sLog() : m_channel(0), m_handle(0), m_event(0), m_priority(0) {}
+        // setOrder's: the priority is set after it (no store of it before the channel's table lookup)
+        sLog(int channel, unsigned int handle, const ui::EventData& event)
+            : m_channel(channel), m_handle(handle), m_event(event) {}
         int m_channel;  // 1 or 2 (GfMenuObjZoneTelop / GfMenuObjLocationTelop)
         unsigned int m_handle;  // the menu object postUpdate sends m_event to
         ui::EventData m_event;
