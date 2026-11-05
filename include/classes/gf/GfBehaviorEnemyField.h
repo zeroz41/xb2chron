@@ -25,9 +25,20 @@ public:
     // a field move speed (StateFieldBlade::enter passes 0, StateFieldHome::seqWaitTurnEnd and
     // StateFieldAreaWalk::seqMoveToGoal 1; the values' names are not known)
     enum MoveSpeed : int {};
+    // the first block of the ninth param list (fw::ParamManager::m_paramLists[8]): applyLinearVelocityAndRotY
+    // limits a frame's fall to pad_4 - 0.1 (the struct's name is not the original's)
+    struct FallParam {
+        float pad_0;
+        float pad_4;
+    };
     // its table's key function: disposes, then its members go (the D2 copy follows TFieldExecCmdTurn's)
     virtual ~GfBehaviorEnemyField();  // slot 0
     void dispose();
+    void applyLinearVelocityAndRotY(float dt);
+    // disposes its squad place, then joins the squad of its object's enemy gimmick (type 0 or 1) when it has one
+    void createSquadNavi();
+    // disposes its sensor, then creates it at the owner's transform with its object's rows and battle lock info
+    void createSensor();
     // advances the field movement by dt (GfComBehaviorEnemy::updateField calls it each frame)
     void update(float dt);
     // whether the enemy reached its goal (pad_c0) within pad_18, or its local steer timed out colliding
@@ -81,7 +92,10 @@ public:
     float pad_1c;
     // 3 (flying, SDataEnemy::m_actType's value) counts the height in isArrivedToGoal's distance
     unsigned char pad_20;
-    unsigned char pad_21[0xf];
+    unsigned char pad_21[0xb];
+    // moveToGoal turns its velocity toward the facing only while the angle between them is above this (and at
+    // most pad_30)
+    float pad_2c;
     // the turn threshold GfComBehaviorEnemy::execTurnCmd(float) passes to its turn command (CreateInfo::pad_c)
     float pad_30;
     unsigned char pad_34[0x2];
@@ -95,7 +109,16 @@ public:
     unsigned char pad_48[0x8];
     // its place in its squad (the name is not the original's)
     gmk::GmkSquadNavi m_squadNavi;
-    unsigned char pad_90[0x30];
+    // cleared while the enemy floats at the water surface (update with SDataEnemy::m_actType 1); gravity pulls
+    // only while set
+    bool pad_90;
+    unsigned char pad_91[0xf];
+    // the velocity applyLinearVelocityAndRotY moves its collision object by (update clears x and z each frame and
+    // lets gravity act on y; the name is not the original's)
+    mm::Vec3 m_velocity;
+    // the turn speed applyLinearVelocityAndRotY turns the object by (update clears it)
+    float pad_b0;
+    unsigned char pad_b4[0xc];
     // the goal position (isArrivedToGoal; updateNaviMeshObj hands it to its navigation mesh object as the end
     // position, so it is a Vec3; the name is not the original's)
     mm::Vec3 m_goalPos;
@@ -106,7 +129,14 @@ public:
     // the local steer's TIsTargetNotSameSquad<GfComBehaviorEnemy> (the constructor stores its table here)
     unsigned char pad_5260[0x8];
     GfFieldPitchRollController m_pitchRoll;
-    unsigned char pad_52a0[0x10];
+    // update counts pad_52a4 up by dt while it is below pad_52a0
+    float pad_52a0;
+    float pad_52a4;
+    unsigned char pad_52a8;
+    // set when the enemy is where its act type cannot stay (out of water for 1, in it for 0, under it for 2;
+    // update), GfComBehaviorEnemy::updateField's state 13 condition
+    bool pad_52a9;
+    unsigned char pad_52aa[0x6];
 };
 }  // namespace gf
 

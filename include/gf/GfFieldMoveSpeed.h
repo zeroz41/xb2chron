@@ -39,7 +39,9 @@ public:
     };
     explicit GfEnemyFieldMoveSpeed(const CreateInfo* info);
     // inline: GfBehaviorEnemyField's destructor stores -1 to m_handle in place
-    ~GfEnemyFieldMoveSpeed() { m_handle = reinterpret_cast<GF_OBJ_HANDLE*>(-1); }
+    ~GfEnemyFieldMoveSpeed() { dispose(); }
+    // forgets its object (inline in GfBehaviorEnemyField::dispose and the destructor; the name is not the original's)
+    void dispose() { m_handle = reinterpret_cast<GF_OBJ_HANDLE*>(-1); }
     void create(const CreateInfo& info);
     void setSpeedKmph(float speed, float rate);
     void update(float deltaTime);

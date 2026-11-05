@@ -58,6 +58,11 @@
 #include "gf/MsgObjectGetVelocity.h"
 #include "gf/MsgUnk_100003A.h"
 #include "gf/MsgObjectNotifyDead.h"
+#include "classes/fw/NaviManager.h"
+#include "classes/fw/ParamManager.h"
+#include "classes/fw/ParamList.h"
+#include "classes/gf/GfComPropertyEnemy.h"
+#include "classes/gf/GfGameManager.h"
 
 namespace gf {
 
@@ -87,6 +92,77 @@ gmk::GmkRouteNavi* GfBehaviorEnemyField::getGmkRouteNavi() const {
     return nullptr;
 }
 
+void GfBehaviorEnemyField::dispose() {
+    m_pitchRoll.dispose();
+    m_localSteer.dispose();
+    m_moveSpeed.dispose();
+    m_sensor.dispose();
+    m_squadNavi.dispose();
+    fw::NaviManager::sys()->releaseObject(pad_40);
+    pad_40 = nullptr;
+    m_owner = nullptr;
+    m_handle = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    pad_18 = 1.0f;
+    pad_1c = 2.0f;
+    pad_20 = 0;
+}
+
+void GfBehaviorEnemyField::update(float dt) {
+    if (m_owner == nullptr || m_handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    m_velocity.z = 0.0f;
+    m_velocity.x = 0.0f;
+    fw::ColiMoveObject* coli = getColiObject();
+    if (coli != nullptr && !coli->testAttribute(fw::ColiAtrr(0)) && coli->m_followType != 0 && pad_90) {
+        m_velocity.y += dt * -9.8f;
+    } else {
+        m_velocity.y = 0.0f;
+    }
+    pad_b0 = 0.0f;
+    updateNaviMeshObj(dt);
+    m_sensor.update(m_handle, *m_owner);
+    m_moveSpeed.update(dt);
+    GfFieldLocalSteer::UpdateInfo info;
+    info.pad_0 = m_goalPos;
+    info.pad_10 = dt;
+    m_localSteer.update(info);
+    if (pad_52a4 < pad_52a0) {
+        pad_52a4 += dt;
+    }
+    GfObjAcc acc(m_handle);
+    GfObj* obj = acc.getObj();
+    if (obj == nullptr) {
+        return;
+    }
+    const GfComPropertyEnemy* property = obj->getComponent<GfComPropertyEnemy>(5);
+    float water = 0.0f;
+    bool inWater = property->getWaterHeight(water);
+    float chest = property->getChestHeight();
+    if (!GfGameManager::isControlFree() || acc.isEnemyBlade()) {
+        pad_52a9 = false;
+        return;
+    }
+    DataParamAcc param(m_handle);
+    switch (param.getSDataEnemy()->m_actType) {
+    case 0:
+        pad_52a9 = inWater;
+        break;
+    case 1:
+        pad_52a9 = !inWater;
+        if (water < chest) {
+            pad_90 = true;
+        } else {
+            pad_90 = false;
+            m_velocity.y = (water - chest) * 0.1f;
+        }
+        break;
+    case 2:
+        pad_52a9 = inWater && chest < water;
+        break;
+    }
+}
+
 bool GfBehaviorEnemyField::isArrivedToGoal() const {
     if (m_localSteer.isTimeOutCollide()) {
         return true;
@@ -103,6 +179,50 @@ bool GfBehaviorEnemyField::isArrivedToGoal() const {
     }
     float dist = dx * dx + dy * dy + dz * dz;
     return !(pad_18 * pad_18 < dist);
+}
+
+void GfBehaviorEnemyField::moveToGoal(float) {
+    float speed = m_moveSpeed.m_speed * 0.2777778f;
+    GfObjSetup* setup = GfObjManager::getObjInfo(m_handle)->m_setup;
+    const GfObjSetupEnemy* enemy =
+        setup->getRTTI()->isKindOf(&GfObjSetupEnemy::m_rtti) ? static_cast<GfObjSetupEnemy*>(setup) : nullptr;
+    float scale = enemy->m_initialScale.x;
+    {
+        mm::Vec3 dir;
+        getMoveDir(dir);
+        m_velocity += dir * speed * scale;
+    }
+    if (m_localSteer.m_info.m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        m_localSteer.apply(m_velocity, m_velocity);
+    }
+    if (getColiObject() != nullptr) {
+        float goal = atan2f(m_velocity.x, m_velocity.z);
+        GfObjAcc acc(m_handle);
+        float cur = 0.0f;
+        if (acc.isValidTransform()) {
+            mm::Vec3 front = acc.getWorldTransform().rotation.rotate(mm::Vec3::unitZ);
+            front.y = 0.0f;
+            if (!front.isZero()) {
+                float length = front.length();
+                if (length <= 1e-6f) {
+                    front = mm::Vec3::zero;
+                } else {
+                    float inv = 1.0f / length;
+                    front.x = inv * front.x;
+                    front.y = inv * front.y;
+                    front.z = inv * front.z;
+                }
+                cur = atan2f(front.x, front.z);
+            }
+        }
+        float diff = mm::normalizeRadian(goal - cur);
+        pad_b0 = diff * 0.1f;
+        if (pad_2c < fabsf(diff) && fabsf(diff) <= pad_30) {
+            float half = mm::normalizeRadian(cur + diff * 0.1f - goal) * 0.5f;
+            mm::Quat rot(0.0f, sinf(half), 0.0f, cosf(half));
+            m_velocity = rot.rotate(m_velocity);
+        }
+    }
 }
 
 void GfBehaviorEnemyField::applyFieldMoveSpeed(enemy::STATE_ID state, GfComBehaviorEnemy& owner) {
@@ -504,7 +624,7 @@ void GfComBehaviorEnemy::updateField(const fw::UpdateInfo& info) {
             setStateId(static_cast<enemy::STATE_ID>(0));
         }
     }
-    if (getStateId() != 13 && m_field.pad_52a0[9]) {
+    if (getStateId() != 13 && m_field.pad_52a9) {
         m_hfsm.setState(13);
     }
 }
