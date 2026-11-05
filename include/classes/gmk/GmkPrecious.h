@@ -51,6 +51,14 @@ public:
     // BdatInfo's isPopCondMatched fails; then tests GmkManager's state (0x198), isGameTypeIra and the pop distance
     // (m_popDistSq). debugDraw calls it when the gimmick is valid and ignores the answer.
     bool isPopCondMatched() const;
+    // GmkManager::seqUpdate calls it for the gimmicks in the active list: obtains the item when the player stands
+    // within the field-precious distances (2.0.0's symbols name it)
+    void updateInActiveList(float);
+    // update's pop: the game object, its effect, its position (2.0.0's symbols name them)
+    void createGobInst();
+    void createEffectIcon();
+    void validateXform();
+    void createMenuIcon();
     // AGmkBase's row as this kind's BdatInfo; the name is not the original's
     const BdatInfo* getBdatInfo() const {
         return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);

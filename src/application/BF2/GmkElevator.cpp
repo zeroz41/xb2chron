@@ -190,6 +190,14 @@
 #include "gf/GfDataUtil.h"
 #include "classes/gmk/GmkRoutedEnemy/PopXformFinder.h"
 #include "classes/gmk/GmkEnemy/PopXformFinder.h"
+#include "classes/gf/GfQuestTarget.h"
+#include "classes/gf/GfMenuCallContext.h"
+#include "gf/GfMenuBdat.h"
+#include "gf/MenuOffset.h"
+#include "classes/gf/SCOM_ADD_ITEM.h"
+#include "classes/fw/ParamManager.h"
+#include "classes/fw/ParamList.h"
+#include "gf/ItemGetParam.h"
 
 namespace gf {
 // the resident sound sources' files, by index (getSoundSourceFileName reads it; bindGFSoundSource loads each)
@@ -6827,6 +6835,62 @@ void GmkPrecious::debugDraw() const {
     }
 }
 
+// the item is not obtained, its row's conditions hold and the interest position lies within the pop distance
+bool GmkPrecious::isPopCondMatched() const {
+    const BdatInfo* info = getBdatInfo();
+    if (isObtained()) {
+        return false;
+    }
+    if (!info->isPopCondMatched()) {
+        return false;
+    }
+    const mm::Vec3* pos = m_pos;
+    float distSq = m_popDistSq;
+    // isInterestPosExist with the player test that also accepts Ira's control mover
+    GmkManager* manager = GmkManager::sys();
+    if (manager != nullptr && manager->pad_198 != 1) {
+        if (manager->pad_198 != 0) {
+            return false;
+        }
+        if (!gf::GfGameManager::isGameTypeIra() &&
+            gf::GfGameManager::getControlMoverForGimmick() == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            return false;
+        }
+    } else {
+        ml::Scn* scn = ml::Scn::sys();
+        if (scn == nullptr || scn->getCam(-1) == nullptr) {
+            return false;
+        }
+    }
+    const mm::Vec3& interest = getInterestPos();
+    float dx = interest.x - pos->x;
+    float dy = interest.y - pos->y;
+    float dz = interest.z - pos->z;
+    return !(dx * dx + dy * dy + dz * dz > distSq);
+}
+
+// the player takes the item when it stands within the item_get param's heights and radius of it
+void GmkPrecious::updateInActiveList(float) {
+    if (!isPlayerExist() || isObtained() || gf::GfGameManager::isBattle() ||
+        !gf::GfGameManager::isEnableGetFieldPrecious()) {
+        return;
+    }
+    const mm::Vec3& player = getPlayerPos();
+    mm::Vec3 diff = *m_pos - player;
+    // list 5's entry 5 read directly (no count check, unlike getAdapter)
+    const gf::ItemGetParam* param =
+        static_cast<const gf::ItemGetParam*>(fw::ParamManager::get()->m_paramLists[5]->m_entries[5].m_data);
+    if (diff.y >= -param->lower && diff.y <= param->upper) {
+        diff.y = 0.0f;
+        if (diff.dot(diff) <= param->radius * param->radius) {
+            gf::GfGameFlag::setLocal(1, m_createInfo.m_bdatId + 47087, 1);
+            const BdatInfo* info = getBdatInfo();
+            gf::SCOM_ADD_ITEM::create(info->m_itmId, 1);
+            gf::GfPlayFactory::createMenuPrecious(info->m_itmId, true);
+        }
+    }
+}
+
 void GmkPrecious::dispose() {
     if (m_menuIcon != nullptr) {
         gf::GfMenuObjFieldIcon::close(m_menuIcon);
@@ -6841,6 +6905,139 @@ void GmkPrecious::dispose() {
     }
     disposeGobInst(false);
     AGmkBase::dispose();
+}
+
+// leaves the active list; with fade, the game object fades out (destroy command), otherwise it is destroyed now
+void GmkPrecious::disposeGobInst(bool fade) {
+    if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    TGmkActiveList<GmkPrecious>::removeGmk(this);
+    if (fade) {
+        gf::GF_OBJ_HANDLE* gob = m_gob;
+        gf::GfObjAcc acc(gob);
+        if (acc.getObj() != nullptr && !acc.isDestroy() && !acc.testFlag(17)) {
+            gf::SCOM_DESTROY_GAME_OBJ::create(gob, 1.0f, 0);
+        }
+    } else {
+        if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            gf::GfObjAcc acc(m_gob);
+            if (acc.m_obj != nullptr) {
+                acc.setUserData(gf::GfObjUserData(0), 0);
+            }
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+}
+
+// pops while the pop conditions hold, fades out when they stop holding or once the item is obtained
+void GmkPrecious::update(float dt) {
+    AGmkBase::update(dt);
+    if (!isValid() || !gf::GfGameManager::isControlFree()) {
+        return;
+    }
+    if (m_effectHandle == 0) {
+        if (isPopCondMatched()) {
+            createGobInst();
+            createEffectIcon();
+            validateXform();
+        }
+    } else if (!isPopCondMatched()) {
+        disposeGobInst(true);
+        if (m_effectHandle != 0) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->fadeOutDead(m_effectHandle, 5);
+            m_effectHandle = 0;
+        }
+        if (m_menuIcon != nullptr) {
+            gf::GfMenuObjFieldIcon::close(m_menuIcon);
+            if (m_menuIcon != nullptr) {
+                m_menuIcon->release();
+                m_menuIcon = nullptr;
+            }
+        }
+    }
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) && m_menuIcon == nullptr) {
+        createMenuIcon();
+    }
+    updateMenuIcon();
+    if (m_effectHandle != 0 && isObtained()) {
+        disposeGobInst(true);
+        if (m_effectHandle != 0) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->fadeOutDead(m_effectHandle, 5);
+            m_effectHandle = 0;
+        }
+        if (m_menuIcon != nullptr) {
+            gf::GfMenuObjFieldIcon::close(m_menuIcon);
+            if (m_menuIcon != nullptr) {
+                m_menuIcon->release();
+                m_menuIcon = nullptr;
+            }
+        }
+    }
+}
+
+// the icon effect over the item (cmn_700_110 in Ira, cmn_202_000 otherwise)
+void GmkPrecious::createEffectIcon() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_effectHandle != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effectHandle);
+        m_effectHandle = 0;
+    }
+    const char* name = gf::GfGameManager::isGameTypeIra() ? "cmn_700_110" : "cmn_202_000";
+    void* efb = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search(name, nullptr);
+    if (efb == nullptr) {
+        return;
+    }
+    m_effectHandle = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->create(efb, true);
+    if (m_effectHandle != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setCategory(m_effectHandle, fw::EF_CATEGORY(1));
+    }
+}
+
+// the quest target icon over the item's object, when its quest gives one
+void GmkPrecious::createMenuIcon() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_menuIcon != nullptr) {
+        gf::GfMenuObjFieldIcon::close(m_menuIcon);
+        if (m_menuIcon != nullptr) {
+            m_menuIcon->release();
+            m_menuIcon = nullptr;
+        }
+    }
+    gf::GF_OBJ_HANDLE* gob = m_gob;
+    if (gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    unsigned short questId = getBdatInfo()->m_questId;
+    int icon;
+    {
+        gf::GfObjAcc acc(gob);
+        if (acc.m_obj == nullptr || acc.isDestroy() || acc.testFlag(17) || acc.getObj() == nullptr) {
+            return;
+        }
+        icon = getBdatIdOfQuestTargetIcon(gf::GfQuestTarget::getIconType(gob, gf::QuestID(questId)));
+    }
+    if (icon < 0) {
+        return;
+    }
+    m_menuIcon = gf::GfMenuCallContext::create();
+    gf::GfMenuObjFieldIcon::OpenParam param;
+    param.m_offset.m_offset = mm::Vec3(0.0f, 0.0f, 0.0f);
+    param.m_offset.m_bone = nullptr;
+    param.m_icon = icon;
+    param.m_pos.x = m_pos->x;
+    param.m_pos.y = m_pos->y;
+    param.m_pos.z = m_pos->z;
+    unsigned char* fp = gf::GfDataBdat::getFP(0x7b);
+    gf::GfMenuBdat::getMenuOffset((unsigned short)Bdat::getValCheck(fp, 1, 0x2a, 2), param.m_offset);
+    gf::GfMenuObjFieldIcon::open(m_menuIcon, param);
 }
 
 void GmkPrecious::updateMenuIcon() {

@@ -3,6 +3,7 @@
 
 #include "classes/gf/GfMenuObject.h"
 #include "mm/Vec3.h"
+#include "gf/MenuOffset.h"
 
 namespace gf { class GfMenuCallContext; }
 
@@ -15,7 +16,8 @@ public:
     struct OpenParam {
         int m_icon;
         mm::Vec3 m_pos;
-        mm::Vec3 m_offset;
+        // GfMenuBdat::getMenuOffset fills it (GmkPrecious::createMenuIcon); open adds its offset to the position
+        MenuOffset m_offset;
     };
     GfMenuObjFieldIcon(unsigned int handle);
     virtual ~GfMenuObjFieldIcon();  // slot 0
