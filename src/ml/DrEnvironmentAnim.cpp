@@ -32,6 +32,8 @@
 #include "classes/ml/DrMdoCtlSeamAll.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/DrMdoZSortObj.h"
+#include "classes/ml/DrShdLgtClustered.h"
+#include "classes/ml/DrShdLgtHybrid.h"
 #include "classes/ml/FileResTh.h"
 #include "classes/ml/irrvol/MemHandlebaseAllocator.h"
 #include "grlib/CGLibCtl.h"
@@ -1325,6 +1327,29 @@ DrLightMan::~DrLightMan() {
     releaseAll();
 }
 
+void DrLightMan::releaseAll() {
+    m_list[DrLightObj::TYPE_AMB].deleteAll();
+    m_list[DrLightObj::TYPE_DIR].deleteAll();
+    m_list[DrLightObj::TYPE_PNT].deleteAll();
+    m_list[DrLightObj::TYPE_SPT].deleteAll();
+    m_stockList[DrLightObj::TYPE_AMB][0].deleteAll();
+    m_stockList[DrLightObj::TYPE_AMB][1].deleteAll();
+    m_stockList[DrLightObj::TYPE_DIR][0].deleteAll();
+    m_stockList[DrLightObj::TYPE_DIR][1].deleteAll();
+    m_stockList[DrLightObj::TYPE_PNT][0].deleteAll();
+    m_stockList[DrLightObj::TYPE_PNT][1].deleteAll();
+    m_instantPntList.deleteAll();
+    m_stockList[DrLightObj::TYPE_SPT][0].deleteAll();
+    m_stockList[DrLightObj::TYPE_SPT][1].deleteAll();
+    m_instantSptList.deleteAll();
+    m_ambNum = 0;
+    m_dirNum = 0;
+    m_instantPntNum = 0;
+    m_instantSptNum = 0;
+    m_ambLight = nullptr;
+    m_dirLight = nullptr;
+}
+
 void DrLightMan::stockBegin() {
     m_stockState = 0;
     m_stockCount = 0;
@@ -1350,10 +1375,145 @@ void DrLightMan::update() {
     spt.m_head = spt.m_tail = nullptr;
 }
 
+void DrLightMan::updateAmb() {
+    int idx = DrMan::s_nDblIdx;
+    LightList& stock = m_stockList[DrLightObj::TYPE_AMB][idx];
+    for (DrLightObj* obj = stock.m_head; obj != nullptr;) {
+        DrLightObj* next = obj->m_next;
+        m_list[DrLightObj::TYPE_AMB].append(obj);
+        obj = next;
+    }
+    stock.m_head = stock.m_tail = nullptr;
+    m_ambColor = mm::Col3(0.2f, 0.2f, 0.2f);
+    LightList& list = m_list[DrLightObj::TYPE_AMB];
+    bool first = true;
+    for (DrLightObj* obj = list.m_head; obj != nullptr;) {
+        if (obj->m_flags & (DrLightObj::FLAG_RELEASE << idx)) {
+            DrLightObj* next = obj->m_next;
+            if (obj == m_ambLight) {
+                m_ambLight = nullptr;
+            }
+            list.remove(obj);
+            delete obj;
+            obj = next;
+            continue;
+        }
+        if (first) {
+            m_ambColor = static_cast<DrLightObjAmb*>(obj)->m_color;
+        }
+        first = false;
+        obj = obj->m_next;
+    }
+}
+
 void DrLightMan::stockEnd() {
     updateAfterPnt();
     updateAfterSpt();
     m_drMan->m_shdMan->m_lgtMan->stockEnd();
+}
+
+void DrLightMan::updateAfterPnt() {
+    LightList& stock = m_instantPntList;
+    for (DrLightObj* obj = stock.m_head; obj != nullptr;) {
+        DrLightObj* next = obj->m_next;
+        m_list[DrLightObj::TYPE_PNT].append(obj);
+        obj = next;
+    }
+    stock.m_head = stock.m_tail = nullptr;
+    LightList& list = m_list[DrLightObj::TYPE_PNT];
+    DrShdLgtHybrid* hybrid = m_drMan->m_shdMan->m_lgtMan->m_pHybrid;
+    int idx = DrMan::s_nDblIdx;
+    DrCalcViewWork* view = m_drMan->m_calcMan->m_pViewWork;
+    DrLightObj* obj = list.m_head;
+    if (obj == nullptr) {
+        return;
+    }
+    do {
+        DrLightObjPnt* light = static_cast<DrLightObjPnt*>(obj);
+        if (light->m_flags & (DrLightObj::FLAG_RELEASE << idx)) {
+            DrLightObj* next = light->m_next;
+            list.remove(light);
+            delete light;
+            obj = next;
+            continue;
+        }
+        light->update(this);
+        light->m_flags &= ~DrLightObj::FLAG_CULL;
+        if (light->m_flags & DrLightObj::FLAG_SUBTRACT) {
+            if (light->m_color[0] >= 1.0f && light->m_color[1] >= 1.0f && light->m_color[2] >= 1.0f) {
+                light->m_flags |= DrLightObj::FLAG_CULL;
+            }
+        } else {
+            if (light->m_color[0] <= 0.0f && light->m_color[1] <= 0.0f && light->m_color[2] <= 0.0f) {
+                light->m_flags |= DrLightObj::FLAG_CULL;
+            }
+        }
+        if (!(light->m_flags & DrLightObj::FLAG_CULL)) {
+            if (view->m_clipPlane.clipTest(light->m_pos, light->m_size)) {
+                light->m_flags &= ~DrLightObj::FLAG_CULL;
+                if (light->m_flags & DrLightObj::FLAG_SUBTRACT) {
+                    m_drMan->m_shdMan->m_lgtMan->m_pClustered->stockPntList(light);
+                } else if (!(light->m_flags & DrLightObj::FLAG_SHADOW)) {
+                    hybrid->stockPntList(light);
+                }
+            } else {
+                light->m_flags |= DrLightObj::FLAG_CULL;
+            }
+        }
+        obj = light->m_next;
+    } while (obj != nullptr);
+}
+
+void DrLightMan::updateAfterSpt() {
+    LightList& stock = m_instantSptList;
+    for (DrLightObj* obj = stock.m_head; obj != nullptr;) {
+        DrLightObj* next = obj->m_next;
+        m_list[DrLightObj::TYPE_SPT].append(obj);
+        obj = next;
+    }
+    stock.m_head = stock.m_tail = nullptr;
+    LightList& list = m_list[DrLightObj::TYPE_SPT];
+    DrShdLgtHybrid* hybrid = m_drMan->m_shdMan->m_lgtMan->m_pHybrid;
+    int idx = DrMan::s_nDblIdx;
+    DrCalcViewWork* view = m_drMan->m_calcMan->m_pViewWork;
+    DrLightObj* obj = list.m_head;
+    if (obj == nullptr) {
+        return;
+    }
+    do {
+        DrLightObjSpt* light = static_cast<DrLightObjSpt*>(obj);
+        if (light->m_flags & (DrLightObj::FLAG_RELEASE << idx)) {
+            DrLightObj* next = light->m_next;
+            list.remove(light);
+            delete light;
+            obj = next;
+            continue;
+        }
+        light->update(this);
+        light->m_flags &= ~DrLightObj::FLAG_CULL;
+        if (light->m_flags & DrLightObj::FLAG_SUBTRACT) {
+            if (light->m_color[0] >= 1.0f && light->m_color[1] >= 1.0f && light->m_color[2] >= 1.0f) {
+                light->m_flags |= DrLightObj::FLAG_CULL;
+            }
+        } else {
+            if (light->m_color[0] <= 0.0f && light->m_color[1] <= 0.0f && light->m_color[2] <= 0.0f) {
+                light->m_flags |= DrLightObj::FLAG_CULL;
+            }
+        }
+        if (!(light->m_flags & DrLightObj::FLAG_CULL)) {
+            if (view->m_clipPlane.clipTest(light->m_pos, light->m_size)) {
+                light->m_flags &= ~DrLightObj::FLAG_CULL;
+                if (light->m_flags & DrLightObj::FLAG_SUBTRACT) {
+                    m_drMan->m_shdMan->m_lgtMan->m_pClustered->stockSptList(light);
+                } else if (!(light->m_flags & DrLightObj::FLAG_SHADOW)) {
+                    hybrid->stockSptList(light);
+                }
+            } else {
+                light->m_flags |= DrLightObj::FLAG_CULL;
+            }
+        }
+        obj = light->m_next;
+    } while (obj != nullptr);
 }
 
 void DrLightMan::releaseInstantPntLight(DrLightObjPnt* light) {

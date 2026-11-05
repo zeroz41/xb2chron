@@ -16,6 +16,10 @@ class DrShdLgtMan;
 // DrMan's light manager (DrMan::m_lightMan). Only what DrResMdoLight calls is declared.
 class DrLightMan {
 public:
+    DrLightMan(DrMan* drMan);
+    // a new light appended to this frame's stock list (under DrMan's critical section)
+    DrLightObjAmb* createAmbLight();
+    DrLightObjDir* createDirLight();
     DrLightObjPnt* createInstantPntLight();
     DrLightObjSpt* createInstantSptLight();
     // 1.0.0 has both out of line (3.0.1 inlines them into releaseFastLight and drops the copies)
@@ -64,9 +68,30 @@ public:
                 obj->m_prev = m_tail;
                 m_tail = obj;
             } else {
-                m_head = m_tail = obj;
+                m_head = obj;
+                m_tail = obj;
                 obj->m_prev = nullptr;
             }
+            obj->m_next = nullptr;
+        }
+        // unlinks obj (inline: no symbol; the name is not the original's)
+        void remove(DrLightObj* obj) {
+            if (obj->m_prev == nullptr) {
+                if (obj->m_next == nullptr) {
+                    m_head = nullptr;
+                    m_tail = nullptr;
+                } else {
+                    m_head = obj->m_next;
+                    m_head->m_prev = nullptr;
+                }
+            } else if (obj->m_next == nullptr) {
+                m_tail = obj->m_prev;
+                m_tail->m_next = nullptr;
+            } else {
+                obj->m_prev->m_next = obj->m_next;
+                obj->m_next->m_prev = obj->m_prev;
+            }
+            obj->m_prev = nullptr;
             obj->m_next = nullptr;
         }
         DrLightObj* m_head;
@@ -76,7 +101,9 @@ public:
     // releaseAllAmbLight/releaseAllDirLight empty them; by DrLightObj::TYPE_* (the names are not the original's)
     LightList m_list[4];  // 0x0
     LightList m_stockList[4][2];  // 0x40, createAmbLight appends to [TYPE_AMB][stock index]
-    unsigned char pad_c0[0x20];
+    // createInstantPntLight/createInstantSptLight append to them (the names are not the original's)
+    LightList m_instantPntList;  // 0xC0
+    LightList m_instantSptList;  // 0xD0
     DrMan* m_drMan;  // 0xE0, the renderer (stockBegin reaches DrShdLgtMan through its m_shdMan; the name is not the original's)
     DrShdLgtMan* m_shdLgtMan;  // 0xE8, the constructor caches drMan->m_shdMan->m_lgtMan (the name is not the original's)
     DrLightObj* m_ambLight;  // 0xF0, releaseAllAmbLight clears it (the name is not the original's)
