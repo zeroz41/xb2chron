@@ -8,7 +8,8 @@ class DrResMdoSeamMemObj;
 // the seam light map resource (only the field DrResMdoSeamWrkLight::setupWork reads is known; its name is not the
 // original's)
 struct MdsSeamLgtMapData {
-    unsigned char pad_0[0x1C];
+    unsigned char pad_0[0x18];
+    unsigned int m_ofs;  // 0x18: where the light data starts (DrMdoCtlSeamRead::callLightStream reads it from there)
     int id;  // 0x1C: DrMdoCtlSeamRead::waitLightStream adds it to the light memory read in
     unsigned char pad_20[0x18];  // waitLightStream steps the light table by 0x38 bytes
 };

@@ -3111,6 +3111,67 @@ void DrMdoCtlSeamAll::setDeleteCall(int idx) {
     resourceRelease();
 }
 
+void DrMdoCtlSeamRead::callBaseMapStream(_wkSeamReadWait* wait) {
+    const DrResMdoSeamWrkBase::MapEntry* tbl = reinterpret_cast<const DrResMdoSeamWrkBase::MapEntry*>(
+        reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_baseMapTblOfs);
+    const DrResMdoSeamWrkBase::MapEntry* entry = &tbl[wait->m_idx];
+    unsigned int rest = entry->m_size & 0xFFF;
+    DrResMdoSeamMemObj* memObj = m_memMan.createFreeObj((rest == 0 ? 0 : 0x1000 - rest) + entry->m_size);
+    if (memObj != nullptr) {
+        DrResMdoSeamWrkBase* wrk = m_baseFreeHead;
+        if (wrk != nullptr) {
+            DrResMdoSeamWrkBase* next = wrk->m_prev;
+            if (next == nullptr) {
+                m_baseFreeHead = nullptr;
+                m_baseFreeTail = nullptr;
+            } else {
+                m_baseFreeHead = next;
+                next->m_next = nullptr;
+            }
+            if (m_baseUsedTail != nullptr) {
+                m_baseUsedTail->m_prev = wrk;
+            }
+            if (m_pBaseList == nullptr) {
+                m_pBaseList = wrk;
+            }
+            wrk->m_next = m_baseUsedTail;
+            wrk->m_prev = nullptr;
+            m_baseFreeNum--;
+            m_baseUsedNum++;
+            m_baseUsedTail = wrk;
+            int readIdx;
+            if (m_seamRead.read(readIdx, entry->m_ofs, entry->m_size, memObj)) {
+                wrk->m_memObj = memObj;
+                wrk->m_dataIdx = wait->m_idx;
+                wrk->m_mapEntry = entry;
+                wrk->m_readSize = entry->m_size;
+                memObj->m_flags |= 4;
+                int num = m_readCallNum++;
+                if (num >= 7) {
+                    m_seamFlags |= 0x80000;
+                }
+                _wkSeamReadCall* call = &m_readCall[num];
+                call->m_pMemObj = memObj;
+                call->m_pBase = wrk;
+                call->m_cacheParam = entry->m_size;
+                call->m_type = 0;
+                call->m_readIdx = readIdx;
+                call->m_cacheIdx = wait->m_idx;
+                call->m_attr = wait->m_attr;
+                m_seamFlags |= 0x10000;
+                return;
+            }
+            releaseFreeSeamBase(wrk);
+        }
+        m_memMan.releaseFreeObj(memObj);
+    }
+    m_seamFlags |= 0x200000;
+    unsigned int size = entry->m_size;
+    m_readErrType[m_readErrIdx] = 0;
+    m_readErrSize[m_readErrIdx] = size;
+    m_readErrIdx = static_cast<short>(m_readErrIdx + 1) >= 4 ? 0 : m_readErrIdx + 1;
+}
+
 void DrMdoCtlSeamRead::callLowMdlStream(_wkSeamReadWait* wait) {
     const MapHead::LowEntry* tbl = reinterpret_cast<const MapHead::LowEntry*>(
         reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_lowMdlTblOfs);
@@ -3164,6 +3225,129 @@ void DrMdoCtlSeamRead::callLowMdlStream(_wkSeamReadWait* wait) {
     }
     unsigned int size = entry->m_size;
     m_readErrType[m_readErrIdx] = 1;
+    m_readErrSize[m_readErrIdx] = size;
+    m_readErrIdx = static_cast<short>(m_readErrIdx + 1) >= 4 ? 0 : m_readErrIdx + 1;
+    m_seamFlags |= 0x200000;
+}
+
+void DrMdoCtlSeamRead::callInstMapStream(_wkSeamReadWait* wait) {
+    const DrResMdoSeamWrkInst::MapEntry* tbl = reinterpret_cast<const DrResMdoSeamWrkInst::MapEntry*>(
+        reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_instMapTblOfs);
+    const DrResMdoSeamWrkInst::MapEntry* entry = &tbl[wait->m_idx];
+    unsigned int rest = entry->m_size & 0xFFF;
+    DrResMdoSeamMemObj* memObj = m_memMan.createFreeObj((rest == 0 ? 0 : 0x1000 - rest) + entry->m_size);
+    if (memObj != nullptr) {
+        DrResMdoSeamWrkInst* wrk = m_instFreeHead;
+        if (wrk != nullptr) {
+            DrResMdoSeamWrkInst* next = wrk->m_pLink;
+            if (next == nullptr) {
+                m_instFreeHead = nullptr;
+                m_instFreeTail = nullptr;
+            } else {
+                m_instFreeHead = next;
+                next->m_pBackLink = nullptr;
+            }
+            if (m_instUsedTail != nullptr) {
+                m_instUsedTail->m_pLink = wrk;
+            }
+            if (m_pInstList == nullptr) {
+                m_pInstList = wrk;
+            }
+            wrk->m_pBackLink = m_instUsedTail;
+            wrk->m_pLink = nullptr;
+            m_instFreeNum--;
+            m_instUsedTail = wrk;
+            m_instUsedNum++;
+            int readIdx;
+            if (m_seamRead.read(readIdx, entry->m_ofs, entry->m_size, memObj)) {
+                wrk->m_memObj = memObj;
+                wrk->m_dataIdx = wait->m_idx;
+                wrk->m_mapEntry = entry;
+                wrk->m_readSize = entry->m_size;
+                memObj->m_flags |= 4;
+                int num = m_readCallNum++;
+                if (num >= 7) {
+                    m_seamFlags |= 0x80000;
+                }
+                _wkSeamReadCall* call = &m_readCall[num];
+                call->m_pMemObj = memObj;
+                call->m_pInst = wrk;
+                call->m_pInst2 = wait->m_pInst;
+                call->m_cacheParam = entry->m_size;
+                call->m_type = 2;
+                call->m_readIdx = readIdx;
+                call->m_cacheIdx = wait->m_idx;
+                call->m_attr = wait->m_attr;
+                m_seamFlags |= 0x10000;
+                return;
+            }
+            releaseFreeSeamInst(wrk);
+        }
+        m_memMan.releaseFreeObj(memObj);
+    }
+    unsigned int size = entry->m_size;
+    m_readErrType[m_readErrIdx] = 2;
+    m_readErrSize[m_readErrIdx] = size;
+    m_readErrIdx = static_cast<short>(m_readErrIdx + 1) >= 4 ? 0 : m_readErrIdx + 1;
+    m_seamFlags |= 0x200000;
+}
+
+void DrMdoCtlSeamRead::callMpfMdlStream(_wkSeamReadWait* wait) {
+    const DrResMdoSeamWrkMpf::MapEntry* tbl = reinterpret_cast<const DrResMdoSeamWrkMpf::MapEntry*>(
+        reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_mpfMdlTblOfs);
+    const DrResMdoSeamWrkMpf::MapEntry* entry = &tbl[wait->m_idx];
+    unsigned int rest = entry->m_size & 0xFFF;
+    DrResMdoSeamMemObj* memObj = m_memMan.createFreeObj((rest == 0 ? 0 : 0x1000 - rest) + entry->m_size);
+    if (memObj != nullptr) {
+        DrResMdoSeamWrkMpf* wrk = m_mpfFreeHead;
+        if (wrk != nullptr) {
+            DrResMdoSeamWrkMpf* next = wrk->m_pLink;
+            if (next == nullptr) {
+                m_mpfFreeHead = nullptr;
+                m_mpfFreeTail = nullptr;
+            } else {
+                m_mpfFreeHead = next;
+                next->m_pBackLink = nullptr;
+            }
+            if (m_mpfUsedTail != nullptr) {
+                m_mpfUsedTail->m_pLink = wrk;
+            }
+            if (m_pMpfList == nullptr) {
+                m_pMpfList = wrk;
+            }
+            wrk->m_pBackLink = m_mpfUsedTail;
+            wrk->m_pLink = nullptr;
+            m_mpfFreeNum--;
+            m_mpfUsedNum++;
+            m_mpfUsedTail = wrk;
+            int readIdx;
+            if (m_seamRead.read(readIdx, entry->m_ofs, entry->m_size, memObj)) {
+                wrk->m_memObj = memObj;
+                wrk->m_dataIdx = wait->m_idx;
+                wrk->m_mapEntry = entry;
+                wrk->m_readSize = entry->m_size;
+                memObj->m_flags |= 4;
+                int num = m_readCallNum++;
+                if (num >= 7) {
+                    m_seamFlags |= 0x80000;
+                }
+                _wkSeamReadCall* call = &m_readCall[num];
+                call->m_pMemObj = memObj;
+                call->m_pMpf = wrk;
+                call->m_cacheParam = entry->m_size;
+                call->m_type = 3;
+                call->m_readIdx = readIdx;
+                call->m_cacheIdx = wait->m_idx;
+                call->m_attr = wait->m_attr;
+                m_seamFlags |= 0x10000;
+                return;
+            }
+            releaseFreeSeamMpf(wrk);
+        }
+        m_memMan.releaseFreeObj(memObj);
+    }
+    unsigned int size = entry->m_size;
+    m_readErrType[m_readErrIdx] = 3;
     m_readErrSize[m_readErrIdx] = size;
     m_readErrIdx = static_cast<short>(m_readErrIdx + 1) >= 4 ? 0 : m_readErrIdx + 1;
     m_seamFlags |= 0x200000;
@@ -3258,6 +3442,55 @@ void DrMdoCtlSeamRead::callBaseVertexStream(_wkSeamReadWait* wait) {
     m_readErrSize[m_readErrIdx] = size;
     m_readErrIdx = static_cast<short>(m_readErrIdx + 1) >= 4 ? 0 : m_readErrIdx + 1;
     m_seamFlags |= 0x200000;
+}
+
+void DrMdoCtlSeamRead::callHeightTexutreStream(_wkSeamReadWait* wait) {
+    if (m_pTextureNo[wait->m_idx] == 0) {
+        return;
+    }
+    const MapHead::TexSize* tbl = reinterpret_cast<const MapHead::TexSize*>(
+        reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_textureTblOfs);
+    const MapHead::TexSize* entry = &tbl[wait->m_idx];
+    unsigned int rest = entry->m_heightSize & 0xFFF;
+    unsigned int heightSize = (rest == 0 ? 0 : 0x1000 - rest) + entry->m_heightSize;
+    rest = entry->m_size & 0xFFF;
+    unsigned int size = (rest == 0 ? 0 : 0x1000 - rest) + entry->m_size + heightSize;
+    rest = size & 0xFFF;
+    size += rest == 0 ? 0 : 0x1000 - rest;
+    DrResMdoSeamMemObj* memObj = m_memMan.createBackFreeObj(size);
+    if (memObj != nullptr) {
+        int readIdx;
+        if (m_seamRead.read(readIdx, entry->m_heightOfs, entry->m_heightSize, memObj)) {
+            unsigned int texNo = m_pTextureNo[wait->m_idx] - 1;
+            DrResMdoSeamTexture* tex = &m_pTextures[texNo];
+            tex->m_cnt = 0;
+            tex->m_heightCnt = 0;
+            memObj->m_flags |= 4;
+            int num = m_readCallNum++;
+            if (num >= 7) {
+                m_seamFlags |= 0x80000;
+            }
+            _wkSeamReadCall* call = &m_readCall[num];
+            call->m_pMemObj = memObj;
+            call->m_pTexture = tex;
+            call->m_cacheParam = entry->m_heightSize;
+            call->m_type = 8;
+            call->m_readIdx = readIdx;
+            call->m_cacheIdx = wait->m_idx;
+            call->m_attr = wait->m_attr;
+            memcpy(memObj->m_pData + heightSize, tex->m_memObj->m_pData, entry->m_size);
+            tex->m_heightMemObj = memObj;
+            tex->createHeightMoveTexture(heightSize, entry->m_size);
+            tex->m_memObj->m_flags |= 4;
+            return;
+        }
+        m_memMan.releaseFreeObj(memObj);
+    }
+    m_heightReadWait = 60;
+    unsigned int errSize = entry->m_heightSize;
+    m_readErrType[m_readErrIdx] = 8;
+    m_readErrSize[m_readErrIdx] = errSize;
+    m_readErrIdx = static_cast<short>(m_readErrIdx + 1) >= 4 ? 0 : m_readErrIdx + 1;
 }
 
 void DrMdoCtlSeamRead::callInstPosStream(_wkSeamReadWait* wait) {
@@ -3366,6 +3599,88 @@ void DrMdoCtlSeamRead::callMpfPolilStream(_wkSeamReadWait* wait) {
     m_readErrSize[m_readErrIdx] = size;
     m_readErrIdx = static_cast<short>(m_readErrIdx + 1) >= 4 ? 0 : m_readErrIdx + 1;
     m_seamFlags |= 0x200000;
+}
+
+void DrMdoCtlSeamRead::callLightStream(_wkSeamReadWait* wait) {
+    const MdsSeamLgtMapData* tbl = reinterpret_cast<const MdsSeamLgtMapData*>(
+        reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_lightTblOfs);
+    const MdsSeamLgtMapData* entry = &tbl[wait->m_idx];
+    unsigned int rest = entry->id & 0xFFF;
+    DrResMdoSeamMemObj* memObj = m_memMan.createFreeObj((rest == 0 ? 0 : 0x1000 - rest) + entry->id);
+    if (memObj != nullptr) {
+        DrResMdoSeamWrkLight* wrk = m_lightFreeHead;
+        if (wrk != nullptr) {
+            DrResMdoSeamWrkLight* next = wrk->m_prev;
+            if (next == nullptr) {
+                m_lightFreeHead = nullptr;
+                m_lightFreeTail = nullptr;
+            } else {
+                m_lightFreeHead = next;
+                next->m_next = nullptr;
+            }
+            if (m_lightUsedTail != nullptr) {
+                m_lightUsedTail->m_prev = wrk;
+            }
+            if (m_pLightList == nullptr) {
+                m_pLightList = wrk;
+            }
+            wrk->m_next = m_lightUsedTail;
+            wrk->m_prev = nullptr;
+            m_lightFreeNum--;
+            m_lightUsedNum++;
+            m_lightUsedTail = wrk;
+            int readIdx;
+            if (m_seamRead.read(readIdx, entry->m_ofs, entry->id, memObj)) {
+                wrk->m_memObj = memObj;
+                wrk->m_dataIdx = wait->m_idx;
+                memObj->m_flags |= 4;
+                int num = m_readCallNum++;
+                if (num >= 7) {
+                    m_seamFlags |= 0x80000;
+                }
+                _wkSeamReadCall* call = &m_readCall[num];
+                call->m_pMemObj = memObj;
+                call->m_pLight = wrk;
+                call->m_cacheParam = entry->id;
+                call->m_type = 13;
+                call->m_readIdx = readIdx;
+                call->m_cacheIdx = wait->m_idx;
+                call->m_attr = wait->m_attr;
+                m_seamFlags |= 0x10000;
+                return;
+            }
+            releaseFreeSeamLight(wrk);
+        }
+        m_memMan.releaseFreeObj(memObj);
+    }
+    unsigned int size = entry->id;
+    m_readErrType[m_readErrIdx] = 13;
+    m_readErrSize[m_readErrIdx] = size;
+    m_readErrIdx = static_cast<short>(m_readErrIdx + 1) >= 4 ? 0 : m_readErrIdx + 1;
+    m_seamFlags |= 0x200000;
+}
+
+void DrMdoCtlSeamRead::waitMpfMdlStream(_wkSeamReadCall* call, bool ok) {
+    if (ok) {
+        DrResMdoSeamWrkMpf* wrk = call->m_pMpf;
+        const MdsSeamMpfMapHead* head = reinterpret_cast<const MdsSeamMpfMapHead*>(wrk->m_memObj->m_pData);
+        const unsigned char* data = reinterpret_cast<const unsigned char*>(head);
+        initMpfMaterial(data + head->m_dataOfs[1], data + head->m_dataOfs[3], data + head->m_dataOfs[0],
+                        data + head->m_dataOfs[4], true);
+        const DrResMdoSeamWrkMpf::MapEntry* tbl = reinterpret_cast<const DrResMdoSeamWrkMpf::MapEntry*>(
+            reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_mpfMdlTblOfs);
+        m_mpfMemSize += tbl[wrk->m_dataIdx].m_size;
+        MdoWrkMatRes* matRes = m_pWrkMatRes;
+        m_pMpfBits[wrk->m_dataIdx >> 5] |= 1 << (wrk->m_dataIdx & 0x1F);
+        m_mpfNum++;
+        wrk->setupWork(matRes, m_pDrMan->m_allocHandle, head, m_pDrMan->m_mdlMan->m_mpfMan);
+        m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
+    } else {
+        m_seamFlags |= 0x10000;
+        if (m_pDrMan->m_seamReadErrMode >= 1) {
+            m_seamFlags |= 0x400;
+        }
+    }
 }
 
 void DrMdoCtlSeamRead::waitBaseMapStream(_wkSeamReadCall* call, bool ok) {
@@ -3577,7 +3892,6 @@ void DrMdoCtlSeamRead::waitLightStream(_wkSeamReadCall* call, bool ok) {
         }
     }
 }
-
 
 void DrMdoSetup::uniformBlock_no(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {}
 

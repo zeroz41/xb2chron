@@ -35,6 +35,8 @@ public:
     virtual ~DrMdoMat() {}  // slot 0
 
     void updateMatCallBack(const unsigned int* dispBits);
+    // DrMdoCtlSeamRead::waitMpfMdlStream passes four blocks of an MdsSeamMpfMapHead (the return type is not known)
+    void initMpfMaterial(const unsigned char*, const unsigned char*, const unsigned char*, const unsigned char*, bool);
 
     // Material value callbacks: s_pCallMatVal[id] is called with the material's header, the uniform slot (from
     // info->m_uniformOfs) the callback fills and the material's index.

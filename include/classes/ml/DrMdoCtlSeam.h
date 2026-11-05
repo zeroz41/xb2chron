@@ -14,6 +14,7 @@ class DrResMdoSeamMemObj;
 class DrResMdoSeamWrkInst;
 class DrResMdoSeamVertex;
 class DrResMdoSeamTexture;
+class DrResMdoSeamTexList;
 class DrResMdoSeamWrkLow;
 class DrResMdoSeamWrkMpf;
 class DrResMdoSeamWrkEnv;
@@ -75,16 +76,16 @@ public:
             unsigned char pad_30[0x18];
         };
         struct TexSize {
-            unsigned int pad_0;
+            unsigned int m_ofs;  // 0x0: where the image starts (callTexutreStream)
             unsigned int m_size;        // 0x4
             unsigned int m_heightOfs;   // 0x8: where the height image starts
             unsigned int m_heightSize;  // 0xC
             unsigned int pad_10;
         };
         unsigned char pad_0[0x1C];
-        unsigned int m_baseMapTblOfs;     // 0x1C: BaseMapEntry entries (callBaseMapStream)
+        unsigned int m_baseMapTblOfs;     // 0x1C: DrResMdoSeamWrkBase::MapEntry entries (callBaseMapStream)
         unsigned char pad_20[0x4];
-        unsigned int m_instMapTblOfs;     // 0x24 (callInstMapStream)
+        unsigned int m_instMapTblOfs;     // 0x24: DrResMdoSeamWrkInst::MapEntry entries (callInstMapStream)
         unsigned char pad_28[0xC];
         unsigned int m_envMdlTblOfs;      // 0x34: MdlEntry entries (callEnvMdlStream)
         unsigned char pad_38[0x1C];
@@ -112,18 +113,49 @@ public:
     // the names are not the original's
     unsigned char pad_18C[0x1C];
     const MapHead* m_pMapHead;  // 0x1A8
-    unsigned char pad_1B0[0x20];
+    // 0x1B0..0x1DC, 0x1E8..0x214, 0x220..0x24C: the texture, texture list and vertex resource pools, laid out like
+    // the low pool below (DrMdoCtlSeamRead::callTexutreStream, callTexListStream and callVertexStream take a free
+    // resource and give it back when the read fails; the names are not the original's)
+    DrResMdoSeamTexture* m_textureFreeHead;  // 0x1B0
+    DrResMdoSeamTexture* m_textureFreeTail;  // 0x1B8
+    DrResMdoSeamTexture* m_textureList;      // 0x1C0
+    DrResMdoSeamTexture* m_textureUsedTail;  // 0x1C8
     // 0x1D0: the texture resources, by DrResMdoSeamTexture::m_no (m_pTextureNo holds m_no + 1; the name is not the
     // original's)
     DrResMdoSeamTexture* m_pTextures;
-    unsigned char pad_1D8[0x58];
+    int m_textureUsedNum;  // 0x1D8
+    int m_textureFreeNum;  // 0x1DC
+    unsigned char pad_1E0[0x8];
+    DrResMdoSeamTexList* m_texListFreeHead;  // 0x1E8
+    DrResMdoSeamTexList* m_texListFreeTail;  // 0x1F0
+    DrResMdoSeamTexList* m_texListList;      // 0x1F8
+    DrResMdoSeamTexList* m_texListUsedTail;  // 0x200
+    DrResMdoSeamTexList* m_texListWorks;     // 0x208
+    int m_texListUsedNum;                    // 0x210
+    int m_texListFreeNum;                    // 0x214
+    unsigned char pad_218[0x8];
+    DrResMdoSeamVertex* m_vertexFreeHead;  // 0x220
+    DrResMdoSeamVertex* m_vertexFreeTail;  // 0x228
     // 0x230: the vertex resources in use; updateVertexSeam walks them through DrResMdoSeamVertex::m_prev (0x08), so
     // by DrResChankList's naming this is a list's tail (the name is not the original's)
     DrResMdoSeamVertex* m_pVertexList;
-    unsigned char pad_238[0x68];
+    DrResMdoSeamVertex* m_vertexUsedTail;  // 0x238
+    DrResMdoSeamVertex* m_vertexWorks;     // 0x240
+    int m_vertexUsedNum;                   // 0x248
+    int m_vertexFreeNum;                   // 0x24C
+    unsigned char pad_250[0x40];
+    // 0x290..0x2BC, 0x300..0x32C, 0x338..0x364, 0x3A8..0x3D4: the base, instance, mpf and light work pools, laid out
+    // like the low pool below (DrMdoCtlSeamRead::callBaseMapStream, callInstMapStream, callMpfMdlStream and
+    // callLightStream take a free work; the names are not the original's)
+    DrResMdoSeamWrkBase* m_baseFreeHead;  // 0x290
+    DrResMdoSeamWrkBase* m_baseFreeTail;  // 0x298
     // 0x2A0: the base works in use (DrMdoCtlSeamAll::callShadowCacheUpdate walks them; the name is not the original's)
     DrResMdoSeamWrkBase* m_pBaseList;
-    unsigned char pad_2A8[0x20];
+    DrResMdoSeamWrkBase* m_baseUsedTail;  // 0x2A8
+    DrResMdoSeamWrkBase* m_baseWorks;     // 0x2B0
+    int m_baseUsedNum;                    // 0x2B8
+    int m_baseFreeNum;                    // 0x2BC
+    unsigned char pad_2C0[0x8];
     // 0x2C8..0x2F4, 0x370..0x39C: the low and env work pools around their lists in use: the free works, the last
     // work in use, the work array and the counts in use and free (DrMdoCtlSeamRead::callLowMdlStream and
     // callEnvMdlStream take a free work; the original keeps each pool in a 0x38-byte type whose name is unknown, the
@@ -137,11 +169,23 @@ public:
     DrResMdoSeamWrkLow* m_lowWorks;     // 0x2E8
     int m_lowUsedNum;                   // 0x2F0
     int m_lowFreeNum;                   // 0x2F4
-    unsigned char pad_2F8[0x18];
+    unsigned char pad_2F8[0x8];
+    DrResMdoSeamWrkInst* m_instFreeHead;  // 0x300
+    DrResMdoSeamWrkInst* m_instFreeTail;  // 0x308
     DrResMdoSeamWrkInst* m_pInstList;  // 0x310: the instance works in use (DrMdoCtlSeamAll::occRender walks them)
-    unsigned char pad_318[0x30];
+    DrResMdoSeamWrkInst* m_instUsedTail;  // 0x318
+    DrResMdoSeamWrkInst* m_instWorks;     // 0x320
+    int m_instUsedNum;                    // 0x328
+    int m_instFreeNum;                    // 0x32C
+    unsigned char pad_330[0x8];
+    DrResMdoSeamWrkMpf* m_mpfFreeHead;  // 0x338
+    DrResMdoSeamWrkMpf* m_mpfFreeTail;  // 0x340
     DrResMdoSeamWrkMpf* m_pMpfList;  // 0x348
-    unsigned char pad_350[0x20];
+    DrResMdoSeamWrkMpf* m_mpfUsedTail;  // 0x350
+    DrResMdoSeamWrkMpf* m_mpfWorks;     // 0x358
+    int m_mpfUsedNum;                   // 0x360
+    int m_mpfFreeNum;                   // 0x364
+    unsigned char pad_368[0x8];
     DrResMdoSeamWrkEnv* m_envFreeHead;  // 0x370
     DrResMdoSeamWrkEnv* m_envFreeTail;  // 0x378
     DrResMdoSeamWrkEnv* m_pEnvList;  // 0x380
@@ -149,9 +193,15 @@ public:
     DrResMdoSeamWrkEnv* m_envWorks;  // 0x390
     int m_envUsedNum;  // 0x398
     int m_envFreeNum;  // 0x39C
-    unsigned char pad_3A0[0x18];
+    unsigned char pad_3A0[0x8];
+    DrResMdoSeamWrkLight* m_lightFreeHead;  // 0x3A8
+    DrResMdoSeamWrkLight* m_lightFreeTail;  // 0x3B0
     DrResMdoSeamWrkLight* m_pLightList;  // 0x3B8
-    unsigned char pad_3C0[0x2D8];
+    DrResMdoSeamWrkLight* m_lightUsedTail;  // 0x3C0
+    DrResMdoSeamWrkLight* m_lightWorks;     // 0x3C8
+    int m_lightUsedNum;                     // 0x3D0
+    int m_lightFreeNum;                     // 0x3D4
+    unsigned char pad_3D8[0x2C0];
     DrResMdoInstAnmObj m_instAnm;  // 0x698: releaseSeam releases it; ScnObjAccSeamPos reads it (m_mdlType 3)
     EtcPosList m_etcPos;           // 0x6C8 (m_mdlType 3)
     unsigned char pad_6D8[0x8];
@@ -161,7 +211,9 @@ public:
     // 0xB38: DrMdoCtlSeamInstMap::beginResAll keeps the material resources it replaces here and endResAll puts them
     // back
     MdoWrkMatRes* m_pSavedWrkMatRes;
-    unsigned char pad_B40[0x80];
+    unsigned char pad_B40[0x50];
+    unsigned int* m_pMpfBits;        // 0xB90: a bit per mpf model table entry, set by waitMpfMdlStream
+    unsigned char pad_B98[0x28];
     unsigned int* m_pLightBits;      // 0xBC0: a bit per light table entry, set by waitLightStream
     unsigned char pad_BC8[0x8];
     unsigned short* m_pVertexNo;     // 0xBD0: by vertex table entry, the DrResMdoSeamVertex::m_no + 1 holding it
@@ -169,7 +221,9 @@ public:
     unsigned short* m_pTextureNo;    // 0xBE0: by texture table entry, the DrResMdoSeamTexture::m_no + 1 holding it
     unsigned char pad_BE8[0x8];
     unsigned short* m_pTexListNo;    // 0xBF0: by texture list entry, the DrResMdoSeamTexList::m_no + 1 holding it
-    unsigned char pad_BF8[0x14];
+    unsigned char pad_BF8[0xE];
+    unsigned short m_mpfNum;         // 0xC06: waitMpfMdlStream counts the mpf models in
+    unsigned char pad_C08[0x4];
     unsigned short m_lightNum;       // 0xC0C: waitLightStream counts the lights in
     unsigned char pad_C0E[0x8];
     short m_offScreenCnt;            // 0xC16: DrMdoCtlSeamAll::noOffScreenUpdate counts its calls
@@ -190,7 +244,8 @@ public:
     // original's)
     int m_baseMemSize;
     int m_lowMemSize;
-    unsigned char pad_C48[0x8];
+    unsigned char pad_C48[0x4];
+    int m_mpfMemSize;  // 0xC4C: the mpf model memory read in (waitMpfMdlStream; the name is not the original's)
     int m_envMemSize;
     unsigned char pad_C54[0x8];
     // 0xC5C..0xC68: DrMdoCtlSeamMpfMap::updateMpfMapRenderList adds each mpf work's m_renderNum (the name is not the

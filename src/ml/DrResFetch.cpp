@@ -663,7 +663,7 @@ DrResMdoSeamWrkMpf::~DrResMdoSeamWrkMpf() {
             m_workBuf = nullptr;
         }
     }
-    m_readState = 0;
+    m_memObj = nullptr;
     m_dispNum = 0;
 }
 
@@ -4968,12 +4968,12 @@ void DrResMdoSeamRead::readCancel() {}
 int DrResMdoSeamTexList::SEAMRES_TEXLIST_CNTMAX = 0x3C;
 
 DrResMdoSeamTexList::DrResMdoSeamTexList(int no)
-    : m_prev(nullptr), m_next(nullptr), pad_18(nullptr), m_texture(nullptr), pad_28(nullptr), m_buf(nullptr),
+    : m_prev(nullptr), m_next(nullptr), m_memObj(nullptr), m_texture(nullptr), pad_28(nullptr), m_buf(nullptr),
       m_no(no), m_cnt(0), pad_3B(0), m_dataIdx(0), m_num(0) {}
 
 DrResMdoSeamTexList::~DrResMdoSeamTexList() {
     release();
-    pad_18 = nullptr;
+    m_memObj = nullptr;
 }
 
 void DrResMdoSeamTexList::release() {
@@ -5087,7 +5087,7 @@ int DrResMdoSeamVertex::SEAMRES_CNTMAX = 0x3C;
 
 DrResMdoSeamWrkBase::DrResMdoSeamWrkBase()
     : m_matRes(nullptr), m_matWork(nullptr), m_vertexList(nullptr), m_shadowCacheDone(0), m_cacheFlags(0),
-      m_bufNum(0), m_bufReserved(0), m_nodeBits(nullptr), m_nodeWork(nullptr), m_readMask(0), m_instans(nullptr),
+      m_bufNum(0), m_readSize(0), m_nodeBits(nullptr), m_nodeWork(nullptr), m_memObj(nullptr), m_instans(nullptr),
       m_outFrame(0), m_fadeAlpha(0), m_vertexNum(0) {}
 
 DrResMdoSeamWrkBase::~DrResMdoSeamWrkBase() { release(); }
@@ -5128,7 +5128,7 @@ void DrResMdoSeamWrkBase::release() {
         mtl::MemManager::deallocate(m_matWork, 0, false);
         m_matWork = nullptr;
     }
-    m_readMask = 0;
+    m_memObj = nullptr;
 }
 
 void DrResMdoSeamWrkBase::releaseCache(DrMdoCtlSeamBaseMap* ctl) {

@@ -102,8 +102,16 @@ public:
         unsigned char pad_4[0x2];
         unsigned short m_flags;   // 0x6
     };
+    // an entry (0x4C bytes) of the seam map head's base map table (DrMdoCtlSeam::MapHead::m_baseMapTblOfs); the
+    // names are not the original's
+    struct MapEntry {
+        unsigned char pad_0[0x34];
+        unsigned int m_ofs;   // 0x34: where the base map data starts (DrMdoCtlSeamRead::callBaseMapStream)
+        unsigned int m_size;  // 0x38
+        unsigned char pad_3C[0x10];
+    };
 
-    unsigned char pad_18[0x8];
+    const MapEntry* m_mapEntry;  // 0x18: set by DrMdoCtlSeamRead::callBaseMapStream (the name is not the original's)
     const SeamHeader* m_header;  // 0x20 (the name is not the original's)
     unsigned char pad_28[0x8];
     const MdlEntry* m_mdlList;  // 0x30: the models the tree nodes list (the name is not the original's)
@@ -116,7 +124,9 @@ public:
     MdoWrkMatRes* m_matRes;  // 0x68: setupWork's matRes, freed by release (the name is not the original's)
     void* m_matWork;  // 0x70: freed by release (the name is not the original's)
     VertexEntry* m_vertexList;  // 0x78: m_vertexNum entries (the name is not the original's)
-    unsigned char pad_80[0x18];
+    unsigned char pad_80[0x4];
+    int m_dataIdx;  // 0x84: its m_mapEntry's index (DrMdoCtlSeamRead::callBaseMapStream; the name is not the original's)
+    unsigned char pad_88[0x10];
     // 0x98: one bit per shadow cache (DrPixlShadowCacheObj::m_cacheBit) already rendered; callShadowCacheBaseUpdate
     // clears the bits it is given (the name is not the original's)
     unsigned long m_shadowCacheDone;
@@ -125,7 +135,9 @@ public:
     unsigned char pad_A4[0x4];
     void** m_bufList;  // 0xA8: m_bufNum buffers freed by release (the name is not the original's)
     int m_bufNum;      // 0xB0 (the name is not the original's)
-    int m_bufReserved;  // 0xB4: cleared by the constructor, no other use found (the name is not the original's)
+    // 0xB4: cleared by the constructor; DrMdoCtlSeamRead::callBaseMapStream stores m_mapEntry's size (the name is not
+    // the original's)
+    int m_readSize;
     unsigned char pad_B8[0x28];
     unsigned int* m_nodeBits;  // 0xE0: one bit per tree node, cleared by release (the name is not the original's)
     // 0xE8: one bit per vertex list entry, set by calcCacheInfo from m_nodeBits; cleared by release (the name is
@@ -136,7 +148,9 @@ public:
     unsigned char pad_FC[0x4];
     void* m_curShadowCacheBuf;           // 0x100: the buffer of the cache being rendered (the name is not the original's)
     unsigned char pad_108[0x50];
-    unsigned long m_readMask;  // 0x158: cleared by release (the name is not the original's)
+    // 0x158: the memory its stream reads into (DrMdoCtlSeamRead::callBaseMapStream); cleared by release (the name is
+    // not the original's)
+    DrResMdoSeamMemObj* m_memObj;
     // 0x160: by SeamHeader texture list, the DrResMdoSeamTexList holding it (the name is not the original's)
     DrResMdoSeamTexList** m_texLists;
     AlphaInstans* m_instans;  // 0x168: released and destroyed by release (the name is not the original's)

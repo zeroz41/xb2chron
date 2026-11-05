@@ -27,6 +27,14 @@ struct MdsSeamInstMapHead {
 // table 0x7100B7DB48
 class DrResMdoSeamWrkInst {
 public:
+    // an entry (0x40 bytes) of the seam map head's instance map table (DrMdoCtlSeam::MapHead::m_instMapTblOfs); the
+    // names are not the original's
+    struct MapEntry {
+        unsigned char pad_0[0x34];
+        unsigned int m_ofs;   // 0x34: where the instance map data starts (DrMdoCtlSeamRead::callInstMapStream)
+        unsigned int m_size;  // 0x38
+        unsigned char pad_3C[0x4];
+    };
     // a model info (0x20 bytes); the name is not the original's
     struct MdlInfo {
         unsigned char pad_0[0x20];
@@ -79,8 +87,8 @@ public:
     void seachDefShadowInstMapRender(DrPixlShadowObj* shadow, DrMdoCtlSeamInstMap* ctl);
     // 0x08: the next work of DrMdoCtlSeam::m_pInstList (the name is not the original's)
     DrResMdoSeamWrkInst* m_pLink;
-    void* pad_10;
-    unsigned char pad_18[0x8];
+    DrResMdoSeamWrkInst* m_pBackLink;  // 0x10: the previous work (the name is not the original's)
+    const MapEntry* m_mapEntry;  // 0x18: set by DrMdoCtlSeamRead::callInstMapStream (the name is not the original's)
     const MdsSeamInstMapHead* m_header;  // 0x20: the seam map's data (m_memObj's), set by changeMemCall (the name is not the original's)
     const DrResMdoSeamWrkPosInst::BaseData* m_baseData;  // 0x28: the base positions' data (the name is not the original's)
     const unsigned char* pad_30;  // 0x30: m_baseData + its offset at 0x8
@@ -90,10 +98,11 @@ public:
     MdoWrkMatRes* m_pWrkMatRes;
     void* pad_58;  // 0x58: freed by release
     DrResMdoVertex* m_vertex;  // 0x60: deleted by release (the name is not the original's)
-    unsigned char pad_68[0x8];
+    int m_dataIdx;  // 0x68: its m_mapEntry's index (DrMdoCtlSeamRead::callInstMapStream; the name is not the original's)
+    unsigned char pad_6C[0x4];
     void* pad_70;
     unsigned char pad_78[0xC];
-    unsigned int pad_84;
+    unsigned int m_readSize;  // 0x84: m_mapEntry's size (DrMdoCtlSeamRead::callInstMapStream; the name is not the original's)
     unsigned short pad_88;
     // 0x8A: waitInstPosStream sets bit 5 when the position stream ends without its data (the name is not the
     // original's)

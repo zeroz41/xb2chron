@@ -6,6 +6,7 @@
 namespace grlib { class CGLibTextureBuffer; }
 
 namespace ml {
+class DrResMdoSeamMemObj;
 // table 0x7100B7DA80
 // The field and parameter names are not the original's.
 class DrResMdoSeamTexList {
@@ -21,7 +22,9 @@ public:
 
     DrResMdoSeamTexList* m_prev;           // 0x08: list links, zeroed by the constructor
     DrResMdoSeamTexList* m_next;           // 0x10
-    void* pad_18;                          // 0x18: zeroed by the constructor
+    // 0x18: the memory its stream reads into (DrMdoCtlSeamRead::callTexListStream); zeroed by the constructor and
+    // the destructor (the name is not the original's)
+    DrResMdoSeamMemObj* m_memObj;
     grlib::CGLibTextureBuffer* m_texture;  // 0x20: m_num buffers in m_buf
     void* pad_28;                          // 0x28: zeroed by the constructor and release
     void* m_buf;                           // 0x30: the allocation release deallocates
