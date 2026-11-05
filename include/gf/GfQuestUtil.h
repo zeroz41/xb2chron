@@ -48,6 +48,9 @@ public:
     // the quest an enemy's bdat id belongs to through an active task (CharacterManager::PreUpdateProc asks it for
     // every enemy in battle)
     static QuestID getCurrentEnemyWithEvent(unsigned int enemyID);
+    // whether a battle task's enemy (or one of its group's) is on the field with HP left, not counting event-created
+    // enemies
+    static bool isExtstActivateEnemy(const QuestTaskParam& param);
     // whether the quest has a task for the NPC: its condition id into condId (GfPlayComTalk::start keeps both
     // for GfPlayComTalk::getQuestTargetNpc)
     static bool getTalkNpcInfo(unsigned int& condId, unsigned int npc, QuestID quest);

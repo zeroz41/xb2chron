@@ -24,6 +24,15 @@
 #include "classes/gf/GfBdatCond.h"
 #include "classes/gf/GfGameCond.h"
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gf/SCOM_ADD_MONEY.h"
+#include "classes/gf/SCOM_ADD_COIN.h"
+#include "classes/gf/SCOM_ADD_SP.h"
+#include "classes/gf/SCOM_ADD_EXP.h"
+#include "classes/gf/SCOM_ADD_DEVELOP.h"
+#include "classes/gf/SCOM_ADD_TRUST.h"
+#include "classes/gf/SCOM_ADD_MERCENARIES_POINT.h"
+#include "classes/gf/SCOM_ADD_ITEM.h"
+#include "classes/gf/SCOM_ADD_IDEA.h"
 
 namespace gf {
 
@@ -204,6 +213,30 @@ bool GfQuestUtil::isReduceHpObj(GF_OBJ_HANDLE* handle) {
     return GfQuestTask::isReduceHpObj(id, handle);
 }
 
+void GfQuestUtil::execReward(const GfQuestReward& reward) {
+    SCOM_ADD_MONEY::create(reward.m_items[0].m_value);
+    SCOM_ADD_COIN::create(reward.m_items[1].m_value);
+    SCOM_ADD_SP::create(reinterpret_cast<GF_OBJ_HANDLE*>(-1), reward.m_items[2].m_value);
+    SCOM_ADD_EXP::createInnExp(reward.m_items[3].m_value);
+    SCOM_ADD_DEVELOP::create(static_cast<unsigned short>(reward.m_items[4].getDevelopZone()),
+                             static_cast<unsigned short>(reward.m_items[4].m_value));
+    SCOM_ADD_TRUST::create(reward.m_trustBlade, static_cast<unsigned short>(reward.m_items[5].m_value));
+    SCOM_ADD_MERCENARIES_POINT::create(static_cast<unsigned short>(reward.m_items[7].m_value));
+    for (int i = 8; i < 12; i++) {
+        unsigned int value = reward.m_items[i].m_value;
+        int count = value >> 16;
+        SCOM_ADD_ITEM::create(value & 0xFFFF, count);
+    }
+    // the idea (item 6: category in the high half, points in the low half) goes to the trust blade's driver
+    if (reward.m_trustBlade != 0) {
+        SCOM_ADD_IDEA::create(GfDataBlade::getCreator(reward.m_trustBlade), reward.m_items[6].m_high,
+                              reward.m_items[6].m_low);
+    } else {
+        SCOM_ADD_IDEA::create(reinterpret_cast<GF_OBJ_HANDLE*>(-1), reward.m_items[6].m_high,
+                              reward.m_items[6].m_low);
+    }
+}
+
 void GfQuestUtil::addOrderParentQuest(QuestID id) {
     SDataGame* data = GfDataManager::getDataGame();
     removeOrderParentQuest(id);
@@ -375,6 +408,32 @@ void GfQuestUtil::addTaskHanyouCount(unsigned int purposeId, unsigned int task, 
     }
     param.m_questId = GfQuestManager::getOrderQuestId(purposeId);
     GfQuestManager::eventChangeTaskState(param);
+}
+
+bool GfQuestUtil::getDummyTalkGroup(unsigned int& group, unsigned int& bit, unsigned int mapId, unsigned int npcId,
+                                    QuestID questId) {
+    if (GfGameManager::getMapID() != mapId || !GfQuestInfo::isQuestProgress(questId)) {
+        return false;
+    }
+    QuestListAcc* acc = QuestListAcc::get();
+    for (unsigned int task = 0; task < 4; task++) {
+        QuestTaskParam param(questId, task, TASK_STATE(0));
+        if (param.m_taskType != 6 || !GfQuestTask::isEnableTaskCondition(param)) {
+            continue;
+        }
+        unsigned int dummy = acc->getTalkDummyGroup(param.m_taskId);
+        if (dummy == 0) {
+            continue;
+        }
+        for (unsigned int i = 0; i < 8; i++) {
+            if (acc->getDummyGroupNpcID(dummy, i) == npcId) {
+                group = dummy;
+                bit = i;
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 bool GfQuestUtil::getTalkNpcInfo(unsigned int& condId, unsigned int npc, QuestID quest) {

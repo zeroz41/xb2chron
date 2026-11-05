@@ -16,7 +16,16 @@ struct GfQuestReward {
         unsigned int getDevelopZone() const;
 
         mm::mtl::FixStr<64> m_text;
-        unsigned int m_value;
+        // the number, or two halves: GfQuestUtil::getReward stores a development reward's point and zone, an idea's
+        // value and category and an item's id and number as separate halfwords, and execReward reads the idea's
+        // halves with separate halfword loads. The half names are not the original's.
+        union {
+            unsigned int m_value;
+            struct {
+                unsigned short m_low;
+                unsigned short m_high;
+            };
+        };
     };
 
     Param m_items[12];
