@@ -122,13 +122,20 @@ struct MdsMdlTopHeader {
 // DrMdoCtlNom's passes index a top header's array of them. The field names are not the original's.
 struct MdsMdlInfoHeader {
     unsigned int m_flags;  // 0x0, bit 8: m_meshNo names a DrResMdoMeshObj part
-    // 0x4: the passes the part is drawn in; DrMdoCtlSeamEnvMap's passes test bit 0 (render), 3 (gbuffer),
-    // 5 (light pre-pass), 1 (alpha), 6 (sp alpha), 2 (refraction). The name is not the original's.
-    unsigned char m_passFlags;
-    // 0x5, bit 6: the part casts a shadow (DrMdoCtl::partsShadowBaseRender and the partsPos*ShadowRender passes
-    // draw only these; the name is not the original's)
-    unsigned char m_shadowFlags;
-    unsigned char pad_6[0x2];
+    union {
+        // 0x4 as one word: DrMdoCtlSeamInstMap::createInstThicknessPassDisplayList tests bit 15 (m_shadowFlags bit 7)
+        // through a byte load the backend narrows from it (the name is not the original's)
+        unsigned int m_drawFlags;
+        struct {
+            // 0x4: the passes the part is drawn in; DrMdoCtlSeamEnvMap's passes test bit 0 (render), 3 (gbuffer),
+            // 5 (light pre-pass), 1 (alpha), 6 (sp alpha), 2 (refraction). The name is not the original's.
+            unsigned char m_passFlags;
+            // 0x5, bit 6: the part casts a shadow (DrMdoCtl::partsShadowBaseRender and the partsPos*ShadowRender
+            // passes draw only these; the name is not the original's)
+            unsigned char m_shadowFlags;
+            unsigned char pad_6[0x2];
+        };
+    };
     // 0x8: the DrResMdoVertex bind entry (setVertexBind's index); 0xA/0xC: the DrResMdoVertex::render index, 0xC
     // while m_flags bit 13 is set (the names are not the original's)
     unsigned short m_vtxBindIdx;
@@ -181,6 +188,16 @@ struct MdoFlagWaveRes {
     grlib::CGLibTriUniformArray* m_pUniformArray;  // 0x18, after the phases
     float* m_pPhase;  // 0x20, at 0x28: a random phase in [0, 100) per wave
 };
+// The material block of a seam instance map's data (MdsSeamInstMapHead::m_dataOfs[2]); the names are not the
+// original's
+struct MdsSeamInstMatBlock {
+    unsigned char pad_0[0x14];
+    unsigned int m_ofs0;  // 0x14
+    unsigned char pad_18[0x4];
+    unsigned int m_ofs1;  // 0x1C
+    unsigned char pad_20[0x4];
+    unsigned int m_ofs2;  // 0x24
+};
 struct MdoWrkMatRes {
     const MdsMatTexEntry* getTexEntries() const {
         return reinterpret_cast<const MdsMatTexEntry*>(
@@ -203,7 +220,11 @@ struct MdoWrkMatRes {
     // 0x48, by MdsMatInfoHeader::m_avatarMapIdx: DrMdoSetup::unimate_AvatarMapWrk's colour indices (the name is not
     // the original's)
     const MdsMatAvatarMap* m_pAvatarMap;
-    unsigned char pad_50[0x30];
+    // 0x50: a seam instance map's MdsSeamInstMatBlock (DrMdoCtlSeamInstMap::initInstMapParts); 0x58..0x68: the
+    // blocks at its offsets (the names are not the original's)
+    const unsigned char* m_pSeamMatBlock;
+    const unsigned char* m_pSeamMatData[3];
+    unsigned char pad_70[0x10];
     // 0x80: the material's shader object; DrMdoMat::release*SeamMat delete it (the name is not the original's)
     DrShdMdoDecShdObj* m_pDecShdObj;
     // 0x88: cleared together with m_pDecShdObj (the name and the type are not the original's)

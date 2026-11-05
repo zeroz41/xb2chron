@@ -5,6 +5,8 @@
 #include "mm/Vec3.h"
 #include "ml/DrResMdoSeamWrkPosInst.h"
 
+namespace grlib { class CGLibTriUniformArray; }
+
 namespace ml {
 class DrResMdoInstAnmObj;
 struct MdoWrkMatRes;
@@ -15,13 +17,20 @@ class DrMdoCtlSeamInstMap;
 class DrResMdoSeamParmRead;
 // the head of a seam instance map's data (name from setupWork's symbol; the field names are not the original's)
 struct MdsSeamInstMapHead {
-    unsigned char pad_0[0x18];
+    unsigned char pad_0[0xC];
+    // 0xC..0x14: offsets of data blocks: [1], [0] and m_extOfs go to DrMdoMat::initInstMapMaterial and
+    // resetInstMapMaterial, [2] (0 when there is none) is the MdsSeamInstMatBlock of the material resources
+    unsigned int m_dataOfs[3];
     unsigned int m_baseOfs;    // 0x18: offset of the base positions' data
     unsigned int m_vertexOfs;  // 0x1C: offset of the vertex data, 0 when there is none
-    unsigned char pad_20[0x18];
+    unsigned char pad_20[0x4];
+    int m_matArg;  // 0x24: initInstMapMaterial's and resetInstMapMaterial's last argument
+    unsigned char pad_28[0x10];
     unsigned int m_etcOfs;     // 0x38: offset of the m_etcNum EtcInfo
     int m_etcNum;              // 0x3C
-    unsigned char pad_40[0x14];
+    unsigned char pad_40[0x4];
+    unsigned int m_extOfs;  // 0x44
+    unsigned char pad_48[0xC];
     unsigned int m_offColiOfs;  // 0x54: offset of the off-collision table, 0 when there is none
 };
 // table 0x7100B7DB48
@@ -37,7 +46,20 @@ public:
     };
     // a model info (0x20 bytes); the name is not the original's
     struct MdlInfo {
-        unsigned char pad_0[0x20];
+        // 0x0: the instances; createInstZPrePassDisplayList draws m_num - m_skipNum, m_billNum of them as
+        // billboards (the names are not the original's)
+        unsigned short m_num;
+        unsigned short m_skipNum;  // 0x2: skipped from m_count, 0x34 bytes each
+        unsigned short m_billNum;  // 0x4: MdoInstancePrePassArg::m_billNum
+        unsigned short m_billArg;  // 0x6: MdoInstancePrePassArg::m_billArg
+        unsigned char m_mdlFlags;  // 0x8, bit 0: MdoInstancePrePassArg::m_bill
+        unsigned char pad_9[0x3];
+        unsigned short m_topIdx;  // 0xC: index into MdoWrkMatRes::m_pMdlTop
+        // 0xE: index into DrMdoCtlSeam::m_pVertexNo, 0xFFFF: the work's own m_vertex
+        unsigned short m_vtxNo;
+        unsigned char pad_10[0x4];
+        unsigned int m_count;     // 0x14: MdoInstancePrePassArg::m_count
+        unsigned char pad_18[0x8];
     };
     // one etc position block of the seam map's data (0x20 bytes; the names are not the original's)
     struct EtcInfo {
@@ -73,6 +95,13 @@ public:
     virtual ~DrResMdoSeamWrkInst();  // slot 0
     void release();
     void releaseCache(DrMdoCtlSeamInstMap* ctl);
+    // true when the work is to be freed (DrMdoCtlSeamInstMap::readInstMapCheck)
+    bool update(const DrResMdoSeamParmRead* parm, bool force, unsigned int seamFlags);
+    static float SEAM_INSTMAP_READ_IN_CHECK;
+    static float SEAM_INSTMAP_READ_ADD_CHECK;
+    void setupWork(MdoWrkMatRes* matRes, grlib::CGLibTriUniformArray* triArray, mtl::ALLOC_HANDLE handle,
+                   DrMdoCtlSeamInstMap* ctl, const MdsSeamInstMapHead* head, const unsigned int* dispBits,
+                   unsigned int dispBitNum, const DrResMdoInstAnmObj* anm);
     void changeMemCall();
     void calcCacheInfo();
     bool callReadOffColiTest(const mm::Vec3& pos, const DrResMdoSeamParmRead* parm);
@@ -126,7 +155,10 @@ public:
     unsigned char pad_144[0x8];
     int m_mdlNum;             // 0x14C (the name is not the original's)
     unsigned short m_mdlCnt;  // 0x150: beginMdl clears it (the name is not the original's)
-    unsigned char pad_152[0x4];
+    // 0x152: DrMdoCtlSeamInstMap::createInstZPrePassDisplayList skips the work while it is 0 (the name is not the
+    // original's)
+    unsigned short m_prePassNum;
+    unsigned char pad_154[0x2];
     unsigned short m_readOff;  // 0x156: callReadOffColiTest sets a bit from bit 7 (the name is not the original's)
     unsigned int m_shadowCacheDone;  // 0x158: callShadowCacheInstUpdate clears the bits it is given (the name is not the original's)
     unsigned char pad_15C[0x3C];

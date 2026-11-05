@@ -215,7 +215,11 @@ public:
     // releaseSeam frees both (the names are not the original's)
     void* m_memPoolBuf;
     unsigned char* m_workBuf;
-    unsigned char pad_B50[0x40];
+    unsigned char pad_B50[0x30];
+    // 0xB80: a bit per inst map table entry, cleared by DrMdoCtlSeamInstMap::releaseFreeSeamInst (the name is not
+    // the original's)
+    unsigned int* m_pInstBits;
+    unsigned char pad_B88[0x8];
     unsigned int* m_pMpfBits;        // 0xB90: a bit per mpf model table entry, set by waitMpfMdlStream
     unsigned char pad_B98[0x28];
     unsigned int* m_pLightBits;      // 0xBC0: a bit per light table entry, set by waitLightStream
@@ -225,7 +229,9 @@ public:
     unsigned short* m_pTextureNo;    // 0xBE0: by texture table entry, the DrResMdoSeamTexture::m_no + 1 holding it
     unsigned char pad_BE8[0x8];
     unsigned short* m_pTexListNo;    // 0xBF0: by texture list entry, the DrResMdoSeamTexList::m_no + 1 holding it
-    unsigned char pad_BF8[0xE];
+    unsigned char pad_BF8[0xC];
+    // 0xC04: the inst maps in use; releaseFreeSeamInst counts them down (the name is not the original's)
+    short m_instNum;
     unsigned short m_mpfNum;         // 0xC06: waitMpfMdlStream counts the mpf models in
     unsigned char pad_C08[0x4];
     unsigned short m_lightNum;       // 0xC0C: waitLightStream counts the lights in
@@ -256,7 +262,7 @@ public:
     // original's)
     int m_baseMemSize;
     int m_lowMemSize;
-    unsigned char pad_C48[0x4];
+    int m_instMemSize;  // 0xC48: by inst map, its m_readSize (releaseFreeSeamInst; the name is not the original's)
     int m_mpfMemSize;  // 0xC4C: the mpf model memory read in (waitMpfMdlStream; the name is not the original's)
     int m_envMemSize;
     unsigned char pad_C54[0x8];

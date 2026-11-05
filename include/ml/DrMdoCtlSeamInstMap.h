@@ -4,6 +4,9 @@
 #include "ml/DrMdoCtlSeamBaseMap.h"
 
 namespace ml { class DrResMdoSeamWrkInst; }
+namespace ml { struct MdsMdlTopHeader; }
+namespace mm { class Mat44; }
+namespace mm { class Vec3; }
 
 namespace ml {
 // One part of the seam model control: the DrMdoCtlSeam* classes have no table of their own and DrMdoCtlSeamAll's
@@ -13,12 +16,16 @@ class DrMdoCtlSeamInstMap : public ::ml::DrMdoCtlSeamBaseMap {
 public:
     void initInstMapParts(DrResMdoSeamWrkInst* wrk, DrResMdoSeamWrkInst* wrk2);
     void releaseFreeSeamInst(DrResMdoSeamWrkInst* wrk);
+    void readInstMapCheck();
+    bool readInstModelCheck(const mm::Vec3& pos, bool, bool);
     void createInstZPrePassDisplayList();
     void createInstThicknessPassDisplayList(bool first);
     void renderSeamInstMap(int pass);
     void beginResAll(MdoWrkMatRes* res);
     void endResAll();
     void callInstShadowCacheAddRender(int idx);
+    void renderInstShadowCacheRender(DrResMdoSeamWrkInst* wrk, const mm::Mat44& mtx, unsigned int vtxNo,
+                                     const MdsMdlTopHeader* top);
 };
 }  // namespace ml
 

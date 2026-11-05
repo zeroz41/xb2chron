@@ -3052,6 +3052,156 @@ void DrMdoCtlSeamAll::noOffScreenUpdate() {
     }
 }
 
+void DrMdoCtlSeamInstMap::createInstThicknessPassDisplayList(bool first) {
+    if (m_pDrMan->m_seamOccRenderOff) {
+        return;
+    }
+    MdoInstancePrePassArg arg;
+    arg.m_first = 0x34;
+    arg.m_first2 = first;
+    for (DrResMdoSeamWrkInst* wrk = m_instPool.m_list; wrk != nullptr; wrk = wrk->m_pLink) {
+        m_pWrkMatRes = wrk->m_pWrkMatRes;
+        if (m_pWrkMatRes == nullptr || (wrk->m_cacheFlags & 0x110) != 0x110) {
+            continue;
+        }
+        wrk->beginMdl();
+        while (const DrResMdoSeamWrkInst::MdlInfo* info = wrk->getMdlInfo()) {
+            unsigned int num = info->m_num;
+            if (num == 0) {
+                continue;
+            }
+            if (info->m_vtxNo == 0xFFFF) {
+                m_pWrkMatRes->m_pVertex = wrk->m_vertex;
+            } else {
+                unsigned int no = m_pVertexNo[info->m_vtxNo];
+                m_pWrkMatRes->m_pVertex = m_vertexPool.m_works[no - 1].m_vertex;
+            }
+            arg.m_bill = false;
+            m_curShaderIdx = -1;
+            m_curBindIdx = -1;
+            m_bindFlags[1] = 0;
+            m_bindFlags[0] |= 0x10;
+            m_pWrkMatRes->m_pVertex->beginVertexSetup();
+            const MdsMdlTopHeader* top = &m_pWrkMatRes->m_pMdlTop[info->m_topIdx];
+            int partNum = top->m_infoNum;
+            arg.m_info = reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs);
+            arg.m_count = info->m_count;
+            arg.m_instances = num;
+            arg.m_billNum = 0;
+            arg.m_billArg = 0;
+            for (int i = 0; i < partNum; i++, arg.m_info++) {
+                if ((m_pWrkMatRes->m_pResMat + arg.m_info->m_matIdx)->m_color.a > 0.0f &&
+                    (arg.m_info->m_drawFlags & 0x8000) && (arg.m_info->m_flags & 0x24000) == 0x4000) {
+                    partsInstanceThicknessRender(arg);
+                }
+            }
+        }
+    }
+}
+
+void DrMdoCtlSeamInstMap::initInstMapParts(DrResMdoSeamWrkInst* wrk, DrResMdoSeamWrkInst* pair) {
+    const MdsSeamInstMapHead* head = reinterpret_cast<const MdsSeamInstMapHead*>(wrk->m_memObj->m_pData);
+    const unsigned char* data = reinterpret_cast<const unsigned char*>(head);
+    MdoWrkMatRes* matRes = nullptr;
+    initInstMapMaterial(matRes, data + head->m_dataOfs[1], data + head->m_dataOfs[0], data + head->m_extOfs, nullptr,
+                        head->m_matArg);
+    m_pWrkMatRes = matRes;
+    if (head->m_dataOfs[2] != 0) {
+        const unsigned char* blockData = data + head->m_dataOfs[2];
+        const MdsSeamInstMatBlock* block = reinterpret_cast<const MdsSeamInstMatBlock*>(blockData);
+        m_pWrkMatRes->m_pSeamMatBlock = blockData;
+        m_pWrkMatRes->m_pSeamMatData[0] = m_pWrkMatRes->m_pSeamMatBlock + block->m_ofs0;
+        m_pWrkMatRes->m_pSeamMatData[1] = m_pWrkMatRes->m_pSeamMatBlock + block->m_ofs1;
+        m_pWrkMatRes->m_pSeamMatData[2] = m_pWrkMatRes->m_pSeamMatBlock + block->m_ofs2;
+    }
+    const DrResMdoSeamWrkInst::MapEntry* tbl = reinterpret_cast<const DrResMdoSeamWrkInst::MapEntry*>(
+        reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_instMapTblOfs);
+    m_instMemSize += tbl[wrk->m_dataIdx].m_size;
+    wrk->setupWork(matRes, m_triUniformArray, m_pDrMan->m_allocHandle, this, head, m_pDrMan->m_dispOffBits, 500,
+                   &m_instAnm);
+    unsigned int idx = wrk->m_dataIdx;
+    m_pInstBits[idx >> 5] |= 1 << (idx & 0x1F);
+    m_instNum++;
+    if (pair != nullptr) {
+        pair->m_pPair = wrk;
+        wrk->m_pPair = pair;
+    }
+    if (m_viewNum == 0) {
+        m_pDrMan->m_pixlMan->m_shadowCacheMan->callSelectShadowCacheUpdate(~0UL);
+    }
+    m_instShadowCacheDone = 0;
+}
+
+void DrMdoCtlSeamInstMap::releaseFreeSeamInst(DrResMdoSeamWrkInst* wrk) {
+    DrResMdoSeamMemObj* memObj;
+    if (wrk->m_pWrkMatRes == nullptr) {
+        memObj = nullptr;
+    } else {
+        memObj = wrk->m_memObj;
+        unsigned int idx = wrk->m_dataIdx;
+        m_pInstBits[idx >> 5] &= ~(1 << (idx & 0x1F));
+        m_instMemSize -= wrk->m_readSize;
+        releaseInstMapSeamMat(wrk->m_pWrkMatRes);
+        wrk->releaseCache(this);
+        m_instNum--;
+    }
+    DrResMdoSeamWrkInst* after = wrk->m_pLink;
+    DrResMdoSeamWrkInst* before = wrk->m_pBackLink;
+    if (after == nullptr) {
+        if (before != nullptr) {
+            before->m_pLink = nullptr;
+        }
+    } else {
+        if (before != nullptr) {
+            before->m_pLink = after;
+        }
+        after->m_pBackLink = before;
+    }
+    if (m_instPool.m_usedTail == wrk) {
+        m_instPool.m_usedTail = before;
+    }
+    if (m_instPool.m_list == wrk) {
+        m_instPool.m_list = after;
+        if (after != nullptr) {
+            after->m_pBackLink = nullptr;
+        }
+    }
+    if (m_instPool.m_freeTail == nullptr) {
+        m_instPool.m_freeHead = wrk;
+        m_instPool.m_freeTail = wrk;
+        wrk->m_pBackLink = nullptr;
+    } else {
+        m_instPool.m_freeTail->m_pLink = wrk;
+        wrk->m_pBackLink = m_instPool.m_freeTail;
+        m_instPool.m_freeTail = wrk;
+    }
+    wrk->m_pLink = nullptr;
+    m_instPool.m_freeNum++;
+    m_instPool.m_usedNum--;
+    if (memObj != nullptr) {
+        wrk->m_memObj = nullptr;
+        releaseFreeSeamMemObj(memObj);
+    }
+}
+
+void DrMdoCtlSeamInstMap::renderInstShadowCacheRender(DrResMdoSeamWrkInst* wrk, const mm::Mat44& mtx,
+                                                      unsigned int vtxNo, const MdsMdlTopHeader* top) {
+    if (vtxNo == 0xFFFF) {
+        m_pWrkMatRes->m_pVertex = wrk->m_vertex;
+    } else {
+        unsigned int no = m_pVertexNo[vtxNo];
+        m_pWrkMatRes->m_pVertex = m_vertexPool.m_works[no - 1].m_vertex;
+    }
+    m_pWrkMatRes->m_pVertex->beginVertexSetup();
+    grlib::CGLibEtcUniformBlock block;
+    grlib::ShdMat44TransposeMat44(static_cast<float*>(block.getBuff()), mtx);
+    block.updateData(0x40);
+    m_pEtcBlock = &block;
+    m_bindFlags[0] |= 2;
+    partsPosShadowRender(top);
+    partsPosNukiShadowRender(top);
+}
+
 void DrMdoCtlSeamInstMap::beginResAll(MdoWrkMatRes* res) {
     m_pSavedWrkMatRes = m_pWrkMatRes;
     m_pWrkMatRes = res;

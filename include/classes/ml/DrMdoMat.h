@@ -92,6 +92,10 @@ public:
     // free a seam material's resources: vertex, textures, samplers, shader object and uniform arrays
     void releaseBaseMapSeamMat(MdoWrkMatRes* res);
     void releaseInstMapSeamMat(MdoWrkMatRes* res);
+    void initInstMapMaterial(MdoWrkMatRes*& res, const unsigned char*, const unsigned char*, const unsigned char*,
+                             const unsigned char*, int);
+    void resetInstMapMaterial(MdoWrkMatRes* res, const unsigned char*, const unsigned char*, const unsigned char*,
+                              const unsigned char*, int);
     void releaseMpfMapSeamMat(MdoWrkMatRes* res);
     // builds the flag wave work of data + ofs in buf (when given) and hands it to res; returns the bytes it takes
     int getFlagWaveRes(const unsigned char* data, unsigned int ofs, unsigned char* buf, MdoWrkMatRes* res);

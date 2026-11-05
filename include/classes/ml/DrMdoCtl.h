@@ -11,6 +11,23 @@ namespace ml {
 struct MdsMdlInfoHeader;
 struct MdsMdlTopHeader;
 
+// What DrMdoCtl::partsInstance*Render draw one top header's parts with (the type name is the symbols'; 0x28 bytes,
+// DrMdoCtlSeamInstMap's passes fill it on the stack). The field names are not the original's: m_count, m_first and
+// m_instances are what DrMdoCtlSeamInstMap::callInstShadowCacheAddRender passes partsPosNoamShadowRender from the
+// same model info.
+struct MdoInstancePrePassArg {
+    const MdsMdlInfoHeader* m_info;  // 0x0: the part, stepped through the top header's parts
+    unsigned int m_count;            // 0x8
+    unsigned int m_first;            // 0xC
+    unsigned int m_instances;        // 0x10
+    unsigned int m_billNum;          // 0x14: the billboard instances (partsInstanceZPrepassBillRender)
+    unsigned int m_billArg;          // 0x18
+    unsigned char pad_1C[0x4];
+    bool m_bill;                     // 0x20
+    bool m_first2;                   // 0x21: createInstThicknessPassDisplayList's argument
+    unsigned char pad_22[0x6];
+};
+
 // table 0x7100B7B680
 class DrMdoCtl : public ::ml::DrMdoNode {
 public:
@@ -28,6 +45,9 @@ public:
     void partsShadowNukiBaseRender(const MdsMdlTopHeader* top);
     void partsPosShadowRender(const MdsMdlTopHeader* top);
     void partsPosNukiShadowRender(const MdsMdlTopHeader* top);
+    void partsInstanceZPrepassRender(const MdoInstancePrePassArg& arg);
+    void partsInstanceZPrepassBillRender(const MdoInstancePrePassArg& arg);
+    void partsInstanceThicknessRender(const MdoInstancePrePassArg& arg);
     // count/first go to grlib::CGLibCtlVertex::setInstanceVertex, instances to DrResMdoVertex::renderIns (the
     // parameter names are not the original's)
     void partsPosNoamShadowRender(const MdsMdlTopHeader* top, grlib::CGLibVtxInstans* inst, unsigned int count,
