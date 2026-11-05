@@ -37,6 +37,15 @@
 #include "classes/gf/GfEvtModelBlade.h"
 #include "classes/gf/GfEvtModelEnemy.h"
 #include "gf/GfDataBlade.h"
+#include "classes/gf/GfPause.h"
+#include "gf/GfDataEvent.h"
+#include "classes/gf/GfManager.h"
+#include "classes/gf/GfGameFlag.h"
+#include "gf/GfPlayFactory.h"
+#include "classes/gf/GfMapManager.h"
+#include "classes/gf/GfGameObj.h"
+#include "classes/gf/GfEvtModelSalvage.h"
+#include "plugin/Bdat.h"
 #include <math.h>
 
 namespace gf {
@@ -113,6 +122,59 @@ void GfGameEvent::clear() {
             self->m_disp[i] = true;
         }
         self->m_dispObjects.clear();
+    }
+}
+
+void GfGameEvent::update(const fw::UpdateInfo& info) {
+    if (get() == nullptr || !get()->m_initialized) {
+        return;
+    }
+    event::Manager* manager = event::Manager::get();
+    if (manager != nullptr) {
+        manager->update();
+        manager->tail();
+        manager->render();
+    }
+    mm::mtl::FixedList<GfEvtModel*, 128>& models = get()->m_models;
+    for (mm::mtl::FixedList<GfEvtModel*, 128>::iterator it = models.begin(); it != models.end(); ++it) {
+        (*it)->update(info);
+    }
+    if (GfEvtBgm::get() != nullptr) {
+        GfEvtBgm::get()->update(info);
+    }
+    if (get() != nullptr) {
+        get()->updateCsEventCategoryVolume();
+    }
+}
+
+void GfGameEvent::play(unsigned int id, unsigned int mode, unsigned int bladeId, const mm::Vec3& pos, float time) {
+    GfGameEvent* self = get();
+    event::Manager* manager = event::Manager::get();
+    if (self == nullptr || manager == nullptr) {
+        return;
+    }
+    self->m_stop = false;
+    unsigned char* list = Bdat::getFP("EVT_listList");
+    unsigned int top = Bdat::getIdTop(list);
+    unsigned int end = top + Bdat::getIdCount(list);
+    for (unsigned int i = top; i < end; i++) {
+        unsigned char* fp = Bdat::getFP(reinterpret_cast<const char*>(Bdat::getVal(list, "listSeat", i)));
+        unsigned int evtTop = Bdat::getIdTop(fp);
+        unsigned int evtEnd = evtTop + Bdat::getIdCount(fp);
+        if (evtTop <= id && id < evtEnd) {
+            mm::mtl::FixStr<64> name(reinterpret_cast<const char*>(Bdat::getVal(fp, "evtName", id)));
+            if (name.m_str[0] == '\0') {
+                return;
+            }
+            if (!manager->isDebugPlayOnetime() && static_cast<unsigned short>(Bdat::getVal(fp, "linkID", id)) != 0) {
+                name += "_link";
+            }
+            Bdat::getVal(fp, "category", id);
+            self->m_playEventId = id;
+            self->m_playBladeId = bladeId;
+            manager->play(name.m_str, reinterpret_cast<GF_OBJ_HANDLE*>(-1), 0, 0, mode, bladeId, pos, time);
+            return;
+        }
     }
 }
 
@@ -213,6 +275,28 @@ void GfGameEvent::setDisp(EVTDISP disp, bool flag) {
     }
 }
 
+void GfGameEvent::applySetDisp(EVTDISP disp) {
+    // the gimmick type each display kind 16..26 shows (65 for the kinds below 16, which are object lists); the
+    // name is not the original's
+    static const unsigned char s_gmkType[27] = {65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+                                                65, 65, 28, 31, 34, 9,  13, 15, 37, 38, 50, 51, 35};
+    if (disp == 1) {
+        applySetDispObject(GfMapManager::getGfObjHandle());
+        return;
+    }
+    if (disp >= 16) {
+        unsigned long index = disp;
+        if (index - 16 < 11) {
+            GfGameUtil::setDispByGmkType(gmk::GmkType(s_gmkType[index]), get() != nullptr ? get()->m_disp[index] : true);
+        }
+    } else {
+        mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>& list = *GfGameObj::getList(disp);
+        for (mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>::iterator it = list.begin(); it != list.end(); ++it) {
+            applySetDispObject(*it);
+        }
+    }
+}
+
 void GfGameEvent::setGmkIdDisp(gmk::GmkType type, unsigned int id, bool flag) {
     GfGameUtil::setDispByGmkTypeAndGmkIdx(type, id, flag);
 }
@@ -281,6 +365,82 @@ void GfGameEvent::gevMapjump(GEV gev, const MapjumpCallbackInfo& info) {
         if (manager != nullptr && manager->isPlaying()) {
             get()->m_mapjumped = 1;
         }
+    }
+}
+
+void GfGameEvent::gevPlayEvent(GEV gev, unsigned int id) {
+    switch (gev) {
+    case 8:
+        if (m_tempWeather != 0) {
+            WEATHERID current = GfGameEnv::getTempWeather();
+            int mapId = m_tempWeatherMapId;
+            GfGameEnv::destroyTempWeather(m_tempWeather);
+            m_tempWeather = WEATHER_HANDLE(0);
+            m_tempWeatherMapId = 0;
+            if (mapId == GfGameManager::getMapID()) {
+                GfFieldWeather::setMapWeatherID(current);
+            }
+        }
+        break;
+    case 9:
+        pad_1914 = id;
+        break;
+    case 10:
+        m_eventPhase = 2;
+        if (GfDataEvent::getEventType(id) != 1 && m_mapjumped == 0) {
+            m_mapjumped = 1;
+        }
+        m_playEventId = id;
+        pad_1908 = id;
+        break;
+    case 11: {
+        GfDataEvent::getEventType(id);
+        if (m_mapjumped == 1) {
+            m_mapjumped = 0;
+        }
+        if (GfManager::isExecModeThater()) {
+            break;
+        }
+        int flag = GfDataEvent::getEventPlayFlag(id);
+        if (flag >= 0) {
+            GfGameFlag::setLocal(1, flag, 1);
+        }
+        GfPlayFactory::createEventAfterScript(id);
+        break;
+    }
+    case 12:
+        m_eventPhase = 1;
+        m_playEventId = id;
+        break;
+    case 13:
+        m_playEventId = 0;
+        pad_1914 = 0;
+        m_eventPhase = 0;
+        m_fadeInWaitSec = 0.0f;
+        m_fadeInSec = 0.5f;
+        if (m_tempWeather != 0) {
+            WEATHERID current = GfGameEnv::getTempWeather();
+            int mapId = m_tempWeatherMapId;
+            GfGameEnv::destroyTempWeather(m_tempWeather);
+            m_tempWeather = WEATHER_HANDLE(0);
+            m_tempWeatherMapId = 0;
+            if (mapId == GfGameManager::getMapID()) {
+                GfFieldWeather::setMapWeatherID(current);
+            }
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+void GfGameEvent::playBgm(const EventBgmSetup& setup) {
+    EventBgmSetup bgm = setup;
+    if (GfPause::isPause(0x40)) {
+        bgm.m_noBgm = false;
+    }
+    if (GfEvtBgm::get() != nullptr) {
+        GfEvtBgm::get()->playBgm(bgm);
     }
 }
 
@@ -545,6 +705,32 @@ void GfGameEvent::destroyEvtModel(GfEvtModel* model) {
     mm::mtl::FixedList<GfEvtModel*, 128>::iterator it = self->m_models.find(model);
     if (it != self->m_models.end()) {
         self->m_models.erase(it);
+    }
+}
+
+
+GfEvtModelSalvage* GfGameEvent::createSalvage() {
+    GfInitParamDriver param;
+    param.m_createType = 9;
+    param.m_objId = 1;
+    param.pad_40 = 8;
+    return GfEvtModelSalvage::create(param);
+}
+
+
+void GfGameEvent::replaceEquipModel(mm::mtl::FixStr<128>& model) {
+    if (get() != nullptr && (get()->m_playEventId == 10498 || get()->m_playEventId == 10494)) {
+        if (strstr(model.m_str, "pc000101") != nullptr) {
+            const char* driverModel = GfGameUtil::getDriverModel(1, true, true);
+            if (driverModel != nullptr && strstr(driverModel, "pc000103") == nullptr) {
+                model = "model/";
+                model += driverModel;
+            }
+        }
+    }
+    if (strstr(model.m_str, "bl000401") != nullptr) {
+        model = "model/";
+        model += GfGameUtil::getBladeModel(1011, false);
     }
 }
 

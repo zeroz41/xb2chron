@@ -19,14 +19,18 @@ namespace fw { enum SoundCategory : int; }
 namespace fw { class UpdateInfo; }
 namespace gf {
 // what an event shows: GfGameEvent::setDisp(EVTDISP, bool) keeps one flag per kind (27 of them, initialize sets
-// them all); the enumerators are not known
-enum EVTDISP : unsigned int {};
+// them all); the enumerators are not known. No fixed underlying type: stored unsigned (setDisp indexes with uxtw)
+// but promoted to int (applySetDisp's `disp < 16` is a signed compare)
+enum EVTDISP {};
 
 // table 0x7100B54448
 class GfGameEvent : public ::mm::mtl::PtrSingleton< ::gf::GfGameEvent> {
 public:
     // runs the singleton's event work (GfGameManager::update calls it; symbol _ZN2gf11GfGameEvent6updateERKN2fw10UpdateInfoE)
     static void update(const fw::UpdateInfo& info);
+    // mutes the cutscene categories 13 and 14 while event::SeqManager is in state 4 and an event plays (update
+    // calls it on the instance)
+    void updateCsEventCategoryVolume();
     static void postUpdate(const fw::UpdateInfo& info);
     static void finishNewGameWait();
     static void stop();
@@ -85,6 +89,9 @@ public:
     static float getFadeInWaitSec();
     static float getFadeInSec();
     static void setDisp(EVTDISP disp, bool flag);
+    // shows (flag) or hides the objects of a type by their BDAT ids: an id hidden is kept in m_dispObjects as
+    // type << 16 | id (event::HideManager and SeqManager::exec call it)
+    static void setDisp(unsigned int type, const mm::mtl::FixedVector<unsigned int, 1024>& ids, bool flag);
     static void applySetDisp(EVTDISP disp);
     static void setGmkIdDisp(gmk::GmkType type, unsigned int id, bool flag);
     static void setGmkBdatDisp(gmk::GmkType type, unsigned int id, bool flag);
