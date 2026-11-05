@@ -64,43 +64,117 @@
 
 namespace ml {
 
+DrShdDataList::DrShdDataList(DrMan* drMan)
+    : m_pRes(nullptr), m_pDrMan(drMan), m_pResShdWork(nullptr), m_pMpfObj(nullptr) {
+    memset(m_pShdObj, 0, sizeof(m_pShdObj));
+    m_pShdList = new (m_pDrMan->m_workHandle, nullptr, 0, 4, false) grlib::CGLibShdListBase<DrShdDataObj>();
+    createWork();
+    createShader();
+}
+
+DrShdDataList::~DrShdDataList() {
+    releaseShader();
+    for (int i = 0; i < 12; i++) {
+        m_vertex[i].release();
+    }
+    for (int i = 0; i < 8; i++) {
+        m_index[i].release();
+    }
+    m_boneStmOut.release();
+    m_oldBoneStmOut.release();
+    for (int i = 0; i < 0x5B; i++) {
+        m_fetchShader[i].clearWork();
+    }
+    m_alphaTestBlock.release();
+    if (m_pShdList != nullptr) {
+        delete m_pShdList;
+        m_pShdList = nullptr;
+    }
+}
+
+void DrShdDataList::releaseShader() {
+    if (m_pResShdWork != nullptr) {
+        m_pShdList->release();
+        if (m_pResShdWork != nullptr) {
+            mtl::MemManager::deallocate(m_pResShdWork, 0, false);
+            m_pResShdWork = nullptr;
+        }
+    }
+    if (m_pRes != nullptr) {
+        m_pRes->Release();
+        m_pRes = nullptr;
+    }
+}
+
 void DrShdDataList::reloadShader(int) { createShader(); }
 
-DrShdDataObj* DrShdDataList::getDebugShdObj(int i) { return &m_pDebugShdObj[i]; }
+void DrShdDataList::createAlphaTestBlock() {
+    m_alphaTestBlock.setupArray(11);
+    m_alphaTestBlock.allocMem(11 * 0x100);
+    for (int i = 0; i < 11; i++) {
+        m_alphaTestBlock.m_ofs +=
+            m_alphaTestBlock.m_pArray[i].setupArray(0x10, m_alphaTestBlock.m_mem, m_alphaTestBlock.m_ofs);
+    }
+    for (int i = 1; i < 10; i++) {
+        grlib::CGLibOneUniformBlock* block = &m_alphaTestBlock.m_pArray[i];
+        float* buff = reinterpret_cast<float*>(block->m_pBuff);
+        buff[0] = i * 0.1f;
+        buff[1] = 0.0f;
+        buff[2] = 0.0f;
+        buff[3] = 0.0f;
+        block->updateData();
+    }
+    grlib::CGLibOneUniformBlock* block = &m_alphaTestBlock.m_pArray[0];
+    float* buff = reinterpret_cast<float*>(block->m_pBuff);
+    buff[0] = 0.01f;
+    buff[1] = 0.0f;
+    buff[2] = 0.0f;
+    buff[3] = 0.0f;
+    block->updateData();
+    block = &m_alphaTestBlock.m_pArray[10];
+    buff = reinterpret_cast<float*>(block->m_pBuff);
+    buff[0] = 0.99f;
+    buff[1] = 0.0f;
+    buff[2] = 0.0f;
+    buff[3] = 0.0f;
+    block->updateData();
+}
 
-DrShdDataObj* DrShdDataList::getSelectShdObj(int i) { return &m_pSelectShdObj[i]; }
+DrShdDataObj* DrShdDataList::getDebugShdObj(int i) { return &m_pShdObj[0][i]; }
 
-DrShdDataObj* DrShdDataList::getShadowShdObj(int i) { return &m_pShadowShdObj[i]; }
+DrShdDataObj* DrShdDataList::getSelectShdObj(int i) { return &m_pShdObj[1][i]; }
 
-DrShdDataObj* DrShdDataList::getPostShdObj(int i) { return &m_pPostShdObj[i]; }
+DrShdDataObj* DrShdDataList::getShadowShdObj(int i) { return &m_pShdObj[2][i]; }
 
-DrShdDataObj* DrShdDataList::getComputeObj(int i) { return &m_pComputeObj[i]; }
+DrShdDataObj* DrShdDataList::getPostShdObj(int i) { return &m_pShdObj[3][i]; }
 
-void DrShdDataList::bindShdVertex() { grlib::CGLibCtlVertex::setVertex(m_shdVertex); }
+DrShdDataObj* DrShdDataList::getComputeObj(int i) { return &m_pShdObj[9][i]; }
 
-void DrShdDataList::bindQuadsTex() { grlib::CGLibCtlVertex::setVertex(m_quadsTex); }
+void DrShdDataList::bindShdVertex() { grlib::CGLibCtlVertex::setVertex(m_vertex[0]); }
 
-void DrShdDataList::bindTriangle() { grlib::CGLibCtlVertex::setVertex(m_triangle); }
+void DrShdDataList::bindQuadsTex() { grlib::CGLibCtlVertex::setVertex(m_vertex[1]); }
 
-void DrShdDataList::bindTriangleTex() { grlib::CGLibCtlVertex::setVertex(m_triangleTex); }
+void DrShdDataList::bindTriangle() { grlib::CGLibCtlVertex::setVertex(m_vertex[2]); }
 
-void DrShdDataList::bindShdBoxVertex() { grlib::CGLibCtlVertex::setVertex(m_shdBoxVertex); }
+void DrShdDataList::bindTriangleTex() { grlib::CGLibCtlVertex::setVertex(m_vertex[3]); }
 
-void DrShdDataList::bindShdRainDropVertex() { grlib::CGLibCtlVertex::setVertex(m_shdRainDropVertex); }
+void DrShdDataList::bindShdBoxVertex() { grlib::CGLibCtlVertex::setVertex(m_vertex[4]); }
 
-void DrShdDataList::bindShdEffVtx() { grlib::CGLibCtlVertex::setVertex(m_shdEffVtx); }
+void DrShdDataList::bindShdRainDropVertex() { grlib::CGLibCtlVertex::setVertex(m_vertex[8]); }
 
-void DrShdDataList::bindShdDepthCheck() { grlib::CGLibCtlVertex::setVertex(m_shdDepthCheck); }
+void DrShdDataList::bindShdEffVtx() { grlib::CGLibCtlVertex::setVertex(m_vertex[9]); }
 
-void DrShdDataList::renderQuads() { m_quadsIndex.drawIndex(); }
+void DrShdDataList::bindShdDepthCheck() { grlib::CGLibCtlVertex::setVertex(m_vertex[10]); }
 
-void DrShdDataList::renderTriangle() { m_triangleIndex.drawIndex(); }
+void DrShdDataList::renderQuads() { m_index[0].drawIndex(); }
 
-void DrShdDataList::renderBox() { m_boxIndex.drawIndex(); }
+void DrShdDataList::renderTriangle() { m_index[1].drawIndex(); }
 
-void DrShdDataList::renderRainDrop() { m_rainDropIndex.drawIndex(); }
+void DrShdDataList::renderBox() { m_index[2].drawIndex(); }
 
-void DrShdDataList::renderEffVtx(int instances) { m_effVtxIndex.drawInsIndex(instances); }
+void DrShdDataList::renderRainDrop() { m_index[6].drawIndex(); }
+
+void DrShdDataList::renderEffVtx(int instances) { m_index[7].drawInsIndex(instances); }
 
 // GrlPrimitiveType 0 (no enumerator has a name yet): the drawing of points
 void DrShdDataList::renderPoint(int count) { grlib::CGLibCtlVertex::renderVertex(GrlPrimitiveType(0), count); }
