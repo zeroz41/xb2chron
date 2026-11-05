@@ -10,6 +10,7 @@
 #include "ml/MlMem.h"
 #include "mm/mtl/FixStr.h"
 #include "ctype.h"
+#include "fw/UpdateInfo.h"
 
 namespace fw {
 
@@ -36,6 +37,71 @@ bool PadManager::finalize() {
         ml::DevPad::stopVibration(manager->m_controlPads[0].m_padNo);
     }
     return true;
+}
+
+void PadManager::update(const UpdateInfo& info) {
+    unsigned int padMax = ml::DevPad::getPadMax();
+    for (unsigned int i = 0; i < padMax; i++) {
+        if (m_activePads.test(i)) {
+            unsigned int prevRawBtn = m_rawPads[i].m_btn;
+            unsigned int prevBtn = m_pads[i].m_btn;
+            makePadData(i);
+            updatePadData(i, m_rawPads[i], prevRawBtn, m_rawWorks, info.m_frameTime);
+            updatePadData(i, m_pads[i], prevBtn, m_works, info.m_frameTime);
+        } else {
+            m_rawPads[i].clear();
+            m_pads[i].clear();
+        }
+    }
+    updateControlPadNo(0);
+    for (int i = 0; i < 12; i++) {
+        if (m_controlPadNos[i] >= 0) {
+            m_controlPads[i] = m_pads[m_controlPadNos[i]];
+        } else {
+            m_controlPads[i].clear();
+        }
+    }
+    for (int i = 0; i < 12; i++) {
+        if (m_rawControlPadNos[i] >= 0) {
+            m_rawControlPads[i] = m_rawPads[m_rawControlPadNos[i]];
+        } else {
+            m_rawControlPads[i].clear();
+        }
+    }
+}
+
+void PadManager::makePadData(int padNo) {
+    TUnk_B42870* filter = m_filters[padNo];
+    float lx = ml::DevPad::getALX(padNo, false);
+    float ly = ml::DevPad::getALY(padNo, false);
+    float rx = ml::DevPad::getARX(padNo, false);
+    float ry = ml::DevPad::getARY(padNo, false);
+    unsigned int btn = ml::DevPad::getBtn(padNo);
+    unsigned int down = ml::DevPad::getDown(padNo);
+    unsigned int up = ml::DevPad::getUp(padNo);
+    unsigned int dbl = ml::DevPad::getDbl(padNo);
+    if (lx != lx) {
+        lx = 0.0f;
+    }
+    if (ly != ly) {
+        ly = 0.0f;
+    }
+    if (rx != rx) {
+        rx = 0.0f;
+    }
+    if (ry != ry) {
+        ry = 0.0f;
+    }
+    PadData& data = m_rawPads[padNo];
+    data.m_btn = filter->filterBtn(btn);
+    data.m_down = filter->filterBtn(down);
+    data.m_up = filter->filterBtn(up);
+    data.m_dbl = filter->filterBtn(dbl);
+    data.m_lx = filter->filterALX(lx, ly);
+    data.m_ly = filter->filterALY(lx, ly);
+    data.m_rx = filter->filterARX(rx, ry);
+    data.m_ry = filter->filterARY(rx, ry);
+    replacePadData(padNo);
 }
 
 bool PadManager::isInitialized() const {

@@ -31,6 +31,29 @@ struct PadData {
         pad_2C[3] = 0.2f;
     }
 
+    // back to what the constructor makes, in place (fw::PadManager::update clears a pad it does not read so: its
+    // stores come in this order, with no temporary; inline, the name is not the original's)
+    void clear() {
+        m_btn = 0;
+        m_down = 0;
+        m_up = 0;
+        m_repeat = 0;
+        m_dbl = 0;
+        pad_14 = 0;
+        pad_18 = 0;
+        m_lx = 0.0f;
+        m_ly = 0.0f;
+        m_rx = 0.0f;
+        m_ry = 0.0f;
+        m_style = 0;
+        m_isConnect = false;
+        m_padNo = -1;
+        pad_2C[0] = 0.2f;
+        pad_2C[1] = 0.2f;
+        pad_2C[2] = 0.2f;
+        pad_2C[3] = 0.2f;
+    }
+
     unsigned int m_btn;     // ml::DevPad::getBtn: held
     unsigned int m_down;    // ml::DevPad::getDown: pressed this frame
     unsigned int m_up;      // ml::DevPad::getUp: released this frame
