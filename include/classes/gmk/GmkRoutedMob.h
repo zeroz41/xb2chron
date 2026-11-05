@@ -17,6 +17,7 @@ namespace gmk {
 class GmkRoutedMob : public ::gmk::GmkRoute {
 public:
     class PopXformFinder;
+    GmkRoutedMob() {}  // inline: Vector<GmkRoutedMob>::resize/extend construct in place with its members' defaults
     virtual ~GmkRoutedMob();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3

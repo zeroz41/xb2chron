@@ -36,6 +36,7 @@ public:
     const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     // whether pos lies within the random walk radius of its position (1.0.0 name)
     bool isPointInsideRandomWalk(const mm::Vec3& pos) const;
+    GmkEnemy() {}  // inline: Vector<GmkEnemy>::resize/extend construct in place with its members' defaults
     virtual ~GmkEnemy();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3

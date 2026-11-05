@@ -3685,8 +3685,8 @@ static inline bool getYSnapPosForPop(mm::Vec3& pos, const mm::Vec3& from, float 
     return getYSnapPos(pos, from, length, config);
 }
 
-// a squad with room places the objects; else the gimmick's position (pad_98 1) or a point in its shape; the
-// rotation is the gimmick's; snapped on the ground when its data's first byte says so
+// a squad with room places the objects; else the gimmick's position (m_popInfo.m_popNum 1) or a point in its
+// shape; the rotation is the gimmick's; snapped on the ground when its data's first byte says so
 bool GmkMob::PopXformFinder::findPosRot(mm::Vec3& pos, mm::Vec3& rot) const {
     GmkSquad* squad = m_gmk->m_insts.m_squad;
     unsigned int num;
@@ -3698,7 +3698,7 @@ bool GmkMob::PopXformFinder::findPosRot(mm::Vec3& pos, mm::Vec3& rot) const {
         squad->getPosRotY(pos, rot.y, m_gmk->getGobInstNum());
         rot.z = 0.0f;
         rot.x = 0.0f;
-    } else if (m_gmk->m_insts.pad_98 == 1) {
+    } else if (m_gmk->m_insts.m_popInfo.m_popNum == 1) {
         pos = *m_gmk->m_pos;
     } else {
         m_gmk->getPositionInShape(pos, false);

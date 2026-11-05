@@ -2,10 +2,16 @@
 #define CLASSES_GMK_GMKMOBINSTS_H
 
 #include "mm/mtl/Vector.h"
+#include "mm/mtl/FixedVector.h"
+#include "classes/gmk/ScenarioFlagCond.h"
+#include "classes/gmk/QuestFlagCond.h"
+#include "classes/gmk/TimeCond.h"
 
+class CBdatWrapper;
 namespace gf { class GF_OBJ_HANDLE; }
 namespace mm { class Vec3; }
 namespace gmk {
+class AGmkBase;
 class GmkSquad;
 // the game objects a mob gimmick spawns (GmkMob holds one at 0x48; GmkMob::create and GmkRoutedMob::create/dispose
 // call its functions). No table: a plain class. Size 0xd0 (GmkMob's stride 0x118 minus 0x48).
@@ -20,31 +26,85 @@ public:
         virtual void onPopGob(gf::GF_OBJ_HANDLE* handle) const = 0;  // slot 1
         virtual void onCreateGobInsts(unsigned int num) const = 0;  // slot 2
     };
-    // inline (no symbol in 1.0.0 or 3.0.1): GmkMob's destructor runs dispose again after its own dispose, then
-    // clears 0x90 when it is set
+    // a gimmick row's pop conditions (create 0x71005970BC reads them; 0x40 bytes: Vector<GmkMob>::resize zeroes
+    // every field, its copy copies 0x0..0x1a as one run around the TimeCond). The field names are not the
+    // original's: the columns create reads into them.
+    class BdatInfo {
+    public:
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
+        bool isPopCommonCondMatched(const AGmkBase& gmk) const;
+        bool isPopDistCondMatched(const mm::Vec3& pos) const;
+        unsigned short m_condition = 0;        // 0x0: "Condition"
+        unsigned short m_group = 0;            // 0x2: "Group"
+        unsigned short m_squadId = 0;          // 0x4: "squadId"
+        unsigned short m_mot = 0;              // 0x6: "Mot"
+        unsigned short m_collision = 0;        // 0x8: "Collision"
+        unsigned short m_reactionRange = 0;    // 0xA: "ReactionRange"
+        unsigned short m_reactionPercent = 0;  // 0xC: "ReactionPercent"
+        unsigned short m_reactionMot = 0;      // 0xE: "ReactionMot"
+        unsigned short m_battleReaction = 0;   // 0x10: "BattleReaction"
+        ScenarioFlagCond m_scenarioFlag;       // 0x12: "ScenarioFlagMin"/"ScenarioFlagMax"
+        QuestFlagCond m_questFlag;             // 0x16: "QuestFlag"/Min/Max
+        TimeCond m_timeRange;                  // 0x20: "TimeRange"
+        // squared "Visible_XZ"/"Visible_Y" and "Invisible_XZ"/"Invisible_Y" (each at least the visible one + 1)
+        float m_visibleXZSq = 0.0f;    // 0x30
+        float m_visibleYSq = 0.0f;     // 0x34
+        float m_invisibleXZSq = 0.0f;  // 0x38
+        float m_invisibleYSq = 0.0f;   // 0x3c
+    };
+    // how its objects pop (create 0x7100597488 reads the row; 0x48 bytes). The field names are not the
+    // original's: the columns create reads into them.
+    class PopInfo {
+    public:
+        void create(CBdatWrapper bdat, int row);
+        void update(GmkMobInsts& insts, mm::mtl::Vector<gf::GF_OBJ_HANDLE*>& gobs, const IPopXformFinder& finder);
+        unsigned char m_scaleMin = 100;     // 0x0: "ScaleMin"
+        unsigned char m_scaleMax = 100;     // 0x1: "ScaleMax"
+        unsigned char m_motSpeedMin = 100;  // 0x2: "MotSpeedMin"
+        unsigned char m_motSpeedMax = 100;  // 0x3: "MotSpeedMax"
+        unsigned short m_group = 0;         // 0x4: "Group"
+        int m_memberNum = 0;                // 0x8: FLD_NpcGroupId's "memberNum" of the group
+        unsigned short m_mot = 0;           // 0xC: "Mot"
+        unsigned short m_mountPoint = 0;    // 0xE: "MountPoint"
+        unsigned short m_mountObject = 0;   // 0x10: "MountObject"
+        unsigned short m_mountPoint2 = 0;   // 0x12: "MountPoint2"
+        unsigned short m_mountObject2 = 0;  // 0x14: "MountObject2"
+        // 0x18: the mob ids: "MobID", or FLD_MobGroupList's ids of "MOBGroupID"
+        mm::mtl::FixedVector<unsigned int, 8> m_mobIds;
+        // 0x40: how many pop, random in "PopMin".."PopMax"; 1 makes the pop finders pop at the gimmick's own
+        // position, else somewhere in its shape (GmkMob::PopXformFinder::findPosRot)
+        int m_popNum = 0;
+        bool m_hasSquad = false;  // 0x44: "squadId" is set
+    };
+    // what update and the sequence steps are given
+    class UpdateInfo;
+    // inline (no symbol in 1.0.0 or 3.0.1): GmkMob's destructor runs dispose again after its own dispose; the
+    // members' destructors then empty m_popInfo's id list
     ~GmkMobInsts() {
         dispose();
-        if (pad_90 != nullptr) {
-            pad_90 = nullptr;
-        }
     }
     void dispose();
     // shows or hides one of its objects by pad_a0 (display bit 8) when the object is bound to a gimmick
     void validateDisp(gf::GF_OBJ_HANDLE* handle) const;
     void disposeGobInsts(bool);
-    unsigned char pad_0[0x90];
-    void* pad_90;
-    // 0x98: 1 makes the pop finders pop at the gimmick's own position, else somewhere in its shape
-    // (GmkMob::PopXformFinder::findPosRot)
-    int pad_98;
-    unsigned char pad_9c[0x4];
-    bool pad_a0;  // validateDisp(handle) shows the objects while it is set
-    unsigned char pad_a1[0x7];
-    mm::mtl::Vector<gf::GF_OBJ_HANDLE*>* m_gobInsts;  // 0xa8: GmkMob's game objects (the name is not the original's)
+    // dispose clears these three (the names are not known)
+    unsigned long pad_0 = 0;
+    unsigned long pad_8 = 0;
+    int pad_10 = -1;
+    unsigned char pad_14[0x4];  // not set by the constructor; the copy copies it with pad_0..pad_10
+    BdatInfo m_bdatInfo;  // 0x18 (the name is not the original's)
+    PopInfo m_popInfo;    // 0x58 (the name is not the original's)
+    bool pad_a0 = true;  // validateDisp(handle) shows the objects while it is set
+    // 0xa8: GmkMob's game objects (the name is not the original's)
+    mm::mtl::Vector<gf::GF_OBJ_HANDLE*>* m_gobInsts = nullptr;
     // 0xb0: the squad its objects join; the pop finders place the objects by it while it has room (the name is not
     // the original's)
-    GmkSquad* m_squad;
-    unsigned char pad_b8[0x18];
+    GmkSquad* m_squad = nullptr;
+    // 0xb8: flag bits (dispose clears bits 0..2; the name is not the original's)
+    unsigned long m_flags = 0;
+    // 0xc0: the sequence step (seqUpdatePopDepop / seqWaitToFadeOutOfGobInst; GmkMob::create sets it; the name is
+    // not the original's)
+    void (GmkMobInsts::*m_seq)(const UpdateInfo&) = nullptr;
 };
 }  // namespace gmk
 

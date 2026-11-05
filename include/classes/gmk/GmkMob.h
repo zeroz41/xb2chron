@@ -19,6 +19,7 @@ public:
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {}
     };
     class PopXformFinder;
+    GmkMob() {}  // inline: Vector<GmkMob>::resize/extend construct in place with its members' defaults
     virtual ~GmkMob();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3
