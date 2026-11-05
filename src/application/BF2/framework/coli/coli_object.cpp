@@ -140,6 +140,58 @@ void ColiObject::setHandle(unsigned int handle) {
 
 bool ColiObject::isChar() const { return m_coliObj != nullptr && m_coliObj->m_type == 1; }
 
+void ColiObject::setInstantlyMatrix(mm::Mat44 const& matrix) {
+    float scale = m_scale;
+    m_matrix = matrix;
+    mm::Mat44 local(matrix);
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            local.m[i][j] *= scale;
+        }
+    }
+    local.mulCopy(pad_60, local);
+    if (m_coliObj != nullptr) {
+        switch (m_coliObj->m_type) {
+        case 1: {
+            idcoli::IDColiParmsCharacter parms(m_coliObj);
+            parms.setInstantlyMatrix(local);
+            break;
+        }
+        case 2: {
+            idcoli::IDColiParmsPhantom parms(m_coliObj);
+            parms.setInstantlyMatrix(local);
+            break;
+        }
+        }
+    }
+}
+
+void ColiObject::setMatrix(mm::Mat44 const& matrix) {
+    float scale = m_scale;
+    m_matrix = matrix;
+    mm::Mat44 local(matrix);
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            local.m[i][j] *= scale;
+        }
+    }
+    local.mulCopy(pad_60, local);
+    if (m_coliObj != nullptr) {
+        switch (m_coliObj->m_type) {
+        case 1: {
+            idcoli::IDColiParmsCharacter parms(m_coliObj);
+            parms.setMatrix(local);
+            break;
+        }
+        case 2: {
+            idcoli::IDColiParmsPhantom parms(m_coliObj);
+            parms.setMatrix(local);
+            break;
+        }
+        }
+    }
+}
+
 const mm::Mat44& ColiObject::getMatrix() const { return m_matrix; }
 
 int ColiObject::getPriority() const {
