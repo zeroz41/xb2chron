@@ -48,6 +48,16 @@
 #include "classes/gf/GfAppendHandles.h"
 #include "gf/GFATTACH.h"
 #include "gf/GfDataMob.h"
+#include "classes/gf/GfInitParamEnemy.h"
+#include "classes/gf/GfBdatChrEnArrange.h"
+#include "gf/GfDataDriver.h"
+#include "classes/gf/GfObjSetupWeapon.h"
+#include "classes/gf/GfObjSetupBlade.h"
+#include "classes/gf/GfObjSetupDriver.h"
+#include "gf/GfDataBlade.h"
+#include "classes/gf/GfInitParamWeapon.h"
+#include "classes/gf/GfInitParamDriver.h"
+#include "classes/gf/GfComAsm.h"
 
 #define GF_OBJ_FACTORY_PATH "D:/Monolithsoft/BF2/prog/application/BF2/gf/object/gf_obj_factory.cpp"
 
@@ -261,6 +271,15 @@ GF_OBJ_HANDLE* GfObjFactory::createGmkTbox(const CBdatWrapper& bdat, int row) {
     return createMapObj(param);
 }
 
+GF_OBJ_HANDLE* GfObjFactory::createGmkTboxBattleChallenge(const CBdatWrapper&, int, int id) {
+    unsigned char* fp = GfDataBdat::getFP(0xAC);
+    GfInitParamGimmick param;
+    param.m_objId = id;
+    param.pad_18 = &fp;
+    param.m_gimmickType = GimmickType(1);
+    return createMapObj(param);
+}
+
 GF_OBJ_HANDLE* GfObjFactory::createGmkNpc(const CBdatWrapper& bdat, int row) {
     if (GfObjManager::sys() == nullptr) {
         return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
@@ -333,6 +352,43 @@ GF_OBJ_HANDLE* GfObjFactory::createMobNull() {
     return handle;
 }
 
+GF_OBJ_HANDLE* GfObjFactory::createGmkEnemy(int id, signed char a, unsigned short b, const mm::Vec3& pos,
+                                            const mm::Vec3& rot, bool flag) {
+    GfBdatChrEnArrange* arrange = GfBdatChrEnArrange::sys();
+    unsigned char* paramFp = GfDataBdat::getFP(0x8C);
+    unsigned char* fp = GfDataBdat::getFP(0xA5);
+    unsigned short paramId = arrange->getChrEnArrangeParamID(id);
+    unsigned short rscId = Bdat::getValCheck(paramFp, "ResourceID", paramId, 2);
+    unsigned int level = static_cast<unsigned short>(arrange->getChrEnArrangeLv(id)) + a;
+    GfInitParamEnemy param;
+    param.m_paramId = paramId;
+    param.m_arrangeId = id;
+    param.pad_81 = flag;
+    param.m_objId = rscId;
+    param.pad_44 = b;
+    param.pad_ae = a;
+    param.pad_18 = &fp;
+    param.pad_ac = static_cast<int>(level) < 1 ? 1 : (level > 999 ? 999 : level);
+    param.m_initialPos = pos;
+    param.pad_70 = rot;
+    param.m_hasTransform = true;
+    if (GfGameManager::isGameTypeIra() && GfGameManager::isScenarioGame() && GfGameManager::isClearGame() &&
+        param.m_arrangeId == 0x5A8) {
+        unsigned int lv = GfDataDriver::getLevel(0x11);
+        unsigned int lv2 = GfDataDriver::getLevel(0x12);
+        lv = lv < lv2 ? lv : lv2;
+        unsigned int lv3 = GfDataDriver::getLevel(0x13);
+        param.pad_ac = lv < lv3 ? lv : lv3;
+    }
+    GF_OBJ_HANDLE* handle = createEnemy(param);
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    GfObjSetupEnemy* setup = mm::mtl::rttiCast<GfObjSetupEnemy>(GfObjManager::getObjInfo(handle)->m_setup);
+    setup->m_enArrangeId = id;
+    return handle;
+}
+
 GF_OBJ_HANDLE* GfObjFactory::createSmnEnemy(int id, const mm::Vec3& pos, const mm::Vec3& rot, bool flag) {
     GF_OBJ_HANDLE* handle = createGmkEnemy(id, 0, 0, pos, rot, flag);
     if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
@@ -399,6 +455,38 @@ GF_OBJ_HANDLE* GfObjFactory::createGmkMapGimmick(const CBdatWrapper& bdat, int r
     return handle;
 }
 
+GF_OBJ_HANDLE* GfObjFactory::createGmkBlade(const CBdatWrapper& bdat, int row, int index) {
+    if (GfDataBlade::isCommonBlade(index)) {
+        GfInitParamNpc param;
+        param.m_objId = index;
+        param.pad_90 = true;
+        param.pad_98 = const_cast<char*>(GfDataBlade::getDebugName(index));
+        return createNpc(param);
+    }
+    unsigned char* fp = GfDataNpc::getRscBdatFp(index);
+    GfInitParamNpc param;
+    param.m_objId = index;
+    param.pad_18 = &fp;
+    param.pad_90 = true;
+    param.pad_98 = reinterpret_cast<void*>(Bdat::getValCheck(bdat.m_fp, "name", row, 7));
+    GF_OBJ_HANDLE* handle = createNpc(param);
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    GfObjSetupNpc* setup = getSetupOf<GfObjSetupNpc>(GfObjManager::getObjInfo(handle), 6);
+    unsigned short mot = Bdat::getValCheck(bdat.m_fp, "Mot", row, 2);
+    if (mot) {
+        int id = mot;
+        const char* name = reinterpret_cast<const char*>(
+            Bdat::getValCheck(Bdat::getFP("FLD_NpcMobMotionId"), "cmdName", id, 7));
+        setup->m_stateName = name;
+        if (setup->m_stateName.length() != 0) {
+            setup->m_stateName[0] = 'S';
+        }
+    }
+    return handle;
+}
+
 GF_OBJ_HANDLE* GfObjFactory::createFieldObj(const GfInitParamFobj& param) {
     GfObjManager* manager = GfObjManager::sys();
     if (manager == nullptr) {
@@ -416,6 +504,97 @@ GF_OBJ_HANDLE* GfObjFactory::createFieldObj(const GfInitParamFobj& param) {
     }
     manager->callGfObjListener(IGfObjListener::OBJEVT(1), handle);
     return handle;
+}
+
+GfAppendHandles* GfObjFactory::createDriverWeapon(GfInitParamWeapon& param) {
+    GfAppendInfo info;
+    DataParamAcc acc(param.pad_120);
+    GfAppendInfo* appendInfo;
+    if (GfDataDriver::isIra(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0)) {
+        appendInfo = GfObjUtil::getAppendInfo(param.pad_38, GFATTACH(param.pad_1e4));
+    } else if (param.pad_120 != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        unsigned int driver = acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0;
+        unsigned int blade = param.pad_12c;
+        if (blade == 0) {
+            blade = acc.getBlade(param.pad_94, false);
+        }
+        param.pad_128 = acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0;
+        GfAppendUtil::setupPartyBlade(GFATTACH(param.pad_1e4), param.pad_38, param.m_objId, driver, blade);
+        appendInfo = GfObjUtil::getAppendInfo(param.pad_38, GFATTACH(param.pad_1e4));
+    } else if (param.pad_30 == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        DataParamAcc driverAcc(3, param.pad_128, GimmickType(0));
+        unsigned int blade = param.pad_12c;
+        if (blade == 0) {
+            blade = driverAcc.getBlade(param.pad_94, false);
+        }
+        GfAppendUtil::setupWeapon(GFATTACH(param.pad_1e4), info, param.m_objId, param.pad_128, blade,
+                                  isEventActCreateType(param.m_createType));
+        appendInfo = &info;
+    } else {
+        DataParamAcc driverAcc(param.pad_30);
+        unsigned int blade = param.pad_12c;
+        if (blade == 0) {
+            blade = driverAcc.getBlade(param.pad_94, false);
+        }
+        if (driverAcc.getObjType() == 3) {
+            param.pad_128 = driverAcc.isValid() && driverAcc.getObjType() == 3 ? driverAcc.getBdatId() : 0;
+        }
+        GfAppendUtil::setupWeapon(GFATTACH(param.pad_1e4), info, param.m_objId, param.pad_128, blade,
+                                  isEventActCreateType(param.m_createType));
+        appendInfo = &info;
+    }
+    GfAppendHandles* handles = GfMountManager::getAppendHandles(param.pad_38, GFATTACH(param.pad_1e4));
+    if (handles == nullptr) {
+        handles = &param.pad_130;
+    } else {
+        GF_OBJ_HANDLE* const* objs = handles->getObjHandles();
+        for (int i = 0; i < 10; i++) {
+            if (objs[i] != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                return handles;
+            }
+        }
+    }
+    bool second = appendInfo->m_list != 0;
+    appendInfo->m_list = 1;
+    handles->m_useSecond = true;
+    fn_710052A760(*handles, param, *appendInfo);
+    appendInfo->m_list = 0;
+    handles->m_useSecond = false;
+    fn_710052A760(*handles, param, *appendInfo);
+    appendInfo->m_list = second;
+    handles->m_useSecond = second;
+    return handles;
+}
+
+GfAppendHandles* GfObjFactory::createEnemyBladeWeapon(GfInitParamWeapon& param, unsigned int id, GF_OBJ_HANDLE* owner,
+                                                      GF_OBJ_HANDLE* blade) {
+    if (param.pad_1e8) {
+        GfAppendUtil::setupEnemyBladeWithNoDriver(GFATTACH(param.pad_1e4), param.pad_38, param.pad_12c, blade);
+    } else {
+        GfAppendUtil::setupEnemyBlade(GFATTACH(param.pad_1e4), param.pad_38, id, owner, blade);
+    }
+    GfAppendInfo* found = GfObjUtil::getAppendInfo(param.pad_38, GFATTACH(param.pad_1e4));
+    GfAppendInfo info;
+    GfAppendInfo* appendInfo = found == nullptr ? &info : found;
+    GfAppendHandles* handles = GfMountManager::getAppendHandles(param.pad_38, GFATTACH(param.pad_1e4));
+    if (handles == nullptr) {
+        handles = &param.pad_130;
+    } else {
+        GF_OBJ_HANDLE* const* objs = handles->getObjHandles();
+        for (int i = 0; i < 10; i++) {
+            if (objs[i] != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                return handles;
+            }
+        }
+    }
+    for (unsigned int i = 0; i < static_cast<unsigned int>(appendInfo->m_appends[appendInfo->m_list].size()); i++) {
+        param.pad_98 = *appendInfo->m_appends[appendInfo->m_list][i];
+        GF_OBJ_HANDLE* handle = fn_710052AD9C(param, owner, blade);
+        if (handles != nullptr) {
+            (handles->m_useSecond ? handles->m_secondHandles : handles->m_handles)[i] = handle;
+        }
+    }
+    return handles;
 }
 
 GF_OBJ_HANDLE* GfObjFactory::createEnWeapon(GfInitParamEnWeapon& param) {
@@ -527,6 +706,23 @@ GF_OBJ_HANDLE* GfObjFactory::createUiObj(const GfInitParamUiObj& param) {
     return handle;
 }
 
+GF_OBJ_HANDLE* GfObjFactory::createDummyMover() {
+    GfObjManager* manager = GfObjManager::sys();
+    if (manager == nullptr) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    GfInitParamEventObj param;
+    param.m_createType = 11;
+    param.pad_81 = false;
+    GF_OBJ_HANDLE* handle = manager->createGfObj(11, param);
+    setupObjInfo(handle, reinterpret_cast<GF_ASSET_HANDLE*>(-1), param);
+    manager->addHandle(handle);
+    GfObjSetup::createSetupParam(handle, param);
+    GfObjUtil::addDebugName(handle);
+    manager->callGfObjListener(IGfObjListener::OBJEVT(1), handle);
+    return handle;
+}
+
 bool GfObjFactory::destroyObjHandle(GF_OBJ_HANDLE* handle) {
     GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
     GfAssetManager::destroy(info->m_assetHandle);
@@ -539,6 +735,50 @@ bool GfObjFactory::destroyObjHandle(GF_OBJ_HANDLE* handle) {
         info->m_obj = nullptr;
     }
     return true;
+}
+
+void GfObjFactory::rebuildAssetHandle(GF_OBJ_HANDLE* handle) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info->m_assetHandle == reinterpret_cast<GF_ASSET_HANDLE*>(-1)) {
+        return;
+    }
+    GfAssetManager::destroy(info->m_assetHandle);
+    info->m_assetHandle = reinterpret_cast<GF_ASSET_HANDLE*>(-1);
+    switch (GfObjUtil::getObjType(handle)) {
+    case 3: {
+        GfObjSetupDriver* setup = getSetupOf<GfObjSetupDriver>(GfObjManager::getObjInfo(handle), 3);
+        fn_7100525A2C(setup->m_param);
+        GF_ASSET_HANDLE* asset = GfAssetFactory::createAssetPackDriver(setup->m_param);
+        setupObjInfo(handle, asset, setup->m_param);
+        break;
+    }
+    case 4: {
+        GfObjSetupBlade* setup = getSetupOf<GfObjSetupBlade>(GfObjManager::getObjInfo(handle), 4);
+        GF_ASSET_HANDLE* asset = GfAssetFactory::createAssetPackBlade(setup->m_param);
+        if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            setupObjInfo(handle, asset, setup->m_param);
+            int index = info->m_mounts[0].m_appendIndex;
+            if (GFOBJ_INFO* newInfo = GfObjManager::getObjInfo(handle)) {
+                newInfo->m_mounts[0].m_appendIndex = index;
+            }
+        }
+        break;
+    }
+    case 10: {
+        GfObjSetupWeapon* setup = getSetupOf<GfObjSetupWeapon>(GfObjManager::getObjInfo(handle), 10);
+        GF_ASSET_HANDLE* asset = GfAssetFactory::createAssetPackWeapon(setup->m_param);
+        if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            setupObjInfo(handle, asset, setup->m_param);
+            int index = info->m_mounts[0].m_appendIndex;
+            if (GFOBJ_INFO* newInfo = GfObjManager::getObjInfo(handle)) {
+                newInfo->m_mounts[0].m_appendIndex = index;
+            }
+        }
+        break;
+    }
+    default:
+        break;
+    }
 }
 
 void GfObjFactory::destroyObj(GF_OBJ_HANDLE* handle) {
