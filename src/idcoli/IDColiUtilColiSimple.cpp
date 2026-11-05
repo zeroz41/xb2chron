@@ -1,5 +1,8 @@
+#include <string.h>
+
 #include "idcoli/IDColiUtilColi.h"
 #include "idcoli/IDColiInput.h"
+#include "idcoli/IDColiInputUtil.h"
 #include "idcoli/IDColiPrimitive.h"
 #include "idcoli/IDColiShapeWork.h"
 #include "classes/idcoli/IDColiObjGrdChar.h"
@@ -135,6 +138,88 @@ bool IDColiUtilColiSimple::isRayInCapsule(IDColiResult& result, const IDColiInpu
 }
 
 bool IDColiUtilColiSimple::isRayPoli(IDColiResult&, const IDColiInput&, const void*) { return false; }
+
+void IDColiInputUtil::getSphere(IDColiInput& out, const mm::Vec3& pos, float radius, bool) {
+    out.m_pos = pos;
+    out.m_lengthMax = radius;
+    out.m_lengthMin = radius * radius;
+    out.m_instSizeMin = 0.0f;
+    out.m_max.x = pos.x + radius;
+    out.m_max.y = pos.y + radius;
+    out.m_max.z = pos.z + radius;
+    out.m_min.x = pos.x - radius;
+    out.m_min.y = pos.y - radius;
+    out.m_min.z = pos.z - radius;
+    out.m_intMax[0] = ::ceilf(out.m_max.x);
+    out.m_intMax[1] = ::ceilf(out.m_max.y);
+    out.m_intMax[2] = ::ceilf(out.m_max.z);
+    out.m_intMin[0] = ::floorf(out.m_min.x);
+    out.m_intMin[1] = ::floorf(out.m_min.y);
+    out.m_intMin[2] = ::floorf(out.m_min.z);
+    CLSphereWork* sphere = static_cast<CLSphereWork*>(out.getShape());
+    sphere->m_center = out.m_pos;
+    sphere->m_radius = radius;
+}
+
+void IDColiInputUtil::getRay(IDColiInput& out, const mm::Vec3& start, const mm::Vec3& dir, float lengthMax,
+                             float lengthMin, bool) {
+    out.m_start = start;
+    out.m_end = dir;
+    out.m_lengthMax = lengthMax;
+    out.m_lengthMin = lengthMin;
+    out.m_length = 1.0f;
+    out.m_instSizeMin = 0.0f;
+    mm::Vec3 far = start + dir * lengthMax;
+    mm::Vec3 near = start + dir * lengthMin;
+    if (far.x > near.x) {
+        out.m_max.x = far.x;
+        out.m_min.x = near.x;
+    } else {
+        out.m_max.x = near.x;
+        out.m_min.x = far.x;
+    }
+    if (far.y > near.y) {
+        out.m_max.y = far.y;
+        out.m_min.y = near.y;
+    } else {
+        out.m_max.y = near.y;
+        out.m_min.y = far.y;
+    }
+    if (far.z > near.z) {
+        out.m_max.z = far.z;
+        out.m_min.z = near.z;
+    } else {
+        out.m_max.z = near.z;
+        out.m_min.z = far.z;
+    }
+    out.m_pos = start;
+    out.m_dir = dir;
+    out.m_intMax[0] = ::ceilf(out.m_max.x);
+    out.m_intMax[1] = ::ceilf(out.m_max.y);
+    out.m_intMax[2] = ::ceilf(out.m_max.z);
+    out.m_intMin[0] = ::floorf(out.m_min.x);
+    out.m_intMin[1] = ::floorf(out.m_min.y);
+    out.m_intMin[2] = ::floorf(out.m_min.z);
+    out.m_lineHalf = (far - near) * 0.5f;
+    out.m_lineCenter = near + out.m_lineHalf;
+    out.m_lineHalfAbs.x = ::fabsf(out.m_lineHalf.x) + 1e-6f;
+    out.m_lineHalfAbs.y = ::fabsf(out.m_lineHalf.y) + 1e-6f;
+    out.m_lineHalfAbs.z = ::fabsf(out.m_lineHalf.z) + 1e-6f;
+    IDColiPrimitive::createRay(*static_cast<CLRayWork*>(out.getShape()), start, dir, lengthMax, -lengthMin);
+}
+
+void IDColiInputUtil::getBox(IDColiInput& out, const CLBoxWork& box) {
+    memcpy(out.getShape(), &box, sizeof(CLBoxWork));
+    out.m_max = box.m_max;
+    out.m_min = box.m_min;
+    out.m_instSizeMin = 0.0f;
+    out.m_intMax[0] = ::ceilf(box.m_max.x);
+    out.m_intMax[1] = ::ceilf(box.m_max.y);
+    out.m_intMax[2] = ::ceilf(box.m_max.z);
+    out.m_intMin[0] = ::floorf(box.m_min.x);
+    out.m_intMin[1] = ::floorf(box.m_min.y);
+    out.m_intMin[2] = ::floorf(box.m_min.z);
+}
 
 void IDColiPrimitive::calcBoxAaBb(CLBoxWork* box) {
     mm::Vec3 corners[8] = {

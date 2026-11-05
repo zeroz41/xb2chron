@@ -43,10 +43,17 @@ public:
 };
 
 // a line shape's work: 0x70 bytes (1.0.0's IDColiPrimitive::createRay fills two of them, at 0x0 and 0x70 of a
-// CLRayWork). Fields are not declared yet.
+// CLRayWork). IDColiInputUtil::getLine fills it; the names are not the original's.
 class CLLineWork {
 public:
-    unsigned char pad_0[0x70];
+    mm::Vec3 m_start;  // 0x0
+    mm::Vec3 m_end;  // 0x10
+    mm::Vec3 m_dir;  // 0x20, m_end - m_start
+    mm::Vec3 m_unitDir;  // 0x30, m_dir over its length (x 0, y 1 when it is too short)
+    mm::Vec3 m_max;  // 0x40, the bounding box
+    mm::Vec3 m_min;  // 0x50
+    float m_lengthSq;  // 0x60
+    float m_length;  // 0x64
 };
 
 // a ray shape's work: two line works (1.0.0's IDColiPrimitive::createRay(CLRayWork&, ...) writes both; the ray

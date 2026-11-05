@@ -5,6 +5,7 @@
 
 namespace idcoli { class CLBoxWork; }
 namespace idcoli { class CLCapsuleWork; }
+namespace idcoli { class CLRayWork; }
 namespace idcoli { class IDCmfPosData; }
 
 namespace mm { class Mat44; }
@@ -22,6 +23,8 @@ public:
     static void calcPosDataSetup(IDCmfPosData* posData, const mm::Mat44& matrix, const mm::Vec3& corner0,
                                  const mm::Vec3& corner1);
     static void calcBaseBoxSetup(CLBoxWork* box, const mm::Mat44& matrix, const mm::Vec3& size);
+    // the ray's two line works (IDColiInputUtil::getRay hands it the start, the vector and the two lengths)
+    static void createRay(CLRayWork& ray, const mm::Vec3& start, const mm::Vec3& dir, float, float);
     static void createBaseSphere(void* base, IDColiBaseType& type, const mm::Mat44& matrix, const mm::Vec3& size);
     static void createBaseBox(void* base, IDColiBaseType& type, const mm::Mat44& matrix, const mm::Vec3& size);
     static void createBaseCapsule(void* base, IDColiBaseType& type, const mm::Mat44& matrix, const mm::Vec3& size);
