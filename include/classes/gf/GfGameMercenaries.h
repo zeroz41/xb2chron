@@ -53,7 +53,12 @@ public:
     static void execMissionRewardAchievementBonusForBlade(unsigned int mission);
     static void execMissionAchievementForBlade(unsigned int mission);
     static void execMissionRewardByTeamID(unsigned int teamId);  // the reward of the team's mission
+    // placeholder (it sits between addTeamMember and clearTeamMember; callers: clearTeamMember (false) and
+    // clearTeamMemberForHana (GfDataHana::isValid(blade))): after the game is cleared, re-activates blades 0x3E9..0x3EB
+    // for blades 0x3E9/0x3EA and, for a Hana blade, each Hana form 0x3ED..0x3EF marked mercenary-unuse 1..3
+    static void fn_71003014CC(unsigned int blade, bool hana);
     static void clearTeamMember(unsigned int team);
+    static void clearTeamMemberForHana(unsigned int team);  // (symbols)
     // (symbols) adds the blade to the team; GfMenuObjMercenaryForm::seqDepartureEnd adds each of its team list's
     static bool addTeamMember(unsigned int teamId, unsigned int blade);
     static bool getZoneMission(mm::mtl::FixedVector<unsigned short, 500>& missions, unsigned int zone);  // a zone's missions

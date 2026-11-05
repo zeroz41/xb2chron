@@ -465,7 +465,7 @@ int GfQuestInfo::getQuestTaskTimeInfo(const QuestTaskParam& param) {
 }
 
 unsigned int GfQuestReward::Param::getDevelopZone() const {
-    return GfDataMap::getDevelopMapId(m_developZone);
+    return GfDataMap::getDevelopMapId(m_value >> 16);
 }
 
 }  // namespace gf

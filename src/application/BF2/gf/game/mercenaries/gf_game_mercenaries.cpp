@@ -26,6 +26,23 @@
 #include "classes/gf/GfBdatBlade.h"
 #include "classes/gf/GfBdatChrDr.h"
 #include "ml/MtRand.h"
+#include "classes/gf/SCOM_ACHIEV_INC.h"
+#include "gf/GfDataHana.h"
+#include "gf/GfGameUtil.h"
+#include "classes/gf/SCOM_ADD_MONEY.h"
+#include "classes/gf/SCOM_ADD_EXP.h"
+#include "classes/gf/SCOM_ADD_DEVELOP.h"
+#include "classes/gf/SCOM_ADD_TRUST.h"
+#include "classes/gf/SCOM_ADD_IDEA.h"
+#include "classes/gf/SCOM_ADD_MERCENARIES_POINT.h"
+#include "classes/gf/SCOM_ADD_ITEM.h"
+#include "classes/gf/SCOM_FIELD_SKILL.h"
+#include "gf/AchievQuest.h"
+#include "gf/GfQuestInfo.h"
+#include "gf/GfQuestTask.h"
+#include "gf/QuestTaskParam.h"
+#include "gf/GfDataAchievement.h"
+#include "gf/GfKizunaringBlade.h"
 
 namespace gf {
 
@@ -115,6 +132,29 @@ void GfGameMercenaries::updateMercenariesTeam(const fw::UpdateInfo& info) {
         }
     }
     checkTeamMissionComplete();
+}
+
+void GfGameMercenaries::checkTeamMissionComplete() {
+    mm::mtl::FixedVector<unsigned short, 3> teams;
+    getTeam(teams);
+    for (const unsigned short& teamId : teams) {
+        GfDataMercenaries::Team* team = GfDataMercenaries::getTeamByTeamID(teamId);
+        unsigned int mission = GfDataMercenaries::getTeamMission(teamId);
+        if (!team->m_missionEnd && GfDataMercenaries::getMissionTime(mission) == 0) {
+            continue;
+        }
+        ElapseTime time = GfDataMercenaries::getTeamMissionTime(teamId);
+        if (GfDataMercenaries::getMissionFlag(mission) != 2) {
+            continue;
+        }
+        if ((time.hour == 0 && time.min == 0 && time.sec == 0) || team->m_missionEnd) {
+            team->m_missionEnd = false;
+            setMissionComplete(mission);
+            if (GfDataMercenaries::getTeamLeader(teamId) != 0) {
+                SCOM_POPUP::createMercenaryReturn(GfDataMercenaries::getMissionMapID(mission), teamId);
+            }
+        }
+    }
 }
 
 int GfGameMercenaries::getMissionFlag(unsigned int mission) {
@@ -252,6 +292,74 @@ bool GfGameMercenaries::isQuestMission(QuestID quest) {
     return false;
 }
 
+void GfGameMercenaries::execMissionReward(unsigned int mission) {
+    if (GfDataMercenaries::getMissionFlag(mission) != 3) {
+        return;
+    }
+    GfDataMercenaries::Team* team = GfDataMercenaries::getTeamByMissionID(mission);
+    if (int gold = getRewardGold(mission, false)) {
+        SCOM_ADD_MONEY::create(gold);
+    }
+    if (int exp = getRewardExp(mission, false)) {
+        SCOM_ADD_EXP::createInnExp(exp);
+    }
+    if (int develop = getRewardDevelop(mission, false)) {
+        GfQuestReward reward;
+        unsigned short zone = GfQuestUtil::getReward(reward, GfDataMercenaries::getMissionRewardID(mission), false)
+                                ? reward.m_items[4].getDevelopZone()
+                                : 0;
+        SCOM_ADD_DEVELOP::create(zone, develop);
+    }
+    if (int trust = getRewardTrust(mission)) {
+        for (int i = 0; i < 6; i++) {
+            if (team->m_members[i] != 0) {
+                SCOM_ADD_TRUST::create(team->m_members[i], trust);
+            }
+        }
+    }
+    // the idea points (item 6: the points in the low half, their category in the high half)
+    unsigned int idea;
+    {
+        GfQuestReward reward;
+        idea = GfQuestUtil::getReward(reward, GfDataMercenaries::getMissionRewardID(mission), false)
+                   ? reward.m_items[6].m_value & 0xFFFF
+                   : 0;
+    }
+    if (idea != 0) {
+        unsigned int category;
+        {
+            GfQuestReward reward;
+            category = GfQuestUtil::getReward(reward, GfDataMercenaries::getMissionRewardID(mission), false)
+                           ? reward.m_items[6].m_value >> 16
+                           : 0;
+        }
+        SCOM_ADD_IDEA::create(reinterpret_cast<GF_OBJ_HANDLE*>(-1), category, idea);
+    }
+    if (int point = getRewardMercenariesPoint(mission)) {
+        SCOM_ADD_MERCENARIES_POINT::create(point);
+    }
+    {
+        // the items (8 to 11: the item in the low half, the count in the high half)
+        GfQuestReward reward;
+        if (GfQuestUtil::getReward(reward, GfDataMercenaries::getMissionRewardID(mission), false)) {
+            for (int i = 8; i < 12; i++) {
+                if (unsigned int item = reward.m_items[i].m_value & 0xFFFF) {
+                    SCOM_ADD_ITEM::create(item, reward.m_items[i].m_value >> 16);
+                }
+            }
+        }
+    }
+    execMissionRewardAchievementBonusForBlade(mission);
+    execMissionAchievementForBlade(mission);
+    if (team != nullptr) {
+        team->m_mission = 0;
+        team->m_quest = QuestID();
+    }
+    setMissionFlag(mission, 4);
+    GfQuestManager::requestOrderAchievementQuestForce();
+    GfQuestManager::requestOrderQuestForce();
+}
+
 int GfGameMercenaries::getRewardGold(unsigned int mission, bool) {
     GfQuestReward reward;
     unsigned int gold = GfQuestUtil::getReward(reward, GfDataMercenaries::getMissionRewardID(mission), false)
@@ -294,6 +402,18 @@ int GfGameMercenaries::getRewardMercenariesPoint(unsigned int mission) {
     return reward.m_items[7].m_value & 0xFFFF;
 }
 
+void GfGameMercenaries::execMissionAchievementForBlade(unsigned int mission) {
+    SCOM_ACHIEV_INC::addTotalCount(0x14, 1);
+    SCOM_ACHIEV_INC::create(0x14, 1, 0);
+    if (GfDataMercenaries::Team* team = GfDataMercenaries::getTeamByMissionID(mission)) {
+        for (int i = 0; i < 6; i++) {
+            if (team->m_members[i] != 0) {
+                SCOM_ACHIEV_INC::create(0x40, 1, team->m_members[i]);
+            }
+        }
+    }
+}
+
 void GfGameMercenaries::execMissionRewardByTeamID(unsigned int teamId) {
     execMissionReward(GfDataMercenaries::getTeamMission(teamId));
     GfQuestManager::requestOrderAchievementQuestForce();
@@ -304,6 +424,62 @@ void GfGameMercenaries::setMissionCompleteForce(unsigned int mission) {
         team->m_missionTime = ElapseTime();
         team->m_missionTimeTotal = ElapseTime();
         team->m_missionEnd = true;
+    }
+}
+
+void GfGameMercenaries::fn_71003014CC(unsigned int blade, bool hana) {
+    if (!GfGameManager::isClearGame()) {
+        return;
+    }
+    if (blade == 0x3E9 || blade == 0x3EA) {
+        GfDataBlade::setActivateReserver(0x3E9);
+        GfDataBlade::setActivateReserver(0x3EA);
+        GfDataBlade::setActivateReserver(0x3EB);
+    }
+    if (!GfDataHana::isValid(blade)) {
+        return;
+    }
+    for (unsigned int form = 0x3ED; form < 0x3F0; form++) {
+        // the mercenary team (1..3) the form was sent with
+        switch (GfDataHana::getMercenaryUnuse(form)) {
+        case 1:
+        case 2:
+        case 3:
+            GfDataBlade::setActivateReserver(form);
+            if (!hana) {
+                GfDataDriver::setBlade(4, form, -1);
+            }
+            GfDataHana::setMercenaryUnuse(form, 0);
+            break;
+        }
+    }
+}
+
+void GfGameMercenaries::clearTeamMember(unsigned int team) {
+    if (unsigned short* members = GfDataMercenaries::getTeamMember(team)) {
+        for (int i = 0; i < 6; i++) {
+            if (unsigned int blade = members[i]) {
+                GfGameUtil::execActivateReserverForBlade(blade);
+                fn_71003014CC(blade, false);
+                members[i] = 0;
+            }
+        }
+    }
+}
+
+void GfGameMercenaries::clearTeamMemberForHana(unsigned int team) {
+    if (unsigned short* members = GfDataMercenaries::getTeamMember(team)) {
+        for (int i = 0; i < 6; i++) {
+            if (unsigned int blade = members[i]) {
+                GfGameUtil::execActivateReserverForBlade(blade);
+                if (GfDataHana::isValid(blade)) {
+                    fn_71003014CC(blade, true);
+                } else {
+                    fn_71003014CC(blade, false);
+                }
+                members[i] = 0;
+            }
+        }
     }
 }
 
@@ -343,6 +519,29 @@ bool GfGameMercenaries::getRewardItem(unsigned int& item, unsigned int& count, u
     item = value & 0xFFFF;
     count = value >> 16;
     return item != 0;
+}
+
+void GfGameMercenaries::updateMissionAutoStart() {
+    if (GfGameManager::isGameTypeIra()) {
+        return;
+    }
+    GfGameMercenaries* self = get();
+    if (self == nullptr) {
+        return;
+    }
+    QuestListAcc* acc = QuestListAcc::get();
+    for (const unsigned short& mission : self->m_autoStartList) {
+        int flag = GfDataMercenaries::getMissionFlag(mission);
+        if (flag >= 1 && flag <= 3) {
+            continue;
+        }
+        if (flag == 4 && !acc->getFLD_MercenariesMissionRepeatable(mission)) {
+            continue;
+        }
+        if (GfGameCond::isGameCond(acc->getFLD_MercenariesMissionAutoStart(mission))) {
+            setMissionFlag(mission, 1);
+        }
+    }
 }
 
 void GfGameMercenaries::setupNewGameParam() {
