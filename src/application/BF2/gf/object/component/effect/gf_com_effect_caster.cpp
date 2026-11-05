@@ -20,6 +20,11 @@
 #include "classes/gf/GfAssetManager.h"
 #include "classes/gf/GfAssetResource.h"
 #include "gf/GfObjAcc.h"
+#include "gf/MsgFxBuff.h"
+#include "classes/gf/GfComEvtAnim.h"
+#include "classes/gf/GfExtendPacking.h"
+#include "gf/MsgFxWeapon.h"
+#include "classes/gf/GfComAsm.h"
 #include "gf/GfObjUtil.h"
 #include "gf/GfDataWeapon.h"
 #include "classes/gf/DataParamAcc.h"
@@ -28,6 +33,7 @@
 #include "gf/GfEffectGround.h"
 #include "gf/GfEnvProperty.h"
 #include "classes/gf/GfComProperty.h"
+#include <float.h>
 #include <stdlib.h>
 #include <string.h>
 #include "classes/fw/EffectResData.h"
@@ -56,9 +62,204 @@ void GfComEffectCaster::procMsgFxForceCancel(fw::MessageObject*, MsgFxForceCance
     }
 }
 
+void GfComEffectCaster::procMsgFxBuff(fw::MessageObject*, MsgFxBuff& msg) {
+    GfComAsm* com = m_owner->getComponent<GfComAsm>(2);
+    if (m_resData != nullptr && com != nullptr) {
+        GfObjAcc acc(static_cast<GfObj*>(m_owner));
+        for (fw::EffectAnnotationData* it = m_resData->m_annotations.begin(); it != m_resData->m_annotations.end();
+             ++it) {
+            if (it->m_type == 9 && strstr(it->m_stateName.m_str, com->getStateName(AnimLayer(0))) != nullptr) {
+                EffectSetUp setup;
+                setup.m_name = it->pad_54.m_str;
+                setup.pad_44 = it->pad_108;
+                setup.m_scale = pad_117b8 * it->pad_c4;
+                setup.pad_48 = it->pad_f5;
+                setup.pad_49 = it->pad_f4;
+                setup.pad_20 = msg.pad_10;
+                setup.m_pos = it->m_position;
+                setup.m_rot = it->m_rotation;
+                setup.pad_4b = it->pad_f9;
+                setup.pad_4c = it->pad_fa;
+                setup.pad_4d = it->pad_fb;
+                if (it->pad_fb) {
+                    setup.m_scale = it->pad_c4;
+                }
+                it->pad_10c = effectStart(setup, it->pad_78.m_str);
+            }
+        }
+    }
+}
+
+void GfComEffectCaster::procMsgFxWeapon(fw::MessageObject*, MsgFxWeapon& msg) {
+    if (m_resData != nullptr) {
+        for (fw::EffectAnnotationData* it = m_resData->m_annotations.begin(); it != m_resData->m_annotations.end();
+             ++it) {
+            if (it->m_type == 2) {
+                switch (msg.m_type) {
+                case 0: {
+                    EffectSetUp setup;
+                    setup.m_name = it->pad_54.m_str;
+                    setup.pad_44 = it->pad_108;
+                    setup.m_scale = pad_117b8 * it->pad_c4;
+                    setup.pad_48 = it->pad_f5;
+                    setup.pad_49 = it->pad_f4;
+                    setup.pad_4a = 1;
+                    setup.m_pos = it->m_position;
+                    setup.m_rot = it->m_rotation;
+                    setup.pad_4b = it->pad_f9;
+                    setup.pad_4c = it->pad_fa;
+                    setup.pad_4d = it->pad_fb;
+                    if (it->pad_fb) {
+                        setup.m_scale = it->pad_c4;
+                    }
+                    it->pad_10c = effectStart(setup, it->pad_78.m_str);
+                    break;
+                }
+                case 1:
+                    effectEnd(it->pad_10c);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+GfComEffectCaster::GfComEffectCaster()
+    : m_waterDepthLimit(FLT_MIN), m_chestHeight(FLT_MIN), pad_30(0), pad_38(0), m_resData(nullptr), pad_48(nullptr),
+      m_caster(nullptr), m_pPoint(nullptr), pad_117ac(0), pad_117c4(0) {
+    pad_116e0 = mm::Mat44(mm::Mat44::identity);
+    pad_11720 = mm::Mat44(mm::Mat44::identity);
+    pad_18 = 0.0f;
+    pad_1c = -1.0f;
+    pad_20 = -1.0f;
+    pad_11760 = "cmn_001_020";
+    pad_11774 = "cmn_001_000";
+    m_motionFrame = 0.0f;
+    pad_117b4 = 1;
+    m_viewnum = 0;
+    m_tailId = -1;
+    pad_14 = false;
+}
+
 GfComEffectCaster::~GfComEffectCaster() {
     s_leaderCasterSet = false;
     cleanup();
+}
+
+void GfComEffectCaster::cleanup() {
+    for (EventEfHandleTbl* it = m_eventEfHandles.begin(); it != m_eventEfHandles.end(); ++it) {
+        if (it->pad_28) {
+            it->pad_28->release();
+            it->pad_28 = nullptr;
+        }
+    }
+    m_eventEfHandles.clear();
+    for (Param* it = m_params.begin(); it != m_params.end(); ++it) {
+        if (it->m_id) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(it->m_id);
+        }
+        if (it->pad_6e && m_pPoint) {
+            m_pPoint->m_releaseFrame(it->pad_34.m_str);
+        }
+    }
+    m_params.clear();
+    if (pad_48) {
+        pad_48->release();
+        pad_48 = nullptr;
+    }
+    for (unsigned int i = 0; i < m_packs.size(); ++i) {
+        if (m_packs[i].m_pack) {
+            m_packs[i].m_pack->release();
+            m_packs[i].m_pack = nullptr;
+        }
+    }
+    m_packs.clear();
+    if (EffectCaster* caster = m_caster) {
+        if (caster->m_pPoint) {
+            caster->m_pPoint->release();
+            caster->m_pPoint = nullptr;
+        }
+        caster->m_isDead = true;
+        m_caster = nullptr;
+    }
+    if (m_pPoint) {
+        m_pPoint->release();
+        m_pPoint = nullptr;
+    }
+}
+
+void GfComEffectCaster::setup(const SetupInfo& info) {
+    pad_48 = nullptr;
+    m_viewnum = info.m_viewnum;
+    m_layer = info.pad_10;
+    pad_117ac = info.m_kind;
+    GfAssetResource* efb = GfObjUtil::getResourceEfb(static_cast<GfObj*>(m_owner)->m_handle);
+    pad_48 = efb ? fw::EffectPack::createFromMemory(efb->getAssetData(), efb->getAssetSize(), efb->getAssetName(), false)
+                 : nullptr;
+    pad_117b8 = info.pad_18;
+    mm::mtl::FixedVector<const char*, 128> names;
+    GfAssetManager::getFileNameByExt(names, info.m_asset, ".wiefb");
+    for (const char*& name : names) {
+        if (GfAssetResource* resource = GfAssetManager::getResource(info.m_asset, name)) {
+            unsigned int id = 0;
+            if (const char* number = strchr(resource->getAssetName(), '_')) {
+                char digits[4] = {};
+                digits[0] = number[1];
+                digits[1] = number[2];
+                digits[2] = '\0';
+                id = atoi(digits);
+            }
+            PackEntry entry;
+            entry.m_pack = fw::EffectPack::createFromMemory(resource->getAssetData(), resource->getAssetSize(),
+                                                            resource->getAssetName(), false);
+            entry.m_id = id;
+            m_packs.push_back(entry);
+        }
+    }
+    setupEfp(info);
+    if (m_caster == nullptr) {
+        setupCaster(m_pPoint);
+    }
+    setupEfTail(1);
+    if (GfComAsm* asmCom = m_owner->getComponent<GfComAsm>(2)) {
+        asmCom->m_callbacks[3].name = ASM_CB_NAME_EFFECT;
+        asmCom->m_callbacks[3].delegate.set(this, &GfComEffectCaster::asmCallback);
+    } else if (GfComEvtAnim* evtAnim = m_owner->getComponent<GfComEvtAnim>(2)) {
+        evtAnim->m_asm.m_callbacks[3].name = ASM_CB_NAME_EFFECT;
+        evtAnim->m_asm.m_callbacks[3].delegate.set(this, &GfComEffectCaster::evtAnimCallback);
+    }
+    GfExtendResource* extend = GfAssetManager::getExtentResource(info.m_asset, 0);
+    if (extend && extend->getRTTI()->isKindOf(&GfExtendPacking::m_rtti)) {
+        GfExtendPacking* packing = static_cast<GfExtendPacking*>(extend);
+        if (packing->m_pEffectResData) {
+            m_resData = packing->m_pEffectResData;
+            GfObjAcc acc(static_cast<GfObj*>(m_owner));
+            for (fw::EffectAnnotationData* it = packing->m_pEffectResData->m_annotations.begin();
+                 it != packing->m_pEffectResData->m_annotations.end(); ++it) {
+                if (it->m_type == 0) {
+                    EffectSetUp setup;
+                    setup.m_name = it->pad_54.m_str;
+                    if (it->pad_108 == 1) {
+                        setup.m_caster = m_caster;
+                    } else {
+                        setup.m_caster = nullptr;
+                    }
+                    setup.m_scale = pad_117b8 * it->pad_c4;
+                    setup.pad_48 = it->pad_f5;
+                    setup.pad_49 = it->pad_f4;
+                    setup.m_pos = it->m_position;
+                    setup.m_rot = it->m_rotation;
+                    setup.pad_4b = it->pad_f9;
+                    setup.pad_4c = it->pad_fa;
+                    setup.pad_4d = it->pad_fb;
+                    if (it->pad_fb) {
+                        setup.m_scale = it->pad_c4;
+                    }
+                    effectStart(setup, it->pad_78.m_str);
+                }
+            }
+        }
+    }
 }
 
 void GfComEffectCaster::setupEfp(const SetupInfo& info) {

@@ -3,6 +3,7 @@
 
 #include "mm/mtl/RTTI.h"
 #include "mm/Vec3.h"
+#include "mm/Mat44.h"
 #include "mm/mtl/FixedVector.h"
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/IntrusivePtr.h"
@@ -15,7 +16,6 @@ namespace fw { class EffectPack; }
 namespace fw { class EffectPoint; }
 namespace fw { class EffectResData; }
 namespace anm { class ResASM; }
-namespace mm { class Mat44; }
 namespace gf { class EffectCaster; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GF_ASSET_HANDLE; }
@@ -24,6 +24,9 @@ namespace gf { class GfComEvtAnim; }
 namespace gf { class CallBackCache; }
 namespace effect { class SendParam; }
 namespace gf { class MsgFxForceCancel; }
+namespace gf { class MsgFxBuff; }
+namespace gf { class MsgFxWeapon; }
+namespace gf { class GfObj; }
 
 namespace gf {
 // table 0x7100B65990
@@ -48,7 +51,11 @@ public:
         unsigned int m_id;  // findEffectCasterParam's key (the name is not the original's)
         // released by the destructor (reference_object.h's `m_RefCount > 0`); what it holds is unknown
         mm::mtl::IntrusivePtr<mm::mtl::ReferenceObject> pad_60;
-        unsigned int pad_68[3];
+        unsigned short pad_68;
+        unsigned char pad_6a[0x4];
+        // set when the effect took a bone frame from the effect point (cleanup hands pad_34's frame back)
+        bool pad_6e;
+        unsigned char pad_6f[0x5];
         mm::Vec3 pad_80;
         mm::Vec3 pad_90;
         unsigned char pad_a0[0x19];
@@ -77,15 +84,16 @@ public:
     // GfGameObj::setupForLoopEffect fills, the field names are not the original's)
     struct EffectSetUp {
         EffectSetUp()
-            : pad_20(nullptr), m_name(nullptr), pad_3c(-1.0f), pad_40(1.0f), pad_44(0), pad_46(0), pad_48(false),
-              pad_49(false), pad_4a(false), pad_4b(false), pad_4c(false), pad_4d(false), pad_4e(1) {
+            : pad_20(nullptr), m_name(nullptr), m_caster(nullptr), m_scale(1.0f), pad_3c(-1.0f), pad_40(1.0f), pad_44(0), pad_46(0), pad_48(0),
+              pad_49(0), pad_4a(0), pad_4b(0), pad_4c(0), pad_4d(0), pad_4e(1), pad_4f(0) {
             m_pos = mm::Vec3::zero;
             m_rot = mm::Vec3::zero;
         }
 
         mm::Vec3 m_pos;
         mm::Vec3 m_rot;
-        void* pad_20;
+        // the object whose effect caster effectStart uses (the target's when null); procMsgFxBuff hands the message's
+        GfObj* pad_20;
         const char* m_name;  // the effect's name
         EffectCaster* m_caster;
         float m_scale;
@@ -93,22 +101,30 @@ public:
         float pad_40;
         unsigned short pad_44;
         unsigned short pad_46;
-        bool pad_48;
-        bool pad_49;
-        bool pad_4a;
-        bool pad_4b;
-        bool pad_4c;
-        bool pad_4d;
-        unsigned short pad_4e;
+        // procMsgFxBuff and procMsgFxWeapon copy the annotation's bytes into 0x48..0x4d (pad_f5, pad_f4, -, pad_f9,
+        // pad_fa, pad_fb); procMsgFxWeapon sets 0x4a
+        unsigned char pad_48;
+        unsigned char pad_49;
+        unsigned char pad_4a;
+        unsigned char pad_4b;
+        unsigned char pad_4c;
+        unsigned char pad_4d;
+        unsigned char pad_4e;
+        unsigned char pad_4f;
     };
 
     // what setup and setupEfp read (the layout is what setupEfp shows; the names are not the original's)
     struct SetupInfo {
-        unsigned char pad_0[0x8];
+        unsigned int m_kind;  // setup's pad_117ac (the name is not the original's)
+        unsigned char pad_4[0x4];
         GF_ASSET_HANDLE* m_asset;  // the asset setupEfp takes its effect point file from
-        unsigned int pad_10;  // setupEfp hands it to the effect point's EfpInitData (its first field)
+        // setupEfp hands it to the effect point's EfpInitData (its first field); setup makes it m_layer
+        unsigned int pad_10;
+        unsigned int m_viewnum;  // setup's m_viewnum (the name is not the original's)
+        float pad_18;  // setup's pad_117b8
     };
 
+    GfComEffectCaster();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComEffectCaster();  // slot 1
     virtual void changeLayer(unsigned int, unsigned int);  // slot 3
@@ -117,6 +133,9 @@ public:
     // ends every running effect an annotation started that has pad_f8 set
     void procMsgFxForceCancel(fw::MessageObject*, MsgFxForceCancel&);
     void cleanup();
+    // the packs of the owner's efb and the asset's ".wiefb" files, the effect point and caster, the animation
+    // callback, and the effects of the asset's SETUP annotations (type 0)
+    void setup(const SetupInfo& info);
     void apply(const fw::UpdateInfo& info);
     void applyEvent(const fw::UpdateInfo& info);
     void asmCallback(GfComAsm* com, const CallBackCache& cache);
@@ -128,7 +147,12 @@ public:
     int calcFollowAnnotetionTag(Param* param, effect::SendParam& sendParam);
     // kills the running effect with the handle (its Param's pad_ba set); defined inline in gf_com_effect_caster.cpp
     void effectEnd(unsigned int handle);
-    void effectStart(const EffectSetUp& setup, const char*);
+    // the handle of the effect started (procMsgFxBuff and procMsgFxWeapon keep it in the annotation's pad_10c)
+    unsigned int effectStart(const EffectSetUp& setup, const char*);
+    // starts the PROG_BUFF annotations (type 9) of the current animation state
+    void procMsgFxBuff(fw::MessageObject*, MsgFxBuff& msg);
+    // starts (attach) or ends (detach) the effects of the weapon annotations (type 2)
+    void procMsgFxWeapon(fw::MessageObject*, MsgFxWeapon& msg);
     // hands the effect its parameters, or kills it (the parameter names are not the original's)
     void updateParam(GfComEffectCaster* caster, Param* param, float rate, bool flag);
     fw::EffectPoint* getEffectPoint();
@@ -168,13 +192,20 @@ public:
 
     // createFromFileName hands it to EffectManager::setViewnum when not 0 (the name is not the original's)
     unsigned int m_viewnum;
-    unsigned char pad_14[0x10];
+    // the constructor's values; what they hold is unknown
+    bool pad_14;
+    float pad_18;
+    float pad_1c;
+    float pad_20;
     // GfEffectGround emits no foot step effect and keeps the water material while the water at the object is at
     // least this deep (the name is not the original's)
     float m_waterDepthLimit;
     // GfComBehaviorPc::setup sets it to the PC property's m_chestHeight (the name is not the original's)
     float m_chestHeight;
-    unsigned char pad_2c[0x14];
+    unsigned char pad_2c[0x4];
+    // cleared by the constructor; what they hold is unknown
+    unsigned long pad_30;
+    unsigned long pad_38;
     // the effect annotations (procMsgFxForceCancel ends the effects they started; the name is not the original's)
     fw::EffectResData* m_resData;
     // getEffectPack puts it first in the packs it gathers when it is set; what it holds is unknown
@@ -187,15 +218,23 @@ public:
     // 16-aligned (its elements hold a Vec3): ends at 0x116D0 (the name is not the original's)
     mm::mtl::FixedVector<EventEfHandleTbl, 256> m_eventEfHandles;
     unsigned int m_layer;  // changeLayer's, the caster's layer (the name is not the original's)
-    unsigned char pad_116d4[0xB4];
+    unsigned char pad_116d4[0xC];
+    // set to the identity by the constructor; what they hold is unknown
+    mm::Mat44 pad_116e0;
+    mm::Mat44 pad_11720;
+    // effect names the constructor sets ("cmn_001_020" and "cmn_001_000"); what they name is unknown
+    mm::mtl::FixStr<16> pad_11760;
+    mm::mtl::FixStr<16> pad_11774;
     // cleared by the constructor; EffectCaster::postUpdate hands it to its caster's setStateName (the name is not
     // the original's)
     mm::mtl::FixStr<32> m_stateName;
     unsigned int pad_117ac;  // a kind 0..8: setupEfp picks the effect point file index by it
     float m_motionFrame;  // EffectCaster::postUpdate hands it to setMotionFrame (the name is not the original's)
-    unsigned char pad_117b4[0x8];
+    unsigned int pad_117b4;  // 1 after the constructor
+    float pad_117b8;
     unsigned int m_tailId;  // the tail number setupEfTail loaded last (the name is not the original's)
-    unsigned char pad_117c0[0x10];
+    unsigned char pad_117c0[0x4];
+    unsigned short pad_117c4;  // cleared by the constructor
 };
 }  // namespace gf
 

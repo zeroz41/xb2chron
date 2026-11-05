@@ -30,7 +30,7 @@ struct EffectAnnotationTbl {
     unsigned int pad_fc;
     float m_startFrame;
     float m_endFrame;
-    unsigned int pad_108;
+    float pad_108;  // initSub copies it to the annotation's pad_c4
     unsigned int pad_10c;
     unsigned int pad_110;
     unsigned char pad_114;
@@ -74,7 +74,8 @@ struct EffectAnnotationData {
     // the state name without its "_00", "_01" or "_02": type 5 registers leave annotations of "%s_%02d" 0 to 2
     mm::mtl::FixStr<32> m_baseName;
     unsigned int pad_c0;
-    unsigned int pad_c4;
+    // a scale procMsgFxBuff and procMsgFxWeapon hand effectStart (times the caster's pad_117b8 unless pad_fb is set)
+    float pad_c4;
     unsigned int pad_c8;
     mm::Vec3 m_position;
     mm::Vec3 m_rotation;  // in radians
