@@ -887,6 +887,28 @@ const mm::Vec3& DrMdlObj::getAABBMax() const { return m_aabbMax; }
 
 const mm::Vec3& DrMdlObj::getAABBMin() const { return m_aabbMin; }
 
+void DrMdlObj::getInitialVertexAABBMax(mm::Vec3& out, bool scaled) const {
+    const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop;
+    out = mm::Vec3(top->m_max[0], top->m_max[1], top->m_max[2]);
+    if (scaled) {
+        float scale = m_scale;
+        out.x = scale * out.x;
+        out.y = scale * out.y;
+        out.z = scale * out.z;
+    }
+}
+
+void DrMdlObj::getInitialVertexAABBMin(mm::Vec3& out, bool scaled) const {
+    const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop;
+    out = mm::Vec3(top->m_min[0], top->m_min[1], top->m_min[2]);
+    if (scaled) {
+        float scale = m_scale;
+        out.x = scale * out.x;
+        out.y = scale * out.y;
+        out.z = scale * out.z;
+    }
+}
+
 bool DrMdlObj::isGpuRender() const { return m_gpuRender; }
 
 void DrMdlObj::setSpAlphaMode(bool enable) {
