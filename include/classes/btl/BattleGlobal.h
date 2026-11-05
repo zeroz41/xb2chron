@@ -45,6 +45,23 @@ public:
     void DeleteUniteComboDirection();
     void SetPause(int kind, bool pause);
     void DeleteSlow(unsigned int id);
+    // deletes every slow-motion request's effect on its character (on a copy of the requests)
+    void DeleteSlowAll();
+    // makes the special effect of the type (0: "cmn_020_007") after deleting the one there was
+    void CreateSpecialEffect(int type);
+    // the symbols name it through InputLeverGachaButton's LEVER_GACHA_DATA::BUTTON; its members are not known
+    struct LEVER_GACHA_DATA {
+        // InputLeverGachaButton's button (0-3; compared unsigned, as an enum of non-negative enumerators, whose names
+        // are not known)
+        enum BUTTON : unsigned int {};
+    };
+    // a lever gacha button press: whether it counted (each button counts again once its time ran out)
+    bool InputLeverGachaButton(LEVER_GACHA_DATA::BUTTON button);
+    // a lever gacha stick angle (radians): whether it counted
+    bool InputLeverGachaStick(float angle);
+    // starts a future view on the handle's character for time, unless one runs or its cool time does not end
+    void RegisterFutureView(gf::GF_OBJ_HANDLE* handle, float time, unsigned int id, int type, int arts, int value);
+    void DeleteSpecialEffect(int type);
     // deletes the elemental combo's slow-motion request and sets its slowed effects back to speed 1
     void DeleteElementalComboSlow();
     void DeleteElementalComboCamera();
@@ -134,13 +151,15 @@ public:
     void ShakeCameraAxis(const SHAKE_CAMERA_AXIS_PARAM& param);
 
     struct SLOW_PROC_DATA {
-        unsigned char pad_0[0x4];
-        float deleteDelay;  // DeleteDelayElementalComboSlow sets it
-        int pad_8;  // DeleteDelayElementalComboSlow clears it
+        float pad_0;  // RegisterSlow's first argument (RegisterElementalComboSlow passes 0.01)
+        float deleteDelay;  // DeleteDelayElementalComboSlow sets it; RegisterSlow's second argument
+        float pad_8;  // DeleteDelayElementalComboSlow clears it; RegisterSlow stores minus its third argument (or 0)
         unsigned int id;  // IsSlowProc looks it up
         unsigned char dynamicsChara;  // SetSlowDynamicsSpeed's character
         unsigned char pad_11;
         unsigned short dynamicsSpeed;  // SetSlowDynamicsSpeed's speed, in percent
+        // 1.0.0's name; sets the character's dynamics back to speed 1 (no copy of its own in 3.0.1: inline)
+        void Finalize();
     };
     // the request with this id, or none (inline: no copy of its own in either version)
     SLOW_PROC_DATA* GetSlowProcData(unsigned int id) {
@@ -255,6 +274,11 @@ public:
         unsigned char charaIndex;  // CharacterManager's index of the attacker (SearchCharacter)
     };
 
+    // a new attack record for the attacker's handle; its id
+    unsigned int CreateAttackData(gf::GF_OBJ_HANDLE* handle);
+    // adds damage to the record (unless create, or the handle is not -1 and not its attacker's), else makes a
+    // record; the record's damage
+    int AddAttackDamage(gf::GF_OBJ_HANDLE* handle, unsigned int id, unsigned int damage, bool create);
     void UpdateAttackData(unsigned int id);
     int GetAttackDamage(unsigned int id) const;
     // the handle of the record's attacker (charaIndex), -1 when there is no record
@@ -333,14 +357,22 @@ public:
     // the enemies that joined through a link, nearest first asked by GetLinkJoinEnemyHandle (the name is not the
     // original's)
     ::mm::mtl::FixedVector<LinkJoinEnemy, 8> m_linkJoinEnemy;
-    // two fixed vectors the destructor clears (element types unknown: only their byte sizes, 8 and 0x90, are known)
-    ::mm::mtl::FixedVector<unsigned int, 2> pad_808;
+    // the special effects CreateSpecialEffect made, by type (DeleteSpecialEffect; the type and names are not the
+    // original's)
+    struct SpecialEffect {
+        unsigned int handle;  // the EffectManager handle
+        int type;  // CreateSpecialEffect's type (-1 once deleted)
+    };
+    ::mm::mtl::FixedVector<SpecialEffect, 1> m_specialEffect;
+    // a fixed vector the destructor clears (element type unknown: only its byte size, 0x90, is known)
     ::mm::mtl::FixedVector<unsigned int, 36> pad_818;
     unsigned char pad_8b0[0x8];
     // the slow-motion requests (the name is not the original's)
     ::mm::mtl::FixedVector<SLOW_PROC_DATA, 20> m_slowProc;
     float pad_a50;  // Utility::IsPause holds while it is <= 0
-    unsigned char pad_a54[0x48];
+    unsigned char pad_a54[0x4];
+    unsigned int m_nextSlowId;  // RegisterSlow's next id, never 0 (the name is not the original's)
+    unsigned char pad_a5c[0x40];
     // PlayerParameter::BattleStart copies it into CharacterParameter's pad_20; meaning unknown
     int pad_a9c;
     unsigned char pad_aa0[0x8];
@@ -359,7 +391,17 @@ public:
     float m_statusEnhanceRate;
     // the challenge battle unit's GetDropEtherCubeRate returns it; meaning unknown
     float pad_5c50;
-    unsigned char pad_5c54[0x24];
+    unsigned char pad_5c54[0x8];
+    // the lever gacha's input state (the fields of LEVER_GACHA_DATA, declared above; field names are not the original's)
+    // per button, the time before it counts again (InputLeverGachaButton)
+    float m_leverGachaButtonTime[4];
+    // InputLeverGachaStick's stick angles, in 1/10000 radians: the last one that counted (0xFFFF: none) and the latest
+    unsigned short m_leverGachaStickAngle;
+    unsigned short m_leverGachaStickLastAngle;
+    unsigned char pad_5c70;
+    unsigned char m_leverGachaCount;  // counts every input that counted (InputLeverGachaButton/Stick)
+    bool m_leverGachaInput;  // set by every input that counted
+    unsigned char pad_5c73[0x5];
     // the playing jingle's sound handle, -1 when none plays (IsJinglePlaying; the name is not the original's)
     long m_jingleHandle;
     unsigned char pad_5c80[0x18];
@@ -425,7 +467,11 @@ public:
     int pad_5d64;  // FutureViewButtonChllengeResultProc acts only for this challenge id
     // an arts reference: data type in bits 0-2, arts id above (GetFutureViewArtsData asks DataManager::GetArtsData for it)
     unsigned short pad_5d68;
-    unsigned char pad_5d6a[0x4];
+    unsigned char pad_5d6a;  // RegisterFutureView's last argument
+    // RegisterFutureView: the m_voiceIndex of the characters (in the handle's list) of Bdat id 0x452 and 0x453
+    signed char pad_5d6b;
+    signed char pad_5d6c;
+    unsigned char pad_5d6d;
     unsigned char pad_5d6e;  // FutureViewButtonChllengeResultProc sends a menu event once while it is set, then clears it
     unsigned char pad_5d6f[0x9];
     unsigned int pad_5d78[3];  // AddOCGDamage adds to an entry, up to 99999999

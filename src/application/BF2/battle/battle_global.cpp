@@ -30,6 +30,7 @@
 #include "classes/btl/ShakeCameraElementCameraAxis.h"
 #include "classes/gf/GfMenuObjVision.h"
 #include "classes/fw/CameraManager.h"
+#include "btl/Utility.h"
 
 namespace btl {
 
@@ -1088,6 +1089,41 @@ void BattleGlobal::ShakeCameraAxis(const SHAKE_CAMERA_AXIS_PARAM& param) {
     m_shakeCamera->RegisterData(element);
 }
 
+inline void BattleGlobal::SLOW_PROC_DATA::Finalize() {
+    if (dynamicsChara < 90) {
+        const BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(dynamicsChara);
+        if (chr != nullptr) {
+            gf::GfComDynamics* dynamics = chr->GetObject()->getComponent<gf::GfComDynamics>(8);
+            if (dynamics != nullptr) {
+                dynamics->m_updater.m_timeScale = 1.0f;
+            }
+        }
+    }
+    deleteDelay = 0.0f;
+    pad_8 = 0.0f;
+    dynamicsChara = 90;
+}
+
+unsigned int BattleGlobal::RegisterSlow(float rate, float time, float delay) {
+    if (m_slowProc.size() >= m_slowProc.capacity()) {
+        SLOW_PROC_DATA* it = m_slowProc.begin();
+        it->Finalize();
+        m_slowProc.erase(it);
+    }
+    SLOW_PROC_DATA data;
+    data.pad_0 = rate;
+    data.deleteDelay = time;
+    data.pad_8 = delay > 0.0f ? -delay : 0.0f;
+    unsigned int id = m_nextSlowId;
+    do {
+        ++m_nextSlowId;
+    } while (m_nextSlowId == 0);
+    data.id = id;
+    data.dynamicsChara = 90;
+    m_slowProc.push_back(data);
+    return id;
+}
+
 void BattleGlobal::SetSlowDynamicsSpeed(unsigned int id, int chara, unsigned int speed) {
     SLOW_PROC_DATA* data = GetSlowProcData(id);
     if (data == nullptr) {
@@ -1104,6 +1140,123 @@ void BattleGlobal::SetSlowDynamicsSpeed(unsigned int id, int chara, unsigned int
     dynamics->m_updater.m_timeScale = speed * 0.01f;
     data->dynamicsChara = chara;
     data->dynamicsSpeed = speed;
+}
+
+void BattleGlobal::DeleteSlow(unsigned int id) {
+    if (id != 0) {
+        for (SLOW_PROC_DATA& data : m_slowProc) {
+            if (data.id == id) {
+                data.Finalize();
+                m_slowProc.erase(&data);
+                return;
+            }
+        }
+    }
+}
+
+void BattleGlobal::DeleteSlowAll() {
+    ::mm::mtl::FixedVector<SLOW_PROC_DATA, 20> list = m_slowProc;
+    for (SLOW_PROC_DATA& data : list) {
+        data.Finalize();
+    }
+}
+
+void BattleGlobal::RegisterFutureView(gf::GF_OBJ_HANDLE* handle, float time, unsigned int id, int type, int arts,
+                                      int value) {
+    if (pad_5d54 != 0 || pad_5d60 > 0.0f) {
+        return;
+    }
+    {
+        ::mm::mtl::FixedVector<unsigned char, 90> list;
+        Utility::GetCharacterList(list, handle, static_cast<Utility::CHECK_CHR_NUM_MODE>(0), 0x12);
+        CharacterManager* manager = CharacterManager::sys();
+        bool found452 = false;
+        bool found453 = false;
+        for (unsigned char index : list) {
+            const BattleCharacter* chr = manager->GetCharacterConst(index);
+            if (chr->m_bdatID == 0x452) {
+                pad_5d6b = chr->m_voiceIndex;
+                if (found453) {
+                    break;
+                }
+                found452 = true;
+            } else if (chr->m_bdatID == 0x453) {
+                pad_5d6c = chr->m_voiceIndex;
+                if (found452) {
+                    break;
+                }
+                found453 = true;
+            }
+        }
+    }
+    pad_5d48 = handle;
+    pad_5d54 = 1;
+    pad_5d58 = id;
+    pad_5d60 = time;
+    pad_5d68 = (type & 7) | (arts << 3);
+    pad_5d6a = value;
+    SetPause(5, true);
+}
+
+bool BattleGlobal::InputLeverGachaButton(LEVER_GACHA_DATA::BUTTON button) {
+    if (button <= 3) {
+        if (m_leverGachaButtonTime[button] > 0.0f) {
+            return false;
+        }
+        for (unsigned int i = 0; i < 4; i++) {
+            if (i == button) {
+                m_leverGachaButtonTime[i] = 1.0f / 3.0f;
+            } else {
+                m_leverGachaButtonTime[i] -= 0.11111112f;  // one ulp above 1/9 (the original's constant)
+            }
+        }
+        m_leverGachaCount++;
+        m_leverGachaInput = true;
+        return true;
+    }
+    return false;
+}
+
+void BattleGlobal::CreateSpecialEffect(int type) {
+    DeleteSpecialEffect(type);
+    const char* name = nullptr;
+    switch (type) {
+        case 0:
+            name = "cmn_020_007";
+            break;
+    }
+    if (name == nullptr || m_specialEffect.size() >= m_specialEffect.capacity()) {
+        return;
+    }
+    fw::EffectManager* manager = fw::EffectManager::sys();
+    unsigned int handle = manager->create(name, nullptr, true);
+    if (handle != 0) {
+        SpecialEffect effect;
+        effect.handle = handle;
+        effect.type = type;
+        m_specialEffect.push_back(effect);
+        // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B937F0)
+        static const mm::Vec3 s_pos(-1122.0f, -493.0f, 0.0f);
+        manager->setParam(handle, s_pos, mm::Vec3::unit);
+    }
+    DataManager::sys()->SetSpecialEffects(2, true);
+}
+
+void BattleGlobal::DeleteSpecialEffect(int type) {
+    for (SpecialEffect& effect : m_specialEffect) {
+        if (effect.type == type) {
+            if (effect.handle != 0 && fw::EffectManager::sys() != nullptr) {
+                fw::EffectManager::sys()->dead(effect.handle);
+                effect.handle = 0;
+            }
+            if (effect.type == 0) {
+                DataManager::sys()->SetSpecialEffects(2, false);
+            }
+            effect.type = -1;
+            m_specialEffect.erase(&effect);
+            return;
+        }
+    }
 }
 
 void BattleGlobal::DeleteDelayElementalComboSlow(float delay) {
