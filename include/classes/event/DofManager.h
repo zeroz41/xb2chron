@@ -3,7 +3,7 @@
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
 
-namespace event { enum MSG_TYPE : int; }
+namespace event { enum MSG_TYPE : int; class CharaObj; }
 
 namespace event {
 // table 0x7100B3CDC0; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::DofManager>
@@ -26,6 +26,10 @@ public:
     void stop();
     void update();
     void render();
+    // static (the character comes in x0; calcDist is its caller): the camera eye's distance to the point above
+    // the character, scaled by the cosine between that direction and the first camera interface's m_target taken
+    // as a direction; the float is not read
+    static float calcDistSub(CharaObj* chara, float);
 
     // fields play() sets; what they hold is not known yet (play(int, int) reads them from EVT_dof's "dist", "range",
     // "pixel", "lens", "strength", "blend" columns, in that order)

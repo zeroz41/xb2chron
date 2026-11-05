@@ -13,6 +13,7 @@
 #include "gf/GfDataBlade.h"
 #include "mm/Mat44.h"
 #include "classes/event/FrameManager.h"
+#include "classes/fw/CameraManager.h"
 #include "classes/event/CamManager.h"
 #include "classes/event/DebugManager.h"
 #include "classes/gf/GfAssetSetup.h"
@@ -1226,6 +1227,18 @@ void ObjectLight::play(const char* name, float frame) {
     m_light->play(name, frame);
 }
 
+ObjectCamera::ObjectCamera(const char* name, unsigned int id)
+    : Object(static_cast<OBJTYPE>(3), name), m_cam(nullptr), pad_70(id), pad_4e0(0), pad_4e4(0) {
+    CamObj* cam = mm::mtl::Singleton<CamManager>::getPtr()->createCam(id);
+    m_cam = cam;
+    mm::Vec3 pos = cam->m_pos;
+    m_pos.m_type = 1;
+    m_pos.m_value = pos;
+    mm::Vec3 tar = cam->m_tar;
+    m_tar.m_type = 1;
+    m_tar.m_value = tar;
+}
+
 // the camera is removed from CamManager's list (the current one cleared while its pad_64 is 0) and deleted
 ObjectCamera::~ObjectCamera() {
     CamManager* mgr = mm::mtl::Singleton<CamManager>::getPtr();
@@ -1338,6 +1351,36 @@ void CamMotion::update(const FrameInfo& info) {
     }
 }
 
+// the interface is pushed onto its camera layer when enabled, popped when disabled (only on a change)
+int CamObj::SetEnable::update(const ICmd::Param& param) {
+    unsigned int index = param.m_param.val(0).getS32();
+    bool enable = param.m_param.val(1).getBool();
+    CamInterface* cam = mm::mtl::Singleton<CamManager>::getPtr()->m_interfaces[index];
+    if (enable) {
+        if (!cam->pad_ac) {
+            (fw::CameraManager::get()->m_layers + static_cast<unsigned int>(cam->m_type))->push(cam->m_self, 0.0f);
+        }
+        cam->pad_ac = true;
+    } else {
+        if (cam->pad_ac) {
+            (fw::CameraManager::get()->m_layers + static_cast<unsigned int>(cam->m_type))->pop(cam->m_self, 0.0f);
+        }
+        cam->pad_ac = false;
+    }
+    return 1;
+}
+
+int CamObj::SetTargetPos::update(const ICmd::Param& param) {
+    unsigned int index = param.m_param.val(0).getS32();
+    mm::Vec3 pos(param.m_param.val(1).getF32(), param.m_param.val(2).getF32(), param.m_param.val(3).getF32());
+    mm::Vec3 tar(param.m_param.val(4).getF32(), param.m_param.val(5).getF32(), param.m_param.val(6).getF32());
+    float roll = param.m_param.val(7).getF32();
+    CamInterface* cam = mm::mtl::Singleton<CamManager>::getPtr()->m_interfaces[index];
+    cam->pad_b0 = roll;
+    cam->setLookAt(pos, tar, roll);
+    return 1;
+}
+
 // the angle is converted from a focal length (mm, 25.39 mm film) when the third value is set; at least 5 degrees
 int CamObj::SetFov::update(const ICmd::Param& param) {
     unsigned int index = param.m_param.val(0).getS32();
@@ -1386,6 +1429,55 @@ void CamObj::changeActive(CamBase* cam) {
     }
 }
 
+// the active camera's view is copied in and, unless it is m_field or CamManager's free camera runs, queued to the
+// interface as SetTargetPos, SetFov and SetNearfar commands
+void CamObj::update(const FrameInfo& info) {
+    if (m_activeCam && info.m_step > 0.0f) {
+        m_activeCam->update(info);
+        CamBase* cam = m_activeCam;
+        float px = cam->pad_10[0];
+        float py = cam->pad_10[1];
+        float pz = cam->pad_10[2];
+        float tx = cam->pad_20[0];
+        float ty = cam->pad_20[1];
+        float tz = cam->pad_20[2];
+        float fov = cam->pad_30;
+        float roll = cam->pad_34;
+        float nearClip = cam->m_near;
+        float farClip = cam->m_far;
+        m_pos.x = px;
+        m_pos.y = py;
+        m_pos.z = pz;
+        m_tar.x = tx;
+        m_tar.y = ty;
+        m_tar.z = tz;
+        m_fov = fov;
+        m_rotZ = roll;
+        m_near = nearClip;
+        m_far = farClip;
+        if (cam != &m_field && !(mm::mtl::Singleton<CamManager>::getPtr()->m_list.pad_14 & 2)) {
+            CmdParam param;
+            param.val(0).setS32(pad_64);
+            param.val(1).setF32(px);
+            param.val(2).setF32(py);
+            param.val(3).setF32(pz);
+            param.val(4).setF32(tx);
+            param.val(5).setF32(ty);
+            param.val(6).setF32(tz);
+            param.val(7).setF32(roll);
+            m_cmdQueue.push_back(&m_setTargetPos, param);
+            param.val(0).setS32(pad_64);
+            param.val(1).setF32(fov);
+            param.val(2).setBool(pad_8);
+            m_cmdQueue.push_back(&m_setFov, param);
+            param.val(0).setS32(pad_64);
+            param.val(1).setF32(nearClip);
+            param.val(2).setF32(farClip);
+            m_cmdQueue.push_back(&m_setNearfar, param);
+        }
+    }
+}
+
 void CamObj::render(const mm::Col4& col) {
     if (m_activeCam) {
         m_activeCam->render(col);
@@ -1403,6 +1495,17 @@ void CamManager::loadResource(const char* name) {
         return;
     }
     mm::mtl::Singleton<ResManager>::getPtr()->load(mm::mtl::Singleton<Extend>::getPtr()->eva(name), nullptr, false);
+}
+
+// the camera of id 0 becomes the current one
+CamObj* CamManager::createCam(unsigned int id) {
+    CamObj* cam = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+        CamObj(id, (m_list.pad_10 >> 2) & 1, m_list.pad_10 & 1);
+    m_list.m_cams.push_back(cam);
+    if (id == 0) {
+        m_cur = cam;
+    }
+    return cam;
 }
 
 void CamManager::setFocal(bool focal) {
@@ -2013,6 +2116,17 @@ DofManager::DofManager()
 
 DofManager::~DofManager() {}
 
+float DofManager::calcDistSub(CharaObj* chara, float) {
+    mm::Vec3 eye = mm::mtl::Singleton<CamManager>::getPtr()->m_interfaces[0]->m_eye;
+    mm::Vec3 tar = mm::mtl::Singleton<CamManager>::getPtr()->m_interfaces[0]->m_target;
+    mm::Vec3 vec = chara->m_pos + mm::Vec3(0.0f, chara->pad_1730, 0.0f) - eye;
+    float dist = vec.length();
+    vec.normalize();
+    mm::Vec3 dir = mm::Vec3(tar) - mm::Vec3(eye);  // the copies give the original's operand order (zkit sweep)
+    dir.normalize();
+    return dist * vec.dot(dir);
+}
+
 FadeManager::~FadeManager() {}
 
 FadeCtrl::~FadeCtrl() {}
@@ -2230,6 +2344,31 @@ void CamManager::init() {
             CamInterface(static_cast<fw::CAMERA_TYPE>(i));
         cam->addRef();
         m_interfaces.push_back(cam);
+    }
+}
+
+// while the free camera runs (pad_14 bit 1) its view drives the first interface
+void CamManager::update() {
+    if (m_list.pad_14 & 2) {
+        m_free.update(mm::mtl::Singleton<FrameManager>::getPtr()->frameInfo());
+        mm::Vec3 pos;
+        pos.x = m_free.pad_10[0];
+        pos.y = m_free.pad_10[1];
+        pos.z = m_free.pad_10[2];
+        mm::Vec3 tar;
+        tar.x = m_free.pad_20[0];
+        tar.y = m_free.pad_20[1];
+        tar.z = m_free.pad_20[2];
+        float fov = m_free.pad_30;
+        float roll = m_free.pad_34;
+        if (m_free.pad_8) {
+            fov = atanf(25.39f / (fov + fov));
+            fov = (fov + fov) * 180.0f / 3.1415f;
+        }
+        CamInterface* cam = mm::mtl::Singleton<CamManager>::getPtr()->m_interfaces[0];
+        cam->pad_b0 = roll;
+        cam->setLookAt(pos, tar, roll);
+        cam->m_fov = fmaxf(fov, 5.0f);
     }
 }
 

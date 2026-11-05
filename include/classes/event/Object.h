@@ -6,11 +6,16 @@
 #include "mm/mtl/FixStr.h"
 
 namespace mm { class Col4; }
+// what kind of object it is (1.0.0's Object(OBJTYPE, const char*)); ObjectCamera passes 3; the enumerators' names
+// are unknown
+namespace event { enum OBJTYPE : int; }
 
 namespace event {
 // table 0x7100B3DBF0
 class Object : public ::event::IBouCallback, public ::event::IManiCallback {
 public:
+    // inline (3.0.1 has no out-of-line copy; ObjectCamera's constructor inlines it)
+    Object(OBJTYPE type, const char* name) : m_type(type), m_name(name), m_child(nullptr), m_next(nullptr) {}
     virtual ~Object();  // slot 0
     // clear..tail are empty but out of line: CharaObj.cpp defines each right after ObjectChara's override
     virtual void clear();  // slot 4

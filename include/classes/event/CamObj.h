@@ -43,6 +43,8 @@ public:
         virtual ~SetTargetPos() {}  // slot 0
         virtual int update(event::ICmd::Param const&);  // slot 3
     };
+    // out of line (CamManager::createCam passes CamManager's flag bits 2 and 0 as the two bools)
+    CamObj(unsigned int id, bool, bool);
     virtual ~CamObj();  // slot 0
     virtual void update(event::FrameInfo const&);  // slot 2
     virtual void render(mm::Col4 const&);  // slot 3
@@ -57,7 +59,10 @@ public:
     mm::Vec3 m_tar;  // 0x20
     float m_fov;   // 0x30; the camcommands save it before changing it; the name is not the original's
     float m_rotZ;  // 0x34; the name is not the original's
-    unsigned char pad_38[0x8];
+    // the active camera's clip distances update copies in and queues as SetNearfar's values; the names are not the
+    // original's
+    float m_near;  // 0x38
+    float m_far;   // 0x3c
     // the commands the constructor builds in place (changeActive queues m_setEnable); the names are not the
     // original's
     SetEnable m_setEnable;  // 0x40

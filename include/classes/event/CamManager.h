@@ -23,6 +23,8 @@ public:
     void clear();
     void update();
     void render();
+    // out of line (ObjectCamera's constructor is its one caller)
+    CamObj* createCam(unsigned int id);
     // 0x10: a member object, not three plain members: the original's inlined constructor (Singleton<CamManager>::getPtr
     // in ObjectCamera's destructor and the other getPtr callers) stores the list's count before the two words, which
     // only a sub-object whose constructor clears them in its body gives (fields in CamManager's own init list come

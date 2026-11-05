@@ -134,7 +134,9 @@ public:
     unsigned char pad_d60[0x630];
     // playVolumeFade/playRimBloom and their stops forward to it; the name is not the original's
     CharaEffectPlayer m_effectPlayer;  // 0x1390
-    unsigned char pad_1630[0x108];
+    unsigned char pad_1630[0x100];
+    float pad_1730;  // 0x1730: DofManager::calcDistSub adds it to m_pos's y (a height above the position)
+    unsigned char pad_1734[0x4];
     // three command queues ObjectChara::clear empties (1.0.0's CharaObj::clear); the names are not the original's
     CmdQueue<8, 0> m_cmdQueue0;  // 0x1738
     CmdQueue<8, 0> m_cmdQueue1;  // 0x2088

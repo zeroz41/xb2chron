@@ -16,6 +16,7 @@ namespace event {
 // table 0x7100B3DE68
 class ObjectCamera : public ::event::Object {
 public:
+    ObjectCamera(const char* name, unsigned int id);
     virtual ~ObjectCamera();  // slot 0
     virtual bool OnBouRectSelect(event::IBouCallback::SelectParam const&);  // slot 2
     virtual void OnBouRender(event::IBouCallback::RenderParam const&);  // slot 3

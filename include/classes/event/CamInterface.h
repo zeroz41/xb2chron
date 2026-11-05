@@ -18,9 +18,10 @@ public:
     virtual ~CamInterface() {}  // slot 0 (inline: in the unit's tail at 0x710014C3AC; releases m_self)
     fw::CAMERA_TYPE m_type;  // 0xa8: the constructor's (the name is not the original's)
     bool pad_ac;
-    unsigned int pad_b0;
-    // the interface holds a reference to itself (the destructor releases it); the name is not the original's
-    mm::mtl::IntrusivePtr<CamInterface> m_self;  // 0xb8
+    float pad_b0;  // 0xb0: the roll SetTargetPos and CamManager::update pass to setLookAt
+    // the interface holds a reference to itself (the destructor releases it; SetEnable pushes it onto and pops it
+    // from its fw::CameraLayer, whose push/pop take an IntrusivePtr<fw::Camera>&); the name is not the original's
+    mm::mtl::IntrusivePtr<fw::Camera> m_self;  // 0xb8
 };
 }  // namespace event
 
