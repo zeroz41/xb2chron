@@ -11,6 +11,11 @@
 #include "classes/ml/DrMdoCtlPos.h"
 #include "classes/ml/DrResMdoSortPos.h"
 #include "classes/ml/DrMdoCtlSeamAll.h"
+#include "ml/DrEnvColiObj.h"
+#include "ml/DrCalcClipObj.h"
+#include "ml/DrResEtcTexList.h"
+#include "ml/DrCalcClipMan.h"
+#include "ml/DrGlobalIBLMan.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/DrMdoZSortObj.h"
 #include "classes/ml/DrResMdoSeamWrkBase.h"
@@ -2510,12 +2515,316 @@ void DrMdoCtlPos::callSpAlphaRenderPosAll() {
     }
 }
 
+void DrMdoCtlSeam::resourceRelease() {
+    if (m_instMdlInfo != nullptr) {
+        m_instMdlInfo->releaseCall();
+    }
+    if (m_cldMdlData != nullptr) {
+        m_cldMdlData->release();
+        m_cldMdlData = nullptr;
+    }
+    if (m_envObj != nullptr) {
+        m_envObj->release();
+        m_envObj = nullptr;
+    }
+    if (m_envColi != nullptr) {
+        m_envColi->release();
+        m_envColi = nullptr;
+    }
+    if (m_calcClip != nullptr) {
+        m_calcClip->release();
+        m_calcClip = nullptr;
+    }
+    if (m_etcTexList != nullptr) {
+        m_etcTexList->release();
+        m_etcTexList = nullptr;
+    }
+    if (m_cpPlane != nullptr) {
+        m_cpPlane->release();
+        m_cpPlane = nullptr;
+    }
+    DrGlobalIBLMan* iblMan = *(m_pDrMan->m_iblMan + m_viewNum);
+    for (DrGlobalIBLPack* pack : m_iblPacks) {
+        iblMan->releaseObj(pack);
+    }
+    m_iblPacks.clear();
+    for (DrEnvironmentObj* env : m_envObjs) {
+        if (env != nullptr) {
+            env->release();
+        }
+    }
+    m_envObjs.clear();
+}
+
+void DrMdoCtlSeam::calcEnd() {
+    bool readIdle;
+    if (m_seamFlags & 0x10000) {
+        m_seamFlags &= ~0x8000;
+        m_readIdleCnt = 0;
+        readIdle = false;
+    } else if (++m_readIdleCnt >= 5) {
+        m_readIdleCnt = 4;
+        m_seamFlags |= 0x8000;
+        readIdle = true;
+    } else {
+        m_seamFlags &= ~0x8000;
+        readIdle = false;
+    }
+    if (readIdle) {
+        m_seamFlags &= ~0x20000;
+        m_readBusyCnt = 0;
+    } else if (++m_readBusyCnt >= 900) {
+        m_readBusyCnt = 900;
+        m_seamFlags |= 0x20000;
+    } else {
+        m_seamFlags &= ~0x20000;
+    }
+    if (m_seamFlags & 0x20000) {
+        m_seamFlags |= 0x8000;
+        m_readIdleCnt = 4;
+    }
+    if (m_seamFlags & 0x200000) {
+        m_seamFlags |= 0x400000;
+        m_readErrWait = 30;
+    }
+    bool stmIdle;
+    if (m_seamFlags & 0x400) {
+        m_seamFlags &= ~0x800;
+        m_stmIdleCnt = 0;
+        stmIdle = false;
+    } else if (++m_stmIdleCnt >= 5) {
+        m_stmIdleCnt = 4;
+        m_seamFlags |= 0x800;
+        stmIdle = true;
+    } else {
+        m_seamFlags &= ~0x800;
+        stmIdle = false;
+    }
+    if (stmIdle) {
+        m_seamFlags &= ~0x100000;
+        m_stmBusyCnt = 0;
+    } else if (++m_stmBusyCnt >= 900) {
+        m_stmBusyCnt = 900;
+        m_seamFlags |= 0x100000;
+    } else {
+        m_seamFlags &= ~0x100000;
+    }
+    if (m_seamFlags & 0x100000) {
+        m_seamFlags |= 0x800;
+        m_stmIdleCnt = 4;
+    }
+    if (m_seamFlags & 0x800) {
+        m_pDrMan->setSeamMapStmOk(false);
+    } else {
+        m_pDrMan->setSeamMapStmOk(true);
+    }
+}
+
+void DrMdoCtlSeam::updateTexutreSeam() {
+    if (m_releaseVertexAll) {
+        DrResMdoSeamTexture::SEAMRES_HEIGHT_CNTMAX = 3;
+        DrResMdoSeamTexture::SEAMRES_NOM_CNTMAX = 10;
+        DrResMdoSeamTexList::setListCnt(10);
+    } else {
+        if (m_parmRead.m_posCnt == 0) {
+            DrResMdoSeamTexList::setListCnt(60);
+            DrResMdoSeamTexture::SEAMRES_NOM_CNTMAX = 120;
+        } else {
+            DrResMdoSeamTexList::setListCnt(10);
+            DrResMdoSeamTexture::SEAMRES_NOM_CNTMAX = 10;
+        }
+        if (m_seamFlags & 0x20) {
+            DrResMdoSeamTexture::SEAMRES_HEIGHT_CNTMAX = 3;
+        } else {
+            DrResMdoSeamTexture::SEAMRES_HEIGHT_CNTMAX = 60;
+        }
+    }
+    DrResMdoSeamTexture* tex = m_textureList;
+    if (m_releaseVertexAll) {
+        while (tex != nullptr) {
+            DrResMdoSeamTexture* next = tex->m_prev;
+            releaseFreeSeamTexture(tex, false);
+            tex = next;
+        }
+        m_textureMemSize = 0;
+    } else {
+        while (tex != nullptr) {
+            if (tex->update()) {
+                const MapHead::TexSize* tbl = reinterpret_cast<const MapHead::TexSize*>(
+                    reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_textureTblOfs);
+                DrResMdoSeamTexture* next = tex->m_prev;
+                m_textureMemSize -= tbl[tex->m_dataIdx].m_size;
+                if (tex->m_heightReady == 1) {
+                    m_textureMemSize -= tbl[tex->m_dataIdx].m_heightSize;
+                }
+                releaseFreeSeamTexture(tex, false);
+                tex = next;
+            } else {
+                if (tex->m_readIn != 0) {
+                    const MapHead::TexSize* tbl = reinterpret_cast<const MapHead::TexSize*>(
+                        reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_textureTblOfs);
+                    const MapHead::TexSize* entry = &tbl[tex->m_dataIdx];
+                    if (tex->m_heightReady == 1) {
+                        unsigned int heightSize = tbl[tex->m_dataIdx].m_heightSize;
+                        unsigned int rest = heightSize & 0xFFF;
+                        tex->changeMemTexture((rest == 0 ? 0 : 0x1000 - rest) + heightSize, entry->m_size);
+                    } else {
+                        tex->changeMemTexture(entry->m_size);
+                    }
+                } else if (tex->m_heightReady == 1 && tex->updateHeight()) {
+                    const MapHead::TexSize* tbl = reinterpret_cast<const MapHead::TexSize*>(
+                        reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_textureTblOfs);
+                    tex->m_heightReady = 0;
+                    const MapHead::TexSize* entry = &tbl[tex->m_dataIdx];
+                    unsigned int heightSize = entry->m_heightSize;
+                    unsigned int rest = heightSize & 0xFFF;
+                    unsigned int allocSize = (rest == 0 ? 0 : 0x1000 - rest) + heightSize;
+                    m_textureMemSize -= heightSize;
+                    DrResMdoSeamMemObj* memObj = tex->m_memObj;
+                    tex->m_memObj = m_memMan.createParentFreeObj(memObj, allocSize);
+                    tex->resetTexture(entry->m_size);
+                    releaseFreeSeamMemObj(memObj);
+                }
+                tex = tex->m_prev;
+            }
+        }
+    }
+    DrResMdoSeamTexList* list = m_texListList;
+    if (m_releaseVertexAll) {
+        while (list != nullptr) {
+            DrResMdoSeamTexList* next = list->m_prev;
+            releaseFreeSeamTexList(list, false);
+            list = next;
+        }
+        m_textureMemSize = 0;
+    } else {
+        while (list != nullptr) {
+            if (list->update(&m_parmRead)) {
+                DrResMdoSeamTexList* next = list->m_prev;
+                const MapHead::ResSize* tbl = reinterpret_cast<const MapHead::ResSize*>(
+                    reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_texListTblOfs);
+                m_textureMemSize -= tbl[list->m_dataIdx].m_size;
+                releaseFreeSeamTexList(list, false);
+                list = next;
+            } else {
+                list = list->m_prev;
+            }
+        }
+    }
+}
+
+void DrMdoCtlSeam::releaseFreeSeamTexture(DrResMdoSeamTexture* tex, bool keepMem) {
+    auto toFree = [&](DrResMdoSeamTexture* res) {
+        DrResMdoSeamTexture* after = res->m_prev;
+        DrResMdoSeamTexture* before = res->m_next;
+        if (after == nullptr) {
+            if (before != nullptr) {
+                before->m_prev = nullptr;
+            }
+        } else {
+            if (before != nullptr) {
+                before->m_prev = after;
+            }
+            after->m_next = before;
+        }
+        if (m_textureUsedTail == res) {
+            m_textureUsedTail = before;
+        }
+        if (m_textureList == res) {
+            m_textureList = after;
+            if (after != nullptr) {
+                after->m_next = nullptr;
+            }
+        }
+        if (m_textureFreeTail == nullptr) {
+            m_textureFreeHead = res;
+            m_textureFreeTail = res;
+            res->m_next = nullptr;
+        } else {
+            m_textureFreeTail->m_prev = res;
+            res->m_next = m_textureFreeTail;
+            m_textureFreeTail = res;
+        }
+        res->m_prev = nullptr;
+        m_textureFreeNum++;
+        m_textureUsedNum--;
+    };
+    if (keepMem) {
+        tex->release();
+        toFree(tex);
+    } else {
+        DrResMdoSeamMemObj* memObj = tex->m_memObj;
+        DrResMdoSeamMemObj* heightMemObj = tex->m_heightMemObj;
+        m_pTextureNo[tex->m_dataIdx] = 0;
+        tex->release();
+        tex->m_memObj = nullptr;
+        toFree(tex);
+        if (memObj != nullptr) {
+            releaseFreeSeamMemObj(memObj);
+        }
+        if (heightMemObj != nullptr) {
+            releaseFreeSeamMemObj(heightMemObj);
+        }
+    }
+}
+
 DrMdoCtlSeamAll::~DrMdoCtlSeamAll() {
     releaseSeamAll();
 }
 
 void DrMdoCtlSeam::releaseFreeSeamMemObj(DrResMdoSeamMemObj* obj) {
     m_memMan.releaseFreeObj(obj);
+}
+
+void DrMdoCtlSeam::releaseFreeSeamTexList(DrResMdoSeamTexList* list, bool keepMem) {
+    auto toFree = [&](DrResMdoSeamTexList* res) {
+        DrResMdoSeamTexList* after = res->m_prev;
+        DrResMdoSeamTexList* before = res->m_next;
+        if (after == nullptr) {
+            if (before != nullptr) {
+                before->m_prev = nullptr;
+            }
+        } else {
+            if (before != nullptr) {
+                before->m_prev = after;
+            }
+            after->m_next = before;
+        }
+        if (m_texListUsedTail == res) {
+            m_texListUsedTail = before;
+        }
+        if (m_texListList == res) {
+            m_texListList = after;
+            if (after != nullptr) {
+                after->m_next = nullptr;
+            }
+        }
+        if (m_texListFreeTail == nullptr) {
+            m_texListFreeHead = res;
+            m_texListFreeTail = res;
+            res->m_next = nullptr;
+        } else {
+            m_texListFreeTail->m_prev = res;
+            res->m_next = m_texListFreeTail;
+            m_texListFreeTail = res;
+        }
+        res->m_prev = nullptr;
+        m_texListFreeNum++;
+        m_texListUsedNum--;
+    };
+    if (keepMem) {
+        list->release();
+        toFree(list);
+    } else {
+        DrResMdoSeamMemObj* memObj = list->m_memObj;
+        m_pTexListNo[list->m_dataIdx] = 0;
+        list->release();
+        list->m_memObj = nullptr;
+        toFree(list);
+        if (memObj != nullptr) {
+            releaseFreeSeamMemObj(memObj);
+        }
+    }
 }
 
 void DrMdoCtlSeam::updateVertexSeam() {
@@ -2545,6 +2854,57 @@ void DrMdoCtlSeam::updateVertexSeam() {
                 }
                 vtx = vtx->m_prev;
             }
+        }
+    }
+}
+
+void DrMdoCtlSeam::releaseFreeSeamVertex(DrResMdoSeamVertex* vtx, bool keepMem) {
+    auto toFree = [&](DrResMdoSeamVertex* res) {
+        DrResMdoSeamVertex* after = res->m_prev;
+        DrResMdoSeamVertex* before = res->m_next;
+        if (after == nullptr) {
+            if (before != nullptr) {
+                before->m_prev = nullptr;
+            }
+        } else {
+            if (before != nullptr) {
+                before->m_prev = after;
+            }
+            after->m_next = before;
+        }
+        if (m_vertexUsedTail == res) {
+            m_vertexUsedTail = before;
+        }
+        if (m_pVertexList == res) {
+            m_pVertexList = after;
+            if (after != nullptr) {
+                after->m_next = nullptr;
+            }
+        }
+        if (m_vertexFreeTail == nullptr) {
+            m_vertexFreeHead = res;
+            m_vertexFreeTail = res;
+            res->m_next = nullptr;
+        } else {
+            m_vertexFreeTail->m_prev = res;
+            res->m_next = m_vertexFreeTail;
+            m_vertexFreeTail = res;
+        }
+        res->m_prev = nullptr;
+        m_vertexFreeNum++;
+        m_vertexUsedNum--;
+    };
+    if (keepMem) {
+        vtx->release();
+        toFree(vtx);
+    } else {
+        DrResMdoSeamMemObj* memObj = vtx->m_memObj;
+        m_pVertexNo[vtx->m_dataIdx] = 0;
+        vtx->release();
+        vtx->m_memObj = nullptr;
+        toFree(vtx);
+        if (memObj != nullptr) {
+            releaseFreeSeamMemObj(memObj);
         }
     }
 }

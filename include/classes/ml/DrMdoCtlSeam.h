@@ -6,8 +6,10 @@
 #include "ml/DrResMdoSeamMemMan.h"
 #include "classes/ml/DrResMdoSeamRead.h"
 #include "ml/DrResMdoSeamParmRead.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace ml { class DrResMdoSeamWrkBase; }
+namespace cloud { class CloudMdlDataObj; }
 
 namespace ml {
 class DrResMdoSeamMemObj;
@@ -19,6 +21,13 @@ class DrResMdoSeamWrkLow;
 class DrResMdoSeamWrkMpf;
 class DrResMdoSeamWrkEnv;
 class DrResMdoSeamWrkLight;
+class DrEnvironmentObj;
+class DrEnvColiObj;
+class DrCalcClipObj;
+class DrCalcCpPlaneObj;
+class DrGlobalIBLPack;
+class DrResMdoInstMdlInfo;
+class DrResEtcTexList;
 
 // table 0x7100B7BA10
 class DrMdoCtlSeam : public ::ml::DrMdlObj {
@@ -30,6 +39,9 @@ public:
     void calcEnd();
     void releaseFreeSeamMemObj(DrResMdoSeamMemObj* obj);
     void releaseFreeSeamVertex(DrResMdoSeamVertex* vertex, bool);
+    void releaseFreeSeamTexture(DrResMdoSeamTexture* texture, bool);
+    void releaseFreeSeamTexList(DrResMdoSeamTexList* list, bool);
+    void updateTexutreSeam();
     void updateVertexSeam();
     void releaseSeam();
 
@@ -201,13 +213,29 @@ public:
     DrResMdoSeamWrkLight* m_lightWorks;     // 0x3C8
     int m_lightUsedNum;                     // 0x3D0
     int m_lightFreeNum;                     // 0x3D4
-    unsigned char pad_3D8[0x2C0];
+    unsigned char pad_3D8[0x20];
+    // 0x3F8..0x658: the seam's own objects, released and cleared by resourceRelease (the names are not the
+    // original's)
+    DrEnvironmentObj* m_envObj;   // 0x3F8
+    DrEnvColiObj* m_envColi;      // 0x400
+    DrCalcClipObj* m_calcClip;    // 0x408
+    unsigned char pad_410[0x8];
+    DrCalcCpPlaneObj* m_cpPlane;  // 0x418
+    // 0x420: the view's DrGlobalIBLMan made them (resourceRelease gives them back)
+    mm::mtl::FixedVector<DrGlobalIBLPack*, 32> m_iblPacks;
+    mm::mtl::FixedVector<DrEnvironmentObj*, 32> m_envObjs;  // 0x528
+    unsigned char pad_630[0x8];
+    DrResMdoInstMdlInfo* m_instMdlInfo;  // 0x638: resourceRelease calls its releaseCall
+    unsigned char pad_640[0x18];
+    DrResEtcTexList* m_etcTexList;       // 0x658
+    unsigned char pad_660[0x38];
     DrResMdoInstAnmObj m_instAnm;  // 0x698: releaseSeam releases it; ScnObjAccSeamPos reads it (m_mdlType 3)
     EtcPosList m_etcPos;           // 0x6C8 (m_mdlType 3)
     unsigned char pad_6D8[0x8];
     // 0x6E0: the destructor destroys it; releaseFreeSeamMemObj frees its blocks
     DrResMdoSeamMemMan m_memMan;
-    unsigned char pad_B28[0x10];
+    unsigned char pad_B28[0x8];
+    cloud::CloudMdlDataObj* m_cldMdlData;  // 0xB30: released by resourceRelease (the name is not the original's)
     // 0xB38: DrMdoCtlSeamInstMap::beginResAll keeps the material resources it replaces here and endResAll puts them
     // back
     MdoWrkMatRes* m_pSavedWrkMatRes;
@@ -225,7 +253,13 @@ public:
     unsigned short m_mpfNum;         // 0xC06: waitMpfMdlStream counts the mpf models in
     unsigned char pad_C08[0x4];
     unsigned short m_lightNum;       // 0xC0C: waitLightStream counts the lights in
-    unsigned char pad_C0E[0x8];
+    // 0xC0E..0xC14: calcEnd's frame counters: 0xC12 counts frames with no stream started (m_seamFlags bit 16) up to
+    // 4, then sets bit 15; 0xC14 counts frames after that up to 900, then sets bit 17. 0xC0E/0xC10 do the same for
+    // bit 10 with bits 11 and 20 (bit 11 clear: DrMan::setSeamMapStmOk(true)). The names are not the original's.
+    short m_stmIdleCnt;
+    short m_stmBusyCnt;
+    short m_readIdleCnt;
+    short m_readBusyCnt;
     short m_offScreenCnt;            // 0xC16: DrMdoCtlSeamAll::noOffScreenUpdate counts its calls
     unsigned char pad_C18[0x2];
     // 0xC1A, 0xC1E, 0xC20: DrMdoCtlSeamRead::updateReadCall clears m_readSkip while reading is off and counts the
@@ -235,7 +269,9 @@ public:
     unsigned char pad_C1C[0x2];
     short m_readWaitCnt;
     short m_heightReadWait;
-    unsigned char pad_C22[0x12];
+    unsigned char pad_C22[0x8];
+    short m_readErrWait;  // 0xC2A: calcEnd sets 30 when a stream could not start (bit 21; the name is not the original's)
+    unsigned char pad_C2C[0x8];
     int m_textureMemSize;            // 0xC34: the texture memory read in
     int m_vertexMemSize;             // 0xC38: the vertex memory read in
     unsigned char pad_C3C[0x4];

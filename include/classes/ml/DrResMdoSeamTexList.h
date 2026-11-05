@@ -7,6 +7,7 @@ namespace grlib { class CGLibTextureBuffer; }
 
 namespace ml {
 class DrResMdoSeamMemObj;
+class DrResMdoSeamParmRead;
 // table 0x7100B7DA80
 // The field and parameter names are not the original's.
 class DrResMdoSeamTexList {
@@ -16,6 +17,8 @@ public:
     void release();
     // DrMdoCtlSeamRead::waitTexListStream builds the list once its stream is in
     void createTextureList(mtl::ALLOC_HANDLE handle);
+    // true once the list has stayed unused long enough to be freed (DrMdoCtlSeam::updateTexutreSeam frees it)
+    bool update(DrResMdoSeamParmRead* parmRead);
     static void setListCnt(int cnt);
 
     static int SEAMRES_TEXLIST_CNTMAX;
