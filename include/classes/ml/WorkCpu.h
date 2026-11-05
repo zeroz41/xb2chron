@@ -30,7 +30,9 @@ public:
     // FixedList node is 0x28)
     struct GRPLIST {
         int m_handle;  // 0x0 createGroupHandle's handle (the name is not the original's)
-        unsigned char pad_4[0x4];
+        // 0x4 the CPU entryJobThread enters the group's next any-CPU job on: 1 up to the CPU count less one, round
+        // robin (createGroupHandle starts it at 1)
+        unsigned int pad_4;
         // 0x8 the group's jobs on each CPU, by the CPU less one (wkTail moves each job to its own CPU's; the name is
         // not the original's)
         reslist<TJOB*>* m_job[3];
@@ -51,8 +53,8 @@ public:
     // false when the CPU work does not exist or the group is not entered
     static bool removeAutoExecGrp(int group);
     // enters a job group in the groups beginUpdate wakes, on cpu (Scn's constructor: its thUpAfter group on CPU 1,
-    // 0xF; the unnamed parameter is not known yet)
-    static void entryAutoExecGrp(int group, CPUID cpu, unsigned int);
+    // 0xF; the cpu is unused; the list is kept sorted by priority; false when there is no WorkCpu)
+    static bool entryAutoExecGrp(int group, CPUID cpu, unsigned int priority);
     // the group's jobs freed and its lists released once it is synced and no job of it is busy (false when the
     // CPU work does not exist)
     static bool releaseGroupHandle(int group);

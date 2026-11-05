@@ -1006,6 +1006,62 @@ int WorkCpu::getResult(int group) {
     return 0;
 }
 
+bool WorkCpu::entryAutoExecGrp(int group, CPUID, unsigned int priority) {
+    WorkCpu* cpu = get();
+    if (cpu == nullptr) {
+        return false;
+    }
+    CS lock(_mlwcpu::getAutoExecCriticalSection());
+    for (mm::mtl::FixedList<AUTO_EXEC, 32>::iterator it = cpu->m_autoExec.begin(); it != cpu->m_autoExec.end();
+         ++it) {
+    }
+    AUTO_EXEC exec = {group, priority};
+    if (!cpu->m_autoExec.empty() && priority <= (*cpu->m_autoExec.begin()).m_priority) {
+        cpu->m_autoExec.push_front(exec);
+        return true;
+    }
+    for (mm::mtl::FixedList<AUTO_EXEC, 32>::iterator it = cpu->m_autoExec.begin(); it != cpu->m_autoExec.end();
+         ++it) {
+        if (priority <= (*it).m_priority) {
+            cpu->m_autoExec.insert(it, exec);
+            return true;
+        }
+    }
+    cpu->m_autoExec.push_back(exec);
+    return true;
+}
+
+namespace _mlwcpu {
+
+// the work memory of the WorkCpu, none without one (inline in its users, like getMemStack; the name is not the
+// original's)
+static mtl::ALLOC_HANDLE getMemWork() {
+    if (WorkCpu* cpu = WorkCpu::get()) {
+        return cpu->m_memWork;
+    }
+    return mtl::ALLOC_HANDLE();
+}
+
+}  // namespace _mlwcpu
+
+int WorkCpu::createGroupHandle(unsigned int count) {
+    WorkCpu* cpu = get();
+    if (cpu == nullptr) {
+        return -1;
+    }
+    CS lock(_mlwcpu::getGroupCriticalSection());
+    GRPLIST grp;
+    grp.m_handle = ++cpu->pad_2088;
+    grp.pad_4 = 1;
+    for (unsigned int i = 0; i < get()->m_cpuNum; i++) {
+        reslist<TJOB*>* list = new (_mlwcpu::getMemWork(), nullptr, 0, 4, false) reslist<TJOB*>;
+        grp.m_job[i] = list;
+        list->create(count, _mlwcpu::getMemWork());
+    }
+    cpu->m_group.push_back(grp);
+    return cpu->pad_2088;
+}
+
 WorkCpu* WorkCpu::create(WorkObj* parent) {
     return WorkUtil::createWork<WorkCpu>("WorkCpu", parent, false);
 }
