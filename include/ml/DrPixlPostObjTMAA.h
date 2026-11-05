@@ -19,6 +19,7 @@ public:
 
     DrPixlPostObjTMAA(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan);
     ~DrPixlPostObjTMAA();
+    void resetColorBuff();
     void render();
     void renderTMAA();
     // the current frame's bloom buffer (DrPixlPostObjBloom::calculateDownScaleImpl reads it)

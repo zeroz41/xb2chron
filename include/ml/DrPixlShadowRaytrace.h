@@ -19,6 +19,7 @@ public:
 
     DrPixlShadowRaytrace(DrMan* drMan);
     ~DrPixlShadowRaytrace();
+    void resetColorBuff();
     void render_beforeTemporal();
     void raytracePass();
     void blurPassSub(BlurAxis axis, DrPixlRenderTarget* src, DrPixlRenderTarget* dst);

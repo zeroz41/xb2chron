@@ -10,7 +10,9 @@ namespace ml {
 // DrPixlPostMan::m_volume. Only what DrPixlPostMan uses is declared.
 class DrPixlPostObjVolume : public DrPixlPostObj {
 public:
+    DrPixlPostObjVolume(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan);
     ~DrPixlPostObjVolume();
+    void calcColorBuff();
 
     // 0x18, the constructor creates the three and sets them up with DrPixlFormat::s_VolumeFormat (name inferred)
     DrPixlRenderTarget* m_volumeBuff[3];

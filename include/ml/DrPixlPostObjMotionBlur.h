@@ -12,6 +12,8 @@ namespace ml {
 class DrPixlPostObjMotionBlur : public DrPixlPostObj {
 public:
     ~DrPixlPostObjMotionBlur();
+    void calcBludBuffColorBuff();
+    void update();
     void render();
     void calcBlurWork();
     void calcVelocityBlur();

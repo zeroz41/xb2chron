@@ -224,7 +224,10 @@ public:
     unsigned char pad_1080[0x4];
     int m_weather;  // 0x1084
     float m_weatherFrame[2];  // 0x1088, set by DrMan::s_nDblStockIdx, read by s_nDblIdx; reset to 60
-    unsigned char pad_1090[0x6E];
+    unsigned char pad_1090[0x6C];
+    // 0x10FC: DrPixlPostMan::update clears it each frame when set (name inferred)
+    unsigned char m_frameReq;
+    unsigned char pad_10FD[0x1];
     bool m_dbgReduction;  // 0x10FE, DrPixlMan::lastRender then draws debugReductionRender (name inferred)
     unsigned char pad_10FF[0x5];
     // 0x1104, getSSROn is false while set and DrCalcViewWork::m_gpuCheckAllVisible is (name inferred)

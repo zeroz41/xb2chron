@@ -20,6 +20,7 @@ public:
     void render();
     void renderCaputre();
     void renderGlass();
+    void update();
 
     grlib::CGLibVtxVertex m_vertex;  // 0x18
     grlib::CGLibVtxIndex m_index;  // 0x40

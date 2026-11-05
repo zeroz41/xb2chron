@@ -9,6 +9,8 @@ class DrPixlPostObjDepthofField : public DrPixlPostObj {
 public:
     DrPixlPostObjDepthofField(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan);
     ~DrPixlPostObjDepthofField();
+    void resetColorBuff();
+    void update();
 
     // 0x18-0x48: the constructor creates the seven; resetColorBuff sets them up with these DrPixlFormat formats
     // (the names are not the original's)

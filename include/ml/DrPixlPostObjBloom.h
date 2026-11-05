@@ -14,7 +14,10 @@ public:
 
     static float BLOOMTEX_SCALE;
 
+    DrPixlPostObjBloom(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan);
+    ~DrPixlPostObjBloom() { releaseBloomTexture(); }
     void resetColorBuff(bool all);
+    void releaseBloomTexture();
     void releaseColorBuff(bool all);
     void createBloomTexture(float width, float height, bool all);
     void calcRender();
@@ -31,7 +34,8 @@ public:
     // m_scaleBuff[2]
     DrPixlRenderTarget* m_scaleBuff[5];
     DrPixlRenderTarget* m_scaleWorkBuff[5];
-    unsigned char pad_88[0xC];
+    unsigned char pad_88[0x8];
+    unsigned int m_perFrame;  // 0x90, DrPixlPostMan::update clears it each frame (name inferred)
     unsigned int m_flags;  // 0x94, calcRender sets bit 0 after rebuilding the buffers
     // 0x98, by DrMan::s_nDblIdx: releaseColorBuff frees both when all or DrPixlPostParm::m_iblColorMode is 3
     DrPixlRenderTarget* m_dblBuff[2];

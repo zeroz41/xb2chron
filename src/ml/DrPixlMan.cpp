@@ -49,6 +49,12 @@
 #include "ml/DrPixlPostObjTSSAO.h"
 #include "ml/DrPixlPostObjSSR.h"
 #include "ml/DrPixlShadowRaytrace.h"
+#include "ml/DrPixlPostObjFxAA.h"
+#include "ml/DrPixlPostObjTMAA.h"
+#include "ml/DrPixlPostObjRainDrop.h"
+#include "ml/DrPixlPostObjToneMap.h"
+#include "ml/DrPixlPostObjHistgram.h"
+#include "ml/DrPixlPostObjGlassBr.h"
 #include <math.h>
 #include <string.h>
 
@@ -721,6 +727,48 @@ void DrPixlPostMan::renderDeferredFast() {
     }
 }
 
+void DrPixlPostMan::resetColorBuff() {
+    if (m_tssao != nullptr) {
+        m_tssao->resetColorBuff(false);
+    }
+    setupDepthBuff();
+    if (m_bloom != nullptr) {
+        m_bloom->resetColorBuff(false);
+    }
+    if (m_ssr != nullptr) {
+        m_ssr->resetColorBuff();
+    }
+    if (m_tmaa != nullptr) {
+        m_tmaa->resetColorBuff();
+    }
+    if (m_shadowRaytrace != nullptr) {
+        m_shadowRaytrace->resetColorBuff();
+    }
+    if (m_drMan->m_postParm[m_drMan->m_postParmIdx]->m_iblColorMode == 2) {
+        return;
+    }
+    if (m_depthOfField != nullptr) {
+        m_depthOfField->resetColorBuff();
+    }
+    if (m_motionBlur != nullptr) {
+        m_motionBlur->calcBludBuffColorBuff();
+    }
+    if (m_motionBlur2 != nullptr) {
+        m_motionBlur2->resetColorBuff();
+    }
+    if (DrPixlPostObjFxAA* fxaa = m_fxaa) {
+        DrMan* drMan = fxaa->m_drMan;
+        fxaa->m_width = drMan->m_curViewInfo->m_width;
+        fxaa->m_height = drMan->m_curViewInfo->m_height;
+    }
+    if (m_volume != nullptr) {
+        m_volume->calcColorBuff();
+    }
+    if (m_rainDrop != nullptr) {
+        m_rainDrop->resetColorBuff();
+    }
+}
+
 DrPixlOccQuery::DrPixlOccQuery(DrMan* drMan, DrPixlMan* pixlMan)
     : m_drMan(drMan), m_pixlMan(pixlMan), m_renderCount(0), m_freeHead(nullptr), m_freeTail(nullptr),
       m_useHead(nullptr), m_useTail(nullptr), m_objs(nullptr), m_useCount(0), m_freeCount(0), m_capacity(0) {
@@ -776,6 +824,168 @@ DrResQueryObj* DrPixlOccQuery::createObj() {
     obj->m_flags = 0;
     return obj;
 }
+
+inline DrPixlPostMan::VolumeWork::VolumeWork(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
+    : m_drMan(drMan), m_pixlMan(pixlMan), m_postMan(postMan), m_flag(false) {
+    m_volume[0] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) RenderVolume(m_drMan);
+    m_volume[0]->setTextureInfo(16.0f, 16.0f, 16.0f, static_cast<GrlSurfaceFormat>(0x25), false, 0);
+    m_volume[1] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) RenderVolume(m_drMan);
+    m_volume[1]->setTextureInfo(16.0f, 16.0f, 16.0f, static_cast<GrlSurfaceFormat>(0x25), false, 0);
+}
+
+DrPixlPostMan::DrPixlPostMan(DrMan* drMan, DrPixlMan* pixlMan, int)
+    : m_drMan(drMan), m_pixlMan(pixlMan), m_volumeWork(nullptr), m_toneMap(nullptr), m_bloom(nullptr),
+      m_volume(nullptr), m_depthOfField(nullptr), m_fxaa(nullptr), m_cubeMapMultiIBL(nullptr), m_cubeMapIBL(nullptr),
+      m_motionBlur(nullptr), m_motionBlur2(nullptr), m_histgram(nullptr), m_tmaa(nullptr), m_ssr(nullptr),
+      m_tssao(nullptr), m_expStencil(nullptr), m_skyDome(nullptr), m_toonGrad(nullptr), m_rainDrop(nullptr),
+      m_glassBr(nullptr), m_capture(nullptr), m_unbranchToDepth(nullptr), m_downDepth(), m_refraction(nullptr),
+      m_refractionHalf(nullptr), m_quaterNormal(nullptr), m_depthBuff(nullptr), m_refractionQuery(nullptr), m_flags(0),
+      m_waterFog(0.0f) {
+    m_volumeWork = new (m_drMan->m_workHandle, nullptr, 0, 4, false) VolumeWork(m_drMan, m_pixlMan, this);
+    m_toneMap = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlPostObjToneMap(m_drMan, m_pixlMan, this);
+    m_fxaa = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlPostObjFxAA(m_drMan, m_pixlMan, this);
+    m_cubeMapMultiIBL = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlPostObjCubeMapMultiIBL(m_drMan, m_pixlMan, this);
+    m_cubeMapIBL = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlPostObjCubeMapIBL(m_drMan, m_pixlMan, this);
+    m_downDepth[0] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    m_downDepth[1] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    m_quaterNormal = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    m_depthBuff = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    m_bloom = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlPostObjBloom(m_drMan, m_pixlMan, this);
+    m_volume = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlPostObjVolume(m_drMan, m_pixlMan, this);
+    m_skyDome = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlSkyDome(m_drMan);
+    m_rainDrop = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlPostObjRainDrop(m_drMan, m_pixlMan, this);
+    m_toonGrad = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlToonGrad(m_drMan);
+    m_tmaa = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlPostObjTMAA(m_drMan, pixlMan, this);
+    m_ssr = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlPostObjSSR(m_drMan, pixlMan, this);
+    m_tssao = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlPostObjTSSAO(m_drMan, pixlMan, this);
+    m_expStencil = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlPostObjExpStencil(m_drMan);
+    m_refractionQuery = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrResUseQueryObj();
+    m_histgram = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlPostObjHistgram(m_drMan, m_pixlMan, this);
+    m_unbranchToDepth = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlPostObjUnbranchToDepth(m_drMan, m_pixlMan, this);
+    m_shadowRaytrace = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlShadowRaytrace(m_drMan);
+    setupDepthBuff();
+    m_refractionHalf = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+}
+
+DrPixlPostMan::~DrPixlPostMan() {
+    if (m_refractionQuery != nullptr) {
+        delete m_refractionQuery;
+        m_refractionQuery = nullptr;
+    }
+    if (m_shadowRaytrace != nullptr) {
+        delete m_shadowRaytrace;
+        m_shadowRaytrace = nullptr;
+    }
+    if (m_expStencil != nullptr) {
+        delete m_expStencil;
+        m_expStencil = nullptr;
+    }
+    if (m_downDepth[0] != nullptr) {
+        delete m_downDepth[0];
+        m_downDepth[0] = nullptr;
+    }
+    if (m_downDepth[1] != nullptr) {
+        delete m_downDepth[1];
+        m_downDepth[1] = nullptr;
+    }
+    if (m_quaterNormal != nullptr) {
+        delete m_quaterNormal;
+        m_quaterNormal = nullptr;
+    }
+    if (m_refraction != nullptr) {
+        delete m_refraction;
+        m_refraction = nullptr;
+    }
+    if (m_refractionHalf != nullptr) {
+        delete m_refractionHalf;
+        m_refractionHalf = nullptr;
+    }
+    if (m_depthBuff != nullptr) {
+        delete m_depthBuff;
+        m_depthBuff = nullptr;
+    }
+    if (m_toonGrad != nullptr) {
+        delete m_toonGrad;
+        m_toonGrad = nullptr;
+    }
+    if (m_skyDome != nullptr) {
+        delete m_skyDome;
+        m_skyDome = nullptr;
+    }
+    if (m_rainDrop != nullptr) {
+        delete m_rainDrop;
+        m_rainDrop = nullptr;
+    }
+    if (m_fxaa != nullptr) {
+        delete m_fxaa;
+        m_fxaa = nullptr;
+    }
+    if (m_volumeWork != nullptr) {
+        delete m_volumeWork;
+        m_volumeWork = nullptr;
+    }
+    if (m_toneMap != nullptr) {
+        delete m_toneMap;
+        m_toneMap = nullptr;
+    }
+    if (m_bloom != nullptr) {
+        delete m_bloom;
+        m_bloom = nullptr;
+    }
+    if (m_volume != nullptr) {
+        delete m_volume;
+        m_volume = nullptr;
+    }
+    if (m_depthOfField != nullptr) {
+        delete m_depthOfField;
+        m_depthOfField = nullptr;
+    }
+    if (m_motionBlur != nullptr) {
+        delete m_motionBlur;
+        m_motionBlur = nullptr;
+    }
+    if (m_motionBlur2 != nullptr) {
+        delete m_motionBlur2;
+        m_motionBlur2 = nullptr;
+    }
+    if (m_cubeMapMultiIBL != nullptr) {
+        delete m_cubeMapMultiIBL;
+        m_cubeMapMultiIBL = nullptr;
+    }
+    if (m_cubeMapIBL != nullptr) {
+        delete m_cubeMapIBL;
+        m_cubeMapIBL = nullptr;
+    }
+    if (m_histgram != nullptr) {
+        delete m_histgram;
+        m_histgram = nullptr;
+    }
+    if (m_tmaa != nullptr) {
+        delete m_tmaa;
+        m_tmaa = nullptr;
+    }
+    if (m_ssr != nullptr) {
+        delete m_ssr;
+        m_ssr = nullptr;
+    }
+    if (m_tssao != nullptr) {
+        delete m_tssao;
+        m_tssao = nullptr;
+    }
+    if (m_glassBr != nullptr) {
+        delete m_glassBr;
+        m_glassBr = nullptr;
+    }
+    if (m_capture != nullptr) {
+        delete m_capture;
+        m_capture = nullptr;
+    }
+    if (m_unbranchToDepth != nullptr) {
+        delete m_unbranchToDepth;
+        m_unbranchToDepth = nullptr;
+    }
+}
+
 
 void DrPixlPostMan::setBlur(bool on) {
     if (on) {

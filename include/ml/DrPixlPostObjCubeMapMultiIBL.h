@@ -15,6 +15,7 @@ namespace ml {
 // the multi-IBL cube map post object (DrPixlPostMan::m_cubeMapMultiIBL). The field names are not the original's.
 class DrPixlPostObjCubeMapMultiIBL : public DrPixlPostObj {
 public:
+    DrPixlPostObjCubeMapMultiIBL(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan);
     ~DrPixlPostObjCubeMapMultiIBL();
     void render();
     unsigned int getPremMipCount() const;
