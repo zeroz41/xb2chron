@@ -9,6 +9,17 @@
 #include "classes/gf/GfComponent.h"
 #include "fw/IkResolver.h"  // the tree: "fw/IkResolver.h" (new)
 namespace fw { class Message; }
+namespace fw { class BlowRotateIkSolver; }
+namespace fw { class LookIkSolver; }
+namespace fw { class ParamAdapter; }
+namespace fw { class PlacementGroundSolver; }
+namespace fw { class RotateIkSolver; }
+namespace fw { class RotateLocalIkSolver; }
+namespace fw { class SlopeGroundSolver; }
+namespace fw { class SphericalCoordinatesIkSolver; }
+namespace fw { class SpineRotateIKSolver; }
+namespace fw { class TransLocalIkSolver; }
+namespace fw { class TwoCharaGroundSolver; }
 namespace fw { class MessageObject; }
 
 namespace gf {
@@ -33,6 +44,21 @@ public:
     virtual void changeLayer(unsigned int, unsigned int);  // slot 3
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     void setup(const SetupInfo& info);
+    // each makes a solver on the object's frame and model pose into its slot of m_solvers, none without a pose
+    fw::RotateIkSolver* createRotateBodyIK(const char* bone);  // m_solvers[0]
+    fw::LookIkSolver* createLookIK(float spineFadeInTime, float spineFadeOutTime);  // m_solvers[3]
+    fw::PlacementGroundSolver* createPlacementGroundIK(float maxDown);  // m_solvers[2], on m_ground
+    fw::SlopeGroundSolver* createSlopeGroundIK(float, float);  // m_solvers[0], on m_ground
+    fw::TwoCharaGroundSolver* createTwoCharaGroundIK(float maxDown, const char* mainRootBone,
+                                                     const char* subRootBone);  // m_solvers[2], on m_ground
+    fw::SphericalCoordinatesIkSolver* createSphericalCoordinatesIkSolver(const fw::ParamAdapter& param,
+                                                                         const char* bone);  // m_solvers[8]
+    fw::SpineRotateIKSolver* createSpineRotateIkSolver(const fw::ParamAdapter& param, const char* firstBone,
+                                                       const char* secondBone);  // m_solvers[4]
+    fw::TransLocalIkSolver* createTransEyeIkSolver(unsigned int slot, const char* bone);
+    fw::RotateLocalIkSolver* createRotateEyeIkSolver(unsigned int slot, const char* bone);
+    // on the bone named `bone` (bone 1 without a name or when none is so named)
+    fw::BlowRotateIkSolver* createBlowRotateIkSolver(const char* bone);  // m_solvers[1]
     void cleanup();
 
     // the solver at an index as a T, none when the index holds none or another kind (inline: the name is not the

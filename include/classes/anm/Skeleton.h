@@ -102,16 +102,20 @@ public:
             return label.m_type < key.m_type;
         }
     };
-    // the bone a label names, 0xFFFF when none does (1.0.0's; inline: GfComEnvSensor::setup inlines it)
-    unsigned short getBoneFromLabel(LabelType type, unsigned short index) const {
+    // the bone a label names, none when none does (1.0.0's; inline: GfComIK's unit holds the out-of-line copy)
+    const Bone* getBoneFromLabel(LabelType type, unsigned short index) const {
+        unsigned short bone = 0xFFFF;
         if (m_labels.size() != 0) {
             LabelKey key = {type, index};
             ArrayIterartor<const SkelLabel> it = std::lower_bound(m_labels.begin(), m_labels.end(), key, CompLable());
             if (it != m_labels.end() && it.m_pData->m_type == type && it.m_pData->m_index == index) {
-                return it.m_pData->m_bone;
+                bone = it.m_pData->m_bone;
             }
         }
-        return 0xFFFF;
+        if (bone == 0xFFFF) {
+            return nullptr;
+        }
+        return &m_bones[bone];
     }
     // orders the extra-track slots by name (std::lower_bound's comparator in getExtraTruckSlotID)
     struct CompTruck {

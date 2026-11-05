@@ -44,6 +44,13 @@ public:
     Water m_water;
     // bit 0: m_water holds the water the object is in; bit 1 + i: m_grounds[i] holds a ground
     unsigned int m_flags;
+    // GfComIK's grounds read none of it while clear (the name is not the original's)
+    bool m_valid;
+
+    // whether m_grounds[index] holds a ground (inline: the name is not the original's)
+    bool isGround(int index) const { return ((1 << (index + 1)) & m_flags) != 0; }
+    // m_grounds[index] while it holds a ground, else none (inline: the name is not the original's)
+    const Ground* getGround(int index) const { return isGround(index) ? &m_grounds[index] : nullptr; }
 };
 
 }  // namespace gf

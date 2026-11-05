@@ -54,6 +54,9 @@ public:
     const mm::mtl::IntrusivePtr<fw::ReferenceFrame>& getFrame() const {
         return m_childFrame.get() == nullptr ? m_frame : m_childFrame;
     }
+    mm::mtl::IntrusivePtr<fw::ReferenceFrame>& getFrame() {
+        return m_childFrame.get() == nullptr ? m_frame : m_childFrame;
+    }
     static mm::mtl::RTTI m_rtti;
 
     // the object's frame: setup makes it, getPosition and getRotation read its world transform
