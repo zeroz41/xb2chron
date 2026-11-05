@@ -4,6 +4,9 @@
 #include "classes/layer/LayerActBase.h"
 #include "layer/LayerAccLayoutObj.h"
 #include "layer/LayerLinkList.h"
+#include "layer/LayerViewPort.h"
+
+namespace layer { class LyrLayoutPosData; }
 
 namespace layer {
 // table 0x7100B7FCC8
@@ -19,11 +22,10 @@ public:
     // 0x270: the objects LayerAccLayoutObj's create functions made while LayerManager::s_nStkIdx names each (the
     // name is not the original's)
     LayerLinkList<LayerBase> m_childList[2];
-    unsigned char pad_2A0[0x10];
-    float m_viewPortX;  // setViewPort
-    float m_viewPortY;
-    float m_viewPortWidth;
-    float m_viewPortHeight;
+    // 0x2A0: what LayerObjTopLayout::workLayoutCreate keeps of its layout binary (the names are not the original's)
+    const void* m_layoutData;  // the header's m_dataOfs
+    const LyrLayoutPosData* m_posData;
+    LayerViewPort m_viewPort;  // 0x2B0: setViewPort
     LAYER_ANCHOR m_anchorMode;  // setAutoAnchorMode
     unsigned short m_priorityTblCount[2];  // createPriorityTbl, indexed by LayerManager::s_nStkIdx
 };

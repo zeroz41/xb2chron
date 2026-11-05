@@ -29,7 +29,7 @@ public:
 // what LayerObjUtil::calcDispInfo reads the object's size from; only the fields LayerAccObjBase reads are known
 class LayerResRenderInfo {
 public:
-    unsigned char pad_0[0x8];
+    float m_scale[2];  // LayerObjTopLayout::workLayoutCreate sets both to 1 (the name is not the original's)
     float m_width;  // calcScl_Correction_Up's size (the name is not the original's)
     float m_height;  // calcScl_Correction_Up's size (the name is not the original's)
     short m_pixelX;  // calcScl_Pixel_Up adds it to m_pixelWidth (the name is not the original's)

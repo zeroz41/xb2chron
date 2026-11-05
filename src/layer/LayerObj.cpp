@@ -3,6 +3,7 @@
 #include "classes/layer/LayerObj.h"
 #include "classes/layer/LayerObjFont.h"
 #include "layer/LayerObjUtil.h"
+#include "layer/LayerAccLayoutBinary.h"
 #include "classes/layer/LayerObjTopLayout.h"
 #include "classes/layer/LayerObjTopTexObj.h"
 #include "classes/layer/LayerObjTopMemObj.h"
@@ -928,6 +929,87 @@ LayerObjTopLayout::~LayerObjTopLayout() {
     m_objList.deleteAll();
     m_childList[0].deleteAll();
     m_childList[1].deleteAll();
+}
+void LayerObjTopLayout::workLayoutCreate(const void* resource) {
+    m_resData = resource;
+    const LyrLayoutBinHeader* header = static_cast<const LyrLayoutBinHeader*>(resource);
+    m_layoutData = static_cast<const char*>(resource) + header->m_dataOfs;
+    const LyrLayoutPosData* posData =
+        reinterpret_cast<const LyrLayoutPosData*>(static_cast<const char*>(resource) + header->m_posDataOfs);
+    m_posData = posData;
+    const LyrLayoutBinTbl* tbl =
+        reinterpret_cast<const LyrLayoutBinTbl*>(static_cast<const char*>(resource) + header->m_tblOfs);
+    const LyrLayoutBinObj* objs =
+        reinterpret_cast<const LyrLayoutBinObj*>(static_cast<const char*>(resource) + tbl->m_ofs);
+    int num = header->m_posNum;
+    for (int i = 0; i < num; i++, posData++) {
+        if (posData->m_flags & LyrLayoutPosData::FLAG_OBJ) {
+            const LyrLayoutBinObj* objData = &objs[posData->m_objIdx];
+            LayerObj* obj = static_cast<LayerObj*>(
+                LayerObjManager::createStaticObj(static_cast<const char*>(m_resData) + objData->m_resOfs));
+            float pos[4];
+            LayerObjUtil::getLayoutInfo(pos, posData, static_cast<LayerCenterType>(obj->m_renderInfo.m_centerType),
+                                        static_cast<unsigned short>(obj->m_renderInfo.m_pixelWidth),
+                                        static_cast<unsigned short>(obj->m_renderInfo.m_pixelHeight));
+            obj->setInitPosScl(pos[0], pos[1], pos[2], pos[3]);
+            m_objList.addListNotNull(obj);
+        }
+    }
+    m_renderInfo.m_scale[0] = 1.0f;
+    m_renderInfo.m_scale[1] = 1.0f;
+    m_renderInfo.m_width = 1.0f;
+    m_renderInfo.m_height = 1.0f;
+    m_renderInfo.m_pixelX = 0;
+    m_renderInfo.m_pixelY = 0;
+    m_renderInfo.m_pixelWidth = 0;
+    m_renderInfo.m_pixelHeight = 0;
+}
+void LayerObjTopLayout::updateDispOffLayout(LayerResUpdateInfo& info, const LayerRenderView* view) {
+    for (LayerBase* obj = m_objList.m_head; obj != nullptr;) {
+        LayerBase* next = obj->m_next;
+        if (static_cast<LayerObj*>(obj)->isFlag(LayerManager::s_nDebIdx, LayerObj::FLAG_RELEASE)) {
+            m_objList.removeList(obj);
+            mm::mtl::PtrSingleton<LayerManager>::sys()->m_objManager->m_deleteList.addListNotNull(obj);
+        } else {
+            static_cast<LayerObj*>(obj)->applyBegin(info, view);
+        }
+        obj = next;
+    }
+    if (m_renderFlags & RENDER_TEXTURE) {
+        m_texObj->applyBegin(info, view);
+    }
+}
+void LayerObjTopLayout::updateEndLayout(const LayerRenderView* view, LayerResUpdateInfo& info) {
+    if (m_oldUniform != nullptr) {
+        delete m_oldUniform;
+        m_oldUniform = nullptr;
+    }
+    LayerRenderView localView;
+    const LayerRenderView* childView;
+    if (m_renderFlags & RENDER_TEXTURE) {
+        LayerObjUtil::calcLayerRenderView(localView, m_viewPortInfo, m_uniform, m_texViewPort, view, info.m_matrix);
+        m_viewPortInfo.m_pRenderTarget = m_renderTarget;
+        m_viewPortInfo.m_clearColor = m_clearColor;
+        m_viewPortInfo.m_flags = 0;
+        childView = &localView;
+    } else if (m_stateFlags & STATE_VIEWPORT) {
+        LayerObjUtil::calcLayerRenderView(localView, m_viewPortInfo, m_uniform, m_viewPort, view, info.m_matrix);
+        m_viewPortInfo.m_pRenderTarget = nullptr;
+        m_viewPortInfo.m_flags = 0;
+        childView = &localView;
+    } else {
+        m_oldUniform = m_uniform;
+        m_uniform = nullptr;
+        childView = view;
+    }
+    for (LayerBase* obj = m_objList.m_head; obj != nullptr;) {
+        LayerBase* next = obj->m_next;
+        static_cast<LayerObj*>(obj)->applyEnd(info, childView);
+        obj = next;
+    }
+    if (m_renderFlags & RENDER_TEXTURE) {
+        m_texObj->applyEnd(info, view);
+    }
 }
 void LayerObjTopLayout::applyEnd(LayerResUpdateInfo& info, const LayerRenderView* view) {
     if (m_stateFlags & STATE_NO_UPDATE) return;

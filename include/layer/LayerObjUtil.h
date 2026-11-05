@@ -43,9 +43,15 @@ public:
         height = m_bottom - m_top;
     }
 
-    unsigned char pad_0[0x4];
+    // LayerObjTopLayout::workLayoutCreate creates an object for each record with FLAG_OBJ (the names are not the
+    // original's)
+    enum { FLAG_OBJ = 0x2 };
+    unsigned char m_flags;
+    unsigned char pad_1[0x3];
     unsigned int m_nameOfs;  // 0x4: its name's offset from the layout binary's start (LayerAccLayoutBinary::getPosIdx)
-    unsigned char pad_8[0x10];
+    unsigned char pad_8[0x4];
+    unsigned int m_objIdx;  // 0xC: the LyrLayoutBinObj record of its object (the name is not the original's)
+    unsigned char pad_10[0x8];
     float m_width;
     float m_height;
     float m_posX;

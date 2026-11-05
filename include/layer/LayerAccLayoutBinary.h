@@ -9,7 +9,9 @@ namespace layer {
 struct LyrLayoutBinHeader {
     unsigned char pad_0[0x10];
     unsigned int m_tblOfs;  // 0x10: a LyrLayoutBinTbl's offset from the start, or 0
-    unsigned char pad_14[0x8];
+    // 0x14: the offset of the data LayerObjTopLayout::workLayoutCreate keeps (its meaning is not known)
+    unsigned int m_dataOfs;
+    unsigned char pad_18[0x4];
     unsigned int m_posDataOfs;  // 0x1C: the LyrLayoutPosData records' offset from the start
     unsigned int m_posNum;  // 0x20
 };
@@ -17,6 +19,13 @@ struct LyrLayoutBinHeader {
 struct LyrLayoutBinTbl {
     unsigned int m_ofs;  // its data's offset from the binary's start
     unsigned int m_num;
+};
+// a record of the table's data: LayerObjTopLayout::workLayoutCreate creates an object from the resource at
+// m_resOfs from the binary's start (the names are not the original's)
+struct LyrLayoutBinObj {
+    unsigned char pad_0[0x4];
+    unsigned int m_resOfs;
+    unsigned char pad_8[0x4];
 };
 // access to a layout binary's named positions (UILayoutData reads its layout through one)
 class LayerAccLayoutBinary {

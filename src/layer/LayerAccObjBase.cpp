@@ -482,10 +482,10 @@ void LayerAccLayoutObj::setViewPortMode(bool enable) {
 
 void LayerAccLayoutObj::setViewPort(float x, float y, float width, float height) {
     LayerObjLayout* obj = static_cast<LayerObjLayout*>(m_layer);
-    obj->m_viewPortX = x;
-    obj->m_viewPortY = y;
-    obj->m_viewPortWidth = width;
-    obj->m_viewPortHeight = height;
+    obj->m_viewPort.m_x = x;
+    obj->m_viewPort.m_y = y;
+    obj->m_viewPort.m_width = width;
+    obj->m_viewPort.m_height = height;
 }
 
 void LayerAccLayoutObj::createPriorityTbl(unsigned int count) {
