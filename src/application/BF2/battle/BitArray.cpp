@@ -27,6 +27,18 @@
 #include "classes/gf/SCOM_ENBOOK_IN_BATTLE.h"
 #include "mm/mtl/FixedVector.h"
 #include "gf/GfDataDriver.h"
+#include "classes/btl/UIManager.h"
+#include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfObj.h"
+#include "classes/gf/GfComPropertyPc.h"
+#include "gf/GfTargetProperty.h"
+#include "classes/gf/GfDataBdat.h"
+#include "plugin/Bdat.h"
+#include "mm/mtl/FixStr.h"
+#include <string.h>
+#include "ml/MTRand.h"
+#include "classes/gf/SCOM_ACHIEV_INC.h"
+#include <stdlib.h>
 
 namespace btl {
 
@@ -86,8 +98,109 @@ gf::GF_OBJ_HANDLE* Utility::GetControlCharacterHandle() {
     return gf::GfGameManager::getPartyLeaderDriver();
 }
 
+bool Utility::IsSatisfyCondition(int condition) {
+    if (condition != 2 || ChallengeBattleManager::sys()->pad_29 != 3) {
+        BattleGlobal* global = BattleGlobal::sys();
+        const char* column;
+        if (global->m_challengeAnySuccess) {
+            if ((1 << condition) & 0xBBF9) {
+                return false;
+            }
+            column = "FLD_CondID2";
+            if (((1 << condition) & 0xF0006) && global->pad_bit42) {
+                return true;
+            }
+        } else {
+            if (global->pad_bit42) {
+                if ((1 << condition) & 0x8CCE7) {
+                    return true;
+                }
+                if ((1 << condition) & 0x18) {
+                    return false;
+                }
+            }
+            column = "FLD_CondID";
+        }
+        unsigned short id = Bdat::getValCheckU16(gf::GfDataBdat::getFP(0x1E), column, condition);
+        if (id != 0) {
+            return gf::GfGameCond::isGameCond(id);
+        }
+    }
+    return false;
+}
+
 bool Utility::IsSatisfyConditionFld(int condition) {
     return gf::GfGameCond::isGameCond(condition);
+}
+
+void Utility::AchieveCondition(BTL_ACHIEVE_COND cond, gf::GF_OBJ_HANDLE* handle, unsigned int value) {
+    switch (cond) {
+    case 0:
+        gf::SCOM_ACHIEV_INC::createBladeArts(handle, value);
+        break;
+    case 1:
+        gf::SCOM_ACHIEV_INC::createBladeArtsSp(handle, value);
+        break;
+    case 2:
+        gf::SCOM_ACHIEV_INC::createBladeNArts(handle);
+        break;
+    case 3:
+        gf::SCOM_ACHIEV_INC::createKizuna(handle);
+        break;
+    case 4:
+        gf::SCOM_ACHIEV_INC::createFightCombo(handle);
+        break;
+    case 5:
+        gf::SCOM_ACHIEV_INC::createDriverCombo2(handle);
+        break;
+    case 6:
+        gf::SCOM_ACHIEV_INC::createFightComboFinish(handle);
+        gf::SCOM_ACHIEV_INC::createDriverCombo4(handle);
+        break;
+    case 7:
+        gf::SCOM_ACHIEV_INC::createElementalCombo(handle);
+        break;
+    case 8:
+        gf::SCOM_ACHIEV_INC::createBladeCombo2(handle);
+        break;
+    case 9:
+        gf::SCOM_ACHIEV_INC::createElementalComboFinish(handle);
+        gf::SCOM_ACHIEV_INC::createBladeCombo3(handle);
+        break;
+    case 10:
+        gf::SCOM_ACHIEV_INC::createFusionCombo(handle);
+        break;
+    case 11:
+        gf::SCOM_ACHIEV_INC::createChainAttack(handle);
+        break;
+    case 12:
+        gf::SCOM_ACHIEV_INC::createButtonChallenge();
+        break;
+    case 13:
+        gf::SCOM_ACHIEV_INC::createHelp(handle);
+        break;
+    case 14:
+        gf::SCOM_ACHIEV_INC::createPotGet();
+        break;
+    case 15:
+        gf::SCOM_ACHIEV_INC::createAvoid(handle);
+        break;
+    case 16:
+        gf::SCOM_ACHIEV_INC::createGuard(handle);
+        break;
+    case 17:
+        gf::SCOM_ACHIEV_INC::createBladeChange(handle);
+        break;
+    case 18:
+        gf::SCOM_ACHIEV_INC::createRecover(handle, value);
+        break;
+    case 19:
+        gf::SCOM_ACHIEV_INC::createBackAttack(handle);
+        break;
+    case 20:
+        gf::SCOM_ACHIEV_INC::createOverKill();
+        break;
+    }
 }
 
 void Utility::NotifyDead(gf::GF_OBJ_HANDLE* handle, const gf::MsgObjectNotifyDead& msg) {
@@ -107,6 +220,26 @@ void Utility::GetArtsData(ARTS_DATA::DATA_TYPE type, int id, ARTS_DATA& data) {
 
 unsigned short Utility::GetArtsEnhance(const ARTS_DATA& data, int index) {
     return data.m_enhances[index - 1].id;
+}
+
+int Utility::GetSeType(const char* name) {
+    if (name == nullptr || *name == '\0') {
+        return 0;
+    }
+    unsigned char* fp = gf::GfDataBdat::getFP(0x3B);
+    int id = Bdat::getIdTop(fp);
+    int count = Bdat::getIdCount(fp);
+    if (count > 0) {
+        int end = count + id;
+        do {
+            const char* pack = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "PackName", id, 7));
+            if (pack && strcmp(pack, name) == 0) {
+                return id;
+            }
+            id++;
+        } while (id < end);
+    }
+    return 0;
 }
 
 namespace {
@@ -144,6 +277,24 @@ int Utility::GetAntiAttribute(unsigned int attr) {
 
 int Utility::GetElementalEffectID() {
     return DataManager::sys()->m_elementalEffectID;
+}
+
+namespace {
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B3A800). The kizuna ranks' column
+// suffixes, by rank - 1.
+const char* const s_kizunaRankName[] = {"E",  "D",  "C",  "B",  "A",  "S",  "S1", "S2",
+                                        "S3", "S4", "S5", "S6", "S7", "S8", "S9", "SS"};
+}  // namespace
+
+void Utility::GetFluctuateKizunaData(KIZUNA_FLUCTUATE& data, int id, int rank) {
+    unsigned char* fp = gf::GfDataBdat::getFP(0xB);
+    mm::mtl::FixStr<32> column;
+    data.m_value = static_cast<short>(Bdat::getValCheck(fp, column.format("Param%s", s_kizunaRankName[rank - 1]).m_str, id, 5));
+    bool target = Bdat::getValCheckU8(fp, "Target", id) == 1;
+    data.m_target = target;
+    if (target && ((1 << id) & 0x3808) && ChainAttackManager::sys()->IsProc(true)) {
+        data.m_target = false;
+    }
 }
 
 int Utility::GetUniteComboID(int first, int second) {
@@ -289,6 +440,46 @@ bool Utility::IsCharacterAutoHeal(gf::GF_OBJ_HANDLE* handle) {
         return character->IsAutoHeal();
     }
     return true;
+}
+
+void Utility::SomebodyPraise(int id, bool flag, bool finish) {
+    CharacterManager* manager = CharacterManager::sys();
+    BattleCharacter* chr = manager->GetCharacterConst(id);
+    if (chr == nullptr) {
+        return;
+    }
+    const CharacterParameter* param = chr->GetCharacterParameterConst(true);
+    if (param == nullptr) {
+        return;
+    }
+    BattleCharacter* speakers[5];
+    int num = 0;
+    if (!flag && !finish && !param->m_flags622_6) {
+        BattleCharacter* driver = manager->GetCharacterConst(param->m_driverHandle);
+        if (driver && driver->IsEnableSpeakVoice(false)) {
+            speakers[num++] = driver;
+        }
+    }
+    if (param->IsPlayerParameter()) {
+        int group = param->m_groupIndex;
+        for (int i = 0; i < 3; i++) {
+            if (i == group) {
+                continue;
+            }
+            BattleCharacter* other = manager->GetCharacterConst(gf::GfGameParty::getHandleDriver(i, static_cast<gf::PTPOS>(0)));
+            if (other && other->IsEnableSpeakVoice(false)) {
+                speakers[num++] = other;
+            }
+        }
+    }
+    if (num != 0) {
+        BattleCharacter* speaker = num != 1 ? speakers[ml::mtRand(num)] : speakers[0];
+        if (finish) {
+            TalkManager::sys()->NotifyTrigger(speaker->m_voiceIndex, static_cast<TalkManager::TRIGGER>(0x2D), 0, 0);
+        } else {
+            TalkManager::sys()->NotifyTrigger(speaker->m_voiceIndex, static_cast<TalkManager::TRIGGER>(0x12), 0, 0);
+        }
+    }
 }
 
 void Utility::RegisterEnemyBook(ENBOOK_TYPE type, gf::GF_OBJ_HANDLE* handle, int value) {
@@ -464,6 +655,19 @@ int Utility::AI_GetStamp(gf::GF_OBJ_HANDLE* handle) {
         return chr->m_stamp;
     }
     return 0;
+}
+
+int Utility::AI_GetStampCharacterID(int stamp) {
+    for (int i = 0; i < 90; i++) {
+        BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(i);
+        if (chr == nullptr || chr->IsDead(0)) {
+            continue;
+        }
+        if (chr->m_stamp == stamp) {
+            return chr->GetAiChrID();
+        }
+    }
+    return -1;
 }
 
 float Utility::AI_GetHpPercent(gf::GF_OBJ_HANDLE* handle) {
@@ -1153,6 +1357,25 @@ bool Utility::AI_IsEnableTalentArts(gf::GF_OBJ_HANDLE* handle, int target) {
         return false;
     }
     return chr->IsEnableArts(0, 7, 0, AI_GetCharacterHandle(target)) == 0;
+}
+
+int Utility::AI_SearchVoiceCodeCharacter(int voiceCode) {
+    CharacterManager* manager = CharacterManager::sys();
+    for (int i = 0; i < 90; i++) {
+        BattleCharacter* chr = manager->GetCharacterConst(i);
+        if (chr && atoi(chr->m_voiceCode) == voiceCode) {
+            return chr->GetAiChrID();
+        }
+    }
+    return -1;
+}
+
+int Utility::AI_GetVoiceCode(gf::GF_OBJ_HANDLE* handle) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (chr) {
+        return atoi(chr->m_voiceCode);
+    }
+    return 0;
 }
 
 unsigned long Utility::AI_PlayVoice(gf::GF_OBJ_HANDLE* handle, int voice) {

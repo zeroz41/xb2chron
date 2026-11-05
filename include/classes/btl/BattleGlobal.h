@@ -566,7 +566,10 @@ public:
     bool pad_bit40 : 1;
     // NotifyShiftTimeOver sets it while UIManager's pad_bit15 is set; NotifyShiftNone clears it with pad_bit40
     bool pad_bit41 : 1;
-    unsigned char : 5;
+    // while set, Utility::IsSatisfyCondition holds for its conditions 0-2, 5-7, 10, 11, 14, 15 and 19 (1, 2, 16-19 with
+    // m_challengeAnySuccess) without asking FLD_ConditionList (meaning unknown)
+    bool pad_bit42 : 1;
+    unsigned char : 4;
     // set once PlayErrorSE played its sound, which it then does not play again (the name is not the original's)
     bool m_errorSePlayed : 1;
     bool pad_bit48 : 1;

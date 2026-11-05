@@ -9,7 +9,19 @@ namespace mm { namespace mtl { template <typename, unsigned long> class FixedVec
 
 namespace mm { class Vec3; }
 
+namespace btl {
+// what Utility::GetFluctuateKizunaData reads from BDAT 0xB for a kizuna fluctuation (BattleCharacter::FluctuateKizuna,
+// KIZUNA_GAUGE_DATA::UpdateBuddy); the field names are not the original's
+struct KIZUNA_FLUCTUATE {
+    int m_value;    // the row's "Param<rank>" (E, D, C, B, A, S, S1-S9, SS by the rank 1-16)
+    bool m_target;  // the row's "Target" is 1 (cleared for rows 3, 11-13 while a chain attack runs)
+};
+}  // namespace btl
+
 namespace btl { namespace Utility {
+// the BDAT 0x3B row whose "PackName" is the name, 0 for none (BattleCharacter::Initialize)
+int GetSeType(const char* name);
+void GetFluctuateKizunaData(KIZUNA_FLUCTUATE& data, int id, int rank);
 void GetArtsData(ARTS_DATA::DATA_TYPE type, int id, ARTS_DATA& data);
 // the id of the arts' enhance at index (1-based; ARTS_DATA::m_enhances[index - 1])
 unsigned short GetArtsEnhance(const ARTS_DATA& data, int index);
@@ -22,6 +34,12 @@ gf::GF_OBJ_HANDLE* GetLeader();
 gf::GF_OBJ_HANDLE* GetControlCharacterHandle();
 bool IsSatisfyCondition(int condition);
 bool IsSatisfyConditionFld(int condition);
+// the achievement conditions AchieveCondition passes on to gf::SCOM_ACHIEV_INC (0 blade arts, 1 blade arts sp, 2 blade
+// n-arts, 3 kizuna, 4 fight combo, 5 driver combo 2, 6 fight combo finish and driver combo 4, 7 elemental combo, 8 blade
+// combo 2, 9 elemental combo finish and blade combo 3, 10 fusion combo, 11 chain attack, 12 button challenge, 13 help,
+// 14 pot get, 15 avoid, 16 guard, 17 blade change, 18 recover, 19 back attack, 20 overkill)
+enum BTL_ACHIEVE_COND : int;
+void AchieveCondition(BTL_ACHIEVE_COND cond, gf::GF_OBJ_HANDLE* handle, unsigned int value);
 unsigned int GetTrustRank(int blade);
 int GetWeaponSeType(int weaponType);
 int GetAttrSeType(int attr);
@@ -76,6 +94,7 @@ void AI_SetSuperArmor(gf::GF_OBJ_HANDLE* handle, float time);
 bool IsBattleStart(gf::GF_OBJ_HANDLE* handle);
 // which SCOM_ENBOOK_* command RegisterEnemyBook creates: 0 IN_BATTLE, 1 BOSS_TIME, 2 DEFEAT_ENEMY, 3 DEAD_PLAYER
 enum ENBOOK_TYPE : int;
+void SomebodyPraise(int id, bool flag, bool finish);
 void RegisterEnemyBook(ENBOOK_TYPE type, gf::GF_OBJ_HANDLE* handle, int value);
 int AI_GetDeadCharacterNum(gf::GF_OBJ_HANDLE* handle, CHECK_CHR_NUM_MODE mode);
 // 2.0.0's symbols name it. What it does: as AI_GetDeadCharacterNum with GetCharacterList flags 0x64 instead of 0x65

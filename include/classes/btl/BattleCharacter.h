@@ -532,7 +532,10 @@ public:
     navi::NvmshAcObj* m_nvmshAcObj;
     // constructed by the constructor, destroyed by the destructor (the name is not the original's)
     ElementalComboManager m_elementalCombo;
-    unsigned char pad_C50[0x4C];
+    unsigned char pad_C50[0x28];
+    // the character's voice code as text: Utility::AI_GetVoiceCode returns it through atoi and
+    // AI_SearchVoiceCodeCharacter compares it so (the name is not the original's; its 0x24 bytes reach the next field)
+    char m_voiceCode[0x24];
     // the animation state names GetAnimationStateName formats (the names are not the original's)
     mutable mm::mtl::FixStr<20> m_animStateName;
     mutable mm::mtl::FixStr<24> m_animName;
