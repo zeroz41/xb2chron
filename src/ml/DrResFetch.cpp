@@ -4703,7 +4703,11 @@ DrResMdoPos* DrResMdoPosAddList::createAdd() {
 
 DrResMdoInstAnmObj::DrResMdoInstAnmObj() : m_header(0), m_parts(0), pad_10() {}
 
-void DrResMdoInstAnmObj::release() { *this = DrResMdoInstAnmObj(); }
+void DrResMdoInstAnmObj::release() {
+    m_header = nullptr;
+    m_parts = nullptr;
+    memset(pad_10, 0, sizeof(pad_10));
+}
 
 void DrResMdoInstAnmObj::setupLink(DrResMdoPos* pos) const {
     if (m_header) {

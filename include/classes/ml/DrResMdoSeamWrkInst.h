@@ -85,7 +85,7 @@ public:
     bool setEtcPosCache(mtl::ALLOC_HANDLE handle, int cacheIdx, DrResMdoSeamMemObj* memObj, const DrResMdoInstAnmObj* anm);
     void occRender();
     void seachDefShadowInstMapRender(DrPixlShadowObj* shadow, DrMdoCtlSeamInstMap* ctl);
-    // 0x08: the next work of DrMdoCtlSeam::m_pInstList (the name is not the original's)
+    // 0x08: the next work of DrMdoCtlSeam::m_instPool.m_list (the name is not the original's)
     DrResMdoSeamWrkInst* m_pLink;
     DrResMdoSeamWrkInst* m_pBackLink;  // 0x10: the previous work (the name is not the original's)
     const MapEntry* m_mapEntry;  // 0x18: set by DrMdoCtlSeamRead::callInstMapStream (the name is not the original's)
@@ -135,6 +135,8 @@ public:
     unsigned char pad_1A8[0x8];
     void* pad_1B0;
     void* pad_1B8;
+    // 0x1C8 bytes: DrMdoCtlSeam's instance work pool destroys its works at that stride
+    unsigned char pad_1C0[0x8];
 };
 }  // namespace ml
 

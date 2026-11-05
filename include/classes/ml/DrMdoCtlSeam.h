@@ -7,20 +7,23 @@
 #include "classes/ml/DrResMdoSeamRead.h"
 #include "ml/DrResMdoSeamParmRead.h"
 #include "mm/mtl/FixedVector.h"
+// the pools' element types: the inline destructor destroys their works through their virtual destructors
+#include "classes/ml/DrResMdoSeamTexture.h"
+#include "classes/ml/DrResMdoSeamTexList.h"
+#include "classes/ml/DrResMdoSeamVertex.h"
+#include "classes/ml/DrResMdoSeamColi.h"
+#include "classes/ml/DrResMdoSeamWrkBase.h"
+#include "classes/ml/DrResMdoSeamWrkLow.h"
+#include "classes/ml/DrResMdoSeamWrkInst.h"
+#include "classes/ml/DrResMdoSeamWrkMpf.h"
+#include "classes/ml/DrResMdoSeamWrkEnv.h"
+#include "classes/ml/DrResMdoSeamWrkLight.h"
 
-namespace ml { class DrResMdoSeamWrkBase; }
 namespace cloud { class CloudMdlDataObj; }
+namespace grlib { class CGLibTriUniformArray; }
 
 namespace ml {
 class DrResMdoSeamMemObj;
-class DrResMdoSeamWrkInst;
-class DrResMdoSeamVertex;
-class DrResMdoSeamTexture;
-class DrResMdoSeamTexList;
-class DrResMdoSeamWrkLow;
-class DrResMdoSeamWrkMpf;
-class DrResMdoSeamWrkEnv;
-class DrResMdoSeamWrkLight;
 class DrEnvironmentObj;
 class DrEnvColiObj;
 class DrCalcClipObj;
@@ -28,11 +31,16 @@ class DrCalcCpPlaneObj;
 class DrGlobalIBLPack;
 class DrResMdoInstMdlInfo;
 class DrResEtcTexList;
+class DrResMdoSortSeamAll;
+class DrResMdoSortSeamEnvMap;
+class DrResMdoPosAddList;
 
 // table 0x7100B7BA10
 class DrMdoCtlSeam : public ::ml::DrMdlObj {
 public:
-    virtual ~DrMdoCtlSeam();  // slot 0
+    // slot 0. Inline: the original emits it (and the deleting destructor) after the unit's own functions; its
+    // body only destroys the members
+    virtual ~DrMdoCtlSeam() {}
     void resourceRelease();
     // DrMdoCtlSeamAll::dispOffUpdate: true when DrMdoCtlSeamAll::callDeleteUpdate is to run (the meaning is inferred)
     bool calcBegin();
@@ -125,95 +133,57 @@ public:
     // the names are not the original's
     unsigned char pad_18C[0x1C];
     const MapHead* m_pMapHead;  // 0x1A8
-    // 0x1B0..0x1DC, 0x1E8..0x214, 0x220..0x24C: the texture, texture list and vertex resource pools, laid out like
-    // the low pool below (DrMdoCtlSeamRead::callTexutreStream, callTexListStream and callVertexStream take a free
-    // resource and give it back when the read fails; the names are not the original's)
-    DrResMdoSeamTexture* m_textureFreeHead;  // 0x1B0
-    DrResMdoSeamTexture* m_textureFreeTail;  // 0x1B8
-    DrResMdoSeamTexture* m_textureList;      // 0x1C0
-    DrResMdoSeamTexture* m_textureUsedTail;  // 0x1C8
-    // 0x1D0: the texture resources, by DrResMdoSeamTexture::m_no (m_pTextureNo holds m_no + 1; the name is not the
-    // original's)
-    DrResMdoSeamTexture* m_pTextures;
-    int m_textureUsedNum;  // 0x1D8
-    int m_textureFreeNum;  // 0x1DC
-    unsigned char pad_1E0[0x8];
-    DrResMdoSeamTexList* m_texListFreeHead;  // 0x1E8
-    DrResMdoSeamTexList* m_texListFreeTail;  // 0x1F0
-    DrResMdoSeamTexList* m_texListList;      // 0x1F8
-    DrResMdoSeamTexList* m_texListUsedTail;  // 0x200
-    DrResMdoSeamTexList* m_texListWorks;     // 0x208
-    int m_texListUsedNum;                    // 0x210
-    int m_texListFreeNum;                    // 0x214
-    unsigned char pad_218[0x8];
-    DrResMdoSeamVertex* m_vertexFreeHead;  // 0x220
-    DrResMdoSeamVertex* m_vertexFreeTail;  // 0x228
-    // 0x230: the vertex resources in use; updateVertexSeam walks them through DrResMdoSeamVertex::m_prev (0x08), so
-    // by DrResChankList's naming this is a list's tail (the name is not the original's)
-    DrResMdoSeamVertex* m_pVertexList;
-    DrResMdoSeamVertex* m_vertexUsedTail;  // 0x238
-    DrResMdoSeamVertex* m_vertexWorks;     // 0x240
-    int m_vertexUsedNum;                   // 0x248
-    int m_vertexFreeNum;                   // 0x24C
-    unsigned char pad_250[0x40];
-    // 0x290..0x2BC, 0x300..0x32C, 0x338..0x364, 0x3A8..0x3D4: the base, instance, mpf and light work pools, laid out
-    // like the low pool below (DrMdoCtlSeamRead::callBaseMapStream, callInstMapStream, callMpfMdlStream and
-    // callLightStream take a free work; the names are not the original's)
-    DrResMdoSeamWrkBase* m_baseFreeHead;  // 0x290
-    DrResMdoSeamWrkBase* m_baseFreeTail;  // 0x298
-    // 0x2A0: the base works in use (DrMdoCtlSeamAll::callShadowCacheUpdate walks them; the name is not the original's)
-    DrResMdoSeamWrkBase* m_pBaseList;
-    DrResMdoSeamWrkBase* m_baseUsedTail;  // 0x2A8
-    DrResMdoSeamWrkBase* m_baseWorks;     // 0x2B0
-    int m_baseUsedNum;                    // 0x2B8
-    int m_baseFreeNum;                    // 0x2BC
-    unsigned char pad_2C0[0x8];
-    // 0x2C8..0x2F4, 0x370..0x39C: the low and env work pools around their lists in use: the free works, the last
-    // work in use, the work array and the counts in use and free (DrMdoCtlSeamRead::callLowMdlStream and
-    // callEnvMdlStream take a free work; the original keeps each pool in a 0x38-byte type whose name is unknown, the
-    // field names are not the original's)
-    DrResMdoSeamWrkLow* m_lowFreeHead;
-    DrResMdoSeamWrkLow* m_lowFreeTail;
-    // 0x2D8, 0x348, 0x380, 0x3B8: the low, mpf, env and light works in use, each walked through the work's 0x08
-    // (DrMdoCtlSeamAll::releaseSeamAll; the names are not the original's)
-    DrResMdoSeamWrkLow* m_pLowList;
-    DrResMdoSeamWrkLow* m_lowUsedTail;  // 0x2E0
-    DrResMdoSeamWrkLow* m_lowWorks;     // 0x2E8
-    int m_lowUsedNum;                   // 0x2F0
-    int m_lowFreeNum;                   // 0x2F4
-    unsigned char pad_2F8[0x8];
-    DrResMdoSeamWrkInst* m_instFreeHead;  // 0x300
-    DrResMdoSeamWrkInst* m_instFreeTail;  // 0x308
-    DrResMdoSeamWrkInst* m_pInstList;  // 0x310: the instance works in use (DrMdoCtlSeamAll::occRender walks them)
-    DrResMdoSeamWrkInst* m_instUsedTail;  // 0x318
-    DrResMdoSeamWrkInst* m_instWorks;     // 0x320
-    int m_instUsedNum;                    // 0x328
-    int m_instFreeNum;                    // 0x32C
-    unsigned char pad_330[0x8];
-    DrResMdoSeamWrkMpf* m_mpfFreeHead;  // 0x338
-    DrResMdoSeamWrkMpf* m_mpfFreeTail;  // 0x340
-    DrResMdoSeamWrkMpf* m_pMpfList;  // 0x348
-    DrResMdoSeamWrkMpf* m_mpfUsedTail;  // 0x350
-    DrResMdoSeamWrkMpf* m_mpfWorks;     // 0x358
-    int m_mpfUsedNum;                   // 0x360
-    int m_mpfFreeNum;                   // 0x364
-    unsigned char pad_368[0x8];
-    DrResMdoSeamWrkEnv* m_envFreeHead;  // 0x370
-    DrResMdoSeamWrkEnv* m_envFreeTail;  // 0x378
-    DrResMdoSeamWrkEnv* m_pEnvList;  // 0x380
-    DrResMdoSeamWrkEnv* m_envUsedTail;  // 0x388
-    DrResMdoSeamWrkEnv* m_envWorks;  // 0x390
-    int m_envUsedNum;  // 0x398
-    int m_envFreeNum;  // 0x39C
-    unsigned char pad_3A0[0x8];
-    DrResMdoSeamWrkLight* m_lightFreeHead;  // 0x3A8
-    DrResMdoSeamWrkLight* m_lightFreeTail;  // 0x3B0
-    DrResMdoSeamWrkLight* m_pLightList;  // 0x3B8
-    DrResMdoSeamWrkLight* m_lightUsedTail;  // 0x3C0
-    DrResMdoSeamWrkLight* m_lightWorks;     // 0x3C8
-    int m_lightUsedNum;                     // 0x3D0
-    int m_lightFreeNum;                     // 0x3D4
-    unsigned char pad_3D8[0x20];
+    // 0x1B0..0x3D8: the seam's resource and work pools (0x38 bytes each; the original's type is a template, its name
+    // and the field names are not the original's). DrMdoCtlSeamRead::call*Stream take a free resource or work and
+    // give it back when the read fails; releaseSeam and the destructor destroy the works (in reverse member order
+    // in the destructor) and clear the pool.
+    template <class T>
+    struct ResPool {
+        ~ResPool() { release(); }
+        // destroys the works and clears the pool (releaseSeam and the destructor inline it; the name is not the
+        // original's)
+        void release() {
+            for (int i = 0; i < m_max; i++) {
+                m_works[i].~T();
+            }
+            m_max = 0;
+            m_works = nullptr;
+            m_usedNum = 0;
+            m_freeNum = 0;
+            m_list = nullptr;
+            m_usedTail = nullptr;
+            m_freeHead = nullptr;
+            m_freeTail = nullptr;
+        }
+
+        T* m_freeHead;  // 0x00
+        T* m_freeTail;  // 0x08
+        // 0x10: the works in use, walked through the work's 0x08 link (updateVertexSeam, DrMdoCtlSeamAll::
+        // releaseSeamAll, callShadowCacheUpdate, occRender)
+        T* m_list;
+        T* m_usedTail;  // 0x18
+        // 0x20: the works, by m_no (the texture pool's m_works[m_pTextureNo[i] - 1])
+        T* m_works;
+        int m_usedNum;  // 0x28
+        int m_freeNum;  // 0x2C
+        int m_max;      // 0x30: the works in m_works
+    };
+    ResPool<DrResMdoSeamTexture> m_texturePool;  // 0x1B0
+    ResPool<DrResMdoSeamTexList> m_texListPool;  // 0x1E8
+    ResPool<DrResMdoSeamVertex> m_vertexPool;    // 0x220
+    // 0x258: 1.0.0's DrMdoCtlSeam::releaseFreeSeamCollision(DrResMdoSeamColi*, bool) gives its argument back to the
+    // lists at 0x258..0x270; its works are 0x48 bytes with a virtual destructor
+    ResPool<DrResMdoSeamColi> m_coliPool;
+    ResPool<DrResMdoSeamWrkBase> m_basePool;     // 0x290
+    ResPool<DrResMdoSeamWrkLow> m_lowPool;       // 0x2C8
+    ResPool<DrResMdoSeamWrkInst> m_instPool;     // 0x300
+    ResPool<DrResMdoSeamWrkMpf> m_mpfPool;       // 0x338
+    ResPool<DrResMdoSeamWrkEnv> m_envPool;       // 0x370
+    ResPool<DrResMdoSeamWrkLight> m_lightPool;   // 0x3A8
+    unsigned char pad_3E0[0x8];
+    // 0x3E8, 0x3F0: built in m_workBuf by setupSeamMapHead, destroyed by releaseSeam (the names are not the original's)
+    DrResMdoSortSeamAll* m_sortSeamAll;
+    DrResMdoSortSeamEnvMap* m_sortSeamEnvMap;
     // 0x3F8..0x658: the seam's own objects, released and cleared by resourceRelease (the names are not the
     // original's)
     DrEnvironmentObj* m_envObj;   // 0x3F8
@@ -224,7 +194,8 @@ public:
     // 0x420: the view's DrGlobalIBLMan made them (resourceRelease gives them back)
     mm::mtl::FixedVector<DrGlobalIBLPack*, 32> m_iblPacks;
     mm::mtl::FixedVector<DrEnvironmentObj*, 32> m_envObjs;  // 0x528
-    unsigned char pad_630[0x8];
+    // 0x630: set up in m_workBuf by setupSeamMapHead, released by releaseSeam (the name is not the original's)
+    DrResMdoPosAddList* m_posAddList;
     DrResMdoInstMdlInfo* m_instMdlInfo;  // 0x638: resourceRelease calls its releaseCall
     unsigned char pad_640[0x18];
     DrResEtcTexList* m_etcTexList;       // 0x658
@@ -234,12 +205,17 @@ public:
     unsigned char pad_6D8[0x8];
     // 0x6E0: the destructor destroys it; releaseFreeSeamMemObj frees its blocks
     DrResMdoSeamMemMan m_memMan;
-    unsigned char pad_B28[0x8];
+    // 0xB28: releaseSeam releases its blocks (the name is not the original's)
+    grlib::CGLibTriUniformArray* m_triUniformArray;
     cloud::CloudMdlDataObj* m_cldMdlData;  // 0xB30: released by resourceRelease (the name is not the original's)
     // 0xB38: DrMdoCtlSeamInstMap::beginResAll keeps the material resources it replaces here and endResAll puts them
     // back
     MdoWrkMatRes* m_pSavedWrkMatRes;
-    unsigned char pad_B40[0x50];
+    // 0xB40, 0xB48: setupSeamMapHead's memory pool buffer and the work buffer it lays out its objects in;
+    // releaseSeam frees both (the names are not the original's)
+    void* m_memPoolBuf;
+    unsigned char* m_workBuf;
+    unsigned char pad_B50[0x40];
     unsigned int* m_pMpfBits;        // 0xB90: a bit per mpf model table entry, set by waitMpfMdlStream
     unsigned char pad_B98[0x28];
     unsigned int* m_pLightBits;      // 0xBC0: a bit per light table entry, set by waitLightStream

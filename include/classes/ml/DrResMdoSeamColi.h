@@ -6,6 +6,10 @@ namespace ml {
 class DrResMdoSeamColi {
 public:
     virtual ~DrResMdoSeamColi();  // slot 0
+
+    // 0x48 bytes: the constructor (DrResMdoSeamColi(int)) sets up to 0x40 and DrMdoCtlSeam's collision pool
+    // destroys its works at that stride
+    unsigned char pad_8[0x40];
 };
 }  // namespace ml
 

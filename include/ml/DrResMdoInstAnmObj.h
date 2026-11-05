@@ -22,6 +22,8 @@ public:
         int num34;              // 0x34: getWorkSize counts 0x30 bytes per (num34 + linkNumB) (the name is not the original's)
     };
     DrResMdoInstAnmObj();
+    // DrMdoCtlPos's and DrMdoCtlSeam's destructors call release() after their own bodies, in member order
+    ~DrResMdoInstAnmObj() { release(); }
     void release();
     void setupLink(DrResMdoPos* pos) const;
     // the work bytes the header's objects take, rounded up to 0x10 (getWorkSize multiplies linkTopB by 0x78 and

@@ -18,6 +18,11 @@
 #include "ml/DrGlobalIBLMan.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/DrMdoZSortObj.h"
+#include "classes/ml/DrResMdoSeamColi.h"
+#include "classes/ml/DrResMdoSortSeamAll.h"
+#include "classes/ml/DrResMdoSortSeamEnvMap.h"
+#include "classes/ml/DevGraph.h"
+#include "ml/DrResMdoPos.h"
 #include "classes/ml/DrResMdoSeamWrkBase.h"
 #include "classes/ml/DrResMdoSeamTexList.h"
 #include "classes/ml/DrResMdoSeamTexture.h"
@@ -2191,7 +2196,6 @@ void DrMdoCtlPos::releasePos() {
 
 DrMdoCtlPos::~DrMdoCtlPos() {
     releasePos();
-    m_instAnm.release();
 }
 
 void DrMdoCtlPos::update() {
@@ -2515,6 +2519,55 @@ void DrMdoCtlPos::callSpAlphaRenderPosAll() {
     }
 }
 
+void DrMdoCtlSeam::releaseSeam() {
+    resourceRelease();
+    m_instAnm.release();
+    if (m_instMdlInfo != nullptr) {
+        DrResMdoInstMdlInfo::release(m_instMdlInfo);
+    }
+    if (m_posAddList != nullptr) {
+        m_posAddList->release();
+        m_posAddList = nullptr;
+    }
+    if (m_sortSeamAll != nullptr) {
+        m_sortSeamAll->~DrResMdoSortSeamAll();
+    }
+    if (m_sortSeamEnvMap != nullptr) {
+        m_sortSeamEnvMap->~DrResMdoSortSeamEnvMap();
+    }
+    m_sortSeamAll = nullptr;
+    m_sortSeamEnvMap = nullptr;
+    m_texturePool.release();
+    m_texListPool.release();
+    m_vertexPool.release();
+    m_coliPool.release();
+    m_basePool.release();
+    m_lowPool.release();
+    m_instPool.release();
+    m_mpfPool.release();
+    m_envPool.release();
+    m_lightPool.release();
+    m_memMan.releaseMem();
+    if (m_triUniformArray != nullptr) {
+        m_triUniformArray->release();
+        m_triUniformArray = nullptr;
+    }
+    DevGraph::releaseMemPoolBuffer(m_memPoolBuf);
+    if (m_workBuf != nullptr) {
+        mtl::MemManager::deallocate(m_workBuf, 0, false);
+        m_workBuf = nullptr;
+    }
+    if (m_memPoolBuf != nullptr) {
+        mtl::MemManager::deallocate(m_memPoolBuf, 0, false);
+        m_memPoolBuf = nullptr;
+    }
+    m_seamRead.release();
+    m_pDrMan->m_mdlMan->delMpfObj();
+    if (m_pDrMan->m_cloudMan != nullptr) {
+        m_pDrMan->m_cloudMan->m_rate = 1.0f;
+    }
+}
+
 void DrMdoCtlSeam::resourceRelease() {
     if (m_instMdlInfo != nullptr) {
         m_instMdlInfo->releaseCall();
@@ -2639,7 +2692,7 @@ void DrMdoCtlSeam::updateTexutreSeam() {
             DrResMdoSeamTexture::SEAMRES_HEIGHT_CNTMAX = 60;
         }
     }
-    DrResMdoSeamTexture* tex = m_textureList;
+    DrResMdoSeamTexture* tex = m_texturePool.m_list;
     if (m_releaseVertexAll) {
         while (tex != nullptr) {
             DrResMdoSeamTexture* next = tex->m_prev;
@@ -2689,7 +2742,7 @@ void DrMdoCtlSeam::updateTexutreSeam() {
             }
         }
     }
-    DrResMdoSeamTexList* list = m_texListList;
+    DrResMdoSeamTexList* list = m_texListPool.m_list;
     if (m_releaseVertexAll) {
         while (list != nullptr) {
             DrResMdoSeamTexList* next = list->m_prev;
@@ -2727,27 +2780,27 @@ void DrMdoCtlSeam::releaseFreeSeamTexture(DrResMdoSeamTexture* tex, bool keepMem
             }
             after->m_next = before;
         }
-        if (m_textureUsedTail == res) {
-            m_textureUsedTail = before;
+        if (m_texturePool.m_usedTail == res) {
+            m_texturePool.m_usedTail = before;
         }
-        if (m_textureList == res) {
-            m_textureList = after;
+        if (m_texturePool.m_list == res) {
+            m_texturePool.m_list = after;
             if (after != nullptr) {
                 after->m_next = nullptr;
             }
         }
-        if (m_textureFreeTail == nullptr) {
-            m_textureFreeHead = res;
-            m_textureFreeTail = res;
+        if (m_texturePool.m_freeTail == nullptr) {
+            m_texturePool.m_freeHead = res;
+            m_texturePool.m_freeTail = res;
             res->m_next = nullptr;
         } else {
-            m_textureFreeTail->m_prev = res;
-            res->m_next = m_textureFreeTail;
-            m_textureFreeTail = res;
+            m_texturePool.m_freeTail->m_prev = res;
+            res->m_next = m_texturePool.m_freeTail;
+            m_texturePool.m_freeTail = res;
         }
         res->m_prev = nullptr;
-        m_textureFreeNum++;
-        m_textureUsedNum--;
+        m_texturePool.m_freeNum++;
+        m_texturePool.m_usedNum--;
     };
     if (keepMem) {
         tex->release();
@@ -2790,27 +2843,27 @@ void DrMdoCtlSeam::releaseFreeSeamTexList(DrResMdoSeamTexList* list, bool keepMe
             }
             after->m_next = before;
         }
-        if (m_texListUsedTail == res) {
-            m_texListUsedTail = before;
+        if (m_texListPool.m_usedTail == res) {
+            m_texListPool.m_usedTail = before;
         }
-        if (m_texListList == res) {
-            m_texListList = after;
+        if (m_texListPool.m_list == res) {
+            m_texListPool.m_list = after;
             if (after != nullptr) {
                 after->m_next = nullptr;
             }
         }
-        if (m_texListFreeTail == nullptr) {
-            m_texListFreeHead = res;
-            m_texListFreeTail = res;
+        if (m_texListPool.m_freeTail == nullptr) {
+            m_texListPool.m_freeHead = res;
+            m_texListPool.m_freeTail = res;
             res->m_next = nullptr;
         } else {
-            m_texListFreeTail->m_prev = res;
-            res->m_next = m_texListFreeTail;
-            m_texListFreeTail = res;
+            m_texListPool.m_freeTail->m_prev = res;
+            res->m_next = m_texListPool.m_freeTail;
+            m_texListPool.m_freeTail = res;
         }
         res->m_prev = nullptr;
-        m_texListFreeNum++;
-        m_texListUsedNum--;
+        m_texListPool.m_freeNum++;
+        m_texListPool.m_usedNum--;
     };
     if (keepMem) {
         list->release();
@@ -2830,7 +2883,7 @@ void DrMdoCtlSeam::releaseFreeSeamTexList(DrResMdoSeamTexList* list, bool keepMe
 void DrMdoCtlSeam::updateVertexSeam() {
     if (m_releaseVertexAll) {
         DrResMdoSeamVertex::SEAMRES_CNTMAX = 10;
-        DrResMdoSeamVertex* vtx = m_pVertexList;
+        DrResMdoSeamVertex* vtx = m_vertexPool.m_list;
         while (vtx != nullptr) {
             DrResMdoSeamVertex* next = vtx->m_prev;
             releaseFreeSeamVertex(vtx, false);
@@ -2839,7 +2892,7 @@ void DrMdoCtlSeam::updateVertexSeam() {
         m_vertexMemSize = 0;
     } else {
         DrResMdoSeamVertex::SEAMRES_CNTMAX = m_parmRead.m_posCnt == 0 ? 60 : 10;
-        DrResMdoSeamVertex* vtx = m_pVertexList;
+        DrResMdoSeamVertex* vtx = m_vertexPool.m_list;
         while (vtx != nullptr) {
             if (vtx->update()) {
                 DrResMdoSeamVertex* next = vtx->m_prev;
@@ -2872,27 +2925,27 @@ void DrMdoCtlSeam::releaseFreeSeamVertex(DrResMdoSeamVertex* vtx, bool keepMem) 
             }
             after->m_next = before;
         }
-        if (m_vertexUsedTail == res) {
-            m_vertexUsedTail = before;
+        if (m_vertexPool.m_usedTail == res) {
+            m_vertexPool.m_usedTail = before;
         }
-        if (m_pVertexList == res) {
-            m_pVertexList = after;
+        if (m_vertexPool.m_list == res) {
+            m_vertexPool.m_list = after;
             if (after != nullptr) {
                 after->m_next = nullptr;
             }
         }
-        if (m_vertexFreeTail == nullptr) {
-            m_vertexFreeHead = res;
-            m_vertexFreeTail = res;
+        if (m_vertexPool.m_freeTail == nullptr) {
+            m_vertexPool.m_freeHead = res;
+            m_vertexPool.m_freeTail = res;
             res->m_next = nullptr;
         } else {
-            m_vertexFreeTail->m_prev = res;
-            res->m_next = m_vertexFreeTail;
-            m_vertexFreeTail = res;
+            m_vertexPool.m_freeTail->m_prev = res;
+            res->m_next = m_vertexPool.m_freeTail;
+            m_vertexPool.m_freeTail = res;
         }
         res->m_prev = nullptr;
-        m_vertexFreeNum++;
-        m_vertexUsedNum--;
+        m_vertexPool.m_freeNum++;
+        m_vertexPool.m_usedNum--;
     };
     if (keepMem) {
         vtx->release();
@@ -2913,36 +2966,36 @@ void DrMdoCtlSeamAll::releaseSeamAll() {
     if (m_viewNum == 0) {
         m_pDrMan->m_pixlMan->m_shadowCacheMan->delShadowCacheUpdate();
     }
-    for (DrResMdoSeamWrkBase* wrk = m_pBaseList; wrk != nullptr;) {
+    for (DrResMdoSeamWrkBase* wrk = m_basePool.m_list; wrk != nullptr;) {
         DrResMdoSeamWrkBase* next = wrk->m_prev;
         releaseFreeSeamBase(wrk);
         wrk = next;
     }
     m_baseMemSize = 0;
-    for (DrResMdoSeamWrkLow* wrk = m_pLowList; wrk != nullptr;) {
+    for (DrResMdoSeamWrkLow* wrk = m_lowPool.m_list; wrk != nullptr;) {
         DrResMdoSeamWrkLow* next = wrk->m_prev;
         releaseFreeSeamLow(wrk);
         wrk = next;
     }
     m_lowMemSize = 0;
-    for (DrResMdoSeamWrkInst* wrk = m_pInstList; wrk != nullptr;) {
+    for (DrResMdoSeamWrkInst* wrk = m_instPool.m_list; wrk != nullptr;) {
         DrResMdoSeamWrkInst* next = wrk->m_pLink;
         releaseFreeSeamInst(wrk);
         wrk = next;
     }
-    for (DrResMdoSeamWrkMpf* wrk = m_pMpfList; wrk != nullptr;) {
+    for (DrResMdoSeamWrkMpf* wrk = m_mpfPool.m_list; wrk != nullptr;) {
         DrResMdoSeamWrkMpf* next = wrk->m_pLink;
         releaseFreeSeamMpf(wrk);
         wrk = next;
     }
     m_baseMemSize = 0;
-    for (DrResMdoSeamWrkEnv* wrk = m_pEnvList; wrk != nullptr;) {
+    for (DrResMdoSeamWrkEnv* wrk = m_envPool.m_list; wrk != nullptr;) {
         DrResMdoSeamWrkEnv* next = wrk->m_prev;
         releaseFreeSeamEnvMap(wrk);
         wrk = next;
     }
     m_envMemSize = 0;
-    for (DrResMdoSeamWrkLight* wrk = m_pLightList; wrk != nullptr;) {
+    for (DrResMdoSeamWrkLight* wrk = m_lightPool.m_list; wrk != nullptr;) {
         DrResMdoSeamWrkLight* next = wrk->m_prev;
         releaseFreeSeamLight(wrk);
         wrk = next;
@@ -2954,13 +3007,13 @@ void DrMdoCtlSeamAll::releaseSeamAll() {
 
 void DrMdoCtlSeamAll::callShadowCacheUpdate(unsigned long bits) {
     m_baseShadowCacheDone &= ~bits;
-    for (DrResMdoSeamWrkBase* wrk = m_pBaseList; wrk != nullptr; wrk = wrk->m_prev) {
+    for (DrResMdoSeamWrkBase* wrk = m_basePool.m_list; wrk != nullptr; wrk = wrk->m_prev) {
         if (wrk->m_matRes != nullptr) {
             wrk->callShadowCacheBaseUpdate(bits);
         }
     }
     m_instShadowCacheDone &= ~bits;
-    for (DrResMdoSeamWrkInst* wrk = m_pInstList; wrk != nullptr; wrk = wrk->m_pLink) {
+    for (DrResMdoSeamWrkInst* wrk = m_instPool.m_list; wrk != nullptr; wrk = wrk->m_pLink) {
         if (wrk->m_pWrkMatRes != nullptr) {
             wrk->callShadowCacheInstUpdate(bits);
         }
@@ -3153,7 +3206,7 @@ void DrMdoCtlSeamEnvMap::callRenderSeamEnvMap() {
     if (m_pDrMan->m_seamEnvRenderOff) {
         return;
     }
-    for (DrResMdoSeamWrkEnv* wrk = m_pEnvList; wrk != nullptr; wrk = wrk->m_prev) {
+    for (DrResMdoSeamWrkEnv* wrk = m_envPool.m_list; wrk != nullptr; wrk = wrk->m_prev) {
         m_pWrkMatRes = wrk->m_matRes;
         if (m_pWrkMatRes == nullptr || !(wrk->m_type & 0x1)) {
             continue;
@@ -3199,7 +3252,7 @@ void DrMdoCtlSeamEnvMap::callGBuffRenderSeamEnvMap() {
     if (m_pDrMan->m_seamEnvRenderOff) {
         return;
     }
-    for (DrResMdoSeamWrkEnv* wrk = m_pEnvList; wrk != nullptr; wrk = wrk->m_prev) {
+    for (DrResMdoSeamWrkEnv* wrk = m_envPool.m_list; wrk != nullptr; wrk = wrk->m_prev) {
         m_pWrkMatRes = wrk->m_matRes;
         if (m_pWrkMatRes == nullptr || !(wrk->m_type & 0x2)) {
             continue;
@@ -3245,7 +3298,7 @@ void DrMdoCtlSeamEnvMap::callLightPrePassRenderSeamEnvMap() {
     if (m_pDrMan->m_seamEnvRenderOff) {
         return;
     }
-    for (DrResMdoSeamWrkEnv* wrk = m_pEnvList; wrk != nullptr; wrk = wrk->m_prev) {
+    for (DrResMdoSeamWrkEnv* wrk = m_envPool.m_list; wrk != nullptr; wrk = wrk->m_prev) {
         m_pWrkMatRes = wrk->m_matRes;
         if (m_pWrkMatRes == nullptr || !(wrk->m_type & 0x8)) {
             continue;
@@ -3291,7 +3344,7 @@ void DrMdoCtlSeamEnvMap::callAlphaRenderSeamEnvMap() {
     if (m_pDrMan->m_seamEnvRenderOff) {
         return;
     }
-    for (DrResMdoSeamWrkEnv* wrk = m_pEnvList; wrk != nullptr; wrk = wrk->m_prev) {
+    for (DrResMdoSeamWrkEnv* wrk = m_envPool.m_list; wrk != nullptr; wrk = wrk->m_prev) {
         m_pWrkMatRes = wrk->m_matRes;
         if (m_pWrkMatRes == nullptr || !(wrk->m_type & 0x10)) {
             continue;
@@ -3337,7 +3390,7 @@ void DrMdoCtlSeamEnvMap::callSpAlphaRenderSeamEnvMap() {
     if (m_pDrMan->m_seamEnvRenderOff) {
         return;
     }
-    for (DrResMdoSeamWrkEnv* wrk = m_pEnvList; wrk != nullptr; wrk = wrk->m_prev) {
+    for (DrResMdoSeamWrkEnv* wrk = m_envPool.m_list; wrk != nullptr; wrk = wrk->m_prev) {
         m_pWrkMatRes = wrk->m_matRes;
         if (m_pWrkMatRes == nullptr || !(wrk->m_type & 0x20)) {
             continue;
@@ -3383,7 +3436,7 @@ void DrMdoCtlSeamEnvMap::callRefractionRenderSeamEnvMap() {
     if (m_pDrMan->m_seamEnvRenderOff) {
         return;
     }
-    for (DrResMdoSeamWrkEnv* wrk = m_pEnvList; wrk != nullptr; wrk = wrk->m_prev) {
+    for (DrResMdoSeamWrkEnv* wrk = m_envPool.m_list; wrk != nullptr; wrk = wrk->m_prev) {
         m_pWrkMatRes = wrk->m_matRes;
         if (m_pWrkMatRes == nullptr || !(wrk->m_type & 0x4)) {
             continue;
@@ -3441,7 +3494,7 @@ void DrMdoCtlSeamBaseMap::callShadowMapRenderSeamBaseMap(DrPixlShadowObj* shadow
     grlib::ShdMat44TransposeMat44(static_cast<float*>(block.getBuff()), view->m_view);
     block.updateData(0x40);
     m_pEtcBlock = &block;
-    for (DrResMdoSeamWrkBase* wrk = m_pBaseList; wrk != nullptr; wrk = wrk->m_prev) {
+    for (DrResMdoSeamWrkBase* wrk = m_basePool.m_list; wrk != nullptr; wrk = wrk->m_prev) {
         m_pWrkMatRes = wrk->m_matRes;
         if (m_pWrkMatRes != nullptr && (wrk->m_cacheFlags & 0x8)) {
             m_curShaderIdx = -1;
@@ -3457,7 +3510,7 @@ void DrMdoCtlSeamAll::occRender() {
     if (!(m_dispFlags & 1) || (m_seamFlags & 0x10000000) || m_pDrMan->m_seamOccRenderOff) {
         return;
     }
-    for (DrResMdoSeamWrkInst* wrk = m_pInstList; wrk != nullptr; wrk = wrk->m_pLink) {
+    for (DrResMdoSeamWrkInst* wrk = m_instPool.m_list; wrk != nullptr; wrk = wrk->m_pLink) {
         m_pWrkMatRes = wrk->m_pWrkMatRes;
         if (m_pWrkMatRes != nullptr) {
             wrk->occRender();
@@ -3478,27 +3531,27 @@ void DrMdoCtlSeamRead::callBaseMapStream(_wkSeamReadWait* wait) {
     unsigned int rest = entry->m_size & 0xFFF;
     DrResMdoSeamMemObj* memObj = m_memMan.createFreeObj((rest == 0 ? 0 : 0x1000 - rest) + entry->m_size);
     if (memObj != nullptr) {
-        DrResMdoSeamWrkBase* wrk = m_baseFreeHead;
+        DrResMdoSeamWrkBase* wrk = m_basePool.m_freeHead;
         if (wrk != nullptr) {
             DrResMdoSeamWrkBase* next = wrk->m_prev;
             if (next == nullptr) {
-                m_baseFreeHead = nullptr;
-                m_baseFreeTail = nullptr;
+                m_basePool.m_freeHead = nullptr;
+                m_basePool.m_freeTail = nullptr;
             } else {
-                m_baseFreeHead = next;
+                m_basePool.m_freeHead = next;
                 next->m_next = nullptr;
             }
-            if (m_baseUsedTail != nullptr) {
-                m_baseUsedTail->m_prev = wrk;
+            if (m_basePool.m_usedTail != nullptr) {
+                m_basePool.m_usedTail->m_prev = wrk;
             }
-            if (m_pBaseList == nullptr) {
-                m_pBaseList = wrk;
+            if (m_basePool.m_list == nullptr) {
+                m_basePool.m_list = wrk;
             }
-            wrk->m_next = m_baseUsedTail;
+            wrk->m_next = m_basePool.m_usedTail;
             wrk->m_prev = nullptr;
-            m_baseFreeNum--;
-            m_baseUsedNum++;
-            m_baseUsedTail = wrk;
+            m_basePool.m_freeNum--;
+            m_basePool.m_usedNum++;
+            m_basePool.m_usedTail = wrk;
             int readIdx;
             if (m_seamRead.read(readIdx, entry->m_ofs, entry->m_size, memObj)) {
                 wrk->m_memObj = memObj;
@@ -3539,27 +3592,27 @@ void DrMdoCtlSeamRead::callLowMdlStream(_wkSeamReadWait* wait) {
     unsigned int rest = entry->m_size & 0xFFF;
     DrResMdoSeamMemObj* memObj = m_memMan.createFreeObj((rest == 0 ? 0 : 0x1000 - rest) + entry->m_size);
     if (memObj != nullptr) {
-        DrResMdoSeamWrkLow* wrk = m_lowFreeHead;
+        DrResMdoSeamWrkLow* wrk = m_lowPool.m_freeHead;
         if (wrk != nullptr) {
             DrResMdoSeamWrkLow* next = wrk->m_prev;
             if (next == nullptr) {
-                m_lowFreeHead = nullptr;
-                m_lowFreeTail = nullptr;
+                m_lowPool.m_freeHead = nullptr;
+                m_lowPool.m_freeTail = nullptr;
             } else {
-                m_lowFreeHead = next;
+                m_lowPool.m_freeHead = next;
                 next->m_next = nullptr;
             }
-            if (m_lowUsedTail != nullptr) {
-                m_lowUsedTail->m_prev = wrk;
+            if (m_lowPool.m_usedTail != nullptr) {
+                m_lowPool.m_usedTail->m_prev = wrk;
             }
-            if (m_pLowList == nullptr) {
-                m_pLowList = wrk;
+            if (m_lowPool.m_list == nullptr) {
+                m_lowPool.m_list = wrk;
             }
-            wrk->m_next = m_lowUsedTail;
+            wrk->m_next = m_lowPool.m_usedTail;
             wrk->m_prev = nullptr;
-            m_lowFreeNum--;
-            m_lowUsedNum++;
-            m_lowUsedTail = wrk;
+            m_lowPool.m_freeNum--;
+            m_lowPool.m_usedNum++;
+            m_lowPool.m_usedTail = wrk;
             int readIdx;
             if (m_seamRead.read(readIdx, entry->m_ofs, entry->m_size, memObj)) {
                 wrk->m_memObj = memObj;
@@ -3597,27 +3650,27 @@ void DrMdoCtlSeamRead::callInstMapStream(_wkSeamReadWait* wait) {
     unsigned int rest = entry->m_size & 0xFFF;
     DrResMdoSeamMemObj* memObj = m_memMan.createFreeObj((rest == 0 ? 0 : 0x1000 - rest) + entry->m_size);
     if (memObj != nullptr) {
-        DrResMdoSeamWrkInst* wrk = m_instFreeHead;
+        DrResMdoSeamWrkInst* wrk = m_instPool.m_freeHead;
         if (wrk != nullptr) {
             DrResMdoSeamWrkInst* next = wrk->m_pLink;
             if (next == nullptr) {
-                m_instFreeHead = nullptr;
-                m_instFreeTail = nullptr;
+                m_instPool.m_freeHead = nullptr;
+                m_instPool.m_freeTail = nullptr;
             } else {
-                m_instFreeHead = next;
+                m_instPool.m_freeHead = next;
                 next->m_pBackLink = nullptr;
             }
-            if (m_instUsedTail != nullptr) {
-                m_instUsedTail->m_pLink = wrk;
+            if (m_instPool.m_usedTail != nullptr) {
+                m_instPool.m_usedTail->m_pLink = wrk;
             }
-            if (m_pInstList == nullptr) {
-                m_pInstList = wrk;
+            if (m_instPool.m_list == nullptr) {
+                m_instPool.m_list = wrk;
             }
-            wrk->m_pBackLink = m_instUsedTail;
+            wrk->m_pBackLink = m_instPool.m_usedTail;
             wrk->m_pLink = nullptr;
-            m_instFreeNum--;
-            m_instUsedTail = wrk;
-            m_instUsedNum++;
+            m_instPool.m_freeNum--;
+            m_instPool.m_usedTail = wrk;
+            m_instPool.m_usedNum++;
             int readIdx;
             if (m_seamRead.read(readIdx, entry->m_ofs, entry->m_size, memObj)) {
                 wrk->m_memObj = memObj;
@@ -3659,27 +3712,27 @@ void DrMdoCtlSeamRead::callMpfMdlStream(_wkSeamReadWait* wait) {
     unsigned int rest = entry->m_size & 0xFFF;
     DrResMdoSeamMemObj* memObj = m_memMan.createFreeObj((rest == 0 ? 0 : 0x1000 - rest) + entry->m_size);
     if (memObj != nullptr) {
-        DrResMdoSeamWrkMpf* wrk = m_mpfFreeHead;
+        DrResMdoSeamWrkMpf* wrk = m_mpfPool.m_freeHead;
         if (wrk != nullptr) {
             DrResMdoSeamWrkMpf* next = wrk->m_pLink;
             if (next == nullptr) {
-                m_mpfFreeHead = nullptr;
-                m_mpfFreeTail = nullptr;
+                m_mpfPool.m_freeHead = nullptr;
+                m_mpfPool.m_freeTail = nullptr;
             } else {
-                m_mpfFreeHead = next;
+                m_mpfPool.m_freeHead = next;
                 next->m_pBackLink = nullptr;
             }
-            if (m_mpfUsedTail != nullptr) {
-                m_mpfUsedTail->m_pLink = wrk;
+            if (m_mpfPool.m_usedTail != nullptr) {
+                m_mpfPool.m_usedTail->m_pLink = wrk;
             }
-            if (m_pMpfList == nullptr) {
-                m_pMpfList = wrk;
+            if (m_mpfPool.m_list == nullptr) {
+                m_mpfPool.m_list = wrk;
             }
-            wrk->m_pBackLink = m_mpfUsedTail;
+            wrk->m_pBackLink = m_mpfPool.m_usedTail;
             wrk->m_pLink = nullptr;
-            m_mpfFreeNum--;
-            m_mpfUsedNum++;
-            m_mpfUsedTail = wrk;
+            m_mpfPool.m_freeNum--;
+            m_mpfPool.m_usedNum++;
+            m_mpfPool.m_usedTail = wrk;
             int readIdx;
             if (m_seamRead.read(readIdx, entry->m_ofs, entry->m_size, memObj)) {
                 wrk->m_memObj = memObj;
@@ -3720,27 +3773,27 @@ void DrMdoCtlSeamRead::callEnvMdlStream(_wkSeamReadWait* wait) {
     unsigned int rest = entry->m_size & 0xFFF;
     DrResMdoSeamMemObj* memObj = m_memMan.createFreeObj((rest == 0 ? 0 : 0x1000 - rest) + entry->m_size);
     if (memObj != nullptr) {
-        DrResMdoSeamWrkEnv* wrk = m_envFreeHead;
+        DrResMdoSeamWrkEnv* wrk = m_envPool.m_freeHead;
         if (wrk != nullptr) {
             DrResMdoSeamWrkEnv* next = wrk->m_prev;
             if (next == nullptr) {
-                m_envFreeHead = nullptr;
-                m_envFreeTail = nullptr;
+                m_envPool.m_freeHead = nullptr;
+                m_envPool.m_freeTail = nullptr;
             } else {
-                m_envFreeHead = next;
+                m_envPool.m_freeHead = next;
                 next->m_next = nullptr;
             }
-            if (m_envUsedTail != nullptr) {
-                m_envUsedTail->m_prev = wrk;
+            if (m_envPool.m_usedTail != nullptr) {
+                m_envPool.m_usedTail->m_prev = wrk;
             }
-            if (m_pEnvList == nullptr) {
-                m_pEnvList = wrk;
+            if (m_envPool.m_list == nullptr) {
+                m_envPool.m_list = wrk;
             }
-            wrk->m_next = m_envUsedTail;
+            wrk->m_next = m_envPool.m_usedTail;
             wrk->m_prev = nullptr;
-            m_envFreeNum--;
-            m_envUsedNum++;
-            m_envUsedTail = wrk;
+            m_envPool.m_freeNum--;
+            m_envPool.m_usedNum++;
+            m_envPool.m_usedTail = wrk;
             int readIdx;
             if (m_seamRead.read(readIdx, entry->m_ofs, entry->m_size, memObj)) {
                 wrk->m_memObj = memObj;
@@ -3822,7 +3875,7 @@ void DrMdoCtlSeamRead::callHeightTexutreStream(_wkSeamReadWait* wait) {
         int readIdx;
         if (m_seamRead.read(readIdx, entry->m_heightOfs, entry->m_heightSize, memObj)) {
             unsigned int texNo = m_pTextureNo[wait->m_idx] - 1;
-            DrResMdoSeamTexture* tex = &m_pTextures[texNo];
+            DrResMdoSeamTexture* tex = &m_texturePool.m_works[texNo];
             tex->m_cnt = 0;
             tex->m_heightCnt = 0;
             memObj->m_flags |= 4;
@@ -3968,27 +4021,27 @@ void DrMdoCtlSeamRead::callLightStream(_wkSeamReadWait* wait) {
     unsigned int rest = entry->id & 0xFFF;
     DrResMdoSeamMemObj* memObj = m_memMan.createFreeObj((rest == 0 ? 0 : 0x1000 - rest) + entry->id);
     if (memObj != nullptr) {
-        DrResMdoSeamWrkLight* wrk = m_lightFreeHead;
+        DrResMdoSeamWrkLight* wrk = m_lightPool.m_freeHead;
         if (wrk != nullptr) {
             DrResMdoSeamWrkLight* next = wrk->m_prev;
             if (next == nullptr) {
-                m_lightFreeHead = nullptr;
-                m_lightFreeTail = nullptr;
+                m_lightPool.m_freeHead = nullptr;
+                m_lightPool.m_freeTail = nullptr;
             } else {
-                m_lightFreeHead = next;
+                m_lightPool.m_freeHead = next;
                 next->m_next = nullptr;
             }
-            if (m_lightUsedTail != nullptr) {
-                m_lightUsedTail->m_prev = wrk;
+            if (m_lightPool.m_usedTail != nullptr) {
+                m_lightPool.m_usedTail->m_prev = wrk;
             }
-            if (m_pLightList == nullptr) {
-                m_pLightList = wrk;
+            if (m_lightPool.m_list == nullptr) {
+                m_lightPool.m_list = wrk;
             }
-            wrk->m_next = m_lightUsedTail;
+            wrk->m_next = m_lightPool.m_usedTail;
             wrk->m_prev = nullptr;
-            m_lightFreeNum--;
-            m_lightUsedNum++;
-            m_lightUsedTail = wrk;
+            m_lightPool.m_freeNum--;
+            m_lightPool.m_usedNum++;
+            m_lightPool.m_usedTail = wrk;
             int readIdx;
             if (m_seamRead.read(readIdx, entry->m_ofs, entry->id, memObj)) {
                 wrk->m_memObj = memObj;
