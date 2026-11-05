@@ -6001,6 +6001,22 @@ unsigned int GmkEnemyInsts::PopInfo::getGobInstNum() const {
     return num;
 }
 
+gf::GF_OBJ_HANDLE* GmkEnemyInsts::getGobInst(unsigned int index) const {
+    for (unsigned int i = 0; i < 4; i++) {
+        const PopInfo::PopEnemyInfo& info = m_popInfo.m_enemyInfos[i];
+        unsigned int num = info.getGobInstNum();
+        if (index < num) {
+            unsigned char idx = index;
+            if (idx < info.pad_18->size()) {
+                return info.pad_18->at(idx);
+            }
+            return info.pad_10->at(idx - info.pad_18->size());
+        }
+        index -= num;
+    }
+    return reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+}
+
 bool GmkEnemyInsts::isQuestDead() const {
     for (unsigned int i = 0; i < 4; i++) {
         const PopInfo::PopEnemyInfo& info = m_popInfo.m_enemyInfos[i];
@@ -6029,6 +6045,18 @@ void GmkEnemyInsts::validateDisp() const {
     }
 }
 
+bool GmkEnemyInsts::reqForcePopGobInst(const ForcePopEnemyInfo& info) const {
+    if (m_popInfo.getGobInstNum() != 0) {
+        return false;
+    }
+    if (m_bdatInfo.m_smnGroups != 0 && !(m_flags & 4)) {
+        return false;
+    }
+    pad_141 = true;
+    m_forcePopInfo = info;
+    return true;
+}
+
 bool GmkEnemyInsts::reqClearRepopCounter() const {
     if (&GmkEnemyInsts::seqUpdateRepopCounter == m_seq) {
         m_clearRepopCounterReq = true;
@@ -6054,6 +6082,49 @@ void GmkEnemyInsts::seqUpdateRepopCounter(const UpdateInfo& info) {
     }
     m_popInfo.removeDefeatedNamedEnemyInfo();
     m_seq = &GmkEnemyInsts::seqUpdatePopDepop;
+}
+
+// the four slots' counts summed here (PopInfo::getGobInstNum's loop adds them in another order)
+void GmkEnemyInsts::seqWaitToFadeOutOfGobInst(const UpdateInfo& info) {
+    const PopInfo::PopEnemyInfo* infos = m_popInfo.m_enemyInfos;
+    if (infos[0].getGobInstNum() + infos[1].getGobInstNum() + infos[2].getGobInstNum() + infos[3].getGobInstNum() == 0) {
+        m_seq = &GmkEnemyInsts::seqUpdatePopDepop;
+    }
+}
+
+bool GmkEnemyInsts::canDepopGobInst() const {
+    if (!isValid()) {
+        return false;
+    }
+    const PopInfo::PopEnemyInfo* infos = m_popInfo.m_enemyInfos;
+    if (infos[0].getGobInstNum() + infos[1].getGobInstNum() + infos[2].getGobInstNum() + infos[3].getGobInstNum() == 0) {
+        return false;
+    }
+    if (m_bdatInfo.m_smnGroups == 0) {
+        if (!(m_flags & 1) && pad_180 == 0) {
+            return true;
+        }
+    } else if (m_bdatInfo.m_scenarioFlag.m_scenarioFlagMax != 0 && !m_bdatInfo.m_scenarioFlag.isMatch()) {
+        return true;
+    }
+    return !(m_flags & 4);
+}
+
+void GmkEnemyInsts::onEnemyDead(gf::GF_OBJ_HANDLE* handle) {
+    if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+    }
+    m_popInfo.removeGobInst(handle, true);
+    if (m_popInfo.getGobInstNum() == 0) {
+        pad_159 = 0;
+        if (m_bdatInfo.m_smnGroups == 0) {
+            m_popWait = pad_24;
+            m_seq = &GmkEnemyInsts::seqUpdateRepopCounter;
+        }
+    }
 }
 
 GmkEnemyInsts::~GmkEnemyInsts() { dispose(); }

@@ -12,17 +12,33 @@ class CBdatWrapper;
 #include "mm/mtl/Vector.h"
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gmk { class AGmkBase; }
+namespace mm { class Vec3; }
 
 namespace gmk {
-// what GmkEnemyInsts::reqForcePopGobInst is asked to pop (layout not proven yet)
-struct ForcePopEnemyInfo;
+// what GmkEnemyInsts::reqForcePopGobInst is asked to pop (12 bytes: GfSmnEnemyManager::execAbsSummon builds one on
+// the stack with a byte at 0x0 and zeroes at 0x4 and 0x8; reqForcePopGobInst keeps it at the insts' 0x144; the
+// field names are not the original's)
+struct ForcePopEnemyInfo {
+    unsigned char pad_0 = 0;
+    unsigned int pad_4 = 0;
+    unsigned char pad_8 = 0;
+};
 
 // a class with no table: an enemy gimmick's objects (GmkEnemy's at 0x48, GmkRoutedEnemy's at 0x50) and how they
 // pop (its PopInfo at 0x98)
 class GmkEnemyInsts {
 public:
+    class IPopXformFinder;
     class PopInfo {
     public:
+        // what seqUpdatePopDepop gives create: the insts' 0x8, 0x10 and its m_forcePopInfo's byte at 0x0 (the field
+        // names are not the original's)
+        class CreateInfo {
+        public:
+            unsigned char* pad_0;
+            int pad_8;
+            unsigned char pad_c;
+        };
         // one of the gimmick's pop slots (0x28 bytes: the destructors walk PopInfo's four at 0x28 apart)
         class PopEnemyInfo {
         public:
@@ -77,6 +93,11 @@ public:
         bool hasTypeGenus(unsigned char genus, bool) const;
         // GfGameUtil::clearEnemyRepopCounter asks it with the enemy id and true before clearing the counter
         bool hasEneID(unsigned short id, bool) const;
+        void create(const CreateInfo& info);
+        void update(const GmkEnemyInsts& insts, const IPopXformFinder& finder);
+        void validatePopPos(float dt, const GmkEnemyInsts& insts, const IPopXformFinder& finder);
+        // takes an object out of the slots (onEnemyDead passes true)
+        void removeGobInst(gf::GF_OBJ_HANDLE* handle, bool);
         // seqUpdateRepopCounter calls it as the counter runs out
         void removeDefeatedNamedEnemyInfo();
         // create's "flag" bit "ene_priority" and "pop_act_type" (the names are not the original's)
@@ -85,6 +106,17 @@ public:
         unsigned char pad_2 = 0;  // create clears it first and sets it to 1 at the end
         unsigned char pad_3[0x5];
         PopEnemyInfo m_enemyInfos[4];  // 0x8 (the name is not the original's)
+    };
+    // what finds the objects' pop positions (GmkEnemy and GmkRoutedEnemy each derive a PopXformFinder from it: four
+    // slots, no destructor; the slot names are 3.0.1's symbols of GmkEnemy::PopXformFinder)
+    class IPopXformFinder {
+    public:
+        virtual bool findPosRot(mm::Vec3& pos, mm::Vec3& rot, gf::GF_OBJ_HANDLE* handle,
+                                const PopInfo::PopEnemyInfo& info) const = 0;  // slot 0
+        virtual bool isYSnap() const = 0;  // slot 1
+        virtual void onPopGob(gf::GF_OBJ_HANDLE* handle) const = 0;  // slot 2
+        // seqUpdatePopDepop passes the four slots' pad_4 counts summed after PopInfo::create
+        virtual void onCreateGobInsts(unsigned int num) const = 0;  // slot 3
     };
     // the gimmick's row as it pops (GmkEnemy's at 0x80)
     // a gimmick row's pop conditions (create reads them; 0x60 bytes)
@@ -128,7 +160,11 @@ public:
     // what update and the sequence steps are given (the seq steps read its first float as the frame time)
     class UpdateInfo {
     public:
-        float m_dt;  // (the name is not the original's; fields after it unknown)
+        // the names are not the original's
+        float m_dt;
+        unsigned char pad_4[0x4];
+        const mm::Vec3* m_pos;  // 0x8: updatePopDepopCond measures from it to getInterestPos
+        const IPopXformFinder* m_finder;  // 0x10
     };
     // GmkEnemy's and GmkRoutedEnemy's dispose inline it (the name is not the original's): the flags' low three bits,
     // the objects, the counted reference at 0x150 and the distances back to their defaults
@@ -154,24 +190,35 @@ public:
     }
     ~GmkEnemyInsts();
     void disposeGobInsts(bool, bool);
-    gf::GF_OBJ_HANDLE* getGobInst(unsigned int index) const;  // the handle of one of them
+    gf::GF_OBJ_HANDLE* getGobInst(unsigned int index) const;  // the handle of one of them (-1 past the last)
     bool isQuestDead() const;
     // shows or hides one of its objects by pad_140 (display bit 8) when the object is bound to a gimmick
     void validateDisp(gf::GF_OBJ_HANDLE* handle) const;
     // every object's display by validateDisp(handle)
     void validateDisp() const;
     // pops the gimmick's objects now (GfSmnEnemyManager::execAbsSummon)
-    void reqForcePopGobInst(const ForcePopEnemyInfo& info) const;
+    // false while objects are out, or for a summon gimmick without flag bit 2; else keeps info and sets pad_141
+    bool reqForcePopGobInst(const ForcePopEnemyInfo& info) const;
     // asks a running repop counter to restart from 0 (true when the sequence is seqUpdateRepopCounter)
     bool reqClearRepopCounter() const;
     void seqUpdatePopDepop(const UpdateInfo& info);
+    // m_flags: bit 0 the pop conditions hold, bit 1 the interest position is within the pop range (pad_88/pad_8c),
+    // bit 2 within the depop range (pad_90/pad_94)
+    void updatePopDepopCond(const UpdateInfo& info);
     void seqUpdateRepopCounter(const UpdateInfo& info);
+    // back to seqUpdatePopDepop once no object is left
+    void seqWaitToFadeOutOfGobInst(const UpdateInfo& info);
+    bool canDepopGobInst() const;
+    // the object's user data cleared and the object taken out; with none left the repop counter starts (not for a
+    // summon gimmick)
+    void onEnemyDead(gf::GF_OBJ_HANDLE* handle);
     // whether it holds what it pops by: its first two fields set and a positive count at 0x10 (inline in GmkEnemy's
     // and GmkRoutedEnemy's isValid; the name is not the original's)
     bool isValid() const { return pad_0 != 0 && pad_8 != 0 && pad_10 > 0; }
     // the defaults: Vector<GmkEnemy>::resize's stores, the same values dispose sets
     unsigned long pad_0 = 0;
-    unsigned long pad_8 = 0;
+    // the gimmick's BDAT table (create reads its rows' "ene1num".."ene4num" from it; PopInfo::create gets it)
+    unsigned char* pad_8 = nullptr;
     // seqUpdateRepopCounter never counts down for the values 40012 and 40013 (a bdat id? not proven)
     int pad_10 = -1;
     float pad_14 = 100.0f;  // 100 after dispose
@@ -180,27 +227,29 @@ public:
     // the original's)
     float m_popDist = 110.0f;
     float m_depopDist = 55.0f;
-    unsigned int pad_24 = 0;
+    // onEnemyDead starts the repop counter m_popWait from it
+    float pad_24 = 0.0f;
     unsigned int pad_28 = 0;
     unsigned int pad_2c = 0;
     unsigned int pad_30 = 0;
     unsigned int pad_34 = 0;
     BdatInfo m_bdatInfo;  // 0x38 (the name is not the original's)
-    // the constructor clears these 16 bytes (one paired store; their types are not known)
-    unsigned long pad_88 = 0;
-    unsigned long pad_90 = 0;
+    // create squares the CreateInfo's four distances into these: pop range across and in height, depop range across
+    // and in height (updatePopDepopCond); the constructor clears them with one paired store
+    float pad_88 = 0.0f;
+    float pad_8c = 0.0f;
+    float pad_90 = 0.0f;
+    float pad_94 = 0.0f;
     PopInfo m_popInfo;  // 0x98 (the name is not the original's)
     // fields (its destructor 0x71005D85E8 touches +0x150, +0x178); size 0x188: GmkRoutedEnemy's Vector follows it at
     // 0x1d8 (insts at 0x50; its copy copies the insts up to 0x188)
     // the defaults from here on: Vector<GmkEnemy>::resize's stores (the gaps are not set)
     unsigned char pad_140 = 1;
-    bool pad_141 = false;  // when set, seqUpdateRepopCounter ends the count at once
+    // when set, seqUpdateRepopCounter ends the count at once (reqForcePopGobInst sets it)
+    mutable bool pad_141 = false;
     unsigned char pad_142[0x2];
-    unsigned char pad_144 = 0;
-    unsigned char pad_145[0x3];
-    unsigned int pad_148 = 0;
-    unsigned char pad_14c = 0;
-    unsigned char pad_14d[0x3];
+    // reqForcePopGobInst's info (the name is not the original's)
+    mutable ForcePopEnemyInfo m_forcePopInfo;
     // released by dispose (reference_object.h's `m_RefCount > 0`); what it holds is unknown
     mm::mtl::ReferenceObject* pad_150 = nullptr;
     unsigned char pad_158 = 0;
@@ -218,7 +267,8 @@ public:
     // flag bits (canDepopGobInst tests bits 0 and 2; dispose clears bits 0..2 with one 64-bit and; the name is not
     // the original's)
     unsigned long m_flags = 0;
-    unsigned short pad_180 = 0;
+    unsigned char pad_180 = 0;  // canDepopGobInst: no depop while set (a byte)
+    unsigned char pad_181 = 0;
     unsigned char pad_182[0x2];
     // 0x184: flag bits the enemy wave gimmick (GmkEnemyWave) sets: 0x2 and 0x1 in its create, 0x4 cleared by its
     // seqWaitToValidLinkGmkList (the name is not the original's)
