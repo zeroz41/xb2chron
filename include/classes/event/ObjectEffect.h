@@ -20,6 +20,7 @@ namespace event {
 // table 0x7100B3DF50
 class ObjectEffect : public ::event::Object {
 public:
+    ObjectEffect(const char* name);
     virtual ~ObjectEffect();  // slot 0
     virtual bool OnBouRectSelect(event::IBouCallback::SelectParam const&);  // slot 2
     virtual void OnBouRender(event::IBouCallback::RenderParam const&);  // slot 3

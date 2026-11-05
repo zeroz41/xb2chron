@@ -140,6 +140,7 @@
 #include "classes/event/ShakeManager.h"
 #include "classes/event/TodoManager.h"
 #include "classes/event/ObjectPartyList.h"
+#include "classes/event/BouManager.h"
 #include "gf/GfObjAcc.h"
 #include "classes/event/FrameInfo.h"
 #include "classes/event/LipsyncRes.h"
@@ -2283,6 +2284,75 @@ void ObjectEffect::tail() {
     m_effect->m_ctrl.update();
 }
 
+// the walks to the end of the first three categories come first and use nothing (as in startPage)
+ObjectList::~ObjectList() {
+    for (Object* last = m_categories[0]->m_child; last; last = last->m_next) {
+    }
+    for (Object* last = m_categories[1]->m_child; last; last = last->m_next) {
+    }
+    for (Object* last = m_categories[2]->m_child; last; last = last->m_next) {
+    }
+    if (m_root) {
+        clearSub(m_root);
+    }
+    if (Object* parent = m_categories[2]) {
+        Object* child = parent->m_child;
+        while (child) {
+            Object* next = child->m_next;
+            delete child;
+            child = next;
+        }
+        parent->m_child = nullptr;
+    }
+    m_counts[2] = 0;
+    if (Object* parent = m_categories[0]) {
+        Object* child = parent->m_child;
+        while (child) {
+            Object* next = child->m_next;
+            delete child;
+            child = next;
+        }
+        parent->m_child = nullptr;
+    }
+    m_counts[0] = 0;
+    if (Object* parent = m_categories[1]) {
+        Object* child = parent->m_child;
+        while (child) {
+            Object* next = child->m_next;
+            delete child;
+            child = next;
+        }
+        parent->m_child = nullptr;
+    }
+    m_counts[1] = 0;
+    if (Object* parent = m_categories[3]) {
+        Object* child = parent->m_child;
+        while (child) {
+            Object* next = child->m_next;
+            delete child;
+            child = next;
+        }
+        parent->m_child = nullptr;
+    }
+    m_counts[3] = 0;
+    if (m_root) {
+        m_root->m_child = nullptr;
+    }
+    for (int i = 3; i >= 0; --i) {
+        if (m_categories[i]) {
+            delete m_categories[i];
+            m_categories[i] = nullptr;
+        }
+    }
+    if (m_root) {
+        delete m_root;
+        m_root = nullptr;
+    }
+    m_flags = 0;
+    m_active = nullptr;
+    pad_80 = nullptr;
+}
+
 void ObjectList::clearSub(Object* obj) {
     obj->clear();
     for (Object* child = obj->m_child; child; child = child->m_next) {
@@ -2295,6 +2365,35 @@ void ObjectList::startSceneSub(Object* obj) {
     for (Object* child = obj->m_child; child; child = child->m_next) {
         startSceneSub(child);
     }
+}
+
+// empties the effect category: each effect leaves BouManager's list, then the objects are deleted
+void ObjectList::startPage() {
+    for (Object* obj = m_categories[2]->m_child; obj; obj = obj->m_next) {
+        BouManager* bou = mm::mtl::Singleton<BouManager>::getPtr();
+        for (IBouCallback** it = bou->m_callbacks.begin(); it != bou->m_callbacks.end(); ++it) {
+            if (*it == obj) {
+                bou->m_callbacks.erase(it);
+                break;
+            }
+        }
+    }
+    Object* parent = m_categories[2];
+    Object* last = parent->m_child;
+    while (last) {
+        last = last->m_next;
+    }
+    if (parent) {
+        Object* child = parent->m_child;
+        while (child) {
+            Object* next = child->m_next;
+            delete child;
+            child = next;
+        }
+        parent->m_child = nullptr;
+    }
+    m_counts[2] = 0;
+    m_active = nullptr;
 }
 
 void ObjectList::endSceneSub(Object* obj) {
@@ -2341,6 +2440,107 @@ bool ObjectList::isLoadingSub(Object* obj) const {
     return false;
 }
 
+Object* ObjectList::createGfObj(const char* name, gf::GF_OBJ_HANDLE* handle) {
+    ObjectChara* obj = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+        ObjectChara(name);
+    obj->createGfObj(handle);
+    Object* parent = m_categories[0];
+    if (parent->m_child == nullptr) {
+        parent->m_child = obj;
+    } else {
+        Object* last = parent->m_child;
+        while (last->m_next) {
+            last = last->m_next;
+        }
+        last->m_next = obj;
+    }
+    m_counts[0]++;
+    mm::mtl::Singleton<BouManager>::getPtr()->m_callbacks.push_back(obj);
+    m_active = obj;
+    if (pad_80 == nullptr) {
+        pad_80 = obj;
+    }
+    return obj;
+}
+
+Object* ObjectList::createCamera(const char* name, unsigned int id) {
+    Object* result = nullptr;
+    if (id < m_counts[1]) {
+        for (Object* obj = m_categories[1]->m_child; obj; obj = obj->m_next) {
+            if (id-- == 0) {
+                result = obj;
+                break;
+            }
+        }
+    } else {
+        ObjectCamera* obj = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+            ObjectCamera(name, id);
+        Object* parent = m_categories[1];
+        if (parent->m_child == nullptr) {
+            parent->m_child = obj;
+        } else {
+            Object* last = parent->m_child;
+            while (last->m_next) {
+                last = last->m_next;
+            }
+            last->m_next = obj;
+        }
+        m_counts[1]++;
+        mm::mtl::Singleton<BouManager>::getPtr()->m_callbacks.push_back(obj);
+        m_active = obj;
+        result = obj;
+    }
+    return result;
+}
+
+Object* ObjectList::createEffect(const char* name) {
+    ObjectEffect* obj = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+        ObjectEffect(name);
+    Object* parent = m_categories[2];
+    if (parent->m_child == nullptr) {
+        parent->m_child = obj;
+    } else {
+        Object* last = parent->m_child;
+        while (last->m_next) {
+            last = last->m_next;
+        }
+        last->m_next = obj;
+    }
+    m_counts[2]++;
+    mm::mtl::Singleton<BouManager>::getPtr()->m_callbacks.push_back(obj);
+    m_active = obj;
+    return obj;
+}
+
+Object* ObjectList::createLight(const char* name, unsigned int id) {
+    Object* result = nullptr;
+    if (id < m_counts[3]) {
+        for (Object* obj = m_categories[3]->m_child; obj; obj = obj->m_next) {
+            if (id-- == 0) {
+                result = obj;
+                break;
+            }
+        }
+    } else {
+        ObjectLight* obj = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+            ObjectLight(name, id);
+        Object* parent = m_categories[3];
+        if (parent->m_child == nullptr) {
+            parent->m_child = obj;
+        } else {
+            Object* last = parent->m_child;
+            while (last->m_next) {
+                last = last->m_next;
+            }
+            last->m_next = obj;
+        }
+        m_counts[3]++;
+        m_active = obj;
+        result = obj;
+    }
+    return result;
+}
+
 Object* ObjectList::searchByNameSub(Object* obj, const char* name) {
     if (strcmp(name, obj->m_name.m_str) == 0) {
         return obj;
@@ -2352,6 +2552,24 @@ Object* ObjectList::searchByNameSub(Object* obj, const char* name) {
         }
     }
     return nullptr;
+}
+
+void ObjectList::listupObject(mm::mtl::FixedVector<unsigned int, 256>& list, unsigned int type, bool append) {
+    if (!append) {
+        list.clear();
+    }
+    if (m_categories[0] == nullptr) {
+        return;
+    }
+    for (Object* obj = m_categories[0]->m_child; obj && list.size() < 256; obj = obj->m_next) {
+        if (obj->m_type == 2 && static_cast<ObjectChara*>(obj)->m_chara->m_gfHandle !=
+                                    reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            gf::GfObjAcc acc(static_cast<ObjectChara*>(obj)->m_chara->m_gfHandle);
+            if (acc.getType() == type) {
+                list.push_back(acc.getBdatId());
+            }
+        }
+    }
 }
 
 Object* ObjectManager::createCamera(const char* name, unsigned int id) {
@@ -4755,8 +4973,8 @@ bool BouManager::OnMouseMove(ml::EventView* view) {
         return false;
     }
     if (m_debugFlags.test(0) && m_flags.test(2) && !m_flags.test(3)) {
-        m_dragOfs.x = view->m_pos.x - m_downPos.x;
-        m_dragOfs.y = view->m_pos.y - m_downPos.y;
+        m_rect.w = view->m_pos.x - m_rect.x;
+        m_rect.h = view->m_pos.y - m_rect.y;
         updateActive(view->m_pos);
     }
     return false;

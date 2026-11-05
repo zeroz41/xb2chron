@@ -15,6 +15,12 @@ public:
     // inline: ml::DesktopIcon's constructor sets its rectangle from one
     Rect(T x, T y, T w, T h) : x(x), y(y), w(w), h(h) {}
     Rect(const Rect& r) : x(r.x), y(r.y), w(r.w), h(r.h) {}
+    // the empty rectangle as a guarded function static (_ZZN2mm4RectIiE4zeroEvE1r; event::BouRect's constructor
+    // copies it)
+    static const Rect& zero() {
+        static Rect r(0, 0, 0, 0);
+        return r;
+    }
     // whether a point lies within it, its far edges included (inline: ui::UIInputPointer::setPointerPos compares
     // the point with each edge, the size halved apart from the test); the name is not the original's
     bool isInside(const Pnt<T>& p) const { return p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h; }

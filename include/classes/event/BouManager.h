@@ -11,12 +11,16 @@ namespace event { enum MSG_TYPE : int; }
 #include "mm/mtl/Bitflag.h"
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
+#include "classes/event/BouRect.h"
 namespace event { class IBouCallback; }
 
 namespace event {
 // table 0x7100B3DA40; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::BouManager>
 class BouManager : public IManager, public mm::mtl::Singleton<BouManager>, public ::ml::IWorkEvent {
 public:
+    // inline: Singleton<BouManager>::getPtr (0x710014D480, out of line in its callers) holds it; both flag words
+    // zeroed, the rectangle from Rect<int>::zero(), both vectors empty
+    BouManager() : m_flags(), m_debugFlags() {}
     virtual ~BouManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     virtual bool OnMouseButtonDown(ml::EventView*);  // slot 3
@@ -35,11 +39,9 @@ public:
     // the slots load each word on its own, as ManiManager's do
     mm::mtl::Bitflag<32> m_flags;  // 0x18
     mm::mtl::Bitflag<32> m_debugFlags;  // 0x1c setDebugEnable's (the name is not the original's)
-    unsigned char pad_20[0x8];
-    // where the drag began (OnMouseButtonDown) and the pointer's offset from it (OnMouseMove) (the names are not
-    // the original's)
-    mm::Pnt<int> m_downPos;  // 0x28
-    mm::Pnt<int> m_dragOfs;  // 0x30
+    // the drag rectangle: its corner where the drag began (OnMouseButtonDown), its size the pointer's offset from
+    // it (OnMouseMove); the name is not the original's
+    BouRect m_rect;  // 0x20
     mm::mtl::FixedVector<IBouCallback*, 1024> m_callbacks;  // 0x38 push/pop (the name is not the original's)
     mm::mtl::FixedVector<IBouCallback*, 1024> m_actives;  // 0x2040 updateActive fills it (the name is not the original's; element type inferred)
 };

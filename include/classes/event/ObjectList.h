@@ -2,7 +2,9 @@
 #define CLASSES_EVENT_OBJECTLIST_H
 
 #include "mm/mtl/FixStr.h"
+#include "mm/mtl/FixedVector.h"
 namespace event { class Object; }
+namespace gf { class GF_OBJ_HANDLE; }
 
 namespace event {
 // table 0x7100B3E0F8
@@ -11,6 +13,8 @@ public:
     // 0x7100127994 (1.0.0's ObjectList(const char*, bool)): ObjectManager::createScene passes m_flags bit 0
     ObjectList(const char* name, bool flag);
     virtual ~ObjectList();  // slot 0
+    // empties the effect category (ObjectManager::OnEventProc)
+    void startPage();
     // makes the object at the given path active (ScriptSetActive::doit tail-calls it)
     void setActivePath(const char* path);
 
@@ -30,9 +34,19 @@ public:
     inline void stopEffect();
     // the object below obj (obj included) with that name, else null (static: the original passes obj in x0)
     static Object* searchByNameSub(Object* obj, const char* name);
+    // a character object for an existing gf object, added to category 0
+    Object* createGfObj(const char* name, gf::GF_OBJ_HANDLE* handle);
+    // the driver (blade) of the event party whose blade (driver) has that bdat id, else the party leader driver
+    // (getDriverByBlade) / -1 (getBladeByDriver)
+    gf::GF_OBJ_HANDLE* getDriverByBlade(unsigned int bladeId);
+    gf::GF_OBJ_HANDLE* getBladeByDriver(unsigned int driverId);
+    // the id-th object of the camera (light) category, created when the category holds fewer
     Object* createCamera(const char* name, unsigned int id);
     Object* createEffect(const char* name);
     Object* createLight(const char* name, unsigned int id);
+    // appends the bdat id of every character object whose gf object has that type (clears the list first unless
+    // append is set)
+    void listupObject(mm::mtl::FixedVector<unsigned int, 256>& list, unsigned int type, bool append);
     // 1.0.0's constructor zeroes it, then stores its second argument (bool) in bit 0; the name is not the original's
     unsigned int m_flags;  // 0x8
     mm::mtl::FixStr<64> m_name;  // 0xc; 1.0.0's constructor copies its first argument in
