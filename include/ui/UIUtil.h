@@ -47,6 +47,7 @@ void initLayerLib();
 void termLayerLib();
 void initBdatFP();  // opens the menu's BDAT tables into s_BdatFPs (UIManager::resetData first)
 void setupAllocator(mtl::ALLOC_HANDLE handle);  // the menu's program and resource allocators (UIManager's constructor)
+void destoryAllocator();  // gives back setupAllocator's two allocators (gf::GfMenuManager::finalize)
 void initObjectMap(unsigned int count);
 void termObjectMap();
 UIImageObject* getImageObject(unsigned int handle);  // null when the handle is no image object's

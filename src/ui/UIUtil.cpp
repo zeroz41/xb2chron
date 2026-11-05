@@ -19,6 +19,8 @@
 #include "classes/ui/UIImageObject.h"
 #include "classes/ui/UILayoutObject.h"
 #include "classes/ui/UIObject.h"
+#include "mtl/MemManager.h"
+#include "classes/ml/DevGraph.h"
 
 namespace ui { namespace UIUtil {
 
@@ -312,6 +314,33 @@ void makeMenuEnvFileName(mm::mtl::FixStr<128>& path, const char* name) {
     lowerFileName(path);
 }
 
+void setupAllocator(mtl::ALLOC_HANDLE handle) {
+    mtl::ALLOC_HANDLE prog =
+        mtl::MemManager::create(handle, 0x500000, "MenuProgram", false, mtl::AllocatorType(1), 0x10, "no name", 0);
+    mtl::ALLOC_HANDLE res =
+        mtl::MemManager::create(handle, 0x5500000, "MenuResource", false, mtl::AllocatorType(2), 0x1000, "no name", 0);
+    ml::DevGraph::setMemPoolMemHandle(res);
+    s_ProgAllocator.m_name = "MenuProgram";
+    s_ProgAllocator.setMemHandle(prog);
+    s_ResAllocator.m_name = "MenuResource";
+    s_ResAllocator.setMemHandle(res);
+}
+
+void destoryAllocator() {
+    mtl::ALLOC_HANDLE handle;
+    handle = s_ProgAllocator.getMemHandle();
+    if (handle.m_handle != 0) {
+        mtl::MemManager::erase(handle);
+        s_ProgAllocator.setMemHandle(mtl::ALLOC_HANDLE());
+    }
+    handle = s_ResAllocator.getMemHandle();
+    if (handle.m_handle != 0) {
+        ml::DevGraph::releaseMemPoolMemHandle(handle);
+        mtl::MemManager::erase(handle);
+        s_ResAllocator.setMemHandle(mtl::ALLOC_HANDLE());
+    }
+}
+
 mm::mtl::IAllocator* getResourceAllocator() {
     return &s_ResAllocator;
 }
@@ -323,6 +352,57 @@ unsigned int getGroupPriority(unsigned int group) {
 void setSafeMergin(unsigned int width, unsigned int height) {
     s_SafeMarginW = width;
     s_SafeMarginH = height;
+}
+
+bool adjustScreen(mm::Rect<short>& rect) {
+    auto right = [](const mm::Rect<short>& r) -> short { return r.x + r.w; };
+    auto bottom = [](const mm::Rect<short>& r) -> short { return r.y + r.h; };
+    layer::LayerAccManager manager;
+    mm::Rect<short> r;
+    r = rect;
+    mm::Rect<short> screen;
+    screen.x = s_SafeMarginW;
+    screen.w = (int)manager.getScreenWidth() - s_SafeMarginW * 2;
+    screen.y = s_SafeMarginH;
+    screen.h = (int)manager.getScreenHeight() - s_SafeMarginH * 2;
+    if (screen.x <= rect.x && right(screen) > right(rect) && screen.y <= rect.y && bottom(screen) > bottom(rect)) {
+        return false;
+    }
+    if (r.x < screen.x) {
+        r.x = screen.x;
+    }
+    if (r.y < screen.y) {
+        r.y = screen.y;
+    }
+    if (r.x + r.w > screen.x + screen.w) {
+        r.x = screen.x + screen.w - r.w;
+    }
+    if (r.y + r.h > screen.y + screen.h) {
+        r.y = screen.y + screen.h - r.h;
+    }
+    rect = r;
+    return true;
+}
+
+bool adjustRect(mm::Rect<short>& rect, mm::Rect<short>& area) {
+    auto right = [](const mm::Rect<short>& r) -> short { return r.x + r.w; };
+    auto bottom = [](const mm::Rect<short>& r) -> short { return r.y + r.h; };
+    if (area.x <= rect.x && right(area) > right(rect) && area.y <= rect.y && bottom(area) > bottom(rect)) {
+        return false;
+    }
+    if (rect.x < area.x) {
+        rect.x = area.x;
+    }
+    if (rect.y < area.y) {
+        rect.y = area.y;
+    }
+    if (rect.x + rect.w > area.x + area.w) {
+        rect.x = area.x + area.w - rect.w;
+    }
+    if (rect.y + rect.h > area.y + area.h) {
+        rect.y = area.y + area.h - rect.h;
+    }
+    return true;
 }
 
 unsigned long timeSecToUITime(float sec) {
@@ -371,6 +451,43 @@ const fw::PadData* getPadData() {
         return &UIManager::sys()->m_padRead->uiGetControlPad();
     }
     return &fw::PadManager::getControlPadData(0);
+}
+
+void setDockPos(unsigned int handle, unsigned int target, unsigned char side, bool outer) {
+    UIObjectAcc acc(handle);
+    UIObjectAcc targetAcc(target);
+    unsigned short mode = outer ? 3 : 2;
+    if (acc.m_object != nullptr && targetAcc.m_object != nullptr) {
+        short width;
+        mm::Pnt<short> pos;
+        short height;
+        acc.getSize(true, width, height);
+        width /= 2;
+        height /= 2;
+        mm::Rect<short> rect;
+        targetAcc.getRect(rect, mode);
+        pos.x = rect.x + rect.w / 2;
+        pos.y = rect.y + rect.h / 2;
+        switch (side) {
+        case 0:
+            break;
+        case 1:
+            pos.x -= rect.w / 2 + width;
+            break;
+        case 2:
+            pos.x += rect.w / 2 + width;
+            break;
+        case 3:
+            pos.y = pos.y - height - rect.h / 2;
+            break;
+        case 4:
+            pos.y = height + pos.y + rect.h / 2;
+            break;
+        default:
+            return;
+        }
+        acc.setPosCenter(pos);
+    }
 }
 
 }}  // namespace ui::UIUtil
