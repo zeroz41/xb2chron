@@ -14,6 +14,17 @@
 
 namespace btl {
 
+void ElementalComboManager::Reset(bool once) {
+    if (once) {
+        if (m_isReset) {
+            return;
+        }
+        m_isReset = true;
+    }
+    ResetElement(-1);
+    ResetElementalComboData();
+}
+
 ElementalComboManager::~ElementalComboManager() {
     if (BattleGlobal::sys()->m_elementalCombo.m_immortal == m_handle) {
         BattleGlobal::sys()->SetElementalComboImmortal(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1));
@@ -72,6 +83,44 @@ void ElementalComboManager::CheckCharacterID() {
     }
 }
 
+void ElementalComboManager::ResetElement(int element) {
+    int end = 8;
+    int start = 0;
+    if (element >= 0) {
+        end = element;
+        start = element;
+    }
+    for (int i = start; i <= end; ++i) {
+        m_elements[i].Clear(i);
+    }
+    pad_18 = 0.0f;
+    pad_aa6 = 0;
+}
+
+void ElementalComboManager::ResetElementalComboData() {
+    if (BattleGlobal::sys()->m_elementalCombo.m_immortal == m_handle) {
+        BattleGlobal::sys()->SetElementalComboImmortal(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1));
+    }
+    if (BattleGlobal::sys()->pad_5d08 == m_handle && !BattleGlobal::sys()->pad_5d3f) {
+        BattleGlobal::sys()->DeleteUniteComboDirection();
+    }
+    for (int i = 0; i < 3; ++i) {
+        if (m_combos[i].m_comboID != 0) {
+            m_combos[i].Clear();
+        }
+        pad_aaf[i] = 0;
+    }
+    m_comboStage = 0;
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(m_charaID);
+    if (chr != nullptr) {
+        chr->SetRimBloom(static_cast<BattleCharacter::RIMBLOOM_ID>(1), false);
+        pad_aa4_4 = 0;
+    }
+    pad_aa0 = 0;
+    pad_aa0_28 = 0;
+    DeleteBallEffect(-1);
+}
+
 void ElementalComboManager::Rub(const ElementalComboManager& other, float rate) {
     if (other.m_comboStage == 0) {
         return;
@@ -90,7 +139,7 @@ void ElementalComboManager::Rub(const ElementalComboManager& other, float rate) 
         data.pad_14 = 1.0f;
         data.pad_18 = 0;
         data.pad_28 = 0;
-        data.pad_78 = other.m_charaID;
+        data.m_source.charaID = other.m_charaID;
         unsigned char* fp = gf::GfDataBdat::getFP(0x23);
         if (!m_isPlayer) {
             unsigned int dd = static_cast<unsigned short>(Bdat::getValCheck(fp, "DD", id, 2));
@@ -104,14 +153,14 @@ void ElementalComboManager::Rub(const ElementalComboManager& other, float rate) 
             dot.bits = Bdat::getValCheck(fp, "DotEn", id, 8);
             data.pad_20 = dot.value * 0.01f;
         }
-        memset(data.pad_7a, 0, sizeof(data.pad_7a));
-        unsigned char& bits = data.pad_7a[m_charaID >> 3];
+        memset(data.pad_7a.bits, 0, sizeof(data.pad_7a.bits));
+        unsigned char& bits = data.pad_7a.bits[m_charaID >> 3];
         bits |= 1 << (m_charaID & 7);
         data.pad_88_0 = 0;
     }
     BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(m_charaID);
     if (chr != nullptr) {
-        chr->SetRimBloom(static_cast<BattleCharacter::RIMBLOOM_ID>(m_combos[m_comboStage - 1].pad_77), true);
+        chr->SetRimBloom(static_cast<BattleCharacter::RIMBLOOM_ID>(m_combos[m_comboStage - 1].m_source.rimBloomID), true);
     }
 }
 
@@ -267,7 +316,7 @@ void ElementalComboManager::Update(float dt) {
                 if (id == 0) {
                     sub = -1;
                 } else {
-                    sub = m_combos[m_comboStage - 1].pad_78;
+                    sub = m_combos[m_comboStage - 1].m_source.charaID;
                     if (sub == 0xFF) {
                         sub = -1;
                     }
@@ -309,6 +358,20 @@ float ElementalComboManager::CalcRestTimeRatio(const ELEMENTAL_COMBO_DATA& data)
         return 1.0f;
     }
     return data.m_restTime / data.m_time;
+}
+
+void ElementalComboManager::MulRestTimeSpeed(float rate) {
+    for (int i = 0; i < 3; ++i) {
+        ELEMENTAL_COMBO_DATA& data = m_combos[i];
+        if (data.m_comboID != 0) {
+            float speed = data.m_restTimeSpeed * 0.0005f * rate;
+            unsigned short value = speed * 2000.0f;
+            if (value > 64000) {
+                value = 64000;
+            }
+            data.m_restTimeSpeed = value;
+        }
+    }
 }
 
 float ElementalComboManager::GetRestTimeRatio(bool& fixed) const {

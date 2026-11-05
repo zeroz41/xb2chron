@@ -1,6 +1,7 @@
 #ifndef CLASSES_BTL_ELEMENTALCOMBOMANAGER_H
 #define CLASSES_BTL_ELEMENTALCOMBOMANAGER_H
 
+#include <stddef.h>
 #include <string.h>
 #include "mm/Vec3.h"
 
@@ -16,7 +17,9 @@ public:
         ELEMENTAL_DATA()
             : m_value(0.0f), m_ratio(0.0f), pad_8(0), m_state(0), pad_10(0), pad_14(), pad_b4(0), pad_b8(0xFF),
               pad_b9(0), pad_ba(3), m_element(0) {}
-        void Clear() {
+        // ResetElement's loop: the element's own index is set last, as part of the clear (the base register its
+        // inlined copy keeps shows the store is the clear's own)
+        void Clear(int element) {
             pad_b4 = 0;
             m_value = 0.0f;
             m_ratio = 0.0f;
@@ -26,6 +29,7 @@ public:
             pad_b9 = 0;
             pad_ba = 3;
             memset(pad_14, 0, sizeof(pad_14));
+            m_element = element;
         }
         // GetElementalValue answers it, SetElementalValue caps it at the manager's m_valueMax (1.0.0; the name is
         // not the original's)
@@ -51,30 +55,23 @@ public:
         ELEMENTAL_COMBO_DATA()
             : pad_0(0), pad_4(0), pad_8(0), m_time(0.0f), m_restTime(0.0f), pad_14(0.0f), pad_18(0), pad_1c(0.0f),
               pad_20(0.0f), pad_24(1.0f), pad_28(0), pad_2c(0), pad_70(0), m_restTimeSpeed(2000), m_comboID(0),
-              pad_77(0), pad_78(0xFF), pad_79(0), pad_7a(), pad_86(0), pad_88_0(0), pad_88_1(0) {}
+              m_source{0, 0xFF}, pad_79(0), pad_7a(), pad_86(0), pad_88_0(0), pad_88_1(0) {}
         void Clear() {
+            // the fields up to pad_24 as one block (the original's store order follows a memset)
+            memset(this, 0, offsetof(ELEMENTAL_COMBO_DATA, pad_24));
             pad_24 = 1.0f;
-            m_restTimeSpeed = 2000;
-            pad_0 = 0;
-            pad_4 = 0;
-            pad_8 = 0;
-            m_time = 0.0f;
-            m_restTime = 0.0f;
-            pad_14 = 0.0f;
-            pad_18 = 0;
-            pad_1c = 0;
-            pad_20 = 0;
             pad_28 = 0;
             pad_2c = 0;
             pad_70 = 0;
+            m_restTimeSpeed = 2000;
             m_comboID = 0;
+            Source source = {0, 0xFF};
+            m_source = source;
             pad_79 = 0;
-            pad_77 = 0;
-            pad_78 = 0xFF;
-            memset(pad_7a, 0, sizeof(pad_7a));
             pad_86 = 0;
             pad_88_0 = 0;
             pad_88_1 = 0;
+            pad_7a = CharaBits();
         }
         unsigned int pad_0;
         unsigned int pad_4;
@@ -96,11 +93,21 @@ public:
         unsigned short m_restTimeSpeed;
         // non-zero while the stage runs (GetElementalComboID answers it; the name is not the original's)
         unsigned char m_comboID;
-        unsigned char pad_77;
-        unsigned char pad_78;
+        // its own type: Clear stores both as one 16-bit constant from a local (the names are not the original's)
+        struct Source {
+            unsigned char rimBloomID;  // Rub hands it to BattleCharacter::SetRimBloom
+            // the character the stage came from, 0xFF for none (Rub sets the other manager's m_charaID; Update hands
+            // it to CharacterParameter::SetElementalComboID)
+            unsigned char charaID;
+        };
+        Source m_source;
         unsigned char pad_79;
-        // a bit per character index (Rub sets its character's; meaning unknown)
-        unsigned char pad_7a[0xC];
+        // a bit per character index (Rub sets its character's; meaning unknown). Its own type: Clear zeroes the 12
+        // bytes as one 8-byte and one 4-byte store apart from its neighbours (a memset merges them)
+        struct CharaBits {  // the name is not the original's
+            unsigned char bits[0xC];
+        };
+        CharaBits pad_7a;
         unsigned short pad_86;
         unsigned char pad_88_0 : 1;
         unsigned char pad_88_1 : 1;
