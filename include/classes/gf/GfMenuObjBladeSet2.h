@@ -7,7 +7,8 @@
 #include "classes/ui/UIManager.h"
 #include "ui/EventData.h"
 
-namespace gf { class GfMenuBladeList; class GfMenuCallContext; class GfMenuDriverList; }
+namespace gf { class GfMenuBladeList; class GfMenuCallContext; class GfMenuDriverList; class RQ_SETUP_BLADE; }
+namespace ui { class UIObjectAcc; }
 namespace mm { namespace mtl { class ReferenceObject; } }
 
 namespace gf {
@@ -51,10 +52,14 @@ public:
         event.m_param0 = param;
         ui::UIManager::get()->requestObjectEvent(handle, event, 0.0f);
     }
+    static void setupBldeSlot(ui::UIObjectAcc& acc, const GfMenuBladeList* list);
     bool seqOpenImage();
+    static void makeSetupBlade_Remove(RQ_SETUP_BLADE& setup, unsigned int driver, unsigned int blade);
     bool seqReturnBlSlot();
-    void refreshBladeSlot(GfMenuBladeList* list);
+    static void refreshBladeSlot(GfMenuBladeList* list);
     void refreshBladeList();
+    static void setupBldeList(ui::UIObjectAcc& acc, const GfMenuBladeList* list, GfMenuBladeList* slotList);
+    static bool checkBladeSet(unsigned int blade, GfMenuBladeList* list);
 
     GfMenuBladeList* m_slotList;            // 0x28: initialize's (the destructor releases it)
     mm::mtl::ReferenceObject* pad_30;

@@ -22,6 +22,14 @@
 #include "ui/EventData.h"
 #include "mm/mtl/Delegate.h"
 #include "gf/GfMenuSequence.h"
+#include "classes/gf/GfMenuAdapterManager.h"
+#include "classes/gf/GfMenuCharDataAdapter.h"
+#include "classes/gf/GfMenuReference.h"
+#include "classes/gf/DataParamAcc.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfReqParam.h"
+#include "mm/Vec2.h"
+#include "mm/mtl/FixStr.h"
 
 namespace gf {
 
@@ -174,10 +182,218 @@ void GfMenuObjBladeSet2::MainListener::reciveEvent(ui::EventData const& event, u
     }
 }
 
+void GfMenuObjBladeSet2::setupBldeSlot(ui::UIObjectAcc& acc, const GfMenuBladeList* list) {
+    mm::mtl::FixStr<32> name;
+    GfMenuAdapterManager::beginAddAfter();
+    for (int i = 0; i < 3; i++) {
+        name.format("IMG_tface@%02d", i + 1);
+        GfMenuCharDataAdapter::createFromBladeList(acc.searchChild(name.m_str), 3, list, i, false);
+        name.format("IMG_twpnicon@%02d", i + 1);
+        GfMenuCharDataAdapter* weapon =
+            GfMenuCharDataAdapter::createFromBladeList(acc.searchChild(name.m_str), 0x29, list, i, false);
+        if (weapon != nullptr) {
+            name.format("IMG_twpnicon_base@%02d", i + 1);
+            weapon->m_rowHandle = acc.searchChild(name.m_str);
+        }
+        name.format("IMG_telemicon@%02d", i + 1);
+        GfMenuCharDataAdapter::createFromBladeList(acc.searchChild(name.m_str), 0x2A, list, i, false);
+        name.format("IMG_trole_icon@%02d", i + 1);
+        GfMenuCharDataAdapter::createFromBladeList(acc.searchChild(name.m_str), 0x42, list, i, false);
+        name.format("IMG_tlock@%02d", i + 1);
+        GfMenuCharDataAdapter* lock =
+            GfMenuCharDataAdapter::createFromBladeList(acc.searchChild(name.m_str), 0x5A, list, i, true);
+        if (lock != nullptr) {
+            lock->setDispAlphaMode(true);
+        }
+    }
+    for (int i = 0; i < 3; i++) {
+        name.format("TXT_dr_class_name@%02d", i + 1);
+        ui::UIObjectAcc text(acc.m_handle, name.m_str);
+        GfMenuCharDataAdapter* className = GfMenuCharDataAdapter::createFromReferenceDriver(text.m_handle, 0x25, 0, true);
+        if (className != nullptr) {
+            className->m_index = i;
+            className->m_virtualMode = 1;
+        }
+        name.format("IMG_dr_class_eff_lv@%02d", i + 1);
+        GfMenuCharDataAdapter* level =
+            GfMenuCharDataAdapter::createFromReferenceDriver(acc.searchChild(name.m_str), 0x27, 0, true);
+        if (level != nullptr) {
+            level->m_index = i;
+            level->m_virtualMode = 1;
+        }
+        name.format("IMG_dr_class_empty@%02d", i + 1);
+        GfMenuObjUtil::createSyncPlugin(acc.searchChild(name.m_str), text.m_handle, 0x40);
+    }
+    GfMenuAdapterManager::endAddAfter();
+    GfMenuCharDataAdapter::createFromReferenceDriver(acc.searchChild("IMG_drimg01"), 0x1C, 0, false);
+    GfMenuCharDataAdapter::createFromReferenceBlade(acc.searchChild("IMG_blimg01"), 0x36, 0, false);
+    {
+        ui::UIObjectAcc image(acc.searchChild("IMG_blimg01"));
+        image.setStreamImage2nd();
+    }
+    GfMenuObject::addNumberEventCondition(acc.m_handle, "IMG_blimg01", 0, 0);
+}
+
+bool GfMenuObjBladeSet2::seqOpenImage() {
+    ui::UIObjectAcc image(m_handle, "IMG_blimg01");
+    if (image.isStreaming()) {
+        image.setAlpha(0.0f);
+        return false;
+    }
+    {
+        ui::UIObjectAcc acc(m_handle, "LAY_bl_list");
+        unsigned int blade = GfMenuReference::getReferenceBladeID(0);
+        acc.setLayout(image.m_handle, "blade");
+        GfMenuObjUtil::ImageParam imageParam;
+        if (blade != 0 && GfMenuObjUtil::getImageParam(1, blade, imageParam, 1)) {
+            mm::Vec2 scale;
+            image.getScale(scale);
+            scale.x = imageParam.m_scale * scale.x;
+            scale.y = imageParam.m_scale * scale.y;
+            image.setScale(scale);
+            GfMenuObjUtil::addPos(image.m_handle, imageParam.m_x, imageParam.m_y);
+        }
+    }
+    image.setAlpha(1.0f);
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x10000000;
+    param.m_motionLib = "cmn_fade_motion_lr";
+    param.m_motion = "fade_in_r";
+    param.m_startFlags = 8;
+    param.m_setDefault = true;
+    GfMenuObjUtil::startCtrl(image.m_handle, param, nullptr);
+    image.setAlpha(0.0f);
+    return true;
+}
+
+void GfMenuObjBladeSet2::makeSetupBlade_Remove(RQ_SETUP_BLADE& setup, unsigned int driver, unsigned int blade) {
+    GfMenuObjUtil::getDriverPartyID(driver);
+    bool homura = GfMenuObjUtil::hasHomura(driver);
+    DataParamAcc acc(3, driver, GimmickType(0));
+    int slot = acc.getBladeSet(false);
+    if (slot == 3) {
+        slot = GfDataBlade::getDriverSetID(0x3E9);
+    }
+    if (acc.getBlade(-1, false) == blade) {
+        do {
+            slot = slot + 1 < (int)GfMenuObjUtil::getBladeSlotMax() ? slot + 1 : 0;
+        } while (acc.getBlade(slot, false) == 0);
+    }
+    int active = slot;
+    if (acc.getBlade(slot, false) == 0x3E9 && GfDataBlade::isHikariCurrent()) {
+        active = 3;
+    }
+    if (blade == 0x3EA && homura) {
+        blade = 0x3E9;
+    }
+    for (int i = 0; i < 5; i++) {
+        setup.m_blades[i] = acc.getBlade(i, false) != blade ? acc.getBlade(i, false) : 0;
+    }
+    setup.m_driver = driver;
+    setup.m_activeBlade = setup.m_blades[active];
+}
+
 bool GfMenuObjBladeSet2::seqReturnBlSlot() {
     ui::UIObjectAcc acc(m_handle, "LAY_dr_team");
     sendEvent(acc.m_handle, 0x101, 1);
     refreshBladeList();
+    return true;
+}
+
+void GfMenuObjBladeSet2::refreshBladeSlot(GfMenuBladeList* list) {
+    unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+    GfMenuBladeList::DriverSetup setup;
+    setup.pad_1C = true;
+    setup.pad_1D = false;
+    setup.pad_1E = false;
+    setup.m_type = 1;
+    setup.m_driver = driver;
+    setup.m_param.m_pageRowSize = GfMenuObjUtil::getBladeSlotMax();
+    list->setupFromDriver(setup);
+    while ((unsigned int)list->getSize() < 3) {
+        MenuBladeInfo info;
+        info.m_blade = 0;
+        info.m_creator = driver;
+        list->addContents(info);
+    }
+}
+
+void GfMenuObjBladeSet2::refreshBladeList() {
+    if (m_faceCount == 0) {
+        return;
+    }
+    m_bladeList->updateOwner();
+    ui::UIObjectAcc face(m_handle, "LAY_bl_facelayout");
+    ui::UIObjectAcc info(m_handle, "LAY_bl_infolayout");
+    mm::mtl::FixStr<32> name;
+    unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+    for (unsigned int i = 0; i < m_faceCount; i++) {
+        unsigned int blade = m_bladeList->getContents(m_bladeList->getPageIndex(i)).m_blade;
+        name.format("IMG_fadeselect@%02d", i + 1);
+        bool disp = GfDataBlade::getSetDriver(m_bladeList->getContents(m_bladeList->getPageIndex(i)).m_blade) == driver;
+        if (disp && blade == 0x3EA) {
+            if (GfDataBlade::isActivateDriver(0x3E9)) {
+                disp = GfDataBlade::getDriverSetID(0x3E9) != -1;
+            } else {
+                disp = true;
+            }
+        }
+        face.setDispChild(disp, name.m_str);
+    }
+}
+
+void GfMenuObjBladeSet2::setupBldeList(ui::UIObjectAcc& acc, const GfMenuBladeList* list, GfMenuBladeList* slotList) {
+    GfMenuAdapterManager::beginAddAfter();
+    mm::mtl::FixStr<32> name;
+    for (int i = 0; i < 15; i++) {
+        name.format("IMG_face@%02d", i + 1);
+        GfMenuCharDataAdapter::createFromBladeList(acc.searchChild(name.m_str), 3, list, i, false);
+        name.format("IMG_wpnicon@%02d", i + 1);
+        GfMenuCharDataAdapter* weapon =
+            GfMenuCharDataAdapter::createFromBladeList(acc.searchChild(name.m_str), 0x29, list, i, false);
+        if (weapon != nullptr) {
+            name.format("IMG_wpnicon_base@%02d", i + 1);
+            weapon->m_rowHandle = acc.searchChild(name.m_str);
+        }
+        name.format("IMG_elemicon@%02d", i + 1);
+        GfMenuCharDataAdapter::createFromBladeList(acc.searchChild(name.m_str), 0x2A, list, i, false);
+        name.format("IMG_role_icon@%02d", i + 1);
+        GfMenuCharDataAdapter::createFromBladeList(acc.searchChild(name.m_str), 0x42, list, i, false);
+        name.format("LAY_mericon@%02d", i + 1);
+        GfMenuCharDataAdapter::createFromBladeList(acc.searchChild(name.m_str), 0x53, list, i, true);
+        name.format("IMG_dr_icon@%02d", i + 1);
+        GfMenuCharDataAdapter::createFromBladeListOwnerDriver(acc.searchChild(name.m_str), 3, list, i, true);
+        name.format("IMG_face@%02d", i + 1);
+        GfMenuCharDataAdapter::createFromBladeList(acc.searchChild(name.m_str), 0x4A, list, i, true)->setSlotList(slotList);
+        name.format("IMG_lock@%02d", i + 1);
+        GfMenuCharDataAdapter* lock =
+            GfMenuCharDataAdapter::createFromBladeList(acc.searchChild(name.m_str), 0x5A, list, i, true);
+        if (lock != nullptr) {
+            lock->setDispAlphaMode(true);
+        }
+    }
+    GfMenuAdapterManager::endAddAfter();
+}
+
+bool GfMenuObjBladeSet2::checkBladeSet(unsigned int blade, GfMenuBladeList* list) {
+    unsigned int index = list->getIndex(false);
+    // the selected content read in place (an if/else, not getContents' if-then: the original keeps m_dummy's
+    // address out of the entry block)
+    unsigned int selected = list->getIndex(false);
+    const MenuBladeInfo& current = selected < list->m_list.size() ? list->m_list[selected] : list->m_dummy;
+    if (current.m_blade != 0) {
+        for (unsigned int i = 0; i < (unsigned int)list->getSize(); i++) {
+            const MenuBladeInfo& info = list->getContents(i);
+            if (index != i && info.m_blade == blade) {
+                return true;
+            }
+        }
+    }
+    for (unsigned int i = 0; i < (unsigned int)list->getSize(); i++) {
+        if (list->getContents(i).m_blade == blade) {
+            return false;
+        }
+    }
     return true;
 }
 }  // namespace gf
