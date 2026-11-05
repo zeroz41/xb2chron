@@ -514,7 +514,8 @@ void GfComBehaviorEnemy::setStateId(enemy::STATE_ID state) {
         pad_54e2 = false;
         m_reqChangeBattle = false;
         pad_5508 = 0;
-        m_field.m_pitchRoll.pad_30 = 0x101;
+        m_field.m_pitchRoll.pad_30 = true;
+        m_field.m_pitchRoll.pad_31 = true;
         GfObjSetupEnemy* setup =
             mm::mtl::rttiCast<GfObjSetupEnemy>(GfObjManager::getObjInfo(static_cast<GfObj*>(m_owner)->m_handle)->m_setup);
         btl::SirenBattleManager* siren = btl::SirenBattleManager::sys();

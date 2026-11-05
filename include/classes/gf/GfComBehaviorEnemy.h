@@ -73,7 +73,7 @@ public:
     // m_field.pad_52a9 is set and it is not in that state already.
     void updateField(const fw::UpdateInfo& info);
     // 2.0.0's symbols name it. What it does: sets the state machine to state; for state 0 (battle) it first clears
-    // pad_54e2, m_reqChangeBattle and pad_5508, sets m_pitchRoll.pad_30 to 0x101, gives its object flag bit 2 (pad_110
+    // pad_54e2, m_reqChangeBattle and pad_5508, sets m_pitchRoll.pad_30 and pad_31, gives its object flag bit 2 (pad_110
     // |= 4) and takes its invincibility off unless its setup's arrange row is one of the siren battle's two
     // (SirenBattleManager m_params[].m_arrangeID), and has a squad member's others ask for battle
     // (reqChangeBattleToOtherMember).
@@ -119,6 +119,7 @@ public:
     void execTurnCmdAccurately(float rotY);
     // turns the enemy toward its move direction (GfBehaviorEnemyField::getMoveDir) in the xz plane
     void execTurnCmdToGoal();
+    void extractLoco();
     // (re)makes its state machine: the enemy's 16 states (battle, field idle/spawn/walk/home/squad/blade)
     void createFsm();
     // disposes the field movement, the state machine and the menu object, cleans the plugins up and lets the

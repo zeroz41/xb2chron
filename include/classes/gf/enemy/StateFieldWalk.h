@@ -52,7 +52,8 @@ public:
     unsigned int pad_1c;
     TFieldExecCmd<GfComAsm> m_execCmd;
     Seq m_seq;
-    unsigned int pad_68;
+    // the time seqLandingIdle counts up (seqWaitTurnEndAtRoutePoint clears it)
+    float pad_68;
     mm::Vec3 pad_70;
     int pad_80;
     int pad_84;
@@ -60,6 +61,7 @@ public:
     // enemy to it; the names are not the original's)
     bool m_hasPointRotY;
     float m_pointRotY;
+    // the route point action: 2, 3 play a unique motion, 4, 5 a special one moving by its locomotion, 6 lands
     unsigned int pad_90;
     float pad_94;
     float pad_98;

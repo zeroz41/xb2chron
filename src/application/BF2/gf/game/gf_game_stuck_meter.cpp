@@ -138,7 +138,7 @@ void GfFieldUndulator::dispose() {
     m_bdat.pad_1 = false;
 }
 
-GfFieldPitchRollController::GfFieldPitchRollController(const CreateInfo* info) : pad_10(nullptr), m_seq(nullptr), pad_28(0), pad_30(0) {
+GfFieldPitchRollController::GfFieldPitchRollController(const CreateInfo* info) : pad_10(nullptr), m_seq(nullptr), pad_28(0), pad_30(false), pad_31(false) {
     if (info) {
         create(*info);
     }

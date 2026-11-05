@@ -4,6 +4,7 @@
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkAcc.h"
 #include "mm/Vec3.h"
+#include "mm/Vec3NA.h"
 
 namespace gmk {
 class GmkRoute;
@@ -14,7 +15,13 @@ class GmkRoute;
 class GmkRouteNavi {
 public:
     class InitResult;
-    class UpdateInfo;
+    // what update takes: the mover's position as three floats, zero by default (12 bytes: the field states copy the
+    // three components; the field's name is not the original's)
+    class UpdateInfo {
+    public:
+        UpdateInfo() { m_pos.x = 0.0f; m_pos.y = 0.0f; m_pos.z = 0.0f; }
+        mm::Vec3NA m_pos;
+    };
     // 0x28 bytes: create copies it whole (memcpy 0x28) into m_info
     class CreateInfo {
     public:

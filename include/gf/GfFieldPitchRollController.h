@@ -31,7 +31,9 @@ public:
     void* pad_10;
     Seq m_seq;  // the step update runs; create starts it at seqInit
     unsigned long pad_28;
-    unsigned short pad_30;
+    // GfComBehaviorEnemy::setStateId sets both on battle start; StateFieldWalk::seqWaitToIdle sets pad_30
+    bool pad_30;
+    bool pad_31;
     unsigned char pad_32[0x6];
 };
 }  // namespace gf
