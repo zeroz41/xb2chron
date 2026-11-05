@@ -171,6 +171,33 @@ void GfItemInfo::setType(ItemType::Type type) {
     m_type = type;
 }
 
+bool GfItemBoxBase::canAddItem(unsigned int item) {
+    ItemType::Type type;
+    unsigned int index;
+    GfDataItem::getItemType(type, index, item);
+    unsigned int stock = GfItemUtil::getEnableStock(item);
+    if (getTypeIndex(type) == 0) {
+        return false;
+    }
+    item_iterator it = begin(type);
+    item_iterator last = end(type);
+    if (isMulti(type)) {
+        for (; it.m_cur != last.m_cur; ++it) {
+            GfItemInfo* info = *it.m_cur;
+            if (info->m_id != 0 && info->m_id == index && info->getType() == type) {
+                return info->m_count < stock;
+            }
+        }
+    }
+    it = begin(type);
+    for (; it.m_cur != last.m_cur; ++it) {
+        if ((*it.m_cur)->getIndex() == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
 int GfItemBoxBase::countItem(unsigned int item) {
     ItemType::Type type;
     unsigned int index;
@@ -205,6 +232,18 @@ int GfItemBoxBase::countItemCategory(ItemType::Type type) {
 int GfItemBoxBase::maxItemCategory(ItemType::Type type) {
     item_iterator it = begin(type);
     return getItemTypeInfo(type).m_end - it.m_cur;
+}
+
+unsigned int GfItemBoxBase::maxStockItem(unsigned int item) {
+    if (item == 0) {
+        return 0;
+    }
+    ItemType::Type type = static_cast<ItemType::Type>(GfDataItem::getItemType(item));
+    ItemTypeInfo& info = getItemTypeInfo(type);
+    if (!isMulti(type)) {
+        return info.m_maxSlot;
+    }
+    return info.m_maxStack;
 }
 
 unsigned int GfItemBoxBase::getItemTime(unsigned int item) {
