@@ -9,7 +9,7 @@
 
 namespace gf { class GAME_VOICE_HANDLE; class GfMenuIDList; class GfMenuReferenceNumber; }
 namespace mm { template <typename T> class Pnt; }
-namespace ui { class UIObjectAcc; struct EventData; class UISelectObjList; }
+namespace ui { class UICtrlRoll; class UIObjectAcc; struct EventData; class UISelectObjList; }
 
 namespace gf {
 // table 0x7100B62AA0; the "Hitonowa" (circle of people) menu evt_ui openHitonowa opens (gf_menu_obj_hitonowa.cpp).
@@ -73,6 +73,9 @@ public:
     // ListListener::reciveEvent) pass this. What it does (not written yet): sets up the list object handle for id (an
     // NPC's or blade's name text, dock position, a control). Its return value is unused by seqDispResult.
     void dispResult(unsigned int handle, unsigned int id);
+    // 2.0.0's symbols name it. Its code is in this unit and seqInEntry passes this (the list object at m_cursor, the
+    // id there and its getNpcGroup). Not written yet.
+    void dispStatus(unsigned int handle, unsigned int id, unsigned int group);
 
     // 2.0.0's symbols name it. A member: the jobs below store what it returns in m_busyCtrl (with 3 and 2), and
     // seqCtrlWait waits on that control. What it does: starts a control of kind and returns its slot
@@ -146,13 +149,38 @@ public:
     bool seqReturnMain();
     // m_seq's job seqStartEntry adds (not written yet)
     bool seqMoveEntry();
+    // 2.0.0's symbols name them (callers: ListListener::reciveEvent). selectComplete moves the list object to the
+    // centre of its parent's "char_region" and scales its LAY_icon_face up (returns the move's control);
+    // unselectComplete returns it (control into m_busyCtrl) and scales LAY_icon_face back.
+    int selectComplete(unsigned int handle);
+    void unselectComplete(unsigned int handle);
+    // m_seq jobs (2.0.0's symbols name them)
+    bool seqWaitStreamingEvent();
+    bool seqWaitStreaming();
+    // after the common window closes with result 0: navigates to the selected NPC of m_kind's list, or stops
+    // navigating when it is already the target
+    bool seqWaitNavi();
+    bool seqChangeGet();
+    bool seqInGet();
+    bool seqNextGet();
+    // fades in each list-0 object whose alpha is 0 ("cmn_fade_emotion" "fade_in", 0.1 s apart)
+    bool seqDispGet();
+    // shows m_list's IMG_icon_frame at m_cursor, starts its control into m_busyCtrl, then seqChangeLost2
+    bool seqChangeLost();
+    bool seqChangeLost2();
+    bool seqInLost();
+    bool seqInEntry();
+    bool seqMoveEntry2();
 
     unsigned char pad_24[0x4];
     // the id lists the ctor creates (GfMenuIDList::create) and the select lists showing them, by kind (0-3; the
     // ctor and destructor create and release four of each; the names are not the original's)
     GfMenuIDList* m_idLists[4];
     ui::UISelectObjList* m_selectLists[4];
-    unsigned char pad_68[0x30];
+    unsigned char pad_68[0x8];
+    // the roll control seqMoveLost takes the list object off (UICtrlRoll::delObject; the name is not the original's)
+    ui::UICtrlRoll* m_roll;
+    unsigned char pad_78[0x20];
     // the m_list entry the jobs work on, seqNextEntry moves it on (the name is not the original's)
     unsigned int m_cursor;
     // ConfirmListener sets it when LAY_result reports event 8 with 1; seqOpenImage clears it (the name is not the
@@ -169,7 +197,12 @@ public:
     int m_busyCtrl;
     // the object whose animation seqAnimWait waits for, 0 none (the name is not the original's)
     unsigned int m_animObject;
-    unsigned char pad_AA8[0x429];
+    unsigned char pad_AA8[0x410];
+    // the kind of the id list the main layout shows (seqWaitNavi; the name is not the original's)
+    unsigned int m_kind;
+    unsigned char pad_EBC[0x14];
+    // seqMoveEntry2 slides LAY_status out when it is set, and clears it (the name is not the original's)
+    bool m_statusFadeOut;
     // seqConfirmGet slides LAY_result out when it is set, and clears it (the name is not the original's)
     bool m_resultFadeOut;
     unsigned char pad_ED2[0x6];

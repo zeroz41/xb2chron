@@ -5,6 +5,11 @@
 #include "classes/gf/GfGameVoice.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfMenuLocation.h"
+#include "classes/gf/GfMenuManager.h"
+#include "mm/Vec2.h"
+#include "mm/mtl/FixStr.h"
+#include "ui/UIStr.h"
+#include "classes/fw/SoundManager.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "ui/EventData.h"
 #include "gf/GfMenuTypes.h"
@@ -97,6 +102,108 @@ void GfMenuObjHitonowa::dispLevel() {
 // the list kinds refreshNew and updateQuestIcon walk (lbl_71009C1D58; the name is not the original's)
 static const unsigned int s_newIconKinds[] = {1, 2, 3};
 
+void GfMenuObjHitonowa::dispResult(unsigned int handle, unsigned int id) {
+    ui::UIObjectAcc result(m_handle, "LAY_result");
+    int slot = GfMenuObjUtil::getCtrlID(result.m_handle);
+    if (slot != -1) {
+        GfMenuObjUtil::stopCtrl(slot);
+    }
+    unsigned char* bdat;
+    unsigned int msg;
+    {
+        ui::UIObjectAcc text(result.m_handle, "TXT_result_name");
+        bool found = GfDataNpc::getName(bdat, msg, id);
+        text.setDisp(found);
+        if (found) {
+            text.setText(ui::UIStr(bdat, msg));
+        }
+    }
+    {
+        ui::UIObjectAcc text(result.m_handle, "TXT_result_job");
+        bool found = GfDataNpc::getJobMsg(bdat, msg, id);
+        text.setDisp(found);
+        if (found) {
+            text.setText(ui::UIStr(bdat, msg));
+        }
+    }
+    {
+        ui::UIObjectAcc text(result.m_handle, "TXT_result_text");
+        bool found = GfDataNpc::getResultMsg(bdat, msg, id);
+        text.setDisp(found);
+        if (found) {
+            text.setText(ui::UIStr(bdat, msg));
+        }
+    }
+    GfMenuObjUtil::setDockPos(result.m_handle, handle, 4, true);
+    GfMenuObjUtil::addPos(result.m_handle, 0, 32);
+    if (!m_resultFadeOut) {
+        result.setDisp(true);
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_l";
+        param.m_setDefault = true;
+        param.m_startFlags = 8;
+        param.m_eventId = 1;
+        GfMenuObjUtil::startCtrl(result.m_handle, param, nullptr);
+        m_resultFadeOut = true;
+    }
+}
+
+int GfMenuObjHitonowa::openTelop(unsigned int kind) {
+    ui::UIObjectAcc telop(m_handle, "LAY_telop");
+    telop.setDisp(true);
+    telop.setAlpha(1.0f);
+    {
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 1;
+        param.m_time = 0.1f;
+        GfMenuObjUtil::startCtrl(telop.m_handle, param, "LAY_telop_mask");
+    }
+    {
+        ui::UIObjectAcc base(telop.m_handle, "IMG_telop_base");
+        if (kind == 3) {
+            base.startAnimation("start_max", false);
+            m_animObject = base.m_handle;
+        } else {
+            base.startAnimation(kind == 1 ? "start_failed" : "start_success", false);
+        }
+    }
+    int ctrl = -1;
+    for (unsigned int i = 0; i < 4; i++) {
+        mm::mtl::FixStr<32> name;
+        name.format("TXT_telop@%02d", i + 1);
+        ui::UIObjectAcc text(m_handle, name.m_str);
+        if (kind == i) {
+            text.setDisp(true);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_in_l";
+            param.m_setDefault = true;
+            param.m_startFlags = 8;
+            ctrl = GfMenuObjUtil::startCtrl(text.m_handle, param, nullptr);
+        } else {
+            text.setDisp(false);
+        }
+    }
+    switch (kind) {
+    case 0:
+        GfMenuObjUtil::playSE(0x27);
+        break;
+    case 1:
+        GfMenuObjUtil::playSE(0x32);
+        break;
+    case 2:
+        GfMenuObjUtil::playJingle(0xd);
+        break;
+    case 3:
+        GfMenuObjUtil::playJingle(0xc);
+        break;
+    }
+    return ctrl;
+}
+
 void GfMenuObjHitonowa::refreshNew() {
     for (int i = 0; i < 3; i++) {
         unsigned int kind = s_newIconKinds[i];
@@ -109,8 +216,84 @@ void GfMenuObjHitonowa::refreshNew() {
     }
 }
 
+void GfMenuObjHitonowa::unselectComplete(unsigned int handle) {
+    ui::UIObjectAcc object(handle);
+    int slot = GfMenuObjUtil::getCtrlID(handle);
+    if (slot != -1) {
+        ui::UIObjectAcc parent(object.getParentHandle());
+        object.setIgnoreSize(false);
+        object.setDispPriority(8);
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x80000000;
+        param.m_time = 0.3f;
+        param.m_curve = 1;
+        param.m_slot = slot;
+        m_busyCtrl = GfMenuObjUtil::startCtrl(object.m_handle, param, nullptr);
+        ui::UIObjectAcc face(object.m_handle, "LAY_icon_face");
+        GfMenuObjUtil::CtrlParam scale;
+        scale.m_methods = 0x80000;
+        scale.m_curve = 1;
+        scale.m_scale = 1.0f;
+        scale.m_time = 0.3f;
+        GfMenuObjUtil::startCtrl(face.m_handle, scale, nullptr);
+    }
+}
+
+bool GfMenuObjHitonowa::seqWaitStreaming() {
+    for (int kind = 0; kind < 4; kind++) {
+        for (unsigned int i = 0; i < m_selectLists[kind]->getSize(); i++) {
+            ui::UIObjectAcc face(m_selectLists[kind]->getObject(i), "IMG_icon_face");
+            if (face.isStreamImage() && face.isStreaming()) {
+                return false;
+            }
+        }
+    }
+    ui::UIObjectAcc main(m_handle, "LAY_main");
+    GfMenuObjUtil::setCommonFadeIn(main.m_handle, 1, 0);
+    return true;
+}
+
+bool GfMenuObjHitonowa::seqStartGet() {
+    m_busyCtrl = openTelop(0);
+    m_seq.addJob(&GfMenuObjHitonowa::seqCtrlWait);
+    m_seq.addWait(30);
+    m_seq.addJob(&GfMenuObjHitonowa::seqCloseTelop);
+    m_seq.addJob(&GfMenuObjHitonowa::seqCtrlWait);
+    m_seq.addJob(&GfMenuObjHitonowa::seqMoveGet);
+    return true;
+}
+
+bool GfMenuObjHitonowa::seqStartLost() {
+    m_busyCtrl = openTelop(1);
+    m_seq.addJob(&GfMenuObjHitonowa::seqCtrlWait);
+    m_seq.addWait(30);
+    m_seq.addJob(&GfMenuObjHitonowa::seqCloseTelop);
+    m_seq.addJob(&GfMenuObjHitonowa::seqCtrlWait);
+    m_seq.addJob(&GfMenuObjHitonowa::seqMoveLost);
+    return true;
+}
+
 bool GfMenuObjHitonowa::seqStartEntry() {
     m_seq.addJob(&GfMenuObjHitonowa::seqMoveEntry);
+    return true;
+}
+
+bool GfMenuObjHitonowa::seqWaitNavi() {
+    if (GfMenuManager::isOpenCommonWindow()) {
+        return false;
+    }
+    unsigned short result = GfMenuManager::getCommonWindowResult();
+    if (result == 0) {
+        ui::UIObjectAcc main(m_handle, "LAY_main");
+        GfMenuIDList* list = m_idLists[m_kind];
+        unsigned int id = list->getContents(list->getIndex(false)).m_id;
+        if (GfMenuLocation::getNpcNavigateID() == id) {
+            GfMenuLocation::startNpcNavigate(0);
+        } else {
+            list = m_idLists[m_kind];
+            GfMenuLocation::startNpcNavigate(list->getContents(list->getIndex(false)).m_id);
+        }
+    }
     return true;
 }
 
@@ -277,6 +460,65 @@ bool GfMenuObjHitonowa::seqConfirmGet() {
     return true;
 }
 
+bool GfMenuObjHitonowa::seqChangeGet() {
+    ui::UIObjectAcc object(m_list->getObject(m_cursor));
+    ui::UIObjectAcc frame(object.m_handle, "IMG_icon_frame");
+    frame.setDisp(true);
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x10000000;
+    param.m_motionLib = "sample";
+    param.m_motion = "fadein";
+    param.m_setDefault = true;
+    param.m_startFlags = 8;
+    m_busyCtrl = GfMenuObjUtil::startCtrl(frame.m_handle, param, nullptr);
+    GfMenuObjUtil::playSE(0x12);
+    m_seq.addJob(&GfMenuObjHitonowa::seqCtrlWait);
+    m_seq.addWait(15);
+    m_seq.addJob(&GfMenuObjHitonowa::seqDispResult);
+    m_seq.addJob(&GfMenuObjHitonowa::seqConfirmGet);
+    m_seq.addJob(&GfMenuObjHitonowa::seqInGet);
+    return true;
+}
+
+bool GfMenuObjHitonowa::seqInGet() {
+    ui::UIObjectAcc object(m_list->getObject(m_cursor));
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x10000000;
+    param.m_motionLib = "cmn_fade_motion_zoom_2";
+    param.m_motion = "fade_out";
+    param.m_setDefault = true;
+    param.m_startFlags = 10;
+    m_busyCtrl = GfMenuObjUtil::startCtrl(object.m_handle, param, nullptr);
+    m_seq.addJob(&GfMenuObjHitonowa::seqCtrlWait);
+    m_seq.addWait(15);
+    m_seq.addJob(&GfMenuObjHitonowa::seqNextGet);
+    return true;
+}
+
+bool GfMenuObjHitonowa::seqDispGet() {
+    unsigned int count = 0;
+    for (unsigned int i = 0; i < m_selectLists[0]->getSize(); i++) {
+        ui::UIObjectAcc acc(m_selectLists[0]->getContents(i));
+        float alpha;
+        acc.getAlpha(alpha);
+        if (alpha == 0.0f) {
+            acc.setDisp(true);
+            acc.setAlpha(1.0f);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_emotion";
+            param.m_motion = "fade_in";
+            param.m_setDefault = true;
+            param.m_startFlags = 8;
+            param.m_delay = count * 0.1f;
+            m_busyCtrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            acc.setAlpha(0.0f);
+            count++;
+        }
+    }
+    return true;
+}
+
 bool GfMenuObjHitonowa::seqStartLevelMax() {
     m_busyCtrl = openTelop(3);
     return true;
@@ -320,11 +562,70 @@ bool GfMenuObjHitonowa::seqReturn() {
     return true;
 }
 
+bool GfMenuObjHitonowa::seqWaitStreaming2() {
+    for (int kind = 0; kind < 4; kind++) {
+        for (unsigned int i = 0; i < m_selectLists[kind]->getSize(); i++) {
+            ui::UIObjectAcc face(m_selectLists[kind]->getObject(i), "IMG_icon_face");
+            if (face.isStreamImage() && face.isStreaming()) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 bool GfMenuObjHitonowa::seqReturnMain() {
     ui::UIObjectAcc acc(m_handle, "LAY_main");
     ui::EventData event;
     event.m_type = 0x100;
     GfMenuObject::sendEvent(acc.m_handle, event, 0.0f);
+    return true;
+}
+
+bool GfMenuObjHitonowa::seqChangeLost() {
+    ui::UIObjectAcc object(m_list->getObject(m_cursor));
+    ui::UIObjectAcc frame(object.m_handle, "IMG_icon_frame");
+    frame.setDisp(true);
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x40000000;
+    param.m_bright = 1.0f;
+    param.m_time = 0.5f;
+    param.m_curve = 1;
+    m_busyCtrl = GfMenuObjUtil::startCtrl(frame.m_handle, param, nullptr);
+    m_seq.addJob(&GfMenuObjHitonowa::seqCtrlWait);
+    m_seq.addJob(&GfMenuObjHitonowa::seqChangeLost2);
+    GfMenuObjUtil::playSE(0x1a);
+    return true;
+}
+
+bool GfMenuObjHitonowa::seqChangeLost2() {
+    ui::UIObjectAcc object(m_list->getObject(m_cursor));
+    ui::UIObjectAcc frame(object.m_handle, "IMG_icon_frame");
+    frame.setDisp(true);
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x40000002;
+    param.m_time = 1.0f;
+    param.m_curve = 2;
+    m_busyCtrl = GfMenuObjUtil::startCtrl(frame.m_handle, param, nullptr);
+    m_seq.addJob(&GfMenuObjHitonowa::seqCtrlWait);
+    m_seq.addWait(15);
+    m_seq.addJob(&GfMenuObjHitonowa::seqInLost);
+    return true;
+}
+
+bool GfMenuObjHitonowa::seqInLost() {
+    ui::UIObjectAcc object(m_list->getObject(m_cursor));
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x10000000;
+    param.m_motionLib = "cmn_fade_motion_zoom_2";
+    param.m_motion = "fade_out";
+    param.m_setDefault = true;
+    param.m_startFlags = 10;
+    m_busyCtrl = GfMenuObjUtil::startCtrl(object.m_handle, param, nullptr);
+    m_seq.addJob(&GfMenuObjHitonowa::seqCtrlWait);
+    m_seq.addWait(15);
+    m_seq.addJob(&GfMenuObjHitonowa::seqNextLost);
+    GfMenuObjUtil::playSE(0x38);
     return true;
 }
 
@@ -336,6 +637,75 @@ bool GfMenuObjHitonowa::seqNextLost() {
     } else {
         m_seq.addJob(&GfMenuObjHitonowa::seqReturn);
     }
+    return true;
+}
+
+bool GfMenuObjHitonowa::seqMoveEntry() {
+    ui::UIObjectAcc object(m_list->getObject(m_cursor));
+    object.setDisp(true);
+    object.setAlpha(1.0f);
+    object.setScale(mm::Vec2(0.0f, 0.0f));
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x80000;
+    param.m_scale = 2.6f;
+    param.m_curve = 1;
+    param.m_time = 0.2f;
+    m_busyCtrl = GfMenuObjUtil::startCtrl(object.m_handle, param, nullptr);
+    GfMenuObjUtil::startCtrl(object.m_handle, param, nullptr);
+    m_seq.addJob(&GfMenuObjHitonowa::seqCtrlWait);
+    m_seq.addWait(30);
+    m_seq.addJob(&GfMenuObjHitonowa::seqInEntry);
+    GfMenuObjUtil::playSE(0x37);
+    return true;
+}
+
+bool GfMenuObjHitonowa::seqInEntry() {
+    ui::UIObjectAcc object(m_list->getObject(m_cursor));
+    ui::UIObjectAcc newText(object.m_handle, "TXT_icon_new");
+    ui::UIObjectAcc newIcon(object.m_handle, "LAY_icon_new");
+    newText.setAlpha(1.0f);
+    newIcon.setAddColor("white");
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x40000000;
+    param.m_time = 0.5f;
+    param.m_setDefault = true;
+    m_busyCtrl = GfMenuObjUtil::startCtrl(newIcon.m_handle, param, nullptr);
+    m_seq.addJob(&GfMenuObjHitonowa::seqCtrlWait);
+    m_seq.addWait(45);
+    m_seq.addJob(&GfMenuObjHitonowa::seqMoveEntry2);
+    dispStatus(object.m_handle, m_ids[m_cursor], getNpcGroup(m_ids[m_cursor]));
+    mm::mtl::PtrSingleton<fw::SoundManager>::get()->playSe(0x33, nullptr, 1.0f, static_cast<fw::SoundCategory>(0));
+    return true;
+}
+
+bool GfMenuObjHitonowa::seqMoveEntry2() {
+    ui::UIObjectAcc object(m_list->getObject(m_cursor));
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x80000;
+    param.m_scale = 1.0f;
+    param.m_curve = 1;
+    param.m_time = 0.2f;
+    m_busyCtrl = GfMenuObjUtil::startCtrl(object.m_handle, param, nullptr);
+    GfMenuObjUtil::startCtrl(object.m_handle, param, nullptr);
+    m_seq.addJob(&GfMenuObjHitonowa::seqCtrlWait);
+    m_seq.addJob(&GfMenuObjHitonowa::seqNextEntry);
+    // slides LAY_status out once (inlined in the original: its locals sit above this function's)
+    [&] {
+        ui::UIObjectAcc status(m_handle, "LAY_status");
+        if (m_statusFadeOut) {
+            GfMenuObjUtil::CtrlParam fade;
+            fade.m_methods = 0x10000000;
+            fade.m_motionLib = "cmn_fade_motion_lr";
+            fade.m_motion = "fade_out_l";
+            fade.m_setDefault = true;
+            fade.m_startFlags = 10;
+            fade.m_eventId = 2;
+            GfMenuObjUtil::startCtrl(status.m_handle, fade, nullptr);
+            GfMenuObjUtil::playSE(0xe);
+            m_statusFadeOut = false;
+        }
+    }();
+    GfMenuObjUtil::playSE(0x38);
     return true;
 }
 
