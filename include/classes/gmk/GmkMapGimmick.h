@@ -36,7 +36,10 @@ public:
     virtual ~GmkMapGimmick();  // slot 0
     void setSolved() const;
     bool isNotSolved() const;
-    void validateEffectWithoutLodControl(int lodId, bool flag) const;
+    // creates the effect asset of the LOD model's row and, when it has one (with flag: only a looping one), starts it
+    // on every seam part of the field's LOD model carrying the model's LOD id; false without an asset (or with a
+    // gimmick set flagged off)
+    bool validateEffectWithoutLodControl(int lodId, bool flag) const;
     const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
@@ -47,6 +50,12 @@ public:
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9
     // its first step (create stores it; symbol name)
     void seqInit(float dt);
+    // the step seqInit installs: pops/depops the game object, then tests the line of sight to it (symbol name)
+    void seqUpdate(float dt);
+    void createGobInst();
+    bool canPopGobInst() const;
+    bool canDepopGobInst() const;
+    void validateLodState() const;
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x21);
     // 0x48: create stores (BdatInfo::m_nameRadius + 10) squared (the name is not the original's)
@@ -59,7 +68,8 @@ public:
     unsigned char pad_68 = 1;
     // 0x70: its effects by LOD state (the destructor disposes them; Vector<GmkMapGimmick>::resize constructs it; the
     // name is not the original's)
-    gf::GfFieldLodEffect m_lodEffect;
+    // mutable: the const validateEffectWithoutLodControl creates its asset and instances
+    mutable gf::GfFieldLodEffect m_lodEffect;
     // 0xA8, 0xA9: the enemy wave gimmick (GmkEnemyWave::seqWaitToValidLinkGmkList) sets the first and clears the second on the map
     // gimmick its row names (meaning unknown)
     bool pad_a8 = false;

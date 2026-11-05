@@ -6381,6 +6381,41 @@ void GmkMapGimmick::create(const CreateInfo& info) {
     }
 }
 
+// links the map objects and the effect its row names (the GmkMapObj fields 0x51/0x52, the GmkEffect fields
+// 0xb1/0xb2: set, and whether the gimmick is still unsolved), puts the LOD models in their state, then updates
+void GmkMapGimmick::seqInit(float) {
+    const BdatInfo* info = getBdatInfo();
+    if (info->m_mapobjId != 0) {
+        AGmkBase* gmk = GmkManager::sys()->findFirstGmkInstByBdatId(GmkMapObj::TYPE, info->m_mapobjId);
+        if (gmk == nullptr) {
+            gmk = GmkManager::sys()->findFirstGmkInstByBdatId(GmkRoutedMapObj::TYPE, info->m_mapobjId);
+            if (gmk == nullptr) {
+                return;
+            }
+        }
+        // the original writes the GmkMapObj fields for a GmkRoutedMapObj too
+        GmkMapObj* mapObj = static_cast<GmkMapObj*>(gmk);
+        bool notSolved = isNotSolved();
+        mapObj->pad_51 = 1;
+        mapObj->pad_52 = notSolved;
+    }
+    if (gf::GfGameManager::isGameTypeIra() && info->m_effectId != 0) {
+        GmkEffect* effect =
+            static_cast<GmkEffect*>(GmkManager::sys()->findFirstGmkInstByBdatId(GmkEffect::TYPE, info->m_effectId));
+        if (effect == nullptr) {
+            return;
+        }
+        bool notSolved = isNotSolved();
+        effect->pad_b1 = 1;
+        effect->pad_b2 = notSolved;
+    }
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set == nullptr || !set->m_createInfo.m_flag) {
+        validateLodState();
+    }
+    m_seq = &GmkMapGimmick::seqUpdate;
+}
+
 void GmkMapGimmick::dispose() {
     m_seq = nullptr;
     if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
@@ -6405,6 +6440,54 @@ void GmkMapGimmick::debugDraw() const {
     if (isValid()) {
         isNotSolved();
     }
+}
+
+// true while it has a game object and the gimmick is solved, its row's conditions fail or the interest position
+// is beyond the name distance
+bool GmkMapGimmick::canDepopGobInst() const {
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        if (!isNotSolved() || !getBdatInfo()->isPopCondMatched()) {
+            return true;
+        }
+        if (m_nameDistSq > 0.0f && !DistCond::isMatch(m_nameDistSq, *m_pos)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GmkMapGimmick::validateEffectWithoutLodControl(int lodId, bool flag) const {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return false;
+    }
+    m_lodEffect.createAsset(lodId);
+    if (!m_lodEffect.m_hasAsset) {
+        return false;
+    }
+    if (m_lodEffect.getAsset(gf::LOD_STATE_ANIM) == nullptr) {
+        return false;
+    }
+    if (flag) {
+        void* asset = m_lodEffect.getAsset(gf::LOD_STATE_ANIM);
+        if (!mm::mtl::PtrSingleton<fw::EffectManager>::sys()->isLoop(asset)) {
+            return false;
+        }
+    }
+    gf::GfFieldLod* fieldLod = gf::GfFieldLod::sys();
+    ml::ScnObjModel* model = fieldLod->m_coliAnim.m_info.m_model;
+    if (model != nullptr && fieldLod->m_coliAnim.m_info.m_lod != nullptr) {
+        unsigned short id = fieldLod->m_lodIds[lodId - fieldLod->m_idTop];
+        ml::ScnObjAccSeamPos seam(model);
+        int max = seam.getMax();
+        for (int i = 0; i < max; i++) {
+            ml::ScnObjAccPartsPos parts = seam.getObj(i);
+            if (id == parts.getID() && m_lodEffect.m_handle == 0) {
+                m_lodEffect.createInst(gf::LOD_STATE_ANIM, parts, false);
+            }
+        }
+    }
+    return true;
 }
 
 void GmkMapGimmick::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
