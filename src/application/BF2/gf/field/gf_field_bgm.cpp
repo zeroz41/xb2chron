@@ -9,6 +9,8 @@
 #include "gf/MapjumpCallbackInfo.h"
 #include "classes/gf/GfBdatMaplist.h"
 #include "fw/UpdateInfo.h"
+#include "mm/Math.h"
+#include "gf/GfUtil.h"
 #include "classes/gf/GfBdatBgm.h"
 #include "classes/gf/GfDeadCamera.h"
 #include "classes/gf/GfEvtBgm.h"
@@ -25,6 +27,10 @@
 
 namespace gf {
 namespace _gffsn {
+
+// where streamed BGM files live and their folder (makePlayFileName and streamPlay build the play path from them)
+const char* s_szStreamPath = "/stream/";
+const char* s_szBgmPath = "/bgm/";
 
 bool s_bStopBGM;
 
@@ -339,7 +345,7 @@ BgmBattle::BgmBattle(GfFieldBgm* fieldBgm) : BgmTrack(fieldBgm, true) {
 
 BgmTrack::BgmTrack(GfFieldBgm* fieldBgm, bool battle)
     : m_bgmCondID(0), m_battle(battle), m_keepBgmCondID(false), m_baseVolume(1.0f), m_fadeVolume(1.0f),
-      m_fadeScale(1.0f), pad_61C(0), m_fieldBgm(fieldBgm), m_copied(false), m_category(1) {
+      m_fadeScale(1.0f), m_playTime(0.0f), m_fieldBgm(fieldBgm), m_copied(false), m_category(1) {
     m_conds.assign(BGMCOND());
     for (unsigned int i = 0; i < 4; i++) {
         m_conds[i].m_conditionNo = i;
@@ -389,6 +395,30 @@ void BgmTrack::stopBGM(float time) {
     m_conds[0].m_bgmFileName = "";
 }
 
+bool BgmTrack::makePlayFileName(mm::mtl::FixStr<64>& name) const {
+    for (const BGMCOND& cond : m_conds) {
+        if (cond.m_bgmFileName.length() == 0) {
+            if (!cond.m_handle.isValid()) {
+                continue;
+            }
+            if (unsigned int bgmID = m_bgmCondID != 0 ? getBgmConditionBgmID(m_bgmCondID, cond.m_conditionNo) : 0) {
+                const char* fileName = GfBdatBgm::sys()->getBgmListfilename(bgmID);
+                if (util::getFilePtrFromPath(fileName) != fileName) {
+                    name.format("%s%s", _gffsn::s_szStreamPath, fileName);
+                } else {
+                    name.format("%s%s%s", _gffsn::s_szStreamPath, _gffsn::s_szBgmPath, fileName);
+                }
+                return true;
+            }
+        }
+        if (cond.m_bgmFileName.length() != 0) {
+            name = cond.m_bgmFileName;
+            return true;
+        }
+    }
+    return false;
+}
+
 bool BgmTrack::isPlaying() const {
     for (unsigned long i = 0; i < 4; ++i) {
         const BGMCOND& cond = m_conds[i];
@@ -397,6 +427,45 @@ bool BgmTrack::isPlaying() const {
         }
     }
     return false;
+}
+
+void BgmTrack::copyPlayParam(BgmTrack* src, const BgmFileInfo& info) {
+    stopBGM(0.0f);
+    m_bgmCondID = info.m_bgmCondID;
+    m_fadeVolume = src->m_fadeVolume;
+    m_baseVolume = src->m_baseVolume;
+    m_playing = true;
+    for (BGMCOND& cond : m_conds) {
+        cond.clear();
+    }
+    SoundHandle handle;
+    float volume = 0.0f;
+    for (BGMCOND& cond : src->m_conds) {
+        if (cond.m_handle.isValid()) {
+            handle = cond.m_handle;
+            volume = cond.m_volume;
+            cond.m_handle.clear();
+            break;
+        }
+    }
+    if (handle.isValid()) {
+        m_conds[info.m_condNo].m_playNo = info.m_bgmID;
+        m_conds[info.m_condNo].m_handle = handle;
+        m_conds[info.m_condNo].m_volume = volume;
+    }
+    if (GfSound* sound = GfSound::get()) {
+        for (BGMCOND& cond : src->m_conds) {
+            if (cond.m_handle.isValid()) {
+                sound->setCategory(cond.m_handle, fw::SoundCategory(m_category));
+            }
+        }
+    }
+    src->m_bgmCondID = 0;
+    src->m_baseVolume = 0.0f;
+    src->m_fadeVolume = 0.0f;
+    for (BGMCOND& cond : src->m_conds) {
+        cond.clear();
+    }
 }
 
 void BgmTrack::setCategoryApply(unsigned char category) {
@@ -508,6 +577,69 @@ void BgmGimmick::update(const fw::UpdateInfo& info) {
         m_bgmCondID = id;
     }
     BgmTrack::update(info);
+}
+
+void BgmTrack::calcMultiplyVolume(const fw::UpdateInfo& info) {
+    float volume = 1.0f;
+    float fadeOutTime = 5.0f;
+    float fadeInTime = 5.0f;
+    for (MultiplyVolume& entry : m_multiplyVolumes) {
+        volume *= entry.m_func(entry.m_fadeOutTime, entry.m_fadeInTime, entry.m_param);
+        fadeOutTime = fadeOutTime > entry.m_fadeOutTime ? entry.m_fadeOutTime : fadeOutTime;
+        fadeInTime = fadeInTime > entry.m_fadeInTime ? entry.m_fadeInTime : fadeInTime;
+    }
+    if (volume < m_baseVolume) {
+        m_baseVolume -= info.m_deltaTime / fadeOutTime;
+        mm::clampSelf(m_baseVolume, volume, 1.0f);
+    } else if (volume > m_baseVolume) {
+        m_baseVolume += info.m_deltaTime / fadeInTime;
+        mm::clampSelf(m_baseVolume, 0.0f, volume);
+    }
+}
+
+bool BgmTrack::getPlayVolume(float& volume, const fw::UpdateInfo& info, const BGMCOND& cond, bool fadeOut) {
+    ExecFadeParam param;
+    param.m_cond = &cond;
+    param.m_track = this;
+    param.m_updateInfo = &info;
+    volume = cond.m_volume;
+    float minStep = 0.0f;
+    bool result = false;
+    for (const BgmVolumeFade& fade : m_volumeFades) {
+        param.m_fade = &fade;
+        float step = fade.m_func(param);
+        if (fadeOut) {
+            step = step > 0.0f ? -step : step;
+        }
+        if (minStep > step) {
+            minStep = step;
+            result = fade.m_flag;
+        }
+    }
+    if (minStep < 0.0f) {
+        volume += minStep;
+        if (volume < 0.0f) {
+            volume = 0.0f;
+        } else if (volume > 1.0f) {
+            volume = 1.0f;
+        }
+        return result || fadeOut;
+    }
+    float maxStep = 0.0f;
+    for (const BgmVolumeFade& fade : m_volumeFades) {
+        param.m_fade = &fade;
+        float step = fade.m_func(param);
+        maxStep = maxStep < step ? step : maxStep;
+    }
+    if (maxStep > 0.0f) {
+        volume += maxStep;
+        if (volume < 0.0f) {
+            volume = 0.0f;
+        } else if (volume > 1.0f) {
+            volume = 1.0f;
+        }
+    }
+    return false;
 }
 
 void BgmTrack::stopCondBGM(float time, BGMCOND& cond) {

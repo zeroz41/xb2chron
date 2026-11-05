@@ -76,6 +76,19 @@ inline T abs(T x) {
     return x < 0 ? -x : x;
 }
 
+// the in-place clamp mm_math.h holds above clamp (BgmTrack::calcMultiplyVolume cites line 801 for its assertion and
+// stores only on the paths that change the value; the name is not the original's)
+template <typename T>
+inline void clampSelf(T& x, const T& mi, const T& ma) {
+#line 801
+    MM_ASSERT(mi<=ma);
+    if (x < mi) {
+        x = mi;
+    } else if (x > ma) {
+        x = ma;
+    }
+}
+
 // by reference: a bound read from memory is read again after the assertion's call
 template <typename T>
 inline T clamp(const T& x, const T& mi, const T& ma) {

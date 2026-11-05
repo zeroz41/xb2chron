@@ -34,6 +34,9 @@ struct BGMCOND {
     // BgmTrack's constructor builds one on the stack and inlines this into its four entries
     BGMCOND() : m_volume(0.0f), m_playNo(0), m_playing(false), m_requested(false), m_conditionNo(0) {}
 
+    // 1.0.0's out-of-line BGMCOND::isSilentPlay (3.0.1 inlines it): the entry plays the silent BGM
+    bool isSilentPlay() const { return strcmp(m_bgmFileName.m_str, "SilentBgm") == 0; }
+
     // 1.0.0's out-of-line BGMCOND::clear (3.0.1 inlines it into BgmTrack::stopCondBGM): the name emptied when set,
     // the handle cleared when valid, the values zeroed
     void clear() {
@@ -66,6 +69,15 @@ struct ExecFadeParam {
     const fw::UpdateInfo* m_updateInfo;
     const BgmVolumeFade* m_fade;
     const BGMCOND* m_cond;
+};
+
+// what GfFieldBgm::getBgmFileInfo finds for a BGM file (BgmTrack::copyPlayParam(BgmTrack*, const BgmFileInfo&)
+// takes the condition id from +0 and hands the entry at index +8 the BGM id at +4; the field names are not the
+// original's)
+struct BgmFileInfo {
+    unsigned int m_bgmCondID;
+    unsigned int m_bgmID;
+    unsigned int m_condNo;
 };
 
 // table 0x7100B51390
@@ -105,9 +117,9 @@ public:
     void stopBGM(float time);
     // 1.0.0's out-of-line symbol (3.0.1 inlines it): the volume of the first entry with a valid handle, else 0
     float getVolume() const {
-        for (unsigned long i = 0; i < 4; ++i) {
-            if (m_conds[i].m_handle.isValid()) {
-                return m_conds[i].m_volume;
+        for (const BGMCOND& cond : m_conds) {
+            if (cond.m_handle.isValid()) {
+                return cond.m_volume;
             }
         }
         return 0.0f;
@@ -120,19 +132,37 @@ public:
     // it on BgmField's instance. What it does: takes a BGM name (asserts `pszName != 0` as it copies it into a
     // FixStr); its only caller passes GfPlayComEvent's BGM name.
     void playForEventTheater(const char* name);
+    // 3.0.1's symbols name them
+    void streamPlay(BGMCOND& cond);
+    void calcMultiplyVolume(const fw::UpdateInfo& info);
+    bool getPlayVolume(float& volume, const fw::UpdateInfo& info, const BGMCOND& cond, bool fadeOut);
+    bool makePlayFileName(mm::mtl::FixStr<64>& name) const;
+    void copyPlayParam(BgmTrack* src, const BgmFileInfo& info);
+
+    // one entry of m_multiplyVolumes: a delegate calcMultiplyVolume calls with the three values (in s0-s2), the first
+    // two the times the base volume falls and rises over (the names are not the original's)
+    struct MultiplyVolume {
+        mm::mtl::Delegate<float(float, float, float)> m_func;
+        float m_fadeOutTime;
+        float m_fadeInTime;
+        float m_param;
+        unsigned char pad_2C[0x4];
+    };
 
     // the four condition entries (1.0.0 has FixedArray<BGMCOND, 4>::assign; isPlaying reads 4 entries of 0x5C
     // from +8)
     mm::mtl::FixedArray<BGMCOND, 4> m_conds;
     mm::mtl::FixedVector<BgmVolumeFade, 12> m_volumeFades;  // 1.0.0's addVolumeFade asserts size() < capacity()
-    unsigned char pad_3C0[0xD0];
-    // element type unproven (its size fits 0x170 = 4 x BGMCOND); ~BgmTrack clears its count at +0x600
-    mm::mtl::FixedVector<BGMCOND, 4> m_bgmConds;
+    // the volume multipliers calcMultiplyVolume walks (count at +0x600, elements of 0x30 whose delegate it calls with
+    // the entry's three values; ~BgmTrack clears the count; the name is not the original's)
+    mm::mtl::FixedVector<MultiplyVolume, 12> m_multiplyVolumes;
     unsigned int m_bgmCondID;  // 1.0.0's getBgmCondID reads it
     // the constructor's flag: BgmBattle and BgmBattleBoss pass true, the other tracks false (the name is not the
     // original's)
     bool m_battle;
-    unsigned char pad_60D[0x1];
+    // update stores whether one of the entries started or keeps playing (getPlayVolume then fades the later entries
+    // out); playForEventTheater sets it (the name is not the original's)
+    bool m_playing;
     // stopBGM keeps m_bgmCondID while it is set (the name is not the original's)
     bool m_keepBgmCondID;
     unsigned char pad_60F[0x1];
@@ -141,7 +171,9 @@ public:
     // stopBGM sets them to 0 and 1, GfFieldBgm::destroy both to 1 (the names are not the original's)
     float m_fadeVolume;
     float m_fadeScale;
-    unsigned int pad_61C;  // the constructor clears it
+    // the constructor clears it; streamPlay seeks a BGM it starts by name to it when positive (the name is not the
+    // original's)
+    float m_playTime;
     GfFieldBgm* m_fieldBgm;  // the owner (the constructors take it)
     bool m_pause;  // setPause stores it (1.0.0's symbol names the setter)
     // GfFieldBgm::isBossBgmCopied reads it on the boss track (the name is not the original's)
