@@ -36,7 +36,14 @@ public:
     struct Data {
         // where the jump gimmick stands: LocatorGimmick::update shows it on the compass; canPopGobInst passes it to
         // DistHvCond::isMatch as an mm::Vec3 (the name is not the original's)
-        mm::Vec3 m_startPos;
+        union {
+            mm::Vec3 m_startPos;
+            struct {
+                float pad_0[3];
+                // the icon's rotation about y (validateIconPos's for a jump of type 0; the name is not the original's)
+                float m_rotY;
+            };
+        };
         mm::Vec3NA m_pos;  // where the jump lands
         float m_param[3];  // passed on in MsgPcFieldNotifyBigJump (meaning not known)
     };
@@ -61,7 +68,11 @@ public:
     // 2.0.0's symbols name it (new in 3.0.1; between reqRecreateIcon and onGobEvent). What it does: creates the effect
     // "ma40a_01_101_dlc" from GfFieldManager::getEffectPack() (0x71005A748C).
     void suceededBigJump() const;
+    // named by the symbols (update calls createGobInst when canPopGobInst answers true; createIcon tail-calls
+    // validateIconPos)
+    void createGobInst();
     void createIcon();
+    void validateIconPos();
     void reqRecreateIcon();
     // sets the flag reqRecreateIcon tests and removes the icon effect (fw::EffectManager::dead)
     void reqDeadIcon();
@@ -78,9 +89,13 @@ public:
     DistHvCond m_eneDisp = {0.0f, 0.0f};
     DistHvCond m_eneRelease = {0.0f, 0.0f};
     unsigned int m_effectHandle;  // dispose removes it from fw::EffectManager (the name is not the original's)
-    unsigned int pad_74 = 0;
+    // create's squared distance from BDAT 0x7B member 1 (update shows the icon within it of the data's start
+    // position, DistCond::isMatch; the name is not the original's)
+    float m_iconDistSq = 0.0f;
     unsigned char pad_78 = 0;  // reqRecreateIcon clears it and makes the icon again when it was set
-    unsigned char pad_79 = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
+    // the icon effect's SendParam::m_flagB (validateIconPos); the data ends here: Vector<T>::expand's implicit copy
+    // copies up to it; the rest is alignment
+    unsigned char pad_79 = 1;
 };
 }  // namespace gmk
 

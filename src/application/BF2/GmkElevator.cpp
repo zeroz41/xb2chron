@@ -184,6 +184,8 @@
 #include "classes/gf/GfComTransform.h"
 #include "classes/ml/Scn.h"
 #include "classes/ml/ScnObjCam.h"
+#include "classes/gmk/DistCond.h"
+#include "effect/SendParam.h"
 #include "classes/gmk/GmkSquadNavi.h"
 #include "fw/FwDebug.h"
 #include "mm/mtl/Vector.h"
@@ -4782,6 +4784,33 @@ bool GmkJump::BdatInfo::isPopCondMatched() const {
     return true;
 }
 
+// the squared ene_disp/ene_release distances of the current map's row of BDAT 0x5D and the icon's squared distance;
+// no row for the map: disposed again
+void GmkJump::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    unsigned char* fp = gf::GfDataBdat::getFP(0x5D);
+    if (fp != nullptr) {
+        int mapId = gf::GfGameManager::getMapID();
+        if (mapId >= Bdat::getIdTop(fp) && Bdat::getIdTop(fp) + Bdat::getIdCount(fp) > mapId) {
+            unsigned char dispR = Bdat::getValCheck(fp, "ene_disp_r", mapId, 1);
+            unsigned char dispH = Bdat::getValCheck(fp, "ene_disp_h", mapId, 1);
+            m_eneDisp.m_horizontalSq = (float)dispR * (float)dispR;
+            m_eneDisp.m_verticalSq = (float)dispH * (float)dispH;
+            unsigned char releaseR = Bdat::getValCheck(fp, "ene_release_r", mapId, 1);
+            unsigned char releaseH = Bdat::getValCheck(fp, "ene_release_h", mapId, 1);
+            float r = (float)(dispR + releaseR);
+            float h = (float)(dispH + releaseH);
+            m_eneRelease.m_horizontalSq = r * r;
+            m_eneRelease.m_verticalSq = h * h;
+            Bdat::uVal iconDist;
+            iconDist.ulong = Bdat::getValCheck(gf::GfDataBdat::getFP(0x7B), 0, 1, 8);
+            m_iconDistSq = iconDist.real * iconDist.real;
+            return;
+        }
+    }
+    dispose();
+}
+
 void GmkJump::dispose() {
     if (m_effectHandle != 0) {
         mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effectHandle);
@@ -4798,6 +4827,40 @@ void GmkJump::dispose() {
     AGmkBase::dispose();
 }
 
+// pops or fades out its game object by the distance conditions; shows the icon near the start position
+void GmkJump::update(float dt) {
+    AGmkBase::update(dt);
+    if (!isValid()) {
+        return;
+    }
+    pad_50 = getBdatInfo()->isPopCondMatched();
+    if (!isInterestPosExist()) {
+        return;
+    }
+    if (canPopGobInst()) {
+        createGobInst();
+    } else if (canDepopGobInst()) {
+        gf::GF_OBJ_HANDLE* gob = m_gob;
+        if (gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            gf::GfObjAcc acc(gob);
+            if (acc.getObj() != nullptr && !acc.isDestroy() && !acc.testFlag(17)) {
+                gf::SCOM_DESTROY_GAME_OBJ::create(gob, 1.0f, 0);
+            }
+        }
+    }
+    if (pad_78) {
+        return;
+    }
+    if (pad_50 && DistCond::isMatch(m_iconDistSq, getData()->m_startPos)) {
+        if (m_effectHandle == 0) {
+            createIcon();
+        }
+    } else if (m_effectHandle != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->fadeOutDead(m_effectHandle, 5);
+        m_effectHandle = 0;
+    }
+}
+
 bool GmkJump::canPopGobInst() const {
     bool result = false;
     if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) && pad_50) {
@@ -4808,6 +4871,52 @@ bool GmkJump::canPopGobInst() const {
     return result;
 }
 
+void GmkJump::createGobInst() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    CBdatWrapper bdat(m_list->getBindedBdatFp());
+    m_gob = gf::GfObjFactory::createGmkCollection(bdat, m_createInfo.m_bdatId);
+    {
+        gf::GfObjAcc acc(m_gob);
+        acc.setUserData(gf::GfObjUserData(0), reinterpret_cast<unsigned long>(this));
+    }
+    {
+        gf::GF_OBJ_HANDLE* gob = m_gob;
+        gf::GfObjAcc acc(gob);
+        if (acc.m_obj != nullptr) {
+            gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(gob)->m_setup);
+            setup->pad_6c |= 7;
+        }
+        if (gf::GfObj* obj = acc.getObj()) {
+            obj->pad_110 |= 7;
+        }
+    }
+    {
+        gf::GF_OBJ_HANDLE* gob = m_gob;
+        // the original calls getGmkType here and drops its answer
+        getGmkType();
+        gf::GfObjAcc acc(gob);
+        if (acc.m_obj != nullptr) {
+            acc.setDisp(gf::OBJDISP(8), true);
+        }
+    }
+    gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(m_gob)->m_setup);
+    const Data* data = getData();
+    setup->m_initialPos.x = data->m_startPos.x;
+    setup->m_initialPos.y = data->m_startPos.y;
+    setup->m_initialPos.z = data->m_startPos.z;
+}
+
 bool GmkJump::canDepopGobInst() const {
     if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         if (!pad_50 || !m_eneRelease.isMatch(getData()->m_startPos)) {
@@ -4815,6 +4924,82 @@ bool GmkJump::canDepopGobInst() const {
         }
     }
     return false;
+}
+
+// the icon effect: "cmn_100_103" for a jump of type 0, "cmn_100_106" (or the field pack's "ma40a_01_100_dlc" in
+// the Ira game) for type 1
+void GmkJump::createIcon() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_effectHandle != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effectHandle);
+        m_effectHandle = 0;
+    }
+    const char* name;
+    fw::EffectPack* pack;
+    if (getBdatInfo()->m_type == 1) {
+        if (gf::GfGameManager::isGameTypeIra()) {
+            name = "ma40a_01_100_dlc";
+            pack = gf::GfFieldManager::getEffectPack();
+        } else {
+            pack = nullptr;
+            name = "cmn_100_106";
+        }
+    } else {
+        pack = nullptr;
+        name = "cmn_100_103";
+    }
+    void* efb = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search(name, pack);
+    if (efb == nullptr) {
+        return;
+    }
+    m_effectHandle = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->create(efb, true);
+    if (m_effectHandle != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setCategory(m_effectHandle, fw::EF_CATEGORY(1));
+        validateIconPos();
+    }
+}
+
+// places the icon: type 1 on the ground under the start position (getYSnapPos from 3 above, 6 down), type 0 at
+// the start position raised by BDAT 0x7B member 0x25 and turned by the data's rotation
+void GmkJump::validateIconPos() {
+    if (m_effectHandle == 0) {
+        return;
+    }
+    effect::SendParam param;
+    const Data* data = getData();
+    mm::Vec3 pos;
+    float rotY;
+    if (getBdatInfo()->m_type == 1) {
+        mm::Vec3 from = data->m_startPos;
+        from.y += 3.0f;
+        if (!getYSnapPosForPop(pos, from, 6.0f)) {
+            pos = data->m_startPos;
+        }
+        rotY = 0.0f;
+    } else {
+        pos = data->m_startPos;
+        Bdat::uVal height;
+        height.ulong = Bdat::getValCheck(gf::GfDataBdat::getFP(0x7B), 0, 0x25, 8);
+        pos.y += height.real;
+        rotY = data->m_rotY;
+    }
+    // read before the rotation (the original loads the position before its sinf/cosf calls)
+    mm::Vec3 trans = pos;
+    param.m_mtx.setRotY(rotY);
+    param.m_mtx.addTrans(trans);
+    bool flag;
+    if (pad_79) {
+        // the original calls getGmkType here and drops its answer
+        getGmkType();
+        flag = true;
+    } else {
+        flag = false;
+    }
+    param.m_flagB = flag;
+    mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setParam(m_effectHandle, &param);
 }
 
 void GmkJump::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
@@ -6354,6 +6539,28 @@ bool DistHvCond::isMatch(const mm::Vec3& pos) const {
     float dz = interest.z - pos.z;
     float xzSq = dx * dx + dz * dz;
     return !(m_horizontalSq < xzSq);
+}
+
+bool DistCond::isMatch(float distSq, const mm::Vec3& pos) {
+    GmkManager* manager = GmkManager::sys();
+    if (manager != nullptr && manager->pad_198 != 1) {
+        if (manager->pad_198 != 0) {
+            return false;
+        }
+        if (!gf::GfGameManager::isGameTypeIra() && !isPlayerExist()) {
+            return false;
+        }
+    } else {
+        ml::Scn* scn = ml::Scn::sys();
+        if (scn == nullptr || scn->getCam(-1) == nullptr) {
+            return false;
+        }
+    }
+    const mm::Vec3& interest = getInterestPos();
+    float dx = interest.x - pos.x;
+    float dy = interest.y - pos.y;
+    float dz = interest.z - pos.z;
+    return !(dx * dx + dy * dy + dz * dz > distSq);
 }
 
 ScenarioFlagCond::ScenarioFlagCond(const CBdatWrapper& bdat, int row, const char* prefix) {
