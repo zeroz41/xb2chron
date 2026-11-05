@@ -4,6 +4,7 @@
 #include <math.h>
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedVector.h"
+#include "mm/mtl/Bitflag.h"
 #include "classes/event/FrameInfo.h"
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
@@ -38,7 +39,7 @@ public:
         m_frameInfo.m_cmdStep = step;
         if ((pad_18 & 0x67f4) && step <= 0.0f) m_frameInfo.m_cmdStep = fmaxf(pad_188, 0.0f) + 1.0f;
         m_frameInfo.m_step = step;
-        if (!(pad_10 & 1)) m_frameInfo.m_step = fmaxf(pad_188, 0.0f) + 1.0f;
+        if (!pad_10.test(0)) m_frameInfo.m_step = fmaxf(pad_188, 0.0f) + 1.0f;
         if (pad_18 & 0x38300a) m_frameInfo.m_step = 0.0f;
         m_frameInfo.pad_10 = pad_188;
         return m_frameInfo;
@@ -48,9 +49,35 @@ public:
     // the name is not the original's
     inline void startPage(const char* name, int no, float frame);
 
+    // OnEventProc's messages 7 (tail-called) and 8, 14, 16, 18
+    void initPage();
+    void update();
+    void render();
+    void tail();
+    // every pause type cleared
+    void pauseClearAll();
+
+    // the page state's reset: initPage and OnEventProc's messages 4 and 12 inline it (the name is not the
+    // original's)
+    void resetPage() {
+        m_maxFrame = 1000.0f;
+        pad_d0 = "";
+        m_pageNo = 0;
+        m_frame = 0.0f;
+        pad_164 = 0.0f;
+        pad_16c = 0.0f;
+        m_skipAbleFrame = 0.0f;
+        pad_11b0 = -1;
+        m_keyFrames.clear();
+        pad_188 = 0.0f;
+    }
+
 private:
     // the fields below up to m_frame are set by the constructor; no reader seen yet
-    int pad_10;
+    // a 4-aligned flag word: tail's test of bit 1 of pad_14 reuses its first read where an int at 0x10 lets GVN
+    // widen the read of bit 0 here over pad_14. Bit 8: initPage ran this frame, 9: between messages 4 and 8, 10/11:
+    // pause type 1 set/cleared (message 19 keeps or restores the frame)
+    mm::mtl::Bitflag<32> pad_10;
     int pad_14;
 
 public:
@@ -67,8 +94,8 @@ private:
     float pad_15c;
     float pad_160;
     float pad_164;
-    unsigned char pad_168[0x4];
-    int pad_16c;
+    float pad_168;  // 0x168: OnEventProc's message 19 keeps pad_164 here while bit 10 of pad_10 is set
+    float pad_16c;  // 0x16c: the highest frame reached (render marks it)
     // what getMaxFrame returns; the name is not the original's
     float m_maxFrame;  // 0x170
     unsigned char pad_174[0x4];
@@ -85,6 +112,9 @@ private:
     };
     mm::mtl::FixedVector<KeyFrame, 512> m_keyFrames;  // 0x190 (count at 0x1190)
     FrameInfo m_frameInfo;  // 0x1198: what frameInfo fills and returns (the name is not the original's)
+    int pad_11ac;  // 0x11ac: tail counts frames here while bit 2 of pad_14 is set
+    int pad_11b0;  // 0x11b0: resetPage sets it to -1
+    unsigned char pad_11b4[0x4];
 };
 }  // namespace event
 

@@ -4669,17 +4669,70 @@ void TextManager::OnEventProc(event::MSG_TYPE msg) {
 #include "classes/gf/GfEvtModelEvent.h"
 #include "classes/event/DebugManager.h"
 #include "classes/event/FrameManager.h"
+#include "classes/event/CpuManager.h"
 
 namespace event {
 
 FrameManager::FrameManager()
     : pad_18(0), pad_d0(), m_frame(0.0f), pad_15c(0.0f), pad_160(0.0f), pad_164(0.0f), pad_16c(0),
       m_maxFrame(1000.0f), pad_184(1), m_keyFrames(), m_frameInfo() {
-    pad_10 = 0;
+    pad_10.reset();
     pad_14 = 2;
     for (int i = 0; i < 22; i++) {
         pad_20[i] = reinterpret_cast<gf::GF_PAUSE_HANDLE*>(-1);
     }
+}
+
+void FrameManager::initPage() {
+    resetPage();
+    pad_160 = pad_15c;
+    pad_10.set(8);
+    CpuManager* cpu = mm::mtl::Singleton<CpuManager>::getPtr();
+    cpu->m_frame = 0.0f;
+    cpu->m_cpuFrame = 0.0f;
+    cpu->m_startFrame = cpu->calcCpuFrame();
+    cpu->m_flags |= 1;
+}
+
+void FrameManager::tail() {
+    if (pad_14 & 0x20) {
+        frameInfo();
+    }
+    if ((pad_14 & 2) && (pad_10.test(8) || m_frame != pad_164) && pad_d0.m_str[0] != '\0') {
+        // what it was sent is compiled out
+        mm::mtl::Singleton<CopydataManager>::getPtr();
+    }
+    if (pad_14 & 4) {
+        if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkip() && pad_11ac++ >= 10) {
+            pad_14 &= ~4;
+        }
+    }
+    pad_10.reset(6);
+    pad_10.reset(8);
+}
+
+void FrameManager::addKeyFrame(float frame, bool flag) {
+    KeyFrame key = {frame, flag};
+    if (!m_keyFrames.empty() && !(key.frame > m_keyFrames.back().frame)) {
+        for (unsigned long i = 0; i < m_keyFrames.size(); i++) {
+            KeyFrame& entry = m_keyFrames[i];
+            if (key.frame == entry.frame) {
+                if (flag) {
+                    entry.flag = true;
+                }
+                return;
+            }
+            if (key.frame < entry.frame) {
+                float entryFrame = entry.frame;
+                bool entryFlag = entry.flag;
+                entry.frame = key.frame;
+                entry.flag = key.flag;
+                key.frame = entryFrame;
+                key.flag = entryFlag;
+            }
+        }
+    }
+    m_keyFrames.push_back(key);
 }
 
 FrameManager::~FrameManager() {}
@@ -6272,12 +6325,12 @@ bool Manager::startScene(const char* name, int no) {
 }
 
 void FrameManager::startPage(const char* name, int no, float frame) {
-    bool b = pad_10 & 0x10;
+    bool b = pad_10.test(4);
     pad_d0 = name;
     m_pageNo = no;
     m_maxFrame = fmaxf(frame, 0.0f);
     if (b && Manager::get()->m_sceneNo <= no) {
-        pad_10 |= 0x20;
+        pad_10.set(5);
         pad_178 = m_maxFrame - 1.0f;
     }
 }
