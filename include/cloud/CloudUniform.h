@@ -20,11 +20,11 @@ enum CloudUniformType {
     CLOUD_UNIFORM_FLOW_1,       // 0x20
     CLOUD_UNIFORM_SKY_0,        // 0xD0
     CLOUD_UNIFORM_SKY_1,        // 0xA0
-    CLOUD_UNIFORM_SKY_2,        // 0xF0
+    CLOUD_UNIFORM_10,           // 0xF0, CloudMdlParts
     CLOUD_UNIFORM_MDL_0,        // 0x60
     CLOUD_UNIFORM_MDL,          // 0xA0, bound as "U_MDL"
     CLOUD_UNIFORM_13,           // 0xE0
-    CLOUD_UNIFORM_14,           // 0x20
+    CLOUD_UNIFORM_SKY_2,        // 0x20, CloudObjSky (renderDetailPoli binds it as "U_DET")
     CLOUD_UNIFORM_15,           // 0xA0
     CLOUD_UNIFORM_16,           // 0x140
     CLOUD_UNIFORM_BLUR,         // 0x60, CloudObjPlane fills it with createBlurUniform
@@ -52,6 +52,8 @@ public:
                             const mm::Vec3& color3, const mm::Vec3& color4, float, float, float, unsigned int idx,
                             unsigned int param, float rate);
     void createBlurUniform(bool second);
+    // CloudObjSky::updateUniform's SKY_1 block from its scroll (the parameter name is not the original's)
+    void createSkyUniform(const mm::Vec3& scroll);
     static unsigned int s_nUniformBlockSize[CLOUD_UNIFORM_NUM];
 };
 

@@ -3,6 +3,7 @@
 
 #include "mm/Col3.h"
 #include "mm/Mat44.h"
+#include "mm/Vec3.h"
 #include "cloud/CloudUniform.h"
 
 namespace grlib { class CGLibRenderTarget; class CGLibDepthBuffer; class CGLibDepthTarget; }
@@ -16,15 +17,30 @@ public:
     CloudCalcParams();
 
     const ml::IDrDrawWorkInfo* m_pInfo;  // 0x0, apply's argument
-    unsigned char pad_8[0x108];
+    unsigned char pad_8[0x88];
+    mm::Mat44 m_skyMat[2];       // 0x90, CloudObjSky::updateUniform sends [0], then [1] twice
     mm::Mat44 m_invMat;          // 0x110, apply inverts a matrix into it (CloudObjReduction::update sends it)
-    unsigned char pad_150[0x44];
+    mm::Vec3 m_skyPos;           // 0x150, CloudObjSky::updateUniform sends it with m_far * 0.9
+    unsigned char pad_160[0x30];
+    float m_skySpeed;            // 0x190, CloudObjSky::updateParams scales both scrolls by it
     float m_height;              // 0x194, CloudMan::setHeight/getHeight
     unsigned char pad_198[0x4];
     unsigned int m_cldNum;       // 0x19C, CloudMan::setCldNum (0 or 1)/getCldNum
     unsigned char pad_1A0[0x18];
     mm::Col3 m_planeCol[2];      // 0x1B8, CloudMan::getPlaneCol (0 picks the first)
-    unsigned char pad_1D0[0x1FC];
+    unsigned char pad_1D0[0x144];
+    float m_skyWindAngle;        // 0x314, degrees: CloudObjSky::updateParams's scroll direction (cos, 1, sin)
+    unsigned char pad_318[0x8];
+    float m_detailDir[3];        // 0x320, CloudObjSky's detail scroll per unit of time
+    float m_skyParam[3];         // 0x32C, CloudObjSky::updateUniform sends them reversed; [2] also moves the detail
+    float m_skyRateH;            // 0x338, CloudObjSky's scroll rate along x and z
+    float m_skyRateV;            // 0x33C, along y
+    unsigned char pad_340[0x4];
+    float m_skyScale;            // 0x344, squared into CloudObjSky's scroll
+    unsigned char pad_348[0x10];
+    int m_skyTexSize;            // 0x358, CloudObjSky's detail target is this square
+    unsigned int m_skyShader;    // 0x35C, CloudObjSky::renderSkyPoli's shader variant
+    unsigned char pad_360[0x6C];
     float m_near;                // 0x3CC (apply's; CloudObjReduction sends far - near, far * near, far: the names
     float m_far;                 // 0x3D0  are inferred from that use)
     unsigned char pad_3D4[0x4C];

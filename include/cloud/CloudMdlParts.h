@@ -41,7 +41,7 @@ public:
     mm::Vec3 m_pos;                // 0x0, CMLObjData's position
     mm::Vec3 m_scroll;             // 0x10
     mm::Vec3 m_detailScroll;       // 0x20, moves 10 times as fast as m_scroll
-    CloudUniform m_uniform;        // 0x30, created as kind 10 (CLOUD_UNIFORM_SKY_2 as the enum names it)
+    CloudUniform m_uniform;        // 0x30, created as kind 10 (CLOUD_UNIFORM_10)
     CloudMdlDataObj* m_pData;      // 0x68
     unsigned short m_index;        // 0x70, the CMLObjData index in m_pData
     unsigned short m_sortKey;      // 0x72, calcZSort's key

@@ -19,6 +19,7 @@
 #include "classes/cloud/CloudObjSky.h"
 #include "classes/cloud/CloudMan.h"
 #include "cloud/CloudShaderMan.h"
+#include "cloud/CloudTextureMan.h"
 #include "grlib/CGLibCtl.h"
 #include "grlib/CGLibDecShader.h"
 #include "grlib/CGLibShader.h"
@@ -304,6 +305,18 @@ void CloudObjPlane::renderPlaneDef() {
     }
 }
 
+CloudObjSky::CloudObjSky() {
+    m_skyUniform0.createUniform(CLOUD_UNIFORM_SKY_0, 0);
+    m_skyUniform1.createUniform(CLOUD_UNIFORM_SKY_1, 0);
+    m_skyUniform2.createUniform(CLOUD_UNIFORM_SKY_2, 0);
+    m_targetSize = CloudMan::sys()->m_pObjMan->m_pCalcParams->m_skyTexSize;
+    m_target.setTextureInfo((float)m_targetSize, (float)m_targetSize, (GrlSurfaceFormat)1, false, 0);
+    m_scroll = mm::Vec3(0.0f, 0.0f, 0.0f);
+    m_detailScroll = mm::Vec3(0.0f, 0.0f, 0.0f);
+    m_detailParam = 1.0f;
+    m_isFirst = true;
+}
+
 CloudObjSky::~CloudObjSky() {}
 
 void CloudObjSky::update() {
@@ -311,6 +324,140 @@ void CloudObjSky::update() {
         updateParams();
         updateUniform();
     }
+}
+
+void CloudObjSky::updateParams() {
+    CloudMan* sys = CloudMan::sys();
+    CloudCalcParams* calc = sys->m_pObjMan->m_pCalcParams;
+    float frame = sys->m_frame;
+    float rate = sys->m_rate;
+    float rateH = calc->m_skyRateH;
+    float speed0 = calc->m_skySpeed;
+    float rateV = calc->m_skyRateV;
+    const float sq2 = sqrtf(2.0f);
+    float time = frame * rate;
+    float speedH = rateH * speed0;
+    float speedV = speed0 * rateV;
+    mm::Vec3 dir(cosf(calc->m_skyWindAngle * 0.017453292f) * sq2, 1.0f,
+                 sinf(calc->m_skyWindAngle * 0.017453292f) * sq2);
+    float len = dir.length();
+    float moveH = time * speedH;
+    float moveV = time * speedV;
+    if (len <= 1e-6f) {
+        dir = mm::Vec3::zero;
+    } else {
+        float scale = 1.0f / len;
+        dir = mm::Vec3(dir.x * scale, scale, dir.z * scale);
+    }
+    m_scroll += mm::Vec3(moveH * dir.x, moveV * dir.y, moveH * dir.z) * (calc->m_skyScale * calc->m_skyScale);
+    float speed = calc->m_skySpeed * 0.5f;
+    float move = time * speed * 0.01f;
+    m_detailScroll.x += calc->m_detailDir[0] * move;
+    m_detailScroll.y += calc->m_detailDir[1] * move;
+    m_detailScroll.z += calc->m_detailDir[2] * move;
+    if (m_isFirst) {
+        m_detailParam = calc->m_skyParam[2];
+        m_isFirst = false;
+    } else if (m_detailParam != calc->m_skyParam[2]) {
+        float diff = (m_detailParam - calc->m_skyParam[2]) * 0.5f;
+        m_detailScroll.x = diff + m_detailScroll.x;
+        m_detailScroll.y = diff + m_detailScroll.y;
+        m_detailParam = calc->m_skyParam[2];
+    }
+    m_detailScroll.x = fmodf(m_detailScroll.x, 256.0f);
+    m_detailScroll.y = fmodf(m_detailScroll.y, 256.0f);
+    if (m_detailScroll.z >= 4352.0f) {
+        m_detailScroll.z += -4352.0f;
+    } else if (m_detailScroll.z <= -4352.0f) {
+        m_detailScroll.z += 4352.0f;
+    }
+    m_scroll.x = fmodf(m_scroll.x, 256.0f);
+    m_scroll.y = fmodf(m_scroll.y, 256.0f);
+    if (m_scroll.z >= 4352.0f) {
+        m_scroll.z += -4352.0f;
+    } else if (m_scroll.z <= -4352.0f) {
+        m_scroll.z += 4352.0f;
+    }
+    if (calc->m_skyTexSize != m_targetSize) {
+        m_targetSize = calc->m_skyTexSize;
+        m_target.setTextureInfo((float)m_targetSize, (float)m_targetSize, (GrlSurfaceFormat)1, false, 0);
+        m_isTargetClear = true;
+    }
+}
+
+void CloudObjSky::renderDetailPoli() {
+    if (m_isTargetClear) {
+        m_isTargetClear = false;
+        m_target.clearTexture(mm::Col4(0.0f, 0.0f, 0.0f, 0.0f), (GrlClaerMask)0xF);
+    }
+    m_target.setRenderTarget();
+    grlib::CGLibPolygon::setCullingOff();
+    grlib::CGLibColorCtl::setBlendControl((GrlBlendFunc)5, (GrlBlendFunc)6, (GrlBlendCombine)1, (GrlLogicType)3);
+    grlib::CGLibColorCtl::setColorBufferOn();
+    grlib::CGLibDepthCtl::setDepthControl(0, 0, (GrlCompare)7);
+    CloudVertexMan* vtx = CloudMan::sys()->m_pVertexMan;
+    CloudShaderMan* shd = CloudMan::sys()->m_pShaderMan;
+    CloudTextureMan* tex = CloudMan::sys()->m_pTextureMan;
+    vtx->bindVertexList((CloudVertexType)2);
+    grlib::CGLibDecShader* shader = shd->setShader((CloudShaderType)8, 0, 1, 1);
+    unsigned int det = shader->getCurrentShader().getUniformBlockOfs("U_DET");
+    unsigned int t3d = shader->getCurrentShader().getTextureLocation("t3d");
+    unsigned int texNoise = shader->getCurrentShader().getTextureLocation("texNoise");
+    shd->setTexture(t3d, *tex->m_pTextures[1], (CloudSamplerType)0);
+    shd->setTexture(texNoise, *tex->m_pTextures[2], (CloudSamplerType)0);
+    m_skyUniform2.setUniformBlock(det);
+    vtx->renderIndexList((CloudVertexType)2);
+}
+
+void CloudObjSky::renderSkyPoli() {
+    CloudCalcParams* calc = CloudMan::sys()->m_pObjMan->m_pCalcParams;
+    grlib::CGLibColorCtl::setBlendOffControl((GrlLogicType)3);
+    grlib::CGLibDepthCtl::setDepthControl(1, 0, (GrlCompare)3);
+    CloudObjReduction* reduction = CloudMan::sys()->m_pObjMan->m_pReduction;
+    reduction->m_skyTarget.setRenderTarget(*reduction->m_depth0.m_pDepthBuffer);
+    grlib::CGLibPolygon::setCullingOff();
+    CloudVertexMan* vtx = CloudMan::sys()->m_pVertexMan;
+    CloudShaderMan* shd = CloudMan::sys()->m_pShaderMan;
+    CloudTextureMan* tex = CloudMan::sys()->m_pTextureMan;
+    vtx->bindVertexList((CloudVertexType)5);
+    grlib::CGLibDecShader* shader = shd->setShader((CloudShaderType)6, calc->m_skyShader, 2, 1);
+    unsigned int col = shader->getCurrentShader().getUniformBlockOfs("U_COL");
+    unsigned int mdl = shader->getCurrentShader().getUniformBlockOfs("U_MDL");
+    unsigned int fog = shader->getCurrentShader().getUniformBlockOfs("U_FOG");
+    unsigned int count = shader->getCurrentShader().getUniformBlockOfs("U_COUNT");
+    unsigned int noisetex = shader->getCurrentShader().getTextureLocation("noisetex");
+    unsigned int texNoise = shader->getCurrentShader().getTextureLocation("texNoise");
+    unsigned int detail = shader->getCurrentShader().getTextureLocation("detail");
+    shd->setTexture(noisetex, *tex->m_pTextures[1], (CloudSamplerType)0);
+    shd->setTexture(texNoise, *tex->m_pTextures[2], (CloudSamplerType)0);
+    shd->setTexture(detail, *m_target.m_pTexture, (CloudSamplerType)2);
+    m_skyUniform0.setUniformBlock(mdl);
+    m_skyUniform1.setUniformBlock(col);
+    calc->m_uniform.setUniformBlock(fog);
+    CloudMan::sys()->m_pObjMan->m_pReduction->m_counter[0].setUniformBlock(count);
+    vtx->renderIndexList((CloudVertexType)5);
+}
+
+void CloudObjSky::renderLastPoli() {
+    grlib::CGLibCtlShader::setMemoryBarrierBit(4);
+    CloudObjMan* man = CloudMan::sys()->m_pObjMan;
+    CloudCalcParams* calc = man->m_pCalcParams;
+    calc->m_pTarget->setRenderTarget(*calc->m_pDepth);
+    grlib::CGLibPolygon::setCullingOff();
+    grlib::CGLibDepthCtl::setDepthControl(1, 0, (GrlCompare)3);
+    grlib::CGLibColorCtl::setBlendControl((GrlBlendFunc)2, (GrlBlendFunc)6, (GrlBlendCombine)1, (GrlLogicType)3);
+    CloudVertexMan* vtx = CloudMan::sys()->m_pVertexMan;
+    CloudShaderMan* shd = CloudMan::sys()->m_pShaderMan;
+    vtx->bindVertexList((CloudVertexType)5);
+    CloudObjReduction* reduction = man->m_pReduction;
+    grlib::CGLibDecShader* shader = shd->setShader((CloudShaderType)10, 3, 2, 1);
+    unsigned int mdl = shader->getCurrentShader().getUniformBlockOfs("U_MDL");
+    unsigned int count = shader->getCurrentShader().getUniformBlockOfs("U_COUNT");
+    unsigned int base = shader->getCurrentShader().getTextureLocation("base");
+    shd->setTexture(base, *reduction->m_skyTarget.m_pTexture, (CloudSamplerType)2);
+    m_skyUniform0.setUniformBlock(mdl);
+    man->m_pReduction->m_counter[0].setUniformBlock(count);
+    vtx->renderIndexList((CloudVertexType)5);
 }
 
 void CloudObjSky::alphaRender() {
