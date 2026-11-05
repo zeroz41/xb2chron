@@ -95,6 +95,8 @@
 #include "classes/event/ObjectList.h"
 #include "classes/event/ObjectManager.h"
 #include "classes/event/MemoryManager.h"
+#include "classes/gf/GfGameEvent.h"
+#include "classes/event/LightManager.h"
 #include "classes/event/CmdVariable.h"
 #include "classes/event/ICmd/Param.h"
 #include "classes/gf/GfEvent.h"
@@ -2560,6 +2562,28 @@ Object* ObjectList::createGfObj(const char* name, gf::GF_OBJ_HANDLE* handle) {
     return obj;
 }
 
+gf::GF_OBJ_HANDLE* ObjectList::getDriverByBlade(unsigned int bladeId) {
+    for (unsigned int id = 1; id <= 3; id++) {
+        gf::GF_OBJ_HANDLE* driver = mm::mtl::Singleton<ObjectPartyList>::getPtr()->getDriver(id);
+        gf::GF_OBJ_HANDLE* blade = mm::mtl::Singleton<ObjectPartyList>::getPtr()->getBlade(id);
+        if (gf::GfObjAcc(blade).getBdatId() == bladeId) {
+            return driver;
+        }
+    }
+    return gf::GfGameManager::getPartyLeaderDriver();
+}
+
+gf::GF_OBJ_HANDLE* ObjectList::getBladeByDriver(unsigned int driverId) {
+    for (unsigned int id = 1; id <= 3; id++) {
+        gf::GF_OBJ_HANDLE* driver = mm::mtl::Singleton<ObjectPartyList>::getPtr()->getDriver(id);
+        gf::GF_OBJ_HANDLE* blade = mm::mtl::Singleton<ObjectPartyList>::getPtr()->getBlade(id);
+        if (gf::GfObjAcc(driver).getBdatId() == driverId) {
+            return blade;
+        }
+    }
+    return reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+}
+
 Object* ObjectList::createCamera(const char* name, unsigned int id) {
     Object* result = nullptr;
     if (id < m_counts[1]) {
@@ -2669,6 +2693,106 @@ void ObjectList::listupObject(mm::mtl::FixedVector<unsigned int, 256>& list, uns
     }
 }
 
+void ObjectManager::updateCurrent() {
+    if (strcmp(m_sceneName.m_str, m_currentName.m_str) == 0) {
+        return;
+    }
+    m_current = searchScene(m_sceneName.m_str);
+    if (!m_current) {
+        m_current = createScene(m_sceneName.m_str);
+    }
+    if (m_current) {
+        m_currentName = m_sceneName;
+    }
+}
+
+void ObjectManager::render() {
+    if (isDisp() || mm::mtl::Singleton<CharaManager>::getPtr()->isCharaDisp() ||
+        mm::mtl::Singleton<CharaManager>::getPtr()->isFacialDisp() ||
+        mm::mtl::Singleton<CharaManager>::getPtr()->isBoneDisp() ||
+        mm::mtl::Singleton<EffectManager>::getPtr()->isEffectDisp() ||
+        mm::mtl::Singleton<LightManager>::getPtr()->isLightDisp()) {
+        if (m_current) {
+            m_current->render();
+        }
+    }
+}
+
+Object* ObjectManager::createGfObjPcByWalkID(const char* name, unsigned int walkId, unsigned int a) {
+    bool skip = mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast();
+    updateCurrent();
+    if (skip) {
+        return m_current->createGhost(name);
+    }
+    return m_current->createGfObjPcByWalkID(name, walkId, a);
+}
+
+// 1.0.0's ObjectList::createGfObjPcByBladeID: the driver of that blade, or (bit 0 of m_flags) a new driver of
+// the blade's creator (3 when it has none)
+inline Object* ObjectList::createGfObjPcByBladeID(const char* name, unsigned int bladeId, unsigned int a) {
+    if (!(m_flags & 1)) {
+        return createGfObj(name, getDriverByBlade(bladeId));
+    }
+    int creator = gf::GfDataBlade::getCreator(bladeId);
+    return createGfObj(name, static_cast<CHARA_TYPE>(1), creator == 0 ? 3 : creator, a, 0);
+}
+
+Object* ObjectManager::createGfObjPcByBladeID(const char* name, unsigned int bladeId, unsigned int a) {
+    bool skip = mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast();
+    updateCurrent();
+    if (skip) {
+        return m_current->createGhost(name);
+    }
+    return m_current->createGfObjPcByBladeID(name, bladeId, a);
+}
+
+Object* ObjectManager::createGfObjBlByWalkID(const char* name, unsigned int walkId, unsigned int a) {
+    bool skip = mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast();
+    updateCurrent();
+    if (skip) {
+        return m_current->createGhost(name);
+    }
+    return m_current->createGfObjBlByWalkID(name, walkId, a);
+}
+
+Object* ObjectManager::createGfObjBladeByPcID(const char* name, unsigned int pcId, unsigned int a) {
+    bool skip = mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast();
+    updateCurrent();
+    if (skip) {
+        return m_current->createGhost(name);
+    }
+    return m_current->createGfObjBladeByPcID(name, pcId, a);
+}
+
+Object* ObjectManager::createGfObjPartyIn(const char* name, CHARA_TYPE type, unsigned int id, unsigned int a, unsigned int b) {
+    bool skip = mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast();
+    updateCurrent();
+    if (skip) {
+        return m_current->createGhost(name);
+    }
+    return m_current->createGfObjPartyIn(name, type, id, a, b);
+}
+
+Object* ObjectManager::createGfObj(const char* name, CHARA_TYPE type, unsigned int id, unsigned int a, unsigned int b) {
+    bool skip = mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast();
+    updateCurrent();
+    if (skip) {
+        return m_current->createGhost(name);
+    }
+    return m_current->createGfObj(name, type, id, a, b);
+}
+
+Object* ObjectManager::createModel(const char* name, const char* model, unsigned int a, unsigned int b) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        updateCurrent();
+        return m_current->createGhost(name);
+    }
+    mm::mtl::FixStr<128> path(model);
+    gf::GfGameEvent::replaceEquipModel(path);
+    updateCurrent();
+    return m_current->createModel(name, path.m_str, a, b);
+}
+
 Object* ObjectManager::createCamera(const char* name, unsigned int id) {
     updateCurrent();
     return m_current->createCamera(name, id);
@@ -2690,6 +2814,99 @@ ObjectList* ObjectManager::createScene(const char* name) {
         ObjectList(name, m_flags & 1);
     m_scenes.push_back(list);
     return list;
+}
+
+inline void ObjectManager::init() {
+    m_flags = 0;
+    m_sceneName = "default";
+    m_currentName = "";
+    m_current = nullptr;
+    mm::mtl::Singleton<ObjectPartyList>::getPtr()->init();
+}
+
+inline void ObjectManager::clear() {
+    for (unsigned long i = 0; i < m_scenes.size(); i++) {
+        if (m_scenes[i]) {
+            delete m_scenes[i];
+            m_scenes[i] = nullptr;
+        }
+    }
+    m_scenes.clear();
+    m_flags = 0;
+    m_sceneName = "default";
+    m_currentName = "";
+    m_current = nullptr;
+}
+
+inline void ObjectManager::setupScene() {
+    m_sceneName = mm::mtl::PtrSingleton<Manager>::sys()->m_sceneName.m_str;
+    updateCurrent();
+}
+
+inline void ObjectManager::startScene() {
+    m_sceneName = mm::mtl::PtrSingleton<Manager>::sys()->m_sceneName.m_str;
+    updateCurrent();
+    if (m_current) {
+        m_current->startScene();
+    }
+}
+
+inline void ObjectManager::startPage() {
+    if (m_current) {
+        m_current->startPage();
+    }
+}
+
+inline void ObjectManager::endScene() {
+    if (m_current) {
+        m_current->endScene();
+    }
+}
+
+inline void ObjectManager::update() {
+    if (m_current) {
+        m_current->update();
+    }
+}
+
+inline void ObjectManager::tail() {
+    if (m_current) {
+        m_current->tail();
+    }
+}
+
+void ObjectManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        init();
+        break;
+    case 5:
+        setupScene();
+        break;
+    case 7:
+        startScene();
+        break;
+    case 8:
+        startPage();
+        break;
+    case 10:
+        endScene();
+        break;
+    case 12:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    case 16:
+        render();
+        break;
+    case 18:
+        tail();
+        break;
+    default:
+        break;
+    }
 }
 
 Object* ObjectManager::searchByName(const char* name) {
@@ -3228,7 +3445,7 @@ CaptureManager::~CaptureManager() {}
 // ---- script commands (session 19) ----
 #include "classes/event/ObjectManager.h"
 
-event::ObjectManager::ObjectManager() : m_flags(0), pad_14(0), m_sceneName("default") {}
+event::ObjectManager::ObjectManager() : m_flags(0), m_dispFlags(0), m_sceneName("default") {}
 
 event::ObjectManager::~ObjectManager() {}
 #include "classes/event/ObjectChara.h"

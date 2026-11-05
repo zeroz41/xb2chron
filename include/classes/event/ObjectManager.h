@@ -54,6 +54,29 @@ public:
 
     // makes the scene named m_sceneName current (ScriptSetActive calls it before reading m_current)
     void updateCurrent();
+    // the scene named name, else null (1.0.0's searchScene 0x710011DC28; 3.0.1 inlines it into updateCurrent)
+    ObjectList* searchScene(const char* name) const {
+        for (unsigned long i = 0; i < m_scenes.size(); i++) {
+            if (strcmp(name, m_scenes[i]->m_name.m_str) == 0) {
+                return m_scenes[i];
+            }
+        }
+        return nullptr;
+    }
+    // 1.0.0's isDisp (0x7100111004; 3.0.1 inlines it: render)
+    bool isDisp() const { return m_dispFlags & 1; }
+    // renders the current scene when anything is shown (OnEventProc)
+    void render();
+    // 1.0.0's init, clear, setupScene, startScene, startPage, endScene, update, tail (0x710011CAC0..0x710011CFE8);
+    // 3.0.1 inlines them into OnEventProc (defined inline in CharaObj.cpp)
+    inline void init();
+    inline void clear();
+    inline void setupScene();
+    inline void startScene();
+    inline void startPage();
+    inline void endScene();
+    inline void update();
+    inline void tail();
     // a new scene (an ObjectList named name, m_flags bit 0 passed on), added to m_scenes (1.0.0's name)
     ObjectList* createScene(const char* name);
     // 1.0.0's names (0x710011D99C, 0x710011C900; 3.0.1 inlines them): the current scene's effects alive, and
@@ -61,10 +84,12 @@ public:
     inline bool isUsingEffect();
     inline void stopEffect();
 
-    // bit 0 is passed to each new ObjectList (1.0.0's createScene); the name is not the original's
+    // bit 0 is passed to each new ObjectList (1.0.0's createScene); 1.0.0's setCloneMode(bool) sets it; the name is
+    // not the original's
     unsigned int m_flags;  // 0x10
-    // zeroed with m_flags (one 64-bit store with the second table pointer); no reader seen yet
-    unsigned int pad_14;   // 0x14
+    // bit 0: 1.0.0's setDisp(bool)/isDisp; zeroed with m_flags (one 64-bit store with the second table pointer); the
+    // name is not the original's
+    unsigned int m_dispFlags;   // 0x14
     // the scenes 1.0.0's createScene adds and updateCurrent searches by name; the name is not the original's
     mm::mtl::FixedVector<ObjectList*, 16> m_scenes;  // 0x18 (size 0x98)
     // the scene updateCurrent makes current ("default" at first); the name is not the original's

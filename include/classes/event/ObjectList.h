@@ -3,7 +3,7 @@
 
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedVector.h"
-namespace event { class Object; }
+namespace event { class Object; class ObjectChara; enum CHARA_TYPE : int; }
 namespace gf { class GF_OBJ_HANDLE; }
 
 namespace event {
@@ -26,6 +26,34 @@ public:
     void updateSub(Object* obj);
     // renders a loading object greyed out (0.5 each), others white at half alpha
     void renderSub(Object* obj);
+    // 1.0.0's startScene, endScene, update, tail (0x710011A2AC, 0x710011A448, 0x710011A4A4, 0x710011A59C; 3.0.1
+    // inlines them: ObjectManager::OnEventProc)
+    void startScene() {
+        if (m_root) {
+            startSceneSub(m_root);
+        }
+    }
+    void endScene() {
+        if (m_root) {
+            endSceneSub(m_root);
+        }
+    }
+    void update() {
+        if (m_root) {
+            updateSub(m_root);
+        }
+    }
+    void tail() {
+        if (m_root) {
+            tailSub(m_root);
+        }
+    }
+    // 1.0.0's render (0x710011A500; 3.0.1 inlines it: ObjectManager::render)
+    void render() {
+        if (m_root) {
+            renderSub(m_root);
+        }
+    }
     void tailSub(Object* obj);
     bool isLoadingSub(Object* obj) const;
     // 1.0.0's names (0x710011C018, 0x710011C0C4; 3.0.1 inlines them): whether an effect of the list is alive,
@@ -36,6 +64,19 @@ public:
     static Object* searchByNameSub(Object* obj, const char* name);
     // a character object for an existing gf object, added to category 0
     Object* createGfObj(const char* name, gf::GF_OBJ_HANDLE* handle);
+    // the character creators ObjectManager's same-named members call on the current scene (createGhost when the
+    // skip manager skips fast); 3.0.1 symbols
+    ObjectChara* createGfObj(const char* name, CHARA_TYPE type, unsigned int id, unsigned int, unsigned int);
+    Object* createGfObjPcByWalkID(const char* name, unsigned int walkId, unsigned int);
+    Object* createGfObjBlByWalkID(const char* name, unsigned int walkId, unsigned int);
+    Object* createGfObjBladeByPcID(const char* name, unsigned int pcId, unsigned int);
+    Object* createGfObjPartyIn(const char* name, CHARA_TYPE type, unsigned int id, unsigned int, unsigned int);
+    Object* createModel(const char* name, const char* model, unsigned int, unsigned int);
+    Object* createGhost(const char* name);
+    // 1.0.0's createGfObjPcByBladeID (0x710011B27C); 3.0.1 inlines it into ObjectManager's (defined inline in
+    // CharaObj.cpp)
+    inline Object* createGfObjPcByBladeID(const char* name, unsigned int bladeId, unsigned int);
+    void adjestDefaultPos(ObjectChara* obj, bool);
     // the driver (blade) of the event party whose blade (driver) has that bdat id, else the party leader driver
     // (getDriverByBlade) / -1 (getBladeByDriver)
     gf::GF_OBJ_HANDLE* getDriverByBlade(unsigned int bladeId);

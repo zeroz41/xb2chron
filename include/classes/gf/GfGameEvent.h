@@ -3,6 +3,7 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "gf/GfEvtSe.h"
+#include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedList.h"
 #include "mm/mtl/FixedVector.h"
 #include "mtl/AllocHandle.h"
@@ -31,6 +32,8 @@ public:
     static void stop();
     // shows the object as the running events' display settings ask (GfGameObj::addInObj, listenerGfObj)
     static void applySetDispObject(GF_OBJ_HANDLE* handle);
+    // event::ObjectManager::createModel passes the model name through it before creating the model (result unused)
+    static void replaceEquipModel(mm::mtl::FixStr<128>& model);
     // 2.0.0's symbols name it. A static member: its unit is gf_game_event and it reads GfGameEvent's and
     // event::Manager's instances. What it does: finds the event id in EVT_listList's sheets, builds its evtName
     // (+ "_link" when linkID is set and debug one-time play is off), stores the id and third argument at

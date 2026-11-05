@@ -24,6 +24,8 @@ public:
     void clearOffScrLight();
     void update();  // out of line
     void render();  // out of line
+    // 1.0.0's isLightDisp (0x71000E4230; 3.0.1 inlines it: ObjectManager::render)
+    bool isLightDisp() const { return m_flags & 1; }
     unsigned int m_flags;          // 0x10 bit 0: setLightDisp (the name is not the original's)
     unsigned int m_modeFlags;      // 0x14 bit 0: setStreamMode (the name is not the original's)
     LightEvt* m_offScrLights[4];   // 0x18 playOffScrLight indexes it (the name is not the original's)

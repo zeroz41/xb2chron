@@ -81,7 +81,13 @@ public:
     // the scene name setupScene/startScene copy their name argument into (evt_setup's setSeamlessReadPos/Axis pass
     // it to SeamlessManager::addFirstSeamPoint); the name is not the original's
     mm::mtl::FixStr<32> m_sceneName;  // 0x254
-    unsigned char pad_278[0x294 - 0x278];
+    unsigned char pad_278[0x280 - 0x278];
+    // the gf object play keeps (+0x280); ObjectManager::createGfObjTalk builds the talk character from it when
+    // GfObjUtil::getObj finds it (the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_playHandle;  // 0x280
+    // the first word play keeps; createGfObjTalk's character id when no gf object exists (below 2001: 2004)
+    unsigned int pad_288;  // 0x288
+    unsigned char pad_28c[0x294 - 0x28C];
     // nonzero: GfEvtModelDriver's constructor then moves its init parameter in the theater; not known yet
     unsigned int pad_294;
     unsigned char pad_298[0x2B4 - 0x298];

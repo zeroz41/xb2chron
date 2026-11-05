@@ -26,6 +26,11 @@ public:
     bool isAutoTalkMode() const { return m_modeFlags & 4; }
     // inlined in 3.0.1 (CharaObj::setTar tests bit 4, which 1.0.0's accessors do not name); the name is not the original's
     unsigned int getModeFlags() const { return m_modeFlags; }
+    // 1.0.0's isCharaDisp, isFacialDisp, isBoneDisp (0x71000D78C4, 0x71000D78EC, 0x71000D7914; 3.0.1 inlines
+    // them: ObjectManager::render)
+    bool isCharaDisp() const { return m_dispFlags & 1; }
+    bool isFacialDisp() const { return m_dispFlags & 2; }
+    bool isBoneDisp() const { return m_dispFlags & 4; }
 
 private:
     // 1.0.0's accessors name the bits: 0 stream mode (isStreamMode), 1 offscreen mode (isOffscrMode), 2 auto talk
