@@ -127,7 +127,10 @@ public:
     unsigned char pad_1CE[0x1E];
     // 0x1EC, DrPixlPostObjMotionBlur::render runs calcVelocityBlur only while it is above 0 (name inferred)
     float m_velocityBlurRate;
-    unsigned char pad_1F0[0x28];
+    unsigned char pad_1F0[0xC];
+    // 0x1FC: ScnRenderDrSysParmAcc::setMotBlurDefault writes DrIniSys::m_postParm's (the name is not the original's)
+    bool m_motBlurDefault;
+    unsigned char pad_1FD[0x1B];
     bool m_dofOverride;  // isDOF: either of these two
     bool m_dof;
     bool m_dofHLvMode;
@@ -151,7 +154,11 @@ public:
     bool m_colTbl;  // 0x26A, getColTblOn
     unsigned char pad_26B[0x35];
     float m_toonDirLightScale;  // 0x2A0, getToonDirLightScale when DrMan::m_toonDirLightScale is set
-    unsigned char pad_2A4[0x20];
+    unsigned char pad_2A4[0x4];
+    // 0x2A8: DrIniSys::setupDlcIni sets it from lib_dlc_nx.ini's toonShadowAlphaDLC key, on DrIniSys::m_postParm and
+    // DrMan::m_postParm[0] (name inferred from the key)
+    float m_toonShadowAlpha;
+    unsigned char pad_2AC[0x18];
     // 0x2C4-0x2D0: DrMdoMat::matCall_OutLineVal's outline width and fade distances (names inferred)
     float m_outLineScale;
     unsigned char pad_2C8[0x4];
@@ -228,7 +235,11 @@ public:
     unsigned char pad_1080[0x4];
     int m_weather;  // 0x1084
     float m_weatherFrame[2];  // 0x1088, set by DrMan::s_nDblStockIdx, read by s_nDblIdx; reset to 60
-    unsigned char pad_1090[0x6C];
+    unsigned char pad_1090[0xC];
+    // 0x109C: the wetness value DrIniSys::getWetnessSetting returns without a table row or column 3, read from
+    // DrIniSys::m_postParm (the name is not the original's)
+    float m_wetDefault;
+    unsigned char pad_10A0[0x5C];
     // 0x10FC: DrPixlPostMan::update clears it each frame when set (name inferred)
     unsigned char m_frameReq;
     unsigned char pad_10FD[0x1];

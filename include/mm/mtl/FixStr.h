@@ -27,6 +27,10 @@
 // navi's (NvmshResMan::setupResource cites it so)
 #define MM_MTL_FIXSTR_H_FILE \
     "D:/Monolithsoft/BF2/prog/libs/navi/proj/windows/../../../mcl/mm_lib/source\\mm_mtl/fixstr.h"
+#elif defined(MM_LIB_FROM_XBRD)
+// xbrd's (DrIniSys's constructor cites it so)
+#define MM_MTL_FIXSTR_H_FILE \
+    "D:/Monolithsoft/BF2/prog/libs/xbrd/proj/windows/../../../mcl/mm_lib/source\\mm_mtl/fixstr.h"
 #elif defined(MM_LIB_FROM_LIBS)
 #define MM_MTL_FIXSTR_H_FILE "../../../mcl/mm_lib/source\\mm_mtl/fixstr.h"
 #else

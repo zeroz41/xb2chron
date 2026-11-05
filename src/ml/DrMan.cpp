@@ -1,3 +1,4 @@
+#define MM_LIB_FROM_XBRD
 #include "classes/ml/DrMan.h"
 #include "ml/DrCreator.h"
 #include "ml/DrMdlMan.h"
@@ -43,6 +44,7 @@
 #include "classes/ml/Scn.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include <string.h>
+#include <stdlib.h>
 #include "stdio.h"
 #include "grlib/CGLibTexture.h"
 #include "ml/DrIrrVolMan.h"
@@ -54,6 +56,9 @@
 #include "classes/ml/DrMdoCtlMpf.h"
 #include "classes/ml/DrMdoCtlCldMdl.h"
 #include "classes/ml/DrMdoCtlDammy.h"
+#include "ml/DrPixlPostMan.h"
+#include "ml/DrPixlPostObjRainDrop.h"
+#include "classes/ml/ScnObjModel.h"
 
 namespace cloud {
 using namespace grlib;
@@ -88,9 +93,28 @@ const char* ORIENTATION_FILE = "orientation";
 const char* FLAG_WAVE0_FILE = "flag_wave_0";
 const char* FLAG_WAVE1_FILE = "flag_wave_1";
 
+const char* DrIniSys::s_pAttrDlcTbl[1] = {"toonShadowAlphaDLC"};
+
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_71015E9398). The path DrIniSys formats
 // its file names into.
 static char s_pathBuf[0x200];
+
+DrIniSys::DrIniSys(DrMan* drMan)
+    : m_pDrMan(drMan),
+      m_mirrorBallRes(nullptr),
+      m_mirrorBall(nullptr),
+      m_active(true),
+      m_camLight(nullptr),
+      m_glassBreakage(nullptr),
+      m_filterLut(nullptr),
+      m_iblEnvPath(DUMMY_CUBEMAP_FILE),
+      m_wetnessCsv(nullptr),
+      m_dlcIniValue(0.5f) {
+    memset(m_texRes, 0, sizeof(m_texRes));
+    m_iblEnvPath.format("%sshader/%s.witex", "/monolib/", DUMMY_CUBEMAP_FILE);
+}
+
+DrIniSys::~DrIniSys() { dataWorkClear(); }
 
 void DrIniSys::dataWorkClear() {
     for (int i = 0; i < 18; i++) {
@@ -137,16 +161,59 @@ FileResTh* DrIniSys::readTextureMapFile(const char* name) {
     return res;
 }
 
+void DrIniSys::loadRainDropTexture() {
+    const char* name0 = RAIN_DROP_FILE;
+    if (m_texRes[13] != nullptr) {
+        m_texRes[13]->Release();
+        m_texRes[13] = nullptr;
+    }
+    FileResTh* res13 = readTextureMapFile(name0);
+    m_texRes[13] = res13;
+    const void* data13 = res13->m_data;
+    unsigned int size13 = res13->m_size;
+    grlib::CGLibTexture::createTextureImagePtrs(m_texture[13], data13, size13, false, nullptr, true);
+    const char* name1 = RAIN_DROP_DEPTH_FILE;
+    if (m_texRes[14] != nullptr) {
+        m_texRes[14]->Release();
+        m_texRes[14] = nullptr;
+    }
+    FileResTh* res14 = readTextureMapFile(name1);
+    m_texRes[14] = res14;
+    const void* data14 = res14->m_data;
+    unsigned int size14 = res14->m_size;
+    grlib::CGLibTexture::createTextureImagePtrs(m_texture[14], data14, size14, false, nullptr, true);
+    if (DrPixlPostObjRainDrop* rainDrop = m_pDrMan->m_pixlMan->m_cate[0].m_postMan->m_rainDrop) {
+        rainDrop->requestUseLoadedDepth();
+    }
+}
+
+void DrIniSys::loadToonGradTexture() {
+    const char* names[2] = {TOON_GRAD_FILE, TOON_GRAD_NIGHT_FILE};
+    const char* dlcNames[2] = {TOON_GRAD_DLC_FILE, TOON_GRAD_NIGHT_DLC_FILE};
+    const char** list = m_pDrMan->m_dlcShaderMode == 1 ? dlcNames : names;
+    for (int i = 0; i < 2; i++) {
+        if (m_texRes[4 + i] != nullptr) {
+            m_texRes[4 + i]->Release();
+            m_texRes[4 + i] = nullptr;
+        }
+        FileResTh* res = readTextureMapFile(list[i]);
+        m_texRes[4 + i] = res;
+        const void* data = res->m_data;
+        unsigned int size = res->m_size;
+        grlib::CGLibTexture::createTextureImagePtrs(m_texture[4 + i], data, size, false, nullptr, true);
+    }
+}
+
 void DrIniSys::loadIBLEnvTexture() {
     FileResTh* res = nullptr;
     if (Scn* scn = mm::mtl::PtrSingleton<Scn>::sys()) {
-        res = scn->allocEntryRes(m_iblEnvPath);
+        res = scn->allocEntryRes(m_iblEnvPath.m_str);
     }
     if (res != nullptr) {
         return;
     }
     res = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) FileResTh();
-    if (res->loadBlock(m_pDrMan->m_fileHandle, m_iblEnvPath, 0x1000, 0)) {
+    if (res->loadBlock(m_pDrMan->m_fileHandle, m_iblEnvPath.m_str, 0x1000, 0)) {
         if (m_texRes[12] != nullptr) {
             m_texRes[12]->Release();
             m_texRes[12] = nullptr;
@@ -182,6 +249,27 @@ void DrIniSys::loadCameraLight() {
     m_camLight = res;
 }
 
+void DrIniSys::loadFlagWaveTexture() {
+    const char* name0 = FLAG_WAVE0_FILE;
+    if (m_texRes[16] != nullptr) {
+        m_texRes[16]->Release();
+        m_texRes[16] = nullptr;
+    }
+    FileResTh* res16 = readTextureMapFile(name0);
+    m_texRes[16] = res16;
+    const void* data16 = res16->m_data;
+    unsigned int size16 = res16->m_size;
+    grlib::CGLibTexture::createTextureImagePtrs(m_texture[16], data16, size16, false, nullptr, true);
+    const char* name1 = FLAG_WAVE1_FILE;
+    if (m_texRes[17] != nullptr) {
+        m_texRes[17]->Release();
+        m_texRes[17] = nullptr;
+    }
+    FileResTh* res17 = readTextureMapFile(name1);
+    m_texRes[17] = res17;
+    grlib::CGLibTexture::createTextureImagePtrs(m_texture[17], res17->m_data, res17->m_size, false, nullptr, true);
+}
+
 void DrIniSys::loadFilterLutTexture() {
     if (m_pDrMan->m_dlcShaderMode == 1) {
         snprintf(s_pathBuf, sizeof(s_pathBuf), "/monolib/shader/filterlut_dlc.%s", "wiltp");
@@ -204,19 +292,96 @@ void DrIniSys::loadFilterLutTexture() {
     m_pDrMan->m_filterData->setFilterData(res->m_data);
 }
 
+void DrIniSys::setupDlcIni(int mode) {
+    if (mode == 1) {
+        FileResTh* res = nullptr;
+        if (Scn* scn = mm::mtl::PtrSingleton<Scn>::sys()) {
+            res = scn->allocEntryRes(SYSTEM_INI_DLC_FILE);
+        }
+        if (res == nullptr) {
+            res = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) FileResTh();
+            res->loadBlock(m_pDrMan->m_fileHandle, SYSTEM_INI_DLC_FILE, 0, 0);
+        }
+        float value = m_postParm.m_toonShadowAlpha;
+        const char* data = static_cast<const char*>(res->m_data);
+        char line[0x800];
+        int len = 0;
+        for (long i = 0; i < res->m_size; i++) {
+            char c = data[i];
+            if (c != '\n' && c != '\r') {
+                line[len++] = c;
+            } else {
+                if (len == 0) {
+                    continue;
+                }
+                int n = 0;
+                for (int j = 0; j < len; j++) {
+                    if (line[j] != '\t' && line[j] != ' ') {
+                        line[n++] = line[j];
+                    }
+                }
+                line[n] = '\0';
+                int pos = -1;
+                for (int j = 0; j < n; j++) {
+                    if (line[j] == '=') {
+                        pos = j;
+                        break;
+                    }
+                }
+                if (pos != -1) {
+                    line[pos] = '\0';
+                    if (strcmp(s_pAttrDlcTbl[0], line) == 0) {
+                        value = atof(&line[pos + 1]);
+                    }
+                }
+                len = 0;
+            }
+        }
+        res->Release();
+        m_postParm.m_toonShadowAlpha = value;
+    } else {
+        m_postParm.m_toonShadowAlpha = m_dlcIniValue;
+    }
+    m_pDrMan->m_postParm[0]->m_toonShadowAlpha = m_postParm.m_toonShadowAlpha;
+}
+
+void DrIniSys::loadMirrorBallModel() {
+    snprintf(s_pathBuf, sizeof(s_pathBuf), "/monolib/shader/%s.wimdo", MIRROR_BALL_MDL_FILE);
+    FileResTh* res = nullptr;
+    if (Scn* scn = mm::mtl::PtrSingleton<Scn>::sys()) {
+        res = scn->allocEntryRes(s_pathBuf);
+    }
+    if (res == nullptr) {
+        res = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) FileResTh();
+        res->loadBlock(m_pDrMan->m_fileHandle, s_pathBuf, 0x1000, 0);
+        if (res == nullptr) {
+            return;
+        }
+    }
+    if (m_mirrorBall != nullptr) {
+        m_mirrorBall->setDelete();
+    }
+    if (m_mirrorBallRes != nullptr) {
+        m_mirrorBallRes->Release();
+        m_mirrorBallRes = nullptr;
+    }
+    m_mirrorBallRes = res;
+    m_mirrorBall = mm::mtl::PtrSingleton<Scn>::sys()->createMdl(res->m_data, s_pathBuf, 0);
+}
+
 void DrIniSys::getWetnessSetting(unsigned short row, WetSetting& setting) const {
     if (m_wetnessCsv->GetRowCount() == 0) {
         setting.m_enable = false;
         setting.m_param1 = 0;
         setting.m_param2 = 0;
-        setting.m_value = m_wetDefault;
+        setting.m_value = m_postParm.m_wetDefault;
         return;
     }
     row = (row == 0 || row >= m_wetnessCsv->GetRowCount()) ? 0 : row;
     setting.m_enable = m_wetnessCsv->GetInt(row, 0) == 1;
     setting.m_param1 = m_wetnessCsv->GetInt(row, 1);
     setting.m_param2 = m_wetnessCsv->GetInt(row, 2);
-    setting.m_value = m_wetnessCsv->GetColumCount(row) >= 4 ? m_wetnessCsv->GetFloat(row, 3) : m_wetDefault;
+    setting.m_value = m_wetnessCsv->GetColumCount(row) >= 4 ? m_wetnessCsv->GetFloat(row, 3) : m_postParm.m_wetDefault;
 }
 
 const void* DrIniSys::getGlassBreakage() const { return m_glassBreakage->m_data; }

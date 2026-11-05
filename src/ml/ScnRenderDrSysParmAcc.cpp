@@ -1496,7 +1496,7 @@ void ScnRenderDrSysParmAcc::setMotBlurOverride(bool enable) { m_postParm->setOve
 
 void ScnRenderDrSysParmAcc::setMotBlur(bool enable) { m_postParm->m_motBlur = enable; }
 
-void ScnRenderDrSysParmAcc::setMotBlurDefault(bool enable) { m_drMan->m_iniSys->m_motBlurDefault = enable; }
+void ScnRenderDrSysParmAcc::setMotBlurDefault(bool enable) { m_drMan->m_iniSys->m_postParm.m_motBlurDefault = enable; }
 
 void ScnRenderDrSysParmAcc::setDOF(bool enable) { m_postParm->setDOF(enable); }
 
