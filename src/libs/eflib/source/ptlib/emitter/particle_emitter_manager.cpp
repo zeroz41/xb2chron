@@ -86,6 +86,27 @@ EmitterManager*& EmitterManager::getPtr() {
     return s_pEmitterManager;
 }
 
+int EmitterObj::move_func(float frame, int flag) {
+#line 1958 "D:/Monolithsoft/BF2/prog/libs/eflib/proj/windows/../../../eflib/source\\ptlib/emitter/particle_emitter.cpp"
+    MM_ASSERT(m_move_type < MOVE_TYPE_MAX);
+    switch (m_move_type) {
+    case 1:
+        return move01_type0(frame, flag);
+    case 2:
+        return move01_type1(frame, flag);
+    case 3:
+        move01_type9(frame, flag);
+        break;
+    case 4:
+        return move01_type_model(frame, flag);
+    case 5:
+        return move01_type5(frame, flag);
+    case 6:
+        return move01_type12(frame, flag);
+    }
+    return 0;
+}
+
 void* EmitterObj::lockStream(const DrDrawWorkInfoEF* pDrInfo) {
     return m_pStream->lockStream(pDrInfo);
 }
@@ -180,6 +201,17 @@ void EmitterManager::emitter_set_param_pos_only(unsigned int handle, EmitterPara
     }
 }
 
+void EmitterManager::emitter_set_param_pos_only2(unsigned int handle, EmitterParam* pParam) {
+    for (IntrusiveList<EmitterObj>::iterator it = m_emitterActiveList.begin(); it != m_emitterActiveList.end(); ++it) {
+        if (it->m_handle == handle) {
+            if (it->m_pAttach == nullptr) {
+                it->m_mtx.setTransRow(pParam->m_mtx.getTrans());
+            }
+            ParticleManager::get()->update_model_spd(&*it, 1.0f);
+        }
+    }
+}
+
 void EmitterManager::emitter_set_param(unsigned int handle, EmitterParam* pParam) {
     for (IntrusiveList<EmitterObj>::iterator it = m_emitterActiveList.begin(); it != m_emitterActiveList.end(); ++it) {
         if (it->m_handle == handle) {
@@ -266,6 +298,27 @@ void EmitterManager::emitter_set_nowait(unsigned int handle, int nowait) {
     }
 }
 
+void EmitterManager::emitter_pack_free(unsigned long pack) {
+    int count = 0;
+    for (IntrusiveList<EmitterSetNode>::iterator it = m_emitterSetList.begin(); it != m_emitterSetList.end(); ++it) {
+        if (it->m_pHeader->m_userParam == pack) {
+            count++;
+        }
+    }
+    if (count > 0) {
+        do {
+            for (IntrusiveList<EmitterSetNode>::iterator it = m_emitterSetList.begin(); it != m_emitterSetList.end();
+                 ++it) {
+                if (it->m_pHeader->m_userParam == pack) {
+                    emitter_set_free(it->m_pHeader, 1);
+                    count--;
+                    break;
+                }
+            }
+        } while (count > 0);
+    }
+}
+
 void EmitterManager::moveAfter() {}
 
 IntrusiveList<EmitterObj>* EmitterManager::getEmitterActiveList() {
@@ -287,6 +340,30 @@ bool EmitterManager::emitter_set_check(FxHeader* pHeader) {
         }
     }
     return false;
+}
+
+ParticleObj* EmitterManager::createCommon(EmitterObj* pEmitter) {
+    ParticleObj* pParticle;
+    if (pEmitter->m_allocMode == 1) {
+        pParticle = particleAlloc(pEmitter, false);
+    } else {
+        pParticle = particleAlloc(pEmitter, true);
+    }
+    if (pParticle != nullptr) {
+        mm::Vec3 goal;
+        EmitterObj::calc_start2goal01(pEmitter, &pParticle->m_pos, &goal);
+        pParticle->m_goal = goal;
+        pParticle->pad_c2 = 0;
+        pParticle->m_prevPos = pParticle->m_pos;
+        pParticle->pad_40 = mm::Vec3::zero;
+        pParticle->pad_50 = mm::Vec3::zero;
+        pParticle->getExtParam().m_pLgt = nullptr;
+        pParticle->getExtParam().m_pMdl = nullptr;
+        pParticle->getExtParam().pad_118 = nullptr;
+        pParticle->getExtParam().pad_120 = nullptr;
+        pParticle->getExtParam().m_pMdl = nullptr;
+    }
+    return pParticle;
 }
 
 ComputeManager*& ComputeManager::getPtr() {

@@ -52,6 +52,9 @@ public:
     IntrusiveList<EmitterObj>* getEmitterActiveList();
     // takes a particle off the free list and links it into an emitter's particles, first or last
     ParticleObj* particleAlloc(EmitterObj* pEmitter, bool front);
+    // allocates a particle for an emitter and places it at the emitter's start (create_local01; nullptr when none
+    // is left)
+    ParticleObj* createCommon(EmitterObj* pEmitter);
     // takes a particle off the free list and resets it, nullptr when none is left
     ParticleObj* getFreeParticle();
     // takes an emitter off the free list, nullptr when none is left

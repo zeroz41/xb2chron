@@ -76,7 +76,12 @@ public:
     // EmitterManager::particleAlloc starts the second at the first (the names are not the original's)
     mm::Vec3 m_pos;
     mm::Vec3 m_prevPos;
-    unsigned char pad_30[0x100];
+    mm::Vec3 m_goal;  // 0x30: calc_start2goal01's goal (EmitterManager::createCommon; the name is not the original's)
+    mm::Vec3 pad_40;  // createCommon zeroes it
+    mm::Vec3 pad_50;  // createCommon zeroes it
+    unsigned char pad_60[0x62];
+    unsigned char pad_c2;  // createCommon clears it
+    unsigned char pad_c3[0x6D];
     Work* m_pWork;  // 0x130
     unsigned int m_id;  // 0x138: initUtilObj's number (the name is not the original's)
     unsigned char pad_13c[0x2];
@@ -103,6 +108,18 @@ public:
         char m_name[4];  // 0x24C: HashManager::build's entry name; the length is not known yet
     };
     void emitter_set_param_sub(EmitterParam* pParam);
+    // the move types' count ("m_move_type < MOVE_TYPE_MAX"; only MOVE_TYPE_MAX's name is the original's)
+    enum { MOVE_TYPE_MAX = 7 };
+    // moves the emitter's particles by its move type (what the int means is not known yet)
+    int move_func(float frame, int flag);
+    int move01_type0(float frame, int flag);
+    int move01_type1(float frame, int flag);
+    void move01_type9(float frame, int flag);
+    int move01_type_model(float frame, int flag);
+    int move01_type5(float frame, int flag);
+    int move01_type12(float frame, int flag);
+    // a new particle's start and goal (EmitterManager::createCommon passes the particle's m_pos and m_goal)
+    static void calc_start2goal01(EmitterObj* pEmitter, mm::Vec3* pStart, mm::Vec3* pGoal);
     // m_fadeCount out of m_fadeFrames, 1 without a fade
     float calc_fade();
     // EmitterManager's speed of the emitter's category
@@ -128,7 +145,9 @@ public:
     Data* m_pData;  // 0x98 (the name is not the original's)
     unsigned char pad_a0[0x20];
     EmitterCas* m_pCas;
-    unsigned char pad_c8[0x18];
+    unsigned char pad_c8[0x8];
+    int m_move_type;  // 0xD0: below MOVE_TYPE_MAX; move_func dispatches on it ("m_move_type < MOVE_TYPE_MAX")
+    unsigned char pad_d4[0xC];
     mm::Mat44 m_mtx;  // the emitter's placement: EmitterParam::m_mtx
     unsigned char pad_120[0xC];
     float m_alpha;  // emitter_set_alpha's
@@ -144,7 +163,10 @@ public:
     unsigned char pad_174[0xD];
     unsigned char m_fadeCount;   // calc_fade's numerator
     unsigned char m_fadeFrames;  // calc_fade's denominator
-    unsigned char pad_183[0xE1];
+    unsigned char pad_183[0xDE];
+    // 0x261: low four bits; 1 makes createCommon link the particle in first (the name is not the original's)
+    unsigned char m_allocMode : 4;
+    unsigned char pad_262[0x2];
     unsigned int m_handle;  // the handle the emitter_set_* setters look for
     unsigned char pad_268[0x4];
     unsigned char m_flags;  // 0x26C: HashManager::build skips the emitter while bit 4 is set (the name is not the original's)
