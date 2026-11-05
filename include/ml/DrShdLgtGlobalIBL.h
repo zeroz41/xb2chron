@@ -2,9 +2,10 @@
 #define ML_DRSHDLGTGLOBALIBL_H
 
 #include "classes/mm/mtl/List.h"
+#include "mm/Mat44.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace grlib { class CGLibDblUniformBlock; }
-namespace mm { class Mat44; }
 namespace mm { class Vec3; }
 namespace mm { class Vec4; }
 
@@ -26,21 +27,26 @@ public:
 
     // one of a view\x27s 32 IBL slots (0x18 bytes; the type and field names are not the original\x27s)
     struct Slot {
-        unsigned char pad_0[0x4];
+        int m_index;  // 0x0, the constructor numbers the slots 0..31
         // 0x4, three request states (DrRequetIBL::m_pState: requestIBL sets 1, cancelIBL 3), by m_frame
         unsigned char m_state[3];
         unsigned char pad_7[0x1];
         unsigned int m_frame;  // 0x8, removeObj reads m_state[(m_frame + 2) % 3]
         unsigned char pad_c[0x4];
         DrLightObjGlobalIBL* m_obj;  // 0x10, the light the slot holds
+
+        Slot() : m_state(), m_frame(0), m_obj(nullptr) {}
     };
     // a view\x27s state, 0x2060 bytes (delViewInfo names it; the type and field names are not the original\x27s)
     struct ViewInfo {
         mm::mtl::List<DrLightObjGlobalIBL*> m_objList;  // 0x0, addObj/removeObj
         Slot m_slot[32];  // 0x40
-        unsigned char pad_340[0x1CF8];
-        grlib::CGLibDblUniformBlock* m_uniformBlock;  // 0x2038, the constructor makes it
-        unsigned char pad_2040[0x10];
+        // 0x340, the constructor zeroes them; updateUniformBlockImpl transposes them into the uniform buffer
+        mm::Mat44 m_mtx[0x60];
+        // 0x1B40, the lights renderIndexTable gives a slot each (findSlotByPosition searches them)
+        mm::mtl::FixedVector<DrLightObjGlobalIBL*, 128> m_lights;
+        int m_indexTable[64];  // 0x1F48, by m_lights index: the slot renderIndexTable picks (-1 none)
+        grlib::CGLibDblUniformBlock* m_uniformBlock;  // 0x2048, the constructor makes it
         bool m_resetColorBuff;  // 0x2050, resetColorBuff sets it
         unsigned char pad_2051[0xF];
     };

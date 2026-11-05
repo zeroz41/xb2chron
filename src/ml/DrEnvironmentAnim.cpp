@@ -1259,7 +1259,7 @@ void DrGlobalIBLPack::release() {
 DrLightObjGlobalIBL::DrLightObjGlobalIBL()
     : pad_0(nullptr), m_version(0), pad_10(0), pad_18(0), pad_48(0), pad_50(mm::Vec3::zero), pad_60(mm::Vec3::zero),
       m_bindIndex(0) {
-    pad_390 = mm::Vec3::zero;
+    m_position = mm::Vec3::zero;
     pad_3b8 = 0;
     pad_3c0 = 0;
     pad_3c4 = false;

@@ -35,6 +35,8 @@ public:
     DrLightObjGlobalIBL();
     ~DrLightObjGlobalIBL();
     unsigned int getPriority() const;
+    bool isInRange(const mm::Vec3& pos) const;
+    float calcSimilarity(const DrLightObjGlobalIBL& other) const;
     // binds mesh index's vertices (the mesh drawVertex and the occlusion query use)
     void bindVertex(unsigned int index);
     void drawVertex();
@@ -57,14 +59,15 @@ public:
     unsigned char pad_74[0x4];
     grlib::CGLibTextureBuffer m_texture[7];  // 0x78, the constructor builds seven
     unsigned char pad_388[0x8];
-    mm::Vec3 pad_390;
+    mm::Vec3 m_position;  // 0x390, DrShdLgtGlobalIBL::updateUniformBlockImpl stores it with w = 1 (name inferred)
     mm::Vec3 m_additionalAmbient;  // 0x3A0
     float m_skyIntensity;  // 0x3B0
     float m_dirLightIntensity;  // 0x3B4
     unsigned long pad_3b8;
     unsigned int pad_3c0;
     bool pad_3c4;
-    unsigned char pad_3c5[0x4B];
+    unsigned char pad_3c5[0xB];
+    mm::Mat44 m_mtx;  // 0x3D0, DrShdLgtGlobalIBL::updateUniformBlockImpl transposes it per slot (name inferred)
     mm::Vec4 pad_410[4];
     unsigned char pad_450[0x3F0];
     mm::Mat44 m_shMatrix[4];  // 0x840, by index * 4 + term (getSHMatrix); the bound is not proven
