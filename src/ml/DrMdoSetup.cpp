@@ -9,6 +9,7 @@
 #include "cloud/CloudMdlDataObj.h"
 #include "classes/ml/DrMdoCtlNom.h"
 #include "classes/ml/DrMdoCtlPos.h"
+#include "classes/ml/DrResMdoSortPos.h"
 #include "classes/ml/DrMdoCtlSeamAll.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/DrMdoZSortObj.h"
@@ -1953,9 +1954,127 @@ bool DrMdoCtlNom::cloneMdlObj(DrMdlObj* obj) {
     return cloned;
 }
 
+void DrMdoCtlPos::releasePos() {
+    m_pDrMan->m_pixlMan->m_shadowCacheMan->delShadowCacheUpdate();
+    for (int i = 0; i < m_posNum; i++) {
+        m_pPosList[i].~DrResMdoPos();
+    }
+    m_posNum = 0;
+    m_instAnm.release();
+    if (m_pAddList != nullptr) {
+        m_pAddList->release();
+        m_pAddList = nullptr;
+    }
+    if (m_instMdlInfo != nullptr) {
+        DrResMdoInstMdlInfo::release(m_instMdlInfo);
+    }
+    m_pSortPos->~DrResMdoSortPos();
+    for (int i = 0; i < m_buffNum; i++) {
+        if (m_ppBuffList[i] != nullptr) {
+            mtl::MemManager::deallocate(m_ppBuffList[i], 0, false);
+            m_ppBuffList[i] = nullptr;
+        }
+    }
+    if (m_pWorkB != nullptr) {
+        mtl::MemManager::deallocate(m_pWorkB, 0, false);
+        m_pWorkB = nullptr;
+    }
+    if (m_pWorkA != nullptr) {
+        mtl::MemManager::deallocate(m_pWorkA, 0, false);
+        m_pWorkA = nullptr;
+    }
+    releaseMat();
+}
+
 DrMdoCtlPos::~DrMdoCtlPos() {
     releasePos();
     m_instAnm.release();
+}
+
+void DrMdoCtlPos::update() {
+    if (m_ctlFlags2 & 0x40000) {
+        m_ctlFlags2 &= ~0x30000;
+    } else {
+        unsigned int bit = 0x10000 << DrMan::s_nDblIdx;
+        if (m_ctlFlags2 & bit) {
+            m_ctlFlags2 &= ~bit;
+            m_singleAlpha = m_alpha[DrMan::s_nDblIdx];
+        }
+    }
+    if (m_mdlFlags & 8) {
+        m_ctlFlags |= 0x4000000;
+    } else {
+        m_ctlFlags &= ~0x4000000;
+    }
+    m_stateFlags = 0;
+    m_mdlFlags = 0;
+    updateMdlPos();
+    createMdlList();
+    DrMdlMan* mdlMan = m_pDrMan->m_mdlMan;
+    if (m_stateFlags & 0x8000) {
+        mdlMan->m_pPassReq[0] = true;
+    }
+    if (m_stateFlags & 0x10000) {
+        mdlMan->m_pPassReq[1] = true;
+    }
+    if (m_stateFlags & 0x20000) {
+        mdlMan->m_pPassReq[2] = true;
+    }
+    if (m_stateFlags & 0x40000) {
+        mdlMan->m_pPassReq[7] = true;
+    }
+    if (m_stateFlags & 0x8) {
+        mdlMan->m_pPassReq[3] = true;
+    }
+    if (m_stateFlags & 0x4) {
+        mdlMan->m_pPassReq[4] = true;
+    }
+    if (m_stateFlags & 0x100) {
+        mdlMan->m_pPassReq[8] = true;
+    }
+    if (m_stateFlags & 0x200) {
+        mdlMan->m_pPassReq[9] = true;
+    }
+}
+
+void DrMdoCtlPos::dispOffUpdate() {
+    if (m_instMdlInfo != nullptr) {
+        m_pViewWork = m_pDrMan->m_calcMan->m_pViewWork;
+        DrResMdlInstMdlArg arg;
+        arg.m_viewPos = &m_pViewWork->m_viewPos;
+        arg.m_gpuCheckAllVisible = m_pViewWork->m_gpuCheckAllVisible;
+        arg.m_disp = false;
+        arg.m_viewNum = m_viewNum;
+        arg.pad_8 = nullptr;
+        arg.m_speed = m_speed;
+        m_instMdlInfo->update(arg);
+    }
+}
+
+void DrMdoCtlPos::resourceInit() {
+    setupResource(false);
+    if (m_pWrkMatRes->m_texNum != 0) {
+        DrMdoTextureMan* man = m_pDrMan->m_mdlMan->m_textureMan;
+        const unsigned char* data = m_pWrkMatRes->m_pTexData;
+        DrResMdoTexList* list;
+        for (list = man->m_texList.m_pHead; list != nullptr; list = list->m_pNext) {
+            if (list->m_res == data) {
+                list->m_refCount++;
+                goto found;
+            }
+        }
+        list = new (man->m_pDrMan->m_resHandle, nullptr, 0, 4, false) DrResMdoTexList(data);
+        if (list != nullptr) {
+            man->m_texList.pushBack(list);
+        }
+    found:
+        m_pWrkMatRes->m_pTexList = list;
+        for (int i = 0; i < m_pWrkMatRes->m_pTexList->m_texNum; i++) {
+            m_pWrkMatRes->m_ppTexture[i] = m_pWrkMatRes->m_pTexList->getTexObj(i);
+        }
+    }
+    m_pDrMan->m_pixlMan->m_shadowCacheMan->addShadowCacheUpdate(false);
+    pad_24C = 0;
 }
 
 void DrMdoCtlPos::setDeleteCall(int index) {
@@ -1977,6 +2096,70 @@ void DrMdoCtlPos::callShadowCacheUpdate(unsigned long bits) {
     }
 }
 
+bool DrMdoCtlPos::chankRenderMdl(const MdsPosRangeTreeData* tree, MdoArgInst& arg) {
+    const DrCalcViewWork* view = m_pViewWork;
+    float dx = view->m_viewPos.x - tree->m_center[0];
+    float dy = view->m_viewPos.y - tree->m_center[1];
+    float dz = view->m_viewPos.z - tree->m_center[2];
+    if (dx * dx + dy * dy + dz * dz > tree->m_distSq) {
+        return false;
+    }
+    if (!view->m_clipPlane.clipTest(tree->center(), tree->m_radius)) {
+        return false;
+    }
+    bool rendered = false;
+    int childNum = tree->m_childNum;
+    if (childNum != 0) {
+        const unsigned short* child = tree->childTbl(m_pPosHead);
+        for (int i = 0; i < childNum; i++) {
+            rendered |= chankRenderMdl(m_pRangeTree + child[i], arg);
+        }
+    }
+    if (tree->m_mdlNum != 0) {
+        rendered |= clipRenderMdl(tree, arg);
+    }
+    return rendered;
+}
+
+void DrMdoCtlPos::chankShadowRenderMdl(const MdsPosRangeTreeData* tree, DrPixlShadowCacheObj& cache) {
+    if (!cache.clipTest(tree->center(), tree->m_radius)) {
+        return;
+    }
+    int childNum = tree->m_childNum;
+    if (childNum != 0) {
+        const unsigned short* child = tree->childTbl(m_pPosHead);
+        for (int i = 0; i < childNum; i++) {
+            chankShadowRenderMdl(m_pRangeTree + child[i], cache);
+        }
+    }
+    if (tree->m_mdlNum != 0) {
+        clipShadowRenderMdl(tree, cache);
+    }
+}
+
+void DrMdoCtlPos::nomTreeShadowRenderMdl(const MdsPosRangeTreeData* tree, DrPixlShadowObj* shadow) {
+    const DrCalcViewWork* view = m_pViewWork;
+    float dx = view->m_viewPos.x - tree->m_center[0];
+    float dy = view->m_viewPos.y - tree->m_center[1];
+    float dz = view->m_viewPos.z - tree->m_center[2];
+    if (dx * dx + dy * dy + dz * dz > tree->m_distSq) {
+        return;
+    }
+    if (!shadow->clipTypeChk(tree->center(), tree->m_radius)) {
+        return;
+    }
+    int childNum = tree->m_childNum;
+    if (childNum != 0) {
+        const unsigned short* child = tree->childTbl(m_pPosHead);
+        for (int i = 0; i < childNum; i++) {
+            nomTreeShadowRenderMdl(m_pRangeTree + child[i], shadow);
+        }
+    }
+    if (tree->m_mdlNum != 0) {
+        nomTreeListShadowRenderMdl(tree, shadow);
+    }
+}
+
 void DrMdoCtlPos::shadowRender() {
     m_renderTech = 0;
     m_renderPass = 6;
@@ -1993,6 +2176,44 @@ void DrMdoCtlPos::shadowRender() {
             nomTreeShadowRenderMdl(&m_pRangeTree[i], shadow);
         }
     }
+}
+
+bool DrMdoCtlPos::shadowCacheRender(DrPixlShadowCacheObj& cache) {
+    if (m_shadowCacheBits & cache.m_cacheBit) {
+        return true;
+    }
+    if (m_shadowCacheReq == 0) {
+        m_shadowCacheReq = cache.m_cacheBit;
+        m_shadowCacheCount = 0;
+    } else if (!(m_shadowCacheReq & cache.m_cacheBit)) {
+        m_shadowCacheReq = cache.m_cacheBit;
+        m_shadowCacheCount = 0;
+        return true;
+    }
+    if (m_pWrkMatRes->m_pVertex != nullptr) {
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        m_renderTech = 0;
+        m_renderPass = 6;
+        if (cache.m_flags & 0x10) {
+            m_mdlFlags |= 0x80;
+        }
+        m_shadowRange = DrPixlShadowCacheMan::SHADOW_CHECK_RANGE_TBL[static_cast<unsigned int>(cache.m_level)];
+        const PosHead* head = m_pPosHead;
+        for (int i = 0; i < head->m_treeNum; i++) {
+            chankShadowRenderMdl(&m_pRangeTree[i], cache);
+        }
+        m_mdlFlags &= ~0x80;
+    }
+    m_shadowCacheCount = 0;
+    m_shadowCacheReq = 0;
+    if (!(cache.m_flags & 8)) {
+        m_shadowCacheBits |= cache.m_cacheBit;
+    }
+    return true;
 }
 
 void DrMdoCtlPos::callZpreePassRenderPosAll() {

@@ -19,9 +19,14 @@ public:
     bool clipTest(mm::Vec3 const& pos, float radius);
 
     grlib::CGLibDepthTarget m_depth;  // 0x0
-    unsigned char pad_800[0xE8];
+    unsigned char pad_800[0x8];
+    // 0x808: DrMdoCtlPos::shadowCacheRender renders with m_mdlFlags 0x80 while bit 4 is set and does not mark the
+    // cache done while bit 3 is set (the name is not the original's)
+    unsigned char m_flags;
+    unsigned char pad_809[0xDF];
     unsigned long m_cacheBit;  // 0x8E8: this cache's bit in a seam's done mask (the name is not the original's)
-    unsigned char pad_8F0[0x2];
+    // 0x8F0: index of DrPixlShadowCacheMan::SHADOW_CHECK_RANGE_TBL (the name is not the original's)
+    short m_level;
     short m_cacheIdx;  // 0x8F2: index of this cache's buffer in a seam's buffer list (the name is not the original's)
     unsigned char pad_8F4[0xC];
     DrCalcClipWorkPlane m_clip;  // 0x900
@@ -50,6 +55,9 @@ public:
     void createCacheBuff();
     void resetColorBuff();
     void buffUpdate();
+    // by DrPixlShadowCacheObj::m_level: 0, 2, 15, 5 (DrMdoCtlPos::shadowCacheRender keeps it as its range)
+    static const float SHADOW_CHECK_RANGE_TBL[4];
+
     // DrResMdoPosInstAnm::update tests the 0x800/0x1000/0x2000 bits it returns
     unsigned int clipDirShadowChk(const mm::Vec3& pos, float radius, bool skipView);
 

@@ -61,7 +61,9 @@ public:
     void* pad_58;
     void* pad_60;
     void* pad_68;
-    MdlList m_extraList;  // 0x70, m_pExtraList points at it (the name is not the original's)
+    // 0x70: a flag per render pass a model of this frame needs; DrMdoCtlPos::update sets entries 0-4 and 7-9 from
+    // its m_stateFlags bits. m_pPassReq points at it (the name is not the original's)
+    bool m_passReq[0x10];
     void* pad_80;
     void* pad_88;
     void* pad_90;
@@ -73,7 +75,7 @@ public:
     // 0x220: the constructor points it at the list array at 0xA8; the shadow passes walk its first list
     MdlList* m_pMdlList;
     MdlList* m_pGrpList;  // 0x228, points at m_lists[10] (the name is not the original's)
-    MdlList* m_pExtraList;  // 0x230, points at m_extraList (the name is not the original's)
+    bool* m_pPassReq;  // 0x230, points at m_passReq (the name is not the original's)
     int pad_238;  // zeroed by the constructor
     // 0x23C: a bit per view (DrMdlBase::m_groups indexes it); the shadow passes render only models whose bit is set.
     // The constructor sets it to all ones.

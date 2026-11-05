@@ -263,7 +263,7 @@ void DrMan::end() {
     m_curEnvMan = m_envMan[0];
     m_pixlMan->setupCate(0);
     DrMdlMan* mdlMan = m_mdlMan;
-    mdlMan->m_pExtraList = &mdlMan->m_extraList;
+    mdlMan->m_pPassReq = mdlMan->m_passReq;
     mdlMan->m_curZSortMan = mdlMan->m_zsortMan;
     mdlMan->m_pMdlList = &mdlMan->m_lists[0];
     mdlMan->pad_238 = 0;

@@ -79,6 +79,7 @@ public:
     int getVanishEffectMax() const;
     // DrMdoCtlDammy's destructor releases the material through it
     void releaseMat();
+    void setupResource(bool);
     // DrMdoCtlMpf::resourceInit
     void setupMpfResource();
     MdoVanishEffectWrk* getVanishEffectWrk(unsigned int index, unsigned int bank);
