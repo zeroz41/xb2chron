@@ -21,11 +21,17 @@ public:
     virtual ~CamHands() {}  // slot 0
     virtual void update(event::FrameInfo const&);  // slot 2
     virtual void render(mm::Col4 const&);  // slot 3
+    // the position / target curve's values again from their keys (update, while m_flags bit 0 / bit 1 is set)
+    void calcFollowPos();
+    void calcFollowTar();
     void setPos(PosAxis const& pos, CV_TYPE type);
     void setTar(TarAxis const& tar, CV_TYPE type);
     void setFov(float fov, CV_TYPE type);
     void addAnmPos(float time, PosAxis const& pos, CV_TYPE type);
     void addAnmTar(float time, TarAxis const& tar, CV_TYPE type);
+    // replace the index-th key of the position / target curve (ObjectCamera::OnManiSetPos / OnManiSetTar)
+    void insertAnmPos(unsigned long index, PosAxis const& pos);
+    void insertAnmTar(unsigned long index, TarAxis const& tar);
     void addAnmFov(float time, float fov, CV_TYPE type);
     void setRotZ(float rotZ, CV_TYPE type);
     void addAnmRotZ(float time, float rotZ, CV_TYPE type);
@@ -41,8 +47,8 @@ public:
     AnmF32 m_anmRotZ;  // @0x540
     mm::mtl::FixedVector<PosAxis, 16> m_posKeys;  // @0x650, count @0x850 (insertAnmPos takes a PosAxis)
     mm::mtl::FixedVector<TarAxis, 16> m_tarKeys;  // @0x860, count @0xA60 (insertAnmTar takes a TarAxis)
-    // two more lists the destructor clears (counts @0xAB0 and @0xAF8); the element types are not known, only the
-    // space they take
+    // two more lists the destructor clears (counts @0xAB0 and @0xAF8): setFov/addAnmFov push each fov key's value
+    // into pad_a70, setRotZ/addAnmRotZ each roll key's into pad_ab8 (as m_posKeys/m_tarKeys keep the axes)
     mm::mtl::FixedVector<float, 16> pad_a70;
     mm::mtl::FixedVector<float, 16> pad_ab8;
 };

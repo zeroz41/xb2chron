@@ -29,6 +29,8 @@ public:
     // axis2rot's vector is the character's current position
     mm::Vec3 axis2pos(unsigned int type, float x, float y, float z);
     mm::Vec3 axis2rot(unsigned int type, float x, float y, float z, const mm::Vec3& pos);
+    // the target a TarAxis gives (CamHands::setTar); the vector is the camera's current position
+    mm::Vec3 axis2tar(unsigned int type, float x, float y, float z, const mm::Vec3& pos);
     // the frame of axis type (0..3, then one per character of the current scene)
     mm::Mat44 getPosAxis(unsigned int type);
     float getRotOfsY(unsigned int type, const mm::Vec3& pos);

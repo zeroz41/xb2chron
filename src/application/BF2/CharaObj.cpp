@@ -159,6 +159,7 @@
 #include "classes/event/BouRect.h"
 #include "classes/event/CamField.h"
 #include "classes/event/CamFree.h"
+#include "fw/FwDebug.h"
 #include "classes/ml/EventView.h"
 #include "classes/ml/Scn.h"
 #include "classes/ml/WinView.h"
@@ -1370,6 +1371,169 @@ Object* Object::searchByPath(const char* path) {
     return nullptr;
 }
 
+void CamHands::update(const FrameInfo& info) {
+    float step = info.m_step;
+    if (m_flags & 1) {
+        calcFollowPos();
+    }
+    if (m_anmPos.pad_8 & 2) {
+        m_anmPos.update(step);
+        pad_10 = m_anmPos.m_value;
+    }
+    if (m_flags & 6) {
+        calcFollowTar();
+    }
+    if (m_anmTar.pad_8 & 2) {
+        m_anmTar.update(step);
+        pad_20 = m_anmTar.m_value;
+    }
+    if (m_anmFov.pad_8 & 2) {
+        m_anmFov.update(step);
+        pad_30 = m_anmFov.m_value;
+    }
+    if (m_anmRotZ.pad_8 & 2) {
+        m_anmRotZ.update(step);
+        pad_34 = m_anmRotZ.m_value;
+    }
+}
+
+void CamHands::setPos(PosAxis const& pos, CV_TYPE type) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    mm::Vec3 value = mm::mtl::Singleton<DataManager>::getPtr()->axis2pos(pos.m_type, pos.m_value.x, pos.m_value.y,
+                                                                           pos.m_value.z);
+    pad_10 = value;
+    m_anmPos.clear();
+    m_anmPos.append(0.0f, value, static_cast<CV_TYPE>(0));
+    m_anmPos.pad_58 = type;
+    m_posKeys.clear();
+    m_posKeys.push_back(pos);
+}
+
+void CamHands::addAnmPos(float time, PosAxis const& pos, CV_TYPE type) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    mm::Vec3 value = mm::mtl::Singleton<DataManager>::getPtr()->axis2pos(pos.m_type, pos.m_value.x, pos.m_value.y,
+                                                                           pos.m_value.z);
+    m_anmPos.append(time, value, type);
+    m_posKeys.push_back(pos);
+}
+
+void CamHands::insertAnmPos(unsigned long index, PosAxis const& pos) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    mm::Vec3 value = mm::mtl::Singleton<DataManager>::getPtr()->axis2pos(pos.m_type, pos.m_value.x, pos.m_value.y,
+                                                                           pos.m_value.z);
+    if (index < m_anmPos.m_values.size()) {
+        m_anmPos.m_values.begin()[index] = value;
+    }
+    if (index < m_posKeys.size()) {
+        m_posKeys.begin()[index] = pos;
+    }
+}
+
+void CamHands::setTar(TarAxis const& tar, CV_TYPE type) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    const mm::Vec3& pos = pad_10;
+    mm::Vec3 value = mm::mtl::Singleton<DataManager>::getPtr()->axis2tar(tar.m_type, tar.m_value.x, tar.m_value.y,
+                                                                           tar.m_value.z, pos);
+    pad_20 = value;
+    m_anmTar.clear();
+    m_anmTar.append(0.0f, value, static_cast<CV_TYPE>(0));
+    m_anmTar.pad_58 = type;
+    m_tarKeys.clear();
+    m_tarKeys.push_back(tar);
+    bool follow = tar.m_type == 4 || tar.m_type == 5;
+    if (follow) {
+        m_flags |= 4;
+    } else {
+        m_flags &= ~4;
+    }
+}
+
+void CamHands::addAnmTar(float time, TarAxis const& tar, CV_TYPE type) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    const mm::Vec3& pos = pad_10;
+    mm::Vec3 value = mm::mtl::Singleton<DataManager>::getPtr()->axis2tar(tar.m_type, tar.m_value.x, tar.m_value.y,
+                                                                           tar.m_value.z, pos);
+    m_anmTar.append(time, value, type);
+    m_tarKeys.push_back(tar);
+    bool follow = tar.m_type == 4 || tar.m_type == 5;
+    if (follow) {
+        m_flags |= 4;
+    } else {
+        m_flags &= ~4;
+    }
+}
+
+void CamHands::insertAnmTar(unsigned long index, TarAxis const& tar) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    const mm::Vec3& pos = pad_10;
+    mm::Vec3 value = mm::mtl::Singleton<DataManager>::getPtr()->axis2tar(tar.m_type, tar.m_value.x, tar.m_value.y,
+                                                                           tar.m_value.z, pos);
+    if (index < m_anmTar.m_values.size()) {
+        m_anmTar.m_values.begin()[index] = value;
+    }
+    if (index < m_tarKeys.size()) {
+        m_tarKeys.begin()[index] = tar;
+    }
+    bool follow = tar.m_type == 4 || tar.m_type == 5;
+    if (follow) {
+        m_flags |= 4;
+    } else {
+        m_flags &= ~4;
+    }
+}
+
+void CamHands::setFov(float fov, CV_TYPE type) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    pad_30 = fov;
+    m_anmFov.clear();
+    m_anmFov.append(0.0f, fov, static_cast<CV_TYPE>(0));
+    m_anmFov.pad_58 = type;
+    pad_a70.clear();
+    pad_a70.push_back(fov);
+}
+
+void CamHands::addAnmFov(float time, float fov, CV_TYPE type) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    m_anmFov.append(time, fov, type);
+    pad_a70.push_back(fov);
+}
+
+void CamHands::setRotZ(float rotZ, CV_TYPE type) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    pad_34 = rotZ;
+    m_anmRotZ.clear();
+    m_anmRotZ.append(0.0f, rotZ, static_cast<CV_TYPE>(0));
+    m_anmRotZ.pad_58 = type;
+    pad_ab8.clear();
+    pad_ab8.push_back(rotZ);
+}
+
+void CamHands::addAnmRotZ(float time, float rotZ, CV_TYPE type) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    m_anmRotZ.append(time, rotZ, type);
+    pad_ab8.push_back(rotZ);
+}
+
 CamMotion::~CamMotion() {
     stop();
 }
@@ -1467,12 +1631,12 @@ void CamObj::update(const FrameInfo& info) {
     if (m_activeCam && info.m_step > 0.0f) {
         m_activeCam->update(info);
         CamBase* cam = m_activeCam;
-        float px = cam->pad_10[0];
-        float py = cam->pad_10[1];
-        float pz = cam->pad_10[2];
-        float tx = cam->pad_20[0];
-        float ty = cam->pad_20[1];
-        float tz = cam->pad_20[2];
+        float px = cam->pad_10.x;
+        float py = cam->pad_10.y;
+        float pz = cam->pad_10.z;
+        float tx = cam->pad_20.x;
+        float ty = cam->pad_20.y;
+        float tz = cam->pad_20.z;
         float fov = cam->pad_30;
         float roll = cam->pad_34;
         float nearClip = cam->m_near;
@@ -3276,13 +3440,13 @@ void CamManager::update() {
     if (m_list.pad_14 & 2) {
         m_free.update(mm::mtl::Singleton<FrameManager>::getPtr()->frameInfo());
         mm::Vec3 pos;
-        pos.x = m_free.pad_10[0];
-        pos.y = m_free.pad_10[1];
-        pos.z = m_free.pad_10[2];
+        pos.x = m_free.pad_10.x;
+        pos.y = m_free.pad_10.y;
+        pos.z = m_free.pad_10.z;
         mm::Vec3 tar;
-        tar.x = m_free.pad_20[0];
-        tar.y = m_free.pad_20[1];
-        tar.z = m_free.pad_20[2];
+        tar.x = m_free.pad_20.x;
+        tar.y = m_free.pad_20.y;
+        tar.z = m_free.pad_20.z;
         float fov = m_free.pad_30;
         float roll = m_free.pad_34;
         if (m_free.pad_8) {
