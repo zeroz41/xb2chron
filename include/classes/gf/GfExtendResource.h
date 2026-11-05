@@ -1,6 +1,7 @@
 #ifndef CLASSES_GF_GFEXTENDRESOURCE_H
 #define CLASSES_GF_GFEXTENDRESOURCE_H
 
+#include "classes/mm/mtl/ReferenceObject.h"
 #include "mm/mtl/RTTI.h"
 
 namespace gf {
@@ -8,14 +9,14 @@ namespace gf {
 // gf::GfExtendResource*)): its m_rtti ("GfExtendResource", no bases; here lbl_7100C24DE0) is the base
 // GfExtendPacking's m_rtti names. It has no table of its own in the image: GfExtendPacking's (destructors, then
 // getRTTI) is the shape it gives its derived classes.
-class GfExtendResource {
+// Counted: AssetPackInfo::releaseExtResource releases each one (reference_object.h line 60, slot 1 deletes); a new one
+// holds the first reference (GfExtendPacking's constructor stores the count 1).
+class GfExtendResource : public mm::mtl::ReferenceObject {
 public:
-    explicit GfExtendResource(int kind) : m_kind(kind) {}
+    GfExtendResource() { addRef(); }
     virtual ~GfExtendResource() {}  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     static mm::mtl::RTTI m_rtti;
-
-    int m_kind;  // GfExtendPacking's constructor sets 1 (the name is not the original's)
 };
 }  // namespace gf
 

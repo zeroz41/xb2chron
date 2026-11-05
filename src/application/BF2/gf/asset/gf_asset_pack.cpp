@@ -2,6 +2,7 @@
 #include "classes/gf/GfAssetManager.h"
 #include "classes/gf/GfAssetPack.h"
 #include "classes/gf/GfAssetResource.h"
+#include "classes/gf/GfExtendResource.h"
 #include "gf/GfSlotMapping.h"
 #include "gf/AssetPackInfo.h"
 #include "classes/gf/GfAssetPack.h"
@@ -56,6 +57,17 @@ GfAssetResource* GfAssetPack::getResource(GfFileIdx file) const {
     return nullptr;
 }
 
+bool AssetPackInfo::isLoaded(mm::mtl::FixStr<128>* name) {
+    bool loaded = true;
+    for (GfAssetPack* pack : m_packs) {
+        if (!pack->isLoaded(name)) {
+            loaded = ++m_loadState == 5400;
+            break;
+        }
+    }
+    return loaded;
+}
+
 bool GfAssetPack::isLoaded(mm::mtl::FixStr<128>*) const {
     if (m_files.m_files.empty()) {
         return false;
@@ -84,6 +96,23 @@ GfAssetType GfAssetPack::getAssetType() const {
 }
 
 void GfAssetPack::dispAssetLogForDebug() {}
+
+AssetPackInfo::AssetPackInfo(unsigned int kind)
+    : m_handle(reinterpret_cast<GF_ASSET_HANDLE*>(-1)),
+      m_packs(getAllocator(ALLOCATOR(0))),
+      m_objHandle(reinterpret_cast<GF_OBJ_HANDLE*>(-1)),
+      pad_60(10),
+      m_destroy(false),
+      m_usingGame(false),
+      m_retargetLoad(false),
+      m_reload(false),
+      m_assetType(GfAssetType(0)),
+      m_loadState(0) {
+    m_packs.reserve(kind == 3 ? 128 : 20, 8);
+    for (GfExtendResource*& resource : m_extendResources) {
+        resource = nullptr;
+    }
+}
 
 AssetPackInfo::~AssetPackInfo() {
     for (GfAssetPack*& slot : m_packs) {
@@ -291,6 +320,52 @@ bool AssetPackInfo::isExistAssetPack(const GfAssetPack* pack) const {
         }
     }
     return false;
+}
+
+void AssetPackInfo::releaseExtResource() {
+    for (GfExtendResource*& resource : m_extendResources) {
+        if (resource != nullptr) {
+            resource->release();
+            resource = nullptr;
+        }
+    }
+}
+
+void AssetPackInfo::setAssetPack(GfAssetType type, GfAssetPack* pack) {
+    GfAssetPack** it = m_packs.begin();
+    GfAssetPack** end = m_packs.end();
+    for (; it != end; ++it) {
+        if (*it == pack) {
+            break;
+        }
+    }
+    if (it != m_packs.end()) {
+        return;
+    }
+    pack->addRef();
+    m_packs.push_back(pack);
+    pack->m_useCount++;
+    if (m_assetType == 0) {
+        m_assetType = type;
+    }
+}
+
+void AssetPackInfo::execReload() {
+    GfAssetUtil::setRetargetLoad(m_handle, false);
+    for (GfAssetPack* pack : m_packs) {
+        if (GfFileSizePool* pool = GfFileSizePool::sys()) {
+            for (GfAssetFiles::AssetFile* file : pack->m_files.m_files) {
+                if (file->m_fileSize != -2) {
+                    pool->recalcFileSizeCache(file->m_sizeHandle, file->m_path.m_str);
+                    file->m_fileSize = -2;
+                    file->m_sizeHandle = pool->requestFileSize(file->m_path.m_str);
+                }
+            }
+        }
+        pack->releaseResource();
+        pack->releaseSlotHandle();
+        GfAssetManager::getSlotMapping()->requestSlotLoad(m_handle, pack);
+    }
 }
 
 bool AssetPackInfo::isPreSizeSizeValid() const {

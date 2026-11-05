@@ -9,7 +9,7 @@
 
 namespace gf {
 
-GfExtendPacking::GfExtendPacking() : GfExtendResource(1), m_pResASM(nullptr), m_pEffectResData(nullptr) {}
+GfExtendPacking::GfExtendPacking() : m_pResASM(nullptr), m_pEffectResData(nullptr) {}
 
 GfExtendPacking::~GfExtendPacking() {
     if (m_pResASM != nullptr) {

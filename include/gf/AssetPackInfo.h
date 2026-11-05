@@ -78,6 +78,9 @@ public:
     // whether both infos hold packs of the same values in the same order (1.0.0's symbols name it;
     // GfAssetManager::updateCheckDestroy calls it there and here)
     bool isSameResource(const AssetPackInfo* other) const;
+    // drops the packs' resources and file sizes and requests their slots again (1.0.0's symbols name it;
+    // GfAssetManager::updateCheckCacheReload calls it there and here)
+    void execReload();
 
     GF_ASSET_HANDLE* m_handle;  // setDestroy hands it to GfAssetUtil::addDestroyObject (the name is not the original's)
     // the asset's packs, each counted in its m_useCount and referenced (the destructor drops both) (the name is not
@@ -87,7 +90,7 @@ public:
     // GfAssetManager::getExtentResource reads them by index, destroyExtResource releases all four (the name is not
     // the original's)
     GfExtendResource* m_extendResources[4];
-    unsigned char pad_60[0x4];
+    unsigned int pad_60;  // the constructor sets 10
     bool m_destroy;  // GfAssetManager::isDestroy reads it (the name is not the original's)
     bool m_usingGame;  // setUsingGame's state: enableGameResource/disableGameResource test it (the name is not the original's)
     bool m_retargetLoad;  // GfAssetUtil::setRetargetLoad sets it, isRetargetLoad reads it
