@@ -63,6 +63,18 @@ const char* s_pageNames[6] = {
 const unsigned int s_pageCameras[6] = {0, 1, 2, 3, 4, 4};
 }  // namespace
 
+GfMenuObjBladeCreate::GfMenuObjBladeCreate(unsigned int handle)
+    : GfMenuObject(handle), m_seq(this), m_eventSignal(nullptr), pad_1120(false), pad_1140(4), pad_1144(0),
+      pad_1170(0), m_boosterNumbers(), pad_1180(0), m_number(), m_camera(nullptr), pad_1198(-1), pad_11A0(0),
+      pad_11A8(nullptr), m_saveReq(0), pad_11B4(false), pad_11B8(0), m_bgm(0), m_se() {
+    m_number = GfMenuReferenceNumber::create();
+#line 170
+    m_camera = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfMenuBladeCreateCamera();
+    m_se[0] = 0;
+    m_se[1] = 0;
+    m_se[2] = 0;
+}
+
 GfMenuObjBladeCreate::~GfMenuObjBladeCreate() {
     m_camera = nullptr;
     m_number = nullptr;
@@ -300,6 +312,7 @@ bool GfMenuObjBladeCreate::seqSetupCrystal() {
     return true;
 }
 
+
 inline void GfMenuObjBladeCreate::dispGuideText(bool disp) {
     ui::UIObjectAcc guide(m_handle, "LAY_guide");
     guide.setDisp(disp);
@@ -396,6 +409,83 @@ bool GfMenuObjBladeCreate::seqSaveWait() {
     }
     GfMenuObjFade::dispSaving(false, 0);
     m_saveReq = -1;
+    return true;
+}
+
+bool GfMenuObjBladeCreate::seqCreateStart() {
+    GfMenuDriverList* list = m_pageContext.m_driverList;
+    GfMenuModelView* view = m_pageContext.m_modelView;
+    GF_OBJ_HANDLE* driverObj = view->findGfObj(3, list->getContents(list->getIndex(false)).m_driver);
+    {
+        GfMenuModelView* view = m_pageContext.m_modelView;
+        mm::Vec3 pos(0.0f, 0.0f, 0.0f);
+        view->playEffect(6, "bc_20_030", pos, view->findGfObj(0xF, view->getMapObjID(1)));
+    }
+    m_pageContext.m_modelView->playEffectFromCAS(0, "bc_20_000", driverObj);
+    m_seq.addJob(&GfMenuObjBladeCreate::seqCreateSetup);
+    list = m_pageContext.m_driverList;
+    unsigned int driver = list->getContents(list->getIndex(false)).m_driver;
+    for (unsigned int i = 0; i < m_pageContext.m_driverList->getSize(); i++) {
+        if (driver != m_pageContext.m_driverList->getContents(i).m_driver) {
+            GfObjAcc acc(m_pageContext.m_modelView->findGfObj(3, m_pageContext.m_driverList->getContents(i).m_driver));
+            acc.setDisp(static_cast<OBJDISP>(1), false);
+        }
+    }
+    const char* motion = nullptr;
+    switch (driver) {
+    case 1:
+        motion = "mnu_blade_create_rex_01";
+        break;
+    case 2:
+        motion = "mnu_blade_create_nia_01";
+        break;
+    case 3:
+        motion = "mnu_blade_create_sieg_01";
+        break;
+    case 6:
+        motion = "mnu_blade_create_melef_01";
+        break;
+    }
+    if (motion == nullptr) {
+        return true;
+    }
+    fw::Transform& transform =
+        GfMenuModelView::getObjectTransform(m_pageContext.m_modelView->findGfObj(3, driver));
+    const mm::Quat& q = transform.rotation;
+    float x2 = q.x + q.x;
+    float y2 = q.y + q.y;
+    float z2 = q.z + q.z;
+    float xx = q.x * x2;
+    float xy = q.x * y2;
+    float xz = q.x * z2;
+    float yy = q.y * y2;
+    float yz = q.y * z2;
+    float zz = q.z * z2;
+    float wx = q.w * x2;
+    float wy = q.w * y2;
+    float wz = q.w * z2;
+    float m00 = 1.0f - (yy + zz);
+    float m01 = xy + wz;
+    float m02 = xz - wy;
+    float m11 = 1.0f - (xx + zz);
+    float m20 = xz + wy;
+    float m21 = yz - wx;
+    float m22 = 1.0f - (xx + yy);
+    mm::Vec3 r;
+    r.x = mm::asin(-m21);
+    if (r.x < 1.57079637f) {
+        if (r.x > -1.57079637f) {
+            r.z = ::atan2f(m01, m11);
+            r.y = ::atan2f(m20, m22);
+        } else {
+            r.z = -::atan2f(m02, m00);
+            r.y = 0.0f;
+        }
+    } else {
+        r.z = ::atan2f(m02, m00);
+        r.y = 0.0f;
+    }
+    m_pageContext.m_modelView->playCameraMotion(motion, transform.position, r.y);
     return true;
 }
 
@@ -592,6 +682,17 @@ void GfMenuObjBladeCreate::BoosterNumListener::reciveEvent(const ui::EventData& 
     }
 }
 
+bool GfMenuObjBladeCreate::seqCreateSetup() {
+    m_seq.addJob(&GfMenuObjBladeCreate::seqCreateStartDriver);
+    m_seq.addWait(120);
+    m_seq.addJob(&GfMenuObjBladeCreate::seqCreateStartSE);
+    m_seq.addJob(&GfMenuObjBladeCreate::seqCreateWaitDriver);
+    m_seq.addJob(&GfMenuObjBladeCreate::seqCreateWaitFade);
+    m_seq.addJob(&GfMenuObjBladeCreate::seqCreateBuildBlade);
+    pad_1148 = 0;
+    return true;
+}
+
 bool GfMenuObjBladeCreate::seqCreateSkipToReslt() {
     if (GfMenuManager::isFading()) {
         return false;
@@ -640,6 +741,95 @@ bool GfMenuObjBladeCreate::seqCreatePlayJingle() {
 }
 
 bool GfMenuObjBladeCreate::seqCreatePlayBgmAfter() {
+    return true;
+}
+
+bool GfMenuObjBladeCreate::seqCreateCtrlBlade() {
+    unsigned int blade = *pad_1128.begin();
+    switch (pad_1144) {
+    case 0: {
+        GfMenuModelView* view = m_pageContext.m_modelView;
+        view->setObjectVanishRatio(view->findGfObj(4, blade), 1.0f);
+        view = m_pageContext.m_modelView;
+        view->setObjectVanishParam(view->findGfObj(4, blade), 9);
+        GfMenuModelView::CtrlParam param(m_pageContext.m_modelView->findGfObj(4, blade), 0.3f, false);
+        param.setAddPosY(0.2f);
+        if (pad_1128.size() == 1) {
+            param.setMoveVanish(0.5f);
+        } else {
+            param.setMoveVanish(0.7f);
+        }
+        m_pageContext.m_modelView->startObjectCtrl(param);
+        GfMenuModelView* driverView = m_pageContext.m_modelView;
+        GfMenuDriverList* list = m_pageContext.m_driverList;
+        GF_OBJ_HANDLE* driver = driverView->findGfObj(3, list->getContents(list->getIndex(false)).m_driver);
+        if (pad_1148 == 0) {
+            m_pageContext.m_modelView->playEffectFromCAS(1, "bc_20_010", driver);
+            pad_1148++;
+        } else if (pad_1128.size() > 1) {
+            m_pageContext.m_modelView->playEffectFromCAS(pad_1148 + 1, "bc_20_010", driver);
+            pad_1148++;
+        } else {
+            GF_OBJ_HANDLE* obj = m_pageContext.m_modelView->findGfObj(4, blade);
+            m_pageContext.m_modelView->playEffectFromCAS(5, "bc_20_020", driver);
+            m_pageContext.m_modelView->playEffectFromCAS(7, "bc_20_040", obj);
+        }
+        GfMenuObjUtil::playVibration(static_cast<fw::VibrationID>(16), 1.0f);
+        GfMenuObjUtil::playSE("se_fld_allmap_712");
+        pad_114C = 15;
+        break;
+    }
+    case 1: {
+        GfMenuModelView::CtrlParam param(m_pageContext.m_modelView->findGfObj(4, blade), 0.4f, false);
+        param.setAddPosY(0.2f);
+        m_pageContext.m_modelView->startObjectCtrl(param);
+        break;
+    }
+    case 2: {
+        GfMenuModelView::CtrlParam param(m_pageContext.m_modelView->findGfObj(4, blade), 0.3f, false);
+        if (pad_1128.size() == 1) {
+            param.setAddPosY(-0.5f);
+            param.setMoveSclX(0.001f);
+            param.setMoveSclZ(0.001f);
+        } else {
+            param.setAddPosY(0.2f);
+            param.setMoveVanish(1.0f);
+            GfMenuObjUtil::playSE("se_fld_allmap_713");
+        }
+        m_pageContext.m_modelView->startObjectCtrl(param);
+        break;
+    }
+    }
+    m_seq.addJob(&GfMenuObjBladeCreate::seqCreateWaitBlade);
+    return true;
+}
+
+bool GfMenuObjBladeCreate::seqCreateWaitBlade() {
+    unsigned int blade = *pad_1128.begin();
+    GfMenuModelView* view = m_pageContext.m_modelView;
+    if (view->isObjectCtrlBusy(view->findGfObj(4, blade))) {
+        return false;
+    }
+    if (pad_1144 < 2) {
+        pad_1144++;
+        m_seq.addJob(&GfMenuObjBladeCreate::seqCreateCtrlBlade);
+    } else {
+        m_pageContext.m_modelView->delGfObj(4, blade);
+        pad_1128.erase(pad_1128.begin());
+        if (!pad_1128.empty()) {
+            pad_1144 = 0;
+            m_seq.addJob(&GfMenuObjBladeCreate::seqCreateBuildBlade);
+        } else {
+            GfMenuFade::setFade(2, 60, mm::Col4::white);
+            GfMenuObjUtil::playSE("se_fld_allmap_714");
+            m_seq.addJob(&GfMenuObjBladeCreate::seqCreateWaitFade);
+            m_seq.addJob(&GfMenuObjBladeCreate::seqCreatePlayJingle);
+            m_seq.addWait(30);
+            m_seq.addJob(&GfMenuObjBladeCreate::seqCreatePlayBgmAfter);
+            m_seq.addJob(&GfMenuObjBladeCreate::seqCreateStartEvent);
+            pad_1128.clear();
+        }
+    }
     return true;
 }
 

@@ -41,6 +41,8 @@ public:
     // are not the original's. It runs from 0x28 to the model view (0xAF0): changePage reads the model view through
     // the context (context + 0xAC8). The constructor zeroes its 0x08..0x28 and 0x30..0x40.
     struct PageContext {
+        // GfMenuObjBladeCreate's constructor zeroes these (0x30..0x50, 0x58, 0x60) and the FixedVector's size
+        PageContext() : pad_08(), pad_30(nullptr), m_callContext(nullptr), pad_A90() {}
         unsigned int m_page;      // the page shown: nextPage and returnPage step from it (0xFF steps on to 0)
         unsigned int m_prevPage;  // changePage keeps the page it leaves here
         unsigned char pad_08[0x20];
@@ -145,6 +147,7 @@ public:
     bool seqSetupDriverObj();
     bool seqSetupCrystal();
     void refreshCrystalList();
+    bool seqCreateStart();
     bool seqCreateSetup();
     // 2.0.0's symbols name it (not in 1.0.0; between seqCreateSetup and seqCreateStartDriver): once no fade runs, steps
     // the page sequence on
@@ -156,6 +159,8 @@ public:
     bool seqCreateStartDriver();
     bool seqCreateWaitDriver();
     bool seqCreateBuildBlade();
+    bool seqCreateCtrlBlade();
+    bool seqCreateWaitBlade();
     bool seqCreateStartEvent();
     bool seqCreateWaitEvent();
     bool seqResultEnd();
@@ -172,10 +177,14 @@ public:
     // seqResultStart and seqResultConfirm once the window is answered
     bool pad_1120;
     mm::mtl::FixedVector<unsigned int, 4> pad_1128;  // a FixedVector of 0x10 bytes (element type unknown)
-    unsigned long pad_1140;  // the constructor sets 4
-    // seqCreateSetup clears it; seqCreateStartEvent stops the model view's effect one past it
+    unsigned int pad_1140;  // the constructor sets 4
+    // the step seqCreateCtrlBlade runs on the first blade of pad_1128 (0, 1, 2; seqCreateWaitBlade steps it on and
+    // seqCreateBuildBlade clears it)
+    unsigned int pad_1144;
+    // seqCreateSetup clears it; seqCreateStartEvent stops the model view's effect one past it; seqCreateCtrlBlade
+    // plays its effect in that slot and counts it up
     unsigned int pad_1148;
-    unsigned char pad_114C[4];
+    unsigned int pad_114C;  // seqCreateCtrlBlade's step 0 sets 15
     // reference-counted objects the destructor releases (in the order 0x1160, 0x1168, 0x1150, 0x1158, 0x11A8)
     mm::mtl::ReferenceObject* pad_1150;
     mm::mtl::ReferenceObject* pad_1158;
