@@ -46,6 +46,9 @@
 #include "grlib/CGLibVtxVertex.h"
 #include "grlib/CGLibVtxIndex.h"
 #include "classes/ml/DrResMdoSeamRead.h"
+#include "classes/ml/DevFileTh.h"
+#include "ml/DevFileParamTh.h"
+#include "ml/EventFileTh.h"
 #include "classes/ml/DrResMdoSeamTexture.h"
 #include "classes/ml/DrResMdoSeamVertex.h"
 #include "classes/ml/DrResMdoSeamTexList.h"
@@ -5063,17 +5066,162 @@ void DrResMdoSeamMemMan::releaseFreeObj(DrResMdoSeamMemObj* obj) {
 }
 
 // Zeroes 0x8-0x58 as one block, then sets the flags.
-DrResMdoSeamRead::DrResMdoSeamRead() : pad_8(), m_readWaitBits(0), m_readDoneBits(0), m_flags(0), pad_50() {
+DrResMdoSeamRead::DrResMdoSeamRead() : m_handles(), m_readWaitBits(0), m_readDoneBits(0), m_flags(0), m_path(nullptr) {
     m_flags = FLAG_READ_ASYNC;
 }
 
 DrResMdoSeamRead::~DrResMdoSeamRead() { release(); }
 
+void DrResMdoSeamRead::release() {
+    m_readWaitBits = 0;
+    m_readDoneBits = 0;
+    if (m_flags & FLAG_OPEN) {
+        for (int i = 0; i < 8; i++) {
+            if (m_handles[i] != nullptr) {
+                DevFileTh::rfClose(m_handles[i]);
+                m_handles[i] = nullptr;
+            }
+        }
+        m_flags &= ~FLAG_OPEN;
+    }
+    if (m_flags & FLAG_READ_FILE) {
+        for (int i = 0; i < 8; i++) {
+            if (m_handles[i] != nullptr) {
+                DevFileTh::cancel(m_handles[i], false);
+                m_handles[i] = nullptr;
+            }
+        }
+        m_flags &= ~FLAG_READ_FILE;
+    }
+}
+
 void DrResMdoSeamRead::setup(bool async) {
     m_flags = (m_flags & ~(FLAG_READ_ASYNC | FLAG_READ_SYNC)) | (async ? FLAG_READ_ASYNC : FLAG_READ_SYNC);
 }
 
+void DrResMdoSeamRead::setOpenInit() {
+    release();
+    if (!(m_flags & FLAG_READ_ASYNC)) return;
+    DevFileParamTh param;
+    param.m_listener = this;
+    param.m_path = m_path;
+    for (int i = 0; i < 8; i++) {
+        if (m_handles[i] == nullptr) {
+            m_handles[i] = DevFileTh::rfOpen(param);
+            if (m_handles[i] == nullptr) {
+                m_flags |= FLAG_OPEN_ERR;
+                return;
+            }
+        }
+    }
+    m_flags |= FLAG_OPEN;
+}
+
+void DrResMdoSeamRead::update(const char* path, bool async) {
+    m_path = path;
+    m_flags &= ~FLAG_OPEN_ERR;
+    if (async) {
+        if (m_flags & FLAG_READ_SYNC) m_flags |= FLAG_WANT_ASYNC;
+    } else {
+        if (m_flags & FLAG_READ_ASYNC) m_flags |= FLAG_WANT_SYNC;
+    }
+    if ((m_flags & (FLAG_WANT_ASYNC | FLAG_READ_SYNC)) == (FLAG_WANT_ASYNC | FLAG_READ_SYNC)) m_flags |= FLAG_MODE_CHANGE;
+    if ((m_flags & (FLAG_WANT_SYNC | FLAG_READ_ASYNC)) == (FLAG_WANT_SYNC | FLAG_READ_ASYNC)) m_flags |= FLAG_MODE_CHANGE;
+    if (m_flags & FLAG_MODE_CHANGE) {
+        if (!isRead()) {
+            if (m_flags & FLAG_MODE_WAIT) {
+                release();
+                m_flags = (m_flags & ~0xFF) | ((m_flags & FLAG_WANT_ASYNC) ? FLAG_READ_ASYNC : FLAG_READ_SYNC);
+            } else {
+                m_flags |= FLAG_MODE_WAIT;
+            }
+        }
+    }
+    if ((m_flags & (FLAG_OPEN | FLAG_READ_ASYNC)) == FLAG_READ_ASYNC) setOpenInit();
+    if ((m_flags & (FLAG_READ_FILE | FLAG_READ_SYNC)) == FLAG_READ_SYNC) {
+        release();
+        if (m_flags & FLAG_READ_SYNC) m_flags |= FLAG_READ_FILE;
+    }
+}
+
+bool DrResMdoSeamRead::isRead() {
+    if (m_flags & FLAG_READ_ASYNC) {
+        for (int i = 0; i < 8; i++) {
+            if (DevFileTh::rfIsBusy(m_handles[i])) return true;
+        }
+        return false;
+    }
+    if (m_flags & FLAG_READ_SYNC) {
+        for (int i = 0; i < 8; i++) {
+            if (m_handles[i] != nullptr) return true;
+        }
+    }
+    return false;
+}
+
 void DrResMdoSeamRead::readCancel() {}
+
+bool DrResMdoSeamRead::read(int& idx, unsigned int ofs, unsigned int size, DrResMdoSeamMemObj* obj) {
+    int no = getFileHandleNum();
+    if (no == -1) return false;
+    unsigned short bit = 1 << no;
+    m_readDoneBits &= ~bit;
+    m_readWaitBits |= bit;
+    int readSize = (int)size + ((int)size % 0x40 != 0 ? 0x40 - (int)size % 0x40 : 0);
+    DevFileParamTh param;
+    param.pad_4c = ofs;
+    param.pad_50 = readSize;
+    param.m_buffer = obj->m_pData;
+    param.m_size = obj->m_size;
+    param.m_prio = DrMan::get()->m_seamReadPrio;
+    if (!(m_flags & FLAG_READ_ASYNC)) {
+        param.m_path = m_path;
+        param.m_listener = this;
+        m_handles[no] = DevFileTh::readFile(param);
+    } else {
+        DevFileTh::rfRead(m_handles[no], param);
+    }
+    idx = no;
+    return true;
+}
+
+int DrResMdoSeamRead::getFileHandleNum() {
+    if (m_flags & FLAG_READ_SYNC) {
+        for (int i = 0; i < 8; i++) {
+            if (!(m_readWaitBits & (1 << i)) && m_handles[i] == nullptr) return i;
+        }
+    } else if (m_flags & FLAG_READ_ASYNC) {
+        for (int i = 0; i < 8; i++) {
+            if (!(m_readWaitBits & (1 << i)) && !DevFileTh::rfIsBusy(m_handles[i])) return i;
+        }
+    }
+    return -1;
+}
+
+bool DrResMdoSeamRead::OnFileEvent(EventFileTh* event) {
+    for (int i = 0; i < 8; i++) {
+        if (m_handles[i] == event->m_handle && event->m_kind == 2) {
+            m_readDoneBits |= 1 << i;
+            if (m_flags & FLAG_READ_SYNC) m_handles[i] = nullptr;
+            return true;
+        }
+    }
+    return false;
+}
+
+int DrResMdoSeamRead::getReadMax() {
+    int num = 0;
+    if (m_flags & FLAG_READ_SYNC) {
+        for (int i = 0; i < 8; i++) {
+            if (!(m_readWaitBits & (1 << i)) && m_handles[i] == nullptr) num++;
+        }
+    } else if (m_flags & FLAG_READ_ASYNC) {
+        for (int i = 0; i < 8; i++) {
+            if (!(m_readWaitBits & (1 << i)) && !DevFileTh::rfIsBusy(m_handles[i])) num++;
+        }
+    }
+    return num;
+}
 
 int DrResMdoSeamTexList::SEAMRES_TEXLIST_CNTMAX = 0x3C;
 
