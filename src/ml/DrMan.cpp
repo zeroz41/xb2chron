@@ -49,6 +49,11 @@
 #include "classes/ml/DrCalcTexStreamMan.h"
 #include "classes/cloud/CloudMan.h"
 #include "csvb/CsvbData.h"
+#include "classes/ml/DrGpuCheckObj.h"
+#include "classes/ml/DrStmReadCheck.h"
+#include "classes/ml/DrMdoCtlMpf.h"
+#include "classes/ml/DrMdoCtlCldMdl.h"
+#include "classes/ml/DrMdoCtlDammy.h"
 
 namespace cloud {
 using namespace grlib;
@@ -247,6 +252,64 @@ void DrMan::deleteAddRenderSystem(unsigned int index) {
     m_delViewNum[idx]++;
 }
 
+void DrMdlMan::addDelList(int view) {
+    m_mdlDelLists[view].deleteAll();
+    m_gpuCheckDelLists[view].deleteAll();
+    DrMdlBase* obj = m_mdlAddLists[DrMan::s_nDblIdx].m_pTop;
+    while (obj != nullptr) {
+        if (obj->m_viewNum == view) {
+            obj->resourceInit();
+            DrMdlBase* next = obj->m_pNext;
+            m_mdlAddLists[DrMan::s_nDblIdx].remove(obj);
+            m_mdlLists[view].pushBack(obj);
+            obj = next;
+        } else {
+            obj = obj->m_pNext;
+        }
+    }
+    DrGpuCheckObj* check = m_gpuCheckAddLists[DrMan::s_nDblIdx].m_head;
+    while (check != nullptr) {
+        if (check->m_type == view) {
+            DrGpuCheckObj* next = check->m_next;
+            m_gpuCheckAddLists[DrMan::s_nDblIdx].remove(check);
+            m_gpuCheckLists[view].pushBack(check);
+            check = next;
+        } else {
+            check = check->m_next;
+        }
+    }
+    m_smlShadowMan->addObjList(view);
+}
+
+void DrMdlMan::setupEnd() {
+    int idx = DrMan::s_nDblIdx;
+    m_mdlAddLists[idx].m_pTop = nullptr;
+    m_mdlAddLists[idx].m_pTail = nullptr;
+    m_gpuCheckAddLists[idx].m_head = nullptr;
+    m_gpuCheckAddLists[idx].m_tail = nullptr;
+    m_smlShadowMan->delObjList();
+    m_texSimpleMan->update();
+    m_textureMan->update();
+    m_vertexMan->update();
+    DrResChankList<DrStmReadCheck>& addList = m_stmLoadAddLists[DrMan::s_nDblIdx];
+    for (DrStmReadCheck* obj = addList.m_head; obj != nullptr;) {
+        DrStmReadCheck* next = obj->m_next;
+        addList.remove(obj);
+        m_stmLoadList.pushBack(obj);
+        obj = next;
+    }
+    addList = DrResChankList<DrStmReadCheck>();
+    for (DrStmReadCheck* obj = m_stmLoadList.m_head; obj != nullptr;) {
+        bool done = obj->update();
+        DrStmReadCheck* next = obj->m_next;
+        if (done) {
+            m_stmLoadList.remove(obj);
+            delete obj;
+        }
+        obj = next;
+    }
+}
+
 void DrMan::end() {
     if (m_cloudMan != nullptr) {
         m_cloudMan->end();
@@ -264,12 +327,54 @@ void DrMan::end() {
     m_pixlMan->setupCate(0);
     DrMdlMan* mdlMan = m_mdlMan;
     mdlMan->m_pPassReq = mdlMan->m_passReq;
-    mdlMan->m_curZSortMan = mdlMan->m_zsortMan;
-    mdlMan->m_pMdlList = &mdlMan->m_lists[0];
+    mdlMan->m_curZSortMan = mdlMan->m_zsortMan[0];
+    mdlMan->m_pMdlList = &mdlMan->m_mdlLists[0];
     mdlMan->pad_238 = 0;
-    mdlMan->m_pGrpList = &mdlMan->m_lists[10];
+    mdlMan->m_pGpuCheckList = &mdlMan->m_gpuCheckLists[0];
     mdlMan->m_smlShadowMan->m_viewIdx = 0;
     m_shdMan->setupCate(0);
+}
+
+void DrMdlMan::apply() {
+    m_pPassReq[0] = false;
+    m_pPassReq[1] = false;
+    m_pPassReq[2] = false;
+    m_pPassReq[3] = false;
+    m_pPassReq[4] = false;
+    m_pPassReq[5] = false;
+    m_pPassReq[6] = false;
+    m_pPassReq[7] = false;
+    m_pPassReq[8] = false;
+    m_pPassReq[9] = false;
+    m_pPassReq[10] = false;
+    m_pPassReq[11] = false;
+    m_pPassReq[12] = false;
+    m_curZSortMan->beginViewWorld();
+    for (DrMdlBase* obj = m_pMdlList->m_pTop; obj != nullptr; obj = obj->m_pNext) {
+        if ((obj->m_dispFlags & 1) && (m_shadowViewMask & (1 << obj->m_groups))) {
+            obj->update();
+        } else {
+            obj->dispOffUpdate();
+        }
+    }
+    pad_240 &= ~(1 << pad_238);
+    m_gpuCheckRender->beginUpdate();
+    bool render = false;
+    for (DrGpuCheckObj* check = m_pGpuCheckList->m_head; check != nullptr; check = check->m_next) {
+        render |= check->update();
+    }
+    m_gpuCheckRender->endUpdate();
+    if (render) {
+        pad_240 |= 1 << pad_238;
+    }
+    if (pad_238 == 0) {
+        DrMan* man = m_pDrMan;
+        if (man->m_cloudMan != nullptr) {
+            man->m_cloudMan->apply(&man->m_drawWorkInfo[man->m_postParmIdx], m_curZSortMan);
+        }
+    }
+    m_curZSortMan->endViewWorld();
+    m_pPassReq[6] = m_smlShadowMan->checkDisp();
 }
 
 bool DrMan::loopCnt() { return true; }
@@ -341,12 +446,154 @@ void DrMan::bkgHomeMenu(bool enable) {
     }
 }
 
+DrMdlMan::~DrMdlMan() {
+    deleteAll();
+    if (m_occUniform != nullptr) {
+        delete m_occUniform;
+        m_occUniform = nullptr;
+    }
+    if (m_etcUniform != nullptr) {
+        delete m_etcUniform;
+        m_etcUniform = nullptr;
+    }
+    if (m_gpuCheckRender != nullptr) {
+        delete m_gpuCheckRender;
+        m_gpuCheckRender = nullptr;
+    }
+    if (m_texSimpleMan != nullptr) {
+        delete m_texSimpleMan;
+        m_texSimpleMan = nullptr;
+    }
+    if (m_smlShadowMan != nullptr) {
+        delete m_smlShadowMan;
+        m_smlShadowMan = nullptr;
+    }
+    if (m_vertexMan != nullptr) {
+        delete m_vertexMan;
+        m_vertexMan = nullptr;
+    }
+    if (m_textureMan != nullptr) {
+        delete m_textureMan;
+        m_textureMan = nullptr;
+    }
+    if (m_samplerMan != nullptr) {
+        delete m_samplerMan;
+        m_samplerMan = nullptr;
+    }
+    for (int i = 0; i < 4; i++) {
+        if (m_zsortMan[i] != nullptr) {
+            delete m_zsortMan[i];
+            m_zsortMan[i] = nullptr;
+        }
+    }
+    if (m_mpfMan != nullptr) {
+        delete m_mpfMan;
+        m_mpfMan = nullptr;
+    }
+}
+
+void DrMdlMan::deleteAll() {
+    for (int i = 0; i < 2; i++) {
+        m_stmLoadAddLists[i].deleteAll();
+    }
+    m_stmLoadList.deleteAll();
+    for (int i = 0; i < 4; i++) {
+        m_mdlLists[i].deleteAll();
+        m_gpuCheckLists[i].deleteAll();
+    }
+    for (int i = 0; i < 2; i++) {
+        m_mdlAddLists[i].deleteAll();
+    }
+    for (int i = 0; i < 2; i++) {
+        m_gpuCheckAddLists[i].deleteAll();
+    }
+    for (int i = 0; i < 4; i++) {
+        m_mdlDelLists[i].deleteAll();
+        m_gpuCheckDelLists[i].deleteAll();
+    }
+}
+
+DrMdlObj* DrMdlMan::createMdl(const void* resource, const char* name, int view) {
+    CS lock(*DrMan::getCriticalSection());
+    // the kind of model the resource header (magic, version) holds
+    const int* header = static_cast<const int*>(resource);
+    int kind = [](const int* header) {
+        switch (header[0]) {
+        case 0x53494D44:  // "DMIS"
+            return header[1] == 0x2780 ? 2 : 0;
+        case 0x4D454D44:  // "DMEM"
+            return header[1] == 0x2780 ? 3 : 0;
+        case 0x4D534D44:  // "DMSM"
+            return header[1] == 0x2780 ? 4 : 0;
+        case 0x4D584D44:  // "DMXM"
+            return header[1] == 0x2780 ? 1 : 0;
+        case 0x444C4D43:  // "CMLD"
+            return header[1] == 0x2712 ? 5 : 0;
+        default:
+            return 0;
+        }
+    }(header);
+    DrMdlObj* obj;
+    switch (kind) {
+    case 1:
+        obj = new (m_pDrMan->m_resHandle, nullptr, 0, 4, false) DrMdoCtlNom(resource, name, m_pDrMan, view);
+        break;
+    case 2:
+        obj = new (m_pDrMan->m_resHandle, nullptr, 0, 4, false) DrMdoCtlPos(resource, name, m_pDrMan, view);
+        break;
+    case 3:
+        obj = new (m_pDrMan->m_resHandle, nullptr, 0, 4, false) DrMdoCtlMpf(resource, name, m_pDrMan, view);
+        break;
+    case 4:
+        obj = new (m_pDrMan->m_resHandle, nullptr, 0, 4, false) DrMdoCtlSeamAll(resource, name, m_pDrMan, view);
+        break;
+    default:
+        if (kind == 5) {
+            obj = new (m_pDrMan->m_resHandle, nullptr, 0, 4, false) DrMdoCtlCldMdl(resource, m_pDrMan, view);
+        } else {
+            obj = new (m_pDrMan->m_resHandle, nullptr, 0, 4, false) DrMdoCtlDammy(resource, m_pDrMan, view);
+        }
+        break;
+    }
+    m_mdlAddLists[DrMan::s_nDblStockIdx].pushBack(obj);
+    return obj;
+}
+
 void DrMdlObj::setDblBuffAlpha(bool enable) {
     if (enable) {
         m_ctlFlags2 &= ~0x40000;
     } else {
         m_ctlFlags2 |= 0x40000;
     }
+}
+
+DrMdoGrpObj* DrMdlMan::createInstantGrp(int view, unsigned int listNum) {
+    CS lock(*DrMan::getCriticalSection());
+    DrMdoGrpObj* obj = new (m_pDrMan->m_resHandle, nullptr, 0, 4, false) DrMdoGrpObj(view, listNum);
+    obj->resourceInit();
+    m_mdlLists[view].pushBack(obj);
+    return obj;
+}
+
+DrGpuCheckBase* DrMdlMan::createGpuCheckObj(int type) {
+    CS lock(*DrMan::getCriticalSection());
+    DrGpuCheckObj* obj = new (m_pDrMan->m_resHandle, nullptr, 0, 4, false) DrGpuCheckObj(type, false);
+    m_gpuCheckAddLists[DrMan::s_nDblStockIdx].pushBack(obj);
+    return obj;
+}
+
+DrGpuCheckBase* DrMdlMan::createEffGpuCheckObj(int type) {
+    CS lock(*DrMan::getCriticalSection());
+    DrGpuCheckObj* obj = new (m_pDrMan->m_resHandle, nullptr, 0, 4, false) DrGpuCheckObj(type, true);
+    m_gpuCheckLists[type].pushBack(obj);
+    return obj;
+}
+
+DrStmReadCheck* DrMdlMan::createStmLoadObj(const char* name) {
+    CS lock(*DrMan::getCriticalSection());
+    DrStmReadCheck* obj = new (m_pDrMan->m_resHandle, nullptr, 0, 4, false) DrStmReadCheck(name);
+    m_stmLoadAddLists[DrMan::s_nDblStockIdx].pushBack(obj);
+    return obj;
 }
 
 bool DrMdlMan::shadowRender(DrPixlShadowObj* shadowObj) {

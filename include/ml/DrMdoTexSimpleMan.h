@@ -13,6 +13,7 @@ class DrMdoTexSimpleMan {
 public:
     DrMdoTexSimpleMan(DrMan* drMan);
     ~DrMdoTexSimpleMan();
+    void update();  // DrMdlMan::setupEnd calls it
 
     DrMan* m_pDrMan;                           // 0x0
     DrMdoResList<DrResMdoTexSimple> m_list0;   // 0x8

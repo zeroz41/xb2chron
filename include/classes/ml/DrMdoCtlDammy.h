@@ -12,6 +12,8 @@ public:
     virtual void update();  // slot 2
     virtual void dispOffUpdate();  // slot 3
     virtual void resourceInit();  // slot 5
+
+    unsigned char pad_190[0x20];  // sizeof 0x1B0 (DrMdlMan::createMdl news that much); not recovered
 };
 }  // namespace ml
 

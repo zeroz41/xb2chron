@@ -9,6 +9,7 @@ namespace ml {
 // table 0x7100B7BAA8
 class DrMdoCtlSeamAll : public ::ml::DrMdoCtlSeamRead {
 public:
+    DrMdoCtlSeamAll(const void* data, const char* name, DrMan* drMan, int viewNum);  // DrMdlMan::createMdl news it
     virtual ~DrMdoCtlSeamAll();  // slot 0
     virtual void update();  // slot 2
     virtual void dispOffUpdate();  // slot 3
@@ -38,6 +39,8 @@ public:
     void callAlphaRenderSeamEnvMap();
     void callSpAlphaRenderSeamEnvMap();
     void callRefractionRenderSeamEnvMap();
+
+    unsigned char pad_14C0[0x120];  // sizeof 0x15E0 (DrMdlMan::createMdl news that much); not recovered
 };
 }  // namespace ml
 

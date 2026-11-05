@@ -3,12 +3,14 @@
 
 #include "grlib/CGLibOcclusionQuery.h"
 #include "mm/Vec4.h"
+#include "ml/ScnObjAccGpuCheck.h"
 
 namespace mm { class Vec3; }
 
 namespace ml {
 // table 0x7100B7D6C8
-class DrGpuCheckObj {
+// DrMdlMan::createGpuCheckObj returns it as a DrGpuCheckBase (the same address)
+class DrGpuCheckObj : public DrGpuCheckBase {
 public:
     // DrMdlMan::createEffGpuCheckObj passes true for effects' objects (the parameter names are not the original's)
     DrGpuCheckObj(int type, bool eff);
@@ -19,7 +21,7 @@ public:
     virtual void setPos(mm::Vec3 const&, float);  // slot 5
     virtual void setWorldPos(mm::Vec3 const&, float);  // slot 6
     virtual unsigned int isDeleteCall() const;  // slot 7: the release() bit of DrMan::s_nDblIdx
-    virtual void update();  // slot 8
+    virtual bool update();  // slot 8: DrMdlMan::apply ors the results
     virtual void render();  // slot 9
 
     // m_flags bits (the names are not the original's)

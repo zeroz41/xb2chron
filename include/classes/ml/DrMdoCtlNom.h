@@ -24,6 +24,7 @@ namespace ml {
 // table 0x7100B7B848
 class DrMdoCtlNom : public ::ml::DrMdlObj, public ::ml::DrMdoNomClone {
 public:
+    DrMdoCtlNom(const void* data, const char* name, DrMan* drMan, int viewNum);  // DrMdlMan::createMdl news it
     virtual ~DrMdoCtlNom();  // slot 0
     virtual void update();  // slot 2
     virtual void dispOffUpdate();  // slot 3

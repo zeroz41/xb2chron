@@ -53,6 +53,17 @@ public:
         }
     }
 
+    // deletes every object (virtual destructor) and empties the list (inline: the name is not the original's)
+    void deleteAll() {
+        T* obj = m_head;
+        while (obj != nullptr) {
+            T* next = obj->m_next;
+            delete obj;
+            obj = next;
+        }
+        m_head = nullptr;
+        m_tail = nullptr;
+    }
     // links obj at the end (inline: the name is not the original's)
     void pushBack(T* obj) {
         if (m_tail == nullptr) {

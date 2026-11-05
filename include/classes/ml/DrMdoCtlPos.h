@@ -40,6 +40,7 @@ namespace ml {
 // table 0x7100B7B8E0
 class DrMdoCtlPos : public ::ml::DrMdlObj {
 public:
+    DrMdoCtlPos(const void* data, const char* name, DrMan* drMan, int viewNum);  // DrMdlMan::createMdl news it
     virtual ~DrMdoCtlPos();  // slot 0
     virtual void update();  // slot 2
     virtual void dispOffUpdate();  // slot 3
@@ -114,6 +115,7 @@ public:
     // 0x37C: shadowCacheRender sets it from DrPixlShadowCacheMan::SHADOW_CHECK_RANGE_TBL (the name is not the
     // original's)
     float m_shadowRange;
+    unsigned char pad_380[0xA0];  // sizeof 0x420 (DrMdlMan::createMdl news that much); not recovered
 };
 }  // namespace ml
 

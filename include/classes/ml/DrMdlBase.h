@@ -12,7 +12,7 @@ public:
     // inline in DrMdoCtl's and DrMdoGrpObj's constructors (no symbol of its own)
     // assigned in the body: DrMdoGrpObj(int, unsigned int) stores m_pNext, m_viewNum, m_groups in this order
     explicit DrMdlBase(int viewNum)
-        : pad_8() {
+        : m_pPrev() {
         m_pNext = nullptr;
         m_viewNum = viewNum;
         m_groups = 0;
@@ -39,7 +39,7 @@ public:
     virtual void setDeleteCall(int);  // slot 16
 
     // DrMdoGrpObj's constructor and DrMdoMat's chain share these fields (the names are not the original's)
-    unsigned char pad_8[0x8];
+    DrMdlBase* m_pPrev;  // 0x8, the previous object of DrMdlMan's list (the name is not the original's)
     DrMdlBase* m_pNext;  // 0x10, the next object of the list DrMdoGrpObj's render passes walk
     // DrMdlObj's getGroups/setGroups read it
     short m_groups;  // 0x18
