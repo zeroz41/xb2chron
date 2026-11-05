@@ -150,6 +150,15 @@ unsigned int WorkRootState::allocWID(WorkObj* work) {
     return wid;
 }
 
+void WorkRootState::freeWID(unsigned int wid) {
+    CS lock(getCriticalSection());
+    unsigned int slot = wid & 0xFFFF;
+    unsigned int word = slot >> 5;
+    unsigned int mask = ~(1 << (slot & 0x1F));
+    s_aBitWID[word] &= mask;
+    s_apBitWID[slot] = nullptr;
+}
+
 mtl::ALLOC_HANDLE WorkRootState::getWorkMem() {
     return WorkRootMem::getMemState();
 }
@@ -339,7 +348,9 @@ WorkRoot::WorkRoot(const char* name, WorkObj* parent) : WorkObj(name, parent, 32
     m_requestParent.create(128, m_mem);
 }
 
-WorkRoot::~WorkRoot() {}
+// defined inline: the inline hint (threshold 325, D2 costs 315) is what lets the deleting destructor inline the
+// two reslist destructors as the original does
+inline WorkRoot::~WorkRoot() {}
 
 bool WorkRoot::wkStandbyLogout() {
     if (m_child.size() != 0) {
