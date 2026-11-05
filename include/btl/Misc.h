@@ -48,8 +48,19 @@ float CalcAngle(const mm::Vec3& a, const mm::Vec3& b, bool isSigned);
 // which transform GetObjectTransform reads (0: position; the names are not the original's)
 enum TRANS_TYPE : int {
     TRANS_TYPE_POS = 0,
+    TRANS_TYPE_DIR = 1,  // the direction the rotation turns unitZ to
 };
 bool GetObjectTransform(gf::GF_OBJ_HANDLE* handle, mm::Vec3& out, TRANS_TYPE type);
+// the object's TRANS_TYPE_DIR direction, normalized in the XZ plane when xz; false for no object
+bool GetObjectDirection(gf::GF_OBJ_HANDLE* handle, mm::Vec3& out, bool xz);
+// starts a battle volume fade of the parts (all for a negative one) and sets the object's normal alpha
+void SetVolumeFadeRate(gf::GF_OBJ_HANDLE* handle, float rate, unsigned int, int parts);
+// the land height under pos raised by offset (the water surface when water, GetValidLandHeight's when valid);
+// pos.y - 3000 when nothing is found
+float GetLandHeight(const mm::Vec3& pos, float offset, bool water, bool valid);
+bool GetWaterHeight(mm::Vec3& out, mm::Vec3& from, float range);
+bool GetValidLandHeight(mm::Vec3& out, mm::Vec3& from, float range);
+bool IsInWater(const mm::Vec3& pos, float range);
 // the angle of v about the Y axis from unitZ
 float CalcRotY(const mm::Vec3& v);
 
