@@ -921,6 +921,12 @@ void MstxtRes::OnResEvent(const IResEvent::PARAM& param) {
     m_flags &= ~1;
 }
 
+void Manager::failureSkip() {
+    mm::mtl::Singleton<DebugManager>::getPtr()->setFlag(8);
+    mm::mtl::Singleton<DebugManager>::getPtr()->setFlag(0);
+    mm::mtl::Singleton<DebugManager>::getPtr()->playMessage("failure skip!! [%s.sb]", m_eventName.m_str);
+}
+
 void MstxtManager::load(const char* name) {
     MstxtRes* found = nullptr;
     for (unsigned long i = 0; i < m_res.size(); i++) {
@@ -3328,7 +3334,7 @@ ResPack::~ResPack() {
 
 // inline here: the original's out-of-line copy (0x71000B8D70, called from another unit) stores in an order no source
 // form gives yet, while the copies Singleton<ResManager>::getPtr inlines (EffectPlayEva::update) match this one
-ResManager::ResManager() : pad_0x18(0), pad_0x10b8(0) {}
+ResManager::ResManager() : pad_0x18(0), pad_0x10b8(0), pad_0x10bc(0) {}
 
 void ResManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
@@ -3371,6 +3377,8 @@ void ShakeManager::clear() {
     m_shaker.stop();
     m_flags = 0;
 }
+
+ShakeManager::ShakeManager() : m_flags(0) {}
 
 void ShakeManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
@@ -5746,6 +5754,19 @@ void CsSndManager::OnEventProc(event::MSG_TYPE msg) {
 #include "classes/ml/Scn.h"
 #include "ml/ScnRenderDrSysParmAcc.h"
 #include "classes/gf/GfFieldTime.h"
+#include "classes/gf/GfGameManager.h"
+#include "gf/GfDataEvent.h"
+#include "classes/gf/GfEvent.h"
+#include "classes/event/SeqManager.h"
+#include "classes/event/FrameManager.h"
+#include "classes/event/DebugManager.h"
+#include "classes/event/ResManager.h"
+#include "classes/event/CpuManager.h"
+#include "classes/event/ScheManager.h"
+#include "classes/event/ShakeManager.h"
+#include "classes/event/MemoryManager.h"
+#include "classes/ml/WorkCpu.h"
+#include "classes/ml/WinView.h"
 
 namespace event {
 
@@ -5755,6 +5776,40 @@ void Manager::render() {
 
 bool Manager::OnKeyDown(ml::EventView*) {
     return false;
+}
+
+void Manager::update() {
+    if (m_flags & 1) {
+        sendMessage(static_cast<MSG_TYPE>(14));
+    }
+    sendMessage(static_cast<MSG_TYPE>(15));
+    if (m_flags & 1) {
+        SeqManager* seq = mm::mtl::Singleton<SeqManager>::getPtr();
+        if (!seq->m_cmdQueue.empty() && seq->m_cmdQueue.m_items[0].m_cmd == &seq->m_endWait &&
+            mm::mtl::Singleton<ResManager>::getPtr()->pad_0x10b8 <= 0) {
+            sendMessage(static_cast<MSG_TYPE>(12));
+            sendMessage(static_cast<MSG_TYPE>(13));
+            clearPlay();
+        }
+    }
+    if (isPlaying()) {
+        if (mm::mtl::Singleton<SeqManager>::getPtr()->m_flags & 1) {
+            sendMessage(static_cast<MSG_TYPE>(2));
+            clearPlay();
+            if (m_state.test(10)) {
+                m_state.reset(10);
+            }
+            m_state.reset(0);
+            m_state.set(1);
+        }
+        if (mm::mtl::Singleton<SeqManager>::getPtr()->m_flags & 2) {
+            sendMessage(static_cast<MSG_TYPE>(2));
+            if (m_state.test(10)) {
+                m_state.reset(10);
+            }
+            m_state.reset(0);
+        }
+    }
 }
 
 void Manager::tail() {
@@ -5784,6 +5839,62 @@ void Manager::finishNewGameWait() {
     mm::mtl::Singleton<UIManager>::getPtr()->m_openFlags |= 0x80000;
 }
 
+void Manager::play(const char* name, gf::GF_OBJ_HANDLE* handle, unsigned int word0, unsigned int word1,
+                   unsigned int word2, unsigned int word3, const mm::Vec3& pos, float value) {
+    m_playHandle = handle;
+    pad_288 = word0;
+    pad_28c = word1;
+    pad_290 = word2;
+    pad_294 = word3;
+    m_languageMode = LANGUAGE_MODE_NONE;
+    m_playPos = mm::Vec3::zero;
+    pad_2b0 = 0.0f;
+    if (gf::GfGameManager::isGameTypeIra()) {
+        m_playPos = pos;
+        pad_2b0 = value;
+    }
+    if (!isPlaying()) {
+        mm::mtl::Singleton<SeqManager>::getPtr()->play(name);
+    }
+    m_state.set(0);
+    m_state.reset(1);
+}
+
+void Manager::stop() {
+    if (isPlaying()) {
+        mm::mtl::Singleton<DebugManager>::getPtr()->setFlag(4);
+        end();
+    }
+}
+
+bool Manager::init(const char* name) {
+    if (!(m_flags & 1)) {
+        m_flags = 0;
+        m_eventName = name;
+        m_sceneName = name;
+        gf::GfEvent::callEventPlay(static_cast<gf::GEV>(9), gf::GfDataEvent::getEventID(name));
+        SeqManager* seq = mm::mtl::Singleton<SeqManager>::getPtr();
+        if (seq->m_cmdQueue.empty() || seq->m_cmdQueue.m_items[0].m_cmd != &seq->m_playNext) {
+            if (!ml::ProcDesktop::isDispInfo()) {
+                m_state.set(10);
+            }
+            sendMessage(static_cast<MSG_TYPE>(1));
+        }
+        sendMessage(static_cast<MSG_TYPE>(3));
+        sendMessage(static_cast<MSG_TYPE>(4));
+        m_state.set(0);
+        m_flags |= 1;
+    }
+    SeqManager* seq = mm::mtl::Singleton<SeqManager>::getPtr();
+    return !seq->m_cmdQueue.contains(&seq->m_startAreajump);
+}
+
+bool Manager::setupScene(const char* name) {
+    m_sceneName = name;
+    sendMessage(static_cast<MSG_TYPE>(5));
+    return true;
+}
+
 bool Manager::setupSceneEnd() {
     if (!(m_flags & 2)) {
         sendMessage(static_cast<MSG_TYPE>(6));
@@ -5794,6 +5905,63 @@ bool Manager::setupSceneEnd() {
         return true;
     }
     return false;
+}
+
+bool Manager::startScene(const char* name, int no) {
+    if (!(m_flags & 4)) {
+        m_sceneName = name;
+        m_sceneNo = no;
+        sendMessage(static_cast<MSG_TYPE>(7));
+        m_flags |= 4;
+    }
+    SeqManager* seq = mm::mtl::Singleton<SeqManager>::getPtr();
+    if (seq->m_cmdQueue.contains(&seq->m_startForm) || seq->m_cmdQueue.contains(&seq->m_startChange) ||
+        seq->m_cmdQueue.contains(&seq->m_startEnvSeam) || seq->m_cmdQueue.contains(&seq->m_startWeather) ||
+        seq->m_cmdQueue.contains(&seq->m_startStreaming0) || seq->m_cmdQueue.contains(&seq->m_startCaptureWait)) {
+        return false;
+    }
+    m_flags &= ~4;
+    return true;
+}
+
+void FrameManager::startPage(const char* name, int no, float frame) {
+    bool b = pad_10 & 0x10;
+    pad_d0 = name;
+    m_pageNo = no;
+    m_maxFrame = fmaxf(frame, 0.0f);
+    if (b && Manager::get()->m_sceneNo <= no) {
+        pad_10 |= 0x20;
+        pad_178 = m_maxFrame - 1.0f;
+    }
+}
+
+bool Manager::startPage(const char* name, int no, float frame) {
+    if (!(m_flags & 8)) {
+        sendMessage(static_cast<MSG_TYPE>(8));
+        mm::mtl::Singleton<FrameManager>::getPtr()->startPage(name, no, frame);
+        m_flags |= 8;
+    }
+    SeqManager* seq = mm::mtl::Singleton<SeqManager>::getPtr();
+    if (seq->m_cmdQueue.contains(&seq->m_startStreaming1)) {
+        return false;
+    }
+    m_flags &= ~8;
+    return true;
+}
+
+bool Manager::endScene() {
+    if (!(m_flags & 0x10)) {
+        sendMessage(static_cast<MSG_TYPE>(9));
+        m_flags |= 0x10;
+    }
+    SeqManager* seq = mm::mtl::Singleton<SeqManager>::getPtr();
+    if (seq->m_cmdQueue.contains(&seq->m_exec) || seq->m_cmdQueue.contains(&seq->m_execFadeout) ||
+        seq->m_cmdQueue.contains(&seq->m_execGrass) || seq->m_cmdQueue.contains(&seq->m_endChange)) {
+        return false;
+    }
+    sendMessage(static_cast<MSG_TYPE>(10));
+    m_flags &= ~0x10;
+    return true;
 }
 
 void Manager::setLanguageMode(bool enable, LANGUAGE_MODE mode) {
@@ -5813,6 +5981,13 @@ bool Manager::checkLanguageMode() const {
 
 bool Manager::isDebugPlayOnetime() const {
     return mm::mtl::Singleton<DebugManager>::getPtr()->testFlag(3);
+}
+
+void Manager::bkgHomeMenu(bool enable) {
+    mm::mtl::Singleton<CpuManager>::getPtr()->setPause(4, true);
+    if (!enable) {
+        mm::mtl::Singleton<CpuManager>::getPtr()->setPause(4, false);
+    }
 }
 
 Manager* Manager::create(ml::Scn* scn) {

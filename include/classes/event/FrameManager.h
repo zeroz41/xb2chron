@@ -44,6 +44,10 @@ public:
         return m_frameInfo;
     }
 
+    // Manager::startPage's page setup (inlined; defined in CharaObj.cpp): the page name, number and start frame;
+    // the name is not the original's
+    inline void startPage(const char* name, int no, float frame);
+
 private:
     // the fields below up to m_frame are set by the constructor; no reader seen yet
     int pad_10;
@@ -57,7 +61,7 @@ private:
     // each set to -1 (an invalid handle); the type is inferred: FrameManager::OnEventProc destroys pause handles
     gf::GF_PAUSE_HANDLE* pad_20[22];
     mm::mtl::FixStr<128> pad_d0;
-    unsigned char pad_154[0x4];
+    int m_pageNo;  // 0x154: startPage's number (the name is not the original's)
     // what getFrame returns; the name is not the original's
     float m_frame;  // 0x158
     float pad_15c;
@@ -67,7 +71,9 @@ private:
     int pad_16c;
     // what getMaxFrame returns; the name is not the original's
     float m_maxFrame;  // 0x170
-    unsigned char pad_174[0xc];
+    unsigned char pad_174[0x4];
+    float pad_178;  // 0x178: startPage's frame - 1 when bit 4 of pad_10 is set (then it sets bit 5)
+    unsigned char pad_17c[0x4];
     float m_skipAbleFrame;  // 0x180 setSkipAbleFrame stores its argument (the name is not the original's)
     int pad_184;
     float pad_188;  // 0x188 (frameInfo reads it)

@@ -15,6 +15,16 @@ public:
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // the inlined getPtr's constructor zeroes only the word at 0x10
     ScheManager() : pad_10(0) {}
+    // deletes every scheduler and empties the list (Manager's destructor inlines it; the name is not the original's)
+    void clear() {
+        for (unsigned long i = 0; i < m_schedulers.size(); i++) {
+            if (m_schedulers[i]) {
+                delete m_schedulers[i];
+                m_schedulers[i] = nullptr;
+            }
+        }
+        m_schedulers.clear();
+    }
     // starts a scheduler for handle's object (replacing its running one); type becomes Scheduler::m_type
     void push(gf::GF_OBJ_HANDLE* handle, unsigned int type);
     // clears the step flag of handle's scheduler (the first scheduler with that handle); the name is not the original's

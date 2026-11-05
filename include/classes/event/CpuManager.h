@@ -13,6 +13,8 @@ namespace event {
 class CpuManager : public IManager, public mm::mtl::Singleton<CpuManager> {
 public:
     virtual ~CpuManager() {}  // slot 0
+    // inline: Singleton<CpuManager>::getPtr builds it in place (Manager::bkgHomeMenu)
+    CpuManager() : m_flags(0), m_frame(0.0f), m_startFrame(0.0f), m_pauseFrame(0.0f), m_cpuFrame(0.0f) {}
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // 1.0.0's CpuManager::init/end (0x71000AB610/0x71000AB61C), update (0x71000AB628), calcCpuFrame
     // (0x71000AB680) and tailAlways (0x71000AB6A8); 3.0.1 inlines them into OnEventProc
@@ -27,6 +29,27 @@ public:
     void tailAlways() {
         if ((m_flags & 7) == 1) {
             m_frame = m_cpuFrame;
+        }
+    }
+    // sets or clears the pause bit flag (Manager::bkgHomeMenu: bit 2) while started: entering a pause keeps
+    // calcCpuFrame, leaving the last one moves the start on by the paused time (the name is not the original's)
+    void setPause(unsigned int flag, bool on) {
+        if (m_flags & 1) {
+            bool paused = (m_flags & 6) != 0;
+            if (on) {
+                m_flags |= flag;
+            } else {
+                m_flags &= ~flag;
+            }
+            bool now = (m_flags & 6) != 0;
+            if (paused != now) {
+                float frame = calcCpuFrame();
+                if (now) {
+                    m_pauseFrame = frame;
+                } else {
+                    m_startFrame = fmaxf(m_startFrame + (frame - m_frame), 0.0f);
+                }
+            }
         }
     }
     // bit 0: started, bit 1: paused, bit 2: paused by the home menu (the name is not the original's)

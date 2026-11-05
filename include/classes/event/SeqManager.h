@@ -299,6 +299,8 @@ public:
     inline void logout();
     inline void clear();
     void init();
+    // Manager::play starts the event sequence name (0x7100142D9C, 3.0.1 symbol)
+    void play(const char* name);
     void setupScene();
     // Manager::setupSceneEnd waits on it (0x7100148CC8, 3.0.1 symbol)
     bool isSetupSceneEnd() const;

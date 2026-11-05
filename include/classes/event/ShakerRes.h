@@ -11,6 +11,8 @@ class ShakerRes {
 public:
     // out of line, the key function: D2/D0 sit before create (0x71001000D8)
     virtual ~ShakerRes();  // slot 0
+    // inline: ShakeManager's constructor builds the eight in place
+    ShakerRes() : m_res(nullptr), m_rcha(nullptr) {}
     void create(const char* name);
     void update();
     // inline: the destructor's body and create's first part (the name is not the original's)

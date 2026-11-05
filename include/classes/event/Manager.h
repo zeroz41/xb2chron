@@ -7,6 +7,7 @@
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedVector.h"
 #include "mm/mtl/Bitflag.h"
+#include "mm/Vec3.h"
 #include "classes/event/IManager.h"
 
 namespace event { class Manager; }
@@ -60,6 +61,16 @@ public:
     // MstxtRes::OnResEvent calls it when its text fails to load (3.0.1 symbol)
     void failureSkip();
     bool isPlaying() const { return m_state.test(0); }
+    // forgets play's handle, words and language mode and the command flags (update's; the name is not the original's)
+    void clearPlay() {
+        m_playHandle = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        m_languageMode = LANGUAGE_MODE_NONE;
+        m_flags = 0;
+        pad_290 = 0;
+        pad_294 = 0;
+        pad_288 = 0;
+        pad_28c = 0;
+    }
     // sends msg to every manager in turn; the name is not the original's (no symbol: inline everywhere)
     void sendMessage(event::MSG_TYPE msg) {
         for (unsigned int i = 0; i < m_managers.size(); i++) {
@@ -77,20 +88,28 @@ public:
     // the managers each message goes to, in order (the name is not the original's)
     mm::mtl::FixedVector<IManager*, 64> m_managers;  // 0x20
     ml::Scn* m_scn;  // 0x228 the constructor's argument; BouManager::clear reaches the view through it (the name is not the original's)
-    unsigned char pad_230[0x254 - 0x230];
+    // the event name init copies its argument into (failureSkip's message shows it; the name is not the original's)
+    mm::mtl::FixStr<32> m_eventName;  // 0x230
     // the scene name setupScene/startScene copy their name argument into (evt_setup's setSeamlessReadPos/Axis pass
     // it to SeamlessManager::addFirstSeamPoint); the name is not the original's
     mm::mtl::FixStr<32> m_sceneName;  // 0x254
-    unsigned char pad_278[0x280 - 0x278];
+    // startScene's number; FrameManager's page setup (startPage) compares its page number with it (the name is not
+    // the original's)
+    int m_sceneNo;  // 0x278
+    unsigned char pad_27c[0x280 - 0x27C];
     // the gf object play keeps (+0x280); ObjectManager::createGfObjTalk builds the talk character from it when
     // GfObjUtil::getObj finds it (the name is not the original's)
     gf::GF_OBJ_HANDLE* m_playHandle;  // 0x280
     // the first word play keeps; createGfObjTalk's character id when no gf object exists (below 2001: 2004)
     unsigned int pad_288;  // 0x288
-    unsigned char pad_28c[0x294 - 0x28C];
+    unsigned int pad_28c;  // 0x28c: play's second word
+    unsigned int pad_290;  // 0x290: play's third word
     // nonzero: GfEvtModelDriver's constructor then moves its init parameter in the theater; not known yet
     unsigned int pad_294;
-    unsigned char pad_298[0x2B4 - 0x298];
+    unsigned char pad_298[0x2A0 - 0x298];
+    // play's position: zero, or its pos argument when GfGameManager::isGameTypeIra (the name is not the original's)
+    mm::Vec3 m_playPos;  // 0x2a0
+    float pad_2b0;  // 0x2b0: play's float argument when isGameTypeIra, else 0
     // set by setLanguageMode (NONE when disabled), tested by checkLanguageMode; the name is not the original's
     LANGUAGE_MODE m_languageMode;  // 0x2b4
     unsigned char pad_2b8[0x2C0 - 0x2B8];  // create allocates 0x2C0 bytes

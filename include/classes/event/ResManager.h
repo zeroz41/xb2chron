@@ -50,7 +50,9 @@ public:
     unsigned int pad_0x18;  // the constructor and clear() zero an int here
     mm::mtl::FixedVector<Item*, 512> m_entries;  // @0x20, size @0x1020; the name is not the original's
     ResPackManager m_packManager;  // @0x1028; the name is not the original's
-    long pad_0x10b8;  // the constructor and clear() zero 8 bytes here
+    // the constructor and clear() zero 8 bytes here; Manager::update waits while the int is above 0
+    int pad_0x10b8;
+    unsigned int pad_0x10bc;
 };
 }  // namespace event
 

@@ -19,6 +19,8 @@ public:
     // whether bit <bit> of m_flags is set (Manager::isDebugPlayOnetime tests bit 3, UIManager::startNewGameWait
     // bit 12; 1.0.0 inlines these tests too); the name is not the original's
     bool testFlag(unsigned int bit) const { return (m_flags >> bit) & 1; }
+    // sets bit <bit> of m_flags (Manager::stop sets bit 4, failureSkip bits 8 and 0); the name is not the original's
+    void setFlag(unsigned int bit) { m_flags |= 1 << bit; }
     void render();
     // formats the message into a 512-byte buffer and shows it for 90 frames (bit 1)
     void playMessage(const char* format, ...);

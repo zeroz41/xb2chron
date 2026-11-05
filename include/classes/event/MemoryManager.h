@@ -16,6 +16,8 @@ public:
     MemoryManager();
     virtual ~MemoryManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    // Manager's destructor calls it on the singleton (0x71000B3918, 3.0.1 symbol)
+    void destroy();
 
     long pad_10;
     long pad_18;
