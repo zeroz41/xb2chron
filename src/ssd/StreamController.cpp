@@ -18,6 +18,76 @@ unsigned int StreamController::idCounter_;
 
 StreamController::~StreamController() {}
 
+void StreamController::Execution() {
+    switch (state_) {
+    case 3:
+        ExecCloseStream();
+        break;
+    case 6:
+        if (seekRequested_) {
+            buffer_.Clear();
+            if (decodeState_ == 4) {
+                decodeState_ = 1;
+            }
+            bufferReady_ = false;
+            readEnd_ = false;
+            pad_f4 = false;
+            unsigned long size = source_.format_.data.dataSize;
+            unsigned long position;
+            switch (source_.format_.sample.format) {
+            case 4: {
+                int sample = 0;
+                if (source_.format_.sample.blockAlign != 0) {
+                    sample = seekPosition_ / source_.format_.sample.blockAlign;
+                }
+                int frame = sample / static_cast<int>(source_.extra_.pad_0[2]);
+                if (frame >= static_cast<int>(source_.extra_.pad_0[5])) {
+                    frame = source_.extra_.pad_0[5];
+                }
+                frameIndex_ = frame;
+                position = opusFrameOffsets_[frame];
+                break;
+            }
+            case 3:
+                position = (seekPosition_ & ~0xFUL) * source_.format_.sample.channelCount;
+                if (position >= size) {
+                    position = size;
+                }
+                break;
+            default:
+                position = seekPosition_;
+                if (position >= size) {
+                    position = size;
+                }
+                break;
+            }
+            if (seekPosition_ == size) {
+                bufferReady_ = true;
+                readEnd_ = true;
+                pad_f4 = true;
+            }
+            readPosition_ = position;
+            seekPosition_ = 0;
+            seekRequested_ = false;
+            seekPending_ = false;
+        }
+        if (inData_) {
+            ExecReadStream(inData_);
+        }
+        break;
+    case 4:
+        ExecOpenStream();
+        break;
+    }
+    if (decode_) {
+        (this->*decode_)();
+    }
+    if (closeRequested_) {
+        state_ = 3;
+        closeRequested_ = false;
+    }
+}
+
 void StreamController::ExecCloseStream() {
     decode_ = nullptr;
     inData_ = nullptr;
