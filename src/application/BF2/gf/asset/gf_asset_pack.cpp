@@ -44,14 +44,13 @@ GfAssetResource* GfAssetPack::getResource(GfFileIdx file) const {
             return resource.m_resource;
         }
     }
-    for (unsigned int map : m_files.m_fileMap) {
-        if ((map & 0xFFFF) == static_cast<unsigned int>(file)) {
-            for (const Resource& resource : m_resources) {
-                if (resource.m_fileIdx == (map >> 16)) {
-                    return resource.m_resource;
-                }
-            }
-            return nullptr;
+    int common = m_files.getCommonResource(file);
+    if (common == -1) {
+        return nullptr;
+    }
+    for (const Resource& resource : m_resources) {
+        if (resource.m_fileIdx == common) {
+            return resource.m_resource;
         }
     }
     return nullptr;
@@ -229,6 +228,25 @@ void AssetPackInfo::setLoadComplete() {
     m_reload = false;
     for (GfAssetPack* pack : m_packs) {
         (void)pack;
+    }
+}
+
+void GfAssetPack::createSoundPack() {
+    if (m_sePackId == -1) {
+        return;
+    }
+    if (m_sePack != nullptr) {
+        m_sePackRef++;
+        return;
+    }
+    for (const GfAssetFiles::AssetFile* file : m_files.m_files) {
+        if (GfAssetResource* resource = getResource(file->m_idx)) {
+            if (GfSound* sound = GfSound::sys()) {
+                m_sePack = sound->createObjSePack(resource);
+                m_sePackRef++;
+            }
+            return;
+        }
     }
 }
 
@@ -428,8 +446,60 @@ void GfAssetPack::updateCacheCount() {
     }
 }
 
+bool GfAssetPack::isExistReferenceMemory() const {
+    for (const GfAssetFiles::AssetFile* file : m_files.m_files) {
+        GfAssetResource* resource = getResource(file->m_idx);
+        if (resource != nullptr && resource->m_type == 3) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void GfAssetPack::loadStart(mm::mtl::IAllocator* allocator) {
+    m_allocator = allocator;
+    for (const GfAssetFiles::AssetFile* file : m_files.m_files) {
+        GfFileIdx idx = file->m_idx;
+        const mm::mtl::FixStr<128>& name = m_files.getFileName(idx);
+        if (!m_files.isNoFile(idx) && getResource(idx) == nullptr) {
+            GfAssetResource* resource = GfAssetResource::create(m_files.m_name.m_str, name.m_str, allocator, 10);
+            setResource(idx, resource);
+        }
+    }
+}
+
+bool GfAssetPack::isNeedLoad() const {
+    if (m_slotHandle == reinterpret_cast<GF_SLOT_HANDLE*>(-1)) {
+        return true;
+    }
+    for (const GfAssetFiles::AssetFile* file : m_files.m_files) {
+        if (!m_files.isNoFile(file->m_idx) && getResource(file->m_idx) == nullptr) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void GfAssetPack::setTimeout() {
     m_timeout = true;
+}
+
+bool GfAssetPack::changeBackupAssetType() {
+    if (m_backupTypes.empty()) {
+        return false;
+    }
+    for (const GfAssetFiles::AssetFile* file : m_files.m_files) {
+        if (getResource(file->m_idx) != nullptr) {
+            return false;
+        }
+    }
+    GfAssetType type = m_backupTypes.front();
+    if (type != 0) {
+        m_files.m_type = type;
+    }
+    m_backupTypes.pop();
+    m_backupChanged = true;
+    return true;
 }
 
 AssetPackValue GfAssetPack::calcAssetPackValue(const char* name, GfAssetType type) {
@@ -471,6 +541,21 @@ void GfAssetPack::setResource(GfFileIdx file, GfAssetResource* resource) {
 
 bool GfAssetPack::isExistSameAsset(const GfAssetPack& other) const {
     return m_files.isExistSameAsset(other.m_files);
+}
+
+const mm::mtl::FixStr<128>& GfAssetFiles::getFileName(GfFileIdx idx) const {
+    // the name returned for a file the pack does not have (the name is not the original's)
+    static mm::mtl::FixStr<128> s_noName;
+    int common = getCommonResource(idx);
+    if (common == -1) {
+        common = idx;
+    }
+    for (const AssetFile* file : m_files) {
+        if (file->m_idx == common) {
+            return file->m_path;
+        }
+    }
+    return s_noName;
 }
 
 void GfAssetFiles::setInitializeParam(const GfAssetFilesInfo& info) {

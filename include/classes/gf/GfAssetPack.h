@@ -4,6 +4,7 @@
 #include "classes/mm/mtl/ReferenceObject.h"
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedVector.h"
+#include "mm/mtl/FixedQueue.h"
 #include "classes/gf/GfAssetManager.h"
 #include "classes/gf/GfSound.h"
 
@@ -175,8 +176,14 @@ public:
     bool isPreSizeSizeValid() const;
     // the bytes the pack's files still need, in blocks of `blockSize` (GfSlotMapping::setupFreeSlot)
     unsigned long getNeedLoadFileSize(unsigned long blockSize, bool);
-    // false when the pack has no backup asset type to change to (GfSlotMapping::updateSlotRequest)
+    // false when the pack has no backup asset type to change to, or already holds a resource
+    // (GfSlotMapping::updateSlotRequest); else the files take the next backup type
     bool changeBackupAssetType();
+    // whether one of the pack's resources is reference memory, resource type 3
+    // (GfAssetManager::updateCheckCacheReload)
+    bool isExistReferenceMemory() const;
+    // whether the pack has no slot yet or a file that exists has no resource (GfAssetManager::createAssetFiles)
+    bool isNeedLoad() const;
     void updateCacheCount();
     void setTimeout();
     bool isExistSameAsset(const GfAssetPack& other) const;
@@ -212,14 +219,16 @@ public:
     };
     mm::mtl::FixedVector<Resource, 16> m_resources;  // releaseResource releases them
     GfAssetFiles m_files;
-    unsigned char pad_220[0x8];
+    // loadStart's: the files' resources are created from it (the name is not the original's)
+    mm::mtl::IAllocator* m_allocator;
     bool m_enterLocked;  // AssetPackInfo::lockEnterRersource sets it (the name is not the original's)
     unsigned char pad_229[0x7];
     GF_SLOT_HANDLE* m_slotHandle;  // -1 while it has none
     // releaseRefResource sets it when one of the pack's resources holds the data it is given; the constructor clears
     // it (the name is not the original's)
     bool m_refReleased;
-    unsigned char pad_239[0x1];
+    // changeBackupAssetType sets it when it gives the files the next backup type (the name is not the original's)
+    bool m_backupChanged;
     bool m_full;  // AssetPackInfo::isFullResource asks whether any pack has it (the name is not the original's)
     bool m_timeout;  // setTimeout sets it
     unsigned char pad_23c[0xc];
@@ -241,7 +250,10 @@ public:
     // AssetPackInfo::updateReloadCount counts the updates the pack goes with no reference besides its users', up to
     // 99 (the name is not the original's)
     unsigned int m_refCacheCount;
-    unsigned char pad_284[0x24];
+    unsigned char pad_284[0x4];
+    // the asset types the pack falls back to, first first: changeBackupAssetType takes them off one by one (the name
+    // is not the original's)
+    mm::mtl::FixedQueue<GfAssetType, 4> m_backupTypes;
     fw::SoundPack* m_sePack;  // createSoundPack's; GfSound::destroyObjSePack destroys it
     int m_sePackId;  // -1 for a pack with no sound pack
     int m_sePackRef;  // destroySoundPack drops one, the last destroys the sound pack
