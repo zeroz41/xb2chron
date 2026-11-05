@@ -53,6 +53,11 @@
 #include "classes/btl/CharacterParameter.h"
 #include "gf/GfObjUtil.h"
 #include "mm/mtl/Delegate.h"
+#include "gf/MsgPcGetLookPoint.h"
+#include "gf/MsgObjectDamage.h"
+#include "gf/MsgObjectGetVelocity.h"
+#include "gf/MsgUnk_100003A.h"
+#include "gf/MsgObjectNotifyDead.h"
 
 namespace gf {
 
@@ -142,6 +147,39 @@ void GfBehaviorEnemyField::applyFieldMoveSpeed(MoveSpeed from, MoveSpeed to, GfC
         break;
     }
     m_moveSpeed.setSpeedKmph(speed, rate);
+}
+
+bool GfComBehaviorEnemy::recieveMessage(fw::MessageObject* sender, fw::Message& msg) {
+    switch (msg.m_id) {
+    case 0x1000003:
+        break;
+    case 0x1000008:
+        if (fw::ReferenceFrame* frame = pad_138.get()) {
+            static_cast<MsgPcGetLookPoint&>(msg).m_point = frame->getWorldTransform().position;
+            static_cast<MsgPcGetLookPoint&>(msg).m_found = true;
+        }
+        return true;
+    case 0x100003A:
+        procMsgObjectNotifyDamage(sender, static_cast<MsgObjectNotifyDamage&>(msg));
+        break;
+    case 0x100003B:
+        procMsgObjectNotifyDead(sender, static_cast<MsgObjectNotifyDead&>(msg));
+        break;
+    case 0x1000044:
+        if (sender != nullptr) {
+            pad_54e4 = true;
+            MsgObjectDamage damage(1, 0);
+            damage.pad_2c[2] = 1;
+            sender->sendMessage(static_cast<GfObj*>(m_owner), damage);
+        }
+        return true;
+    case 0x1000049:
+        static_cast<MsgObjectGetVelocity&>(msg).m_velocity = pad_54d0;
+        break;
+    default:
+        return false;
+    }
+    return true;
 }
 
 GfComBehaviorEnemy::~GfComBehaviorEnemy() {

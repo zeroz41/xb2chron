@@ -18,6 +18,7 @@ namespace fw { class MessageObject; }
 namespace fw { class UpdateInfo; }
 namespace gf { class CallBackCache; }
 namespace gf { class GfComAsm; }
+namespace gf { class MsgObjectNotifyDead; class MsgObjectNotifyDamage; }
 namespace gmk { class AGmkBase; }
 namespace gf { class GfMenuCallContext; }
 namespace gf { namespace enemy { enum STATE_ID : int; } }
@@ -88,6 +89,9 @@ public:
     // enemies, 15 for an enemy blade, else by its gimmick's pop_act_type; battle when a squad member is in battle
     void onPopped();
     void createBehField();
+    // its handlers of messages 0x100003A (a damage notice) and 0x100003B (its death), from recieveMessage
+    void procMsgObjectNotifyDead(fw::MessageObject* sender, gf::MsgObjectNotifyDead& msg);
+    void procMsgObjectNotifyDamage(fw::MessageObject* sender, gf::MsgObjectNotifyDamage& msg);
     // its menu object (the enemy's gauge): StateFieldSpawn disposes of it while spawning, makes it on leaving
     void disposeMenuObj();
     void createMenuObj();
@@ -142,7 +146,8 @@ public:
     TFieldExecCmdTurn<GfComAsm> m_turnCmd;
     GfFieldUndulator m_undulator;
     GfFieldDmg m_fieldDmg;
-    unsigned char pad_54c8[0x18];
+    unsigned char pad_54c8[0x8];
+    mm::Vec3 pad_54d0;  // what it answers MsgObjectGetVelocity (0x1000049) with
     // set while the enemy is counted in its sensor's battle lock (GmkBattleLock::pad_c4); update counts it in and
     // out, the destructor takes it out
     bool pad_54e0;
@@ -150,7 +155,8 @@ public:
     bool pad_54e2;  // reqChangeBattleAfterIdle sets it
     // set by reqChangeBattle (the name is not the original's)
     bool m_reqChangeBattle;
-    unsigned char pad_54e4[0x4];
+    bool pad_54e4;  // recieveMessage sets it on message 0x1000044 (before the damage it hands its sender)
+    unsigned char pad_54e5[0x3];
     void* pad_54e8;  // its Listener clears it on a standby logout
     // the constructor's listener (the name is not the original's)
     Listener m_listener;
