@@ -34,6 +34,12 @@ public:
     // clamps game+0x1176A8 to 100, version stamp at 0x117388 with a 0x306 memset, GfDataUtil::setupUi1868ForSDataGame) and tail-calls
     // fn_710022D55C.
     static void checkAndReplaceGameData();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its unit is GfDataStore's and
+    // checkAndReplaceGameData tail-calls it (no arguments). What it does: takes blades 0x459 and 0x45A off their
+    // drivers (GfDataDriver::getDriverBySetBlade/unsetBlade, GfDataBlade::setUnselect), unequips their orbs
+    // (GfEquipUtil::equipBladeOrb with an empty item) and tests GfDataBlade::isActivateMercenaryTeam on them.
+    // GfManager::setupPowerNewGame calls it after GfGameUtil::setupPoweredNewGameParam.
+    static void fn_710022D55C();
     static void setupOptionData(const SDataOption& option);
 
     SDataSystem m_system;  // 0x8 (the member names are not the original's)

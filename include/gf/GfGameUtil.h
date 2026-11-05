@@ -7,6 +7,7 @@ namespace mm { class Vec3; namespace mtl { template <int LEN> class FixStr; temp
 namespace gmk { enum GmkType : int; }
 namespace gf { class GfFieldLocator; }
 namespace gf { class SDataBlade; enum GFDIFF : int; }
+namespace gf { class SDataGame; class SDataGameIra; }
 namespace mm { namespace mtl { template <typename T> class Vector; } }
 namespace mm { class Mat44; }
 namespace fw { class SoundPack; }
@@ -18,6 +19,10 @@ class GfGameUtil {
 public:
     // the field locators the orderable quests ask for (GfMenuLocation::refreshLocator fills its list 3 from them)
     static void collectOrderableLocators(mm::mtl::Vector<GfFieldLocator>& locators);
+    // the symbols name them (GfManager's setupNewGame, setupPowerNewGame and setupEventTheater call them)
+    static void setupNewGameParam(const SDataGame& game);
+    static void setupPoweredNewGameParam(const SDataGame& game, const SDataGameIra& ira);
+    static void setChangeClothes(SDataGame& dst, const SDataGame& src);
     static void clearEnemyRepopCounter(int enemy);
     // switches the current Homura/Hikari blade (true: to Hikari); GfMenuObjCharSelect::seqSpHomuraToHikari and
     // seqSpHikariToHomura call it

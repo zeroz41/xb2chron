@@ -9,6 +9,7 @@
 namespace fw { class UpdateInfo; }
 namespace gf { class GfManager; }
 namespace gf { class SDataGame; }
+namespace gf { struct EvtTheaterParam; }
 namespace gf { class SDataGameIra; }
 namespace gf { class SDataOption; }
 namespace gf { class SDataSystem; }
@@ -52,9 +53,16 @@ public:
     static bool isExecModeAdvertize();
     static bool isExecModeTool();
     static bool isExecModeThater();
+    static void setupNewGame(const SDataSystem& system, const SDataGame& game, const SDataOption& option,
+                             const SDataGameIra& ira);
+    static void setupPowerNewGame(const SDataSystem& system, const SDataGame& game, const SDataOption& option,
+                                  const SDataGameIra& ira);
     static void setupContinueGame(const SDataSystem& system, const SDataGame& game, const SDataOption& option,
                                   const SDataGameIra& ira);
+    static void setupEventTheater(const SDataGame& game);
     static void setupReturnTitle();
+    static void startGame(bool saveDataCreated, bool clearGameCheck);
+    static void startEventTheater(const EvtTheaterParam& param);
     static void execToAdvertize();
     static void setupOptionData(const SDataOption& option);
     static bool isContinueGame();

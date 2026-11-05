@@ -10,6 +10,8 @@ class GfDataEvent {
 public:
     // the event's type (GfFobjManager::gevPlayEvent tests it for 1)
     static int getEventType(unsigned int eventId);
+    // the symbols name it: the map the event jumps to (0: none; GfManager::startEventTheater)
+    static unsigned int getMapjumpID(unsigned int event);
     static bool isBladeCreateEvent(unsigned int event);
     // the script GfPlayComAfterEventScript runs after the event, and the start id it sets first
     static int getEventAfterScriptStartID(unsigned int event);

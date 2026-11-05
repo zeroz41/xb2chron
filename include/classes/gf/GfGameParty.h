@@ -159,6 +159,9 @@ public:
     // 2.0.0's symbols name it. What it does: resets m_hierarchy to {0}, adding 1 and 2 when
     // GfGameManager::isGameTypeIra answers true.
     void setupGame();
+    // the symbols name them (GfManager's setupNewGame and setupPowerNewGame call them without an object)
+    static void setupNewGameParty();
+    static void setupPoweredNewGameParty();
     static void setupPartyPositionByPartyPosition(const GfPartyPosInfo& info);
     // the symbols name it. What it does: the position and y rotation of every hierarchy's object (1-6, 1-9 in an
     // Ira game) into its record, valid when the object has a transform

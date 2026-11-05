@@ -28,6 +28,21 @@
 #include "gf/GfParamIkReflection.h"
 #include "classes/gf/GfInfo.h"
 #include "classes/gf/GfMemManager.h"
+#include "classes/gf/GfGameParty.h"
+#include "classes/gf/GfFieldTime.h"
+#include "classes/gf/GfDataStore.h"
+#include "gf/GfGameUtil.h"
+#include "gf/GfGameUtilSaveData.h"
+#include "gf/GfDataEvent.h"
+#include "gf/GfPlayFactory.h"
+#include "gf/GfReqParam.h"
+#include "gf/EvtTheaterParam.h"
+#include "gf/ParamReturnTitle.h"
+#include "gf/GfDataUtil.h"
+#include "gf/GfDataParty.h"
+#include "gf/SDataGame.h"
+#include "gf/SDataDlc.h"
+#include "classes/gf/GfGameEvent.h"
 
 namespace gf {
 
@@ -187,6 +202,68 @@ bool GfManager::isExecModeThater() {
     return false;
 }
 
+void GfManager::setupNewGame(const SDataSystem&, const SDataGame& game, const SDataOption&, const SDataGameIra&) {
+    GfGameUtil::setupNewGameParam(game);
+    s_pThis->m_gameMode = GAME_MODE_NEW;
+    GfGameParty::setupNewGameParty();
+    if (GfFieldTime* time = GfFieldTime::get()) {
+        ElapseTime elapse = {0, 0, 0};
+        time->setElapseTime(elapse);
+        time->setTime(12, 0);
+    }
+}
+
+void GfManager::setupPowerNewGame(const SDataSystem&, const SDataGame& game, const SDataOption&,
+                                  const SDataGameIra& ira) {
+    GfGameUtil::setupPoweredNewGameParam(game, ira);
+    GfDataStore::fn_710022D55C();
+    GfMenuManager::setupGame();
+    GfGameManager::setupGame(GAME_TYPE(GfGameManager::isGameTypeIra()));
+    GfFieldManager::setupGame();
+    s_pThis->m_gameMode = GAME_MODE_NEW;
+    GfGameParty::setupPoweredNewGameParty();
+    if (GfFieldTime* time = GfFieldTime::get()) {
+        time->setTime(12, 0);
+    }
+}
+
+void GfManager::setupContinueGame(const SDataSystem& system, const SDataGame& game, const SDataOption& option,
+                                  const SDataGameIra& ira) {
+    s_pThis->m_gameMode = GAME_MODE_CONTINUE;
+    GfDataManager::clear();
+    GfAssetManager::clear();
+    GfFieldManager::clear();
+    GfGameManager::clear();
+    GfDataManager::setupGame(&system, &game, &option, &ira);
+    GfGameManager::setupGame(GAME_TYPE(GfGameManager::isGameTypeIra()));
+    GfFieldManager::setupGame();
+    s_pThis->m_loadGameTime = 0.0f;
+    s_gameTime.reset();
+}
+
+void GfManager::setupEventTheater(const SDataGame& game) {
+    s_pThis->m_gameMode = GAME_MODE_NONE;
+    GfDataManager::clear();
+    GfAssetManager::clear();
+    GfFieldManager::clear();
+    GfGameManager::clear();
+    GfGameUtil::setChangeClothes(*GfDataManager::getDataGame(), game);
+    GfDataManager::setupGame(nullptr, nullptr, GfGameUtilSaveData::getValidOptionData(), nullptr);
+    GfGameManager::setupGame(GAME_TYPE(GfGameManager::isGameTypeIra()));
+    GfFieldManager::setupGame();
+}
+
+void GfManager::setupReturnTitle() {
+    s_pThis->m_gameMode = GAME_MODE_NONE;
+    GfDataManager::clear();
+    GfAssetManager::clear();
+    GfFieldManager::clear();
+    GfGameManager::clear();
+    GfDataManager::setupGame(nullptr, nullptr, nullptr, nullptr);
+    GfGameManager::setupGame(GAME_TYPE(GfGameManager::isGameTypeIra()));
+    GfFieldManager::setupGame();
+}
+
 void GfManager::setupOptionData(const SDataOption& option) {
     GfDataManager::setupOptionData(option);
     if (GfSound* sound = GfSound::get()) {
@@ -243,6 +320,69 @@ void GfManager::setSaveDataCreated() {
     if (GfManager* manager = get()) {
         manager->m_saveDataCreated = true;
     }
+}
+
+void GfManager::startGame(bool saveDataCreated, bool clearGameCheck) {
+    if (GfManager* manager = get()) {
+        manager->m_saveDataCreated = saveDataCreated;
+    }
+    setExec(EXEC_STATE(1));
+    if (isContinueGame()) {
+        GfMapjumpInfo info(0);
+        info.m_flags = GfMapjumpInfo::Flags();
+        if (!GfGameManager::isGameTypeIra() || GfDataUtil::getSkipTravelID() != 0) {
+            // the saved rotation's z read as a word: 1234 there means the save keeps no position (the game starts at
+            // the skip travel point only)
+            int mark = *reinterpret_cast<const int*>(&GfDataManager::getDataGame()->m_saveRot[0].z);
+            unsigned int map = GfDataUtil::getSkipTravelID();
+            if (mark == 1234) {
+                info.m_map = map;
+                info.pad_4 = 0;
+            } else {
+                const mm::Vec3* pos = GfDataParty::getSavePos(0, true);
+                const mm::Vec3* rot = GfDataParty::getSaveRot(0, true);
+                mm::Vec3 rad(rot->x * 0.017453292f, rot->y * 0.017453292f, rot->z * 0.017453292f);
+                info.setupForSaveData(map, *pos, rad, GfDataUtil::isStartChapterSave());
+            }
+        } else {
+            unsigned int word = GfDataManager::getDataGameIra()->m_word;
+            const mm::Vec3* pos = GfDataParty::getSavePos(0, true);
+            const mm::Vec3* rot = GfDataParty::getSaveRot(0, true);
+            float rotY = rot->y * 0.017453292f;
+            info.m_map = 0;
+            info.pad_4 = word;
+            info.m_pos = *pos;
+            info.m_rotY = rotY;
+            info.m_setRotY = true;
+        }
+        GfPlayFactory::createMapjump(info);
+        if (GfDataUtil::isStartChapterSave()) {
+            GfPlayFactory::createOneEvent(GfDataUtil::getEventChapterSave());
+        } else {
+            GfDataUtil::getAutoEventAfterLoad();
+        }
+    } else if (isNewGame()) {
+        GfGameEvent::finishNewGameWait();
+        if (GfDataUtil::isClearGameCheck()) {
+            GfDataUtil::setClearGameCheck(false);
+        }
+    } else if (clearGameCheck) {
+        GfDataUtil::setClearGameCheck(true);
+    }
+    GfGameManager::setStartGame();
+}
+
+void GfManager::execToAdvertize() {
+    if (!isExecModeThater()) {
+        setExec(EXEC_STATE(2));
+    }
+    GfGameManager::leaveGameForDebug();
+    GfMapjumpInfo info(0);
+    info.m_flags = GfMapjumpInfo::Flags();
+    info.m_map = static_cast<unsigned int>(-1);
+    info.pad_4 = 0;
+    info.m_flags.m_startChapter = true;
+    GfPlayFactory::createMapjump(info);
 }
 
 void GfManager::gevGameState(GF_STATE, GF_STATE next) {
