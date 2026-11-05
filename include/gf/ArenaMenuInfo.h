@@ -63,7 +63,7 @@ struct ArenaMenuInfo {
     Text getText14() const { return m_text14; }
     unsigned short m_value18;  // not set by the constructor
     bool m_flag1A;
-    unsigned char pad_1B[0x1];
+    bool m_flag1B;  // GfArenaUtil::setupMenuInfoForChBtl: the row's hide condition holds
     unsigned short m_value1C;
     unsigned short m_values1E[3];
     unsigned int m_value24;

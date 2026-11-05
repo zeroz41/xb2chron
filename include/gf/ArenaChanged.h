@@ -19,11 +19,12 @@ struct ArenaChanged {
         unsigned short m_level;
         unsigned short m_challengeLevel;
     };
-    // filled by setupRankForBattleStart; what the shorts hold is not recovered
+    // filled by setupRankForBattleStart: a party blade whose weapon rank is above the challenge's limit, its weapon
+    // damage and the damage GfArenaUtil::getWeaponDamage gives it for the challenge. The names are not the original's.
     struct EntryE0 {
-        unsigned short pad_0;
-        unsigned short pad_2;
-        unsigned short pad_4;
+        unsigned short m_blade;
+        unsigned short m_damage;
+        unsigned short m_challengeDamage;
     };
     mm::mtl::FixedVector<Entry38, 26> m_list38;
     mm::mtl::FixedVector<EntryE0, 422> m_listE0;

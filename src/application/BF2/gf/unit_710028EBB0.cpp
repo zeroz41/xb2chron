@@ -22,6 +22,12 @@
 #include "gf/MapjumpCallbackInfo.h"
 #include "btl/Utility.h"
 #include "gf/GfArenaUtil.h"
+#include "classes/gf/SCOM_POPUP.h"
+#include "classes/gf/GfBdatCond.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/gf/GfGameParty.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfItemUtil.h"
 
 namespace gf {
 
@@ -240,6 +246,42 @@ void StateArenaEvent::gevPlayEvent(gf::GEV gev, unsigned int) {
     }
 }
 
+void GfArenaUtil::setupMenuInfoForChBtl(ArenaMenuInfo& info, unsigned int id) {
+    GfBdatBtl* btl = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
+    bool hasItem = btl->getBTL_ChBtlNeedItem(id) == 0 || GfItemUtil::getItemBoxCount(btl->getBTL_ChBtlNeedItem(id)) != 0;
+    info.clear();
+    info.m_lists.m_list38.clear();
+    info.m_lists.m_listE0.clear();
+    info.m_ratios[0] = 0.0f;
+    info.m_ratios[1] = 0.0f;
+    info.m_ratios[2] = 0.0f;
+    info.m_rule = ChBtlInfo::ChBtlDiff();
+    info.m_valueAE8 = 1;
+    info.m_flagAEC = false;
+    info.m_id = id;
+    info.m_valueE = btl->getBTL_ChBtlName(id);
+    info.m_value8 = btl->getBTL_ChBtlMaxLevel(id);
+    info.m_kind = btl->getBTL_ChBtlType(id);
+    info.m_valueC = btl->getBTL_ChBtlDifficult(id);
+    info.m_valueA = btl->getBTL_ChBtlJoinNumber(id);
+    info.m_value4 = btl->getBTL_ChBtlTimeLimit(id);
+    info.m_value10 = btl->getBTL_ChBtlCaption(id);
+    info.m_flag12 = btl->getBTL_ChBtlCondition(id) == 0 ? hasItem
+                                                       : hasItem && GfGameCond::isGameCond(btl->getBTL_ChBtlCondition(id));
+    info.m_text14.m_message = btl->getBTL_ChBtlConditionCap(id);
+    info.m_text14.m_flag = btl->getBTL_ChBtlCondition2(id) == 0
+                               ? hasItem
+                               : hasItem && GfGameCond::isGameCond(btl->getBTL_ChBtlCondition2(id));
+    info.m_value18 = btl->getBTL_ChBtlConditionCap2(id);
+    info.m_flag1A = btl->isBTL_ChBtlFlagHide(id);
+    info.m_flag1B = btl->getBTL_ChBtlHideCondition(id) != 0 && GfGameCond::isGameCond(btl->getBTL_ChBtlHideCondition(id));
+    info.m_value1C = btl->getBTL_ChBtlNeedDefeat(id);
+    info.m_values1E[0] = btl->getBTL_ChBtlDriver(id, 0);
+    info.m_values1E[1] = btl->getBTL_ChBtlDriver(id, 1);
+    info.m_values1E[2] = btl->getBTL_ChBtlDriver(id, 2);
+    info.m_valueAE8 = mm::mtl::PtrSingleton<GfGameArena>::sys()->getSaveInfo()->m_rows[id].m_flag3C;
+}
+
 void GfArenaUtil::setupMenuInfoForScore(ChBtlInfo::ChBtlDiff& diff, ArenaMenuInfo& info, unsigned int value) {
     if (diff.m_value4 < value) {
         diff.m_value4 = value;
@@ -254,6 +296,35 @@ void GfArenaUtil::setupMenuInfoForClearTime(ChBtlInfo::ChBtlDiff& diff, ArenaMen
     info.m_value30 = value;
 }
 
+void GfArenaUtil::setupSaveData(SaveChBtl& save, const mm::mtl::FixedVector<unsigned short, 128>& ids) {
+    GfBdatBtl* btl = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
+    for (const unsigned short& id : ids) {
+        ChBtlInfo& info = save.m_rows[id];
+        if (!info.m_isChecked) {
+            info.m_isChecked = true;
+            info.m_flag3C = !btl->isBTL_ChBtlFlagHide(id);
+        }
+    }
+}
+
+void GfArenaUtil::applyChallengeStatus(SaveChBtl& save, const mm::mtl::FixedVector<unsigned short, 128>& ids) {
+    GfBdatBtl* btl = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
+    for (const unsigned short& id : ids) {
+        ChBtlInfo& info = save.m_rows[id];
+        if (!info.m_flag3C) {
+            if (GfGameCond::isGameCond(btl->getBTL_ChBtlCondition(id))) {
+                info.m_flag3C = true;
+                info.m_flag3E = true;
+                SCOM_POPUP::createChBtlNewChallenge(id);
+            }
+        } else if (!info.m_flag3E) {
+            if (GfGameCond::isGameCond(btl->getBTL_ChBtlCondition(id))) {
+                info.m_flag3E = true;
+            }
+        }
+    }
+}
+
 void GfArenaUtil::setupBattleMapWeather(unsigned int id) {
     GfBdatBtl* btl = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
     if (unsigned int map = btl->getBTL_ChBtlMapJump(id)) {
@@ -266,6 +337,59 @@ void GfArenaUtil::setupBattleMapWeather(unsigned int id) {
             env->m_timeMax = 100.0f;
         }
     }
+}
+
+void GfArenaUtil::setupChBtlList(mm::mtl::FixedVector<unsigned short, 128>& ids) {
+    ids.clear();
+    GfBdatBtl* btl = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
+    unsigned short start = btl->getBTL_ChBtlStart();
+    unsigned short end = btl->getBTL_ChBtlEnd();
+    for (unsigned short id = start; id < end; ++id) {
+        ids.push_back(id);
+    }
+}
+
+void GfArenaUtil::setChallengeOK(SaveChBtl& save, unsigned int id) {
+    save.m_rows[id].m_flag3C = 2;
+}
+
+unsigned int GfArenaUtil::getWeaponDamage(const ArenaBattleStart& start, unsigned int blade) {
+    DataParamAcc acc(4, blade, static_cast<GimmickType>(0));
+    GfBdatBtl* btl = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
+    unsigned int maxRank = btl->getBTL_ChBtlMaxWpnRank(start.m_id);
+    if (maxRank != 0 && GfDataBlade::getBladeWeaponRank(blade) > maxRank) {
+        if (unsigned int table = btl->getBTL_ChBtlWpnRevTable(start.m_id)) {
+            return btl->getBTL_ChBtlWpnRevWpnDmg(table, acc.getWeaponType(-1, false));
+        }
+    }
+    return acc.getWeaponDamage(false);
+}
+
+void GfArenaUtil::createPopupForKillEnemy(unsigned int value) {
+    GfBdatBtl* btl = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
+    GfBdatCond* cond = mm::mtl::PtrSingleton<GfBdatCond>::sys();
+    unsigned short start = btl->getBTL_ChBtlStart();
+    unsigned short end = btl->getBTL_ChBtlEnd();
+    for (unsigned short id = start; id < end; ++id) {
+        unsigned int condition = btl->getBTL_ChBtlCondition(id);
+        if (condition != 0 && cond->getConditionListConditionType(condition, 0) == 0xD) {
+            if (cond->getConditionNamedNamed(cond->getConditionListCondition(condition, 0)) == value) {
+                ChBtlInfo& info = mm::mtl::PtrSingleton<GfGameArena>::sys()->getSaveInfo()->m_rows[id];
+                if (!info.m_flag3E) {
+                    SCOM_POPUP::createChBtlNewChallenge(id);
+                    info.m_flag3E = true;
+                }
+                return;
+            }
+        }
+    }
+}
+
+unsigned int GfArenaUtil::getPlayEvent(unsigned int id) {
+    if (id == 0) {
+        return 0;
+    }
+    return mm::mtl::PtrSingleton<GfBdatBtl>::sys()->getBTL_ChBtlEvent(id);
 }
 
 bool GfArenaUtil::isPlayEvent(const mm::mtl::FixedArray<ChBtlInfo, 48>& infos, unsigned int id) {

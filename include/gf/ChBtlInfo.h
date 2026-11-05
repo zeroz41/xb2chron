@@ -16,9 +16,11 @@ struct ChBtlInfo {
         unsigned int m_value8 : 17;  // also stored at 0x2C
         unsigned int m_flag8 : 7;
     };
-    ChBtlInfo() : m_flag3C(false), m_isChecked(false), m_flag3E(false) {}
+    ChBtlInfo() : m_flag3C(0), m_isChecked(false), m_flag3E(false) {}
     ChBtlDiff m_rules[5];
-    bool m_flag3C;  // setupGame: !GfBdatBtl::isBTL_ChBtlFlagHide(id) the first time
+    // setupGame: !GfBdatBtl::isBTL_ChBtlFlagHide(id) the first time; applyChallengeStatus sets 1,
+    // GfArenaUtil::setChallengeOK 2 (a state, not a bool)
+    unsigned char m_flag3C;
     bool m_isChecked;  // setupGame sets it once it has set m_flag3C
     bool m_flag3E;
 };
