@@ -239,7 +239,7 @@ bool StateUtilField::isBigSplashFallSpeed(gf::GfComBehaviorPc& behavior) {
     GfComPropertyPc* property = behavior.m_owner->getComponent<GfComPropertyPc>(5);
     const GfComPropertyPc::GravityParam* param =
         property->getParamAdapter(1).get<GfComPropertyPc::GravityParam>();
-    float speed = property->getLocomotion()->m_translation.y + property->m_moveSpeed * property->pad_d4;
+    float speed = property->getLocomotion()->m_translation.y + property->m_moveSpeed * property->pad_d0.y;
     speed = property->m_colVel.y + speed;
     speed = property->m_moveVec2.x + speed;
     return speed <= -param->m_bigSplashFallSpeed;

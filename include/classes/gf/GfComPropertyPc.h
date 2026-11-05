@@ -13,6 +13,7 @@
 #include "classes/gf/pc/GfPropertyBattle.h"
 
 namespace fw { class Message; }
+namespace mm { class Mat44; }
 namespace fw { class MessageObject; }
 namespace gf { class EnviromentSensor; }
 namespace anm { class QsTransform; }
@@ -25,6 +26,7 @@ namespace gf {
 // table 0x7100B69448
 class GfComPropertyPc : public ::gf::GfComProperty {
 public:
+    GfComPropertyPc();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     // inline (its deleting destructor inlines the body), so recieveMessage is the key function
     virtual inline ~GfComPropertyPc();  // slot 1
@@ -89,6 +91,10 @@ public:
     };
     // by its symbol (GfComBehaviorPc's warps call it)
     void flush();
+    // by its symbol: the camera's directions from the inverse of the view matrix (flush passes CameraManager's)
+    void setViewMtx(const mm::Mat44& viewMtx);
+    // by its symbol: the world directions the stick moves the PC along (up, the camera's front and right flattened)
+    void updateWorldDirs();
     // by its symbol: the water states call it after turning m_rot
     void syncDirection();
 
@@ -128,10 +134,10 @@ public:
     mm::Vec2 m_moveVec2;
     Locomotion m_locomotion;  // setLocomotion's translation and rotation
     float m_moveSpeed;
-    unsigned char pad_c4[0x10];
-    // StateUtilField::isBigSplashFallSpeed adds m_moveSpeed times it to the fall speed (meaning not known)
-    float pad_d4;
-    unsigned char pad_d8[0x28];
+    // StateUtilField::isBigSplashFallSpeed adds m_moveSpeed times its y to the fall speed (meaning not known)
+    mm::Vec3 pad_d0;
+    mm::Vec3 pad_e0;
+    float pad_f0;
     mm::Vec3 m_colVel;          // ColVelCalculatorPlugin::update's: the ground's movement it carries the PC with
     // bit 4: ColVelCalculatorPlugin::update takes the ground's movement; bit 10: DeadColCheckPlugin::testDead asks
     // the first collision object instead of the dead plane
@@ -163,7 +169,7 @@ public:
     mm::Quat m_lastRot;
     mm::Vec3 m_frontDir;        // StateFieldIdle::checkSpace starts its capsule 0.6 along it from m_pos
                                 // (the name is not the original's)
-    unsigned char pad_1d0[0x10];
+    mm::Vec3 m_frontDirInv;     // syncDirection's -m_frontDir (the name is not the original's)
     mm::Vec3 m_moveDir;         // TaskFieldJump::update sets m_velocity along it
     // syncDirection stores -m_moveDir here; the turn states turn to it when the stick gives no direction
     // (the name is not the original's)
@@ -171,19 +177,34 @@ public:
     // AgentUtilField::setFollowWallEndInput sets the stick's x by the target's side along it, as its y by m_frontDir
     // (the name is not the original's)
     mm::Vec3 m_sideDir;
-    unsigned char pad_210[0x80];
+    // syncDirection's -m_sideDir: m_frontDir, m_moveDir and m_sideDir are m_rot's y, z and -x axes, each kept with
+    // its negation (the name is not the original's)
+    mm::Vec3 m_sideDirInv;
+    // setViewMtx's, from the inverse of the view matrix: its translation row (the camera's position) and its rows
+    // 1, 2 and 0 each with its negation, -row 2 (the camera's front) first (the names are not the original's)
+    mm::Vec3 m_viewPos;
+    mm::Vec3 m_viewUp;
+    mm::Vec3 m_viewDown;
+    mm::Vec3 m_viewFront;
+    mm::Vec3 m_viewBack;
+    mm::Vec3 m_viewRight;
+    mm::Vec3 m_viewLeft;
     // two of updateWorldDirs' world directions: the ones the stick's y and x move the PC along
     // (TaskFieldWallEscape::update picks the stick's signs by them; the names are not the original's)
     mm::Vec3 m_stickFrontDir;
-    unsigned char pad_2a0[0x10];
+    mm::Vec3 m_stickFrontDirInv;  // updateWorldDirs': -m_stickFrontDir (the name is not the original's)
     // updateWorldDirs': the front direction at +0x250 flattened against m_stickFrontDir and normalized; the turn
     // states move the stick's y along it with m_stickSideDir for its x (the name is not the original's)
     mm::Vec3 m_groundFrontDir;
-    unsigned char pad_2c0[0x10];
+    mm::Vec3 m_groundFrontDirInv;  // updateWorldDirs': -m_groundFrontDir (the name is not the original's)
+    // updateWorldDirs': m_viewRight flattened the same way (else m_sideDir), and its negation (the names are not
+    // the original's)
     mm::Vec3 m_stickSideDir;
-    unsigned char pad_2e0[0x10];
+    mm::Vec3 m_stickSideDirInv;
     float m_chestHeight;        // setup's: the character data's chest height in metres (the name is not the original's)
-    unsigned char pad_2f4[0x4];
+    // flush's: water at least this deep (above the ground under the PC) puts it at m_waterLevel 2 (the name is
+    // not the original's)
+    float m_waistHeight;
     // StateFieldWater::update takes the PC out of water once m_waterDepth is no more than it (the name is not the
     // original's)
     float m_waterLeaveDepth;

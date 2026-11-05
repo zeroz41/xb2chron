@@ -15,6 +15,22 @@ namespace gf {
 
 inline GfComPropertyPc::~GfComPropertyPc() {}
 
+GfComPropertyPc::GfComPropertyPc()
+    : m_setupKind(-1), m_battleStartKind(0), m_headColiHeight(0.0f), m_headColiPos(mm::Vec3::zero), m_inputDir(),
+      m_inputFlags(), m_prevInputDir(), m_prevInputFlags(), m_velocity(mm::Vec3::zero), m_moveVec2(0.0f, 0.0f),
+      m_moveSpeed(0.0f), pad_d0(mm::Vec3::zero), pad_e0(mm::Vec3::zero), pad_f0(0.0f), m_colVel(mm::Vec3::zero),
+      m_stateFlags(0), m_waterLevel(0), pad_118(0.0f), m_waterDepth(0.0f), m_wallJumpState(0), m_warpType(0),
+      m_frontDir(mm::Vec3::zero), m_frontDirInv(mm::Vec3::zero), m_moveDir(mm::Vec3::zero),
+      m_moveDirInv(mm::Vec3::zero), m_sideDir(mm::Vec3::zero), m_sideDirInv(mm::Vec3::zero),
+      m_viewPos(mm::Vec3::zero), m_viewUp(mm::Vec3::zero), m_viewDown(mm::Vec3::zero), m_viewFront(mm::Vec3::zero),
+      m_viewBack(mm::Vec3::zero), m_viewRight(mm::Vec3::zero), m_viewLeft(mm::Vec3::zero),
+      m_stickFrontDir(mm::Vec3::zero), m_stickFrontDirInv(mm::Vec3::zero), m_groundFrontDir(mm::Vec3::zero),
+      m_groundFrontDirInv(mm::Vec3::zero), m_stickSideDir(mm::Vec3::zero), m_stickSideDirInv(mm::Vec3::zero),
+      m_chestHeight(0.0f), m_waistHeight(0.0f), m_waterLeaveDepth(0.0f) {
+    m_locomotion.m_translation = mm::Vec3::zero;
+    m_locomotion.m_rotation = mm::Quat::identity;
+}
+
 void GfComPropertyPc::resetParams() {
     fw::ParamManager* manager = fw::ParamManager::get();
     m_paramList = manager->m_paramLists[13];
