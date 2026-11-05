@@ -9,6 +9,7 @@
 #include "classes/mm/mtl/Singleton.h"
 
 namespace event { enum MSG_TYPE : int; }
+namespace minigame { namespace tora { class MinigameUpdatableObject; } }
 
 namespace event {
 // table 0x7100B3D5C8; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::UIManager>
@@ -29,6 +30,13 @@ public:
     UIManager();  // 0x71001024A0, out of line; Singleton<UIManager>::getPtr inlines it
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     void clear();
+    // the waits below return false while the script has to wait (the frame stays paused) and true once the menu is
+    // closed; the bit of m_openFlags each one sets stays set while it is open
+    bool openSkip(bool& result);
+    bool openCommonUI(unsigned int id);
+    bool execFieldSkill(unsigned int id, bool& result);
+    bool openShopUI(unsigned int id, bool& result);
+    bool openRewardUI(unsigned int id);
     // 2.0.0's symbols name it. A member because the evt_ex plugin's
     // play (ScriptCamMotion) calls it on Singleton<UIManager>::getPtr(). What it does: takes the text, ether value,
     // exp/select/item lists and cancel text evt_ex's set* entries collected, checks MstxtManager's state and opens a
@@ -63,6 +71,9 @@ public:
     // 5th arguments, those above 0), with the entry's 2nd argument and its 3rd as a bool; returns false while the
     // script has to wait.
     bool openHitonowaUI(const mm::mtl::FixedVector<int, 3>& ids, int param, bool flag);
+    bool openCampUI(bool& talk);
+    bool openBtlchOrderUI();
+    bool openNamedUI();
     void update();
     // 1.0.0's UIManager::logout (0x71000F02E8); 3.0.1 inlines it into OnEventProc
     void logout() {
@@ -78,10 +89,14 @@ public:
     unsigned int m_flags;  // 0x14
     // the constructor zeroes these (0x1c: 1); not known yet
     unsigned int pad_18;
-    bool pad_1c;
+    // execFieldSkill's GfGameUtil::evalSumFs result, its bool& result (the name is not the original's)
+    bool m_fieldSkillResult;
     unsigned char pad_1d[0x20 - 0x1D];
-    unsigned long pad_20;
-    unsigned long pad_28;
+    // the call context openSkip creates for GfMenuObjEventSkip::open and releases once it is closed (the name is
+    // not the original's)
+    gf::GfMenuCallContext* m_skipContext;  // 0x20
+    // the call context openShopUI creates for GfMenuObjShop::open (the name is not the original's)
+    gf::GfMenuCallContext* m_shopContext;  // 0x28
     unsigned long pad_30;
     // evt_pay.getResult's value (getPayoffUI); the name is not the original's
     int m_payoffResult;  // 0x38
@@ -90,12 +105,15 @@ public:
     // evt_ex.getResult's value (getExperienceUI); the name is not the original's
     int m_exResult;  // 0x48
     unsigned char pad_4c[0x50 - 0x4C];
-    unsigned long pad_50;  // the constructor zeroes it
+    // the call context openRewardUI creates for GfMenuObjBalloon::openGetItem (the name is not the original's)
+    gf::GfMenuCallContext* m_rewardContext;  // 0x50
     // the call context openBladeNameUI releases and creates for GfMenuObjBladeCreate::openCreatedBladeName; the
     // name is not the original's
     gf::GfMenuCallContext* m_bladeNameContext;  // 0x58
-    unsigned long pad_60;  // the constructor zeroes it
-    unsigned int pad_68;  // the constructor zeroes it
+    // the call context openChapTelopUI creates for GfMenuObjChapterTelop::openEndTelop (the name is not the
+    // original's)
+    gf::GfMenuCallContext* m_chapTelopContext;  // 0x60
+    unsigned int pad_68;  // the constructor zeroes it; openChapTelopUI sets it to 1
     unsigned char pad_6c[0x70 - 0x6C];
     // the call contexts openAvanTitleUI and openZoneTelopUI create; the names are not the original's
     gf::GfMenuCallContext* m_avanTitleContext;  // 0x70
@@ -103,8 +121,14 @@ public:
     // two curves the constructor builds in place and the destructor tears down; the names are not the original's
     AnmF32 m_anm0;  // 0x80
     AnmF32 m_anm1;  // 0x190
-    unsigned long pad_2a0;
-    unsigned long pad_2a8;  // Singleton<UIManager>'s instance is 0x2B0 bytes
+    // the minigame openMinigame creates and terminates (the name is not the original's)
+    minigame::tora::MinigameUpdatableObject* m_minigame;
+    unsigned long pad_2a8;
+    // openCommonUI's wait after its fade: 30 frames, 0 while skipping; the constructor leaves it
+    int pad_2b0;
+    // openSkip's countdown: 14 when it starts, the skip menu opens at 11, -1 once it is closed; the constructor
+    // leaves it (Singleton<UIManager>'s .bss instance is 0x2C0 bytes)
+    int pad_2b4;
 };
 }  // namespace event
 

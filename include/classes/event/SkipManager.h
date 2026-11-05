@@ -19,6 +19,8 @@ public:
     void clear();
     void update();
     void tail();
+    // out of line with no callers; the UIManager open*UI waits inline it with false (drop the skipping bit)
+    void skip(bool skip, float frame);
     void setSkipVolume(bool);  // out of line
 
 private:

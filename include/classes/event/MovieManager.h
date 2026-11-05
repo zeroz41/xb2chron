@@ -30,13 +30,26 @@ public:
     static void makePath(mm::mtl::FixStr<256>& path, const char* name);
     // setScriptFlag's bit; the name is not the original's
     bool isScriptFlag() const { return (pad_10 & 0x100) != 0; }
+    // 2.0.0's MovieManager::stop (0x7100111C14, 0x38 bytes); 3.0.1 inlines it everywhere (clear, update,
+    // SkipManager::skip): when bit 1 or 2 is set, drops bits 3/5 (with bit 3), starts the 0x22c countdown at 2 and
+    // swaps bits 1, 2, 5 for bit 6
+    void stop() {
+        if (pad_10 & 6) {
+            if (pad_10 & 8) {
+                pad_10 &= ~0x28;
+            }
+            pad_22c = 2;
+            pad_10 = (pad_10 & ~0x66) | 0x40;
+        }
+    }
     // fields the constructor initializes; what they hold is not known yet
     unsigned int pad_10;
     mm::mtl::FixStr<256> pad_14;
     bool pad_118;
     mm::mtl::FixStr<256> pad_11c;
     long pad_220;  // -1 at first
-    unsigned char pad_228[0x8];
+    int pad_228;  // update counts it down while bit 5 is set
+    int pad_22c;  // stop sets it to 2; update counts it down while bit 6 is set
 };
 }  // namespace event
 

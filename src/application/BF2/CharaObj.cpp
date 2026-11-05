@@ -830,6 +830,17 @@ MdlstmObj::~MdlstmObj() {
     ;
 }
 
+// bit 2 of m_flags enables it (2.0.0's setSkipFastEnable); the debug flags 5 and 6 can turn it off
+bool SkipManager::isSkipFast() const {
+    if ((m_flags & 4) &&
+        (!mm::mtl::Singleton<DebugManager>::getPtr()->testFlag(5) ||
+         mm::mtl::Singleton<DebugManager>::getPtr()->testFlag(6)) &&
+        isSkip()) {
+        return true;
+    }
+    return false;
+}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void MdlstmManager::OnEventProc(event::MSG_TYPE msg) {
     if (msg == 14) {
@@ -3932,6 +3943,11 @@ void TextManager::OnEventProc(event::MSG_TYPE msg) {
 #include "classes/gf/GfMenuObjStaffroll.h"
 #include "classes/gf/GfMenuObjOpeningTelop.h"
 #include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfMenuFieldSkill.h"
+#include "classes/gf/GfMenuObjEventSkip.h"
+#include "classes/gf/GfMenuObjBalloon.h"
+#include "classes/gf/GfMenuObjShop.h"
+#include "classes/minigame/tora/MinigameUpdatableObject.h"
 #include "classes/event/ModelManager.h"
 #include "classes/gf/GfInitParamEventObj.h"
 #include "classes/gf/GfInitParamDriver.h"
@@ -3983,6 +3999,76 @@ void SeManager::pan(int id, float pan, float frame, CV_TYPE type) {
 
 SeManager::~SeManager() {}
 
+bool UIManager::openSkip(bool& result) {
+    if (!(m_openFlags & 1)) {
+        m_openFlags |= 1;
+        pad_2b4 = 14;
+    } else {
+        if (pad_2b4 == 11) {
+            m_skipContext = gf::GfMenuCallContext::create();
+            gf::GfMenuObjEventSkip::open(m_skipContext);
+        }
+        if (!(pad_2b4 >= 0 && pad_2b4-- != 0) && m_skipContext->isTerm()) {
+            gf::GfMenuCallContext::GfMenuResult res = {};
+            m_skipContext->popResult(res);
+            mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(1), false);
+            m_openFlags &= ~1;
+            if (m_skipContext != nullptr) {
+                m_skipContext->release();
+                m_skipContext = nullptr;
+            }
+            pad_2b4 = -1;
+            result = res.m_id == 0;
+            return true;
+        }
+    }
+    mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(1), true);
+    return false;
+}
+
+// the windows 73..153 open after a fade out and a wait
+bool UIManager::openCommonUI(unsigned int id) {
+    bool fade = id >= 73 && id <= 153;
+    if (!(m_openFlags & 4)) {
+        bool skip = mm::mtl::Singleton<SkipManager>::getPtr()->isSkip();
+        if (fade) {
+            mm::mtl::Singleton<FadeManager>::getPtr()->play(true, 40, static_cast<FadeCtrl::PRIO>(0), nullptr);
+        }
+        pad_2b0 = skip ? 0 : 30;
+        m_openFlags |= 4;
+    }
+    bool wait = fade && (mm::mtl::Singleton<FadeManager>::getPtr()->isFading() || pad_2b0-- > 0);
+    if (!wait) {
+        if (!(m_openFlags & 2)) {
+            gf::GfMenuManager::openCommonWindow(id);
+            m_openFlags |= 2;
+        }
+        wait = gf::GfMenuManager::isOpenCommonWindow();
+    }
+    if (wait) {
+        mm::mtl::Singleton<SkipManager>::getPtr()->skip(false, 0.0f);
+        mm::mtl::Singleton<SkipManager>::getPtr()->setSkipVolume(false);
+        mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(4), true);
+        return false;
+    }
+    mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(4), false);
+    m_openFlags &= ~6;
+    return true;
+}
+
+void SkipManager::skip(bool skip, float frame) {
+    if (skip) {
+        if ((m_flags & 1) && m_endFrame == frame) {
+            return;
+        }
+        mm::mtl::Singleton<MovieManager>::getPtr()->stop();
+        m_endFrame = frame;
+        m_flags |= 1;
+    } else if (m_flags & 1) {
+        m_flags &= ~1;
+    }
+}
+
 void SkipManager::setSkipVolume(bool skip) {
     if (skip) {
         if (!(m_flags & 2)) {
@@ -4003,10 +4089,55 @@ void SkipManager::setSkipVolume(bool skip) {
     }
 }
 
+bool UIManager::execFieldSkill(unsigned int id, bool& result) {
+    if (!(m_openFlags & 0x8)) {
+        m_fieldSkillResult = gf::GfGameUtil::evalSumFs(id, 0);
+        m_openFlags |= 0x8;
+    }
+    if (gf::GfMenuFieldSkill::isRunning()) {
+        mm::mtl::Singleton<SkipManager>::getPtr()->skip(false, 0.0f);
+        mm::mtl::Singleton<SkipManager>::getPtr()->setSkipVolume(false);
+        mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(5), true);
+        return false;
+    }
+    mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(5), false);
+    m_openFlags &= ~0x8;
+    result = m_fieldSkillResult;
+    return true;
+}
+
+bool UIManager::openShopUI(unsigned int id, bool& result) {
+    if (!(m_openFlags & 0x10)) {
+        m_shopContext = gf::GfMenuCallContext::create();
+        gf::GfMenuObjShop::OpenParam param;
+        param.m_option = false;
+        param.m_shopId = id;
+        gf::GfMenuObjShop::open(m_shopContext, param);
+        m_openFlags |= 0x10;
+    }
+    if (!m_shopContext->isTerm()) {
+        mm::mtl::Singleton<SkipManager>::getPtr()->skip(false, 0.0f);
+        mm::mtl::Singleton<SkipManager>::getPtr()->setSkipVolume(false);
+        mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(6), true);
+        return false;
+    }
+    gf::GfMenuCallContext::GfMenuResult res = {};
+    m_shopContext->popResult(res);
+    mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(6), false);
+    m_openFlags &= ~0x10;
+    if (m_shopContext != nullptr) {
+        m_shopContext->release();
+        m_shopContext = nullptr;
+    }
+    result = res.m_id == 1;
+    return true;
+}
+
 UIManager::UIManager()
-    : m_openFlags(0), m_flags(0), pad_18(0), pad_1c(true), pad_20(0), pad_28(0), pad_30(0), m_payoffResult(0),
-      pad_40(0), pad_50(0), m_bladeNameContext(nullptr), pad_60(0), pad_68(0), m_avanTitleContext(nullptr),
-      m_zoneTelopContext(nullptr), pad_2a0(0), pad_2a8(0) {}
+    : m_openFlags(0), m_flags(0), pad_18(0), m_fieldSkillResult(true), m_skipContext(nullptr),
+      m_shopContext(nullptr), pad_30(0), m_payoffResult(0), pad_40(0), m_rewardContext(nullptr),
+      m_bladeNameContext(nullptr), m_chapTelopContext(nullptr), pad_68(0), m_avanTitleContext(nullptr),
+      m_zoneTelopContext(nullptr), m_minigame(nullptr), pad_2a8(0) {}
 
 int UIManager::getPayoffUI() const {
     return m_payoffResult;
@@ -4014,6 +4145,30 @@ int UIManager::getPayoffUI() const {
 
 int UIManager::getExperienceUI() const {
     return m_exResult;
+}
+
+bool UIManager::openRewardUI(unsigned int id) {
+    bool opened = true;
+    if (!(m_openFlags & 0x80)) {
+        m_rewardContext = gf::GfMenuCallContext::create();
+        gf::GfMenuObjBalloon::OpenGetItemParam param;
+        param.m_id = id;
+        opened = gf::GfMenuObjBalloon::openGetItem(m_rewardContext, param);
+        m_openFlags |= 0x80;
+    }
+    if (!opened || m_rewardContext->isTerm()) {
+        mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(9), false);
+        m_openFlags &= ~0x80;
+        if (m_rewardContext != nullptr) {
+            m_rewardContext->release();
+            m_rewardContext = nullptr;
+        }
+        return true;
+    }
+    mm::mtl::Singleton<SkipManager>::getPtr()->skip(false, 0.0f);
+    mm::mtl::Singleton<SkipManager>::getPtr()->setSkipVolume(false);
+    mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(9), true);
+    return false;
 }
 
 void UIManager::openBladeNameUI() {
@@ -4026,6 +4181,17 @@ void UIManager::openBladeNameUI() {
         gf::GfMenuObjBladeCreate::openCreatedBladeName(m_bladeNameContext);
         m_openFlags |= 0x100;
     }
+}
+
+bool UIManager::openChapTelopUI(unsigned int id) {
+    if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkip() && !(m_openFlags & 0x200)) {
+        m_chapTelopContext = gf::GfMenuCallContext::create();
+        gf::GfMenuObjChapterTelop::openEndTelop(m_chapTelopContext, id);
+        pad_68 = 1;
+        mm::mtl::Singleton<FadeManager>::getPtr()->play(true, 0, static_cast<FadeCtrl::PRIO>(0), nullptr);
+        m_openFlags |= 0x200;
+    }
+    return true;
 }
 
 void UIManager::openAvanTitleUI(unsigned int id) {
@@ -4052,6 +4218,32 @@ void UIManager::openZoneTelopUI(unsigned int id) {
         m_zoneTelopContext = gf::GfMenuCallContext::create();
         gf::GfMenuObjZoneTelop::open(m_zoneTelopContext, id);
         m_openFlags |= 0x1000;
+    }
+}
+
+void UIManager::openOpeningTelopUI(OPTELOP_TYPE type, unsigned int id) {
+    if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkip()) {
+        if (!(m_openFlags & 0x2000)) {
+            gf::GfMenuManager::openOpeningTelop();
+            m_openFlags |= 0x2000;
+        }
+        switch (type) {
+        case OPTELOP_C:
+            gf::GfMenuObjOpeningTelop::openCenter(id);
+            break;
+        case OPTELOP_LB:
+            gf::GfMenuObjOpeningTelop::openLeft(id);
+            break;
+        case OPTELOP_RT:
+            gf::GfMenuObjOpeningTelop::openRight(id);
+            break;
+        case OPTELOP_LH:
+            gf::GfMenuObjOpeningTelop::openLeftHalf(id);
+            break;
+        case OPTELOP_RH:
+            gf::GfMenuObjOpeningTelop::openRightHalf(id);
+            break;
+        }
     }
 }
 
@@ -4104,6 +4296,75 @@ bool UIManager::startNewGameWait() {
         frame->pause(static_cast<FrameManager::PAUSE_TYPE>(18), false);
         m_openFlags &= ~0x40000;
     }
+    return true;
+}
+
+bool UIManager::openMinigame() {
+    if (!(m_openFlags & 0x100000)) {
+        m_minigame = minigame::tora::factory::create(nullptr);
+        m_openFlags |= 0x100000;
+    }
+    if (!m_minigame->isTerminate()) {
+        mm::mtl::Singleton<SkipManager>::getPtr()->skip(false, 0.0f);
+        mm::mtl::Singleton<SkipManager>::getPtr()->setSkipVolume(false);
+        mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(13), true);
+        return false;
+    }
+    mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(13), false);
+    m_minigame->setTerminate();
+    m_minigame = nullptr;
+    m_openFlags &= ~0x100000;
+    return true;
+}
+
+bool UIManager::openCampUI(bool& talk) {
+    if (!(m_openFlags & 0x400000)) {
+        gf::GfMenuManager::openCampMenu();
+        m_openFlags |= 0x400000;
+    }
+    bool open = gf::GfMenuManager::isOpenCampMenu();
+    bool select = gf::GfMenuManager::isCampSelectTalk();
+    if (!select && open) {
+        mm::mtl::Singleton<SkipManager>::getPtr()->skip(false, 0.0f);
+        mm::mtl::Singleton<SkipManager>::getPtr()->setSkipVolume(false);
+        mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(15), true);
+        return false;
+    }
+    mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(15), false);
+    m_openFlags &= ~0x400000;
+    talk = select;
+    return true;
+}
+
+bool UIManager::openBtlchOrderUI() {
+    if (!(m_openFlags & 0x800000)) {
+        gf::GfMenuManager::openBtlchOrder();
+        m_openFlags |= 0x800000;
+    }
+    if (gf::GfMenuManager::isOpenBtlchOrder()) {
+        mm::mtl::Singleton<SkipManager>::getPtr()->skip(false, 0.0f);
+        mm::mtl::Singleton<SkipManager>::getPtr()->setSkipVolume(false);
+        mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(16), true);
+        return false;
+    }
+    mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(16), false);
+    m_openFlags &= ~0x800000;
+    return true;
+}
+
+bool UIManager::openNamedUI() {
+    if (!(m_openFlags & 0x1000000)) {
+        gf::GfMenuManager::openNamedList();
+        m_openFlags |= 0x1000000;
+    }
+    if (gf::GfMenuManager::isOpenNamedList()) {
+        mm::mtl::Singleton<SkipManager>::getPtr()->skip(false, 0.0f);
+        mm::mtl::Singleton<SkipManager>::getPtr()->setSkipVolume(false);
+        mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(17), true);
+        return false;
+    }
+    mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(17), false);
+    m_openFlags &= ~0x1000000;
     return true;
 }
 
