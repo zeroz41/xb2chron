@@ -623,6 +623,8 @@ bool GmkSet::isValidView() const {
     return true;
 }
 
+GmkRoutedEnemyList::GmkRoutedEnemyList(unsigned int updateGmkNumPerFrame) : TGmkList(updateGmkNumPerFrame), m_triggerList(-1) {}
+
 void GmkRoutedEnemyList::setUpdateGmkNumPerFrame(unsigned int num) {
     TGmkList::setUpdateGmkNumPerFrame(num);
     m_triggerList.setUpdateGmkNumPerFrame(num);
@@ -644,6 +646,10 @@ void GmkRoutedEnemyList::dispose() {
 void GmkRoutedEnemyList::update(float dt) {
     m_triggerList.update(dt);
     TGmkList::update(dt);
+}
+
+bool GmkRoutedEnemyList::updateImmediate() {
+    return TGmkList::updateImmediate() && m_triggerList.updateImmediate();
 }
 
 void GmkRoutedEnemyList::debugUpdateMmf() {
@@ -684,6 +690,12 @@ void GmkEnemyList::dispose() {
         pad_8d0 = nullptr;
     }
     TGmkList::dispose();
+}
+
+bool GmkEnemyList::updateImmediate() {
+    return TGmkList::updateImmediate() && m_triggerList.updateImmediate() &&
+           (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) &&
+           m_waveList.updateImmediate();
 }
 
 void GmkEnemyList::debugUpdateMmf() {
@@ -1011,6 +1023,8 @@ void GmkSet::createGmkLists(int id) {
         list->create(info);
     }
 }
+
+GmkMapGimmickList::GmkMapGimmickList(unsigned int updateGmkNumPerFrame) : TGmkList(updateGmkNumPerFrame), m_triggerList(-1) {}
 
 void GmkSet::seqCreateMapBdat(float) {
     createGmkLists(m_createInfo.m_bdatId);
@@ -2685,6 +2699,25 @@ void GmkEnemyWave::seqWaitAccessing(float) {}
 
 void GmkEnemyWave::debugDraw() const {}
 
+void GmkEnemyWave::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+    m_scenarioFlag = ScenarioFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2), (unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMax", row, 2));
+    m_questFlag = QuestFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "QuestFlag", row, 2), (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMin", row, 1),
+                                (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMax", row, 1));
+    m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", row, 2);
+    m_popTime.m_time = (unsigned int)Bdat::getValCheck(bdat.m_fp, "POP_TIME", row, 3);
+    m_popWeather.m_weather = (unsigned char)Bdat::getValCheck(bdat.m_fp, "popWeather", row, 1);
+    m_instanceMax = (unsigned char)Bdat::getValCheck(bdat.m_fp, "instanceMax", row, 1);
+    m_mapGimmickId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "gimmick", row, 2);
+    m_onlyOnce = (unsigned char)Bdat::getValCheck(bdat.m_fp, "onlyOnce", row, 1);
+    m_nameRadius = (unsigned short)Bdat::getValCheck(bdat.m_fp, "nameRadius", row, 2);
+    m_waitTime = (unsigned short)Bdat::getValCheck(bdat.m_fp, "waitTime", row, 2);
+    m_sealedStoneIndex = gf::GfGameManager::isGameTypeIra() ? (unsigned short)Bdat::getValCheck(bdat.m_fp, "sealedStonePopID", row, 2) : 0;
+    if (gf::GfGameManager::isGameTypeIra()) {
+        m_opCondition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "OP_Condition", row, 2);
+        m_missMsgId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "missMSG_ID", row, 2);
+    }
+}
+
 // a gimmick set row's BDAT table name for a kind given by name, as GmkManager::getSheetnameByType reads it (the
 // original inlines it with the literal kind name; the name is not the original's)
 static inline const char* getSheetnameByKindName(const GmkManager* manager, int id, const char* kindName) {
@@ -2916,6 +2949,30 @@ void GmkBattleChallengeReward::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {
 }
 
 // ---- GmkBattleChallengePortal (placeholder slot symbols: see its header)
+void GmkBattleChallengePortal::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+    m_scenarioFlag = ScenarioFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2),
+                                      (unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMax", row, 2));
+    m_questFlag = QuestFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "QuestFlag", row, 2),
+                                (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMin", row, 1),
+                                (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMax", row, 1));
+    m_timeRange.m_time = (unsigned short)Bdat::getValCheck(bdat.m_fp, "TimeRange", row, 2);
+    m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", row, 2);
+    unsigned int visibleXZ = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Visible_XZ", row, 2);
+    unsigned short visibleY = Bdat::getValCheck(bdat.m_fp, "Visible_Y", row, 2);
+    m_visibleXZSq = (float)visibleXZ * (float)visibleXZ;
+    m_visibleYSq = (float)visibleY * (float)visibleY;
+    unsigned short invisibleXZ = Bdat::getValCheck(bdat.m_fp, "Invisible_XZ", row, 2);
+    if (invisibleXZ <= visibleXZ) {
+        invisibleXZ = visibleXZ + 1;
+    }
+    unsigned short invisibleY = Bdat::getValCheck(bdat.m_fp, "Invisible_Y", row, 2);
+    if (invisibleY <= visibleY) {
+        invisibleY = visibleY + 1;
+    }
+    m_invisibleXZSq = (float)invisibleXZ * (float)invisibleXZ;
+    m_invisibleYSq = (float)invisibleY * (float)invisibleY;
+}
+
 bool GmkBattleChallengePortal::BdatInfo::isPopCommonCondMatched(const AGmkBase&) const {
     if (m_scenarioFlag.m_scenarioFlagMax != 0 && !m_scenarioFlag.isMatch()) {
         return false;
@@ -3082,6 +3139,41 @@ bool GmkCamp::isFound() const { return gf::GfGameFlag::getLocal(1, m_createInfo.
 GmkCamp::~GmkCamp() { dispose(); }
 
 gmk::GmkType GmkCamp::getGmkType() const { return TYPE; }
+
+void GmkSealedStone::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+    m_feedbackEffectName = reinterpret_cast<const char*>(Bdat::getValCheck(bdat.m_fp, "FeedbackEffectName", row, 7));
+    m_finishEffectName = reinterpret_cast<const char*>(Bdat::getValCheck(bdat.m_fp, "FinishEffectName", row, 7));
+    Bdat::uVal waitTime;
+    waitTime.uint = (unsigned int)Bdat::getValCheck(bdat.m_fp, "FinishWaitTime", row, 8);
+    m_finishWaitTime = waitTime.real;
+    unsigned int visibleXZ = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Visible_XZ", row, 2);
+    unsigned short visibleY = Bdat::getValCheck(bdat.m_fp, "Visible_Y", row, 2);
+    m_visibleXZSq = (float)visibleXZ * (float)visibleXZ;
+    m_visibleYSq = (float)visibleY * (float)visibleY;
+    unsigned short invisibleXZ = Bdat::getValCheck(bdat.m_fp, "Invisible_XZ", row, 2);
+    if (invisibleXZ <= visibleXZ) {
+        invisibleXZ = visibleXZ + 1;
+    }
+    unsigned short invisibleY = Bdat::getValCheck(bdat.m_fp, "Invisible_Y", row, 2);
+    if (invisibleY <= visibleY) {
+        invisibleY = visibleY + 1;
+    }
+    m_invisibleXZSq = (float)invisibleXZ * (float)invisibleXZ;
+    m_invisibleYSq = (float)invisibleY * (float)invisibleY;
+    if (Bdat::getMember(bdat.m_fp, "Priority") != nullptr) {
+        m_priority = (unsigned char)Bdat::getValCheck(bdat.m_fp, "Priority", row, 1);
+    }
+    Bdat::uVal scale;
+    scale.uint = (unsigned int)Bdat::getValCheck(bdat.m_fp, "EffectScale", row, 8);
+    m_effectScale = scale.real;
+    Bdat::uVal x, y, z;
+    x.uint = (unsigned int)Bdat::getValCheck(bdat.m_fp, "EffectOffsetX", row, 8);
+    y.uint = (unsigned int)Bdat::getValCheck(bdat.m_fp, "EffectOffsetY", row, 8);
+    z.uint = (unsigned int)Bdat::getValCheck(bdat.m_fp, "EffectOffsetZ", row, 8);
+    m_effectOffset.x = x.real;
+    m_effectOffset.y = y.real;
+    m_effectOffset.z = z.real;
+}
 
 void GmkSealedStone::create(const CreateInfo& info) {
     AGmkBase::create(info);

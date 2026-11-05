@@ -15,6 +15,7 @@ class GmkBattleChallengePortalGob;
 
 class GmkBattleChallengePortal : public ::gmk::AGmkBase {
 public:
+    GmkBattleChallengePortal() {}  // inline, user-provided: the defaults are stored by Vector<T>::resize/extend, no zero fill
     // the overrides its table holds
     virtual ~GmkBattleChallengePortal();  // slot 0 (~GmkBattleChallengePortal)
     virtual gmk::GmkType getGmkType() const;  // slot 2 (getGmkType)
@@ -31,17 +32,19 @@ public:
         // its row reader: out of line (create), called by initGmkBdatInfo (initGmkBdatInfo) where the template
         // calls T1::create (so the name is the template's; the CBdatWrapper parameter as GmkElevator::BdatInfo's)
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
+        // user-provided: Vector<BdatInfo>::resize stores the defaults only (no zeroing of the element first)
+        BdatInfo() {}
         // 2.0.0's symbols name it: its row's pop conditions (scenario flag range, quest state range, time
         // range, game condition), as GmkEvent::BdatInfo::isCondMatched plus the time range
         bool isPopCommonCondMatched(const AGmkBase& gmk) const;
-        unsigned short m_condition;      // 0x0
+        unsigned short m_condition;      // 0x0: not set by Vector<BdatInfo>::resize
         ScenarioFlagCond m_scenarioFlag; // 0x2
         QuestFlagCond m_questFlag;       // 0x6
         TimeCond m_timeRange;            // 0x10
-        float m_visibleXZSq;             // 0x20: compared with the interest position's squared XZ distance
-        float m_visibleYSq;              // 0x24: likewise its squared Y distance
-        float m_invisibleXZSq;           // 0x28: canDepopGobInst's XZ limit
-        float m_invisibleYSq;            // 0x2C: canDepopGobInst's Y limit
+        float m_visibleXZSq = 0.0f;             // 0x20: compared with the interest position's squared XZ distance
+        float m_visibleYSq = 0.0f;              // 0x24: likewise its squared Y distance
+        float m_invisibleXZSq = 0.0f;           // 0x28: canDepopGobInst's XZ limit
+        float m_invisibleYSq = 0.0f;            // 0x2C: canDepopGobInst's Y limit
     };
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x3d);
@@ -50,15 +53,15 @@ public:
     // openPortal (gmk.openPortal) waits while it answers false. It installs seqOpen and seqFinish.
     static bool openPortal();
     // the step update calls while the gimmick is valid (the name is not the original's)
-    void (GmkBattleChallengePortal::*m_seq)(float dt);
+    void (GmkBattleChallengePortal::*m_seq)(float dt) = &GmkBattleChallengePortal::seqValidateResHandle;
     // fields: size from the stride 0x80: Vector<GmkBattleChallengePortal>::resize resize
-    void* m_portalEffect0;  // 0x58: seqValidateResHandle searches "ex_portal_01" in the field's effect pack (the name is not the original's)
-    void* m_portalEffect1;  // 0x60: the same for "ex_portal_02" (the name is not the original's)
-    unsigned int m_effectHandle0;  // 0x68: disposeGobInst kills or fades it out (the name is not the original's)
-    unsigned int m_effectHandle1;  // 0x6c: likewise (the name is not the original's)
-    gf::GF_OBJ_HANDLE* m_gob;  // 0x70: dispose destroys it unless it is -1 (the name is not the original's)
-    float m_timer;  // 0x78: seqOpen sets it from BDAT table 0x7B's member 0 at row 0x55; seqWait counts it down (the name is not the original's)
-    unsigned char pad_7c[0x4];
+    void* m_portalEffect0 = nullptr;  // 0x58: seqValidateResHandle searches "ex_portal_01" in the field's effect pack (the name is not the original's)
+    void* m_portalEffect1 = nullptr;  // 0x60: the same for "ex_portal_02" (the name is not the original's)
+    unsigned int m_effectHandle0 = 0;  // 0x68: disposeGobInst kills or fades it out (the name is not the original's)
+    unsigned int m_effectHandle1 = 0;  // 0x6c: likewise (the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);  // 0x70: dispose destroys it unless it is -1 (the name is not the original's)
+    float m_timer = 0.0f;  // 0x78: seqOpen sets it from BDAT table 0x7B's member 0 at row 0x55; seqWait counts it down (the name is not the original's)
+    // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 
     // 2.0.0's symbols name them. What it does (step; Vector<GmkBattleChallengePortal>::resize installs it): finds the
     // two portal effects in gf::GfFieldManager's effect pack, then goes to seqUpdate.

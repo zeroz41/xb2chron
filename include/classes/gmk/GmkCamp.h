@@ -13,6 +13,7 @@ class GmkCampGob;
 
 class GmkCamp : public ::gmk::AGmkBase {
 public:
+    GmkCamp() {}  // inline, user-provided: the defaults are stored by Vector<T>::resize/extend, no zero fill
     // the overrides its table holds (slot functions still carry their placeholder symbols, given per slot)
     virtual ~GmkCamp();  // slot 0 (~GmkCamp)
     virtual gmk::GmkType getGmkType() const;  // slot 2 (getGmkType)
@@ -33,9 +34,9 @@ public:
             m_campPointName = (unsigned short)Bdat::getValCheck(bdat.m_fp, "CampPointName", row, 2);
         }
         // 0x0: the condition isCondMatched tests, "ConditionID" (the name is not the original's)
-        unsigned short m_condition = 0;
+        unsigned short m_condition;
         // 0x2: "CampPointName" (the name is not the original's; 4-byte stride in createGmk, zeroed by resize)
-        unsigned short m_campPointName = 0;
+        unsigned short m_campPointName;
     };
     // 2.0.0's symbols name it. What it does: true when the local game flag 0xD869 + bdat id (type 1) is set;
     // onPlayerAccessed sets that flag. Caller gf::GfGmkLocator::getPosNum.
@@ -43,14 +44,14 @@ public:
     const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x3e);
-    gf::GF_OBJ_HANDLE* m_gob;  // 0x48: dispose destroys it unless it is -1 (the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);  // 0x48: dispose destroys it unless it is -1 (the name is not the original's)
     // fields: size from the stride 0x60: Vector<GmkCamp>::resize resize
     // 0x50: create squares the float of BDAT table 0x7B's member 0 at row 0x58; update keeps the game object only while
     // the interest point is that close (squared distance; the name is not the original's)
-    float m_popDistSq;
+    float m_popDistSq = 0.0f;
     unsigned char pad_54[0x4];
-    float pad_58;  // create stores the float of BDAT table 0x7B's member 0 at row 0x5B
-    unsigned char pad_5c[0x4];
+    float pad_58 = 0.0f;  // create stores the float of BDAT table 0x7B's member 0 at row 0x5B
+    // the data ends here (0x5C): Vector<T>::expand/extend copy pad_58 as 4 bytes; the rest is alignment
 };
 }  // namespace gmk
 

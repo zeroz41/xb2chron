@@ -16,6 +16,8 @@ class GmkBattleChallengeGob;
 
 class alignas(16) GmkBattleChallenge : public ::gmk::AGmkBase {
 public:
+    // user-provided: construct_n<GmkBattleChallenge> stores the defaults below only (no zero fill of the element first)
+    GmkBattleChallenge() {}
     // weak (tail of the unit): emitted with the table, whose key function is create
     virtual ~GmkBattleChallenge() { dispose(); }  // slot 0 (~GmkBattleChallenge, dispose inlined; D0 ~GmkBattleChallenge)
     virtual gmk::GmkType getGmkType() const { return TYPE; }  // slot 2 (getGmkType)
@@ -91,16 +93,16 @@ public:
     static unsigned int sm_targetGmkBdatId;
     // lbl_7100EB7DBC
     static State sm_battleStatus;
-    unsigned char pad_48[0x8];
+    // (0x48..0x4f: a hole; Vector<T>::expand's implicit copy skips it)
     GmkPhantom m_phantom;  // 0x50 (the name is not the original's)
-    void (GmkBattleChallenge::*m_seq)(float dt);  // 0xE0: create sets seqCheckCondition, dispose clears it (the name is not the original's)
-    unsigned short m_waveCount;  // 0xF0: the waves done (the name is not the original's)
+    void (GmkBattleChallenge::*m_seq)(float dt) = nullptr;  // 0xE0: create sets seqCheckCondition, dispose clears it (the name is not the original's)
+    unsigned short m_waveCount = 0;  // 0xF0: the waves done (the name is not the original's)
     unsigned char pad_f2[0x2];
-    float m_timer;  // 0xF4: seqWaveStart sets it from the wave's data (the name is not the original's)
-    bool m_isAccCounted;  // 0xF8: create clears it, seqCheckCondition sets it after counting the access (the name is not the original's)
-    bool m_isPaused;  // 0xF9: update skips m_seq when set (the name is not the original's)
+    float m_timer = 0.0f;  // 0xF4: seqWaveStart sets it from the wave's data (the name is not the original's)
+    bool m_isAccCounted = false;  // 0xF8: create clears it, seqCheckCondition sets it after counting the access (the name is not the original's)
+    bool m_isPaused = false;  // 0xF9: update skips m_seq when set (the name is not the original's)
     unsigned char pad_fa[0x2];
-    int m_result;  // 0xFC: copied to sm_battleStatus.m_result (the name is not the original's)
+    int m_result = 0;  // 0xFC: copied to sm_battleStatus.m_result (the name is not the original's)
 };
 }  // namespace gmk
 

@@ -31,6 +31,8 @@ public:
         WeatherCond m_popWeather;  // the row's "popWeather"
         BootedGmkCond m_bootedGmk;  // the row's OP_gimmickType/ID
     };
+    // user-provided: Vector<GmkMapGimmick>::resize/extend store the defaults below only (no zero fill of the element first)
+    GmkMapGimmick() {}
     virtual ~GmkMapGimmick();  // slot 0
     void setSolved() const;
     bool isNotSolved() const;
@@ -48,20 +50,20 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x21);
     // 0x48: create stores (BdatInfo::m_nameRadius + 10) squared (the name is not the original's)
-    float m_nameDistSq;
+    float m_nameDistSq = 0.0f;
     // 0x50: the step update runs, cleared by dispose (the name is not the original's)
-    void (GmkMapGimmick::*m_seq)(float);
+    void (GmkMapGimmick::*m_seq)(float) = nullptr;
     // 0x60: its game object, -1 for none (dispose destroys it; onGobEvent forgets it when it is destroyed; the name is
     // not the original's)
-    gf::GF_OBJ_HANDLE* m_gob;
-    unsigned char pad_68[0x8];
+    gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    unsigned char pad_68 = 1;
     // 0x70: its effects by LOD state (the destructor disposes them; Vector<GmkMapGimmick>::resize constructs it; the
     // name is not the original's)
     gf::GfFieldLodEffect m_lodEffect;
     // 0xA8, 0xA9: the enemy wave gimmick (GmkEnemyWave::seqWaitToValidLinkGmkList) sets the first and clears the second on the map
     // gimmick its row names (meaning unknown)
-    bool pad_a8;
-    bool pad_a9;
+    bool pad_a8 = false;
+    bool pad_a9 = false;
     unsigned char pad_aa[0x6];  // size from TGmkList::getInst's stride
 };
 }  // namespace gmk

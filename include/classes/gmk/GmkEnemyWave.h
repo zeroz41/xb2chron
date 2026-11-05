@@ -7,6 +7,10 @@
 #include "classes/gmk/GmkPhantom.h"
 #include "mm/mtl/FixedVector.h"
 #include "classes/gmk/GmkEnemyWaveExtension.h"
+#include "classes/gmk/ScenarioFlagCond.h"
+#include "classes/gmk/QuestFlagCond.h"
+#include "classes/gmk/TimeCond.h"
+#include "classes/gmk/WeatherCond.h"
 
 namespace gmk {
 // 2.0.0's symbols name it. Element (0x4A0 bytes) of the list TGmkList<GmkEnemyWave, ..., 'ENEW', ...> (table
@@ -33,13 +37,22 @@ public:
         // its row reader: out of line (create), called by initGmkBdatInfo (initGmkBdatInfo) where the template
         // calls T1::create (so the name is the template's; the CBdatWrapper parameter as GmkElevator::BdatInfo's)
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
-        unsigned char pad_0[0x2c];
-        unsigned short m_mapGimmickId;  // 0x2C: the map gimmick (GmkType 0x21) seqWaitToValidLinkGmkList reaches with m_secondAcc
-        unsigned char pad_2e[0x2];
-        unsigned short pad_30;  // GmkBattleChallenge::seqWaveStart's timer (0: none)
-        unsigned char pad_32[0xa];
-        unsigned short m_sealedStoneIndex;  // 0x3C: from 1, the gimmick set's GmkSealedStoneList element seqWaitToValidLinkGmkList takes
-        unsigned char pad_3e[0x2];
+        // no constructor of its own: Vector<BdatInfo>::resize zero-fills each element, then stores the defaults below
+        ScenarioFlagCond m_scenarioFlag;  // 0x0: "ScenarioFlagMin", "ScenarioFlagMax"
+        QuestFlagCond m_questFlag;        // 0x4: "QuestFlag", "QuestFlagMin", "QuestFlagMax"
+        TimeCond m_popTime;               // 0x8: "POP_TIME"
+        WeatherCond m_popWeather;         // 0x18: "popWeather"
+        unsigned short m_condition = 0;   // 0x28: "Condition"
+        unsigned short m_opCondition = 0;  // 0x2A: "OP_Condition" (Ira only)
+        unsigned short m_mapGimmickId = 0;  // 0x2C: "gimmick": the map gimmick (GmkType 0x21) seqWaitToValidLinkGmkList reaches with m_secondAcc
+        unsigned char m_instanceMax = 0;  // 0x2E: "instanceMax"
+        unsigned char m_onlyOnce = 0;     // 0x2F: "onlyOnce"
+        unsigned short m_waitTime = 0;    // 0x30: "waitTime" (GmkBattleChallenge::seqWaveStart's timer, 0: none)
+        unsigned short m_nameRadius = 10;  // 0x32: "nameRadius"
+        unsigned int pad_34 = 0;
+        unsigned short m_missMsgId = 0;   // 0x38: "missMSG_ID" (Ira only)
+        unsigned short pad_3a = 0;
+        unsigned short m_sealedStoneIndex = 0;  // 0x3C: "sealedStonePopID" (Ira only): from 1, the gimmick set's GmkSealedStoneList element seqWaitToValidLinkGmkList takes
     };
     const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     static const gmk::GmkType TYPE = gmk::GmkType(0x3a);

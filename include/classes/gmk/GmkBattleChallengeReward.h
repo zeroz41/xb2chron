@@ -12,6 +12,7 @@ class GmkBattleChallengeRewardGob;
 
 class GmkBattleChallengeReward : public ::gmk::AGmkBase {
 public:
+    GmkBattleChallengeReward() {}  // inline, user-provided: the defaults are stored by Vector<T>::resize/extend, no zero fill
     // the overrides its table holds (slot functions still carry their placeholder symbols, given per slot)
     virtual ~GmkBattleChallengeReward();  // slot 0 (~GmkBattleChallengeReward)
     virtual gmk::GmkType getGmkType() const;  // slot 2 (getGmkType)
@@ -31,17 +32,17 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x3c);
     // the step update calls (the name is not the original's)
-    void (GmkBattleChallengeReward::*m_seq)(float dt);
-    gf::GF_OBJ_HANDLE* m_gob;  // dispose destroys it unless it is -1 (the name is not the original's)
-    bool m_isAccessed;  // onPlayerAccessed sets it, dispose clears it (the name is not the original's)
+    void (GmkBattleChallengeReward::*m_seq)(float dt) = nullptr;
+    gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);  // dispose destroys it unless it is -1 (the name is not the original's)
+    bool m_isAccessed = false;  // onPlayerAccessed sets it, dispose clears it (the name is not the original's)
     unsigned char pad_61[0x3];
     // fields: size from the stride 0x78: Vector<GmkBattleChallengeReward>::resize resize/expand
-    float m_waitTime;  // 0x64: initWaitPopTime stores its argument; seqWaitPop waits until m_timer passes it (the name is not the original's)
-    float m_timer;  // 0x68: the seq steps add dt to it (the name is not the original's)
-    int m_bdatRow;  // 0x6c: the row of BDAT table 0x4D getBdatId_RSC_TboxList/getBdatId_BTL_ChBtlRewardSet read (the name is not the original's)
-    int m_index;  // 0x70: those getters read column TresureResource<m_index + 1> / TresureSet<m_index + 1> (the name is not the original's)
-    bool m_isDispOn;  // 0x74: validateDisp shows the game object and activates its collision when set (the name is not the original's)
-    unsigned char pad_75[0x3];
+    float m_waitTime = 0.0f;  // 0x64: initWaitPopTime stores its argument; seqWaitPop waits until m_timer passes it (the name is not the original's)
+    float m_timer = 0.0f;  // 0x68: the seq steps add dt to it (the name is not the original's)
+    int m_bdatRow = 0;  // 0x6c: the row of BDAT table 0x4D getBdatId_RSC_TboxList/getBdatId_BTL_ChBtlRewardSet read (the name is not the original's)
+    int m_index = 0;  // 0x70: those getters read column TresureResource<m_index + 1> / TresureSet<m_index + 1> (the name is not the original's)
+    bool m_isDispOn = true;  // 0x74: validateDisp shows the game object and activates its collision when set (the name is not the original's)
+    // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 
     // 2.0.0's symbols name them. What it does: the u16 column TresureResource<m_index + 1> of BDAT table 0x4D at row
     // m_bdatRow (caller gf::GfFieldTbox::start).
