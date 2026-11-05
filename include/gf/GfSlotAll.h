@@ -19,7 +19,8 @@ public:
     void destroyMapping();
     void destroy(mm::mtl::FixedVector<GfSlotBase*, 1304>& slots);  // out of line in 1.0.0, inline in 3.0.1
     unsigned long getBlockSize(GfAssetType type) const;
-    void setupSlotByte(GfAssetType type, unsigned long size, unsigned int param);
+    // GfSlotMapping::setupFreeSlot keeps the handle it returns
+    GF_SLOT_HANDLE* setupSlotByte(GfAssetType type, unsigned long size, unsigned int param);
     unsigned int getSlotNumByByteSize(GfAssetType type, unsigned long size) const;
     GF_SLOT_HANDLE* setupSlotNum(GfAssetType type, unsigned int num, unsigned int param);
     GF_SLOT_HANDLE* createSlotHandle(GfAssetType type, unsigned int index);  // out of line in 1.0.0, inline in 3.0.1

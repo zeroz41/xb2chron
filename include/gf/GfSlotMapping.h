@@ -3,6 +3,7 @@
 
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_SLOT_HANDLE; }
+namespace gf { class GF_ASSET_HANDLE; }
 namespace gf { class GfAssetPack; }
 namespace gf { class GfSetupParam; }
 namespace gf { class GfAllocator; }
@@ -34,18 +35,24 @@ public:
     // false when memory is outside the asset memory [m_memTop, m_memEnd)
     bool deallocateSize(void* memory);
     void createMapping(const GfSetupParam& param);
+    void destroyMapping();
+    void requestSlotLoad(GF_ASSET_HANDLE* handle, GfAssetPack* pack);
+    // whether the slot holds data (GfSlotAll::isExistData)
+    bool isExistData(GF_SLOT_HANDLE* handle) const;
 
     // a requested slot load (the names are not the original's: updateSlotRequest shows what each does)
     struct REQ {
-        void* m_handle;
+        GF_ASSET_HANDLE* m_handle;
         GfAssetPack* m_pack;
-        unsigned int m_prio;
+        unsigned short m_retry;  // setupFreeSlot counts the requests that found no slot, up to 999
         float m_timeout;  // seconds left; at 0 the pack changes to its backup asset type or times out
     };
     // orders requests by their pack's priority, biggest first (requestSlotLoad's std::sort)
     struct BiggerPrio {
         inline bool operator()(const REQ& a, const REQ& b) const;
     };
+    // gives the request's pack a slot (or reuses its own) and starts its load
+    bool setupFreeSlot(REQ* req);
 
     GfSlotAllocator* m_slotAllocator;  // the slots' memory (not the original's)
     GfSlotAll* m_slotAll;               // (not the original's)

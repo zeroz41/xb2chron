@@ -144,8 +144,8 @@ unsigned long GfSlotAll::getBlockSize(GfAssetType type) const {
     return m_slots[type - 3][0]->getBlockSize();
 }
 
-void GfSlotAll::setupSlotByte(GfAssetType type, unsigned long size, unsigned int param) {
-    setupSlotNum(type, getSlotNumByByteSize(type, size), param);
+GF_SLOT_HANDLE* GfSlotAll::setupSlotByte(GfAssetType type, unsigned long size, unsigned int param) {
+    return setupSlotNum(type, getSlotNumByByteSize(type, size), param);
 }
 
 unsigned int GfSlotAll::getSlotNumByByteSize(GfAssetType type, unsigned long size) const {

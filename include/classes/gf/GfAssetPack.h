@@ -173,6 +173,10 @@ public:
     const mm::mtl::FixStr<64>* getAssetName() const;
     void applyPreFileSize();
     bool isPreSizeSizeValid() const;
+    // the bytes the pack's files still need, in blocks of `blockSize` (GfSlotMapping::setupFreeSlot)
+    unsigned long getNeedLoadFileSize(unsigned long blockSize, bool);
+    // false when the pack has no backup asset type to change to (GfSlotMapping::updateSlotRequest)
+    bool changeBackupAssetType();
     void updateCacheCount();
     void setTimeout();
     bool isExistSameAsset(const GfAssetPack& other) const;
@@ -218,7 +222,13 @@ public:
     unsigned char pad_239[0x1];
     bool m_full;  // AssetPackInfo::isFullResource asks whether any pack has it (the name is not the original's)
     bool m_timeout;  // setTimeout sets it
-    unsigned char pad_23c[0x14];
+    unsigned char pad_23c[0xc];
+    // the slots the pack asks for: GfSlotMapping::setupFreeSlot passes it to GfSlotAll::getByteSizeBySlotNum (the
+    // name is not the original's)
+    unsigned int m_slotNum;
+    // the slots its load needs: setupFreeSlot sets it from GfSlotAll::getSlotNumByByteSize (the name is not the
+    // original's)
+    unsigned int m_needSlotNum;
     // the pack's load priority: GfSlotMapping::BiggerPrio sorts slot requests by it, biggest first (the name is not
     // the original's)
     unsigned int m_prio;
