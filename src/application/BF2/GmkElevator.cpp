@@ -6961,12 +6961,56 @@ bool GmkEnemyInsts::BdatInfo::isPopCondMatchedOfSmn() const {
     return true;
 }
 
+bool GmkEnemyInsts::PopInfo::hasEneID(unsigned short id, bool popped) const {
+    for (unsigned int i = 0; i < 4; i++) {
+        const PopEnemyInfo& info = m_enemyInfos[i];
+        if (info.pad_10 == nullptr || info.pad_18 == nullptr) {
+            continue;
+        }
+        if (popped && info.pad_3 < 100) {
+            continue;
+        }
+        if (info.m_eneId == id) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GmkEnemyInsts::PopInfo::hasTypeGenus(unsigned char genus, bool popped) const {
+    for (unsigned int i = 0; i < 4; i++) {
+        const PopEnemyInfo& info = m_enemyInfos[i];
+        if (info.pad_10 == nullptr || info.pad_18 == nullptr) {
+            continue;
+        }
+        if (popped && info.pad_3 < 100) {
+            continue;
+        }
+        if (info.m_typeGenus == genus) {
+            return true;
+        }
+    }
+    return false;
+}
+
 unsigned int GmkEnemyInsts::PopInfo::getGobInstNum() const {
     unsigned int num = 0;
     for (unsigned int i = 0; i < 4; i++) {
         num += m_enemyInfos[i].getGobInstNum();
     }
     return num;
+}
+
+void GmkEnemyInsts::PopInfo::PopEnemyInfo::dispose() {
+    if (pad_10 != nullptr) {
+        delete pad_10;
+        pad_10 = nullptr;
+    }
+    if (pad_18 != nullptr) {
+        delete pad_18;
+        pad_18 = nullptr;
+    }
+    pad_24 = 0;
 }
 
 gf::GF_OBJ_HANDLE* GmkEnemyInsts::getGobInst(unsigned int index) const {
