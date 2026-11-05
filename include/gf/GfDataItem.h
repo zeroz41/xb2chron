@@ -14,6 +14,8 @@ public:
     static int getRarity(unsigned int item);  // GfMenuItemAdapter::update_RareIcon's icon
     // the message table and row of the item's name
     static bool getName(unsigned char*& bdat, unsigned int& id, unsigned int item);
+    // the message table and row of the item's caption (GfItemUtil::getProperty; returns true once it set them)
+    static bool getCaption(unsigned char*& bdat, unsigned int& id, unsigned int item);
     static unsigned int getItemType(unsigned int item);  // 2: an accessory (DataObjDriver::setVirtualEquipAcc)
     // an item id's type and its index in that type's table (GfItemBox entries hold both: bits 13-18, 0-12)
     static bool getItemType(ItemType::Type& type, unsigned int& index, unsigned int item);
