@@ -13,6 +13,7 @@
 #include "classes/fw/EffectManager.h"
 #include "ml/ScnObjAccSeamPos.h"
 #include "ml/ScnObjAccPartsPos.h"
+#include "classes/ml/DevGraph.h"
 #include "plugin/Bdat.h"
 #include <string.h>
 #include "mm/mtl/Vector.h"
@@ -78,6 +79,110 @@ int GfFieldLod::findBdatIdByLodId(unsigned short lodId) const {
         }
     }
     return m_idTop - 1;
+}
+
+bool GfFieldLodColiAnim::play(unsigned short lodId, bool reverse, bool immediate) {
+    ml::ScnObjAccSeamPos seam(m_info.m_model);
+    int max = seam.getMax();
+    bool played = false;
+    for (int i = 0; i < max; i++) {
+        ml::ScnObjAccPartsPos pos = seam.getObj(i);
+        if (lodId != pos.getID() || (!pos.isPosAnm() && !pos.isNodeAnm())) {
+            continue;
+        }
+        PosInfo& posInfo = m_posInfos[i];
+        posInfo.m_playing = true;
+        posInfo.m_reverse = reverse;
+        if (immediate) {
+            pos.setPosFrame(reverse ? 0.0f : pos.getPosMaxFrame());
+            pos.setNodeFrame(reverse ? 0.0f : pos.getNodeMaxFrame());
+        }
+        if (posInfo.m_effect.m_hasAsset) {
+            GfFieldLodState state = reverse ? LOD_STATE_ANIM_REVERSE : LOD_STATE_ANIM;
+            void* asset = posInfo.m_effect.getAsset(state);
+            bool loop = asset != nullptr && fw::EffectManager::get()->isLoop(asset);
+            if (!immediate || loop) {
+                posInfo.m_effect.createInst(state, pos, immediate && loop);
+            }
+        }
+        played = true;
+    }
+    return played;
+}
+
+bool GfFieldLodColiAnim::isPlayEnd(unsigned short lodId) const {
+    ml::ScnObjAccSeamPos seam(m_info.m_model);
+    size_t count = m_posInfos.size();
+    for (size_t i = 0; i < count; i++) {
+        const PosInfo& posInfo = m_posInfos[i];
+        ml::ScnObjAccPartsPos pos = seam.getObj(posInfo.m_index);
+        if (lodId != pos.getID() || pos.isLoop()) {
+            continue;
+        }
+        if (pos.isPosAnm() && ((posInfo.m_reverse && pos.getPosFrame() <= 0.0f) ||
+                               (!posInfo.m_reverse && pos.getPosMaxFrame() <= pos.getPosFrame()))) {
+            return true;
+        }
+        if (pos.isNodeAnm() && ((posInfo.m_reverse && pos.getNodeFrame() <= 0.0f) ||
+                                (!posInfo.m_reverse && pos.getNodeMaxFrame() <= pos.getNodeFrame()))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void GfFieldLodColiAnim::setPlaySpeed(unsigned short lodId, float speed) {
+    ml::ScnObjAccSeamPos seam(m_info.m_model);
+    int max = seam.getMax();
+    for (int i = 0; i < max; i++) {
+        ml::ScnObjAccPartsPos pos = seam.getObj(i);
+        if (lodId == pos.getID()) {
+            m_posInfos[i].m_speed = speed;
+        }
+    }
+}
+
+float GfFieldLodColiAnim::getAnimEndTime(unsigned short lodId) const {
+    ml::ScnObjAccSeamPos seam(m_info.m_model);
+    int max = seam.getMax();
+    for (int i = 0; i < max; i++) {
+        ml::ScnObjAccPartsPos pos = seam.getObj(i);
+        if (lodId != pos.getID()) {
+            continue;
+        }
+        if (pos.isPosAnm()) {
+            return pos.getPosMaxFrame() * ml::DevGraph::getFrameSyncSec();
+        }
+        if (pos.isNodeAnm()) {
+            return pos.getNodeMaxFrame() * ml::DevGraph::getFrameSyncSec();
+        }
+    }
+    return 0.0f;
+}
+
+void GfFieldLodColiAnim::setFade(unsigned short lodId, bool visible, float time) {
+    ml::ScnObjAccSeamPos seam(m_info.m_model);
+    int max = seam.getMax();
+    for (int i = 0; i < max; i++) {
+        ml::ScnObjAccPartsPos pos = seam.getObj(i);
+        if (lodId != pos.getID()) {
+            continue;
+        }
+        PosInfo& posInfo = m_posInfos[i];
+        if (posInfo.m_visible != visible) {
+            posInfo.m_fadeElapsed = 0.0f;
+            posInfo.m_fadeTime = time;
+            posInfo.m_visible = visible;
+        }
+        if (posInfo.m_effect.m_hasAsset) {
+            GfFieldLodState state = visible ? LOD_STATE_POP : (time <= 0.0f ? LOD_STATE_DEPOP : LOD_STATE_DEPOP_FADE);
+            void* asset = posInfo.m_effect.getAsset(state);
+            bool loop = asset != nullptr && fw::EffectManager::get()->isLoop(asset);
+            if (time > 0.0f || loop) {
+                posInfo.m_effect.createInst(state, pos, time == 0.0f && !loop);
+            }
+        }
+    }
 }
 }  // namespace gf
 
