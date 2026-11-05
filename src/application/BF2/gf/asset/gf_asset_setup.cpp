@@ -62,22 +62,9 @@
 #include "classes/gf/GfAssetPack.h"
 #include "gf/GfDataWeapon.h"
 #include <string.h>
+#include "classes/gf/GfObjSetup.h"
 
 namespace gf {
-
-namespace {
-// the create types GfAssetFactory makes event setups for (as gf_obj_factory.cpp's; the name is not the original's)
-inline bool isEventCreateType(int type) {
-    switch (type) {
-    case 2:
-    case 3:
-    case 11:
-        return true;
-    default:
-        return false;
-    }
-}
-}  // namespace
 
 GfAssetSetup::~GfAssetSetup() {
     for (RefResource*& resource : m_refResources) {

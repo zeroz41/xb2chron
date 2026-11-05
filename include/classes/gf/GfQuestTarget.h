@@ -4,6 +4,7 @@
 #include "classes/gf/IQuestEvent.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/mtl/FixedList.h"
+#include "mm/mtl/FixedVector.h"
 #include "gf/QuestID.h"
 #include "classes/gf/GfGameManager.h"
 
@@ -25,7 +26,7 @@ class TargetInfo {
 public:
     TargetInfo()
         : m_handle(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), m_id(0), m_mapId(0), m_flag(false), m_type(0),
-          m_category(0), pad_20(0), m_gmkValue(0x41) {}
+          m_category(0), m_reachCategory(0), pad_24(0), m_gmkValue(0x41) {}
     // the talk targets' setup (getIconTypeTalk's two forms; the name is not the original's). Takes the quest by
     // value and the map already resolved, as 1.0.0's out-of-line setupForCollect(QuestID, COLLECT_CATEGORY, ...) does
     void setupForTalk(QuestID questId, unsigned int npcId, GF_OBJ_HANDLE* handle, unsigned int mapId, bool flag) {
@@ -37,6 +38,28 @@ public:
         m_flag = flag;
     }
 
+    // 1.0.0's TargetInfo::COLLECT_CATEGORY (the locators pass 1 for a treasure box, 2 for a precious item)
+    enum COLLECT_CATEGORY {};
+    // 1.0.0's out-of-line TargetInfo::setupForCollect (3.0.1 inlines it); the map is resolved by the caller
+    void setupForCollect(QuestID questId, COLLECT_CATEGORY category, unsigned int id, unsigned int mapId, bool flag) {
+        m_type = 1;
+        m_id = id;
+        m_questId = questId;
+        m_mapId = mapId;
+        m_category = category;
+        m_flag = flag;
+    }
+
+    // the reach-place targets' setup (getIconTypeReachPlace; inlined, the name is not the original's)
+    void setupForReach(QuestID questId, unsigned int category, unsigned int placeId, unsigned int mapId, bool flag) {
+        m_type = 2;
+        m_id = placeId;
+        m_questId = questId;
+        m_mapId = mapId;
+        m_reachCategory = category;
+        m_flag = flag;
+    }
+
     GF_OBJ_HANDLE* m_handle;  // 0x0: the object, or -1
     unsigned int m_id;        // 0x8: the NPC, item or gimmick id
     QuestID m_questId;        // 0xC
@@ -44,7 +67,8 @@ public:
     bool m_flag;              // 0x14: what the getIconType functions' last argument passes
     unsigned int m_type;      // 0x18: 1 collect or field object, 4 talk, 5 gimmick
     unsigned int m_category;  // 0x1C: setupForCollect's COLLECT_CATEGORY
-    unsigned long pad_20;     // 0x20: zeroed by the constructor
+    unsigned int m_reachCategory;  // 0x20: setupForReach's place category (1-3)
+    unsigned int pad_24;           // 0x24: zeroed by the constructor
     unsigned int m_gmkValue;  // 0x28: 0x41, or what setupForGimmick's gimmick's slot 2 returns
 };
 
@@ -97,6 +121,9 @@ public:
     static unsigned int getIconTypeTalk(GF_OBJ_HANDLE* handle, QuestID questId, unsigned int mapId, bool flag);
     // GfGameScene::setEraseQuestEnemyForEventStart passes each enemy and the event's quest
     static unsigned int getIconType(GF_OBJ_HANDLE* handle, QuestID questId);
+    // the NPCs the quest's tasks name (request-item, collect, talk with its dummy group, condition), for a quest in
+    // progress; true when there are any (GfMenuObjHitonowa::hasQuest)
+    static bool getNpcList(::mm::mtl::FixedVector<unsigned short, 64>& npcs, QuestID questId);
 
     ::mm::mtl::FixedList<TargetCache, 512> m_targetCache;  // 0x10
 };

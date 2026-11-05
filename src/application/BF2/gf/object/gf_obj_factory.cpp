@@ -94,17 +94,6 @@ inline T* getSetupOf(GFOBJ_INFO* info, int type) {
     }
     return nullptr;
 }
-// the create types GfAssetFactory makes event setups for (the name is not the original's)
-inline bool isEventCreateType(int type) {
-    switch (type) {
-    case 2:
-    case 3:
-    case 11:
-        return true;
-    default:
-        return false;
-    }
-}
 
 // the create types 10 to 13 (the name is not the original's)
 inline bool isEventActCreateType(int type) {

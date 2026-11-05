@@ -92,6 +92,10 @@ public:
     static void execReward(const GfQuestReward& reward);
     // whether the enemy is one of the enemy group's 12 (GfBdatChrEnParam::getEnemyGroupEnemyID); false for no group
     static bool isEnemyGroup(unsigned int group, unsigned int enemy);
+    // the dummy talk group (and its flag bit) of an NPC on a map for the quest; false when it has none (fn_710030B16C
+    // passes them to GfQuestInfo::isDummuTalkGroupFlag)
+    static bool getDummyTalkGroup(unsigned int& group, unsigned int& bit, unsigned int mapId, unsigned int npcId,
+                                  QuestID questId);
     // counts a field skill use for the first ordered, unfinished affinity chart quest of the blade whose field skill
     // count task wants that skill (SCOM_FIELD_SKILL::exec)
     static void incFieldSkillTask(unsigned int blade, unsigned int skill);

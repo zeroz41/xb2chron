@@ -106,6 +106,19 @@ protected:
         pad_50 = param.pad_50;
     }
 };
+
+// the create types GfAssetFactory makes event setups for (the name is not the original's; inline in
+// gf_obj_factory and in GfQuestTarget's talk icon lookup)
+inline bool isEventCreateType(int type) {
+    switch (type) {
+    case 2:
+    case 3:
+    case 11:
+        return true;
+    default:
+        return false;
+    }
+}
 }  // namespace gf
 
 #endif
