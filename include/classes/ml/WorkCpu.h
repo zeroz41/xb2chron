@@ -59,7 +59,7 @@ public:
     // CPU; the unnamed parameters are not known yet)
     static void entryJobThread(int group, unsigned int (*job)(void*, void*), unsigned int, void* data, void* extra,
                                CPUID cpu, bool, bool);
-    static const unsigned int& getFrameCount();  // the work CPU's frame counter (fw::Framework::getFrameCount)
+    static const unsigned long& getFrameCount();  // the work CPU's frame counter (fw::Framework::getFrameCount)
     // a listener told of the HOME menu no more (fw::MovieManager's destructor)
     static void addBackgroundListener(IWorkBackground* listener);
     static void removeBackgroundListener(IWorkBackground* listener);
@@ -110,6 +110,11 @@ public:
     // starts the render jobs (wakeup) unless stalled or shutting down
     static void beginRender();
     static void endUpdate();
+    // syncs the render and auto groups and waits until no CPU thread holds a job
+    static void endRender();
+    // closes the frame: frame times, render sync, WorkControl::endFrame, the frame count and updateMessage
+    static void endFrame();
+    void updateMessage();
     static void swapBank();
     // a job off m_jobAlloc (null when all are in use) and one handed back, under the job lock
     TJOB* allocJob();
@@ -146,7 +151,8 @@ public:
     unsigned long pad_1798;            // 0x1798 entryJobThread stores a job pointer here
     // 0x17A0 the job groups beginUpdate wakes (entryAutoExecGrp, removeAutoExecGrp) (the name is not the original's)
     mm::mtl::FixedList<AUTO_EXEC, 32> m_autoExec;
-    unsigned long pad_1958;
+    unsigned int pad_1958;
+    int pad_195c;  // 0x195C endFrame counts it up
     // 0x1960 a list of 8-byte values (element type not recovered)
     mm::mtl::FixedList<void*, 32> pad_1960;
     // 0x1BA0 the listeners told of the HOME menu (add/removeBackgroundListener, setBackground) and of the system
@@ -156,15 +162,17 @@ public:
     unsigned long m_mainThreadId;      // 0x2020 getMainThreadId (the name is not the original's)
     int m_bankCount[2];                // 0x2028 beginFrame zeroes the current bank's (the name is not the original's)
     float m_renderTime;                // 0x2030 thRender's time of WorkRootState::renderWork (the name is not the original's)
-    unsigned int pad_2034;
-    unsigned long pad_2038;
+    // 0x2034 to 0x203C times endFrame takes (DevClock::getTimeNow) from the frame's clocks
+    float pad_2034;
+    float pad_2038;
+    float pad_203c;
     bool pad_2040;                     // 0x2040 updateMessage sets it and clears it once DevFileTh is not saving
     unsigned char pad_2041[0x7];
     long m_beginClock[8];              // 0x2048 getBeginClock returns [0] or [4] (the name is not the original's)
     int pad_2088;                      // 0x2088 createGroupHandle counts up
     unsigned char pad_208c[0x4];
-    unsigned int m_frameCount;         // 0x2090 getFrameCount (the name is not the original's)
-    unsigned int pad_2094;
+    // a 64-bit count (endFrame adds 1 to all of it; 32-bit readers of getFrameCount take the low half)
+    unsigned long m_frameCount;        // 0x2090 getFrameCount (the name is not the original's)
     long pad_2098;                     // 0x2098 the constructor stores std::chrono::system_clock::now()
     // 0x20A0 the error callbacks registErrorCB enters and unregistErrorCB removes, under m_errorCBLock (the names are
     // not the original's)

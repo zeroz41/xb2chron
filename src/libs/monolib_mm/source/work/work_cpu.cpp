@@ -101,6 +101,8 @@ static CriticalSection& getGroupCriticalSection() {
     return s_cs;
 }
 
+// the beat endFrame stamps (getClockNow into [0]); the constructor zeroes all three
+long s_aHearBeat[3];
 bool s_bEnableLib;
 bool s_bStallRender;
 bool s_bBackGround;
@@ -441,7 +443,22 @@ CPUID WorkCpu::getRenderCPUID() {
     return CPUID(1);
 }
 
-const unsigned int& WorkCpu::getFrameCount() {
+CPUID WorkCpu::getSubWorkCPUID() {
+    unsigned int cpuNum = get()->m_cpuNum;
+    CPUID cpu = CPUID(1);
+    if (s_bRenderSubCpu) {
+        if (cpuNum > 2) {
+            cpu = CPUID(2);
+        }
+    } else if (cpuNum > 2) {
+        return CPUID(2);
+    } else if (cpuNum == 2) {
+        cpu = CPUID(2);
+    }
+    return cpu;
+}
+
+const unsigned long& WorkCpu::getFrameCount() {
     return get()->m_frameCount;
 }
 
@@ -472,6 +489,88 @@ void WorkCpu::beginRender() {
         return;
     }
     wakeup(cpu->m_renderGroup);
+}
+
+void WorkCpu::endFrame() {
+    WorkCpu* cpu = get();
+    if (cpu == nullptr || DevClock::get() == nullptr) {
+        return;
+    }
+    DevClock::getClockNow(cpu->m_beginClock[2]);
+    DevClock::getTimeNow(cpu->pad_2038, cpu->m_beginClock[1]);
+    DevClock::getTimeNow(cpu->pad_203c, cpu->m_beginClock[0]);
+    for (unsigned int i = 0; i < get()->m_cpuNum; i++) {
+        if (WorkCpuThread* thread = cpu->m_thread[i]) {
+            if (thread->m_cpu == CPUID(1)) {
+                long clock = thread->m_frameClockCopy - thread->m_frameClock;
+                thread->pad_1e4 = DevClock::getClock2Sec(clock);
+            } else {
+                thread->pad_1e4 = thread->m_frameCount;
+            }
+        }
+    }
+    if (!_wroot::s_bErrorStop) {
+        if (WorkRootState::isThreadRender()) {
+            swapBank();
+        }
+        if (!isShutdown() && !_mlwcpu::s_bStallRender) {
+            DevGraph::renderSync();
+        }
+    }
+    cpu->m_flags &= ~0x20;
+    get()->pad_1738 = get()->pad_173c;
+    DevClock::getClockNow(cpu->m_beginClock[3]);
+    DevGraph::cb(RCB(3));
+    WorkControl::endFrame();
+    DevClock::getTimeNow(cpu->pad_2034, cpu->m_beginClock[0]);
+    cpu->m_beginClock[4] = cpu->m_beginClock[0];
+    cpu->m_beginClock[5] = cpu->m_beginClock[1];
+    cpu->m_beginClock[6] = cpu->m_beginClock[2];
+    cpu->m_beginClock[7] = cpu->m_beginClock[3];
+    cpu->pad_195c++;
+    cpu->m_frameCount++;
+    cpu->updateMessage();
+    DevClock::getClockNow(_mlwcpu::s_aHearBeat[0]);
+}
+
+void WorkCpu::endRender() {
+    WorkCpu* cpu = get();
+    if (cpu == nullptr) {
+        return;
+    }
+    if (!_wroot::s_bErrorStop) {
+        if (cpu->m_renderGroup != -1 && !(cpu->m_flags & 2)) {
+            sync(cpu->m_renderGroup, WKCPU_SYNC(0), CPUID(0));
+        }
+        if (!_wroot::s_bErrorStop) {
+            DevGraph::cb(RCB(4));
+            if (!_wroot::s_bErrorStop) {
+                for (mm::mtl::FixedList<AUTO_EXEC, 32>::iterator it = cpu->m_autoExec.begin();
+                     it != cpu->m_autoExec.end(); ++it) {
+                    sync((*it).m_group, WKCPU_SYNC(0), CPUID(0));
+                }
+            }
+        }
+    }
+    unsigned int i;
+    bool busy;
+    do {
+        busy = false;
+        for (i = 0; i < get()->m_cpuNum; i++) {
+            if (WorkCpuThread* thread = cpu->m_thread[i]) {
+                int num;
+                {
+                    CS lock(*thread->m_jobLock);
+                    num = thread->m_job.size();
+                }
+                if (num != 0) {
+                    resumeThread();
+                    busy = true;
+                }
+            }
+        }
+    } while (busy);
+    DevClock::getClockNow(cpu->m_beginClock[1]);
 }
 
 const long& WorkCpu::getBeginClock(bool first) {

@@ -45,8 +45,9 @@ public:
     // original's)
     long m_frameClock;
     long m_frameClockCopy;
-    int m_frameCount;
-    int pad_1e4;  // 0x1E4 the constructor zeroes it
+    float m_frameCount;
+    // 0x1E4 the constructor zeroes it; endFrame sets the main CPU's frame time in seconds, else copies 0x1E0
+    float pad_1e4;
     // 0x1E8 the lock of the thread's jobs: the destructor deletes it (the name is not the original's)
     CriticalSection* m_jobLock;
     // 0x1F0 the jobs the thread holds (the name is not the original's)

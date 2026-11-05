@@ -28,6 +28,8 @@ public:
     // queues a pause request (pause on or off) under a name (ErrViewer's destructor lifts its "SYS:ERR" one) (the
     // parameter names are not the original's)
     static void pause(bool pause, const char* name);
+    // the frame's end for the pause requests (WorkCpu::endFrame calls it)
+    static void endFrame();
 
     static int s_nPauseNum;
     static int s_nSysPauseNum;
