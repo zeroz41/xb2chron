@@ -11,6 +11,7 @@
 #include "classes/ml/DevFileArchiveNx.h"
 #include "classes/ml/DevFileNxTh.h"
 #include "classes/ml/DevFileTh.h"
+#include "classes/ml/FileReadResult.h"
 #include "classes/ml/DevFileArchiver.h"
 #include "classes/ml/DevFileJob.h"
 #include "classes/ml/DevFileJobValidArcNxTh.h"
@@ -37,6 +38,7 @@
 #include "classes/ml/ErrViewer.h"
 #include "classes/ml/LibMain.h"
 #include "classes/ml/WorkSystem.h"
+#include "classes/ml/Thread.h"
 #include "nn/hid.h"
 #include "nn/oe.h"
 #include "nn/os.h"
@@ -2345,6 +2347,61 @@ void device_detail::deallocateFile(void* ptr, unsigned long) {
     mtl::MemManager::deallocate(ptr, 0, false);
 }
 
+bool DevFileNxTh::m_mountRom;
+bool DevFileNxTh::m_mountSave;
+bool DevFileNxTh::m_validuser;
+nn::account::UserHandle DevFileNxTh::m_appuser;
+int DevFileNxTh::m_AocListupBuffer[16];
+void* DevFileNxTh::m_mountAoc[16];
+
+void DevFileNxTh::initializeSave() {
+    nn::account::Uid uid = {};
+    if (nn::account::OpenPreselectedUser(&m_appuser).IsSuccess()) {
+        m_validuser = true;
+        NN_ASSERT(nn::account::GetUserId(&uid, m_appuser).IsSuccess());
+    }
+    if (uid._data[0] == 0 && uid._data[1] == 0) {
+        uid = nn::account::Uid();
+        int count = 0;
+        if (nn::account::ListAllUsers(&count, &uid, 1).IsFailure() || count == 0) {
+#line 465 "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../source\\device/nx/th_dev_file_nx.cpp"
+            NN_LOG("error: user account not exist!!\n");
+            return;
+        }
+    }
+    if (!nn::fs::IsSaveDataExisting(uid)) {
+        if (nn::fs::ResultUsableSpaceNotEnough::Includes(nn::fs::EnsureSaveData(uid))) {
+            return;
+        }
+    }
+    nn::Result result = nn::fs::MountSaveData("save", uid);
+    if (result.IsFailure()) {
+        nn::diag::detail::AbortImpl("", "", "", 0, &result, "");
+    }
+    m_mountSave = true;
+}
+
+void DevFileNxTh::finalizeSDK() {
+    if (m_mountSave) {
+        nn::fs::Unmount("save");
+    }
+    if (m_mountRom) {
+        nn::fs::Unmount("rom");
+    }
+    if (m_validuser) {
+        nn::account::CloseUser(m_appuser);
+    }
+    for (int i = 0; i < 16; i++) {
+        mm::mtl::FixStr<16> name;
+        if (m_mountAoc[i] != nullptr) {
+            name.format("aoc%d", m_AocListupBuffer[i]);
+            nn::fs::Unmount(name.m_str);
+            free(m_mountAoc[i]);
+            m_mountAoc[i] = nullptr;
+        }
+    }
+}
+
 MemoryAutoReleaser::~MemoryAutoReleaser() {
     if (m_ptr != nullptr) {
         free(m_ptr);
@@ -2359,12 +2416,76 @@ DevFileNxTh::DevFileNxTh(mtl::ALLOC_HANDLE handle)
 
 DevFileNxTh::~DevFileNxTh() {}
 
+bool DevFileNxTh::initialize() {
+    if (pad_18 == 0) {
+        for (unsigned long i = 1; i < m_impl->m_params.size(); i++) {
+            m_impl->m_params[i].m_owner = this;
+            Thread* thread = Thread::create("rfLoadThread", false, thFileLoader, &m_impl->m_params[i], 0x10000,
+                                            WorkCpu::getSubWorkCPUID(), -3);
+            if (thread != nullptr) {
+                m_impl->m_params[i].m_thread = thread;
+                thread->resume();
+            }
+        }
+        pad_18 = 1;
+    }
+    return true;
+}
+
+bool DevFileNxTh::finalize() {
+    switch (pad_18) {
+    case 1:
+        __atomic_store_n(&m_impl->pad_17F8, true, __ATOMIC_SEQ_CST);
+        for (unsigned long i = 1; i < m_impl->m_params.size(); i++) {
+            if (m_impl->m_params[i].m_thread != nullptr) {
+                m_impl->m_params[i].m_thread->setSignalEvent(true);
+            }
+        }
+        pad_18 = 2;
+        break;
+    case 2:
+        if (__atomic_load_n(&m_impl->pad_17FC, __ATOMIC_SEQ_CST) == 0) {
+            pad_18 = 3;
+        }
+        break;
+    case 3:
+        for (unsigned long i = 1; i < m_impl->m_params.size(); i++) {
+            if (m_impl->m_params[i].m_thread != nullptr) {
+                m_impl->m_params[i].m_thread->release();
+            }
+        }
+        pad_18 = 4;
+        break;
+    }
+    return pad_18 == 4;
+}
+
 const char* DevFileNxTh::getMediaRootPath() const {
     return s_romMountMode ? "rom:" : s_dvdRoot.m_str;
 }
 
 const char* DevFileTh::getDvdRoot() {
     return s_romMountMode ? "rom:" : s_dvdRoot.m_str;
+}
+
+void DevFileNxTh::getMediaPath(mm::mtl::FixStr<256>& out, const char* path) {
+    mm::mtl::FixStr<256> result;
+    if (DevFileTh::getMediaType(path) == 0) {
+        result = s_romMountMode ? "rom:" : s_dvdRoot.m_str;
+        mm::mtl::FixStr<128> name(path);
+        for (int i = 0; i < result.m_nLen; i++) {
+            if (result.m_str[i] == '\\') {
+                result.m_str[i] = '/';
+            }
+        }
+        if (result.m_nLen != 0 && name.m_str[0] != '/' && result.m_str[result.m_nLen - 1] != '/') {
+            result += "/";
+        }
+        result += name.m_str;
+    } else {
+        result = path;
+    }
+    out = result;
 }
 
 DevFileJobTh* DevFileNxTh::createLoader(mtl::ALLOC_HANDLE handle) {
@@ -2423,6 +2544,67 @@ bool DevFileNxTh::rfClose(FileHandleTh* handle) {
     nn::fs::CloseFile(param.m_handle);
     param.m_isOpen = false;
     return true;
+}
+
+void DevFileNxTh::tail() {
+    for (OpenReadParam* param = m_impl->m_params.begin(); param != m_impl->m_params.end(); param++) {
+        if (!param->pad_10D || param->pad_118 == nullptr) {
+            continue;
+        }
+        mm::threading::WriteLockGuard lock(param->m_lock);
+        if (!__atomic_load_n(&param->pad_118->m_canceled, __ATOMIC_SEQ_CST)) {
+            FileHandleTh* handle = param->pad_118;
+            if (handle->m_readSize != 0 && handle->m_readSize == handle->m_size) {
+                param->pad_10D = false;
+                if (handle->m_outData != nullptr) {
+                    *handle->m_outData = handle->m_data;
+                }
+                if (handle->m_outSize != nullptr) {
+                    *handle->m_outSize = handle->m_size;
+                }
+                if (IWorkEvent* listener = handle->m_listener) {
+                    EventFileTh event;
+                    event.m_kind = 2;
+                    event.m_handle = handle;
+                    event.pad_10 = handle->pad_2c;
+                    event.m_allocator = handle->m_allocator;
+                    event.m_path = handle->m_path;
+                    event.m_data = handle->m_data;
+                    event.m_result = handle->m_size;
+                    event.pad_38 = handle->pad_68;
+                    listener->OnFileEvent(&event);
+                }
+                param->pad_118 = nullptr;
+            }
+        } else if (!param->pad_10F) {
+            if (param->pad_110) {
+                nn::fs::CloseFile(param->m_handle);
+                param->pad_110 = false;
+            }
+            FileHandleTh* handle = param->pad_118;
+            param->m_isOpen = false;
+            param->pad_10D = false;
+            if (handle->m_outData != nullptr) {
+                *handle->m_outData = nullptr;
+            }
+            if (handle->m_outSize != nullptr) {
+                *handle->m_outSize = -1;
+            }
+            if (IWorkEvent* listener = handle->m_listener) {
+                EventFileTh event;
+                event.m_kind = 4;
+                event.m_handle = handle;
+                event.pad_10 = handle->pad_2c;
+                event.m_allocator = handle->m_allocator;
+                event.m_path = handle->m_path;
+                event.m_data = handle->m_data;
+                event.m_result = handle->m_size;
+                event.pad_38 = handle->pad_68;
+                listener->OnFileEvent(&event);
+            }
+            param->pad_118 = nullptr;
+        }
+    }
 }
 
 bool DevFileNxTh::rfIsUsedChannel(unsigned int channel) {

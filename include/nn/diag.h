@@ -1,6 +1,8 @@
 #ifndef NN_DIAG_H
 #define NN_DIAG_H
 
+#include "nn/result.h"
+
 // NintendoSDK 3.5.0's nn::diag logging, as far as the module uses it.
 namespace nn { namespace diag {
 
@@ -46,6 +48,9 @@ void OnAssertionFailure(AssertionType type, const char* condition, const char* f
 void LogImpl(const LogMetaData& metaData, const char* format, ...);
 // what NN_ABORT_UNLESS calls (the release build passes empty texts and line 0)
 [[noreturn]] void AbortImpl(const char* condition, const char* functionName, const char* fileName, int lineNumber);
+// the same for a failed result (ml::DevFileNxTh::initializeSave's save mount)
+[[noreturn]] void AbortImpl(const char* condition, const char* functionName, const char* fileName, int lineNumber,
+                            const ::nn::Result* result, const char* format, ...);
 // whether pointer (as an integer) is not null: NN_ABORT_UNLESS_NOT_NULL's test
 bool NotNullImpl(unsigned long pointer);
 }  // namespace detail

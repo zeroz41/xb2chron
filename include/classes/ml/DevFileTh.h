@@ -86,6 +86,9 @@ public:
     static void makeMediaFileName(mm::mtl::FixStr<256>& out, const char* root, const char* path);
     // named by the symbols: the media root ("rom:" in rom mount mode, else the dvd root path)
     static const char* getDvdRoot();
+    // named by the symbols: the medium a path names (DevFileNxTh::getMediaPath puts the media root before the paths
+    // of medium 0)
+    static MEDIA getMediaType(const char* path);
     // opens the file a parameter names for reading in parts (forwards to its Impl; the parameter name is not the
     // original's)
     static FileHandleTh* rfOpen(const DevFileParamTh& param);

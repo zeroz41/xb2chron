@@ -1,6 +1,8 @@
 #ifndef ML_EVENTFILETH_H
 #define ML_EVENTFILETH_H
 
+namespace mm { namespace mtl { class IAllocator; } }
+
 namespace ml {
 
 class FileHandleTh;
@@ -15,8 +17,15 @@ public:
     int m_kind;
     unsigned char pad_4[0x4];
     FileHandleTh* m_handle;  // the read's (DevFileTh::readFile returned it)
-    unsigned char pad_10[0x20];
-    int m_result;  // nonzero when a read succeeded (fw::ScriptInfo::OnFileEvent)
+    // 0x10-0x28 and 0x38: copied from the handle's 0x2C, allocator, path, data and 0x68 (DevFileNxTh::tail)
+    int pad_10;
+    unsigned char pad_14[0x4];
+    mm::mtl::IAllocator* m_allocator;
+    const char* m_path;
+    void* m_data;
+    int m_result;  // nonzero when a read succeeded (fw::ScriptInfo::OnFileEvent; DevFileNxTh::tail passes the size)
+    unsigned char pad_34[0x4];
+    unsigned long pad_38;
 };
 
 }  // namespace ml

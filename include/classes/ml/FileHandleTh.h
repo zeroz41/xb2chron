@@ -23,13 +23,18 @@ public:
     int m_size;  // the data's size
     unsigned char pad_1c[0xC];
     int m_readSize;  // 0x28 (DevFileReaderTh::asyncUpdate clears it before each medium's read)
-    unsigned char pad_2c[0x4];
+    int pad_2c;  // passed on in the read's end event (DevFileNxTh::tail)
     // copied to FileResTh's m_allocator (FileResTh::release frees the data through it when set)
     mm::mtl::IAllocator* m_allocator;
     unsigned char pad_38[0x28];
     // 0x60: who hears the read's end (FileResTh::release clears it before canceling the read)
     IWorkEvent* m_listener;
-    unsigned char pad_68[0x2C];
+    unsigned long pad_68;  // passed on in the read's end event (DevFileNxTh::tail)
+    // 0x70, 0x78: where the read's end hands its data and size when set (DevFileNxTh::tail; the names are not the
+    // original's)
+    void** m_outData;
+    int* m_outSize;
+    unsigned char pad_80[0x14];
     // 0x94: the file's path (DevFileReaderTh::asyncUpdate passes it to PathUtil::getFilePtrFromPath); its length is
     // not known: it runs to the next known field
     char m_path[0x12C];

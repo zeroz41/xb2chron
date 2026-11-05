@@ -9,6 +9,7 @@
 #include "mm/mtl/FixedArray.h"
 #include "mm/mtl/UniquePtr.h"
 #include "mtl/MemManager.h"
+#include "nn/account.h"
 
 namespace ml { class DevFileParamTh; }
 namespace ml { enum DevFileResult : int; }  // an enum: writeBlock stores 0 through it as an int
@@ -58,11 +59,27 @@ public:
     // named by the symbols: DeviceNx::initializeSDK calls them (the SDK's file setup, then the save data's)
     static void initializeSDK(const Device::InitParam& param);
     static void initializeSave();
+    // named by the symbols: releases what initializeSDK and initializeSave mounted and opened
+    static void finalizeSDK();
+    // named by the symbols: a read channel's thread (its argument is the channel's OpenReadParam): waits for
+    // DevFileTh's setup, then runs thUpdate
+    static unsigned int thFileLoader(void* arg);
+    // named by the symbols: a read channel's loop (reads what the channel's request asks for until the Impl stops);
+    // thFileLoader calls it with no object set up, so it reads only its argument
+    void thUpdate(void* arg);
     // named by the symbols: the path the file system opens for path (the medium's root, then path;
     // DevFileJobValidNxTh::asyncUpdate passes its request's path)
     static void getMediaPath(mm::mtl::FixStr<256>& out, const char* path);
     // set while the save data is mounted (DevFileTh::flushSave commits it then; named by the symbols)
     static bool m_mountSave;
+    // named by the symbols: set once initializeSDK has mounted "rom"
+    static bool m_mountRom;
+    // named by the symbols: set by initializeSave once the preselected user is open (m_appuser)
+    static bool m_validuser;
+    static nn::account::UserHandle m_appuser;
+    // named by the symbols: the installed add-on content indices, and the mount cache of each (null when unmounted)
+    static int m_AocListupBuffer[16];
+    static void* m_mountAoc[16];
 };
 }  // namespace ml
 

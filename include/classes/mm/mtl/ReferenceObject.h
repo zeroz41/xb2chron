@@ -6,6 +6,10 @@
 // mm_lib's reference_object.h, as the including file's include path named it (see mm/mtl/FixStr.h)
 #ifdef MM_LIB_FROM_LIBS
 #define MM_MTL_REFERENCE_OBJECT_PATH "../../../mcl/mm_lib/source\\mm_mtl/reference_object.h"
+#elif defined(MM_LIB_FROM_MONOLIB_MM)
+// monolib_mm's own files (ml::DevFileNxTh::finalize releases its threads so)
+#define MM_MTL_REFERENCE_OBJECT_PATH \
+    "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../../MCL/mm_lib/source\\mm_mtl/reference_object.h"
 #else
 #define MM_MTL_REFERENCE_OBJECT_PATH \
     "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/reference_object.h"

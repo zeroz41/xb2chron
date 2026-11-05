@@ -5,6 +5,9 @@
 #include "ml/font/FontSys.h"
 
 namespace ml { enum FONT_STYLE : int; }
+namespace ml { class FileHandleTh; }
+namespace ml { class FileReadResult; }
+namespace nn { namespace fs { struct FileHandle; } }
 namespace mm { class Col4; }
 namespace mm { class Mat44; }
 namespace mm { template <typename> class Rect; }
@@ -63,6 +66,10 @@ public:
     // original's)
     static void* zlibAlloc(void* opaque, unsigned int items, unsigned int size);
     static void zlibFree(void* opaque, void* ptr);
+    // named by the symbols: one read of a channel's file for a request (DevFileNxTh::thUpdate and
+    // DevFileArchiveNx::thUpdate); whether it succeeded. The parameters' meanings are inferred
+    static bool readFile(FileHandleTh*& handle, nn::fs::FileHandle& file, int, long offset, void* buffer,
+                         unsigned int size, FileReadResult& result);
 };
 }  // namespace ml
 
