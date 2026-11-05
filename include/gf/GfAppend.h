@@ -17,11 +17,16 @@ public:
     };
 
     GfAppend();
+    // inline: 3.0.1 keeps no copy (session 19 notes put an out-of-line one in 1.0.0); setupExtraModel,
+    // setupBelongingForDriver and fn_71004A2030 inline it
     GfAppend(const char* modelName, const char* motionName, unsigned short mountIndex, unsigned short rscID, float scale,
-             bool flag);
+             bool secondList)
+        : m_modelName(modelName), m_motionName(motionName), m_mountIndex(mountIndex), m_rscID(rscID), m_scale(scale),
+          m_secondList(secondList) {}
     // the name of the bone the mount is on, "" when none is
     const char* getBone(OPTMNT mount) const;
-    void addMount(MOUNT_INFO& info);
+    // inline: 3.0.1 keeps no copy (session 19 notes put an out-of-line one in 1.0.0)
+    void addMount(MOUNT_INFO& info) { m_mounts.push_back(info); }
     const char* getModelName() const;
     const char* getMotionName() const;
     const char* getResourceName() const;
