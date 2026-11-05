@@ -173,7 +173,8 @@ struct MdsFlagWaveHeader {
 // The flag wave work DrMdoMat::getFlagWaveRes builds in its buffer: this, m_num phases and the uniform array (one
 // triple-buffered block per wave); updateFlagWaveTbl animates it. The type and field names are not the original's.
 struct MdoFlagWaveRes {
-    const unsigned char* m_pData;  // 0x0
+    // 0x0: the wave block index per material (DrMdoShdSetPrePass::preshd_Fw* bind m_pUniformArray's block by it)
+    const unsigned short* m_pData;
     const unsigned char* m_pParam;  // 0x8
     int m_num;  // 0x10
     bool m_first;  // 0x14, updateFlagWaveTbl copies the first frame into the old buffer too

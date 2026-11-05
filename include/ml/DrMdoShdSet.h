@@ -25,8 +25,25 @@ public:
     enum PrePassType {};
 
     void preshd_Obj(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list, PrePassType type);
+    void preshd_ObjT(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list, PrePassType type);
+    void preshd_ObjT_Al(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list, PrePassType type);
+    void preshd_Obj_Al(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list, PrePassType type);
+    void preshd_Mot_Al(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list, PrePassType type);
+    void preshd_Inst_Al(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list, PrePassType type);
+    void preshd_InstT_Al(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list, PrePassType type);
+    void preshd_MotT_Al(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list, PrePassType type);
+    void preshd_ObjT_Al_FS(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list, PrePassType type);
+    void preshd_MotT_Al_FS(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list, PrePassType type);
+    void preshd_Mot(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list, PrePassType type);
+    void preshd_MotT(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list, PrePassType type);
     void preshd_Inst(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list, PrePassType type);
     void preshd_InstT(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list, PrePassType type);
+    // matIdx indexes the model's flag wave blocks (MdoFlagWaveRes::m_pData)
+    void preshd_Fw(int shd, const MdsMatInfoHeader* info, int triIdx, int matIdx, DrShdDataList* list, PrePassType type);
+    void preshd_FwT(int shd, const MdsMatInfoHeader* info, int triIdx, int matIdx, DrShdDataList* list, PrePassType type);
+    void preshd_FwT_Al(int shd, const MdsMatInfoHeader* info, int triIdx, int matIdx, DrShdDataList* list, PrePassType type);
+    void preshd_Fw_Al(int shd, const MdsMatInfoHeader* info, int triIdx, int matIdx, DrShdDataList* list, PrePassType type);
+    void preshd_FwT_Al_Fs(int shd, const MdsMatInfoHeader* info, int triIdx, int matIdx, DrShdDataList* list, PrePassType type);
 
     MdoWrkMatRes* m_pWrkMatRes;  // 0x8 (preshd_Obj reads it)
 };

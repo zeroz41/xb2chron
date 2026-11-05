@@ -5165,6 +5165,206 @@ void DrMdoShdSetPrePass::preshd_Obj(int shd, const MdsMatInfoHeader* info, int t
     m_pMdl->m_curTriBlockIdx = triIdx;
 }
 
+void DrMdoShdSetPrePass::preshd_ObjT(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list,
+                                    PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    DrMdoCtl* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        obj->setupShader(m_pMdl->m_bindFlags[1], type);
+        (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+    } else {
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        if (m_pMdl->m_curTriBlockIdx != triIdx) {
+            (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        }
+    }
+    m_pMdl->m_curTriBlockIdx = triIdx;
+    setOneTexShaderSet(info->m_texEntryIdx, obj->m_shaderSel[0]);
+}
+
+void DrMdoShdSetPrePass::preshd_ObjT_Al(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list,
+                                    PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    DrMdoCtl* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        obj->setupShader(m_pMdl->m_bindFlags[1], type);
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        unsigned int flags = m_pMdl->m_stateFlags;
+        unsigned int texLoc = obj->m_shaderSel[1];
+        unsigned int blkLoc = obj->m_shaderSel[9];
+        DrAPCache* ap = DrMan::get()->m_apCache;
+        ap->beginTexSampling(2, 0);
+        if (flags & 0x20000000) {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags &= ~0x40000000;
+        } else {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+        (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        DrMan::get()->m_calcMan->m_pViewWork->m_staticBlock.setUniformBlock(obj->m_shaderSel[6]);
+    } else {
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        if (m_pMdl->m_curTriBlockIdx != triIdx) {
+            (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        }
+        unsigned int flags = m_pMdl->m_stateFlags;
+        if (flags & 0x20000000) {
+            if (flags & 0x40000000) {
+                unsigned int texLoc = obj->m_shaderSel[1];
+                unsigned int blkLoc = obj->m_shaderSel[9];
+                DrAPCache* ap = DrMan::get()->m_apCache;
+                ap->beginTexSampling(2, 0);
+                ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+                DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+                m_pMdl->m_stateFlags &= ~0x40000000;
+            }
+        } else if (!(flags & 0x40000000)) {
+            unsigned int texLoc = obj->m_shaderSel[1];
+            unsigned int blkLoc = obj->m_shaderSel[9];
+            DrAPCache* ap = DrMan::get()->m_apCache;
+            ap->beginTexSampling(2, 0);
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+    }
+    m_pMdl->m_curTriBlockIdx = triIdx;
+    setOneTexShaderSet(info->m_texEntryIdx, obj->m_shaderSel[0]);
+}
+
+void DrMdoShdSetPrePass::preshd_Mot(int shd, const MdsMatInfoHeader* info, int, int, DrShdDataList* list,
+                                    PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    DrMdoCtl* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx == shd) {
+        return;
+    }
+    m_pMdl->m_curShaderIdx = shd;
+    obj->setupShader(m_pMdl->m_bindFlags[1], type);
+    DrMan::get()->m_calcMan->m_pViewWork->m_staticBlock.setUniformBlock(obj->m_shaderSel[6]);
+    list->m_boneStmOut.setStorageBuffer(0);
+}
+
+void DrMdoShdSetPrePass::preshd_MotT(int shd, const MdsMatInfoHeader* info, int, int, DrShdDataList* list,
+                                    PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    DrMdoCtl* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        obj->setupShader(m_pMdl->m_bindFlags[1], type);
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        DrMan::get()->m_calcMan->m_pViewWork->m_staticBlock.setUniformBlock(obj->m_shaderSel[6]);
+        list->m_boneStmOut.setStorageBuffer(0);
+    }
+    setOneTexShaderSet(info->m_texEntryIdx, obj->m_shaderSel[0]);
+}
+
+void DrMdoShdSetPrePass::preshd_MotT_Al(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list,
+                                    PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    DrMdoCtl* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        obj->setupShader(m_pMdl->m_bindFlags[1], type);
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        DrMan::get()->m_calcMan->m_pViewWork->m_staticBlock.setUniformBlock(obj->m_shaderSel[6]);
+        unsigned int flags = m_pMdl->m_stateFlags;
+        unsigned int texLoc = obj->m_shaderSel[1];
+        unsigned int blkLoc = obj->m_shaderSel[9];
+        DrAPCache* ap = DrMan::get()->m_apCache;
+        ap->beginTexSampling(2, 0);
+        if (flags & 0x20000000) {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags &= ~0x40000000;
+        } else {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+        list->m_boneStmOut.setStorageBuffer(0);
+    } else {
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        if (m_pMdl->m_curTriBlockIdx != triIdx) {
+            (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        }
+        unsigned int flags = m_pMdl->m_stateFlags;
+        if (flags & 0x20000000) {
+            if (flags & 0x40000000) {
+                unsigned int texLoc = obj->m_shaderSel[1];
+                unsigned int blkLoc = obj->m_shaderSel[9];
+                DrAPCache* ap = DrMan::get()->m_apCache;
+                ap->beginTexSampling(2, 0);
+                ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+                DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+                m_pMdl->m_stateFlags &= ~0x40000000;
+            }
+        } else if (!(flags & 0x40000000)) {
+            unsigned int texLoc = obj->m_shaderSel[1];
+            unsigned int blkLoc = obj->m_shaderSel[9];
+            DrAPCache* ap = DrMan::get()->m_apCache;
+            ap->beginTexSampling(2, 0);
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+    }
+    m_pMdl->m_curTriBlockIdx = triIdx;
+    setOneTexShaderSet(info->m_texEntryIdx, obj->m_shaderSel[0]);
+}
+
 void DrMdoShdSetPrePass::preshd_Inst(int shd, const MdsMatInfoHeader*, int, int, DrShdDataList* list,
                                      PrePassType type) {
     DrResShdPrePass* obj = list->getPrePassObj(shd);
@@ -5186,6 +5386,478 @@ void DrMdoShdSetPrePass::preshd_InstT(int shd, const MdsMatInfoHeader* info, int
     }
     list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
     setOneTexShaderSet(info->m_texEntryIdx, obj->m_shaderSel[0]);
+}
+
+void DrMdoShdSetPrePass::preshd_Obj_Al(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list,
+                                    PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    DrMdoCtl* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        obj->setupShader(m_pMdl->m_bindFlags[1], type);
+        unsigned int flags = m_pMdl->m_stateFlags;
+        unsigned int texLoc = obj->m_shaderSel[1];
+        unsigned int blkLoc = obj->m_shaderSel[9];
+        DrAPCache* ap = DrMan::get()->m_apCache;
+        ap->beginTexSampling(2, 0);
+        if (flags & 0x20000000) {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags &= ~0x40000000;
+        } else {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+        (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        DrMan::get()->m_calcMan->m_pViewWork->m_staticBlock.setUniformBlock(obj->m_shaderSel[6]);
+    } else {
+        if (m_pMdl->m_curTriBlockIdx != triIdx) {
+            (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        }
+        unsigned int flags = m_pMdl->m_stateFlags;
+        if (flags & 0x20000000) {
+            if (flags & 0x40000000) {
+                unsigned int texLoc = obj->m_shaderSel[1];
+                unsigned int blkLoc = obj->m_shaderSel[9];
+                DrAPCache* ap = DrMan::get()->m_apCache;
+                ap->beginTexSampling(2, 0);
+                ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+                DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+                m_pMdl->m_stateFlags &= ~0x40000000;
+            }
+        } else if (!(flags & 0x40000000)) {
+            unsigned int texLoc = obj->m_shaderSel[1];
+            unsigned int blkLoc = obj->m_shaderSel[9];
+            DrAPCache* ap = DrMan::get()->m_apCache;
+            ap->beginTexSampling(2, 0);
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+    }
+    list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+    m_pMdl->m_curTriBlockIdx = triIdx;
+}
+
+void DrMdoShdSetPrePass::preshd_ObjT_Al_FS(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list,
+                                    PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    DrMdoCtl* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        obj->setupShader(m_pMdl->m_bindFlags[1], type);
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        {
+            unsigned int texLoc = obj->m_shaderSel[1];
+            unsigned int blkLoc = obj->m_shaderSel[9];
+            DrAPCache* ap = DrMan::get()->m_apCache;
+            ap->beginTexSampling(2, 0);
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+        }
+        unsigned int flags = m_pMdl->m_stateFlags;
+        unsigned int texLoc = obj->m_shaderSel[2];
+        unsigned int blkLoc = obj->m_shaderSel[9];
+        DrAPCache* ap = DrMan::get()->m_apCache;
+        ap->beginTexSampling(2, 0);
+        if (flags & 0x20000000) {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags &= ~0x40000000;
+        } else {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+        (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        DrMan::get()->m_calcMan->m_pViewWork->m_staticBlock.setUniformBlock(obj->m_shaderSel[6]);
+    } else {
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        if (m_pMdl->m_curTriBlockIdx != triIdx) {
+            (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        }
+        unsigned int flags = m_pMdl->m_stateFlags;
+        if (flags & 0x20000000) {
+            if (flags & 0x40000000) {
+                unsigned int texLoc = obj->m_shaderSel[2];
+                unsigned int blkLoc = obj->m_shaderSel[9];
+                DrAPCache* ap = DrMan::get()->m_apCache;
+                ap->beginTexSampling(2, 0);
+                ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+                DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+                m_pMdl->m_stateFlags &= ~0x40000000;
+            }
+        } else if (!(flags & 0x40000000)) {
+            unsigned int texLoc = obj->m_shaderSel[2];
+            unsigned int blkLoc = obj->m_shaderSel[9];
+            DrAPCache* ap = DrMan::get()->m_apCache;
+            ap->beginTexSampling(2, 0);
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+    }
+    m_pMdl->m_curTriBlockIdx = triIdx;
+    setOneTexShaderSet(info->m_texEntryIdx, obj->m_shaderSel[0]);
+}
+
+void DrMdoShdSetPrePass::preshd_Mot_Al(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list,
+                                    PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    DrMdoCtl* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        obj->setupShader(m_pMdl->m_bindFlags[1], type);
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        DrMan::get()->m_calcMan->m_pViewWork->m_staticBlock.setUniformBlock(obj->m_shaderSel[6]);
+        unsigned int flags = m_pMdl->m_stateFlags;
+        unsigned int texLoc = obj->m_shaderSel[1];
+        unsigned int blkLoc = obj->m_shaderSel[9];
+        DrAPCache* ap = DrMan::get()->m_apCache;
+        ap->beginTexSampling(2, 0);
+        if (flags & 0x20000000) {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags &= ~0x40000000;
+        } else {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+        list->m_boneStmOut.setStorageBuffer(0);
+    } else {
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        if (m_pMdl->m_curTriBlockIdx != triIdx) {
+            (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        }
+        unsigned int flags = m_pMdl->m_stateFlags;
+        if (flags & 0x20000000) {
+            if (flags & 0x40000000) {
+                unsigned int texLoc = obj->m_shaderSel[1];
+                unsigned int blkLoc = obj->m_shaderSel[9];
+                DrAPCache* ap = DrMan::get()->m_apCache;
+                ap->beginTexSampling(2, 0);
+                ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+                DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+                m_pMdl->m_stateFlags &= ~0x40000000;
+            }
+        } else if (!(flags & 0x40000000)) {
+            unsigned int texLoc = obj->m_shaderSel[1];
+            unsigned int blkLoc = obj->m_shaderSel[9];
+            DrAPCache* ap = DrMan::get()->m_apCache;
+            ap->beginTexSampling(2, 0);
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+    }
+    m_pMdl->m_curTriBlockIdx = triIdx;
+}
+
+void DrMdoShdSetPrePass::preshd_MotT_Al_FS(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list,
+                                    PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    DrMdoCtl* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        obj->setupShader(m_pMdl->m_bindFlags[1], type);
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        DrMan::get()->m_calcMan->m_pViewWork->m_staticBlock.setUniformBlock(obj->m_shaderSel[6]);
+        {
+            unsigned int texLoc = obj->m_shaderSel[1];
+            unsigned int blkLoc = obj->m_shaderSel[9];
+            DrAPCache* ap = DrMan::get()->m_apCache;
+            ap->beginTexSampling(2, 0);
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+        }
+        unsigned int flags = m_pMdl->m_stateFlags;
+        unsigned int texLoc = obj->m_shaderSel[2];
+        unsigned int blkLoc = obj->m_shaderSel[9];
+        DrAPCache* ap = DrMan::get()->m_apCache;
+        ap->beginTexSampling(2, 0);
+        if (flags & 0x20000000) {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags &= ~0x40000000;
+        } else {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+        list->m_boneStmOut.setStorageBuffer(0);
+    } else {
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        if (m_pMdl->m_curTriBlockIdx != triIdx) {
+            (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        }
+        unsigned int flags = m_pMdl->m_stateFlags;
+        if (flags & 0x20000000) {
+            if (flags & 0x40000000) {
+                unsigned int texLoc = obj->m_shaderSel[2];
+                unsigned int blkLoc = obj->m_shaderSel[9];
+                DrAPCache* ap = DrMan::get()->m_apCache;
+                ap->beginTexSampling(2, 0);
+                ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+                DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+                m_pMdl->m_stateFlags &= ~0x40000000;
+            }
+        } else if (!(flags & 0x40000000)) {
+            unsigned int texLoc = obj->m_shaderSel[2];
+            unsigned int blkLoc = obj->m_shaderSel[9];
+            DrAPCache* ap = DrMan::get()->m_apCache;
+            ap->beginTexSampling(2, 0);
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+    }
+    m_pMdl->m_curTriBlockIdx = triIdx;
+    setOneTexShaderSet(info->m_texEntryIdx, obj->m_shaderSel[0]);
+}
+
+void DrMdoShdSetPrePass::preshd_Inst_Al(int shd, const MdsMatInfoHeader* info, int, int, DrShdDataList* list,
+                                    PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        obj->setupShader(0, type);
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        unsigned int flags = m_pMdl->m_stateFlags;
+        unsigned int texLoc = obj->m_shaderSel[1];
+        unsigned int blkLoc = obj->m_shaderSel[9];
+        DrAPCache* ap = DrMan::get()->m_apCache;
+        ap->beginTexSampling(2, 0);
+        if (flags & 0x20000000) {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags &= ~0x40000000;
+        } else {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+        DrMan::get()->m_calcMan->m_pViewWork->m_staticBlock.setUniformBlock(obj->m_shaderSel[6]);
+    } else {
+        list->getAlphaTestUniform(info->m_alphaRef == 0.0f ? 0.5f : info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        unsigned int flags = m_pMdl->m_stateFlags;
+        if (flags & 0x20000000) {
+            if (flags & 0x40000000) {
+                unsigned int texLoc = obj->m_shaderSel[1];
+                unsigned int blkLoc = obj->m_shaderSel[9];
+                DrAPCache* ap = DrMan::get()->m_apCache;
+                ap->beginTexSampling(2, 0);
+                ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+                DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+                m_pMdl->m_stateFlags &= ~0x40000000;
+            }
+        } else if (!(flags & 0x40000000)) {
+            unsigned int texLoc = obj->m_shaderSel[1];
+            unsigned int blkLoc = obj->m_shaderSel[9];
+            DrAPCache* ap = DrMan::get()->m_apCache;
+            ap->beginTexSampling(2, 0);
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+    }
+}
+
+void DrMdoShdSetPrePass::preshd_InstT_Al(int shd, const MdsMatInfoHeader* info, int, int, DrShdDataList* list,
+                                    PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        obj->setupShader(0, type);
+        list->getAlphaTestUniform(info->m_alphaRef == 0.0f ? 0.5f : info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        unsigned int flags = m_pMdl->m_stateFlags;
+        unsigned int texLoc = obj->m_shaderSel[1];
+        unsigned int blkLoc = obj->m_shaderSel[9];
+        DrAPCache* ap = DrMan::get()->m_apCache;
+        ap->beginTexSampling(2, 0);
+        if (flags & 0x20000000) {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags &= ~0x40000000;
+        } else {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+        DrMan::get()->m_calcMan->m_pViewWork->m_staticBlock.setUniformBlock(obj->m_shaderSel[6]);
+    } else {
+        list->getAlphaTestUniform(info->m_alphaRef == 0.0f ? 0.5f : info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+        unsigned int flags = m_pMdl->m_stateFlags;
+        if (flags & 0x20000000) {
+            if (flags & 0x40000000) {
+                unsigned int texLoc = obj->m_shaderSel[1];
+                unsigned int blkLoc = obj->m_shaderSel[9];
+                DrAPCache* ap = DrMan::get()->m_apCache;
+                ap->beginTexSampling(2, 0);
+                ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+                DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+                m_pMdl->m_stateFlags &= ~0x40000000;
+            }
+        } else if (!(flags & 0x40000000)) {
+            unsigned int texLoc = obj->m_shaderSel[1];
+            unsigned int blkLoc = obj->m_shaderSel[9];
+            DrAPCache* ap = DrMan::get()->m_apCache;
+            ap->beginTexSampling(2, 0);
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+    }
+    setOneTexShaderSet(info->m_texEntryIdx, obj->m_shaderSel[0]);
+}
+
+void DrMdoShdSetPrePass::preshd_Fw(int shd, const MdsMatInfoHeader* info, int triIdx, int matIdx, DrShdDataList* list,
+                                    PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    DrMdoCtl* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        obj->setupShader(m_pMdl->m_bindFlags[1], type);
+        (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        unsigned int loc = obj->m_shaderSel[3];
+        DrAPCache* ap = DrMan::get()->m_apCache;
+        ap->beginTexSampling(0, 1);
+        ap->setTexture(DrMan::get()->m_iniSys->m_texture[16], loc);
+        loc = obj->m_shaderSel[4];
+        ap = DrMan::get()->m_apCache;
+        ap->beginTexSampling(0, 1);
+        ap->setTexture(DrMan::get()->m_iniSys->m_texture[17], loc);
+    } else if (m_pMdl->m_curTriBlockIdx != triIdx) {
+        (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+    }
+    MdoFlagWaveRes* fw = m_pMdl->m_pWrkMatRes->m_pFlagWave;
+    if (fw) {
+        fw->m_pUniformArray->m_pArray[fw->m_pData[matIdx]].setUniformBlock(obj->m_shaderSel[10]);
+    }
+    m_pMdl->m_curTriBlockIdx = triIdx;
+}
+
+void DrMdoShdSetPrePass::preshd_Fw_Al(int shd, const MdsMatInfoHeader* info, int triIdx, int matIdx, DrShdDataList* list,
+                                    PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    DrMdoCtl* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        obj->setupShader(m_pMdl->m_bindFlags[1], type);
+        unsigned int flags = m_pMdl->m_stateFlags;
+        unsigned int texLoc = obj->m_shaderSel[1];
+        unsigned int blkLoc = obj->m_shaderSel[9];
+        DrAPCache* ap = DrMan::get()->m_apCache;
+        ap->beginTexSampling(2, 0);
+        if (flags & 0x20000000) {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags &= ~0x40000000;
+        } else {
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+        (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        DrMan::get()->m_calcMan->m_pViewWork->m_staticBlock.setUniformBlock(obj->m_shaderSel[6]);
+        {
+            unsigned int loc = obj->m_shaderSel[3];
+            DrAPCache* ap = DrMan::get()->m_apCache;
+            ap->beginTexSampling(0, 1);
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[16], loc);
+            loc = obj->m_shaderSel[4];
+            ap = DrMan::get()->m_apCache;
+            ap->beginTexSampling(0, 1);
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[17], loc);
+        }
+    } else {
+        if (m_pMdl->m_curTriBlockIdx != triIdx) {
+            (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+        }
+        unsigned int flags = m_pMdl->m_stateFlags;
+        if (flags & 0x20000000) {
+            if (flags & 0x40000000) {
+                unsigned int texLoc = obj->m_shaderSel[1];
+                unsigned int blkLoc = obj->m_shaderSel[9];
+                DrAPCache* ap = DrMan::get()->m_apCache;
+                ap->beginTexSampling(2, 0);
+                ap->setTexture(DrMan::get()->m_iniSys->m_texture[2], texLoc);
+                DrMan::get()->m_calcMan->m_pViewWork->m_invDitherBlock.setUniformBlock(blkLoc);
+                m_pMdl->m_stateFlags &= ~0x40000000;
+            }
+        } else if (!(flags & 0x40000000)) {
+            unsigned int texLoc = obj->m_shaderSel[1];
+            unsigned int blkLoc = obj->m_shaderSel[9];
+            DrAPCache* ap = DrMan::get()->m_apCache;
+            ap->beginTexSampling(2, 0);
+            ap->setTexture(DrMan::get()->m_iniSys->m_texture[1], texLoc);
+            DrMan::get()->m_calcMan->m_pViewWork->m_ditherBlock.setUniformBlock(blkLoc);
+            m_pMdl->m_stateFlags |= 0x40000000;
+        }
+    }
+    list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+    MdoFlagWaveRes* fw = m_pMdl->m_pWrkMatRes->m_pFlagWave;
+    if (fw) {
+        fw->m_pUniformArray->m_pArray[fw->m_pData[matIdx]].setUniformBlock(obj->m_shaderSel[10]);
+    }
+    m_pMdl->m_curTriBlockIdx = triIdx;
 }
 
 }  // namespace ml
