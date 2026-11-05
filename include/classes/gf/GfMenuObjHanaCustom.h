@@ -53,6 +53,9 @@ public:
         event.m_param0 = param;
         ui::UIManager::get()->requestObjectEvent(handle, event, 0.0f);
     }
+    // 1.0.0's (out of line there, 0x710046F884): the index of the first content with that id, -1 for none; 3.0.1
+    // only has it inlined into updatePartsList
+    static int searchIdList(GfMenuIDList* list, unsigned int id);
     static void updatePartsList(ui::UIObjectAcc& acc, GfMenuIDList* list, ui::UISelectObjList* select,
                                 mm::mtl::FixedArray<GfMenuIDList*, 7>& partsLists);
     static void setupPartsList(ui::UIObjectAcc& acc, GfMenuIDList* list, ui::UISelectObjList* select,
@@ -78,7 +81,8 @@ public:
             adapter->m_parts.m_hanaId = hana;
         }
     }
-    static void refreshEquipListSub(ui::UIObjectAcc& acc, unsigned int hana, unsigned int slot, unsigned int type);
+    // one row of the equipment list: the part (item) of a slot (1-14) at row index + 1; whether it showed one
+    static bool refreshEquipListSub(ui::UIObjectAcc& acc, unsigned int slot, unsigned int item, unsigned int index);
     bool seqLineAnime();
 
     // the names below are not the original's

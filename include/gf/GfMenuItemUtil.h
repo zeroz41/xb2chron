@@ -25,6 +25,9 @@ public:
     // when GfMenuObjUtil::isValidExpansion(3) holds; 0 for a DLC driver's own accessory). The name is 1.0.0's: its
     // searchEquipAcc has the same callers (canEquipAcc, GfMenuObjDrEquip2); 2.0.0's symbols name it too
     static unsigned short searchEquipAcc(unsigned int item, GfItemHandle handle, unsigned int* slot);
+    // the blade that has the Hana part (item and handle) of that parts slot equipped, 0 for none (its callers:
+    // GfMenuObjHanaCustom::refreshItemList shows that blade's name; parameter names inferred)
+    static unsigned int searchEquipHanaParts(unsigned int partsId, unsigned int item, GfItemHandle handle);
     // whether the party has the money for the item at the shop and room for it in its box
     static bool canBuyItem(unsigned int item, unsigned int shop);
     // false when the party's money is at its maximum, else GfDataItem::isEnableSell
