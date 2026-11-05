@@ -13,6 +13,7 @@ public:
     static void calc1PixlOfs(float& width, float& height);
     static float gaussianDistribution(float x, float y, float rho);
     void setScaleShader(DrPixlRenderTarget* target);
+    void setShaderBloom(DrShdDataObj* shader, grlib::CGLibUniformEtcUtility& uniform);
     // binds target's texture at location (linear sampling with filter) and a unit uv scale at ofs
     void setUVScale_UB(grlib::CGLibUniformEtcUtility& uniform, DrShdDataObj* shader, const DrPixlRenderTarget* target,
                        bool filter, unsigned int location, unsigned int ofs);

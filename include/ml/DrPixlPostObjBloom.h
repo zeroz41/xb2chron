@@ -21,6 +21,7 @@ public:
     void releaseColorBuff(bool all);
     void createBloomTexture(float width, float height, bool all);
     void calcRender();
+    void calcCollectRender(bool);
     void calculateDownScaleImpl(DownScaleType type);
     void calculateGaussBlur();
     void calculateGaussBlurImplPS();

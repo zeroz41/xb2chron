@@ -5,7 +5,9 @@ namespace ml {
 // a view's post-process parameters (DrMan::DrMan makes four, 0x1110 bytes each). Its setters write a block per
 // DrMan::s_nDblIdx; ScnRenderDrSysParmAcc's getters read the fields below. The field names are not the original's:
 // each is named after the ScnRenderDrSysParmAcc accessor that reads or writes it.
-class DrPixlPostParm {
+// 8-aligned: the original reads two 4-byte fields at an 8-aligned offset as one 8-byte load (GVN widening; bloomRender,
+// calculateFlareBuff, calculateLensFlare), which clang only does when it knows the 8-byte alignment
+class __attribute__((aligned(8))) DrPixlPostParm {
 public:
     // a block of override settings per DrMan::s_nDblIdx (the setOverride*/setDoF*/setColorFilter* setters write the
     // current one). The type and field names are not the original's: each field is named after its setter.
@@ -106,7 +108,20 @@ public:
     bool m_lensFlare;
     unsigned char pad_3F[0x5];
     float m_borderBlmMul;  // 0x44
-    unsigned char pad_48[0xC9];
+    unsigned char pad_48[0x70];
+    // 0xB8: DrPixlPostObjBloom::bloomRender maps each through a table to GrlBlendFunc for setupBloomAddMaterial
+    // (source and destination; the name is not the original's)
+    int m_bloomBlend[2];
+    unsigned char pad_C0[0x8];
+    // 0xC8: DrPixlPostObjBloom::calculateFlareBuff passes {[0], [1] / 3} as the "ratio" uniform (name inferred)
+    float m_flareRatio[2];
+    // 0xD0..0xE8: DrPixlPostObjBloom::calculateLensFlare's settings (the names are not the original's): it draws
+    // m_lensFlareNum flares, turning by pi / m_lensFlareNum from m_lensFlareAngle degrees
+    int m_lensFlareNum;
+    float m_lensFlareAngle;  // 0xD4
+    float m_lensFlareRatio[4];  // 0xD8, the "ratio" uniform ([2] times 0.1)
+    float m_lensFlareSpread;  // 0xE8, the "spuv" uniform's z less 0.8
+    unsigned char pad_EC[0x25];
     bool m_tmaa;  // 0x111, getTMAAOn
     unsigned char pad_112[0x2];
     // by SHARPNESS_TYPE; getTMAASharpness reads m_tmaaSharpnessAlt while DrMan::m_qualityMode is 0 (names inferred)
@@ -192,7 +207,9 @@ public:
     int m_bloomType;
     unsigned char pad_F5C[0x16];
     bool m_blm2PassExtract;  // 0xF72, isBlm2PassExtract (with m_tmaa)
-    unsigned char pad_F73[0x15];
+    // 0xF73: DrPixlPostObjBloom::bloomRender samples m_bloomBuff[1] instead of [0] while set (name inferred)
+    bool m_bloomBuffSel;
+    unsigned char pad_F74[0x14];
     // 0xF88: DrPixlPostObjSSR::update fades it to 1 over m_ssrFadeTime * 30 frames (the names are not the original's)
     float m_ssrFade;
     float m_ssrFadeTime;  // 0xF8C
