@@ -628,6 +628,25 @@ void CharaHideWpn::term() {
     }
 }
 
+void CharaWeightPlayer::easeOut(gf::AnimLayer, const char* name, float time, CV_TYPE type, WeightLayer layer) {
+    CharaWeightItem* item = nullptr;
+    for (CharaWeightItem** it = m_items.begin(); it != m_items.end(); ++it) {
+        if (strcmp((*it)->m_name, name) == 0) {
+            item = *it;
+            break;
+        }
+    }
+    if (!item) {
+        return;
+    }
+    AnmF32& anm = item->m_anm[layer];
+    anm.clear();
+    if (time > 0.0f) {
+        anm.append(0.0f, item->m_weight, type);
+    }
+    anm.append(time, 0.0f, type);
+}
+
 void CharaWinkPlayer::idle_start() {
     m_count = ml::mtRand(60) + 90;
     m_state = &CharaWinkPlayer::idle_waiting;
@@ -1561,7 +1580,7 @@ void CharaPlayFacial::term() {
 }
 
 void CharaPlayWink::init() {
-    m_step = 0;
+    m_flags = 0;
 }
 
 ObjectChara* ObjectManager::getChara(unsigned int id) {
@@ -2721,6 +2740,8 @@ void CharaObj::setExtParam(const char* name, float value) {
 
 #include "classes/gf/GfEvtModelDriver.h"
 #include "classes/gf/GfEvtModelWeapon.h"
+#include "classes/gf/GfEvtModelBlade.h"
+#include "classes/gf/GfEvtModelEnemy.h"
 
 namespace event {
 
@@ -2735,6 +2756,59 @@ void CharaObj::setScaleWeapon(float scale) {
 }
 
 CharaWpnAsm::~CharaWpnAsm() {}
+
+CharaEvaPlayer::~CharaEvaPlayer() {
+    stop();
+}
+
+void CharaEvaPlayer::playAction(int action) {
+    if (m_model == nullptr) {
+        return;
+    }
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_model->m_handle);
+    if (obj == nullptr) {
+        return;
+    }
+    if (!(m_flags & 1)) {
+        return;
+    }
+    stopAction();
+    if (action <= 0) {
+        gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2);
+        if (anim != nullptr) {
+            anim->setState("S_idle");
+        }
+    } else if (action == 1) {
+        const char* stat = reinterpret_cast<const char*>(Bdat::getValCheck(Bdat::getFP("EVT_acttype"), "stat1", 1, 7));
+        gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2);
+        if (anim != nullptr) {
+            anim->setState(stat);
+        }
+    } else if (action <= 16) {
+        const char* stat = reinterpret_cast<const char*>(Bdat::getValCheck(Bdat::getFP("EVT_acttype"), "stat1", action, 7));
+        gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2);
+        if (anim != nullptr) {
+            anim->setState(stat);
+        }
+    } else if (action <= 22) {
+        const char* stat = reinterpret_cast<const char*>(Bdat::getValCheck(Bdat::getFP("EVT_acttype"), "stat1", action, 7));
+        gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2);
+        if (anim != nullptr) {
+            anim->setState(stat);
+        }
+        gf::GfEvtModel* model = m_model;
+        if (gf::GfEvtModelDriver* driver = model->m_modelType == 0 ? static_cast<gf::GfEvtModelDriver*>(model) : nullptr) {
+            driver->setWeaponBattleState();
+        } else if (gf::GfEvtModelBlade* blade = model->m_modelType == 1 ? static_cast<gf::GfEvtModelBlade*>(model) : nullptr) {
+            blade->setWeaponBattleState();
+        } else if (gf::GfEvtModelEnemy* enemy = model->m_modelType == 5 ? static_cast<gf::GfEvtModelEnemy*>(model) : nullptr) {
+            enemy->setWeaponBattleState();
+        } else if (gf::GfEvtModelWeapon* weapon = model->m_modelType == 2 ? static_cast<gf::GfEvtModelWeapon*>(model) : nullptr) {
+            weapon->setWeaponBattleState();
+        }
+    }
+    m_action = action;
+}
 
 void CharaEvaPlayer::setBattleWeapon(int weapon) {
     CharaWpnAsm::CMD cmd = static_cast<CharaWpnAsm::CMD>(weapon - 1);
@@ -2753,6 +2827,96 @@ void CharaEvaPlayer::setBattleWeapon(int weapon) {
         break;
     }
     m_battleWeapon = weapon;
+}
+
+void CharaEvaPlayer::playFoot(bool foot) {
+    if (m_model == nullptr) {
+        return;
+    }
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_model->m_handle);
+    if (obj == nullptr) {
+        return;
+    }
+    gf::GfComProperty* property = obj->getComponent<gf::GfComProperty>(5);
+    gf::GfComEffectCaster* caster = obj->getComponent<gf::GfComEffectCaster>(7);
+    if (property != nullptr && caster != nullptr) {
+        if (foot) {
+            FootMessage msg(0);
+            gf::GfObj* owner = static_cast<gf::GfObj*>(property->m_owner);
+            caster->recieveMessage(owner, msg);
+        } else {
+            FootMessage msg(1);
+            gf::GfObj* owner = static_cast<gf::GfObj*>(property->m_owner);
+            caster->recieveMessage(owner, msg);
+        }
+    }
+}
+}  // namespace event
+
+#include "classes/gf/GfGameManager.h"
+
+namespace event {
+
+void CharaEvaPlayer::play(CharaObj* chara, gf::GfEvtModel* model, CharaDysUpdater* dys, void* eva, void* anm,
+                          bool action, bool weapon, const char* name, const mm::Vec3& pos) {
+    stop();
+    m_flags = weapon ? (action | 2u) : action;
+    if (m_flags & 2) {
+        if (strstr(name, "wp050101_l") != nullptr || strstr(name, "wp050101_r") != nullptr) {
+            m_flags |= 8;
+        }
+        if (gf::GfGameManager::isGameTypeIra() && strstr(name, "wp730011") != nullptr) {
+            m_flags |= 8;
+        }
+    }
+    m_chara = chara;
+    m_model = model;
+    m_dys = dys;
+    m_anm = anm;
+    m_pos = pos;
+    m_rcha = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) CRchaEx();
+    m_rcha->setup(mtl::ALLOC_HANDLE(), eva);
+    m_time = 0.0f;
+}
+
+void CharaEvaPlayer::stopAction() {
+    if (m_model == nullptr) {
+        return;
+    }
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_model->m_handle);
+    if (obj == nullptr) {
+        return;
+    }
+    if (m_action <= 0) {
+        return;
+    }
+    if (m_action == 1) {
+        gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2);
+        if (anim != nullptr) {
+            anim->setState("S_idle");
+        }
+    } else if (m_action <= 16) {
+        gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2);
+        if (anim != nullptr) {
+            anim->setState("S_idle");
+        }
+    } else if (m_action <= 22) {
+        gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2);
+        if (anim != nullptr) {
+            anim->setState("S_idle");
+        }
+        gf::GfEvtModel* model = m_model;
+        if (gf::GfEvtModelDriver* driver = model->m_modelType == 0 ? static_cast<gf::GfEvtModelDriver*>(model) : nullptr) {
+            driver->setWeaponFieldState();
+        } else if (gf::GfEvtModelBlade* blade = model->m_modelType == 1 ? static_cast<gf::GfEvtModelBlade*>(model) : nullptr) {
+            blade->setWeaponFieldState();
+        } else if (gf::GfEvtModelEnemy* enemy = model->m_modelType == 5 ? static_cast<gf::GfEvtModelEnemy*>(model) : nullptr) {
+            enemy->setWeaponFieldState();
+        } else if (gf::GfEvtModelWeapon* weapon = model->m_modelType == 2 ? static_cast<gf::GfEvtModelWeapon*>(model) : nullptr) {
+            weapon->setWeaponFieldState();
+        }
+    }
+    m_action = 0;
 }
 
 CharaEvaPlayerEff::~CharaEvaPlayerEff() {
