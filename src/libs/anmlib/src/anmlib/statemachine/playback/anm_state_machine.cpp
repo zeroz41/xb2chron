@@ -1,5 +1,6 @@
 #include "anm/StateMachine.h"
 #include "anm/AsmBlender.h"
+#include "anm/AsmVariable.h"
 #include "classes/anm/ReferenceObject.h"
 #include "classes/anm/ResASM.h"
 #include "classes/anm/SimplexState.h"
@@ -9,6 +10,8 @@
 #include "classes/anm/AddBlendTree.h"
 #include "classes/anm/LerpAddBlendTree.h"
 #include "anm/Array.h"
+#include "anm/Util.h"
+#include <algorithm>
 #include <new>
 #include <float.h>
 #include "mm/MMStdBase.h"
@@ -25,6 +28,18 @@ StateMachine::StateMachine() : m_interpolate(nullptr), m_elapsed(0.0f), m_pListe
       m_pAllocator(nullptr) {}
 
 StateMachine::~StateMachine() {}
+
+void StateMachine::setup(const ResASM& res, unsigned int layer, mm::mtl::IAllocator& allocator) {
+    m_pAllocator = &allocator;
+    m_states.setAllocator(m_pAllocator);
+    m_additives.setAllocator(m_pAllocator);
+    for (unsigned int i = 0; i < res.m_states.size(); i++) {
+        const ResStateData& state = res.m_states[i];
+        if (state.m_pInfo->m_layer == layer) {
+            m_states.insert(StateMap::tree_type::value_type(state.m_pInfo->m_name, createState(state)));
+        }
+    }
+}
 
 AsmState* StateMachine::createState(const ResStateData& res) {
     switch (res.m_pInfo->m_type) {
@@ -57,6 +72,64 @@ AsmState* StateMachine::createState(const ResStateData& res) {
 #line 760 ANM_STATE_MACHINE_PATH
         MM_ASSERT(0);
         return nullptr;
+    }
+}
+
+void StateMachine::cleanup() {
+    if (m_pState) {
+        m_pState->dettach(m_pBlender);
+        m_pState = nullptr;
+    }
+    if (m_pPrevState) {
+        m_pPrevState->dettach(m_pBlender);
+        m_pPrevState = nullptr;
+    }
+    AdditiveMap::tree_type& tree = m_additives.m_tree;
+    AdditiveMap::node* n = nullptr;
+    if (tree.m_root != &AdditiveMap::tree_type::m_sentinel) {
+        n = tree.m_root;
+        while (n->left != &AdditiveMap::tree_type::m_sentinel) {
+            n = n->left;
+        }
+    }
+    for (; n != nullptr; n = tree.next(n)) {
+        n->value.second.m_state->dettach(m_pBlender);
+    }
+    m_additives.clear();
+    m_states.clear();
+}
+
+void StateMachine::update(float dt) {
+    if (m_pState && m_interpolate) {
+        m_elapsed += dt;
+        float t = m_elapsed / m_interpolate->m_time;
+        if (t >= 1.0f) {
+            m_pPrevState->dettach(m_pBlender);
+            m_pPrevState = nullptr;
+            m_pState->setWeight(1.0f);
+            m_interpolate = nullptr;
+            m_elapsed = 0.0f;
+        } else {
+            if (m_interpolate->m_curve == 1) {
+                t = t * (t * ((1.0f - t) * 3.0f)) + t * (t * t);
+            }
+            m_pState->setWeight(t);
+            m_pPrevState->setWeight(1.0f - t);
+        }
+    }
+    if (m_additives.m_tree.m_size != 0) {
+        // the additive states that ended, taken out after the walk
+        StringPtr ended[16];
+        unsigned int count = 0;
+        for (AdditiveMap::node* n = m_additives.m_tree.first(); n != nullptr; n = m_additives.m_tree.next(n)) {
+            n->value.second.update(dt, m_pBlender, m_pListener);
+            if (!n->value.second.m_state) {
+                ended[count++] = n->value.first;
+            }
+        }
+        for (unsigned int i = 0; i < count; i++) {
+            m_additives.erase(ended[i]);
+        }
     }
 }
 
@@ -260,12 +333,56 @@ float StateMachine::getSpeed() const {
     return 0.0f;
 }
 
+bool StateMachine::doEaseInAdditive(const char* state, float time, float weight, InterpolateType type,
+                                    InterpolateCurve curve) {
+    StateMap::node* n = m_states.find(state);
+    if (n == nullptr) {
+        return false;
+    }
+    AsmState* pState = n->value.second.get();
+    if (pState->getRefCount() != 1) {
+        pState = createState(*pState->m_pRes);
+    }
+    AdditiveInfo info;
+    m_additives.insert(AdditiveMap::tree_type::value_type(n->value.first, info));
+    if (AdditiveMap::node* a = m_additives.find(n->value.first)) {
+        a->value.second.easeIn(m_pBlender, m_pListener, pState, time, weight, type, curve);
+    }
+    return true;
+}
+
 bool StateMachine::doEaseOutAdditive(const char* state, float time, InterpolateType type, InterpolateCurve curve) {
     AdditiveMap::node* n = m_additives.find(state);
     if (n == nullptr) {
         return false;
     }
     n->value.second.easeOut(m_pBlender, m_pListener, time, type, curve);
+    return true;
+}
+
+bool StateMachine::setAdditiveStateWeight(const char* state, float weight) {
+    AdditiveMap::node* n = m_additives.find(state);
+    if (n == nullptr) {
+        return false;
+    }
+    AdditiveInfo& info = n->value.second;
+    info.m_scale = weight;
+    if (AsmState* pState = info.m_state.get()) {
+        float w = info.m_weight;
+        float t = 1.0f;
+        if (info.m_mode != AdditiveInfo::MODE_NONE) {
+            if (info.m_mode == AdditiveInfo::MODE_IN) {
+                t = info.m_elapsed / info.m_time;
+            } else if (info.m_mode == AdditiveInfo::MODE_OUT) {
+                t = 1.0f - info.m_elapsed / info.m_time;
+            }
+            t = clamp(t, 0.0f, 1.0f);
+            if (info.m_curve == 1) {
+                t = t * (t * ((1.0f - t) * 3.0f)) + t * (t * t);
+            }
+        }
+        pState->setWeight(w * weight * t);
+    }
     return true;
 }
 
@@ -289,3 +406,9 @@ template anm::StateMachine::AdditiveMap::node* anm::StateMachine::AdditiveMap::t
 
 // 
 template anm::StateMachine::StateMap::node* anm::StateMachine::StateMap::tree_type::insert(const anm::StateMachine::StateMap::tree_type::value_type&);
+
+// executeCmd's command and select node lookups (executeCmd itself is not written yet)
+template anm::ArrayIterartor<anm::ResCmd* const> std::__lower_bound<anm::CompCmd&, anm::ArrayIterartor<anm::ResCmd* const>, const char*>(
+    anm::ArrayIterartor<anm::ResCmd* const>, anm::ArrayIterartor<anm::ResCmd* const>, const char* const&, anm::CompCmd&);
+template anm::ArrayIterartor<const anm::SelectNode> std::__lower_bound<anm::CompSelectCmdValue&, anm::ArrayIterartor<const anm::SelectNode>, int>(
+    anm::ArrayIterartor<const anm::SelectNode>, anm::ArrayIterartor<const anm::SelectNode>, const int&, anm::CompSelectCmdValue&);

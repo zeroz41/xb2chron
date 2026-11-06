@@ -58,6 +58,57 @@ struct ResLoopCount {
     InterpolateInfo m_interpolate;
 };
 
+// a transition a command makes: to m_state, only while the state playing is within m_min..m_max (a negative bound
+// does not apply; StateMachine::executeCmd; the names are not the original's)
+struct ResCmdTrans {
+    // whether a state at the time may make the transition (inline; the name is not the original's)
+    bool isInRange(float time) const {
+        return (m_min <= time || m_min < 0.0f) && (m_max >= time || m_max < 0.0f);
+    }
+
+    const char* m_state;
+    float m_min;
+    float m_max;
+    TransInfo m_trans;
+    InterpolateInfo m_interpolate;
+};
+
+// one branch of a select command: taken when the command's variable holds m_value (the name is the symbol's
+// (std::__lower_bound<anm::CompSelectCmdValue&, anm::ArrayIterartor<anm::SelectNode const>, int>), its fields' are
+// not the original's)
+struct SelectNode {
+    int m_value;
+    ResCmdTrans m_trans;
+};
+
+// a command a state answers (StateMachine::executeCmd finds it by name; the name is the symbol's
+// (std::__lower_bound<anm::CompCmd&, anm::ArrayIterartor<anm::ResCmd* const>, char const*>), its fields' are not
+// the original's): 0x38 bytes
+struct ResCmd {
+    const char* m_name;
+    int m_type;  // 0: m_trans, 1: the first of m_cmds whose range holds, 2: m_select's node of the variable's value
+    union {
+        ResCmdTrans m_trans;
+        Array<ResCmd> m_cmds;  // their m_trans
+        struct {
+            unsigned int m_variable;  // the state machine's variable
+            Array<SelectNode> m_nodes;  // sorted by value
+        } m_select;
+    };
+};
+
+// orders a state's commands against a name (std::lower_bound's comparator in StateMachine::executeCmd; the name is
+// the symbol's)
+struct CompCmd {
+    bool operator()(const ResCmd* cmd, const char* name) const { return strcmp(cmd->m_name, name) < 0; }
+};
+
+// orders a select command's nodes against a value (std::lower_bound's comparator in StateMachine::executeCmd; the
+// name is the symbol's)
+struct CompSelectCmdValue {
+    bool operator()(const SelectNode& node, int value) const { return node.m_value < value; }
+};
+
 // a state's settings (the names are not the original's)
 // a blend tree resource: its type picks the tree (StateMachine::createState: 0 LerpBlendTree, 2 SpeedLerpBlendTree,
 // 3 AddBlendTree, 4 LerpAddBlendTree; the names are not the original's)
@@ -71,7 +122,8 @@ struct ResState {
     const char* m_name;  // StateMachine::getStateName's
     unsigned long m_attribute;  // StateMachine::getAttribute's category 0 (the name is not the original's)
     unsigned int m_layer;  // the StateMachine (ASMControl layer) that plays it (the name is not the original's)
-    unsigned char pad_1c[0x14];
+    unsigned char pad_1c[0x4];
+    Array<ResCmd*> m_cmds;  // sorted by name (StateMachine::executeCmd; the name is not the original's)
     const ResLoopCount* m_pLoopCount;  // none: one loop for a clip that plays once, else none
     unsigned char pad_38[0x30];
     const ResBlendTree* m_pTree;  // type 2's (the name is not the original's)

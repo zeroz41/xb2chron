@@ -27,6 +27,10 @@ template <typename K, typename V>
 struct MapPair {
     MapPair() {}
     MapPair(const K& key, const V& value) : first(key), second(value) {}
+    // from a key and a value of other types, each converted in place (StateMachine::setup builds its state's pair from
+    // the state's name and createState's pointer with one reference taken and the name read after the call)
+    template <typename K2, typename V2>
+    MapPair(const K2& key, const V2& value) : first(key), second(value) {}
     K first;
     V second;
 };
@@ -258,7 +262,8 @@ public:
     }
 
     // 1.0.0's erase and rebalance_after_erase (GfGameVisible's instances at 0x71002EFD80 and 0x71002EFEC0): CLRS's
-    // delete and fixup; erase picks x by address (`*(cond ? &y->right : &y->left)`) and frees y as free_node does
+    // delete and fixup; erase picks x by address (`*(cond ? &y->right : &y->left)`) and frees y as free_node does;
+    // y's element is assigned whole (StateMachine's AdditiveInfo instance copies the key, then the value)
     // z's element taken out: z's node, or its successor's after the successor's element moves into z, unlinked and
     // freed
     void erase(node* z) {
@@ -282,8 +287,7 @@ public:
         } else {
             y->parent->right = x;
         }
-        z->value.second = y->value.second;
-        z->value.first = y->value.first;
+        z->value = y->value;
         if (y->color == black) {
             rebalance_after_erase(x);
         }
