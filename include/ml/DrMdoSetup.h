@@ -26,6 +26,9 @@ public:
           m_mdlFlags(0), pad_16A(0), pad_16B(0), m_nodeMax(0), pad_182(0), pad_184(0), pad_188(0) {}
 
     void updateMpfMatUniformBlock();
+    // Writes the material's stock variables (s_pStockMaterial) into its uniform block and sets m_renderPass from
+    // its technique type.
+    void createUniformBlock(const MdsMatInfoHeader* info, DrResMdoMat* mat);
 
     // Static texture callbacks: s_pStaticTexture[id] binds texture id at the shader location.
     void varStTex_ColorTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);

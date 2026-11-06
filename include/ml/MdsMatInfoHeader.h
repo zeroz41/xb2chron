@@ -5,6 +5,12 @@ namespace ml {
 // One material's header in a model resource (0x74 bytes: DrMdoMat::updateMatCallBack steps through an array of
 // them). Only the fields DrMdoMat's material callbacks read are known; the field names are not the original's.
 struct MdsMatInfoHeader {
+    // What m_techEntryOfs points at (the type and field names are not the original's).
+    struct TechEntry {
+        unsigned int m_techIdx;       // 0x0: its MdsMatTechnique in MdoWrkMatRes::m_pTechnique
+        unsigned short m_type;        // 0x4: createUniformBlock starts render pass 0 for types 0, 7 and 8, else 4
+        unsigned short m_uniformIdx;  // 0x6: its block in MdoWrkMatRes::m_pMatUniformArray
+    };
     unsigned char pad_0[0x4];
     // 0x04, bit 15: the shadow and pre-pass shader setters pick the second fetch table (DrMdoShdSetShadow::
     // s_pShwFethcTbl[1], 1.0.0's s_pShwFethcMof) and pass 1 to DrResShdPrePass::setupShader (name inferred)
@@ -26,7 +32,10 @@ struct MdsMatInfoHeader {
     unsigned char m_cullType;
     unsigned char pad_2B[0x15];
     unsigned int m_uniformOfs;  // 0x40, this material's first slot in MdoWrkMatRes::m_pUniformVal
-    unsigned char pad_44[0x12];
+    unsigned char pad_44[0x8];
+    // 0x4C, from MdoWrkMatRes::m_pMatData: this material's TechEntry (DrMdoSetup::createUniformBlock; name inferred)
+    unsigned int m_techEntryOfs;
+    unsigned char pad_50[0x6];
     // 0x56: this material's entry in MdoWrkMatRes::m_pAvatarMap (DrMdoSetup::unimate_AvatarMapWrk; name inferred)
     unsigned short m_avatarMapIdx;
     unsigned short m_callBackIdx;  // 0x58, first (callback, slot) pair of the material's list

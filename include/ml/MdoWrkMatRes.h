@@ -19,6 +19,9 @@ class DrResMdoVertex;
 class DrResMpfSampler;
 class DrShdMdoDecShdObj;
 struct MdsMatInfoHeader;
+struct MdsFixAnmInf;
+struct MdsMatTechnique;
+struct MdsFixAnmKey;
 
 // The material callback list DrMdoMat::updateMatCallBack walks; offsets are from MdoWrkMatRes::m_pMatData. The
 // type and field names are not the original's.
@@ -223,11 +226,18 @@ struct MdoWrkMatRes {
     // 0x48, by MdsMatInfoHeader::m_avatarMapIdx: DrMdoSetup::unimate_AvatarMapWrk's colour indices (the name is not
     // the original's)
     const MdsMatAvatarMap* m_pAvatarMap;
-    // 0x50: a seam instance map's MdsSeamInstMatBlock (DrMdoCtlSeamInstMap::initInstMapParts); 0x58..0x68: the
-    // blocks at its offsets (the names are not the original's)
+    // 0x50: a seam instance map's MdsSeamInstMatBlock (DrMdoCtlSeamInstMap::initInstMapParts) (the name is not the
+    // original's)
     const unsigned char* m_pSeamMatBlock;
-    const unsigned char* m_pSeamMatData[3];
-    unsigned char pad_70[0x10];
+    // 0x58/0x60: the fixed animation's values and keys (DrMdoAnim::calcAnim, getHermiteAttr); seam instance maps
+    // point them and 0x68 into their block (the names are not the original's)
+    const MdsFixAnmInf* m_pFixAnmInf;
+    const MdsFixAnmKey* m_pFixAnmKey;
+    const unsigned char* m_pSeamMatData;
+    // 0x70: the material techniques; 0x78: the data their offsets start from (DrMdoSetup::createUniformBlock) (the
+    // names are not the original's)
+    const MdsMatTechnique* m_pTechnique;
+    const unsigned char* m_pTechData;
     // 0x80: the material's shader object; DrMdoMat::release*SeamMat delete it (the name is not the original's)
     DrShdMdoDecShdObj* m_pDecShdObj;
     // 0x88: cleared together with m_pDecShdObj (the name and the type are not the original's)
@@ -262,7 +272,9 @@ struct MdoWrkMatRes {
     int m_texNum;  // 0xF0, setupMpfResource gets the texture list only when it is set (the name is not the original's)
     unsigned char pad_F4[0x4];
     float* m_pUniformVal;  // 0xF8, the uniform values the callbacks write
-    unsigned char pad_100[0x10];
+    // 0x100: by MdsFixAnmInf, its current frame; DrMdoAnim::calcAnim advances it (the name is not the original's)
+    float* m_pFixAnmFrame;
+    unsigned char pad_108[0x8];
     MdoWrkAvatarTbl* m_pAvatarTbl;  // 0x110, DrMdoSetup::varStTex_Avatar* bind its textures
     MdoWrkMatAce* m_pAce;  // 0x118
     // 0x120: DrMdoMat::release*SeamMat release the uniform array at its +8 (the type and the name are not the

@@ -73,6 +73,8 @@
 #include "ml/DrResMdoMeshObj.h"
 #include "ml/DrResEtcPamObj.h"
 #include "ml/DrResEtcParams.h"
+#include "ml/MdsFixAnm.h"
+#include "ml/MdsMatTechnique.h"
 #include "ml/DrPixlShadowMan.h"
 #include "grlib/CGLibVtxInstans.h"
 #include "ml/MdsMpfMatInfoHeader.h"
@@ -122,7 +124,7 @@
 
 namespace ml {
 
-DrMdoCtl::DrMdoCtl(int viewNum) : DrMdoNode(viewNum) {}
+DrMdoCtl::DrMdoCtl(int viewNum) : DrMdoAnim(viewNum) {}
 
 void DrMdoCtl::setMatrix(const mm::Mat44& matrix) {
     m_matrix = matrix;
@@ -2644,6 +2646,35 @@ void DrMdoCtlPos::nomTreeShadowRenderMdl(const MdsPosRangeTreeData* tree, DrPixl
     }
 }
 
+void DrMdoSetup::createUniformBlock(const MdsMatInfoHeader* info, DrResMdoMat* mat) {
+    MdoWrkMatRes* res = m_pWrkMatRes;
+    const MdsMatInfoHeader::TechEntry* entry =
+        reinterpret_cast<const MdsMatInfoHeader::TechEntry*>(res->m_pMatData + info->m_techEntryOfs);
+    const MdsMatTechnique* tech = &res->m_pTechnique[entry->m_techIdx];
+    if (tech->m_varTblNum == 0) {
+        return;
+    }
+    switch (entry->m_type) {
+    case 0:
+    case 7:
+    case 8:
+        m_renderPass = 0;
+        break;
+    default:
+        m_renderPass = 4;
+        break;
+    }
+    int num = tech->m_varTblNum;
+    const MdsMatVariableTbl* var = reinterpret_cast<const MdsMatVariableTbl*>(res->m_pTechData + tech->m_varTblOfs);
+    grlib::CGLibDblUniformBlock* block = &res->m_pMatUniformArray->m_pArray[entry->m_uniformIdx];
+    float* buf = reinterpret_cast<float*>(block->getBuff());
+    for (int i = 0; i < num; i++) {
+        buf += (this->*s_pStockMaterial[var->m_stockIdx])(buf, mat, info, var);
+        var++;
+    }
+    block->updateData();
+}
+
 void DrMdoCtlPos::shadowRender() {
     m_renderTech = 0;
     m_renderPass = 6;
@@ -3422,9 +3453,9 @@ void DrMdoCtlSeamInstMap::initInstMapParts(DrResMdoSeamWrkInst* wrk, DrResMdoSea
         const unsigned char* blockData = data + head->m_dataOfs[2];
         const MdsSeamInstMatBlock* block = reinterpret_cast<const MdsSeamInstMatBlock*>(blockData);
         m_pWrkMatRes->m_pSeamMatBlock = blockData;
-        m_pWrkMatRes->m_pSeamMatData[0] = m_pWrkMatRes->m_pSeamMatBlock + block->m_ofs0;
-        m_pWrkMatRes->m_pSeamMatData[1] = m_pWrkMatRes->m_pSeamMatBlock + block->m_ofs1;
-        m_pWrkMatRes->m_pSeamMatData[2] = m_pWrkMatRes->m_pSeamMatBlock + block->m_ofs2;
+        m_pWrkMatRes->m_pFixAnmInf = reinterpret_cast<const MdsFixAnmInf*>(m_pWrkMatRes->m_pSeamMatBlock + block->m_ofs0);
+        m_pWrkMatRes->m_pFixAnmKey = reinterpret_cast<const MdsFixAnmKey*>(m_pWrkMatRes->m_pSeamMatBlock + block->m_ofs1);
+        m_pWrkMatRes->m_pSeamMatData = m_pWrkMatRes->m_pSeamMatBlock + block->m_ofs2;
     }
     const DrResMdoSeamWrkInst::MapEntry* tbl = reinterpret_cast<const DrResMdoSeamWrkInst::MapEntry*>(
         reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_instMapTblOfs);

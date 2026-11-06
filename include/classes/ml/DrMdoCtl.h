@@ -1,7 +1,7 @@
 #ifndef CLASSES_ML_DRMDOCTL_H
 #define CLASSES_ML_DRMDOCTL_H
 
-#include "classes/ml/DrMdoNode.h"
+#include "ml/DrMdoAnim.h"
 #include "mm/Mat44.h"
 #include "mm/Vec3.h"
 
@@ -31,9 +31,9 @@ struct MdoInstancePrePassArg {
 };
 
 // table 0x7100B7B680
-class DrMdoCtl : public ::ml::DrMdoNode {
+class DrMdoCtl : public ::ml::DrMdoAnim {
 public:
-    // 1.0.0 has DrMdoCtl(int) and DrMdoNode(int) (both 0x104 bytes); 3.0.1's inlines DrMdoNode's
+    // 1.0.0 has DrMdoCtl(int), DrMdoAnim(int) and DrMdoNode(int) (all 0x104 bytes); 3.0.1's inlines DrMdoAnim's
     explicit DrMdoCtl(int viewNum);
     virtual ~DrMdoCtl() {}  // slot 0
     void setMatrix(const mm::Mat44& matrix);
