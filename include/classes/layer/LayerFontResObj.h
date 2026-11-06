@@ -9,10 +9,17 @@ namespace layer { class LayerFontManager; }
 namespace layer {
 // a font resource's header (the names are not the original's)
 struct LayerFontResHead {
-    unsigned char pad_0[0x20];
+    unsigned char pad_0[0xC];
+    unsigned int m_fontInfoOffset;   // 0xC: LayerFontResObj::m_fontInfo, from the resource's start (setFontData)
+    unsigned int m_codeIndexOffset;  // 0x10: m_codeIndex, the same
+    unsigned char pad_14[0x4];
+    unsigned int m_hashTblOffset;    // 0x18: m_hashTbl, the same
+    unsigned char pad_1C[0x4];
     unsigned int m_hashMask;       // 0x20: a character code's bits that pick its hash bucket (getFontInfo)
     unsigned int m_textureOffset;  // 0x24: its image, from the resource's start (setupResource)
     unsigned int m_textureSize;    // 0x28
+    unsigned int m_texInfoOffset;  // 0x2C: m_texInfo, from the resource's start
+    unsigned int m_border;         // 0x30: m_border's pixels
 };
 
 // table 0x7100B80670
@@ -20,6 +27,21 @@ struct LayerFontResHead {
 // their LayerBase* to its methods unadjusted (LayerAccFontObj::setMsg/setColorMap, LayerAccFontStyle).
 class LayerFontResObj : public ::layer::LayerBase {
 public:
+    // 1.0.0/2.0.0's constructor (out of line there, inline in LayerFontManager::createFontResObj in 3.0.1)
+    LayerFontResObj(LayerFontManager* manager) {
+        m_prev = nullptr;
+        m_next = nullptr;
+        m_manager = manager;
+        m_state = 0xCC;
+        m_objType = 10;
+        m_releaseFlags = 0;
+        m_data = nullptr;
+        m_texture = nullptr;
+        m_cellUvWidth = 1.0f;
+        m_cellUvHeight = 1.0f;
+        m_border = 0.0f;
+        m_borderWidth = 0.0f;
+    }
     virtual ~LayerFontResObj();  // slot 0
     virtual void release();  // slot 2
     virtual void setupResource();  // slot 3
@@ -74,6 +96,20 @@ public:
             } while (lo <= hi);
         }
         return m_fontInfo;
+    }
+    // 2.0.0's (inline in 3.0.1): data is the font resource
+    void setFontData(const void* data) {
+        m_data = static_cast<const unsigned char*>(data);
+        m_head = static_cast<const LayerFontResHead*>(data);
+        m_fontInfo = reinterpret_cast<const FontInfo*>(m_data + m_head->m_fontInfoOffset);
+        m_codeIndex = reinterpret_cast<const unsigned short*>(m_data + m_head->m_codeIndexOffset);
+        m_hashTbl = reinterpret_cast<const HashEntry*>(m_data + m_head->m_hashTblOffset);
+        m_texInfo = reinterpret_cast<const TexInfo*>(m_data + m_head->m_texInfoOffset);
+        m_border = (float)m_head->m_border;
+        m_borderWidth = m_border + m_border;
+        m_cellUvWidth = (float)m_texInfo->m_cellWidth / (float)m_texInfo->m_texWidth;
+        m_cellUvHeight = (float)m_texInfo->m_cellHeight / (float)m_texInfo->m_texHeight;
+        m_releaseFlags |= 4;
     }
     const HashEntry* m_hashTbl;      // 0x40: in the resource (LayerFontManager::createFontResObj)
     const unsigned short* m_codeIndex;  // 0x48: the same

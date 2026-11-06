@@ -111,6 +111,33 @@ void LayerFontDrawBuffer::createFontCode(unsigned short code) {
 
 LayerFontManager::~LayerFontManager() { allRelease(); }
 
+LayerBase* LayerFontManager::createFontResObj(const void* data) {
+    LayerFontResObj* obj = new (m_manager->m_workHandle, nullptr, 0, 4, false) LayerFontResObj(this);
+    obj->setFontData(data);
+    m_setupList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    if (m_defaultResObj == nullptr) {
+        m_defaultResObj = obj;
+    }
+    return obj;
+}
+
+LayerBase* LayerFontManager::createFontIconObj(const void* data) {
+    LayerFontIconObj* obj =
+        new (m_manager->m_workHandle, nullptr, 0, 4, false) LayerFontIconObj(this, data, static_cast<LAYER_TYPE>(11));
+    m_setupList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    if (m_defaultObj == nullptr) {
+        m_defaultObj = obj;
+    }
+    return obj;
+}
+
+LayerBase* LayerFontManager::createFontColMapObj(const void* data) {
+    LayerFontIconObj* obj =
+        new (m_manager->m_workHandle, nullptr, 0, 4, false) LayerFontIconObj(this, data, static_cast<LAYER_TYPE>(12));
+    m_setupList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    return obj;
+}
+
 LayerFontIconObj::~LayerFontIconObj() {
     if (m_texture != nullptr) {
         m_texture->release();
@@ -175,6 +202,36 @@ void LayerFontTag::beginParseString() {
     m_pos[1] = 0;
     m_lineNum = 0;
     m_lastCode = 0;
+}
+
+void LayerFontTag::calcTagColorStart(const LayerTagTbl* tbl, unsigned int num) {
+    if (num != 0) {
+        const mm::mtl::Vector<LayerStrInfo>* colors = m_styleObj->m_colorInfo;
+        if (colors != nullptr) {
+            for (int i = 0; i < (int)colors->size(); i++) {
+                if (strcmp(tbl->m_value, (*colors)[i].m_name.m_str) == 0) {
+                    m_defaultColor = m_color;
+                    m_color = mm::Col4((*colors)[i].m_col4.r, (*colors)[i].m_col4.g, (*colors)[i].m_col4.b, 1.0f);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+void LayerFontTag::calcTagIconStart(const LayerTagTbl* tbl, unsigned int num) {
+    if (num != 0) {
+        const mm::mtl::Vector<LayerStrInfo>* icons = m_styleObj->m_iconInfo;
+        if (icons != nullptr) {
+            for (int i = 0; i < (int)icons->size(); i++) {
+                if (strcmp(tbl->m_value, (*icons)[i].m_name.m_str) == 0) {
+                    int code = (*icons)[i].m_s32;
+                    createFontIcon(code);
+                    return;
+                }
+            }
+        }
+    }
 }
 
 bool LayerFontTag::callTagEnd(const char* name) {

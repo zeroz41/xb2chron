@@ -2,6 +2,10 @@
 #define LAYER_LAYERBASE_H
 
 namespace layer {
+// a layer object's kind (LayerBase::m_objType; the name is from 2.0.0's LayerFontIconObj constructor, its enumerators'
+// names are not known: 9 font style, 10 font, 11 font icon, 12 font colour map)
+enum LAYER_TYPE {};
+
 // the base of the layer objects: LayerObj, LayerObjLayout and LayerObjWork's tables hold its (empty) destructor, and
 // UIObject passes its LayerBase to LayerAccLayoutBinary::setLayoutObj as a LayerObj
 class LayerBase {
