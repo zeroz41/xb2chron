@@ -8152,10 +8152,100 @@ StmPackMemory::~StmPackMemory() {
     pad_5860.clear();
 }
 
+void StmPackMemory::update() {
+    if (!(pad_8 & 1)) {
+        for (unsigned long i = 0; i < pad_5860.size(); i++) {
+            if (pad_5860[i]->m_header.isLoading()) {
+                return;
+            }
+        }
+        if (!pad_5860[pad_58f0]->m_data.open()) {
+            return;
+        }
+        pad_18 = (mtl::MemManager::maxAllocSize(pad_c) >> 12) - 2;
+        pad_10 = mtl::MemManager::allocate(pad_c, pad_18 * 0x1000, 0x1000, false, "no name", 0);
+        pad_8 |= 1;
+    }
+    if (pad_8 & 1) {
+        freeCut();
+        if (pad_8 & 2) {
+            if (waitCut()) {
+                pad_8 &= ~2u;
+            }
+        } else {
+            if (pad_8 & 4) {
+                return;
+            }
+            if (loadCut()) {
+                pad_8 |= 2;
+            }
+        }
+    }
+}
+
+bool StmPackMemory::loadCut(void* adr, unsigned long size, unsigned long page, unsigned long& next) {
+    if (!pad_5860[pad_58e8]->m_data.isSuccess()) {
+        return false;
+    }
+    unsigned long first = pad_5838;
+    int prio = pad_5860[pad_58e8]->m_header.getPrio(pad_5838);
+    unsigned long dataOfs = pad_5860[pad_58e8]->m_header.getDataOfs(pad_5838);
+    unsigned long dataSize = pad_5860[pad_58e8]->m_header.getDataSize(pad_5838);
+    pad_5848 = dataSize;
+    pad_5850 = size;
+    if (dataSize >= size) {
+        return false;
+    }
+    unsigned long count = pad_5860[pad_58e8]->m_header.getCount();
+    for (unsigned long i = pad_5838 + 1; i < count; i++) {
+        if (prio != pad_5860[pad_58e8]->m_header.getPrio(i)) {
+            break;
+        }
+        unsigned long end = pad_5860[pad_58e8]->m_header.getDataOfs(i) +
+                            pad_5860[pad_58e8]->m_header.getDataSize(i) - dataOfs;
+        if (end >= size) {
+            break;
+        }
+        pad_5838 = i;
+        dataSize = end;
+    }
+    unsigned long pageEnd = page + (dataSize >> 12) + 1;
+    loadCut(adr, dataSize, first, pad_5838, page, pageEnd, prio);
+    next = pageEnd;
+    pad_5838++;
+    return true;
+}
+
+void StmPackMemory::loadCut(void* adr, unsigned long size, unsigned long first, unsigned long last,
+                            unsigned long pageStart, unsigned long pageEnd, int prio) {
+    unsigned long dataOfs = pad_5860[pad_58e8]->m_header.getDataOfs(first);
+    pad_5860[pad_58e8]->m_data.read(adr, size, dataOfs);
+    StmPackRes res(adr, size, dataOfs, first, last, pageStart, pageEnd, prio, pad_5858, pad_58e8);
+    pad_5858++;
+    pad_30.push_back(res);
+}
+
+void* StmPackMemory::adr(const char* name, unsigned long* size) {
+    for (StmPackRes* it = pad_30.begin(); it != pad_30.end(); ++it) {
+        if (!it->isLoading() && it->pad_50 == pad_58f0) {
+            for (unsigned long i = it->pad_28; i <= it->pad_30; i++) {
+                if (strcmp(name, pad_5860[pad_58f0]->m_header.getPath(i)) == 0) {
+                    it->pad_0++;
+                    if (size != nullptr) {
+                        *size = pad_5860[pad_58f0]->m_header.getDataSize(i);
+                    }
+                    return it->getFileAdr(pad_5860[pad_58f0]->m_header.getDataOfs(i));
+                }
+            }
+        }
+    }
+    return nullptr;
+}
+
 void StmPackMemory::render(const mm::Rect<int>& rect, float alpha) {}
 
 void StmPackMemory::free(void* p, int) {
-    for (Block* it = pad_30.begin(); it != pad_30.end(); ++it) {
+    for (StmPackRes* it = pad_30.begin(); it != pad_30.end(); ++it) {
         if (!(it->pad_4 & 1) && it->pad_10 <= reinterpret_cast<unsigned long>(p) &&
             reinterpret_cast<unsigned long>(p) < it->pad_10 + it->pad_18) {
             it->pad_4 |= 2;
