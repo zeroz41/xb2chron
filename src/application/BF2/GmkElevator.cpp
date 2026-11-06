@@ -95,6 +95,7 @@
 #include "classes/gf/GfAllocator.h"
 #include "gf/GfSoundSource.h"
 #include "classes/gf/GfObjManager.h"
+#include "classes/gf/GfObjSetupNpc.h"
 #include "gf/GfStaticRes.h"
 #include "gf/GfUtil.h"
 #include "ml/PathUtil.h"
@@ -3421,6 +3422,35 @@ void GmkBattleChallenge::create(const CreateInfo& info) {
     m_seq = &GmkBattleChallenge::seqCheckCondition;
 }
 
+// starts the challenge once its row's conditions hold and the player is inside its phantom
+void GmkBattleChallenge::seqCheckCondition(float) {
+    // the original asks the list's CreateInfo here and does not use it
+    m_list->getCreateInfo();
+    const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+    if (info->m_condition != 0 && !gf::GfGameCond::isGameCond(info->m_condition)) {
+        return;
+    }
+    if (info->m_questFlag.isSet() && !info->m_questFlag.isMatch()) {
+        return;
+    }
+    if (info->m_scenarioFlag.m_scenarioFlagMax != 0 && !info->m_scenarioFlag.isMatch()) {
+        return;
+    }
+    if (!m_phantom.pad_83) {
+        return;
+    }
+    sm_activeInstance = this;
+    if (!m_isAccCounted) {
+        GmkBattleLock* lock = getBattleLock();
+        if (lock != nullptr) {
+            lock->pad_c4++;
+            m_isAccCounted = true;
+        }
+    }
+    m_result = 0;
+    m_seq = &GmkBattleChallenge::seqWaveStart;
+}
+
 void GmkBattleChallenge::dispose() {
     m_seq = nullptr;
     m_phantom.dispose();
@@ -3446,6 +3476,52 @@ void GmkBattleChallenge::update(float dt) {
 }
 
 void GmkBattleChallenge::debugDraw() const {}
+
+void GmkBattleChallenge::suspendAll(bool pause) {
+    m_isPaused = pause;
+    unsigned int num = getWaveNum();
+    for (unsigned int i = 0; i < num; i++) {
+        getWave(i)->m_isPaused = pause;
+    }
+}
+
+void GmkBattleChallenge::seqWaveUpdate(float dt) {
+    updateBattleStatus(false);
+    unsigned int clearedNum = 0;
+    for (unsigned int i = 0; i < getWaveNum(); i++) {
+        if (getWave(i)->m_isCleared) {
+            clearedNum = i + 1;
+        }
+    }
+    float timer = m_timer - dt;
+    m_timer = timer;
+    if (timer <= 0.0f) {
+        clearedNum = std::min<unsigned int>(m_waveCount + 1, getWaveNum());
+    }
+    if (m_waveCount < clearedNum) {
+        m_result = timer <= 0.0f ? 1 : 2;
+        m_waveCount = clearedNum;
+        if (m_waveCount < getWaveNum()) {
+            unsigned char* fp = gf::GfDataBdat::getFP(0x7B);
+            Bdat::uVal wait;
+            if (timer <= 0.0f) {
+                wait.real = 0.0f;
+            } else {
+                wait.ulong = Bdat::getValCheck(fp, 0, 0x56, 8);
+            }
+            m_timer = wait.real;
+            m_seq = &GmkBattleChallenge::seqWaitNextWave;
+        } else {
+            m_seq = &GmkBattleChallenge::seqFinish;
+            seqFinish(dt);
+        }
+    }
+}
+
+void GmkBattleChallenge::seqFinish(float) {
+    updateBattleStatus(true);
+    m_seq = nullptr;
+}
 
 void GmkBattleChallenge::seqWaitNextWave(float dt) {
     m_timer -= dt;
@@ -3633,12 +3709,12 @@ void GmkBattleChallengePortal::seqValidateResHandle(float) {
     if (pack == nullptr) {
         return;
     }
-    m_portalEffect0 = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search("ex_portal_01", pack);
-    if (m_portalEffect0 == nullptr) {
+    m_portalEffect[0] = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search("ex_portal_01", pack);
+    if (m_portalEffect[0] == nullptr) {
         return;
     }
-    m_portalEffect1 = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search("ex_portal_02", pack);
-    if (m_portalEffect1 == nullptr) {
+    m_portalEffect[1] = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search("ex_portal_02", pack);
+    if (m_portalEffect[1] == nullptr) {
         return;
     }
     m_seq = &GmkBattleChallengePortal::seqUpdate;
@@ -3652,12 +3728,40 @@ void GmkBattleChallengePortal::dispose() {
         }
         gf::GfObjUtil::destroy(m_gob);
         m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
-        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(m_effectHandle0);
-        m_effectHandle0 = 0;
-        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(m_effectHandle1);
-        m_effectHandle1 = 0;
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(m_effectHandle[0]);
+        m_effectHandle[0] = 0;
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(m_effectHandle[1]);
+        m_effectHandle[1] = 0;
     }
     AGmkBase::dispose();
+}
+
+void GmkBattleChallengePortal::disposeGobInst(bool fade) {
+    gf::GF_OBJ_HANDLE* gob = m_gob;
+    if (gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    if (fade) {
+        gf::GfObjAcc acc(gob);
+        if (acc.getObj() != nullptr && !acc.isDestroy() && !acc.testFlag(0x11)) {
+            gf::SCOM_DESTROY_GAME_OBJ::create(gob, 1.0f, 0);
+        }
+    } else {
+        gf::GfObjAcc acc(gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    for (int i = 0; i < 2; i++) {
+        if (fade) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->fadeOutDead(m_effectHandle[i]);
+        } else {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(m_effectHandle[i]);
+        }
+        m_effectHandle[i] = 0;
+    }
 }
 
 void GmkBattleChallengePortal::update(float dt) {
@@ -3674,6 +3778,45 @@ bool GmkBattleChallengePortal::isPopCondMatchedExceptDist() const {
         return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->isPopCommonCondMatched(*this);
     }
     return false;
+}
+
+void GmkBattleChallengePortal::createGobInst() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    disposeGobInst(false);
+    CBdatWrapper bdat(m_list->getBindedBdatFp());
+    m_gob = gf::GfObjFactory::createGmkNpc(bdat, m_createInfo.m_bdatId);
+    if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    gf::GfObjAcc acc(m_gob);
+    acc.setUserData(gf::GfObjUserData(0), reinterpret_cast<unsigned long>(this));
+    gf::GfObjSetupNpc* setup = mm::mtl::rttiCast<gf::GfObjSetupNpc>(gf::GfObjManager::getObjInfo(m_gob)->m_setup);
+    // m_pos points at the gimmick's Xform: its position, then its rotation (only the y angle is taken)
+    const mm::Vec3* xform = m_pos;
+    float rotY = xform[1].y;
+    setup->m_initialPos.x = xform[0].x;
+    setup->m_initialPos.y = xform[0].y;
+    setup->m_initialPos.z = xform[0].z;
+    setup->pad_30.x = 0.0f;
+    setup->pad_30.y = rotY;
+    setup->pad_30.z = 0.0f;
+    createEffect(0);
+}
+
+bool GmkBattleChallengePortal::createEffect(unsigned int index) {
+    unsigned int& handle = m_effectHandle[index];
+    handle = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->create(m_portalEffect[index], true);
+    if (handle == 0) {
+        return false;
+    }
+    mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setCategory(handle, fw::EF_CATEGORY(1));
+    effect::SendParam param;
+    getMatrix(param.m_mtx, false);
+    mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setParam(handle, &param);
+    return true;
 }
 
 bool GmkBattleChallengePortal::canPopGobInst() const {
@@ -3705,6 +3848,35 @@ void GmkBattleChallengePortal::seqUpdate(float) {
     }
 }
 
+void GmkBattleChallengePortal::seqOpen(float) {
+    createEffect(1);
+    unsigned int mapId = gf::GfGameManager::getMapID();
+    unsigned int se;
+    switch (mapId) {
+    default:
+        se = 0;
+        break;
+    case 3:
+        se = 0xD;
+        break;
+    case 9:
+        se = 0x10;
+        break;
+    case 0x3A:
+        se = 2;
+        break;
+    }
+    if (fw::SoundManager* sound = mm::mtl::PtrSingleton<fw::SoundManager>::sys()) {
+        if (gf::GfFieldSound* fieldSound = mm::mtl::PtrSingleton<gf::GfFieldSound>::sys()) {
+            sound->playSe(se, fieldSound->getMapPack(), 1.0f, fw::SoundCategory(0));
+            Bdat::uVal wait;
+            wait.ulong = Bdat::getValCheck(gf::GfDataBdat::getFP(0x7B), 0, 0x55, 8);
+            m_timer = wait.real;
+            m_seq = &GmkBattleChallengePortal::seqWait;
+        }
+    }
+}
+
 void GmkBattleChallengePortal::seqFinish(float) {}
 
 void GmkBattleChallengePortal::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::GF_OBJ_HANDLE* handle) {
@@ -3721,10 +3893,10 @@ void GmkBattleChallengePortal::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::
         }
         gf::GfObjUtil::destroy(m_gob);
         m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
-        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(m_effectHandle0);
-        m_effectHandle0 = 0;
-        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(m_effectHandle1);
-        m_effectHandle1 = 0;
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(m_effectHandle[0]);
+        m_effectHandle[0] = 0;
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(m_effectHandle[1]);
+        m_effectHandle[1] = 0;
     }
 }
 

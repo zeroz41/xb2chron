@@ -55,10 +55,12 @@ public:
     // the step update calls while the gimmick is valid (the name is not the original's)
     void (GmkBattleChallengePortal::*m_seq)(float dt) = &GmkBattleChallengePortal::seqValidateResHandle;
     // fields: size from the stride 0x80: Vector<GmkBattleChallengePortal>::resize resize
-    void* m_portalEffect0 = nullptr;  // 0x58: seqValidateResHandle searches "ex_portal_01" in the field's effect pack (the name is not the original's)
-    void* m_portalEffect1 = nullptr;  // 0x60: the same for "ex_portal_02" (the name is not the original's)
-    unsigned int m_effectHandle0 = 0;  // 0x68: disposeGobInst kills or fades it out (the name is not the original's)
-    unsigned int m_effectHandle1 = 0;  // 0x6c: likewise (the name is not the original's)
+    // 0x58: seqValidateResHandle searches "ex_portal_01" and "ex_portal_02" in the field's effect pack; createEffect
+    // indexes it (the name is not the original's)
+    void* m_portalEffect[2] = {nullptr, nullptr};
+    // 0x68: the effects createEffect creates from m_portalEffect, by the same index; disposeGobInst kills or fades
+    // them out (the name is not the original's)
+    unsigned int m_effectHandle[2] = {0, 0};
     gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);  // 0x70: dispose destroys it unless it is -1 (the name is not the original's)
     float m_timer = 0.0f;  // 0x78: seqOpen sets it from BDAT table 0x7B's member 0 at row 0x55; seqWait counts it down (the name is not the original's)
     // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
@@ -71,8 +73,9 @@ public:
     void disposeGobInst(bool);
     // What it does (called by seqUpdate): pops the game object (createEffect) and plays its effects.
     void createGobInst();
-    // What it does: creates the game object and its effects (true from seqOpen).
-    void createEffect(bool);
+    // What it does: creates the index-th portal effect (0 from createGobInst, 1 from seqOpen) at the gimmick's
+    // matrix; false when the effect manager made none.
+    bool createEffect(unsigned int index);
     // What it does: true when the gimmick should pop its game object (BdatInfo conditions, distance to the
     // interest point).
     bool canPopGobInst() const;

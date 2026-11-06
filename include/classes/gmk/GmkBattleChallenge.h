@@ -69,11 +69,26 @@ public:
     // its index-th wave in the gimmick set's enemy list, none when the set has no enemy list or fewer waves (defined
     // in GmkElevator.cpp, which sees GmkEnemyList; the name is not the original's)
     GmkEnemyWave* getWave(unsigned int index) const;
-    // 2.0.0's symbols name them.
-    AGmkBase* getBattleLock();
+    // 2.0.0's symbols name them. getBattleLock: the gimmick its first wave's access reaches, when valid (a battle
+    // lock: seqCheckCondition counts the challenge in its pad_c4)
+    GmkBattleLock* getBattleLock();
     // seqCheckCondition, seqWaveStart: the steps create and the first step store in m_seq
     void seqCheckCondition(float dt);
     void seqWaveStart(float dt);
+    // the steps seqWaveStart and seqWaveUpdate store in m_seq: seqWaveUpdate counts the cleared waves and goes to
+    // seqWaitNextWave or seqFinish; seqFinish publishes the end in sm_battleStatus
+    void seqWaveUpdate(float dt);
+    void seqFinish(float dt);
+    // publishes the progress in sm_battleStatus (inline: seqWaveUpdate and seqFinish store the same; the name is
+    // not the original's)
+    void updateBattleStatus(bool isEnd) {
+        sm_battleStatus.m_waveNum = getWaveNum();
+        unsigned int waveIndex = m_waveCount + 1;
+        unsigned int waveNum = getWaveNum();
+        sm_battleStatus.m_waveIndex = waveIndex < waveNum ? waveIndex : waveNum;
+        sm_battleStatus.m_result = m_result;
+        sm_battleStatus.m_isEnd = isEnd;
+    }
     // 2.0.0's symbols name them. suspendAll (members: its address sits among this class's functions; suspend calls it
     // on sm_activeInstance with a bool).
     void suspendAll(bool);
