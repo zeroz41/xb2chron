@@ -758,6 +758,29 @@ mm::Vec3 DataManager::axis2rot(unsigned int type, float x, float y, float z, con
     return mm::Vec3(x, y, z);
 }
 
+const char* DataManager::getTarName(unsigned int id) {
+    // a switch: clang turns it into the lookup table lbl_7100B3FD90, indexed by the sign-extended id
+    switch (id) {
+    case 0:
+        return "";
+    case 1:
+        return "POS";
+    case 2:
+        return "POS_G";
+    case 3:
+        return "SAY";
+    case 4:
+        return "ANG";
+    case 5:
+        return "ANG_G";
+    }
+    ObjectList* list;
+    if (id < ((list = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current) ? list->m_counts[0] + 6ul : 6)) {
+        return mm::mtl::Singleton<ObjectManager>::getPtr()->getChara(id - 6)->m_name.m_str;
+    }
+    return "";
+}
+
 int EffectLinearCol::update(const ICmd::Param& param) {
     if (m_ctrl == nullptr) {
         return 1;
@@ -6638,6 +6661,105 @@ void SeqManager::OnEventProc(event::MSG_TYPE msg) {
 
 // the fixed target axes 4 and 5 are the radian ones; any other id names an object (looked up, never radian)
 DataManager::DataManager() : m_flags(0), m_sceneName("default"), m_current(0) {}
+
+inline void DataManager::clear() {
+    for (unsigned long i = 0; i < m_scenes.size(); i++) {
+        if (m_scenes[i]) {
+            delete m_scenes[i];
+            m_scenes[i] = nullptr;
+        }
+    }
+    m_scenes.clear();
+    m_sceneName = "default";
+    m_currentName = "";
+    m_current = nullptr;
+}
+
+DataManager::~DataManager() {
+    clear();
+}
+
+inline void DataManager::resetOffset() {
+    m_flags = 0;
+    m_ofsMat = mm::Mat44::identity;
+    m_ofsRot = mm::Vec3::zero;
+}
+
+void DataManager::login() {
+    resetOffset();
+    if (gf::GfGameManager::isGameTypeIra()) {
+        Manager* manager = mm::mtl::PtrSingleton<Manager>::sys();
+        mm::Vec3 pos = manager->m_playPos;
+        float rotY = manager->pad_2b0;
+        if (!pos.isEqual(mm::Vec3::zero) || rotY != 0.0f) {
+            m_ofsMat.setRotY(rotY);
+            m_ofsMat.setTransRow(pos);
+            m_ofsRot = mm::Vec3(0.0f, rotY, 0.0f);
+            m_flags |= 1;
+        }
+    }
+}
+
+void DataManager::updateCurrent() {
+    if (strcmp(m_sceneName.m_str, m_currentName.m_str) == 0) {
+        return;
+    }
+    m_current = searchScene(m_sceneName.m_str);
+    if (!m_current) {
+        m_current = createScene(m_sceneName.m_str);
+        if (!m_current) {
+            return;
+        }
+        if (m_flags & 1) {
+            m_current->m_srcMat = m_ofsMat;
+            m_current->m_srcRot.y = m_ofsRot.y;
+            m_current->m_desMat = m_ofsMat;
+            m_current->m_desRot.y = m_ofsRot.y;
+        }
+    }
+    m_currentName = m_sceneName;
+}
+
+DataManager::OfsInfo* DataManager::createScene(const char* name) {
+    OfsInfo* info = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) OfsInfo(name);
+    m_scenes.push_back(info);
+    return info;
+}
+
+inline void DataManager::setupScene() {
+    m_sceneName = mm::mtl::PtrSingleton<Manager>::sys()->m_sceneName.m_str;
+    updateCurrent();
+}
+
+inline void DataManager::startScene() {
+    m_sceneName = mm::mtl::PtrSingleton<Manager>::sys()->m_sceneName.m_str;
+    updateCurrent();
+}
+
+void DataManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 1:
+        login();
+        break;
+    case 2:
+        resetOffset();
+        break;
+    case 4:
+        clear();
+        break;
+    case 5:
+        setupScene();
+        break;
+    case 7:
+        startScene();
+        break;
+    case 12:
+        clear();
+        break;
+    default:
+        break;
+    }
+}
 
 
 MemoryManager::MemoryManager() : pad_10(0), pad_18(0), pad_24(), pad_28(0), pad_30(0), pad_38(0), m_txtbufs(), pad_1048(0), pad_1050(0), pad_1058(0) {}
