@@ -30,6 +30,8 @@
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedArray.h"
 #include "ui/EventData.h"
+#include "mm/mtl/FixedVector.h"
+#include <algorithm>
 
 namespace gf {
 
@@ -49,6 +51,36 @@ GfMenuObjDrArtsSet2::GfMenuObjDrArtsSet2(unsigned int handle)
     s_EnableWpn2 = GfGameManager::isClearGame() && !GfMenuObjUtil::isValidExpansion(3) &&
                      GfMenuObjUtil::isValidExpansion(1) && isActiveBCHWpn();
     s_RefDriverIndex = 0;
+}
+
+bool isActiveBCHWpn() {
+    if (!GfMenuObjUtil::isValidExpansion(1)) {
+        return false;
+    }
+    mm::mtl::FixedVector<unsigned int, 50> types;
+    GfDataDriver::getEquipWpnType(types, 1);
+    for (mm::mtl::FixedVector<unsigned int, 50>::iterator it = types.begin(); it != types.end();) {
+        mm::mtl::FixedArray<unsigned int, 4> arts;
+        GfMenuObjUtil::getEnableArts(arts, 1, *it, PTPOS(0), false);
+        int i;
+        for (i = 0; i < 4; i++) {
+            if (GfDataDriverArts::getArtsLevel(1, arts[i]) != 0) {
+                break;
+            }
+        }
+        if (*it == 17) {
+            if (GfMenuObjUtil::isValidBlade(GfDataDriver::getBlade(1, -1))) {
+                it = types.erase(it);
+            } else {
+                ++it;
+            }
+        } else if (i == 4) {
+            it = types.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    return std::find(types.begin(), types.end(), 33u) != types.end();
 }
 
 GfMenuObjDrArtsSet2::~GfMenuObjDrArtsSet2() {

@@ -9,6 +9,9 @@ namespace gf { class GfInitParamMapSeamless; class GfInitParamGimmick; class GfI
 namespace gf { class GfInitParamFobj; class GfInitParamWeapon; class GfInitParamEnWeapon; class GfInitParamBelonging; }
 namespace gf { class GfInitParamExtra; class GfInitParamEventObj; class GfInitParamUiObj; }
 namespace gf { class GfAppendHandles; class GfAppendInfo; }
+namespace gf { class GfComSound; class GfExtendPacking; class GfObj; class GF_ASSET_HANDLE; }
+namespace fw { struct ResSoundTriggerInfo; }
+namespace gf { enum GfFileIdx : int; }
 
 namespace gf {
 // makes the game's objects (functions, by its symbols)
@@ -76,6 +79,14 @@ void fn_710052A760(GfAppendHandles& handles, GfInitParamWeapon& param, GfAppendI
 // Placeholder name (no symbol names it). Called by GfObjFactory::createEnemyBladeWeapon (this unit) once per append,
 // after it copied the append into param.pad_98: makes that weapon object and returns its handle.
 GF_OBJ_HANDLE* fn_710052AD9C(GfInitParamWeapon& param, GF_OBJ_HANDLE* owner, GF_OBJ_HANDLE* blade);
+// a GfComSound's trigger filter (its m_triggerFilter's signature): the jump states' sound triggers ("S_jump_02",
+// "S_jumpdmg") play only while the ground under the object is above the water it is in (when it is in water
+// and on ground); every other trigger plays
+bool checkSoundTriggerPlayer(GfComSound* sound, const fw::ResSoundTriggerInfo& info);
+// queues the sound triggers of every file of the asset's archive file into the packing's queue
+void addExtendPackingSoundTrigger(GF_ASSET_HANDLE* asset, GfFileIdx file, GfExtendPacking* packing);
+// a driver's or a blade's slope IK limits (pitch, roll) in radians from its character data; false for other objects
+bool getSlopeIKLimit(GfObj* obj, float* pitch, float* roll);
 }  // namespace gf
 
 #endif

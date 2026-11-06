@@ -63,6 +63,11 @@
 #include "ml/ScnObjAccMdlParticle.h"
 #include "classes/fw/EffectManager.h"
 #include <string.h>
+#include "fw/PadRelay.h"
+#include "gf/GfStaticRes.h"
+#include "arc/CArcData.h"
+#include "classes/fw/CommonResource.h"
+#include "classes/gf/GfAllocator.h"
 
 namespace gf {
 
@@ -1031,6 +1036,25 @@ bool GfObjUtil::isDummyMover(GF_OBJ_HANDLE* handle) {
         return getAssetHandle(handle) == reinterpret_cast<GF_ASSET_HANDLE*>(-1);
     }
     return false;
+}
+
+void bindPadResources() {
+    if (fw::PadResEventManager* manager = fw::PadResEventManager::sys()) {
+        manager->setup(5, getAllocator(ALLOCATOR(0)));
+        if (fw::CommonResource* resource = GfStaticRes::search("/param/pad.pdp")) {
+            arc::CArcData arc(resource->getAssetData());
+            fw::PadResEventManager::setResource(0, fw::PadEventImporter::create(arc.getFileAdr("field.pad"),
+                                                                               "T:/BF2/param/pad/data/field.pdml"));
+            fw::PadResEventManager::setResource(1, fw::PadEventImporter::create(arc.getFileAdr("battle.pad"),
+                                                                               "T:/BF2/param/pad/data/battle.pdml"));
+            fw::PadResEventManager::setResource(2, fw::PadEventImporter::create(arc.getFileAdr("camera.pad"),
+                                                                               "T:/BF2/param/pad/data/camera.pdml"));
+            fw::PadResEventManager::setResource(3, fw::PadEventImporter::create(arc.getFileAdr("target.pad"),
+                                                                               "T:/BF2/param/pad/data/target.pdml"));
+            fw::PadResEventManager::setResource(4, fw::PadEventImporter::create(arc.getFileAdr("system.pad"),
+                                                                               "T:/BF2/param/pad/data/system.pdml"));
+        }
+    }
 }
 
 void unbindPadResource() {

@@ -2,6 +2,7 @@
 #define CLASSES_GF_FOOTSTEPPLUGIN_H
 
 #include "classes/gf/Plugin.h"
+#include "gf/GfEnvProperty.h"
 
 namespace fw { class UpdateInfo; }
 namespace gf { class GfComBehavior; }
@@ -33,6 +34,10 @@ public:
 
     bool m_running;  // update sets it while the object moves at least as fast as its run speed; steps pass it on
 };
+
+// the ground of a foot by its name: "right"/"right00" 2, "left"/"left00" 1, "right01" 4, "left01" 3, "right02" 6,
+// "left02" 5, any other 0 (FootStepPlugin::notifyStep passes it to playSe)
+GfEnvProperty::GROUND_INDEX getFootGroundIndex(const char* name);
 }  // namespace gf
 
 #endif

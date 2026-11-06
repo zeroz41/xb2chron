@@ -58,6 +58,18 @@
 #include "classes/gf/GfInitParamWeapon.h"
 #include "classes/gf/GfInitParamDriver.h"
 #include "classes/gf/GfComAsm.h"
+#include "classes/gf/GfComSound.h"
+#include "classes/gf/GfComProperty.h"
+#include "gf/GfEnvProperty.h"
+#include "fw/SoundResTrigger.h"
+#include "classes/fw/SoundResSourceManager.h"
+#include "classes/gf/GfExtendPacking.h"
+#include "classes/gf/GfAssetResource.h"
+#include "arc/CArcData.h"
+#include "classes/gf/GfBdatChrBl.h"
+#include "classes/gf/GfBdatChrDr.h"
+#include "classes/mm/mtl/PtrSingleton.h"
+#include <string.h>
 
 #define GF_OBJ_FACTORY_PATH "D:/Monolithsoft/BF2/prog/application/BF2/gf/object/gf_obj_factory.cpp"
 
@@ -128,6 +140,19 @@ inline int getRaceType(unsigned int race) {
     }
 }
 }  // namespace
+
+bool checkSoundTriggerPlayer(GfComSound* sound, const fw::ResSoundTriggerInfo& info) {
+    const char* name = info.m_stateName;
+    if (strcmp(name, "S_jump_02") == 0 || strcmp(name, "S_jumpdmg") == 0) {
+        GfComProperty* property = sound->m_owner->findComponent<GfComProperty>(5);
+        const GfEnvProperty* env = property->m_env.get();
+        const GfEnvProperty::Ground* ground = env->getGround(0);
+        if ((env->m_flags & 1) != 0 && ground != nullptr) {
+            return !(ground->m_position.y <= env->m_water.m_height);
+        }
+    }
+    return true;
+}
 
 GF_OBJ_HANDLE* GfObjFactory::createNpc(const GfInitParamNpc& param) {
     GfObjManager* manager = GfObjManager::sys();
@@ -710,6 +735,50 @@ GF_OBJ_HANDLE* GfObjFactory::createDummyMover() {
     GfObjUtil::addDebugName(handle);
     manager->callGfObjListener(IGfObjListener::OBJEVT(1), handle);
     return handle;
+}
+
+void addExtendPackingSoundTrigger(GF_ASSET_HANDLE* asset, GfFileIdx file, GfExtendPacking* packing) {
+    if (packing == nullptr) {
+        return;
+    }
+    GfAssetResource* resource = GfAssetManager::getResource(asset, file, static_cast<GfAssetType>(0));
+    if (resource == nullptr) {
+        return;
+    }
+    arc::CArcData arc(resource->getAssetData());
+    unsigned int files = arc.getFiles();
+    for (unsigned int i = 0; i != files; i++) {
+        const fw::ResSoundTrigger* trigger = fw::SoundResTriggerImporter::importBinary(arc.getFileAdr(i));
+        if (trigger != nullptr) {
+            packing->m_soundTriggers.push_back(trigger);
+        }
+    }
+}
+
+bool getSlopeIKLimit(GfObj* obj, float* pitch, float* roll) {
+    switch (GfObjUtil::getObjType(obj->m_handle)) {
+    case 3: {
+        GfObjSetup* setup = GfObjUtil::getObjSetup(obj->m_handle);
+        GfBdatChrDr* bdat = mm::mtl::PtrSingleton<GfBdatChrDr>::sys();
+        unsigned int id = setup->m_bdatId;
+        unsigned char limitPitch = bdat->getChrDrRotateLimitPitch(id);
+        unsigned char limitRoll = bdat->getChrDrRotateLimitRoll(id);
+        *pitch = limitPitch * 0.0174532924f;
+        *roll = limitRoll * 0.0174532924f;
+        return true;
+    }
+    case 4: {
+        GfObjSetup* setup = GfObjUtil::getObjSetup(obj->m_handle);
+        GfBdatChrBl* bdat = mm::mtl::PtrSingleton<GfBdatChrBl>::sys();
+        unsigned int id = setup->m_bdatId;
+        unsigned char limitPitch = bdat->getChrBlRotateLimitPitch(id);
+        unsigned char limitRoll = bdat->getChrBlRotateLimitRoll(id);
+        *pitch = limitPitch * 0.0174532924f;
+        *roll = limitRoll * 0.0174532924f;
+        return true;
+    }
+    }
+    return false;
 }
 
 bool GfObjFactory::destroyObjHandle(GF_OBJ_HANDLE* handle) {

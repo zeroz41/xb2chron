@@ -22,6 +22,11 @@
 #include "mm/Rect.h"
 #include "ui/EventData.h"
 #include "ui/UIUtil.h"
+#include "classes/gf/GfGameFlag.h"
+#include "classes/gf/GfGameManager.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfDataEvent.h"
+#include "gf/GfDataUtil.h"
 
 namespace gf {
 
@@ -205,6 +210,63 @@ void GfMenuObjBladeBook::refreshBladeList() {
             secret.setDisp(unuse && blade != 0);
         }
     }
+}
+
+bool isUnuseBlade(unsigned int blade) {
+    if (!GfMenuObjUtil::isValidBlade(blade)) {
+        return true;
+    }
+    if (GfDataBlade::isRegularBlade(blade)) {
+        if (GfGameManager::isClearGame() && blade != 1007) {
+            return false;
+        }
+        switch (blade) {
+        case 1001:
+            return GfDataUtil::getScenarioFlag() < 1031;
+        case 1002:
+            return GfDataUtil::getScenarioFlag() < 3048;
+        case 1004:
+            return GfDataUtil::getScenarioFlag() < 2010;
+        case 1005:
+            return GfDataUtil::getScenarioFlag() < 2033;
+        case 1006:
+            return GfDataUtil::getScenarioFlag() < 4054;
+        case 1007:
+            return GfGameFlag::getLocal(1, 0x8A03) == 0;
+        case 1008:
+            return GfDataUtil::getScenarioFlag() < 3013;
+        case 1009:
+            return GfDataUtil::getScenarioFlag() < 5004;
+        case 1010:
+            return GfDataUtil::getScenarioFlag() < 5042;
+        case 1011:
+            return GfDataUtil::getScenarioFlag() < 7040;
+        default:
+            return true;
+        }
+    }
+    if (!GfDataBlade::isRareBlade(blade)) {
+        return true;
+    }
+    switch (blade) {
+    case 1045:
+        return GfGameFlag::getLocal(1, 0x8A02) == 0;
+    case 1105:
+        return GfGameFlag::getLocal(1, 0x8A08) == 0;
+    case 1106:
+        return GfGameFlag::getLocal(1, 0x8A09) == 0;
+    case 1107:
+        return GfGameFlag::getLocal(1, 0x8A0A) == 0;
+    case 1111:
+        return GfGameFlag::getLocal(1, 0x8A10) == 0;
+    default:
+        break;
+    }
+    unsigned int event = GfDataBlade::getCreateEvent(blade);
+    if (event != 0 && GfDataEvent::isWatchedEventFlag(event)) {
+        return false;
+    }
+    return GfDataBlade::isActivateUnuse(blade);
 }
 
 void GfMenuObjBladeBook::getScreenOverSize(unsigned int handle, float scale, short& width, short& height) {
