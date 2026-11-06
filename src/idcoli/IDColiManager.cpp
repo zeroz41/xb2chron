@@ -114,6 +114,31 @@ IDColiManager::~IDColiManager() {
     }
 }
 
+void IDColiManager::release() {
+    for (int i = 0; i < 2; i++) {
+        for (int kind = 0; kind < KIND_NUM; kind++) {
+            ColiLinkList<IDColiObj>& list = m_addList[kind][i];
+            for (IDColiObj* obj = list.m_head; obj != nullptr;) {
+                IDColiObj* next = obj->m_next;
+                delete obj;
+                obj = next;
+            }
+            list.m_head = nullptr;
+            list.m_tail = nullptr;
+        }
+    }
+    for (int kind = 0; kind < KIND_NUM; kind++) {
+        ColiLinkList<IDColiObj>& list = m_objList[kind];
+        for (IDColiObj* obj = list.m_head; obj != nullptr;) {
+            IDColiObj* next = obj->m_next;
+            delete obj;
+            obj = next;
+        }
+        list.m_head = nullptr;
+        list.m_tail = nullptr;
+    }
+}
+
 void IDColiManager::update() {
     addDelUpdate();
     for (int kind = 0; kind < KIND_NUM; kind++) {
@@ -172,6 +197,28 @@ IDColiObj* IDColiManager::createColiGrdChar() {
     IDColiObjGrdChar* obj = new (m_allocHandle, nullptr, 0, 4, false) IDColiObjGrdChar();
     m_addList[KIND_GRDCHAR][s_nStkIdx].pushBack(obj);
     return obj;
+}
+
+inline IDColiObj* IDColiManager::getSweepTop(ColiLinkList<IDColiObj>& list) {
+    for (IDColiObj* obj = list.m_head; obj != nullptr; obj = obj->m_next) {
+        if (!(obj->m_flags & (1 << s_nDebIdx)) && !(obj->m_state & 4) && !(obj->m_flags & 0x80)) {
+            return obj;
+        }
+    }
+    return nullptr;
+}
+
+void IDColiManager::addList(ColiLinkList<IDColiObj>& list, ColiLinkList<IDColiObj>& add, bool sweep) {
+    for (IDColiObj* obj = add.m_head; obj != nullptr;) {
+        IDColiObj* next = obj->m_next;
+        add.remove(obj);
+        if (sweep) {
+            static_cast<IDColiObjBase*>(obj)->sweepPush(static_cast<IDColiObjBase*>(getSweepTop(list)));
+        }
+        list.pushBack(obj);
+        obj = next;
+    }
+    add = ColiLinkList<IDColiObj>();
 }
 
 unsigned int IDColiManager::isGblId(unsigned int id) { return m_gblIdBits[id >> 5] & (1 << (id & 0x1F)); }

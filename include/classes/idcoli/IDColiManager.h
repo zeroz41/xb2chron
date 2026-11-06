@@ -24,6 +24,12 @@ public:
     void addDelUpdate();
     void consistentUpdate();
     void updateConsistentList(ColiLinkList<IDColiObj>& list);
+    void addList(ColiLinkList<IDColiObj>& list, ColiLinkList<IDColiObj>& add, bool sweep);
+    void delList(ColiLinkList<IDColiObj>& list, bool sweep);
+    // the first object of list still in the sweep lists (not deleted this frame, state bit 2 and flag 0x80 clear).
+    // Inline everywhere; a member, since its callers keep `this` live (consistentUpdate sets x0 for
+    // updateConsistentList, which reads nothing else of it). The name is not the original's.
+    IDColiObj* getSweepTop(ColiLinkList<IDColiObj>& list);
     // a member: fw::ColiManager::tail hands it its collision system in x0
     void tail();
     IDColiObj* createColiGrand(const void* data);

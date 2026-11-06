@@ -21,6 +21,28 @@ public:
         }
         obj->m_next = nullptr;
     }
+    // unlinks obj (IDColiManager's addList and delList; the name is not the original's)
+    void remove(T* obj) {
+        T* prev = obj->m_prev;
+        T* next = obj->m_next;
+        if (prev == nullptr) {
+            if (next == nullptr) {
+                m_head = nullptr;
+                m_tail = nullptr;
+            } else {
+                m_head = next;
+                next->m_prev = nullptr;
+            }
+        } else if (next == nullptr) {
+            m_tail = prev;
+            prev->m_next = nullptr;
+        } else {
+            prev->m_next = next;
+            obj->m_next->m_prev = obj->m_prev;
+        }
+        obj->m_prev = nullptr;
+        obj->m_next = nullptr;
+    }
 
     T* m_head;
     T* m_tail;
