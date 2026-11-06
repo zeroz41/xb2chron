@@ -19,6 +19,7 @@ public:
     // out of line: GmkNpcManager::removeGmkNpc tail-calls it
     void removeGmkNpc(AGmkNpc* npc);
     void setActiveGmkNpc(AGmkNpc* npc);
+    void createGobInst();
     // an NPC id, its table and its gimmick list set (GmkNpcManager::update and addGmkNpc test these three; the name is
     // not the original's)
     bool isValid() const { return m_npcId != 0 && m_bdatFp != nullptr && m_gmks != nullptr; }

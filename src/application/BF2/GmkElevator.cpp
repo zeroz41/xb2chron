@@ -1055,6 +1055,30 @@ void GmkSet::update(float dt) {
     }
 }
 
+// defined after update (the original's address is lower): the original passes 0.0f to m_npcManager.update but leaves
+// GmkNpcIdInfo::update's unused float unset, i.e. dead-argument elimination saw GmkNpcManager::update before
+// GmkNpcIdInfo::update in the module; referencing GmkNpcIdInfo::update here before update's body is emitted reverses
+// that order
+bool GmkSet::updateImmediate() {
+    if (!isValid() || &GmkSet::seqUpdate != m_seq) {
+        update(0.0f);
+        return false;
+    }
+    for (int i = 0; i < GMK_LIST_NUM; ++i) {
+        if (m_gmkLists[i] != nullptr) {
+            m_gmkLists[i]->updateImmediate();
+        }
+    }
+    unsigned int size = m_npcManager.m_npcIdInfos.size();
+    for (unsigned int i = 0; i < size; ++i) {
+        GmkNpcIdInfo& info = m_npcManager.m_npcIdInfos[i];
+        if (info.isValid()) {
+            info.update(0.0f, m_npcManager.m_flag);
+        }
+    }
+    return true;
+}
+
 int getCurrentMapBdatId() { return gf::GfGameManager::getMapID(); }
 
 const IGmkList* GmkSet::getGmkList(GmkType type) const { return m_gmkLists[static_cast<unsigned int>(type)]; }
@@ -1062,6 +1086,79 @@ const IGmkList* GmkSet::getGmkList(GmkType type) const { return m_gmkLists[stati
 IGmkList* GmkSet::getGmkList(GmkType type) { return m_gmkLists[static_cast<unsigned int>(type)]; }
 
 GmkNpcManager::~GmkNpcManager() { dispose(); }
+
+void GmkNpcManager::update(float dt) {
+    if (gf::GfGameManager::isFadeout()) {
+        unsigned int size = m_npcIdInfos.size();
+        for (unsigned int i = 0; i < size; ++i) {
+            GmkNpcIdInfo& info = m_npcIdInfos[i];
+            if (info.isValid()) {
+                info.update(dt, m_flag);
+            }
+        }
+        return;
+    }
+    unsigned int size = m_npcIdInfos.size();
+    if (size <= m_updateIdx) {
+        m_updateIdx = 0;
+    }
+    unsigned int num = m_updateNumPerFrame < size ? m_updateNumPerFrame : size;
+    for (unsigned int n = 0; n < num; ++n, ++m_updateIdx) {
+        if (size <= m_updateIdx) {
+            m_updateIdx = 0;
+            return;
+        }
+        GmkNpcIdInfo& info = m_npcIdInfos[m_updateIdx];
+        if (info.isValid()) {
+            info.update(dt, m_flag);
+        }
+    }
+}
+
+
+void GmkNpcIdInfo::update(float, bool flag) {
+    if (!isValid() || !isInterestPosExist()) {
+        return;
+    }
+    {
+        gf::GfObjAcc acc(m_handle);
+        if (gf::GfObj* obj = acc.getObj()) {
+            switch (obj->m_type) {
+            case 5:
+                if (acc.isBattle()) {
+                    return;
+                }
+                break;
+            case 6:
+                if (gf::GfComBehaviorNpc* behavior = obj->getComponent<gf::GfComBehaviorNpc>(6)) {
+                    if (behavior->pad_100) {
+                        return;
+                    }
+                }
+                break;
+            }
+        }
+    }
+    for (mm::mtl::IntrusiveList<AGmkNpc>::iterator it = m_gmks->begin(); it != m_gmks->end(); ++it) {
+        if (it->isPopCondMatched()) {
+            setActiveGmkNpc(&*it);
+            break;
+        }
+    }
+    if (m_handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        if (flag && m_gmk != nullptr && m_gmk->isPopDistCondMatched()) {
+            createGobInst();
+        }
+    } else if (m_gmk->isDepopCondMatched() || m_gmk->isDepopDistCondMatched()) {
+        gf::GF_OBJ_HANDLE* handle = m_handle;
+        if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            gf::GfObjAcc acc(handle);
+            if (acc.getObj() != nullptr && !acc.isDestroy() && !acc.testFlag(0x11)) {
+                gf::SCOM_DESTROY_GAME_OBJ::create(handle, 1.0f, 0);
+            }
+        }
+    }
+}
 
 void GmkNpcManager::create() {
     m_npcIdInfos.setAllocator(fw::FrameworkMemory::getAllocator(5));
