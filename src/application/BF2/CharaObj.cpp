@@ -5473,6 +5473,93 @@ ModelObj::~ModelObj() {
     }
 }
 
+ModelObj* ModelManager::createModel(const char* name, bool flag, unsigned int arg, int user) {
+    ModelObj* obj;
+    if ((mm::mtl::Singleton<MdlstmManager>::getPtr()->pad_14 & 1) &&
+        (obj = searchModel(user, name, flag, arg)) != nullptr) {
+        obj->setReserve(user, true);
+        return obj;
+    }
+    obj = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) ModelObj(name, flag, arg);
+    obj->setReserve(user, true);
+    m_objs.push_back(obj);
+    return obj;
+}
+
+ModelObj* ModelManager::searchModel(unsigned int user, const char* name, bool flag, unsigned int arg) {
+    for (unsigned long i = 0; i < m_objs.size(); i++) {
+        if (!m_objs[i]->isReserve(user)) {
+            ModelObj* obj = m_objs[i];
+            if (obj->isSame(name, flag, arg)) {
+                return m_objs[i];
+            }
+        }
+    }
+    return nullptr;
+}
+
+ModelObj* ModelManager::createModel(const char* name, const ModelObj::DESC& desc, bool flag, unsigned int arg,
+                                    int user) {
+    ModelObj* obj;
+    if ((mm::mtl::Singleton<MdlstmManager>::getPtr()->pad_14 & 1) &&
+        (obj = searchModel(user, name, desc, flag, arg)) != nullptr) {
+        obj->setReserve(user, true);
+        return obj;
+    }
+    obj = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+        ModelObj(name, desc, flag, arg);
+    obj->setReserve(user, true);
+    m_objs.push_back(obj);
+    return obj;
+}
+
+ModelObj* ModelManager::searchModel(unsigned int user, const char* name, const ModelObj::DESC& desc, bool flag,
+                                    unsigned int arg) {
+    for (unsigned long i = 0; i < m_objs.size(); i++) {
+        if (!m_objs[i]->isReserve(user)) {
+            ModelObj* obj = m_objs[i];
+            if (obj->isSame(name, desc, flag, arg)) {
+                return m_objs[i];
+            }
+        }
+    }
+    return nullptr;
+}
+
+ModelObj* ModelManager::searchModel(unsigned int user, MODEL_TYPE type, unsigned int id,
+                                    const ModelObj::OPTION& option, bool flag, unsigned int arg) {
+    for (unsigned long i = 0; i < m_objs.size(); i++) {
+        if (!m_objs[i]->isReserve(user)) {
+            ModelObj* obj = m_objs[i];
+            if (obj->isSame(type, id, option, flag, arg)) {
+                return m_objs[i];
+            }
+        }
+    }
+    return nullptr;
+}
+
+void ModelManager::destroyModel(ModelObj* obj, int user) {
+    if (obj == nullptr) {
+        return;
+    }
+    if (mm::mtl::Singleton<MdlstmManager>::getPtr()->pad_14 & 1) {
+        obj->setReserve(user, false);
+        if (obj->isReserve(-1)) {
+            return;
+        }
+    }
+    // the original's lookup tests the entries against null after the delete: it erases the first non-null entry,
+    // not necessarily the model's
+    delete obj;
+    for (mm::mtl::FixedVector<ModelObj*, 1024>::iterator it = m_objs.begin(); it != m_objs.end(); ++it) {
+        if (*it != nullptr) {
+            m_objs.erase(it);
+            break;
+        }
+    }
+}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void ModelManager::OnEventProc(event::MSG_TYPE msg) {
     if (msg == 14) {

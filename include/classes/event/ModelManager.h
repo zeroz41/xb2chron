@@ -30,7 +30,20 @@ public:
         }
     }
 
-    ModelObj* createModel(int id);
+    ModelObj* createModel(const char* name, bool flag, unsigned int arg, int user);
+    // the model user does not hold yet that was made so; nullptr when there is none (searchModel's callers)
+    ModelObj* searchModel(unsigned int user, const char* name, bool flag, unsigned int arg);
+    ModelObj* createModel(const char* name, const ModelObj::DESC& desc, bool flag, unsigned int arg, int user);
+    ModelObj* searchModel(unsigned int user, const char* name, const ModelObj::DESC& desc, bool flag,
+                          unsigned int arg);
+    ModelObj* createModel(MODEL_TYPE type, unsigned int id, const ModelObj::OPTION& option, bool flag,
+                          unsigned int arg, int user);
+    ModelObj* searchModel(unsigned int user, MODEL_TYPE type, unsigned int id, const ModelObj::OPTION& option,
+                          bool flag, unsigned int arg);
+    ModelObj* searchModel(unsigned int user);
+    ModelObj* createModel(int user);
+    // drops user's hold; deletes the model when nobody holds it (or the stream manager's bit 0 is clear)
+    void destroyModel(ModelObj* obj, int user);
 
     // the models createModel made (1024: the count sits at 0x2010); the name is not the original's
     mm::mtl::FixedVector<ModelObj*, 1024> m_objs;  // 0x10
