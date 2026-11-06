@@ -149,7 +149,9 @@ public:
     bool m_dofOverride;  // isDOF: either of these two
     bool m_dof;
     bool m_dofHLvMode;
-    unsigned char pad_21B[0x1];
+    // 0x21B: DrPixlPostObjDepthofField::renderDofScaleDown selects its "DOWN_SEC" variant 1 while set, else 2 and
+    // eight "ofs" taps (name inferred from the declaration)
+    bool m_dofDownSec;
     bool m_dofAutoFocus;
     unsigned char pad_21D[0x3];
     float m_dofPixlRatio;
@@ -160,14 +162,24 @@ public:
     float m_dofBlend;
     int m_dofPixlLv;
     int m_dofFocusNum;
-    unsigned char pad_240[0x4];
+    // 0x240: DrPixlPostObjDepthofField::renderDepthAllSample passes it after m_dofFocusMin in its "ratio" uniform
+    // (name inferred)
+    float m_dofFocusRange;
     float m_dofFocusMin;
     unsigned char pad_248[0x21];
     // 0x269, DrPixlPostObjCubeMapMultiIBL::requestIBL refuses requests while it is clear
     // (the name is not the original's)
     bool m_multiIBL;
     bool m_colTbl;  // 0x26A, getColTblOn
-    unsigned char pad_26B[0x35];
+    unsigned char pad_26B[0x1];
+    // 0x26C-0x27C: the color filter (stOverrideParm's m_colorFilterNum/Frm/FarNum sit 4 bytes later there);
+    // DrPixlPostObjDepthofField::update compares the two numbers with DrResFilterData's (names inferred)
+    int m_colorFilterNum;  // 0x26C
+    float m_colorFilterFrm;  // 0x270
+    bool m_colorFilterDof;  // 0x274: DrPixlPostObjDepthofField::update copies it to its m_filterOn
+    unsigned char pad_275[0x3];
+    int m_colorFilterFarNum;  // 0x278
+    unsigned char pad_27C[0x24];
     float m_toonDirLightScale;  // 0x2A0, getToonDirLightScale when DrMan::m_toonDirLightScale is set
     unsigned char pad_2A4[0x4];
     // 0x2A8: DrIniSys::setupDlcIni sets it from lib_dlc_nx.ini's toonShadowAlphaDLC key, on DrIniSys::m_postParm and

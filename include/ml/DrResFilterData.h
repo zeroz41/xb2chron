@@ -14,10 +14,17 @@ public:
             m_far = 1000.0f;
             m_angle = 60.0f;
             pad_20 = 0;
+            m_num = 0;
+            m_farNum = 0;
             m_rate = 1.0f;
         }
         unsigned char pad_0[0x20];
-        long pad_20;      // 0x20: the constructor clears it
+        // 0x20-0x28: the constructor clears them (one 8-byte store)
+        unsigned int pad_20;
+        // 0x24/0x26: the filter numbers DrPixlPostObjDepthofField::update compares with DrPixlPostParm's
+        // m_colorFilterNum/m_colorFilterFarNum (names inferred)
+        unsigned short m_num;
+        unsigned short m_farNum;
         unsigned char pad_28[0x4];
         float m_far;      // 0x2C: the constructor sets 1000
         float m_angle;    // 0x30: the constructor sets 60
@@ -42,7 +49,7 @@ public:
     grlib::CGLibTextureBuffer* m_texture;  // 0xF0: m_texNum of them, one per entry
     int m_texNum;                          // 0xF8
     unsigned char pad_FC[0x4];
-    int pad_100;                           // the constructor clears it
+    int m_curFilter;                       // 0x100: the constructor clears it; the m_filter in use (name inferred)
 };
 }  // namespace ml
 
