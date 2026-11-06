@@ -17,6 +17,8 @@ public:
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     void update();  // out of line
     void render();  // out of line
+    // out of line (0x71000EEEA0; FrameManager::pause passes whether a sound pause type is set)
+    void pause(bool);
     // OnEventProc's clear (inlined; the names are not the original's): stops each playing bgm
     void clear();
     void stop0();

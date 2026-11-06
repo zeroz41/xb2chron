@@ -35,6 +35,8 @@ public:
     void clear();
     void update();
     void draw();
+    // out of line (0x710010E3DC; FrameManager::pause passes whether a voice pause type is set)
+    void pause(bool);
 
     unsigned int pad_8;  // bit 0 drawn as "delay" by VoiceManager's debug draw
     // preload's queue: it drops the oldest while 8 are queued (the name is not the original's)

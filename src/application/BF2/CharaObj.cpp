@@ -163,6 +163,8 @@
 #include "classes/event/CamFree.h"
 #include "fw/FwDebug.h"
 #include "classes/ml/EventView.h"
+#include "classes/ml/DevKeyboard.h"
+#include "classes/gf/GfPause.h"
 #include "classes/ml/Scn.h"
 #include "classes/ml/WinView.h"
 #include "classes/event/CharaMount.h"
@@ -282,6 +284,63 @@ CamFree::~CamFree() {
 
 void CamFree::update(const event::FrameInfo&) {}
 
+bool CamFree::OnMouseButtonDown(ml::EventView* view) {
+    if (view->pad_28 & 1) {
+        pad_4c |= 8;
+    } else {
+        pad_4c &= ~8u;
+    }
+    if (view->m_buttons & 4) {
+        pad_4c |= 1;
+    }
+    if (view->m_buttons & 2) {
+        pad_4c |= 2;
+    }
+    if (view->m_buttons & 1) {
+        pad_4c |= 4;
+    }
+    pad_50 = 0;
+    if (!(pad_4c & 8)) {
+        return false;
+    }
+    if (pad_4c & 1) {
+        pad_50 = 1;
+    } else if (pad_4c & 2) {
+        pad_50 = 2;
+    } else if (pad_4c & 4) {
+        pad_50 = 3;
+    } else {
+        return false;
+    }
+    return true;
+}
+
+bool CamFree::OnMouseButtonUp(ml::EventView* view) {
+    if (view->m_buttons & 4) {
+        pad_4c &= ~1u;
+    }
+    if (view->m_buttons & 2) {
+        pad_4c &= ~2u;
+    }
+    if (view->m_buttons & 1) {
+        pad_4c &= ~4u;
+    }
+    pad_50 = 0;
+    if (!(pad_4c & 8)) {
+        return false;
+    }
+    if (pad_4c & 1) {
+        pad_50 = 1;
+    } else if (pad_4c & 2) {
+        pad_50 = 2;
+    } else if (pad_4c & 4) {
+        pad_50 = 3;
+    } else {
+        return false;
+    }
+    return true;
+}
+
 bool CamFree::OnKeyUp(ml::EventView* view) {
     if (!(view->pad_28 & 1)) {
         return false;
@@ -289,6 +348,61 @@ bool CamFree::OnKeyUp(ml::EventView* view) {
     pad_4c &= ~8u;
     pad_50 = 0.0f;
     return true;
+}
+
+bool CamFree::OnKeyDown(ml::EventView* view) {
+    if (view->pad_28 & 1) {
+        pad_4c |= 8;
+    }
+    if (view->pad_2c & 1) {
+        switch (view->pad_33) {
+        case 0x25: {
+            float fov = pad_30 - 0.5f;
+            if (fov < 5.0f) {
+                fov = 5.0f;
+            } else if (fov > 120.0f) {
+                fov = 120.0f;
+            }
+            pad_30 = fov;
+            break;
+        }
+        case 0x26:
+            ctrlDolly(mm::Pnt<int>(0, 8));
+            break;
+        case 0x27: {
+            float fov = pad_30 + 0.5f;
+            if (fov < 5.0f) {
+                fov = 5.0f;
+            } else if (fov > 120.0f) {
+                fov = 120.0f;
+            }
+            pad_30 = fov;
+            break;
+        }
+        case 0x28:
+            ctrlDolly(mm::Pnt<int>(0, -8));
+            break;
+        case 0x81:
+            pad_34 += -0.017453292f;
+            break;
+        case 0x82:
+            moveScreen(mm::Pnt<int>(0, -8));
+            break;
+        case 0x83:
+            pad_34 += 0.017453292f;
+            break;
+        case 0x84:
+            moveScreen(mm::Pnt<int>(8, 0));
+            break;
+        case 0x86:
+            moveScreen(mm::Pnt<int>(-8, 0));
+            break;
+        case 0x88:
+            moveScreen(mm::Pnt<int>(0, 8));
+            break;
+        }
+    }
+    return false;
 }
 
 void CamField::update(const event::FrameInfo&) {}
@@ -4896,6 +5010,12 @@ void FrameManager::tail() {
     pad_10.reset(8);
 }
 
+void FrameManager::pauseClearAll() {
+    for (unsigned int i = 0; i < 22; i++) {
+        pause(static_cast<PAUSE_TYPE>(i), false);
+    }
+}
+
 void FrameManager::addKeyFrame(float frame, bool flag) {
     KeyFrame key = {frame, flag};
     if (!m_keyFrames.empty() && !(key.frame > m_keyFrames.back().frame)) {
@@ -5912,6 +6032,97 @@ void RandManager::OnEventProc(event::MSG_TYPE msg) {
     case 14:
         update();
         break;
+    }
+}
+
+void FrameManager::pause(PAUSE_TYPE type, bool enable) {
+    unsigned int bit = 1 << type;
+    if (((pad_18 & bit) != 0) == enable) {
+        return;
+    }
+    gf::GF_PAUSE_HANDLE*& handle = pad_20[type];
+    if (handle != reinterpret_cast<gf::GF_PAUSE_HANDLE*>(-1)) {
+        gf::GfPause::destroyHandle(handle);
+        handle = reinterpret_cast<gf::GF_PAUSE_HANDLE*>(-1);
+    }
+    if (enable) {
+        switch (type) {
+        case 1:
+            handle = gf::GfPause::reqPause(0x28d);
+            break;
+        case 3:
+            handle = gf::GfPause::reqPause(0x81);
+            break;
+        case 12:
+        case 21:
+            handle = gf::GfPause::reqPause(0x8d);
+            break;
+        case 19:
+        case 20:
+            if (pad_14 & 0x10) {
+                handle = gf::GfPause::reqPause(0x8d);
+            }
+            break;
+        default:
+            break;
+        }
+        pad_18 |= bit;
+    } else {
+        pad_18 &= ~bit;
+    }
+    mm::mtl::Singleton<CsSndManager>::getPtr()->pause((pad_18 & 0x3c1002) != 0);
+    VoiceManager* voice = mm::mtl::Singleton<VoiceManager>::getPtr();
+    bool voicePause = (pad_18 & 0x3c100a) != 0;
+    if (voicePause) {
+        voice->pad_10 |= 4;
+    } else {
+        voice->pad_10 &= ~4u;
+    }
+    voice->m_player.pause(voicePause);
+    if (voicePause != (voice->m_oneShoter.pad_8 & 1)) {
+        for (unsigned int i = 0; i < voice->m_oneShoter.m_handles.size(); i++) {
+            mm::mtl::PtrSingleton<fw::SoundManager>::sys()->pause(*voice->m_oneShoter.m_handles.at(i), voicePause, 0.0f);
+        }
+        if (voicePause) {
+            voice->m_oneShoter.pad_8 |= 1;
+        } else {
+            voice->m_oneShoter.pad_8 &= ~1u;
+        }
+    }
+    if (mm::mtl::Singleton<MovieManager>::getPtr()->pad_10 & 4) {
+        bool moviePause = (pad_18 & 0x38300a) != 0;
+        gf::GfMovieManager* movie = mm::mtl::PtrSingleton<gf::GfMovieManager>::sys();
+        bool paused = movie->ispause();
+        if (moviePause) {
+            if (!paused) {
+                mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->pause();
+            }
+        } else if (paused) {
+            mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->play();
+        }
+    }
+    // CpuManager's pause bit 1 follows whether any type is set; leaving it moves the start on by the paused time
+    CpuManager* cpu = mm::mtl::Singleton<CpuManager>::getPtr();
+    bool on = pad_18 != 0;
+    if (cpu->m_flags & 1) {
+        bool paused = (cpu->m_flags & 6) != 0;
+        cpu->m_flags = !on ? cpu->m_flags & ~2u : cpu->m_flags | 2;
+        bool now = (cpu->m_flags & 6) != 0;
+        if (paused != now) {
+            float frame = cpu->calcCpuFrame();
+            if (now) {
+                cpu->m_pauseFrame = frame;
+            } else {
+                cpu->m_startFrame = fmaxf(cpu->m_startFrame + (frame - cpu->m_pauseFrame), 0.0f);
+            }
+        }
+    }
+    if (type == 1) {
+        if (enable) {
+            pad_10.set(10);
+        } else {
+            pad_10.set(11);
+        }
     }
 }
 
