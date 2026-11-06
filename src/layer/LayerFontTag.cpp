@@ -27,6 +27,24 @@
 
 namespace layer {
 
+LayerFontDrawBuffer::Work* LayerFontDrawBuffer::createChar(const unsigned char* text) {
+    LayerTagWork work = {};
+    m_isCreate = false;
+    m_work = &work;
+    calcParseString(text);
+    unsigned int length = 0;
+    for (unsigned long i = 0; i < 10000 && text[i] != 0; i++) {
+        length++;
+    }
+    work.m_length = length;
+    work.m_bufferLength = length;
+    createWorkBuffer(work, text);
+    m_isCreate = true;
+    calcParseString(text);
+    endWorkSetup();
+    return m_buffer;
+}
+
 // not identical yet (4 words): the second m_styleData->m_flags & 2 read is scheduled after the tex load, the
 // original's after the cellWidth load. Kept as the key function: it emits LayerFontDrawBuffer's table
 void LayerFontDrawBuffer::createFontCode(unsigned short code) {
@@ -109,6 +127,77 @@ void LayerFontDrawBuffer::createFontCode(unsigned short code) {
     }
 }
 
+inline void LayerFontIconObj::getFontUvParms(float* parms, unsigned short code) const {
+    if (m_uvHead != nullptr) {
+        unsigned int index = m_uvNum <= code ? 0 : code;
+        const LayerFontIconUvData* data =
+            reinterpret_cast<const LayerFontIconUvData*>(reinterpret_cast<const unsigned char*>(m_uvHead) +
+                                                         m_uvHead->m_dataOffset) +
+            index;
+        parms[0] = m_texHeight * data->m_scale[0];
+        parms[1] = m_cellHeight * data->m_scale[1];
+        parms[2] = data->m_uv[0];
+        parms[3] = data->m_uv[1];
+        parms[4] = data->m_uv[2];
+        parms[5] = data->m_uv[3];
+    } else {
+        parms[0] = m_texHeight;
+        parms[1] = m_cellHeight;
+        parms[2] = 1.0f;
+        parms[3] = 1.0f;
+        parms[4] = 0.0f;
+        parms[5] = 0.0f;
+    }
+}
+
+void LayerFontDrawBuffer::createFontIcon(unsigned short code) {
+    if (m_iconObj != nullptr && m_lineNum < m_styleData->m_lineNumMax) {
+        const LayerFontResObj::TexInfo* tex = m_resObj->m_texInfo;
+        float parms[6];
+        m_iconObj->getFontUvParms(parms, code);
+        Vertex* vertex = m_rubyVertex;
+        float size[2];
+        size[0] = parms[0] * m_styleData->m_offsetY;
+        size[1] = parms[1] * m_styleData->m_offsetY;
+        vertex->m_width = size[0];
+        vertex->m_height = size[1];
+        vertex->m_x = m_pos[0];
+        vertex->m_y = m_pos[1];
+        if (m_setting == 0) {
+            vertex->m_y += (((float)tex->m_cellHeight - m_resObj->m_borderWidth) * m_styleData->m_offsetY - parms[1]) * 0.5f;
+        } else {
+            vertex->m_x += (((float)tex->m_cellWidth - m_resObj->m_borderWidth) * m_styleData->m_offsetY - parms[0]) * 0.5f;
+        }
+        vertex->m_uvWidth = parms[2];
+        vertex->m_uvHeight = parms[3];
+        vertex->m_u = parms[4];
+        vertex->m_v = parms[5];
+        unsigned char* color = m_rubyVertex->m_color;
+        color[0] = (int)(m_color.r * 255.0f);
+        color[1] = (int)(m_color.g * 255.0f);
+        color[2] = (int)(m_color.b * 255.0f);
+        color[3] = (int)(m_color.a * 255.0f);
+        const LyrFontStyleData* style = m_styleData;
+        if (style->m_lineWidthMax >= m_pos[m_axis] + (int)size[m_axis]) {
+            m_pos[m_axis] += (int)size[m_axis] + style->m_charSpace;
+            if (m_maxSize[m_axis] < m_pos[m_axis]) {
+                m_maxSize[m_axis] = m_pos[m_axis];
+            }
+            int cross = m_pos[m_crossAxis] + (int)size[m_crossAxis] + style->m_lineSpace;
+            if (m_maxSize[m_crossAxis] < cross) {
+                m_maxSize[m_crossAxis] = cross;
+            }
+            m_buffer->m_lines[m_lineNum].m_main.m_width = m_pos[m_axis];
+            if (m_buffer->m_lines[m_lineNum].m_ruby.m_first == -1) {
+                m_buffer->m_lines[m_lineNum].m_ruby.m_first = m_iconIndex;
+            }
+            m_buffer->m_lines[m_lineNum].m_ruby.m_last = m_iconIndex;
+            m_rubyVertex++;
+            m_iconIndex++;
+        }
+    }
+}
+
 LayerFontManager::~LayerFontManager() { allRelease(); }
 
 LayerBase* LayerFontManager::createFontResObj(const void* data) {
@@ -154,6 +243,25 @@ void LayerFontIconObj::setupResource() {
 void LayerFontIconObj::release() {
     m_state = 0x22;
     m_releaseFlags |= 1 << LayerManager::s_nStkIdx;
+}
+
+void LayerFontIconObj::getFontUvOnlyParms(float* uv, unsigned short code) const {
+    if (m_uvHead != nullptr) {
+        unsigned int index = m_uvNum <= code ? 0 : code;
+        const LayerFontIconUvData* data =
+            reinterpret_cast<const LayerFontIconUvData*>(reinterpret_cast<const unsigned char*>(m_uvHead) +
+                                                         m_uvHead->m_dataOffset) +
+            index;
+        uv[0] = data->m_uv[0];
+        uv[1] = data->m_uv[1];
+        uv[2] = data->m_uv[2];
+        uv[3] = data->m_uv[3];
+    } else {
+        uv[0] = 1.0f;
+        uv[1] = 1.0f;
+        uv[2] = 0.0f;
+        uv[3] = 0.0f;
+    }
 }
 
 LayerFontResObj::~LayerFontResObj() {

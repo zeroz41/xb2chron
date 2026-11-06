@@ -17,7 +17,7 @@ struct LayerFontIconUvHead {
     unsigned int m_dataOffset;  // 0x18
 };
 struct LayerFontIconUvData {
-    unsigned char pad_0[0x8];
+    float m_scale[2];  // 0x0: createFontIcon scales the icon's width (m_texHeight) and height (m_cellHeight) by them
     float m_uv[4];  // 0x8: getFontUvOnlyParms copies them
     unsigned char pad_18[0x4];
 };
@@ -68,6 +68,8 @@ public:
     virtual void setupResource();  // slot 3
     // the four UV values of icon code (the first record's past the table's end; 1, 1, 0, 0 without a table)
     void getFontUvOnlyParms(float* uv, unsigned short code) const;
+    // 1.0.0's (inline in 3.0.1's LayerFontDrawBuffer::createFontIcon): the icon's width, height, then its 4 UVs
+    void getFontUvParms(float* parms, unsigned short code) const;
     // 2.0.0's (inline in 3.0.1): reads m_data's sizes, texture and UV table
     void createIconRes() {
         const LayerFontIconResHead* head = reinterpret_cast<const LayerFontIconResHead*>(m_data);

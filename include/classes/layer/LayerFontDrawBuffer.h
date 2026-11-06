@@ -56,7 +56,7 @@ public:
     Work* m_buffer;  // 0x4B0: what createChar returns
     LayerObjFont* m_obj;  // 0x4B8: the constructor's
     int m_charIndex;  // 0x4C0: the next character's index
-    unsigned char pad_4C4[0x4];
+    int m_iconIndex;  // 0x4C4: the next icon's index (createFontIcon; its vertices go to m_rubyVertex)
     int m_maxSize[2];  // 0x4C8: the furthest m_pos reached
 };
 }  // namespace layer
