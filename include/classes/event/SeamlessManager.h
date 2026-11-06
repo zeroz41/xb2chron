@@ -18,6 +18,13 @@ public:
     SeamlessManager();  // out of line (Singleton<SeamlessManager>::getPtr calls it)
     void addFirstSeamPoint(const char* name, const PosAxis& pos);
     void addSeamPoint(float frame, const PosAxis& pos);  // the parameter name is not the original's
+    // 1.0.0 has these out of line under these names
+    void update();
+    void render();
+    void readFirstSeamPoint(const char* name);
+    void readNextSeamPoint(const char* name);
+    // 1.0.0 has it out of line (event::SeamlessManager::clear); 3.0.1 keeps only OnEventProc's inlined copy
+    inline void clear();
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // fields the constructor initializes; what they hold is not known yet
     // 1.0.0's FirstKey (its constructor is symbol-named): a FixStr<16> name, a PosAxis, a Vec3
@@ -34,16 +41,21 @@ public:
         mm::Vec3 m_pos;  // 0x10
     };
 
-    long pad_10;
+    // bit 0: a first seam point is read (m_firstPos), bit 1: m_pos follows m_keys, bit 2: the renderer's seam map
+    // add-position mode is on; clear() zeroes it (the name is not the original's)
+    unsigned int m_flags;  // 0x10
+    unsigned int m_dispFlags;  // 0x14 bit 0: 1.0.0's setDisp(bool), render needs it (the name is not the original's)
     unsigned char pad_18[0x8];
     // addFirstSeamPoint's entries; the name is not the original's
     mm::mtl::FixedVector<FirstKey, 16> m_firstKeys;  // 0x20 (count at 0x520)
     // (the 16-aligned vector ends at 0x530)
-    unsigned char pad_530[0x10];
+    // the position read*SeamPoint passes to the renderer's seam map (the name is not the original's)
+    mm::Vec3 m_firstPos;  // 0x530
     // addSeamPoint's entries, kept in frame order; the name is not the original's
     mm::mtl::FixedVector<Key, 256> m_keys;  // 0x540 (count at 0x2540)
     // (the 16-aligned vector ends at 0x2550)
-    unsigned char pad_2550[0x10];
+    // the first key's position update passes to the renderer's seam map (the name is not the original's)
+    mm::Vec3 m_pos;  // 0x2550
 };
 }  // namespace event
 

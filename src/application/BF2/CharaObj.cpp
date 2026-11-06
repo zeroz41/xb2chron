@@ -5703,7 +5703,100 @@ void LightManager::loadResource(const char* name) {
     mm::mtl::Singleton<ResManager>::getPtr()->load(mm::mtl::Singleton<Extend>::getPtr()->lgt(name), nullptr, true);
 }
 
-SeamlessManager::SeamlessManager() : pad_10(0), m_firstKeys(), m_keys() {}
+SeamlessManager::SeamlessManager() : m_flags(0), m_dispFlags(0), m_firstKeys(), m_keys() {}
+
+void SeamlessManager::update() {
+    if (m_keys.empty()) {
+        return;
+    }
+    const FrameInfo& info = mm::mtl::Singleton<FrameManager>::getPtr()->frameInfo();
+    if (m_keys.empty()) {
+        return;
+    }
+    while (m_keys.begin()->m_frame + 5.0f <= info.pad_0) {
+        m_keys.erase(m_keys.begin());
+        m_flags &= ~2;
+        if (m_keys.empty()) {
+            return;
+        }
+    }
+    m_pos = m_keys.begin()->m_pos;
+    m_flags = (m_flags & ~3) | 2;
+    ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+    acc.setSeamMapAddPosMode(true);
+    acc.setSeamMapReadPos(m_pos);
+    m_flags |= 4;
+}
+
+void SeamlessManager::render() {
+    if (!(m_dispFlags & 1) || !(m_flags & 3)) {
+        return;
+    }
+    int x = ml::DevGraph::getRootWidth() - 415;
+    fw::debug::drawSquare2D(mm::Rect<int>(x, 120, 225, 40), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+    fw::debug::drawLineSquare2D(mm::Rect<int>(x, 120, 225, 40), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    if (m_flags & 1) {
+        fw::debug::drawFont(x + 5, 125, "SEAMLESS(FIRST)");
+    } else {
+        fw::debug::drawFont(x + 5, 125, "SEAMLESS");
+    }
+    fw::debug::drawFont(x + 10, 140, "pos:");
+    if (m_flags & 1) {
+        fw::debug::drawFont(x + 50, 140, "%.2f %.2f %.2f", m_firstPos.x, m_firstPos.y, m_firstPos.z);
+    } else {
+        fw::debug::drawFont(x + 50, 140, "%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
+    }
+}
+
+SeamlessManager::FirstKey::FirstKey(const char* name, const PosAxis& pos, const mm::Vec3& value) {
+    m_name = name;
+    m_pos = pos;
+    m_value = value;
+}
+
+void SeamlessManager::addSeamPoint(float frame, const PosAxis& pos) {
+    if (!m_keys.empty()) {
+        if (frame <= m_keys.begin()->m_frame) {
+            m_keys.clear();
+        } else if (m_keys.size() >= m_keys.capacity()) {
+            m_keys.erase(m_keys.begin());
+        }
+    }
+    Key key;
+    key.m_frame = frame;
+    key.m_pos =
+        mm::mtl::Singleton<DataManager>::getPtr()->axis2pos(pos.m_type, pos.m_value.x, pos.m_value.y, pos.m_value.z);
+    m_keys.push_back(key);
+}
+
+// 1.0.0 has it out of line (event::SeamlessManager::clear); 3.0.1 keeps only OnEventProc's inlined copy
+inline void SeamlessManager::clear() {
+    if (m_flags & 4) {
+        ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+        acc.setSeamMapAddPosMode(false);
+        m_flags &= ~4;
+    }
+    m_keys.clear();
+    m_firstKeys.clear();
+    m_flags = 0;
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void SeamlessManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+    case 12:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    case 16:
+        render();
+        break;
+    }
+}
 
 SeamlessManager::~SeamlessManager() {}
 
