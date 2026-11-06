@@ -25,6 +25,7 @@ public:
     static const Col3 red;
     static const Col3 green;
     static const Col3 blue;
+    static const Col3 orange;
 
     float r;
     float g;

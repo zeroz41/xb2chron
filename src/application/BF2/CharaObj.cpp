@@ -110,6 +110,11 @@
 #include "classes/gf/GfComModel.h"
 #include "classes/fw/ModelObject.h"
 #include "ml/ScnObjAccResMdlInfo.h"
+#include "classes/gf/GfComProperty.h"
+#include "classes/gf/GfComEffectCaster.h"
+#include "ml/ScnObjAccVolumeFade.h"
+#include "classes/fw/EffectManager.h"
+#include "mm/Math.h"
 #include "classes/event/RandPlayer/Warp.h"
 #include "classes/event/RandPlayer/Wait.h"
 #include "classes/event/RandUtil.h"
@@ -2485,6 +2490,184 @@ void CharaEffectPlayer::stopAfterImage() {
         }
         m_flags &= ~8;
     }
+}
+
+void CharaEffectPlayer::stopRimBloom() {
+    if (m_handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) || !(m_flags & 4)) {
+        return;
+    }
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    gf::GfComProperty* property = obj != nullptr ? obj->getComponent<gf::GfComProperty>(5) : nullptr;
+    gf::GfComEffectCaster* caster = obj != nullptr ? obj->getComponent<gf::GfComEffectCaster>(7) : nullptr;
+    fw::Message msg(0x1000057, 0x80);
+    if (property != nullptr && caster != nullptr) {
+        gf::GfObj* owner = static_cast<gf::GfObj*>(property->m_owner);
+        caster->recieveMessage(owner, msg);
+    }
+    m_rimBloom = 0;
+    m_flags &= ~4;
+}
+
+void CharaEffectPlayer::stopVolumeFade(VF_TYPE type) {
+    if (m_handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    unsigned int bit = type == 1 ? 2 : 1;
+    if (m_flags & bit) {
+        gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+        if (obj != nullptr) {
+            if (gf::GfComModel* model = obj->getComponent<gf::GfComModel>(1)) {
+                ml::ScnObjAccVolumeFade fade(model->m_model->getInterface());
+                fade.setRatio(0.0f, m_fadeIndices[type]);
+            }
+        }
+        m_flags &= ~bit;
+    }
+    m_anm[type].clear();
+    m_flags &= ~(type == 1 ? 0x20 : 0x10);
+}
+
+void CharaEffectPlayer::updateVolumeFadeAnim(VF_TYPE type, float step) {
+    AnmF32& anm = m_anm[type];
+    anm.update(step);
+    m_fadeRatios[type] = anm.m_value;
+    if (!anm.isPlaying()) {
+        m_flags &= ~(type == 1 ? 0x20 : 0x10);
+    }
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    gf::GfComModel* model = obj->getComponent<gf::GfComModel>(1);
+    ml::VolumeFadeParams params;
+    if (fw::EffectManager::sys()->getVolumeFadeParam(m_fadeIds[type], params)) {
+        params.m_color0 = m_fadeColors0[type];
+        params.m_color1 = m_fadeColors1[type];
+        params.m_value0 = m_fadeValues0[type];
+        params.m_value1 = m_fadeValues1[type];
+        if (model != nullptr) {
+            ml::ScnObjAccVolumeFade fade(model->m_model->getInterface());
+            fade.setParams(params, m_fadeIndices[type]);
+            fade.setRatio(m_fadeRatios[type], m_fadeIndices[type]);
+        }
+    }
+}
+
+void CharaEffectPlayer::playVolumeFade(VF_TYPE type, int id, const mm::Vec3& color0, const mm::Vec3& color1,
+                                       float value0, float value1, int index, float ratio) {
+    unsigned int bit = type == 1 ? 2 : 1;
+    if ((m_flags & bit) && m_fadeIds[type] == id && m_fadeColors0[type].isEqual(color0) &&
+        m_fadeColors1[type].isEqual(color1) && m_fadeValues0[type] == value0 && m_fadeValues1[type] == value1 &&
+        m_fadeIndices[type] == index && m_fadeRatios[type] == ratio) {
+        return;
+    }
+    if (m_handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    if (!(mm::mtl::Singleton<CharaManager>::getPtr()->getModeFlags() & 1)) {
+        gf::GfObjAcc acc(m_handle);
+        mm::mtl::Singleton<DebugManager>::getPtr()->playMessage("volumeFade %s %d", acc.getDebugName(), id);
+    }
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    gf::GfComModel* model = obj->getComponent<gf::GfComModel>(1);
+    ml::VolumeFadeParams params;
+    if (fw::EffectManager::sys()->getVolumeFadeParam(id, params)) {
+        mm::clampSelf(value1, 0.0f, 1.0f);
+        params.m_color0 = color0;
+        params.m_color1 = color1;
+        params.m_value0 = value0;
+        params.m_value1 = value1;
+        if (model != nullptr) {
+            ml::ScnObjAccVolumeFade fade(model->m_model->getInterface());
+            int max = fade.getMax();
+            mm::clampSelf(index, -1, fade.getMax() - 1);
+            mm::clampSelf(ratio, 0.0f, 1.0f);
+            fade.setParams(params, index);
+            fade.setRatio(ratio, index);
+        }
+        m_fadeIds[type] = id;
+        m_fadeColors0[type] = color0;
+        m_fadeColors1[type] = color1;
+        m_fadeValues0[type] = value0;
+        m_fadeValues1[type] = value1;
+        m_fadeIndices[type] = index;
+        m_fadeRatios[type] = ratio;
+        m_flags |= bit;
+    }
+}
+
+void CharaEffectPlayer::playVolumeFadeAnim(VF_TYPE type, float ratio, float frame) {
+    unsigned int bit = type == 1 ? 2 : 1;
+    if ((m_flags & bit) && m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        AnmF32& anm = m_anm[type];
+        anm.clear();
+        anm.append(0.0f, m_fadeRatios[type], CV_TYPE(1));
+        anm.append(frame, ratio, CV_TYPE(1));
+        m_flags |= type == 1 ? 0x20 : 0x10;
+    }
+}
+
+void CharaEffectPlayer::playRimBloom(int type) {
+    if ((m_flags & 4) && m_rimBloom == type) {
+        return;
+    }
+    if (m_handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    gf::GfObjAcc acc(m_handle);
+    mm::mtl::Singleton<DebugManager>::getPtr()->playMessage("rimBloom %s %d", acc.getDebugName(), type);
+    stopRimBloom();
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    gf::GfComProperty* property = obj != nullptr ? obj->getComponent<gf::GfComProperty>(5) : nullptr;
+    gf::GfComEffectCaster* caster = obj != nullptr ? obj->getComponent<gf::GfComEffectCaster>(7) : nullptr;
+    RimBloomMessage msg;
+    msg.m_type = type;
+    if (property != nullptr && caster != nullptr) {
+        gf::GfObj* owner = static_cast<gf::GfObj*>(property->m_owner);
+        caster->recieveMessage(owner, msg);
+    }
+    m_rimBloom = type;
+    m_flags |= 4;
+}
+
+void CharaEffectPlayer::playAfterImage(int src, int dst, float param0, float param1, float param2) {
+    if ((m_flags & 8) && m_afterImageSrc == src && m_afterImageDst == dst && m_afterImageParams[0] == param0 &&
+        m_afterImageParams[1] == param1 && m_afterImageParams[2] == param2) {
+        return;
+    }
+    if (m_handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    gf::GfObjAcc acc(m_handle);
+    mm::mtl::Singleton<DebugManager>::getPtr()->playMessage("afterImage %s %d %d", acc.getDebugName(), src, dst);
+    stopAfterImage();
+    // the defaults getAfterImageParams starts from (orange trails)
+    ml::DrMdlAfterImageParams params;
+    params.m_params0[0] = 4.0f;
+    params.m_params0[1] = 12.0f;
+    params.m_params0[2] = 0.95f;
+    params.m_color0 = mm::Col3::orange;
+    params.m_params1[2] = 0.0f;
+    params.m_params1[0] = 0.3f;
+    params.m_params1[1] = 0.0f;
+    params.m_color1 = mm::Col3::orange;
+    params.m_params2[2] = 0.0f;
+    params.m_params2[0] = 0.3f;
+    params.m_params2[1] = 0.0f;
+    fw::EffectManager::sys()->getAfterImageParams(src, dst, params);
+    params.m_params0[0] = param0;
+    params.m_params0[1] = param1;
+    params.m_params0[2] = param2;
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    if (obj != nullptr) {
+        if (gf::GfComModel* model = obj->getComponent<gf::GfComModel>(1)) {
+            ml::ScnObjAccResMdlInfo info(model->m_model->getInterface());
+            info.createAfterImage(params);
+        }
+    }
+    m_afterImageSrc = src;
+    m_afterImageDst = dst;
+    m_afterImageParams[0] = param0;
+    m_afterImageParams[1] = param1;
+    m_afterImageParams[2] = param2;
+    m_flags |= 8;
 }
 
 CharaEffectPlayer::~CharaEffectPlayer() {}

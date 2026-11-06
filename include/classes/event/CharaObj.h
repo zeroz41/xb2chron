@@ -179,7 +179,6 @@ public:
     unsigned char pad_e00[0x590];
     // playVolumeFade/playRimBloom and their stops forward to it; the name is not the original's
     CharaEffectPlayer m_effectPlayer;  // 0x1390
-    unsigned char pad_1630[0x20];
     // setExtDisp/setExtParam forward to it and tail runs its updateRequest; the name is not the original's
     CharaPartUpdater m_partUpdater;  // 0x1650
     unsigned char pad_1658[0xd8];

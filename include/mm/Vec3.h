@@ -68,6 +68,10 @@ public:
         value.f = f;
         return value.bits != 0xCCCCCCCC && (value.bits & 0x7F800000) != 0x7F800000;
     }
+    // each component within 1e-6 of other's (as Col3::isEqual; inline, so the name is not the original's)
+    bool isEqual(const Vec3& other) const {
+        return ::fabsf(other.x - x) <= 1e-6f && ::fabsf(other.y - y) <= 1e-6f && ::fabsf(other.z - z) <= 1e-6f;
+    }
     bool isZero() const { return ::fabsf(x) <= 1e-6f && ::fabsf(y) <= 1e-6f && ::fabsf(z) <= 1e-6f; }
     // to length 1; one too short for that becomes zero
     void normalize() {
