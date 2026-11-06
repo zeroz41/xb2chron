@@ -5689,9 +5689,9 @@ void DrResMdoSeamWrkLow::release() {
         instans->~CGLibVtxInstans();
         m_instans = nullptr;
     }
-    if (m_buf != nullptr) {
-        mtl::MemManager::deallocate(m_buf, 0, false);
-        m_buf = nullptr;
+    if (m_matRes != nullptr) {
+        mtl::MemManager::deallocate(m_matRes, 0, false);
+        m_matRes = nullptr;
     }
     if (m_buf2 != nullptr) {
         mtl::MemManager::deallocate(m_buf2, 0, false);

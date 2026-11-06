@@ -54,6 +54,12 @@ public:
     void shwShd_Obj(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list);
     void shwShd_Inst(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list);
     void shwShd_InstT(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list);
+    void shwShd_ObjT(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list);
+    void shwShd_InstMot(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list);
+    // matIdx indexes the model's flag wave blocks (MdoFlagWaveRes::m_pData)
+    void shwShd_Fw(int shd, const MdsMatInfoHeader* info, int triIdx, int matIdx, DrShdDataList* list);
+    void shwShd_Spt_Inst(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list);
+    void shwShd_Spt_InstT(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list);
 
     static const unsigned char s_pShwUseShdader[30];  // DrShdDataList::getShwObj index
     static const unsigned char s_pShwFethcDef[30];    // DrShdDataList::getFetchShader index

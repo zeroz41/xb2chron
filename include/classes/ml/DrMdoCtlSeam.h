@@ -35,6 +35,15 @@ class DrResMdoSortSeamAll;
 class DrResMdoSortSeamEnvMap;
 class DrResMdoPosAddList;
 
+// One entry of the seam map's low model table (MapHead::m_lowMdlTblOfs), 0x48 bytes; the type name is from
+// DrResMdoSeamWrkLow::setupWork's symbol, the field names are not the original's.
+struct MdsSeamLowData {
+    unsigned char pad_0[0x28];
+    unsigned int m_ofs;   // 0x28 (callLowMdlStream)
+    unsigned int m_size;  // 0x2C: the bytes callLowMdlStream reads; DrMdoCtlSeamLowMap::initLowMapParts counts them in
+    unsigned char pad_30[0x18];
+};
+
 // table 0x7100B7BA10
 class DrMdoCtlSeam : public ::ml::DrMdlObj {
 public:
@@ -88,12 +97,6 @@ public:
             unsigned char pad_0[0x34];
             unsigned int m_ofs;   // 0x34
             unsigned int m_size;  // 0x38
-        };
-        struct LowEntry {
-            unsigned char pad_0[0x28];
-            unsigned int m_ofs;   // 0x28
-            unsigned int m_size;  // 0x2C
-            unsigned char pad_30[0x18];
         };
         struct TexSize {
             unsigned int m_ofs;  // 0x0: where the image starts (callTexutreStream)
@@ -222,7 +225,11 @@ public:
     unsigned char pad_B58[0x8];
     // 0xB60: a second bit per base map table entry, cleared by releaseFreeSeamBase (the name is not the original's)
     unsigned int* m_pBaseSubBits;
-    unsigned char pad_B68[0x18];
+    unsigned char pad_B68[0x8];
+    // 0xB70: a bit per low map table entry, cleared by DrMdoCtlSeamLowMap::releaseFreeSeamLow (the name is not the
+    // original's)
+    unsigned int* m_pLowBits;
+    unsigned char pad_B78[0x8];
     // 0xB80: a bit per inst map table entry, cleared by DrMdoCtlSeamInstMap::releaseFreeSeamInst (the name is not
     // the original's)
     unsigned int* m_pInstBits;
@@ -240,7 +247,8 @@ public:
     // 0xC00: the base maps in use; initBaseMapParts counts them up, releaseFreeSeamBase down (the name is not the
     // original's)
     short m_baseNum;
-    unsigned char pad_C02[0x2];
+    // 0xC02: the low maps in use; releaseFreeSeamLow counts them down (the name is not the original's)
+    short m_lowNum;
     // 0xC04: the inst maps in use; releaseFreeSeamInst counts them down (the name is not the original's)
     short m_instNum;
     unsigned short m_mpfNum;         // 0xC06: waitMpfMdlStream counts the mpf models in

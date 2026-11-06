@@ -17,6 +17,7 @@
 #include "ml/DrEnvColiObj.h"
 #include "ml/DrCalcClipObj.h"
 #include "ml/DrResEtcTexList.h"
+#include "ml/DrResEtcUniformObj.h"
 #include "ml/DrCalcClipMan.h"
 #include "ml/DrGlobalIBLMan.h"
 #include "classes/ml/DrMdoMat.h"
@@ -1779,6 +1780,16 @@ int DrMdoCtlMpfWork::getObjChk(int idx) {
     return m_pObjWork[idx].m_objChk;
 }
 
+void DrMdoCtlMpfWork::createAutoList(int idx, DrCalcViewWork* view, grlib::CGLibVtxInstans* inst) {
+    _wkMpfObjSelect* sel = &m_pObjWork[idx];
+    float range = m_pObjData[idx].m_range * 0.01f;
+    if (sel->m_selFlags & 1) {
+        createAutoMdlRenderList(sel, view, inst, range, m_ppObjBuff[idx], m_ppAlphaObjBuff[idx]);
+    } else {
+        createAutoBillRenderList(sel, view, inst, range, m_ppObjBuff[idx], m_ppAlphaObjBuff[idx]);
+    }
+}
+
 void DrMdoCtlMpfInst::setupInstMpf(const unsigned char* data) {
     m_pInstData = reinterpret_cast<const MdsMpfObjData*>(data + reinterpret_cast<const ResHeader*>(data)->m_instOfs);
 }
@@ -3527,6 +3538,80 @@ void DrMdoCtlSeamInstMap::releaseFreeSeamInst(DrResMdoSeamWrkInst* wrk) {
     }
 }
 
+void DrMdoCtlSeamLowMap::initLowMapParts(DrResMdoSeamWrkLow* wrk) {
+    const MdsSeamLowMapHead* head = reinterpret_cast<const MdsSeamLowMapHead*>(wrk->m_memObj->m_pData);
+    const unsigned char* data = reinterpret_cast<const unsigned char*>(head);
+    MdoWrkMatRes* matRes = nullptr;
+    initBaseMapMaterial(matRes, data + head->m_dataOfs[1], data + head->m_dataOfs[0], data + head->m_matOfs[0],
+                        data + head->m_matOfs[2], data + head->m_matOfs[1], 0);
+    m_pWrkMatRes = matRes;
+    if (head->m_dataOfs[2] != 0) {
+        const unsigned char* blockData = data + head->m_dataOfs[2];
+        const MdsSeamInstMatBlock* block = reinterpret_cast<const MdsSeamInstMatBlock*>(blockData);
+        m_pWrkMatRes->m_pSeamMatBlock = blockData;
+        m_pWrkMatRes->m_pFixAnmInf = reinterpret_cast<const MdsFixAnmInf*>(m_pWrkMatRes->m_pSeamMatBlock + block->m_ofs0);
+        m_pWrkMatRes->m_pFixAnmKey = reinterpret_cast<const MdsFixAnmKey*>(m_pWrkMatRes->m_pSeamMatBlock + block->m_ofs1);
+        m_pWrkMatRes->m_pSeamMatData = m_pWrkMatRes->m_pSeamMatBlock + block->m_ofs2;
+    }
+    const MdsSeamLowData* tbl = reinterpret_cast<const MdsSeamLowData*>(
+        reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_lowMdlTblOfs);
+    const MdsSeamLowData* entry = &tbl[wrk->m_dataIdx];
+    m_lowMemSize += entry->m_size;
+    wrk->setupWork(matRes, m_triUniformArray, m_pDrMan->m_allocHandle, head, entry, 500);
+    unsigned int idx = wrk->m_dataIdx;
+    m_pLowBits[idx >> 5] |= 1 << (idx & 0x1F);
+    m_lowNum++;
+}
+
+void DrMdoCtlSeamLowMap::releaseFreeSeamLow(DrResMdoSeamWrkLow* wrk) {
+    DrResMdoSeamMemObj* memObj = wrk->m_memObj;
+    if (wrk->m_matRes != nullptr) {
+        unsigned int idx = wrk->m_dataIdx;
+        m_pLowBits[idx >> 5] &= ~(1 << (idx & 0x1F));
+        m_lowMemSize -= wrk->m_readSize;
+        releaseBaseMapSeamMat(wrk->m_matRes);
+        wrk->release();
+        m_lowNum--;
+    }
+    DrResMdoSeamWrkLow* after = wrk->m_prev;
+    DrResMdoSeamWrkLow* before = wrk->m_next;
+    if (after == nullptr) {
+        if (before != nullptr) {
+            before->m_prev = nullptr;
+        }
+    } else {
+        if (before != nullptr) {
+            before->m_prev = after;
+        }
+        after->m_next = before;
+    }
+    if (m_lowPool.m_usedTail == wrk) {
+        m_lowPool.m_usedTail = before;
+    }
+    if (m_lowPool.m_list == wrk) {
+        m_lowPool.m_list = after;
+        if (after != nullptr) {
+            after->m_next = nullptr;
+        }
+    }
+    if (m_lowPool.m_freeTail == nullptr) {
+        m_lowPool.m_freeHead = wrk;
+        m_lowPool.m_freeTail = wrk;
+        wrk->m_next = nullptr;
+    } else {
+        m_lowPool.m_freeTail->m_prev = wrk;
+        wrk->m_next = m_lowPool.m_freeTail;
+        m_lowPool.m_freeTail = wrk;
+    }
+    wrk->m_prev = nullptr;
+    m_lowPool.m_freeNum++;
+    m_lowPool.m_usedNum--;
+    if (memObj != nullptr) {
+        wrk->m_memObj = nullptr;
+        m_memMan.releaseFreeObj(memObj);
+    }
+}
+
 void DrMdoCtlSeamInstMap::renderInstShadowCacheRender(DrResMdoSeamWrkInst* wrk, const mm::Mat44& mtx,
                                                       unsigned int vtxNo, const MdsMdlTopHeader* top) {
     if (vtxNo == 0xFFFF) {
@@ -4113,9 +4198,9 @@ void DrMdoCtlSeamRead::callBaseMapStream(_wkSeamReadWait* wait) {
 }
 
 void DrMdoCtlSeamRead::callLowMdlStream(_wkSeamReadWait* wait) {
-    const MapHead::LowEntry* tbl = reinterpret_cast<const MapHead::LowEntry*>(
+    const MdsSeamLowData* tbl = reinterpret_cast<const MdsSeamLowData*>(
         reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_lowMdlTblOfs);
-    const MapHead::LowEntry* entry = &tbl[wait->m_idx];
+    const MdsSeamLowData* entry = &tbl[wait->m_idx];
     unsigned int rest = entry->m_size & 0xFFF;
     DrResMdoSeamMemObj* memObj = m_memMan.createFreeObj((rest == 0 ? 0 : 0x1000 - rest) + entry->m_size);
     if (memObj != nullptr) {
@@ -5458,6 +5543,34 @@ void DrMdoShdSetShadow::shwShd_Obj(int shd, const MdsMatInfoHeader* info, int tr
     m_pMdl->m_curTriBlockIdx = triIdx;
 }
 
+void DrMdoShdSetShadow::shwShd_ObjT(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list) {
+    DrResShdShw* obj = list->getShwObj(s_pShwUseShdader[shd]);
+    DrMdoCtl* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        unsigned char dec = s_pShwTypeDec[shd];
+        obj->setDecAType(dec >> 4);
+        obj->setDecBType(dec & 0xF);
+        obj->setupShader(list->getFetchShader(s_pShwFethcTbl[m_pMdl->m_bindFlags[1]][shd]));
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[3]);
+        m_pMdl->m_pDrMan->m_pixlMan->m_shadowUniform->setUniformBlock(obj->m_shaderSel[2]);
+        (m_pMdl->m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[1]);
+    } else if (m_pMdl->m_curTriBlockIdx != triIdx) {
+        (m_pMdl->m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[1]);
+    }
+    m_pMdl->m_curTriBlockIdx = triIdx;
+    setOneTexShaderSet(info->m_texEntryIdx, obj->m_shaderSel[0]);
+}
+
 void DrMdoShdSetShadow::shwShd_Inst(int shd, const MdsMatInfoHeader*, int, int, DrShdDataList* list) {
     DrResShdShw* obj = list->getShwObj(s_pShwUseShdader[shd]);
     if (m_pMdl->m_curShaderIdx != shd) {
@@ -5483,6 +5596,89 @@ void DrMdoShdSetShadow::shwShd_InstT(int shd, const MdsMatInfoHeader* info, int,
         obj->setupShader(list->getFetchShader(s_pShwFethcDef[shd]));
         list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[3]);
         m_pMdl->m_pEtcBlock->setUniformBlock(obj->m_shaderSel[1]);
+    } else if (m_pMdl->m_bindFlags[0] & 2) {
+        m_pMdl->m_pEtcBlock->setUniformBlock(obj->m_shaderSel[1]);
+    }
+    setOneTexShaderSet(info->m_texEntryIdx, obj->m_shaderSel[0]);
+    m_pMdl->m_bindFlags[0] &= ~2;
+}
+
+void DrMdoShdSetShadow::shwShd_InstMot(int shd, const MdsMatInfoHeader*, int, int, DrShdDataList* list) {
+    DrResShdShw* obj = list->getShwObj(s_pShwUseShdader[shd]);
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        unsigned char dec = s_pShwTypeDec[shd];
+        obj->setDecAType(dec >> 4);
+        obj->setDecBType(dec & 0xF);
+        obj->setupShader(list->getFetchShader(s_pShwFethcDef[shd]));
+        m_pMdl->m_pDrMan->m_pixlMan->m_shadowUniform->setUniformBlock(obj->m_shaderSel[2]);
+    }
+    m_pMdl->m_pDrMan->m_mdlMan->m_etcUniform->setUniformBlock(m_pMdl->m_pWrkMatRes->m_pEtcRef->m_etcIdx,
+                                                              obj->m_shaderSel[1]);
+}
+
+void DrMdoShdSetShadow::shwShd_Fw(int shd, const MdsMatInfoHeader* info, int triIdx, int matIdx, DrShdDataList* list) {
+    DrResShdShw* obj = list->getShwObj(s_pShwUseShdader[shd]);
+    unsigned int decA = s_pShwTypeDec[shd] >> 4;
+    unsigned int decB = s_pShwTypeDec[shd] & 0xF;
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        obj->setDecAType(decA);
+        obj->setDecBType(decB);
+        obj->setupShader(list->getFetchShader(s_pShwFethcDef[shd]));
+        if (decA != 1) {
+            list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[3]);
+        }
+        m_pMdl->m_pDrMan->m_pixlMan->m_shadowUniform->setUniformBlock(obj->m_shaderSel[2]);
+        (m_pMdl->m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[1]);
+        unsigned int loc = obj->m_shaderSel[5];
+        DrAPCache* ap = DrMan::get()->m_apCache;
+        ap->beginTexSampling(0, 1);
+        ap->setTexture(DrMan::get()->m_iniSys->m_texture[16], loc);
+        loc = obj->m_shaderSel[6];
+        ap = DrMan::get()->m_apCache;
+        ap->beginTexSampling(0, 1);
+        ap->setTexture(DrMan::get()->m_iniSys->m_texture[17], loc);
+    } else if (m_pMdl->m_curTriBlockIdx != triIdx) {
+        (m_pMdl->m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[1]);
+    }
+    if (decA != 1) {
+        setOneTexShaderSet(info->m_texEntryIdx, obj->m_shaderSel[0]);
+    }
+    MdoFlagWaveRes* fw = m_pMdl->m_pWrkMatRes->m_pFlagWave;
+    if (fw) {
+        fw->m_pUniformArray->m_pArray[fw->m_pData[matIdx]].setUniformBlock(obj->m_shaderSel[4]);
+    }
+    m_pMdl->m_curTriBlockIdx = triIdx;
+}
+
+void DrMdoShdSetShadow::shwShd_Spt_Inst(int shd, const MdsMatInfoHeader*, int, int, DrShdDataList* list) {
+    DrResShdShw* obj = list->getShwObj(s_pShwUseShdader[shd]);
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        unsigned char dec = s_pShwTypeDec[shd];
+        obj->setDecAType(dec >> 4);
+        obj->setDecBType(dec & 0xF);
+        obj->setupShader(list->getFetchShader(s_pShwFethcDef[shd]));
+        m_pMdl->m_pEtcBlock->setUniformBlock(obj->m_shaderSel[1]);
+        m_pMdl->m_pDrMan->m_pixlMan->m_shadowUniform->setUniformBlock(obj->m_shaderSel[2]);
+    } else if (m_pMdl->m_bindFlags[0] & 2) {
+        m_pMdl->m_pEtcBlock->setUniformBlock(obj->m_shaderSel[1]);
+    }
+    m_pMdl->m_bindFlags[0] &= ~2;
+}
+
+void DrMdoShdSetShadow::shwShd_Spt_InstT(int shd, const MdsMatInfoHeader* info, int, int, DrShdDataList* list) {
+    DrResShdShw* obj = list->getShwObj(s_pShwUseShdader[shd]);
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        unsigned char dec = s_pShwTypeDec[shd];
+        obj->setDecAType(dec >> 4);
+        obj->setDecBType(dec & 0xF);
+        obj->setupShader(list->getFetchShader(s_pShwFethcDef[shd]));
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[3]);
+        m_pMdl->m_pEtcBlock->setUniformBlock(obj->m_shaderSel[1]);
+        m_pMdl->m_pDrMan->m_pixlMan->m_shadowUniform->setUniformBlock(obj->m_shaderSel[2]);
     } else if (m_pMdl->m_bindFlags[0] & 2) {
         m_pMdl->m_pEtcBlock->setUniformBlock(obj->m_shaderSel[1]);
     }

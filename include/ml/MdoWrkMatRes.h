@@ -285,7 +285,13 @@ struct MdoWrkMatRes {
     }* m_pExtUniform;
     unsigned char pad_128[0x18];
     MdoFlagWaveRes* m_pFlagWave;  // 0x140, DrMdoMat::getFlagWaveRes (the name is not the original's)
-    unsigned char pad_148[0x10];
+    // 0x148: DrMdoShdSetShadow::shwShd_InstMot binds DrMdlMan::m_etcUniform's block m_etcIdx (the type and the
+    // names are not the original's)
+    struct EtcUniformRef {
+        unsigned char pad_0[0x20];
+        int m_etcIdx;  // 0x20, passed to DrResEtcUniformObj::setUniformBlock as its short index
+    }* m_pEtcRef;
+    unsigned char pad_150[0x8];
     MdoVanishEffectWrk* m_pVanishEffectWrk;  // 0x158, three banks per material (DrMdoMat::getVanishEffectWrk)
     MdoRimBloomWrk* m_pRimBloomWrk;  // 0x160, DrMdlObj::getRimBloomWrk (the name is not the original's)
     unsigned char pad_168[0x8];
