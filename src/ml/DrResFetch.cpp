@@ -5058,6 +5058,30 @@ DrResMdoSeamMemObj* DrResMdoSeamMemMan::createBackFreeObj(unsigned int size) {
     return ret;
 }
 
+DrResMdoSeamMemObj* DrResMdoSeamMemMan::createParentFreeObj(DrResMdoSeamMemObj* parent, unsigned int size) {
+    if (parent->m_size < size) return nullptr;
+    DrResMdoSeamMemObj* obj = m_spareList.m_head;
+    if (obj != nullptr) {
+        m_spareList.remove(obj);
+        unsigned int rest = parent->m_size - size;
+        parent->m_size = size;
+        obj->m_size = rest;
+        obj->m_pData = parent->m_pData + size;
+        obj->m_flags = 1;
+        DrResMdoSeamMemObj* next = parent->m_next;
+        parent->m_next = obj;
+        obj->m_prev = parent;
+        if (next != nullptr) {
+            obj->m_next = next;
+            next->m_prev = obj;
+        } else {
+            obj->m_next = nullptr;
+            m_memList.m_tail = obj;
+        }
+    }
+    return obj;
+}
+
 void DrResMdoSeamMemMan::releaseFreeObj(DrResMdoSeamMemObj* obj) {
     clearMemObj(obj, m_memList);
     if (m_flags & 2) {
