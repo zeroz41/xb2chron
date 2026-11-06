@@ -39,6 +39,8 @@
 #include "classes/event/VolumePlayer.h"
 #include "classes/event/VoicePlayer.h"
 #include "classes/event/VoiceMaker.h"
+#include "classes/event/VoiceOneShoter.h"
+#include "classes/event/VoiceManager.h"
 #include "fw/LangUtil.h"
 #include "classes/event/CsSndManager.h"
 #include "classes/fw/SoundManager.h"
@@ -1068,14 +1070,12 @@ const char* Extend::replaceString(const char* str, const char* from, const char*
     // the buffer's name is not the original's
     static char s_buf[256];
     memset(s_buf, 0, sizeof(s_buf));
-    unsigned long fromLen = strlen(from);
-    unsigned long toLen = strlen(to);
     char* dst = s_buf;
     while (*str != '\0') {
-        if (memcmp(str, from, fromLen) == 0) {
-            memcpy(dst, to, toLen);
-            str += fromLen;
-            dst += toLen;
+        if (memcmp(str, from, strlen(from)) == 0) {
+            memcpy(dst, to, strlen(to));
+            str += strlen(from);
+            dst += strlen(to);
         } else {
             *dst++ = *str++;
         }
@@ -4783,6 +4783,26 @@ void GroupManager::OnEventProc(event::MSG_TYPE msg) {
 GroupManager::~GroupManager() {}
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+bool VoiceManager::playAuto(const char* name, float frame, IVoiceEvent* event) {
+    if (!(pad_10 & 1)) {
+        return false;
+    }
+    const char* path = m_maker.makePath(name);
+    if (path == nullptr) {
+        return false;
+    }
+    bool found = mm::mtl::Singleton<LipsyncManager>::getPtr()->setTarget(path);
+    if (found) {
+        pad_10 |= 2;
+    } else {
+        pad_10 &= ~2;
+    }
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkip()) {
+        return found;
+    }
+    return m_player.play(mm::mtl::Singleton<Extend>::getPtr()->wav(path), frame, event);
+}
+
 void TextManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
     case 4:
@@ -6269,6 +6289,92 @@ void VoiceMaker::create(bool use, const char* dir, const char* name) {
     }
 }
 
+const char* VoiceMaker::makePath(const char* name) {
+    if (!(m_flags & 1)) {
+        return nullptr;
+    }
+    m_voicePath = m_path.m_str;
+    m_voicePath += name;
+    return m_voicePath.m_str;
+}
+
+VoicePlayer::~VoicePlayer() {}
+
+VoiceOneShoter::~VoiceOneShoter() {}
+
+VoiceManager::VoiceManager() : pad_10(0), pad_14(0) {}
+
+VoiceManager::~VoiceManager() {}
+
+void VoiceManager::preloadAuto(float frame, const char* name) {
+    if (pad_10 & 1) {
+        const char* path = m_maker.makePath(name);
+        if (path != nullptr) {
+            m_player.preload(frame, mm::mtl::Singleton<Extend>::getPtr()->wav(path));
+        }
+    }
+}
+
+void VoiceManager::preload(float frame, const char* name) {
+    const char* wav = mm::mtl::Singleton<Extend>::getPtr()->wav(name);
+    m_player.preload(frame, wav);
+}
+
+bool VoiceManager::playOneshot(const char* name, float volume) {
+    mm::mtl::FixStr<64> path("/stream/");
+    path += name;
+    if (fw::LangUtil::getVoiceType() != 0) {
+        path = mm::mtl::Singleton<Extend>::getPtr()->replaceString(name, "jp", fw::LangUtil::getVoiceFolder());
+    }
+    return m_oneShoter.play(mm::mtl::Singleton<Extend>::getPtr()->wav(path.m_str), volume);
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void VoiceManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        m_player.clear();
+        for (unsigned int i = 0; i < m_oneShoter.m_handles.size(); i++) {
+            mm::mtl::PtrSingleton<fw::SoundManager>::sys()->pause(*m_oneShoter.m_handles.at(i), false, 0.0f);
+            mm::mtl::PtrSingleton<fw::SoundManager>::sys()->stopVoice(m_oneShoter.m_handles[i], 1.0f / 3.0f);
+        }
+        m_oneShoter.m_handles.clear();
+        m_oneShoter.pad_8 = 0;
+        pad_10 = 0;
+        break;
+    case 7:
+    case 8:
+        if (m_player.m_nextHandle != 0) {
+            mm::mtl::PtrSingleton<fw::SoundManager>::sys()->stopVoice(m_player.m_nextHandle, 0.0f);
+            m_player.m_nextHandle = 0;
+        }
+        m_player.m_nextName = "";
+        m_player.m_keys.clear();
+        break;
+    case 12:
+        m_player.clear();
+        for (unsigned int i = 0; i < m_oneShoter.m_handles.size(); i++) {
+            mm::mtl::PtrSingleton<fw::SoundManager>::sys()->pause(*m_oneShoter.m_handles.at(i), false, 0.0f);
+            mm::mtl::PtrSingleton<fw::SoundManager>::sys()->stopVoice(m_oneShoter.m_handles[i], 1.0f / 3.0f);
+        }
+        m_oneShoter.m_handles.clear();
+        m_oneShoter.pad_8 = 0;
+        pad_10 = 0;
+        break;
+    case 14:
+        m_player.update();
+        m_oneShoter.update();
+        break;
+    case 16:
+        if (pad_14 & 1) {
+            m_player.draw();
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 VolumeManager::VolumeManager() : pad_10(0), pad_14(0) {}
 
 inline void VolumeSeamless::update() {
@@ -7217,3 +7323,4 @@ void ScheManager::push(gf::GF_OBJ_HANDLE* handle, unsigned int type) {
 }
 
 }  // namespace event
+template event::VoiceManager* mm::mtl::Singleton<event::VoiceManager>::getPtr();
