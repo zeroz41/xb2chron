@@ -641,6 +641,19 @@ void ScnObjCam::updateFovNearFar() {
     info->m_nearExtent[3] = info->m_aspect * -extent;
 }
 
+void ScnObjCam::setDist(const float& dist) {
+    RENDER_INFO* info = m_info.m_cpu;
+    info->m_dist = dist;
+    const mm::Mat44& rot = info->m_transform.m_worldMat;
+    mm::Vec3 offset(0.0f, 0.0f, dist);
+    info->m_transform.m_pos =
+        mm::Vec3(offset.x * rot.m[0][0] + offset.y * rot.m[1][0] + offset.z * rot.m[2][0],
+                 offset.x * rot.m[0][1] + offset.y * rot.m[1][1] + offset.z * rot.m[2][1],
+                 offset.x * rot.m[0][2] + offset.y * rot.m[1][2] + offset.z * rot.m[2][2]) +
+        info->m_target;
+    updateViewMatrix(true);
+}
+
 void ScnObjCam::apply() {
     RENDER_INFO* info = m_info.m_render;
     const mm::Rect<int>& viewport = DevGraph::getViewport();

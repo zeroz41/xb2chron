@@ -51,6 +51,8 @@ public:
     void setLookAt(const mm::Vec3& eye, const mm::Vec3& target, float roll);
     // the projection's derived values from the field of view, near distance and aspect ratio
     void updateFovNearFar();
+    // the eye moved to dist from the target along the view's z axis (the rotation's third row)
+    void setDist(const float& dist);
     virtual ~ScnObjCam();  // slot 0
     virtual void update();  // slot 2
     virtual void renderDebug(ml::DebDraw*);  // slot 3
