@@ -30,6 +30,15 @@
 #include "classes/fw/FrameworkMemory.h"
 #include "classes/gf/GfFobjDropitem.h"
 #include "ml/MTRand.h"
+#include "classes/gf/GfMenuCallContext.h"
+#include "classes/gf/GfMenuObjBtlchTelop.h"
+#include "classes/gf/GfGameArena.h"
+#include "classes/gf/GfArenaBattle.h"
+#include "classes/btl/UIManager.h"
+#include "btl/Utility.h"
+#include "classes/gf/SCOM_BATTLE_ARENA.h"
+#include "classes/gf/SCOM_CLEAR_TIME.h"
+#include "classes/gf/GfMenuObjSalvage.h"
 #include <math.h>
 
 namespace btl {
@@ -131,6 +140,343 @@ void ChallengeBattleManager::PreUpdate(const fw::UpdateInfo&) {
 
 void ChallengeBattleManager::Update(const fw::UpdateInfo& info) {
     ChallengeBattleManager::get()->UpdateProc(info);
+}
+
+// whether a pause, a combo or special attack camera direction or a chain attack holds the challenge's progress (the
+// checks CheckChallengeFailure makes too; the name is not the original's)
+static inline bool IsProgressHeld() {
+    if (BattleGlobal::get()->IsPause(-1)) {
+        return true;
+    }
+    if (BattleGlobal::get()->m_uniteComboCamera || BattleGlobal::get()->pad_bit12 ||
+        BattleGlobal::get()->m_elementalCombo.m_camera || SpAttackManager::get()->m_camera) {
+        return true;
+    }
+    return ChainAttackManager::get()->IsProc(false);
+}
+
+void ChallengeBattleManager::UpdateProc(const fw::UpdateInfo& info) {
+    unsigned char state = pad_26;
+    unsigned char next = state;
+    bool operate = true;
+    bool suspend = false;
+    switch (state) {
+    case 0:
+        return;
+    case 1:
+        DataManager::get()->RegisterUpdateAttackParam(true, false);
+        gf::GfMenuObjBtlTime::openFromChallengeBattle();
+        operate = false;
+        pad_10 = 0.0f;
+        next = 2;
+        pad_2c = false;
+        pad_2d = false;
+        break;
+    case 2:
+        pad_10 = 0.0f;
+        pad_2c = false;
+        pad_2d = false;
+        operate = false;
+        if (gf::GfGameManager::isFadeClear()) {
+            next = 3;
+        }
+        break;
+    case 3:
+        pad_10 = 0.0f;
+        pad_2c = false;
+        pad_2d = false;
+        operate = false;
+        next = gf::GfGameArena::get()->m_msgObj->pad_98 ? 51 : 3;
+        break;
+    case 51:
+        if (CheckChallengeFailure()) {
+            next = 151;
+            break;
+        }
+        if (pad_29 == 2) {
+            if (!CharacterManager::get()->IsExistChallengeBattleEnemy()) {
+                next = 157;
+            }
+        } else if (pad_29 == 3) {
+            int need = (unsigned short)Bdat::getValCheck(gf::GfDataBdat::getFP(77), "NeedDefeat", pad_2a, 2);
+            int score = IsProc() ? gf::GfGameManager::getBattleArenaScore() : 0;
+            if (score >= need) {
+                next = 157;
+            }
+        } else if (!CharacterManager::get()->IsExistChallengeBattleEnemy()) {
+            next = gmk::GmkBattleChallenge::sm_battleStatus.m_isEnd ? 157 : 101;
+        }
+        break;
+    case 101:
+        if (CheckChallengeFailure()) {
+            next = 151;
+        } else {
+            suspend = true;
+            next = 102;
+        }
+        break;
+    case 102:
+        suspend = true;
+        if (CheckChallengeFailure()) {
+            next = 151;
+            break;
+        }
+        next = 103;
+        if (pad_14 < 10.0f) {
+            for (int i = 0; i < 20; i++) {
+                const BattleCharacter* character = CharacterManager::get()->GetCharacterConst(i);
+                if (character != nullptr && character->IsDead(0)) {
+                    next = 102;
+                    break;
+                }
+            }
+        }
+        break;
+    case 103: {
+        suspend = true;
+        if (CheckChallengeFailure()) {
+            next = 151;
+            break;
+        }
+        CharacterManager* manager = CharacterManager::get();
+        next = 104;
+        for (int i = 0; i < 20; i++) {
+            const BattleCharacter* character = manager->GetCharacterConst(i);
+            if (character != nullptr && character->IsBattle()) {
+                BattleCharacter* control = manager->GetControlCharacter();
+                if ((control != nullptr && !control->IsBattle() && pad_14 >= 5.0f) || pad_14 >= 10.0f) {
+                    next = 104;
+                } else {
+                    next = 103;
+                }
+                break;
+            }
+        }
+        break;
+    }
+    case 104:
+        if (CheckChallengeFailure()) {
+            next = 151;
+        } else if (CharacterManager::get()->IsExistBattleEnemy(nullptr, reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1),
+                                                                false)) {
+            next = 51;
+        } else if (gmk::GmkBattleChallenge::sm_battleStatus.m_isEnd && pad_14 >= 5.0f) {
+            next = 157;
+        }
+        break;
+    case 151: {
+        operate = false;
+        if (IsProgressHeld()) {
+            break;
+        }
+        gf::GfMenuCallContext* context = pad_8;
+        if (context != nullptr) {
+            context->reset();
+        } else {
+            context = gf::GfMenuCallContext::create();
+            pad_8 = context;
+        }
+        if (context != nullptr) {
+            gf::GfMenuObjBtlchTelop::OpenParam param;
+            param.m_type = 3;
+            param.m_value = pad_2d ? 2 : 1;
+            gf::GfMenuObjBtlchTelop::open(pad_8, param);
+        }
+        gf::SCOM_BATTLE_ARENA::createPlayJingle(130, 1.0f, 0.2f);
+        DropLoseEtherCube();
+        gf::SCOM_BATTLE_ARENA::createLoseStart();
+        next = 152;
+        break;
+    }
+    case 152: {
+        operate = false;
+        if (IsProgressHeld()) {
+            break;
+        }
+        float time = pad_14;
+        gf::GfMenuCallContext* context = pad_8;
+        bool closed = context == nullptr;
+        if (time < 2.5f || !closed) {
+            if (time <= 3.5f) {
+                break;
+            }
+            if (!closed) {
+                context->release();
+                pad_8 = nullptr;
+            }
+        }
+        next = 153;
+        break;
+    }
+    case 153:
+        operate = false;
+        if (IsProgressHeld()) {
+            break;
+        }
+        BattleGlobal::get()->Tutorial(BTL_TUTORIAL_COND(15), 0, nullptr);
+        next = 154;
+        break;
+    case 154:
+        operate = false;
+        if (IsProgressHeld() || BattleGlobal::get()->pad_bit43 || UIManager::get()->m_tutorials.size() != 0 ||
+            UIManager::get()->pad_e0 > 0.0f) {
+            break;
+        }
+        if (pad_28 != 0) {
+            next = 156;
+            break;
+        }
+        TalkManager::get()->PlayNarrationVoice(TalkManager::NARRATION_TYPE(0x30), 3, 0);
+        gf::GfMenuManager::openCommonWindow(280);
+        next = 155;
+        break;
+    case 155:
+        operate = false;
+        if (gf::GfMenuManager::isOpenCommonWindow()) {
+            break;
+        }
+        pad_28 = (unsigned short)gf::GfMenuManager::getCommonWindowResult() == 0 ? 2 : 1;
+        // fall through
+    case 156:
+        operate = false;
+        next = 156;
+        if (IsProgressHeld() || !Utility::IsEnableEventStart()) {
+            break;
+        }
+        gf::GfMenuObjBtlTime::closeAll();
+        if (pad_28 == 2) {
+            gf::SCOM_BATTLE_ARENA::createRetry();
+            next = 201;
+        } else if (pad_28 == 3) {
+            gf::SCOM_BATTLE_ARENA::createGiveUp();
+            next = 202;
+        } else {
+            gf::SCOM_BATTLE_ARENA::createLose();
+            next = 202;
+        }
+        break;
+    case 157: {
+        unsigned int time = pad_10;
+        time = time < 5999 ? time : 5999;
+        gf::GfMenuObjSalvage::setBtlchNewRecord(time < gf::GfGameManager::getBattleArenaMenuInfo()->m_rule.m_value0);
+        gf::SCOM_CLEAR_TIME::create(time);
+        next = 158;
+        break;
+    }
+    case 158: {
+        if (IsProgressHeld()) {
+            break;
+        }
+        BattleGlobal::get()->Tutorial(BTL_TUTORIAL_COND(16), 0, nullptr);
+        gf::GfMenuCallContext* context = pad_8;
+        if (context != nullptr) {
+            context->reset();
+        } else {
+            context = gf::GfMenuCallContext::create();
+            pad_8 = context;
+        }
+        if (context != nullptr) {
+            gf::GfMenuObjBtlchTelop::OpenParam param;
+            param.m_type = 3;
+            param.m_value = 0;
+            gf::GfMenuObjBtlchTelop::open(pad_8, param);
+        }
+        TalkManager::get()->PlayNarrationVoice(TalkManager::NARRATION_TYPE(0x30), 2, 0);
+        gf::SCOM_BATTLE_ARENA::createPlayJingle(113, 1.0f, 0.2f);
+        next = 159;
+        break;
+    }
+    case 159: {
+        if (IsProgressHeld()) {
+            break;
+        }
+        float time = pad_14;
+        gf::GfMenuCallContext* context = pad_8;
+        bool closed = context == nullptr;
+        if (time < 2.5f || !closed) {
+            if (time <= 3.5f) {
+                break;
+            }
+            if (!closed) {
+                context->release();
+                pad_8 = nullptr;
+            }
+        }
+        next = 160;
+        break;
+    }
+    case 160: {
+        if (pad_18 < BtlSystemBalanceAccess::get()->pad_120 || IsProgressHeld() || !Utility::IsEnableEventStart()) {
+            break;
+        }
+        gf::GfMenuObjBtlTime::closeAll();
+        UIManager* ui = UIManager::get();
+        ui->pad_30 = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        ui->pad_38 = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        ui->pad_40 = 0;
+        ui->pad_41 = 0;
+        next = 161;
+        break;
+    }
+    case 161:
+        gf::SCOM_BATTLE_ARENA::createWin();
+        next = 202;
+        break;
+    }
+    if (BattleGlobal::get()->IsPause(-1) || ChainAttackManager::get()->IsProc(false) || pad_26 >= 150) {
+        suspend = true;
+    }
+    gmk::GmkBattleChallenge::suspend(suspend);
+    pad_2b = operate && pad_26 < 200;
+    bool pause = BattleGlobal::get()->IsPause(-1);
+    if (!pause && next >= 50 && next < 150) {
+        float time = pad_10 + info.m_frameTime;
+        float limit = gf::GfGameManager::getBattleArenaMenuInfo()->m_value4;
+        pad_10 = time < limit ? time : limit;
+    }
+    if (next == state) {
+        pad_14 += info.m_frameTime;
+        pad_18 += info.m_deltaTime;
+    } else {
+        pad_14 = 0.0f;
+        pad_18 = 0.0f;
+    }
+    pad_26 = next;
+    if (pad_1c > 0.0f) {
+        pad_1c -= info.m_deltaTime;
+        if (pad_1c <= 0.0f) {
+            TalkManager::get()->PlayNarrationVoice(TalkManager::NARRATION_TYPE(0x30), 1, 0);
+            BattleGlobal::get()->Tutorial(BTL_TUTORIAL_COND(13), 0, nullptr);
+            if (pad_29 >= 1 && pad_29 <= 3) {
+                BattleGlobal::get()->Tutorial(BTL_TUTORIAL_COND(pad_29 + 0x12), 0, nullptr);
+            }
+        }
+    }
+    RetireProc(info);
+    if (pad_26 < 150) {
+        unsigned short id = pad_24;
+        unsigned short current = BattleGlobal::get()->pad_8374[30];
+        if (id == 0) {
+            if (current != 0) {
+                pad_24 = current;
+                goto bgm_done;
+            }
+            CharacterManager::get()->SetupBGM(false, false);
+            id = BattleGlobal::get()->pad_83b2;
+            pad_24 = id;
+            current = id;
+        }
+        if (pad_24 != 0 && current == 0) {
+            BattleGlobal::get()->SetBGM(id);
+        }
+    }
+bgm_done:
+    if (pad_8 != nullptr && pad_8->isTerm()) {
+        if (pad_8 != nullptr) {
+            pad_8->release();
+            pad_8 = nullptr;
+        }
+    }
 }
 
 bool ChallengeBattleManager::CheckChallengeFailure() const {

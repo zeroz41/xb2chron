@@ -9,6 +9,7 @@
 
 namespace btl { class BattleCharacter; }
 namespace fw { class UpdateInfo; }
+namespace gf { class GfMenuCallContext; }
 
 namespace btl {
 
@@ -85,7 +86,10 @@ public:
     // 2.0.0's symbols name it. What it does: whether getBattleArenaMenuInfo()'s m_value4 (seconds) less pad_10 is at
     // most 300.
     bool IsChallengeTimeWarning() const;
-    // 2.0.0's symbols name it. What it does: the per-frame update (0xDD4 bytes; not written).
+    // 2.0.0's symbols name it. What it does: the per-frame update: pad_26's state machine (1..3 start, 51 and
+    // 101..104 the waves, 151..156 the loss and its retry window, 157..161 the win, 201/202 the exit), then the
+    // gimmick's suspend, pad_2b, the time pad_10 and the state's time pad_14/pad_18, the start telop's narration
+    // (pad_1c), RetireProc and the BGM id pad_24.
     void UpdateProc(const fw::UpdateInfo& info);
     // 2.0.0's symbols name it. What it does: true once pad_2c is set; otherwise, while no pause, camera direction or
     // chain attack runs, sets pad_2c on game over, or pad_2c and pad_2d once pad_10 reaches the challenge's seconds.
@@ -97,7 +101,9 @@ public:
     // button allows it, 1 waits for the window's answer (pad_28 = 2 or 3, pad_26 = 153).
     void RetireProc(const fw::UpdateInfo& info);
 
-    ::mm::mtl::ReferenceObject* pad_8;  // released (and cleared) by Start/End/Retry
+    // the context UpdateProc opens GfMenuObjBtlchTelop's menu with (states 151 and 158); released (and cleared) by
+    // Start/End/Retry and by UpdateProc once it terminates
+    ::gf::GfMenuCallContext* pad_8;
     float pad_10;
     float pad_14;
     float pad_18;
