@@ -61,11 +61,7 @@ public:
     // position and rotation
     CreateInfo m_createInfo;
     GmkBdat m_bdat;  // 0x40: the constructor stores its table (the name is not the original's)
-    GmkNpcManager m_npcManager;  // 0x178 (the name is not the original's)
-    unsigned char pad_1a8[0x4];
-    // createGmkLists sets it to 0x20 before anything else (nothing else here reads it; the name is not the original's)
-    int m_listParam;  // 0x1ac
-    unsigned char pad_1b0[0x8];
+    GmkNpcManager m_npcManager;  // 0x178 (0x40 bytes; the name is not the original's)
     IGmkList* m_gmkLists[GMK_LIST_NUM];  // 0x1b8: its list of each kind, by GmkType (the name is not the original's)
     // the step update runs (create stores seqWaitToValidate_GfGameManager_m_mapID, which moves on to
     // seqCreateMapBdat, then seqUpdate); 0x3D0 bytes in all (GfGmkLocatorAtlas holds one at 0x70, its next member at

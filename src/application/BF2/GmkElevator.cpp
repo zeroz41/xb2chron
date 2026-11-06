@@ -1063,8 +1063,58 @@ IGmkList* GmkSet::getGmkList(GmkType type) { return m_gmkLists[static_cast<unsig
 
 GmkNpcManager::~GmkNpcManager() { dispose(); }
 
+void GmkNpcManager::create() {
+    m_npcIdInfos.setAllocator(fw::FrameworkMemory::getAllocator(5));
+    unsigned char* fpA8 = gf::GfDataBdat::getFP(0xa8);
+    unsigned char* fp88 = gf::GfDataBdat::getFP(0x88);
+    unsigned char* fp8a = gf::GfDataBdat::getFP(0x8a);
+    unsigned int num = Bdat::getIdCount(fpA8) + Bdat::getIdCount(fp88) + Bdat::getIdCount(fp8a);
+    m_npcIdInfos.reserve(num);
+    m_npcIdInfos.resize(num);
+    m_npcIdTop = Bdat::getIdTop(gf::GfDataBdat::getFP(0xa8));
+}
+
 const GmkNpcIdInfo* GmkNpcManager::getNpcIdInfoByNpcId(int npcId) const {
     return &m_npcIdInfos[getNpcIdInfoIdxFromNpcId(npcId)];
+}
+
+int GmkNpcManager::getNpcIdInfoIdxFromNpcId(int npcId) {
+    unsigned char* fp88 = gf::GfDataBdat::getFP(0x88);
+    unsigned char* fp8a = gf::GfDataBdat::getFP(0x8a);
+    unsigned char* fpA8 = gf::GfDataBdat::getFP(0xa8);
+    if (npcId >= Bdat::getIdTop(fp88) && npcId < Bdat::getIdTop(fp88) + Bdat::getIdCount(fp88)) {
+        return npcId - Bdat::getIdTop(fp88);
+    }
+    if (npcId >= Bdat::getIdTop(fp8a) && npcId < Bdat::getIdTop(fp8a) + Bdat::getIdCount(fp8a)) {
+        return Bdat::getIdCount(fp88) + npcId - Bdat::getIdTop(fp8a);
+    }
+    int count88 = Bdat::getIdCount(fp88);
+    int count8a = Bdat::getIdCount(fp8a);
+    int topA8 = Bdat::getIdTop(fpA8);
+    return count88 + npcId + count8a - topA8;
+}
+
+void GmkNpcManager::dispose() {
+    m_npcIdTop = 0;
+    if (m_npcIdInfos.size() != 0) {
+        for (GmkNpcIdInfo* it = m_npcIdInfos.begin(); it != m_npcIdInfos.end(); ++it) {
+            it->dispose();
+        }
+    }
+    m_npcIdInfos.destroy();
+}
+
+void GmkNpcManager::removeGmkNpc(AGmkNpc* npc) {
+    if (npc == nullptr) {
+        return;
+    }
+    unsigned char* fp = npc->getBindedBdatFp();
+    int row = npc->getBindedBdatId();
+    if (row < Bdat::getIdTop(fp)) {
+        return;
+    }
+    unsigned short npcId = Bdat::getValCheck(fp, "NpcID", row, 2);
+    m_npcIdInfos[getNpcIdInfoIdxFromNpcId(npcId)].removeGmkNpc(npc);
 }
 
 // the same steps as dispose, written here: the original's dispose keeps its default CreateInfo on the stack, this
@@ -1088,7 +1138,7 @@ void GmkSet::seqWaitToValidate_GfGameManager_m_mapID(float) {
 }
 
 void GmkSet::createGmkLists(int id) {
-    m_listParam = 0x20;
+    m_npcManager.m_updateNumPerFrame = 0x20;
     for (int i = 0; i < GMK_LIST_NUM; ++i) {
         if (m_gmkLists[i] != nullptr) {
             delete m_gmkLists[i];
