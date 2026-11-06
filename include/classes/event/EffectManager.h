@@ -5,6 +5,7 @@ namespace event { enum MSG_TYPE : int; }
 namespace event { class EffectRes; }
 
 #include "mm/mtl/FixedVector.h"
+#include "classes/event/EffectRes.h"
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
 
@@ -22,6 +23,8 @@ public:
     void load(const char* name);
     // 1.0.0's isEffectDisp (0x71000DF598; 3.0.1 inlines it: ObjectManager::render)
     bool isEffectDisp() const { return m_dispFlags & 1; }
+    // 1.0.0's getResPack (3.0.1 inlines it: EffectCtrl::genelate): the kept EffectRes's pack
+    fw::EffectPack* getResPack() const { return pad_a0 ? pad_a0->m_pack : nullptr; }
     // bit 0: stream mode (1.0.0's isStreamMode), bit 1: offscreen mode (setOffscrMode); the name is not the original's
     unsigned int m_flags;  // 0x10
     // bit 0: effects shown (1.0.0's setEffectDisp/isEffectDisp); the name is not the original's

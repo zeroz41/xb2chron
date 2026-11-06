@@ -4509,6 +4509,11 @@ void DofManager::OnEventProc(event::MSG_TYPE msg) {
     }
 }
 
+void EffectCtrl::genelate() {
+    m_effect = fw::EffectManager::sys()->create(m_name.m_str, EffectManager::getPtr()->getResPack(), true);
+    fw::EffectManager::sys()->setCategory(m_effect, static_cast<fw::EF_CATEGORY>(3));
+}
+
 void EffectCtrl::kill() {
     if (m_caster != nullptr) {
         for (unsigned long i = 0; i < m_handles.size(); i++) {
