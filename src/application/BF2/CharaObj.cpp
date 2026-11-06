@@ -78,6 +78,7 @@
 #include "classes/event/MotstmManager.h"
 #include "classes/event/Extend.h"
 #include "classes/event/CharaEvaPlayerEff.h"
+#include "classes/event/Curve.h"
 #include "classes/event/CharaWpnAsm.h"
 #include "classes/event/CharaEvaPlayer.h"
 #include "classes/gf/GfEvtModel.h"
@@ -722,6 +723,93 @@ void EffectPlayEff::term() {
     pad_20 = -1.0f;
 }
 
+// a cubic bezier between p0 and p3 with control values p1, p2 (the helper's name is not the original's)
+static inline float bezier(float t, float p0, float p1, float p2, float p3) {
+    float t2 = t * t;
+    float t3 = t2 * t;
+    float b0 = -t3 + 3.0f * t2 - 3.0f * t + 1.0f;
+    float b1 = 3.0f * t3 - 6.0f * t2 + 3.0f * t;
+    float b2 = -3.0f * t3 + 3.0f * t2;
+    return p0 * b0 + p1 * b1 + p2 * b2 + p3 * t3;
+}
+
+float Curve::getValue(CV_TYPE type, float time) {
+    switch (type) {
+    case 0:
+        return time < 1.0f ? 0.0f : 1.0f;
+    case 1:
+        return time;
+    case 2:
+        return bezier(time, 0.0f, 0.0f, 1.0f, 1.0f);
+    case 3:
+        return bezier(time, 0.0f, 0.0f, 0.1f, 1.0f);
+    case 4:
+        return bezier(time, 0.0f, 0.9f, 1.0f, 1.0f);
+    case 5:
+        return bezier(time, 0.0f, 0.0f, 0.66f, 1.0f);
+    case 6:
+        return bezier(time, 0.0f, 0.33f, 1.0f, 1.0f);
+    }
+    return time;
+}
+
+void AnmBase::update(float step) {
+    if (step < 0.0f) {
+        return;
+    }
+    unsigned long index = pad_68;
+    pad_8 &= ~4;
+    if (pad_8 & 1) {
+        if (step != 0.0f) {
+            pad_8 &= ~1;
+        }
+        pad_8 |= 4;
+    }
+    if (step != 0.0f && m_keys.size() != 0) {
+        pad_5c += step;
+        mm::clampSelf(pad_5c, 0.0f, pad_60);
+        if (pad_58 == 1 || pad_60 <= 0.0f) {
+            getIndex_Alpha(pad_68, pad_70, pad_5c, pad_68, pad_70);
+        } else {
+            float time = pad_60 * Curve::getValue(static_cast<CV_TYPE>(pad_58), pad_5c / pad_60);
+            mm::clampSelf(time, 0.0f, pad_60);
+            getIndex_Alpha(pad_68, pad_70, time, pad_68, pad_70);
+        }
+    }
+    if (index < pad_68) {
+        pad_8 |= 4;
+    }
+}
+
+void AnmBase::getIndex_Alpha(unsigned long& index, float& blend, float time, unsigned long start,
+                             float startBlend) const {
+    index = start;
+    blend = startBlend;
+    if (m_keys.size() == 0) {
+        return;
+    }
+    if (time < m_keys[0]) {
+        index = 0;
+        blend = 0.0f;
+        return;
+    } else if (time < m_keys[m_keys.size() - 1]) {
+        float prev = m_keys[index];
+        for (;;) {
+            float next = m_keys[index + 1];
+            if (prev <= time && time < next) {
+                float length = next - prev;
+                blend = length != 0.0f ? (time - prev) / length : 0.0f;
+                return;
+            }
+            ++index;
+            prev = next;
+        }
+    } else {
+        index = m_keys.size() - 1;
+    }
+    blend = 0.0f;
+}
+
 void AnmVec::update(float step) {
     AnmBase::update(step);
     if (pad_8 & 2) {
@@ -745,6 +833,42 @@ void AnmCol::update(float step) {
     if (pad_8 & 2) {
         m_value = calcEvalute(pad_68, pad_70);
     }
+}
+
+void AnmF32::append(float time, float value, CV_TYPE type) {
+    time = fmaxf(time, 0.0f);
+    if (!m_keys.empty() && time < m_keys.back()) {
+        time = m_keys.back();
+    }
+    pad_8 |= 2;
+    m_keys.push_back(time);
+    pad_60 = time;
+    m_values.push_back(value);
+    m_types.push_back(type);
+}
+
+void AnmVec::append(float time, const mm::Vec3& value, CV_TYPE type) {
+    time = fmaxf(time, 0.0f);
+    if (!m_keys.empty() && time < m_keys.back()) {
+        time = m_keys.back();
+    }
+    pad_8 |= 2;
+    m_keys.push_back(time);
+    pad_60 = time;
+    m_values.push_back(value);
+    m_types.push_back(type);
+}
+
+void AnmCol::append(float time, const mm::Col4& value, CV_TYPE type) {
+    time = fmaxf(time, 0.0f);
+    if (!m_keys.empty() && time < m_keys.back()) {
+        time = m_keys.back();
+    }
+    pad_8 |= 2;
+    m_keys.push_back(time);
+    pad_60 = time;
+    m_values.push_back(value);
+    m_types.push_back(type);
 }
 
 mm::Vec3 DataManager::axis2rot(unsigned int type, float x, float y, float z, const mm::Vec3& pos) {
@@ -7514,6 +7638,7 @@ SeObj::~SeObj() {
     m_name = "";
     m_flags = 0;
 }
+
 
 void SeObj::play(const char* name, float wait, float fadeIn, float fadeOut, float volume) {
     mm::clampSelf(volume, 0.0f, 1.0f);

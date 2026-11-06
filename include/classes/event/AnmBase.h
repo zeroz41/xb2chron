@@ -15,6 +15,8 @@ public:
     unsigned int pad_8;  // UIManager's constructor stores 1
     mm::mtl::FixedVector<float, 16> m_keys;  // @0x10, count @0x50 (the key frames)
     void update(float step);
+    // the key index and blend at a time (update passes its own index and blend as both outputs and inputs)
+    void getIndex_Alpha(unsigned long& index, float& blend, float time, unsigned long start, float startBlend) const;
     // 1.0.0's AnmBase::clear (0x7100091E28); inline in 3.0.1
     void clear() {
         m_keys.clear();
@@ -29,7 +31,7 @@ public:
     // the original's
     bool isPlaying() const { return !(pad_60 <= pad_5c); }
 
-    unsigned int pad_58;  // UIManager's constructor stores 1
+    unsigned int pad_58;  // UIManager's constructor stores 1; update passes it to Curve::getValue as the CV_TYPE
     float pad_5c;  // compared with pad_60 (the linear commands' updates)
     float pad_60;
     unsigned long pad_68;  // calcEvalute's key index
