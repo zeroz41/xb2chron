@@ -31,6 +31,8 @@ public:
     void setMotBlur(bool enable);
     void setToneMap(bool enable, float value);
     void resetScene();
+    // the vignette effect (cmn_205_000 for 5000, cmn_205_001 for 5001) setColorFilter type 1 plays for its two ints
+    void playVignette(int num, int farNum);
     // out of line (OnEventProc branches to them)
     void clear();
     void update();
@@ -46,24 +48,28 @@ public:
             m_field.m_cloudSea = gf::GfFieldWeather::getCurrentCloudSea();
         }
     }
-    // bit 0: setClockStop's state; bit 2: setWeatherType sets it; bit 4: setMotBlur's (set while disabled); bit 5:
-    // setToneMap's (the name is not the original's)
+    // bit 0: setClockStop's state; bit 1: clear() turns the scene's auto reset off; bit 2: setWeatherType sets it;
+    // bit 3: clear() ends GfFieldGimmick's event fade; bit 4: setMotBlur's (set while disabled); bit 5: setToneMap's
+    // (the name is not the original's)
     unsigned int m_flags;  // 0x10
-    unsigned int pad_14;
-    // 0x18..0x38: the constructor and clear() set 0x18/0x1c/0x28/0x2c to -1 and the rest to 0; clear() undoes the
-    // cloud sea when 0x20 is set, the colour filter when 0x24 is set, and removes the effect handle 0x38
-    int pad_18;
-    int pad_1c;
+    unsigned int m_debugFlags;  // 0x14 bit 0: render() draws the clock, weather and cloud sea (the name is not the original's)
+    // the clock setClock set last; the constructor and clear() set both to -1 (the names are not the original's)
+    int m_hour;  // 0x18
+    int m_min;  // 0x1c
     // 1 or 2: the cloud sea EnvTransfer::load set (2 when the transfer's is 0); clear() turns it off when set (the
     // name is not the original's)
     int m_cloudSea;  // 0x20
-    // set while a colour filter is on: clear() turns it off when set (the name is not the original's)
+    // the colour filter's state: 0 off, 1 on (setColorFilter type 1), 2 fading out (type 2; update() turns it off
+    // once m_filterCount reaches m_filterTime); clear() turns it off when set (the name is not the original's)
     int m_colorFilter;  // 0x24
-    int pad_28;
-    int pad_2c;
-    int pad_30;
-    int pad_34;
-    // the effect handle clear() hands to fw::EffectManager::remove when set (the name is not the original's)
+    // the two ints setColorFilter type 1 hands to gf::GfGameEvent::setColorFilter and playVignette (-1 after
+    // the constructor and clear(); the names are not the original's)
+    int m_filterNum;  // 0x28
+    int m_filterFarNum;  // 0x2c
+    float m_filterTime;  // 0x30 setColorFilter's frame count (the name is not the original's)
+    int m_filterCount;  // 0x34 frames update() counted since the fade out began (the name is not the original's)
+    // the vignette effect playVignette created; clear() hands it to fw::EffectManager::remove when set (the name
+    // is not the original's)
     unsigned int m_effect;  // 0x38
     float m_toneMap;  // 0x3c setToneMap's value (the name is not the original's)
     EnvTransferEvent m_event;  // 0x40 (the name is not the original's)

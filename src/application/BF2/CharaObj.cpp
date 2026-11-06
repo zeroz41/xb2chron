@@ -6119,6 +6119,22 @@ void EffectManager::loadResource(const char* name) {
 
 LightManager::LightManager() : m_flags(0), m_modeFlags(0), m_offScrLights(), m_evtLight(nullptr) {}
 
+void LightManager::render() {
+    if (!(m_flags & 1)) {
+        return;
+    }
+    int x = ml::DevGraph::getRootWidth() - 250;
+    if (m_evtLight && m_evtLight->isPlaying()) {
+        m_evtLight->render(x, 280);
+    }
+    for (int i = 1; i < 4; i++) {
+        LightEvt* light = m_offScrLights[i];
+        if (light && light->isPlaying()) {
+            light->render(x, 280 + i * 50);
+        }
+    }
+}
+
 LightManager::~LightManager() {}
 
 void LightManager::loadResource(const char* name) {
@@ -6398,6 +6414,8 @@ EffectManager::~EffectManager() {}
 #include "classes/event/CpuManager.h"
 #include "classes/event/Manager.h"
 #include "classes/event/EnvManager.h"
+#include "classes/gf/GfFieldGimmick.h"
+#include "effect/SendParam.h"
 #include "classes/event/SelectManager.h"
 #include "classes/event/RandManager.h"
 #include "classes/ml/Scn.h"
@@ -6503,8 +6521,215 @@ void EnvTransfer::load() {
 }
 
 EnvManager::EnvManager()
-    : m_flags(0), pad_14(0), pad_18(-1), pad_1c(-1), m_cloudSea(0), m_colorFilter(0), pad_28(-1), pad_2c(-1),
-      pad_30(0), pad_34(0), m_effect(0) {}
+    : m_flags(0), m_debugFlags(0), m_hour(-1), m_min(-1), m_cloudSea(0), m_colorFilter(0), m_filterNum(-1),
+      m_filterFarNum(-1), m_filterTime(0.0f), m_filterCount(0), m_effect(0) {}
+
+void EnvManager::clear() {
+    if (m_flags & 4) {
+        gf::GfGameEvent::resetWeaType();
+        m_flags &= ~4;
+    }
+    if (m_flags & 2) {
+        ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+        acc.setAutoResetScene(false);
+        m_flags &= ~2;
+    }
+    if (m_flags & 8) {
+        mm::mtl::PtrSingleton<gf::GfFieldGimmick>::sys()->m_eventFade.m_active = false;
+        m_flags &= ~8;
+    }
+    if (m_flags & 1) {
+        if (gf::GfFieldTime* time = mm::mtl::PtrSingleton<gf::GfFieldTime>::sys()) {
+            time->setTimeStop(false);
+        }
+        m_flags &= ~1;
+    }
+    if (m_cloudSea) {
+        gf::GfGameEvent::setCloudSea(false, false);
+    }
+    if (m_colorFilter) {
+        gf::GfGameEvent::setColorFilter(false, -1, -1, 0.0f);
+    }
+    if (m_effect) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effect);
+    }
+    if (m_flags & 0x10) {
+        ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+        acc.setMotBlurOverride(true);
+        acc.setMotBlur(true);
+        m_flags &= ~0x10;
+    }
+    if (m_flags & 0x20) {
+        m_flags &= ~0x20;
+        m_toneMap = 0.0f;
+    }
+    m_hour = -1;
+    m_min = -1;
+    m_cloudSea = 0;
+    m_colorFilter = 0;
+    m_filterNum = -1;
+    m_filterFarNum = -1;
+    m_filterTime = 0.0f;
+    m_filterCount = 0;
+    m_effect = 0;
+}
+
+void EnvManager::update() {
+    if (m_colorFilter == 2) {
+        if ((int)m_filterTime <= m_filterCount++) {
+            gf::GfGameEvent::setColorFilter(false, -1, -1, 0.0f);
+            m_colorFilter = 0;
+            m_filterTime = 0.0f;
+            if (m_effect) {
+                mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(m_effect);
+            }
+            m_effect = 0;
+        }
+    }
+    if (m_flags & 0x10) {
+        ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+        acc.setMotBlurOverride(true);
+        acc.setMotBlur(false);
+    }
+    if (m_flags & 0x20) {
+        ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+        acc.setOverrideToneMap(m_toneMap);
+    }
+}
+
+void EnvManager::render() {
+    if (!(m_debugFlags & 1)) {
+        return;
+    }
+    gf::GfFieldTime* time = mm::mtl::PtrSingleton<gf::GfFieldTime>::sys();
+    if (time == nullptr) {
+        return;
+    }
+    int x = ml::DevGraph::getRootWidth() - 150;
+    fw::debug::drawSquare2D(mm::Rect<int>(x, 160, 140, 70), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+    fw::debug::drawLineSquare2D(mm::Rect<int>(x, 160, 140, 70), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFont(x + 5, 165, "ENV");
+    int lx = x + 10;
+    unsigned int hour, min;
+    time->getTime(hour, min);
+    fw::debug::drawFont(lx, 180, "clock:");
+    fw::debug::drawFont(lx + 80, 180, "%02d:%02d", hour, min);
+    int weather = gf::GfFieldWeather::getCurrentMapWeatherID(false);
+    fw::debug::drawFont(lx, 195, "weather:");
+    fw::debug::drawFont(lx + 80, 195, "%d", weather);
+    int sea = gf::GfFieldWeather::getCurrentCloudSea();
+    fw::debug::drawFont(lx, 210, "sea:");
+    fw::debug::drawFont(lx + 80, 210, "%d", sea);
+}
+
+// the clock is "HHMM": the digits a shorter string lacks count as 0, the hour wraps at 24 and the minute at 60
+void EnvManager::setClock(const char* clock) {
+    size_t len = strlen(clock);
+    int min1 = 0;
+    int min10 = 0;
+    int hour10 = 0;
+    int hour1 = 0;
+    if (len > 0) {
+        hour10 = (clock[0] - '0') * 10;
+        if (len > 1) {
+            hour1 = clock[1] - '0';
+            if (len > 2) {
+                min10 = (clock[2] - '0') * 10;
+                if (len > 3) {
+                    min1 = clock[3] - '0';
+                }
+            }
+        }
+    }
+    int hour = hour10 + hour1;
+    int min = min10 + min1;
+    while (hour >= 24) {
+        hour -= 24;
+    }
+    while (min >= 60) {
+        min -= 60;
+    }
+    if (m_hour != hour || m_min != min) {
+        if (gf::GfFieldTime* time = mm::mtl::PtrSingleton<gf::GfFieldTime>::sys()) {
+            time->setTime(hour, min);
+        }
+        m_hour = hour;
+        m_min = min;
+    }
+}
+
+void EnvManager::setColorFilter(COLORFILTER_TYPE type, int no, int frame, float rate) {
+    switch (type) {
+    case 0:
+        if (m_colorFilter != 0) {
+            gf::GfGameEvent::setColorFilter(false, -1, -1, rate / 30.0f);
+            m_colorFilter = 0;
+            m_filterTime = rate;
+            if (m_effect) {
+                mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(m_effect);
+            }
+            m_effect = 0;
+        }
+        break;
+    case 1:
+        if (m_colorFilter == 1 && m_filterNum == no && m_filterFarNum == frame && m_filterTime == rate) {
+            break;
+        }
+        gf::GfGameEvent::setColorFilter(true, no, frame, rate / 30.0f);
+        m_colorFilter = 1;
+        m_filterNum = no;
+        m_filterFarNum = frame;
+        m_filterTime = rate;
+        playVignette(no, frame);
+        break;
+    case 2:
+        if (m_colorFilter == 1) {
+            gf::GfGameEvent::setColorFilter(true, -1, -1, rate / 30.0f);
+            m_colorFilter = 2;
+            m_filterTime = rate;
+            m_filterCount = 0;
+            if (m_effect) {
+                mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(m_effect);
+            }
+            m_effect = 0;
+        }
+        m_filterTime = rate;
+        break;
+    }
+}
+
+void EnvManager::playVignette(int num, int farNum) {
+    if (m_effect) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(m_effect);
+    }
+    m_effect = 0;
+    if (num == 5000 || farNum == 5000) {
+        m_effect = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->create("cmn_205_000", nullptr, true);
+    } else if (num == 5001 || farNum == 5001) {
+        m_effect = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->create("cmn_205_001", nullptr, true);
+    } else {
+        return;
+    }
+    if (m_effect) {
+        // the matrix, scale, colour, first range and first flag set again, as GfGameScene's vignette does: the
+        // original stores them after the matrix copy
+        effect::SendParam param;
+        param.m_mtx = mm::Mat44::identity;
+        param.m_scale.x = 1.0f;
+        param.m_scale.y = 1.0f;
+        param.m_scale.z = 1.0f;
+        param.m_color[0] = 1.0f;
+        param.m_color[1] = 1.0f;
+        param.m_color[2] = 1.0f;
+        param.m_color[3] = 1.0f;
+        param.m_rangeA = 1.0f;
+        param.m_valueA = 0.0f;
+        param.m_flagA = false;
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setViewnum(m_effect, 0);
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setParam(m_effect, &param);
+    }
+}
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void EnvManager::OnEventProc(event::MSG_TYPE msg) {
