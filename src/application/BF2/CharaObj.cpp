@@ -3342,6 +3342,35 @@ Object* ObjectList::createLight(const char* name, unsigned int id) {
     return result;
 }
 
+void ObjectList::setActivePath(const char* path) {
+    Object* root = m_root;
+    if (root == nullptr) {
+        return;
+    }
+    if (*path == '\0') {
+        m_active = nullptr;
+        return;
+    }
+    Object* found = nullptr;
+    {
+        char buf[512];
+        char* rest = nullptr;
+        strcpy(buf, path);
+        strtok_r(buf, "/", &rest);
+        for (Object* child = root->m_child; child; child = child->m_next) {
+            if (strcmp(buf, child->m_name.m_str) == 0) {
+                found = child->searchByPath(path);
+                break;
+            }
+        }
+    }
+    m_active = found;
+    if (found == nullptr || found == m_root || found == m_categories[0] || found == m_categories[1] ||
+        found == m_categories[2] || found == m_categories[3]) {
+        m_active = nullptr;
+    }
+}
+
 Object* ObjectList::searchByNameSub(Object* obj, const char* name) {
     if (strcmp(name, obj->m_name.m_str) == 0) {
         return obj;
