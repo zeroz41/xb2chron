@@ -13,6 +13,29 @@ public:
     // out of line, the key function: D2/D0 sit before draw (0x71000B87A0)
     virtual ~ResPack();  // slot 0
     void draw();
+    // 1.0.0's ResPack::clear (0x7100097BD4; 3.0.1 inlines it: ResManager::clear)
+    void clear() {
+        if (m_res != nullptr) {
+            m_res->release();
+            m_res = nullptr;
+        }
+        m_handle.m_handle = 0;
+        m_func = nullptr;
+        m_event = nullptr;
+    }
+    // 1.0.0's ResPack::update (0x7100097CC8; 3.0.1 inlines it: ResManager::update): runs the step until it stays
+    void update() {
+        if (m_func) {
+            void (ResPack::*func)();
+            do {
+                func = m_func;
+                if (!func) {
+                    break;
+                }
+                (this->*func)();
+            } while (func != m_func);
+        }
+    }
     void load(mtl::ALLOC_HANDLE handle, const char* name, IResPackEvent* event);
     void func_loading();
 

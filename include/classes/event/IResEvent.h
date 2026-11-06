@@ -12,7 +12,7 @@ public:
         int m_type;  // 0x0: 3 = loaded (the data below is valid), 4 = failed (MstxtRes calls Manager::failureSkip)
         const char* m_name;  // 0x8: EffectRes hands it to EffectPack::createFromMemory as the pack's name
         void* m_data;  // 0x10: the loaded file
-        unsigned int m_size;  // 0x18: its size
+        unsigned long m_size;  // 0x18: its size (ResManager::updateNormal stores 8 bytes)
     };
     virtual void OnResEvent(PARAM const&) = 0;
 };

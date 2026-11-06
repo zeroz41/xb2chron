@@ -1755,6 +1755,7 @@ void Param::createString(mm::mtl::FixStr<256>& str) {
 #include "classes/event/LightEvt.h"
 #include "classes/event/ObjectLight.h"
 #include "classes/event/ObjectCamera.h"
+#include "classes/gf/GfComAsm.h"
 
 namespace event {
 
@@ -2321,6 +2322,62 @@ void CamManager::setFocal(bool focal) {
     } else {
         m_list.pad_10 &= ~4;
     }
+}
+
+bool CharaUtil::checkStat(gf::GfObj* obj, const char* stat) {
+    const char* name;
+    if (gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2)) {
+        name = anim->getStateName() ? anim->getStateName() : "";
+    } else if (gf::GfComAsm* com = obj->getComponent<gf::GfComAsm>(2)) {
+        name = com->getStateName(static_cast<gf::AnimLayer>(0)) ? com->getStateName(static_cast<gf::AnimLayer>(0)) : "";
+    } else {
+        return false;
+    }
+    return strcmp(name, stat) == 0;
+}
+
+bool CharaUtil::checkStat(gf::GfObj* obj, const char* stat, const char* stat2) {
+    if (gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2)) {
+        const char* name = anim->getStateName() ? anim->getStateName() : "";
+        return strcmp(name, stat) == 0 || strcmp(name, stat2) == 0;
+    }
+    if (gf::GfComAsm* com = obj->getComponent<gf::GfComAsm>(2)) {
+        const char* name = com->getStateName(static_cast<gf::AnimLayer>(0)) ? com->getStateName(static_cast<gf::AnimLayer>(0)) : "";
+        return strcmp(name, stat) == 0 || strcmp(name, stat2) == 0;
+    }
+    return false;
+}
+
+bool CharaUtil::checkStatSeries(gf::GfObj* obj, const char* stat) {
+    const char* name;
+    if (gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2)) {
+        name = anim->getStateName() ? anim->getStateName() : "";
+    } else if (gf::GfComAsm* com = obj->getComponent<gf::GfComAsm>(2)) {
+        name = com->getStateName(static_cast<gf::AnimLayer>(0)) ? com->getStateName(static_cast<gf::AnimLayer>(0)) : "";
+    } else {
+        return false;
+    }
+    return strstr(name, stat) != nullptr;
+}
+
+bool CharaUtil::isActionBusy(gf::GfObj* obj) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkip()) {
+        return false;
+    }
+    // bit 3 of the mode flags: 1.0.0 names it seamless action
+    if (!(mm::mtl::Singleton<CharaManager>::getPtr()->getModeFlags() & 8)) {
+        return false;
+    }
+    return !checkStatSeries(obj, "S_idle");
+}
+
+void CharaUtil::setGravity(gf::GF_OBJ_HANDLE* handle, bool on) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    gf::GfObjAcc acc(handle);
+    acc.setGravity(on);
+    acc.setCollisionGround(on);
 }
 
 }  // namespace event
@@ -4758,22 +4815,67 @@ void CamManager::OnEventProc(event::MSG_TYPE msg) {
 
 #include "classes/event/ResManager.h"
 #include "classes/event/ResPack.h"
+#include "classes/gf/GfAssetManager.h"
+#include "classes/fw/PadManager.h"
 
 namespace event {
 
 ResPack::~ResPack() {
-    if (m_res != nullptr) {
-        m_res->release();
-        m_res = nullptr;
-    }
-    m_handle.m_handle = 0;
-    m_func = nullptr;
-    m_event = nullptr;
+    clear();
 }
 
 // inline here: the original's out-of-line copy (0x71000B8D70, called from another unit) stores in an order no source
 // form gives yet, while the copies Singleton<ResManager>::getPtr inlines (EffectPlayEva::update) match this one
 ResManager::ResManager() : pad_0x18(0), pad_0x10b8(0), pad_0x10bc(0) {}
+
+void ResManager::update() {
+    if (m_packManager.isLoading()) {
+        m_packManager.update();
+    } else {
+        updateNormal();
+    }
+}
+
+void ResManager::loadPack(const char* name) {
+    m_packManager.load(mm::mtl::Singleton<MemoryManager>::getPtr()->pad_24, name, this);
+}
+
+void ResManager::load(const char* name, IResEvent* event, bool packOnly) {
+    if (Item* item = search(name)) {
+        item->addRef(event);
+        if (item->m_type < 3) {
+            return;
+        }
+        item->m_type = static_cast<RES_RESULT_TYPE>(2);
+    } else {
+        item = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+            Item(name, event, packOnly, static_cast<RES_RESULT_TYPE>(0), nullptr, 0, false);
+        m_entries.push_back(item);
+    }
+    pad_0x10b8++;
+}
+
+void ResManager::OnPackEvent(const IResPackEvent::PARAM& param) {
+    const char* name = param.m_name;
+    void* data = param.m_data;
+    unsigned long size = param.m_size;
+    Item* item = search(name);
+    if (item == nullptr) {
+        item = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+            Item(name, nullptr, false, static_cast<RES_RESULT_TYPE>(3), data, size, true);
+    } else {
+        if (item->m_data == nullptr) {
+            item->m_type = static_cast<RES_RESULT_TYPE>(2);
+            item->m_data = data;
+            item->m_size = size;
+            item->m_packed = true;
+            return;
+        }
+        item = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+            Item(name, nullptr, false, static_cast<RES_RESULT_TYPE>(3), data, size, true);
+    }
+    m_entries.push_back(item);
+}
 
 void ResManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
