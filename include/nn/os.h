@@ -29,6 +29,16 @@ public:
     long GetNanoSeconds() const {
         return m_nanoSeconds;
     }
+    // the nanoseconds divided by 1000000 through a multiply-high built from 32-bit halves (the original's code;
+    // the SDK's own form of the division is not known)
+    long GetMilliSeconds() const {
+        unsigned long low = m_nanoSeconds & 0xFFFFFFFF;
+        long high = m_nanoSeconds >> 32;
+        long middle = high * 0xD7B634DBL + ((low * 0xD7B634DBUL) >> 32);
+        long upper = high * 0x431BDE82L;
+        long lower = low * 0x431BDE82L + (middle & 0xFFFFFFFF);
+        return ((upper + (middle >> 32) + (lower >> 32)) >> 18) + (static_cast<unsigned long>(m_nanoSeconds) >> 63);
+    }
 
 private:
     long m_nanoSeconds;

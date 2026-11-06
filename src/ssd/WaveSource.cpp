@@ -9,6 +9,10 @@
 #include "classes/ssd/Allocator.h"
 #include "classes/ssd/SoundCore.h"
 #include "ssd/Debug.h"
+#include "ssd/Text.h"
+#include "nn/os.h"
+#include "nn/time.h"
+#include <stdarg.h>
 
 namespace ssd {
 
@@ -164,8 +168,160 @@ Result set_result(Result result) {
     return result;
 }
 
+void get_log_time_stamp(LogTimeStamp::Type type, char* buffer, unsigned long size) {
+    if (SoundCore::instance_ == nullptr) {
+        const char* text = "[Invalid sound]";
+        while ((*buffer++ = *text++) != 0) {
+        }
+        return;
+    }
+    switch (type) {
+    case 2: {
+        nn::time::PosixTime posix;
+        nn::time::CalendarTime calendar;
+        nn::time::CalendarAdditionalInfo info;
+        nn::time::StandardUserSystemClock::GetCurrentTime(&posix);
+        nn::Result result = nn::time::ToCalendarTime(&calendar, &info, posix);
+        if (result.IsFailure()) {
+            nn::diag::detail::AbortImpl("", "", "", 0, &result, "");
+        }
+        sprintf(buffer, size, "[%02d.%02d.%02d.%03d] ", calendar.hour, calendar.minute, calendar.second, 0);
+        break;
+    }
+    case 0:
+        buffer[0] = 0;
+        break;
+    case 1:
+        sprintf(buffer, size, "[%.3f] ",
+                nn::os::ConvertToTimeSpan(nn::os::GetSystemTick()).GetMilliSeconds() / 1000.0);
+        break;
+    default: {
+        nn::time::PosixTime posix;
+        nn::time::CalendarTime calendar;
+        nn::time::CalendarAdditionalInfo info;
+        nn::time::StandardUserSystemClock::GetCurrentTime(&posix);
+        nn::Result result = nn::time::ToCalendarTime(&calendar, &info, posix);
+        if (result.IsFailure()) {
+            nn::diag::detail::AbortImpl("", "", "", 0, &result, "");
+        }
+        sprintf(buffer, size, "[%02d.%02d.%02d %02d.%02d.%02d.%03d] ", calendar.year, calendar.month, calendar.day,
+                calendar.hour, calendar.minute, calendar.second, 0);
+        break;
+    }
+    }
+}
+
+void get_log_time_stamp(LogTimeStamp::Type type, char16_t* buffer, unsigned long size) {
+    if (SoundCore::instance_ == nullptr) {
+        const char16_t* text = u"[Invalid sound]";
+        while ((*buffer++ = *text++) != 0) {
+        }
+        return;
+    }
+    switch (type) {
+    case 2: {
+        nn::time::PosixTime posix;
+        nn::time::CalendarTime calendar;
+        nn::time::CalendarAdditionalInfo info;
+        nn::time::StandardUserSystemClock::GetCurrentTime(&posix);
+        nn::Result result = nn::time::ToCalendarTime(&calendar, &info, posix);
+        if (result.IsFailure()) {
+            nn::diag::detail::AbortImpl("", "", "", 0, &result, "");
+        }
+        sprintf(buffer, size, u"[%02d.%02d.%02d.%03d] ", calendar.hour, calendar.minute, calendar.second, 0);
+        break;
+    }
+    case 0:
+        buffer[0] = 0;
+        break;
+    case 1:
+        sprintf(buffer, size, u"[%.3f] ",
+                nn::os::ConvertToTimeSpan(nn::os::GetSystemTick()).GetMilliSeconds() / 1000.0);
+        break;
+    default: {
+        nn::time::PosixTime posix;
+        nn::time::CalendarTime calendar;
+        nn::time::CalendarAdditionalInfo info;
+        nn::time::StandardUserSystemClock::GetCurrentTime(&posix);
+        nn::Result result = nn::time::ToCalendarTime(&calendar, &info, posix);
+        if (result.IsFailure()) {
+            nn::diag::detail::AbortImpl("", "", "", 0, &result, "");
+        }
+        sprintf(buffer, size, u"[%02d.%02d.%02d %02d.%02d.%02d.%03d] ", calendar.year, calendar.month, calendar.day,
+                calendar.hour, calendar.minute, calendar.second, 0);
+        break;
+    }
+    }
+}
+
 void abort() {
     nn::diag::detail::AbortImpl("", "", "", 0);
+}
+
+void log_message(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    char line[256];
+    // the original formats through a helper taking the arguments by value (their second copy)
+    [&](char* buffer, unsigned long size, va_list list) {
+        char stamp[32];
+        get_log_time_stamp(SoundCore::instance_->GetLogTimeStampType(), stamp, sizeof(stamp));
+        char message[256];
+        vsprintf(message, sizeof(message), format, list);
+        sprintf(buffer, size, "SSD %s: %s\n", stamp, message);
+    }(line, sizeof(line), args);
+    char16_t text[256];
+    Utf8ToUTF16(line, text, sizeof(line));
+    Debug::log_.messageMethod(LogMessage::Type(0), text);
+    va_end(args);
+}
+
+void log_message(const char16_t* format, ...) {
+    va_list args;
+    va_start(args, format);
+    char16_t line[256];
+    // the original formats through a helper taking the arguments by value (their second copy)
+    [&](char16_t* buffer, unsigned long size, va_list list) {
+        char16_t stamp[32];
+        get_log_time_stamp(SoundCore::instance_->GetLogTimeStampType(), stamp, sizeof(stamp));
+        char16_t message[256];
+        vsprintf(message, sizeof(message), format, list);
+        sprintf(buffer, size, u"SSD %s: %s\n", stamp, message);
+    }(line, sizeof(line), args);
+    Debug::log_.messageMethod(LogMessage::Type(0), line);
+    va_end(args);
+}
+
+void log_error(Result result, Debug::LogFlag::Type flag, const char16_t* format, ...) {
+    va_list args;
+    va_start(args, format);
+    SoundCore* core = SoundCore::instance_;
+    if (core != nullptr) {
+        core->result_ = result;
+    }
+    if (Debug::log_.errorFlag & flag) {
+        char16_t line[256];
+        // the original formats through a helper taking the arguments by value (their second copy)
+        [&](char16_t* buffer, unsigned long size, va_list list) {
+            char16_t stamp[32];
+            get_log_time_stamp(core->GetLogTimeStampType(), stamp, sizeof(stamp));
+            char16_t message[256];
+            vsprintf(message, sizeof(message), format, list);
+            sprintf(buffer, size, u"SSD %s: %s\n", stamp, message);
+        }(line, sizeof(line), args);
+        Debug::log_.messageMethod(LogMessage::Type(2), line);
+    }
+    va_end(args);
+}
+
+const char16_t* get_logfilename(const char16_t* path) {
+    const char16_t* name = path;
+    for (const char16_t* p = path; *p != 0; p++) {
+        if (*p == u'/') {
+            name = p + 1;
+        }
+    }
+    return name;
 }
 
 }  // namespace ssd

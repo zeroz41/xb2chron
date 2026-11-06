@@ -56,6 +56,11 @@ Result set_result(Result result);
 // the logged form of a source path (the assertions pass their file's)
 const char16_t* get_logfilename(const char16_t* path);
 void abort();
+// writes type's time stamp for a log line into buffer (size bytes): the system tick's seconds, the clock time,
+// or the date and time; "[Invalid sound]" before the sound core exists
+void get_log_time_stamp(LogTimeStamp::Type type, char* buffer, unsigned long size);
+void get_log_time_stamp(LogTimeStamp::Type type, char16_t* buffer, unsigned long size);
+void log_message(const char* format, ...);
 void log_message(const char16_t* format, ...);
 void log_error(Result result, Debug::LogFlag::Type flag, const char16_t* format, ...);
 
