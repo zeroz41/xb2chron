@@ -32,6 +32,9 @@ public:
 
     // setupModel's choices (the names are not the original's)
     struct OPTION {
+        // zeroes the three fields only: MdlstmManager's constructor clears an MdlstmObj's OPTION with a word and a
+        // halfword store, not the padding after it
+        OPTION() : bladeId(0), left(false), bladeFlag(false) {}
         // a driver's blade (0: the debug manager's for the driver) or a weapon's driver
         unsigned int bladeId;
         // a weapon for the left hand (setupBladeForEventLeftCS, pad_1e1) rather than the right
@@ -51,6 +54,8 @@ public:
             m_reserve &= ~(1 << index);
         }
     }
+    // 1.0.0's ModelObj::isBusy (0x710009C7E4; inlined in 3.0.1, defined inline in CharaObj.cpp)
+    bool isBusy() const;
     bool isReserve(int index) {
         return m_reserve & (index >= 0 ? 1 << index : 0x7fffffff);
     }

@@ -935,6 +935,10 @@ void OffscrManager::OnEventProc(event::MSG_TYPE msg) {
 #include "classes/event/StmManager.h"
 #include "classes/event/MdlstmObj.h"
 #include "classes/event/IStmMemory.h"
+#include "classes/event/MdlstmManager.h"
+#include "classes/event/AlphaManager.h"
+#include "classes/event/Extend.h"
+#include "classes/event/ModelManager.h"
 
 namespace event {
 
@@ -950,6 +954,172 @@ MdlstmObj::~MdlstmObj() {
     ;
 }
 
+// fades the built model out, destroys both models, releases the reader and clears the object
+void MdlstmObj::finishFree() {
+    if (m_buildModel != nullptr) {
+        mm::mtl::Singleton<AlphaManager>::getPtr()->setAlpha(m_buildModel->m_handle, ALPHA_ATTR(2), 0.0f, 1.0f);
+        if (m_buildModel != nullptr) {
+            mm::mtl::Singleton<ModelManager>::getPtr()->destroyModel(m_buildModel, m_user);
+            m_buildModel = nullptr;
+        }
+    }
+    if (m_model != nullptr) {
+        mm::mtl::Singleton<ModelManager>::getPtr()->destroyModel(m_model, m_user);
+        m_model = nullptr;
+    }
+    pad_b0 = 0;
+    pad_b8 = 0;
+    pad_c0 = 0;
+    pad_c8 = 0;
+    if (m_reader != nullptr) {
+        m_reader->release();
+        m_reader = nullptr;
+    }
+    pad_e8 = 0;
+    m_id = 0;
+    m_flags.reset();
+    m_state = 0;
+    m_frame = 0.0f;
+    m_name.clear();
+    m_type = MODEL_TYPE();
+    pad_9c = 0;
+    m_option.bladeId = 0;
+    m_option.left = false;
+    m_option.bladeFlag = false;
+}
+
+// 1.0.0's ModelObj::isBusy: pad_8's bits 2-3, a running wait, or the game model still loading
+inline bool ModelObj::isBusy() const {
+    if (pad_8 & 0xc) {
+        return true;
+    }
+    if (m_busyWait >= 0) {
+        return true;
+    }
+    if (m_model != nullptr && m_model->isBusy(nullptr)) {
+        return true;
+    }
+    return false;
+}
+
+// steps the object through its states: load at its frame, model once both files are in, delay, busy, free
+void MdlstmObj::exec(float frame, float loadFrame) {
+    if (m_state == 2) {
+        if (m_type != 0) {
+            if (m_frame <= loadFrame) {
+                finishLoad();
+            }
+        } else if (m_name.m_str[0] != '\0') {
+            finishLoad();
+        }
+    }
+    if (m_state == 3) {
+        if ((m_model != nullptr && !m_model->isBusy()) || (m_flags.test(3) && m_flags.test(4))) {
+            finishLoaded();
+        }
+    }
+    if (m_state == 4) {
+        if (m_frame <= frame) {
+            finishModel();
+        }
+    }
+    if (m_state == 5) {
+        if (pad_e8-- <= 0) {
+            finishDelay();
+        }
+    }
+    if (m_state == 6) {
+        if (!m_buildModel->isBusy()) {
+            finishBusy();
+        }
+    }
+    if (m_state == 9) {
+        if (pad_e8-- <= 0) {
+            finishFree();
+        }
+    }
+    if (m_buildModel != nullptr && m_state < 7 && !m_buildModel->isBusy()) {
+        mm::mtl::Singleton<AlphaManager>::getPtr()->setAlpha(m_buildModel->m_handle, ALPHA_ATTR(2), 0.0f, 1.0f);
+    }
+}
+
+void MdlstmObj::init(float frame, const char* name, unsigned int id, bool flag, int user) {
+    m_flags.set(0);
+    m_frame = frame;
+    m_name = name;
+    m_option.bladeFlag = flag;
+    m_type = MODEL_TYPE();
+    pad_9c = 0;
+    m_option.bladeId = 0;
+    m_option.left = false;
+    m_id = id;
+    pad_b0 = 0;
+    pad_c0 = 0;
+    m_buildModel = nullptr;
+    pad_e8 = 0;
+    m_user = user;
+    m_state = 1;
+    MdlstmData::Info info;
+    if (mm::mtl::Singleton<MdlstmData>::getPtr()->getReplaceInfo(info, m_name.m_str)) {
+        m_type = info.m_type;
+        pad_9c = info.m_id;
+        m_option.bladeId = info.m_bladeId;
+        m_option.left = info.m_left;
+    }
+}
+
+ModelObj* MdlstmObj::build() {
+    if (m_state == 2) {
+        finishLoad();
+    }
+    if (m_state == 3) {
+        finishLoaded();
+    }
+    if (m_state == 4) {
+        finishModel();
+    }
+    if (m_state == 5) {
+        finishDelay();
+    }
+    if (m_state == 6) {
+        finishBusy();
+    }
+    mm::mtl::Singleton<AlphaManager>::getPtr()->setAlpha(m_buildModel->m_handle, ALPHA_ATTR(2), 1.0f, 1.0f);
+    if (mm::mtl::Singleton<MdlstmManager>::getPtr()->pad_14 & 1) {
+        mm::mtl::Singleton<AlphaManager>::getPtr()->setAlpha(m_buildModel->m_handle, ALPHA_ATTR(1), 1.0f, 1.0f);
+    }
+    m_state = 8;
+    return m_buildModel;
+}
+
+// mdo and arc: a loaded file named as the model's mdo sets bit 3, as its arc bit 4
+void MdlstmObj::OnResEvent(const IResEvent::PARAM& param) {
+    if (strcmp(param.m_name, mm::mtl::Singleton<Extend>::getPtr()->mdo(m_name.m_str)) == 0) {
+        m_flags.set(3);
+        m_flags.reset(1);
+    } else if (strcmp(param.m_name, mm::mtl::Singleton<Extend>::getPtr()->arc(m_name.m_str)) == 0) {
+        m_flags.set(4);
+        m_flags.reset(2);
+    }
+}
+
+void MdlstmManager::clear() {
+    mm::mtl::Singleton<MdlstmData>::getPtr()->clear();
+    for (unsigned int i = 0; i < m_active.size(); i++) {
+        m_active[i]->dispose();
+    }
+    for (unsigned int i = 0; i < m_active.size(); i++) {
+        m_active[i]->finishFree();
+    }
+    m_active.clear();
+    pad_3c018 = 0;
+    pad_3e028 = 0;
+    pad_3e02c = 0;
+    pad_3e030 = 0;
+    pad_10 = 0;
+    pad_14 = 0;
+}
+
 // bit 2 of m_flags enables it (2.0.0's setSkipFastEnable); the debug flags 5 and 6 can turn it off
 bool SkipManager::isSkipFast() const {
     if ((m_flags & 4) &&
@@ -959,6 +1129,49 @@ bool SkipManager::isSkipFast() const {
         return true;
     }
     return false;
+}
+
+// the next object's frame after `frame` (the last loaded one's when none is earlier)
+float MdlstmManager::getNextCutFrame(float frame) {
+    if (pad_3c018 == 0) {
+        return frame;
+    }
+    float next = m_objs[pad_3c018 - 1].m_frame;
+    for (unsigned int i = 0; i < pad_3c018; i++) {
+        if (m_active[i]->m_frame > frame && m_active[i]->m_frame < next) {
+            next = m_active[i]->m_frame;
+        }
+    }
+    return next;
+}
+
+// m_active stays sorted by frame: the new object goes in front of the first later one
+void MdlstmManager::load(float frame, const char* name, unsigned int id, bool flag) {
+    if (!(pad_10 & 1)) {
+        return;
+    }
+    MdlstmObj* obj = &m_objs[pad_3c018++];
+    obj->init(frame, name, id, flag, pad_3e030);
+    for (unsigned int i = 0; i < m_active.size(); i++) {
+        if (m_active[i]->m_frame <= obj->m_frame) {
+            continue;
+        }
+        for (; i < m_active.size(); i++) {
+            MdlstmObj* next = m_active[i];
+            m_active[i] = obj;
+            obj = next;
+        }
+    }
+    m_active.push_back(obj);
+}
+
+ModelObj* MdlstmManager::build(const char* name, unsigned int id) {
+    for (unsigned int i = 0; i < pad_3e028; i++) {
+        if (m_active[i]->isBuildable(name, id)) {
+            return m_active[i]->build();
+        }
+    }
+    return nullptr;
 }
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet

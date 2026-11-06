@@ -3,6 +3,7 @@
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
 #include "classes/event/MdlstmObj.h"
+#include "classes/event/MdlstmData.h"
 #include "mm/mtl/FixedVector.h"
 
 namespace event { enum MSG_TYPE : int; }
@@ -18,6 +19,11 @@ public:
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     void update();
     void clear();
+    float getNextCutFrame(float frame);
+    void load(float frame, const char* name, unsigned int id, bool flag);
+    void load(float frame, MODEL_TYPE type, unsigned int no, unsigned int id, bool flag);
+    ModelObj* build(const char* name, unsigned int id);
+    void addReplaceInfo(const MdlstmData::Info& info);
 
     // layout from the destructor: the list is cleared, then the objects are destroyed; names are not the original's
     unsigned int pad_10;
