@@ -115,6 +115,7 @@
 #include "classes/gf/GfComEffectCaster.h"
 #include "ml/ScnObjAccVolumeFade.h"
 #include "classes/fw/EffectManager.h"
+#include "effect/SendParam.h"
 #include "mm/Math.h"
 #include "classes/event/RandPlayer/Warp.h"
 #include "classes/event/RandPlayer/Wait.h"
@@ -4506,6 +4507,56 @@ void DofManager::OnEventProc(event::MSG_TYPE msg) {
         break;
     default:
         break;
+    }
+}
+
+void EffectCtrl::update() {
+    while (!m_handles.empty()) {
+        if (mm::mtl::PtrSingleton<fw::EffectManager>::sys()->isExist(*m_handles.begin())) {
+            break;
+        }
+        if (m_caster != nullptr) {
+            m_caster->setEffectCaster(false, *m_handles.begin());
+        }
+        if (m_mount != nullptr) {
+            m_mount->setEffectMount(false, *m_handles.begin(), "", mm::Vec3::zero, false, static_cast<EVT_attachtype>(0));
+        }
+        m_handles.erase(m_handles.begin());
+    }
+    if (m_effect != 0) {
+        if (m_caster != nullptr) {
+            m_caster->setEffectCaster(true, m_effect);
+        }
+        if (m_mount != nullptr) {
+            m_mount->setEffectMount(true, m_effect, m_mountName.m_str, m_mountPos, m_mountFlag, m_mountType);
+        }
+        effect::SendParam param;
+        param.m_mtx.setRotXYZ(m_rot);
+        param.m_mtx.setTransRow(m_pos);
+        param.m_scale = m_scale;
+        memcpy(param.m_color, &m_color, sizeof(param.m_color));
+        param.m_rangeA = 1.0f;
+        param.m_valueA = pad_1a4;
+        param.m_flagA = pad_1a8;
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setViewnum(m_effect, m_param);
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setParam(m_effect, &param);
+    }
+    if (!m_handles.empty()) {
+        effect::SendParam param;
+        param.m_mtx.setRotXYZ(m_rot);
+        param.m_mtx.setTransRow(m_pos);
+        param.m_scale = m_scale;
+        memcpy(param.m_color, &m_color, sizeof(param.m_color));
+        param.m_rangeA = pad_1a0;
+        param.m_valueA = 0.0f;
+        param.m_flagA = pad_1a8;
+        for (unsigned long i = 0; i < m_handles.size(); i++) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setParam(m_handles[i], &param);
+        }
+    }
+    if (m_effect != 0) {
+        m_handles.push_back(m_effect);
+        m_effect = 0;
     }
 }
 

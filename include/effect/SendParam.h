@@ -65,7 +65,8 @@ public:
     float m_rangeC;  // -1 by default
     unsigned int m_category;  // es_set_category stores the category here (the name is not the original's)
     unsigned short m_id;  // 0xFFFF by default
-    bool m_flagA;
+    // a byte, not a bool: EffectCtrl::update stores an int field into it without a test
+    unsigned char m_flagA;
     // true by default; es_set_viewnum stores its view number here (a byte, not a bool)
     unsigned char m_flagB;
     unsigned char m_option;

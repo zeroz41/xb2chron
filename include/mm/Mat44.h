@@ -43,7 +43,8 @@ public:
     Mat44& operator=(const Mat44& ma) = default;
 
     // the rotation by euler angles r (radians): x first, then y, then z, rows as AGmkBase::getMatrix and
-    // gmk::Xform::toMatrix store them (the name is not the original's)
+    // gmk::Xform::toMatrix store them (the name is not the original's); the rotation's nine first, then the
+    // zero column (event::EffectCtrl::update stores m[2][2] before the zeros)
     void setRotXYZ(Vec3 r) {
         float sx = ::sinf(r.x);
         float cx = ::cosf(r.x);
@@ -54,14 +55,14 @@ public:
         m[0][0] = cy * cz;
         m[0][1] = cy * sz;
         m[0][2] = -sy;
-        m[0][3] = 0.0f;
         m[1][0] = sx * sy * cz - cx * sz;
         m[1][1] = sx * sy * sz + cx * cz;
         m[1][2] = sx * cy;
-        m[1][3] = 0.0f;
         m[2][0] = cx * sy * cz + sx * sz;
         m[2][1] = cx * sy * sz - sx * cz;
         m[2][2] = cx * cy;
+        m[0][3] = 0.0f;
+        m[1][3] = 0.0f;
         m[2][3] = 0.0f;
         m[3][0] = 0.0f;
         m[3][1] = 0.0f;

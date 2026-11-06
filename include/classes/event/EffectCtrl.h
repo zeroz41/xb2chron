@@ -35,8 +35,12 @@ public:
     mm::Vec3 m_rot;  // 0x170
     mm::Vec3 m_scale;  // 0x180
     mm::Col4 m_color;  // 0x190
-    // zeroed by create; what it holds is not known yet
-    mm::Vec3 pad_1a0;
+    // zeroed by create; update hands pad_1a0 to the handles' SendParam::m_rangeA, pad_1a4 to the live effect's
+    // m_valueA and pad_1a8 to both m_flagA; what they hold is not known yet
+    float pad_1a0;
+    float pad_1a4;
+    int pad_1a8;
+    unsigned char pad_1ac[0x4];
     // the actor setCaster stores and the one setMount stores, with setMount's other arguments (the names are not
     // the original's)
     IAttachActor* m_caster;  // 0x1b0
