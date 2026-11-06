@@ -5636,6 +5636,7 @@ void TextManager::OnEventProc(event::MSG_TYPE msg) {
 #include "classes/gf/GfMenuObjChapterTelop.h"
 #include "classes/gf/GfMenuObjZoneTelop.h"
 #include "classes/event/SeManager.h"
+#include "classes/gf/GfSound.h"
 #include "classes/gf/GfMenuObjStaffroll.h"
 #include "classes/gf/GfMenuObjOpeningTelop.h"
 #include "classes/gf/GfMenuManager.h"
@@ -7320,6 +7321,93 @@ void FrameManager::pause(PAUSE_TYPE type, bool enable) {
         } else {
             pad_10.set(11);
         }
+    }
+}
+
+SeObj::~SeObj() {
+    if (m_handle.isValid()) {
+        gf::GfSound::sys()->stopSe(m_handle, 0.0f);
+        m_handle.clear();
+    }
+    m_pan = 0.0f;
+    m_name = "";
+    m_flags = 0;
+}
+
+void SeObj::play(const char* name, float wait, float fadeIn, float fadeOut, float volume) {
+    mm::clampSelf(volume, 0.0f, 1.0f);
+    if (!(m_flags & 1) || strcmp(m_name.m_str, name) != 0) {
+        if (m_handle.isValid()) {
+            gf::GfSound::sys()->stopSe(m_handle, 0.0f);
+            m_handle.clear();
+        }
+        m_pan = 0.0f;
+        m_name = "";
+        m_flags = 0;
+        m_handle = gf::GfSound::sys()->playSe(name, static_cast<fw::SoundCategory>(12));
+        m_handle.isValid();
+    }
+    m_flags |= 1;
+    if (wait > 0.0f) {
+        m_flags |= 8;
+    } else {
+        m_flags &= ~8;
+    }
+    if (fadeIn > 0.0f) {
+        m_flags |= 0x10;
+    } else {
+        m_flags &= ~0x10;
+    }
+    if (fadeOut > 0.0f && wait > 0.0f) {
+        m_flags |= 0x20;
+    } else {
+        m_flags &= ~0x20;
+    }
+    m_name = name;
+    m_time = 0.0f;
+    m_wait = wait;
+    m_fadeOutWait = wait;
+    m_fadeIn = fadeIn;
+    m_fadeOut = fadeOut;
+    m_volume = volume;
+    m_pan = 0.0f;
+    gf::GfSound::sys()->setVolume(m_handle, volume, 0.0f);
+}
+
+void SeObj::changeVolume(float volume, float frame) {
+    if (!m_handle.isValid()) {
+        return;
+    }
+    float time = mm::mtl::Singleton<SkipManager>::getPtr()->isSkip() ? 0.0f : frame;
+    mm::clampSelf(volume, 0.0f, 1.0f);
+    if (time <= 0.0f) {
+        m_volume = volume;
+        m_volumeAnm.clear();
+        m_flags &= ~0x40;
+        gf::GfSound::sys()->setVolume(m_handle, volume, 0.0f);
+    } else {
+        m_volumeAnm.clear();
+        m_volumeAnm.append(0.0f, m_volume, static_cast<CV_TYPE>(0));
+        m_volumeAnm.append(time, volume, static_cast<CV_TYPE>(1));
+        m_flags |= 0x40;
+    }
+}
+
+void SeObj::pan(float pan, float frame, CV_TYPE type) {
+    if (!m_handle.isValid()) {
+        return;
+    }
+    float time = mm::mtl::Singleton<SkipManager>::getPtr()->isSkip() ? 0.0f : frame;
+    if (time <= 0.0f) {
+        m_pan = pan;
+        m_panAnm.clear();
+        m_flags = (m_flags & ~0x180) | 0x100;
+        gf::GfSound::sys()->setPan(m_handle, pan, 0.0f);
+    } else {
+        m_panAnm.clear();
+        m_panAnm.append(0.0f, m_pan, static_cast<CV_TYPE>(0));
+        m_panAnm.append(time, pan, type);
+        m_flags |= 0x180;
     }
 }
 
