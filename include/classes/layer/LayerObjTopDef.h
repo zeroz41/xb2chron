@@ -20,6 +20,8 @@ public:
     virtual void applyBegin(layer::LayerResUpdateInfo&, layer::LayerRenderView const*);  // slot 5
     virtual void applyEnd(layer::LayerResUpdateInfo&, layer::LayerRenderView const*);  // slot 6
     virtual void setDrawList(layer::LayerSortMan*, bool);  // slot 7
+    // the per-frame update apply and applyBegin run first: textures, action, position, animation
+    void updateFast();
     void updateParams(LayerArgMdlRenInf& arg, const LayerRenderView* view);
 
     // its resource head is LayerActDef::ResData

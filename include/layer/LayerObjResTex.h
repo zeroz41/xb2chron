@@ -18,7 +18,8 @@ public:
     void setAddTexture(const void* res, unsigned int index);
     void setAddTexture(grlib::CGLibTextureBuffer& texture, unsigned int index);
     void clear();
-    void updateTexutre(grlib::CGLibTextureBuffer** textures, LayerTextureObj* textureObj);
+    // true when the textures changed (LayerObjTopDef::updateFast then re-tests the first one's format)
+    bool updateTexutre(grlib::CGLibTextureBuffer** textures, LayerTextureObj* textureObj);
 
     LayerLinkList<LayerResAddTexObj> m_list;          // 0x0
     LayerLinkList<LayerResAddTexObj> m_addLists[2];  // 0x18: by LayerManager::s_nStkIdx

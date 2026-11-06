@@ -51,6 +51,8 @@ public:
     bool actend_cmdend(const LyrActionData* data, bool cmdEnd);
     bool actend_on(const LyrActionData* data, bool cmdEnd);
     void actionIdx(unsigned int index);
+    // runs the current action's commands (the TopDef/TopLayout updateFast)
+    void updateAction();
     // the action commands: each reads its command at cmd, steps cmd past it and returns whether the action waits
     bool actcmd_no(const unsigned char*& cmd);
     bool actcmd_priority(const unsigned char*& cmd);

@@ -5,16 +5,8 @@
 
 namespace layer {
 
-// the parameters an object's animation moves (calcParm blends each group toward a key's). The field names are not
-// the original's; the groups follow the key flags (LayerAnimeInfo::FLAG_)
-struct LayerResParmInfo {
-    float m_pos[2];    // 0x0: FLAG_POS
-    float m_rot;       // 0x8: FLAG_ROT
-    float m_scale[2];  // 0xC: FLAG_SCALE
-    float m_size[2];   // 0x14: FLAG_SIZE
-    float m_color[4];  // 0x1C: FLAG_COLOR
-    float m_parm[3];   // 0x2C: FLAG_PARM
-};
+// defined in classes/layer/LayerObj.h (with the LayerResColor it holds)
+struct LayerResParmInfo;
 
 // one key of an animation (0x40 bytes, LayerAnimeObj(int) allocates its count times 0x40): the frames it lasts and
 // the parameters it reaches. The names are not the original's

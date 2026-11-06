@@ -12,6 +12,27 @@ namespace grlib { template <class T> class CGLibUniformArray; }
 namespace layer { class LayerTextureObj; }
 
 namespace layer {
+// what LayerObjMesh::updateMeshUniformBlock and its s_pCallUniform callbacks read and write (the field names are
+// not the original's)
+struct LayerArgMdlRenInf {
+    // one mesh's entry of LayerObjTopDef's mesh table (0x38 bytes; the type and names are not the original's)
+    struct Node {
+        LayerResMatrix m_matrix;  // updatePosMatrixUniformBlock's first matrix
+        LayerResColor m_color;  // updateMeshUniformBlock combines it with m_color
+        unsigned char pad_34[0x2];
+        unsigned char m_flags;  // bit 0: the mesh is hidden (updateMeshUniformBlock clears the draw bit)
+        unsigned char pad_37[0x1];
+    };
+
+    unsigned int* m_dispFlags;  // bit 0 set when the mesh draws
+    grlib::CGLibDblUniformBlock* m_uniformBlock;  // m_buff starts at its getBuff()
+    const Node* m_node;
+    const LayerResMatrix* m_viewMatrix;  // its second
+    const LayerResColor* m_color;
+    const unsigned char* m_meshInfo;  // [3]: the s_pCallUniform index
+    float* m_buff;  // the uniform data being written; each callback steps it past what it writes
+};
+
 // table none in 3.0.1 (its derived classes'). 1.0.0's LayerActDef() calls LayerObjWork's C2 constructor and its
 // table (0x71011B7980) is LayerObjWork's but for slot 1 (its own destructor) and slot 10 (updatePartsAction).
 class LayerActDef : public ::layer::LayerObjWork {
@@ -55,9 +76,27 @@ public:
     struct TexRefList {
         const AnimInfo* m_anim;  // 0x0
         const TexRef* m_refs;  // a LyrDrawData's m_texNum entries from its m_texIdx
-        unsigned char pad_10[0x58];
+        unsigned char pad_10[0x8];
+        // the mesh records LayerObjMesh::updateMeshUniformBlock reads through LayerArgMdlRenInf::m_meshInfo
+        // (0x1C bytes each; LayerObjTopDef::updateParams; the type and names are not the original's)
+        struct MeshInfo {
+            unsigned char m_data[0x1C];
+        };
+        const MeshInfo* m_meshInfos;  // 0x18
+        unsigned char pad_20[0x28];
+        // one mesh draw: its m_meshInfos and m_nodes entries (LayerObjTopDef::updateParams; the type and names are
+        // not the original's)
+        struct Draw {
+            unsigned short m_meshIdx;
+            unsigned short m_nodeIdx;
+        };
+        const Draw* m_draws;  // 0x48
+        int m_drawNum;  // 0x50
+        unsigned char pad_54[0x4];
+        const void* m_viewData;  // 0x58: LayerObjTopDef::updateParams copies the LayerRenderView's
+        unsigned int* m_dispFlags;  // 0x60: one per draw (LayerArgMdlRenInf::m_dispFlags)
         grlib::CGLibUniformArray<grlib::CGLibDblUniformBlock>* m_uniforms;  // 0x68: ~LayerObjTopDef releases it
-        unsigned char pad_70[0x8];
+        const LayerArgMdlRenInf::Node* m_nodes;  // 0x70: one per m_draws node index
         NumberWork* m_number;  // 0x78: LayerObjDraw::draw_call_number draws its instances
         float m_frameEnd;  // 0x80: actcmd_animfrm runs while the frame is below it
         float m_frameStart;  // 0x84

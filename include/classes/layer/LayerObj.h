@@ -76,6 +76,17 @@ public:
     mm::Col4 m_mulCol;
     mm::Col3 m_addCol;
 };
+// the parameters an object's animation moves (LayerAnimeObj::calcParm blends each group toward a key's; the groups
+// follow the key flags, LayerAnimeInfo::FLAG_). The field names are not the original's
+struct LayerResParmInfo {
+    // x, y: LayerActBase::actcmd_pos/scl interpolate them element by element
+    float m_pos[2];    // 0x0: FLAG_POS
+    float m_rot;       // 0x8: FLAG_ROT
+    float m_scale[2];  // 0xC: FLAG_SCALE
+    float m_size[2];   // 0x14: FLAG_SIZE
+    // 0x1C: m_mulCol FLAG_COLOR, m_addCol FLAG_PARM; LayerObj::setMulCol / setAddCol
+    LayerResColor m_color;
+};
 class LayerBase;
 // what an object's applyBegin/applyEnd pass down to its children (only the fields applyEnd reads and writes are
 // known; the field names are not the original's)
@@ -123,6 +134,11 @@ public:
     // setInitPos with the size too (LayerAccLayoutBinary::setLayoutObj passes a layout position's x, y, width, height)
     void setInitPosScl(float, float, float, float);
     void setRot(float rot);
+    // recomputes the default position from m_params (apply, applyBegin, the TopDef/TopLayout updateFast)
+    void updateDefPos();
+    // space 1 (3D) and 2 (world matrix uniform) take their depth from mtx; uniform is freed a frame after it is
+    // no longer used
+    void updateDefSpace(grlib::CGLibDblUniformBlock*& uniform, LAYER_SPACE_TYPE space, const mm::Mat44& mtx);
     void setScale(float x, float y);
     void setMulCol(const mm::Col4& col);
     void setAddCol(const mm::Col3& col);
@@ -143,16 +159,28 @@ public:
         FLAG_POS = 0x2,  // setPos
         FLAG_SCALE = 0x4,  // setScale
         FLAG_ROT = 0x8,  // setRot
+        FLAG_SIZE = 0x10,  // updateDefPos copies m_params' size (the name is not the original's)
         FLAG_MUL_COL = 0x20,  // setMulCol
         FLAG_ADD_COL = 0x40,  // setAddCol
         FLAG_DISP_ON = 0x80,  // setDisp(true)
         FLAG_DISP_OFF = 0x100,  // setDisp(false)
+        // updateDefPos deletes the current animation (the name is not the original's)
+        FLAG_ANIME_STOP = 0x200,
+        FLAG_UV = 0x400,  // updateDefPos copies m_uvParams' entry (the name is not the original's)
         FLAG_PRIORITY_TBL = 0x800,  // LayerAccLayoutObj::createPriorityTbl clears it
         FLAG_ACTION_RUNNING = 0x10000,  // LayerAccAction::isRunning
         FLAG_ACTION_END = 0x20000,  // LayerActBase::actionEnd
         FLAG_MATRIX = 0x40000,  // setMatrix
         FLAG_FLIP_ON = 0x80000,  // setFlip(type, true), shifted by the type
         FLAG_FLIP_OFF = 0x200000,  // setFlip(type, false), shifted by the type
+        // updateDefPos deletes the current secondary texture (the name is not the original's)
+        FLAG_SEC_TEXTURE_STOP = 0x1000000,
+        // LayerObjTopDef::updateFast sets/clears STATE_ANIME_PAUSE and STATE_HIDE from them (the names are not the
+        // original's)
+        FLAG_ANIME_PAUSE_ON = 0x1000,
+        FLAG_ANIME_PAUSE_OFF = 0x2000,
+        FLAG_HIDE_ON = 0x4000,
+        FLAG_HIDE_OFF = 0x8000,
     };
     // the bits of m_stateFlags (the names are not the original's)
     enum {
@@ -174,21 +202,26 @@ public:
         // LayerObjMesh's uv uniform mirrors u / v (scale negated, offset moved by 1)
         STATE_FLIP_U = 0x100000,
         STATE_FLIP_V = 0x200000,
+        // updateDefPos: set while setDisp(true) holds; without it the object gets STATE_NO_UPDATE
+        STATE_DISP = 0x20000,
+        // LayerObjTopDef::updateFast: the animation does not advance (the name is not the original's)
+        STATE_ANIME_PAUSE = 0x200,
+        STATE_HIDE = 0x80,  // LayerObjTopDef::updateFast (the name is not the original's)
+        // LayerObjTopDef::updateFast sets it while the object's alpha is 0 (part of STATE_NO_DRAW; the name is not
+        // the original's)
+        STATE_ALPHA_ZERO = 0x80000,
     };
-    // what setPos/setRot/setScale/setMulCol/setAddCol write, one per m_flags entry and a third the getters fall
-    // back to (the layout is not the original's)
-    struct Param {
-        // x, y: LayerActBase::actcmd_pos/scl interpolate them element by element
-        float m_pos[2];
+    // a uv transform (offset, scale, rotation), one per m_flags entry; updateDefPos copies the FLAG_UV one into
+    // m_uvOfs/m_uvScl/m_uvRot (the type and names are not the original's)
+    struct UvParam {
+        float m_ofs[2];
+        float m_scl[2];
         float m_rot;
-        float m_scale[2];
-        unsigned char pad_14[0x8];
-        LayerResColor m_color;  // setMulCol / setAddCol
     };
 
     // the entry the getters read for a value: this frame's when it set it, else the one being read back when that
     // set it, else the third (the name is not the original's)
-    const Param& getParam(unsigned int flag) const;
+    const LayerResParmInfo& getParam(unsigned int flag) const;
     // an m_flags entry's bits (the index is unsigned: the original zero-extends it; the names are not the original's)
     bool isFlag(unsigned int index, unsigned int flag) const { return (m_flags[index] & flag) != 0; }
     void onFlag(unsigned int index, unsigned int flag) { m_flags[index] |= flag; }
@@ -224,12 +257,14 @@ public:
     unsigned char pad_C5[0x1];
     unsigned char m_texFilterType;  // setTexFilterType (a LayerTexFilterType)
     unsigned char pad_C7[0x1];
-    Param m_params[3];
+    // what setPos/setRot/setScale/setMulCol/setAddCol write, one per m_flags entry and a third the getters fall
+    // back to (and LayerAnimeObj::update moves)
+    LayerResParmInfo m_params[3];
     // the screen bounds setDrawList tests: drawn only while [0] > 0, [1] > 0, [2] < 1 and [3] < 1 (the name is not
     // the original's)
     LayerResDispInfo m_dispInfo;
     LayerResRenderInfo m_renderInfo;  // 0x180
-    unsigned char pad_19C[0x28];  // the render info is 4-aligned (floats at 0x188)
+    UvParam m_uvParams[2];  // 0x19C
     // the uv transform LayerObjMesh's call_uniform_def/uvscl/hdr write (offset, scale, rotation about the scaled
     // center; the names are not the original's)
     float m_uvOfs[2];  // 0x1C4
@@ -238,7 +273,9 @@ public:
     unsigned short m_runningActIdx[2];  // LayerAccAction::getRunningActIdx, indexed by LayerManager::s_nDebIdx
     LayerResMatrix m_localMatrix;  // 0x1DC: applyEnd multiplies it by its parent's (the name is not the original's)
     float m_ctrlSpd;  // LayerActBase::actcmd_ctrlspd (the name is not the original's)
-    unsigned char pad_1F8[0x4];
+    // m_ctrlSpd as of this frame's update: the animation advances by it times the frame time (the name is not the
+    // original's)
+    float m_frameCtrlSpd;
     // the z LayerObjUtil::updatePosMatrixUniformBlock writes into the position uniform (LayerObjMesh's
     // call_uniform_noImage; the name is not the original's)
     float m_posZ;
@@ -254,7 +291,7 @@ public:
 };
 inline void LayerObj::onFlag(unsigned int flag) { onFlag(LayerManager::s_nStkIdx, flag); }
 inline void LayerObj::offFlag(unsigned int flag) { offFlag(LayerManager::s_nStkIdx, flag); }
-inline const LayerObj::Param& LayerObj::getParam(unsigned int flag) const {
+inline const LayerResParmInfo& LayerObj::getParam(unsigned int flag) const {
     if (isFlag(LayerManager::s_nStkIdx, flag)) return m_params[LayerManager::s_nStkIdx];
     return isFlag(LayerManager::s_nDebIdx, flag) ? m_params[LayerManager::s_nDebIdx] : m_params[2];
 }

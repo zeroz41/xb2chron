@@ -2,6 +2,7 @@
 #include <new>
 #include <string.h>
 #include "classes/layer/LayerManager.h"
+#include "classes/layer/LayerObj.h"
 #include "classes/layer/LayerShdManager.h"
 #include "classes/layer/LayerSortObj.h"
 #include "classes/mm/mtl/PtrSingleton.h"
@@ -69,15 +70,15 @@ void LayerAnimeObj::calcParm(LayerResParmInfo& info, const LayerAnimeInfo& anime
         info.m_size[1] += (anime.m_size[1] - info.m_size[1]) * frame;
     }
     if (anime.m_flags & LayerAnimeInfo::FLAG_PARM) {
-        info.m_parm[0] += (anime.m_parm[0] - info.m_parm[0]) * frame;
-        info.m_parm[1] += (anime.m_parm[1] - info.m_parm[1]) * frame;
-        info.m_parm[2] += (anime.m_parm[2] - info.m_parm[2]) * frame;
+        info.m_color.m_addCol.r += (anime.m_parm[0] - info.m_color.m_addCol.r) * frame;
+        info.m_color.m_addCol.g += (anime.m_parm[1] - info.m_color.m_addCol.g) * frame;
+        info.m_color.m_addCol.b += (anime.m_parm[2] - info.m_color.m_addCol.b) * frame;
     }
     if (anime.m_flags & LayerAnimeInfo::FLAG_COLOR) {
-        info.m_color[0] += (anime.m_color[0] - info.m_color[0]) * frame;
-        info.m_color[1] += (anime.m_color[1] - info.m_color[1]) * frame;
-        info.m_color[2] += (anime.m_color[2] - info.m_color[2]) * frame;
-        info.m_color[3] += (anime.m_color[3] - info.m_color[3]) * frame;
+        info.m_color.m_mulCol.r += (anime.m_color[0] - info.m_color.m_mulCol.r) * frame;
+        info.m_color.m_mulCol.g += (anime.m_color[1] - info.m_color.m_mulCol.g) * frame;
+        info.m_color.m_mulCol.b += (anime.m_color[2] - info.m_color.m_mulCol.b) * frame;
+        info.m_color.m_mulCol.a += (anime.m_color[3] - info.m_color.m_mulCol.a) * frame;
     }
 }
 

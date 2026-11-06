@@ -137,6 +137,53 @@ void LayerObj::setInitPos(float x, float y) {
     m_params[0].m_pos[1] = y;
     m_params[2].m_pos[1] = y;
 }
+void LayerObj::setInitPosScl(float x, float y, float width, float height) {
+    if (m_objType == 2) {
+        setInitPos(x, y);
+        return;
+    }
+    if (m_stateFlags & 0x2) {
+        if (mm::mtl::PtrSingleton<LayerManager>::sys()->m_coordinate != 0) {
+            setInitPos(x + width, y);
+        } else {
+            setInitPos(x + static_cast<unsigned short>(m_renderInfo.m_pixelWidth) * width, y);
+        }
+        setInitScale(height, height);
+    } else {
+        setInitPos(x, y);
+        if (mm::mtl::PtrSingleton<LayerManager>::sys()->m_coordinate != 0) {
+            setInitScale(width / m_renderInfo.m_width, height / m_renderInfo.m_height);
+        } else {
+            setInitScale(width, height);
+        }
+    }
+}
+void LayerObj::updateDefSpace(grlib::CGLibDblUniformBlock*& uniform, LAYER_SPACE_TYPE space, const mm::Mat44& mtx) {
+    switch (space) {
+    case 2:
+        LayerObjUtil::calcMatrixToZBuffPos(m_depth, m_posZ, mtx);
+        m_stateFlags &= ~0x1000;
+        m_stateFlags |= STATE_3D_SPACE | STATE_RAW_POS;
+        LayerObjUtil::createWorldMatrixUniform(uniform, mtx, m_priority * 0.0625f);
+        return;
+    case 1:
+        LayerObjUtil::calcMatrixToZBuffPos(m_depth, m_posZ, mtx);
+        m_stateFlags |= STATE_3D_SPACE;
+        break;
+    default:
+        m_posZ = 0.0f;
+        break;
+    }
+    if (m_stateFlags & 0x1000) {
+        m_stateFlags &= ~0x1000;
+        if (uniform != nullptr) {
+            delete uniform;
+            uniform = nullptr;
+        }
+    } else if (uniform != nullptr) {
+        m_stateFlags |= 0x1000;
+    }
+}
 void LayerObj::applyEnd(LayerResUpdateInfo& info, const LayerRenderView* view) {
     if (m_stateFlags & STATE_NO_UPDATE) return;
     LayerResMatrix matrix;
@@ -186,13 +233,13 @@ void LayerObj::setMatrix(const mm::Mat44& mtx) {
     onFlag(LayerManager::s_nStkIdx, FLAG_MATRIX);
 }
 void LayerObj::getPos(float& x, float& y) const {
-    const Param& param = getParam(FLAG_POS);
+    const LayerResParmInfo& param = getParam(FLAG_POS);
     x = param.m_pos[0];
     y = param.m_pos[1];
 }
 void LayerObj::getRot(float& rot) const { rot = getParam(FLAG_ROT).m_rot; }
 void LayerObj::getScale(float& x, float& y) const {
-    const Param& param = getParam(FLAG_SCALE);
+    const LayerResParmInfo& param = getParam(FLAG_SCALE);
     x = param.m_scale[0];
     y = param.m_scale[1];
 }
@@ -862,6 +909,65 @@ void LayerObjTopDef::resourceInit() {
         }
     }
     m_stateFlags &= ~STATE_RESOURCE_INIT;
+}
+void LayerObjTopDef::updateFast() {
+    if (m_resTex.updateTexutre(m_textures, m_textureObj)) {
+        m_stateFlags &= ~STATE_TEX_FORMAT;
+        switch (static_cast<int>(m_textures[0]->getFormat())) {
+        case 0x4D:
+        case 0x4F:
+        case 0x50:
+            m_stateFlags |= STATE_TEX_FORMAT;
+            break;
+        }
+    }
+    if (isFlag(LayerManager::s_nDebIdx, FLAG_ANIME_PAUSE_ON | FLAG_ANIME_PAUSE_OFF | FLAG_HIDE_ON | FLAG_HIDE_OFF)) {
+        if (isFlag(LayerManager::s_nDebIdx, FLAG_ANIME_PAUSE_ON)) {
+            m_stateFlags |= STATE_ANIME_PAUSE;
+        } else if (isFlag(LayerManager::s_nDebIdx, FLAG_ANIME_PAUSE_OFF)) {
+            m_stateFlags &= ~STATE_ANIME_PAUSE;
+        }
+        if (isFlag(LayerManager::s_nDebIdx, FLAG_HIDE_ON)) {
+            m_stateFlags |= STATE_HIDE;
+        } else if (isFlag(LayerManager::s_nDebIdx, FLAG_HIDE_OFF)) {
+            m_stateFlags &= ~STATE_HIDE;
+        }
+    }
+    m_frameCtrlSpd = m_ctrlSpd;
+    updateAction();
+    updateDefPos();
+    if (m_animeObj[2] != nullptr) {
+        float frame = m_frameCtrlSpd * mm::mtl::PtrSingleton<LayerManager>::sys()->m_frameRate.y;
+        if (m_animeObj[2]->update(m_params[2], (m_stateFlags & STATE_ANIME_PAUSE) ? 0.0f : frame)) {
+            if (m_animeObj[2] != nullptr) {
+                delete m_animeObj[2];
+                m_animeObj[2] = nullptr;
+            }
+        }
+    }
+    if (m_params[2].m_color.m_mulCol.a <= 0.0f && m_objType != 7) {
+        m_stateFlags |= STATE_ALPHA_ZERO;
+    }
+}
+void LayerObjTopDef::updateParams(LayerArgMdlRenInf& arg, const LayerRenderView* view) {
+    m_texRefs->m_viewData = view->m_viewData;
+    m_dispInfo.m_minX = m_dispInfo.m_minY = -100000.0f;
+    m_dispInfo.m_maxX = m_dispInfo.m_maxY = 100000.0f;
+    LayerObjUtil::calcDispInfo(m_dispInfo, *arg.m_viewMatrix, m_renderInfo);
+    if (m_stateFlags & STATE_NO_DRAW) return;
+    arg.m_dispFlags = m_texRefs->m_dispFlags;
+    const TexRefList::Draw* draw = m_texRefs->m_draws;
+    for (int i = 0; i < m_texRefs->m_drawNum; i++, draw++) {
+        unsigned int index = i;
+        arg.m_node = &m_texRefs->m_nodes[draw->m_nodeIdx];
+        arg.m_meshInfo = m_texRefs->m_meshInfos[draw->m_meshIdx].m_data;
+        arg.m_uniformBlock = &m_texRefs->m_uniforms->m_pArray[index];
+        updateMeshUniformBlock(arg);
+        arg.m_dispFlags++;
+    }
+    if (m_secTexture[2] != nullptr) {
+        m_secTexture[2]->update();
+    }
 }
 void LayerObjTopDef::applyEnd(LayerResUpdateInfo& info, const LayerRenderView* view) {
     if (m_stateFlags & STATE_NO_UPDATE) return;

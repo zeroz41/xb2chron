@@ -6,6 +6,7 @@ namespace layer { class LayerResDispInfo; }
 namespace layer { class LayerResRenderInfo; }
 namespace layer { class LayerRenderView; class LayerResViewPortInfo; class LayerViewPort; }
 namespace grlib { class CGLibDblUniformBlock; }
+namespace mm { class Mat44; }
 #include "layer/LayerAccObjBase.h"
 
 namespace layer {
@@ -101,6 +102,10 @@ void calcLayerTransRotScaleMatrix(LayerResMatrix& mtx, const LayerBasePos& base,
 void calcLayerTransRotScaleLaoutMatrix(LayerResMatrix& mtx, const LayerBasePos& base, const LayerResRenderInfo& info);
 // writes a position matrix (8 floats) to buff: z at [2]; raw leaves out the LayerManager's screen scale
 // the screen bounds of an object drawn with the matrix and render info
+// the depth of the matrix's position: z and the sort distance LayerObj::updateDefSpace keeps (m_depth, m_posZ)
+void calcMatrixToZBuffPos(float& depth, float& z, const mm::Mat44& mtx);
+// uniform (created on first use) gets the world matrix mtx and the priority-derived offset
+void createWorldMatrixUniform(grlib::CGLibDblUniformBlock*& uniform, const mm::Mat44& mtx, float offset);
 void calcDispInfo(LayerResDispInfo& disp, const LayerResMatrix& matrix, const LayerResRenderInfo& info);
 // the screen bounds of a layout drawn with the matrix and render info
 void calcLayoutDispInfo(LayerResDispInfo& disp, const LayerResMatrix& matrix, const LayerResRenderInfo& info);
