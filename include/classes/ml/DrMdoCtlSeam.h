@@ -102,7 +102,8 @@ public:
             unsigned int m_heightSize;  // 0xC
             unsigned int pad_10;
         };
-        unsigned char pad_0[0x1C];
+        unsigned char pad_0[0x18];
+        int m_baseMapNum;                 // 0x18: entries of the base map table (the name is not the original's)
         unsigned int m_baseMapTblOfs;     // 0x1C: DrResMdoSeamWrkBase::MapEntry entries (callBaseMapStream)
         unsigned char pad_20[0x4];
         unsigned int m_instMapTblOfs;     // 0x24: DrResMdoSeamWrkInst::MapEntry entries (callInstMapStream)
@@ -215,7 +216,13 @@ public:
     // releaseSeam frees both (the names are not the original's)
     void* m_memPoolBuf;
     unsigned char* m_workBuf;
-    unsigned char pad_B50[0x30];
+    // 0xB50: a bit per base map table entry, set by DrMdoCtlSeamBaseMap::initBaseMapParts and cleared by
+    // releaseFreeSeamBase (the name is not the original's)
+    unsigned int* m_pBaseBits;
+    unsigned char pad_B58[0x8];
+    // 0xB60: a second bit per base map table entry, cleared by releaseFreeSeamBase (the name is not the original's)
+    unsigned int* m_pBaseSubBits;
+    unsigned char pad_B68[0x18];
     // 0xB80: a bit per inst map table entry, cleared by DrMdoCtlSeamInstMap::releaseFreeSeamInst (the name is not
     // the original's)
     unsigned int* m_pInstBits;
@@ -229,7 +236,11 @@ public:
     unsigned short* m_pTextureNo;    // 0xBE0: by texture table entry, the DrResMdoSeamTexture::m_no + 1 holding it
     unsigned char pad_BE8[0x8];
     unsigned short* m_pTexListNo;    // 0xBF0: by texture list entry, the DrResMdoSeamTexList::m_no + 1 holding it
-    unsigned char pad_BF8[0xC];
+    unsigned char pad_BF8[0x8];
+    // 0xC00: the base maps in use; initBaseMapParts counts them up, releaseFreeSeamBase down (the name is not the
+    // original's)
+    short m_baseNum;
+    unsigned char pad_C02[0x2];
     // 0xC04: the inst maps in use; releaseFreeSeamInst counts them down (the name is not the original's)
     short m_instNum;
     unsigned short m_mpfNum;         // 0xC06: waitMpfMdlStream counts the mpf models in

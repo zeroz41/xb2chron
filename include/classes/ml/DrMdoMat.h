@@ -92,6 +92,10 @@ public:
     // free a seam material's resources: vertex, textures, samplers, shader object and uniform arrays
     void releaseBaseMapSeamMat(MdoWrkMatRes* res);
     void releaseInstMapSeamMat(MdoWrkMatRes* res);
+    void initBaseMapMaterial(MdoWrkMatRes*& res, const unsigned char*, const unsigned char*, const unsigned char*,
+                             const unsigned char*, const unsigned char*, int);
+    void resetBaseMapMaterial(MdoWrkMatRes* res, const unsigned char*, const unsigned char*, const unsigned char*,
+                              const unsigned char*, const unsigned char*, int);
     void initInstMapMaterial(MdoWrkMatRes*& res, const unsigned char*, const unsigned char*, const unsigned char*,
                              const unsigned char*, int);
     void resetInstMapMaterial(MdoWrkMatRes* res, const unsigned char*, const unsigned char*, const unsigned char*,

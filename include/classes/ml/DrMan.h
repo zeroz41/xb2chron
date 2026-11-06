@@ -242,7 +242,14 @@ public:
     // 0x1CFC: while >= 1, DrMdoCtlSeamRead::wait*Stream also set bit 10 of a seam model's flags when its stream
     // ends without data (the name is not the original's)
     int m_seamReadErrMode;
-    unsigned char pad_1D00[0x20];
+    // 0x1D00: the distance around a seam base map's box within which DrMdoCtlSeamBaseMap::readBaseModelCheck reads
+    // it (DrMdoCtlSeamBaseMap::SEAM_BASEMAP_READ_DEN_CHECK instead while the seam flags' bit 7 is set); 0x1D04,
+    // 0x1D08: readBaseMapCheck copies them to DrResMdoSeamWrkBase::SEAM_BASEMAP_VERTEX_CHECK and
+    // SEAM_BASEMAP_VERTEX_MIDDLE (the names are not the original's)
+    float m_seamBaseReadRange;
+    float m_seamBaseVertexCheck;
+    float m_seamBaseVertexMiddle;
+    unsigned char pad_1D0C[0x14];
     unsigned int* m_dispOffBits;  // 0x1D20: a bit per display index, set = hidden (ScnObjAccPartsEtcPos::isDisp; name inferred)
     unsigned char pad_1D28[0x8];
     mm::Vec3 m_globalWind[2];           // 0x1D30, by s_nDblNowIdx (getGlobalWind)

@@ -330,6 +330,60 @@ void DrMdoMat::setupMpfResource() {
     }
 }
 
+void DrMdoCtlSeamBaseMap::releaseFreeSeamBase(DrResMdoSeamWrkBase* wrk) {
+    DrResMdoSeamMemObj* memObj;
+    if (wrk->m_matRes == nullptr) {
+        memObj = nullptr;
+    } else {
+        memObj = wrk->m_memObj;
+        unsigned int idx = wrk->m_dataIdx;
+        m_pBaseBits[idx >> 5] &= ~(1 << (idx & 0x1F));
+        idx = wrk->m_dataIdx;
+        m_pBaseSubBits[idx >> 5] &= ~(1 << (idx & 0x1F));
+        m_baseMemSize -= wrk->m_readSize;
+        releaseBaseMapSeamMat(wrk->m_matRes);
+        wrk->releaseCache(this);
+        m_baseNum--;
+    }
+    DrResMdoSeamWrkBase* after = wrk->m_prev;
+    DrResMdoSeamWrkBase* before = wrk->m_next;
+    if (after == nullptr) {
+        if (before != nullptr) {
+            before->m_prev = nullptr;
+        }
+    } else {
+        if (before != nullptr) {
+            before->m_prev = after;
+        }
+        after->m_next = before;
+    }
+    if (m_basePool.m_usedTail == wrk) {
+        m_basePool.m_usedTail = before;
+    }
+    if (m_basePool.m_list == wrk) {
+        m_basePool.m_list = after;
+        if (after != nullptr) {
+            after->m_next = nullptr;
+        }
+    }
+    if (m_basePool.m_freeTail == nullptr) {
+        m_basePool.m_freeHead = wrk;
+        m_basePool.m_freeTail = wrk;
+        wrk->m_next = nullptr;
+    } else {
+        m_basePool.m_freeTail->m_prev = wrk;
+        wrk->m_next = m_basePool.m_freeTail;
+        m_basePool.m_freeTail = wrk;
+    }
+    wrk->m_prev = nullptr;
+    m_basePool.m_freeNum++;
+    m_basePool.m_usedNum--;
+    if (memObj != nullptr) {
+        wrk->m_memObj = nullptr;
+        releaseFreeSeamMemObj(memObj);
+    }
+}
+
 void DrMdoMat::releaseBaseMapSeamMat(MdoWrkMatRes* res) {
     if (res->m_pVertex != nullptr) {
         delete res->m_pVertex;
@@ -368,6 +422,52 @@ void DrMdoMat::releaseBaseMapSeamMat(MdoWrkMatRes* res) {
         res->m_pExtUniform->m_pUniformArray = nullptr;
     }
 }
+
+void DrMdoCtlSeamBaseMap::readBaseMapCheck() {
+    unsigned int flags = m_seamFlags;
+    if (m_parmRead.m_posCnt == 0 && !(flags & 0x40)) {
+        DrResMdoSeamWrkBase::SEAM_BASEMAP_READ_CHECK =
+            (flags & 0x80) ? SEAM_BASEMAP_READ_DEN_CHECK + 50.0f : m_pDrMan->m_seamBaseReadRange + 100.0f;
+        DrResMdoSeamWrkBase::SEAM_BASEMAP_READ_IN_CHECK = SEAM_BASEMAP_READ_IN_CHECK + 5.0f;
+    } else {
+        DrResMdoSeamWrkBase::SEAM_BASEMAP_READ_CHECK =
+            ((flags & 0x80) ? SEAM_BASEMAP_READ_DEN_CHECK : m_pDrMan->m_seamBaseReadRange) + 0.5f;
+        DrResMdoSeamWrkBase::SEAM_BASEMAP_READ_IN_CHECK = SEAM_BASEMAP_READ_IN_CHECK + 0.5f;
+    }
+    DrResMdoSeamWrkBase::SEAM_BASEMAP_VERTEX_CHECK = m_pDrMan->m_seamBaseVertexCheck;
+    DrResMdoSeamWrkBase::SEAM_BASEMAP_VERTEX_MIDDLE = m_pDrMan->m_seamBaseVertexMiddle;
+    DrCalcViewWork* view = m_pDrMan->m_calcMan->m_pViewWork;
+    bool readAll = (flags & 0x1000) || m_releaseVertexAll;
+    for (DrResMdoSeamWrkBase* wrk = m_basePool.m_list; wrk != nullptr;) {
+        bool release = wrk->update(view, &m_parmRead, readAll, m_seamFlags);
+        if (wrk->m_cacheFlags & 0x80) {
+            changeMemBaseMapParts(wrk);
+        }
+        DrResMdoSeamWrkBase* next = wrk->m_prev;
+        if (release) {
+            releaseFreeSeamBase(wrk);
+        }
+        wrk = next;
+    }
+    if (m_seamFlags & 0x80200) {
+        return;
+    }
+    bool found = false;
+    if (m_baseNum >= 5 || (m_seamFlags & 0x1000)) {
+        return;
+    }
+    if (!readBaseModelCheck(found, m_parmRead.m_readPos, true)) {
+        return;
+    }
+    for (int i = 0; i < m_parmRead.m_posCnt; i++) {
+        if (!readBaseModelCheck(found, m_parmRead.m_pos[i], false)) {
+            return;
+        }
+    }
+}
+
+float DrMdoCtlSeamBaseMap::SEAM_BASEMAP_READ_DEN_CHECK = 100.0f;
+float DrMdoCtlSeamBaseMap::SEAM_BASEMAP_READ_IN_CHECK = 5.0f;
 
 void DrMdoMat::releaseMpfMapSeamMat(MdoWrkMatRes* res) {
     if (res->m_pVertex != nullptr) {
@@ -3229,6 +3329,41 @@ void DrMdoCtlSeamAll::noOffScreenUpdate() {
     }
 }
 
+void DrMdoCtlSeamBaseMap::createBaseThicknesPassDisplayList(bool first) {
+    if (m_pDrMan->m_seamBaseShadowOff) {
+        return;
+    }
+    for (DrResMdoSeamWrkBase* wrk = m_basePool.m_list; wrk != nullptr; wrk = wrk->m_prev) {
+        m_pWrkMatRes = wrk->m_matRes;
+        if (m_pWrkMatRes == nullptr || !(wrk->m_cacheFlags & 0x8)) {
+            continue;
+        }
+        int num = wrk->m_renderNum[7];
+        if (num == 0) {
+            continue;
+        }
+        DrResMdoAlpTbl* alpTbl = wrk->m_instans;
+        wrk->beginRender();
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[1] = 0;
+        m_bindFlags[0] |= 0x10;
+        int list = m_pWrkMatRes->m_matNum * 7;
+        for (int i = 0; i < num; i++) {
+            for (DrResMdoSeamWrkBase::RenderEntry* entry = wrk->m_renderList[list + i]; entry != nullptr;
+                 entry = entry->m_next != 0 ? &wrk->m_renderEntries[entry->m_next - 1] : nullptr) {
+                wrk->selectVertex(entry->m_vertexIdx);
+                const MdsMdlInfoHeader* info =
+                    reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + entry->m_infoOfs);
+                if (info->m_drawFlags & 0x8000) {
+                    partsThicknessRender(info, 0, 0, alpTbl, entry->m_alpIdx, first);
+                }
+            }
+        }
+        wrk->endRender();
+    }
+}
+
 void DrMdoCtlSeamInstMap::createInstThicknessPassDisplayList(bool first) {
     if (m_pDrMan->m_seamOccRenderOff) {
         return;
@@ -3402,6 +3537,40 @@ void DrMdoCtlSeamAll::callZPrePassSeamAll() {
     createInstZPrePassDisplayList();
     createMpfZPrePassDisplayList();
     createLowZPrePassDisplayList();
+}
+
+void DrMdoCtlSeamBaseMap::createBaseZPrePassDisplayList() {
+    if (!(m_seamFlags & 2) || m_pDrMan->m_seamBaseShadowOff) {
+        return;
+    }
+    for (DrResMdoSeamWrkBase* wrk = m_basePool.m_list; wrk != nullptr; wrk = wrk->m_prev) {
+        m_pWrkMatRes = wrk->m_matRes;
+        if (m_pWrkMatRes == nullptr || !(wrk->m_cacheFlags & 0x8)) {
+            continue;
+        }
+        int num = wrk->m_renderNum[0];
+        if (num == 0) {
+            continue;
+        }
+        DrResMdoAlpTbl* alpTbl = wrk->m_instans;
+        wrk->beginRender();
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[1] = 0;
+        m_bindFlags[0] |= 0x10;
+        for (int i = 0; i < num; i++) {
+            for (DrResMdoSeamWrkBase::RenderEntry* entry = wrk->m_renderList[i]; entry != nullptr;
+                 entry = entry->m_next != 0 ? &wrk->m_renderEntries[entry->m_next - 1] : nullptr) {
+                wrk->selectVertex(entry->m_vertexIdx);
+                const MdsMdlInfoHeader* info =
+                    reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + entry->m_infoOfs);
+                if (!(info->m_drawFlags & 0x8000)) {
+                    partsZPrePassRender(info, 0, 0, alpTbl, entry->m_alpIdx);
+                }
+            }
+        }
+        wrk->endRender();
+    }
 }
 
 void DrMdoCtlSeamAll::callThicknessFirstSeamAll() {

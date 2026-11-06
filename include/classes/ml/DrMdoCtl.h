@@ -11,6 +11,7 @@ namespace ml {
 struct MdsMdlInfoHeader;
 struct MdsMdlTopHeader;
 class DrMdoCtlMpfWork;
+class DrResMdoAlpTbl;
 
 // What DrMdoCtl::partsInstance*Render draw one top header's parts with (the type name is the symbols'; 0x28 bytes,
 // DrMdoCtlSeamInstMap's passes fill it on the stack). The field names are not the original's: m_count, m_first and
@@ -46,6 +47,9 @@ public:
     void partsShadowNukiBaseRender(const MdsMdlTopHeader* top);
     void partsPosShadowRender(const MdsMdlTopHeader* top);
     void partsPosNukiShadowRender(const MdsMdlTopHeader* top);
+    void partsZPrePassRender(const MdsMdlInfoHeader* info, int, int, DrResMdoAlpTbl* alpTbl, unsigned int alpIdx);
+    void partsThicknessRender(const MdsMdlInfoHeader* info, int, int, DrResMdoAlpTbl* alpTbl, unsigned int alpIdx,
+                              bool first);
     void partsInstanceZPrepassRender(const MdoInstancePrePassArg& arg);
     void partsInstanceZPrepassBillRender(const MdoInstancePrePassArg& arg);
     void partsInstanceThicknessRender(const MdoInstancePrePassArg& arg);

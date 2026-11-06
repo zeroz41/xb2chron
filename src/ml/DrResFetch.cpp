@@ -5363,10 +5363,10 @@ void DrResMdoSeamWrkBase::release() {
             entry.memObj = nullptr;
         }
     }
-    grlib::CGLibVtxInstans* instans = m_instans;
+    DrResMdoAlpTbl* instans = m_instans;
     if (instans != nullptr) {
-        instans->release();
-        instans->~CGLibVtxInstans();
+        instans->m_inst.release();
+        instans->m_inst.~CGLibVtxInstans();
         m_instans = nullptr;
     }
     m_vertexList = nullptr;
