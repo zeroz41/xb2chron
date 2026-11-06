@@ -85,6 +85,26 @@ void DrLightObjPnt::setMat(const mm::Mat44& mtx) {
     m_pos = m_mat.getTrans();
 }
 
+void DrLightObjSpt::setMat(const mm::Mat44& mtx) {
+    m_mat = mtx;
+    float x = m_mat.m[0][0] * 0.0f + m_mat.m[1][0] * 0.0f - m_mat.m[2][0];
+    float y = m_mat.m[0][1] * 0.0f + m_mat.m[1][1] * 0.0f - m_mat.m[2][1];
+    float z = m_mat.m[0][2] * 0.0f + m_mat.m[1][2] * 0.0f - m_mat.m[2][2];
+    m_dir.z = z;
+    m_dir.y = y;
+    m_dir.x = x;
+    float length = m_dir.length();
+    if (length <= 1e-6f) {
+        m_dir = mm::Vec3::zero;
+    } else {
+        float scale = 1.0f / length;
+        m_dir.x = scale * m_dir.x;
+        m_dir.y = scale * m_dir.y;
+        m_dir.z = scale * m_dir.z;
+    }
+    m_pos = m_mat.getTrans();
+}
+
 void DrLightObjPnt::setPos(const mm::Vec3& pos) {
     m_pos = pos;
     m_mat.setTransRow(pos);
