@@ -88,6 +88,17 @@ public:
     // appends the bdat id of every character object whose gf object has that type (clears the list first unless
     // append is set)
     void listupObject(mm::mtl::FixedVector<unsigned int, 256>& list, unsigned int type, bool append);
+    // the name of the root object ("ルート" in Shift-JIS). Not in the binary: the constructor's copy of it becomes
+    // immediates, so nothing references it and the linker drops it. The constructor's code proves a 64-byte constant
+    // array like the four below: with a plain literal clang drops a table store the original keeps. The name is
+    // inferred from those four, not the original's
+    static const char ROOT_TREE[64];
+    // the names of the four category objects (Shift-JIS, .rodata 0x71009B93A4.., 0x40 each; the constructor copies
+    // them in)
+    static const char CHR_TREE[64];
+    static const char CAM_TREE[64];
+    static const char EFF_TREE[64];
+    static const char LGT_TREE[64];
     // 1.0.0's constructor zeroes it, then stores its second argument (bool) in bit 0; the name is not the original's
     unsigned int m_flags;  // 0x8
     mm::mtl::FixStr<64> m_name;  // 0xc; 1.0.0's constructor copies its first argument in

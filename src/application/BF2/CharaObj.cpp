@@ -3063,6 +3063,87 @@ void ObjectEffect::setMount(IAttachActor* actor, const char* name, const mm::Vec
     m_mountType = type;
 }
 
+// "ルート", "キャラツリー", "カメラツリー", "エフェクトツリー", "ライトツリー" in Shift-JIS
+const char ObjectList::ROOT_TREE[64] = "\x83\x8b\x81\x5b\x83\x67";
+const char ObjectList::CHR_TREE[64] = "\x83\x4c\x83\x83\x83\x89\x83\x63\x83\x8a\x81\x5b";
+const char ObjectList::CAM_TREE[64] = "\x83\x4a\x83\x81\x83\x89\x83\x63\x83\x8a\x81\x5b";
+const char ObjectList::EFF_TREE[64] = "\x83\x47\x83\x74\x83\x46\x83\x4e\x83\x67\x83\x63\x83\x8a\x81\x5b";
+const char ObjectList::LGT_TREE[64] = "\x83\x89\x83\x43\x83\x67\x83\x63\x83\x8a\x81\x5b";
+
+// a root object with the four category objects below it
+ObjectList::ObjectList(const char* name, bool flag)
+    : m_flags(0), m_name(name), m_root(), m_categories(), m_active(), pad_80(), m_counts() {
+    if (flag) {
+        m_flags |= 1;
+    } else {
+        m_flags &= ~1;
+    }
+    m_root = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+        ObjectTree(ROOT_TREE);
+    m_categories[0] = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+        ObjectTree(CHR_TREE);
+    {
+        Object* parent = m_root;
+        if (parent->m_child == nullptr) {
+            parent->m_child = m_categories[0];
+        } else {
+            Object* last = parent->m_child;
+            while (last->m_next) {
+                last = last->m_next;
+            }
+            last->m_next = m_categories[0];
+        }
+    }
+    m_counts[0] = 0;
+    m_categories[1] = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+        ObjectTree(CAM_TREE);
+    {
+        Object* parent = m_root;
+        if (parent->m_child == nullptr) {
+            parent->m_child = m_categories[1];
+        } else {
+            Object* last = parent->m_child;
+            while (last->m_next) {
+                last = last->m_next;
+            }
+            last->m_next = m_categories[1];
+        }
+    }
+    m_counts[1] = 0;
+    m_categories[2] = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+        ObjectTree(EFF_TREE);
+    {
+        Object* parent = m_root;
+        if (parent->m_child == nullptr) {
+            parent->m_child = m_categories[2];
+        } else {
+            Object* last = parent->m_child;
+            while (last->m_next) {
+                last = last->m_next;
+            }
+            last->m_next = m_categories[2];
+        }
+    }
+    m_counts[2] = 0;
+    m_categories[3] = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+        ObjectTree(LGT_TREE);
+    {
+        Object* parent = m_root;
+        if (parent->m_child == nullptr) {
+            parent->m_child = m_categories[3];
+        } else {
+            Object* last = parent->m_child;
+            while (last->m_next) {
+                last = last->m_next;
+            }
+            last->m_next = m_categories[3];
+        }
+    }
+    m_counts[3] = 0;
+    m_active = nullptr;
+    pad_80 = nullptr;
+}
+
 // the walks to the end of the first three categories come first and use nothing (as in startPage)
 ObjectList::~ObjectList() {
     for (Object* last = m_categories[0]->m_child; last; last = last->m_next) {
