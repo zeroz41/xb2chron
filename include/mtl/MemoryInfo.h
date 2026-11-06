@@ -13,7 +13,7 @@ struct MemoryInfo {
 
     unsigned long m_totalSize;  // the mspace's max_footprint
     unsigned long m_freeSize;  // m_totalSize less the chunks in use
-    long m_usedSize;  // footprint less the free chunks and top
+    unsigned long m_usedSize;  // footprint less the free chunks and top (MemoryManager::render converts it unsigned)
     unsigned long m_maxFreeSize;  // the largest free chunk (or untouched tail)
     float m_usedRate;  // m_usedSize in percent of m_totalSize
     float m_chunkUsedRate;  // the chunks in use in percent of all chunks

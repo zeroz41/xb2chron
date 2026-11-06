@@ -33,7 +33,6 @@ public:
         m_cmdQueue.eraseAll();
         m_ctrl.kill();
     }
-    unsigned char pad_1f0[0x70];
     CmdQueue<6, 0> m_cmdQueue;  // 0x260; erased by end (CmdQueue<6,0>::erase); the name is not the original's
     unsigned char pad_960[0x70];  // the EffectPlayEff (0x960) and EffectPlayEva (0x988) commands
     // the commands moveTo/turnTo/colorTo queue (the constructor builds them); the names are not the original's

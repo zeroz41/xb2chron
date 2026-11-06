@@ -1457,6 +1457,119 @@ const char* Extend::replaceString(const char* str, const char* from, const char*
     return s_buf;
 }
 
+}  // namespace event
+
+#include "grlib/CGLibCtl.h"
+#include "mtl/MemManager.h"
+#include "mtl/MemoryInfo.h"
+#include "classes/ml/ProcDesktop.h"
+#include "fw/FwDebug.h"
+#include "mm/Rect.h"
+
+namespace event {
+
+void MemoryManager::destroy() {
+    // the original reads each memory's figures through an inlined function (its name is not known)
+    auto info = [](mtl::ALLOC_HANDLE handle) {
+        mtl::MemoryInfo memInfo;
+        mtl::MemManager::getMemoryInfo(handle, &memInfo);
+    };
+    if (pad_24.m_handle != 0) {
+        grlib::CGLibGPUCache::releaseMemPoolMemHandle(pad_24);
+    }
+    if (m_motstm.m_handle != 0) {
+        info(m_motstm);
+    }
+    if (pad_24.m_handle != 0) {
+        info(pad_24);
+    }
+    if (m_handle.m_handle != 0) {
+        info(m_handle);
+    }
+    if (m_static.m_handle != 0) {
+        info(m_static);
+    }
+    if (m_motstm.m_handle != 0) {
+        mtl::MemManager::erase(m_motstm);
+        m_motstm = mtl::ALLOC_HANDLE();
+    }
+    if (pad_24.m_handle != 0) {
+        mtl::MemManager::erase(pad_24);
+        pad_24 = mtl::ALLOC_HANDLE();
+    }
+    if (m_handle.m_handle != 0) {
+        mtl::MemManager::erase(m_handle);
+        m_handle = mtl::ALLOC_HANDLE();
+    }
+    if (m_static.m_handle != 0) {
+        mtl::MemManager::erase(m_static);
+        m_static = mtl::ALLOC_HANDLE();
+    }
+}
+
+void MemoryManager::render() {
+    if (!(m_flags & 1) && !ml::ProcDesktop::isDispInfo()) {
+        return;
+    }
+    if ((m_flags & 1) && m_handle.m_handle != 0) {
+        fw::debug::drawSquare2D(mm::Rect<int>(0x41F, 0xE6, 0xC8, 0x28), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+        fw::debug::drawLineSquare2D(mm::Rect<int>(0x41F, 0xE6, 0xC8, 0x28), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFont(0x424, 0xEB, "SYS");
+        mtl::MemoryInfo info;
+        if (mtl::MemManager::getMemoryInfo(m_handle, &info)) {
+            float rate = static_cast<float>(info.m_usedSize) / static_cast<float>(info.m_totalSize);
+            // red while the memory is over 90% full, blinking
+            if (rate > 0.9f && (m_frame & 0x10)) {
+                fw::debug::drawSquare2D(mm::Rect<int>(0x420, 0xE7, static_cast<int>(rate * 200.0f) - 1, 0x27),
+                                        mm::Col4(1.0f, 0.0f, 0.0f, 0.25f));
+            } else {
+                fw::debug::drawSquare2D(mm::Rect<int>(0x420, 0xE7, static_cast<int>(rate * 200.0f) - 1, 0x27),
+                                        mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+            }
+            fw::debug::drawFont(0x429, 0xFA, "%.1f / %.1fKB (%d)", info.m_usedSize / 1024.0f,
+                                info.m_totalSize / 1024.0f, info.m_footerCount);
+        }
+    }
+    if (((m_flags & 1) || ml::ProcDesktop::isDispInfo()) && pad_24.m_handle != 0) {
+        fw::debug::drawSquare2D(mm::Rect<int>(0x41F, 0x118, 0xC8, 0x28), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+        fw::debug::drawLineSquare2D(mm::Rect<int>(0x41F, 0x118, 0xC8, 0x28), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFont(0x424, 0x11D, "RES");
+        mtl::MemoryInfo info;
+        if (mtl::MemManager::getMemoryInfo(pad_24, &info)) {
+            float rate = static_cast<float>(info.m_usedSize) / static_cast<float>(info.m_totalSize);
+            // red while the memory is over 90% full, blinking
+            if (rate > 0.9f && (m_frame & 0x10)) {
+                fw::debug::drawSquare2D(mm::Rect<int>(0x420, 0x119, static_cast<int>(rate * 200.0f) - 1, 0x27),
+                                        mm::Col4(1.0f, 0.0f, 0.0f, 0.25f));
+            } else {
+                fw::debug::drawSquare2D(mm::Rect<int>(0x420, 0x119, static_cast<int>(rate * 200.0f) - 1, 0x27),
+                                        mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+            }
+            fw::debug::drawFont(0x429, 0x12C, "%.1f / %.1fKB (%d)", info.m_usedSize / 1024.0f,
+                                info.m_totalSize / 1024.0f, info.m_footerCount);
+        }
+    }
+    if (++m_frame > 31) {
+        m_frame = 0;
+    }
+}
+
+const char* MemoryManager::createTxtbuf(const char* str) {
+    if (str == nullptr) {
+        return nullptr;
+    }
+    if (*str == '\0') {
+        return "";
+    }
+    char* buf = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+        char[strlen(str) + 0x10];
+    strcpy(buf, str);
+    m_txtbufs.push_back(buf);
+    return buf;
+}
+
 PosAxis::PosAxis() : m_type(1), m_value(mm::Vec3::zero) {}
 
 RotAxis::RotAxis() : m_type(1), m_value(mm::Vec3::zero) {}
@@ -4215,6 +4328,72 @@ void DofManager::OnEventProc(event::MSG_TYPE msg) {
     }
 }
 
+void EffectCtrl::kill() {
+    if (m_caster != nullptr) {
+        for (unsigned long i = 0; i < m_handles.size(); i++) {
+            m_caster->setEffectCaster(false, m_handles[i]);
+        }
+    }
+    if (m_mount != nullptr) {
+        for (unsigned long i = 0; i < m_handles.size(); i++) {
+            m_mount->setEffectMount(false, m_handles[i], "", mm::Vec3::zero, false, static_cast<EVT_attachtype>(0));
+        }
+    }
+    if (m_effect != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effect);
+    }
+    for (unsigned long i = 0; i < m_handles.size(); i++) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_handles[i]);
+    }
+}
+
+void EffectCtrl::setCaster(IAttachActor* caster) {
+    if (m_caster != nullptr) {
+        for (unsigned long i = 0; i < m_handles.size(); i++) {
+            m_caster->setEffectCaster(false, m_handles[i]);
+        }
+    }
+    if (m_mount != nullptr) {
+        for (unsigned long i = 0; i < m_handles.size(); i++) {
+            m_mount->setEffectMount(false, m_handles[i], "", mm::Vec3::zero, false, static_cast<EVT_attachtype>(0));
+        }
+    }
+    m_caster = caster;
+    m_mount = nullptr;
+    if (m_caster != nullptr) {
+        for (unsigned long i = 0; i < m_handles.size(); i++) {
+            m_caster->setEffectCaster(true, m_handles[i]);
+        }
+    }
+}
+
+void EffectCtrl::setMount(IAttachActor* actor, const char* name, const mm::Vec3& pos, bool flag,
+                          EVT_attachtype type) {
+    if (m_caster != nullptr) {
+        for (unsigned long i = 0; i < m_handles.size(); i++) {
+            m_caster->setEffectCaster(false, m_handles[i]);
+        }
+    }
+    if (m_mount != nullptr) {
+        for (unsigned long i = 0; i < m_handles.size(); i++) {
+            m_mount->setEffectMount(false, m_handles[i], "", mm::Vec3::zero, false, static_cast<EVT_attachtype>(0));
+        }
+    }
+    m_caster = nullptr;
+    m_mount = actor;
+    m_mountName = name;
+    m_mountPos = pos;
+    m_mountFlag = flag;
+    m_mountType = type;
+    if (m_mount != nullptr) {
+        for (unsigned long i = 0; i < m_handles.size(); i++) {
+            m_mount->setEffectMount(true, m_handles[i], m_mountName.m_str, m_mountPos, m_mountFlag, m_mountType);
+        }
+    }
+}
+
+EffectCtrl::~EffectCtrl() {}
+
 void FadePlanner::update(float step) {
     for (int i = 0; i < 4; i++) {
         Entry& entry = pad_c[i];
@@ -6763,7 +6942,9 @@ void DataManager::OnEventProc(event::MSG_TYPE msg) {
 }
 
 
-MemoryManager::MemoryManager() : pad_10(0), pad_18(0), pad_24(), pad_28(0), pad_30(0), pad_38(0), m_txtbufs(), pad_1048(0), pad_1050(0), pad_1058(0) {}
+MemoryManager::MemoryManager()
+    : m_flags(0), pad_14(0), m_sizeType(0), m_static(), m_handle(), pad_24(), m_motstm(), m_sizes(), m_txtbufs(), pad_1048(0),
+      pad_1050(0), m_frame(0) {}
 
 MemoryManager::~MemoryManager() {}
 
@@ -8465,7 +8646,7 @@ inline bool ObjectList::isUsingEffect() {
         for (unsigned int j = 0; j < i; j++) {
             obj = obj->m_next;
         }
-        if (static_cast<ObjectEffect*>(obj)->m_effect->m_ctrl.pad_110 != nullptr) {
+        if (static_cast<ObjectEffect*>(obj)->m_effect->m_ctrl.m_handles.size() != 0) {
             return true;
         }
     }
