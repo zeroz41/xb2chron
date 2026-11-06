@@ -11,7 +11,13 @@ namespace gf {
 // one entry of GfFobjDropitem::EmitInfo's drop list (0x14 bytes by its Vector's indexing): emitDropitems reads an
 // item id at 0x0, a count at 0x4 and the float it hands to emitDropitem at 0x10
 struct GfDropitemInfo {
-    unsigned char pad_0x0[0x14];
+    // btl::ChallengeBattleManager::DropLoseEtherCube's one entry: 0, 10, 100, 0, 10, 0
+    unsigned int pad_0x0;   // item id? (inferred, 0 = ether cube in DropLoseEtherCube)
+    unsigned char pad_0x4;  // a count (10 in DropLoseEtherCube)
+    unsigned char pad_0x5;  // 100 in DropLoseEtherCube
+    unsigned int pad_0x8;
+    unsigned int pad_0xc;   // 10 in DropLoseEtherCube
+    float pad_0x10;  // the float emitDropitems hands to emitDropitem
 };
 
 // table 0x7100B52910

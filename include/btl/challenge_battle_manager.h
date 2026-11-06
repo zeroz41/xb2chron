@@ -87,6 +87,15 @@ public:
     bool IsChallengeTimeWarning() const;
     // 2.0.0's symbols name it. What it does: the per-frame update (0xDD4 bytes; not written).
     void UpdateProc(const fw::UpdateInfo& info);
+    // 2.0.0's symbols name it. What it does: true once pad_2c is set; otherwise, while no pause, camera direction or
+    // chain attack runs, sets pad_2c on game over, or pad_2c and pad_2d once pad_10 reaches the challenge's seconds.
+    bool CheckChallengeFailure() const;
+    // 2.0.0's symbols name it. What it does: drops ether cubes (gf::GfFobjDropitem::emitDropitems) around the
+    // controlled character while the arena menu info's float at 0xAD4 is above 0.
+    void DropLoseEtherCube();
+    // 2.0.0's symbols name it. What it does: pad_27's retire step: 0 asks (common window 290, pause 7) when the pad's
+    // button allows it, 1 waits for the window's answer (pad_28 = 2 or 3, pad_26 = 153).
+    void RetireProc(const fw::UpdateInfo& info);
 
     ::mm::mtl::ReferenceObject* pad_8;  // released (and cleared) by Start/End/Retry
     float pad_10;
@@ -102,8 +111,8 @@ public:
     unsigned char pad_29;
     unsigned char pad_2a;
     unsigned char pad_2b;
-    unsigned char pad_2c;
-    unsigned char pad_2d;
+    mutable unsigned char pad_2c;  // CheckChallengeFailure (const) sets it
+    mutable unsigned char pad_2d;  // CheckChallengeFailure (const) sets it
 };
 
 }  // namespace btl
