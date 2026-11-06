@@ -10,8 +10,22 @@ namespace movie {
 // library's own constructor and destructor
 class Buffer {
 public:
+    explicit Buffer(unsigned long capacity);
+    Buffer(void* base, unsigned long capacity);
     Buffer(const Buffer&);
     ~Buffer();
+    Buffer& operator=(const Buffer&);
+
+    void* Base() const;
+    unsigned long Capacity() const;
+    int Offset() const;
+    int Size() const;
+    void SetRange(int offset, int size);
+    unsigned int GetUint32Data() const;
+    long GetInt64Data() const;
+    void SetUint32Data(unsigned int data);
+    void SetInt64Data(long data);
+
 
     unsigned char pad_0[0x30];
 };

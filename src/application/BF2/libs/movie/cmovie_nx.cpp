@@ -156,6 +156,8 @@ void StreamReader::GetSize(void* handle, long* size) {
     }
 }
 
+AudioOutRenderer::~AudioOutRenderer() {}
+
 // Proposed names, not the original's: the symbols leave them unnamed (lbl_7100EB7E10, lbl_7100EB7E14)
 static bool s_pause;
 static bool s_homeMenu;
@@ -168,6 +170,58 @@ void AudioOutRendererThreadFunction(void* arg) {
         }
         nn::os::SleepThread(nn::TimeSpan::FromMilliSeconds(renderer->m_sleepMs));
     }
+}
+
+int AudioOutRenderer::Finalize() {
+    nn::os::FinalizeMutex(&m_outputMutex);
+    if (m_threadStack != nullptr) {
+        MultimediaFree(m_threadStack, nullptr);
+    }
+    for (int i = 0; i < 3; i++) {
+        if (m_audioOutBufferData[i] != nullptr) {
+            MultimediaFree(m_audioOutBufferData[i], nullptr);
+            m_audioOutBufferData[i] = nullptr;
+        }
+    }
+    if (m_pcmBuffer != nullptr) {
+        MultimediaFree(m_pcmBuffer, nullptr);
+        m_pcmBuffer = nullptr;
+    }
+    if (m_frameBuffer != nullptr) {
+        delete m_frameBuffer;
+        m_frameBuffer = nullptr;
+    }
+    m_outputBuffers.clear();
+    m_emptyBuffers.clear();
+    m_filledBuffers.clear();
+    return 0;
+}
+
+int AudioOutRenderer::Start() {
+    m_startRealTimeUs = -1;
+    MediaClock* clock = m_mediaClock;
+    nn::os::LockMutex(&clock->m_mutex);
+    clock->m_anchorTimeUs = -1;
+    nn::os::UnlockMutex(&clock->m_mutex);
+    int channelCount = nn::audio::GetAudioOutChannelCount(&m_audioOut);
+    int sampleRate = nn::audio::GetAudioOutSampleRate(&m_audioOut);
+    nn::audio::SampleFormat sampleFormat = nn::audio::GetAudioOutSampleFormat(&m_audioOut);
+    for (int i = 0; i < 3; i++) {
+        m_audioOutBufferData[i] = MultimediaAllocate(m_audioOutBufferSize, 0x1000, nullptr);
+        memset(m_audioOutBufferData[i], 0, 0x400);
+        nn::audio::SetAudioOutBufferInfo(&m_audioOutBuffers[i], m_audioOutBufferData[i], m_audioOutBufferSize, 0x400);
+        nn::audio::AppendAudioOutBuffer(&m_audioOut, &m_audioOutBuffers[i]);
+    }
+    int status;
+    if (nn::audio::StartAudioOut(&m_audioOut).IsSuccess()) {
+        status = 0;
+        m_started = true;
+    } else {
+        status = 0x1000;
+    }
+    nn::os::StartThread(&m_thread);
+    m_threadStarted = true;
+    return status;
 }
 
 void AudioOutRenderer::OnOutputAvailable(int index, long presentationTimeUs, unsigned int flags) {

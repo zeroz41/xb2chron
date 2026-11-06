@@ -5,6 +5,7 @@
 // reaches are written out; the field names are not the original's.
 #include <vector>
 #include "movie/Decoder.h"
+#include "nn/audio.h"
 #include "nn/os.h"
 
 // the movie library's allocator hooks (defined in cmovie_nx.cpp; they go through CMovieNX::CMovie's allocator)
@@ -16,6 +17,8 @@ void* MultimediaReallocate(void* address, unsigned long size, void* userPtr);
 void VideoInputReadThreadFunction(void* arg);
 void AudioInputReadThreadFunction(void* arg);
 void AudioVideoWorkerThreadFunction(void* arg);
+// AudioOutRenderer::Initialize starts it with the renderer as argument
+void AudioOutRendererThreadFunction(void* arg);
 
 // the player's clock (no symbols of its own: its members are all inlined): the time base the audio's first output
 // buffer anchors
@@ -50,23 +53,55 @@ public:
     };
 
     ~AudioOutRenderer();
-    void Render();
+    int Initialize(MediaClock* mediaClock);
+    int Finalize();
+    int Start();
+    int Render();
     void GenerateFixedSizeAudioFrame();
+    void Close();
     void OnOutputAvailable(int index, long presentationTimeUs, unsigned int flags);
 
-    unsigned char pad_0[0x9];
+    movie::Decoder* m_decoder;  // Close returns the queued outputs to it
+    bool m_threadStarted;  // Start's: the render thread runs (Close waits for it)
     bool m_exit;  // the render thread runs until it is set
-    unsigned char pad_a[0x1];
-    bool m_started;  // the render thread renders while it is set
-    unsigned char pad_c[0x424];
+    bool m_threadCreated;  // Initialize's: the render thread exists (Close destroys it)
+    bool m_started;  // the render thread renders while it is set (StartAudioOut succeeded)
+    bool m_audioOutOpened;  // Close stops and closes the audio out while it is set
+    unsigned char pad_d[0x3];
+    int m_sampleRate;  // Render's divisor of the played frames into microseconds
+    int m_channelCount;  // Render repeats each sample this often when it exceeds m_decoderChannelCount
+    unsigned char pad_18[0x4];
+    int m_decoderChannelCount;
+    int m_bytesPerSample;  // Initialize's 2
+    unsigned char pad_24[0x4];
+    long m_presentationTimeUs;  // Render's: the time of the buffer it plays
+    unsigned long m_threadStackSize;
+    void* m_threadStack;  // MultimediaAllocate's, for m_thread
+    nn::os::ThreadType m_thread;  // "thAudioRenderer"
+    nn::audio::AudioOut m_audioOut;
+    long m_bufferCountMax;  // Initialize's 16 (no reader in the matched code; name inferred)
+    void* m_audioOutBufferData[3];  // Start's: MultimediaAllocate'd, one per m_audioOutBuffers entry
+    void* m_pcmBuffer;  // Initialize's: the decoded samples' buffers, sliced into m_emptyBuffers
+    int m_pcmBufferSize;  // Initialize's allocation for m_pcmBuffer
+    unsigned char pad_39c[0x4];
+    nn::audio::AudioOutBuffer m_audioOutBuffers[3];
+    int m_pcmBufferCount;  // Initialize cuts m_pcmBuffer into this many buffers of m_pcmBufferStride bytes
+    int m_pcmBufferStride;
+    int m_fixedFrameSize;  // GenerateFixedSizeAudioFrame's frame size
+    bool m_fixedSizeFrames;  // GenerateFixedSizeAudioFrame gathers outputs into frames of m_fixedFrameSize
+    unsigned char pad_425[0xB];
     std::vector<audioData> m_outputBuffers;  // the decoder's outputs not yet played, under m_outputMutex
-    unsigned char pad_448[0x38];
+    std::vector<movie::Buffer> m_emptyBuffers;  // Initialize's slices of m_pcmBuffer; Render returns played ones
+    std::vector<movie::Buffer> m_filledBuffers;  // the frames waiting for Render, oldest first
+    movie::Buffer* m_frameBuffer;  // Initialize's 0x4000-byte buffer
     long m_sleepMs;  // the render thread's wait between frames, in milliseconds
-    unsigned char pad_488[0x8];
+    unsigned long m_audioOutBufferSize;  // Start's allocation per m_audioOutBufferData entry
     nn::os::MutexType m_outputMutex;
     bool m_eos;  // isplaying's: the audio has played out
     MediaClock* m_mediaClock;  // Initialize's
     long m_startTimeUs;  // -1 until the first output buffer arrives
+    long m_startRealTimeUs;  // Render's: the system time of the first rendered frame, -1 until then
+    long m_playedFrames;  // Render's count of the frames handed to the audio out
 };
 
 class VideoRenderer {

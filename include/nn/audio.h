@@ -151,6 +151,30 @@ int GetWaveBufferCount(const VoiceType* voice);
 void SetVoicePlayState(VoiceType* voice, VoiceType::PlayState state);
 void ReleaseVoiceSlot(AudioRendererConfig* config, VoiceType* voice);
 
+// audio out (the movie sample player's AudioOutRenderer). 0x170 bytes: the renderer's AudioOut at 0x200 is followed by
+// a field at 0x370
+struct alignas(8) AudioOut {
+    unsigned char pad_0[0x170];
+};
+// 0x28 bytes: the renderer keeps three at 0x3A0, 0x3C8 and 0x3F0
+struct alignas(8) AudioOutBuffer {
+    unsigned char pad_0[0x28];
+};
+enum SampleFormat : int;
+
+int GetAudioOutChannelCount(const AudioOut* audioOut);
+int GetAudioOutSampleRate(const AudioOut* audioOut);
+SampleFormat GetAudioOutSampleFormat(const AudioOut* audioOut);
+Result StartAudioOut(AudioOut* audioOut);
+void StopAudioOut(AudioOut* audioOut);
+void CloseAudioOut(AudioOut* audioOut);
+void SetAudioOutBufferInfo(AudioOutBuffer* buffer, void* data, unsigned long bufferSize, unsigned long dataSize);
+bool AppendAudioOutBuffer(AudioOut* audioOut, AudioOutBuffer* buffer);
+// the oldest buffer the audio out has played, or null
+AudioOutBuffer* GetReleasedAudioOutBuffer(AudioOut* audioOut);
+void* GetAudioOutBufferDataPointer(const AudioOutBuffer* buffer);
+unsigned long GetAudioOutBufferDataSize(const AudioOutBuffer* buffer);
+
 }}  // namespace nn::audio
 
 #endif
