@@ -1,4 +1,5 @@
 #define MM_LIB_FROM_XBRD
+#include "classes/grlib/CGLibUniformEtcUtility.h"
 #include "classes/ml/DrAPCache.h"
 #include "classes/ml/DrCalcClipWorkCone.h"
 #include "classes/ml/DrCalcClipWorkPlane.h"
@@ -33,6 +34,7 @@
 #include "ml/DrCalcMan.h"
 #include "ml/DrCalcViewWork.h"
 #include "ml/DrLightObjGlobalIBL.h"
+#include "ml/DrPixlMan.h"
 #include "ml/DrPixlPostMan.h"
 #include "ml/DrPixlPostParm.h"
 #include "ml/DrPixlPostObjCapture.h"
@@ -51,6 +53,7 @@
 #include "ml/DrShdDataList.h"
 #include "ml/DrShdDataObj.h"
 #include "ml/DrShdLgtMan.h"
+#include "ml/DrShdMan.h"
 #include "navi/NvmshAcMan.h"
 
 namespace ml {
@@ -224,6 +227,244 @@ void DrPixlPostObjMotionBlur2::render() {
     if (m_blurOn) {
         lastRender();
     }
+}
+
+void DrPixlPostObjMotionBlur2::renderCalcBlur() {
+    m_blurOut->clearTexture(mm::Col4(0.0f, 0.0f, 0.0f, 0.0f), (GrlClaerMask)0xF);
+    DrAPGxType::setupScreenQuads(false);
+    m_blurOut->setRenderTarget();
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    DrShdDataObj* obj = list->getPostShdObj(0x3A);
+    unsigned int hlv = parm->m_motBlurHLvMode ? 1 : 2;
+    obj->setDeclarationIdx(obj->getDeclarationOfs("DECL_HLV"), hlv);
+    obj->setupShader(0u);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    unsigned int location0 = obj->getCurrentShader().getTextureLocation("s0");
+    unsigned int location1 = obj->getCurrentShader().getTextureLocation("s1");
+    unsigned int maskLocation = obj->getCurrentShader().getTextureLocation("gTBlurMask");
+    unsigned int maxVelLocation = obj->getCurrentShader().getTextureLocation("sMaxVelocity");
+    unsigned int ofs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "ofs[0]");
+    unsigned int sizeOfS0 = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gSizeOfS0");
+    unsigned int sizeOfMaxVelocity =
+        uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gSizeOfMaxVelocity");
+    unsigned int sizeOfOutput =
+        uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gSizeOfOutput");
+    unsigned int paramOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gParam");
+    unsigned int posOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gPosOffset");
+    DrPixlRenderTarget* hdrBuff = m_pixlMan->m_objTbl->m_hdrBuff[0];
+    DrAPCache* cache = m_drMan->m_apCache;
+    float hdrWidth = hdrBuff->m_width;
+    float hdrHeight = hdrBuff->m_height;
+    float velWidth = m_velocityBuff[0]->m_width;
+    float velHeight = m_velocityBuff[0]->m_height;
+    float maxWidth = m_workOutA->m_width;
+    float maxHeight = m_workOutA->m_height;
+    float offsets[12];
+    offsets[0] = (hdrWidth - 1.0f) / hdrWidth;
+    offsets[1] = (hdrHeight - 1.0f) / hdrHeight;
+    offsets[2] = 1.0f / (hdrWidth + hdrWidth);
+    offsets[3] = 1.0f / (hdrHeight + hdrHeight);
+    offsets[4] = (velWidth - 1.0f) / velWidth;
+    offsets[5] = (velHeight - 1.0f) / velHeight;
+    offsets[6] = 1.0f / (velWidth + velWidth);
+    offsets[7] = 1.0f / (velHeight + velHeight);
+    offsets[8] = (maxWidth - 1.0f) / maxWidth;
+    offsets[9] = (maxHeight - 1.0f) / maxHeight;
+    offsets[10] = 1.0f / (maxWidth + maxWidth);
+    offsets[11] = 1.0f / (maxHeight + maxHeight);
+    uniform.setF32SetF32Array(ofs, offsets, 12);
+    mm::Vec4 sizeS0(hdrWidth, hdrHeight, 1.0f / hdrWidth, 1.0f / hdrHeight);
+    uniform.setVec4SetVec4(sizeOfS0, sizeS0);
+    mm::Vec4 sizeMaxVelocity;
+    sizeMaxVelocity.x = m_workOutA->m_width;
+    sizeMaxVelocity.y = m_workOutA->m_height;
+    sizeMaxVelocity.z = 1.0f / sizeMaxVelocity.x;
+    sizeMaxVelocity.w = 1.0f / sizeMaxVelocity.y;
+    uniform.setVec4SetVec4(sizeOfMaxVelocity, sizeMaxVelocity);
+    mm::Vec4 sizeOutput;
+    sizeOutput.x = m_blurOut->m_width;
+    sizeOutput.y = m_blurOut->m_height;
+    sizeOutput.z = 1.0f / sizeOutput.x;
+    sizeOutput.w = 1.0f / sizeOutput.y;
+    uniform.setVec4SetVec4(sizeOfOutput, sizeOutput);
+    float scale = 1.0f;
+    if (parm->m_reduction) {
+        scale = powf(parm->m_reductionScale[0] * parm->m_reductionScale[0] +
+                         parm->m_reductionScale[1] * parm->m_reductionScale[1],
+                     0.7f);
+    }
+    mm::Vec4 param;
+    param.x = scale * parm->m_motBlurStrength;
+    param.z = 0.0f;
+    param.w = 0.0f;
+    param.y = 0.0f;
+    uniform.setVec4SetVec4(paramOfs, param);
+    mm::Vec4 posOffset;
+    posOffset.z = m_maskBuff->m_width;
+    posOffset.w = m_maskBuff->m_height;
+    posOffset.x = 1.0f / posOffset.z;
+    posOffset.y = 1.0f / posOffset.w;
+    posOffset.z = 0.5f / posOffset.z;
+    posOffset.w = -0.5f / posOffset.w;
+    uniform.setVec4SetVec4(posOfs, posOffset);
+    cache->beginTexSampling(2, 1);
+    cache->setTexture(*m_pixlMan->m_objTbl->m_hdrBuff[0]->m_pTexture, location0);
+    cache->setTexture(*m_velocityBuff[0]->m_pTexture, location1);
+    cache->setTexture(*m_workOutA->m_pTexture, maxVelLocation);
+    cache->beginTexSampling(2, 0);
+    cache->setTexture(*m_maskBuff->m_pTexture, maskLocation);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    grlib::CGLibCtlVertex::setVertex(*m_vertex[m_vertexIdx]);
+    grlib::CGLibCtlVertex::renderVertex((GrlPrimitiveType)0, m_vertex[m_vertexIdx]->m_num);
+    m_blurOut->setColorInvalidate();
+}
+
+void DrPixlPostObjMotionBlur2::lastRender() {
+    DrPixlRenderTarget* hdrBuff = m_pixlMan->m_objTbl->m_hdrBuff[0];
+    hdrBuff->setRenderTarget();
+    DrAPGxType::setupBlend(1);
+    DrShdDataObj* obj = m_drMan->m_shdMan->m_dataList->getPostShdObj(0x46);
+    obj->setupShader(0u);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    unsigned int posOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gPosOffset");
+    unsigned int fragOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gFragToUV");
+    mm::Vec4 posOffset = mm::Vec4::zero;
+    posOffset.x = 1.0f / m_maskBuff->m_width;
+    posOffset.y = 1.0f / m_maskBuff->m_height;
+    uniform.setVec4SetVec4(posOfs, posOffset);
+    mm::Vec4 fragToUV = mm::Vec4::zero;
+    fragToUV.x = 1.0f / hdrBuff->m_width;
+    fragToUV.y = 1.0f / hdrBuff->m_height;
+    uniform.setVec4SetVec4(fragOfs, fragToUV);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    unsigned int location0 = obj->getCurrentShader().getTextureLocation("s0");
+    unsigned int location1 = obj->getCurrentShader().getTextureLocation("s1");
+    DrAPCache* cache = m_drMan->m_apCache;
+    cache->beginTexSampling(2, 1);
+    cache->setTexture(*m_blurOut->m_pTexture, location0);
+    cache->beginTexSampling(2, 0);
+    cache->setTexture(*m_maskBuff->m_pTexture, location1);
+    grlib::CGLibCtlVertex::setVertex(*m_vertex[m_vertexIdx]);
+    grlib::CGLibCtlVertex::renderVertex((GrlPrimitiveType)0, m_vertex[m_vertexIdx]->m_num);
+    DrAPGxType::setupBlend(0);
+}
+
+void DrPixlPostObjMotionBlur2::calcVelocityBlur() {
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    if (parm->m_velocityBlurScale <= 0.0f) {
+        return;
+    }
+    DrAPCache* cache = m_drMan->m_apCache;
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getPostShdObj(0x1C);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    list->bindQuadsTex();
+    obj->setupShader(0u);
+    unsigned int location = obj->getCurrentShader().getTextureLocation("s0");
+    unsigned int ofs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "ofs[0]");
+    float width = m_velocityBuff[1]->m_width * parm->m_velocityBlurScale;
+    float height = parm->m_velocityBlurScale * m_velocityBuff[1]->m_height;
+    float offsets[20];
+    cache->beginTexSampling(2, 1);
+    grlib::CGLibCtlShader::setMemoryBarrierBit(2);
+    m_velocityBuff[1]->setRenderTarget();
+    cache->setTexture(*m_velocityBuff[0]->m_pTexture, location);
+    getSampleOffsets_GaussBlur_Horizontally(width, height, 2, offsets, 1.0f, 1.0f);
+    uniform.setF32SetF32Array(ofs, offsets, 20);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    list->renderQuads();
+    uniform.m_block.Rebuilding();
+    grlib::CGLibUniBaseUtility& base = uniform;
+    base.setMoveMem();
+    m_velocityBuff[1]->setColorInvalidate();
+    grlib::CGLibCtlShader::setMemoryBarrierBit(2);
+    m_velocityBuff[0]->setRenderTarget();
+    cache->setTexture(*m_velocityBuff[1]->m_pTexture, location);
+    getSampleOffsets_GaussBlur_Verticaly(width, height, 2, offsets, 1.0f, 1.0f);
+    uniform.setF32SetF32Array(ofs, offsets, 20);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    list->renderQuads();
+    m_velocityBuff[0]->setColorInvalidate();
+}
+
+void DrPixlPostObjMotionBlur2::calcMaxVelocityPerTile() {
+    DrAPCache* cache = m_drMan->m_apCache;
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getPostShdObj(0x40);
+    list->bindQuadsTex();
+    obj->setupShader(0u);
+    DrAPGxType::setupBlend(0);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    unsigned int location = obj->getCurrentShader().getTextureLocation("s0");
+    unsigned int sizeOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "size");
+    unsigned int ofs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "ofs[0]");
+    cache->beginTexSampling(2, 1);
+    m_workOutB->setRenderTarget();
+    cache->setTexture(*m_velocityBuff[0]->m_pTexture, location);
+    mm::Vec4 size;
+    size.x = 1.0f / m_workOutB->m_width;
+    size.y = 1.0f / m_workOutB->m_height;
+    uniform.setVec4SetVec4(sizeOfs, size);
+    float offsets[20];
+    for (int i = 0; i < 5; i++) {
+        offsets[i * 4 + 0] = i / static_cast<float>(m_velocityBuff[0]->m_width);
+        offsets[i * 4 + 1] = 0.0f;
+    }
+    uniform.setF32SetF32Array(ofs, offsets, 20);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    list->renderQuads();
+    uniform.m_block.Rebuilding();
+    grlib::CGLibUniBaseUtility& base = uniform;
+    base.setMoveMem();
+    m_workOutB->setColorInvalidate();
+    m_workOutA->setRenderTarget();
+    cache->setTexture(*m_velocityBuff[1]->m_pTexture, location);
+    size.x = 1.0f / m_workOutA->m_width;
+    size.y = 1.0f / m_workOutA->m_height;
+    uniform.setVec4SetVec4(sizeOfs, size);
+    for (int i = 0; i < 5; i++) {
+        offsets[i * 4 + 0] = 0.0f;
+        offsets[i * 4 + 1] = i / static_cast<float>(m_workOutB->m_height);
+    }
+    uniform.setF32SetF32Array(ofs, offsets, 20);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    list->renderQuads();
+    m_workOutA->setColorInvalidate();
+}
+
+void DrPixlPostObjMotionBlur2::calcBlurMask() {
+    DrAPCache* cache = m_drMan->m_apCache;
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getPostShdObj(0x49);
+    list->bindQuadsTex();
+    obj->setupShader(0u);
+    DrAPGxType::setupBlend(0);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    unsigned int location = obj->getCurrentShader().getTextureLocation("s0");
+    unsigned int ofs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "vOfs");
+    cache->beginTexSampling(2, 1);
+    m_maskBuff->setRenderTarget();
+    cache->setTexture(*m_workOutA->m_pTexture, location);
+    mm::Vec4 vOfs;
+    vOfs.x = 0.5f / m_maskBuff->m_width;
+    vOfs.y = 0.5f / m_maskBuff->m_height;
+    uniform.setVec4SetVec4(ofs, vOfs);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    list->renderQuads();
+    m_maskBuff->setColorInvalidate();
 }
 
 DrPixlPostObjSSR::DrPixlPostObjSSR(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)

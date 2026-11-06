@@ -139,13 +139,23 @@ public:
     unsigned char pad_1CB[0x2];
     // 0x1CD: DrPixlPostObjMotionBlur2::render runs calcVelocityBlur while it is set (the name is not the original's)
     bool m_velocityBlur;
-    unsigned char pad_1CE[0x1E];
+    unsigned char pad_1CE[0x1];
+    // 0x1CF: DrPixlPostObjMotionBlur2::renderCalcBlur selects its "DECL_HLV" variant 2 while it is clear, else 1
+    // (name inferred)
+    bool m_motBlurHLvMode;
+    unsigned char pad_1D0[0x1C];
     // 0x1EC, DrPixlPostObjMotionBlur::render runs calcVelocityBlur only while it is above 0 (name inferred)
     float m_velocityBlurRate;
     unsigned char pad_1F0[0xC];
     // 0x1FC: ScnRenderDrSysParmAcc::setMotBlurDefault writes DrIniSys::m_postParm's (the name is not the original's)
     bool m_motBlurDefault;
-    unsigned char pad_1FD[0x1B];
+    unsigned char pad_1FD[0xB];
+    // 0x208: DrPixlPostObjMotionBlur2::calcVelocityBlur blurs the velocity buffer only while it is above 0, its
+    // gauss taps scaled by it (name inferred)
+    float m_velocityBlurScale;
+    unsigned char pad_20C[0x8];
+    // 0x214: DrPixlPostObjMotionBlur2::renderCalcBlur's "gParam" strength (name inferred)
+    float m_motBlurStrength;
     bool m_dofOverride;  // isDOF: either of these two
     bool m_dof;
     bool m_dofHLvMode;
