@@ -3751,6 +3751,23 @@ bool DevGraph::isIgnore() {
     return dg::s_bIgnore;
 }
 
+void DevGraph::fontDraw(short x, short y, float scaleH, float scaleV, const char* text, const mm::Col4* col,
+                        const mm::Col4* backCol, bool flag) {
+    DevGraph* dev = get();
+    if (dev == nullptr || dev->pad_228.h == 0 || dev->pad_228.w == 0) {
+        return;
+    }
+    if (backCol != nullptr && backCol->a > 0.0f) {
+        DebDraw* draw = DebDraw::get(-1);
+        draw->setZComp(false);
+        draw->setZWrite(false);
+        draw->setCol(*backCol);
+        draw->renderRectFill(x, y, fontGetWidth(text, static_cast<FONT_STYLE>(0), scaleH),
+                             get() != nullptr ? get()->fontGetHeightSys(static_cast<FONT_STYLE>(0), scaleV) : 0);
+    }
+    get()->fontDrawSys(x, y, scaleH, scaleV, text, col, flag);
+}
+
 void DevGraph::grSetClearCol(const mm::Col4& col) {
     DevGraph* dev = get();
     if (dev != nullptr) {
@@ -3902,6 +3919,24 @@ void DevGraph::wkTail() {
     }
 }
 
+bool DevGraph::wkStandbyLogin() {
+    if (!WorkCpu::isInitialized()) {
+        return false;
+    }
+    m_que = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) DevGraphQue();
+    m_work.m_que = m_que->createQue(0x600000);
+    if (mm::mtl::PtrSingleton<grlib::CGLibManager>::get() == nullptr) {
+        new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) grlib::CGLibManager();
+    }
+    pad_1f8 = mm::Rect<int>(0, 0, getRootWidth(), getRootHeight());
+    m_viewport = mm::Rect<int>(0, 0, getRootWidth(), getRootHeight());
+    pad_218 = mm::Rect<int>(0, 0, getRootWidth(), getRootHeight());
+    pad_228 = mm::Rect<int>(0, 0, getRootWidth(), getRootHeight());
+    pad_238 = mm::Rect<int>(0, 0, getRootWidth(), getRootHeight());
+    ErrViewer::create();
+    return WorkObj::wkStandbyLogin();
+}
+
 GraphQue* DevGraphQue::createQue(unsigned int size) {
     GraphQue* que = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) GraphQue(this, size);
     m_ques.push_back(que);
@@ -3991,6 +4026,15 @@ float DevGraph::getScreenScaleW() {
     return get()->getScreenScaleWSys();
 }
 
+float DevGraph::getFrameSyncSec() {
+    int vsync = dg::s_nVSync;
+    float sec = getVSyncSec();
+    if (vsync != 0) {
+        return sec * dg::s_nVSync;
+    }
+    return sec + sec;
+}
+
 float DevGraph::getCost() {
     DevGraph* dev = get();
     if (dev != nullptr) {
@@ -4019,8 +4063,8 @@ bool DebDraw::getScreenPos(mm::Vec3& out, const mm::Vec3& pos) {
     x /= w;
     y /= w;
     z /= w;
-    out.x = (x + 1.0f) * (DevGraph::get()->pad_230 * 0.5f);
-    out.y = (1.0f - y) * (DevGraph::get()->pad_234 * 0.5f);
+    out.x = (x + 1.0f) * (DevGraph::get()->pad_228.w * 0.5f);
+    out.y = (1.0f - y) * (DevGraph::get()->pad_228.h * 0.5f);
     out.z = z;
     return true;
 }
@@ -4047,6 +4091,21 @@ void DevGraph::setFrameSpd(float spd) {
 }  // namespace ml
 
 namespace ml {
+DevGraph::DevGraph(const char* name, WorkObj* parent) : DevBase(name, parent, 8) {
+    pad_310 = false;
+    m_renderState = static_cast<RSTAT>(2);
+    m_clearCol = mm::Col4::black;
+    m_clearDepth = 1.0f;
+    m_cbList.create(16, WorkUtil::getWorkMem());
+    m_work.m_que = nullptr;
+    m_work.pad_8 = 0;
+    m_que = nullptr;
+    m_frameSpd = 1.0f;
+    for (int i = 0; i < 4; i++) {
+        m_outerRender[i] = nullptr;
+    }
+}
+
 DevGraph::~DevGraph() {}
 }  // namespace ml
 

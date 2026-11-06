@@ -27,6 +27,7 @@ public:
 
     unsigned int m_side;          // 0x0 which half the queues fill (the name is not the original's)
     reslist<GraphQue*> m_ques;    // 0x8 the queues createQue makes (the name is not the original's)
+    unsigned char pad_48[0x640];  // DevGraph::wkStandbyLogin allocates 0x688 bytes
 };
 
 inline GraphQue::GraphQue(DevGraphQue* owner, unsigned int size)

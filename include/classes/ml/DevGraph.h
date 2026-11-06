@@ -2,6 +2,7 @@
 #define CLASSES_ML_DEVGRAPH_H
 
 #include "classes/ml/DevBase.h"
+#include "classes/ml/GraphQue.h"
 #include "classes/ml/reslist.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/Col4.h"
@@ -30,20 +31,16 @@ extern bool s_bIgnore;
 enum RCB : int;
 class DevGraph : public ::ml::DevBase, public ::mm::mtl::PtrSingleton<DevGraph> {
 public:
+    DevGraph(const char* name, WorkObj* parent);
     virtual ~DevGraph();  // slot 0
-    // the frame's scratch memory 0x338 points at: taken downward from m_top (the names are not the original's)
-    struct WorkBuf {
-        unsigned char pad_0[0x30];
-        char* m_top;  // 0x30
-    };
     // size bytes of the frame's scratch memory, 4-aligned downward (inline: DevFontLayer's queue and its commands;
     // the name is not the original's)
     void* allocWork(unsigned int size) {
-        char* p = m_workBuf->m_top - size;
+        char* p = m_work.m_que->m_end - size;
         if (reinterpret_cast<unsigned long>(p) & 3) {
             p -= reinterpret_cast<unsigned long>(p) & 3;
         }
-        m_workBuf->m_top = p;
+        m_work.m_que->m_end = p;
         return p;
     }
     static int getRootWidth();
@@ -60,6 +57,10 @@ public:
     static void setVSync(int vsync);
     static bool isIgnore();
     static int fontGetWidth(const char* text, FONT_STYLE style, float scale);
+    // draws text through the object's fontDrawSys over a filled rectangle of backCol the size of the text (when
+    // backCol's alpha is above 0; DevFontLayer::renderQue)
+    static void fontDraw(short x, short y, float scaleH, float scaleV, const char* text, const mm::Col4* col,
+                         const mm::Col4* backCol, bool flag);
     static void grSetClearCol(const mm::Col4& col);
     // named by the symbols: the object's grInitContextSys, then its queue's flushViewport (WinView::renderView)
     static void grInitContext();
@@ -131,20 +132,31 @@ public:
 
     // the frame callbacks (the destructor clears it; the name is not the original's)
     reslist<DevGraphCB*> m_cbList;  // 0x1B8
-    unsigned char pad_1f8[0x10];
+    // wkStandbyLogin sets 0x1F8..0x248 to (0, 0, root width, root height)
+    mm::Rect<int> pad_1f8;     // 0x1F8
     mm::Rect<int> m_viewport;  // 0x208 getViewport returns it (the name is not the original's)
-    unsigned char pad_218[0x18];
-    int pad_230;          // 0x230 DebDraw::getScreenPos scales x by half of it (a screen width?)
-    int pad_234;          // 0x234 DebDraw::getScreenPos scales y by half of it (a screen height?)
-    unsigned char pad_238[0xDC];
+    mm::Rect<int> pad_218;     // 0x218 grInitContextSys sets it with m_viewport
+    // 0x228; DebDraw::getScreenPos scales x and y by half of its w and h (the screen size?); grInitContextSys copies
+    // 0x218's w and h into it
+    mm::Rect<int> pad_228;
+    mm::Rect<int> pad_238;     // 0x238
+    unsigned char pad_248[0xC8];
+    bool pad_310;              // 0x310 the constructor clears it
+    unsigned char pad_311[0x3];
     RSTAT m_renderState;  // 0x314 setRenderState stores it under its lock (the name is not the original's)
     // grSetClearCol copies the colour in and sets 0x328 to 1 (the names are not the original's)
     mm::Col4 m_clearCol;  // 0x318
     float m_clearDepth;   // 0x328
     unsigned char pad_32c[0x4];
     DevGraphQue* m_que;   // 0x330 pushRect/popRect forward to it (the name is not the original's)
-    WorkBuf* m_workBuf;  // 0x338 (the name is not the original's)
-    unsigned char pad_340[0x8];
+    // 0x338: the frame's scratch memory (the queue wkStandbyLogin makes with m_que's createQue; allocWork takes from
+    // its end) and 8 bytes the constructor clears; wkStandbyLogout clears both with one 16-byte memset (its base is
+    // not the first field's address), so they are one 16-byte member (the names are not the original's)
+    struct Work {
+        GraphQue* m_que;
+        unsigned long pad_8;
+    };
+    Work m_work;
     float m_frameSpd;     // 0x348 setFrameSpd (the name is not the original's)
     unsigned char pad_34c[0x4];
     // up to four render functions addOuterRender keeps in the first free entry and removeOuterRender clears
