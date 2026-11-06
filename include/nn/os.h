@@ -31,6 +31,15 @@ public:
     }
     // the nanoseconds divided by 1000000 through a multiply-high built from 32-bit halves (the original's code;
     // the SDK's own form of the division is not known)
+    // the nanoseconds divided by 1000 the same way (Render, AVSync and GetRealTimeUs's current time)
+    long GetMicroSeconds() const {
+        unsigned long low = m_nanoSeconds & 0xFFFFFFFF;
+        long high = m_nanoSeconds >> 32;
+        long middle = high * 0xE353F7CFL + ((low * 0xE353F7CFUL) >> 32);
+        long upper = high * 0x20C49BA5L;
+        long lower = low * 0x20C49BA5L + (middle & 0xFFFFFFFF);
+        return ((upper + (middle >> 32) + (lower >> 32)) >> 7) + (static_cast<unsigned long>(m_nanoSeconds) >> 63);
+    }
     long GetMilliSeconds() const {
         unsigned long low = m_nanoSeconds & 0xFFFFFFFF;
         long high = m_nanoSeconds >> 32;

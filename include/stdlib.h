@@ -16,6 +16,7 @@ void* aligned_alloc(size_t alignment, size_t size);
 int atoi(const char* text);
 double atof(const char* text);
 __attribute__((noreturn)) void abort(void);
+int rand(void);
 
 #ifdef __cplusplus
 }

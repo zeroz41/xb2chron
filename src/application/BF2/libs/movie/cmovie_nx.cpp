@@ -6,6 +6,8 @@
 #include "mtl/MemManager.h"
 #include "nn/os.h"
 #include "mm/mtl/Hash.h"
+#include <math.h>
+#include <stdlib.h>
 #include <string.h>
 
 namespace arc {
@@ -224,6 +226,81 @@ int AudioOutRenderer::Start() {
     return status;
 }
 
+int AudioOutRenderer::Render() {
+    GenerateFixedSizeAudioFrame();
+    nn::os::LockMutex(&m_outputMutex);
+    if (m_filledBuffers.size() == 0) {
+        nn::os::UnlockMutex(&m_outputMutex);
+        return 0;
+    }
+    movie::Buffer* buffer = &m_filledBuffers.front();
+    short* data = static_cast<short*>(buffer->Base());
+    int size = buffer->Size();
+    unsigned int flags = buffer->GetUint32Data();
+    long presentationTimeUs = buffer->GetInt64Data();
+    void* base = buffer->Base();
+    unsigned long capacity = buffer->Capacity();
+    nn::os::UnlockMutex(&m_outputMutex);
+    if (data == nullptr || size == 0) {
+        if (flags == 4) {
+            m_eos = true;
+        }
+        return 0;
+    }
+    nn::audio::AudioOutBuffer* outBuffer = nn::audio::GetReleasedAudioOutBuffer(&m_audioOut);
+    if (outBuffer == nullptr) {
+        return 0;
+    }
+    short* out = static_cast<short*>(nn::audio::GetAudioOutBufferDataPointer(outBuffer));
+    nn::audio::GetAudioOutBufferDataSize(outBuffer);
+    m_presentationTimeUs = presentationTimeUs;
+    if (m_startTimeUs >= 0 && m_mediaClock != nullptr) {
+        long nowUs = nn::os::ConvertToTimeSpan(nn::os::GetSystemTick()).GetMicroSeconds();
+        long startTimeUs = m_startTimeUs;
+        if (m_startRealTimeUs == -1) {
+            m_startRealTimeUs = nowUs;
+        }
+        long elapsedUs = nowUs - m_startRealTimeUs;
+        long playedUs = m_playedFrames * 1000000 / m_sampleRate;
+        if (elapsedUs <= playedUs) {
+            playedUs = elapsedUs;
+        }
+        m_mediaClock->updateAnchor(startTimeUs + playedUs, nowUs, m_presentationTimeUs);
+        if (m_startRealTimeUs == -1) {
+            m_startRealTimeUs = nn::os::ConvertToTimeSpan(nn::os::GetSystemTick()).GetMicroSeconds();
+            m_mediaClock->setStartingTimeMedia(m_startTimeUs);
+        }
+    }
+    unsigned long outSize = size;
+    if (m_decoderChannelCount < m_channelCount) {
+        int samples = outSize / 2;
+        short* dst = out;
+        for (int i = 0; i < samples; i++) {
+            short sample = data[i];
+            for (int c = 0; c < m_channelCount; c++) {
+                *dst++ = sample;
+            }
+        }
+        outSize = m_channelCount * outSize;
+    } else {
+        memcpy(out, data, outSize);
+    }
+    m_playedFrames += outSize / m_bytesPerSample;
+    int durationMs = outSize * 1000 / m_bytesPerSample / m_sampleRate;
+    m_sleepMs = durationMs / static_cast<int>(ceil(durationMs / 8.3333));
+    nn::audio::SetAudioOutBufferInfo(outBuffer, out, m_audioOutBufferSize, outSize);
+    nn::audio::AppendAudioOutBuffer(&m_audioOut, outBuffer);
+    if (flags == 4) {
+        m_eos = true;
+    }
+    movie::Buffer emptyBuffer(base, capacity);
+    nn::os::LockMutex(&m_outputMutex);
+    m_emptyBuffers.push_back(emptyBuffer);
+    m_filledBuffers.erase(m_filledBuffers.begin());
+    nn::os::UnlockMutex(&m_outputMutex);
+    return 0;
+}
+
 void AudioOutRenderer::OnOutputAvailable(int index, long presentationTimeUs, unsigned int flags) {
     audioData data;
     data.m_index = index;
@@ -240,6 +317,52 @@ void AudioOutRenderer::OnOutputAvailable(int index, long presentationTimeUs, uns
         nn::os::UnlockMutex(&clock->m_mutex);
         m_startTimeUs = presentationTimeUs;
     }
+}
+
+void VideoRendererThreadFunction(void* arg) {
+    VideoRenderer* renderer = static_cast<VideoRenderer*>(arg);
+    while (!renderer->m_exit) {
+        bool render = !renderer->m_started || (!s_pause && !s_homeMenu);
+        if (render) {
+            renderer->Render();
+        }
+        if (renderer->m_sleepUs < 2000) {
+            renderer->m_sleepUs = 2000;
+        } else if (renderer->m_sleepUs > 300000) {
+            renderer->m_sleepUs = 300000;
+        }
+        nn::os::SleepThread(nn::TimeSpan::FromMicroSeconds(renderer->m_sleepUs));
+    }
+}
+
+bool VideoRenderer::AVSync(long presentationTimeUs) {
+    m_presentationTimeUs = presentationTimeUs;
+    if (m_firstFrame) {
+        m_firstFrame = false;
+        m_startRealTimeUs = nn::os::ConvertToTimeSpan(nn::os::GetSystemTick()).GetMicroSeconds();
+        m_mediaClock->updateAnchor(m_presentationTimeUs, m_startRealTimeUs, 0x7FFFFFFFFFFFFFFF);
+    }
+    long nowUs = nn::os::ConvertToTimeSpan(nn::os::GetSystemTick()).GetMicroSeconds();
+    long lateUs = nowUs - GetRealTimeUs(m_presentationTimeUs, nowUs);
+    m_lastPresentationTimeUs = m_presentationTimeUs;
+    m_sleepUs = -lateUs;
+    bool drop = false;
+    if (lateUs > 40000) {
+        m_droppedFrames++;
+        drop = true;
+    }
+    if (lateUs > 0) {
+        m_sleepUs = 0;
+    }
+    return drop;
+}
+
+long VideoRenderer::GetRealTimeUs(long mediaTimeUs, long nowUs) {
+    long realUs;
+    if (m_mediaClock->getRealTimeFor(mediaTimeUs, &realUs) != 0) {
+        realUs = nowUs + (mediaTimeUs - m_lastPresentationTimeUs);
+    }
+    return realUs;
 }
 
 void* MultimediaAllocate(unsigned long size, unsigned long alignment, void* userPtr) {
@@ -450,6 +573,25 @@ void MovieDecoderPlayer::DestroypAudioVideoRenderer() {
 }
 
 namespace CMovieNX {
+
+// the frame starts as noise: random luma (the C library's linear congruential step after one rand()), grey chroma
+void CMovie::initialize(mm::mtl::IAllocator* allocator) {
+    m_player = nullptr;
+    m_frameSize = 1280 * 720 * 3 / 2;
+    m_allocator = allocator;
+    m_frame = static_cast<unsigned char*>(allocator->allocate(m_frameSize, 0x1000));
+    unsigned char* frame = m_frame;
+    unsigned int seed = rand();
+    for (unsigned char* p = frame; p < frame + 1280 * 720; p++) {
+        *p = seed >> 8;
+        seed = seed * 1103515245 + 12345;
+    }
+    *reinterpret_cast<unsigned int*>(m_frame) = 0xDEADBEEF;
+    memset(frame + 1280 * 720, 0x80, 1280 * 720 / 2);
+    nn::os::FlushDataCache(m_frame, m_frameSize);
+    s_pause = false;
+    s_homeMenu = false;
+}
 
 void CMovie::finalize() {
     if (m_frame != nullptr) {

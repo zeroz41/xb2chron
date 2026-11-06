@@ -34,6 +34,51 @@ public:
     }
     ~MediaClock() { nn::os::FinalizeMutex(&m_mutex); }
 
+    // The members below are inlined (no symbols); their names and forms follow Android's MediaClock, whose fields
+    // and initial values this clock has (no playback rate). The current time is the system tick in microseconds.
+    // VideoRenderer::AVSync's: the first frame's media time anchors at the current real time
+    void updateAnchor(long anchorTimeMediaUs, long anchorTimeRealUs, long maxTimeMediaUs) {
+        if (anchorTimeMediaUs < 0 || anchorTimeRealUs < 0) {
+            return;
+        }
+        nn::os::LockMutex(&m_mutex);
+        long nowUs = nn::os::ConvertToTimeSpan(nn::os::GetSystemTick()).GetMicroSeconds();
+        long nowMediaUs = anchorTimeMediaUs + (nowUs - anchorTimeRealUs);
+        if (nowMediaUs >= 0) {
+            m_anchorTimeMediaUs = nowMediaUs;
+            m_anchorTimeRealUs = nowUs;
+            m_maxTimeMediaUs = maxTimeMediaUs;
+        }
+        nn::os::UnlockMutex(&m_mutex);
+    }
+    // AudioOutRenderer::Render's: the media time of the first rendered frame (the argument is read before the lock)
+    void setStartingTimeMedia(long startingTimeMediaUs) {
+        nn::os::LockMutex(&m_mutex);
+        m_anchorTimeUs = startingTimeMediaUs;
+        nn::os::UnlockMutex(&m_mutex);
+    }
+    // the media time at realUs; -1 while no anchor is set
+    int getMediaTime_l(long realUs, long* outMediaUs, bool allowPastMaxTime) const {
+        if (m_anchorTimeRealUs == -1) {
+            return -1;
+        }
+        long mediaUs = m_anchorTimeMediaUs + (realUs - m_anchorTimeRealUs);
+        if (mediaUs > m_maxTimeMediaUs && !allowPastMaxTime) {
+            mediaUs = m_maxTimeMediaUs;
+        }
+        if (mediaUs < m_anchorTimeUs) {
+            mediaUs = m_anchorTimeUs;
+        }
+        if (mediaUs < 0) {
+            mediaUs = 0;
+        }
+        *outMediaUs = mediaUs;
+        return 0;
+    }
+    // VideoRenderer::GetRealTimeUs's: the real time at which targetMediaUs plays (defined below with the inline
+    // keyword: GetRealTimeUs inlines it)
+    int getRealTimeFor(long targetMediaUs, long* outRealUs);
+
     nn::os::MutexType m_mutex;
     // -1, -1, INT64_MAX, -1: the initial values of Android's MediaClock (anchor media/real time, max media time,
     // starting media time), which the names follow
@@ -42,6 +87,20 @@ public:
     long m_maxTimeMediaUs;
     long m_anchorTimeUs;  // OnOutputAvailable sets it under the lock from the first output's time
 };
+
+inline int MediaClock::getRealTimeFor(long targetMediaUs, long* outRealUs) {
+    nn::os::LockMutex(&m_mutex);
+    long nowUs = nn::os::ConvertToTimeSpan(nn::os::GetSystemTick()).GetMicroSeconds();
+    long nowMediaUs;
+    int status = getMediaTime_l(nowUs, &nowMediaUs, true);
+    if (status != 0) {
+        nn::os::UnlockMutex(&m_mutex);
+        return status;
+    }
+    *outRealUs = (targetMediaUs - nowMediaUs) + nowUs;
+    nn::os::UnlockMutex(&m_mutex);
+    return 0;
+}
 
 class AudioOutRenderer {
 public:
@@ -131,7 +190,15 @@ public:
         }
     }
 
-    unsigned char pad_0[0x28];
+    int Render();
+    bool AVSync(long presentationTimeUs);
+    long GetRealTimeUs(long mediaTimeUs, long nowUs);
+
+    unsigned char pad_0[0x9];
+    bool m_exit;  // the render thread runs until it is set
+    unsigned char pad_a[0x6];
+    long m_presentationTimeUs;  // AVSync's: the time of the frame it checks
+    unsigned char pad_18[0x10];
     void* m_threadStack;  // StopAudioVideoRenderer frees it with the render thread at 0x30
     unsigned char pad_30[0x1E0];
     std::vector<VideoData> m_outputBuffers;  // the decoder's outputs not yet shown, under m_outputMutex
@@ -140,6 +207,13 @@ public:
     unsigned char pad_250[0x18];
     bool m_started;  // isstandby's: the first frame is shown
     bool m_eos;  // isplaying's: the video has played out
+    unsigned char pad_26a[0x6];
+    MediaClock* m_mediaClock;
+    long m_sleepUs;  // the render thread's wait before the next frame (AVSync's; kept within 2000..300000)
+    long m_startRealTimeUs;  // AVSync's: the real time of the first frame
+    int m_droppedFrames;  // AVSync's count of frames shown more than 40 ms late
+    bool m_firstFrame;  // AVSync anchors the clock at the next frame while it is set
+    long m_lastPresentationTimeUs;  // AVSync's; GetRealTimeUs's base while the clock has no anchor
 };
 
 class MovieDecoderPlayer {

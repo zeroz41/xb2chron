@@ -120,6 +120,14 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY void clear() noexcept { __base::clear(); }
 
+    // the elements after __position move down by one (std::move), the last one is destroyed
+    _LIBCPP_INLINE_VISIBILITY iterator erase(const_iterator __position) {
+        difference_type __ps = __position - begin();
+        pointer __p = this->__begin_ + __ps;
+        this->__destruct_at_end(std::move(__p + 1, this->__end_, __p));
+        return __p;
+    }
+
     _LIBCPP_INLINE_VISIBILITY void push_back(const_reference __x) {
         if (this->__end_ != this->__end_cap_) {
             ::new ((void*)this->__end_) _Tp(__x);
