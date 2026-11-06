@@ -99,6 +99,44 @@ void CalcUtil::applyHingeConstraints(const anm::Array<ResHingeConstraint>& const
     }
 }
 
+void limitHinge(const ResHingeConstraint& constraint, NodeArray* nodes) {
+    const ResNode& res0 = (*nodes->m_pResNodes)[constraint.m_constraint.m_node0];
+    const ResNode& res1 = (*nodes->m_pResNodes)[constraint.m_constraint.m_node1];
+    if (res1.isFixed()) {
+        return;
+    }
+    Node& node0 = nodes->m_nodes[constraint.m_constraint.m_node0];
+    Node& node1 = nodes->m_nodes[constraint.m_constraint.m_node1];
+    mm::Vec3 hingeAxis = constraint.m_axis;
+    mm::Vec3 axis = node1.m_parentRot.rotate(hingeAxis);
+    node1.m_nextPos -= axis * (node1.m_nextPos - node0.m_nextPos).dot(axis);
+    if (constraint.m_flags & 1) {
+        mm::Vec3 dir = node1.m_nextPos - node0.m_nextPos;
+        float length = dir.length();
+        if (length > 1.1920928955078125e-07F) {
+            dir = dir * (1.0f / length);
+        }
+        float limit = ::cosf(constraint.m_angle);
+        mm::Vec3 restDir = node1.m_dir;
+        if (dir.dot(restDir) < limit) {
+            float angle = constraint.m_angle;
+            float axisLength = axis.length();
+            if (axisLength <= 1e-6f) {
+                axis = mm::Vec3::zero;
+            } else {
+                axis.x = axis.x * (1.0f / axisLength);
+                axis.y = axis.y * (1.0f / axisLength);
+                axis.z = axis.z * (1.0f / axisLength);
+            }
+            float half = angle * 0.5f;
+            float s = ::sinf(half);
+            float c = ::cosf(half);
+            mm::Quat rot(axis.x * s, axis.y * s, axis.z * s, c);
+            node1.m_nextPos = node0.m_nextPos + length * rot.rotate(restDir);
+        }
+    }
+}
+
 void CalcUtil::detectCollision(const CollionArray& collisions, NodeArray* nodes) {
     const anm::Array<ResNodeCollision>& resCollisions = *nodes->m_pResCollisions;
     const ResNodeCollision* end = resCollisions.m_pElements + resCollisions.size();
@@ -109,6 +147,66 @@ void CalcUtil::detectCollision(const CollionArray& collisions, NodeArray* nodes)
         detectCollisionSpheres(collision, collisions, 0, nodes);
         detectCollisionCapsules(collision, collisions, 0, nodes);
         detectCollisionPlanes(collision, collisions, 0, nodes);
+    }
+}
+
+void detectCollisionSpheres(const ResNodeCollision& collision, const CollionArray& collisions, unsigned int fixed,
+                            NodeArray* nodes) {
+    for (const ShpereCollObj& obj : collisions.m_spheres) {
+        if (collision.m_groupMask & (1 << obj.m_pRes->m_group)) {
+            Node& node0 = nodes->m_nodes[collision.m_node0];
+            Node& node1 = nodes->m_nodes[collision.m_node1];
+            mm::Vec3 center = (1.0f - collision.m_weight) * node0.m_nextPos + collision.m_weight * node1.m_nextPos;
+            mm::Vec3 push;
+            if (obj.detect(collision.m_radius, center, &push)) {
+                if (!(fixed & 1)) {
+                    node0.m_nextPos += (1.0f - collision.m_weight) * push;
+                }
+                if (!(fixed & 2)) {
+                    node1.m_nextPos += collision.m_weight * push;
+                }
+            }
+        }
+    }
+}
+
+void detectCollisionCapsules(const ResNodeCollision& collision, const CollionArray& collisions, unsigned int fixed,
+                             NodeArray* nodes) {
+    for (const CapsuleCollObj& obj : collisions.m_capsules) {
+        if (collision.m_groupMask & (1 << obj.m_pRes->m_group)) {
+            Node& node0 = nodes->m_nodes[collision.m_node0];
+            Node& node1 = nodes->m_nodes[collision.m_node1];
+            mm::Vec3 center = (1.0f - collision.m_weight) * node0.m_nextPos + collision.m_weight * node1.m_nextPos;
+            mm::Vec3 push;
+            if (obj.detect(collision.m_radius, center, &push)) {
+                if (!(fixed & 1)) {
+                    node0.m_nextPos += (1.0f - collision.m_weight) * push;
+                }
+                if (!(fixed & 2)) {
+                    node1.m_nextPos += collision.m_weight * push;
+                }
+            }
+        }
+    }
+}
+
+void detectCollisionPlanes(const ResNodeCollision& collision, const CollionArray& collisions, unsigned int fixed,
+                           NodeArray* nodes) {
+    for (const PlaneCollObj& obj : collisions.m_planes) {
+        if (collision.m_groupMask & (1 << obj.m_pRes->m_group)) {
+            Node& node0 = nodes->m_nodes[collision.m_node0];
+            Node& node1 = nodes->m_nodes[collision.m_node1];
+            mm::Vec3 center = (1.0f - collision.m_weight) * node0.m_nextPos + collision.m_weight * node1.m_nextPos;
+            mm::Vec3 push;
+            if (obj.detect(collision.m_radius, center, &push)) {
+                if (!(fixed & 1)) {
+                    node0.m_nextPos += (1.0f - collision.m_weight) * push;
+                }
+                if (!(fixed & 2)) {
+                    node1.m_nextPos += collision.m_weight * push;
+                }
+            }
+        }
     }
 }
 

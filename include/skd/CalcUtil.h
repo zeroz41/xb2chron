@@ -43,15 +43,15 @@ public:
 
 // skd_calc_util.cpp's single steps: a stick constraint's cone and a constraint's distance (applyStickConstraints),
 // a hinge (applyHingeConstraints), and one collision pair against each shape of the collision array
-// (detectCollision passes 0 as the third argument)
+// (detectCollision passes 0 as the third argument: bit 0 set leaves node0 unmoved, bit 1 node1)
 void limitCone(const ResConstraint& constraint, const ResConeLimit& cone, NodeArray* nodes);
 void limitDistance(const ResConstraint& constraint, NodeArray* nodes);
 void limitHinge(const ResHingeConstraint& constraint, NodeArray* nodes);
-void detectCollisionSpheres(const ResNodeCollision& collision, const CollionArray& collisions, unsigned int index,
+void detectCollisionSpheres(const ResNodeCollision& collision, const CollionArray& collisions, unsigned int fixed,
                             NodeArray* nodes);
-void detectCollisionCapsules(const ResNodeCollision& collision, const CollionArray& collisions, unsigned int index,
+void detectCollisionCapsules(const ResNodeCollision& collision, const CollionArray& collisions, unsigned int fixed,
                              NodeArray* nodes);
-void detectCollisionPlanes(const ResNodeCollision& collision, const CollionArray& collisions, unsigned int index,
+void detectCollisionPlanes(const ResNodeCollision& collision, const CollionArray& collisions, unsigned int fixed,
                            NodeArray* nodes);
 
 // skd_calc_util.cpp's: the functions the queue runs each shape's detection jobs with, registered (skd::Packet's

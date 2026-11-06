@@ -2,6 +2,7 @@
 #define SKD_RESSOLVER_H
 
 #include "anm/Array.h"
+#include "mm/Vec3.h"
 
 namespace skd { struct ResSpringConstraint; }
 
@@ -16,8 +17,12 @@ struct ResConstraint {
 };
 
 // the cone a stick constraint's node stays in (limitCone's; 8 bytes)
+// limitCone keeps node1 within m_angle of its rest direction when bit 0 of m_flags is set (the names are not the
+// original's)
 struct ResConeLimit {
-    unsigned char pad_0[0x8];
+    float m_angle;
+    unsigned char m_flags;
+    unsigned char pad_5[0x3];
 };
 
 // a stick constraint of a solver resource (0x18 bytes, the stride applyStickConstraints walks): its two nodes'
@@ -40,10 +45,15 @@ struct ResSpringConstraint {
 };
 
 // a hinge constraint of a solver resource (0x30 bytes, the stride applyHingeConstraints walks), its two nodes'
-// constraint first (applyHingeConstraints passes it to limitDistance)
+// constraint first (applyHingeConstraints passes it to limitDistance). limitHinge keeps node1 in the plane
+// through node0 normal to m_axis (turned by node1's parent rotation) and, when bit 0 of m_flags is set, within
+// m_angle of node1's rest direction (the names are not the original's)
 struct ResHingeConstraint {
     ResConstraint m_constraint;
-    unsigned char pad_10[0x20];
+    mm::Vec3 m_axis;
+    float m_angle;
+    unsigned char m_flags;
+    unsigned char pad_25[0xB];
 };
 
 // one node of a solver resource (0x28 bytes, the stride anm::Array<ResNode> indexes with). Only what the detection
