@@ -882,7 +882,7 @@ bool GfGameManager::isEnableOpenMainMenu() {
     if (scene->isFullScreenMenuAfter() || scene->isMaskMainMenu()) {
         return false;
     }
-    int state = scene->m_openMainMenuState;
+    int state = scene->m_partyStates[0].m_state;
     bool open = (state == 0 || state == 1) && !scene->isMoverGetFieldDamage();
     if (!open) {
         return false;
@@ -892,7 +892,7 @@ bool GfGameManager::isEnableOpenMainMenu() {
             return false;
         }
     }
-    return !scene->m_disableOpenMainMenu;
+    return !scene->m_partyStates[0].m_targetValueSet;
 }
 
 bool GfGameManager::isClearGame() {

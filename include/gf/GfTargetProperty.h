@@ -60,7 +60,7 @@ public:
     int pad_B4;  // 1 from the constructor
     int pad_B8;
     long pad_C0;  // -1 from the constructor
-    int pad_C8;
+    float pad_C8;  // GfGameScene::updatePlayerState tests it against 0.0
 };
 
 // no table: the object's target, as GfComProperty keeps it (1.0.0's UniquePtr<gf::GfTargetProperty> names the type;

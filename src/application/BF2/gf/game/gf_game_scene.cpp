@@ -43,6 +43,7 @@
 #include "classes/gf/GfTrinityAttack.h"
 #include "classes/gf/GfPlayComEventFade.h"
 #include "string.h"
+#include "math.h"
 #include <algorithm>
 #include "classes/gf/GfMenuObjExpGet.h"
 #include "classes/gf/GfGameObj.h"
@@ -103,6 +104,10 @@
 #include "gf/SDataBlade.h"
 #include "gf/GfDataItem.h"
 #include "gf/GfQuestUtil.h"
+#include "classes/gf/GfBdatChrEnArrange.h"
+#include "classes/gf/GfComAsm.h"
+#include "classes/gf/GfComCollider.h"
+#include "classes/fw/ColiObject.h"
 
 namespace gf {
 
@@ -327,13 +332,13 @@ bool GfGameScene::isEnableRideCondition(unsigned int id) const {
     if (!GfDataParty::isRideChar(acc.getDriverId())) {
         return true;
     }
-    if (m_value258 < 3) {
+    if (m_partyStates[0].m_count < 3) {
         return false;
     }
     if (GfLayerPause::isLayerPause(4)) {
         return false;
     }
-    return m_openMainMenuState != 2;
+    return m_partyStates[0].m_state != 2;
 }
 
 void GfGameScene::checkFieldBladeChangeForRide() {
@@ -565,7 +570,7 @@ bool GfGameScene::isDisableJumpForRide() const {
         return false;
     }
     GfObjAcc acc(GfGameParty::getHandleDriver(0, static_cast<PTPOS>(0)));
-    if (isBattle() && !acc.isBattle() && m_openMainMenuState != 2) {
+    if (isBattle() && !acc.isBattle() && m_partyStates[0].m_state != 2) {
         return false;
     }
     return m_rideActive;
@@ -1054,6 +1059,44 @@ void GfGameScene::createSepiaFilter() {
     manager->setParam(m_value68C, &param);
 }
 
+void GfGameScene::updatePlayerState() {
+    for (PartyState& state : m_partyStates) {
+        state.m_state = 0;
+        state.m_targetValueSet = false;
+        GfObjProperty* property = GfObjUtil::getProperty(GfGameParty::getHandleMover(state.m_id));
+        if (property != nullptr && property->m_target != nullptr) {
+            GfObjProperty::TargetInfo* target = property->m_target;
+            state.m_state = 1;
+            switch (target->m_state) {
+            case 1:
+                state.m_state = 2;
+                break;
+            case 3:
+                state.m_state = 3;
+                break;
+            case 4:
+                state.m_state = 5;
+                break;
+            }
+            if (target->m_blocksFollowWarp) {
+                state.m_state = 4;
+            }
+            if (target->pad_C0 != -1) {
+                state.m_state = 5;
+            }
+            if (target->pad_C8 != 0.0f) {
+                state.m_targetValueSet = true;
+            }
+        }
+        if (state.m_state == 1 && !GfGameManager::isControlFree()) {
+            state.m_state = 5;
+        }
+        state.m_fieldDamage = _gfgsc::isPartyMemberGetFieldDamage(state.m_id);
+        GfObjAcc acc(GfGameParty::getHandleMover(state.m_id));
+        state.m_count = acc.isBattle() ? 0 : state.m_count + 1;
+    }
+}
+
 void GfGameScene::gevOpenMainMenu() {
     if (GfGameManager::isGameTypeIra()) {
         return;
@@ -1304,6 +1347,90 @@ void GfGameScene::updateBladeChangeInField(const fw::UpdateInfo& info) {
         return;
     }
     m_fieldBladeChangeTime = time + info.m_deltaTime;
+}
+
+// Placeholder name: what updateColiPrio runs on each party member's driver and blade (or Ira's second driver). With
+// a valid object whose info has a priority (its m_attachIndex) and whose collision object is not at it: while it is
+// down (not in party state 2) and dead in a dead pose, its collision gets priority 900 and loses state 1; once it is
+// alive again, it gets its priority back (and collision state 1)
+static void fn_71002CA4AC(const DataParamAcc& acc, bool dead, bool keep) {
+    if (!acc.isValid()) {
+        return;
+    }
+    GfObj* obj = GfObjUtil::getObj(acc.m_handle);
+    if (obj == nullptr) {
+        return;
+    }
+    int priority = obj->m_info->m_attachIndex;
+    if (priority < 0) {
+        return;
+    }
+    GfComAsm* com = obj->getComponent<GfComAsm>(2);
+    if (com == nullptr) {
+        return;
+    }
+    GfComCollider* collider = obj->getComponent<GfComCollider>(4);
+    if (collider == nullptr) {
+        return;
+    }
+    fw::ColiObject* coli = collider->getColiObject(0);
+    if (coli == nullptr) {
+        return;
+    }
+    int current = coli->getPriority();
+    if (dead && priority == current && !keep) {
+        const char* name = com->getStateName(AnimLayer(0));
+        if (name == nullptr || (strcmp(name, "S_waterdead_00") != 0 && strcmp(name, "S_waterdead_01") != 0)) {
+            if (!com->isEnd(AnimLayer(0)) && !com->isLoop(AnimLayer(0))) {
+                return;
+            }
+            name = com->getStateName(AnimLayer(0));
+            if (name == nullptr) {
+                return;
+            }
+            if (strcmp(name, "S_dead") != 0 && strcmp(name, "S_downpose") != 0) {
+                return;
+            }
+        }
+        coli->setPriority(900);
+        coli->clearState(fw::ColiState(1));
+    }
+    if (priority != current && !dead) {
+        coli->setPriority(priority);
+        coli->setState(fw::ColiState(1));
+    }
+}
+
+void GfGameScene::updateColiPrio(const fw::UpdateInfo&) {
+    for (unsigned int i = 0; i < 3; i++) {
+        DataParamAcc driver(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0)));
+        fn_71002CA4AC(driver, driver.getHp() == 0, m_partyStates[i].m_state == 2);
+        if (GfGameManager::isGameTypeIra()) {
+            DataParamAcc partner(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(1)));
+            fn_71002CA4AC(partner, partner.getHp() == 0, m_partyStates[i].m_state == 2);
+        } else {
+            DataParamAcc blade(GfGameParty::getHandleBlade(i, -1));
+            fn_71002CA4AC(blade, driver.getHp() == 0, m_partyStates[i].m_state == 2);
+        }
+    }
+}
+
+void GfGameScene::updateMaxHp(const fw::UpdateInfo&) {
+    for (unsigned int i = 0; i < 3; i++) {
+        GfObj* obj = GfObjUtil::getObj(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0)));
+        if (obj == nullptr) {
+            continue;
+        }
+        DataParamAcc acc(obj->m_handle);
+        unsigned int hp = acc.getHp();
+        unsigned int hpMax = acc.getHpMax(false);
+        if (acc.getHp() > acc.getHpMax(false)) {
+            MsgObjectHealHp msg(0, 1);
+            msg.m_flags = MsgObjectHealHp::Flags();
+            fw::MessageObject* object = obj;
+            object->recieveMessage(object, msg);
+        }
+    }
 }
 
 void GfGameScene::updateQuestTaskLog(const fw::UpdateInfo&) {

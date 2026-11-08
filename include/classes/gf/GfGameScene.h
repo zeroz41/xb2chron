@@ -91,6 +91,17 @@ public:
     void updatePlayerState();
     void updatePartyObjFlag(const fw::UpdateInfo& info);
     void updateCrystalPopup(const fw::UpdateInfo& info);
+    // 1.0.0 symbols name the next eight
+    void updateBattleMomuri(const fw::UpdateInfo& info);
+    void updatePartyInfo(const fw::UpdateInfo& info);
+    // each party member's collision priority (its object info's) while alive, 900 while down in a dead pose
+    void updateColiPrio(const fw::UpdateInfo& info);
+    void updateAutoHeal(const fw::UpdateInfo& info);
+    void updateMaxHp(const fw::UpdateInfo& info);
+    void updateMoveAchievement(const fw::UpdateInfo& info);
+    void updateAutoFlag(const fw::UpdateInfo& info);
+    // shifts the eight save positions down and records the controlled mover's position as the newest
+    void updateEnableSavePos(const fw::UpdateInfo& info);
     bool isEnableRideCondition(unsigned int id) const;
     bool isPlayerStopFlag(PLSTOP);
     void setPlayerStopFlag(PLSTOP, bool);
@@ -134,7 +145,7 @@ public:
     // an entry of setDamageCharacter's (the names are not the original's)
     struct DamageCharacter {
         GF_OBJ_HANDLE* m_handle;  // the constructor's -1
-        int m_time;  // setDamageCharacter zeroes the handle's
+        float m_time;  // setDamageCharacter zeroes the handle's; updateAutoHeal counts it to 1 second per heal
     };
     GfGameScene(const GfSetupParam& param);
     static void build(const GfSetupParam& param);  // makes the scene (0x8D0 bytes, allocator 1)
@@ -291,15 +302,21 @@ public:
     // updatePartyBattle's: how many times each party driver's battle start was set up (up to 3; the name is not the
     // original's)
     unsigned long m_partyBattleStartCount[3];  // 0x238
-    unsigned char pad_250[0x4];
-    // GfGameManager::isEnableOpenMainMenu opens the main menu only while it is 0 or 1 (the name is not the original's)
-    int m_openMainMenuState;
-    // isEnableRideCondition lets a riding driver ride from 3 on (the name is not the original's)
-    int m_value258;
-    unsigned char pad_25C[0x1];
-    // GfGameManager::isEnableOpenMainMenu answers false while it is set (the name is not the original's)
-    bool m_disableOpenMainMenu;
-    unsigned char pad_25E[0x22];
+    // updatePlayerState's, one per party member (the struct and field names are not the original's)
+    struct PartyState {
+        unsigned int m_id;  // the party member (GfGameParty::getHandleMover's index)
+        // from its mover's target info: 1 free, 2/3/5 by the target state 1/3/4, 4 while m_blocksFollowWarp, 5 while
+        // pad_C0 is set or (state 1) the game is not under control; 0 with no target info.
+        // GfGameManager::isEnableOpenMainMenu opens the main menu only while the first is 0 or 1
+        int m_state;
+        // frames out of battle (0 in battle); isEnableRideCondition lets a riding driver ride from 3 on
+        int m_count;
+        bool m_fieldDamage;  // _gfgsc::isPartyMemberGetFieldDamage's; updateAutoHeal holds its heal while set
+        // the target info's pad_C8 is not 0; GfGameManager::isEnableOpenMainMenu answers false while the first is set
+        bool m_targetValueSet;
+        unsigned char pad_E[0x2];
+    };
+    PartyState m_partyStates[3];  // 0x250
     bool m_validCollisionVelocity;
     // 0x2D0: seven positions getEnableSavePos returns the first enabled of (an enable flag, then the position at
     // 0x10, 0x20 bytes each); not laid out yet, as an mm::Vec3 there would make the class 16-aligned and build
