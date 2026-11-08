@@ -1850,6 +1850,15 @@ unsigned int GfDataBlade::getBladeWeapon(unsigned int blade) {
     return data.m_equipWeapon;
 }
 
+unsigned int GfDataBlade::getBladeWeaponByRank(unsigned int blade, unsigned int chip) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    unsigned int type = getBladeWpnType(blade);
+    if (type < 37 || type - 1 < 16) {
+        return bdat->getPcWpnChipCreateWpn(chip, type - 1);
+    }
+    return 0;
+}
+
 const char* GfDataBlade::getResourceNameMotion(unsigned int blade) {
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
     return data.m_motionName;
@@ -2521,6 +2530,30 @@ const char* GfDataBladeArts::getName(unsigned int arts) {
         }
     }
     return GfBdatBtl::get()->getArtsBlDebugName(arts);
+}
+
+unsigned int GfDataBlade::getSkillLineId(unsigned int blade, unsigned int line) {
+    unsigned int bladeIndex = getBladeIndex(blade);
+    SDataGame* game = GfDataManager::getDataGame();
+    SDataBlade& data = game->m_blades[bladeIndex];
+    ACHIEVEMENT_TYPE type;
+    unsigned int index;
+    if (!GfDataAchievement::getAchievementType(type, index, line)) {
+        return 0;
+    }
+    unsigned short id = 0;
+    switch (type) {
+    case 0:
+        id = data.m_arts[index].m_id;
+        break;
+    case 1:
+        id = data.m_skills[index].m_id;
+        break;
+    case 2:
+        id = data.m_fieldSkills[index].m_id;
+        break;
+    }
+    return id;
 }
 
 bool GfDataDriver::getName(unsigned char*& bdat, unsigned int& id, unsigned int row) {
