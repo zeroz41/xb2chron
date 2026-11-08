@@ -236,6 +236,9 @@ public:
     static void dispRexCrystal(gf::GF_OBJ_HANDLE* handle, bool disp);
     static void dispHomuraCrystal(gf::GF_OBJ_HANDLE* handle, bool disp);  // "cc_homu" shown, "cc_zohar" the opposite
     static void dispMetsuCrystal(gf::GF_OBJ_HANDLE* handle, bool disp);
+    // 2.0.0's symbols name it. What it does: shows or hides the object's MASK2 and MAE_MASK meshes and the reverse
+    // for MAE_DEFO (Ira) or MAE_OPEN; skips create types 2, 3 and 11 (Ira: unless the start event is of type 2).
+    static void dispSinMask(gf::GF_OBJ_HANDLE* handle, bool disp);
     // Kosmos (blade 0x40f, type 4): shows (or hides) and runs (or stops) the second (left) object of its first
     // mounted weapon's first handle set
     static void setKosmosArts3EnableBothWeapon(gf::GF_OBJ_HANDLE* handle, bool enable);
@@ -396,6 +399,9 @@ public:
     // GfDataManager::getDataGame()+0x11AF18/0x11AF0C/0x11AF24/0x11AF30/0x11AF3C is non-zero.
     // GfFieldSound::createMapSound loads the "dlc_se_btl_spskill" sound pack when it is true.
     static bool isEnableBladeElma();
+    // 2.0.0's symbols name it. What it does: appends the add-on rare blades that are unlocked (0x451 to 0x455 and
+    // 0x457, by isEnableBladeDlc's tests; the parameter name is not the original's)
+    static void getListDlcRare(mm::mtl::FixedVector<unsigned short, 422>& list);
     // 2.0.0's symbols name it. What it does: whether the add-on blade is unlocked: 0x451 asks
     // GfGameAoc::isExistGameAoc(0x20101), 0x452/0x453 GfGameManager::isInstalledBattleArenaContents, 0x457 that one too,
     // item 25497 in the box and a first rule value set in row 25 of SDataGame's challenge rule table; every other blade

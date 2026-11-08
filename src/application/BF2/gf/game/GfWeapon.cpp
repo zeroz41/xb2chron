@@ -203,6 +203,7 @@
 #include "gf/GfBootUtil.h"
 #include "gf/GfGameUtilDiff.h"
 #include "gf/ItemCountLowLevel.h"
+#include "classes/gf/SCOM_CURRENT_BLADE.h"
 
 namespace gf {
 
@@ -769,6 +770,17 @@ void GfGameUtil::changeHikariCurrent(bool hikari) {
     GfEvent::callHikariCurrent(hikari);
 }
 
+void fn_71002E2CE4(mm::mtl::FixedVector<unsigned short, 422>& list, unsigned int driver) {
+    for (int slot = 0; slot < 3; slot++) {
+        unsigned int blade = GfDataDriver::getBlade(driver, slot);
+        if (blade != 0 && !GfDataBlade::isDummyBlade(blade)) {
+            if (std::find(list.begin(), list.end(), static_cast<unsigned short>(blade)) == list.end()) {
+                list.push_back(blade);
+            }
+        }
+    }
+}
+
 int GfGameUtil::getObjNumberByEnArrangeId(unsigned int arrangeId) {
     int num = 0;
     if (GfGameObj* obj = mm::mtl::PtrSingleton<GfGameObj>::sys()) {
@@ -828,6 +840,36 @@ void GfGameUtil::dispMetsuCrystal(GF_OBJ_HANDLE* handle, bool disp) {
     int mesh = acc.getExtMeshIdx("Front_Armor");
     if (mesh >= 0) {
         acc.setExtMeshAlpha(mesh, disp ? 1.0f : 0.0f);
+    }
+}
+
+void GfGameUtil::dispSinMask(GF_OBJ_HANDLE* handle, bool disp) {
+    if (GfGameManager::isGameTypeIra()) {
+        if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) return;
+        GfObjSetup* setup = GfObjUtil::getObjSetup(handle);
+        if (setup != nullptr && isEventCreateType(setup->m_createType)) {
+            if (GfDataEvent::getEventType(GfGameEvent::getStartEventId()) != 2) return;
+        }
+        GfObjAcc acc(handle);
+        float alpha = disp ? 1.0f : 0.0f;
+        int mesh = acc.getExtMeshIdx("MASK2");
+        if (mesh >= 0) acc.setExtMeshAlpha(mesh, alpha);
+        mesh = acc.getExtMeshIdx("MAE_MASK");
+        if (mesh >= 0) acc.setExtMeshAlpha(mesh, alpha);
+        mesh = acc.getExtMeshIdx("MAE_DEFO");
+        if (mesh >= 0) acc.setExtMeshAlpha(mesh, disp ? 0.0f : 1.0f);
+    } else {
+        if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) return;
+        GfObjSetup* setup = GfObjUtil::getObjSetup(handle);
+        if (setup != nullptr && isEventCreateType(setup->m_createType)) return;
+        GfObjAcc acc(handle);
+        float alpha = disp ? 1.0f : 0.0f;
+        int mesh = acc.getExtMeshIdx("MASK2");
+        if (mesh >= 0) acc.setExtMeshAlpha(mesh, alpha);
+        mesh = acc.getExtMeshIdx("MAE_MASK");
+        if (mesh >= 0) acc.setExtMeshAlpha(mesh, alpha);
+        mesh = acc.getExtMeshIdx("MAE_OPEN");
+        if (mesh >= 0) acc.setExtMeshAlpha(mesh, disp ? 0.0f : 1.0f);
     }
 }
 
@@ -2487,6 +2529,18 @@ bool GfGameUtil::getDriverAcceList(mm::mtl::FixedVector<unsigned short, 32>& lis
     return !list.empty();
 }
 
+bool GfGameUtilShop::hasChangeItem(unsigned int task) {
+    GfBdatShop* bdat = mm::mtl::PtrSingleton<GfBdatShop>::sys();
+    for (unsigned int i = 0; i < 5; i++) {
+        unsigned int item = bdat->getShopChangeTaskSetItem(task, i);
+        if (item == 0) continue;
+        unsigned int need = bdat->getShopChangeTaskSetNumber(task, i);
+        if (need == 0) need = 1;
+        if (GfItemUtil::getItemBoxCount(item) < need) return false;
+    }
+    return true;
+}
+
 void GfGameUtilShop::execPayInn(unsigned int shop, unsigned int money, bool twice) {
     GfBdatShop* bdat = mm::mtl::PtrSingleton<GfBdatShop>::sys();
     unsigned int point = money;
@@ -2854,6 +2908,35 @@ RESULT_HANA GfGameUtilHana::execEquipCondenserParts(unsigned int hana, unsigned 
     return static_cast<RESULT_HANA>(0);
 }
 
+void GfGameUtilHana::setupDefaultParts(unsigned int blade) {
+    if (!GfDataHana::isValid(blade)) return;
+    if (GfDataBlade::getSDataBlade(blade)->m_equipHana.m_roleParts != 0) return;
+    if (unsigned int item = GfDataHana::getDefaultRoleParts(blade)) {
+        fn_71002E8CD4(item);
+        GfItemUtil::addItemBox(item, 1);
+        execEquipRoleParts(blade, item, GfItemUtil::getNoEquipItemHandle(item));
+    }
+    if (unsigned int item = GfDataHana::getDefaultAttributeParts(blade)) {
+        fn_71002E8CD4(item);
+        GfItemUtil::addItemBox(item, 1);
+        execEquipAttributeParts(blade, item, GfItemUtil::getNoEquipItemHandle(item));
+    }
+    for (unsigned int i = 0; i < GfDataHana::getNartsNum(blade); i++) {
+        if (unsigned int item = GfDataHana::getDefaultNArtsParts(blade, i)) {
+            fn_71002E8CD4(item);
+            GfItemUtil::addItemBox(item, 1);
+            execEquipNArtsParts(blade, item, GfItemUtil::getNoEquipItemHandle(item), i);
+        }
+    }
+    for (unsigned int i = 0; i < GfDataHana::getCondenserNum(blade); i++) {
+        if (unsigned int item = GfDataHana::getDefaultCondenserParts(blade, i)) {
+            fn_71002E8CD4(item);
+            GfItemUtil::addItemBox(item, 1);
+            execEquipCondenserParts(blade, item, GfItemUtil::getNoEquipItemHandle(item), i);
+        }
+    }
+}
+
 RESULT_HANA GfGameUtilHana::execPowerRankup(unsigned int hana, unsigned int rank) {
     if (!GfDataHana::isValid(hana)) return static_cast<RESULT_HANA>(4);
     unsigned int now = GfDataHana::getEquipPowerRank(hana);
@@ -3002,6 +3085,89 @@ bool GfGameUtil::isDispSinMask() {
 bool GfGameUtil::isDispLauraMedal() {
     unsigned short id = GfDataUtil::getScenarioFlag();
     return id >= 11100 && id <= 11130;
+}
+
+void GfGameUtil::getListDlcRare(mm::mtl::FixedVector<unsigned short, 422>& list) {
+    if (GfGameAoc* aoc = GfGameAoc::get()) {
+        if (aoc->isExistGameAoc(GAMEAOC(0x20101))) {
+            list.push_back(0x451);
+        }
+    }
+    if (GfGameManager::isInstalledBattleArenaContents()) {
+        list.push_back(0x452);
+        list.push_back(0x453);
+    }
+    if (GfItemUtil::getItemBoxCount(25498) != 0) {
+        list.push_back(0x454);
+    }
+    if (GfItemUtil::getItemBoxCount(25499) != 0) {
+        list.push_back(0x455);
+    }
+    if (isEnableBladeElma()) {
+        list.push_back(0x457);
+    }
+}
+
+void GfGameUtil::changeKubira() {
+    if (GfDataBlade::isActivateUnuse(1022) || GfDataBlade::isActivateMercenaryTeam(1022) ||
+        !GfDataBlade::isActivateUnuse(1050)) {
+        return;
+    }
+    unsigned int driver = GfDataBlade::getSetDriver(1022);
+    unsigned int current;
+    int slot;
+    if (driver != 0) {
+        current = GfDataDriver::getBlade(driver, -1);
+        slot = GfDataBlade::getDriverSetID(1022);
+    } else {
+        current = 0;
+        slot = -1;
+    }
+    for (unsigned int i = 0; i < GfDataBlade::getEquipOrbMax(1022); i++) {
+        if (unsigned int orb = GfEquipUtil::getEquipBladeOrb(1022, i)) {
+            GfEquipUtil::equipBladeOrb(1022, 0, i, GfItemHandle());
+            GfEquipUtil::equipBladeOrb(1050, orb, i, GfItemHandle());
+        }
+    }
+    GfDataBlade::setBladeWeapon(1050, GfDataBlade::getBladeWeapon(1022));
+    GfDataBlade::setBladeLock(1050, GfDataBlade::isBladeLock(1022));
+    GfDataBlade::setEnableEngageRex(1050, GfDataBlade::isEnableEngageRex(1022));
+    GfDataBlade::setCreator(1050, GfDataBlade::getCreator(1022));
+    GfDataDriver::unsetBlade(1022);
+    if (driver != 0) {
+        GfDataBlade::setActivateDriver(1050, slot, driver, 0);
+    } else {
+        GfDataBlade::setActivateReserver(1050);
+    }
+    SCOM_PARTY_ADD::removeBlade(1022, false, true);
+    if (current == 1022) {
+        SCOM_CURRENT_BLADE::create(1050);
+    }
+}
+
+bool GfGameUtil::setupSaveAchievementPopup(unsigned int blade, unsigned int line, unsigned int level) {
+    if (!GfDataBlade::isActivateUnuse(blade) && !GfDataBlade::isUnselect(blade)) {
+        unsigned int driver = GfDataBlade::getSetDriver(blade);
+        if (driver == 0) {
+            return false;
+        }
+        if (!GfDataDriver::isActivateUnuse(driver)) {
+            return false;
+        }
+    }
+    SDataGameAchievementPopup popup = {(unsigned short)blade, (unsigned char)line, (unsigned char)level};
+    SDataGame* game = GfDataManager::getDataGame();
+    unsigned int count = game->m_achievementPopupCount;
+    for (unsigned int i = 0; i < count; i++) {
+        if (game->m_achievementPopups[i] == popup) {
+            return true;
+        }
+    }
+    if (count < 100) {
+        game->m_achievementPopupCount = count + 1;
+        game->m_achievementPopups[count] = popup;
+    }
+    return true;
 }
 
 unsigned int GfGameUtilDiff::getBtlDifficult() {

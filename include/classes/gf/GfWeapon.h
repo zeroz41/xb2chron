@@ -50,6 +50,10 @@ void fn_71002EE640(unsigned int blade);
 // holds as many items of the item's BDAT range as GfItemUtil::getEnableStock(item) allows (item 0 skips that test),
 // takes one away (addItemBox(id, -1)) of the id of the range the box holds most of that has an unequipped handle.
 void fn_71002E8CD4(unsigned int item);
+// Placeholder name: the symbols leave it unnamed. A free function: its code is in GfWeapon's unit and it takes no
+// this (GfGameUtil::addTrusuPointByLastKizunaTalk is its one caller). What it does: appends the driver's three
+// engaged blades (GfDataDriver::getBlade slots 0-2) that are no dummy blade and not in the list yet.
+void fn_71002E2CE4(mm::mtl::FixedVector<unsigned short, 422>& list, unsigned int driver);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function: its code is in GfWeapon's unit
 // and it takes no this. What it does: true for quest 0x8FD, and for quest 0x80B's task 1 (it builds that task's
 // QuestTaskParam first); false otherwise. Callers: GfQuestTarget::getIconType, fn_710030A840 and

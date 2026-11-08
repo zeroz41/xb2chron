@@ -26,6 +26,18 @@ struct TaskAchieve {
     unsigned int m_count;  // the achievement count so far
 };
 
+// a queued achievement popup, 4 bytes: SCOM_POPUP::createAchievement's blade, line and level (GfGameUtil::
+// setupSaveAchievementPopup; the type and field names are not the original's)
+struct SDataGameAchievementPopup {
+    unsigned short m_blade;
+    unsigned char m_line;
+    unsigned char m_level;
+
+    bool operator==(const SDataGameAchievementPopup& other) const {
+        return m_blade == other.m_blade && m_line == other.m_line && m_level == other.m_level;
+    }
+};
+
 // the game's data, as GfDataManager::getDataGame hands it out (1.0.0's GfGameUtil::setupNewGameParam takes one;
 // that getDataGame's is one is inferred)
 // a saved event row of the game data, 0x64 bytes (GfDataEvent::isSavedEvent; the names are not the original's)
@@ -145,7 +157,9 @@ public:
     // event ids; the names are not the original's)
     SDataGameSavedEvent m_savedEvents[500];
     unsigned int m_savedEventCount;
-    unsigned char pad_1171D8[0x190];
+    // 0x1171D8: the achievement popups queued while their blade could not show them (GfGameUtil::setupSaveAchievementPopup
+    // queues up to 100, execSaveAchievementPopup shows and removes a blade's; the names are not the original's)
+    SDataGameAchievementPopup m_achievementPopups[100];
     // 0x117368: 0x3E9F2CB8 once m_stampedArea was cleared: GfGameLoad's game loads (and
     // GfDataStore::checkAndReplaceGameData) store it and clear the area when it differs (the name is not the original's)
     unsigned int m_areaStamp;
@@ -156,7 +170,7 @@ public:
     // 0x117382: cleared whenever m_areaStamp is not 0x3E9F2CB8 (what it holds is not known; the name is not the
     // original's)
     unsigned char m_stampedArea[0x306];
-    unsigned char pad_117688[0x4];
+    unsigned int m_achievementPopupCount;  // 0x117688: m_achievementPopups' count (the name is not the original's)
     // 0x11768C: the 16 drivers' arts records past the ones their data keeps (GfDataDriver::getDriverWeaponType and
     // getDriverArtsLevel index it like getSDataDriver's m_drivers; the name is not the original's)
     SDataDriverArtsEx m_driverArtsEx[16];
