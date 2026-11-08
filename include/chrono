@@ -8,6 +8,7 @@ namespace std { inline namespace __1 {
 
 template <long long _Num, long long _Den = 1> class ratio {};
 typedef ratio<1LL, 1000000LL> micro;
+typedef ratio<1LL, 1000000000LL> nano;
 
 namespace chrono {
 
@@ -23,6 +24,7 @@ private:
 };
 
 typedef duration<long long, micro> microseconds;
+typedef duration<long long, nano> nanoseconds;
 
 template <class _Clock, class _Duration = typename _Clock::duration> class time_point {
 public:
@@ -42,6 +44,20 @@ public:
     typedef chrono::time_point<system_clock> time_point;
     static time_point now() noexcept;
 };
+
+// steady_clock counts nanoseconds (mm::threading::SpinLock::lock measures its wait with it)
+class steady_clock {
+public:
+    typedef nanoseconds duration;
+    typedef duration::rep rep;
+    typedef chrono::time_point<steady_clock> time_point;
+    static time_point now() noexcept;
+};
+
+template <class _Clock, class _Duration>
+constexpr _Duration operator-(const time_point<_Clock, _Duration>& __lhs, const time_point<_Clock, _Duration>& __rhs) {
+    return _Duration(__lhs.time_since_epoch().count() - __rhs.time_since_epoch().count());
+}
 
 }  // namespace chrono
 }}  // namespace std::__1

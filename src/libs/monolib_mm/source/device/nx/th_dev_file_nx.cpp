@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <new>
+#include <chrono>
 #include "classes/ml/DevBase.h"
 #include "classes/ml/DevClock.h"
 #include "classes/ml/DevClockNx.h"
@@ -165,6 +166,22 @@ bool EventWait::isSignal() const {
 }
 
 SpinLock::SpinLock() : m_lock(0) {}
+
+void SpinLock::lock(float wait) {
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    while (__atomic_exchange_n(&m_lock, 1, __ATOMIC_ACQUIRE) == 1) {
+        std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+        float sec = (now - start).count() / 1000.0f / 1000000.0f;
+        if (wait > 0.0f) {
+            if (sec > wait) {
+                return;
+            }
+        } else if (sec > 0.1f) {
+            start = now;
+            nn::os::SleepThread(nn::TimeSpan::FromMilliSeconds(1));
+        }
+    }
+}
 
 }}  // namespace mm::threading
 
@@ -1196,6 +1213,38 @@ void DeviceNx::initializeSDK(const Device::InitParam& param) {
     }
 }
 
+bool Device::isAllReady() {
+    if (!sys()->isLoggedIn()) {
+        return false;
+    }
+    bool ready = true;
+    for (reslist<WorkObj*>::iterator it = sys()->wkGetChild()->begin(); it != sys()->wkGetChild()->end(); ++it) {
+        bool loggedIn = (*it)->isLoggedIn();
+        if (!loggedIn) {
+            s_name08 = (*it)->m_name;
+        }
+        ready &= loggedIn;
+    }
+    return ready;
+}
+
+bool Device::isColdStartReady() {
+    if (!sys()->isLoggedIn()) {
+        return false;
+    }
+    bool ready = true;
+    for (reslist<WorkObj*>::iterator it = sys()->wkGetChild()->begin(); it != sys()->wkGetChild()->end(); ++it) {
+        if (static_cast<DevBase*>(*it)->m_devState & 1) {
+            bool loggedIn = (*it)->isLoggedIn();
+            if (!loggedIn) {
+                s_name4C = (*it)->m_name;
+            }
+            ready &= loggedIn;
+        }
+    }
+    return ready;
+}
+
 bool Device::wkStandbyLogin() {
     if (WorkCpu::isInitialized()) {
         return false;
@@ -2070,6 +2119,11 @@ int DevGraphNx::getRootWidthSys() {
 
 int DevGraphNx::getRootHeightSys() {
     return WorkRoot::getHeight();
+}
+
+float DevGraphNx::getCostSys() const {
+    unsigned int us = static_cast<unsigned int>(mm::mtl::PtrSingleton<grlib::CGLibManager>::get()->getGpuTimeStamp()) / 1000;
+    return us * 0.000001f / getFrameSyncSec() * 100.0f + 3.0f;
 }
 
 void DevGraphNx::grSetViewportSys(const mm::Rect<int>& rect, int) {
