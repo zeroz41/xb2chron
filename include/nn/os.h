@@ -128,6 +128,7 @@ void InitializeMultiWaitHolder(MultiWaitHolderType* holder, EventType* event);
 void FinalizeMultiWaitHolder(MultiWaitHolderType* holder);
 void LinkMultiWaitHolder(MultiWaitType* multiWait, MultiWaitHolderType* holder);
 MultiWaitHolderType* WaitAny(MultiWaitType* multiWait);
+void UnlinkMultiWaitHolder(MultiWaitHolderType* holder);
 
 // the SDK's timer event (ml::pad_detail::g_TimerEvent drives the vibration node thread; its size is not known
 // here: the .bss leaves it up to 0xAC0 bytes before the next global's 0x1000-aligned start; 0x60 is the SDK's)

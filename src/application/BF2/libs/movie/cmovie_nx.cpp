@@ -4,6 +4,7 @@
 #include "classes/MovieDecoderPlayer.h"
 #include "classes/mm/mtl/IAllocator.h"
 #include "mtl/MemManager.h"
+#include "nn/diag.h"
 #include "nn/os.h"
 #include "mm/mtl/Hash.h"
 #include <math.h>
@@ -426,7 +427,7 @@ int MovieDecoderPlayer::Initialize(unsigned long coreMask) {
 
     // per decoder, one event set and then its holders: the original computes each set's start address ahead of the
     // set's first call (an inlined helper's argument); the helpers' names are inferred
-    auto initializeEvents = [](DecoderEventTypes* types, DecoderEvents* events) {
+    auto initializeEvents = [](DecoderEventTypes* types, movie::DecoderEvents* events) {
         nn::os::InitializeEvent(&types->m_errorEvent, false, nn::os::EventClearMode_ManualClear);
         nn::os::InitializeEvent(&types->m_formatChangedEvent, false, nn::os::EventClearMode_ManualClear);
         nn::os::InitializeEvent(&types->m_inputBufferAvailableEvent, false, nn::os::EventClearMode_ManualClear);
@@ -585,6 +586,76 @@ void AudioInputReadThreadFunction(void* arg) {
     player->m_audioInputThreadDone = true;
 }
 
+void AudioVideoWorkerThreadFunction(void* arg) {
+    MovieDecoderPlayer* player = static_cast<MovieDecoderPlayer*>(arg);
+    nn::os::LinkMultiWaitHolder(&player->m_multiWait, &player->m_workerExitHolder);
+    nn::os::LinkMultiWaitHolder(&player->m_multiWait, &player->m_audioDecoderHolders.m_errorHolder);
+    nn::os::LinkMultiWaitHolder(&player->m_multiWait, &player->m_audioDecoderHolders.m_formatChangedHolder);
+    nn::os::LinkMultiWaitHolder(&player->m_multiWait, &player->m_audioDecoderHolders.m_inputBufferAvailableHolder);
+    nn::os::LinkMultiWaitHolder(&player->m_multiWait, &player->m_audioDecoderHolders.m_outputBufferAvailableHolder);
+    nn::os::LinkMultiWaitHolder(&player->m_multiWait, &player->m_videoDecoderHolders.m_errorHolder);
+    nn::os::LinkMultiWaitHolder(&player->m_multiWait, &player->m_videoDecoderHolders.m_formatChangedHolder);
+    nn::os::LinkMultiWaitHolder(&player->m_multiWait, &player->m_videoDecoderHolders.m_inputBufferAvailableHolder);
+    nn::os::LinkMultiWaitHolder(&player->m_multiWait, &player->m_videoDecoderHolders.m_outputBufferAvailableHolder);
+    for (;;) {
+        nn::os::MultiWaitHolderType* holder = nn::os::WaitAny(&player->m_multiWait);
+        if (holder == &player->m_videoDecoderHolders.m_inputBufferAvailableHolder) {
+            nn::os::ClearEvent(player->m_videoDecoderEvents.m_inputBufferAvailableEvent);
+            player->VideoInputBufferAvailableEvent();
+        } else if (holder == &player->m_videoDecoderHolders.m_outputBufferAvailableHolder) {
+            nn::os::ClearEvent(player->m_videoDecoderEvents.m_outputBufferAvailableEvent);
+            player->VideoOutputBufferAvailableEvent();
+        } else if (holder == &player->m_videoDecoderHolders.m_formatChangedHolder) {
+            nn::os::ClearEvent(player->m_videoDecoderEvents.m_formatChangedEvent);
+            player->VideoFormatChangedEvent();
+        } else if (holder == &player->m_videoDecoderHolders.m_errorHolder) {
+            nn::os::ClearEvent(player->m_videoDecoderEvents.m_errorEvent);
+#line 2869
+            NN_LOG("\n Error event received from Video Decoder \n");
+            movie::Status status = player->m_videoDecoder->GetLastError();
+            if (status != 0) {
+#line 2873
+                NN_LOG("\n Error = 0x%x \"%s\" \n", status, movie::StatusToString(status));
+                NN_LOG("\n Terminate Playback \n");
+                player->m_done = true;
+            }
+        }
+        if (holder == &player->m_audioDecoderHolders.m_inputBufferAvailableHolder) {
+            nn::os::ClearEvent(player->m_audioDecoderEvents.m_inputBufferAvailableEvent);
+            player->AudioInputBufferAvailableEvent();
+        } else if (holder == &player->m_audioDecoderHolders.m_outputBufferAvailableHolder) {
+            nn::os::ClearEvent(player->m_audioDecoderEvents.m_outputBufferAvailableEvent);
+            player->AudioOutputBufferAvailableEvent();
+        } else if (holder == &player->m_audioDecoderHolders.m_formatChangedHolder) {
+            nn::os::ClearEvent(player->m_audioDecoderEvents.m_formatChangedEvent);
+        } else if (holder == &player->m_audioDecoderHolders.m_errorHolder) {
+            nn::os::ClearEvent(player->m_audioDecoderEvents.m_errorEvent);
+#line 2897
+            NN_LOG("\n Error event received from Audio Decoder \n");
+            movie::Status status = player->m_audioDecoder->GetLastError();
+            if (status != 0) {
+#line 2901
+                NN_LOG("\n Error = 0x%x \"%s\" \n", status, movie::StatusToString(status));
+                NN_LOG("\n Terminate Playback \n");
+                player->m_done = true;
+            }
+        } else if (holder == &player->m_workerExitHolder) {
+            break;
+        }
+    }
+    nn::os::ClearEvent(&player->m_workerExitEvent);
+    player->m_workerThreadDone = true;
+    nn::os::UnlinkMultiWaitHolder(&player->m_videoDecoderHolders.m_errorHolder);
+    nn::os::UnlinkMultiWaitHolder(&player->m_videoDecoderHolders.m_formatChangedHolder);
+    nn::os::UnlinkMultiWaitHolder(&player->m_videoDecoderHolders.m_inputBufferAvailableHolder);
+    nn::os::UnlinkMultiWaitHolder(&player->m_videoDecoderHolders.m_outputBufferAvailableHolder);
+    nn::os::UnlinkMultiWaitHolder(&player->m_audioDecoderHolders.m_errorHolder);
+    nn::os::UnlinkMultiWaitHolder(&player->m_audioDecoderHolders.m_formatChangedHolder);
+    nn::os::UnlinkMultiWaitHolder(&player->m_audioDecoderHolders.m_inputBufferAvailableHolder);
+    nn::os::UnlinkMultiWaitHolder(&player->m_audioDecoderHolders.m_outputBufferAvailableHolder);
+    nn::os::UnlinkMultiWaitHolder(&player->m_workerExitHolder);
+}
+
 void MovieDecoderPlayer::StopAudioVideoRenderer() {
     if (m_audioOutRenderer != nullptr) {
         m_audioOutRenderer->Flush();
@@ -630,6 +701,143 @@ int MovieDecoderPlayer::CreateExtractor(const char* path, movie::ContainerType t
     }
     *extractor = newExtractor;
     *reader = newReader;
+    return status;
+}
+
+int MovieDecoderPlayer::CreateDecoders(movie::Extractor* extractor) {
+    int status = 0;
+    movie::MediaData trackFormat;
+    if (extractor == nullptr) {
+        status = 0x3003;
+    } else {
+        for (int i = 0; i < m_trackCount; i++) {
+            extractor->GetTrackConfiguration(i, &trackFormat);
+            const char* mime;
+            if (trackFormat.FindString("mime", &mime)) {
+                int decoderType = 0;
+                if (strncasecmp("video/", mime, 6) == 0 && m_videoDecoder == nullptr) {
+                    if (strncasecmp("video/avc", mime, 9) == 0) {
+                        decoderType = 1;
+                    } else if (strncasecmp("video/x-vnd.on2.vp8", mime, 19) == 0) {
+                        decoderType = 2;
+                    } else if (strncasecmp("video/x-vnd.on2.vp9", mime, 19) == 0) {
+                        decoderType = 3;
+                    }
+                    movie::Decoder* decoder = new movie::Decoder(static_cast<movie::DecoderType>(decoderType),
+                                                                 static_cast<movie::DecoderOutputFormat>(3));
+                    m_videoDecoder = decoder;
+                    status = decoder->RegisterClientEvents(&m_videoDecoderEvents);
+                    if (status == 0) {
+                        status = decoder->Configure(&trackFormat);
+                    }
+                    if (status == 0) {
+                        m_videoTrackIndex = i;
+                        int width = 0;
+                        int height = 0;
+                        trackFormat.FindInt32("width", &width);
+                        m_width = width;
+                        trackFormat.FindInt32("height", &height);
+                        m_height = height;
+                        int outputWidth = 0;
+                        int outputHeight = 0;
+                        int frameRate = 0;
+                        trackFormat.FindInt32("frame-rate", &frameRate);
+                        m_frameRate = frameRate > 0 ? frameRate : 60.0;
+                        m_videoDecoder->GetOutputBufferSize(&outputWidth, &outputHeight);
+                        status = extractor->SelectTrack(i);
+                        m_mode = decoderType;
+                        m_running = true;
+                        m_videoOutputEos = false;
+                    } else {
+                        if (m_videoDecoder != nullptr) {
+                            delete m_videoDecoder;
+                        }
+                        m_videoDecoder = nullptr;
+                    }
+                }
+                if (strncasecmp("audio/", mime, 6) == 0 && m_audioDecoder == nullptr) {
+                    if (strncasecmp("audio/mp4a-latm", mime, 15) == 0) {
+                        decoderType = 4;
+                    } else if (strncasecmp("audio/vorbis", mime, 12) == 0) {
+                        decoderType = 5;
+                    }
+                    int sampleRate = 0;
+                    trackFormat.FindInt32("sample-rate", &sampleRate);
+                    int channelCount = 0;
+                    trackFormat.FindInt32("channel-count", &channelCount);
+                    if (sampleRate == 48000 && channelCount == 2) {
+                        movie::Decoder* decoder = new movie::Decoder(static_cast<movie::DecoderType>(decoderType),
+                                                                     static_cast<movie::DecoderOutputFormat>(1));
+                        m_audioDecoder = decoder;
+                        status = decoder->RegisterClientEvents(&m_audioDecoderEvents);
+                        if (status == 0) {
+                            status = decoder->Configure(&trackFormat);
+                        }
+                        if (status == 0) {
+                            m_audioTrackIndex = i;
+                            int outputWidth = 0;
+                            int outputHeight = 0;
+                            m_audioDecoder->GetOutputBufferSize(&outputWidth, &outputHeight);
+                            status = extractor->SelectTrack(i);
+                            m_audioDecoderCreated = true;
+                            m_audioDecoderType = decoderType;
+                            m_audioOutputEos = false;
+                        }
+                    } else {
+                        status = 0x1000;
+                    }
+                    if (status != 0) {
+                        m_audioDecoderType = 0;
+                        m_audioDecoderCreated = false;
+                        if (m_audioDecoder != nullptr) {
+                            delete m_audioDecoder;
+                        }
+                        m_audioDecoder = nullptr;
+                    }
+                    status = 0;
+                }
+            }
+            m_formats[i] = trackFormat;
+            trackFormat.Clear();
+        }
+    }
+    if (m_audioDecoder == nullptr && m_videoDecoder == nullptr) {
+        status = 0x1000;
+    }
+    return status;
+}
+
+int MovieDecoderPlayer::ReadInputDataFromExtractorSendTodecoder(int index, movie::Decoder* decoder) {
+    movie::Buffer buffer;
+    long presentationTimeUs = 0;
+    int status = decoder->GetInputBuffer(index, &buffer);
+    unsigned int flags = 0;
+    if (status == 0) {
+        status = m_extractor->Read(&buffer);
+        if (status != 0 || buffer.Size() <= 0) {
+            m_inputEos = true;
+            flags = 4;
+            if (status == 0x2000 && m_loop) {
+                m_inputEos = false;
+                flags = 0;
+                m_loopCount++;
+                status = m_extractor->SeekTo(0);
+                if (status == 0) {
+                    status = m_extractor->Read(&buffer);
+                    if (status != 0 || buffer.Size() <= 0) {
+                        m_inputEos = true;
+                        flags = 4;
+                    }
+                }
+            }
+        }
+        m_extractor->GetSampleTime(&presentationTimeUs);
+        decoder->SendInputBufferForDecode(index, buffer.Offset(), buffer.Size(), presentationTimeUs, flags);
+        m_extractor->Advance();
+        if (m_inputEos) {
+            SendEosToDecoder();
+        }
+    }
     return status;
 }
 

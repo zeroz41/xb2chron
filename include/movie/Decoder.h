@@ -4,6 +4,8 @@
 // NintendoSDK's movie library (namespace movie, imported from the SDK's module): only what the sample player the
 // game carries (MovieDecoderPlayer) reaches.
 
+#include "nn/os.h"
+
 namespace movie {
 
 // a decoder's data buffer, 0x30 bytes (std::vector<movie::Buffer> steps by 0x30); copied and destroyed by the
@@ -35,6 +37,8 @@ public:
 
 // a call's result (movie::StatusToString(movie::Status) is imported; 0 = success)
 enum Status {};
+// the result's text (AudioVideoWorkerThreadFunction logs it)
+const char* StatusToString(Status status);
 // the constructors' argument types (Decoder(DecoderType, DecoderOutputFormat), Extractor(ContainerType))
 enum DecoderType {};
 enum DecoderOutputFormat {};
@@ -53,8 +57,15 @@ public:
     unsigned char pad_0[0x8];
 };
 
-// the events a decoder signals (Decoder::RegisterClientEvents(DecoderEvents*)); its layout is not reached here
-struct DecoderEvents;
+// the events a decoder signals (Decoder::RegisterClientEvents(DecoderEvents*)): MovieDecoderPlayer::CreateDecoders
+// registers its four-pointer sets (0x20 bytes each) with it. The order follows the player's handlers (input buffer
+// available, output buffer available, format changed, error); the field names are inferred.
+struct DecoderEvents {
+    nn::os::EventType* m_inputBufferAvailableEvent;
+    nn::os::EventType* m_outputBufferAvailableEvent;
+    nn::os::EventType* m_formatChangedEvent;
+    nn::os::EventType* m_errorEvent;
+};
 
 // the file access an extractor reads through (Extractor::SetDataSource(ClientStreamReader*, const char*)); the game's
 // StreamReader implements it. The library has no table of its own for it (an interface), so the slots follow the
@@ -116,6 +127,8 @@ public:
     virtual Status GetLastError();
     virtual Status GetOutputBuffer(int index, Buffer* buffer, MediaData* format);
     virtual Status GetOutputBufferFormat(int index, MediaData* format);
+
+    unsigned char pad_8[0x8];  // CreateDecoders news 0x10 bytes
 };
 
 // the library's allocator hooks (MovieDecoderPlayer::Initialize installs MultimediaAllocate/Free/Reallocate) and the

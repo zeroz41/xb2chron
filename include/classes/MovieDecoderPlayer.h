@@ -273,6 +273,7 @@ public:
     int CreateExtractor(const char* path, movie::ContainerType type, movie::Extractor** extractor,
                         movie::ClientStreamReader** reader);
     int VideoInputBufferAvailableEvent();
+    int CreateDecoders(movie::Extractor* extractor);
     int ReadInputDataFromExtractorSendTodecoder(int index, movie::Decoder* decoder);
     int SendEosToDecoder();
     int CheckForInputBuffersAndReadVideoInputData();
@@ -351,14 +352,8 @@ public:
     movie::Decoder* m_videoDecoder;
     // AudioVideoWorkerThreadFunction waits on all the holders below. A decoder's four events come in the order its
     // handlers tell (input buffer available, output buffer available, format changed, error). The three nested
-    // types and their names are inferred: CreateDecoders passes the pointer sets (0xB0, 0xD0) on as one argument,
-    // and Initialize/Finalize reach each event and holder set through its start address.
-    struct DecoderEvents {
-        nn::os::EventType* m_inputBufferAvailableEvent;
-        nn::os::EventType* m_outputBufferAvailableEvent;
-        nn::os::EventType* m_formatChangedEvent;
-        nn::os::EventType* m_errorEvent;
-    };
+    // types' names are inferred: CreateDecoders registers the pointer sets (0xB0, 0xD0) with the decoders, and
+    // Initialize/Finalize reach each event and holder set through its start address.
     struct DecoderEventTypes {
         nn::os::EventType m_inputBufferAvailableEvent;
         nn::os::EventType m_outputBufferAvailableEvent;
@@ -375,8 +370,8 @@ public:
     nn::os::EventType m_workerExitEvent;  // Finalize signals it before it waits for the worker thread
     nn::os::MultiWaitHolderType m_workerExitHolder;
     nn::os::MultiWaitType m_multiWait;
-    DecoderEvents m_audioDecoderEvents;
-    DecoderEvents m_videoDecoderEvents;
+    movie::DecoderEvents m_audioDecoderEvents;
+    movie::DecoderEvents m_videoDecoderEvents;
     DecoderEventTypes m_audioDecoderEventTypes;
     DecoderEventTypes m_videoDecoderEventTypes;
     DecoderMultiWaitHolders m_audioDecoderHolders;
@@ -386,7 +381,9 @@ public:
     int m_trackCount;  // CreateExtractor's: the extractor's track count
     int m_width;  // VideoFormatChangedEvent's "width"
     int m_height;  // VideoFormatChangedEvent's "height"
-    unsigned char pad_44c[0x1C];
+    unsigned char pad_44c[0xC];
+    double m_frameRate;  // CreateDecoders': the video track's "frame-rate", 60 when it has none
+    unsigned char pad_460[0x8];
     int m_audioTrackIndex;  // the extractor's track the audio decoder reads
     int m_videoTrackIndex;  // the extractor's track the video decoder reads
     unsigned long m_threadStackSize;  // each of the three threads' stack size
@@ -411,10 +408,12 @@ public:
     nn::os::MessageQueueType m_videoInputQueue;  // told of each free video input buffer
     unsigned long* m_audioInputQueueBuffer;
     nn::os::MessageQueueType m_audioInputQueue;  // told of each free audio input buffer
-    unsigned char pad_b00[0x4];
-    int m_mode;  // CheckForInputBuffersAndReadAudioInputData tests 1..3 when there is no extractor
-    unsigned char pad_b08[0x1];
-    bool m_running;  // CMovie::stop tears the player down only while it is set
+    int m_audioDecoderType;  // CreateDecoders': 4 for "audio/mp4a-latm", 5 for "audio/vorbis" (0 without a decoder)
+    // CreateDecoders': the video decoder's type, 1..3 for "video/avc", "video/x-vnd.on2.vp8", "video/x-vnd.on2.vp9";
+    // CheckForInputBuffersAndReadAudioInputData tests 1..3 when there is no extractor
+    int m_mode;
+    bool m_audioDecoderCreated;  // CreateDecoders sets it with the audio decoder
+    bool m_running;  // CreateDecoders sets it with the video decoder; CMovie::stop tears the player down while set
     bool m_loop;  // at the stream's end the extractor seeks back to the start while it is set
     unsigned char pad_b0b[0x1];
     int m_loopCount;  // ReadInputDataFromExtractorSendTodecoder counts each rewind to the start at the stream's end
