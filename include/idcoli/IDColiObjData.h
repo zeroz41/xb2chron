@@ -23,6 +23,10 @@ public:
     unsigned int m_version;  // 0x2712
     unsigned int m_flags;  // 1: no primitive work, 2: m_subObj
     unsigned int m_infoOffset;
+    // a list of primitive indices at offset from the binary's start (the name is not the original's)
+    const unsigned short* getIndices(unsigned int offset) const {
+        return reinterpret_cast<const unsigned short*>(reinterpret_cast<const char*>(this) + offset);
+    }
 };
 class CHCLInfo {
 public:
@@ -30,9 +34,15 @@ public:
     int m_primNum;
     unsigned int m_boneOffset;
     int m_boneNum;
-    unsigned char pad_10[0x10];
-    unsigned int m_primIndexOffset;  // 0x20, unsigned shorts indexing IDColiObjData::m_primWork
+    unsigned char pad_10[8];
+    // three lists of unsigned shorts indexing IDColiObjData::m_primWork: IDColiObjCharCheck's testType* functions
+    // test the first for check type 1, the third for type 2 and the second for the others
+    unsigned int m_type1IndexOffset;  // 0x18
+    int m_type1IndexNum;  // 0x1C
+    unsigned int m_primIndexOffset;  // 0x20
     int m_primIndexNum;  // 0x24
+    unsigned int m_type2IndexOffset;  // 0x28
+    int m_type2IndexNum;  // 0x2C
 };
 
 // a collision object built from collision data (1.0.0's table _ZTVN6idcoli13IDColiObjDataE derives it from

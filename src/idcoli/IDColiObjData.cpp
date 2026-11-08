@@ -72,6 +72,7 @@ void IDColiObjBase::sweepTreeMax(IdSweepAxisType axis, IdVectorAxisType componen
     }
 }
 
+
 IDColiObjCharCheck::IDColiObjCharCheck(IDColiTreeTop* tree) : IDColiObjChar(tree) {}
 
 bool IDColiObjCharCheck::testResultLine(IDColiResult& result, const IDColiInput& input) {
@@ -150,6 +151,142 @@ bool IDColiObjCharCheck::testCheckBox(IDColiResult& result, const IDColiInput& i
     const void* base = m_base;
     if ((result.m_ignoreMaterial & m_materialBit) == 0 && (m_state & 2) && !(m_flags & 3)) {
         return IDColiUtilColiSimple::s_CallBox[m_baseType](result, input, base);
+    }
+    return false;
+}
+
+bool IDColiObjCharCheck::testTypeLine(IDColiResult& result, const IDColiInput& input, ColiCheckType type) {
+    const void* base = m_base;
+    if ((result.m_ignoreMaterial & m_materialBit) == 0 && (m_state & 2) && !(m_flags & 3)) {
+        if (!(m_flags & 0x100)) {
+            if (type == 1) {
+                if (!(m_flags & 0x400)) {
+                    return false;
+                }
+            } else if (type == 2) {
+                if (m_flags & 0x400) {
+                    return false;
+                }
+            }
+            return IDColiUtilColiResult::s_CallLine[m_baseType](result, input, base);
+        }
+        bool hit = false;
+        const CHCLHeader* binary = m_binary;
+        const CHCLInfo* info = getInfo();
+        if (type == 1) {
+            const unsigned short* index = binary->getIndices(info->m_type1IndexOffset);
+            for (int i = 0; i < info->m_type1IndexNum; i++, index++) {
+                PrimWork& work = m_primWork[*index];
+                hit |= IDColiUtilColiResult::s_CallLine[work.m_baseType](result, input, work.m_base);
+            }
+        } else if (type == 2) {
+            const unsigned short* index = binary->getIndices(info->m_type2IndexOffset);
+            for (int i = 0; i < info->m_type2IndexNum; i++, index++) {
+                PrimWork& work = m_primWork[*index];
+                hit |= IDColiUtilColiResult::s_CallLine[work.m_baseType](result, input, work.m_base);
+            }
+        } else {
+            const unsigned short* index = binary->getIndices(info->m_primIndexOffset);
+            for (int i = 0; i < info->m_primIndexNum; i++, index++) {
+                PrimWork& work = m_primWork[*index];
+                hit |= IDColiUtilColiResult::s_CallLine[work.m_baseType](result, input, work.m_base);
+            }
+        }
+        return hit;
+    }
+    return false;
+}
+
+bool IDColiObjCharCheck::testTypeSphere(IDColiResult& result, const IDColiInput& input, ColiCheckType type) {
+    const void* base = m_base;
+    if ((result.m_ignoreMaterial & m_materialBit) == 0 && (m_state & 2) && !(m_flags & 3)) {
+        if (!(m_flags & 0x100)) {
+            if (type == 1) {
+                if (!(m_flags & 0x400)) {
+                    return false;
+                }
+            } else if (type == 2) {
+                if (m_flags & 0x400) {
+                    return false;
+                }
+            }
+            return IDColiUtilColiResult::s_CallSphere[m_baseType](result, input, base);
+        }
+        bool hit = false;
+        const CHCLHeader* binary = m_binary;
+        const CHCLInfo* info = getInfo();
+        if (type == 2) {
+            {
+                const unsigned short* index = binary->getIndices(info->m_type1IndexOffset);
+                for (int i = 0; i < info->m_type1IndexNum; i++, index++) {
+                    PrimWork& work = m_primWork[*index];
+                    hit |= IDColiUtilColiResult::s_CallSphere[work.m_baseType](result, input, work.m_base);
+                }
+            }
+            {
+                const unsigned short* index = binary->getIndices(info->m_type2IndexOffset);
+                for (int i = 0; i < info->m_type2IndexNum; i++, index++) {
+                    PrimWork& work = m_primWork[*index];
+                    hit |= IDColiUtilColiResult::s_CallSphere[work.m_baseType](result, input, work.m_base);
+                }
+            }
+        } else if (type == 1) {
+            return false;
+        } else {
+            const unsigned short* index = binary->getIndices(info->m_primIndexOffset);
+            for (int i = 0; i < info->m_primIndexNum; i++, index++) {
+                PrimWork& work = m_primWork[*index];
+                hit |= IDColiUtilColiResult::s_CallSphere[work.m_baseType](result, input, work.m_base);
+            }
+        }
+        return hit;
+    }
+    return false;
+}
+
+bool IDColiObjCharCheck::testTypeCapsule(IDColiResult& result, const IDColiInput& input, ColiCheckType type) {
+    const void* base = m_base;
+    if ((result.m_ignoreMaterial & m_materialBit) == 0 && (m_state & 2) && !(m_flags & 3)) {
+        if (!(m_flags & 0x100)) {
+            if (type == 1) {
+                if (!(m_flags & 0x400)) {
+                    return false;
+                }
+            } else if (type == 2) {
+                if (m_flags & 0x400) {
+                    return false;
+                }
+            }
+            return IDColiUtilColiResult::s_CallCapsule[m_baseType](result, input, base);
+        }
+        bool hit = false;
+        const CHCLHeader* binary = m_binary;
+        const CHCLInfo* info = getInfo();
+        if (type == 2) {
+            {
+                const unsigned short* index = binary->getIndices(info->m_type2IndexOffset);
+                for (int i = 0; i < info->m_type2IndexNum; i++, index++) {
+                    PrimWork& work = m_primWork[*index];
+                    hit |= IDColiUtilColiResult::s_CallCapsule[work.m_baseType](result, input, work.m_base);
+                }
+            }
+            {
+                const unsigned short* index = binary->getIndices(info->m_type1IndexOffset);
+                for (int i = 0; i < info->m_type1IndexNum; i++, index++) {
+                    PrimWork& work = m_primWork[*index];
+                    hit |= IDColiUtilColiResult::s_CallCapsule[work.m_baseType](result, input, work.m_base);
+                }
+            }
+        } else if (type == 1) {
+            return false;
+        } else {
+            const unsigned short* index = binary->getIndices(info->m_primIndexOffset);
+            for (int i = 0; i < info->m_primIndexNum; i++, index++) {
+                PrimWork& work = m_primWork[*index];
+                hit |= IDColiUtilColiResult::s_CallCapsule[work.m_baseType](result, input, work.m_base);
+            }
+        }
+        return hit;
     }
     return false;
 }
@@ -252,6 +389,47 @@ void IDColiObjChar::update() {
     }
 }
 
+bool IDColiObjChar::SweepAndPruneUpdate() {
+    bool moved = false;
+    if (m_flags & 0x80) {
+        return moved;
+    }
+    // moves this object along the axis's list past the objects whose m_min component is above its own
+    auto sort = [this](int axis, int component) -> bool {
+        IDColiObjBase* next = m_sweepNext[axis];
+        if (next == nullptr) {
+            return false;
+        }
+        IDColiObjBase* target = nullptr;
+        for (IDColiObjBase* it = next; it != nullptr; it = it->m_sweepNext[axis]) {
+            if ((&m_min.x)[component] >= (&it->m_min.x)[component]) {
+                break;
+            }
+            target = it;
+        }
+        if (target == nullptr) {
+            return false;
+        }
+        IDColiObjBase* prev = m_sweepPrev[axis];
+        if (prev != nullptr) {
+            prev->m_sweepNext[axis] = m_sweepNext[axis];
+        }
+        m_sweepNext[axis]->m_sweepPrev[axis] = prev;
+        IDColiObjBase* after = target->m_sweepNext[axis];
+        if (after != nullptr) {
+            after->m_sweepPrev[axis] = this;
+        }
+        m_sweepNext[axis] = after;
+        m_sweepPrev[axis] = target;
+        target->m_sweepNext[axis] = this;
+        return true;
+    };
+    moved = sort(0, 0);
+    moved |= sort(1, 2);
+    m_flags |= 0x1000;
+    return moved;
+}
+
 void IDColiObjChar::consistentUpdate() {
     m_treeIndex = -1;
     if (!(m_flags & 0x80)) {
@@ -320,6 +498,47 @@ void IDColiObjPhantom::sizeUpdate() {
 
 void IDColiObjPhantom::update() {
     sizeUpdate();
+}
+
+bool IDColiObjPhantom::SweepAndPruneUpdate() {
+    bool moved = false;
+    if (m_flags & 0x80) {
+        return moved;
+    }
+    // moves this object along the axis's list past the objects whose m_min component is above its own
+    auto sort = [this](int axis, int component) -> bool {
+        IDColiObjBase* next = m_sweepNext[axis];
+        if (next == nullptr) {
+            return false;
+        }
+        IDColiObjBase* target = nullptr;
+        for (IDColiObjBase* it = next; it != nullptr; it = it->m_sweepNext[axis]) {
+            if ((&m_min.x)[component] >= (&it->m_min.x)[component]) {
+                break;
+            }
+            target = it;
+        }
+        if (target == nullptr) {
+            return false;
+        }
+        IDColiObjBase* prev = m_sweepPrev[axis];
+        if (prev != nullptr) {
+            prev->m_sweepNext[axis] = m_sweepNext[axis];
+        }
+        m_sweepNext[axis]->m_sweepPrev[axis] = prev;
+        IDColiObjBase* after = target->m_sweepNext[axis];
+        if (after != nullptr) {
+            after->m_sweepPrev[axis] = this;
+        }
+        m_sweepNext[axis] = after;
+        m_sweepPrev[axis] = target;
+        target->m_sweepNext[axis] = this;
+        return true;
+    };
+    moved = sort(0, 0);
+    moved |= sort(1, 2);
+    m_flags |= 0x1000;
+    return moved;
 }
 
 void IDColiObjPhantom::consistentUpdate() {
