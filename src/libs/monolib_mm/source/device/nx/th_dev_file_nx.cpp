@@ -43,6 +43,7 @@
 #include "classes/ml/Thread.h"
 #include "nn/hid.h"
 #include "nn/oe.h"
+#include "nn/settings.h"
 #include "nn/os.h"
 #include "nn/time.h"
 #include "nn/account.h"
@@ -2165,7 +2166,21 @@ void DevGraphNx::renderEndSys() {
     }
 }
 
-int DevGraphNx::thSync(void*, void*) {
+void DevGraphNx::renderSyncSys() {
+    if (get() == nullptr || ((m_flags & 1) | m_updateStop)) {
+        return;
+    }
+    WorkCpu::runThread(WorkCpu::getRenderCPUID(), thSync, this, nullptr, nullptr, false, static_cast<WKCPU_SYNC>(1));
+    for (;;) {
+        float time;
+        DevClock::getTimeNow(time, WorkCpu::getBeginClock(true));
+        if (getFrameSyncSec() * 0.997f < time) {
+            break;
+        }
+    }
+}
+
+unsigned int DevGraphNx::thSync(void*, void*) {
     mm::mtl::PtrSingleton<grlib::CGLibManager>::get()->swap();
     setRenderState(static_cast<RSTAT>(2));
     return 0;
@@ -2222,6 +2237,21 @@ unsigned int DevGraphNx::thInitialize(void*, void*) {
 unsigned int DevGraphNx::thDestroy(void*, void*) {
     mm::mtl::PtrSingleton<grlib::CGLibManager>::get()->deviceRelease();
     return true;
+}
+
+bool DevGraphNx::initGL() {
+    bool result = mm::mtl::PtrSingleton<grlib::CGLibManager>::get()->deviceInit();
+    DevFileParamTh param;
+    int size;
+    param.m_hMem = MlMem::getProductMem();
+    param.m_path = s_sasakiFontName.m_str;
+    void* data = DevFileTh::readFileBlock(param, &size, nullptr);
+    DevGraphNx* dev = static_cast<DevGraphNx*>(get());
+    dev->m_fontData = data;
+    if (data != nullptr) {
+        dev->m_font.construct(data, size);
+    }
+    return result;
 }
 
 bool DevGraphNx::wkStandbyLogout() {
@@ -2377,6 +2407,14 @@ void DevPadNx::setUserSelectControllerID(unsigned int id) {
     if (dev != nullptr) {
         dev->m_impl->setUserSelectController(id);
     }
+}
+
+int DevPadNx::getLocalConnectPadCount() {
+    DevPadNx* dev = static_cast<DevPadNx*>(get());
+    if (dev != nullptr) {
+        return dev->m_impl->m_connectPadCount;
+    }
+    return 0;
 }
 
 void DevPadNx::updateDevice(float dt) {
@@ -3216,6 +3254,58 @@ void DevSettingNx::initialize() {
 }
 
 void DevSettingNx::finalize() {}
+
+// the language a code names, 15 for none; a Chinese code matches zh-CN as zh-Hans and zh-TW as zh-Hant (getLang's
+// and getLangList's inline loop; the name is not the original's)
+static inline LangType findLangType(const char* code) {
+    for (const DevSettingNx::LangCode& entry : s_langCodes) {
+        if (strcmp(code, entry.m_code) == 0) {
+            return entry.m_lang;
+        }
+        if (code[0] == 'z' && code[1] == 'h' && entry.m_code[0] == 'z' && entry.m_code[1] == 'h') {
+            if (entry.m_code[3] == 'C') {
+                if (strcmp(code, "zh-Hans") == 0) {
+                    return entry.m_lang;
+                }
+            } else {
+                if (strcmp(code, "zh-Hant") == 0) {
+                    return entry.m_lang;
+                }
+            }
+        }
+    }
+    return LangType(15);
+}
+
+LangType DevSettingNx::getLang() const {
+    nn::settings::LanguageCode lang = nn::oe::GetDesiredLanguage();
+    const char* code = lang.string;
+    switch (g_devLangMode) {
+    case 1:
+        code = strcmp(lang.string, "ja") == 0 ? lang.string : "en-GB";
+        break;
+    case 0:
+        if (strcmp(lang.string, "ja") == 0 || strncmp(lang.string, "zh-", 3) == 0) {
+            code = "en-GB";
+        }
+        break;
+    }
+    return findLangType(code);
+}
+
+mm::mtl::FixedVector<LangType, 15>& DevSettingNx::getLangList(mm::mtl::FixedVector<LangType, 15>& list) const {
+    list.clear();
+    nn::settings::GetAvailableLanguageCodeCount();
+    nn::settings::LanguageCode codes[15];
+    int count = nn::settings::GetAvailableLanguageCodes(codes, 15);
+    for (int i = 0; i < count; ++i) {
+        LangType lang = findLangType(codes[i].string);
+        if (lang != 15) {
+            list.push_back(lang);
+        }
+    }
+    return list;
+}
 
 void DevSettingNx::setAutoSleepExtended(SleepExtendType type) {
     if (type == 1) {

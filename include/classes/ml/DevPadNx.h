@@ -157,6 +157,7 @@ public:
         int m_userSelect;                           // 0x4540
         int m_userSelectController;                 // 0x4544 (setUserSelectControllerID stores the matching index)
         int m_selectPadId;                          // 0x4548
+        int m_connectPadCount;                      // 0x454C (getLocalConnectPadCount returns it; the name is not the original's)
     };
 
     // the key function: its body is empty, the Impl (m_impl) and the bases are destroyed inline
@@ -178,6 +179,8 @@ public:
 
     // named by the symbols: makes the controller with this id the user-selected one (index into Impl's ids)
     static void setUserSelectControllerID(unsigned int);
+    // named by the symbols: the number of connected local pads (0 without the device)
+    static int getLocalConnectPadCount();
 
     unsigned char pad_544[4];
     mm::mtl::UniquePtr<Impl> m_impl;  // 0x548 (the name is not the original's)

@@ -43,7 +43,7 @@ public:
     static unsigned int thInitialize(void*, void*);
     static unsigned int thDestroy(void*, void*);
     // named by the symbols: the render thread's frame swap
-    static int thSync(void*, void*);
+    static unsigned int thSync(void*, void*);
     static bool initGL();
     // named by the symbols: keeps the name of the font file initGL loads (a FixStr<64> file static of the unit)
     static void entrySasakiFont(const char* name);

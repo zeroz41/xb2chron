@@ -1,6 +1,8 @@
 #ifndef NN_OE_H
 #define NN_OE_H
 
+#include "nn/settings.h"
+
 namespace nn { namespace oe {
 
 // the SDK's application focus: 1 in focus, 2 out of focus, 3 in the background
@@ -17,6 +19,8 @@ int GetUserInactivityDetectionTimeExtensionMode();
 void SetUserInactivityDetectionTimeExtended(bool isExtended);
 void SetUserInactivityDetectionTimeExtendedUnsafe(bool isExtended);
 bool IsUserInactivityDetectionTimeExtended();
+// the language the application should use (ml::DevSettingNx::getLang maps it to a LangType)
+settings::LanguageCode GetDesiredLanguage();
 // whether the system's capture button may take screenshots
 void EnableScreenShot();
 void DisableScreenShot();
