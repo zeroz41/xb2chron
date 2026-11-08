@@ -55,7 +55,8 @@ public:
     static void setCreator(unsigned int blade, unsigned int creator);
     static unsigned int getBladeID(unsigned int index);  // the blade in list slot index (0..421), 0 for none
     // fills list with the party's blades (SCOM_ACHIEV_INC::createParty and createCrystal)
-    static void getListPartyAll(mm::mtl::FixedVector<unsigned short, 422>& list);
+    // whether the list is not empty
+    static bool getListPartyAll(mm::mtl::FixedVector<unsigned short, 422>& list);
     // fills list with the party's blades (the flags' meaning is not known: GfAchievManager::incAchiev passes true,
     // false); whether the list is non-empty
     static bool getListParty(mm::mtl::FixedVector<unsigned short, 422>& list, bool, bool);
@@ -74,6 +75,8 @@ public:
     // 2.0.0's symbols name it. What it does: for the blades 0x464-0x46C returns blade - 0x453 (the DLC drivers
     // 0x11-0x19), 0 for any other blade.
     static unsigned int getIraDriver(unsigned int blade);
+    // appends the blades 1124 to 1132 (the DLC drivers' blades, getIraDriver); whether the list is not empty
+    static bool getListIraBlade(mm::mtl::FixedVector<unsigned short, 422>& list);
     // whether a blade is one of the dummy blades (ids 1012-1013, 1073, 1110, 1124-1132); the symbols spell it
     // isDummyBlade, 1.0.0's GfGameUtil::isDummyBlade calls GfDataBlade::isDummyBlade at the same place
     static bool isDummyBlade(unsigned int blade);
@@ -292,7 +295,8 @@ public:
     static bool isBladeLock(unsigned int blade);
     static bool isNeedAttributeResource(unsigned int blade);
     // the reserve blades (GfDataMercenaries::getReserver fills its list with them)
-    static void getListReserver(mm::mtl::FixedVector<unsigned short, 422>& list);
+    // whether the list is not empty
+    static bool getListReserver(mm::mtl::FixedVector<unsigned short, 422>& list);
     // drops the list's repeated blades (GfAchievStats's blade counts call it after getListReserver; returns nothing
     // its caller reads)
     static void removeSameBlade(mm::mtl::FixedVector<unsigned short, 422>& list);

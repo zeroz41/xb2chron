@@ -1098,6 +1098,13 @@ unsigned int GfDataBlade::getStartActCommonBlade() {
     return 1401;
 }
 
+bool GfDataBlade::getListIraBlade(mm::mtl::FixedVector<unsigned short, 422>& list) {
+    for (unsigned int blade = 1124; blade < 1133; blade++) {
+        list.push_back(blade);
+    }
+    return !list.empty();
+}
+
 ActivateType GfDataBlade::getBladeActivateType(unsigned int blade) {
     unsigned int index = getBladeIndex(blade);
     SDataGame* game = GfDataManager::getDataGame();
@@ -1183,6 +1190,40 @@ bool GfDataBlade::isRegularBlade(unsigned int blade) {
 
 bool GfDataBlade::isValid(unsigned int blade) {
     return blade >= 1001 && blade < 1423;
+}
+
+bool GfDataBlade::getListParty(mm::mtl::FixedVector<unsigned short, 422>& list) {
+    if (GfDataUtil::isIra()) {
+        for (unsigned int driver = 17; driver < 26; driver++) {
+            if (!GfDataDriver::isIraFront(driver) && GfDataDriver::isActivatePartyAll(driver)) {
+                unsigned int party = GfDataParty::getDriverPartyID(driver);
+                if (party < 3) {
+                    unsigned int blade = GfDataDriver::getIraBlade(driver, -1);
+                    if (!isUnselect(blade)) {
+                        list.push_back(blade);
+                    }
+                }
+            }
+        }
+    } else {
+        for (unsigned int i = 0; i < 422; i++) {
+            unsigned int blade = getBladeID(i);
+            if (blade == 0) {
+                continue;
+            }
+            if (!isActivateDriver(blade)) {
+                continue;
+            }
+            unsigned int driver = getSetDriver(blade);
+            if (GfDataDriver::isActivatePartyAll(driver)) {
+                unsigned int party = GfDataParty::getDriverPartyID(driver);
+                if (party < 3 && GfDataParty::isExistBlade(blade) && !isDummyBlade(blade) && !isUnselect(blade)) {
+                    list.push_back(blade);
+                }
+            }
+        }
+    }
+    return !list.empty();
 }
 
 bool GfDataDriver::isIraFront(unsigned int driver) {
@@ -1929,6 +1970,41 @@ bool GfDataBlade::getEquipOrbEnance(mm::mtl::FixedVector<unsigned short, 64>& en
         return false;
     }
     return getEquipOrbEnance(enhances, GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)]);
+}
+
+bool GfDataBlade::getEquipOrbEnance(mm::mtl::FixedVector<unsigned short, 64>& enhances, SDataBlade& data) {
+    unsigned int max = data.m_equipOrbMax;
+    GfBdatItem* item = GfBdatItem::get();
+    for (unsigned int i = 0; i < max; i++) {
+        if (data.m_equipOrbs[i] != 0) {
+            unsigned short enhance = item->getEquipOrbEnhance(data.m_equipOrbs[i]);
+            if (enhance != 0) {
+                enhances.push_back(enhance);
+            }
+        }
+    }
+    if (GfDataHana::isValid(data.m_bladeId)) {
+        unsigned int num = GfDataHana::getCondenserNum(data.m_bladeId);
+        for (unsigned int i = 0; i < num; i++) {
+            if (data.m_equipHana.m_condenserParts[i] != 0) {
+                unsigned short enhance = GfBdatItem::get()->getITM_HanaAssistEnhance(data.m_equipHana.m_condenserParts[i]);
+                if (enhance != 0) {
+                    enhances.push_back(enhance);
+                }
+            }
+        }
+        num = GfBdatBtl::get()->getBTL_HanaBaseECondNum(data.m_bladeId - 1004);
+        for (unsigned int i = 0; i < num; i++) {
+            if (((1 << (i + 3)) & data.m_openCircuit) && (&data.m_equipHana.m_condenserParts[3])[i] != 0) {
+                unsigned short enhance =
+                    GfBdatItem::get()->getITM_HanaAssistEnhance((&data.m_equipHana.m_condenserParts[3])[i]);
+                if (enhance != 0) {
+                    enhances.push_back(enhance);
+                }
+            }
+        }
+    }
+    return enhances.size() != 0;
 }
 
 unsigned int GfDataBlade::getCreateEvent(unsigned int blade) {
@@ -4722,8 +4798,58 @@ bool GfDataParty::isExistBlade(unsigned int blade) {
            GfDataParty::isExistBlade(2, blade);
 }
 
+unsigned int GfDataDriver::getIraBlade(unsigned int driver, int slot) {
+    if (driver - 0x11 < 9) {
+        mm::mtl::FixedVector<unsigned short, 32> back;
+        getIraBack(back, driver);
+        unsigned int id = driver;
+        if (slot == 0) {
+            if (back.empty()) {
+                return 0;
+            }
+            id = back.begin()[0];
+        } else if (slot == 1) {
+            if (back.size() >= 2) {
+                id = back.begin()[1];
+            } else {
+                return 0;
+            }
+        }
+        return GfBdatChrDr::get()->getChrDrDefBlade(id, 0);
+    }
+    return 0;
+}
+
 bool GfDataBlade::isDummyBlade(unsigned int blade) {
     return blade - 1124 < 9 || blade - 1012 < 2 || blade == 1073 || blade == 1110;
+}
+
+bool GfDataBlade::getListPartyAll(mm::mtl::FixedVector<unsigned short, 422>& list) {
+    if (GfDataUtil::isIra()) {
+        for (unsigned int driver = 17; driver < 26; driver++) {
+            if (!GfDataDriver::isIraFront(driver) && GfDataDriver::isActivatePartyAll(driver)) {
+                unsigned int blade = GfDataDriver::getIraBlade(driver, -1);
+                if (!isUnselect(blade)) {
+                    list.push_back(blade);
+                }
+            }
+        }
+    } else {
+        for (unsigned int i = 0; i < 422; i++) {
+            unsigned int blade = getBladeID(i);
+            if (blade == 0) {
+                continue;
+            }
+            if (!isActivateDriver(blade)) {
+                continue;
+            }
+            unsigned int driver = getSetDriver(blade);
+            if (GfDataDriver::isActivatePartyAll(driver) && !isDummyBlade(blade) && !isUnselect(blade)) {
+                list.push_back(blade);
+            }
+        }
+    }
+    return !list.empty();
 }
 
 unsigned int GfDataBlade::getBladeRelativeID(unsigned int blade) {
@@ -7073,6 +7199,73 @@ bool GfDataUtil::isStartChapterSave() {
 
 bool GfDataDriver::isActivatePartyAll(unsigned int driver) {
     return driver != 0 && getSDataDriver(driver)->m_dataType == 1;
+}
+
+bool GfDataBlade::getListReserver(mm::mtl::FixedVector<unsigned short, 422>& list) {
+    for (unsigned int i = 0; i < 422; i++) {
+        unsigned int blade = getBladeID(i);
+        if (blade == 0) {
+            continue;
+        }
+        if (isActivateUnuse(blade)) {
+            continue;
+        }
+        if (isActivateMercenaryTeam(blade)) {
+            continue;
+        }
+        unsigned int driver = getSetDriver(blade);
+        // the DLC drivers' blades and the blades of drivers in the party's first three slots are not reserves
+        if (GfDataDriver::isActivatePartyAll(driver)) {
+            unsigned int party = GfDataParty::getDriverPartyID(driver);
+            if (getIraDriver(blade) != 0 || party < 3) {
+                continue;
+            }
+        } else if (getIraDriver(blade) != 0) {
+            continue;
+        }
+        if (isDummyBlade(blade)) {
+            continue;
+        }
+        if (isUnselect(blade) || blade == 1113 || blade == 1114) {
+            continue;
+        }
+        list.push_back(blade);
+    }
+    return !list.empty();
+}
+
+// all: false leaves out blades 1002 and 1003; withDummy: true keeps the dummy blades (the parameter names are not
+// the original's)
+bool GfDataBlade::getListParty(mm::mtl::FixedVector<unsigned short, 422>& list, bool all, bool withDummy) {
+    list.clear();
+    if (GfDataUtil::isIra()) {
+        for (unsigned int blade = 1127; blade < 1133; blade++) {
+            if (!isActivateUnuse(blade) && !isUnselect(blade)) {
+                list.push_back(blade);
+            }
+        }
+    } else {
+        for (unsigned int i = 0; i < 422; i++) {
+            unsigned int blade = getBladeID(i);
+            if (blade == 0) {
+                continue;
+            }
+            if (!all && (blade == 1002 || blade == 1003)) {
+                continue;
+            }
+            if (!isActivateDriver(blade)) {
+                continue;
+            }
+            if (!withDummy && isDummyBlade(blade)) {
+                continue;
+            }
+            if (isUnselect(blade)) {
+                continue;
+            }
+            list.push_back(blade);
+        }
+    }
+    return !list.empty();
 }
 
 unsigned int GfDataDriver::getSkillPoint(unsigned int driver) {
