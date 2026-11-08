@@ -36,6 +36,8 @@ public:
     // where path's extension starts, none (fw::ResourceManager::isDelayReleaseExtention; the parameter name is not
     // the original's)
     static const char* getFileExtPtr(const char* path);
+    // value's last `digits` decimal digits, zero-padded (the parameter names are not the original's)
+    static void itoa(mm::mtl::FixStr<16>& out, int value, int digits);
 };
 }  // namespace ml
 

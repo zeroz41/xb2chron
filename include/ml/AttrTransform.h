@@ -24,12 +24,12 @@ public:
     // ScnObjModelDrSysStandard::apply copies it and scales its rows by m_scl for the draw model (the name is not
     // the original's)
     mm::Mat44 m_worldMat;  // 0x70, clear sets the identity
-    unsigned char pad_B0[0x40];  // clear sets an identity matrix here
+    mm::Mat44 pad_B0;  // clear sets the identity
     mm::Vec3 m_rot;     // ScnObjModel::setRot's; clear zeroes it
     // clear zeroes it; a Vec3: ScnDebugManipu::setTrans's copy copies its three floats one by one
     mm::Vec3 pad_100;
     mm::Quat m_quat;    // ScnObjModel::addRot(Quat)'s
-    unsigned char pad_120[0x10];  // clear sets an identity Quat here
+    mm::Quat pad_120;  // clear sets the identity
     unsigned int m_flags;  // clear zeroes it; setMat sets bit 0, addRot(Quat) bit 1
     // 0x134-0x140 is tail padding: ScnDebugManipu::setTrans's copy ends its last memcpy at m_flags
 };
