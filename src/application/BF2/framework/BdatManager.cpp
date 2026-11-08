@@ -194,5 +194,5 @@ const char* BdatManager::getName() const {
 }  // namespace fw
 
 // the sheet map's tree operations (their callers are not written yet)
-template void mm::mtl::Map<unsigned int, fw::BdatManager::Impl::SheetFpInfo>::tree_type::rebalance_after_erase(mm::mtl::Map<unsigned int, fw::BdatManager::Impl::SheetFpInfo>::node*);
+template void mm::mtl::Map<unsigned int, fw::BdatManager::Impl::SheetFpInfo>::tree_type::erase(mm::mtl::Map<unsigned int, fw::BdatManager::Impl::SheetFpInfo>::node*);
 template mm::mtl::Map<unsigned int, fw::BdatManager::Impl::SheetFpInfo>::node* mm::mtl::Map<unsigned int, fw::BdatManager::Impl::SheetFpInfo>::tree_type::insert(const mm::mtl::Map<unsigned int, fw::BdatManager::Impl::SheetFpInfo>::tree_type::value_type&);
