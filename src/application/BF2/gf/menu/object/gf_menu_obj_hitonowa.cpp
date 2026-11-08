@@ -30,6 +30,8 @@
 #include "gf/GfDataNpc.h"
 #include "gf/GfDataHitonowa.h"
 #include "algorithm"
+#include "classes/gf/GfMenuQuestList.h"
+#include "classes/gf/GfMenuReferenceNumber.h"
 
 namespace gf {
 
@@ -38,6 +40,29 @@ inline bool GfMenuObjHitonowa::CompareEntry::operator()(const unsigned int& a, c
 }
 
 unsigned int GfMenuObjHitonowa::s_CurLevel;
+
+GfMenuObjHitonowa::GfMenuObjHitonowa(unsigned int handle)
+    : GfMenuObject(handle), pad_68(), m_roll(nullptr), pad_78(), m_levelNum(), m_nextNum(), pad_90(false), pad_94(0),
+      m_resultDone(false), m_ids(), m_list(nullptr), m_seq(this), m_seq2(this), m_questList(nullptr), pad_AB0(),
+      m_kind(0), m_listItems(nullptr), m_listCursor(nullptr), m_statusFadeOut(false), m_resultFadeOut(false),
+      pad_ED2(false), pad_ED3(false), m_voice(nullptr) {
+    ui::UIListInfoBase::SetupParam param;
+    param.m_pageRowSize = 10;
+    ui::UISelectObjList::CreateParam create;
+    create.m_allocator = getAllocator(ALLOCATOR(0));
+    for (int i = 0; i < 4; ++i) {
+        m_idLists[i] = GfMenuIDList::create();
+        if (m_idLists[i] != nullptr) {
+            m_idLists[i]->setup(getAllocator(ALLOCATOR(0)), param);
+        }
+        m_selectLists[i] = ui::UISelectObjList::create(create);
+        m_refNums[i] = GfMenuReferenceNumber::create();
+    }
+    m_listItems = ui::UISelectObjList::create(create);
+    m_levelNum = GfMenuReferenceNumber::create();
+    m_nextNum = GfMenuReferenceNumber::create();
+    m_questList = GfMenuQuestList::create();
+}
 
 void GfMenuObjHitonowa::setBootFromEvent() {
     GfMenuTypes::Param param;
@@ -54,6 +79,71 @@ void GfMenuObjHitonowa::setFaceStream(ui::UIObjectAcc& image, unsigned int id) {
     } else if (kind == 2) {
         image.setStreamImage3rd();
     }
+}
+
+int GfMenuObjHitonowa::getNpcChange(unsigned int id, unsigned int& value) {
+    unsigned char* fp = GfDataBdat::getFP(0x10F);
+    if (fp == nullptr) {
+        return id;
+    }
+    value = id;
+    int result = 0;
+    bool found = false;
+    for (int i = 0; i < Bdat::getIdCount(fp); ++i) {
+        int row = Bdat::getIdTop(fp) + i;
+        unsigned int base = static_cast<unsigned short>(Bdat::getVal(fp, "base_npc", row));
+        unsigned short condA = Bdat::getVal(fp, "cond_a", row);
+        unsigned short npcA = Bdat::getVal(fp, "npc_a", row);
+        if (base == id) {
+            if (npcA != 0 && condA != 0 && GfGameCond::isGameCond(condA)) {
+                value = npcA;
+                result = 1;
+            } else {
+                unsigned short condB = Bdat::getVal(fp, "cond_b", row);
+                unsigned short npcB = Bdat::getVal(fp, "npc_b", row);
+                if (npcB != 0 && condB != 0 && GfGameCond::isGameCond(condB)) {
+                    value = npcB;
+                    result = 2;
+                }
+            }
+            found = true;
+        } else if (npcA == id) {
+            if (condA == 0 || GfGameCond::isGameCond(condA)) {
+                result = 1;
+            } else {
+                result = 0;
+                value = base;
+            }
+            found = true;
+        } else {
+            unsigned short condB = Bdat::getVal(fp, "cond_b", row);
+            unsigned short npcB = Bdat::getVal(fp, "npc_b", row);
+            if (npcB == id) {
+                if (condB == 0 || GfGameCond::isGameCond(condB)) {
+                    result = 2;
+                } else {
+                    result = 0;
+                    value = base;
+                }
+                found = true;
+            }
+        }
+    }
+    if (found) {
+        return result;
+    }
+    if (GfDataNpc::isDispHitonowa(value)) {
+        unsigned char* fp2 = GfDataBdat::getFP(0x110);
+        if (fp2 != nullptr) {
+            for (int i = 0; i < Bdat::getIdCount(fp2); ++i) {
+                unsigned short base = Bdat::getVal(fp2, "base_npc", Bdat::getIdTop(fp2) + i);
+                if (base == value) {
+                    result = 1;
+                }
+            }
+        }
+    }
+    return result;
 }
 
 void GfMenuObjHitonowa::setupGame() {
@@ -202,6 +292,138 @@ int GfMenuObjHitonowa::openTelop(unsigned int kind) {
         break;
     }
     return ctrl;
+}
+
+void GfMenuObjHitonowa::setupEvent() {
+    {
+        ui::UISelectObjList::CreateParam create;
+        create.m_allocator = getAllocator(ALLOCATOR(0));
+        m_list = ui::UISelectObjList::create(create);
+    }
+    const unsigned int kinds[] = {1, 2, 3, 0};
+    if (pad_94 == 0) {
+        for (int k = 0; k < 4; k++) {
+            unsigned int kind = kinds[k];
+            for (unsigned int i = 0; i < m_idLists[kind]->getSize(); i++) {
+                unsigned int id = m_idLists[kind]->getContents(i).m_id;
+                if (kind != 0) {
+                    bool found = false;
+                    for (unsigned int j = 0; j < m_ids.size(); j++) {
+                        if (id == m_ids[j]) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    ui::UIObjectAcc(m_selectLists[kind]->getObject(i)).setAlpha(found ? 1.0f : 0.0f);
+                    if (found) {
+                        ui::UIObjectAcc icon(m_selectLists[kind]->getObject(i), "TXT_icon_new");
+                        icon.setAlpha(0.0f);
+                    }
+                } else {
+                    for (unsigned int j = 0; j < m_ids.size(); j++) {
+                        if (id == m_ids[j]) {
+                            ui::UIObjectAcc(m_selectLists[kind]->getObject(i)).setAlpha(0.0f);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        for (unsigned int j = 0; j < m_ids.size(); j++) {
+            for (int k = 0; k < 4; k++) {
+                unsigned int kind = kinds[k];
+                if (kind == 0) {
+                    continue;
+                }
+                for (unsigned int i = 0; i < m_idLists[kind]->getSize(); i++) {
+                    if (m_idLists[kind]->getContents(i).m_id == m_ids[j]) {
+                        m_list->addObject(m_selectLists[kind]->getObject(i));
+                    }
+                }
+            }
+        }
+    } else if (pad_94 == 1) {
+        for (int k = 0; k < 4; k++) {
+            unsigned int kind = kinds[k];
+            for (unsigned int i = 0; i < m_idLists[kind]->getSize(); i++) {
+                unsigned int id = m_idLists[kind]->getContents(i).m_id;
+                if (kind != 0) {
+                    for (unsigned int j = 0; j < m_ids.size(); j++) {
+                        if (id == m_ids[j]) {
+                            ui::UIObjectAcc(m_selectLists[kind]->getObject(i)).setAlpha(0.0f);
+                            break;
+                        }
+                    }
+                } else {
+                    float alpha = 0.0f;
+                    for (unsigned int j = 0; j < m_ids.size(); j++) {
+                        if (id == m_ids[j]) {
+                            alpha = 1.0f;
+                            break;
+                        }
+                    }
+                    ui::UIObjectAcc(m_selectLists[kind]->getObject(i)).setAlpha(alpha);
+                }
+            }
+        }
+        for (unsigned int j = 0; j < m_ids.size(); j++) {
+            for (int k = 0; k < 4; k++) {
+                unsigned int kind = kinds[k];
+                if (kind != 0) {
+                    continue;
+                }
+                for (unsigned int i = 0; i < m_idLists[kind]->getSize(); i++) {
+                    if (m_idLists[kind]->getContents(i).m_id == m_ids[j]) {
+                        m_list->addObject(m_selectLists[kind]->getObject(i));
+                    }
+                }
+            }
+        }
+    } else if (pad_94 == 2) {
+        for (int k = 0; k < 4; k++) {
+            unsigned int kind = kinds[k];
+            if (kind == 0) {
+                continue;
+            }
+            for (unsigned int i = 0; i < m_idLists[kind]->getSize(); i++) {
+                unsigned int id = m_idLists[kind]->getContents(i).m_id;
+                bool found = false;
+                for (unsigned int j = 0; j < m_ids.size(); j++) {
+                    if (id == m_ids[j]) {
+                        found = true;
+                        break;
+                    }
+                }
+                ui::UIObjectAcc(m_selectLists[kind]->getObject(i)).setAlpha(0.0f);
+            }
+        }
+        for (unsigned int j = 0; j < m_ids.size(); j++) {
+            for (int k = 0; k < 4; k++) {
+                unsigned int kind = kinds[k];
+                if (kind == 0) {
+                    continue;
+                }
+                for (unsigned int i = 0; i < m_idLists[kind]->getSize(); i++) {
+                    if (m_idLists[kind]->getContents(i).m_id == m_ids[j]) {
+                        ui::UIObjectAcc icon(m_selectLists[kind]->getObject(i), "TXT_icon_new");
+                        icon.setAlpha(0.0f);
+                        m_list->addObject(m_selectLists[kind]->getObject(i));
+                    }
+                }
+            }
+        }
+    }
+    {
+        ui::UIObjectAcc main(m_handle, "LAY_main");
+        unsigned int count = main.countChild("LAY_location@%02d", 1);
+        mm::mtl::FixStr<32> name;
+        for (unsigned int i = 0; i < count; i++) {
+            name.format("LAY_location_num@%02d", i + 1);
+            ui::UIObjectAcc num(main.m_handle, name.m_str);
+            num.setAlpha(0.0f);
+        }
+    }
+    m_cursor = 0;
 }
 
 void GfMenuObjHitonowa::refreshNew() {

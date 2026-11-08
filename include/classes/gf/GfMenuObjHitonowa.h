@@ -4,18 +4,20 @@
 #include "classes/gf/GfMenuObject.h"
 #include "classes/ui/UIObjectListener.h"
 #include "gf/GfMenuSequence.h"
+#include "mm/mtl/FixedArray.h"
 #include "mm/mtl/FixedVector.h"
 #include "mm/mtl/IntrusivePtr.h"
 
-namespace gf { class GAME_VOICE_HANDLE; class GfMenuIDList; class GfMenuReferenceNumber; }
+namespace gf { class GAME_VOICE_HANDLE; class GfMenuIDList; class GfMenuQuestList; class GfMenuReferenceNumber; }
 namespace mm { template <typename T> class Pnt; }
-namespace ui { class UICtrlRoll; class UIObjectAcc; struct EventData; class UISelectObjList; }
+namespace ui { class UICtrlCursorSelect; class UICtrlRoll; class UIObjectAcc; struct EventData; class UISelectObjList; }
 
 namespace gf {
 // table 0x7100B62AA0; the "Hitonowa" (circle of people) menu evt_ui openHitonowa opens (gf_menu_obj_hitonowa.cpp).
 // 2.0.0's symbols name it and its five listeners (registered on LAY_main, LAY_result, LAY_list, LAY_image, LAY_bg).
 class GfMenuObjHitonowa : public ::gf::GfMenuObject {
 public:
+    GfMenuObjHitonowa(unsigned int handle);
     // the listeners initialize registers on its layouts (2.0.0's symbols name them): MainListener LAY_main (table
     // 0x7100B62AE8), ConfirmListener LAY_result (0x7100B62B10), ListListener LAY_list (0x7100B62B38), ImageListener
     // LAY_image (0x7100B62B60), BgListener LAY_bg (0x7100B62B88)
@@ -76,6 +78,14 @@ public:
     // 2.0.0's symbols name it. Its code is in this unit and seqInEntry passes this (the list object at m_cursor, the
     // id there and its getNpcGroup). Not written yet.
     void dispStatus(unsigned int handle, unsigned int id, unsigned int group);
+    // 2.0.0's symbols name it. Its code is in this unit and MainListener::reciveEvent calls it. What it does: builds
+    // m_list from the select lists' objects whose ids m_ids holds (kinds 1, 2, 3 then 0, by pad_94's mode 0-2),
+    // setting their alpha and TXT_icon_new, hides LAY_main's LAY_location_num@NN and resets m_cursor.
+    void setupEvent();
+    // 2.0.0's symbols name it. Its code is in this unit, after setupEvent. What it does: shows every select list's
+    // objects again (alpha 1), lays the lists of kinds 1-3 out on LAY_icon_list's icon_center/icon_range grid
+    // (placeObjectHitonowa, 5 columns) unless pad_94 is 1 or 2, and fades LAY_main's LAY_location_num@NN back in.
+    void returnEvent();
 
     // 2.0.0's symbols name it. A member: the jobs below store what it returns in m_busyCtrl (with 3 and 2), and
     // seqCtrlWait waits on that control. What it does: starts a control of kind and returns its slot
@@ -180,7 +190,16 @@ public:
     unsigned char pad_68[0x8];
     // the roll control seqMoveLost takes the list object off (UICtrlRoll::delObject; the name is not the original's)
     ui::UICtrlRoll* m_roll;
-    unsigned char pad_78[0x20];
+    unsigned char pad_78[0x8];
+    // the numbers initialize shows in LAY_level's TXT_level_num and TXT_next_num (GfMenuReferenceAdapter; the names
+    // are not the original's)
+    mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_levelNum;
+    mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_nextNum;
+    // initialize sets it (a value == 1) and tests it
+    bool pad_90;
+    unsigned char pad_91[0x3];
+    // initialize sets it and tests it for 0, 1 and 2
+    int pad_94;
     // the m_list entry the jobs work on, seqNextEntry moves it on (the name is not the original's)
     unsigned int m_cursor;
     // ConfirmListener sets it when LAY_result reports event 8 with 1; seqOpenImage clears it (the name is not the
@@ -197,18 +216,29 @@ public:
     int m_busyCtrl;
     // the object whose animation seqAnimWait waits for, 0 none (the name is not the original's)
     unsigned int m_animObject;
-    unsigned char pad_AA8[0x410];
+    // the quest list the ctor creates (GfMenuQuestList::create) and the destructor releases (the name is not the
+    // original's)
+    GfMenuQuestList* m_questList;
+    // a fixed vector the destructor empties (its 0x400-byte buffer ends at 0xEB0; the element type is not known)
+    mm::mtl::FixedVector<unsigned int, 256> pad_AB0;
     // the kind of the id list the main layout shows (seqWaitNavi; the name is not the original's)
     unsigned int m_kind;
-    unsigned char pad_EBC[0x14];
+    unsigned char pad_EBC[0x4];
+    // the list initialize picks LAY_list_item@%02d into, and the cursor it creates on it (LAY_list_item_cursor);
+    // the destructor releases both (the names are not the original's)
+    ui::UISelectObjList* m_listItems;
+    ui::UICtrlCursorSelect* m_listCursor;
     // seqMoveEntry2 slides LAY_status out when it is set, and clears it (the name is not the original's)
     bool m_statusFadeOut;
     // seqConfirmGet slides LAY_result out when it is set, and clears it (the name is not the original's)
     bool m_resultFadeOut;
-    unsigned char pad_ED2[0x6];
+    // the ctor zeroes 0xED0-0xED3 with one 32-bit store
+    bool pad_ED2;
+    bool pad_ED3;
+    unsigned char pad_ED4[0x4];
     // the counts shown for the id lists, by kind (addNpc stores each list's size; the name is not the
     // original's)
-    mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_refNums[4];
+    mm::mtl::FixedArray<mm::mtl::IntrusivePtr<GfMenuReferenceNumber>, 4> m_refNums;
     // the voice the voice jobs play (the name is not the original's)
     GAME_VOICE_HANDLE* m_voice;
 };
