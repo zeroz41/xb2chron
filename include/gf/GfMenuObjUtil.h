@@ -105,6 +105,9 @@ public:
     static ui::UICtrlCursorSelect* createCursor(CursorParam& param);
     static const char* getMenuMS(unsigned int id);  // a menu message
     static int getFaceIconID(const DataParamAcc& acc);  // an object's face icon, 0 for none
+    // a saved game's face icon of a driver (type 3) or blade (type 4), 0 for any other type
+    // (GfMenuObjSaveLoad2::refreshSave shows the save's party with it)
+    static unsigned int getFaceIconID(const SDataGame& game, unsigned int type, unsigned int id);
     static bool getMenuCondition(unsigned int condition);  // whether a menu's condition is met
     static bool checkCCStart(GfMenuCallContext* context);  // a context that is not running yet
     static bool checkCCNext(GfMenuCallContext* context, unsigned int id);  // a context running on that id

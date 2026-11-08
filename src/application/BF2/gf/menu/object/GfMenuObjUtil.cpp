@@ -68,6 +68,11 @@
 #include "classes/gf/GfGameMercenaries.h"
 #include "gf/GfDataUtil.h"
 #include "gf/GfGameUtil.h"
+#include "gf/SDataGame.h"
+#include "classes/gf/GfBdatChrDr.h"
+#include "gf/GfDataDriverArts.h"
+#include "btl/Utility.h"
+#include "classes/btl/DataManager.h"
 
 namespace gf {
 namespace {
@@ -962,6 +967,111 @@ bool GfMenuObjUtil::isEnemyBoss(gf::GF_OBJ_HANDLE* handle) {
     return enemy != nullptr && enemy->m_boss;
 }
 
+bool GfMenuObjUtil::getArtsIconInfo(unsigned int arts, unsigned int level, ArtsIconInfo& info) {
+    if (arts == 0) {
+        return false;
+    }
+    btl::ARTS_DATA data;
+    btl::Utility::GetArtsData(static_cast<btl::ARTS_DATA::DATA_TYPE>(0), arts, data);
+    info = ArtsIconInfo();
+    switch (data.m_kind) {
+    case 0xB:
+        info.m_type = 0xD;
+        return true;
+    case 3:
+        info.m_type = 0xC;
+        if (data.m_subKind == 3) {
+            info.m_range = 3;
+        }
+        return true;
+    }
+    if (ui::UIUtil::isEnableExpType(3) && GfGameManager::isGameTypeIra() && data.m_kind == 4) {
+        info.m_type = 0xE;
+        switch (data.m_range) {
+        case 0:
+            info.m_range = 0;
+            break;
+        case 2:
+        case 3:
+        case 4:
+            info.m_range = 1;
+            break;
+        case 1:
+        case 5:
+        case 6:
+            info.m_range = 2;
+            break;
+        }
+        return true;
+    }
+    info.m_type = 0;
+    info.m_enhance = 0;
+    if (level - 1 < 5) {
+        unsigned short enhance = data.m_enhances[level - 1].id;
+        if (enhance != 0) {
+            unsigned short effect = Bdat::getVal(GfDataBdat::getFP(0x2C), "EnhanceEffect", enhance);
+            if (effect != 0) {
+                info.m_enhance = static_cast<unsigned char>(Bdat::getVal(GfDataBdat::getFP(0x2D), "Icon", effect)) + 4;
+            }
+        }
+    }
+    info.m_react = 0;
+    for (unsigned long i = 0; i < data.m_hitCount; i++) {
+        switch (data.m_hits[i].reaction) {
+        case 0:
+            continue;
+        case 1:
+            info.m_react = 3;
+            break;
+        case 2:
+            info.m_react = 4;
+            break;
+        case 3:
+            info.m_react = 5;
+            break;
+        case 4:
+            info.m_react = 6;
+            break;
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+        case 9:
+            info.m_react = 1;
+            break;
+        case 10:
+        case 11:
+        case 12:
+        case 13:
+        case 14:
+            info.m_react = 2;
+            break;
+        }
+        break;
+    }
+    switch (data.m_range) {
+    case 0:
+        info.m_range = 0;
+        break;
+    case 2:
+    case 3:
+    case 4:
+        info.m_range = 1;
+        break;
+    case 1:
+    case 5:
+        info.m_range = 2;
+        break;
+    }
+    if (ui::UIUtil::isEnableExpType(3) && GfGameManager::isGameTypeIra() && data.m_range == 6) {
+        info.m_range = 2;
+    }
+    if (info.m_react == 0) {
+        info.m_type = data.m_iconType + 4;
+    }
+    return true;
+}
+
 bool GfMenuObjUtil::checkCCStart(GfMenuCallContext* context) {
     return context != nullptr && !context->isActive();
 }
@@ -1204,6 +1314,152 @@ unsigned int GfMenuObjUtil::convMenuDriverID(unsigned int driver) {
     return id;
 }
 
+unsigned int GfMenuObjUtil::getEnableArts(mm::mtl::FixedArray<unsigned int, 4>& arts, unsigned int driver,
+                                          unsigned int wpnType, PTPOS mode, bool flag) {
+    mm::mtl::FixedArray<unsigned int, 3> slotArts;
+    GfDataDriverArts::getSlotArts(slotArts, driver, wpnType, mode);
+    mm::mtl::FixedArray<unsigned int, 4> enableArts;
+    GfDataDriverArts::getEnableArts(enableArts, driver, wpnType, mode);
+    if (ui::UIUtil::isEnableExpType(3) && GfGameManager::isGameTypeIra()) {
+        mm::mtl::FixedArray<unsigned int, 4> extraArts;
+        if (mode == 0 && flag) {
+            GfDataDriverArts::getEnableArts(extraArts, driver, wpnType, static_cast<PTPOS>(3));
+        } else if (mode == 1) {
+            GfDataDriverArts::getEnableArts(extraArts, driver, wpnType, static_cast<PTPOS>(2));
+        } else {
+            goto copy;
+        }
+        if (enableArts[3] == 0) {
+            enableArts[3] = extraArts[0];
+        }
+    }
+copy:
+    for (int i = 0; i < 3; i++) {
+        arts[i] = slotArts[i];
+    }
+    unsigned int count = 0;
+    for (int i = 0; i < 3; i++) {
+        if (slotArts[i] != 0) {
+            count++;
+        }
+    }
+    arts[3] = 0;
+    for (int i = 0; i < 4; i++) {
+        if (enableArts[i] != 0 && GfDataDriverArts::getArtsLevel(driver, enableArts[i]) != 0) {
+            bool found = false;
+            for (int j = 0; j < 4; j++) {
+                if (enableArts[i] == arts[j]) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                arts[3] = enableArts[i];
+                count++;
+                break;
+            }
+        }
+    }
+    if (ui::UIUtil::isEnableExpType(3) && GfGameManager::isGameTypeIra() && (mode != 0 || flag)) {
+        count = 4;
+    }
+    return count;
+}
+
+unsigned int GfMenuObjUtil::getFaceIconID(const SDataGame& game, unsigned int type, unsigned int id) {
+    // the common blades' face icons by icon data (the names are not the original's)
+    static const struct {
+        unsigned int m_icon;
+        unsigned int m_face;
+    } s_commonFaces[4] = {{0xF8, 0x10A}, {0xFA, 0x10E}, {0xFC, 0x112}, {0xFD, 0x116}};
+    unsigned short scenario = GfGameFlag::getLocal(game.m_gameFlag, 0x10, 1);
+    unsigned int face;
+    if (type != 4) {
+        face = 0;
+        if (type == 3) {
+            face = GfBdatChrDr::get()->getChrDrStill(id);
+            if (id == 1) {
+                if (scenario >= 7060) {
+                    face = 0x108;
+                } else if (scenario > 1029) {
+                    face = 0x106;
+                }
+            }
+        }
+    } else {
+        unsigned int index = GfDataBlade::getBladeRelativeID(id);
+        const unsigned short& iconData = game.m_blades[index].m_iconData;
+        face = iconData;
+        if (GfDataBlade::isCommonBlade(id)) {
+            for (int i = 0; i < 4; i++) {
+                if (iconData == s_commonFaces[i].m_icon) {
+                    face = s_commonFaces[i].m_face;
+                    break;
+                }
+            }
+            for (unsigned int part = 0; part < 4; part++) {
+                if (game.m_blades[index].m_extraParts[part]) {
+                    if (face == 0x10E) {
+                        part = part + 1 > 3 ? 0 : part + 1;
+                    }
+                    face += part;
+                    break;
+                }
+            }
+        } else if (scenario > 7024 && id == 0x3F2) {
+            face = 0x105;
+        }
+    }
+    if (ui::UIUtil::isEnableExpType(3) && GfGameManager::isGameTypeIra() && face == 0x143) {
+        if (isIraSinMaskOff()) {
+            face = 0x149;
+        }
+    }
+    return face;
+}
+
+bool GfMenuObjUtil::getImageParam(unsigned int type, unsigned int id, ImageParam& param, unsigned int index) {
+    if (index > 4) {
+        return false;
+    }
+    unsigned char* fp = GfDataBdat::getFP(type != 0 ? 0x176 : 0x175);
+    mm::mtl::FixStr<32> offsX;
+    mm::mtl::FixStr<32> offsY;
+    mm::mtl::FixStr<32> scale;
+    if (index == 0) {
+        offsX = "offs_x";
+        offsY = "offs_y";
+        scale = "scale";
+    } else {
+        offsX.format("offs_x%1d", index + 1);
+        offsY.format("offs_y%1d", index + 1);
+        scale.format("scale%1d", index + 1);
+    }
+    unsigned int row;
+    if (type != 0) {
+        row = convMenuBladeID(id);
+    } else {
+        unsigned char* chr = GfDataBdat::getFP(0x88);
+        if (id < Bdat::getIdTop(chr) || id > Bdat::getIdEnd(chr)) {
+            return false;
+        }
+        unsigned short still = Bdat::getVal(chr, "Still", id);
+        for (row = Bdat::getIdTop(fp);; row++) {
+            if (row > Bdat::getIdEnd(fp)) {
+                return false;
+            }
+            if (static_cast<unsigned short>(Bdat::getVal(fp, "icon_id", row)) == still) {
+                break;
+            }
+        }
+    }
+    param.m_x = Bdat::getVal(fp, offsX.m_str, row);
+    param.m_y = Bdat::getVal(fp, offsY.m_str, row);
+    Bdat::uVal val;
+    val.uint = Bdat::getVal(fp, scale.m_str, row);
+    param.m_scale = val.real;
+    return true;
+}
 bool GfMenuObjUtil::getMenuCondition(unsigned int condition) {
     unsigned char* fp = GfDataBdat::getFP(0x17E);
     if (condition < Bdat::getIdTop(fp) || condition > Bdat::getIdEnd(fp)) {

@@ -26,9 +26,10 @@ struct alignas(16) ARTS_DATA {
     enum DATA_TYPE : int;
     // clears the bit fields (the first 0x20 bytes) only
     ARTS_DATA()
-        : pad_0_0(0), m_kind(0), pad_0_29(0), m_hitWeightTotal(0), m_initialRecast(0), pad_8_0(0), m_category(0),
-          pad_8_11(0), pad_8_28(0), m_fightCombo(0), pad_C_3(0), m_hitRow(0), pad_10_12(0), pad_10_23(0),
-          pad_10_28(0), pad_14(0), pad_18(0), m_distance(0), pad_1C_12(0) {}
+        : pad_0_0(0), m_kind(0), m_subKind(0), pad_0_32(0), m_hitWeightTotal(0), m_initialRecast(0), pad_8_0(0),
+          m_category(0), m_hitCount(0), m_range(0), pad_8_19(0), pad_8_28(0), m_fightCombo(0), pad_C_3(0), m_hitRow(0),
+          pad_10_12(0), pad_10_23(0), pad_10_28(0), pad_14(0), pad_18(0), m_distance(0), pad_1C_12(0),
+          m_iconType(0) {}
     // the share of the hits' damage that hit takes (the hits' weights, divided by the two counts and the BDAT
     // table 0x12 row's "AddAtkNum" + 1)
     float GetHitWeightRate(int hit) const;
@@ -37,13 +38,20 @@ struct alignas(16) ARTS_DATA {
     int CheckHealArts(int index) const;
     unsigned long long pad_0_0 : 24;
     unsigned long long m_kind : 5;  // CheckHealArts answers 1 for 3 (the name is not the original's)
-    unsigned long long pad_0_29 : 16;
+    // with m_kind 3, GfMenuObjUtil::getArtsIconInfo gives range icon 3 for 3 (the name is not the original's)
+    unsigned long long m_subKind : 3;
+    unsigned long long pad_0_32 : 13;
     unsigned long long m_hitWeightTotal : 12;  // the hits' weights' total (GetHitWeightRate; the name is not the original's)
     unsigned long long m_initialRecast : 7;  // percent (ARTS_SLOT_DATA::ResetRecast; the name is not the original's)
     unsigned int pad_8_0 : 5;
     // unknown: GetArtsAttackDistance adds enhance 195's value for 12 (the name is not the original's)
     unsigned int m_category : 6;
-    unsigned int pad_8_11 : 17;
+    // how many of m_hits are used (GfMenuObjUtil::getArtsIconInfo looks for a reaction among them; the name is not
+    // the original's)
+    unsigned int m_hitCount : 5;
+    // the range kind (GfMenuObjUtil::getArtsIconInfo turns it into a range icon; the name is not the original's)
+    unsigned int m_range : 3;
+    unsigned int pad_8_19 : 9;
     unsigned int pad_8_28 : 4;  // GetHitWeightRate divides by it from 2 on (meaning unknown)
     // the fight combo it starts, 0 for none (GfMenuBattleAdapter::update_ArtsFightComboIcon shows it less 1; the
     // name is not the original's)
@@ -57,7 +65,9 @@ struct alignas(16) ARTS_DATA {
     unsigned int pad_18 : 32;
     // the distance GetArtsAttackDistance starts from (the name is not the original's)
     unsigned int m_distance : 12;
-    unsigned int pad_1C_12 : 20;
+    unsigned int pad_1C_12 : 6;
+    // the type icon less 4 (GfMenuObjUtil::getArtsIconInfo; the name is not the original's)
+    unsigned int m_iconType : 14;
     // GfMenuBattleAdapter::update_ArtsFightComboIcon and GfMenuObjUtil::getArtsIconInfo construct one, clearing only
     // the first 0x20 bytes
     // ArtsGravityProc's window: from start stage/frame on it clears BattleCharacter's pad_F03_7, from end
@@ -74,7 +84,10 @@ struct alignas(16) ARTS_DATA {
     struct HIT {
         unsigned char pad_0[0x2];
         unsigned char weight;
-        unsigned char pad_3[0x3];
+        // its reaction: 1-4 give reaction icons 3-6, 5-9 icon 1, 10-14 icon 2 (GfMenuObjUtil::getArtsIconInfo; the
+        // name is not the original's)
+        unsigned char reaction;
+        unsigned char pad_4[0x2];
     };
     HIT m_hits[16];
     unsigned char pad_90[0x4];
@@ -84,8 +97,9 @@ struct alignas(16) ARTS_DATA {
         unsigned short id;
         unsigned char pad_2[0x4];
     };
-    ENHANCE m_enhances[3];
-    unsigned char pad_a6[0x42];
+    // (GfMenuObjUtil::getArtsIconInfo reads entries 0-4 by level)
+    ENHANCE m_enhances[5];
+    unsigned char pad_b2[0x36];
 };
 
 // an enemy group: RegisterEnemyGroup fills a free one with its two objects, ReleaseEnemyGroup marks each released
