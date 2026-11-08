@@ -6,6 +6,8 @@
 #include "idcoli/IDColiPrimitive.h"
 #include "idcoli/IDColiShapeWork.h"
 #include "classes/idcoli/IDColiObjGrdChar.h"
+#include "idcoli/IDColiResult.h"
+#include "classes/fw/ColiCheckCallback.h"
 
 namespace idcoli {
 
@@ -67,11 +69,91 @@ bool IDColiUtilColiResult::isRayInCapsule(IDColiResult& result, const IDColiInpu
 
 bool IDColiUtilColiResult::isRayPoli(IDColiResult&, const IDColiInput&, const void*) { return false; }
 
+bool IDColiUtilColiSimple::isSphereSphere(IDColiResult& result, const IDColiInput& input, const void* pOther) {
+    const CLSphereWork* sphere = static_cast<const CLSphereWork*>(input.getShape());
+    const CLSphereWork* other = static_cast<const CLSphereWork*>(pOther);
+    mm::Vec3 dir = sphere->m_center - other->m_center;
+    float radius = sphere->m_radius + other->m_radius;
+    if (dir.dot(dir) > radius * radius) return false;
+    if (result.m_callback) result.m_callback->coli_callback(result.m_obj);
+    return true;
+}
+
 bool IDColiUtilColiSimple::isSphereBox(IDColiResult& result, const IDColiInput& input, const void* pOther) {
     return isSphereBox(result, static_cast<const CLSphereWork*>(input.getShape()), static_cast<const CLBoxWork*>(pOther));
 }
 
+bool IDColiUtilColiSimple::isSphereCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther) {
+    const CLSphereWork* sphere = static_cast<const CLSphereWork*>(input.getShape());
+    const CLCapsuleWork* capsule = static_cast<const CLCapsuleWork*>(pOther);
+    if (capsule->m_max.x + sphere->m_radius < sphere->m_center.x) return false;
+    if (capsule->m_min.x - sphere->m_radius > sphere->m_center.x) return false;
+    if (sphere->m_radius + capsule->m_max.z < sphere->m_center.z) return false;
+    if (capsule->m_min.z - sphere->m_radius > sphere->m_center.z) return false;
+    if (sphere->m_radius + capsule->m_max.y < sphere->m_center.y) return false;
+    if (capsule->m_min.y - sphere->m_radius > sphere->m_center.y) return false;
+    mm::Vec3 dir = sphere->m_center - capsule->m_pos;
+    float t = dir.dot(capsule->m_offset) * capsule->m_invLengthSq;
+    if (t < 0.0f) t = 0.0f;
+    if (t > 1.0f) t = 1.0f;
+    dir -= capsule->m_offset * t;
+    float sum = sphere->m_radius + capsule->m_radius;
+    if (dir.dot(dir) > sum * sum) return false;
+    if (result.m_callback) result.m_callback->coli_callback(result.m_obj);
+    return true;
+}
+
+bool IDColiUtilColiSimple::isSphereInCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther) {
+    const CLSphereWork* sphere = static_cast<const CLSphereWork*>(input.getShape());
+    const CLCapsuleWork* capsule = static_cast<const CLCapsuleWork*>(pOther);
+    if (capsule->m_max.x + sphere->m_radius < sphere->m_center.x) return false;
+    if (capsule->m_min.x - sphere->m_radius > sphere->m_center.x) return false;
+    if (sphere->m_radius + capsule->m_max.z < sphere->m_center.z) return false;
+    if (capsule->m_min.z - sphere->m_radius > sphere->m_center.z) return false;
+    if (sphere->m_radius + capsule->m_max.y < sphere->m_center.y) return false;
+    if (capsule->m_min.y - sphere->m_radius > sphere->m_center.y) return false;
+    mm::Vec3 dir = sphere->m_center - capsule->m_pos;
+    float t = dir.dot(capsule->m_offset) * capsule->m_invLengthSq;
+    if (t < 0.0f) t = 0.0f;
+    if (t > 1.0f) t = 1.0f;
+    mm::Vec3 offset = capsule->m_offset * t;
+    dir -= offset;
+    float lengthSq = dir.dot(dir);
+    if (lengthSq > capsule->m_radius * capsule->m_radius) return false;
+    if (lengthSq <= 1e-6f) return false;
+    float length = ::sqrtf(lengthSq);
+    mm::Vec3 normal = dir * (1.0f / length);
+    mm::Vec3 pos = offset + capsule->m_radius * normal;
+    pos += capsule->m_pos;
+    mm::Vec3 diff = sphere->m_center - pos;
+    float distSq = diff.dot(diff);
+    float radiusSq = sphere->m_radius * sphere->m_radius;
+    if (distSq <= 1e-6f || distSq > radiusSq) return false;
+    if (result.m_callback) result.m_callback->coli_callback(result.m_obj);
+    return true;
+}
+
 bool IDColiUtilColiSimple::isSpherePoli(IDColiResult&, const IDColiInput&, const void*) { return false; }
+
+bool IDColiUtilColiSimple::isCapsuleSphere(IDColiResult& result, const IDColiInput& input, const void* pOther) {
+    const CLCapsuleWork* capsule = static_cast<const CLCapsuleWork*>(input.getShape());
+    const CLSphereWork* sphere = static_cast<const CLSphereWork*>(pOther);
+    if (capsule->m_max.x + sphere->m_radius < sphere->m_center.x) return false;
+    if (capsule->m_min.x - sphere->m_radius > sphere->m_center.x) return false;
+    if (sphere->m_radius + capsule->m_max.z < sphere->m_center.z) return false;
+    if (capsule->m_min.z - sphere->m_radius > sphere->m_center.z) return false;
+    if (sphere->m_radius + capsule->m_max.y < sphere->m_center.y) return false;
+    if (capsule->m_min.y - sphere->m_radius > sphere->m_center.y) return false;
+    mm::Vec3 dir = sphere->m_center - capsule->m_pos;
+    float t = dir.dot(capsule->m_offset) * capsule->m_invLengthSq;
+    if (t < 0.0f) t = 0.0f;
+    if (t > 1.0f) t = 1.0f;
+    dir -= capsule->m_offset * t;
+    float sum = sphere->m_radius + capsule->m_radius;
+    if (dir.dot(dir) > sum * sum) return false;
+    if (result.m_callback) result.m_callback->coli_callback(result.m_obj);
+    return true;
+}
 
 bool IDColiUtilColiSimple::isCapsuleBox(IDColiResult& result, const IDColiInput& input, const void* pOther) {
     return isCapsuleBox(result, static_cast<const CLCapsuleWork*>(input.getShape()), static_cast<const CLBoxWork*>(pOther));
@@ -79,6 +161,58 @@ bool IDColiUtilColiSimple::isCapsuleBox(IDColiResult& result, const IDColiInput&
 
 bool IDColiUtilColiSimple::isCapsuleInBox(IDColiResult& result, const IDColiInput& input, const void* pOther) {
     return isCapsuleInBox(result, static_cast<const CLCapsuleWork*>(input.getShape()), static_cast<const CLBoxWork*>(pOther));
+}
+
+bool IDColiUtilColiSimple::isCapsuleCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther) {
+    const CLCapsuleWork* capsule = static_cast<const CLCapsuleWork*>(input.getShape());
+    const CLCapsuleWork* other = static_cast<const CLCapsuleWork*>(pOther);
+    if (capsule->m_max.x < other->m_min.x) return false;
+    if (capsule->m_min.x > other->m_max.x) return false;
+    if (capsule->m_max.z < other->m_min.z) return false;
+    if (capsule->m_min.z > other->m_max.z) return false;
+    if (capsule->m_max.y < other->m_min.y) return false;
+    if (capsule->m_min.y > other->m_max.y) return false;
+    mm::Vec3 nearPos;
+    mm::Vec3 otherNearPos;
+    IDColiUtilMath::getNearLineToLine(nearPos, otherNearPos, capsule->m_pos, capsule->m_end, other->m_pos,
+                                      other->m_end);
+    mm::Vec3 dir = nearPos - otherNearPos;
+    float radius = capsule->m_radius + other->m_radius;
+    if (dir.dot(dir) > radius * radius) return false;
+    if (result.m_callback) result.m_callback->coli_callback(result.m_obj);
+    return true;
+}
+
+bool IDColiUtilColiSimple::isCapsuleInCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther) {
+    const CLCapsuleWork* capsule = static_cast<const CLCapsuleWork*>(input.getShape());
+    const CLCapsuleWork* other = static_cast<const CLCapsuleWork*>(pOther);
+    // the lower end of the capsule
+    const mm::Vec3& center = capsule->m_pos.y > capsule->m_end.y ? capsule->m_end : capsule->m_pos;
+    if (other->m_max.x + capsule->m_radius < center.x) return false;
+    if (other->m_min.x - capsule->m_radius > center.x) return false;
+    if (capsule->m_radius + other->m_max.z < center.z) return false;
+    if (other->m_min.z - capsule->m_radius > center.z) return false;
+    if (capsule->m_radius + other->m_max.y < center.y) return false;
+    if (other->m_min.y - capsule->m_radius > center.y) return false;
+    mm::Vec3 dir = center - other->m_pos;
+    float t = dir.dot(other->m_offset) * other->m_invLengthSq;
+    if (t < 0.0f) t = 0.0f;
+    if (t > 1.0f) t = 1.0f;
+    mm::Vec3 offset = other->m_offset * t;
+    dir -= offset;
+    float lengthSq = dir.dot(dir);
+    if (lengthSq > other->m_radius * other->m_radius) return false;
+    if (lengthSq <= 1e-6f) return false;
+    float length = ::sqrtf(lengthSq);
+    mm::Vec3 normal = dir * (1.0f / length);
+    mm::Vec3 pos = offset + other->m_radius * normal;
+    pos += other->m_pos;
+    mm::Vec3 diff = center - pos;
+    float distSq = diff.dot(diff);
+    float radiusSq = capsule->m_radius * capsule->m_radius;
+    if (distSq <= 1e-6f || distSq > radiusSq) return false;
+    if (result.m_callback) result.m_callback->coli_callback(result.m_obj);
+    return true;
 }
 
 bool IDColiUtilColiSimple::isCapsulePoli(IDColiResult&, const IDColiInput&, const void*) { return false; }
@@ -94,6 +228,22 @@ bool IDColiUtilColiSimple::isBoxCapsule(IDColiResult& result, const IDColiInput&
 }
 
 bool IDColiUtilColiSimple::isBoxPoli(IDColiResult&, const IDColiInput&, const void*) { return false; }
+
+bool IDColiUtilColiSimple::isLineSphere(IDColiResult& result, const IDColiInput& input, const void* pOther) {
+    const CLLineWork* line = static_cast<const CLLineWork*>(input.getShape());
+    const CLSphereWork* sphere = static_cast<const CLSphereWork*>(pOther);
+    mm::Vec3 dir = line->m_start - sphere->m_center;
+    float b = dir.dot(line->m_unitDir);
+    float c = dir.dot(dir) - sphere->m_radius * sphere->m_radius;
+    if (b >= 0.0f && c >= 0.0f) return false;
+    float disc = b * b - c;
+    if (disc <= 0.0f) return false;
+    float t = -b - ::sqrtf(disc);
+    if (t < 0.0f) return false;
+    if (line->m_length < t) return false;
+    if (result.m_callback) result.m_callback->coli_callback(result.m_obj);
+    return true;
+}
 
 bool IDColiUtilColiSimple::isLineBox(IDColiResult& result, const IDColiInput& input, const void* pOther) {
     return isPartsLineBox(result, static_cast<const CLLineWork*>(input.getShape()), pOther, false);
@@ -111,6 +261,26 @@ bool IDColiUtilColiSimple::isLineInBox(IDColiResult& result, const IDColiInput& 
 
 bool IDColiUtilColiSimple::isLineInCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther) {
     return isPartsLineCapsule(result, static_cast<const CLLineWork*>(input.getShape()), pOther, false);
+}
+
+bool IDColiUtilColiSimple::isRaySphere(IDColiResult& result, const IDColiInput& input, const void* pOther) {
+    const CLRayWork* ray = static_cast<const CLRayWork*>(input.getShape());
+    const CLSphereWork* sphere = static_cast<const CLSphereWork*>(pOther);
+    auto isHit = [&result, sphere](const CLLineWork* line) -> bool {
+        mm::Vec3 dir = line->m_start - sphere->m_center;
+        float b = dir.dot(line->m_unitDir);
+        float c = dir.dot(dir) - sphere->m_radius * sphere->m_radius;
+        if (b >= 0.0f && c >= 0.0f) return false;
+        float disc = b * b - c;
+        if (disc <= 0.0f) return false;
+        float t = -b - ::sqrtf(disc);
+        if (t < 0.0f) return false;
+        if (line->m_length < t) return false;
+        if (result.m_callback) result.m_callback->coli_callback(result.m_obj);
+        return true;
+    };
+    if (isHit(&ray->m_lines[0])) return true;
+    return isHit(&ray->m_lines[1]);
 }
 
 bool IDColiUtilColiSimple::isRayBox(IDColiResult& result, const IDColiInput& input, const void* pOther) {
@@ -206,6 +376,49 @@ void IDColiInputUtil::getRay(IDColiInput& out, const mm::Vec3& start, const mm::
     out.m_lineHalfAbs.y = ::fabsf(out.m_lineHalf.y) + 1e-6f;
     out.m_lineHalfAbs.z = ::fabsf(out.m_lineHalf.z) + 1e-6f;
     IDColiPrimitive::createRay(*static_cast<CLRayWork*>(out.getShape()), start, dir, lengthMax, -lengthMin);
+}
+
+void IDColiPrimitive::createRay(CLRayWork& ray, const mm::Vec3& start, const mm::Vec3& dir, float lengthMax,
+                                float lengthMin) {
+    ray.m_lines[0].m_dir.x = dir.x * lengthMax;
+    ray.m_lines[0].m_dir.y = dir.y * lengthMax;
+    ray.m_lines[0].m_dir.z = dir.z * lengthMax;
+    ray.m_lines[1].m_dir.x = dir.x * -lengthMin;
+    ray.m_lines[1].m_dir.y = dir.y * -lengthMin;
+    ray.m_lines[1].m_dir.z = dir.z * -lengthMin;
+    ray.m_lines[0].m_unitDir = dir;
+    ray.m_lines[1].m_unitDir = mm::Vec3(-dir.x, -dir.y, -dir.z);
+    ray.m_lines[0].m_length = lengthMax;
+    ray.m_lines[1].m_length = lengthMin;
+    for (int i = 0; i < 2; i++) {
+        CLLineWork& line = ray.m_lines[i];
+        line.m_end.x = start.x + line.m_dir.x;
+        line.m_end.y = start.y + line.m_dir.y;
+        line.m_end.z = start.z + line.m_dir.z;
+        line.m_start = start;
+        line.m_lengthSq = line.m_dir.dot(line.m_dir);
+        if (line.m_start.x > line.m_end.x) {
+            line.m_max.x = line.m_start.x;
+            line.m_min.x = line.m_end.x;
+        } else {
+            line.m_max.x = line.m_end.x;
+            line.m_min.x = line.m_start.x;
+        }
+        if (line.m_start.y > line.m_end.y) {
+            line.m_max.y = line.m_start.y;
+            line.m_min.y = line.m_end.y;
+        } else {
+            line.m_max.y = line.m_end.y;
+            line.m_min.y = line.m_start.y;
+        }
+        if (line.m_start.z > line.m_end.z) {
+            line.m_max.z = line.m_start.z;
+            line.m_min.z = line.m_end.z;
+        } else {
+            line.m_max.z = line.m_end.z;
+            line.m_min.z = line.m_start.z;
+        }
+    }
 }
 
 void IDColiInputUtil::getBox(IDColiInput& out, const CLBoxWork& box) {
