@@ -43,14 +43,14 @@ public:
     // it); the field names are not the original's
     class RaffleResult {
     public:
-        // an enemy the raffle drew: its id (0: none) and its level offset (isPowerfullEnemyExist adds it to the id's
-        // ChrEnArrange level)
+        // an enemy the raffle drew: its id (0: none) and its level offset (isPowerfullEnemyExist sign-extends byte 2
+        // and adds it to the id's ChrEnArrange level; popByRaffleResult hands it to the locator)
         class Enemy {
         public:
-            Enemy() : m_id(0), pad_2(0) {}
+            Enemy() : m_id(0), m_lvOffset(0) {}
             unsigned short m_id;
-            unsigned char pad_2;
             signed char m_lvOffset;
+            unsigned char pad_3;
         };
         RaffleResult() {
             m_dropIds[0] = -1;
@@ -111,6 +111,7 @@ public:
     void seqValidateGmkSalvageLocatorDetails(float);
     // the step seqValidateGmkSalvageLocatorDetails installs
     void seqUpdatePopDepop(float);
+    void createGfObjHandle();
 
     // 0x48: the sequence step update runs (create installs seqValidateGmkSalvageLocatorDetails, dispose clears it)
     void (GmkSalvage::*m_seq)(float);

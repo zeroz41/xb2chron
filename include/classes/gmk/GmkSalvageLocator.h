@@ -22,6 +22,8 @@ public:
     void setTargetable(bool targetable) const;
     void seqWaitPop(float dt);
     void seqPop(float dt);
+    void createTboxGobInst();
+    void createEnemyGobInst();
     void syncDepopTboxes();
     // drops its object (GmkSalvage::update and disposeRaffle call it on the raffle's locators)
     void disposeGobInst(bool);
@@ -39,7 +41,7 @@ public:
     // the stores Vector<GmkSalvageLocator>::resize makes in each element
     GmkSalvageLocator()
         : m_seq(nullptr), pad_58(0), m_dropitemEmitter(nullptr), m_gob(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_isAccessed(false),
-          m_salvage(nullptr), m_popWait(0.0f), m_popTimer(0.0f), m_disposeWait(0.0f), pad_e4(0), pad_e8(-1), pad_ec(0), pad_f0(0), pad_f1(0), pad_f2(0) {}
+          m_salvage(nullptr), m_popWait(0.0f), m_popTimer(0.0f), m_disposeWait(0.0f), m_disposeTimer(0.0f), pad_e8(-1), pad_ec(0), pad_f0(0), pad_f1(0), pad_f2(0) {}
     // its current step (seqWaitPop stores &seqPop; the name is not the original's)
     void (GmkSalvageLocator::*m_seq)(float dt);
     unsigned char pad_58;  // dispose clears it
@@ -53,7 +55,9 @@ public:
     float m_popTimer;  // 0xdc
     // 0xe0: reqDisposeTboxGobInst (const) stores its argument here and clears 0xe4 (the names are not the original's)
     mutable float m_disposeWait;
-    mutable int pad_e4;
+    // seqPop adds each frame's time step and disposes the treasure box once it reaches m_disposeWait (the name is not
+    // the original's)
+    mutable float m_disposeTimer;
     int pad_e8;    // dispose sets it to -1
     int pad_ec;    // dispose clears it
     unsigned char pad_f0;  // dispose clears it

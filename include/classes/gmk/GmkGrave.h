@@ -18,7 +18,11 @@ public:
     public:
         // out of line: initGmkBdatInfo calls it with the table itself (symbol 0x71005A5230)
         void create(unsigned char* fp, int row, const AGmkBase& gmk);
-        unsigned char pad_0[0x2];
+        // update works only when both ids are set: one 32-bit load, so a member of its own (this is
+        // dereferenceable, the second half's load is speculated); the name is not the original's
+        bool isEnable() const { return m_enPopId != 0 && m_windowArg != 0; }
+        unsigned short m_enPopId;  // its row's en_popID (create)
+        // 0x2: create reads it from the enemy list's table (column ene1ID, row m_enPopId);
         // what gf::GfFieldGrave::create passes the common window (GfMenuManager::openCommonWindowWithNamed) with message 51; the name is not
         // the original's
         unsigned short m_windowArg;
@@ -35,6 +39,10 @@ public:
     virtual void debugDraw() const;  // slot 7
     // pops the grave's enemy (gf::GfFieldGrave::seqWaitToSelect calls it on the common window's first choice)
     bool reqPopEnemy() const;
+    void validateTargetable();
+    bool canPopGobInst() const;
+    void createGobInst();
+    bool canDepopGobInst() const;
     // reqPopEnemy's per-kind halves (out of line in the original: _ZNK3gmk8GmkGrave11reqPopEnemyINS_8GmkEnemyEEEbv)
     template <class T> bool reqPopEnemy() const;
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8

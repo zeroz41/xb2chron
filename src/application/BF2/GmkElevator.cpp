@@ -1133,6 +1133,15 @@ void GmkMapGimmickList::debugDraw() const {
     m_triggerList.debugDraw();
 }
 
+void GmkMapGimmickList::createGmk(void* data) {
+    TGmkList::createGmk(data);
+    IGmkList::CreateInfo info = getCreateInfo();
+    if (info.m_allocHandle.m_handle != 0 && info.m_path.length() != 0) {
+        info.m_bdatName.clear();
+        m_triggerList.create(info);
+    }
+}
+
 AGmkBase* GmkMapGimmickList::getInst(unsigned int index) const {
     return const_cast<GmkMapGimmick*>(&m_gmks[index]);
 }
@@ -3011,6 +3020,70 @@ void GmkMapJump::dispose() {
 }
 
 void GmkMapJump::debugDraw() const { AGmkBase::debugDraw(); }
+void GmkGrave::BdatInfo::create(unsigned char* fp, int row, const AGmkBase& gmk) {
+    m_enPopId = 0;
+    m_windowArg = 0;
+    m_enPopId = Bdat::getValCheck(fp, "en_popID", row, 2);
+    unsigned char* mapFp = gf::GfDataBdat::getFP(0x5d);
+    if (mapFp != nullptr) {
+        int mapId = gf::GfGameManager::getMapID();
+        if (mapId >= Bdat::getIdTop(mapFp) && Bdat::getIdTop(mapFp) + Bdat::getIdCount(mapFp) > mapId) {
+            unsigned char dispR = Bdat::getValCheck(mapFp, "ene_disp_r", mapId, 1);
+            unsigned char dispH = Bdat::getValCheck(mapFp, "ene_disp_h", mapId, 1);
+            m_eneDisp.m_horizontalSq = static_cast<float>(dispR) * static_cast<float>(dispR);
+            m_eneDisp.m_verticalSq = static_cast<float>(dispH) * static_cast<float>(dispH);
+            unsigned char releaseR = Bdat::getValCheck(mapFp, "ene_release_r", mapId, 1);
+            unsigned char releaseH = Bdat::getValCheck(mapFp, "ene_release_h", mapId, 1);
+            m_eneRelease.m_horizontalSq = static_cast<float>(dispR + releaseR) * static_cast<float>(dispR + releaseR);
+            m_eneRelease.m_verticalSq = static_cast<float>(dispH + releaseH) * static_cast<float>(dispH + releaseH);
+            const GmkSet* set = static_cast<const GmkSet*>(gmk.m_list->getCreateInfo().m_param);
+            unsigned char* enemyFp;
+            const IGmkList* list = set->m_gmkLists[GmkEnemy::TYPE];
+            if (list == nullptr || (enemyFp = list->getBindedBdatFp()) == nullptr) {
+                list = set->m_gmkLists[GmkRoutedEnemy::TYPE];
+                if (list == nullptr) {
+                    return;
+                }
+                enemyFp = list->getBindedBdatFp();
+                if (enemyFp == nullptr) {
+                    return;
+                }
+            }
+            m_windowArg = Bdat::getValCheck(enemyFp, "ene1ID", m_enPopId, 2);
+            return;
+        }
+    }
+    m_enPopId = 0;
+    m_windowArg = 0;
+}
+
+void GmkGrave::update(float dt) {
+    AGmkBase::update(dt);
+    if (!isValid()) {
+        return;
+    }
+    const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+    if (!info->isEnable()) {
+        return;
+    }
+    pad_48 = gf::GfDataEnemy::getEnemySuppress(info->m_windowArg) != 0;
+    validateTargetable();
+    if (!isInterestPosExist()) {
+        return;
+    }
+    if (canPopGobInst()) {
+        createGobInst();
+    } else if (canDepopGobInst()) {
+        gf::GF_OBJ_HANDLE* gob = m_gob;
+        if (gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            gf::GfObjAcc acc(gob);
+            if (acc.getObj() != nullptr && !acc.isDestroy() && !acc.testFlag(0x11)) {
+                gf::SCOM_DESTROY_GAME_OBJ::create(gob, 1.0f, 0);
+            }
+        }
+    }
+}
+
 void GmkGrave::debugDraw() const {
     AGmkBase::debugDraw();
     isValid();
@@ -3238,7 +3311,7 @@ void GmkSalvage::disposeRaffle(bool req) {
     m_raffleResult.m_enemyIds[2] = -1;
     for (int i = 0; i < 3; i++) {
         m_raffleResult.m_enemies[i].m_id = 0;
-        m_raffleResult.m_enemies[i].pad_2 = 0;
+        m_raffleResult.m_enemies[i].m_lvOffset = 0;
     }
     pad_d0 = false;
     pad_d1 = false;
@@ -3309,7 +3382,7 @@ void GmkSalvage::popByRaffleResult() {
             const RaffleResult::Enemy& enemy = m_raffleResult.m_enemies[i];
             int id = m_raffleResult.m_enemyIds[i];
             unsigned int enemyId = enemy.m_id;
-            unsigned char enemyPad = enemy.pad_2;
+            unsigned char enemyPad = enemy.m_lvOffset;
             locator->pad_e8 = id;
             locator->pad_ec = enemyId;
             locator->pad_f0 = enemyPad;
@@ -3455,6 +3528,57 @@ void GmkSalvage::onPlayerAccessed(gf::GF_OBJ_HANDLE*) { gf::GfGameFlag::setLocal
 void GmkSalvage::debugDraw() const {
     AGmkBase::debugDraw();
     isValid();
+}
+
+void GmkSalvage::createGfObjHandle() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    CBdatWrapper bdat(m_list->getBindedBdatFp());
+    m_gob = gf::GfObjFactory::createGmkCollection(bdat, m_createInfo.m_bdatId);
+    {
+        gf::GfObjAcc acc(m_gob);
+        acc.setUserData(gf::GfObjUserData(0), reinterpret_cast<unsigned long>(this));
+    }
+    bool disp;
+    if (pad_128) {
+        // the original calls getGmkType here and drops its answer
+        getGmkType();
+        disp = true;
+    } else {
+        disp = false;
+    }
+    gf::GF_OBJ_HANDLE* handle = m_gob;
+    if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setDisp(gf::OBJDISP(8), disp);
+        }
+    }
+    {
+        gf::GF_OBJ_HANDLE* gob = m_gob;
+        gf::GfObjAcc acc(gob);
+        if (acc.m_obj != nullptr) {
+            gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(gob)->m_setup);
+            setup->pad_6c |= 7;
+        }
+        if (gf::GfObj* obj = acc.getObj()) {
+            obj->pad_110 |= 7;
+        }
+    }
+    gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(m_gob)->m_setup);
+    const mm::Vec3* xform = m_pos;
+    setup->m_initialPos = xform[0];
+    setup->pad_30 = xform[1];
 }
 void GmkRoutedMapObj::create(const CreateInfo& info) { GmkRoute::create(info); }
 void GmkLandmark::create(const CreateInfo& info) { AGmkBase::create(info); }
@@ -3727,7 +3851,7 @@ void GmkSalvageLocator::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {
 
 void GmkSalvageLocator::reqDisposeTboxGobInst(float wait) const {
     m_disposeWait = wait;
-    pad_e4 = 0;
+    m_disposeTimer = 0.0f;
 }
 
 void GmkSalvageLocator::setTargetable(bool targetable) const {
@@ -3766,7 +3890,7 @@ void GmkSalvageLocator::dispose() {
     pad_e8 = -1;
     pad_ec = 0;
     m_disposeWait = 0.0f;
-    pad_e4 = 0;
+    m_disposeTimer = 0.0f;
     pad_58 = 0;
     m_dropitemEmitter.dispose();
     m_isAccessed = false;
@@ -3795,6 +3919,46 @@ void GmkSalvageLocator::syncDepopTboxes() {
     if (m_createInfo.m_data[0] == 4 && !pad_f1 && !pad_f2 && m_salvage != nullptr) {
         m_salvage->pad_129 = 1;
     }
+}
+
+void GmkSalvageLocator::debugDraw() const {
+    if (!isValid()) {
+        return;
+    }
+    mm::Vec3 dir = mm::Vec3::unitZ;
+    mm::Mat44 rot;
+    rot.setRotXYZ(m_pos[1]);
+    mm::Vec3 end = m_pos[0] + mm::Vec3(dir.x * rot.m[0][0] + dir.y * rot.m[1][0] + dir.z * rot.m[2][0] + rot.m[3][0],
+                                       dir.x * rot.m[0][1] + dir.y * rot.m[1][1] + dir.z * rot.m[2][1] + rot.m[3][1],
+                                       dir.x * rot.m[0][2] + dir.y * rot.m[1][2] + dir.z * rot.m[2][2] + rot.m[3][2]);
+    const mm::Col3& col = mm::Col3::green;
+    fw::debug::drawArrow(m_pos[0], end, mm::Col4(col.r, col.g, col.b, 1.0f));
+}
+
+void GmkSalvageLocator::createTboxGobInst() {
+    m_isAccessed = false;
+    disposeGobInst(false);
+    CBdatWrapper bdat(gf::GfDataBdat::getFP(0x77));
+    m_gob = gf::GfObjFactory::createGmkTbox(bdat, pad_e8);
+    {
+        gf::GfObjAcc acc(m_gob);
+        acc.setUserData(gf::GfObjUserData(0), reinterpret_cast<unsigned long>(this));
+    }
+    gf::GF_OBJ_HANDLE* handle = m_gob;
+    // the original calls getGmkType here and drops its answer
+    getGmkType();
+    {
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setDisp(gf::OBJDISP(8), true);
+        }
+    }
+    gf::GfObjSetupGimmick* setup = getSetupOf<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(m_gob), 8);
+    const mm::Vec3* xform = m_pos;
+    setup->m_initialPos = xform[0];
+    setup->pad_30 = xform[1];
+    setup->m_stateName = "S_drop";
+    setTargetable(true);
 }
 
 void GmkSalvageLocator::disposeGobInst(bool req) {
