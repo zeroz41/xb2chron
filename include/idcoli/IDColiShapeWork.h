@@ -42,6 +42,14 @@ public:
     float m_invLengthSq;  // 0x58 (calcCapsuleSetup)
 };
 
+// a sub character's work (IDColiPrimitive::createSubBaseCharacter): a capsule work (a sphere work in its place when
+// the shape is too short for a capsule) followed by the move of its position since the previous build (cleared when
+// the flag is set or the move is 2 or longer). The class and member names are not the original's.
+class CLSubCharacterWork : public CLCapsuleWork {
+public:
+    mm::Vec3 m_move;  // 0x60
+};
+
 // a line shape's work: 0x70 bytes (1.0.0's IDColiPrimitive::createRay fills two of them, at 0x0 and 0x70 of a
 // CLRayWork). IDColiInputUtil::getLine fills it; the names are not the original's.
 class CLLineWork {

@@ -33,6 +33,7 @@ public:
     static bool isSphereSphere(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isSphereCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isSphereInCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool isSphereInBox(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isCapsuleSphere(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isCapsuleCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isCapsuleInCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther);
@@ -66,6 +67,8 @@ public:
     // (parameter names inferred)
     static void getNearLineToLine(mm::Vec3& near0, mm::Vec3& near1, const mm::Vec3& start0, const mm::Vec3& end0,
                                   const mm::Vec3& start1, const mm::Vec3& end1);
+    // the nearest point to point on the segment (start, end) (IDColiGrandMesh::meshSphere; parameter names inferred)
+    static void getNearLineToPoint(mm::Vec3& out, const mm::Vec3& start, const mm::Vec3& end, const mm::Vec3& point);
 };
 
 class IDColiUtilColiResult {
@@ -89,7 +92,9 @@ public:
     static bool isPartsLineCapsule(IDColiResult& result, const CLLineWork* line, const void* pOther, bool ray,
                                    bool inside);
 
+    static bool isSphereInCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isSpherePoli(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool isCapsuleInCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isCapsulePoli(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isLineSphere(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isLineBox(IDColiResult& result, const IDColiInput& input, const void* pOther);

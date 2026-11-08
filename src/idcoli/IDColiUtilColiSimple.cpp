@@ -434,6 +434,19 @@ void IDColiInputUtil::getBox(IDColiInput& out, const CLBoxWork& box) {
     out.m_intMin[2] = ::floorf(box.m_min.z);
 }
 
+void IDColiUtilMath::getNearLineToPoint(mm::Vec3& out, const mm::Vec3& start, const mm::Vec3& end,
+                                        const mm::Vec3& point) {
+    mm::Vec3 dir = end - start;
+    float lengthSq = dir.dot(dir);
+    float t = dir.dot(point - start) / lengthSq;
+    if (t < 0.0f) t = 0.0f;
+    if (t > 1.0f) t = 1.0f;
+    out = dir * t;
+    out.x = start.x + out.x;
+    out.y = start.y + out.y;
+    out.z = start.z + out.z;
+}
+
 void IDColiPrimitive::calcBoxAaBb(CLBoxWork* box) {
     mm::Vec3 corners[8] = {
         mm::Vec3(box->m_size.x, box->m_size.y, box->m_size.z),    mm::Vec3(box->m_size.x, box->m_size.y, -box->m_size.z),
@@ -456,6 +469,53 @@ void IDColiPrimitive::calcBoxAaBb(CLBoxWork* box) {
     box->m_min += box->m_center;
 }
 
+void IDColiPrimitive::createSubBaseCharacter(void* base, IDColiBaseType& type, const mm::Mat44& matrix,
+                                             const mm::Vec3& size, bool flag) {
+    CLSubCharacterWork* work = static_cast<CLSubCharacterWork*>(base);
+    mm::Vec3 axis(matrix.m[0][0] + matrix.m[1][0] + matrix.m[2][0], matrix.m[0][1] + matrix.m[1][1] + matrix.m[2][1],
+                  matrix.m[0][2] + matrix.m[1][2] + matrix.m[2][2]);
+    float scale = axis.length() * IDColiObj::OBJ_CALC_RADIUS;
+    float radius = size.x * scale;
+    float height = scale * size.y;
+    if (!(height + radius * -2.0f <= 0.01f)) {
+        work->m_radius = radius;
+        if (flag) {
+            work->m_move = mm::Vec3(0.0f, 0.0f, 0.0f);
+            work->m_pos = matrix.getTrans();
+            work->m_pos.y += height;
+        } else {
+            mm::Vec3 pos = matrix.getTrans();
+            pos.y += height;
+            work->m_move.x = pos.x - work->m_pos.x;
+            work->m_move.y = pos.y - work->m_pos.y;
+            work->m_move.z = pos.z - work->m_pos.z;
+            float lengthSq = work->m_move.x * work->m_move.x + work->m_move.y * work->m_move.y;
+            if (work->m_move.z * work->m_move.z + lengthSq >= 4.0f) work->m_move = mm::Vec3(0.0f, 0.0f, 0.0f);
+            work->m_pos = pos;
+        }
+        work->m_end = work->m_pos;
+        work->m_end.y -= height;
+        calcCapsuleSetup(work);
+        type = IDCOLI_BASE_CHARACTER;
+    } else {
+        CLSphereWork* sphere = static_cast<CLSphereWork*>(base);
+        sphere->m_radius = radius;
+        if (flag) {
+            work->m_move = mm::Vec3(0.0f, 0.0f, 0.0f);
+            sphere->m_center = matrix.getTrans();
+        } else {
+            mm::Vec3 pos = matrix.getTrans();
+            work->m_move.x = pos.x - sphere->m_center.x;
+            work->m_move.y = pos.y - sphere->m_center.y;
+            work->m_move.z = pos.z - sphere->m_center.z;
+            float lengthSq = work->m_move.x * work->m_move.x + work->m_move.y * work->m_move.y;
+            if (work->m_move.z * work->m_move.z + lengthSq >= 4.0f) work->m_move = mm::Vec3(0.0f, 0.0f, 0.0f);
+            sphere->m_center = pos;
+        }
+        type = IDCOLI_BASE_SUB_CHARACTER;
+    }
+}
+
 void IDColiPrimitive::createBaseSphere(void* base, IDColiBaseType& type, const mm::Mat44& matrix, const mm::Vec3& size) {
     CLSphereWork* sphere = static_cast<CLSphereWork*>(base);
     type = IDCOLI_BASE_SPHERE;
@@ -469,6 +529,43 @@ void IDColiPrimitive::createBaseSphere(void* base, IDColiBaseType& type, const m
 void IDColiPrimitive::createBaseBox(void* base, IDColiBaseType& type, const mm::Mat44& matrix, const mm::Vec3& size) {
     calcBaseBoxSetup(static_cast<CLBoxWork*>(base), matrix, size);
     type = IDCOLI_BASE_BOX;
+}
+
+void IDColiPrimitive::createBaseInBox(void* base, IDColiBaseType& type, const mm::Mat44& matrix, const mm::Vec3& size) {
+    CLBoxWork* box = static_cast<CLBoxWork*>(base);
+    calcBaseBoxSetup(box, matrix, size);
+    type = IDCOLI_BASE_IN_BOX;
+    box->m_max.x += 4.0f;
+    box->m_min.x -= 4.0f;
+    box->m_max.y += 4.0f;
+    box->m_min.y -= 4.0f;
+    box->m_max.z += 4.0f;
+    box->m_min.z -= 4.0f;
+}
+
+void IDColiPrimitive::createBaseCharacter(void* base, IDColiBaseType& type, const mm::Mat44& matrix,
+                                          const mm::Vec3& size) {
+    mm::Vec3 axis(matrix.m[0][0] + matrix.m[1][0] + matrix.m[2][0], matrix.m[0][1] + matrix.m[1][1] + matrix.m[2][1],
+                  matrix.m[0][2] + matrix.m[1][2] + matrix.m[2][2]);
+    float scale = axis.length() * IDColiObj::OBJ_CALC_RADIUS;
+    float radius = size.x * scale;
+    float length = scale * size.y + radius * -2.0f;
+    if (length <= 0.01f) {
+        CLSphereWork* sphere = static_cast<CLSphereWork*>(base);
+        sphere->m_radius = radius;
+        sphere->m_center = matrix.getTrans();
+        sphere->m_center.y += radius;
+        type = IDCOLI_BASE_SUB_CHARACTER;
+    } else {
+        CLCapsuleWork* capsule = static_cast<CLCapsuleWork*>(base);
+        capsule->m_radius = radius;
+        capsule->m_pos = matrix.getTrans();
+        capsule->m_pos.y += radius;
+        capsule->m_end = capsule->m_pos;
+        capsule->m_end.y += length;
+        calcCapsuleSetup(capsule);
+        type = IDCOLI_BASE_CHARACTER;
+    }
 }
 
 void IDColiPrimitive::createBasePoli(void* base, IDColiBaseType& type, const mm::Mat44& matrix, const mm::Vec3&) {
