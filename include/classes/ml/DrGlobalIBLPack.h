@@ -11,6 +11,11 @@ class DrLightObjGlobalIBL;
 struct GlobalIBLFileHeader {
     unsigned int m_magic;
     unsigned int m_version;
+    // resourceInit's (the names are not the original's)
+    unsigned int m_objNum;     // 0x8, one DrLightObjGlobalIBL each
+    unsigned int m_objOffset;  // 0xC, from the file start: the objects' data, 0xB0 bytes each
+    unsigned int m_vtxOffset;  // 0x10, from the file start: the vertex data m_memPool is set up on
+    unsigned int m_vtxSize;    // 0x14
 };
 
 // table 0x7100B7AD98
@@ -21,6 +26,10 @@ public:
     virtual ~DrGlobalIBLPack();  // slot 0
     // takes the lights out of the view's DrShdLgtGlobalIBL
     void release();
+    // makes a DrLightObjGlobalIBL per object of the file and adds them to the view's DrShdLgtGlobalIBL
+    void resourceInit();
+    // adds or removes the lights when FLAG_HIDE changed, then updates them while shown
+    void update();
 
     // true for a global IBL file: the "GIBL" magic and version 10100 or 20000
     static bool checkFileType(const void* data);

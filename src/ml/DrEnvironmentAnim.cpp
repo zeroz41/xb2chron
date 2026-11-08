@@ -599,6 +599,47 @@ void DrEnvironmentObjLgt::setupSpot(DrEnvironmentLgtList* list, DrLightObjSpt* l
     list->m_light = light;
 }
 
+void DrLightObjDir::setMat(const float* mtx) {
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            m_mat.m[i][j] = mtx[i * 4 + j];
+        }
+    }
+    m_dir.x = m_mat.m[0][0] * 0.0f + m_mat.m[1][0] * 0.0f - m_mat.m[2][0];
+    m_dir.y = m_mat.m[0][1] * 0.0f + m_mat.m[1][1] * 0.0f - m_mat.m[2][1];
+    m_dir.z = m_mat.m[0][2] * 0.0f + m_mat.m[1][2] * 0.0f - m_mat.m[2][2];
+    float length = m_dir.length();
+    if (length <= 1e-6f) {
+        m_dir = mm::Vec3::zero;
+    } else {
+        float scale = 1.0f / length;
+        m_dir.x = scale * m_dir.x;
+        m_dir.y = scale * m_dir.y;
+        m_dir.z = scale * m_dir.z;
+    }
+}
+
+void DrLightObjSpt::setMat(const float* mtx) {
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            m_mat.m[i][j] = mtx[i * 4 + j];
+        }
+    }
+    m_dir.x = m_mat.m[0][0] * 0.0f + m_mat.m[1][0] * 0.0f - m_mat.m[2][0];
+    m_dir.y = m_mat.m[0][1] * 0.0f + m_mat.m[1][1] * 0.0f - m_mat.m[2][1];
+    m_dir.z = m_mat.m[0][2] * 0.0f + m_mat.m[1][2] * 0.0f - m_mat.m[2][2];
+    float length = m_dir.length();
+    if (length <= 1e-6f) {
+        m_dir = mm::Vec3::zero;
+    } else {
+        float scale = 1.0f / length;
+        m_dir.x = scale * m_dir.x;
+        m_dir.y = scale * m_dir.y;
+        m_dir.z = scale * m_dir.z;
+    }
+    m_pos = m_mat.getTrans();
+}
+
 void DrEnvironmentObjLgt::changeMemCall(const void* resource) {
     m_resource = resource;
     const char* res = static_cast<const char*>(resource);
@@ -1275,6 +1316,27 @@ void DrGlobalIBLPack::release() {
     }
 }
 
+void DrGlobalIBLPack::update() {
+    DrMan* man = DrMan::getIns();
+    if ((m_flags ^ m_prevFlags) & FLAG_HIDE) {
+        if (m_flags & FLAG_HIDE) {
+            for (unsigned int i = 0; i < m_lights.size(); ++i) {
+                man->m_lightMan->m_shdLgtMan->m_pGlobalIBL->removeObj(m_lights[i], m_viewIdx);
+            }
+        } else {
+            for (unsigned int i = 0; i < m_lights.size(); ++i) {
+                man->m_lightMan->m_shdLgtMan->m_pGlobalIBL->addObj(m_lights[i], m_viewIdx);
+            }
+        }
+    }
+    if (!(m_flags & FLAG_HIDE)) {
+        for (unsigned int i = 0; i < m_lights.size(); ++i) {
+            m_lights[i]->update();
+        }
+    }
+    m_prevFlags = m_flags;
+}
+
 // --- DrLightObjGlobalIBL ---
 DrLightObjGlobalIBL::DrLightObjGlobalIBL()
     : pad_0(nullptr), m_version(0), pad_10(0), pad_18(0), pad_48(0), pad_50(mm::Vec3::zero), pad_60(mm::Vec3::zero),
@@ -1285,9 +1347,22 @@ DrLightObjGlobalIBL::DrLightObjGlobalIBL()
     pad_3c4 = false;
     m_meshes.clear();
     for (int i = 0; i < 4; i++) {
-        pad_410[i] = mm::Vec4::zero;
+        m_similarityVec[i] = mm::Vec4::zero;
     }
 }
+
+float DrLightObjGlobalIBL::calcSimilarity(const DrLightObjGlobalIBL& other) const {
+    float sum = 0.0f;
+    for (int i = 0; i < 4; i++) {
+        sum += fabsf(m_similarityVec[i].x - other.m_similarityVec[i].x);
+        sum += fabsf(m_similarityVec[i].y - other.m_similarityVec[i].y);
+        sum += fabsf(m_similarityVec[i].z - other.m_similarityVec[i].z);
+        sum += fabsf(m_similarityVec[i].w - other.m_similarityVec[i].w);
+    }
+    return sum;
+}
+
+DrLightObjGlobalIBL::MeshData::MeshData(const MeshData& other) = default;
 
 void DrLightObjGlobalIBL::bindVertex(unsigned int index) {
     m_bindIndex = index;

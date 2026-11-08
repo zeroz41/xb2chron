@@ -13,6 +13,17 @@
 
 namespace ml {
 class DrResUseQueryObj;
+class DrMan;
+class DrGlobalIBLPack;
+
+// a global IBL file's object data (version 10100 / 20000 files); DrGlobalIBLPack::resourceInit steps through them
+// 0xB0 bytes apart for both versions (the layouts are not known)
+struct _GlobalIBLObjData {
+    unsigned char pad_0[0xB0];
+};
+struct _GlobalIBL2ObjData {
+    unsigned char pad_0[0xB0];
+};
 
 // A global IBL light (DrGlobalIBLPack::resourceInit makes them). Only what DrRequetIBL's getters read is declared;
 // the field names follow those getters (DrRequetIBL::getVersion, getTextureNum, getTexture, getAdditionalAmbient,
@@ -24,16 +35,33 @@ public:
     struct MeshData {
         grlib::CGLibVtxVertex m_vertex;  // 0x0, bindVertex binds it
         grlib::CGLibVtxIndex m_index;  // 0x28, drawVertex draws it
-        unsigned char pad_50[0xC0];
+        // 0x50..0x150 as the copy constructor copies it: two matrices (each with mm_mat44.h's alignment
+        // assertion), a word, three Vec3s (x, y, z), 0x110..0x11E as one 14-byte block, three Vec4s (x, y, z, w);
+        // the gaps 0xD4..0xE0 and 0x11E..0x120 and the tail 0x1D8..0x1E0 are not copied (padding)
+        mm::Mat44 pad_50;
+        mm::Mat44 pad_90;
+        float pad_d0;
+        mm::Vec3 pad_e0;
+        mm::Vec3 pad_f0;
+        mm::Vec3 pad_100;
         DrResUseQueryObj* m_query;  // 0x110, begin/endOccQuery
-        unsigned char pad_118[0x38];
+        unsigned char pad_118[0x6];
+        mm::Vec4 pad_120[3];
         grlib::CGLibDblUniformBlock m_uniform[2];  // 0x150
         grlib::CGLibPixlCounter m_pixlCounter;  // 0x1C0
-        unsigned char pad_1d8[0x8];
+
+        MeshData() = default;
+        // out of line (mm::mtl::Vector<MeshData>::extend calls it); defaulted in DrEnvironmentAnim.cpp
+        MeshData(const MeshData& other);
     };
 
     DrLightObjGlobalIBL();
     ~DrLightObjGlobalIBL();
+    void initializeFromBuffer(DrMan* drMan, const void* file, const _GlobalIBLObjData* data, unsigned int index,
+                              DrGlobalIBLPack* pack);
+    void initializeFromBuffer(DrMan* drMan, const void* file, const _GlobalIBL2ObjData* data, unsigned int index,
+                              DrGlobalIBLPack* pack);
+    void update();
     unsigned int getPriority() const;
     bool isInRange(const mm::Vec3& pos) const;
     float calcSimilarity(const DrLightObjGlobalIBL& other) const;
@@ -68,9 +96,13 @@ public:
     bool pad_3c4;
     unsigned char pad_3c5[0xB];
     mm::Mat44 m_mtx;  // 0x3D0, DrShdLgtGlobalIBL::updateUniformBlockImpl transposes it per slot (name inferred)
-    mm::Vec4 pad_410[4];
+    // 0x410: calcSimilarity sums the absolute differences of its sixteen floats with another light's (the name is
+    // not the original's)
+    mm::Vec4 m_similarityVec[4];
     unsigned char pad_450[0x3F0];
-    mm::Mat44 m_shMatrix[4];  // 0x840, by index * 4 + term (getSHMatrix); the bound is not proven
+    // 0x840, by index * 4 + term (getSHMatrix): 28 = seven textures by four terms, up to the 0xF40 bytes
+    // DrGlobalIBLPack::resourceInit allocates
+    mm::Mat44 m_shMatrix[28];
 };
 }  // namespace ml
 
