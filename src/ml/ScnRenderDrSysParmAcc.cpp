@@ -6,6 +6,7 @@
 #include "nn/vi.h"
 #include "nv/nv_MemoryManagement.h"
 #include <stdlib.h>
+#include <algorithm>
 #include "grlib/CGLibVtlMemPool.h"
 #include "grlib/CGLibMemHandle.h"
 #include "grlib/CGLibBuffReleaseTbl.h"
@@ -46,6 +47,7 @@
 #include "ml/ScnObjAccResSubMesh.h"
 #include "ml/ScnObjAccVolumeFade.h"
 #include "ml/ScnObjAccMdlParticle.h"
+#include "ml/MdlVtxParticle.h"
 #include "ml/ScnObjAccGpuCheck.h"
 #include "ml/ScnObjAccStmReadObj.h"
 #include "ml/ScnRenderDrEnvColi.h"
@@ -269,7 +271,7 @@ unsigned int CGLibMemPoolList::cntOffset(unsigned int size, unsigned int alignme
 
 CGLibMemPool::CGLibMemPool() : m_size(0), m_pAlloc(nullptr), m_pBuffer(nullptr) {}
 
-CGLibPartsMemPool::CGLibPartsMemPool() : m_pPrev(nullptr), m_pNext(nullptr) {}
+CGLibPartsMemPool::CGLibPartsMemPool() {}
 
 CGLibPartsMemPool::~CGLibPartsMemPool() { m_pool.release(); }
 
@@ -325,6 +327,22 @@ CGLibMemPool* CGLibMemPoolAdder::getMemPool(const void* p) {
         }
     }
     return nullptr;
+}
+
+void CGLibMemPoolAdder::addAdder(void* buffer, unsigned int size) {
+    ml::CS lock(getCriticalSection());
+    CGLibPartsMemPool* pPool = new (CGLibMemHandle::s_hMemHandle, nullptr, 0, 4, false) CGLibPartsMemPool;
+    pPool->addAdder(buffer, size);
+    if (m_pTail == nullptr) {
+        m_pHead = pPool;
+        m_pTail = pPool;
+        pPool->m_pPrev = nullptr;
+    } else {
+        m_pTail->m_pNext = pPool;
+        pPool->m_pPrev = m_pTail;
+        m_pTail = pPool;
+    }
+    pPool->m_pNext = nullptr;
 }
 
 void CGLibMemPoolAdder::releaseAdder(void* buffer) {
@@ -1219,6 +1237,41 @@ int ScnObjAccVolumeFade::getMax() const {
     return m_material->getVanishEffectMax();
 }
 
+void ScnObjAccVolumeFade::setParams(const VolumeFadeParams& params, int index) {
+    if (m_material == nullptr) {
+        return;
+    }
+    if (index >= 0) {
+        MdoVanishEffectWrk* wrk = m_material->getVanishEffectWrk(index, DrMan::s_nDblIdx);
+        if (wrk != nullptr) {
+            std::copy(params.m_colors, params.m_colors + 5, wrk->m_colors);
+            wrk->m_color0 = params.m_color0;
+            wrk->m_color1 = params.m_color1;
+            std::copy(params.m_values0, params.m_values0 + 5, wrk->m_values0);
+            std::copy(params.m_values1, params.m_values1 + 5, wrk->m_values1);
+            std::copy(params.m_values2, params.m_values2 + 5, wrk->m_values2);
+            wrk->m_value0 = params.m_value0;
+            wrk->m_value1 = params.m_value1;
+            wrk->m_volumeTexIdx = params.m_value2;
+            wrk->m_flags |= 0xEFF;
+        }
+    } else {
+        for (unsigned int i = 0; i < m_material->getVanishEffectMax(); i++) {
+            MdoVanishEffectWrk* wrk = m_material->getVanishEffectWrk(i, DrMan::s_nDblIdx);
+            std::copy(params.m_colors, params.m_colors + 5, wrk->m_colors);
+            wrk->m_color0 = params.m_color0;
+            wrk->m_color1 = params.m_color1;
+            std::copy(params.m_values0, params.m_values0 + 5, wrk->m_values0);
+            std::copy(params.m_values1, params.m_values1 + 5, wrk->m_values1);
+            std::copy(params.m_values2, params.m_values2 + 5, wrk->m_values2);
+            wrk->m_value0 = params.m_value0;
+            wrk->m_value1 = params.m_value1;
+            wrk->m_volumeTexIdx = params.m_value2;
+            wrk->m_flags |= 0xEFF;
+        }
+    }
+}
+
 void ScnObjAccVolumeFade::setRatio(float ratio, int index) {
     if (m_material == nullptr) {
         return;
@@ -1314,6 +1367,35 @@ void ScnObjAccMdlParticle::setActive(bool active, unsigned int index) {
         m_vtxMesh->setActive(active, index);
     }
 }
+
+void ScnObjAccMdlParticle::setParams(const MdlVtxParticle& params) {
+    DrResMdoVtxMeshObj* mesh = m_vtxMesh;
+    if (mesh != nullptr) {
+        mesh->m_val100 = params.m_val0;
+        mesh->m_val104 = params.m_val4;
+        mesh->m_val108 = params.m_val8;
+        mesh->m_val10C = params.m_valC;
+        mesh->m_val110 = params.m_val10;
+        mesh->m_val11C = params.m_val1C;
+        mesh->m_val114 = params.m_val14;
+        mesh->m_val120 = params.m_val20;
+        mesh->m_val124 = params.m_val24;
+        mesh->m_val128 = params.m_val28;
+        mesh->m_val12C = params.m_val2C;
+        mesh->m_val130 = params.m_alpha;
+        if (mesh->m_val124 > 1.0f) {
+            mesh->m_val124 = 1.0f;
+        } else if (mesh->m_val124 < 0.0f) {
+            mesh->m_val124 = 0.0f;
+        }
+        if (mesh->m_val128 > 1.0f) {
+            mesh->m_val128 = 1.0f;
+        } else if (mesh->m_val128 < 0.0f) {
+            mesh->m_val128 = 0.0f;
+        }
+    }
+}
+
 ScnObjAccSeamPos::ScnObjAccSeamPos(ScnObjModel* model) : m_anm(nullptr) {
     DrMdlObj* mdl = static_cast<ScnObjModelDrSys*>(model)->m_pMdlObj;
     if (mdl->m_mdlType == 3) {

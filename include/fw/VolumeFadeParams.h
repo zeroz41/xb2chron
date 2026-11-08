@@ -17,7 +17,7 @@ struct VolumeFadeParams {
     float m_values2[5];
     float m_value0;
     float m_value1;
-    float m_value2;
+    int m_value2;  // ml::ScnObjAccVolumeFade::setParams copies it to MdoVanishEffectWrk::m_volumeTexIdx as is
     float m_keyFrames[4];  // the keys' times in frames (up to the last nonzero one)
     float m_keyFades[4];   // 1 - each key's fade ratio
 };

@@ -34,15 +34,24 @@ public:
     unsigned int m_offset;  // 0x20: the end of what was cut
 };
 
+class CGLibPartsMemPool;
+
+// CGLibPartsMemPool's list links, a sub-object with its own constructor (the name is not the original's): the
+// links are cleared as one block ahead of the pool's fields in CGLibMemPoolAdder::addAdder, which needs the links
+// initialized by a constructor of their own
+struct CGLibPartsMemPoolLink {
+    CGLibPartsMemPoolLink() : m_pPrev(nullptr), m_pNext(nullptr) {}
+    CGLibPartsMemPool* m_pPrev;  // 0x00
+    CGLibPartsMemPool* m_pNext;  // 0x08
+};
+
 // a pool CGLibMemPoolAdder adds, in its list
-class CGLibPartsMemPool {
+class CGLibPartsMemPool : public CGLibPartsMemPoolLink {
 public:
     CGLibPartsMemPool();
     ~CGLibPartsMemPool();
     void addAdder(void* buffer, unsigned int size);
-    CGLibPartsMemPool* m_pPrev;  // 0x00
-    CGLibPartsMemPool* m_pNext;  // 0x08
-    CGLibMemPool m_pool;         // 0x10
+    CGLibMemPool m_pool;  // 0x10
 };
 
 }  // namespace grlib

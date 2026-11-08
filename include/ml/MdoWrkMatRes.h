@@ -2,6 +2,7 @@
 #define ML_MDOWRKMATRES_H
 
 #include "mm/Col3.h"
+#include "mm/Vec3.h"
 
 #include "grlib/CGLibUniformArray.h"
 
@@ -90,7 +91,16 @@ struct MdoMdlData {
 // index * 3 + bank of the array at MdoWrkMatRes+0x158 (banks: DrMan::s_nDblIdx, s_nDblStockIdx, 2). The type and
 // field names are not the original's.
 struct MdoVanishEffectWrk {
-    unsigned char pad_0[0xA4];
+    // 0x0..0xA4: ScnObjAccVolumeFade::setParams copies VolumeFadeParams' fields here
+    mm::Col3 m_colors[5];  // 0x0
+    unsigned char pad_3C[0x4];
+    mm::Vec3 m_color0;     // 0x40
+    mm::Vec3 m_color1;     // 0x50
+    float m_values0[5];    // 0x60
+    float m_values1[5];    // 0x74
+    float m_values2[5];    // 0x88
+    float m_value0;        // 0x9C
+    float m_value1;        // 0xA0
     float m_ratio;  // 0xA4, ScnObjAccVolumeFade::setRatio/getRatio
     int m_volumeTexIdx;  // 0xA8, DrMdoSetup::varStTex_VolumeTex00 binds DrIniSys::m_texture[7 + this] (bank 2)
     unsigned char pad_AC[0x28];

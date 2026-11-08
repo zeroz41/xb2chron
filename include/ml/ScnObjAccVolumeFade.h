@@ -20,7 +20,7 @@ struct VolumeFadeParams {
     float m_values2[5];
     float m_value0;
     float m_value1;
-    float m_value2;
+    int m_value2;  // setParams copies it to MdoVanishEffectWrk::m_volumeTexIdx
 };
 
 // access to a model's volume fade: the model's material set (ScnObjModel's at 0x3D8)

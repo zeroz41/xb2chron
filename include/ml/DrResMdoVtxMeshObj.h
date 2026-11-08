@@ -4,6 +4,7 @@
 #include "grlib/CGLibOneUniformBlock.h"
 #include "grlib/CGLibDblUniformBlock.h"
 #include "mm/Mat44.h"
+#include "ml/MdlVtxParticle.h"
 
 namespace grlib {
 class CGLibVtxVertex;
@@ -22,8 +23,8 @@ public:
         m_val110 = 30;
         m_val108 = 1.2f;
         m_val10C = -0.05f;
-        m_val114 = 0.18f;
-        m_val118 = 0.12f;
+        m_val114.m_first = 0.18f;
+        m_val114.m_second = 0.12f;
         m_val11C = 0.09f;
         m_val120 = 0.998f;
         m_val124 = 0.3f;
@@ -88,8 +89,7 @@ public:
     float m_val108;                            // 0x108
     float m_val10C;                            // 0x10C
     int m_val110;                              // 0x110
-    float m_val114;                            // 0x114
-    float m_val118;                            // 0x118
+    MdlVtxParticle::Pair m_val114;             // 0x114
     float m_val11C;                            // 0x11C
     float m_val120;                            // 0x120
     float m_val124;                            // 0x124
