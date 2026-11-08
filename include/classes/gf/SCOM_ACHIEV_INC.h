@@ -34,6 +34,8 @@ public:
     static unsigned long create(unsigned int type, int value, unsigned int);
     // the same for every blade in the party (GfDataBlade::getListPartyAll)
     static unsigned long createParty(unsigned int type, int value);
+    // queues one request (type, value) for every blade fn_7100563BB4 lists for the handle (its third argument false)
+    static void createCurrentBlade(GF_OBJ_HANDLE* handle, unsigned int type, int value);
     static void addTotalCount(unsigned int type, unsigned int value);
     // counts and queues achievement 49 (value 1) and adds 50 for every blade in the party
     static void createBladeCreate();

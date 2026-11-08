@@ -92,6 +92,9 @@
 #include "classes/gf/SCOM_MISSION_COMPLETE.h"
 #include "classes/gf/GfGameFlag.h"
 #include "classes/gf/SCOM_CHAR_DEAD.h"
+#include "classes/gf/SCOM_CHAR_DMG.h"
+#include "gf/GfAchievStats.h"
+#include "classes/gf/GfQuestTarget.h"
 #include "classes/gf/GfGameScene.h"
 #include "classes/gf/GfGameParty.h"
 #include "classes/gf/GfAllocator.h"
@@ -1690,6 +1693,16 @@ unsigned long SCOM_ACHIEV_INC::createParty(unsigned int type, int value) {
     return GfReqSmallCom::addRequestParallel(request);
 }
 
+void SCOM_ACHIEV_INC::createCurrentBlade(GF_OBJ_HANDLE* handle, unsigned int type, int value) {
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    fn_7100563BB4(blades, handle, false);
+    for (const unsigned short& blade : blades) {
+#line 3399
+        GfReqSmallCom::addRequestParallel(new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+                                              SCOM_ACHIEV_INC(GfReqSmallCom::sys()->newHandle(), type, value, blade));
+    }
+}
+
 void SCOM_ACHIEV_INC::addTotalCount(unsigned int type, unsigned int value) {
     GfDataAchievement::addTotalCount(type, value);
 }
@@ -3067,6 +3080,32 @@ void SCOM_ACHIEV_INC::createKillEnemy(GF_OBJ_HANDLE* handle) {
         do {
             create(0x64, 1, *it);
         } while (++it != end);
+    }
+}
+
+void SCOM_CHAR_DMG::create(GF_OBJ_HANDLE* handle, const MsgObjectNotifyDamage& msg) {
+    if (GfGameScene* scene = GfGameScene::sys()) {
+        scene->addDamage(handle, msg);
+    }
+    GfAchievStats::checkFallLength(handle, msg);
+    if (GfObjUtil::getObjType(handle) == 5 && GfQuestTarget::getIconType(handle, QuestID()) == 0) {
+        return;
+    }
+    mm::mtl::FixedVector<QuestID, 128> quests;
+    unsigned int max = GfQuestManager::getOrderQuestMax();
+    for (unsigned int i = 0; i < max; i++) {
+        QuestID id = GfQuestManager::getOrderQuest(i);
+        if (id.empty() || !GfQuestTask::isReduceHpObj(id, handle)) {
+            continue;
+        }
+        // the original calls isReduceHpObj a second time here
+        if (!GfQuestTask::isReduceHpObj(id, handle) && GfGameScene::sys() != nullptr) {
+            GfGameScene::sys()->setEraseQuestEnemyForEventStart(id);
+        }
+        quests.push_back(id);
+    }
+    for (const QuestID& id : quests) {
+        GfQuestManager::eventCheckTask(id);
     }
 }
 

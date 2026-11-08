@@ -43,6 +43,8 @@ public:
     // 2.0.0's symbols type the handle GF_SCOM_HANDLE*, as SCOM_OBJ_VFADE's constructor
     explicit SCOM_PARTY_ADD(GF_SCOM_HANDLE* handle);
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
+    // exec's path when GfGameManager::isGameTypeIra()
+    bool execForIra(fw::UpdateInfo const&);
 
     static unsigned long create();
     static void addBlade(unsigned int blade, unsigned int driver, int param);
@@ -50,6 +52,9 @@ public:
     // (every caller passes true for it; checked only once the game is cleared)
     static void removeBlade(unsigned int blade, bool flag, bool checkClear = true);
     static void removeBlade(unsigned int driver, int slot, bool flag);
+    // the same for the menu: never checks a cleared game's exceptions; in a cleared game the driver's blade 1001 or 1002
+    // also removes the other one and 1003
+    static void removeBladeForMenu(unsigned int driver, int slot, bool flag);
     static void addDriver(unsigned int driver, unsigned int param);
     static void removeDriver(unsigned int driver, bool flag);
     static void setCurrentBlade(unsigned int blade);
