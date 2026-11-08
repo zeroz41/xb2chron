@@ -6,12 +6,16 @@
 #include "classes/gf/GfMenuIDList.h"
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfMenuObjHitonowa.h"
+#include "classes/gf/GfMenuObjOperationInfo.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
 #include "classes/ui/UIEventManager.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UISelectObjList.h"
 #include "gf/GfMenuObjUtil.h"
+#include "mm/Rect.h"
 #include "mm/mtl/FixStr.h"
 #include "ui/EventData.h"
+#include "ui/UIStr.h"
 
 namespace gf {
 
@@ -156,6 +160,218 @@ bool GfMenuObjNpcTelop::seqStart() {
         GfMenuObject::sendEvent(acc.m_handle, event, delay);
     }
     return true;
+}
+
+void GfMenuObjNpcTelop::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        acc.setSuspend(true);
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjOperationInfo::close();
+            GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+        }
+        break;
+    case 0xC: {
+        unsigned int index = event.m_param0;
+        if (m_state == 1) {
+            if (s_OpenParam.m_flag == 0) {
+                SCOM_FIELD_VOICE::createHitonowaGet();
+            }
+            GfMenuObject::enableInput(acc.m_handle);
+            GfMenuObjOperationInfo::open(acc.m_handle, 0, 0, 0);
+            GfMenuObjOperationInfo::setGuideDisp(false);
+        } else {
+            mm::mtl::FixStr<32> name;
+            for (unsigned int i = 0; i < m_owner->m_idList->getSize(); i++) {
+                name.format("IMG_char_face@%02d", i + 1);
+                ui::UIObjectAcc face(acc.m_handle, name.m_str);
+                face.setImageIndex(0);
+            }
+            m_owner->m_idList->clear();
+            GfMenuObject::termCallContext(acc.m_handle);
+            acc.setDisp(false);
+            acc.setSuspend(true);
+        }
+        mm::mtl::FixStr<32> name;
+        name.format("IMG_char_get_eff@%02d", index + 1);
+        ui::UIObjectAcc eff(acc.m_handle, name.m_str);
+        GfMenuObject::hookAnimationEvent(0, eff.m_handle, 0);
+        break;
+    }
+    case 0x21:
+        if (s_OpenParam.m_entries.size() != 0 && m_owner->m_selectList != nullptr) {
+            m_owner->m_selectList->clear();
+            m_owner->m_idList->clear();
+            mm::mtl::FixStr<32> name;
+            {
+                ui::UIObjectAcc base(acc.m_handle, "IMG_telop_base");
+                base.startAnimation(s_OpenParam.m_flag == 0 ? "start_success" : "start_failed", false);
+                acc.setDispChild(s_OpenParam.m_flag == 0, "LAY_telop_success");
+                acc.setDispChild(s_OpenParam.m_flag == 1, "LAY_telop_lost");
+                acc.setDispChild(true, "LAY_telop");
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_motionLib = "cmn_fade_motion_lr";
+                param.m_motion = "fade_in_l";
+                param.m_setDefault = true;
+                param.m_startFlags = 8;
+                GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_telop");
+            }
+            for (unsigned int i = 0; i < 3; i++) {
+                name.format("LAY_char@%02d", i + 1);
+                ui::UIObjectAcc chara(acc.m_handle, name.m_str);
+                chara.setDisp(false);
+                if (i < s_OpenParam.m_entries.size()) {
+                    OpenParam::Entry& entry = s_OpenParam.m_entries[i];
+                    name.format("TXT_char_name@%02d", i + 1);
+                    if (entry.m_bdat == nullptr) {
+                        acc.setDispChild(false, name.m_str);
+                    } else {
+                        bool disp = entry.m_name != 0;
+                        acc.setDispChild(disp, name.m_str);
+                        if (disp) {
+                            // a temporary object (the original gives it a stack slot of its own)
+                            ui::UIObjectAcc(acc.m_handle, name.m_str).setText(ui::UIStr(entry.m_bdat, entry.m_name));
+                        }
+                    }
+                    // the original passes a copy of the handle
+                    m_owner->m_selectList->addContents(static_cast<unsigned int>(chara.m_handle));
+                    {  // the original stores the second id first, in a slot it shares with the face object
+                        MenuID id;
+                        id.m_subId = 0;
+                        id.m_id = entry.m_id;
+                        m_owner->m_idList->addContents(id);
+                    }
+                    name.format("IMG_char_face@%02d", i + 1);
+                    ui::UIObjectAcc face(acc.m_handle, name.m_str);
+                    GfMenuObjHitonowa::setFaceStream(face, entry.m_id);
+                }
+            }
+            mm::Rect<short> center;
+            mm::Rect<short> range;
+            acc.getLayoutRect("get_anim_center", center);
+            acc.getLayoutRect("get_anim_range", range);
+            GfMenuObjUtil::placeObjectH(m_owner->m_selectList,
+                                        mm::Pnt<short>(center.x + center.w / 2, center.y + center.h / 2),
+                                        range.x - center.x);
+            acc.setDisp(true);
+            acc.setSuspend(false);
+            m_owner->m_waitCount = 0;
+            m_owner->m_seq0.addJob(&GfMenuObjNpcTelop::seqWaitStream);
+            m_owner->m_seq0.addJob(&GfMenuObjNpcTelop::seqStart);
+            m_state = 1;
+        } else {
+            GfMenuObject::termCallContext(acc.m_handle);
+        }
+        break;
+    case 0x22:
+        if (m_state == 0) {
+            break;
+        }
+        if (s_OpenParam.m_entries.size() != 0 && m_owner->m_selectList != nullptr) {
+            mm::mtl::FixStr<32> name;
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 2;
+            param.m_time = 0.16666667f;
+            param.m_startFlags = 10;
+            {
+                ui::UIObjectAcc base(acc.m_handle, "IMG_telop_base");
+                base.startAnimation(s_OpenParam.m_flag == 0 ? "end_success" : "end_filed", false);
+                GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_telop");
+            }
+            GfMenuObjUtil::playSE(0x2B);
+            for (unsigned int i = 0; i < s_OpenParam.m_entries.size(); i++) {
+                name.format("IMG_char_get_eff@%02d", i + 1);
+                ui::UIObjectAcc eff(acc.m_handle, name.m_str);
+                if (s_OpenParam.m_flag != 0) {
+                    eff.startAnimation("end_failed", false);
+                } else {
+                    eff.startAnimation("end_success", false);
+                }
+                if (i == m_owner->m_selectList->getSize() - 1) {
+                    GfMenuObject::hookAnimationEvent(acc.m_handle, eff.m_handle, i);
+                }
+                name.format("LAY_char_face@%02d", i + 1);
+                GfMenuObjUtil::startCtrl(acc.m_handle, param, name.m_str);
+                name.format("LAY_char_name@%02d", i + 1);
+                GfMenuObjUtil::startCtrl(acc.m_handle, param, name.m_str);
+            }
+            GfMenuObjNpcTelop* owner = m_owner;
+            m_state = 0;
+            owner->m_seq0.clear();
+        } else {
+            GfMenuObject::termCallContext(acc.m_handle);
+        }
+        break;
+    case 0x100: {
+        unsigned int index = event.m_param0;
+        mm::mtl::FixStr<32> name;
+        name.format("LAY_char@%02d", index + 1);
+        acc.setDispChild(true, name.m_str);
+        name.format("LAY_char_face@%02d", index + 1);
+        acc.setDispChild(s_OpenParam.m_flag == 1, name.m_str);
+        name.format("LAY_char_name@%02d", index + 1);
+        acc.setDispChild(s_OpenParam.m_flag == 1, name.m_str);
+        name.format("IMG_char_get_eff@%02d", index + 1);
+        ui::UIObjectAcc eff(acc.m_handle, name.m_str);
+        if (s_OpenParam.m_flag == 0) {
+            eff.startAnimation("start_success", false);
+            ui::EventData next;
+            next.m_type = 0x101;
+            next.m_param0 = index;
+            GfMenuObject::sendEvent(acc.m_handle, next, 1.0f);
+        } else {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_in_l";
+            param.m_setDefault = true;
+            param.m_startFlags = 8;
+            name.format("LAY_char_face@%02d", index + 1);
+            acc.setDispChild(true, name.m_str);
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, name.m_str);
+            name.format("LAY_char_name@%02d", index + 1);
+            acc.setDispChild(true, name.m_str);
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, name.m_str);
+            eff.startAnimation("start_failed", false);
+            ui::EventData next;
+            next.m_type = 0x102;
+            GfMenuObject::sendEvent(acc.m_handle, next, 0.83333337f);
+        }
+        if (index == m_owner->m_selectList->getSize() - 1) {
+            GfMenuObject::hookAnimationEvent(acc.m_handle, eff.m_handle, index);
+        }
+        break;
+    }
+    case 0x101: {
+        unsigned int index = event.m_param0;
+        mm::mtl::FixStr<32> name;
+        name.format("LAY_char_face@%02d", index + 1);
+        acc.setDispChild(true, name.m_str);
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_l";
+        param.m_setDefault = true;
+        param.m_startFlags = 8;
+        name.format("LAY_char_name@%02d", index + 1);
+        acc.setDispChild(true, name.m_str);
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, name.m_str);
+        GfMenuObjUtil::playSE(0x2A);
+        break;
+    }
+    case 0x102:
+        GfMenuObjUtil::playSE(0x32);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 void GfMenuObjNpcTelop::HitonowaListener::reciveEvent(const ui::EventData& event, unsigned int handle) {

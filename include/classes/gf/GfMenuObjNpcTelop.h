@@ -21,7 +21,7 @@ public:
     struct OpenParam {
         // one face: the id the caller was given, BDAT table 0x1B5 and its "Name" value of that id
         struct Entry {
-            int m_id;
+            unsigned int m_id;  // unsigned: MainListener::reciveEvent passes it to setFaceStream and a MenuID
             unsigned char* m_bdat;
             unsigned int m_name;
         };
@@ -58,7 +58,7 @@ public:
     GfMenuSequence<GfMenuObjNpcTelop, 4> m_seq1;  // 0x1A0 (the name is not the original's)
 };
 
-// table 0x7100B63A90: LAY_main's listener (2.0.0's symbols name it; its reciveEvent is not written yet)
+// table 0x7100B63A90: LAY_main's listener (2.0.0's symbols name it)
 class GfMenuObjNpcTelop::MainListener : public ::ui::UIObjectListener {
 public:
     MainListener(GfMenuObjNpcTelop* owner) : m_state(0), pad_10(), m_owner(owner) {}
