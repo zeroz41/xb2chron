@@ -45,6 +45,11 @@ public:
     SCOM_FIELD_VOICE(bool stopOnEvent = false)
         : SCOM(SCOM_TYPE(0x3f)), m_flagD0(false), m_flagD1(false), m_stopOnEvent(stopOnEvent),
           m_flagD3(false) {}
+    // the same with the request handle passed in: createLevelup takes the handle (newHandle) before it asks
+    // GfGameManager::isTalking, which only this argument order gives
+    SCOM_FIELD_VOICE(unsigned long handle, bool stopOnEvent)
+        : SCOM(SCOM_TYPE(0x3f), handle), m_flagD0(false), m_flagD1(false), m_stopOnEvent(stopOnEvent),
+          m_flagD3(false) {}
     // inline: the create functions queue their voices in place
     void add(const ParamObj& obj, CV_FIELD field, CV_PRIO prio, float wait = 0.0f) {
         m_voices.push_back(Voice(obj, field, prio, wait));
@@ -56,7 +61,7 @@ public:
     // the bad weather voice and a time range's voice (GfGameScene::gevChangeWeather and gevChangeTimeRange call them
     // and ignore what they return; createTime returns the request handle or -1, outside battle, for a party slot
     // fn_71005680B0 picks whose driver has HP and is valid: the driver's voice, then its partner's)
-    static void createBadWeather();
+    static unsigned long createBadWeather();
     static unsigned long createTime(CV_FIELD field);
     // the voice for leaving an inn (GfMenuObjShop::seqStartSleepFade calls it and ignores what it returns): the
     // partner's voice, then the driver's (field 9), with m_flagD0 set; the request handle or -1
@@ -155,7 +160,7 @@ public:
     // createChangeWeatherIra (0x71005687A4) is not written yet.
     static void createHitonowaGet();
     static void playStop(GF_SCOM_HANDLE* handle);
-    static void createChangeWeatherIra();
+    static unsigned long createChangeWeatherIra();
 
     // true while the voices are to be cut short: 1.0.0 has it out of line (m_stopOnEvent and
     // GfGameManager::isPlayEvent()); 3.0.1's exec inlines it and also tests m_flagD3

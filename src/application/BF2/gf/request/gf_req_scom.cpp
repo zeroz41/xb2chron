@@ -400,6 +400,39 @@ bool SCOM_ENBOOK_DEAD_PLAYER::exec(fw::UpdateInfo const&) {
     return true;
 }
 
+bool SCOM_HOMURI_PARTS::exec(fw::UpdateInfo const& info) {
+    m_time += info.m_deltaTime;
+    if (m_time > m_duration) {
+        m_time = m_duration;
+    }
+    float ratio = m_duration > 0.0f ? m_time / m_duration : 1.0f;
+    if (GfWeapon* weapon = GfGameParty::getHandleWeapon(m_party, -1)) {
+        for (int i = 0; i < 10; ++i) {
+            GfObjAcc acc(weapon->getObjHandles()[i]);
+            if (acc.m_obj == nullptr) {
+                continue;
+            }
+            int mesh = acc.getExtMeshIdx("max_mode");
+            if (mesh >= 0) {
+                acc.setExtMeshAlpha(mesh, m_toMax ? ratio : 1.0f - ratio);
+            }
+            mesh = acc.getExtMeshIdx("max_eff");
+            if (mesh >= 0) {
+                acc.setExtMeshAlpha(mesh, m_toMax ? ratio : 1.0f - ratio);
+            }
+            mesh = acc.getExtMeshIdx("normal_mode");
+            if (mesh >= 0) {
+                acc.setExtMeshAlpha(mesh, m_toMax ? 1.0f - ratio : ratio);
+            }
+            mesh = acc.getExtMeshIdx("normal_eff");
+            if (mesh >= 0) {
+                acc.setExtMeshAlpha(mesh, m_toMax ? 1.0f - ratio : ratio);
+            }
+        }
+    }
+    return m_time >= m_duration;
+}
+
 void SCOM_HOMURI_PARTS::create(unsigned int party, bool toMax, float duration) {
 #line 5826
     SCOM_HOMURI_PARTS* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_HOMURI_PARTS(SCOM_TYPE(76));
@@ -1899,6 +1932,99 @@ void SCOM_ACHIEV_INC::createKizuna(GF_OBJ_HANDLE* handle) {
     }
 }
 
+// Placeholder names: the symbols leave these file-local functions unnamed. fn_7100565E54: true when a blade one of
+// the party's drivers engages, other than exclude, passes check(blade, value); the others are the checks
+// createBattle passes it (a female blade, a male blade, a blade whose quest race is not 2, a weapon type)
+static bool fn_7100565E54(bool (*check)(const DataParamAcc&, int), unsigned int exclude, int value) {
+    for (unsigned int i = 0; i < 3; i++) {
+        DataParamAcc driver(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0)));
+        if (!driver.isValid()) {
+            continue;
+        }
+        for (int slot = 0;
+             slot < GfDataDriver::getMaxSetBladeNum(driver.isValid() && driver.getObjType() == 3 ? driver.getBdatId() : 0);
+             slot++) {
+            unsigned int blade = driver.getBlade(slot, false);
+            if (blade != 0 && blade == exclude) {
+                continue;
+            }
+            DataParamAcc acc(4, driver.getBlade(slot, false), GimmickType(0));
+            if (!acc.isValid()) {
+                continue;
+            }
+            if (check(acc, value)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+static bool fn_7100565FA0(const DataParamAcc& blade, int) {
+    return blade.getGender() == 1;
+}
+
+static bool fn_7100565FBC(const DataParamAcc& blade, int) {
+    return blade.getGender() == 2;
+}
+
+static bool fn_7100565FD8(const DataParamAcc& blade, int) {
+    return blade.getQuestRace() != 2;
+}
+
+static bool fn_7100565FF4(const DataParamAcc& blade, int weapon) {
+    return blade.getWeaponType(-1, false) == weapon;
+}
+
+namespace {
+// Proposed names, not the original's: the symbols leave them unnamed (lbl_71009B7A58)
+struct ItemAchiev {
+    unsigned short m_item;
+    unsigned short m_type;
+};
+}  // namespace
+
+// counts a battle: achievement 0x65, one for each of four items the party has, and per party driver the blade
+// types 0x66.. with the leader's blade checked against the other engaged blades
+void SCOM_ACHIEV_INC::createBattle() {
+    static const ItemAchiev s_itemAchievs[4] = {{0xAFCD, 0x97}, {0xAFCE, 0x98}, {0xAFCF, 0x99}, {0xAFD0, 0x9A}};
+    addTotalCount(0x65, 1);
+    create(0x65, 1, 0);
+    for (int i = 0; i < 4; i++) {
+        if (GfItemUtil::getItemBoxCount(s_itemAchievs[i].m_item) != 0) {
+            unsigned int type = s_itemAchievs[i].m_type;
+            addTotalCount(type, 1);
+            create(type, 1, 0);
+        }
+    }
+    DataParamAcc leader(GfGameManager::getPartyLeaderDriver());
+    for (unsigned int i = 0; i < 3; i++) {
+        DataParamAcc driver(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0)));
+        if (!driver.isValid()) {
+            continue;
+        }
+        create(0x66, 1, driver.getBlade(-1, false));
+        if (fn_7100565E54(fn_7100565FA0, leader.getBlade(-1, false), 0)) {
+            create(0x67, 1, driver.getBlade(-1, false));
+        }
+        if (fn_7100565E54(fn_7100565FBC, leader.getBlade(-1, false), 0)) {
+            create(0x68, 1, driver.getBlade(-1, false));
+        }
+        if (fn_7100565E54(fn_7100565FD8, leader.getBlade(-1, false), 0)) {
+            create(0x69, 1, driver.getBlade(-1, false));
+        }
+        for (unsigned int type = 0x6A; type < 0x71; type++) {
+            int weapon = type - 0x60;
+            if (fn_7100565E54(fn_7100565FF4, leader.getBlade(-1, false), weapon)) {
+                create(type, 1, driver.getBlade(-1, false));
+            }
+        }
+        if (GfDataBlade::isActivateParty(0x3E9) || GfDataBlade::isActivateParty(0x3EA)) {
+            create(0x71, 1, driver.getBlade(-1, false));
+        }
+    }
+}
+
 void SCOM_ACHIEV_INC::createBladeCreate() {
     addTotalCount(49, 1);
     create(49, 1, 0);
@@ -1934,6 +2060,40 @@ void SCOM_ACHIEV_INC::createCbCube(unsigned int value) {
     GfDataBlade::getListParty(blades);
     if (GfAchievManager* manager = GfAchievManager::sys()) {
         manager->checkAchievWithBlade(0x9C, value, blades);
+    }
+}
+
+// Proposed name, not the original's (lbl_7100B6B890): per challenge-battle stage 1..27, the achievement counted
+// for the party's blades, then the one counted once and queued
+__attribute__((used)) static unsigned short s_cbStageAchievs[2][27] = {
+    {0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD,
+     0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xD0, 0xD1, 0xD2},
+    {0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5,
+     0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD3, 0xD4, 0xD5},
+};
+
+void SCOM_ACHIEV_INC::createCbClearStage(unsigned int id) {
+    if (!GfGameManager::isInstalledBattleArenaContents()) {
+        return;
+    }
+    if (GfGameManager::isInstalledBattleArenaContents()) {
+        GfDataAchievement::addTotalCount(0x9F, 1);
+        mm::mtl::FixedVector<unsigned short, 422> blades;
+        GfDataBlade::getListParty(blades);
+        if (GfAchievManager* manager = GfAchievManager::sys()) {
+            manager->incAchievWithBlade(0x9E, 1, blades);
+        }
+    }
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    GfDataBlade::getListParty(blades);
+    GfAchievManager* manager = GfAchievManager::sys();
+    if (id < 0x1C && manager) {
+        manager->incAchievWithBlade(s_cbStageAchievs[0][id - 1], 1, blades);
+    }
+    if (id < 0x1C) {
+        unsigned int type = s_cbStageAchievs[1][id - 1];
+        addTotalCount(type, 1);
+        create(type, 1, 0);
     }
 }
 
@@ -2254,6 +2414,31 @@ unsigned long SCOM_FIELD_VOICE::createUnexplored() {
     return GfReqSmallCom::addRequestParallel(request);
 }
 
+unsigned long SCOM_FIELD_VOICE::createLevelup(const ParamObj& obj) {
+    unsigned int party = GfObjUtil::getPartyID(obj.m_handle);
+    if (party != static_cast<unsigned int>(-1)) {
+        GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, static_cast<PTPOS>(0));
+        if (driver != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            unsigned int hp;
+            {
+                DataParamAcc acc(driver);
+                hp = acc.getHp();
+            }
+            if (hp == 0) {
+                return -1;
+            }
+        }
+    }
+#line 4675
+    SCOM_FIELD_VOICE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        SCOM_FIELD_VOICE(GfReqSmallCom::sys()->newHandle(), !GfGameManager::isTalking());
+    if (request == 0) {
+        return -1;
+    }
+    request->add(obj, CV_FIELD(8), CV_PRIO(3));
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
 unsigned long SCOM_FIELD_VOICE::createLevelupForCamp(const ParamObj& obj) {
     unsigned long handle = createLevelup(obj);
     if (SCOM_FIELD_VOICE* request = static_cast<SCOM_FIELD_VOICE*>(findRequest(handle))) {
@@ -2454,6 +2639,43 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createEngage(unsigned int id) {
     return GfFieldVoice::playVoice(ParamObj(4, id), CV_FIELD(36), 0, 0, CV_PRIO(1));
 }
 
+unsigned long SCOM_FIELD_VOICE::createBadWeather() {
+    if (GfGameManager::isBattle()) {
+        return -1;
+    }
+    if (GfGameManager::isGameTypeIra()) {
+        return createChangeWeatherIra();
+    }
+    int party = fn_71005680B0();
+    if (party == -1) {
+        return -1;
+    }
+    bool torna = GfGameManager::isGameTypeIra();
+    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, static_cast<PTPOS>(0));
+    GF_OBJ_HANDLE* partner;
+    if (torna) {
+        partner = GfGameParty::getHandleDriver(party, static_cast<PTPOS>(1));
+    } else {
+        partner = GfGameParty::getHandleBlade(party, -1);
+    }
+    unsigned int hp;
+    {
+        DataParamAcc acc(driver);
+        hp = acc.getHp();
+    }
+    if (hp == 0 || !GfGameObj::isValidGameObj(partner, true, nullptr)) {
+        return -1;
+    }
+#line 5061
+    SCOM_FIELD_VOICE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_FIELD_VOICE(true);
+    if (request == 0) {
+        return -1;
+    }
+    request->add(ParamObj(partner), CV_FIELD(30), CV_PRIO(1));
+    request->add(ParamObj(driver), CV_FIELD(30), CV_PRIO(1));
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
 unsigned long SCOM_FIELD_VOICE::createTime(CV_FIELD field) {
     if (GfGameManager::isBattle()) {
         return -1;
@@ -2610,6 +2832,16 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createCraftSelect(unsigned int blade) {
     names.push_back("680101");
     names.push_back("680102");
     return createDriverForIra(blade, names);
+}
+
+void SCOM_FIELD_VOICE::createCraftSuccess(unsigned int blade) {
+    SCOM_FIELD_VOICE::VoiceList names;
+    if (blade != 0x13 || GfGameCond::isGameCond(0xE3F)) {
+        names.push_back("680103");
+    }
+    names.push_back("680104");
+    names.push_back("680105");
+    createDriverForIra(blade, names);
 }
 
 GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createPouchAutoAdd(unsigned int item, unsigned int blade) {
@@ -2991,6 +3223,46 @@ static const char* const s_scoreVoices[4][4] = {
 void SCOM_BATTLE_ARENA::createAfterVoice(unsigned int row) {
     unsigned int index = ml::mtRand(4);
     GfGameVoice::playVoice(6, 0xDC3, s_scoreVoices[row][index], CV_PRIO(3));
+}
+
+namespace {
+// Proposed name, not the original's: the symbols leave the table unnamed (lbl_7100B6ADD8)
+struct ReturnVoice {
+    unsigned int m_driver;  // the driver's BDAT id
+    const char* m_voices[2][2];  // [0] when flag is false, [1] when it holds; one picked by ml::mtRand(2)
+};
+}  // namespace
+
+// Proposed name, not the original's (lbl_7100B6ADD8)
+static const ReturnVoice s_returnVoices[7] = {
+    {1, {{"01220102", "01410502"}, {"01800101", "01820101"}}},
+    {2, {{"02220101", "02490101"}, {"02800101", "02760101"}}},
+    {3, {{"06420402", "06410502"}, {"06800101", "06820101"}}},
+    {4, {{"03410601", "03410602"}, {"03760101", "03800101"}}},
+    {5, {{"04490101", "04490102"}, {"04320401", "04760102"}}},
+    {6, {{"05220102", "05980201"}, {"05800101", "05820101"}}},
+    {9, {{"07220102", "07410501"}, {"07410502", "07800101"}}},
+};
+
+GAME_VOICE_HANDLE* SCOM_BATTLE_ARENA::createReturnVoice(GF_OBJ_HANDLE** handles, unsigned int count, bool flag) {
+    unsigned int set = !flag;
+    for (unsigned int i = 0; i < count; ++i) {
+        GF_OBJ_HANDLE* handle = handles[i];
+        if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            continue;
+        }
+        DataParamAcc acc(handle);
+        if (acc.getObjType() != 3) {
+            continue;
+        }
+        for (const ReturnVoice& voice : s_returnVoices) {
+            if (getBladeBdatId(acc) == voice.m_driver) {
+                unsigned int index = ml::mtRand(2);
+                return GfGameVoice::playVoice(handle, voice.m_voices[set][index], CV_PRIO(3));
+            }
+        }
+    }
+    return nullptr;
 }
 
 SCOM_FADE::Fade SCOM_FADE::s_fades[3];

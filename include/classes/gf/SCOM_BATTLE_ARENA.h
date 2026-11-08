@@ -4,7 +4,7 @@
 #include "classes/gf/SCOM.h"
 
 namespace fw { class UpdateInfo; }
-namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GF_OBJ_HANDLE; class GAME_VOICE_HANDLE; }
 
 namespace gf {
 // table 0x7100B6AD28 (no RTTI name): a type-0x55 request whose exec sends the arena game mode (GfGameArena) a
@@ -25,8 +25,8 @@ public:
     // Caller: GfArenaReward::playVoice
     static void createAfterVoice(unsigned int row);
     // for the first count handles that are valid drivers of BDAT id 1..6 or 9, plays one of two voices from tables
-    // at 0x7100B6ADD8. Caller: GfArenaReward::playReturnVoice
-    static void createReturnVoice(GF_OBJ_HANDLE** handles, unsigned int count, bool flag);
+    // at 0x7100B6ADD8 (the voice it plays, else null). Caller: GfArenaReward::playReturnVoice
+    static GAME_VOICE_HANDLE* createReturnVoice(GF_OBJ_HANDLE** handles, unsigned int count, bool flag);
 
     // the names are not the original's: the message's type and its first parameter word
     unsigned int m_type;
