@@ -16,6 +16,12 @@
 #include "classes/gf/GfMenuObjQuestReward.h"
 #include "classes/gf/GfMenuReferenceQuest.h"
 #include "classes/ui/UIObjectAcc.h"
+#include "classes/ui/UIEventManager.h"
+#include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfMenuQuestAdapter.h"
+#include "classes/gf/GfMenuItemAdapter.h"
+#include "classes/gf/GfMenuReferenceAdapter.h"
+#include "classes/gf/IGfMenuReferenceItem.h"
 #include "gf/GfMenuFlag.h"
 #include "gf/GfMenuObjUtil.h"
 #include "gf/GfMenuSequence.h"
@@ -45,6 +51,131 @@ GfMenuObjQuestLog::~GfMenuObjQuestLog() {
     if (m_rewardContext != nullptr) {
         m_rewardContext->release();
         m_rewardContext = nullptr;
+    }
+}
+
+void GfMenuObjQuestLog::initialize() {
+    ui::UIObjectAcc main(m_handle, "LAY_main");
+    if (main.m_object != nullptr) {
+        GfMenuObject::attachExternalCall(0x20, main.m_handle);
+        m_refs[0] = GfMenuReferenceQuest::create();
+        m_refs[1] = GfMenuReferenceQuest::create();
+        m_refs[2] = GfMenuReferenceQuest::create();
+        m_refs[3] = GfMenuReferenceNumber::create();
+        m_refs[4] = GfMenuReferenceNumber::create();
+        m_refs[5] = GfMenuReferenceItem::create();
+        getRef<GfMenuReferenceQuest>(2)->m_quest = QuestID();
+        {
+            ui::UIObjectAcc title(main.m_handle, "LAY_title");
+            GfMenuQuestAdapter::createFromReference(
+                title.searchChild("TXT_title"),
+                mm::mtl::IntrusivePtr<GfMenuReferenceQuest>(static_cast<GfMenuReferenceQuest*>(m_refs[0].get())), 0,
+                false);
+#line 145
+            TitleListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TitleListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(title.m_handle, listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        {
+            ui::UIObjectAcc log(main.m_handle, "LAY_log");
+            GfMenuQuestAdapter* task = GfMenuQuestAdapter::createFromReference(
+                log.searchChild("TXT_log_info_task"),
+                mm::mtl::IntrusivePtr<GfMenuReferenceQuest>(static_cast<GfMenuReferenceQuest*>(m_refs[1].get())), 0x2E,
+                false);
+            if (task != nullptr) {
+                task->m_reference =
+                    mm::mtl::IntrusivePtr<GfMenuReferenceNumber>(static_cast<GfMenuReferenceNumber*>(m_refs[3].get()));
+            }
+            GfMenuQuestAdapter* itemNum = GfMenuQuestAdapter::createFromReference(
+                log.searchChild("TXT_log_info_task_item_num"),
+                mm::mtl::IntrusivePtr<GfMenuReferenceQuest>(static_cast<GfMenuReferenceQuest*>(m_refs[1].get())), 0x2F,
+                true);
+            if (itemNum != nullptr) {
+                itemNum->m_reference =
+                    mm::mtl::IntrusivePtr<GfMenuReferenceNumber>(static_cast<GfMenuReferenceNumber*>(m_refs[3].get()));
+            }
+            GfMenuQuestAdapter* itemMax = GfMenuQuestAdapter::createFromReference(
+                log.searchChild("TXT_log_info_task_item_max"),
+                mm::mtl::IntrusivePtr<GfMenuReferenceQuest>(static_cast<GfMenuReferenceQuest*>(m_refs[1].get())), 0x30,
+                false);
+            if (itemMax != nullptr) {
+                itemMax->m_reference =
+                    mm::mtl::IntrusivePtr<GfMenuReferenceNumber>(static_cast<GfMenuReferenceNumber*>(m_refs[3].get()));
+            }
+            GfMenuQuestAdapter* cond = GfMenuQuestAdapter::createFromReference(
+                log.searchChild("IMG_log_cond"),
+                mm::mtl::IntrusivePtr<GfMenuReferenceQuest>(static_cast<GfMenuReferenceQuest*>(m_refs[1].get())), 0x35,
+                false);
+            if (cond != nullptr) {
+                cond->m_reference =
+                    mm::mtl::IntrusivePtr<GfMenuReferenceNumber>(static_cast<GfMenuReferenceNumber*>(m_refs[3].get()));
+            }
+            GfMenuItemAdapter::createFromReference(
+                log.searchChild("TXT_log_info_task_item"), 0,
+                mm::mtl::IntrusivePtr<IGfMenuReferenceItem>(static_cast<IGfMenuReferenceItem*>(m_refs[5].get())), false);
+            if (GfMenuObjUtil::isValidExpansion(3)) {
+                GfMenuItemAdapter::createFromReference(
+                    log.searchChild("IMG_log_info_task_item_icon"), 2,
+                    mm::mtl::IntrusivePtr<IGfMenuReferenceItem>(static_cast<IGfMenuReferenceItem*>(m_refs[5].get())),
+                    false);
+            }
+            GfMenuReferenceAdapter* page = GfMenuReferenceAdapter::create(
+                log.searchChild("TXT_log_info_task_page_num"),
+                mm::mtl::IntrusivePtr<GfMenuReferenceNumber>(static_cast<GfMenuReferenceNumber*>(m_refs[3].get())), true);
+            if (page != nullptr) {
+                page->m_offset = 1;
+            }
+            GfMenuReferenceAdapter::create(
+                log.searchChild("TXT_log_info_task_page_max"),
+                mm::mtl::IntrusivePtr<GfMenuReferenceNumber>(static_cast<GfMenuReferenceNumber*>(m_refs[4].get())), true);
+#line 189
+            LogListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) LogListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(log.m_handle, listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+            GfMenuObject::addNumberEventCondition(log.m_handle, "TXT_log_info_task_item_num", 1, 0);
+            ui::UIObjectAcc base(log.m_handle, "IMG_log_base");
+            base.startAnimation("log_fade_in", false);
+            log.setDispChild(true, "LAY_log_index@01");
+        }
+        {
+            ui::UIObjectAcc order(main.m_handle, "LAY_order");
+#line 211
+            OrderListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) OrderListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(order.m_handle, listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        {
+            ui::UIObjectAcc complete(main.m_handle, "LAY_complete");
+            GfMenuQuestAdapter::createFromReference(
+                complete.searchChild("TXT_comp_ret_win_title"),
+                mm::mtl::IntrusivePtr<GfMenuReferenceQuest>(static_cast<GfMenuReferenceQuest*>(m_refs[2].get())), 0,
+                false);
+            GfMenuQuestAdapter::createFromReference(
+                complete.searchChild("TXT_comp_ret_win_result"),
+                mm::mtl::IntrusivePtr<GfMenuReferenceQuest>(static_cast<GfMenuReferenceQuest*>(m_refs[2].get())), 2,
+                false);
+            GfMenuQuestAdapter::createFromReference(
+                complete.searchChild("IMG_comp_ret_thumb"),
+                mm::mtl::IntrusivePtr<GfMenuReferenceQuest>(static_cast<GfMenuReferenceQuest*>(m_refs[2].get())), 0x39,
+                false);
+#line 231
+            CompleteListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) CompleteListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(complete.m_handle, listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        GfMenuObject::initialize();
     }
 }
 
