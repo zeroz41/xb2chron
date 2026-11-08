@@ -17,6 +17,15 @@
 #include "classes/gf/GfObjManager.h"
 #include "classes/gf/GfGmkBladeTraverser.h"
 #include "classes/gmk/GmkBlade.h"
+#include "classes/gmk/GmkNpc.h"
+#include "classes/gmk/GmkCtrlVolSe.h"
+#include "classes/gmk/GmkSet.h"
+#include "classes/gmk/IGmkList.h"
+#include "gf/GfDataEvent.h"
+#include "classes/gf/GfUnpopBladeIds.h"
+#include "classes/gf/GfGmkLocatorAtlas.h"
+#include "gf/GfDataBlade.h"
+#include "ml/MtRand.h"
 
 namespace gmk {
 
@@ -40,8 +49,7 @@ inline void GfFieldGimmick::initialize(const GfSetupParam& param) {
 }
 
 GfFieldGimmick::GfFieldGimmick(const GfSetupParam& param)
-    : m_unknownFlag0(false),
-      m_initialized(false),
+    : m_initialized(false),
       m_locatorAtlas(nullptr),
       m_unknownFlag1(false),
       m_enableOpenMainMenu(true),
@@ -156,6 +164,101 @@ int GfFieldGimmick::getBdatIdOfActiveGmkAntiBladeArea() {
         return 0;
     }
     return area->getBdatInfo()->m_bdatId;
+}
+
+GfUnpopBladeIds::GfUnpopBladeIds() {
+    GfDataBlade::getListReserver(m_ids);
+    for (unsigned short* it = m_ids.begin(); it != m_ids.end(); ++it) {
+        if (!GfGameUtil::isBladeInVillage(*it)) {
+            it = m_ids.erase(it);
+            --it;
+        }
+    }
+    gmk::GmkManager::get()->traverseGmkInst(gmk::GmkBlade::TYPE, *this);
+}
+
+void GfFieldGimmick::gevBladeActivate(unsigned int bladeId, gf::ActivateType, gf::ActivateType type) {
+    // gives the blade gimmick its id and marks whether it changed (inline; the field at 0x54 is unnamed)
+    auto setBladeId = [](const gmk::AGmkBase* gmk, int id) {
+        gmk::GmkBlade* blade = const_cast<gmk::GmkBlade*>(static_cast<const gmk::GmkBlade*>(gmk));
+        bool changed = blade->m_bladeId != id;
+        blade->m_bladeId = id;
+        blade->pad_54 = changed;
+    };
+    if (bladeId == 1003) {
+        return;
+    }
+    switch (type) {
+    case 1: {
+        if (!GfGameUtil::isBladeInVillage(bladeId)) {
+            return;
+        }
+        {
+            GfGmkBladeTraverser f(0, bladeId);
+            gmk::GmkManager::get()->traverseGmkInst(gmk::GmkBlade::TYPE, f);
+            if (f.m_result != nullptr) {
+                return;
+            }
+        }
+        GfGmkBladeTraverser f(GfDataBlade::getSize(bladeId), 0);
+        gmk::GmkManager::get()->traverseGmkInst(gmk::GmkBlade::TYPE, f);
+        if (f.m_result != nullptr) {
+            setBladeId(f.m_result, bladeId);
+        }
+        break;
+    }
+    case 0:
+    case 2:
+    case 3: {
+        GfGmkBladeTraverser f(0, bladeId);
+        gmk::GmkManager::get()->traverseGmkInst(gmk::GmkBlade::TYPE, f);
+        if (f.m_result == nullptr) {
+            return;
+        }
+        setBladeId(f.m_result, 0);
+        GfUnpopBladeIds ids;
+        if (ids.m_ids.empty()) {
+            return;
+        }
+        int id = *ids.m_ids.begin();
+        if (!GfDataBlade::isRareBlade(id) && ml::mtRandf1() < 0.75f) {
+            for (unsigned short blade : ids.m_ids) {
+                if (GfDataBlade::isRareBlade(blade)) {
+                    id = blade;
+                    break;
+                }
+            }
+        }
+        setBladeId(f.m_result, id);
+        break;
+    }
+    }
+}
+
+void GfFieldGimmick::gevPlayEvent(GEV gev, unsigned int eventId) {
+    switch (gev) {
+    case GEV(10):
+    case GEV(14):
+        m_unknownFlag2 = GfDataEvent::getEventType(eventId) < 2;
+        m_unknownFlag3 = GfDataEvent::getEventType(eventId) < 2;
+        break;
+    case GEV(11):
+        m_unknownFlag2 = true;
+        m_unknownFlag3 = true;
+        break;
+    default:
+        return;
+    }
+    for (gmk::GmkSet** it = m_gmkMgr.m_gmkSets.begin(); it != m_gmkMgr.m_gmkSets.end(); ++it) {
+        gmk::IGmkList* list = (*it)->getGmkList(gmk::GmkNpc::TYPE);
+        if (list == nullptr) {
+            continue;
+        }
+        for (unsigned int i = 0; i < list->getInstNum(); ++i) {
+            static_cast<const gmk::GmkNpc*>(list->getInst(i))->setDispSpecified(m_unknownFlag2);
+        }
+    }
+    GfGameUtil::setDispByGmkType(gmk::GmkType(0x3c), m_unknownFlag3);
 }
 
 void GfGmkBladeTraverser::onTraverse(const gmk::AGmkBase& base) {

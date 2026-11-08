@@ -93,9 +93,6 @@ public:
     gmk::GmkDmgPhantomManager m_dmgPhantomMgr;  // 0xF418 (0x40 bytes)
     gmk::GmkAntiBladeAreaManager m_antiBladeAreaMgr;  // 0xF458
     gmk::GmkCtrlVolSeManager m_ctrlVolSeMgr;  // 0xF480
-    // cleared by the constructor (its use is not known; the name is not the original's)
-    bool m_unknownFlag0;  // 0xF4A0
-    unsigned char pad_F4A1[0x7];
     // set by initialize, cleared by finalize (1.0.0's isInitialized returns it; the name is not the original's)
     bool m_initialized;  // 0xF4A8
     unsigned char pad_F4A9[0x3];

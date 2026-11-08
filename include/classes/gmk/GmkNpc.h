@@ -58,6 +58,8 @@ public:
     gf::GF_OBJ_HANDLE* getGobInst() const;  // its game object (-1: none)
     // isPopCondMatched while its NPC id's entry names this gimmick, false otherwise (the original's name)
     bool isPopCondMatchedExceptDist() const;
+    // GfFieldGimmick::gevPlayEvent calls it on every NPC gimmick with its flag at 0xFE72 (the original's name)
+    void setDispSpecified(bool disp) const;
     // user-provided: Vector<GmkNpc>::resize stores the defaults below only (no zero fill of the element first)
     GmkNpc() {}
     unsigned char pad_68 = 1;
