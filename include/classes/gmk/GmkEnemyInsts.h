@@ -90,6 +90,8 @@ public:
             pad_2 = 0;
         }
         unsigned int getGobInstNum() const;  // how many objects pop
+        // 2.0.0's symbols name it (0x7100585078); GmkEnemyWave::requestPopWaveEnemy asks it whether a popping entry is done
+        bool isPopFinished() const;
         // LocatorBat_EnemySpeciesID::update skips a gimmick when it answers true for the species with true
         bool hasTypeGenus(unsigned char genus, bool) const;
         // GfGameUtil::clearEnemyRepopCounter asks it with the enemy id and true before clearing the counter

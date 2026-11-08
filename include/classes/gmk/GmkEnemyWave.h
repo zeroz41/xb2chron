@@ -82,9 +82,13 @@ public:
             m_popInfo.m_popTimerCond = popInfo.m_popTimerCond;
         }
         GmkEnemy* m_enemy;
-        unsigned int pad_8;  // create and seqWaitToValidLinkGmkList clear it
+        // create and seqWaitToValidLinkGmkList clear it; requestPopWaveEnemy's timer (adds dt to it, compares it with
+        // m_popInfo.m_popTimerCond and, Ira only, with 5)
+        float pad_8;
         unsigned short m_index;  // 0xC: its index in the data's range (the name is not the original's)
-        unsigned short pad_e;  // create and seqWaitToValidLinkGmkList clear it
+        // create and seqWaitToValidLinkGmkList clear it; requestPopWaveEnemy's step: 0 waiting, 1 timer running, 2 popping,
+        // 3 done
+        unsigned short pad_e;
         GmkEnemyWaveExtension::WavePopInfo m_popInfo;  // 0x10 (the name is not the original's)
     };
     // 2.0.0's symbols name the next three (defined in GmkElevator.cpp's unit).

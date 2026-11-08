@@ -41,6 +41,8 @@ public:
     // 2.0.0's symbols name it. What it does: true when the local game flag 0xD869 + bdat id (type 1) is set;
     // onPlayerAccessed sets that flag. Caller gf::GfGmkLocator::getPosNum.
     bool isFound() const;
+    // 2.0.0's symbols name it. What it does: creates the camp's collection game object (update calls it)
+    void createGfObjHandle();
     const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x3e);

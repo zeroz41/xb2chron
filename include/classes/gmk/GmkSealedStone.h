@@ -48,13 +48,20 @@ public:
     void disposeGobInst(bool);
     // 2.0.0's symbols name them; update calls them (the row's Visible_XZ/Y and Invisible_XZ/Y distances)
     bool canPopGobInst() const;
+    bool canDepopGobInst() const;
+    // 2.0.0's symbols name it. What it does: destroys the old game object and creates a map-object one from the bound
+    // bdat row (update calls it when canPopGobInst holds)
+    void createGobInst();
     // 2.0.0's symbols name seqValidateResHandle, seqUpdate. What they do: create installs seqValidateResHandle, which
     // installs seqUpdate (an empty step).
     void seqValidateResHandle(float);
     void seqUpdate(float);
     // the game object (disposeGobInst does nothing when it is -1; the name is not the original's)
     gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);  // 0x48
-    unsigned long pad_50 = 0;
+    // 0x50/0x54: disposeGobInst(true) hands them to SCOM_DESTROY_GAME_OBJ::create and clears the time (the names are
+    // not the original's; GmkMapObj's pair)
+    float m_disposeWait = 0.0f;
+    unsigned int m_disposeArg = 0;
     // 0x58: the step update runs while the gimmick is valid (create installs seqValidateResHandle; the name is not the
     // original's)
     void (GmkSealedStone::*m_seq)(float) = nullptr;

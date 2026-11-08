@@ -61,7 +61,7 @@ public:
     void seqWaitPop(float);
     // What it does (caller gmk::fn_71005D3C54): applies m_isDispOn to the game object's display flag 8 and to its
     // GfComBehaviorGmk collision.
-    void validateDisp();
+    void validateDisp() const;
     // What it does: creates the game object (BDAT columns, setDisp, GfObjSetupGimmick); called by seqWaitPop.
     void createTboxGobInst();
     // What it does (step): once onPlayerAccessed set m_isAccessed, clears m_timer and goes to seqDepopWait.
