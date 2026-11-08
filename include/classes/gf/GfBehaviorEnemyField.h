@@ -102,7 +102,7 @@ public:
     // its getEnemeyMoveParam index (applyFieldMoveSpeed)
     unsigned char pad_36;
     // set while the enemy belongs to a squad gimmick's members (GfComBehaviorEnemy::isOtherMemberHome)
-    bool pad_37;
+    unsigned char pad_37;
     unsigned char pad_38[0x8];
     // its navigation mesh object (StateFieldAreaWalk::seqMoveToGoal asks canGetMoveVec of it)
     navi::NvmshAcObj* pad_40;

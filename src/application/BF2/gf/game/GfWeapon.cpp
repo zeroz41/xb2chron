@@ -206,6 +206,27 @@
 
 namespace gf {
 
+void GfGameUtil::UiEnemyStatusIconInfo::create(GF_OBJ_HANDLE* handle) {
+    *this = UiEnemyStatusIconInfo();
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    {
+        GfObjAcc acc(handle);
+        if (acc.m_obj == nullptr || acc.isDestroy() || acc.testFlag(17)) {
+            return;
+        }
+    }
+    GfObjAcc acc(handle);
+    GfObj* obj = acc.getObj();
+    GfBdatChrEnArrange* arrange = mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys();
+    GfObjSetupEnemy* setup = mm::mtl::rttiCast<GfObjSetupEnemy>(GfObjManager::getObjInfo(handle)->m_setup);
+    m_aggressive = static_cast<unsigned char>(arrange->getChrEnArrangeDetects(setup->m_enArrangeId)) != 0;
+    if (GfComBehaviorEnemy* behavior = obj->getComponent<GfComBehaviorEnemy>(6)) {
+        m_link = behavior->m_field.pad_37 != 0;
+    }
+}
+
 bool GfGameUtil::isUiInfoIconDistMatch(GF_OBJ_HANDLE* handle) {
     if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
         return false;
@@ -1672,6 +1693,36 @@ bool GfGameUtil::findNpcMat44(mm::Mat44& mtx, int bdatId) {
     return true;
 }
 
+bool GfGameUtil::getGmkPointPosRot(gmk::GmkType type, unsigned int idx, mm::Vec3& pos, mm::Vec3& rot) {
+    if (idx == 0) {
+        return false;
+    }
+    const gmk::GmkManager* manager = gmk::GmkManager::sys();
+    if (manager == nullptr) {
+        return false;
+    }
+    for (gmk::GmkSet* const* it = manager->m_gmkSets.begin(); it != manager->m_gmkSets.end(); ++it) {
+        gmk::IGmkList* list = (*it)->getGmkList(type);
+        if (list == nullptr || !list->isValid() || list->getInstNum() < idx) {
+            continue;
+        }
+        gmk::AGmkBase* gmk = list->getInst(idx - 1);
+        if (gmk == nullptr || !gmk->isValid()) {
+            continue;
+        }
+        const mm::Vec3* point = gmk->m_pos;
+        pos.x = point->x;
+        pos.y = point->y;
+        pos.z = point->z;
+        const mm::Vec3* angle = gmk->m_pos + 1;
+        rot.x = angle->x;
+        rot.y = angle->y;
+        rot.z = angle->z;
+        return true;
+    }
+    return false;
+}
+
 bool GfGameUtil::getGmkTargetPointPos(mm::Vec3& pos, unsigned int id) {
     if (id == 0) {
         return false;
@@ -2374,6 +2425,29 @@ const char* GfGameUtil::getBladeMotion(unsigned int blade, bool flag) {
         return data->m_condMotionName;
     }
     return data->m_motionName;
+}
+
+const char* GfGameUtil::getDriverModel(unsigned int driverId, bool createTypeIn2311, bool createType3) {
+    GfBdatChrDr* bdat = mm::mtl::PtrSingleton<GfBdatChrDr>::sys();
+    if (createTypeIn2311 && driverId == 6) {
+        createType3 = createType3 | GfDataEvent::isInvalidMelefRetarget(GfGameEvent::getStartEventId());
+    }
+    const char* name = fn_71002DF4C4(driverId, createType3);
+    if (name != nullptr) {
+        return name;
+    }
+    if (GfGameManager::isGameTypeIra()) {
+        unsigned int blade = GfDataDriver::getIraBlade(driverId, -1);
+        if (blade != 0) {
+            return getBladeModel(blade, false);
+        }
+    }
+    const char* model = bdat->getChrDrModel2(driverId);
+    if (model != nullptr && *model != '\0' &&
+        GfGameCond::isGameCond(mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->getChrDrCondition(driverId))) {
+        return bdat->getChrDrModel2(driverId);
+    }
+    return bdat->getChrDrModel(driverId);
 }
 
 const char* fn_71002DF4C4(unsigned int driverId, bool flag) {
