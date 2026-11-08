@@ -46,6 +46,9 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(21);
     void disposeGmkPhantom();
+    // the landmark's arrival: once per visit (pad_f1), the discovery rewards, the location telop, the map jump point
+    // and GmkLandmarkManager's list (update calls it while the player is in its phantom)
+    void beginEvent();
     GmkPhantom m_phantom;  // 0x60: the destructor destroys it (the name is not the original's)
     unsigned char pad_f0;
     // 0xf1: onLeavePhantom cancels the location telop and leaves GmkLandmarkManager's list only while it is set,

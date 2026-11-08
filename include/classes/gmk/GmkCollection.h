@@ -20,6 +20,7 @@ public:
         // names not
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         bool isPopCondMatchedExceptDist() const;
+        bool isPopCondMatched(const AGmkBase& gmk) const;
         unsigned short m_nameRadius = 10;     // 0x0: its "nameRadius" column
         unsigned char m_rarity = 0;           // 0x2: its "rarity" column
         unsigned short m_collectionTable = 0; // 0x4: its "CollectionTable" column (a row of BDAT 0x1E0)
@@ -54,6 +55,10 @@ public:
     bool isWaitRepop() const;
     void setTargetable(bool targetable);
     void seqUpdateRepopCounter(float dt);
+    void seqUpdatePopDepop(float dt);
+    void createGfObjHandle();
+    void createIcon();
+    void validateIconPos();
     // AGmkBase's row as this kind's BdatInfo; the name is not the original's
     const BdatInfo* getBdatInfo() const {
         return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);

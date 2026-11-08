@@ -148,6 +148,7 @@
 #include "classes/gmk/GmkRoutedFootPrintPointList.h"
 #include "classes/gmk/GmkSalvageLocatorList.h"
 #include "classes/gmk/GmkCollectionList.h"
+#include "classes/gf/GfComBehaviorGmk.h"
 #include "classes/gmk/GmkTutorialList.h"
 #include "classes/gmk/GmkMapGimmickList.h"
 #include "classes/gmk/GmkAntiBladeArea.h"
@@ -5800,6 +5801,19 @@ void GmkRoutedMob::update(float dt) {
     }
 }
 
+void GmkRoutedMob::debugDraw() const {
+    if (isValid()) {
+        bool popped = m_insts.m_flags & 1;
+        if (isValid()) {
+            if (popped) {
+                debugDrawRoute(mm::Col4(mm::Col4::yellow));
+            } else {
+                debugDrawRoute(mm::Col4(mm::Col4::gray));
+            }
+        }
+    }
+}
+
 void GmkRoutedMob::createRouteNavis(unsigned int num) {
     if (m_navis.size() != 0) {
         m_navis.destroy();
@@ -5832,6 +5846,45 @@ void GmkRoutedMob::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE*
 void GmkLandmark::dispose() {
     disposeGmkPhantom();
     AGmkBase::dispose();
+}
+
+void GmkLandmark::disposeGmkPhantom() {
+    m_phantom.dispose();
+    if (!pad_f1) {
+        return;
+    }
+    pad_f1 = false;
+    gf::GfMenuObjLocationTelop::cancel();
+    if (GmkLandmarkManager::sys() != nullptr) {
+        GmkLandmarkManager::sys()->m_list.remove(this);
+        if (GmkLandmarkManager::sys()->m_list.empty()) {
+            GmkLandmarkManager::sys()->m_currentLandmark = nullptr;
+        } else {
+            GmkLandmarkManager::sys()->m_currentLandmark = GmkLandmarkManager::sys()->m_list.front();
+        }
+    }
+}
+
+void GmkLandmark::update(float) {
+    debugUpdateMmf();
+    if (!isValid()) {
+        return;
+    }
+    bool matched = getBdatInfo()->isCondMatched();
+    if (pad_f0 != matched) {
+        if (matched) {
+            const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+            if (set == nullptr || !set->m_createInfo.m_flag) {
+                m_phantom.create(*this, this, false);
+            }
+        } else {
+            disposeGmkPhantom();
+        }
+        pad_f0 = matched;
+    }
+    if (m_phantom.pad_83 && gf::GfGameManager::isLandmarkUiOK()) {
+        beginEvent();
+    }
 }
 
 GmkLandmark::~GmkLandmark() { dispose(); }
@@ -8756,6 +8809,156 @@ void GmkCollection::disposeIcon(bool flag) {
         }
         m_iconEffect = 0;
     }
+}
+
+void GmkCollection::createGfObjHandle() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    CBdatWrapper bdat(m_list->getBindedBdatFp());
+    m_gob = gf::GfObjFactory::createGmkCollection(bdat, m_createInfo.m_bdatId);
+    {
+        gf::GfObjAcc acc(m_gob);
+        acc.setUserData(gf::GfObjUserData(0), reinterpret_cast<unsigned long>(this));
+    }
+    bool disp;
+    if (pad_6c) {
+        // the original calls getGmkType here and drops its answer
+        getGmkType();
+        disp = true;
+    } else {
+        disp = false;
+    }
+    gf::GF_OBJ_HANDLE* handle = m_gob;
+    if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setDisp(gf::OBJDISP(8), disp);
+        }
+    }
+    if (m_iconEffect != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setDisp(m_iconEffect, disp);
+    }
+    gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(m_gob)->m_setup);
+    const mm::Vec3* xform = m_pos;
+    setup->m_initialPos = xform[0];
+    setup->pad_30 = xform[1];
+    setTargetable(!isWaitRepop());
+}
+
+void GmkCollection::setTargetable(bool targetable) {
+    gf::GfGameFlag::setLocal(1, m_createInfo.m_bdatId + 29020, !targetable);
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GF_OBJ_HANDLE* gob = m_gob;
+        {
+            gf::GfObjAcc acc(gob);
+            if (acc.m_obj != nullptr) {
+                gf::GfObjSetupGimmick* setup =
+                    mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(gob)->m_setup);
+                if (targetable) {
+                    setup->pad_6c |= 7;
+                } else {
+                    setup->pad_6c &= ~7;
+                }
+            }
+            if (gf::GfObj* obj = acc.getObj()) {
+                if (targetable) {
+                    obj->pad_110 |= 7;
+                } else {
+                    obj->pad_110 &= ~7;
+                }
+            }
+        }
+        gf::GfObjAcc acc(m_gob);
+        if (gf::GfObj* obj = acc.getObj()) {
+            if (gf::GfComBehaviorGmk* behavior = obj->getComponent<gf::GfComBehaviorGmk>(6)) {
+                behavior->createMenuObj();
+            }
+        }
+    }
+    if (targetable) {
+        m_repopCounter = 0.0f;
+        m_seq = &GmkCollection::seqUpdatePopDepop;
+    } else {
+        if (m_repopCounter == 0.0f) {
+            m_repopCounter = static_cast<const GmkCollectionList*>(m_list)->m_bdatInfo.m_repopTime * 60.0f;
+        }
+        m_seq = &GmkCollection::seqUpdateRepopCounter;
+    }
+}
+
+// the icon effect: "cmn_200_000", in the Ira game one per rarity ("cmn_700_100".."cmn_700_102")
+void GmkCollection::createIcon() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_iconEffect != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_iconEffect);
+        m_iconEffect = 0;
+    }
+    const BdatInfo* info = getBdatInfo();
+    const char* name = "cmn_200_000";
+    if (gf::GfGameManager::isGameTypeIra()) {
+        const char* names[] = {gf::GfGameManager::isGameTypeIra() ? "cmn_700_100" : "cmn_200_000", "cmn_700_101",
+                               "cmn_700_102"};
+        name = names[std::min<unsigned int>(info->m_rarity, 3)];
+    }
+    void* efb = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search(name, nullptr);
+    if (efb == nullptr) {
+        return;
+    }
+    m_iconEffect = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->create(efb, true);
+    if (m_iconEffect != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setCategory(m_iconEffect, fw::EF_CATEGORY(1));
+        validateIconPos();
+    }
+}
+
+void GmkCollection::seqUpdatePopDepop(float) {
+    if (!isValid()) {
+        return;
+    }
+    if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) && getBdatInfo()->isPopCondMatched(*this)) {
+        createGfObjHandle();
+        if (gf::GfGameManager::isGameTypeIra()) {
+            unsigned int id = m_createInfo.m_bdatId;
+            if (id >= 4401 && id - 4401 < 500) {
+                gf::GfGameFlag::setLocal(1, id + 51429, 1);
+            }
+        }
+    } else if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) && !getBdatInfo()->isPopCondMatched(*this)) {
+        if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            gf::GfObjAcc acc(m_gob);
+            if (acc.m_obj != nullptr) {
+                acc.setUserData(gf::GfObjUserData(0), 0);
+            }
+            gf::GfObjUtil::destroy(m_gob);
+            m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        }
+        disposeIcon(true);
+        return;
+    }
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        const mm::Vec3* pos = m_pos;
+        float distSq = m_popDistSq;
+        if (DistCond::isMatch(distSq, *pos)) {
+            if (m_iconEffect == 0) {
+                createIcon();
+            }
+            return;
+        }
+    }
+    disposeIcon(true);
 }
 
 void GmkCollection::seqUpdateRepopCounter(float dt) {
