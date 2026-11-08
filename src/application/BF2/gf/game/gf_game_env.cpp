@@ -25,6 +25,8 @@
 #include "gf/SDataGame.h"
 #include "gf/gf_data_aoc.h"
 #include "nn/oe.h"
+#include "classes/gf/GfDataAoc.h"
+#include "classes/gf/GfBdatShop.h"
 #include "gf/GfDataUtil.h"
 
 namespace gf {
@@ -46,8 +48,37 @@ void GfLayerPause::destroy() {
     delete pause;
 }
 
+void GfLayerPause::gevPause(unsigned int prev, unsigned int next) {
+    GfLayerPause* self = get();
+    if (prev & 1) {
+        destroyLayerPause(self->m_eventPause4);
+        destroyLayerPause(self->m_eventPause0);
+        destroyLayerPause(self->m_eventPause1);
+        destroyLayerPause(self->m_eventPause7);
+    } else if (next & 1) {
+        self->m_eventPause4 = setLayerPause(4);
+        self->m_eventPause0 = setLayerPause(0);
+        self->m_eventPause1 = setLayerPause(1);
+        self->m_eventPause7 = setLayerPause(7);
+    }
+    if (prev & 0x200) {
+        destroyLayerPause(self->m_eventPause10);
+    } else if (next & 0x200) {
+        self->m_eventPause10 = setLayerPause(10);
+    }
+}
+
 bool GfLayerPause::isLayerPause(unsigned int layer) {
     return fw::Framework::isLayerPause(layer);
+}
+
+void GfLayerPause::destroyLayerPause() {
+    GfLayerPause* self = get();
+    destroyLayerPause(self->m_eventPause4);
+    destroyLayerPause(self->m_eventPause0);
+    destroyLayerPause(self->m_eventPause1);
+    destroyLayerPause(self->m_eventPause7);
+    destroyLayerPause(self->m_eventPause10);
 }
 
 GfGameSpeed::GfGameSpeed(const GfSetupParam& param) : m_timedSpeed(1.0f), m_timer(0.0f) {
@@ -70,11 +101,133 @@ void GfGameSpeed::update(const fw::UpdateInfo& info) {
     }
 }
 
+void GfGameSpeed::updateFrameSpeed(const fw::UpdateInfo& info) {
+    bool timed;
+    if (m_timer > 0.0f) {
+        m_timer -= info.m_deltaTime;
+        if (m_timer <= 0.0f) {
+            m_timedSpeed = m_speeds[SPEED_LAYER4].m_speed;
+            m_timer = 0.0f;
+        }
+        timed = true;
+    } else {
+        timed = false;
+    }
+    if (m_speeds[SPEED_LAYER1].m_dirty || m_speeds[SPEED_LAYER4].m_dirty || m_speeds[SPEED_PLAY].m_dirty || timed) {
+        m_speeds[SPEED_LAYER1].m_dirty = false;
+        m_speeds[SPEED_LAYER4].m_dirty = false;
+        m_speeds[SPEED_PLAY].m_dirty = false;
+        m_speeds[SPEED_PLAY].m_applied = m_speeds[SPEED_PLAY].m_speed;
+        const float& base0 = timed ? m_timedSpeed : m_speeds[SPEED_LAYER4].m_speed;
+        float speed0 = base0 * m_speeds[SPEED_SALVAGE].m_speed * m_speeds[SPEED_PLAY].m_speed;
+        if (speed0 <= 0.0f) {
+            speed0 = 0.000001f;
+        }
+        const float& base1 = timed ? m_timedSpeed : m_speeds[SPEED_LAYER1].m_speed;
+        float speed1 = base1 * m_speeds[SPEED_FACTOR1B].m_speed * m_speeds[SPEED_FACTOR1].m_speed;
+        if (speed1 <= 0.0f) {
+            speed1 = 0.000001f;
+        }
+        fw::Framework::setLayerUpdateSpeed(0, speed0);
+        m_speeds[SPEED_LAYER0].m_applied = speed0;
+        fw::Framework::setLayerUpdateSpeed(4, speed0);
+        m_speeds[SPEED_LAYER4].m_applied = speed0;
+        fw::Framework::setLayerUpdateSpeed(5, speed0);
+        fw::Framework::setLayerUpdateSpeed(6, speed0);
+        fw::Framework::setLayerUpdateSpeed(1, speed1);
+        m_speeds[SPEED_LAYER1].m_applied = speed0;  // as the original: layer 1's group runs at speed1
+        fw::Framework::setLayerUpdateSpeed(2, speed1);
+        fw::Framework::setLayerUpdateSpeed(3, speed1);
+    }
+    if (m_speeds[SPEED_LAYER7].m_dirty) {
+        float speed = m_speeds[SPEED_LAYER7].m_speed * m_speeds[SPEED_SALVAGE_CHARA].m_speed;
+        m_speeds[SPEED_LAYER7].m_dirty = false;
+        fw::Framework::setLayerUpdateSpeed(7, speed);
+        m_speeds[SPEED_LAYER7].m_applied = speed;
+        fw::Framework::setLayerUpdateSpeed(8, speed);
+        fw::Framework::setLayerUpdateSpeed(9, speed);
+    }
+    if (m_speeds[SPEED_LAYER10].m_dirty) {
+        float speed = m_speeds[SPEED_LAYER10].m_speed * m_speeds[SPEED_FACTOR10].m_speed;
+        if (speed <= 0.0f) {
+            speed = 0.000001f;
+        }
+        m_speeds[SPEED_LAYER10].m_dirty = false;
+        fw::Framework::setLayerUpdateSpeed(10, speed);
+        m_speeds[SPEED_LAYER10].m_applied = speed;
+        fw::Framework::setLayerUpdateSpeed(11, speed);
+        fw::Framework::setLayerUpdateSpeed(12, speed);
+    }
+    if (m_speeds[SPEED_LAYER0].m_dirty) {
+        float speed =
+            m_speeds[SPEED_LAYER0].m_speed * m_speeds[SPEED_FACTOR0].m_speed * m_speeds[SPEED_PLAY].m_speed;
+        if (speed <= 0.0f) {
+            speed = 0.000001f;
+        }
+        m_speeds[SPEED_LAYER0].m_dirty = false;
+        fw::Framework::setLayerUpdateSpeed(0, speed);
+        m_speeds[SPEED_LAYER0].m_applied = speed;
+    }
+    if (m_speeds[SPEED_GLOBAL].m_dirty) {
+        m_speeds[SPEED_GLOBAL].m_applied = m_speeds[SPEED_GLOBAL].m_speed;
+        m_speeds[SPEED_GLOBAL].m_dirty = false;
+        float speed = m_speeds[SPEED_GLOBAL].m_speed;
+        if (speed <= 0.0f) {
+            speed = 0.000001f;
+        }
+        fw::Framework::setUpdateSpeed(speed);
+    }
+}
+
 void GfGameSpeed::clear() {
     if (get()) {
         get()->m_timedSpeed = 1.0f;
         get()->m_timer = 0.0f;
     }
+}
+
+void GfGameSpeed::setLayerSpeed(unsigned int layer, float speed) {
+    GfGameSpeed* self = get();
+    switch (layer) {  // case 0 last: the original lays its block out to end at the shared return
+    case 1:
+        self->m_speeds[SPEED_LAYER1].set(speed);
+        break;
+    case 4:
+        self->m_speeds[SPEED_LAYER4].set(speed);
+        break;
+    case 7:
+        self->m_speeds[SPEED_LAYER7].set(speed);
+        break;
+    case 10:
+        self->m_speeds[SPEED_LAYER10].set(speed);
+        break;
+    case 0:
+        self->m_speeds[SPEED_LAYER0].set(speed);
+        break;
+    }
+}
+
+float GfGameSpeed::getLayerSpeed(unsigned int layer) {
+    float speed = 1.0f;
+    GfGameSpeed* self = get();
+    switch (layer) {  // case 0 last: the original lays its block out to end at the shared return
+    case 1:
+        speed = self->m_speeds[SPEED_LAYER1].m_applied;
+        break;
+    case 4:
+        speed = self->m_speeds[SPEED_LAYER4].m_applied;
+        break;
+    case 7:
+        speed = self->m_speeds[SPEED_LAYER7].m_applied;
+        break;
+    case 10:
+        speed = self->m_speeds[SPEED_LAYER10].m_applied;
+        break;
+    case 0:
+        speed = self->m_speeds[SPEED_LAYER0].m_applied;
+        break;
+    }
+    return speed;
 }
 
 void GfGameSpeed::setPlaySpeed(float speed) {
@@ -369,6 +522,58 @@ void GfGameAoc::setupGame(GAME_TYPE mode) {
     GfDataUtil::setIra(*GfDataManager::getDataGame(), mode == 1);
     m_mode = mode;
     refreshAocFlag();
+}
+
+void GfGameAoc::refreshAocFlag() {
+    GfGameFlag::setLocal(1, 0xD781, isExistGameAoc(GAMEAOC(0x10100)));
+    GfGameFlag::setLocal(1, 0xD782, isExistGameAoc(GAMEAOC(0x10200)));
+    GfGameFlag::setLocal(1, 0xD783, isExistGameAoc(GAMEAOC(0x10300)));
+    GfGameFlag::setLocal(1, 0xD784, isExistGameAoc(GAMEAOC(0x10400)));
+    GfGameFlag::setLocal(1, 0xD785, isExistGameAoc(GAMEAOC(0x30100)));
+    GfGameFlag::setLocal(1, 0xD786, 1);
+    GfGameFlag::setLocal(1, 0xD787, isExistGameAoc(GAMEAOC(0x20100)));
+}
+
+// the add-on gift items isExistGameAoc knows, in GfBdatShop::getMNU_DlcGiftgetflag's row order (row 0 is none; the
+// name is not the original's)
+static const unsigned int s_aocGifts[] = {0, 0x40101, 0x40102, 0x40103, 0x40104, 0x40201, 0x40202, 0x40203, 0x40204};
+
+bool GfGameAoc::isExistGameAoc(GAMEAOC id) const {
+    AOC_TYPE type = AOC_TYPE((id >> 16) & 0xF);
+    int version = GfDataAoc::getContentVersion(type);
+    if (version < 0) {
+        return false;
+    }
+    int need = (id >> 8) & 0xFF;
+    if (need > version) {
+        return false;
+    }
+    switch (type) {
+    case 0:
+        return version >= need;
+    case 1:
+        return version >= need;
+    case 2:
+        return version >= need;
+    case 3:
+        return version >= need;
+    case 4:
+        for (unsigned int i = 0; i < 9; ++i) {
+            if (s_aocGifts[i] == id) {
+                if (i == 0) {
+                    return false;
+                }
+                unsigned int flag = GfBdatShop::get()->getMNU_DlcGiftgetflag(i);
+                if (flag == 0) {
+                    return false;
+                }
+                return GfGameFlag::getLocal(GfDataManager::getDataGame()->m_gameFlag, 1, flag) != 0;
+            }
+        }
+        return false;
+    default:
+        return false;
+    }
 }
 
 void GfGameAoc::build(const GfSetupParam& param) {
