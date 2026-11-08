@@ -154,6 +154,134 @@ bool GfMenuObjMinimap2::refreshMapPosition() {
     return true;
 }
 
+void GfMenuObjMinimap2::MainListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        m_state.m_open = 0;
+        m_state.m_ctrlSlot = -1;
+        m_state.m_zoomMode = 0;
+        GfMenuObject::disableInput(acc.m_handle);
+        GfMenuObjMinimap2::createIconTable(acc, m_owner->m_iconTable);
+        GfMenuObjMinimap2::createIconTable2(acc, m_owner->m_icon2Table);
+        acc.getLayoutRect("mini_map", m_owner->m_mapRect);
+        {
+            ui::UIObjectAcc dummy(acc.m_handle, "IMG_dummy");
+            dummy.getRect(m_owner->m_dummyRect, 0);
+        }
+        break;
+    case 2:
+        {
+            mm::mtl::FixedVector<unsigned int, 256>& table = m_owner->m_iconTable;
+            for (unsigned int* it = table.begin(); it != table.end(); ++it) {
+                ui::UIObjectAcc icon(*it);
+                if (icon.m_object != nullptr && !icon.isTerm()) {
+                    icon.setTerm();
+                }
+            }
+            table.clear();
+        }
+        {
+            mm::mtl::FixedVector<unsigned int, 256>& table = m_owner->m_icon2Table;
+            for (unsigned int* it = table.begin(); it != table.end(); ++it) {
+                ui::UIObjectAcc icon(*it);
+                if (icon.m_object != nullptr && !icon.isTerm()) {
+                    icon.setTerm();
+                }
+            }
+            table.clear();
+        }
+        acc.setTerm();
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+        }
+        break;
+    case 0x21:
+        if (GfMenuFlag::get1(0x1F) == 0 && m_state.m_open == 0) {
+            GfMenuObjUtil::PresetCtrlParam param;
+            param.m_preset = 6;
+            param.m_startFlag4 = true;
+            param.m_slot = m_state.m_ctrlSlot;
+            param.m_eventId = 1;
+            int ctrl = GfMenuObjUtil::startPresetCtrl(handle, param);
+            m_state.m_open = 1;
+            m_state.m_ctrlSlot = ctrl;
+        }
+        break;
+    case 0x22:
+        if (m_state.m_open == 1) {
+            GfMenuObjUtil::PresetCtrlParam param;
+            param.m_preset = 6;
+            param.m_out = 1;
+            param.m_startFlag4 = true;
+            param.m_slot = m_state.m_ctrlSlot;
+            int ctrl = GfMenuObjUtil::startPresetCtrl(handle, param);
+            m_state.m_open = 0;
+            m_state.m_ctrlSlot = ctrl;
+            GfMenuObject::disableInput(acc.m_handle);
+        }
+        break;
+    case 8:
+        if (event.m_param1 == 9 && GfMenuFlag::get1(0x20) == 0 && GfMenuManager::isFieldHudInputEnable()) {
+            int mode = m_state.m_zoomMode;
+            switch (mode) {
+            case 0: {
+                acc.setDispChild(false, "IMG_map_frame");
+                acc.setDispChild(false, "IMG_map_base");
+                acc.setDispChild(false, "IMG_map_mask");
+                acc.setDispChild(false, "LAY_icon_base");
+                {
+                    ui::UIObjectAcc center(acc.m_handle, "IMG_map_image_center");
+                    GfMenuObjUtil::setDockPos(center.m_handle, acc.searchChild("IMG_map_center"), 0, true);
+                    mode = 1;
+                    acc.getLayoutRect("mini_map2", m_owner->m_mapRect);
+                }
+                m_owner->m_scale = 1.0f;
+                break;
+            }
+            case 1:
+                m_owner->m_scale = 2.0f;
+                mode = 2;
+                break;
+            case 2:
+                acc.setDispChild(true, "IMG_map_frame");
+                acc.setDispChild(true, "IMG_map_base");
+                acc.setDispChild(true, "IMG_map_mask");
+                acc.setDispChild(false, "LAY_map");
+                mode = 3;
+                break;
+            case 3: {
+                acc.setDispChild(true, "LAY_map");
+                acc.setDispChild(false, "LAY_icon_base");
+                ui::UIObjectAcc center(acc.m_handle, "IMG_map_image_center");
+                GfMenuObjUtil::setDockPos(center.m_handle, acc.searchChild("IMG_map_frame"), 0, true);
+                acc.getLayoutRect("mini_map", m_owner->m_mapRect);
+                mode = 0;
+                break;
+            }
+            }
+            m_state.m_zoomMode = mode;
+            m_owner->m_zoomMode = mode;
+            ui::UIObjectAcc image(acc.m_handle, "LAY_map_image");
+            mm::Vec2 scale;
+            if (mode != 1 && mode != 2) {
+                scale = mm::Vec2(1.0f, 1.0f);
+            } else {
+                scale = mm::Vec2(m_owner->m_scale, m_owner->m_scale);
+            }
+            image.setScale(scale);
+            m_owner->refreshMapPosition();
+        }
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjMinimap2::createIconTable(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 256>& table) {
     ui::UIObjectAcc layout(acc.searchChild("LAY_icon"));
     ui::UIObjectAcc mask(acc.searchChild("IMG_map_mask"));
