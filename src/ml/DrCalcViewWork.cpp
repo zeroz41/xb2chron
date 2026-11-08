@@ -41,6 +41,8 @@
 #include "ml/DrCalcGpuCost.h"
 #include "ml/DrCalcMan.h"
 #include "ml/DrCalcViewWork.h"
+#include "ml/DrMdlMan.h"
+#include "ml/DrMdoVertexMan.h"
 #include "ml/DrPixlMan.h"
 #include <math.h>
 #include "ml/DrPixlPostMan.h"
@@ -1051,7 +1053,7 @@ void DrCalcTexStreamMan::update() {
     m_errReadSize = 0;
     pad_249C = pad_2498;
     pad_2498 = 3;
-    for (DrCalcStmListObj* p = m_stmLists[0].m_head; p != nullptr; p = p->m_pNext) {
+    for (DrCalcStmListObj* p = m_stmLists[0].m_head; p != nullptr; p = p->m_next) {
         if (p->m_flags & (0x1000000 << DrMan::s_nDblIdx)) {
             p->m_curUseMode = p->m_useMode[DrMan::s_nDblIdx];
             p->m_flags &= ~(0x1000000 << DrMan::s_nDblIdx);
@@ -1065,6 +1067,50 @@ void DrCalcTexStreamMan::update() {
     }
     calcMemOptimization();
     afterUpdate();
+}
+
+void DrCalcTexStreamMan::afterUpdate() {
+    DrStmListAfterArg arg;
+    arg.pad_0 = false;
+    arg.m_memChk = false;
+    arg.m_size = 0;
+    if (pad_2068 & 2) {
+        arg.m_memChk = true;
+        arg.m_size = m_errReadSize;
+    }
+    for (DrCalcStmListObj* p = m_stmLists[0].m_head; p != nullptr; p = p->m_next) {
+        p->afterUpdate(arg);
+    }
+    if (!(m_errReadSize == 0 || arg.m_size <= 0)) {
+        arg.m_size = m_errReadSize;
+        for (DrCalcStmListObj* p = m_stmLists[0].m_head; p != nullptr; p = p->m_next) {
+            if (arg.m_memChk && !(p->m_flags & 2) && (p->m_useCount == 0 || p->m_curUseMode == 0)) {
+                if (p->m_idleFrame[0] < 0x708) {
+                    p->m_idleFrame[0] = 0x707;
+                }
+                if (p->m_idleFrame[1] < 0xE10) {
+                    p->m_idleFrame[1] = 0xE0F;
+                }
+                arg.m_size -= p->pad_98;
+                if (arg.m_size < 0) {
+                    arg.m_size = 0;
+                }
+                arg.m_size -= p->pad_94;
+                if (arg.m_size < 0) {
+                    arg.m_size = 0;
+                }
+            }
+        }
+    }
+    int idx = DrMan::s_nDblIdx;
+    DrCalcStmListObj** stock = m_stock[idx];
+    unsigned int num = 0;
+    for (DrCalcStmListObj* p = m_stmLists[0].m_head; p != nullptr; p = p->m_next) {
+        if (!(p->m_flags & 2) && num < STOCK_MAX) {
+            stock[num++] = p;
+        }
+    }
+    m_stockNum[idx] = num;
 }
 
 void DrCalcTexStreamMan::entryJob() { WorkCpu::wakeup(m_jobGroup); }
@@ -1110,6 +1156,151 @@ void DrCalcTexStreamMan::cntMemUpdate() {
             }
             pad_248C = 0;
         }
+    }
+}
+
+template <class T>
+void DrResChankList<T>::changeList(T* obj, T* other) {
+    T* prev = obj->m_prev;
+    T* otherPrev = other->m_prev;
+    if (prev == other) {
+        T* next = obj->m_next;
+        if (otherPrev == nullptr) {
+            m_head = obj;
+        } else {
+            otherPrev->m_next = obj;
+        }
+        obj->m_prev = otherPrev;
+        if (next == nullptr) {
+            m_tail = other;
+        } else {
+            next->m_prev = other;
+        }
+        other->m_prev = obj;
+        other->m_next = next;
+        obj->m_next = other;
+    } else if (otherPrev == obj) {
+        T* next = other->m_next;
+        if (prev == nullptr) {
+            m_head = other;
+        } else {
+            prev->m_next = other;
+        }
+        other->m_prev = prev;
+        if (next == nullptr) {
+            m_tail = obj;
+        } else {
+            next->m_prev = obj;
+        }
+        obj->m_prev = other;
+        obj->m_next = next;
+        other->m_next = obj;
+    } else {
+        remove(obj);
+        remove(other);
+        if (prev == nullptr) {
+            pushFront(other);
+        } else {
+            insertNext(prev, other);
+        }
+        if (otherPrev == nullptr) {
+            pushFront(obj);
+        } else {
+            insertNext(otherPrev, obj);
+        }
+    }
+}
+
+// copyTempBuff and copyMemObj call it (not written yet)
+template void DrResChankList<DrCalcTexStmObj>::changeList(DrCalcTexStmObj*, DrCalcTexStmObj*);
+
+DrCalcStmListObj::DrCalcStmListObj(const char* name, const unsigned char* data, unsigned int param)
+    : m_texBuf(nullptr), m_texBufNum(0), m_pVertex(nullptr) {
+    m_name = name;
+    pad_1d8 = param;
+    pad_18 = nullptr;
+    m_pWork = nullptr;
+    m_pFile = nullptr;
+    m_pAddMemObj = nullptr;
+    m_pMemObj = nullptr;
+    m_heightWait = 0;
+    m_readIdx = 0;
+    m_midTexIdx = 0;
+    m_vertexIdx = 0;
+    m_shaderIdx = 0;
+    m_lowTexIdx = 0;
+    m_heightBegin = 0;
+    m_heightEnd = 0;
+    m_flags = 0;
+    pad_9c = 0;
+    m_entryNum = 0;
+    pad_a2 = 0;
+    m_texNum = 0;
+    m_useCount = 0;
+    m_useMode[1] = 0;
+    m_curUseMode = 0;
+    m_useMode[0] = 0;
+    m_reqWait = 0;
+    m_func = nullptr;
+    m_endFunc = nullptr;
+    m_reqFunc = nullptr;
+    setupInfo(data, false);
+}
+
+DrCalcStmListObj::~DrCalcStmListObj() {
+    if (m_pFile != nullptr) {
+        DevFileTh::cancel(m_pFile, false);
+    }
+    m_pFile = nullptr;
+    for (unsigned int i = m_heightBegin; i < m_heightEnd; i++) {
+        DrCalcTexStmObj*& obj = m_texObjs[i];
+        if (obj != nullptr) {
+            DrCalcTexStreamMan::get()->clearMemObj(obj);
+            obj = nullptr;
+        }
+    }
+    for (int i = 0; i < m_texBufNum; i++) {
+        m_texBuf[i].release();
+    }
+    m_flags &= ~0x70;
+    pad_98 = 0;
+    for (int i = 0; i < m_texBufNum; i++) {
+        m_texBuf[i].release();
+    }
+    m_texBufNum = 0;
+    if (m_pVertex != nullptr) {
+        DrMan::get()->m_mdlMan->m_vertexMan->releaseVertexObj(m_pVertex);
+        m_pVertex = nullptr;
+    }
+    for (int i = 0; i < pad_a2; i++) {
+        DrCalcTexStmObj*& obj = m_texObjs[i];
+        if (obj != nullptr) {
+            DrCalcTexStreamMan::get()->clearMemObj(obj);
+            obj = nullptr;
+        }
+    }
+    m_flags &= ~0x8;
+    pad_94 = 0;
+    if (m_pAddMemObj != nullptr) {
+        DrCalcTexStreamMan::get()->clearMemObj(m_pAddMemObj);
+        m_pAddMemObj = nullptr;
+    }
+    if (m_pMemObj != nullptr) {
+        DrCalcTexStreamMan::get()->clearMemObj(m_pMemObj);
+        m_pMemObj = nullptr;
+    }
+    m_entryNum = 0;
+    if (m_pWork != nullptr) {
+        mtl::MemManager::deallocate(m_pWork, 0, false);
+        m_pWork = nullptr;
+    }
+    for (int i = 0; i < m_texBufNum; i++) {
+        m_texBuf[i].release();
+    }
+    m_texBufNum = 0;
+    if (m_pVertex != nullptr) {
+        DrMan::get()->m_mdlMan->m_vertexMan->releaseVertexObj(m_pVertex);
+        m_pVertex = nullptr;
     }
 }
 

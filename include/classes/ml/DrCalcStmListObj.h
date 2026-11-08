@@ -3,19 +3,33 @@
 
 #include "classes/ml/IWorkEvent.h"
 #include "mm/mtl/FixStr.h"
+#include "ml/DrResMdoSeamMemMan.h"
 
 namespace ml { class EventFileTh; }
 namespace ml { class FileHandleTh; }
 namespace ml { class DrCalcTexStmObj; }
 namespace grlib { class CGLibTextureBuffer; }
+namespace ml { class DrResMdoVertex; }
 
 namespace ml {
+// what DrCalcTexStreamMan::afterUpdate hands each stream list (the name is the symbols'; the fields' names are
+// not the original's)
+struct DrStmListAfterArg {
+    bool pad_0;      // 0x0: zeroed by afterUpdate
+    bool m_memChk;   // 0x1: set while bit 1 of the manager's pad_2068 is
+    int m_size;      // 0x4: the manager's m_errReadSize, less what the idle lists hold
+};
+
 // table 0x7100B7EDE8
-class DrCalcStmListObj : public ::ml::IWorkEvent {
+// the list links at 0x8/0x10 come from DrResChankList's Node: the constructor zeroes them before its table is
+// stored, as DrCalcTexStmObj's does (m_next: DrCalcTexStreamMan::update walks the list from the manager's 0x28)
+class DrCalcStmListObj : public ::ml::IWorkEvent, public DrResChankList<DrCalcStmListObj>::Node {
 public:
     // a state of the stream (DrCalcTexStreamMan::update calls it until it returns false)
     typedef bool (DrCalcStmListObj::*StmFunc)();
 
+    // the stream of the named file; data is the stream's info (setupInfo; the parameter names are not the original's)
+    DrCalcStmListObj(const char* name, const unsigned char* data, unsigned int);
     virtual ~DrCalcStmListObj();  // slot 0
     virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
 
@@ -23,6 +37,10 @@ public:
     enum DrTexUseMode {};
 
     void release();
+    void afterUpdate(DrStmListAfterArg& arg);
+    void memChkUpdate(DrStmListAfterArg& arg);
+    // the entries of the stream's info read (the constructor ends with it)
+    void setupInfo(const unsigned char* data, bool);
     // the stream's graphics API work, once per frame stocked (DrCalcTexStreamMan::apiUpdate)
     void apiUpdate();
     // the stream's flag bits of the frame stocked (DrMan::s_nDblStockIdx)
@@ -93,9 +111,8 @@ public:
     };  // the names are not the original's
 
     // (field names are not the original's)
-    unsigned char pad_8[0x8];
-    DrCalcStmListObj* m_pNext;   // 0x10: DrCalcTexStreamMan::update walks the list from the manager's 0x28
-    unsigned char pad_18[0x10];
+    void* pad_18;                // 0x18: zeroed by the constructor
+    void* m_pWork;               // 0x20: freed by the destructor (the name is not the original's)
     // 0x28: one memory object per entry (the name is not the original's)
     DrCalcTexStmObj** m_texObjs;
     ResTexObj* m_pResObj[2];     // 0x30: by DrMan::s_nDblStockIdx, the 0x18-byte resource entries getResVertexObj,
@@ -142,7 +159,7 @@ public:
     unsigned char pad_92[0x2];
     int pad_94;                  // 0x94: texstm_defReadWait stores the read memory's size
     int pad_98;                  // 0x98: the size of the memory a read filled
-    unsigned char pad_9c[0x4];
+    int pad_9c;                  // 0x9C: zeroed by the constructor
     short m_entryNum;            // 0xA0: the entries of m_texObjs, m_pResObj and m_texInfo (the name is not the original's)
     short pad_a2;                // 0xA2: texstm_defReadWait's count of split memory objects
     short m_texNum;              // 0xA4: the stream's textures (DrResMdoTexList::createStmTexInfoList; the name is not the original's)
@@ -153,7 +170,9 @@ public:
     short m_reqWait;             // 0xAA: frames texstm_requestWait waits
     unsigned char pad_ac[0x4];
     grlib::CGLibTextureBuffer* m_texBuf;  // 0xB0: the stream's textures (getTexObj)
-    unsigned char pad_b8[0x10];
+    int m_texBufNum;             // 0xB8: the m_texBuf entries the destructor releases (the name is not the original's)
+    unsigned char pad_bc[0x4];
+    DrResMdoVertex* m_pVertex;   // 0xC0: given back to the DrMdoVertexMan by the destructor (the name is not the original's)
     int m_curUseMode;            // 0xC8: DrCalcTexStreamMan::update moves m_useMode of the frame here (0 if no texture)
     int m_useMode[2];            // 0xCC: by DrMan::s_nDblStockIdx
     mm::mtl::FixStr<256> m_name;  // 0xD4: the file the stream reads (the constructor's name; the field name is not the original's)

@@ -16,7 +16,8 @@ public:
         T* m_prev;
         T* m_next;
     };
-    void changeList(T* obj, T* next);
+    // obj and other swap their places in the list (the parameter names are not the original's)
+    void changeList(T* obj, T* other);
     // unlinks obj (inline: the name is not the original's)
     void remove(T* obj) {
         T* prev = obj->m_prev;
@@ -76,6 +77,19 @@ public:
             m_tail = obj;
         }
         obj->m_next = nullptr;
+    }
+    // links obj at the front (inline in changeList: the name is not the original's)
+    void pushFront(T* obj) {
+        if (m_head == nullptr) {
+            m_head = obj;
+            m_tail = obj;
+            obj->m_next = nullptr;
+        } else {
+            m_head->m_prev = obj;
+            obj->m_next = m_head;
+            m_head = obj;
+        }
+        obj->m_prev = nullptr;
     }
     T* m_head;  // 0x0
     T* m_tail;  // 0x8
