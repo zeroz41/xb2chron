@@ -18,6 +18,8 @@ public:
     void clear();
     // named by the symbols: makes and keeps a MstxtRes for name unless one of that name is kept
     void load(const char* name);
+    // named by the symbols: unregisters the current resource's BDAT, then registers the one named name
+    void registerBdat(const char* name);
     // the loaded message-text resources (MstxtManager::load pushes each new MstxtRes); the name is not the original's
     mm::mtl::FixedVector<MstxtRes*, 16> m_res;  // 0x10
     // the resource whose BDAT is registered (registerBdat stores it, clear unregisters it); the name is not the original's

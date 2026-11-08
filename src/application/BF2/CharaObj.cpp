@@ -1106,6 +1106,25 @@ SkipManager::~SkipManager() {}
 
 const char* AgelogManager::LOG_DIR = "C:/MonolithSoft/BF2/agelog";
 
+void AgelogManager::render() {
+    if (!m_flags.test(0) || m_flags.test(1)) {
+        return;
+    }
+    int h = ml::DevGraph::getRootHeight();
+    int y = h - 100;
+    int x = (ml::DevGraph::getRootWidth() >> 1) - 80;
+    fw::debug::drawFontColor(mm::Col4::black);
+    fw::debug::drawFont(x + 1, y + 1, "AGELOG RESERVING..");
+    fw::debug::drawFontColor(mm::Col4::yellow);
+    fw::debug::drawFont(x, y, "AGELOG RESERVING..");
+    x = (ml::DevGraph::getRootWidth() >> 1) - 150;
+    y = h - 80;
+    fw::debug::drawFontColor(mm::Col4::black);
+    fw::debug::drawFont(x + 1, y + 1, "agelog path[%s]", LOG_DIR);
+    fw::debug::drawFontColor(mm::Col4::yellow);
+    fw::debug::drawFont(x, y, "agelog path[%s]", LOG_DIR);
+}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void AgelogManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
@@ -1586,6 +1605,27 @@ void MstxtManager::load(const char* name) {
         return;
     }
     m_res.push_back(new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) MstxtRes(name));
+}
+
+void MstxtManager::registerBdat(const char* name) {
+    if (m_bdatRes != nullptr) {
+        MstxtRes* res = m_bdatRes;
+        if (res->m_flags & 4) {
+            gf::GfMenuObjEventSubtitle::endText();
+            fw::BdatManager::unregistBdat(2);
+            res->m_flags &= ~4;
+        }
+        m_bdatRes = nullptr;
+    }
+    MstxtRes* found = nullptr;
+    for (unsigned long i = 0; i < m_res.size(); i++) {
+        if (strcmp(name, m_res[i]->m_name.m_str) == 0) {
+            found = m_res[i];
+            break;
+        }
+    }
+    m_bdatRes = found;
+    m_bdatRes->registerBdat();
 }
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
@@ -2330,6 +2370,22 @@ void CamHands::addAnmRotZ(float time, float rotZ, CV_TYPE type) {
 
 CamMotion::~CamMotion() {
     stop();
+}
+
+void CamMotion::stop() {
+    m_player.stop();
+    m_playerEff.stop();
+    if (pad_40 & 1) {
+        if (pad_48 != nullptr) {
+            mm::mtl::Singleton<MotstmManager>::getPtr()->free(pad_48);
+        }
+        if (pad_50 != nullptr) {
+            mm::mtl::Singleton<MotstmManager>::getPtr()->free(pad_50);
+        }
+    }
+    pad_48 = nullptr;
+    pad_50 = nullptr;
+    pad_40 &= ~6;
 }
 
 void CamMotion::update(const FrameInfo& info) {
@@ -7833,6 +7889,17 @@ CamEvaPlayer::~CamEvaPlayer() {
     m_cam = nullptr;
 }
 
+void CamEvaPlayer::play(CamBase* cam, void* data, const mm::Vec3& pos) {
+    stop();
+    RchaCam* rcha = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) RchaCam();
+    m_cam = cam;
+    m_rcha = rcha;
+    m_rcha->setup(mtl::ALLOC_HANDLE(), data);
+    pad_18 = 0;
+    m_pos = pos;
+    pad_30 = 0;
+}
+
 CamEvaPlayerEff::~CamEvaPlayerEff() {
     if (m_rcha) {
         m_rcha->clear();
@@ -7841,6 +7908,13 @@ CamEvaPlayerEff::~CamEvaPlayerEff() {
             m_rcha = nullptr;
         }
     }
+}
+
+void CamEvaPlayerEff::play(void* data) {
+    stop();
+    m_rcha = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) RchaCamEff();
+    m_rcha->setup(mtl::ALLOC_HANDLE(), data);
+    pad_10 = 0;
 }
 
 void DofManager::play(int type, float p0, float p1, float p2, float p3, float p4, float p5, int frame, bool flag,

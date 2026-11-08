@@ -20,11 +20,10 @@ public:
     // the layout follows CamObj's constructor (it builds the motion in place) and the destructor; the names are not
     // the original's. Size 0xC0.
     unsigned int pad_40;  // bit 1: m_player plays, bit 2: m_playerEff plays (update tests them)
-    unsigned long pad_48;
-    unsigned long pad_50;
+    void* pad_48;  // stop frees it to the MotstmManager when bit 0 of pad_40 is set
+    void* pad_50;  // the same
     unsigned long pad_58;
-    CamEvaPlayer m_player;  // @0x60
-    unsigned char pad_78[0x28];
+    CamEvaPlayer m_player;  // @0x60 (0x40 bytes)
     CamEvaPlayerEff m_playerEff;  // @0xA0
     unsigned long pad_b8;
 };
