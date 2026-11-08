@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFMENUCHARDATAADAPTER_H
 
 #include "classes/gf/GfMenuAdapter.h"
+#include "classes/gf/GfMenuGfObjAdapter.h"
 #include "mm/mtl/Delegate.h"
 
 namespace fw { class UpdateInfo; }
@@ -19,25 +20,12 @@ class TUnk_B5A8E8 {
 public:
     virtual void changeCharData(unsigned char, unsigned int) = 0;
 };
-// a base of gf::GfMenuCharDataAdapter no evidence names yet
-class TUnk_B5A900 {
-public:
-    virtual void changeGfObj(gf::GF_OBJ_HANDLE*) = 0;
-};
-// a base of gf::GfMenuCharDataAdapter no evidence names yet
-class TUnk_B5A918 {
-public:
-    virtual void changePartyDriver(unsigned char) = 0;
-};
-// a base of gf::GfMenuCharDataAdapter no evidence names yet
-class TUnk_B5A930 {
-public:
-    virtual void changePartyBlade(unsigned char, unsigned char) = 0;
-};
-// table 0x7100B5A8A0; base at 0x30 unknown (TUnk_B5A8E8), base at 0x38 unknown (TUnk_B5A900), base at 0x40 unknown
-// (TUnk_B5A918), base at 0x48 unknown (TUnk_B5A930)
-class GfMenuCharDataAdapter : public ::gf::GfMenuAdapter, public TUnk_B5A8E8, public TUnk_B5A900, public TUnk_B5A918,
-                              public TUnk_B5A930 {
+// table 0x7100B5A8A0; base at 0x30 unknown (TUnk_B5A8E8), base at 0x38 unknown (TUnk_B5C118), base at 0x40 unknown
+// (TUnk_B5C130), base at 0x48 unknown (TUnk_B5C148). The bases at 0x38-0x48 are GfMenuGfObjAdapter's interfaces (their
+// tables at 0x7100B5A900/918/930 hold the same changeGfObj/changePartyDriver/changePartyBlade thunks):
+// GfMenuObjEnemyStatus::initialize keeps both adapters in one list of the changeGfObj interface (this one at +0x38)
+class GfMenuCharDataAdapter : public ::gf::GfMenuAdapter, public TUnk_B5A8E8, public TUnk_B5C118, public TUnk_B5C130,
+                              public TUnk_B5C148 {
 public:
     class BladeListConverter;
     class BladeListOwnerDriverConverter;
