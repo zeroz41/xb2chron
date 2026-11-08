@@ -1,6 +1,7 @@
 #ifndef CLASSES_ML_IDRDRAWWORKINFO_H
 #define CLASSES_ML_IDRDRAWWORKINFO_H
 #include "mm/Vec3.h"
+#include "mm/Mat44.h"
 
 namespace ml {
 // what ml's draw system hands each IDrDrawCallback stage; only what the code reads is named
@@ -14,7 +15,11 @@ public:
     // 24 floats cloud::CloudObjReduction::update sends to its shader (6 x 4: the name and the reading as planes are
     // not the original's)
     float m_planes[24];  // 0x1D4
-    unsigned char pad_234[0x32C];
+    unsigned char pad_234[0x1EC];
+    // three matrices cloud::CloudObjFlow::update sends after its own (names not the original's)
+    mm::Mat44 m_flowMat[3];  // 0x420
+    float m_flowVec[3];      // 0x4E0, cloud::CloudObjFlow::update's second uniform
+    unsigned char pad_4EC[0x74];
     // layer::LayerManager's apply and finalRender draw only when it is 0 (the name is not the original's)
     int m_subPass;
     unsigned char pad_564[0x1C];  // sizeof 0x580: DrMan keeps one per view at 0x660

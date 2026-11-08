@@ -54,6 +54,8 @@ public:
     void createBlurUniform(bool second);
     // CloudObjSky::updateUniform's SKY_1 block from its scroll (the parameter name is not the original's)
     void createSkyUniform(const mm::Vec3& scroll);
+    // CloudObjMdl::updateUniform's CLOUD_UNIFORM_MDL block
+    void createMdlPosUniform();
     static unsigned int s_nUniformBlockSize[CLOUD_UNIFORM_NUM];
 };
 

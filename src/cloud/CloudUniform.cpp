@@ -56,6 +56,41 @@ void CloudUniform::updateData() {
 
 CloudObjFlow::~CloudObjFlow() {}
 
+void CloudObjFlow::update() {
+    calcSamplingPos();
+    float height = CloudMan::sys()->m_pObjMan->m_pCalcParams->m_height;
+    float* buf = (float*)m_flowUniform.getBuff();
+    CloudCalcParams* calc = CloudMan::sys()->m_pObjMan->m_pCalcParams;
+    grlib::ShdMat44TransposeMat44(buf, calc->m_flowMat);
+    grlib::ShdMat44TransposeMat44(buf + 0x10, calc->m_pInfo->m_flowMat[0]);
+    grlib::ShdMat44TransposeMat44(buf + 0x20, calc->m_pInfo->m_flowMat[1]);
+    grlib::ShdMat44TransposeMat44(buf + 0x30, calc->m_pInfo->m_flowMat[2]);
+    buf[0x40] = height;
+    buf[0x41] = 0.0f;
+    buf[0x42] = 0.0f;
+    buf[0x43] = height;
+    buf[0x44] = calc->m_flowParam;
+    buf[0x45] = 1.0f;
+    buf[0x46] = calc->m_flowParam;
+    buf[0x47] = 0.0f;
+    buf[0x48] = calc->m_uvScale0;
+    buf[0x49] = 0.0f;
+    buf[0x4A] = calc->m_uvScale1;
+    buf[0x4B] = 0.0f;
+    m_flowUniform.updateData();
+    buf = (float*)m_flowUniform2.getBuff();
+    calc = CloudMan::sys()->m_pObjMan->m_pCalcParams;
+    buf[0] = calc->m_pInfo->m_flowVec[0];
+    buf[1] = calc->m_pInfo->m_flowVec[1];
+    buf[2] = calc->m_pInfo->m_flowVec[2];
+    buf[3] = 0.0f;
+    buf[4] = calc->m_flowBlend;
+    buf[5] = 1.0f - calc->m_flowBlend;
+    buf[6] = 0.0f;
+    buf[7] = 0.0f;
+    m_flowUniform2.updateData();
+}
+
 void CloudObjFlow::alphaRender() {}
 
 CloudObjMan::~CloudObjMan() {
@@ -69,6 +104,16 @@ CloudObjMan::~CloudObjMan() {
         delete m_pCalcParams;
         m_pCalcParams = nullptr;
     }
+}
+
+void CloudObjMan::creataFastSetup() {
+    createFlow();
+    m_objList.pushBack(new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) CloudObjSky());
+    [&] {
+        m_pPlane = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) CloudObjPlane();
+        m_objList.pushBack(m_pPlane);
+    }();
+    createMdl();
 }
 
 CloudObjFlow* CloudObjMan::createFlow() {
@@ -88,6 +133,46 @@ CloudMdlDataObj* CloudObjMan::createMdlData(const void* data) {
     obj->create(data);
     m_mdlList.pushBack(obj);
     return obj;
+}
+
+bool CloudObjMan::update(const ml::IDrDrawWorkInfo* info) {
+    m_mdlOn = false;
+    m_skyHideFrame = false;
+    m_planeUniSkip = false;
+    m_planeUniSkip2 = true;
+    m_isHole = false;
+    m_pCalcParams->apply(info);
+    if (m_pCalcParams->m_pTarget == nullptr || !m_isEnable) {
+        return false;
+    }
+    m_pReduction->imgUpdate();
+    for (CloudMdlDataObj* obj = m_mdlList.m_pTop; obj != nullptr;) {
+        bool alive = obj->update();
+        CloudMdlDataObj* next = obj->m_pNext;
+        if (!alive) {
+            m_mdlList.remove(obj);
+            delete obj;
+        }
+        obj = next;
+    }
+    for (CloudObj* obj = m_objList.m_pTop; obj != nullptr; obj = obj->m_pNext) {
+        obj->update();
+    }
+    if (!m_mdlOn && m_skyHideFrame && m_planeUniSkip && m_planeUniSkip2) {
+        return false;
+    }
+    CloudUniform& uniform = m_pCalcParams->m_uniform;
+    CloudCalcParams* calc = CloudMan::sys()->m_pObjMan->m_pCalcParams;
+    const float* planes = calc->m_pInfo->m_planes;
+    float* buf = (float*)uniform.getBuff();
+    grlib::ShdF32SetF32Array(buf, planes, 24);
+    buf[0x18] = calc->m_height;
+    buf[0x19] = 1.0f / calc->m_heightRange;
+    buf[0x1A] = calc->m_heightParam;
+    buf[0x1B] = 0.0f;
+    uniform.updateData();
+    m_pReduction->update();
+    return true;
 }
 
 bool CloudObjMan::isRender() const {
@@ -143,6 +228,67 @@ void CloudObjMan::alphaRender(const ml::IDrDrawWorkInfo* info) {
 
 CloudObjMdl::~CloudObjMdl() {
     m_partsList.releaseAll();
+}
+
+void CloudObjMdl::update() {
+    CloudMan* man = CloudMan::sys();
+    CloudCalcParams* calc = man->m_pObjMan->m_pCalcParams;
+    float time = man->m_frame * man->m_rate;
+    float moveH = time * (calc->m_mdlRateH * calc->m_skySpeed);
+    float moveV = time * (calc->m_skySpeed * calc->m_mdlRateV);
+    m_scroll.x = 1.0f;
+    m_scroll.y = 1.0f;
+    m_scroll.z = 1.0f;
+    m_scroll.normalize();
+    m_scroll.x = moveH * m_scroll.x * 0.1f;
+    m_scroll.y = moveV * m_scroll.y * 0.1f;
+    m_scroll.z = moveH * m_scroll.z * 0.1f;
+    m_partsList.update();
+    m_partsList.calcZSort();
+    updateUniform();
+}
+
+void CloudObjMdl::updateUniform() {
+    bool isDisp = false;
+    for (CloudMdlParts* parts = m_partsList.m_pTop; parts != nullptr; parts = parts->m_pNext) {
+        if (parts->isDisp()) {
+            parts->createUniform(m_scroll);
+            isDisp = true;
+        }
+    }
+    if (!isDisp) {
+        return;
+    }
+    CloudMan::sys()->m_pObjMan->m_mdlOn = true;
+    CloudCalcParams* calc = CloudMan::sys()->m_pObjMan->m_pCalcParams;
+    float* buf = (float*)m_mdlUniform0.getBuff();
+    buf[0x0] = calc->m_mdlCol0[0];
+    buf[0x1] = calc->m_mdlCol0[1];
+    buf[0x2] = calc->m_mdlCol0[2];
+    buf[0x3] = 1.0f;
+    buf[0x4] = calc->m_mdlCol1[0];
+    buf[0x5] = calc->m_mdlCol1[1];
+    buf[0x6] = calc->m_mdlCol1[2];
+    buf[0x7] = 1.0f;
+    buf[0x8] = calc->m_skyPos.x;
+    buf[0x9] = calc->m_skyPos.y;
+    buf[0xA] = calc->m_skyPos.z;
+    buf[0xB] = 0.0f;
+    buf[0xC] = calc->m_mdlVec[0];
+    buf[0xD] = calc->m_mdlVec[1];
+    buf[0xE] = calc->m_mdlVec[2];
+    buf[0xF] = 0.0f;
+    buf[0x10] = calc->m_lightVec0[0];
+    buf[0x11] = calc->m_lightVec0[1];
+    buf[0x12] = calc->m_lightVec0[2];
+    buf[0x13] = 0.0f;
+    buf[0x14] = calc->m_lightVec1[0];
+    buf[0x15] = calc->m_lightVec1[1];
+    buf[0x16] = calc->m_lightVec1[2];
+    buf[0x17] = 0.0f;
+    m_mdlUniform0.updateData();
+    m_mdlUniform.createMdlPosUniform();
+    m_mdlUniform.updateData();
 }
 
 void CloudObjMdl::alphaRender() {
@@ -383,6 +529,91 @@ void CloudObjSky::updateParams() {
         m_target.setTextureInfo((float)m_targetSize, (float)m_targetSize, (GrlSurfaceFormat)1, false, 0);
         m_isTargetClear = true;
     }
+}
+
+void CloudObjSky::updateUniform() {
+    CloudCalcParams* calc = CloudMan::sys()->m_pObjMan->m_pCalcParams;
+    float* buf = (float*)m_skyUniform0.getBuff();
+    grlib::ShdMat44TransposeMat44(buf, calc->m_skyMat[0]);
+    grlib::ShdMat44TransposeMat44(buf + 0x10, calc->m_skyMat[1]);
+    grlib::ShdMat44TransposeMat44(buf + 0x20, calc->m_skyMat[1]);
+    buf[0x30] = calc->m_skyPos.x;
+    buf[0x31] = calc->m_skyPos.y;
+    buf[0x32] = calc->m_skyPos.z;
+    buf[0x33] = calc->m_far * 0.9f;
+    m_skyUniform0.updateData();
+    m_skyUniform1.createSkyUniform(m_scroll);
+    m_skyUniform1.updateData();
+    CloudMan* sys = CloudMan::sys();
+    calc = sys->m_pObjMan->m_pCalcParams;
+    float time = sys->m_frame * sys->m_rate;
+    buf = (float*)m_skyUniform2.getBuff();
+    buf[0] = m_detailScroll.x;
+    buf[1] = m_detailScroll.y;
+    buf[2] = m_detailScroll.z;
+    buf[3] = 0.0f;
+    buf[4] = calc->m_skyParam[2];
+    buf[5] = calc->m_skyParam[1];
+    buf[6] = calc->m_skyParam[0];
+    buf[7] = time;
+    m_skyUniform2.updateData();
+}
+
+void CloudUniform::createSkyUniform(const mm::Vec3& scroll) {
+    float* buf = (float*)getBuff();
+    CloudCalcParams* calc = CloudMan::sys()->m_pObjMan->m_pCalcParams;
+    buf[0x0] = calc->m_skyCol0[0];
+    buf[0x1] = calc->m_skyCol0[1];
+    buf[0x2] = calc->m_skyCol0[2];
+    buf[0x3] = 1.0f;
+    buf[0x4] = calc->m_skyCol1[0];
+    buf[0x5] = calc->m_skyCol1[1];
+    buf[0x6] = calc->m_skyCol1[2];
+    buf[0x7] = 1.0f;
+    grlib::ShdF32SetF32Array(buf + 0x8, &calc->m_skyPos.x, 4);
+    float scale = calc->m_skyScale * 10.0f;
+    buf[0xC] = calc->m_skyFactor * 10.0f;
+    buf[0xD] = scale;
+    buf[0xE] = calc->m_skyParam2[0];
+    buf[0xF] = calc->m_skyParam2[1];
+    buf[0x10] = calc->m_uvScale0;
+    buf[0x11] = 0.0f;
+    buf[0x12] = calc->m_uvScale1;
+    buf[0x13] = 0.0f;
+    buf[0x14] = scroll.x;
+    buf[0x15] = scroll.y;
+    buf[0x16] = scroll.z;
+    buf[0x17] = 0.0f;
+    buf[0x18] = 0.0f;
+    buf[0x19] = calc->m_skyRadius;
+    buf[0x1A] = 0.0f;
+    buf[0x1B] = 1.0f;
+    float radius2 = calc->m_skyRadius * calc->m_skyRadius;
+    float outer = calc->m_skyRadius + calc->m_skyAtmHeight;
+    float horizon = sqrtf(outer * outer - radius2);
+    mm::Vec3 dir(horizon, calc->m_skyRadius, 0.0f);
+    float length = dir.length();
+    if (length <= 1e-6f) {
+        dir = mm::Vec3::zero;
+    } else {
+        float scale = 1.0f / length;
+        dir.x = scale * dir.x;
+        dir.y = scale * dir.y;
+        dir.z = scale * dir.z;
+    }
+    float x = dir.x;
+    buf[0x1C] = calc->m_skyRadius + calc->m_skyAtmHeight;
+    buf[0x1D] = calc->m_skyRadius + 1.0f;
+    buf[0x1E] = 1.0f / x;
+    buf[0x1F] = 1.0f / horizon;
+    buf[0x20] = calc->m_lightVec0[0];
+    buf[0x21] = calc->m_lightVec0[1];
+    buf[0x22] = calc->m_lightVec0[2];
+    buf[0x23] = 1.0f;
+    buf[0x24] = calc->m_lightVec1[0];
+    buf[0x25] = calc->m_lightVec1[1];
+    buf[0x26] = calc->m_lightVec1[2];
+    buf[0x27] = 1.0f;
 }
 
 void CloudObjSky::renderDetailPoli() {
