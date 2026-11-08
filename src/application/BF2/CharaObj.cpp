@@ -2631,6 +2631,10 @@ void CharaPlayWink::term() {
     idle();
 }
 
+ObjectLight::ObjectLight(const char* name, unsigned int id) : Object(static_cast<OBJTYPE>(5), name) {
+    m_light = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) LightObj(id);
+}
+
 ObjectLight::~ObjectLight() {
     if (m_light) {
         delete m_light;
@@ -2674,6 +2678,15 @@ ObjectCamera::~ObjectCamera() {
 void ObjectCamera::end() {
     if (m_cam) {
         m_cam->end();
+    }
+}
+
+void ObjectCamera::update() {
+    const FrameInfo& info = mm::mtl::Singleton<FrameManager>::getPtr()->frameInfo();
+    m_cam->update(info);
+    if (pad_70 == 0 && mm::mtl::Singleton<DebugManager>::getPtr()->testFlag(13) &&
+        (mm::mtl::Singleton<CamManager>::getPtr()->m_list.pad_14 & 2)) {
+        updateSyncFreeCam();
     }
 }
 
@@ -4213,6 +4226,7 @@ void CharaEvaPlayer::playFoot(bool foot) {
 }  // namespace event
 
 #include "classes/gf/GfGameManager.h"
+#include "classes/event/ManiManager.h"
 
 namespace event {
 
@@ -4359,6 +4373,37 @@ int CharaStopAction::update(const ICmd::Param&) {
     return true;
 }
 
+void ObjectUtil::drawState(const mm::Vec3& pos, float height, gf::GF_OBJ_HANDLE* handle) {
+    gf::GfObj* obj = gf::GfObjUtil::getObj(handle);
+    if (obj == nullptr) {
+        return;
+    }
+    const char* name = nullptr;
+    if (gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2)) {
+        name = anim->getStateName();
+    }
+    if (gf::GfComAsm* asmc = obj->getComponent<gf::GfComAsm>(2)) {
+        name = asmc->getStateName(static_cast<gf::AnimLayer>(0));
+    }
+    if (name == nullptr) {
+        return;
+    }
+    mm::Vec3 head;
+    head.x = pos.x;
+    head.y = pos.y + height + 0.2f;
+    head.z = pos.z;
+    mm::Vec3 screen;
+    if (!ml::ScnCamUtil::getScreenPos(screen, Manager::get()->m_scn->getCam(-1), head)) {
+        return;
+    }
+    int x = screen.x;
+    int y = screen.y;
+    fw::debug::drawSquare2D(mm::Rect<int>(x - 80, y + 15, 160, 23), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+    fw::debug::drawLineSquare2D(mm::Rect<int>(x - 80, y + 15, 160, 23), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFont(x - 75, y + 19, name);
+}
+
 ObjectChara::ObjectChara(const char* name)
     : Object(static_cast<OBJTYPE>(2), name), m_flags(0), m_chara(nullptr) {}
 
@@ -4469,6 +4514,16 @@ void ObjectChara::linerRotAxis(const RotAxis& rot, float time, CV_TYPE type) {
     m_chara->mount(nullptr, "", mm::Vec3::zero, mm::Vec3::zero);
 }
 
+// a drag rectangle holding the object makes it a manipulator target, one not holding it drops it
+bool ObjectChara::OnBouRectSelect(const IBouCallback::SelectParam& param) {
+    if (param.m_rect->isInside(mm::Vec3(m_chara->m_pos))) {
+        mm::mtl::Singleton<ManiManager>::getPtr()->addManipulate(this, static_cast<MANI_TYPE>(0));
+        return true;
+    }
+    mm::mtl::Singleton<ManiManager>::getPtr()->removeManipulate(this);
+    return false;
+}
+
 void ObjectChara::OnManiSetPos(IManiCallback::SetParam& param) {
     mm::Vec3 trans = param.m_mtx.getTrans();
     PosAxis pos = m_pos;
@@ -4537,6 +4592,16 @@ template CmdQueue<6, 0>::~CmdQueue();
 
 void ObjectEffect::tail() {
     m_effect->m_ctrl.update();
+}
+
+// a drag rectangle holding the object makes it a manipulator target, one not holding it drops it
+bool ObjectEffect::OnBouRectSelect(const IBouCallback::SelectParam& param) {
+    if (param.m_rect->isInside(mm::Vec3(m_effect->m_ctrl.m_pos))) {
+        mm::mtl::Singleton<ManiManager>::getPtr()->addManipulate(this, static_cast<MANI_TYPE>(0));
+        return true;
+    }
+    mm::mtl::Singleton<ManiManager>::getPtr()->removeManipulate(this);
+    return false;
 }
 
 void ObjectEffect::OnManiSetPos(IManiCallback::SetParam& param) {
@@ -8901,6 +8966,29 @@ void TodoItem::createString(mm::mtl::FixStr<256>& str) {
 }
 
 // makes the command, queues it with a copy of the parameters and runs the next queued one (pad_8c20 counts them)
+// the last 16 items' texts in a panel at the screen's right edge (the ones not run yet greyed), then the texts
+// are dropped
+void TodoManager::render() {
+    if (!(pad_14 & 1)) {
+        return;
+    }
+    int width = ml::DevGraph::getRootWidth();
+    fw::debug::drawSquare2D(mm::Rect<int>(width - 350, 200, 330, 265), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+    fw::debug::drawLineSquare2D(mm::Rect<int>(width - 350, 200, 330, 265), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFont(width - 345, 205, "TODO");
+    unsigned long i = m_texts.size() > 16 ? m_texts.size() - 16 : 0;
+    int y = 220;
+    for (; i < m_texts.size(); i++) {
+        if (static_cast<unsigned long>(pad_8c20) <= i) {
+            fw::debug::drawFontColor(mm::Col4(0.5f, 0.5f, 0.5f, 1.0f));
+        }
+        fw::debug::drawFont(width - 330, y, m_texts[i].m_str);
+        y += 15;
+    }
+    m_texts.clear();
+}
+
 void TodoManager::add(ITodo* (*exec)(), const Param& param) {
     float frame = FrameManager::getPtr()->getFrame();
     updateAdd();

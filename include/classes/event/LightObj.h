@@ -8,6 +8,10 @@ namespace event {
 // table 0x7100B3D1E0
 class LightObj {
 public:
+    // 1.0.0's LightObj(int) (0x71000E2D00 there); inline in 3.0.1 (ObjectLight's constructor holds its stores)
+    LightObj(int id)
+        : m_state(0), m_lgt(nullptr), m_id(id), m_name(), m_stmData(nullptr), m_pos(mm::Vec3::zero),
+          m_rot(mm::Vec3::zero) {}
     virtual ~LightObj();  // slot 0
     void clear();  // 0x71000F76D8 (the destructor calls it)
     // starts the named light animation (ObjectLight::play forwards to it); returns nothing that ObjectLight uses

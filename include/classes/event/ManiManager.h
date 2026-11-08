@@ -27,6 +27,15 @@ public:
         IManiCallback* m_callback;  // 0x0
         mm::Mat44 m_mats[4];  // 0x10
     };
+    // 1.0.0's out-of-line ManiManager() (0x7100106464 there); inline in 3.0.1 (Singleton<ManiManager>::getPtr's
+    // static in ObjectChara/ObjectEffect::OnBouRectSelect holds its stores)
+    ManiManager() : m_flags(), m_debugFlags(), m_type(static_cast<MANI_TYPE>(1)) {
+        m_mats[0] = mm::Mat44::identity;
+        m_mats[1] = mm::Mat44::identity;
+        m_mats[2] = mm::Mat44::identity;
+        m_mats[3] = mm::Mat44::identity;
+        m_mats[4] = mm::Mat44::identity;
+    }
     // inline: its D1/D0 and thunks sit in the unit's tail (0x710014BCFC); only m_items' clear is left of it
     virtual ~ManiManager() {}  // slot 0
     // the first new virtual is the key function (0x710011C390, defined before OnKeyDown and OnEventProc)
@@ -41,6 +50,8 @@ public:
     void changeManipulate(MANI_TYPE type);
     // drops a target (ObjectChara/ObjectEffect::OnBouRectSelect); with none left, the manipulator too
     void removeManipulate(IManiCallback* callback);
+    // adds a target (ObjectChara/ObjectEffect::OnBouRectSelect pass themselves with type 0)
+    void addManipulate(IManiCallback* callback, MANI_TYPE type);
 
     // bit 0: enabled, bit 1: attached to the view as a work event, bit 2: a manipulator is set (1.0.0's
     // clear/clearManipulate/update test and clear them; the names are not the original's)

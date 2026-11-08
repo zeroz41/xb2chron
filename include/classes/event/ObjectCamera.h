@@ -30,6 +30,9 @@ public:
     virtual bool OnManiStartTar(event::IManiCallback::StartParam&);  // slot 13
     virtual void OnManiSetTar(event::IManiCallback::SetParam&);  // slot 14
     virtual void OnManiRender(event::IManiCallback::RenderParam&);  // slot 15
+    // 0x7100122A18; update calls it while pad_70 is 0, DebugManager's flag 13 and CamManager's free-camera bit
+    // (m_list.pad_14 bit 1) are set
+    void updateSyncFreeCam();
     // the camera the object drives (tail calls its slot 4, CamObj::tail); the name is not the original's
     CamObj* m_cam;  // 0x68
     int pad_70;  // OnBouRender draws the camera info only while it is 0
