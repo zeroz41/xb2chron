@@ -6,29 +6,12 @@
 #include "gf/SDataSaveIra.h"
 #include "mm/mtl/FixStr.h"
 #include "gf/SDataOption.h"
+#include "classes/gf/GfDataZlib.h"
 
 namespace ml { class EventFileTh; class FileHandleTh; }
 namespace gf { enum SAVESLOT : int; class SDataOption; }
 
 namespace gf {
-// data a save writes, compressed on a thread named "CompressThread" (GfDataZlib::execForSave) when
-// GfGameManager::isGameTypeIra says so (the name and the member names are not the original's)
-struct GfGameSaveCompress {
-    GfGameSaveCompress() : m_src(nullptr), m_srcSize(0), m_out(nullptr), m_outSize(0) {}
-    ~GfGameSaveCompress() {
-        unsigned char* out = m_out;
-        m_out = nullptr;
-        if (out != nullptr) {
-            delete out;
-        }
-    }
-
-    const void* m_src;
-    unsigned long m_srcSize;
-    unsigned char* m_out;  // the compressed bytes
-    unsigned long m_outSize;
-};
-
 // table 0x7100B55E50
 class GfGameSave : public ::ml::IWorkEvent {
 public:
@@ -71,8 +54,7 @@ public:
     bool m_flag30;
     bool m_flag31;
     bool m_flag32;
-    GfGameSaveCompress m_compress;   // 0x38
-    GfGameSaveCompress m_compress2;  // 0x58
+    GfDataZlib m_zlib;               // 0x38: compresses the save when GfGameManager::isGameTypeIra says so
     ml::FileHandleTh* m_fileHandle;  // 0x78: the write's handle, none once it ended
     int m_fileKind;                  // the end event's m_kind
 };

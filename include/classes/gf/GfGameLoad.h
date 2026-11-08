@@ -21,7 +21,10 @@ public:
     void getOptionFileNameBin(mm::mtl::FixStr<256>& out);
     // named by 1.0.0: call-site (1.0.0's OnFileEvent calls phaseBinData where 3.0.1's calls this)
     void phaseBinData();
-    void execGameLoadWithMicroThread(SDataSaveIra& save);
+    // each returns whether what it loaded has the save version (0x3A15B)
+    bool execGameLoadWithMicroThread(SDataSaveIra& save);
+    bool execDirectImportIraGameWithMicroThread(SDataSaveIra& save);
+    bool execOptionLoadWithMicroThread(SDataOption& option);
 
     // (the field names are not the original's)
     bool m_ira;            // GfGameManager::isGameTypeIra as it was made: the Torna ("ira") files' names are used
@@ -38,8 +41,7 @@ public:
     void* m_copyDest;      // 0x150: phaseBinData copies m_readSize bytes of m_readData there
     void* m_readData;
     unsigned long m_readSize;
-    GfGameSaveCompress m_decompress;   // 0x168
-    GfGameSaveCompress m_decompress2;  // 0x188
+    GfDataZlib m_zlib;     // 0x168: decompresses what was read
 };
 }  // namespace gf
 

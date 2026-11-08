@@ -56,8 +56,8 @@ public:
 
 int GfScreenW();  // GfInfo::m_nScreenW
 void GfSleep(unsigned int frames);
-// whether a micro-thread group is running (MicroThread::update sets the one it runs); the name is not the original's
-bool GfIsInMicroThread();
+// whether a micro-thread group is running (MicroThread::update sets the one it runs)
+bool GfIsMicroThread();
 }  // namespace gf
 
 #endif

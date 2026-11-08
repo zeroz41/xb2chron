@@ -82,7 +82,7 @@ int GfScreenW() {
     return GfInfo::m_nScreenW;
 }
 
-bool GfIsInMicroThread() {
+bool GfIsMicroThread() {
     return ml::MicroThread::get()->m_currentGroup != nullptr;
 }
 

@@ -145,11 +145,18 @@ public:
     // event ids; the names are not the original's)
     SDataGameSavedEvent m_savedEvents[500];
     unsigned int m_savedEventCount;
-    unsigned char pad_1171D8[0x194];
+    unsigned char pad_1171D8[0x190];
+    // 0x117368: 0x3E9F2CB8 once m_stampedArea was cleared: GfGameLoad's game loads (and
+    // GfDataStore::checkAndReplaceGameData) store it and clear the area when it differs (the name is not the original's)
+    unsigned int m_areaStamp;
     // 0x11736C: the add-on ids + 1 the game was saved with (GfDataUtil::saveAocVersion stores
     // GfDataAoc::getContentVersion(n) + 1, GfDataUtil::isInvalidVersionAoc compares; the name is not the original's)
     int m_aocIds[5];
-    unsigned char pad_117380[0x30C];
+    unsigned char pad_117380[0x2];
+    // 0x117382: cleared whenever m_areaStamp is not 0x3E9F2CB8 (what it holds is not known; the name is not the
+    // original's)
+    unsigned char m_stampedArea[0x306];
+    unsigned char pad_117688[0x4];
     // 0x11768C: the 16 drivers' arts records past the ones their data keeps (GfDataDriver::getDriverWeaponType and
     // getDriverArtsLevel index it like getSDataDriver's m_drivers; the name is not the original's)
     SDataDriverArtsEx m_driverArtsEx[16];

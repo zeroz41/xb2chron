@@ -4,6 +4,8 @@
 #include "nn/account.h"
 #include "nn/result.h"
 
+namespace nn { struct ApplicationId; }  // nn/ec.h
+
 // NintendoSDK's nn::fs, as far as the module imports it
 namespace nn { namespace fs {
 
@@ -46,6 +48,10 @@ Result EnsureSaveData(const account::Uid& uid);
 Result MountSaveData(const char* name, const account::Uid& uid);
 // releases the mount `name` (ml::DevFileNxTh::finalizeSDK: "save", "rom", "aoc%d")
 void Unmount(const char* name);
+// another application's save data of a user: whether it exists, its mount under `name` for reading
+// (gf::LoadIraSaveData::loadData)
+bool IsSaveDataExisting(ApplicationId id, const account::Uid& uid);
+Result MountSaveDataReadOnly(const char* name, ApplicationId id, const account::Uid& uid);
 
 // the results of a lack of space (module 2, descriptions 30 to 45): EnsureSaveData's failure initializeSave gives
 // up on (the SDK's name for the range)
