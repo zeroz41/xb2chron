@@ -71,12 +71,14 @@ public:
         unsigned char pad_19[7];
     };
     // GetBdatData's result, returned in x0/x1: the column's value (zero-extended from its width) and whether the
-    // type was unknown (the names are not the original's)
+    // type was unknown (the names are not the original's). u16 columns go in as 32 bits and the float is copied in
+    // as bits: the original's value is assembled from bytes [0,1) [1,4) [4,8) only (no 2-byte or float store).
     struct BDAT_VALUE {
+        BDAT_VALUE() : m_u64(0), m_isNone(true) {}
         union {
             bool m_flag;
             unsigned char m_u8;
-            unsigned short m_u16;
+            unsigned int m_u32;
             float m_float;
             unsigned long m_u64;
         };

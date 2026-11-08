@@ -151,6 +151,112 @@ void TalkManager::StartBattleCallback() {
     }
 }
 
+TalkManager::BDAT_VALUE TalkManager::GetBdatData(CBdatWrapper& bdat, unsigned int id, BDAT_DATA_TYPE type) const {
+    BDAT_VALUE value;
+    switch (type) {
+    case BDAT_PRIORITY:
+        value.m_u32 = Bdat::getValCheckU8(bdat.m_fp, "Priority", id);
+        value.m_isNone = false;
+        break;
+    case BDAT_GROUP:
+        value.m_u32 = Bdat::getValCheckU8(bdat.m_fp, "Group", id);
+        value.m_isNone = false;
+        break;
+    case BDAT_CT_DRIVER:
+        value.m_u32 = Bdat::getValCheckU16(bdat.m_fp, "CTDriver", id);
+        value.m_isNone = false;
+        break;
+    case BDAT_ENEMY_VC:
+        value.m_u32 = Bdat::getValCheckU16(bdat.m_fp, "EnemyVC", id);
+        value.m_isNone = false;
+        break;
+    case BDAT_COND_0:
+        value.m_u32 = static_cast<unsigned char>(Bdat::getArrayValCheck(bdat.m_fp, "Cond", id, 0, 1));
+        value.m_isNone = false;
+        break;
+    case BDAT_LOT_RATE: {
+        float rate = Bdat::getValCheckU8(bdat.m_fp, "LotRate", id) * 0.01f;
+        memcpy(&value.m_float, &rate, sizeof(rate));
+        value.m_isNone = false;
+        break;
+    }
+    case BDAT_REPLY:
+        value.m_u32 = Bdat::getValCheckU16(bdat.m_fp, "Reply", id);
+        value.m_isNone = false;
+        break;
+    case BDAT_REPLY_GROUP:
+        value.m_u32 = Bdat::getValCheckU8(bdat.m_fp, "ReplyGroup", id);
+        value.m_isNone = false;
+        break;
+    case BDAT_VOICE_0:
+        value.m_u64 = Bdat::getArrayValCheck(bdat.m_fp, "Voice", id, 0, 7);
+        value.m_isNone = false;
+        break;
+    case BDAT_VOICE_1:
+        value.m_u64 = Bdat::getArrayValCheck(bdat.m_fp, "Voice", id, 1, 7);
+        value.m_isNone = false;
+        break;
+    case BDAT_VOICE_2:
+        value.m_u64 = Bdat::getArrayValCheck(bdat.m_fp, "Voice", id, 2, 7);
+        value.m_isNone = false;
+        break;
+    case BDAT_VOICE_3:
+        value.m_u64 = Bdat::getArrayValCheck(bdat.m_fp, "Voice", id, 3, 7);
+        value.m_isNone = false;
+        break;
+    case BDAT_REP_BUDDY:
+        value.m_flag = Bdat::getFlagVal(bdat.m_fp, "Flag", id, "RepBuddy") != 0;
+        value.m_isNone = false;
+        break;
+    case BDAT_LOT_NUM:
+        value.m_flag = Bdat::getFlagVal(bdat.m_fp, "Flag", id, "LotNum") != 0;
+        value.m_isNone = false;
+        break;
+    case BDAT_NO_OVERWRITE:
+        value.m_flag = Bdat::getFlagVal(bdat.m_fp, "Flag", id, "NoOverwrite") != 0;
+        value.m_isNone = false;
+        break;
+    case BDAT_DEAD:
+        value.m_flag = Bdat::getFlagVal(bdat.m_fp, "Flag", id, "Dead") != 0;
+        value.m_isNone = false;
+        break;
+    case BDAT_NO_DIR:
+        value.m_flag = Bdat::getFlagVal(bdat.m_fp, "Flag", id, "NoDir") != 0;
+        value.m_isNone = false;
+        break;
+    case BDAT_NO_CHAIN:
+        value.m_flag = Bdat::getFlagVal(bdat.m_fp, "Flag", id, "NoChain") != 0;
+        value.m_isNone = false;
+        break;
+    case BDAT_NO_REPLY_OK:
+        value.m_flag = Bdat::getFlagVal(bdat.m_fp, "Flag", id, "NoReplyOK") != 0;
+        value.m_isNone = false;
+        break;
+    case BDAT_SERIOUS_OFF:
+        value.m_flag = Bdat::getFlagVal(bdat.m_fp, "Flag", id, "SeriousOff") != 0;
+        value.m_isNone = false;
+        break;
+    case BDAT_INTERVAL:
+        value.m_u32 = Bdat::getValCheckU8(bdat.m_fp, "Interval", id);
+        value.m_isNone = false;
+        break;
+    case BDAT_SOLO_MODE:
+        value.m_u32 = Bdat::getValCheckU8(bdat.m_fp, "SoloMode", id);
+        value.m_isNone = false;
+        break;
+    case BDAT_COND_EX:
+        value.m_u32 = Bdat::getValCheckU16(bdat.m_fp, "CondEx", id);
+        value.m_isNone = false;
+        break;
+    // last in the source: the original gives this case its own tail block (the last case of a switch gets one)
+    case BDAT_COND_1:
+        value.m_u32 = static_cast<unsigned char>(Bdat::getArrayValCheck(bdat.m_fp, "Cond", id, 1, 1));
+        value.m_isNone = false;
+        break;
+    }
+    return value;
+}
+
 bool TalkManager::PlaySpWin(gf::GF_OBJ_HANDLE* handle, int id, bool noObject) {
     unsigned char* fp = gf::GfDataBdat::getFP(0x58 | BattleGlobal::sys()->m_challengeAnySuccess);
     unsigned int voiceId = Bdat::getArrayValCheck(fp, "Voice", id, 0, 3);
