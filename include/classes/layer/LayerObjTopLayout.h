@@ -17,6 +17,11 @@ namespace layer {
 // table 0x7100B7FF60
 class LayerObjTopLayout : public ::layer::LayerActLayout {
 public:
+    // inline: LayerObjManager::createStaticLayoutObj builds it (a layout object, m_objType 3, displayed)
+    LayerObjTopLayout() : m_sortObj(this) {
+        m_objType = 3;
+        m_stateFlags |= STATE_DISP;
+    }
     virtual ~LayerObjTopLayout();  // slot 0
     virtual void apply(layer::LayerSortMan*, layer::LayerRenderView const*);  // slot 4
     virtual void applyBegin(layer::LayerResUpdateInfo&, layer::LayerRenderView const*);  // slot 5

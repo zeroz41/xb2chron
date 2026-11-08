@@ -7,6 +7,11 @@ namespace layer {
 // table none (its derived classes')
 class LayerSortObj {
 public:
+    // the owning object's constructor passes itself (LayerObjManager::createStaticLayoutObj)
+    LayerSortObj(LayerObj* obj) {
+        m_obj = obj;
+        m_next = nullptr;
+    }
     virtual ~LayerSortObj() {}  // slot 0
     virtual void alphaRender() {}  // slot 2
     virtual void lastRender() {}  // slot 3

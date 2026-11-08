@@ -107,7 +107,7 @@ public:
     // one's m_frame (the type and names are not the original's)
     struct Frame {
         float m_frame;
-        float pad_4;
+        int m_frameIdx;  // LayerObjPlace::updateGblFrm: m_frame truncated (the name is not the original's)
     };
     // the head of its resource (m_resData; the type and field names are not the original's)
     struct ResData {

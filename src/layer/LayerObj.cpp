@@ -456,7 +456,7 @@ bool LayerActDef::actcmd_animdef(const unsigned char*& cmd) {
     int num = static_cast<const ResData*>(m_resData)->m_frameNum;
     for (int i = 0; i < num; i++) {
         m_frames[i].m_frame = 0.0f;
-        m_frames[i].pad_4 = 0.0f;
+        m_frames[i].m_frameIdx = 0;
     }
     m_texRefs->m_frameEnd = m_texRefs->m_anim->m_frameNum;
     m_texRefs->m_frameStart = 0.0f;
@@ -673,6 +673,12 @@ LayerObjManager::~LayerObjManager() {
         m_sortMan = nullptr;
     }
 }
+LayerBase* LayerObjManager::createObj(const void* resource) {
+    ml::CS cs(getCriticalSection());
+    LayerBase* obj = createStaticObj(resource);
+    m_setupList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    return obj;
+}
 LayerBase* LayerObjManager::createMaskObj(const void* resource) {
     ml::CS cs(getCriticalSection());
     LayerBase* obj = createStaticMaskObj(resource);
@@ -685,6 +691,15 @@ LayerBase* LayerObjManager::createStaticMaskObj(const void* resource) {
         return new (mm::mtl::PtrSingleton<LayerManager>::sys()->m_workHandle, nullptr, 0, 4, false) LayerObjTopMaskObj(resource);
     }
     return nullptr;
+}
+LayerBase* LayerObjManager::createLayoutObj() {
+    ml::CS cs(getCriticalSection());
+    LayerBase* obj = createStaticLayoutObj();
+    m_setupList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    return obj;
+}
+LayerBase* LayerObjManager::createStaticLayoutObj() {
+    return new (mm::mtl::PtrSingleton<LayerManager>::sys()->m_workHandle, nullptr, 0, 4, false) LayerObjTopLayout();
 }
 LayerBase* LayerObjManager::createStaticFontObj() { return new (mm::mtl::PtrSingleton<LayerManager>::sys()->m_workHandle, nullptr, 0, 4, false) LayerObjTopFont(); }
 LayerBase* LayerObjManager::createTexObj(const grlib::CGLibTextureBuffer& texture) {
@@ -885,8 +900,17 @@ void LayerObjMesh::call_uniform_win_sclga_X(LayerArgMdlRenInf& arg) { setUniform
 void LayerObjMesh::call_uniform_win_sclga_Y(LayerArgMdlRenInf& arg) { setUniformWinGaY(arg, true); }
 void LayerObjPlace::placeReset_Off(LayerResNode* node) {}
 void LayerObjPlace::placeReset_Pos(LayerResNode* node) {
-    node->m_posX = 0.0f;
-    node->m_posY = 0.0f;
+    node->m_pos.x = 0.0f;
+    node->m_pos.y = 0.0f;
+}
+void LayerObjPlace::placeReset_Srt(LayerResNode* node) {
+    node->m_rot = LayerResNode::Pair(0.0f, 0.0f);
+    node->m_scl.x = node->m_scl.y = 1.0f;
+}
+void LayerObjPlace::placeReset_Pos_Srt(LayerResNode* node) {
+    node->m_pos = LayerResNode::Pair(0.0f, 0.0f);
+    node->m_scl = LayerResNode::Pair(1.0f, 1.0f);
+    node->m_rot = LayerResNode::Pair(0.0f, 0.0f);
 }
 void LayerObjPlace::placeReset_Col(LayerResNode* node) {
     node->m_mulCol.r = 1.0f;
@@ -901,6 +925,14 @@ void LayerObjPlace::placeReset_Pos_Col(LayerResNode* node) {
     placeReset_Col(node);
     placeReset_Pos(node);
 }
+void LayerObjPlace::placeReset_Srt_Col(LayerResNode* node) {
+    placeReset_Col(node);
+    placeReset_Srt(node);
+}
+void LayerObjPlace::placeReset_Pos_Srt_Col(LayerResNode* node) {
+    placeReset_Col(node);
+    placeReset_Pos_Srt(node);
+}
 void LayerObjPlace::placeFormat_u8(LayerResNode* node, int anim, const unsigned char* data, const unsigned char* frames, unsigned int frame) {
     s_resCallPlaceAnim[anim](node, data, frames[frame]);
 }
@@ -912,25 +944,25 @@ void LayerObjPlace::placeFormat_u32(LayerResNode* node, int anim, const unsigned
 }
 void LayerObjPlace::placeAnm_Pos(LayerResNode* node, const unsigned char* data, unsigned int key) {
     const float* value = reinterpret_cast<const float*>(data) + key * 2;
-    node->m_posX = value[0];
-    node->m_posY = value[1];
+    node->m_pos.x = value[0];
+    node->m_pos.y = value[1];
 }
 void LayerObjPlace::placeAnm_Scl(LayerResNode* node, const unsigned char* data, unsigned int key) {
     const float* value = reinterpret_cast<const float*>(data) + key * 2;
-    node->m_sclX = value[0];
-    node->m_sclY = value[1];
+    node->m_scl.x = value[0];
+    node->m_scl.y = value[1];
 }
 void LayerObjPlace::placeAnm_Rot(LayerResNode* node, const unsigned char* data, unsigned int key) {
     const float* value = reinterpret_cast<const float*>(data) + key * 2;
-    node->m_rotX = value[0];
-    node->m_rotY = value[1];
+    node->m_rot.x = value[0];
+    node->m_rot.y = value[1];
 }
 void LayerObjPlace::placeAnm_Srt(LayerResNode* node, const unsigned char* data, unsigned int key) {
     const float* value = reinterpret_cast<const float*>(data) + key * 4;
-    node->m_rotX = value[0];
-    node->m_rotY = value[1];
-    node->m_sclX = value[2];
-    node->m_sclY = value[3];
+    node->m_rot.x = value[0];
+    node->m_rot.y = value[1];
+    node->m_scl.x = value[2];
+    node->m_scl.y = value[3];
 }
 void LayerObjPlace::placeAnm_AddCol(LayerResNode* node, const unsigned char* data, unsigned int key) {
     const unsigned char* value = data + key * 4;

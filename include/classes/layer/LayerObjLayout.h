@@ -12,6 +12,7 @@ namespace layer {
 // table 0x7100B7FCC8
 class LayerObjLayout : public ::layer::LayerActBase {
 public:
+    LayerObjLayout();
     virtual ~LayerObjLayout() {}  // slot 0: inline (its deleting destructor sits in the unit's tail)
 
     void workLayoutRelease();

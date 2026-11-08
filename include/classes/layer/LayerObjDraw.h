@@ -1,7 +1,7 @@
 #ifndef CLASSES_LAYER_LAYEROBJDRAW_H
 #define CLASSES_LAYER_LAYEROBJDRAW_H
 
-#include "classes/layer/LayerActDef.h"
+#include "layer/LayerObjPlace.h"
 
 namespace grlib { class CGLibDblUniformBlock; }
 
@@ -22,8 +22,8 @@ public:
 };
 
 // table none in 3.0.1: the draws LayerObjTopDef::finalRender calls through s_pCallDraw (its base place between
-// LayerActDef and LayerObjMesh is inferred)
-class LayerObjDraw : public ::layer::LayerActDef {
+// LayerObjPlace and LayerObjMesh is inferred)
+class LayerObjDraw : public ::layer::LayerObjPlace {
 public:
     void draw_call_onm_def(grlib::CGLibDblUniformBlock* block, const LyrDrawData* data);
     void draw_call_onm_tex(grlib::CGLibDblUniformBlock* block, const LyrDrawData* data);

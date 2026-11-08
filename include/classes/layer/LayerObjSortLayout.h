@@ -7,6 +7,7 @@ namespace layer {
 // table 0x7100B80240
 class LayerObjSortLayout : public ::layer::LayerSortObj {
 public:
+    LayerObjSortLayout(LayerObj* obj) : LayerSortObj(obj) {}
     virtual ~LayerObjSortLayout() {}  // slot 0: the table holds LayerSortObj's
     virtual void finalRender();  // slot 4
 };
