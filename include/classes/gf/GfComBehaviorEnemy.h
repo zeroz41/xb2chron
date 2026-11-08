@@ -61,6 +61,9 @@ public:
     // flying (isFly) and its setup's actMove row (BDAT 0x6e) has actMove_Atr bit 0 (insect) / bit 1 (circle)
     bool isFlyInsect() const;
     bool isFlyCircle() const;
+    // its field movement's place in its squad (inline; TIsTargetNotSameSquad<GfComBehaviorEnemy> reads its squad;
+    // the name is not the original's)
+    const gmk::GmkSquadNavi& getSquadNavi() const { return m_field.m_squadNavi; }
     // its state machine's state (-1 with none)
     gf::enemy::STATE_ID getStateId() const;
     // asks for battle (m_reqChangeBattle) unless it is in battle (state 0) already

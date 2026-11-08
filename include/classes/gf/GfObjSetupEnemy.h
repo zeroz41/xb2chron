@@ -33,7 +33,8 @@ public:
     SDataEnemy* m_sdata;
     // its actMove row (BDAT 0x6e): isFlyInsect/isFlyCircle read its actMove_Atr (the name is not the original's)
     unsigned int m_actMoveId;
-    unsigned int pad_ac;
+    // GfComBehaviorEnemy::createBehField copies it to its field movement's pad_52a0, a time (so a float)
+    float pad_ac;
     unsigned char pad_b0;
     // GfComBehaviorEnemy::onPopped: a gimmick-bound enemy without a pop action row starts in battle, and pop action
     // types 3 to 6 set the behavior's pad_54e2

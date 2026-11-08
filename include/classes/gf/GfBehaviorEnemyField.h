@@ -31,8 +31,20 @@ public:
         float pad_0;
         float pad_4;
     };
+    // what create takes (GfComBehaviorEnemy::createBehField fills it; the names are not the original's)
+    struct CreateInfo {
+        CreateInfo() : m_radius(1.0f), m_height(2.0f), m_actType(0) {}
+        IGfBehFieldOwner* m_owner;
+        GF_OBJ_HANDLE* m_handle;
+        // half the horizontal diagonal of its collision box (else the BDAT collision radius), at least 1
+        float m_radius;
+        // the height of its collision box (else twice the radius), at least 2
+        float m_height;
+        unsigned char m_actType;  // SDataEnemy::m_actType
+    };
     // its table's key function: disposes, then its members go (the D2 copy follows TFieldExecCmdTurn's)
     virtual ~GfBehaviorEnemyField();  // slot 0
+    void create(const CreateInfo& info);
     void dispose();
     void applyLinearVelocityAndRotY(float dt);
     // disposes its squad place, then joins the squad of its object's enemy gimmick (type 0 or 1) when it has one

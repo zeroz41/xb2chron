@@ -381,46 +381,6 @@ bool GfComBehaviorMob::isArrivedToGoal() const {
     return !(radius * radius < distSq);
 }
 
-// true unless the target is a GfComBehaviorMob of the steering object's squad and the squad's leader gimmick's data
-// starts with 1
-template <typename T>
-bool GfFieldLocalSteer::TIsTargetNotSameSquad<T>::operator()(const GfFieldLocalSteer& steer,
-                                                           GF_OBJ_HANDLE* target) const {
-    gmk::GmkSquad* squad;
-    {
-        GfObjAcc acc(steer.m_info.m_handle);
-        GfObj* obj = acc.getObj();
-        if (obj == nullptr) {
-            return true;
-        }
-        T* owner = obj->getComponent<T>(6);
-        if (owner == nullptr) {
-            return true;
-        }
-        squad = owner->m_squadNavi.m_info.m_squad;
-        if (squad == nullptr) {
-            return true;
-        }
-    }
-    gmk::GmkSquad* targetSquad = nullptr;
-    {
-        GfObjAcc acc(target);
-        GfObj* obj = acc.getObj();
-        T* other = obj != nullptr ? obj->getComponent<T>(6) : nullptr;
-        if (other != nullptr) {
-            targetSquad = other->m_squadNavi.m_info.m_squad;
-        }
-    }
-    if (squad != targetSquad) {
-        return true;
-    }
-    gmk::GmkSquadLeader* leader = squad->getBindedGmkSquadLeader();
-    if (leader != nullptr && *reinterpret_cast<const unsigned int*>(leader->m_createInfo.m_data) == 1) {
-        return false;
-    }
-    return true;
-}
-
 void GfComBehaviorMob::Listener::onWkStandbyLogout() {
     m_owner->pad_53b8 = nullptr;
 }

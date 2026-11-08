@@ -25,6 +25,7 @@
 #include "classes/gf/GfObjManager.h"
 #include "classes/gf/GfObjSetupEnemy.h"
 #include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfBdatRsc.h"
 #include "classes/gf/GfMenuObjTargetInfo.h"
 #include "classes/gf/GfMenuCallContext.h"
 #include "gf/GfObjInfo.h"
@@ -39,6 +40,7 @@
 #include "classes/gf/GfComCollider.h"
 #include "classes/fw/ColiMoveObject.h"
 #include "classes/gf/GfFieldLocalSteer.h"
+#include "classes/gf/GfFieldLocalSteer/TIsTargetNotSameSquad.h"
 #include "classes/gmk/GmkEnemy.h"
 #include "classes/navi/NvmshAcObj.h"
 #include "gf/GfMenuBdat.h"
@@ -105,6 +107,45 @@ void GfBehaviorEnemyField::dispose() {
     pad_18 = 1.0f;
     pad_1c = 2.0f;
     pad_20 = 0;
+}
+
+namespace {
+// an enemy's setup when its object's info holds one of its own kind (5), as gf_game_obj's _gfgob::getEnemySetup
+// (inline; the name is not the original's)
+inline GfObjSetupEnemy* getEnemySetup(GF_OBJ_HANDLE* handle) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info != nullptr && info->m_setup != nullptr && info->m_setup->m_type == info->m_obj->m_type &&
+        info->m_obj->m_type == 5) {
+        return mm::mtl::rttiCast<GfObjSetupEnemy>(info->m_setup);
+    }
+    return nullptr;
+}
+}  // namespace
+
+void GfBehaviorEnemyField::createSquadNavi() {
+    m_squadNavi.dispose();
+    gmk::AGmkBase* gmk = gmk::getBindedGmkInst(m_handle);
+    if (gmk == nullptr) {
+        return;
+    }
+    gmk::GmkSquadNavi::CreateInfo info;
+    switch (gmk->getGmkType()) {
+    case gmk::GmkEnemy::TYPE:
+        info.m_squad = static_cast<gmk::GmkEnemy*>(gmk)->m_insts.m_squad;
+        break;
+    case gmk::GmkRoutedEnemy::TYPE:
+        info.m_squad = static_cast<gmk::GmkRoutedEnemy*>(gmk)->m_insts.m_squad;
+        break;
+    default:
+        break;
+    }
+    info.m_handle = m_handle;
+    // the setup is looked up but not used
+    GfObjSetupEnemy* setup = getEnemySetup(m_handle);
+    (void)setup;
+    if (info.m_squad != nullptr && info.m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        m_squadNavi.create(info);
+    }
 }
 
 void GfBehaviorEnemyField::update(float dt) {
@@ -491,6 +532,46 @@ void GfComBehaviorEnemy::disposeMenuObj() {
     }
 }
 
+void GfComBehaviorEnemy::createBehField() {
+    m_field.dispose();
+    GF_OBJ_HANDLE* handle = static_cast<GfObj*>(m_owner)->m_handle;
+    const GfObjSetupEnemy* setup = getEnemySetup(handle);
+    GfBehaviorEnemyField::CreateInfo info;
+    info.m_owner = this;
+    info.m_handle = static_cast<GfObj*>(m_owner)->m_handle;
+    {
+        const GfComCollider* collider = m_owner->getComponent<GfComCollider>(4);
+        mm::Vec3 min;
+        mm::Vec3 max;
+        float radius;
+        float height;
+        if (collider->m_coliObjects[0]->getAABB(min, max)) {
+            float dx = max.x - min.x;
+            float dz = max.z - min.z;
+            radius = ::sqrtf(dx * dx + dz * dz) * 0.5f;
+            height = max.y - min.y;
+        } else {
+            radius = mm::mtl::PtrSingleton<GfBdatRsc>::sys()->getRscEnCharColli(setup->m_bdatId);
+            height = radius + radius;
+        }
+        info.m_radius = radius;
+        info.m_height = height;
+    }
+    if (info.m_radius < 1.0f) {
+        info.m_radius = 1.0f;
+    }
+    if (info.m_height < 2.0f) {
+        info.m_height = 2.0f;
+    }
+    {
+        DataParamAcc acc(static_cast<GfObj*>(m_owner)->m_handle);
+        info.m_actType = acc.getSDataEnemy()->m_actType;
+    }
+    m_field.create(info);
+    m_field.pad_52a0 = setup->pad_ac;
+    m_field.pad_52a4 = 0.0f;
+}
+
 bool GfComBehaviorEnemy::isStateCondMatch(enemy::STATE_ID state) const {
     switch (state) {
     case 0:
@@ -795,6 +876,10 @@ void GfComBehaviorEnemy::Listener::onWkStandbyLogout() {
     m_owner->pad_54e8 = nullptr;
 }
 }  // namespace gf
+
+// the steer filter's operator (its table is GfBehaviorEnemyField's, which GfComBehaviorEnemy's constructor installs)
+template bool gf::GfFieldLocalSteer::TIsTargetNotSameSquad<gf::GfComBehaviorEnemy>::operator()(
+    const gf::GfFieldLocalSteer&, gf::GF_OBJ_HANDLE*) const;
 
 template void mm::mtl::Delegate<void(gf::GfComAsm*, const gf::CallBackCache&)>::memberFuncInvoker<gf::GfComBehavior>(const mm::mtl::Delegate<void(gf::GfComAsm*, const gf::CallBackCache&)>*, gf::GfComAsm*, const gf::CallBackCache&);
 

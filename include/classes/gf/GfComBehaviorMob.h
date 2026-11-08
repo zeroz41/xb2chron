@@ -81,6 +81,9 @@ public:
     // joins the squad of the squad gimmick its object is bound to (none when it is bound to none)
     void createSquadNavi();
     bool isSquadMember() const;
+    // its place in its squad (inline; TIsTargetNotSameSquad<GfComBehaviorMob> reads its squad; the name is not the
+    // original's)
+    const gmk::GmkSquadNavi& getSquadNavi() const { return m_squadNavi; }
     // false while its turn is set up and not done; else whether it has a collision object that follows its frame and
     // either pad_b8, a place in a squad, or a bound gimmick whose INFO shape is not 1
     bool isMove() const;
