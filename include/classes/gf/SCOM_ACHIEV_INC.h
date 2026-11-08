@@ -70,6 +70,7 @@ public:
     static void createDamageGet(GF_OBJ_HANDLE*, unsigned int);
     static void createCriticalHit(GF_OBJ_HANDLE*);
     static void createCriticalGet(GF_OBJ_HANDLE*);
+    static void createBattle();  // GfGameScene::gevBattleEnd calls it after a battle with damage counted
     // placeholder, a member because it follows createCriticalGet in this class's run of gf_req_scom and has its shape:
     // counts achievement 0x76 once and 0x77 for every blade fn_7100563BB4 lists for the handle; its one caller is the
     // dispatch at 0x710000FDEC

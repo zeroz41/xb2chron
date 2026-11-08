@@ -408,6 +408,9 @@ public:
     bool isPlayEvent() const;
     bool isBattleStop();
     void checkFieldBladeChange();
+    // 2.0.0's symbols name it. What it does: m_rideActive set while the leader driver and the blade of its battle start set
+    // both ride (GfDataParty::isRideChar), cleared outside a free field
+    void checkFieldBladeChangeForRide();
     bool isNeedFieldBladeChange(unsigned int index) const;
 };
 }  // namespace gf

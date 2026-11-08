@@ -39,7 +39,10 @@ public:
         unsigned int m_material;  // the water's material
         // not 0: the material is it plus 12 instead, 1 only at night (GfEffectGround::getGroundMaterial)
         unsigned int m_materialOverride;
-        unsigned char pad_40[0x10];
+        // the damage id of the water's collision (fw::COLI_INVALID_DAMAGE_ID: none); gf::_gfgsc::
+        // isPartyMemberGetFieldDamage reads it (the name is not the original's)
+        int m_damageId;
+        unsigned char pad_44[0xC];
     };
 
     Ground m_grounds[8];
