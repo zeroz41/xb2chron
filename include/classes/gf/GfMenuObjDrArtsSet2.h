@@ -40,8 +40,12 @@ public:
         ui::UIManager::get()->requestObjectEvent(handle, event, 0.0f);
     }
 
-    void setupWpnType(ui::UIObjectAcc& acc, mm::mtl::IntrusivePtr<GfMenuReferenceNumber> number, GfMenuArtsList* arts,
-                      GfMenuBladeList* blades);
+    static void setupWpnType(ui::UIObjectAcc& acc, mm::mtl::IntrusivePtr<GfMenuReferenceNumber> number,
+                             GfMenuArtsList* arts, GfMenuBladeList* blades);
+    // 2.0.0's symbols name it. Fills the arts list with the driver's enabled arts of the weapon type (mode pad_2B4,
+    // flag pad_2B9) and their levels; without layer 3 tints the blade faces white for blades of that weapon type
+    void refreshArtsList(ui::UIObjectAcc& acc, GfMenuArtsList* arts, unsigned int driver, unsigned int wpnType,
+                         GfMenuBladeList* blades);
     // 0 when the art can level up, 4 at its highest level (refreshParam, refreshLvUp read it)
     int checkArtsLvUp(unsigned int driver, unsigned int wpnType, GfMenuArtsList* arts, unsigned int index);
     // 1.0.0's checkArtsLvUp(unsigned int, unsigned int, unsigned int, unsigned int) (0x710044EAB4), inlined into its
@@ -50,11 +54,16 @@ public:
     static int checkArtsLvUp(unsigned int driver, unsigned int wpnType, unsigned int arts, unsigned int level);
     // 1.0.0's refreshLvUp (0x710044B7D0: the same calls, string and arguments); 2.0.0's symbols name it
     void refreshLvUp(ui::UIObjectAcc& acc, unsigned int driver, unsigned int wpnType, GfMenuArtsList* arts);
-    void setupWpnTypeIcon(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 50>& wpnTypes,
-                          GfMenuBladeList* blades);
+    static void setupWpnTypeIcon(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 50>& wpnTypes,
+                                 GfMenuBladeList* blades);
+    // 2.0.0's symbols name it. The second weapon row's icons ("IMG_wpn2_icon@NN", 28): the weapon type's image,
+    // white for the blades' weapon types and type 0x11 (which hides "LAY_wpn2_blade"), "dr_thema01_light" otherwise
+    static void setupWpnTypeIcon2(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 50>& wpnTypes,
+                                  GfMenuBladeList* blades);
     void refreshLvUpWpn(ui::UIObjectAcc& acc, unsigned int driver, const mm::mtl::FixedVector<unsigned int, 50>& wpnTypes);
-    void setupArtsList(ui::UIObjectAcc& acc, GfMenuArtsList* arts, mm::mtl::IntrusivePtr<GfMenuReferenceNumber> number,
-                       mm::mtl::IntrusivePtr<GfMenuReferenceNumber> number2);
+    static void setupArtsList(ui::UIObjectAcc& acc, GfMenuArtsList* arts,
+                              mm::mtl::IntrusivePtr<GfMenuReferenceNumber> number,
+                              mm::mtl::IntrusivePtr<GfMenuReferenceNumber> number2);
     void refreshArtsSelect(ui::UIObjectAcc& acc, int index, int prev);
     void refreshLvCap(ui::UIObjectAcc& acc, unsigned int driver, unsigned int wpnType, GfMenuArtsList* arts,
                       unsigned int index);

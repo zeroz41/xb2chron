@@ -7,15 +7,20 @@
 #include "classes/gf/GfMenuObjDrArtsSet2/LevelupListener.h"
 #include "classes/gf/GfMenuObjDrArtsSet2.h"
 #include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfMenuAdapterManager.h"
 #include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfMenuArtsAdapter.h"
 #include "classes/gf/GfMenuArtsList.h"
 #include "classes/gf/GfMenuBladeList.h"
 #include "classes/gf/GfMenuCallContext.h"
+#include "classes/gf/GfMenuCharDataAdapter.h"
+#include "classes/gf/GfMenuDiffAdapter.h"
 #include "classes/gf/GfMenuItemList.h"
 #include "classes/gf/GfMenuObjCommonText.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/gf/GfMenuReference.h"
+#include "classes/gf/GfMenuWeaponTypeAdapter.h"
 #include "classes/gf/GfMenuObjDrArtsSet2/ArtsListListener.h"
 #include "classes/gf/GfMenuObjDrArtsSet2/LevelupListener.h"
 #include "classes/gf/GfMenuObjDrArtsSet2/MainListener.h"
@@ -23,6 +28,7 @@
 #include "classes/ui/UIEventManager.h"
 #include "classes/ui/UIManager.h"
 #include "classes/ui/UIObjectAcc.h"
+#include "gf/GfDataBlade.h"
 #include "gf/GfDataDriver.h"
 #include "gf/GfDataDriverArts.h"
 #include "gf/GfItemUtil.h"
@@ -196,6 +202,92 @@ void GfMenuObjDrArtsSet2::update() {
     GfMenuObject::update();
 }
 
+void GfMenuObjDrArtsSet2::setupWpnType(ui::UIObjectAcc& acc, mm::mtl::IntrusivePtr<GfMenuReferenceNumber> number,
+                                       GfMenuArtsList* arts, GfMenuBladeList* blades) {
+    GfMenuWeaponTypeAdapter::createFromReferenceDriverWpnType(acc.searchChild("TXT_wpn_wp_name"), 0, s_RefDriverIndex,
+                                                              number, 0, false);
+    GfMenuWeaponTypeAdapter::createFromReferenceDriverWpnType(acc.searchChild("TXT_wpn_wp_num"), 2, s_RefDriverIndex,
+                                                              number, 0, true);
+    mm::mtl::FixStr<32> name;
+    for (int i = 0; i < 4; i++) {
+        name.format("TXT_wpn_arts_name@%02d", i + 1);
+        GfMenuArtsAdapter* adapter =
+            GfMenuArtsAdapter::createFromListReferenceDriver(acc.searchChild(name.m_str), 0, arts, i, s_RefDriverIndex, false);
+        if (adapter != nullptr) {
+            name.format("LAY_wpn_arts@%02d", i + 1);
+            adapter->m_rowHandle = acc.searchChild(name.m_str);
+        }
+        name.format("TXT_wpn_arts_lv@%02d", i + 1);
+        GfMenuArtsAdapter::createFromListReferenceDriver(acc.searchChild(name.m_str), 8, arts, i, s_RefDriverIndex, false);
+    }
+    for (int i = 0; i < 3; i++) {
+        name.format("IMG_wpn_blade_face@%02d", i + 1);
+        GfMenuCharDataAdapter::createFromBladeList(acc.searchChild(name.m_str), 3, blades, i, false);
+    }
+    if (s_EnableWpn2) {
+        ui::UIObjectAcc wpn2(acc.searchSibiling("LAY_wpn2"));
+        GfMenuWeaponTypeAdapter::createFromReferenceDriverWpnType(wpn2.searchChild("TXT_wpn2_wp_name"), 0,
+                                                                  s_RefDriverIndex, number, 0, false);
+        GfMenuWeaponTypeAdapter::createFromReferenceDriverWpnType(wpn2.searchChild("TXT_wpn2_wp_num"), 2,
+                                                                  s_RefDriverIndex, number, 0, true);
+        mm::mtl::FixStr<32> name2;
+        for (int i = 0; i < 4; i++) {
+            name2.format("TXT_wpn2_arts_name@%02d", i + 1);
+            GfMenuArtsAdapter* adapter = GfMenuArtsAdapter::createFromListReferenceDriver(
+                wpn2.searchChild(name2.m_str), 0, arts, i, s_RefDriverIndex, false);
+            if (adapter != nullptr) {
+                name2.format("LAY_wpn2_arts@%02d", i + 1);
+                adapter->m_rowHandle = wpn2.searchChild(name2.m_str);
+            }
+            name2.format("TXT_wpn2_arts_lv@%02d", i + 1);
+            GfMenuArtsAdapter::createFromListReferenceDriver(wpn2.searchChild(name2.m_str), 8, arts, i,
+                                                             s_RefDriverIndex, false);
+        }
+        for (int i = 0; i < 3; i++) {
+            name2.format("IMG_wpn2_blade_face@%02d", i + 1);
+            GfMenuCharDataAdapter::createFromBladeList(wpn2.searchChild(name2.m_str), 3, blades, i, false);
+        }
+    }
+}
+
+void GfMenuObjDrArtsSet2::refreshArtsList(ui::UIObjectAcc& acc, GfMenuArtsList* arts, unsigned int driver,
+                                          unsigned int wpnType, GfMenuBladeList* blades) {
+    mm::mtl::FixedArray<unsigned int, 4> enable;
+    GfMenuObjUtil::getEnableArts(enable, driver, wpnType, static_cast<PTPOS>(pad_2B4), pad_2B9);
+    arts->clear();
+    for (int i = 0; i < 4; i++) {
+        MenuArtsInfo info = {enable[i], 0};
+        info.m_level = GfDataDriverArts::getArtsLevel(driver, enable[i]);
+        arts->addContents(info);
+    }
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
+        mm::mtl::FixStr<32> name;
+        for (unsigned int i = 0; i < blades->getSize(); i++) {
+            name.format("IMG_wpn_blade_face@%02d", i + 1);
+            ui::UIObjectAcc face(acc.m_handle, name.m_str);
+            unsigned int blade = (i < blades->m_list.size() ? blades->m_list[i] : blades->m_dummy).m_blade;
+            if (GfDataBlade::getBladeWpnType(blade) == wpnType) {
+                face.setMulColor("white");
+            } else {
+                face.setMulColor("gray");
+            }
+        }
+        if (s_EnableWpn2) {
+            ui::UIObjectAcc wpn2(acc.searchSibiling("LAY_wpn2"));
+            for (unsigned int i = 0; i < blades->getSize(); i++) {
+                name.format("IMG_wpn2_blade_face@%02d", i + 1);
+                ui::UIObjectAcc face(wpn2.m_handle, name.m_str);
+                unsigned int blade = (i < blades->m_list.size() ? blades->m_list[i] : blades->m_dummy).m_blade;
+                if (GfDataBlade::getBladeWpnType(blade) == wpnType) {
+                    face.setMulColor("white");
+                } else {
+                    face.setMulColor("gray");
+                }
+            }
+        }
+    }
+}
+
 inline int GfMenuObjDrArtsSet2::checkArtsLvUp(unsigned int driver, unsigned int wpnType, unsigned int arts,
                                               unsigned int level) {
     if (arts == 0 || GfDataDriverArts::getLevelMax(arts) <= level) {
@@ -262,6 +354,132 @@ bool GfMenuObjDrArtsSet2::seqSelectItem() {
     return true;
 }
 
+void GfMenuObjDrArtsSet2::setupWpnTypeIcon(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 50>& wpnTypes,
+                                           GfMenuBladeList* blades) {
+    unsigned int driver = GfMenuReference::getReferenceDriverID(s_RefDriverIndex);
+    mm::mtl::FixedVector<unsigned int, 50> bladeTypes;
+    for (unsigned int i = 0; i < blades->getSize(); i++) {
+        unsigned int blade = (i < blades->m_list.size() ? blades->m_list[i] : blades->m_dummy).m_blade;
+        bladeTypes.push_back(GfDataBlade::getBladeWpnType(blade));
+    }
+    wpnTypes.clear();
+    GfDataDriver::getEquipWpnType(wpnTypes, driver);
+    for (mm::mtl::FixedVector<unsigned int, 50>::iterator it = wpnTypes.begin(); it != wpnTypes.end();) {
+        mm::mtl::FixedArray<unsigned int, 4> arts;
+        GfMenuObjUtil::getEnableArts(arts, driver, *it, PTPOS(0), false);
+        int i;
+        for (i = 0; i < 4; i++) {
+            if (GfDataDriverArts::getArtsLevel(driver, arts[i]) != 0) {
+                break;
+            }
+        }
+        if (*it == 17) {
+            if (GfMenuObjUtil::isValidBlade(GfDataDriver::getBlade(driver, -1))) {
+                it = wpnTypes.erase(it);
+            } else {
+                ++it;
+            }
+        } else if (i == 4) {
+            it = wpnTypes.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    // each driver's own weapon type goes first
+    unsigned int type = 0;
+    switch (driver) {
+    case 1:
+        for (mm::mtl::FixedVector<unsigned int, 50>::iterator it = wpnTypes.begin(); it != wpnTypes.end(); ++it) {
+            if (*it == 1) {
+                wpnTypes.erase(it);
+                type = 1;
+                break;
+            }
+        }
+        break;
+    case 2:
+        for (mm::mtl::FixedVector<unsigned int, 50>::iterator it = wpnTypes.begin(); it != wpnTypes.end(); ++it) {
+            if (*it == 3) {
+                wpnTypes.erase(it);
+                type = 3;
+                break;
+            }
+        }
+        break;
+    case 3:
+        for (mm::mtl::FixedVector<unsigned int, 50>::iterator it = wpnTypes.begin(); it != wpnTypes.end(); ++it) {
+            if (*it == 8) {
+                wpnTypes.erase(it);
+                type = 8;
+                break;
+            }
+        }
+        break;
+    case 5:
+        for (mm::mtl::FixedVector<unsigned int, 50>::iterator it = wpnTypes.begin(); it != wpnTypes.end(); ++it) {
+            if (*it == 9) {
+                wpnTypes.erase(it);
+                type = 9;
+                break;
+            }
+        }
+        break;
+    case 6:
+        for (mm::mtl::FixedVector<unsigned int, 50>::iterator it = wpnTypes.begin(); it != wpnTypes.end(); ++it) {
+            if (*it == 7) {
+                wpnTypes.erase(it);
+                type = 7;
+                break;
+            }
+        }
+        break;
+    }
+    if (type != 0) {
+        wpnTypes.insert(wpnTypes.begin(), type);
+    }
+    ui::UIObjectAcc bladeLay(acc.m_handle, "LAY_wpn_blade");
+    bladeLay.setDisp(true);
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < 21; i++) {
+        name.format("IMG_wpn_icon@%02d", i + 1);
+        ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+        if (icon.m_object != nullptr) {
+            name.format("IMG_wpn_lvup@%02d", i + 1);
+            ui::UIObjectAcc lvup(acc.searchChild(name.m_str));
+            unsigned int type = i < wpnTypes.size() ? wpnTypes[i] : 0;
+            if (type != 0) {
+                if (type == 0x21) {
+                    type = 0x1B;
+                } else if (type == 0x22) {
+                    type = 0x1C;
+                } else if (type == 0x24) {
+                    type = 0x1D;
+                } else if (type == 0x23) {
+                    type = 0x1E;
+                }
+                icon.setImageIndex(type - 1);
+                icon.setDisp(true);
+                const unsigned int& wpnType = wpnTypes[i];
+                if (std::find(bladeTypes.begin(), bladeTypes.end(), wpnType) != bladeTypes.end()) {
+                    icon.setMulColor("white");
+                } else if (wpnTypes[i] == 0x11) {
+                    icon.setMulColor("white");
+                    bladeLay.setDisp(false);
+                } else {
+                    icon.setMulColor("dr_thema01_light");
+                }
+            } else {
+                icon.setDisp(false);
+            }
+            lvup.setDisp(icon.isDisp());
+        }
+    }
+    if (s_EnableWpn2) {
+        ui::UIObjectAcc wpn2(acc.searchSibiling("LAY_wpn2"));
+        setupWpnTypeIcon2(wpn2, wpnTypes, blades);
+    }
+}
+
 void GfMenuObjDrArtsSet2::refreshLvUpWpn(ui::UIObjectAcc& acc, unsigned int driver,
                                          const mm::mtl::FixedVector<unsigned int, 50>& wpnTypes) {
     for (unsigned int i = 0; i < wpnTypes.size();) {
@@ -285,6 +503,179 @@ void GfMenuObjDrArtsSet2::refreshLvUpWpn(ui::UIObjectAcc& acc, unsigned int driv
             name.format("IMG_wpn2_lvup@%02d", i);
             wpn2.setDispChild(lvUp, name.m_str);
         }
+    }
+}
+
+void GfMenuObjDrArtsSet2::setupArtsList(ui::UIObjectAcc& acc, GfMenuArtsList* arts,
+                                        mm::mtl::IntrusivePtr<GfMenuReferenceNumber> number,
+                                        mm::mtl::IntrusivePtr<GfMenuReferenceNumber> number2) {
+    mm::mtl::FixStr<32> name;
+    unsigned int driver = s_RefDriverIndex;
+    GfMenuAdapterManager::beginAddAfter();
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
+        GfMenuWeaponTypeAdapter::createFromReferenceDriverWpnType(acc.searchChild("TXT_list_index"), 0,
+                                                                  s_RefDriverIndex, number, 0, false);
+        GfMenuWeaponTypeAdapter::createFromReferenceDriverWpnType(acc.searchChild("IMG_arts_wpn_icon"), 1,
+                                                                  s_RefDriverIndex, number, 0, false);
+    }
+    GfMenuWeaponTypeAdapter::createFromReferenceDriverWpnType(acc.searchChild("TXT_arts_wp_num"), 2, s_RefDriverIndex,
+                                                              number, 0, true);
+    for (int i = 0; i < 4; i++) {
+        name.format("TXT_arts_name@%02d", i + 1);
+        GfMenuArtsAdapter::createFromListReferenceDriver(acc.searchChild(name.m_str), 0, arts, i, driver, false);
+        name.format("IMG_arts_icon_type@%02d", i + 1);
+        GfMenuArtsAdapter::createFromListReferenceDriver(acc.searchChild(name.m_str), 2, arts, i, driver, false);
+        name.format("IMG_arts_icon_enhance@%02d", i + 1);
+        GfMenuArtsAdapter::createFromListReferenceDriver(acc.searchChild(name.m_str), 3, arts, i, driver, false);
+        name.format("IMG_arts_icon_react@%02d", i + 1);
+        GfMenuArtsAdapter::createFromListReferenceDriver(acc.searchChild(name.m_str), 4, arts, i, driver, false);
+        name.format("IMG_arts_icon_range@%02d", i + 1);
+        GfMenuArtsAdapter::createFromListReferenceDriver(acc.searchChild(name.m_str), 5, arts, i, driver, false);
+        name.format("TXT_arts_tag_wp_num@%02d", i + 1);
+        GfMenuArtsAdapter::createFromListReferenceDriver(acc.searchChild(name.m_str), 6, arts, i, driver, false);
+        name.format("TXT_arts_tag_wp_max@%02d", i + 1);
+        GfMenuArtsAdapter* wpMax =
+            GfMenuArtsAdapter::createFromListReferenceDriver(acc.searchChild(name.m_str), 0x14, arts, i, driver, false);
+        wpMax->m_releaseIndex = 1;
+        name.format("TXT_arts_lv@%02d", i + 1);
+        GfMenuArtsAdapter::createFromListReferenceDriver(acc.searchChild(name.m_str), 8, arts, i, driver, false);
+    }
+    GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(acc.searchChild("TXT_param_a_txt@01"), 10, arts,
+                                                                   number2, driver, false);
+    GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(acc.searchChild("TXT_param_b_txt@01"), 10, arts,
+                                                                   number2, driver, false);
+    GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(acc.searchChild("TXT_param_a_txt@02"), 11, arts,
+                                                                   number2, driver, false);
+    GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(acc.searchChild("TXT_param_b_txt@02"), 11, arts,
+                                                                   number2, driver, false);
+    GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(acc.searchChild("TXT_param_a_txt@03"), 12, arts,
+                                                                   number2, driver, false);
+    GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(acc.searchChild("TXT_param_b_txt@03"), 12, arts,
+                                                                   number2, driver, false);
+    GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(acc.searchChild("TXT_param_a_num_index@01"), 0x15,
+                                                                   arts, number2, driver, false);
+    GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(acc.searchChild("TXT_param_b_num_index@01"), 0x15,
+                                                                   arts, number2, driver, false);
+    GfMenuArtsAdapter* numA1 = GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(
+        acc.searchChild("TXT_param_a_num@01"), 13, arts, number2, driver, false);
+    GfMenuArtsAdapter* numB1 = GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(
+        acc.searchChild("TXT_param_b_num@01"), 17, arts, number2, driver, false);
+    GfMenuDiffAdapter::create(acc.searchChild("TXT_param_b_num@01"), numA1, numB1, 1, true);
+    GfMenuArtsAdapter* numA2 = GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(
+        acc.searchChild("TXT_param_a_num@02"), 14, arts, number2, driver, false);
+    GfMenuArtsAdapter* numB2 = GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(
+        acc.searchChild("TXT_param_b_num@02"), 18, arts, number2, driver, false);
+    GfMenuDiffAdapter::create(acc.searchChild("TXT_param_b_num@02"), numB2, numA2, 1, true);
+    GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(acc.searchChild("TXT_arts_detail_a_enhance"), 15,
+                                                                   arts, number2, driver, false);
+    GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(acc.searchChild("TXT_arts_detail_b_enhance"), 19,
+                                                                   arts, number2, driver, false);
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        GfMenuCharDataAdapter::createFromReferenceDriver(acc.searchChild("IMG_arts_icon_talent"), 0x6E,
+                                                         s_RefDriverIndex, false);
+        GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(acc.searchChild("TXT_arts_detail_a_tal_info@01"),
+                                                                       0x17, arts, number2, driver, false);
+        GfMenuArtsAdapter::createFromListReferenceDriverReferenceIndex(acc.searchChild("TXT_arts_detail_a_tal_info@02"),
+                                                                       0x16, arts, number2, driver, false);
+    }
+    GfMenuAdapterManager::endAddAfter();
+}
+
+void GfMenuObjDrArtsSet2::refreshArtsSelect(ui::UIObjectAcc& acc, int index, int prev) {
+    mm::mtl::FixStr<32> name;
+    for (int i = 0; i < 4; i++) {
+        name.format("IMG_arts_icon_tag_base@%02d", i + 1);
+        ui::UIObjectAcc tagBase(acc.searchChild(name.m_str));
+        name.format("IMG_arts_icon_base@%02d", i + 1);
+        ui::UIObjectAcc iconBase(acc.searchChild(name.m_str));
+        name.format("TXT_arts_name@%02d", i + 1);
+        ui::UIObjectAcc text(acc.searchChild(name.m_str));
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            name.format("IMG_arts_icon_tag_base@%02d", i + 1);
+            ui::UIObjectAcc iconTag(acc.searchChild(name.m_str));
+            name.format("IMG_arts_tag_base@%02d", i + 1);
+            ui::UIObjectAcc artsTag(acc.searchChild(name.m_str));
+            if (prev == i) {
+                if (pad_2B8) {
+                    tagBase.startAnimation("blade_hold", false);
+                    artsTag.startAnimation("blade_hold", false);
+                } else {
+                    tagBase.startAnimation("driver_hold", false);
+                    artsTag.startAnimation("driver_hold", false);
+                }
+                iconTag.startAnimation("normal_hold", false);
+                GfMenuObjUtil::setColMulandAdd(text.m_handle, "txt_column");
+            } else {
+                if (index == i) {
+                    if (pad_2B8) {
+                        tagBase.startAnimation("blade_select", false);
+                        artsTag.startAnimation("blade_select", false);
+                    } else {
+                        tagBase.startAnimation("driver_select", false);
+                        artsTag.startAnimation("driver_select", false);
+                    }
+                    iconTag.startAnimation("normal_select", false);
+                } else {
+                    if (pad_2B8) {
+                        tagBase.startAnimation("blade", false);
+                        artsTag.startAnimation("blade", false);
+                    } else {
+                        tagBase.startAnimation("driver", false);
+                        artsTag.startAnimation("driver", false);
+                    }
+                    iconTag.startAnimation("normal", false);
+                }
+                text.loadDefColor();
+            }
+        } else {
+            if (prev == i) {
+                tagBase.setAddColor("sys_hold");
+                iconBase.setMulColor("black");
+                iconBase.setAddColor("sys_hold");
+                GfMenuObjUtil::setColMulandAdd(text.m_handle, "txt_column");
+            } else {
+                if (index == i) {
+                    tagBase.setAddColor("sys_select");
+                    iconBase.setMulColor("black");
+                    iconBase.setAddColor("sys_select");
+                } else {
+                    tagBase.loadDefColor();
+                    iconBase.loadDefColor();
+                }
+                text.loadDefColor();
+            }
+        }
+    }
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        acc.setDispChild(pad_2B4 == 0, "TXT_arts_sp_index_talent");
+        acc.setDispChild(pad_2B4 == 0, "LAY_arts_icon_talent");
+        acc.setDispChild(pad_2B4 != 0, "TXT_arts_sp_index_switch");
+        acc.setDispChild(pad_2B4 != 0, "IMG_arts_icon_switch");
+        {
+            ui::UIObjectAcc listIndex(acc.m_handle, "IMG_list_index");
+            listIndex.startAnimation(pad_2B4 == 0 ? "attacker" : "supporter", false);
+        }
+        {
+            ui::UIObjectAcc atk(acc.m_handle, "TXT_list_index_atk");
+            ui::UIObjectAcc sup(acc.m_handle, "TXT_list_index_sup");
+            atk.setAlpha(pad_2B4 == 0 ? 1.0f : 0.5f);
+            sup.setAlpha(pad_2B4 != 0 ? 1.0f : 0.5f);
+        }
+        bool line = false;
+        if (pad_2B4 == 0) {
+            line = pad_2B9;
+        }
+        line |= pad_2B4 == 1;
+        acc.setDispChild(line, "IMG_arts_list_line@01");
+        acc.setDispChild(line, "LAY_arts@04");
+        acc.setDispChild(line, "LAY_arts_sp_index");
+        bool talent = pad_2B4 == 0 && pad_2B9 && m_arts->getSize() - 1 == index;
+        acc.setDispChild(!talent, "LAY_arts_detail_a_normal");
+        acc.setDispChild(talent, "LAY_arts_detail_a_talent");
+        pad_2BA = talent;
+        bool num = pad_2B4 != 1 || m_arts->getSize() - 1 != index;
+        acc.setDispChild(num, "TXT_param_a_num_index@02");
+        acc.setDispChild(num, "TXT_param_b_num_index@02");
     }
 }
 
@@ -431,6 +822,52 @@ void GfMenuObjDrArtsSet2::LevelupListener::reciveEvent(const ui::EventData& even
         GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
     } else {
         UIObjectListener::reciveEvent(event, handle);
+    }
+}
+
+void GfMenuObjDrArtsSet2::setupWpnTypeIcon2(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 50>& wpnTypes,
+                                            GfMenuBladeList* blades) {
+    mm::mtl::FixedVector<unsigned int, 50> bladeTypes;
+    for (unsigned int i = 0; i < blades->getSize(); i++) {
+        unsigned int blade = (i < blades->m_list.size() ? blades->m_list[i] : blades->m_dummy).m_blade;
+        bladeTypes.push_back(GfDataBlade::getBladeWpnType(blade));
+    }
+    ui::UIObjectAcc bladeLay(acc.m_handle, "LAY_wpn2_blade");
+    bladeLay.setDisp(true);
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < 28; i++) {
+        name.format("IMG_wpn2_icon@%02d", i + 1);
+        ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+        if (icon.m_object != nullptr) {
+            name.format("IMG_wpn2_lvup@%02d", i + 1);
+            ui::UIObjectAcc lvup(acc.searchChild(name.m_str));
+            unsigned int type = i < wpnTypes.size() ? wpnTypes[i] : 0;
+            if (type != 0) {
+                if (type == 0x21) {
+                    type = 0x1B;
+                } else if (type == 0x22) {
+                    type = 0x1C;
+                } else if (type == 0x24) {
+                    type = 0x1D;
+                } else if (type == 0x23) {
+                    type = 0x1E;
+                }
+                icon.setImageIndex(type - 1);
+                icon.setDisp(true);
+                const unsigned int& wpnType = wpnTypes[i];
+                if (std::find(bladeTypes.begin(), bladeTypes.end(), wpnType) != bladeTypes.end()) {
+                    icon.setMulColor("white");
+                } else if (wpnTypes[i] == 0x11) {
+                    icon.setMulColor("white");
+                    bladeLay.setDisp(false);
+                } else {
+                    icon.setMulColor("dr_thema01_light");
+                }
+            } else {
+                icon.setDisp(false);
+            }
+            lvup.setDisp(icon.isDisp());
+        }
     }
 }
 
