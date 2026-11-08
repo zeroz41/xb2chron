@@ -66,6 +66,7 @@
 #include "grlib/CGLibVtxVertex.h"
 #include "grlib/CGLibVtxStmOut.h"
 #include <string.h>
+#include <new>
 
 namespace grlib {
 
@@ -508,6 +509,23 @@ void CGLibMemHandle::allocUniform(CGLibMemType& mem, unsigned int size) {
     }
 }
 
+void CGLibMemHandle::free(CGLibMemType& mem) {
+    ml::CS lock(getCriticalSection());
+    if (mem.m_type == 5) {
+        mem.m_pMem = nullptr;
+        return;
+    } else if (mem.m_type == 6) {
+        if (mem.m_pMem != nullptr) {
+            mtl::MemManager::deallocate(mem.m_pMem, 0, false);
+            mem.m_pMem = nullptr;
+        }
+    } else {
+        context::CGLibSystemContext::sys()->m_etcBuffer[mem.m_type].freeBuffer(mem.m_pMem);
+        mem.m_pMem = nullptr;
+    }
+    mem.m_type = 5;
+}
+
 void CGLibBuffFixAlloc::freeBuffer(void* p) {
     freeID((reinterpret_cast<unsigned long>(p) - reinterpret_cast<unsigned long>(m_pBuff)) / m_elemSize);
 }
@@ -577,6 +595,38 @@ CGLibBuffSamplerTbl::CGLibBuffSamplerTbl() : m_pBuff(nullptr), m_useNum(0), m_nu
 
 CGLibBuffSamplerTbl::~CGLibBuffSamplerTbl() { release(); }
 
+void CGLibBuffSamplerTbl::release() {
+    for (int i = 0; i < 128; i++) {
+        for (CGLibBuffResSamObj* pObj = m_hashList[i].m_pHead; pObj != nullptr; pObj = pObj->m_pNext) {
+            new (&pObj->m_params) CGLibWkrSamplerParams;
+            pObj->m_param.releaseParams();
+            pObj->m_refCount = 0;
+            pObj->m_hash = 0;
+        }
+        m_hashList[i].clear();
+    }
+    for (CGLibBuffResSamObj* pObj = m_freeList.m_pHead; pObj != nullptr; pObj = pObj->m_pNext) {
+        new (&pObj->m_params) CGLibWkrSamplerParams;
+        pObj->m_param.releaseParams();
+        pObj->m_refCount = 0;
+        pObj->m_hash = 0;
+    }
+    m_freeList.clear();
+    for (CGLibBuffResSamObj* pObj = m_releaseList.m_pHead; pObj != nullptr; pObj = pObj->m_pNext) {
+        new (&pObj->m_params) CGLibWkrSamplerParams;
+        pObj->m_param.releaseParams();
+        pObj->m_refCount = 0;
+        pObj->m_hash = 0;
+    }
+    m_releaseList.clear();
+    if (m_pBuff != nullptr) {
+        mtl::MemManager::deallocate(m_pBuff, 0, false);
+        m_pBuff = nullptr;
+    }
+    m_useNum = 0;
+    m_num = 0;
+}
+
 CGLibBuffTexture::CGLibBuffTexture() {}
 
 CGLibBuffTexture::~CGLibBuffTexture() { release(); }
@@ -634,6 +684,8 @@ void CGLibReleaseObj::release() {
 
 CGLibBuffReleaseTbl::CGLibBuffReleaseTbl() : m_num(0), m_pTbl(nullptr), m_free(), m_stock() {}
 
+CGLibBuffReleaseTbl::~CGLibBuffReleaseTbl() { release(); }
+
 void CGLibBuffReleaseTbl::release() {
     for (int i = 0; i < m_num; i++) {
         m_pTbl[i].release();
@@ -646,6 +698,19 @@ void CGLibBuffReleaseTbl::release() {
     m_stock[1] = List();
     m_stock[0] = List();
     m_free = List();
+}
+
+int CGLibBuffReleaseTbl::setup(unsigned int num) {
+    release();
+    m_num = num;
+    unsigned int size = num * sizeof(CGLibReleaseObj);
+    m_pTbl = static_cast<CGLibReleaseObj*>(
+        mtl::MemManager::allocate(CGLibMemHandle::s_hDefHandle, size, 0x10, false, "no name", 0));
+    for (int i = 0; i < m_num; i++) {
+        new (&m_pTbl[i]) CGLibReleaseObj;
+        m_free.push(&m_pTbl[i]);
+    }
+    return size;
 }
 
 CGLibReleaseObj* CGLibBuffReleaseTbl::createObj() {
