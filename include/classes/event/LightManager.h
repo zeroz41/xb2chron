@@ -16,6 +16,10 @@ public:
     LightManager();  // out of line (Singleton<LightManager>::getPtr calls it)
     // called by the evt_setup script plugin (application/BF2/ScriptPlayText); a result its callers ignore is declared void
     void loadResource(const char* name);
+    // loads the off-screen light resource (OFF_PATH; the index is not used); CharaObj::createGfObj and createModel call it
+    void loadOffScrLight(unsigned int);
+    void playOffScrLight(unsigned int index);
+    static const char* OFF_PATH;  // "event/offlgt/offlgt01"
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // fields the constructor initializes; what they hold is not known yet
     // 1.0.0's clear/clearEvtLight/clearOffScrLight (3.0.1 inlines them; defined inline in CharaObj.cpp)

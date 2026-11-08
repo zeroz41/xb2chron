@@ -2,6 +2,7 @@
 #define CLASSES_EVENT_CHARAPLAYACTIONAUTO_H
 
 #include "classes/event/ICmd.h"
+#include "mm/Vec3.h"
 
 namespace gf { class GF_OBJ_HANDLE; class GfObj; }
 
@@ -17,6 +18,8 @@ public:
     // action once nothing keeps it busy, and puts it back when the time runs out
     void play(gf::GfObj* obj) const;
     void idle();
+    // debug box over the character: CharaObj draws it at its position, height above it
+    void render(const mm::Vec3& pos, float height);
     // CharaObj holds one, the next command at +0x28
     // bit 2 set: the destructor puts the character back (bit 0 set: MsgGameTalkAction 2, else EVT_acttype row 1's
     // cmd2/stat2 on its event animation); the name is not the original's

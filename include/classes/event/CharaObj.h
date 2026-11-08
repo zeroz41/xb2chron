@@ -176,12 +176,11 @@ public:
     unsigned char pad_d70[0x70];
     // tail updates it last; resetDynamics forwards to it; the name is not the original's
     CharaDysUpdater m_dysUpdater;  // 0xde0
-    unsigned char pad_e00[0x590];
+    unsigned char pad_e08[0x588];
     // playVolumeFade/playRimBloom and their stops forward to it; the name is not the original's
     CharaEffectPlayer m_effectPlayer;  // 0x1390
     // setExtDisp/setExtParam forward to it and tail runs its updateRequest; the name is not the original's
     CharaPartUpdater m_partUpdater;  // 0x1650
-    unsigned char pad_1658[0xd8];
     float pad_1730;  // 0x1730: DofManager::calcDistSub adds it to m_pos's y (a height above the position)
     unsigned char pad_1734[0x4];
     // three command queues ObjectChara::clear empties (1.0.0's CharaObj::clear); the names are not the original's

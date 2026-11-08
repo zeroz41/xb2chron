@@ -780,6 +780,85 @@ void CharaWeightPlayer::easeOut(gf::AnimLayer, const char* name, float time, CV_
     anm.append(time, 0.0f, type);
 }
 
+void CharaPartUpdater::setExtDisp(const char* name, bool disp) {
+    if (m_requests.size() >= m_requests.capacity()) {
+        m_requests.erase(m_requests.begin());
+    }
+    for (Request* it = m_requests.begin(); it != m_requests.end(); ++it) {
+        if (it->m_type == 0 && strcmp(it->m_name, name) == 0) {
+            m_requests.erase(it);
+            break;
+        }
+    }
+    Request request = {0, name, disp ? 1.0f : 0.0f};
+    m_requests.push_back(request);
+    updateRequest();
+}
+
+void CharaPartUpdater::setExtDispWeapon(const char* name, bool disp) {
+    if (m_requests.size() >= m_requests.capacity()) {
+        m_requests.erase(m_requests.begin());
+    }
+    for (Request* it = m_requests.begin(); it != m_requests.end(); ++it) {
+        // the original looks for an older setExtDisp request (type 0), not a weapon one
+        if (it->m_type == 0 && strcmp(it->m_name, name) == 0) {
+            m_requests.erase(it);
+            break;
+        }
+    }
+    Request request = {1, name, disp ? 1.0f : 0.0f};
+    m_requests.push_back(request);
+    updateRequest();
+}
+
+void CharaPartUpdater::setExtParam(const char* name, float value) {
+    if (m_requests.size() >= m_requests.capacity()) {
+        m_requests.erase(m_requests.begin());
+    }
+    for (Request* it = m_requests.begin(); it != m_requests.end(); ++it) {
+        if (it->m_type == 2 && strcmp(it->m_name, name) == 0) {
+            m_requests.erase(it);
+            break;
+        }
+    }
+    Request request = {2, name, value};
+    m_requests.push_back(request);
+    updateRequest();
+}
+
+void CharaDysUpdater::update(float) {
+    if (m_flags & 1) {
+        if (gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle)) {
+            if (gf::GfComDynamics* dynamics = obj->getComponent<gf::GfComDynamics>(8)) {
+                dynamics->m_updater.m_resetRequest = true;
+                dynamics->resetMovement();
+            }
+        }
+        if (--m_dynamics < 0) {
+            m_flags &= ~1;
+        }
+    }
+    if (m_flags & 2) {
+        if (gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle)) {
+            if (gf::GfComDynamics* dynamics = obj->getComponent<gf::GfComDynamics>(8)) {
+                dynamics->resetMovement();
+            }
+        }
+        if (--m_movement < 0) {
+            m_flags &= ~2;
+        }
+    }
+    gf::GF_OBJ_HANDLE* handle = m_handle;
+    float weight = m_blendWeight;
+    if (gf::GfObj* obj = gf::GfObjUtil::getObj(handle)) {
+        if (gf::GfComDynamics* dynamics = obj->getComponent<gf::GfComDynamics>(8)) {
+            for (unsigned int i = 0; i < dynamics->getSolverCount(); ++i) {
+                dynamics->setSolverBlendWeight(i, weight);
+            }
+        }
+    }
+}
+
 void CharaWinkPlayer::idle_start() {
     m_count = ml::mtRand(60) + 90;
     m_state = &CharaWinkPlayer::idle_waiting;
@@ -2123,7 +2202,7 @@ void CharaSetIdle::init() {
 }
 
 void CharaPlayHead::init() {
-    m_step = 0;
+    m_flags = 0;
 }
 
 void CharaPlayHead::term() {
@@ -2131,7 +2210,7 @@ void CharaPlayHead::term() {
 }
 
 void CharaPlayFacial::init() {
-    m_step = 0;
+    m_flags = 0;
 }
 
 void CharaPlayFacial::term() {
@@ -2700,6 +2779,12 @@ void CharaUtil::setGravity(gf::GF_OBJ_HANDLE* handle, bool on) {
 
 namespace event {
 
+const char* LightManager::OFF_PATH = "event/offlgt/offlgt01";
+
+void LightManager::loadOffScrLight(unsigned int) {
+    mm::mtl::Singleton<ResManager>::getPtr()->load(mm::mtl::Singleton<Extend>::getPtr()->lgt(OFF_PATH), nullptr, false);
+}
+
 void CharaObj::createGhost() {
     if (!mm::mtl::Singleton<CharaManager>::getPtr()->isStreamMode()) {
         m_ghost = mm::mtl::Singleton<ModelManager>::getPtr()->createModel(m_modelId);
@@ -2728,6 +2813,194 @@ void CharaObj::playWink(int a, float b, bool c, float d, float e, int f, bool g,
 // run by CharaObj::tail (not written yet); the table is built by the CharaObj constructor (not written yet)
 template void CmdQueue<5, 0>::update();
 template CmdQueue<5, 0>::~CmdQueue();
+
+}  // namespace event
+
+#include "ml/ScnCamUtil.h"
+
+namespace event {
+
+void CharaPlayAction::render(const mm::Vec3& pos, float height) {
+    if (!(m_flags & 4) || gf::GfObjUtil::getObj(m_handle) == nullptr) {
+        return;
+    }
+    mm::Vec3 head;
+    head.x = pos.x;
+    head.y = pos.y + height + 0.2f;
+    head.z = pos.z;
+    mm::Vec3 screen;
+    if (!ml::ScnCamUtil::getScreenPos(screen, Manager::get()->m_scn->getCam(-1), head)) {
+        return;
+    }
+    int x = screen.x;
+    int y = screen.y;
+    fw::debug::drawSquare2D(mm::Rect<int>(x - 80, y - 60, 160, 40), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+    fw::debug::drawLineSquare2D(mm::Rect<int>(x - 80, y - 60, 160, 40), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    int textX = x - 75;
+    int textY = y - 55;
+    fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFont(textX, textY, "[ACTION]");
+    if (m_flags & 0x20) {
+        fw::debug::drawFont(x - 5, textY, "life(\u221e)");
+    } else {
+        fw::debug::drawFont(x - 5, textY, "life(%.1f)", m_time);
+    }
+    fw::debug::drawFont(x - 70, y - 40, m_name);
+}
+
+void CharaPlayActionAuto::render(const mm::Vec3& pos, float height) {
+    if (!(m_flags & 2) || gf::GfObjUtil::getObj(m_handle) == nullptr) {
+        return;
+    }
+    mm::Vec3 head;
+    head.x = pos.x;
+    head.y = pos.y + height + 0.2f;
+    head.z = pos.z;
+    mm::Vec3 screen;
+    if (!ml::ScnCamUtil::getScreenPos(screen, Manager::get()->m_scn->getCam(-1), head)) {
+        return;
+    }
+    int x = screen.x;
+    int y = screen.y;
+    fw::debug::drawSquare2D(mm::Rect<int>(x - 80, y - 60, 160, 40), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+    fw::debug::drawLineSquare2D(mm::Rect<int>(x - 80, y - 60, 160, 40), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    int textX = x - 75;
+    int textY = y - 55;
+    fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFont(textX, textY, "[ACTION_AUTO]");
+    fw::debug::drawFont(x, textY, "life(%.1f)", m_time);
+    fw::debug::drawFont(x - 70, y - 40, "TALK");
+}
+
+void CharaPlayMotion::render(const mm::Vec3& pos, float height) {
+    if (m_data == nullptr || gf::GfObjUtil::getObj(m_handle) == nullptr) {
+        return;
+    }
+    mm::Vec3 head;
+    head.x = pos.x;
+    head.y = pos.y + height + 0.2f;
+    head.z = pos.z;
+    mm::Vec3 screen;
+    if (!ml::ScnCamUtil::getScreenPos(screen, Manager::get()->m_scn->getCam(-1), head)) {
+        return;
+    }
+    int x = screen.x;
+    int y = screen.y;
+    fw::debug::drawSquare2D(mm::Rect<int>(x - 80, y - 60, 220, 40), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+    fw::debug::drawLineSquare2D(mm::Rect<int>(x - 80, y - 60, 220, 40), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    int textX = x - 75;
+    int textY = y - 55;
+    fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFont(textX, textY, "[MOTION]");
+    if (m_flags & 8) {
+        fw::debug::drawFont(x + 35, textY, "life(\u221e)");
+    } else {
+        fw::debug::drawFont(x + 35, textY, "life(%.1f)", m_time);
+    }
+    fw::debug::drawFont(x - 70, y - 40, mm::mtl::Singleton<Extend>::getPtr()->filename(m_name));
+}
+
+void CharaPlayMotionABC::render(const mm::Vec3& pos, float height) {
+    if (!(m_flags & 1) || gf::GfObjUtil::getObj(m_handle) == nullptr) {
+        return;
+    }
+    mm::Vec3 head;
+    head.x = pos.x;
+    head.y = pos.y + height + 0.2f;
+    head.z = pos.z;
+    mm::Vec3 screen;
+    if (!ml::ScnCamUtil::getScreenPos(screen, Manager::get()->m_scn->getCam(-1), head)) {
+        return;
+    }
+    int x = screen.x;
+    int y = screen.y;
+    fw::debug::drawSquare2D(mm::Rect<int>(x - 80, y - 60, 220, 40), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+    fw::debug::drawLineSquare2D(mm::Rect<int>(x - 80, y - 60, 220, 40), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    int textX = x - 75;
+    int textY = y - 55;
+    fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFont(textX, textY, "[MOTION_ABC]");
+    fw::debug::drawFont(x + 35, textY, "life(%.1f)", m_time);
+    if (m_phase >= 1 && m_phase <= 3 && m_names[m_phase - 1][0] != '\0') {
+        fw::debug::drawFont(x - 70, y - 40, mm::mtl::Singleton<Extend>::getPtr()->filename(m_names[m_phase - 1]));
+    }
+}
+
+void CharaPlayHead::render(const mm::Vec3& pos, float height) {
+    if (!(m_flags & 1)) {
+        return;
+    }
+    mm::Vec3 screen;
+    const ml::ScnObjCam* cam = Manager::get()->m_scn->getCam(-1);
+    mm::Vec3 head;
+    head.x = pos.x;
+    head.y = pos.y + height + 0.2f;
+    head.z = pos.z;
+    if (!ml::ScnCamUtil::getScreenPos(screen, cam, head)) {
+        return;
+    }
+    int x = screen.x;
+    int y = screen.y;
+    fw::debug::drawSquare2D(mm::Rect<int>(x + 100, y - 90, 225, 80), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+    fw::debug::drawLineSquare2D(mm::Rect<int>(x + 100, y - 90, 225, 80), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    int textX = x + 105;
+    int textY = y - 85;
+    fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFont(textX, textY, "HEAD");
+    fw::debug::drawFont(x + 110, y - 65, "head:");
+    if (m_flags & 2) {
+        fw::debug::drawFont(x + 170, y - 65, "life(\u221e)");
+    } else {
+        fw::debug::drawFont(x + 170, y - 65, "life(%.1f)", m_time);
+    }
+    fw::debug::drawFont(x + 110, y - 50, "head:");
+    fw::debug::drawFont(x + 170, y - 50, m_name);
+    fw::debug::drawFont(x + 110, y - 35, "blend:");
+    fw::debug::drawFont(x + 170, y - 35, "%d>LOOP>%d", static_cast<int>(m_blendIn), static_cast<int>(m_blendOut));
+}
+
+void CharaPlayFacial::render(const mm::Vec3& pos, float height) {
+    if (!(m_flags & 1)) {
+        return;
+    }
+    mm::Vec3 screen;
+    const ml::ScnObjCam* cam = Manager::get()->m_scn->getCam(-1);
+    mm::Vec3 head;
+    head.x = pos.x;
+    head.y = pos.y + height + 0.2f;
+    head.z = pos.z;
+    if (!ml::ScnCamUtil::getScreenPos(screen, cam, head)) {
+        return;
+    }
+    int x = screen.x;
+    int y = screen.y;
+    fw::debug::drawSquare2D(mm::Rect<int>(x + 100, y, 225, 140), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+    fw::debug::drawLineSquare2D(mm::Rect<int>(x + 100, y, 225, 140), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    int textX = x + 105;
+    int textY = y + 5;
+    fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFont(textX, textY, "FACIAL");
+    if (m_flags & 2) {
+        fw::debug::drawFont(x + 245, textY, "life(\u221e)");
+    } else {
+        fw::debug::drawFont(x + 245, textY, "life(%.1f)", m_time);
+    }
+    fw::debug::drawFont(x + 110, y + 25, "seat:");
+    fw::debug::drawFont(x + 170, y + 25, m_seat);
+    fw::debug::drawFont(x + 110, y + 40, "priset:");
+    fw::debug::drawFont(x + 170, y + 40, m_preset);
+    fw::debug::drawFont(x + 110, y + 60, "brow:");
+    fw::debug::drawFont(x + 170, y + 60, m_brow);
+    fw::debug::drawFont(x + 290, y + 60, "%.1f", m_browValue);
+    fw::debug::drawFont(x + 110, y + 75, "eye:");
+    fw::debug::drawFont(x + 170, y + 75, m_eye);
+    fw::debug::drawFont(x + 290, y + 75, "%.1f", m_eyeValue);
+    fw::debug::drawFont(x + 110, y + 90, "lip:");
+    fw::debug::drawFont(x + 170, y + 90, m_lip);
+    fw::debug::drawFont(x + 290, y + 90, "%.1f", m_lipValue);
+    fw::debug::drawFont(x + 110, y + 110, "blend:");
+    fw::debug::drawFont(x + 170, y + 110, "%d>LOOP>%d", static_cast<int>(m_blendIn), static_cast<int>(m_blendOut));
+}
 
 void CharaObj::setPos(const mm::Vec3& pos) {
     if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {

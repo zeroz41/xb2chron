@@ -10,6 +10,8 @@ namespace event {
 class CharaDysUpdater {
 public:
     virtual ~CharaDysUpdater() {}  // slot 0
+    // CharaObj::tail runs it last
+    void update(float);
     // 1.0.0's CharaDysUpdater::resetMovement(int) (0x71000BD580): resets the object's dynamics movement, sets
     // bit 1 of m_flags and keeps the value; inline in 3.0.1 (the liner commands' updates)
     void resetMovement(int value) {
@@ -40,6 +42,9 @@ public:
     gf::GF_OBJ_HANDLE* m_handle;  // 0x10
     int m_dynamics;  // 0x18 1.0.0's resetDynamics(int) stores its value (the name is not the original's)
     int m_movement;  // 0x1c 1.0.0's resetMovement(int) stores its value (the name is not the original's)
+    // the blend weight update sets on every dynamics solver (the name is not the original's)
+    float m_blendWeight;  // 0x20
+    unsigned char pad_24[0x4];
 };
 }  // namespace event
 
