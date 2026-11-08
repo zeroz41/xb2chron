@@ -2362,6 +2362,47 @@ LightEvt::~LightEvt() {
     m_lgtParam = 0;
 }
 
+void LightEvt::render(int x, int y) {
+    fw::debug::drawSquare2D(mm::Rect<int>(x, y, 230, 45), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+    fw::debug::drawLineSquare2D(mm::Rect<int>(x, y, 230, 45), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFont(x + 5, y + 5, "[EVT_LIGHT]");
+    fw::debug::drawFont(x + 150, y + 5, "scrID:%d", m_lgtParam);
+    fw::debug::drawFont(x + 10, y + 22, "file:    %s", mm::mtl::Singleton<Extend>::getPtr()->filename(m_name.m_str));
+}
+
+// 1.0.0's LightEvt::clear
+inline void LightEvt::clear() {
+    if (m_lgt) {
+        mm::mtl::PtrSingleton<Manager>::sys()->m_scn->releaseItem(m_lgt);
+        m_lgt = nullptr;
+    }
+    m_name = "";
+    m_lgtParam = 0;
+}
+
+void LightEvt::play(void* res, const char* name, unsigned int param) {
+    clear();
+    m_name = name;
+    m_lgt = static_cast<ml::ScnObjLight*>(mm::mtl::PtrSingleton<Manager>::sys()->m_scn->createLgt(res, param));
+    m_lgtParam = param;
+}
+
+void LightObj::clear() {
+    if (m_lgt) {
+        mm::mtl::PtrSingleton<Manager>::sys()->m_scn->releaseItem(m_lgt);
+        m_lgt = nullptr;
+    }
+    if (m_stmData) {
+        if (mm::mtl::Singleton<LightManager>::getPtr()->isStreamMode()) {
+            mm::mtl::Singleton<MotstmManager>::getPtr()->free(m_stmData);
+        }
+        m_stmData = nullptr;
+    }
+    m_name = "";
+    m_state = 0;
+}
+
 LightObj::~LightObj() {
     clear();
 }
@@ -7974,6 +8015,30 @@ void LightManager::loadResource(const char* name) {
     mm::mtl::Singleton<ResManager>::getPtr()->load(mm::mtl::Singleton<Extend>::getPtr()->lgt(name), nullptr, true);
 }
 
+void LightManager::playOffScrLight(unsigned int index) {
+    if (index == 0 || m_offScrLights[index] != nullptr) {
+        return;
+    }
+    ResManager::Item* item =
+        mm::mtl::Singleton<ResManager>::getPtr()->search(mm::mtl::Singleton<Extend>::getPtr()->lgt(OFF_PATH));
+    if (item == nullptr) {
+        return;
+    }
+    void* data = item->m_data;
+    if (data == nullptr || item->m_size == 0) {
+        return;
+    }
+    LightEvt* light = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) LightEvt();
+    m_offScrLights[index] = light;
+    light->play(data, OFF_PATH, index);
+}
+
+void LightManager::loadEvtLight(const char* name) {
+    mm::mtl::FixStr<256> path;
+    path.format("event/evtlgt/%s", name);
+    mm::mtl::Singleton<ResManager>::getPtr()->load(mm::mtl::Singleton<Extend>::getPtr()->lgt(path.m_str), nullptr, false);
+}
+
 SeamlessManager::SeamlessManager() : m_flags(0), m_dispFlags(0), m_firstKeys(), m_keys() {}
 
 void SeamlessManager::update() {
@@ -8246,6 +8311,80 @@ void HideManager::hideGroup(bool hide) {
     }
 }
 
+void HideManager::defineList(mm::mtl::FixedVector<unsigned int, 256> first,
+                             mm::mtl::FixedVector<unsigned int, 256> second) {
+    m_firstList.clear();
+    for (unsigned long i = 0; i < first.size(); i++) {
+        m_firstList.push_back(first[i]);
+    }
+    m_secondList.clear();
+    for (unsigned long i = 0; i < second.size(); i++) {
+        m_secondList.push_back(second[i]);
+    }
+}
+
+// 1.0.0's HideManager::searchObj
+inline HideManager::Obj* HideManager::searchObj(OBJ_TYPE type, unsigned int id) {
+    for (unsigned long i = 0; i < m_objs.size(); i++) {
+        if (m_objs[i]->m_type == type && m_objs[i]->m_id == id) {
+            return m_objs[i];
+        }
+    }
+    return nullptr;
+}
+
+void HideManager::hideObj(OBJ_TYPE type, unsigned int id, bool hide) {
+    Obj* obj = searchObj(type, id);
+    if (obj == nullptr) {
+        obj = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) Obj(type, id);
+        m_objs.push_back(obj);
+    }
+    obj->exec(hide);
+}
+
+// 1.0.0's HideManager::hideList
+inline void HideManager::hideList(bool hide) {
+    if (hide) {
+        if (m_flags.test(1)) {
+            return;
+        }
+        gf::GfGameEvent::setDisp(6, m_firstList, false);
+        gf::GfGameEvent::setDisp(5, m_secondList, false);
+        m_flags.set(1);
+    } else {
+        if (!m_flags.test(1)) {
+            return;
+        }
+        gf::GfGameEvent::setDisp(6, m_firstList, true);
+        gf::GfGameEvent::setDisp(5, m_secondList, true);
+        m_flags.reset(1);
+    }
+}
+
+// 1.0.0's HideManager::resetHideObj
+inline void HideManager::resetHideObj() {
+    for (Obj** it = m_objs.begin(); it != m_objs.end(); ++it) {
+        Obj* obj = *it;
+        obj->clear();
+        delete obj;
+    }
+    m_objs.clear();
+}
+
+void HideManager::OnEventProc(MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+    case 12:
+        clear();
+        break;
+    case 10:
+        hideGroup(false);
+        hideList(false);
+        resetHideObj();
+        break;
+    }
+}
+
 HideManager::~HideManager() {}
 
 }  // namespace event
@@ -8255,6 +8394,69 @@ HideManager::~HideManager() {}
 namespace event {
 
 LodManager::~LodManager() {}
+
+// 1.0.0's LodManager::searchObj
+inline LodManager::Obj* LodManager::searchObj(unsigned int id) {
+    for (unsigned long i = 0; i < m_objs.size(); i++) {
+        if (m_objs[i]->m_id == id) {
+            return m_objs[i];
+        }
+    }
+    return nullptr;
+}
+
+void LodManager::playAnm(unsigned int id, bool reverse, bool skip) {
+    Obj* obj = searchObj(id);
+    if (obj == nullptr) {
+        obj = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) Obj(id);
+        m_objs.push_back(obj);
+    }
+    obj->exec(reverse, skip);
+}
+
+void LodManager::setSwitch(unsigned int id, unsigned int value) {
+    Obj* obj = searchObj(id);
+    if (obj == nullptr) {
+        obj = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) Obj(id);
+        m_objs.push_back(obj);
+    }
+    gf::GfGameEvent::setMapLodSwitch(obj->m_id, value);
+    obj->m_flags |= 2;
+}
+
+// 1.0.0's LodManager::clear
+inline void LodManager::clear() {
+    for (Obj** it = m_objs.begin(); it != m_objs.end(); ++it) {
+        Obj* obj = *it;
+        obj->clear();
+        delete obj;
+    }
+    m_objs.clear();
+}
+
+// 1.0.0's LodManager::resetPlayAnm
+inline void LodManager::resetPlayAnm() {
+    for (Obj** it = m_objs.begin(); it != m_objs.end(); ++it) {
+        Obj* obj = *it;
+        obj->clear();
+        delete obj;
+    }
+    m_objs.clear();
+}
+
+void LodManager::OnEventProc(MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        clear();
+        break;
+    case 10:
+        resetPlayAnm();
+        break;
+    case 12:
+        clear();
+        break;
+    }
+}
 
 DebugManager::DebugManager() : m_flags(0), pad_224(0) {}
 

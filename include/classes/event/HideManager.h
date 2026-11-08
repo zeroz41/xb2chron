@@ -15,6 +15,8 @@ public:
     virtual ~HideManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     enum GRP_TYPE {};
+    // 1.0.0's symbols name it (hideObj, searchObj, Obj::Obj take it); the values are Obj's types (1-7)
+    enum OBJ_TYPE : int;
     void defineGroup(GRP_TYPE group);
     GRP_TYPE getGroup() const;
     // out of line (mm::mtl::Singleton<event::HideManager>::getPtr's static calls it)
@@ -23,6 +25,33 @@ public:
     // 1.0.0/3.0.1 symbols name it (event::HideManager::Obj::clear, ::exec); clear() runs Obj::clear and deletes each
     class Obj {
     public:
+        // 1.0.0's Obj(OBJ_TYPE, unsigned int) (0x71000E1DF8; 3.0.1 inlines it in hideObj)
+        Obj(OBJ_TYPE type, unsigned int id) : m_type(type), m_id(id), m_baseHide(false), m_hide(false) {
+            switch (type) {
+            case 1:
+                m_baseHide = false;
+                break;
+            case 2:
+                m_baseHide = false;
+                break;
+            case 3:
+                m_baseHide = false;
+                break;
+            case 4:
+                m_baseHide = false;
+                break;
+            case 5:
+                m_baseHide = false;
+                break;
+            case 6:
+                m_baseHide = !gf::GfGameEvent::isMapLodDisp(id);
+                break;
+            case 7:
+                m_baseHide = false;
+                break;
+            }
+            m_hide = m_baseHide;
+        }
         void clear();
         void exec(bool hide);
 
@@ -34,6 +63,12 @@ public:
         bool m_hide;          // 0x9
     };
     void clear();
+    // 1.0.0's hideList/resetHideObj/searchObj (3.0.1 inlines them; defined inline in CharaObj.cpp)
+    void hideList(bool hide);
+    void resetHideObj();
+    Obj* searchObj(OBJ_TYPE type, unsigned int id);
+    void defineList(mm::mtl::FixedVector<unsigned int, 256> first, mm::mtl::FixedVector<unsigned int, 256> second);
+    void hideObj(OBJ_TYPE type, unsigned int id, bool hide);
 
     // one entry per group bit: the display kind's name and value; the type's name is not the original's
     struct DispEntry {
