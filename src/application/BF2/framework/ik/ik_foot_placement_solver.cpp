@@ -157,7 +157,7 @@ void FootPlacementIKSolver::solveImpl(anm::RaycastInterface& raycaster) {
 }
 
 void FootPlacementIKSolver::setGroundAngle(const mm::Vec3& angle) {
-    mm::Vec3 half = angle * 0.5f;
+    mm::Vec3 half = mm::Vec3(angle) * 0.5f;
     float sx = sinf(half.x);
     float cx = cosf(half.x);
     float sy = sinf(half.y);
@@ -167,7 +167,7 @@ void FootPlacementIKSolver::setGroundAngle(const mm::Vec3& angle) {
     m_groundAngle.x = sx * cy * cz - cx * sy * sz;
     m_groundAngle.y = cx * sy * cz + sx * cy * sz;
     m_groundAngle.z = cx * cy * sz - sx * sy * cz;
-    m_groundAngle.w = sx * sy * sz + cx * cy * cz;
+    m_groundAngle.w = cx * cy * cz + sx * sy * sz;
 }
 
 bool Raycaster::castRay(const mm::Vec3& from, const mm::Vec3& to, mm::Vec3* pHitPos, mm::Vec3* pNormal) {
