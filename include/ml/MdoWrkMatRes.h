@@ -105,7 +105,9 @@ struct MdoRimBloomWrk {
     float m_power;  // 0xC
     float m_blackRatio;  // 0x10
     float m_emissive;  // 0x14
-    unsigned char pad_18[0x4];
+    // 0x18: DrMdoCtlNom::updateRimBloomCalcUniformBlock hands it to DrResMdoShdObj::setDecShdParm (the name is not
+    // the original's)
+    unsigned int m_decShdIdx;
     unsigned int m_flags;  // 0x1C, which values were set: 1 color, 2 power, 4 black ratio, 8 emissive
 };
 

@@ -8,6 +8,7 @@ namespace ml { class DrMdlObj; }
 namespace ml { class DrPixlShadowCacheObj; }
 namespace ml { class DrResMdoMeshObj; }
 namespace ml { class DrResMdoLight; }
+namespace ml { class DrResMdoShdObj; }
 namespace cloud { class CloudMdlDataObj; }
 namespace ml { class DrResMdoVtxMeshObj; }
 namespace mm { class Col3; }
@@ -63,6 +64,10 @@ public:
     void zPrePassRender();
     void thicknessRender(bool);
     void shadowMapDirRender(int);
+    void stmResSetup();
+    void updateNom();
+    void createShadowRenderList(bool);
+    void updateRimBloomCalcUniformBlock();
 
     // What m_alphaSort points to: setupWorkMdl places it in the work buffer (0x30 bytes) and fills each sort object
     // and its per-MdoWrkMatRes::m_mdlTopNum check-list table when the model has that alpha pass. The type and field
@@ -88,7 +93,8 @@ public:
     AlphaSortWork* m_alphaSort;  // 0x1B8 (the name is not the original's)
     unsigned char pad_1C0[0x8];
     DrResMdoMorpObj* m_morpObj;  // 0x1C8, callNomSetupRender updates it (the name is not the original's)
-    unsigned char pad_1D0[0x8];
+    // 0x1D0: updateRimBloomCalcUniformBlock sets the rim bloom shader's parm in it (the name is not the original's)
+    DrResMdoShdObj* m_shdObj;
     DrResMdoVtxMeshObj* m_vtxMesh;  // 0x1D8, ScnObjAccMdlParticle's
     // 0x1E0: setDisp and setDeleteCall pass the display state on to it (the name is not the original's)
     DrResMdoLight* m_light;

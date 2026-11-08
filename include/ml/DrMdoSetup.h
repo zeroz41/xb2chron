@@ -23,7 +23,7 @@ public:
         : DrMdoMat(viewNum), m_scale(1.0f), pad_EC(0), m_gpuRender(false), m_renderPass(0), m_stateFlags(0),
           m_ctlFlags(0), m_ctlFlags2(0), m_aabbMax(0.5f, 0.5f, 0.5f), m_aabbMin(-0.5f, -0.5f, -0.5f),
           m_center(0.0f, 0.0f, 0.0f), pad_140(1.0f, 1.0f, 1.0f), pad_150(0.0f, 0.0f, 0.0f), m_length(0.0f), pad_164(0),
-          m_mdlFlags(0), pad_16A(0), pad_16B(0), m_nodeMax(0), pad_182(0), pad_184(0), pad_188(0) {}
+          m_mdlFlags(0), pad_16A(0), pad_16B(0), m_nodeMax(0), pad_182(0), m_rimBloomFade(0), pad_188(0) {}
 
     void updateMpfMatUniformBlock();
     // Writes the material's stock variables (s_pStockMaterial) into its uniform block and sets m_renderPass from
@@ -174,7 +174,9 @@ public:
     short m_curBindIdx;
     short m_nodeMax;  // 0x180, getNodeIdx/setNodeMatrix bound by it (the name is not the original's)
     short pad_182;
-    unsigned int pad_184;
+    // 0x184: DrMdoCtlNom::updateRimBloomCalcUniformBlock blends the rim bloom block towards a fixed glow by twice
+    // it while m_mdlFlags bit 8 is set (the name is not the original's)
+    float m_rimBloomFade;
     unsigned int pad_188;  // 1.0.0's DrMdoNode(int) zeroes it after storing its table
 };
 }  // namespace ml

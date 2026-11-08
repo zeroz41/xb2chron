@@ -111,6 +111,7 @@
 #include "ml/DrShdMdoMan.h"
 #include "ml/DrShdMdoDecExtTbl.h"
 #include "ml/MdoWrkMatRes.h"
+#include "ml/DrResMdoShdObj.h"
 #include "ml/MdsMatInfoHeader.h"
 #include "ml/MdsMatTopHeader.h"
 #include "ml/MdsMatVariableTbl.h"
@@ -2465,8 +2466,78 @@ void DrMdoCtlNom::setDisp(bool disp) {
     }
 }
 
+void DrMdoCtlNom::update() {
+    stmResSetup();
+    if (m_ctlFlags2 & 0x40000) {
+        m_ctlFlags2 &= ~0x30000;
+    } else {
+        unsigned int bit = 0x10000 << DrMan::s_nDblIdx;
+        if (m_ctlFlags2 & bit) {
+            m_ctlFlags2 &= ~bit;
+            m_singleAlpha = m_alpha[DrMan::s_nDblIdx];
+        }
+    }
+    updateNom();
+    DrMdlMan* mdlMan = m_pDrMan->m_mdlMan;
+    if (m_stateFlags & 0x8000) {
+        mdlMan->m_pPassReq[0] = true;
+    }
+    if (m_stateFlags & 0x10000) {
+        mdlMan->m_pPassReq[1] = true;
+    }
+    if (m_stateFlags & 0x40000) {
+        mdlMan->m_pPassReq[7] = true;
+    }
+    if (m_stateFlags & 0x8) {
+        mdlMan->m_pPassReq[3] = true;
+    }
+    if (m_stateFlags & 0x4) {
+        mdlMan->m_pPassReq[4] = true;
+    }
+    if (m_stateFlags & 0x100) {
+        mdlMan->m_pPassReq[8] = true;
+    }
+    if (m_stateFlags & 0x200) {
+        mdlMan->m_pPassReq[9] = true;
+    }
+    if (m_cldMdlData != nullptr) {
+        m_cldMdlData->setCallDisp(true);
+    }
+}
+
 void DrMdoCtlNom::callShadowCacheUpdate(unsigned long bits) {
     m_shadowCacheBits &= ~bits;
+}
+
+void DrMdoCtlNom::updateRimBloomCalcUniformBlock() {
+    MdoRimBloomWrk* wrk = getRimBloomWrk(2);
+    if (wrk == nullptr) {
+        return;
+    }
+    grlib::CGLibDblUniformBlock* block = m_pWrkMatRes->m_pRimBloomUniformArray->m_pArray;
+    bool on = wrk->m_emissive > 0.0f || wrk->m_blackRatio > 0.0f;
+    mm::Vec4* buf = reinterpret_cast<mm::Vec4*>(block->getBuff());
+    if (m_mdlFlags & 0x100) {
+        float rate = m_rimBloomFade + m_rimBloomFade;
+        rate = rate < 0.0f ? 0.0f : rate;
+        rate = rate > 1.0f ? 1.0f : rate;
+        float inv = 1.0f - rate;
+        if (on) {
+            buf[0] = mm::Vec4(rate * 0.1f + inv * wrk->m_color.r, rate * 0.1f + inv * wrk->m_color.g,
+                              rate * 0.1f + inv * wrk->m_color.b, 0.0f);
+            buf[1] = mm::Vec4(rate * 2.0f + inv * wrk->m_power, rate * 1.0f + inv * wrk->m_blackRatio,
+                              rate * 1.0f + inv * wrk->m_emissive, 0.0f);
+        } else {
+            buf[0] = mm::Vec4(inv * 0.0f + rate * 0.1f, inv * 0.0f + rate * 0.1f, inv * 0.0f + rate * 0.1f, 0.0f);
+            buf[1] = mm::Vec4(inv * 1.0f + rate * 2.0f, inv * 0.0f + rate * 1.0f, inv * 0.0f + rate * 1.0f, 0.0f);
+        }
+        on = true;
+    } else {
+        buf[0] = mm::Vec4(wrk->m_color.r, wrk->m_color.g, wrk->m_color.b, 0.0f);
+        buf[1] = mm::Vec4(wrk->m_power, wrk->m_blackRatio, wrk->m_emissive, 0.0f);
+    }
+    block->updateData();
+    m_shdObj->setDecShdParm(wrk->m_decShdIdx, on ? 1 : 2);
 }
 
 void DrMdoCtlNom::nomCallRender(int pass) {
