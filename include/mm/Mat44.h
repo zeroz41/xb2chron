@@ -231,9 +231,9 @@ public:
         return r;
     }
     // this = ma * mb; when this is one of them the product is built in a copy first (the name is not the
-    // original's)
+    // original's; the tests compare the operand with this, `&ma == this`, as DrMdoMat::matCall_MatxView's cmp shows)
     __attribute__((always_inline)) void mulSafe(const Mat44& ma, const Mat44& mb) {
-        if (this == &ma || this == &mb) {
+        if (&ma == this || &mb == this) {
             Mat44 t = ma * mb;
             *this = t;
         } else {

@@ -522,6 +522,12 @@ void DrMdoMat::updateMatCallBack(const unsigned int* dispBits) {
     }
 }
 
+void DrMdoMat::matCall_MatxView(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    mm::Mat44* dst = reinterpret_cast<mm::Mat44*>(&m_pWrkMatRes->m_pUniformVal[info->m_uniformOfs + slot]);
+    const mm::Mat44* src = reinterpret_cast<const mm::Mat44*>(&m_pWrkMatRes->m_pMatVal[info->m_uniformOfs + slot]);
+    dst->mulSafe(m_pDrMan->m_calcMan->m_pViewWork->m_invView, *src);
+}
+
 void DrMdoMat::matCall_OutLineVal(const MdsMatInfoHeader* info, int slot, int matIdx) {
     float* dst = m_pWrkMatRes->m_pUniformVal;
     dst += info->m_uniformOfs + slot;
