@@ -1,4 +1,5 @@
 #include "classes/gf/GfMenuObjMainMenu2.h"
+#include "classes/gf/GfMenuObjMainMenu2BG.h"
 #include "classes/gf/SelectionChecker.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataBdat.h"
@@ -54,7 +55,7 @@ unsigned int GfMenuObjMainMenu2::s_IraSubIndexText;
 static unsigned int s_contentsCount;
 
 GfMenuObjMainMenu2::GfMenuObjMainMenu2(unsigned int handle)
-    : GfMenuObject(handle), m_cursor(nullptr), m_context(nullptr), pad_38(0), m_contentsIndex(-1), pad_40(-1), m_menuId(0),
+    : GfMenuObject(handle), m_cursor(nullptr), m_context(nullptr), pad_38(false), pad_39(false), m_contentsIndex(-1), pad_40(-1), m_menuId(0),
       m_driverList(nullptr), m_bladeList(nullptr), m_checker(nullptr), pad_88(0), pad_8C(false), m_seq(this),
       m_jobStarted(false) {
     m_driverList = GfMenuDriverList::create();
@@ -240,11 +241,13 @@ inline int GfMenuObjMainMenu2::moveMainMenu(ui::UIObjectAcc& acc, unsigned int d
     case 5:
         move.setPos(pos);
         param.m_eventId = 5;
+        param.m_methods = 0;
         break;
     case 6:
         pos.y = -rect.y;
         move.setPos(pos);
         param.m_eventId = 6;
+        param.m_methods = 0;
         break;
     }
     return GfMenuObjUtil::startCtrl(move.m_handle, param, nullptr);
@@ -483,6 +486,187 @@ void GfMenuObjMainMenu2::setDispGold(bool disp) {
             GfMenuObjUtil::setChildDisp(handle, "LAY_info_time", disp);
             GfMenuObjUtil::setChildDisp(handle, "LAY_clear_mark", disp);
         }
+    }
+}
+
+void GfMenuObjMainMenu2::ContentsListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    switch (event.m_type) {
+    case 2:
+        GfMenuObject::termCallContext(handle);
+        GfMenuObject::setInputSelectionChecker(handle, nullptr);
+        acc.setTerm();
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            int index = m_owner->m_contentsIndex;
+            unsigned char* fp = GfDataBdat::getFP(GfMenuObjUtil::isValidExpansion(3) ? 0x180 : 0x17F);
+            if (index < (int)m_owner->m_contentsIds.size()) {
+                unsigned int id = m_owner->m_contentsIds[index];
+                if (id == 2 && GfMenuObjUtil::isValidExpansion(1) && GfMenuObjUtil::isInChallengeBattleMap()) {
+                    GfMenuManager::openCommonWindow(0x11D);
+                    break;
+                }
+                if (GfMenuObjUtil::getMenuCondition((unsigned short)Bdat::getVal(fp, "useCond", id))) {
+                    m_owner->m_menuId = (unsigned short)Bdat::getVal(fp, "layer", id);
+                    GfMenuObject::changeFSSubLayer(owner.m_handle, 1, m_owner->m_menuId, false);
+                    moveMainMenu(owner, 3, true);
+                    sendEvent(owner.searchChild("LAY_main"), 0x103, 0);
+                    GfMenuObject::disableInput(handle);
+                    cancelEnableMainMenu(false);
+                    GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+                    GfMenuObjUtil::playSECommonDecide();
+                }
+            }
+            setDispGold(false);
+        } else if (event.m_param1 == 10) {
+            GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_chr_change"), 0, 0.0f);
+        }
+        break;
+    case 1: {
+        m_owner->pad_38 = false;
+        m_owner->pad_39 = false;
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            ui::UIObjectAcc parent(acc.getParentHandle());
+            parent.setAlpha(1.0f);
+        }
+        GfMenuObjUtil::CursorParam cursor;
+        cursor.m_parent = ui::UIObjectAcc(handle).getParentHandle();
+        cursor.m_cursor = acc.searchChild("IMG_contents_cursor_base");
+        cursor.m_type = 0;
+        cursor.m_setting.m_dockType = 0;
+        cursor.m_setting.m_outer = false;
+        cursor.m_pickup = "LAY_contents_item@%02d";
+        m_owner->m_cursor = GfMenuObjUtil::createCursor(cursor);
+        m_owner->m_cursor->open(0);
+        GfMenuObjUtil::createSyncPlugin(acc.searchChild("IMG_contents_cursor"), cursor.m_cursor, 0x32);
+        m_owner->pad_8C = false;
+        int index = 0;
+        {
+            GfMenuTypes::Param layer;
+            if (GfMenuObject::getFSLayerParam(m_owner->m_fsLayer, layer)) {
+                index = layer.m_menuId;
+                m_owner->pad_8C = true;
+                GfMenuObject::removeFSLayerParam(m_owner->m_fsLayer);
+            }
+        }
+        sendEvent(owner.searchChild("LAY_close"), 0x21, 0);
+        if (m_owner->pad_8C) {
+            setCloseKeyEnable(false);
+        }
+        GfMenuObject::setupInputSelection(handle, index, s_contentsCount);
+        GfMenuObject::enableInput(handle);
+        sendEvent(owner.searchChild("LAY_index"), 0x101, index);
+        GfMenuObject::startCallContext(m_owner->m_context, 0x5F, handle);
+        GfMenuObject::setCallContextEventHandler(m_owner->m_context, handle);
+        GfMenuObject::registFSLayerObject(9, handle);
+        GfMenuObject::setInputSelectionChecker(handle, m_owner->m_checker);
+        m_owner->m_contentsIndex = -1;
+        m_owner->pad_40 = -1;
+        m_owner->m_menuId = 0;
+        unsigned char* fp = GfDataBdat::getFP(GfMenuObjUtil::isValidExpansion(3) ? 0x180 : 0x17F);
+        GfMenuObjOperationInfo::setGuideText(
+            (unsigned short)Bdat::getVal(fp, "guide", m_owner->m_contentsIds[index]), 0);
+        if (!m_owner->pad_8C) {
+            GfMenuObjOperationInfo::open(owner.searchChild("LAY_close"), handle, 0, 0);
+            moveMainMenu(owner, 5, true);
+        } else {
+            if (!GfMenuObjUtil::isValidExpansion(3)) {
+                GfMenuObjOperationInfo::open(0, 0, 0, 0);
+                GfMenuObject::setInputActionEnable(owner.searchChild("LAY_close"), 2, false);
+            } else {
+                GfMenuObjOperationInfo::open(owner.searchChild("LAY_close"), 0, 0, 0);
+                GfMenuObjOperationInfo::setActionEnable(owner.searchChild("LAY_close"), 2, false);
+            }
+            moveMainMenu(owner, 6, true);
+            setDispGold(false);
+            unsigned int id = m_owner->m_contentsIds[index];
+            unsigned char* bdat = GfDataBdat::getFP(GfMenuObjUtil::isValidExpansion(3) ? 0x180 : 0x17F);
+            if (GfMenuObjUtil::getMenuCondition((unsigned short)Bdat::getVal(bdat, "useCond", id))) {
+                bool layer3 = GfMenuObjUtil::isValidExpansion(3);
+                if (layer3 && id == 1) {
+                    m_owner->m_menuId = 0x28;
+                    s_IraPartyFormDirect = true;
+                } else {
+                    m_owner->m_menuId = (unsigned short)Bdat::getVal(bdat, "layer", id);
+                }
+                GfMenuObject::changeFSSubLayer(owner.m_handle, 1, m_owner->m_menuId, false);
+                sendEvent(owner.searchChild("LAY_main"), 0x103, 0);
+                GfMenuObject::disableInput(handle);
+                GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+                s_openDirect = true;
+                if (GfMenuObjUtil::isValidExpansion(3) && m_owner->m_menuId == 0x12F) {
+                    ui::UIObjectAcc parent(acc.getParentHandle());
+                    parent.setAlpha(0.0f);
+                    s_IraHitonowaDirect = 1;
+                }
+            }
+        }
+        break;
+    }
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        m_owner->m_cursor->inputChange(index);
+        GfMenuObjUtil::playAnime(acc.m_handle, "IMG_contents_cursor", "loop");
+        sendEvent(owner.searchChild("LAY_index"), 0x101, index);
+        const GfMenuObjUtil::ParamMenu* menu = GfMenuObjUtil::getParamMenu();
+        if (m_owner->pad_38) {
+            GfMenuObjMainMenu2BG::OpenMainMenuBg bg;
+            bg.m_move = index;
+            bg.m_count = s_contentsCount;
+            bg.m_time = menu != nullptr ? menu->m_mainMenuBgTime : 0.0f;
+            GfMenuObjMainMenu2BG::move(m_owner->m_context, handle, bg);
+            mm::mtl::FixStr<32> name;
+            if (index > prev) {
+                if (index == s_contentsCount - 1 && prev == 0) {
+                    name = "IMG_contents_input_l";
+                } else {
+                    name = "IMG_contents_input_r";
+                }
+            } else if (index == 0 && prev == s_contentsCount - 1) {
+                name = "IMG_contents_input_r";
+            } else {
+                name = "IMG_contents_input_l";
+            }
+            ui::UIObjectAcc inputAcc(acc.searchChild(name.m_str));
+            inputAcc.setAddColor("black");
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x40000000;
+            param.m_curve = 3;
+            param.m_time = 0.2f;
+            param.m_bright = 1.0f;
+            GfMenuObjUtil::startCtrl(inputAcc.m_handle, param, nullptr);
+        }
+        mm::mtl::FixStr<32> name;
+        if (prev != -1) {
+            name.format("TXT_contents_item@%02d", prev + 1);
+            GfMenuObjUtil::setColMulandAdd(acc.searchChild(name.m_str), "txt_main_title");
+            GfMenuObjUtil::playSE(5);
+        }
+        name.format("TXT_contents_item@%02d", index + 1);
+        GfMenuObjUtil::setColMulandAdd(acc.searchChild(name.m_str), "txt_main_select");
+        name.format("IMG_contents_item_bg@%02d", prev + 1);
+        GfMenuObjUtil::playAnime(acc.m_handle, name.m_str, "idol");
+        name.format("IMG_contents_item_bg@%02d", index + 1);
+        GfMenuObjUtil::playAnime(acc.m_handle, name.m_str, "loop");
+        m_owner->m_contentsIndex = index;
+        m_owner->pad_40 = prev;
+        m_owner->m_menuId = 0;
+        unsigned char* fp = GfDataBdat::getFP(GfMenuObjUtil::isValidExpansion(3) ? 0x180 : 0x17F);
+        GfMenuObjOperationInfo::setGuideText(
+            (unsigned short)Bdat::getVal(fp, "guide", m_owner->m_contentsIds[index]), 0);
+        m_owner->pad_38 = true;
+        m_owner->pad_39 = false;
+        break;
+    }
+    case 0x41:
+    case 0x43:
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
     }
 }
 

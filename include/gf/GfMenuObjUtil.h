@@ -32,7 +32,11 @@ public:
     struct ParamMenu {
         float m_presetCtrlTime;  // getPresetCtrlTime's for presets 0-5 (the name is not the original's)
         float m_infoWait;   // seconds StateDispInfo waits after a skill
-        unsigned char pad_8[0xC];
+        unsigned char pad_8[0x4];
+        // how long GfMenuObjMainMenu2's contents listener moves the main menu background per selection change
+        // (the name is not the original's)
+        float m_mainMenuBgTime;
+        unsigned char pad_10[0x4];
         float m_totalWait;  // seconds StateTotalNext waits
         float m_chainAttackWait;  // GfMenuObjBladeChange::startChainAttack's event delay (the name is not the original's)
     };

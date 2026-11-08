@@ -162,7 +162,9 @@ public:
     // (the name is not the original's)
     ui::UICtrlCursorSelect* m_cursor;
     GfMenuCallContext* m_context;  // 0x30 initialize creates it (the name is not the original's)
-    unsigned short pad_38;
+    // the contents listener clears both on its open event and sets 0x38 after a selection change (stored separately)
+    bool pad_38;
+    bool pad_39;
     // the selected contents entry, an index into m_contentsIds (the main listener reads it; the constructor sets -1;
     // the name is not the original's)
     int m_contentsIndex;
