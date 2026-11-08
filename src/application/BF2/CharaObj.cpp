@@ -9157,6 +9157,15 @@ void SeqManager::render() {
     }
 }
 
+void SeqManager::play(const char* name) {
+    m_seqName = "";
+    m_cmdQueue.clear();
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setStr(mm::mtl::Singleton<MemoryManager>::getPtr()->createTxtbuf(name));
+    m_cmdQueue.push_back(&m_playStart, param);
+}
+
 void SeqManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
     case 1:
@@ -9512,6 +9521,39 @@ void ManiManager::removeManipulate(IManiCallback* callback) {
     }
     if (m_items.empty()) {
         clearManipulate();
+    }
+}
+
+// type 0 drops the targets; 1..3 re-add every target with the new manipulator kind
+void ManiManager::changeManipulate(MANI_TYPE type) {
+    switch (type) {
+    case 0:
+        clearManipulate();
+        break;
+    case 1: {
+        mm::mtl::FixedVector<Item, 512> items(m_items);
+        clearManipulate();
+        for (unsigned int i = 0; i < items.size(); i++) {
+            addManipulate(items[i].m_callback, static_cast<MANI_TYPE>(1));
+        }
+        break;
+    }
+    case 2: {
+        mm::mtl::FixedVector<Item, 512> items(m_items);
+        clearManipulate();
+        for (unsigned int i = 0; i < items.size(); i++) {
+            addManipulate(items[i].m_callback, static_cast<MANI_TYPE>(2));
+        }
+        break;
+    }
+    case 3: {
+        mm::mtl::FixedVector<Item, 512> items(m_items);
+        clearManipulate();
+        for (unsigned int i = 0; i < items.size(); i++) {
+            addManipulate(items[i].m_callback, static_cast<MANI_TYPE>(3));
+        }
+        break;
+    }
     }
 }
 
@@ -11076,6 +11118,19 @@ bool Manager::setupSceneEnd() {
         return true;
     }
     return false;
+}
+
+bool SeqManager::isSetupSceneEnd() const {
+    if (m_cmdQueue.contains(&m_startLoading) || m_cmdQueue.contains(&m_startOther)) {
+        return false;
+    }
+    MstxtManager* mstxt = mm::mtl::Singleton<MstxtManager>::getPtr();
+    for (unsigned long i = 0; i < mstxt->m_res.size(); i++) {
+        if (mstxt->m_res[i]->m_flags & 1) {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool Manager::startScene(const char* name, int no) {

@@ -168,7 +168,9 @@ public:
             unsigned long newSize = last - first;
 #line 275 MM_MTL_FIXED_VECTOR_PATH
             MM_ASSERT(newSize <= N);
-            uninitialized_copy_n(first, newSize, begin());
+            // copy_construct_n, not uninitialized_copy_n: ManiManager::changeManipulate's copy of its
+            // FixedVector<Item, 512> calls mtl_detail::copy_construct_n<Item> (int_to_type<0>) out of line
+            copy_construct_n(first, newSize, begin());
             m_size = newSize;
         }
     }
