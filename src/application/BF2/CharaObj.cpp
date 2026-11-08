@@ -6087,7 +6087,31 @@ void AlphaManager::render() {
 namespace event {
 
 ShakerRes::~ShakerRes() {
-    clear();
+    destroy();
+}
+
+void ShakerRes::create(const char* name) {
+    destroy();
+    m_name = name;
+    m_res = fw::CommonResource::request(mm::mtl::Singleton<MemoryManager>::getPtr()->m_static, name, 0, false);
+}
+
+void ShakerRes::update() {
+    if (m_res != nullptr && m_res->valid() && m_rcha == nullptr) {
+        void* data = m_res->getAssetData();
+        m_rcha = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_static, nullptr, 0, 4, false) RchaCam();
+        m_rcha->setup(mm::mtl::Singleton<MemoryManager>::getPtr()->m_static, data);
+    }
+}
+
+void Shaker::destroy() {
+    while (m_resNum > 1) {
+        m_resNum--;
+        m_res[m_resNum].destroy();
+    }
+    m_cmdQueue.clear();
+    m_flags = 0;
+    m_cur = nullptr;
 }
 
 void Shaker::stop() {
@@ -6104,6 +6128,44 @@ void ShakeManager::clear() {
 }
 
 ShakeManager::ShakeManager() : m_flags(0) {}
+
+void ShakeManager::update() {
+    if ((m_flags & 2) && !(m_shaker.m_flags & 1)) {
+        idle();
+    }
+    const FrameInfo& info = mm::mtl::Singleton<FrameManager>::getPtr()->frameInfo();
+    if (info.m_step > 0.0f) {
+        m_shaker.exec(info.m_frameStep, info.m_step);
+    }
+}
+
+void ShakeManager::play(const char* name, float time, float fadeIn, float fadeOut) {
+    int type;
+    for (type = 0; type < 4; type++) {
+        if (strcmp(s_names[type].m_str, name) == 0) {
+            break;
+        }
+    }
+    if (type == 4) {
+        return;
+    }
+    m_shaker.play(m_resIds[type], time, fadeIn, fadeOut);
+    m_flags |= 2;
+}
+
+void ShakeManager::setIdleShake(bool enable) {
+    if (((m_flags & 1) != 0) == enable) {
+        return;
+    }
+    if (enable) {
+        m_flags |= 1;
+    } else {
+        m_flags &= ~1u;
+    }
+    if (!(m_flags & 2)) {
+        idle();
+    }
+}
 
 void ShakeManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
@@ -7325,9 +7387,98 @@ void FrameManager::addKeyFrame(float frame, bool flag) {
 
 FrameManager::~FrameManager() {}
 
+inline void SeObj::stop() {
+    if (m_handle.isValid()) {
+        gf::GfSound::sys()->stopSe(m_handle, 0.0f);
+        m_handle.clear();
+    }
+}
+
+inline void SeObj::clear() {
+    stop();
+    m_pan = 0.0f;
+    m_name = "";
+    m_flags = 0;
+}
+
+inline void SeManager::clear() {
+    for (int i = 0; i < 32; i++) {
+        m_objs[i].clear();
+    }
+    m_playObjs.clear();
+    gf::GfGameEvent::destroySe();
+    m_loadCount = 0;
+}
+
+inline void SeManager::render() {
+    if ((pad_10 & 1) && !m_playObjs.empty()) {
+        int x = ml::DevGraph::getRootWidth() - 340;
+        for (int i = 0; i < 32; i++) {
+            if (m_objs[i].m_flags & 1) {
+                m_objs[i].draw(i, x, 230 + i * 70);
+            }
+        }
+    }
+}
+
+void SeManager::update() {
+    const FrameInfo& info = mm::mtl::Singleton<FrameManager>::getPtr()->frameInfo();
+    for (SeObj** it = m_playObjs.begin(); it != m_playObjs.end(); ++it) {
+        (*it)->exec(info);
+    }
+    bool erased;
+    do {
+        erased = false;
+        for (SeObj** it = m_playObjs.begin(); it != m_playObjs.end(); ++it) {
+            if ((*it)->m_flags & 2) {
+                (*it)->clear();
+                m_playObjs.erase(it);
+                erased = true;
+                break;
+            }
+        }
+    } while (erased);
+}
+
 void SeManager::load(const char* name) {
     gf::GfGameEvent::createSe(name);
     m_loadCount++;
+}
+
+void SeManager::play(int id, const char* name, float wait, float fadeIn, float fadeOut, float volume) {
+    if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkip() && name[0] != '\0') {
+        SeObj* obj = &m_objs[id];
+        obj->play(name, wait, fadeIn, fadeOut, volume);
+        int found = -1;
+        for (unsigned long i = 0; i < m_playObjs.size(); i++) {
+            if (m_playObjs[i] == obj) {
+                found = i;
+                break;
+            }
+        }
+        if (found < 0) {
+            m_playObjs.push_back(obj);
+        }
+    }
+}
+
+void SeManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        clear();
+        break;
+    case 12:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    case 16:
+        render();
+        break;
+    default:
+        break;
+    }
 }
 
 void SeManager::changeVolume(int id, float volume, float frame) {
@@ -10915,6 +11066,36 @@ bool StmPackMemory::isFailure() const {
 #include "classes/gf/GfGameParty.h"
 
 namespace event {
+
+void ScheduleItem::clear() {
+    if (m_func) {
+        if (gf::GfObjUtil::getObj(m_handle) != nullptr) {
+            mm::mtl::Singleton<AlphaManager>::getPtr()->setAlpha(m_handle, ALPHA_ATTR(3), 1.0f, 1.0f);
+        }
+    }
+}
+
+void ScheduleItem::func_fadeout(gf::GF_OBJ_HANDLE* handle) {
+    m_alpha -= 0.1f;
+    if (m_alpha > 0.0f) {
+        mm::mtl::Singleton<AlphaManager>::getPtr()->setAlpha(handle, ALPHA_ATTR(3), 1.0f, m_alpha);
+    } else {
+        mm::mtl::Singleton<AlphaManager>::getPtr()->setAlpha(handle, ALPHA_ATTR(3), 1.0f, 0.0f);
+        m_alpha = 0.0f;
+        m_func = &ScheduleItem::func_fadewait;
+    }
+}
+
+void ScheduleItem::func_fadein(gf::GF_OBJ_HANDLE* handle) {
+    m_alpha += 0.1f;
+    if (m_alpha < 1.0f) {
+        mm::mtl::Singleton<AlphaManager>::getPtr()->setAlpha(handle, ALPHA_ATTR(3), 1.0f, m_alpha);
+    } else {
+        mm::mtl::Singleton<AlphaManager>::getPtr()->setAlpha(handle, ALPHA_ATTR(3), 1.0f, 1.0f);
+        m_alpha = 0.0f;
+        m_func = nullptr;
+    }
+}
 
 void Scheduler::func_stanby(gf::GfObj* obj) {}
 

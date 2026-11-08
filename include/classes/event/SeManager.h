@@ -22,8 +22,12 @@ public:
     void changeVolume(int id, float volume, float frame);
     void pan(int id, float pan, float frame, CV_TYPE type);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    void update();
+    // 1.0.0 has both out of line (0x71000EB084, 0x71000EB348); 3.0.1 inlines them into OnEventProc
+    void clear();
+    void render();
 
-    unsigned int pad_10;
+    unsigned int pad_10;  // bit 0: render draws the playing slots (1.0.0's setDisp sets it, inferred)
     // load counts the sounds it asked GfGameEvent to create; the name is not the original's
     int m_loadCount;  // 0x14
     // the sound slots play/changeVolume/pan address by id; the name is not the original's

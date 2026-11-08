@@ -29,18 +29,33 @@ public:
     void term() {
         clear();
         m_shaker.destroy();
-        pad_cb8 = 0;
-        pad_cb0 = 0;
-        pad_ca8 = 0;
+        m_idleResId = 0;
+        m_resIds[3] = 0;
+        m_resIds[2] = 0;
+        m_resIds[1] = 0;
+        m_resIds[0] = 0;
+    }
+    // 1.0.0 has it out of line (0x71000EDFC0); 3.0.1 inlines it into update and setIdleShake: the idle shake
+    // resumed when enabled, the shaker stopped otherwise
+    void idle() {
+        if (m_flags & 1) {
+            m_shaker.play(m_idleResId, -1.0f, -1.0f, -1.0f);
+        } else {
+            m_shaker.stop();
+        }
+        m_flags &= ~2u;
     }
 
-    unsigned int m_flags;  // @0x10, update() tests bit 1; the name is not the original's
+    // bit 0: idle shake enabled (setIdleShake), bit 1: play's shake running (update resumes the idle one after
+    // it); the name is not the original's
+    unsigned int m_flags;  // @0x10
     unsigned char pad_0x14[0x4];
     Shaker m_shaker;  // @0x18 (the constructor stores event::Shaker's table there); the name is not the original's
-    // zeroed by term (Manager's destructor); the instance is 0xCC0 bytes
-    long pad_ca8;
-    long pad_cb0;
-    unsigned int pad_cb8;
+    // the shaker resource of each s_names type (create stores them, play picks one); zeroed by term (Manager's
+    // destructor); the name is not the original's
+    unsigned int m_resIds[4];  // 0xca8
+    unsigned int m_idleResId;  // 0xcb8: setIdleShake's resource; the name is not the original's
+    // the instance is 0xCC0 bytes
 };
 }  // namespace event
 

@@ -15,8 +15,8 @@ public:
     ShakerRes() : m_res(nullptr), m_rcha(nullptr) {}
     void create(const char* name);
     void update();
-    // inline: the destructor's body and create's first part (the name is not the original's)
-    void clear() {
+    // inline: the destructor's body and create's first part (1.0.0 has it out of line as destroy, 0x71000ED00C)
+    void destroy() {
         if (m_rcha != nullptr) {
             delete m_rcha;
             m_rcha = nullptr;

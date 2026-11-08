@@ -22,6 +22,10 @@ public:
     void play(const char* name, float wait, float fadeIn, float fadeOut, float volume);
     void changeVolume(float volume, float frame);  // 0x71000FE29C
     void pan(float pan, float frame, CV_TYPE type);  // 0x71000FE480
+    // 1.0.0 has both out of line (0x71000EA260, 0x71000EA198); 3.0.1 inlines them into SeManager::update and
+    // SeManager::OnEventProc: stop ends the SE, clear also empties the slot
+    void stop();
+    void clear();
 
     // bit 0: in use (SeManager::changeVolume/pan forward only then); bit 1: ended; bit 2: held (the curves do not
     // advance); bit 3: a play time counts down; bit 4: fading in; bit 5: fading out; bit 6: volume curve; bit 7: pan
