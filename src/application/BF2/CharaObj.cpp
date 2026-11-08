@@ -65,6 +65,7 @@
 #include "classes/event/CharaTarPlayer.h"
 #include "classes/event/CharaTarPlayerMot.h"
 #include "classes/event/CharaWeightItem.h"
+#include "classes/event/CharaFacialUtil.h"
 #include "classes/event/CharaObj.h"
 #include "string.h"
 #include "classes/RchaEff.h"
@@ -683,6 +684,81 @@ void CharaHideWpn::term() {
         }
         m_flags &= ~4u;
     }
+}
+
+const char* CharaFacialUtil::getFacialBdat(gf::GfObj* obj) {
+    gf::GfObjAcc acc(obj->m_handle);
+    int id = acc.getBdatId();
+    int group = transferGroup(id, obj->m_type);
+    if (group == 3) {
+        int row = Bdat::getValCheckU16(Bdat::getFP("CHR_Dr"), "EventAsset", id);
+        return reinterpret_cast<const char*>(Bdat::getValCheck(Bdat::getFP("EVT_assetList"), "facialSeat", row, 7));
+    } else if (group == 4) {
+        unsigned char* fp = Bdat::getFP("CHR_Bl");
+        if (Bdat::getIdTop(fp) + Bdat::getIdCount(fp) > id) {
+            int row = Bdat::getValCheckU16(fp, "EventAsset", id);
+            return reinterpret_cast<const char*>(Bdat::getValCheck(Bdat::getFP("EVT_assetList"), "facialSeat", row, 7));
+        }
+    } else if (group == 6) {
+        int row = Bdat::getValCheckU16(Bdat::getFP("RSC_NpcList"), "EventAsset", id);
+        return reinterpret_cast<const char*>(Bdat::getValCheck(Bdat::getFP("EVT_assetList"), "facialSeat", row, 7));
+    }
+    unsigned char* asset = Bdat::getFP("EVT_assetList");
+    return reinterpret_cast<const char*>(Bdat::getValCheck(asset, "facialSeat", Bdat::getIdTop(asset), 7));
+}
+
+int CharaFacialUtil::transferGroup(int id, unsigned int group) {
+    if (group == 3) {
+        unsigned char* fp = Bdat::getFP("CHR_Dr");
+        if (id >= Bdat::getIdTop(fp) && id < Bdat::getIdTop(fp) + Bdat::getIdCount(fp)) {
+            return 3;
+        }
+        return transferGroupSub(id, 3);
+    } else if (group == 4) {
+        unsigned char* fp = Bdat::getFP("CHR_Bl");
+        if (id >= Bdat::getIdTop(fp) && id < Bdat::getIdTop(fp) + Bdat::getIdCount(fp)) {
+            return 4;
+        }
+        return transferGroupSub(id, 4);
+    } else if (group == 6) {
+        unsigned char* fp = Bdat::getFP("RSC_NpcList");
+        if (id >= Bdat::getIdTop(fp) && id < Bdat::getIdTop(fp) + Bdat::getIdCount(fp)) {
+            return 6;
+        }
+        return transferGroupSub(id, 6);
+    }
+    return group;
+}
+
+int CharaFacialUtil::transferGroupSub(int id, unsigned int group) {
+    unsigned char* fp = Bdat::getFP("CHR_Dr");
+    if (id >= Bdat::getIdTop(fp) && id < Bdat::getIdTop(fp) + Bdat::getIdCount(fp)) {
+        return 3;
+    }
+    fp = Bdat::getFP("CHR_Bl");
+    if (id >= Bdat::getIdTop(fp) && id < Bdat::getIdTop(fp) + Bdat::getIdCount(fp)) {
+        return 4;
+    }
+    fp = Bdat::getFP("RSC_NpcList");
+    if (id >= Bdat::getIdTop(fp) && id < Bdat::getIdTop(fp) + Bdat::getIdCount(fp)) {
+        return 6;
+    }
+    return group;
+}
+
+void CharaTarPlayerMot::create(gf::GF_OBJ_HANDLE* handle, CharaWeightPlayer* player) {
+    m_handle = handle;
+    m_weightPlayer = player;
+    m_vec0 = mm::Vec3::zero;
+    m_vec1 = mm::Vec3::zero;
+    m_vec2 = mm::Vec3::zero;
+    m_anm0.clear();
+    m_anm0.append(0.0f, 1.0f, static_cast<CV_TYPE>(2));
+    m_anm1.clear();
+    m_anm1.append(0.0f, 1.0f, static_cast<CV_TYPE>(2));
+    pad_280[2] = 0;
+    pad_280[1] = 0;
+    pad_280[0] = 0;
 }
 
 void CharaWeightPlayer::easeOut(gf::AnimLayer, const char* name, float time, CV_TYPE type, WeightLayer layer) {
@@ -2725,7 +2801,6 @@ void CharaObj::linerRot(const mm::Vec3& rot, float time, CV_TYPE cvType) {
 
 }  // namespace event
 
-#include "classes/event/CharaFacialUtil.h"
 
 namespace event {
 

@@ -21,8 +21,10 @@ public:
     void easeIn(gf::AnimLayer, const char*, float, float, float, CV_TYPE, WeightLayer);  // 0x71000D37EC
     // 0x71000D36C8: eases the named item's curve on layer down to 0 over the time (the AnimLayer is not used)
     void easeOut(gf::AnimLayer, const char*, float, CV_TYPE, WeightLayer);
+    // 0x71000D3F78: eases every item's motion out and deletes the items
+    void destroy();
     gf::GF_OBJ_HANDLE* m_handle;  // 0x8: easeIn's object (the field names are not the original's)
-    unsigned char pad_10[0x8];
+    unsigned long pad_10;  // destroy zeroes it
     // the items the eases look up by name (easeIn pushes new ones)
     mm::mtl::FixedVector<CharaWeightItem*, 12> m_items;  // 0x18, count at 0x78
 };
