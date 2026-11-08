@@ -9,6 +9,9 @@ namespace gf { namespace util {
 
 // a world position's place on the screen; false when it is not in front of the camera
 bool getScreenPos(mm::Vec3& screen, const mm::Vec3& world);
+// a debug text converted from UTF-8 to Shift-JIS, each '%' replaced with "per " (one of eight static buffers used
+// in turn; GfBladeCreate and GfRecipeOrbUtil pass their texts through it)
+const char* debugUTF8ToSJIS(const char* str);
 // the file name in a path (GfFileSizePool hashes it apart from the whole path)
 const char* getFilePtrFromPath(const char* path);
 // a path's file name without its extension (forwards to ml::PathUtil::getNoPathExtName; SCOM_SCRIPT::create names

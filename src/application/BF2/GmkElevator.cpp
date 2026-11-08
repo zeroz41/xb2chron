@@ -76,6 +76,8 @@
 #include "gf/GfDataBlade.h"
 #include "gf/GfQuestInfo.h"
 #include "gf/GfObjAcc.h"
+#include "classes/gf/GfGameParty.h"
+#include "classes/gmk/GmkPhantom.h"
 #include "gf/GfGameUtil.h"
 #include "classes/gf/GfComBehaviorEnemy.h"
 #include "classes/gf/GfComBehaviorNpc.h"
@@ -98,6 +100,7 @@
 #include "classes/gf/GfObjSetupNpc.h"
 #include "gf/GfStaticRes.h"
 #include "gf/GfUtil.h"
+#include "ml/mlUTF.h"
 #include "ml/PathUtil.h"
 #include "classes/gmk/IGmkList.h"
 #include "classes/gmk/GmkGobEventListener.h"
@@ -243,6 +246,43 @@ void unrbindGFSoundSource() {
 }
 
 namespace util {
+// a debug text in Shift-JIS: str (UTF-8) converted through UTF-16, each '%' replaced with "per " (the result is one
+// of eight buffers used in turn)
+const char* debugUTF8ToSJIS(const char* str) {
+    // Proposed names, not the original's: the symbols leave them unnamed (lbl_7100EB6D18, lbl_7100EB6D1C)
+    __attribute__((used)) static unsigned int s_bufferIndex;
+    __attribute__((used)) static char s_buffers[8][0x200];
+    if (str == nullptr) {
+        str = "";
+    }
+    if (s_bufferIndex >= 8) {
+        s_bufferIndex = 0;
+    }
+    unsigned short utf16[0x200];
+    mlUTF8toUTF16(utf16, 0x200, str);
+    if (!mlUTF16toSJIS(s_buffers[s_bufferIndex], 0x200, utf16)) {
+        s_buffers[s_bufferIndex][0] = '\0';
+    }
+    mm::mtl::FixStr<256> text(s_buffers[s_bufferIndex]);
+    while (text.m_nLen > 0) {
+        int pos = text.find('%');
+        if (pos == -1) {
+            break;
+        }
+        if (text.m_nLen > pos) {
+            int end = pos + 1 < text.m_nLen ? pos + 1 : text.m_nLen;
+            strcpy(text.m_str + pos, text.m_str + end);
+            text.m_nLen = strlen(text.m_str);
+        }
+        text.insert(pos, "per ", 4);
+    }
+    char* out = s_buffers[s_bufferIndex];
+    memcpy(out, text.m_str, text.m_nLen);
+    out[text.m_nLen] = '\0';
+    ++s_bufferIndex;
+    return out;
+}
+
 const char* getFilePtrFromPath(const char* path) { return ml::PathUtil::getFilePtrFromPath(path); }
 
 mm::mtl::FixStr<64> getNoPathExtName(const char* path) { return ml::PathUtil::getNoPathExtName(path); }
@@ -674,6 +714,31 @@ void GmkManager::createGmkSet(mtl::ALLOC_HANDLE handle, int bdatId, const mm::Ve
     m_gmkSets.push_back(set);
 }
 
+bool GmkBdat::create(const CreateInfo& info) {
+    dispose();
+    m_createInfo = info;
+    m_resource = fw::CommonResource::request(info.m_handle, m_createInfo.m_path.m_str, 9, false);
+    if (m_resource->m_RefCount != 1) {
+        return false;
+    }
+    m_seq = &GmkBdat::seqWaitResourceLoaded;
+    return true;
+}
+
+void GmkBdat::dispose() {
+    m_seq = nullptr;
+    if (m_createInfo.m_param >= 0) {
+        fw::BdatManager::unregistBdat(m_createInfo.m_param);
+        m_createInfo.m_param = -1;
+    }
+    if (m_resource != nullptr) {
+        m_resource->release();
+        m_resource = nullptr;
+    }
+    m_assetData = nullptr;
+    m_createInfo = CreateInfo();
+}
+
 void GmkManager::disposeGmkSet(int bdatId) {
     if (m_gmkSets.size() == 0) {
         return;
@@ -804,6 +869,49 @@ bool GmkSet::isValidView() const {
         }
     }
     return true;
+}
+
+void GmkPhantomManager::update(float) {
+    mm::mtl::FixedArray<fw::TColiCheckResult<256>, 3>& results = m_results;
+    for (unsigned int i = 0; i < 3; ++i) {
+        results[i].clear();
+    }
+    {
+        gf::GfObjAcc acc(gf::GfGameManager::getControlMoverForGimmick());
+        if (acc.isValidTransform()) {
+            const fw::Transform& transform = acc.getWorldTransform();
+            fw::ColiCheckConfig config;
+            config.m_flags = 2;
+            config.m_mask = 0x100000;
+            config.m_mode = 0;
+            fw::ColiCheck::testSpherePhantom(results[0], transform.position, 0.0f, config);
+        }
+    }
+    {
+        gf::GfObjAcc acc(gf::GfGameParty::getHandleDriver(1, gf::PTPOS(0)));
+        if (acc.isValidTransform()) {
+            const fw::Transform& transform = acc.getWorldTransform();
+            fw::ColiCheckConfig config;
+            config.m_flags = 2;
+            config.m_mask = 0x100000;
+            config.m_mode = 0;
+            fw::ColiCheck::testSpherePhantom(results[1], transform.position, 0.0f, config);
+        }
+    }
+    {
+        gf::GfObjAcc acc(gf::GfGameParty::getHandleDriver(2, gf::PTPOS(0)));
+        if (acc.isValidTransform()) {
+            const fw::Transform& transform = acc.getWorldTransform();
+            fw::ColiCheckConfig config;
+            config.m_flags = 2;
+            config.m_mask = 0x100000;
+            config.m_mode = 0;
+            fw::ColiCheck::testSpherePhantom(results[2], transform.position, 0.0f, config);
+        }
+    }
+    for (mm::mtl::IntrusiveList<GmkPhantom>::iterator it = m_phantoms.begin(); it != m_phantoms.end(); ++it) {
+        it->update(results);
+    }
 }
 
 GmkRoutedEnemyList::GmkRoutedEnemyList(unsigned int updateGmkNumPerFrame) : TGmkList(updateGmkNumPerFrame), m_triggerList(-1) {}

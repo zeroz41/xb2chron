@@ -2,6 +2,7 @@
 #include "classes/ml/_reslist_base.h"
 #include "classes/ml/threadval.h"
 #include "classes/ml/WinView.h"
+#include "ml/mlUTF.h"
 #include "classes/ml/WinViewRoot.h"
 #include "classes/ml/WinProc.h"
 #include "classes/ml/ProcDesktop.h"
@@ -1204,10 +1205,6 @@ const unsigned short s_sjisTable[] = {
 
 }  // namespace
 
-// monolib's C-linkage text conversions (their symbols are unmangled; gf::util::debugUTF8ToSJIS calls both with a
-// size of 0x200, which neither reads)
-extern "C" bool mlUTF16toSJIS(char* dst, int size, const unsigned short* src);
-extern "C" bool mlUTF8toUTF16(unsigned short* dst, int size, const char* src);
 
 // UTF-16 to Shift-JIS: characters below 0x80 as one byte, the rest through the table, a space for one it lacks
 bool mlUTF16toSJIS(char* dst, int size, const unsigned short* src) {
