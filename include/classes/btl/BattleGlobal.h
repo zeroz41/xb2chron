@@ -25,6 +25,8 @@ public:
     // 2.0.0's symbols name these parameter types; their values are not named
     enum FUTURE_VIEW_BTN_RESULT_TYPE {};  // FutureViewButtonChllengeResultProc's result (0, 1)
     enum ATTACK_ONCE_SE_TYPE {};  // EndAttackSE / IsPlayAttackSE (0, 1)
+    // AddOCGTime's kind: an index into its 13 Bdat 0x36 columns AddTimeBC1-3, AddTimeDC1-4, AddTimeFC2-7
+    enum OCG_TIME_TYPE {};
     enum SE_ONCE_ID {};  // CheckOnceSE's flag index
     BattleGlobal();
     virtual ~BattleGlobal();  // slot 0
@@ -39,6 +41,7 @@ public:
     void PostUpdateProc(const fw::UpdateInfo& info);
     // the original's symbol names it; BattleManager::gevMapjump calls it on a map change (GEV 2)
     void NotifyMapChange();
+    void BattleEndInitialize(bool);  // NotifyMapChange passes true
     void Tutorial(BTL_TUTORIAL_COND cond, int, void*);
     // clears the end conditions and the battle flags, which (unless the game is over) it first copies into local
     // game flags 0xC710 and up
@@ -246,6 +249,12 @@ public:
     bool IsOCGResult() const;  // pad_5d9c > 2
     void AddOCGDamage(int index, unsigned int add);  // adds to pad_5d78[index] (0-2) while pad_5d9c != 0
     bool IsOCGOrder(bool check) const;  // pad_bit22, or check and pad_5dc0 >= 0
+    void StartOCG(float time, int index);
+    // the bonuses for pad_5da0's count from Bdat 0x36 (DmgNum*, RecastNum*, ResistNum*)
+    void SetupOCGBonus();
+    void ContinueOCG();
+    void AddOCGCount(const ARTS_DATA* arts);
+    void AddOCGTime(OCG_TIME_TYPE type);
     bool IsKakuseiOrder(bool check) const;  // pad_bit16, or check and pad_5db8 >= 0
     bool IsMindEyeOrder(bool check) const;  // pad_bit20, or check and pad_5dbc >= 0
     // takes the party leader into m_leaderHandle and m_controlHandle; during a chain attack m_controlHandle becomes
@@ -385,7 +394,8 @@ public:
     ::mm::mtl::FixedVector<SpecialEffect, 1> m_specialEffect;
     // a fixed vector the destructor clears (element type unknown: only its byte size, 0x90, is known)
     ::mm::mtl::FixedVector<unsigned int, 36> pad_818;
-    unsigned char pad_8b0[0x8];
+    unsigned int pad_8b0;  // NotifyMapChange clears it (meaning unknown)
+    unsigned char pad_8b4[0x4];
     // the slow-motion requests (the name is not the original's)
     ::mm::mtl::FixedVector<SLOW_PROC_DATA, 20> m_slowProc;
     float pad_a50;  // Utility::IsPause holds while it is <= 0
@@ -508,7 +518,8 @@ public:
     unsigned short pad_5d3c;
     unsigned char pad_5d3e;
     unsigned char pad_5d3f;  // see pad_5d08
-    unsigned char pad_5d40[0x8];
+    // a vision menu's context, released by hand as m_ocgContext is (NotifyMapChange; the name is not the original's)
+    gf::GfMenuCallContext* m_visionContext;
     // IsFutureViewEnemy compares its handle with it while pad_5d54 is non-zero
     gf::GF_OBJ_HANDLE* pad_5d48;
     unsigned char pad_5d50[0x4];
@@ -532,9 +543,17 @@ public:
     gf::GfMenuCallContext* m_ocgContext;
     // the next ones are what EndOCG resets
     unsigned int pad_5d78[3];  // AddOCGDamage adds to an entry, up to 99999999
-    unsigned int pad_5d84[6];
+    float pad_5d84;  // the time StartOCG sets; AddOCGTime adds to it, up to 99
+    float pad_5d88;  // the time AddOCGTime added so far, up to Bdat 0x36's AddTimeMax
+    float pad_5d8c;  // SetupOCGBonus's rates (DmgNum*, RecastNum*, ResistNum*)
+    float pad_5d90;
+    float pad_5d94;
+    unsigned int pad_5d98;
     int pad_5d9c;  // IsOCG/DA8C/DAD8/DD4C read it while m_challengeAnySuccess is clear
-    unsigned int pad_5da0[2];
+    unsigned short pad_5da0;  // AddOCGCount's count, up to 999
+    unsigned short pad_5da2;  // SetupOCGBonus's levels (DmgNum*, RecastNum*, ResistNum*)
+    unsigned short pad_5da4;
+    unsigned short pad_5da6;
     unsigned char pad_5da8;  // a character index (UpdateOCG); 90 (none) when reset
     unsigned char pad_5da9;
     unsigned char pad_5daa;  // 1 when reset
@@ -584,7 +603,9 @@ public:
     bool pad_bit10 : 1;  // ChainAttackManager::Start sets it
     unsigned char : 1;
     bool pad_bit12 : 1;  // DeleteElementalComboCamera clears it
-    unsigned char : 3;
+    bool pad_bit13 : 1;  // NotifyMapChange sets it (meaning unknown)
+    unsigned char : 1;
+    bool pad_bit15 : 1;  // NotifyMapChange clears it (meaning unknown)
     bool pad_bit16 : 1;  // IsKakuseiOrder holds while it is set
     bool pad_bit17 : 1;  // EnemyParameter::MulHate changes no hate while it is set
     bool pad_bit18 : 1;  // IsKakuseiFinished returns it

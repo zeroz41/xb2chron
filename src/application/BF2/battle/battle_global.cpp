@@ -33,6 +33,7 @@
 #include "btl/Utility.h"
 #include "classes/gf/GfSound.h"
 #include "ml/MTRand.h"
+#include "classes/fw/ParamManager.h"
 
 namespace btl {
 
@@ -943,6 +944,58 @@ void BattleGlobal::NotifyShiftTimeOver() {
     }
 }
 
+void BattleGlobal::StartOCG(float time, int index) {
+    pad_bit22 = false;
+    pad_5dc0 = -1.0f;
+    m_ocgContext = nullptr;
+    pad_5d78[0] = 0;
+    pad_5d78[1] = 0;
+    pad_5d78[2] = 0;
+    pad_5d84 = 0.0f;
+    pad_5d88 = 0.0f;
+    pad_5d8c = 0.0f;
+    pad_5d90 = 0.0f;
+    pad_5d94 = 0.0f;
+    pad_5d98 = 0;
+    pad_5d9c = 0;
+    pad_5da0 = 0;
+    pad_5da2 = 0;
+    pad_5da4 = 0;
+    pad_5da6 = 0;
+    pad_5da8 = 90;
+    pad_5da9 = 0;
+    pad_5daa = 1;
+    if (index >= 0 && index < 90) {
+        pad_5d84 = time;
+        pad_5d9c = 1;
+        pad_5da8 = index;
+        SetupOCGBonus();
+    }
+}
+
+void BattleGlobal::ContinueOCG() {
+    pad_bit22 = false;
+    pad_5dc0 = -1.0f;
+    DataManager::sys()->AddPartyGauge(-300.0f, -1, false);
+    unsigned char* fp = gf::GfDataBdat::getFP(0x36);
+    Bdat::uVal time;
+    time.ulong = Bdat::getValCheck(fp, "AddTimeRe", 0, 8);
+    if (pad_5d98 != 0) {
+        Bdat::uVal decrease;
+        decrease.ulong = Bdat::getValCheck(fp, "AddTimeDecrease", 0, 8);
+        time.real -= decrease.real * pad_5d98;
+        float min = Bdat::getValCheckU16(fp, "AddTimeMin", 0);
+        time.real = time.real > min ? time.real : min;
+    }
+    pad_5d84 = fminf(time.real + pad_5d84, 99.0f);
+    pad_5d98++;
+    BattleCharacter* character = CharacterManager::sys()->GetCharacterConst(pad_5da8);
+    if (character != nullptr) {
+        character->PlaySystemSE(static_cast<BTL_SE>(0xDF), 1, true, false);
+    }
+    TalkManager::sys()->NotifyTrigger(pad_5da8, static_cast<TalkManager::TRIGGER>(0x3C), pad_5d98, 0);
+}
+
 bool BattleGlobal::IsOCG() const {
     if (m_challengeAnySuccess) {
         return false;
@@ -964,6 +1017,39 @@ bool BattleGlobal::IsOCGResult() const {
         return false;
     }
     return pad_5d9c > 2;
+}
+
+void BattleGlobal::AddOCGTime(OCG_TIME_TYPE type) {
+    // Bdat 0x36's time column by type (proposed name, not the original's: the symbols leave it unnamed,
+    // lbl_7100B3A460)
+    static const char* const s_addTimeNames[13] = {
+        "AddTimeBC1", "AddTimeBC2", "AddTimeBC3", "AddTimeDC1", "AddTimeDC2", "AddTimeDC3", "AddTimeDC4",
+        "AddTimeFC2", "AddTimeFC3", "AddTimeFC4", "AddTimeFC5", "AddTimeFC6", "AddTimeFC7",
+    };
+    if (m_challengeAnySuccess) {
+        return;
+    }
+    if (pad_5d9c == 0) {
+        return;
+    }
+    unsigned char* fp = gf::GfDataBdat::getFP(0x36);
+    float max = Bdat::getValCheckU16(fp, "AddTimeMax", 0);
+    if (pad_5d88 >= max) {
+        return;
+    }
+    Bdat::uVal add;
+    add.ulong = Bdat::getValCheck(fp, s_addTimeNames[type], 0, 8);
+    if (add.real <= 0.0f) {
+        return;
+    }
+    float time = add.real;
+    float total = time + pad_5d88;
+    if (total > max) {
+        time -= total - max;
+        total = max;
+    }
+    pad_5d88 = total;
+    pad_5d84 = fminf(pad_5d84 + time, 99.0f);
 }
 
 void BattleGlobal::AddOCGDamage(int index, unsigned int add) {
@@ -1292,6 +1378,37 @@ void BattleGlobal::DeleteSlow(unsigned int id) {
             }
         }
     }
+}
+
+void BattleGlobal::NotifyMapChange() {
+    BattleEndInitialize(true);
+    pad_8374[30] = 0;
+    for (int i = 0; i < 2; i++) {
+        m_pause[i] = 0;
+    }
+    pad_8b0 = 0;
+    DeleteSlowAll();
+    DeleteElementalComboCamera();
+    m_elementalCombo.m_immortal = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    DeleteUniteComboDirection();
+    FinalizeJingle();
+    m_nextAttackId = 1;
+    m_attackData.clear();
+    if (pad_5d6e) {
+        gf::GfMenuObjVision::close(3, nullptr);
+        pad_5d6e = 0;
+    }
+    if (m_visionContext != nullptr) {
+        m_visionContext->release();
+        m_visionContext = nullptr;
+    }
+    m_visionContext = nullptr;
+    EndOCG();
+    pad_bit6 = false;
+    pad_bit7 = false;
+    pad_bit15 = false;
+    pad_818.clear();
+    pad_bit13 = true;
 }
 
 void BattleGlobal::DeleteSlowAll() {
