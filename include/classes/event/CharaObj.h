@@ -160,7 +160,11 @@ public:
     unsigned int m_flags;  // 0xca0
     // createGhost sets 6 (what the values mean is not known); the name is not the original's
     int m_state;  // 0xca4
-    unsigned char pad_ca8[0x98];
+    unsigned char pad_ca8[0x44];
+    // ObjectList::createGfObjBladeByPcID tests pad_cec == 1 && pad_cf0 == 2 (a character it must not duplicate)
+    int pad_cec;  // 0xcec
+    int pad_cf0;  // 0xcf0
+    unsigned char pad_cf4[0x4c];
     // the character's gf object (RandPlayer::Wait::update hands it to GfObjUtil::isStanbyTalkingPlayer); the name is
     // not the original's
     gf::GF_OBJ_HANDLE* m_gfHandle;  // 0xd40

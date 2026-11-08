@@ -11,6 +11,7 @@
 #include "classes/event/ScriptUtil.h"
 #include "classes/event/CharaPlayTalk.h"
 #include "gf/GfDataBlade.h"
+#include "gf/GfDataDriver.h"
 #include "mm/Mat44.h"
 #include "classes/event/FrameManager.h"
 #include "classes/fw/CameraManager.h"
@@ -2467,6 +2468,21 @@ LightObj::~LightObj() {
     clear();
 }
 
+void LightObj::render(int x, int y) {
+    if (m_lgt) {
+        fw::debug::drawSquare2D(mm::Rect<int>(x, y, 230, 75), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+        fw::debug::drawLineSquare2D(mm::Rect<int>(x, y, 230, 75), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFont(x + 5, y + 5, "[LIGHT]");
+        fw::debug::drawFont(x + 100, y + 5, "life(%.2f)", m_life);
+        fw::debug::drawFont(x + 10, y + 22, "file:    %s",
+                            mm::mtl::Singleton<Extend>::getPtr()->filename(m_name.m_str));
+        fw::debug::drawFont(x + 10, y + 37, "pos:     %.1f %.1f %.1f", m_pos.x, m_pos.y, m_pos.z);
+        fw::debug::drawFont(x + 10, y + 52, "rot:     %.1f %.1f %.1f", m_rot.x * 57.295776f, m_rot.y * 57.295776f,
+                            m_rot.z * 57.295776f);
+    }
+}
+
 SelectManager::~SelectManager() {}
 
 int SelectManager::getResult() const {
@@ -2642,8 +2658,43 @@ ObjectLight::~ObjectLight() {
     }
 }
 
+void ObjectLight::update() {
+    const FrameInfo& info = mm::mtl::Singleton<FrameManager>::getPtr()->frameInfo();
+    LightObj* light = m_light;
+    if (light->m_lgt) {
+        light->m_lgt->setPos(light->m_pos);
+        light->m_lgt->setRot(light->m_rot);
+        light->m_life -= info.m_frameStep;
+        if (light->m_life < 0.0f) {
+            light->clear();
+        }
+    }
+}
+
+void ObjectLight::render(const mm::Col4&) {
+    if (mm::mtl::Singleton<LightManager>::getPtr()->isLightDisp()) {
+        int x = ml::DevGraph::getRootWidth() - 250;
+        m_light->render(x, m_light->m_id * 80 + 300);
+    }
+}
+
 void ObjectLight::play(const char* name, float frame) {
     m_light->play(name, frame);
+}
+
+void ObjectLight::setPosAxis(const PosAxis& pos) {
+    m_pos = pos;
+    LightObj* light = m_light;
+    light->m_pos = mm::mtl::Singleton<DataManager>::getPtr()->axis2pos(pos.m_type, pos.m_value.x, pos.m_value.y,
+                                                                        pos.m_value.z);
+}
+
+void ObjectLight::setRotAxis(const RotAxis& rot) {
+    m_rot = rot;
+    LightObj* light = m_light;
+    const mm::Vec3& pos = light->m_pos;
+    light->m_rot = mm::mtl::Singleton<DataManager>::getPtr()->axis2rot(rot.m_type, rot.m_value.x, rot.m_value.y,
+                                                                        rot.m_value.z, pos);
 }
 
 ObjectCamera::ObjectCamera(const char* name, unsigned int id)
@@ -2703,7 +2754,7 @@ bool ObjectCamera::OnBouRectSelect(const IBouCallback::SelectParam&) {
 }
 
 void ObjectCamera::OnBouRender(const IBouCallback::RenderParam&) {
-    if (SeqManager::getPtr()->pad_276c < 3 && pad_70 == 0) {
+    if (SeqManager::getPtr()->m_info.pad_54 < 3 && pad_70 == 0) {
         int x = ml::DevGraph::getRootWidth() - 415;
         CamObj* cam = m_cam;
         const mm::Vec3& pos = cam->m_pos;
@@ -4958,6 +5009,33 @@ gf::GF_OBJ_HANDLE* ObjectList::getDriverByBlade(unsigned int bladeId) {
     return gf::GfGameManager::getPartyLeaderDriver();
 }
 
+Object* ObjectList::createGfObjBladeByPcID(const char* name, unsigned int pcId, unsigned int a) {
+    if (!(m_flags & 1)) {
+        return createGfObj(name, getBladeByDriver(pcId));
+    }
+    unsigned int blade = gf::GfDataDriver::getBlade(pcId, -1);
+    unsigned int id = blade == 0 ? 1001 : blade;
+    if (blade != 0) {
+        bool exists = false;
+        if (id == 1011 && m_categories[0]) {
+            for (Object* obj = m_categories[0]->m_child; obj; obj = obj->m_next) {
+                if (obj->m_type == 2) {
+                    CharaObj* chara = static_cast<ObjectChara*>(obj)->m_chara;
+                    if (chara && chara->pad_cec == 1 && chara->pad_cf0 == 2) {
+                        exists = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!exists) {
+            return createGfObj(name, static_cast<CHARA_TYPE>(2), id, a, 0);
+        }
+    }
+    mm::mtl::Singleton<DebugManager>::getPtr()->playMessage("create ghost charactor[%s]", name);
+    return createGhost(name);
+}
+
 gf::GF_OBJ_HANDLE* ObjectList::getBladeByDriver(unsigned int driverId) {
     for (unsigned int id = 1; id <= 3; id++) {
         gf::GF_OBJ_HANDLE* driver = mm::mtl::Singleton<ObjectPartyList>::getPtr()->getDriver(id);
@@ -6772,6 +6850,18 @@ void ScriptEffectCast::doit(const event::Param& param) {
             effect->m_ctrl.setCaster(caster);
         }
         obj->m_caster = caster;
+        obj->m_mountActor = 0;
+    }
+}
+
+void ScriptEffectCast::undo(const event::Param&) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        EffectObj* effect = obj->m_effect;
+        if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+            effect->m_ctrl.setCaster(nullptr);
+        }
+        obj->m_caster = 0;
         obj->m_mountActor = 0;
     }
 }
@@ -9023,15 +9113,49 @@ inline void SeqManager::clear() {
 
 // the key function: emits SeqManager's table (its destructor is inline)
 SeqManager::SeqManager()
-    : m_flags(0), m_dispFlags(0), pad_2718(0), pad_2760(0), pad_2764(0), pad_2768(0), pad_276c(0), pad_2770(""),
-      pad_2778(0), pad_277c(0), pad_2780(""), pad_2788(0), pad_278c(0), pad_2790(0), pad_2794(0), pad_2798(0),
-      pad_279c(0), pad_27a0(0), pad_27a8(0), pad_27b0(0), pad_27b4(0), pad_27b8(0), pad_27bc(0), pad_27c0(0),
-      pad_27c8(0), pad_27d0(0), pad_27d8(1), pad_27d9(0), pad_27da(0), pad_27db(0), pad_27dc(0), pad_27dd(0),
-      pad_27e4(0), pad_27e8(0), pad_27f0(0), pad_27f8(0), pad_2800(0), pad_2808(0), pad_280c(0), pad_2810(0),
-      pad_2814(0), pad_2818(0), pad_2820(""), pad_2830(0), pad_2838(0), pad_2840(0), pad_2848(0) {}
+    : m_flags(0), m_dispFlags(0) {}
 
 // queued by SeqManager::init, setupScene, startScene, end and play (not written yet)
 template void CmdQueue<32, 0>::push_back(ICmd* cmd, const CmdParam& param);
+
+bool SeqManager::checkSkipClear(const SeqInfo& info) {
+    bool theater = gf::GfManager::isExecModeThater();
+    int skip = info.pad_e8;
+    if (theater) {
+        return info.pad_ec == 0 && skip == 0;
+    }
+    unsigned char* fp = Bdat::getFP("EVT_listBf");
+    if (Bdat::getIdTop(fp) <= info.pad_48 && info.pad_48 < Bdat::getIdTop(fp) + Bdat::getIdCount(fp)) {
+        return info.pad_e4 == 0 && skip == 0;
+    }
+    bool noSkip = skip == 0;
+    bool other = strcmp(info.pad_4.m_str, "qst202609") != 0;
+    return noSkip && other;
+}
+
+void SeqManager::render() {
+    // the event kinds m_info.pad_54 indexes ("NONE", "TEV", "FEV", "SEV", "CS ", "MOV"); the name is not the original's
+    // (lbl_7100B3E280)
+    static const char* s_evtTypeNames[] = {"NONE", "TEV", "FEV", "SEV", "CS ", "MOV"};
+    if ((m_dispFlags & 1) && !m_cmdQueue.empty()) {
+        int x = ml::DevGraph::getRootWidth();
+        fw::debug::drawSquare2D(mm::Rect<int>(x - 180, 30, 170, 55), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+        fw::debug::drawLineSquare2D(mm::Rect<int>(x - 180, 30, 170, 55), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFont(x - 175, 35, "EVENT");
+        fw::debug::drawFont(x - 170, 50, "phase:");
+        fw::debug::drawFont(x - 120, 50, m_seqName.m_str);
+        float frame = FrameManager::getPtr()->getFrame();
+        fw::debug::drawFont(x - 170, 65, "frame:");
+        fw::debug::drawFont(x - 120, 65, "%.2f", frame);
+        int y = ml::DevGraph::getRootHeight();
+        fw::debug::drawSquare2D(mm::Rect<int>(25, y - 90, 200, 25), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+        fw::debug::drawLineSquare2D(mm::Rect<int>(25, y - 90, 200, 25), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFont(30, y - 85, s_evtTypeNames[m_info.pad_54]);
+        fw::debug::drawFont(75, y - 85, FrameManager::getPtr()->pad_d0.m_str);
+    }
+}
 
 void SeqManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
@@ -11340,6 +11464,48 @@ int SeqManager::end_eff::update(const ICmd::Param& param) {
     bool busy = mm::mtl::Singleton<ObjectManager>::getPtr()->isUsingEffect();
     mm::mtl::Singleton<ObjectManager>::getPtr()->stopEffect();
     return !busy;
+}
+
+void SeqInfo::setup(const char* name) {
+    unsigned char* list = Bdat::getFP("EVT_listList");
+    int top = Bdat::getIdTop(list);
+    unsigned int count = Bdat::getIdCount(list);
+    for (unsigned int i = 0; i < count; i++) {
+        CBdatWrapper seat(Bdat::getFP(reinterpret_cast<const char*>(Bdat::getVal(list, "listSeat", top + i))));
+        int seatTop = seat.getIdTop();
+        int seatCount = seat.getIdCount();
+        for (int j = 0; j < seatCount; j++) {
+            const char* evtName = reinterpret_cast<const char*>(Bdat::getVal(seat.m_fp, "evtName", seatTop + j));
+            if (strcmp(evtName, name) == 0) {
+                setup(seat, evtName, seatTop + j);
+                return;
+            }
+        }
+    }
+    clear();
+}
+
+void SeqInfo::setup(int id) {
+    unsigned char* list = Bdat::getFP("EVT_listList");
+    int top = Bdat::getIdTop(list);
+    unsigned int count = Bdat::getIdCount(list);
+    for (unsigned int i = 0; i < count; i++) {
+        CBdatWrapper seat(Bdat::getFP(reinterpret_cast<const char*>(Bdat::getVal(list, "listSeat", top + i))));
+        int seatTop = seat.getIdTop();
+        int seatCount = seat.getIdCount();
+        if (seatTop <= id && id < seatTop + seatCount) {
+            setup(seat, reinterpret_cast<const char*>(Bdat::getVal(seat.m_fp, "evtName", id)), id);
+            return;
+        }
+    }
+    clear();
+}
+
+int SeqManager::end_stream::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        mm::mtl::Singleton<MotstmManager>::getPtr()->stop();
+    }
+    return !mm::mtl::Singleton<MotstmManager>::getPtr()->isBusy();
 }
 
 int RandPlayer::Warp::update(const ICmd::Param& param) {

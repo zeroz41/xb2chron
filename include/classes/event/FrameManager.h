@@ -90,7 +90,12 @@ private:
     unsigned char pad_1c[0x4];
     // each set to -1 (an invalid handle); the type is inferred: FrameManager::OnEventProc destroys pause handles
     gf::GF_PAUSE_HANDLE* pad_20[22];
+
+public:
+    // the page name startPage stores (SeqManager::render draws it)
     mm::mtl::FixStr<128> pad_d0;
+
+private:
     int m_pageNo;  // 0x154: startPage's number (the name is not the original's)
     // what getFrame returns; the name is not the original's
     float m_frame;  // 0x158

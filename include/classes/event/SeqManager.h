@@ -6,6 +6,7 @@
 #include "classes/event/CmdQueue.h"
 #include "classes/event/ICmd.h"
 #include "classes/event/IManager.h"
+#include "classes/event/SeqInfo.h"
 #include "classes/mm/mtl/Singleton.h"
 
 namespace event { enum MSG_TYPE : int; class Object; }
@@ -242,56 +243,9 @@ public:
     unsigned int m_dispFlags;  // 0x17C: setDisp/isDisp's bit 0 (1.0.0; the name is not the original's)
     mm::mtl::FixStr<128> m_seqName;  // 0x180: the running state's name (each state's update sets it; the name is not the original's)
     CmdQueue<32, 0> m_cmdQueue;  // 0x208 (the name is not the original's)
-    unsigned char pad_2718;  // 0x2718
-    mm::mtl::FixStr<64> pad_271c;  // 0x271C
-    unsigned int pad_2760;  // 0x2760
-    unsigned int pad_2764;  // 0x2764
-    unsigned int pad_2768;  // 0x2768
-    int pad_276c;  // 0x276C (ObjectCamera::OnBouRender compares it signed: < 3)
-    const char* pad_2770;  // 0x2770
-    unsigned char pad_2778;  // 0x2778
-    unsigned int pad_277c;  // 0x277C
-    const char* pad_2780;  // 0x2780
-    unsigned char pad_2788;  // 0x2788
-    unsigned int pad_278c;  // 0x278C
-    unsigned char pad_2790;  // 0x2790
-    int pad_2794;  // 0x2794: start_fadeout converts it to float as a signed int (VolumeSeamless::start)
-    unsigned int pad_2798;  // 0x2798
-    unsigned char pad_279c;  // 0x279C
-    unsigned long pad_27a0;  // 0x27A0
-    unsigned long pad_27a8;  // 0x27A8
-    unsigned char pad_27b0;  // 0x27B0
-    unsigned int pad_27b4;  // 0x27B4
-    unsigned int pad_27b8;  // 0x27B8
-    unsigned char pad_27bc;  // 0x27BC
-    unsigned long pad_27c0;  // 0x27C0
-    unsigned long pad_27c8;  // 0x27C8
-    unsigned long pad_27d0;  // 0x27D0
-    unsigned char pad_27d8;  // 0x27D8
-    unsigned char pad_27d9;  // 0x27D9
-    unsigned char pad_27da;  // 0x27DA
-    unsigned char pad_27db;  // 0x27DB
-    unsigned char pad_27dc;  // 0x27DC
-    unsigned char pad_27dd;  // 0x27DD
-    unsigned char pad_27de[0x6];  // 0x27DE
-    unsigned char pad_27e4;  // 0x27E4
-    unsigned long pad_27e8;  // 0x27E8
-    unsigned long pad_27f0;  // 0x27F0
-    unsigned long pad_27f8;  // 0x27F8
-    unsigned long pad_2800;  // 0x2800
-    unsigned char pad_2808;  // 0x2808
-    unsigned int pad_280c;  // 0x280C
-    unsigned int pad_2810;  // 0x2810
-    unsigned int pad_2814;  // 0x2814
-    unsigned int pad_2818;  // 0x2818
-    unsigned char pad_281c[0x4];  // 0x281C
-    const char* pad_2820;  // 0x2820
-    unsigned char pad_2828[0x8];  // 0x2828
-    unsigned long pad_2830;  // 0x2830
-    unsigned long pad_2838;  // 0x2838
-    unsigned long pad_2840;  // 0x2840
-    unsigned int pad_2848;  // 0x2848
-    unsigned char pad_284c[0x14];  // 0x284C
+    // the event the sequence plays (the name is not the original's)
+    SeqInfo m_info;  // 0x2718
+    unsigned char pad_2850[0x10];  // 0x2850
     unsigned int pad_2860;  // 0x2860: login sets it to 1 (the instance ends at 0x2868, where getPtr's guard is)
     // 1.0.0's out-of-line SeqManager::login/logout/clear (0x710013145C, 0x7100131494, 0x7100131404); 3.0.1 inlines
     // them in OnEventProc
@@ -307,6 +261,8 @@ public:
     void startScene();
     void render();
     void end();
+    // whether the event's skip clears it: startScene asks it with its SeqInfo
+    static bool checkSkipClear(const SeqInfo& info);
 };
 }  // namespace event
 
