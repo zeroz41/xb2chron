@@ -610,13 +610,133 @@ int CharaPlayActionAuto::update(const ICmd::Param& param) {
 
 void CharaPlayActionAuto::term() {}
 
+void CharaPlayAction::stanby(int id, float time, bool blendIn, bool wait) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkip()) {
+        blendIn = false;
+    }
+    Bdat::getValCheck(Bdat::getFP("EVT_acttype"), "cmd0", id, 7);
+    Bdat::getValCheck(Bdat::getFP("EVT_acttype"), "stat0", id, 7);
+    Bdat::getValCheck(Bdat::getFP("EVT_acttype"), "stat1", id, 7);
+    const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(Bdat::getFP("EVT_acttype"), "name", id, 7));
+    m_name = name;
+    m_id = id;
+    m_time = time;
+    if (time <= 0.0f) {
+        m_flags |= 0x20;
+    } else {
+        m_flags &= ~0x20;
+    }
+    if (blendIn) {
+        m_flags |= 8;
+    } else {
+        m_flags &= ~8;
+    }
+    if (wait) {
+        m_flags |= 0x10;
+    } else {
+        m_flags &= ~0x10;
+    }
+    m_flags |= 4;
+}
+
 void CharaPlayAction::init() {}
+
+int CharaPlayAction::update(const ICmd::Param& param) {
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    if (obj == nullptr) {
+        return 1;
+    }
+    float step = static_cast<CharaObj*>(param.m_param.val(0).getUserdata())->m_frameInfo.m_frameStep;
+    if (param.m_frame <= 0) {
+        stanby(param.m_param.val(1).getS32(), param.m_param.val(2).getF32(), param.m_param.val(3).getBool(),
+               param.m_param.val(4).getBool());
+    }
+    if (!(m_flags & 0xc0) && !CharaUtil::isActionBusy(obj)) {
+        play(obj);
+    }
+    if (!(m_flags & 0x20)) {
+        m_time -= step;
+        if (m_time < 0.0f) {
+            idle();
+            return 1;
+        }
+    }
+    if (!(m_flags & 0x40)) {
+        return 0;
+    }
+    auto getAct = [](int id, const char* name) {
+        return reinterpret_cast<const char*>(Bdat::getValCheck(Bdat::getFP("EVT_acttype"), name, id, 7));
+    };
+    if (!CharaUtil::checkStat(obj, getAct(m_id, "stat2"), getAct(m_id, "statI"))) {
+        return 0;
+    }
+    if (gf::GfObjUtil::getObj(m_handle) != nullptr && (m_flags & 0x40)) {
+        m_id = 0;
+        m_time = -1.0f;
+        m_name = "";
+    }
+    m_flags &= ~0xc4;
+    return 1;
+}
 
 void CharaPlayAction::term() {
     if (m_flags & 2) {
         m_flags &= ~2;
     } else {
         idle();
+    }
+}
+
+void CharaPlayMotion::play(gf::GfObj* obj, void* data, unsigned long size, float frame) {
+    if (m_flags & 1) {
+        if (gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2)) {
+            anim->play(data, size, frame / 30.0f);
+        }
+        m_dys->resetDynamics(0);
+        m_flags |= 4;
+    }
+}
+
+void CharaPlayMotion::stop(gf::GfObj* obj) {
+    if (m_flags & 4) {
+        if (gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2)) {
+            anim->stop();
+            anim->setSpeed(1.0f, static_cast<gf::AnimLayer>(0));
+        }
+        m_dys->resetDynamics(0);
+        m_flags &= ~4;
+    }
+}
+
+void CharaPlayMotion::term() {
+    if (m_flags & 2) {
+        if (gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle)) {
+            stop(obj);
+        }
+        m_ik->setFootIK(true, static_cast<CharaIKUpdater::FOOT_TYPE>(2));
+        if (mm::mtl::Singleton<CharaManager>::getPtr()->isStreamMode() && m_data != nullptr) {
+            mm::mtl::Singleton<MotstmManager>::getPtr()->free(m_data);
+        }
+        m_data = nullptr;
+        m_flags &= ~2;
+    }
+}
+
+void CharaPlayMotionABC::stopMotion(gf::GfObj* obj) {
+    if (gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2)) {
+        anim->stopMulti();
+        anim->setSpeed(1.0f, static_cast<gf::AnimLayer>(0));
+    }
+    m_dys->resetDynamics(0);
+}
+
+void CharaPlayMotionABC::term() {
+    if (m_flags & 1) {
+        if (gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle)) {
+            stopMotion(obj);
+        }
+        m_ik->setFootIK(true, static_cast<CharaIKUpdater::FOOT_TYPE>(2));
+        m_flags &= ~1;
     }
 }
 
@@ -2230,6 +2350,35 @@ bool DebugManager::isMovieDebug() const {
     return (m_flags >> 16) & 1;
 }
 
+mm::Vec2 CharaSetTar::calcLensUV(const mm::Vec3& from, const mm::Vec3& to) {
+    // brings an angle within pi of center
+    auto wrap = [](float r, float center) {
+        while (r < center - 3.14159274f) {
+            r += 6.28318548f;
+        }
+        while (r > center + 3.14159274f) {
+            r -= 6.28318548f;
+        }
+        return r;
+    };
+    float fromYaw = -::atan2f(from.x, -from.z);
+    float fromPitch = ::atan2f(from.y, ::sqrtf(from.x * from.x + from.z * from.z));
+    float toYaw = -::atan2f(to.x, -to.z);
+    float toPitch = ::atan2f(to.y, ::sqrtf(to.x * to.x + to.z * to.z));
+    while (toPitch < fromPitch - 3.14159274f) { toPitch += 6.28318548f; }
+    while (fromPitch + 3.14159274f < toPitch) { toPitch -= 6.28318548f; }
+    while (toYaw < fromYaw - 3.14159274f) { toYaw += 6.28318548f; }
+    while (fromYaw + 3.14159274f < toYaw) { toYaw -= 6.28318548f; }
+    float pitch = toPitch - fromPitch;
+    float yaw = toYaw - fromYaw;
+    pitch = wrap(pitch, 0.0f);
+    yaw = wrap(yaw, 0.0f);
+    mm::Vec2 uv(yaw / LENS_LIMIT.y, pitch / LENS_LIMIT.x);
+    mm::clampSelf(uv.x, -1.0f, 1.0f);
+    mm::clampSelf(uv.y, -1.0f, 1.0f);
+    return uv;
+}
+
 void CharaSetTar::term() {
     if (m_flags & 1) {
         idle();
@@ -2257,6 +2406,25 @@ int CharaSetIdle::update(const ICmd::Param& param) {
 
 void CharaPlayHead::init() {
     m_flags = 0;
+}
+
+int CharaPlayHead::update(const ICmd::Param& param) {
+    if (gf::GfObjUtil::getObj(m_handle) == nullptr) {
+        return 1;
+    }
+    float step = static_cast<CharaObj*>(param.m_param.val(0).getUserdata())->m_frameInfo.m_frameStep;
+    if (param.m_frame <= 0) {
+        play(param.m_param.val(1).getS32(), param.m_param.val(2).getF32(), param.m_param.val(3).getBool(),
+             param.m_param.val(4).getBool(), param.m_param.val(5).getF32(), param.m_param.val(6).getF32());
+    }
+    if (!(m_flags & 2)) {
+        m_time -= step;
+        if (m_time < 0.0f) {
+            idle();
+            return 1;
+        }
+    }
+    return 2;
 }
 
 void CharaPlayHead::term() {
@@ -5418,7 +5586,7 @@ FadeManager::FadeManager() : pad_10(0), pad_14(0) {}
 
 void FadeManager::update() {
     const FrameInfo& info = mm::mtl::Singleton<FrameManager>::getPtr()->frameInfo();
-    pad_18.update(info.pad_4);
+    pad_18.update(info.m_frameStep);
     mm::mtl::Singleton<FadeCtrl>::getPtr()->update();
 }
 

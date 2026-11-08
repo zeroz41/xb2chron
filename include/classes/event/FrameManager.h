@@ -36,7 +36,7 @@ public:
         m_frameInfo.pad_0 = m_frame;
         float step = pad_164 - m_frame;
         if (pad_18 != 0) step = 0.0f;
-        m_frameInfo.pad_4 = step;
+        m_frameInfo.m_frameStep = step;
         m_frameInfo.m_cmdStep = step;
         if ((pad_18 & 0x67f4) && step <= 0.0f) m_frameInfo.m_cmdStep = fmaxf(pad_188, 0.0f) + 1.0f;
         m_frameInfo.m_step = step;

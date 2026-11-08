@@ -4,7 +4,7 @@
 #include "classes/event/ICmd.h"
 #include "mm/Vec3.h"
 
-namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GF_OBJ_HANDLE; class GfObj; }
 
 namespace event {
 // table 0x7100B3E530
@@ -14,10 +14,15 @@ public:
     virtual void init();  // slot 2
     virtual int update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4
+    // update calls it on the first frame (the parameter names are not the original's)
+    void stanby(int id, float time, bool blendIn, bool wait);
+    void play(gf::GfObj* obj);  // out of line (0x71000E7A30); update calls it
     void idle();  // out of line (0x71000E7D04); term calls it unless bit 1 is set
     // debug box over the character: CharaObj draws it at its position, height above it
     void render(const mm::Vec3& pos, float height);
-    // bit 1: term clears it instead of calling idle; the name is not the original's
+    // bit 1: term clears it instead of calling idle; stanby sets bit 2, bit 3 (blend in unless skipping), bit 4
+    // (its last parameter) and bit 5 (no time limit); update waits for "stat2"/"statI" while bit 6 is set; the name
+    // is not the original's
     unsigned int m_flags;  // 0x8
     unsigned char pad_c[0x4];
     gf::GF_OBJ_HANDLE* m_handle;  // 0x10: the character the command plays on (the name is not the original's)
