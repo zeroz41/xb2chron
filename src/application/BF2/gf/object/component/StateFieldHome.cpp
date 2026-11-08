@@ -22,6 +22,19 @@
 #include "classes/gf/GfComAsm.h"
 #include "classes/gf/SCOM_DESTROY_GAME_OBJ.h"
 #include "classes/gf/GfFieldLocalSteer.h"
+#include "gf/GfObjAcc.h"
+#include "classes/gf/GfMountManager.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/gf/GfBdatRsc.h"
+#include "gf/SDataEnemy.h"
+#include "classes/mm/mtl/PtrSingleton.h"
+#include "classes/gmk/GmkRouteNavi.h"
+#include "classes/gmk/GmkSalvageLocator.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfObjManager.h"
+#include "classes/gf/GfObjSetupEnemy.h"
+#include "fw/Transform.h"
+#include "fw/ColiCheck.h"
 #include "ml/MtRand.h"
 
 namespace gf {
@@ -29,6 +42,32 @@ namespace gf {
 void GfComBehaviorEnemy::callbackField(GfComAsm*, const CallBackCache&) {}
 
 namespace enemy {
+
+bool StateFieldAreaWalk::getGoalPosWater(mm::Vec3& pos, const GfComBehaviorEnemy& owner) const {
+    if (!getGoalPosRandom(pos, owner)) {
+        return false;
+    }
+    fw::TColiCheckResult<256> result;
+    result.clear();
+    mm::Vec3 start = pos;
+    start.y += 5.0f;
+    mm::Vec3 end = pos;
+    end.y -= 5.0f;
+    fw::ColiCheckConfig config;
+    config.m_mask = ~0u;
+    config.m_flags = 9;
+    config.m_mode = 1;
+    config.m_option = false;
+    if (!fw::ColiCheck::testLineChara(result, start, end, config)) {
+        return false;
+    }
+    // the water surface the line hit (material 1)
+    if (result.getMaterial(0).m_id != 1) {
+        return false;
+    }
+    pos = result.getPosition(0);
+    return true;
+}
 
 void StateFieldAreaWalk::enter(GfComBehaviorEnemy* owner, ai::State*) {
     if (owner->m_field.getGmkRouteNavi() != nullptr || owner->getBindedGmkInst() == nullptr) {
@@ -152,7 +191,94 @@ void StateFieldBlade::update(GfComBehaviorEnemy* owner, const fw::UpdateInfo& in
     }
 }
 
+// the position of the driver the blade is mounted to; false while it has no valid transform (inline, no symbol;
+// the name is not the original's)
+static inline bool getDriverPos(const GfComBehaviorEnemy& owner, mm::Vec3& pos) {
+    GfObjAcc driver(GfMountManager::getHandle(static_cast<GfObj*>(owner.m_owner)->m_handle, static_cast<GFATTACH>(0), static_cast<OPTMNT>(2)));
+    if (!driver.isValidTransform()) {
+        return false;
+    }
+    pos = driver.getWorldTransform().position;
+    return true;
+}
+
+void StateFieldBlade::seqIdle(GfComBehaviorEnemy& owner, const fw::UpdateInfo&) {
+    mm::Vec3 driverPos;
+    {
+        GfObjAcc driver(GfMountManager::getHandle(static_cast<GfObj*>(owner.m_owner)->m_handle, static_cast<GFATTACH>(0), static_cast<OPTMNT>(2)));
+        if (!driver.isValidTransform()) {
+            return;
+        }
+        driverPos = driver.getWorldTransform().position;
+    }
+    mm::Vec3 diff = driverPos - owner.getTransform().position;
+    float distSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+    float radius;
+    {
+        DataParamAcc acc(static_cast<GfObj*>(owner.m_owner)->m_handle);
+        const SDataEnemy* data = acc.getSDataEnemy();
+        radius = mm::mtl::PtrSingleton<GfBdatRsc>::sys()->getRscEnEnRadius(data->m_rscId);
+    }
+    float range = radius + 4.0f;
+    if (distSq < range * range) {
+        return;
+    }
+    owner.m_field.m_goalPos = driverPos;
+    owner.m_field.applyFieldMoveSpeed(static_cast<GfBehaviorEnemyField::MoveSpeed>(1), owner);
+    m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, "C_move"));
+    m_seq = &StateFieldBlade::seqMoveToDriver;
+}
+
+void StateFieldBlade::seqMoveToDriver(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info) {
+    m_execCmd.update(info.m_deltaTime);
+    if (!m_execCmd.m_done) {
+        return;
+    }
+    const float dt = info.m_deltaTime;
+    owner.m_field.moveToGoal(dt);
+    mm::Vec3 driverPos;
+    if (getDriverPos(owner, driverPos)) {
+        owner.m_field.m_goalPos = driverPos;
+        mm::Vec3 diff = driverPos - owner.getTransform().position;
+        float distSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+        float radius;
+        {
+            DataParamAcc acc(static_cast<GfObj*>(owner.m_owner)->m_handle);
+            const SDataEnemy* data = acc.getSDataEnemy();
+            radius = mm::mtl::PtrSingleton<GfBdatRsc>::sys()->getRscEnEnRadius(data->m_rscId);
+        }
+        float range = radius + 1.0f;
+        if (range * range < distSq) {
+            return;
+        }
+    }
+    owner.m_field.applyFieldMoveSpeed(static_cast<GfBehaviorEnemyField::MoveSpeed>(0), owner);
+    m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, "C_walkend"));
+    m_seq = &StateFieldBlade::seqWaitIdle;
+}
+
 StateFieldHome::StateFieldHome() : m_seq(nullptr), pad_60(false), pad_64(0) {}
+
+void StateFieldHome::enter(GfComBehaviorEnemy* owner, ai::State*) {
+    GfObjAcc acc(static_cast<GfObj*>(owner->m_owner)->m_handle);
+    if (acc.isEnemyBlade()) {
+        requestState(15);
+        return;
+    }
+    gmk::AGmkBase* gmk = gmk::getBindedGmkInst(static_cast<GfObj*>(owner->m_owner)->m_handle);
+    if (gmk != nullptr && gmk->getGmkType() == gmk::GmkSalvageLocator::TYPE) {
+        gmk::GmkSalvageLocator* locator = static_cast<gmk::GmkSalvageLocator*>(gmk);
+        if (GfGameManager::isEnemyChangeBattleOK()) {
+            locator->syncDepopTboxes();
+        } else {
+            locator->onEnemyHomeToPlayerAccess(static_cast<GfObj*>(owner->m_owner)->m_handle);
+        }
+    }
+    m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner->m_owner)->m_handle, "C_idle"));
+    m_seq = &StateFieldHome::seqWaitIdle;
+    pad_60 = false;
+    pad_64 = 0;
+}
 
 void StateFieldHome::seqWaitIdle(GfComBehaviorEnemy&, const fw::UpdateInfo& info) {
     m_execCmd.update(info.m_deltaTime);
@@ -178,12 +304,47 @@ void StateFieldHome::update(GfComBehaviorEnemy* owner, const fw::UpdateInfo& inf
     }
 }
 
+void StateFieldHome::seqInitHomePos(GfComBehaviorEnemy& owner, const fw::UpdateInfo&) {
+    mm::Vec3 home;
+    if (gmk::GmkRouteNavi* navi = owner.m_field.getGmkRouteNavi()) {
+        if (!navi->isValid()) {
+            return;
+        }
+        const mm::Vec3& pos = owner.getTransform().position;
+        gmk::GmkRouteNavi::UpdateInfo naviInfo;
+        naviInfo.m_pos.x = pos.x;
+        naviInfo.m_pos.y = pos.y;
+        naviInfo.m_pos.z = pos.z;
+        navi->update(naviInfo);
+        if (!navi->pad_80) {
+            return;
+        }
+        home = navi->pad_90;
+    } else {
+        GfObjSetupEnemy* setup =
+            mm::mtl::rttiCast<GfObjSetupEnemy>(GfObjManager::getObjInfo(static_cast<GfObj*>(owner.m_owner)->m_handle)->m_setup);
+        home = setup->m_initialPos;
+    }
+    owner.m_field.m_goalPos = home;
+    owner.execTurnCmdToGoal();
+    m_seq = &StateFieldHome::seqWaitTurnEnd;
+}
+
 void StateFieldHome::seqWaitTurnEnd(GfComBehaviorEnemy& owner, const fw::UpdateInfo&) {
     if (owner.m_turnCmd.pad_6c) {
         owner.m_field.applyFieldMoveSpeed(static_cast<GfBehaviorEnemyField::MoveSpeed>(1), owner);
         m_seq = &StateFieldHome::seqMoveToHomePos;
         m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, "C_move"));
     }
+}
+
+void StateFieldHome::seqMoveToHomePos(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info) {
+    m_execCmd.update(info.m_deltaTime);
+    if (!m_execCmd.m_done) {
+        return;
+    }
+    const float dt = info.m_deltaTime;
+    owner.m_field.moveToGoal(dt);
 }
 
 bool StateFieldHome::isCondMatch(const GfComBehaviorEnemy&) { return gmk::isPlayerExist(); }

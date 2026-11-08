@@ -9,6 +9,7 @@ namespace ai { class State; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GfComAsm; }
 namespace gf { class GfComBehaviorEnemy; }
+namespace mm { class Vec3; }
 
 namespace gf { namespace enemy {
 // table 0x7100B65FE0
@@ -30,6 +31,11 @@ public:
     void enter(GfComBehaviorEnemy* owner, ai::State* prev);
     void leave(GfComBehaviorEnemy* owner, ai::State* next);
     void update(GfComBehaviorEnemy* owner, const fw::UpdateInfo& info);
+    // a goal for each way of walking (seqInitGoalPos picks one by pad_18; false: none found)
+    bool getGoalPosRandom(mm::Vec3& pos, const GfComBehaviorEnemy& owner) const;
+    bool getGoalPosCircle(mm::Vec3& pos, const GfComBehaviorEnemy& owner) const;
+    // a random goal moved onto the water surface below or above it
+    bool getGoalPosWater(mm::Vec3& pos, const GfComBehaviorEnemy& owner) const;
     void seqInitGoalPos(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
     void seqWaitTurnEnd(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
     void seqMoveToGoal(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
