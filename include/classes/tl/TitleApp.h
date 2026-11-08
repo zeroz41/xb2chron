@@ -26,6 +26,37 @@ public:
     layer::LayerBase* m_loadLayer;  // 0x770 now_loading's memory layer, 1280x720 (the name is not the original's)
     void* m_loadBuffer;  // 0x778 now_loading's buffer from allocator 5 (the name is not the original's)
 };
+
+// the regional title entries of main's icon table (_main::s_aIconDef): each makes the title application under its
+// own work name like TitleApp::execute. 2.0.0's symbols name the classes and their members; no table or object of
+// them exists (the work they make is a TitleApp).
+// "Title" again; also sets TitleApplet::s_bGameTypeIra
+class TitleAppIra {
+public:
+    static void execute();
+};
+// "Title_english", language 12
+class TitleAppEN {
+public:
+    static void execute();
+    static const char* m_szTitle;
+};
+// "Title_cn_simple", language 6
+class TitleAppCN {
+public:
+    static void execute();
+    static const char* m_szTitle;
+};
+// "Title_cn_original", language 11
+class TitleAppTW {
+public:
+    static void execute();
+    static const char* m_szTitle;
+};
 }  // namespace tl
+
+// the Korean title entry of main's icon table ("Title_korean", language 7), new in 3.0.1: nothing names it or its
+// class
+void fn_710014E2B0();
 
 #endif

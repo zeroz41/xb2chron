@@ -56,7 +56,7 @@
 namespace fw {
 
 Framework::Framework()
-    : m_applet(nullptr), pad_50(0), m_scn(nullptr), pad_60(0), m_memHandle(), pad_70(0), m_state(0), pad_88(false),
+    : m_applet(nullptr), pad_50(0), m_scn(nullptr), m_view(nullptr), m_memHandle(), pad_70(0), m_state(0), pad_88(false),
       pad_89(false), m_updated(false), m_updateSpeed(1.0f) {}
 
 Framework::~Framework() {

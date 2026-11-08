@@ -106,7 +106,7 @@ public:
     FrameworkConfig m_config;
     unsigned long pad_50;  // the FrameworkEnv's fields, copied one by one by initialize
     ml::Scn* m_scn;  // what LayerSetManager gives layer::LayerManager; the name is not the original's
-    unsigned long pad_60;
+    ml::WinView* m_view;  // 0x60 the FrameworkEnv's view (FrameworkLauncher::create<T> hands it to the applet; the name is not the original's)
     mtl::ALLOC_HANDLE m_memHandle;  // getMemHandle hands it out (FrameworkMemory's kind 5 while it is empty)
     unsigned long pad_70;
     fw::UpdateInfo m_updateInfo;    // beginFrame fills it; the name is not the original's

@@ -63,11 +63,23 @@ public:
     // copied whole.
     class AppletCreateParam {
     public:
-        AppletCreateParam() : pad_0(nullptr), pad_90(0), m_onBuilt(nullptr), m_onTerminated(nullptr) {}
+        AppletCreateParam() : m_create(nullptr), m_proc(nullptr), m_onBuilt(nullptr), m_onTerminated(nullptr) {}
 
-        void* pad_0;
+        // what create<T> stores in m_create: it makes the applet again from the same parameters (2.0.0's symbols
+        // name createFunctor<tl::TitleApplet>::create)
+        template <class T>
+        class createFunctor {
+        public:
+            static bool create(ml::WinProc* proc, SceneBuildInfo& info, const fw::FrameworkConfig& config,
+                               void (*onBuilt)(), void (*onTerminated)()) {
+                return FrameworkLauncher::create<T>(proc, info, config, onBuilt, onTerminated);
+            }
+        };
+
+        // 0x00 createFunctor<T>::create of the applet type create<T> made (the name is not the original's)
+        bool (*m_create)(ml::WinProc*, SceneBuildInfo&, const fw::FrameworkConfig&, void (*)(), void (*)());
         mm::mtl::FixStr<128> m_name;  // 0x08 (the name is not the original's)
-        unsigned long pad_90;
+        ml::WinProc* m_proc;  // 0x90 create<T>'s proc (the name is not the original's)
         SceneBuildInfo m_buildInfo;  // 0x98 (the name is not the original's)
         fw::FrameworkConfig m_config;  // 0x100 (the name is not the original's)
         void (*m_onBuilt)();  // 0x140 (createBuildThread's fourth; the name is not the original's)
@@ -93,6 +105,12 @@ public:
     // starts the thread that initializes the applet: true once it is initialized
     static bool createAppletInitializeThread();
     static nn::os::FiberType* mlthFnAppletInitialize(void* launcher);
+    // the launcher's steps for an applet of type T, one per call (tl::TitleApp::wkStandbyLogin calls it until it is
+    // true): build the scene, create the applet on the framework, load its resources, initialize it; then keeps the
+    // parameters in m_appletParam (2.0.0's symbols name create<tl::TitleApplet>)
+    template <class T>
+    static bool create(ml::WinProc* proc, SceneBuildInfo& info, const fw::FrameworkConfig& config, void (*onBuilt)(),
+                       void (*onTerminated)());
 
     // 0x1C8: request bits: stepDebugPause sets 0x200000, resetApp sets 0x50000000 unless one of 0x70000000 is set;
     // wkTail skips the framework's tail while 0x90 is set; 0x10: closed (destroy); 0x20000000 destroy started the
@@ -125,6 +143,52 @@ public:
     bool m_debugPause;  // 0x41A isDebugPause (the name is not the original's)
     // the rest of the launcher is not known yet
 };
+}  // namespace apps
+
+#include "classes/fw/Framework.h"
+#include "classes/fw/Applet.h"
+#include "classes/mm/mtl/IAllocator.h"
+
+namespace apps {
+template <class T>
+bool FrameworkLauncher::create(ml::WinProc* proc, SceneBuildInfo& info, const fw::FrameworkConfig& config,
+                               void (*onBuilt)(), void (*onTerminated)()) {
+    if (!createBuildThread(proc, info, config, onBuilt, onTerminated)) {
+        return false;
+    }
+    FrameworkLauncher* launcher = get();
+    if (!(launcher->m_request & 0x200)) {
+        launcher->m_request |= 0x200;
+        fw::Framework* framework = fw::Framework::get();
+#line 175 "D:/Monolithsoft/BF2/prog/application/BF2\\framework/framework.h"
+        T* applet = new (fw::Framework::getAllocator(), 8, __FILE__, __LINE__) T();
+        framework->m_applet = applet;
+        applet->m_env.m_view = framework->m_view;
+        applet->m_env.m_scn = framework->m_scn;
+        applet->m_env.pad_0 = framework->pad_50;
+        applet->m_env.m_memHandle = framework->m_memHandle;
+        applet->m_env.pad_20 = framework->pad_70;
+        return false;
+    }
+    if (launcher->m_request & 0x800) {
+        if (!createAppletInitializeThread()) {
+            return false;
+        }
+    } else {
+        if (!createWaitLoadResourceThread()) {
+            return false;
+        }
+    }
+    launcher = get();
+    launcher->m_appletParam.m_name = "ResetAppret";
+    launcher->m_appletParam.m_create = &AppletCreateParam::createFunctor<T>::create;
+    launcher->m_appletParam.m_proc = proc;
+    launcher->m_appletParam.m_buildInfo = info;
+    launcher->m_appletParam.m_config = config;
+    launcher->m_appletParam.m_onBuilt = onBuilt;
+    launcher->m_appletParam.m_onTerminated = onTerminated;
+    return true;
+}
 }  // namespace apps
 
 #endif
