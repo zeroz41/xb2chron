@@ -33,6 +33,8 @@ enum {
     VMDATA_STRING = 5,
     VMDATA_ARRAY = 6,
     VMDATA_FUNCTION = 7,
+    // a plugin function (the VM's type names: nil, int, fixed, string, array, function, plugin)
+    VMDATA_PLUGIN = 8,
     // an object of a class (VMOC) a plugin registers; the name is not the original's
     VMDATA_OC = 9,
 };
@@ -47,7 +49,8 @@ typedef struct VMPluginFunc {
     int (*func)(VMThread* pThread);
 } VMPluginFunc;
 
-void vmPluginRegist(const char* name, VMPluginFunc* pPlugin);
+// 1 when the plugin is registered (or already was), 0 when every slot is taken
+int vmPluginRegist(const char* name, VMPluginFunc* pPlugin);
 
 // A method of a script class: the VM looks it up by name (vmOCRegist fills nameLen).
 typedef struct VMOCMethod {
@@ -119,6 +122,13 @@ void vmOCExceptionThrow(VMThread* pThread);
 
 // Reports an argument of the wrong type for the current thread (s_vmWork.pCurThread).
 void vmArgErr(void);
+
+// The VM's own steps (yvm2.c): one thread's run until it waits or ends (3 when it ended); the size bytes (1, 2 or 4,
+// big-endian) of the running code at pc; a call of a script function (thread, function, link, ?) (unnamed in the
+// symbols).
+int vmCodeExecSub(VMThread* pThread);
+unsigned int vmDataGet(VMThread* pThread, int pc, unsigned int size);
+void fn_71006EE9A0(VMThread* pThread, int funcNo, unsigned short linkNo, int);
 
 // The VM's assertion report (defined in WriteStr.cpp): message, file, line.
 void vmMlAssert(const char* message, const char* file, int line);
