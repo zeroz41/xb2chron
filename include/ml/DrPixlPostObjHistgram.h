@@ -27,7 +27,10 @@ public:
     void resetMaxLuminance(float);
 
     DrResUseQueryObj* m_query;  // 0x18, made by the constructor (name inferred)
-    unsigned char pad_20[0x84];
+    // 0x20: resetMaxLuminance's luminance thresholds: ten steps up to the maximum (linear in mode 0, logarithmic
+    // from 1/256 in mode 1), then the maximum and 100000 (the name is not the original's)
+    float m_lumTbl[11];
+    unsigned int m_count[22];  // 0x4C, resetMaxLuminance clears it (the name is not the original's)
     // 0xA4..0xB8: only the constructor's values are known; the names are inferred, not the original's
     int m_counter;  // 0xA4, resetMaxLuminance reads and writes it
     int m_mode;  // 0xA8, resetMaxLuminance switches on 0 and 1; the constructor sets 1

@@ -25,11 +25,21 @@ public:
     DrCalcClipWorkPlane m_clip;  // 0x1A0 (the name is not the original's)
     // 0x270: DrPixlShadowMan::clipDirShadowChk keeps only spheres wholly behind it (the name is not the original's)
     mm::Plane m_shadowPlane;
-    unsigned char pad_290[0x70];
+    // 0x290: setAddObjPos measures each added sphere's depth along it (the name is not the original's)
+    mm::Plane m_depthPlane;
+    unsigned char pad_2B0[0x50];
     // 0x300: the shadow direction clipDirShadowChk tests along (the name is not the original's)
     mm::Vec3 m_shadowDir;
-    unsigned char pad_310[0x28];
+    // 0x310/0x320: the box setAddObjPos grows around each added sphere (the names are not the original's)
+    mm::Vec3 m_addMax;
+    mm::Vec3 m_addMin;
+    // 0x330/0x334: the depth range setAddObjPos grows (the names are not the original's)
+    float m_depthNear;
+    float m_depthFar;
     float m_typeClipRange;  // 0x338: clipTypeChk tests only spheres smaller than it (the name is not the original's)
+    unsigned char pad_33C[0x8];
+    // 0x344: setAddObjPos sets one bit per unit of depth from (int)m_depthNear (the name is not the original's)
+    unsigned int m_depthBits;
 };
 }  // namespace ml
 

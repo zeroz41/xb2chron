@@ -13,6 +13,7 @@ public:
     DrPixlPostObjVolume(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan);
     ~DrPixlPostObjVolume();
     void calcColorBuff();
+    void calculateSclDown_NonTemporal();
 
     // 0x18, the constructor creates the three and sets them up with DrPixlFormat::s_VolumeFormat (name inferred)
     DrPixlRenderTarget* m_volumeBuff[3];

@@ -16,6 +16,8 @@ class DrPixlMan;
 // 0x900). Only what DrPixlMan.cpp's recovered functions use is recovered (the field names are not the original's).
 class DrPixlShadowCacheObj {
 public:
+    // inlined into SHCACHE_WORK_TBL's destructor: releases the depth target before the members are destroyed
+    ~DrPixlShadowCacheObj() { m_depth.release(); }
     bool clipTest(mm::Vec3 const& pos, float radius);
 
     grlib::CGLibDepthTarget m_depth;  // 0x0

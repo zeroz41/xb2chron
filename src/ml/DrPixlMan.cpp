@@ -1939,6 +1939,50 @@ DrPixlPostObjVolume::~DrPixlPostObjVolume() {
     }
 }
 
+void DrPixlPostObjVolume::calculateSclDown_NonTemporal() {
+    grlib::CGLibRenderTarget* src = m_pixlMan->m_objTbl->m_obj[7][0];
+    src->setColorInvalidate();
+    DrPixlRenderTarget* dst = m_volumeBuff[DrMan::s_nDblIdx];
+    dst->setRenderTarget();
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getSelectShdObj(0);
+    list->bindQuadsTex();
+    obj->setupShader(0u);
+    unsigned int location = obj->getCurrentShader().getTextureLocation("s0");
+    DrAPCache* cache = m_drMan->m_apCache;
+    cache->beginTexSampling(2, 1);
+    cache->setTexture(*src->m_pTexture, location);
+    list->renderQuads();
+    dst->setColorInvalidate();
+}
+
+void DrPixlPostObjHistgram::resetMaxLuminance(float maxLum) {
+    switch (m_mode) {
+    case 0: {
+        float step = maxLum / 10.0f;
+        for (int i = 0; i < 10; i++) {
+            m_lumTbl[i] = step * (i + 1);
+        }
+        break;
+    }
+    case 1: {
+        float min = logf(1.0f / 256.0f) / logf(2.0f);
+        float range = logf(maxLum) / logf(2.0f) - min;
+        for (int i = 0; i < 10; i++) {
+            m_lumTbl[i] = powf(2.0f, range * (i / 10.0f) + min);
+        }
+        break;
+    }
+    default:
+        break;
+    }
+    m_lumTbl[9] = maxLum;
+    m_lumTbl[10] = 100000.0f;
+    for (int i = 0; i < 22; i++) {
+        m_count[i] = 0;
+    }
+}
+
 void DrPixlTileParm::update() { m_idx = DrMan::get()->m_qualityMode == 0; }
 
 DrPixlMdlSampler::DrPixlMdlSampler() {
@@ -2127,7 +2171,24 @@ void DrPixlShadowCacheMan::delShadowCacheUpdate() {
 
 void DrPixlShadowCacheMan::callSelectShadowCacheUpdate(unsigned long mask) { m_selectUpdate &= ~mask; }
 
+DrPixlShadowCacheMan::SHCACHE_WORK_TBL::~SHCACHE_WORK_TBL() {}
+
+
 bool DrPixlShadowCacheObj::clipTest(mm::Vec3 const& pos, float radius) { return m_clip.clipTest(pos, radius); }
+
+DrPixlShadowMan::DrPixlShadowMan(DrMan* drMan, DrPixlMan* pixlMan)
+    : m_objNum(0), m_drMan(drMan), m_pixlMan(pixlMan), m_dirShadow(nullptr) {
+    for (int i = 0; i < 0x100; i++) {
+        m_objs[i] = nullptr;
+    }
+    for (int i = 0; i < 16; i++) {
+        m_texWork[i].m_size = 0.0f;
+        m_texWork[i].m_useCount = 0;
+        m_texWork[i].m_type = 0;
+        m_texWork[i].m_index = 0;
+    }
+}
+
 
 DrPixlShadowMan::~DrPixlShadowMan() { releaseTexWork(); }
 
@@ -2232,6 +2293,65 @@ int DrPixlShadowObjDir::clipTypeChk(mm::Vec3 const& pos, float radius) {
         return 0;
     }
     return m_clip.clipTypeTest(pos, radius);
+}
+
+bool DrPixlShadowObjDir::setAddObjPos(mm::Vec3 const& pos, float radius) {
+    if (m_typeClipRange <= radius) {
+        return false;
+    }
+    if (m_clip.clipTypeTest(pos, radius) == 0) {
+        return false;
+    }
+    float depth = pos.x * m_depthPlane.normal.x + pos.y * m_depthPlane.normal.y + pos.z * m_depthPlane.normal.z + m_depthPlane.d;
+    float far = depth + radius;
+    float near = depth - radius;
+    if (near < 0.1f) {
+        near = 0.1f;
+    }
+    if (m_depthNear > near) {
+        if (m_depthBits != 0) {
+            m_depthBits <<= (int)m_depthNear - (int)near;
+        }
+        m_depthNear = near;
+    }
+    if (m_depthFar < far) {
+        m_depthFar = far;
+    }
+    float base = (float)(int)m_depthNear;
+    int lo = (int)(near - base);
+    int hi = (int)(far - base);
+    if (hi > 31) {
+        hi = 31;
+    }
+    for (int i = lo; i <= hi; i++) {
+        m_depthBits |= 1 << i;
+    }
+    float maxX = pos.x + radius;
+    if (m_addMax.x < maxX) {
+        m_addMax.x = maxX;
+    }
+    float minX = pos.x - radius;
+    if (m_addMin.x > minX) {
+        m_addMin.x = minX;
+    }
+    float maxY = pos.y + radius;
+    if (m_addMax.y < maxY) {
+        m_addMax.y = maxY;
+    }
+    float minY = pos.y - radius;
+    if (m_addMin.y > minY) {
+        m_addMin.y = minY;
+    }
+    float maxZ = pos.z + radius;
+    if (m_addMax.z < maxZ) {
+        m_addMax.z = maxZ;
+    }
+    float minZ = pos.z - radius;
+    if (m_addMin.z > minZ) {
+        m_addMin.z = minZ;
+    }
+    m_flags |= 8;
+    return true;
 }
 
 DrPixlShadowObjSpt::~DrPixlShadowObjSpt() {

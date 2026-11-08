@@ -23,6 +23,7 @@ public:
         unsigned char pad_80C[0x4];
     };
 
+    DrPixlShadowMan(DrMan* drMan, DrPixlMan* pixlMan);
     ~DrPixlShadowMan();
     void releaseTexWork();
     void releaseShadow(DrPixlShadowObj* obj);
