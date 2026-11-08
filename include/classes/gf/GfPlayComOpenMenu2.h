@@ -10,7 +10,8 @@ namespace gf {
 // table 0x7100B58558; GfSequentialPlay::addOpenMenu2 makes it
 class GfPlayComOpenMenu2 : public GfPlayCom {
 public:
-    GfPlayComOpenMenu2(unsigned int menu, MAINMENU main) : GfPlayCom(12, false), m_menu(menu), m_main(main), pad_18(0), m_state(0) {}
+    // create sets the menu and the main menu after building it
+    GfPlayComOpenMenu2() : GfPlayCom(12, false), m_step(0), m_wait(0) {}
     static GfPlayComOpenMenu2* create(unsigned int menu, MAINMENU main);
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual const char* getFuncName() const {  // slot 3
@@ -24,8 +25,8 @@ public:
 
     unsigned int m_menu;
     MAINMENU m_main;  // GfSequentialPlay::addOpenMenu2's names
-    int pad_18;
-    int m_state;  // start sets 3; the name is not the original's
+    int m_step;  // update's step: 0 waits m_wait frames then opens the menu, 1 waits for it to close (the name is not the original's)
+    int m_wait;  // start sets 3; update counts it down (the name is not the original's)
 };
 }  // namespace gf
 

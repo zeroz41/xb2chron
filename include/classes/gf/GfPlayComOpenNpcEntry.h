@@ -14,8 +14,8 @@ namespace gf {
 // with the table's thunks); start is the key function.
 class GfPlayComOpenNpcEntry : public GfPlayCom, public mm::mtl::PtrSingleton<GfPlayComOpenNpcEntry> {
 public:
-    explicit GfPlayComOpenNpcEntry(const mm::mtl::FixedVector<unsigned short, 256>& entries)
-        : GfPlayCom(0x31, false), m_entries(entries), m_context(GfMenuCallContext::create()) {}
+    // create copies the entries and makes the context after building it
+    GfPlayComOpenNpcEntry() : GfPlayCom(0x31, false) {}
     // 2.0.0's symbols name it. What it does: copies the given FixedVector of 256 two-byte entries into the command at
     // 0x18 (count at 0x218) and stores GfMenuCallContext::create() at 0x220. Its one caller is
     // GfSequentialPlay::addOpenNpcEntry. The element type (2 bytes) is inferred, not the original's.

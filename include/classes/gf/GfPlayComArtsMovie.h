@@ -8,7 +8,11 @@ namespace gf {
 // table 0x7100B58190
 class GfPlayComArtsMovie : public GfPlayCom {
 public:
-    explicit GfPlayComArtsMovie(const char* name) : GfPlayCom(41, true), m_name(name) {}
+    explicit GfPlayComArtsMovie(const char* name) : GfPlayCom(41, true) {
+        if (name != nullptr) {
+            m_name = name;
+        }
+    }
     static GfPlayComArtsMovie* create(const char* name);
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual const char* getFuncName() const {  // slot 3
