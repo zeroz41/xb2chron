@@ -29,6 +29,17 @@
 #include "mm/mtl/FixStr.h"
 #include "ui/EventData.h"
 #include "gf/GfDataUtil.h"
+#include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfGameSave.h"
+#include "classes/tl/TitleMain.h"
+#include "gf/GfDataMap.h"
+#include "gf/GfGameUtilSaveData.h"
+#include "gf/GfMenuBdat.h"
+#include "gf/SaveMenuInfo.h"
+#include "mm/Pnt.h"
+#include "mm/Rect.h"
+#include "plugin/Bdat.h"
+#include "ui/UIStr.h"
 
 namespace gf {
 
@@ -243,6 +254,223 @@ void GfMenuObjSaveLoad2::setupSave(ui::UIObjectAcc& acc, mm::mtl::IntrusivePtr<G
     m_progressPlugin = ui::UIObjectNumberPlugin::create(acc.searchChild("TXT_progress"));
     m_gameTimePlugin = ui::UIObjectTimePlugin::create(acc.searchChild("TXT_game_time"), 7);
     m_areaPlugin = ui::UIObjectTextPlugin::create(acc.searchChild("TXT_area"));
+}
+
+void GfMenuObjSaveLoad2::refreshSave(ui::UIObjectAcc& acc, unsigned int refresh) {
+    SaveMenuInfo info;
+    SDataGame* game = &GfGameSave::getGameSaveData()->m_game;
+    tl::TitleMain* title = mm::mtl::PtrSingleton<tl::TitleMain>::sys();
+    if (title != nullptr && title->getSaveBuffer()->m_system.m_version == 0x3A15B) {
+        game = &title->getSaveBuffer()->m_game;
+    }
+    GfGameUtilSaveData::getSaveDataMenuInfo(info);
+    bool disp;
+    if (refresh == 0 && info.m_newGame) {
+        info.m_drivers[0].m_driver = 0;
+        info.m_drivers[1].m_driver = 0;
+        info.m_drivers[2].m_driver = 0;
+        ui::UIObjectAcc dr3(acc.searchChild("LAY_dr3"));
+        ui::UIObjectAcc dr2(acc.searchChild("LAY_dr2"));
+        ui::UIObjectAcc dr0(acc.searchChild("LAY_dr0"));
+        dr3.setDisp(true);
+        dr2.setDisp(false);
+        dr0.setDisp(true);
+        disp = false;
+    } else {
+        disp = true;
+    }
+    mm::mtl::FixStr<32> name;
+    unsigned int handle = acc.m_handle;
+    GfMenuObjUtil::setChildDisp(handle, "LAY_time_data", disp);
+    GfMenuObjUtil::setChildDisp(handle, "LAY_progress_data", disp);
+    GfMenuObjUtil::setChildDisp(handle, "LAY_game_time_data", disp);
+    GfMenuObjUtil::setChildDisp(handle, "LAY_area_data", disp);
+    m_drivers->clear();
+    m_blades->clear();
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        for (int i = 0; i < 3; i++) {
+            SaveMenuInfo::IraDriver& row = info.m_iraDrivers[i];
+            MenuDriverInfo driver;
+            driver.m_driver = row.m_driver;
+            m_drivers->addContents(driver);
+            name.format("IMG_driver@%02d", i + 1);
+            {
+                ui::UIObjectAcc img(handle, name.m_str);
+                img.setImageIndex(GfMenuBdat::getIconImageIndex(GfMenuObjUtil::getFaceIconID(*game, 3, driver.m_driver)));
+            }
+            unsigned short blade1 = row.m_blade1;
+            bool has1;
+            {
+                name.format("IMG_blade%d@%02d", 1, i + 1);
+                ui::UIObjectAcc img1(handle, name.m_str);
+                name.format("IMG_blade%d@%02d", 3, i + 1);
+                ui::UIObjectAcc img3(handle, name.m_str);
+                if (blade1 != 0) {
+                    unsigned int icon = GfMenuObjUtil::getFaceIconID(*game, 3, blade1);
+                    img1.setImageIndex(GfMenuBdat::getIconImageIndex(icon));
+                    img1.setDisp(true);
+                    has1 = true;
+                    img3.setImageIndex(GfMenuBdat::getIconImageIndex(icon));
+                    img3.setDisp(false);
+                } else {
+                    img1.setDisp(false);
+                    img3.setDisp(false);
+                    has1 = false;
+                }
+            }
+            unsigned short blade2 = row.m_blade2;
+            bool has2;
+            {
+                name.format("IMG_blade%d@%02d", 2, i + 1);
+                ui::UIObjectAcc img2(handle, name.m_str);
+                if (blade2 != 0) {
+                    img2.setImageIndex(GfMenuBdat::getIconImageIndex(GfMenuObjUtil::getFaceIconID(*game, 3, blade2)));
+                    has2 = true;
+                    img2.setDisp(true);
+                } else {
+                    img2.setDisp(false);
+                    has2 = false;
+                }
+            }
+            {
+                name.format("IMG_driver@%02d", i + 1);
+                ui::UIObjectAcc img(handle, name.m_str);
+                if (has1 || has2) {
+                    acc.setLayout(img.m_handle, "sv_icondr");
+                } else {
+                    acc.setLayout(img.m_handle, "sv_icon_solo");
+                }
+            }
+            name.format("IMG_char_bg@%02d", i + 1);
+            ui::UIObjectAcc bg(handle, name.m_str);
+            if (has1 && !has2) {
+                name.format("IMG_blade%d@%02d", 1, i + 1);
+                ui::UIObjectAcc img1(handle, name.m_str);
+                name.format("IMG_blade%d@%02d", 3, i + 1);
+                ui::UIObjectAcc img3(handle, name.m_str);
+                img1.setDisp(false);
+                img3.setDisp(true);
+                bg.startAnimationFromIndex(1, false);
+            } else if (!has1 && !has2) {
+                bg.startAnimationFromIndex(3, false);
+            } else {
+                bg.startAnimationFromIndex(2, false);
+            }
+        }
+    } else {
+        for (unsigned int i = 0; i < 3; i++) {
+            SaveMenuInfo::Driver& row = info.m_drivers[i];
+            MenuDriverInfo driver;
+            driver.m_driver = row.m_driver;
+            m_drivers->addContents(driver);
+            name.format("IMG_driver@%02d", i + 1);
+            {
+                ui::UIObjectAcc img(handle, name.m_str);
+                img.setImageIndex(GfMenuBdat::getIconImageIndex(GfMenuObjUtil::getFaceIconID(*game, 3, driver.m_driver)));
+            }
+            short top = row.m_bladeTop;
+            unsigned int max = GfMenuObjUtil::getBladeSlotMax(*game);
+            unsigned int slot = 0;
+            for (; slot < max; slot++) {
+                unsigned short id = row.m_blades[(top + slot) % max];
+                MenuBladeInfo blade;
+                blade.m_blade = id;
+                m_blades->addContents(blade);
+                name.format("IMG_blade%d@%02d", slot + 1, i + 1);
+                ui::UIObjectAcc img(handle, name.m_str);
+                if (id == 1113 || id == 1114 || !GfMenuObjUtil::isValidBlade(id)) {
+                    img.setDisp(false);
+                } else {
+                    img.setImageIndex(GfMenuBdat::getIconImageIndex(GfMenuObjUtil::getFaceIconID(*game, 4, blade.m_blade)));
+                    img.setDisp(true);
+                }
+            }
+            for (; slot < 3; slot++) {
+                MenuBladeInfo blade;
+                m_blades->addContents(blade);
+                name.format("IMG_blade%d@%02d", slot + 1, i + 1);
+                ui::UIObjectAcc img(handle, name.m_str);
+                img.setDisp(false);
+            }
+        }
+    }
+    m_yearPlugin->setYear(info.m_saveTime.year);
+    m_yearPlugin->setMonth(info.m_saveTime.month);
+    m_yearPlugin->setDay(info.m_saveTime.day);
+    m_timePlugin->setHour(info.m_saveTime.hour);
+    m_timePlugin->setMin(info.m_saveTime.minute);
+    m_progressPlugin->setNumber(info.m_progress);
+    if (info.m_playTime.hour > 999) {
+        info.m_playTime.hour = 999;
+        info.m_playTime.min = 59;
+        info.m_playTime.sec = 59;
+    }
+    m_gameTimePlugin->setElapseHour(info.m_playTime.hour);
+    m_gameTimePlugin->setMin(info.m_playTime.min);
+    m_gameTimePlugin->setSec(info.m_playTime.sec);
+    unsigned int mapId = GfDataMap::getMapID(info.m_mapJump);
+    if (mapId != 0) {
+        if (info.m_scenario == 9038) {
+            mapId = 20;
+        }
+        unsigned int nameId = (unsigned short)Bdat::getVal(GfDataBdat::getFP(0x5D), "nameID", mapId);
+        unsigned char* texts = GfDataBdat::getFP(0x1B4);
+        m_areaPlugin->setText(ui::UIStr(texts, nameId));
+    }
+    unsigned int count = 0;
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        for (int i = 0; i < 3; i++) {
+            if (info.m_iraDrivers[i].m_driver != 0) {
+                m_numbers[i]->setValue(info.m_iraDrivers[i].m_level);
+                count++;
+            }
+        }
+    } else {
+        for (int i = 0; i < 3; i++) {
+            if (info.m_drivers[i].m_driver != 0) {
+                m_numbers[i]->setValue(info.m_drivers[i].m_level);
+                count++;
+            }
+        }
+    }
+    m_selectList->clear();
+    for (unsigned int i = 0; i < 3; i++) {
+        mm::mtl::FixStr<32> child;
+        child.format("LAY_char@%02d", i + 1);
+        if (count > i) {
+            m_selectList->addContents(acc.searchChild(child.m_str));
+            GfMenuObjUtil::setChildDisp(acc.m_handle, child.m_str, true);
+        } else {
+            GfMenuObjUtil::setChildDisp(acc.m_handle, child.m_str, false);
+        }
+    }
+    ui::UIObjectAcc dr3(acc.searchChild("LAY_dr3"));
+    ui::UIObjectAcc dr2(acc.searchChild("LAY_dr2"));
+    ui::UIObjectAcc dr0(acc.searchChild("LAY_dr0"));
+    switch (count) {
+    case 1:
+        dr3.setDisp(false);
+        dr2.setDisp(false);
+        dr0.setDisp(false);
+        break;
+    case 2:
+        dr3.setDisp(false);
+        dr2.setDisp(true);
+        dr0.setDisp(false);
+        break;
+    case 3:
+        dr3.setDisp(true);
+        dr2.setDisp(false);
+        dr0.setDisp(false);
+        break;
+    }
+    mm::Rect<short> grp2;
+    acc.getLayoutRect("sv_icon_grp02", grp2);
+    mm::Rect<short> grp1;
+    acc.getLayoutRect("sv_icon_grp01", grp1);
+    unsigned int width = grp2.x - grp1.x - 1;
+    mm::Pnt<short> center(grp2.x + grp2.w / 2, grp2.y + grp2.h / 2);
+    GfMenuObjUtil::placeObjectH(m_selectList, center, width);
 }
 
 bool GfMenuObjSaveLoad2::seqSave() {
