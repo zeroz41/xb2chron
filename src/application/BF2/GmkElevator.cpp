@@ -90,6 +90,7 @@
 #include "classes/gmk/GmkRoutedMob/PopXformFinder.h"
 #include "fw/ColiCheck.h"
 #include "classes/gmk/GameFlagCond.h"
+#include "classes/gmk/PopPosSafeCond.h"
 #include "classes/gf/GfManager.h"
 #include "arc/CArcData.h"
 #include "classes/fw/CommonResource.h"
@@ -7709,6 +7710,15 @@ bool GameFlagCond::isMatch(unsigned int value) const {
     }
 }
 
+PopPosSafeCond::PopPosSafeCond(const CreateInfo* info) : m_isValid(false) {
+    if (info != nullptr) {
+        // the original stores the defaults again before the copy
+        m_info = CreateInfo();
+        m_info = *info;
+        m_isValid = true;
+    }
+}
+
 BootedGmkCond::BootedGmkCond(unsigned char type, unsigned short id) : m_gimmickType(0), m_gimmickId(0) {
     set(type, id);
 }
@@ -7728,6 +7738,58 @@ BootedGmkCond::BootedGmkCond(const CBdatWrapper& bdat, int row, const char* pref
     }
     unsigned short id = Bdat::getValCheck(bdat.m_fp, column.m_str, row, 2);
     set(type, id);
+}
+
+bool BootedGmkCond::isMatch() const {
+    GmkAcc::CreateInfoByBdatId info;
+    switch (m_gimmickType) {
+    case 1:
+        info.m_type = GmkMapGimmick::TYPE;
+        break;
+    case 2:
+        info.m_type = GmkDoor::TYPE;
+        break;
+    case 3:
+        info.m_type = GmkType(0x2A);
+        break;
+    case 4:
+        info.m_type = GmkType(0x26);
+        break;
+    case 5:
+        info.m_type = GmkType(0x25);
+        break;
+    case 6:
+        info.m_type = GmkType(0x30);
+        break;
+    default:
+        return false;
+    }
+    info.m_bdatId = m_gimmickId;
+    GmkAcc acc;
+    acc.create(info);
+    bool result = false;
+    if (acc.isValid()) {
+        switch (m_gimmickType) {
+        case 1:
+            result = !static_cast<const GmkMapGimmick*>(acc.m_gmk)->isNotSolved();
+            break;
+        case 2: {
+            const GmkDoor* door = static_cast<const GmkDoor*>(acc.m_gmk);
+            GmkDoor::Progress progress = door->getProgress();
+            if (progress != 0 && !(door->m_doorWait < door->getBdatInfo()->m_doorNextwait)) {
+                // the original tests the condition's fields off the row, not through isSet
+                const BootedGmkCond& sp = door->getBdatInfo()->m_bootedGmk3;
+                if (sp.m_gimmickType != 0 && sp.m_gimmickId != 0) {
+                    result = progress == 3;
+                } else {
+                    result = progress == 1;
+                }
+            }
+            break;
+        }
+        }
+    }
+    return result;
 }
 
 bool GmkEnemyInsts::BdatInfo::isPopCondMatched() const {
