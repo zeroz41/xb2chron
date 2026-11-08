@@ -24,6 +24,9 @@
 #include "classes/gf/pc/FadePlugin.h"
 #include "classes/gf/GfGamePlayerCamera.h"
 #include "gf/pc/MoveUtilField.h"
+#include "classes/gf/GfAppendHandles.h"
+#include "classes/gf/pc/FallDistancePlugin.h"
+#include "gf/MsgUnk_1000022.h"
 #include "float.h"
 #include "string.h"
 
@@ -120,6 +123,14 @@ gf::GfObj* StateUtilField::getAccessTarget(gf::GfComBehaviorPc& behavior) {
 
 bool StateUtilField::isStop(gf::GfComPropertyPc& property, unsigned int noInputFrames) {
     return property.m_field.getParam<GfPropertyField::MoveParam>(0)->m_stopFrames <= noInputFrames;
+}
+
+void StateUtilField::flipAutoRun(gf::GfComPropertyPc& property) {
+    if (testAutoRun(property)) {
+        setAutoRun(property, false);
+    } else if (!property.m_velocity.isZero()) {
+        setAutoRun(property, true);
+    }
 }
 
 void StateUtilField::setAutoRun(gf::GfComPropertyPc& property, bool on) {
@@ -221,12 +232,55 @@ void StateUtilField::setSpecialActStatus(gf::GfComBehaviorPc& behavior, bool sta
     }
 }
 
+bool StateUtilField::isStartSlidePosuture(gf::GfComBehaviorPc& behavior) {
+    GfComPropertyPc* property = behavior.m_owner->getComponent<GfComPropertyPc>(5);
+    const GfComPropertyPc::SlideParam* param = property->getParamAdapter(4).get<GfComPropertyPc::SlideParam>();
+    if (StateUtil::isOnSlideGround(behavior)) {
+        if (property->pad_f0 >= param->m_startSlideValue) {
+            return true;
+        }
+        mm::Vec3 velocity =
+            property->m_velocity + mm::Vec3::unitY * property->m_moveVec2.x + property->pad_d0 * property->m_moveSpeed;
+        if (property->pad_d0.dot(velocity) >= param->m_startSlideSpeed) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool StateUtilField::isEndSlipPosuture(gf::GfComBehaviorPc& behavior) {
+    GfComPropertyPc* property = behavior.m_owner->getComponent<GfComPropertyPc>(5);
+    const GfComPropertyPc::SlideParam* param = property->getParamAdapter(4).get<GfComPropertyPc::SlideParam>();
+    if (isSlideSlope(*property)) {
+        return false;
+    }
+    mm::Vec3 velocity =
+        property->m_velocity + mm::Vec3::unitY * property->m_moveVec2.x + property->pad_d0 * property->m_moveSpeed;
+    return property->pad_d0.dot(velocity) <= param->m_landSpeed;
+}
+
 void StateUtilField::onLandSliding(gf::GfComBehaviorPc& behavior) {
     GfComPropertyPc* property = behavior.m_owner->getComponent<GfComPropertyPc>(5);
     const GfComPropertyPc::SlideParam* param = property->getParam<GfComPropertyPc::SlideParam>(4);
     float speed = property->m_moveSpeed;
     property->m_moveSpeed = speed < param->m_landSpeed ? speed : param->m_landSpeed;
     property->m_velocity = mm::Vec3::zero;
+}
+
+bool StateUtilField::isBigLandDistance(gf::GfComBehaviorPc& behavior) {
+    if (FallDistancePlugin* plugin = behavior.getPlugin<FallDistancePlugin>(17)) {
+        GfComPropertyPc* property = behavior.m_owner->getComponent<GfComPropertyPc>(5);
+        const GfComPropertyPc::GravityParam* param = property->getParamAdapter(1).get<GfComPropertyPc::GravityParam>();
+        return plugin->calcDistance(property->m_pos) + 0.01f >= param->m_bigLandDistance;
+    }
+    return false;
+}
+
+void StateUtilField::notifyJumpEnd(gf::GfComBehaviorPc& behavior) {
+    if (GfAppendHandles* handles = GfObjUtil::getExtraMountObject(static_cast<GfObj*>(behavior.m_owner)->m_handle)) {
+        MsgUnk_1000022 msg;
+        handles->sendMessage(static_cast<GfObj*>(behavior.m_owner), msg);
+    }
 }
 
 void StateUtilField::setEnableWaterIn(gf::GfComBehaviorPc& behavior, bool enable) {
