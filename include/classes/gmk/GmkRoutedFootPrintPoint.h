@@ -21,6 +21,9 @@ public:
     virtual void dispose();  // slot 5
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x37);
+    // 2.0.0's symbols name the next two (GmkRoutedFootPrint::update calls updateConcrete with one of its effects)
+    void updateConcrete(void* effect, float dt);
+    void applyEffectParam(bool) const;
     float pad_48 = 900.0f;
     float pad_4c = 100.0f;
     unsigned int m_effectHandle = 0;  // dispose kills it (EffectManager::dead; the name is not the original's)

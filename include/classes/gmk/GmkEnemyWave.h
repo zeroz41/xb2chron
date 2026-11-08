@@ -100,6 +100,8 @@ public:
     GmkEnemy* getBindedEnemy(unsigned int index);
     // 2.0.0's symbols name it.
     void seqWaitToValidLinkGmkList(float dt);
+    // 2.0.0's symbols name it (update calls it).
+    void createGfObjHandle();
     // 2.0.0's symbols name them.
     void applyPopCondMatchedEnemies(bool);
     void reset();

@@ -31,6 +31,18 @@ public:
     void applyPopCondMatched(bool matched);
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x34);
+    // its data (m_createInfo.m_data): the index ranges of the gimmick set's map gimmicks, enemies and routed enemies
+    // applyPopCondMatched passes its condition to (the names are not the original's)
+    struct Data {
+        unsigned int m_mapGimmickBegin;  // 0x0
+        unsigned int m_mapGimmickEnd;    // 0x4
+        unsigned char pad_8[0x8];
+        unsigned int m_enemyBegin;        // 0x10
+        unsigned int m_enemyEnd;          // 0x14
+        unsigned int m_routedEnemyBegin;  // 0x18
+        unsigned int m_routedEnemyEnd;    // 0x1C
+    };
+    const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     // 0x48..0x50: padding (copy_construct_n<gmk::GmkTrigger> copies nothing there)
     GmkPhantom m_phantom;  // 0x50: the destructor destroys it, dispose disposes it (the name is not the original's)
     // the step update runs: create sets it to seqWaitToValidLinkGmkList (symbol), update calls it, dispose clears it.

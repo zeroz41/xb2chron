@@ -3325,6 +3325,68 @@ void GmkMapObj::reqDisposeGob(float wait, unsigned int arg) const {
     m_disposeArg = arg;
 }
 
+// the two effects of its row's "FootEffect": the name as given, then with its last character counted up by one
+void GmkRoutedFootPrint::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    if (info.m_bdatInfo == nullptr) {
+        dispose();
+        return;
+    }
+    const BdatInfo* bdat = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+    if (bdat->m_footEffect != nullptr && *bdat->m_footEffect != '\0') {
+        fw::EffectPack* pack = gf::GfFieldManager::getEffectPack();
+        if (pack != nullptr) {
+            mm::mtl::FixStr<32> name(bdat->m_footEffect);
+            pad_50 = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search(name.m_str, pack);
+            name.m_str[name.length() - 1]++;
+            pad_58 = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search(name.m_str, pack);
+        }
+    }
+}
+
+// its effect made while the player (or camera) is near its place (the data's position: within pad_4c squared
+// vertically and pad_48 squared across), killed once away
+void GmkRoutedFootPrintPoint::updateConcrete(void* effect, float) {
+    debugUpdateMmf();
+    if (!isValid()) {
+        return;
+    }
+    const mm::Vec3& pos = *reinterpret_cast<const mm::Vec3*>(m_createInfo.m_data);
+    bool created = m_effectHandle != 0;
+    bool inside = false;
+    if (isInterestPosExist()) {
+        const mm::Vec3& interest = getInterestPos();
+        float dy = interest.y - pos.y;
+        if (!(pad_4c < dy * dy)) {
+            float dx = interest.x - pos.x;
+            float dz = interest.z - pos.z;
+            float distSq = dx * dx + dz * dz;
+            inside = !(pad_48 < distSq);
+        }
+    }
+    if (created) {
+        if (!inside && m_effectHandle != 0) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(m_effectHandle);
+            m_effectHandle = 0;
+        }
+        return;
+    }
+    if (!inside) {
+        return;
+    }
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_effectHandle != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(m_effectHandle);
+        m_effectHandle = 0;
+    }
+    m_effectHandle = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->create(effect, true);
+    mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setCategory(m_effectHandle, fw::EF_CATEGORY(1));
+    applyEffectParam(false);
+}
+
 void GmkRoutedFootPrint::dispose() {
     AGmkBase::dispose();
     pad_50 = nullptr;
@@ -3921,6 +3983,13 @@ void GmkAntiBladeArea::onLeavePhantom(const IGmkPhantomEventListener::OnLeaveInf
     GmkAntiBladeAreaManager::removeArea(this);
 }
 
+// out of the manager's list, its phantom released
+void GmkAntiBladeArea::dispose() {
+    GmkAntiBladeAreaManager::removeArea(this);
+    m_phantom.dispose();
+    AGmkBase::dispose();
+}
+
 void GmkAntiBladeAreaManager::dispose() {
     m_active = nullptr;
     m_areas.clear();
@@ -4250,6 +4319,100 @@ void GmkEnemyWave::seqWaitToValidLinkGmkList(float dt) {
     reset();
 }
 
+// places the damage effect at the gimmick's placement (m_pos: position, rotation, scale)
+void GmkDmgEffect::applyEffectParam() const {
+    if (m_effectHandle == 0) {
+        return;
+    }
+    effect::SendParam param;
+    param.m_mtx.setRotXYZ(m_pos[1]);
+    param.m_mtx.addTrans(m_pos[0]);
+    param.m_scale = m_pos[2];
+    bool flag;
+    if (pad_48) {
+        // the original calls getGmkType here and drops its answer (GmkJump::validateIconPos does the same)
+        getGmkType();
+        flag = true;
+    } else {
+        flag = false;
+    }
+    param.m_flagB = flag;
+    mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setParam(m_effectHandle, &param);
+}
+
+// marks the map gimmicks, enemies and routed enemies of its data's ranges as driven by it, with matched
+void GmkTrigger::applyPopCondMatched(bool matched) {
+    unsigned int num = getData()->m_mapGimmickEnd - getData()->m_mapGimmickBegin;
+    for (unsigned int i = 0; i < num; i++) {
+        const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+        IGmkList* list = set->m_gmkLists[GmkMapGimmick::TYPE];
+        if (list == nullptr) {
+            continue;
+        }
+        unsigned int index = getData()->m_mapGimmickBegin + i;
+        if (list->getInstNum() <= index) {
+            continue;
+        }
+        AGmkBase* gmk = list->getInst(index);
+        GmkType type = gmk->getGmkType();
+        if (gmk != nullptr && type == GmkMapGimmick::TYPE) {
+            GmkMapGimmick* gimmick = static_cast<GmkMapGimmick*>(gmk);
+            gimmick->pad_a8 = true;
+            gimmick->pad_a9 = matched;
+        }
+    }
+    num = getData()->m_enemyEnd - getData()->m_enemyBegin;
+    for (unsigned int i = 0; i < num; i++) {
+        const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+        IGmkList* list = set->m_gmkLists[GmkEnemy::TYPE];
+        if (list == nullptr) {
+            continue;
+        }
+        unsigned int index = getData()->m_enemyBegin + i;
+        if (list->getInstNum() <= index) {
+            continue;
+        }
+        AGmkBase* gmk = list->getInst(index);
+        GmkType type = gmk->getGmkType();
+        if (gmk != nullptr && type == GmkEnemy::TYPE) {
+            GmkEnemy* enemy = static_cast<GmkEnemy*>(gmk);
+            enemy->m_insts.pad_158 = 1;
+            enemy->m_insts.pad_159 = matched;
+        }
+    }
+    num = getData()->m_routedEnemyEnd - getData()->m_routedEnemyBegin;
+    for (unsigned int i = 0; i < num; i++) {
+        const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+        IGmkList* list = set->m_gmkLists[GmkRoutedEnemy::TYPE];
+        if (list == nullptr) {
+            continue;
+        }
+        unsigned int index = getData()->m_routedEnemyBegin + i;
+        if (list->getInstNum() <= index) {
+            continue;
+        }
+        AGmkBase* gmk = list->getInst(index);
+        GmkType type = gmk->getGmkType();
+        if (gmk != nullptr && type == GmkRoutedEnemy::TYPE) {
+            GmkRoutedEnemy* enemy = static_cast<GmkRoutedEnemy*>(gmk);
+            enemy->m_insts.pad_158 = 1;
+            enemy->m_insts.pad_159 = matched;
+        }
+    }
+}
+
+// waits for the gimmick set's map gimmick and enemy lists, then applies its conditions (as unmatched) and goes on to
+// seqUpdate
+void GmkTrigger::seqWaitToValidLinkGmkList(float) {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (isGmkListLoading(set->m_gmkLists[GmkMapGimmick::TYPE]) || isGmkListLoading(set->m_gmkLists[GmkEnemy::TYPE]) ||
+        isGmkListLoading(set->m_gmkLists[GmkRoutedEnemy::TYPE])) {
+        return;
+    }
+    applyPopCondMatched(false);
+    m_seq = &GmkTrigger::seqUpdate;
+}
+
 // its step, phantom, access and game object released
 void GmkEnemyWave::dispose() {
     m_seq = nullptr;
@@ -4335,6 +4498,65 @@ unsigned int GmkEnemyWave::getEnemyGobInstNum() const {
         num += it->m_enemy->getGobInstNum();
     }
     return num;
+}
+
+// its game object (a collection object of its row), targetable when it is started by access
+void GmkEnemyWave::createGfObjHandle() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    CBdatWrapper bdat(m_list->getBindedBdatFp());
+    m_gob = gf::GfObjFactory::createGmkCollection(bdat, m_createInfo.m_bdatId);
+    {
+        gf::GfObjAcc acc(m_gob);
+        acc.setUserData(gf::GfObjUserData(0), reinterpret_cast<unsigned long>(this));
+    }
+    {
+        gf::GF_OBJ_HANDLE* handle = m_gob;
+        // the original calls getGmkType here and drops its answer
+        getGmkType();
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setDisp(gf::OBJDISP(8), true);
+        }
+    }
+    {
+        bool targetable = getData()->m_accessType == 1;
+        gf::GF_OBJ_HANDLE* gob = m_gob;
+        gf::GfObjAcc acc(gob);
+        if (acc.m_obj != nullptr) {
+            gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(gob)->m_setup);
+            if (targetable) {
+                setup->pad_6c |= 7;
+            } else {
+                setup->pad_6c &= ~7;
+            }
+        }
+        if (gf::GfObj* obj = acc.getObj()) {
+            if (targetable) {
+                obj->pad_110 |= 7;
+            } else {
+                obj->pad_110 &= ~7;
+            }
+        }
+    }
+    gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(m_gob)->m_setup);
+    const mm::Vec3* xform = m_pos;
+    setup->m_initialPos.x = xform[0].x;
+    setup->m_initialPos.y = xform[0].y;
+    setup->m_initialPos.z = xform[0].z;
+    setup->pad_30.x = xform[1].x;
+    setup->pad_30.y = xform[1].y;
+    setup->pad_30.z = xform[1].z;
 }
 
 void GmkEnemyWave::debugDraw() const {}
@@ -5527,6 +5749,31 @@ GmkTrigger::~GmkTrigger() { dispose(); }
 void GmkEvent::disposeGmkPhantom() {
     TGmkActiveList<GmkEvent>::removeGmk(this);
     m_phantom.dispose();
+}
+
+// starts its tutorial once: every gimmick of its list showing the same tutorial (name and number) is marked as seen
+// with it
+void GmkTutorial::beginTutorial() {
+    if (pad_f0) {
+        return;
+    }
+    const Data* data = getData();
+    if (data->pad_0 != nullptr) {
+        IGmkList* list = m_list;
+        unsigned int num = list->getInstNum();
+        for (unsigned int i = 0; i < num; i++) {
+            GmkTutorial* gmk = static_cast<GmkTutorial*>(list->getInst(i));
+            if (gmk != nullptr && gmk->isValid()) {
+                const Data* other = gmk->getData();
+                if (other->pad_0 != nullptr && strcmp(data->pad_0, other->pad_0) == 0 && data->pad_8 == other->pad_8) {
+                    gf::GfGameFlag::setLocal(1, gmk->getGameFlagId(), 1);
+                }
+            }
+        }
+    }
+    gf::GfGameFlag::setLocal(1, getGameFlagId(), 1);
+    pad_f0 = true;
+    gf::GfPlayFactory::createGmkTutorial(getData()->pad_0, getData()->pad_8);
 }
 
 void GmkTutorial::disposeGmkPhantom() {
