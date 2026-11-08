@@ -73,6 +73,12 @@
 #include "gf/GfDataDriverArts.h"
 #include "btl/Utility.h"
 #include "classes/btl/DataManager.h"
+#include "classes/gf/GfMenuBladeList.h"
+#include "gf/GfDataEnemy.h"
+#include "gf/GfDataNpc.h"
+#include "fw/LangUtil.h"
+#include "mtl/MemManager.h"
+#include <string.h>
 
 namespace gf {
 namespace {
@@ -210,6 +216,43 @@ bool GfMenuObjUtil::checkMissionCond(unsigned int mission, const GfMenuBladeList
 
 void GfMenuObjUtil::setDockPos(unsigned int handle, unsigned int target, unsigned char pos, bool outer) {
     ui::UIUtil::setDockPos(handle, target, pos, outer);
+}
+
+void GfMenuObjUtil::setDockPosNoScale(unsigned int handle, unsigned int target, unsigned char side, bool outer) {
+    ui::UIObjectAcc acc(handle);
+    ui::UIObjectAcc targetAcc(target);
+    unsigned short mode = outer;
+    if (acc.m_object != nullptr && targetAcc.m_object != nullptr) {
+        short width;
+        mm::Pnt<short> pos;
+        short height;
+        acc.getSize(true, width, height);
+        width /= 2;
+        height /= 2;
+        mm::Rect<short> rect;
+        targetAcc.getRect(rect, mode);
+        pos.x = rect.x + rect.w / 2;
+        pos.y = rect.y + rect.h / 2;
+        switch (side) {
+        case 0:
+            break;
+        case 1:
+            pos.x -= rect.w / 2 + width;
+            break;
+        case 2:
+            pos.x += rect.w / 2 + width;
+            break;
+        case 3:
+            pos.y = pos.y - height - rect.h / 2;
+            break;
+        case 4:
+            pos.y = height + pos.y + rect.h / 2;
+            break;
+        default:
+            return;
+        }
+        acc.setPosCenter(pos);
+    }
 }
 
 void GfMenuObjUtil::addPos(unsigned int handle, short x, short y) {
@@ -866,6 +909,62 @@ unsigned int GfMenuObjUtil::getBladeCorrectiveRatio(unsigned int blade) {
     return static_cast<int>(percent + (percent > 0.0f ? 0.5f : -0.5f));
 }
 
+bool GfMenuObjUtil::isBladeSelectable(unsigned int blade, const GfMenuBladeList* list) {
+    if (blade == 0 || GfDataBlade::isActivateDriver(blade) || GfDataMercenaries::getTeamID(blade) != 0) {
+        return false;
+    }
+    if (list != nullptr) {
+        for (unsigned int i = 0; i < static_cast<unsigned int>(list->getSize()); i++) {
+            if (list->getContents(i).m_blade == blade) {
+                return false;
+            }
+        }
+    }
+    if (blade - 1005 < 3) {
+        if (list != nullptr) {
+            for (unsigned int i = 0; i < static_cast<unsigned int>(list->getSize()); i++) {
+                if (list->getContents(i).m_blade - 1005 < 3) {
+                    return false;
+                }
+            }
+        }
+        if (!isAvailableTora()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool GfMenuObjUtil::isBladeLastOne(unsigned int blade, const GfMenuBladeList* list) {
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    GfDataBlade::getListParty(blades);
+    GfDataBlade::getListReserver(blades);
+    int creator = GfDataBlade::getCreator(blade);
+    unsigned int count = 0;
+    for (unsigned int i = 0; i < blades.size(); i++) {
+        unsigned short other = blades[i];
+        if (other != 1008 && GfDataBlade::isReleaseLock(other)) {
+            continue;
+        }
+        if (list != nullptr) {
+            bool found = false;
+            for (unsigned int j = 0; j < static_cast<unsigned int>(list->getSize()); j++) {
+                bool same = list->getContents(j).m_blade == other;
+                found |= same;
+                if (same) {
+                    break;
+                }
+            }
+            if (found) {
+                continue;
+            }
+        }
+        if (GfDataBlade::getCreator(other) == creator) {
+            count++;
+        }
+    }
+    return count < 2;
+}
 unsigned int GfMenuObjUtil::getBladeRank(unsigned int blade) {
     if (isScenarioBlade(blade) || GfDataBlade::isRareBlade(blade)) {
         return 5;
@@ -909,6 +1008,80 @@ bool GfMenuObjUtil::hasHomura(unsigned int driver) {
         has = GfDataBlade::getCreator(1001) == driver && !GfDataBlade::isActivateUnuse(1001);
     }
     return has;
+}
+
+bool GfMenuObjUtil::getBladeTeamName(unsigned int blade, ui::UIStr& name) {
+    if (blade == 0) {
+        return false;
+    }
+    if (GfDataBlade::isCommonBlade(blade)) {
+        DataParamAcc acc(4, blade, static_cast<GimmickType>(0));
+        ui::UIStr bladeName = getName(acc);
+        unsigned char* fp = GfDataBdat::getFP(0x13D);
+        unsigned short id = fp != nullptr ? Bdat::getVal(fp, "name", 0x14) : 0;
+        ui::UIStr team(GfDataBdat::getFP(0xF5), id);
+        unsigned int bladeLength = strlen(bladeName.c_str());
+        char* text;
+        if (fw::LangUtil::getLangType() == 12 || fw::LangUtil::getLangType() == 2 ||
+            fw::LangUtil::getLangType() == 4 || fw::LangUtil::getLangType() == 5) {
+            unsigned int teamLength = strlen(team.c_str());
+            text = static_cast<char*>(getAllocator(ALLOCATOR(0))->allocate(bladeLength + teamLength + 2, 4));
+            strcpy(text, team.c_str());
+            strcat(text, " ");
+            strcat(text, bladeName.c_str());
+        } else {
+            unsigned int teamLength = strlen(team.c_str());
+            text = static_cast<char*>(getAllocator(ALLOCATOR(0))->allocate(bladeLength + teamLength + 1, 4));
+            strcpy(text, bladeName.c_str());
+            strcat(text, team.c_str());
+        }
+        name.setupAllocated(text);
+        if (text != nullptr) {
+            mtl::MemManager::deallocate(text, 0, false);
+        }
+    } else {
+        unsigned char* bdat;
+        unsigned int id;
+        if (!GfDataBlade::getMercenaryName(bdat, id, blade)) {
+            return false;
+        }
+        name.setupMstxt(bdat, id);
+    }
+    return true;
+}
+
+ui::UIStr GfMenuObjUtil::getName(const DataParamAcc& acc) {
+    ui::UIStr name;
+    unsigned char* bdat;
+    unsigned int id = 0;
+    switch (acc.getObjType()) {
+    case 3:
+        if (GfDataDriver::getName(bdat, id, acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0)) {
+            name.setupMstxt(bdat, id);
+        }
+        break;
+    case 4:
+        if (ui::UIUtil::isEnableExpType(3) && GfGameManager::isGameTypeIra() &&
+            (acc.isValid() ? acc.getBdatId() : 0) - 1124 < 9) {
+            if (GfDataDriver::getName(bdat, id, GfDataBlade::getIraDriver(acc.isValid() ? acc.getBdatId() : 0))) {
+                name.setupMstxt(bdat, id);
+            }
+        } else if (GfDataBlade::getName(bdat, id, acc.isValid() ? acc.getBdatId() : 0)) {
+            name.setupMstxt(bdat, id);
+        }
+        break;
+    case 5:
+        if (GfDataEnemy::getName(bdat, id, acc.isValid() ? acc.getBdatId() : 0)) {
+            name.setupMstxt(bdat, id);
+        }
+        break;
+    case 6:
+        if (GfDataNpc::getName(bdat, id, acc.isValid() ? acc.getBdatId() : 0)) {
+            name.setupMstxt(bdat, id);
+        }
+        break;
+    }
+    return name;
 }
 
 unsigned short GfMenuObjUtil::getMsgIDFromList(unsigned int list, unsigned short index) {
@@ -1314,6 +1487,51 @@ unsigned int GfMenuObjUtil::convMenuDriverID(unsigned int driver) {
     return id;
 }
 
+int GfMenuObjUtil::getFaceIconID(const DataParamAcc& acc) {
+    // the common blades' face icons by icon data (the names are not the original's)
+    static const struct {
+        int m_icon;
+        int m_face;
+    } s_commonFaces[4] = {{0xF8, 0x10A}, {0xFA, 0x10E}, {0xFC, 0x112}, {0xFD, 0x116}};
+    int icon = acc.getIconData();
+    int face = icon;
+    if (acc.getObjType() == 3) {
+        if ((acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0) == 1) {
+            if (GfDataUtil::getScenarioFlag() >= 7060) {
+                face = 0x108;
+            } else if (GfDataUtil::getScenarioFlag() > 1029) {
+                face = 0x106;
+            }
+        }
+    } else if (acc.getObjType() == 4) {
+        if (GfDataBlade::isCommonBlade(acc.isValid() ? acc.getBdatId() : 0)) {
+            for (int i = 0; i < 4; i++) {
+                if (icon == s_commonFaces[i].m_icon) {
+                    face = s_commonFaces[i].m_face;
+                    break;
+                }
+            }
+            for (unsigned int part = 0; part < 4; part++) {
+                if (acc.isDispInitExtraParts(part)) {
+                    if (face == 0x10E) {
+                        part = part + 1 > 3 ? 0 : part + 1;
+                    }
+                    face += part;
+                    break;
+                }
+            }
+        } else if ((acc.isValid() ? acc.getBdatId() : 0) == 0x3F2 && GfDataUtil::getScenarioFlag() > 7024) {
+            face = 0x105;
+        }
+    }
+    if (ui::UIUtil::isEnableExpType(3) && GfGameManager::isGameTypeIra() && face == 0x143) {
+        if (isIraSinMaskOff()) {
+            face = 0x149;
+        }
+    }
+    return face;
+}
+
 unsigned int GfMenuObjUtil::getEnableArts(mm::mtl::FixedArray<unsigned int, 4>& arts, unsigned int driver,
                                           unsigned int wpnType, PTPOS mode, bool flag) {
     mm::mtl::FixedArray<unsigned int, 3> slotArts;
@@ -1468,6 +1686,18 @@ bool GfMenuObjUtil::getMenuCondition(unsigned int condition) {
     return GfGameCond::isGameCond(static_cast<unsigned short>(Bdat::getVal(fp, "cond", condition)));
 }
 
+void GfMenuObjUtil::placeObjectH(ui::UISelectObjList* list, const mm::Pnt<short>& center, unsigned int width) {
+    int count = list->getSize();
+    int offset = count % 2 == 0 ? static_cast<int>(width) / 2 : 0;
+    int start = -(count / 2) * static_cast<int>(width) + offset;
+    short x = center.x;
+    short y = center.y;
+    for (int i = 0; i < count; i++) {
+        ui::UIObjectAcc acc(list->getContents(i));
+        acc.setPosCenter(mm::Pnt<short>(start + i * width + x, y));
+    }
+}
+
 void GfMenuObjUtil::placeObjectHLeft(unsigned int handle, const char* format, unsigned int count,
                                      const mm::Pnt<short>& left, unsigned int width) {
     mm::mtl::FixStr<32> name;
@@ -1496,6 +1726,18 @@ void GfMenuObjUtil::placeObjectHRatio(unsigned int base, unsigned int point, flo
         pos.x = baseRect.x + pointRect.w / 2 + static_cast<int>((baseRect.w - pointRect.w) * ratio);
     }
     pointAcc.setPosCenter(pos);
+}
+
+void GfMenuObjUtil::placeObjectV(ui::UISelectObjList* list, const mm::Pnt<short>& center, unsigned int spacing) {
+    int count = list->getSize();
+    int offset = count % 2 == 0 ? static_cast<int>(spacing) / 2 : 0;
+    short x = center.x;
+    int start = -(count / 2) * static_cast<int>(spacing) + offset;
+    short y = center.y;
+    for (int i = 0; i < count; i++) {
+        ui::UIObjectAcc acc(list->getContents(i));
+        acc.setPosCenter(mm::Pnt<short>(x, start + i * spacing + y));
+    }
 }
 
 unsigned int GfMenuObjUtil::getFavoriteStat(unsigned int type, unsigned int id, FAVORITE favorite) {

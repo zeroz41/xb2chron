@@ -116,6 +116,8 @@ public:
     static bool checkCCStart(GfMenuCallContext* context);  // a context that is not running yet
     static bool checkCCNext(GfMenuCallContext* context, unsigned int id);  // a context running on that id
     static void setDockPos(unsigned int handle, unsigned int target, unsigned char pos, bool);
+    // like setDockPos, with the target's rect read without its scale (getRect mode 0, or 1 when outer)
+    static void setDockPosNoScale(unsigned int handle, unsigned int target, unsigned char side, bool outer);
     static void addPos(unsigned int handle, short x, short y);
     // a blade's or driver's image placement (GfMenuObjBladeRelease::seqOpenImage moves the image by it and scales
     // it); the field names are not the original's
@@ -328,6 +330,8 @@ public:
     static unsigned short getBladeRareIconID(unsigned int blade);  // 0 for none
     static unsigned short getBladeAttributeID(unsigned int blade);
     static bool isBladeSelectable(unsigned int blade, const GfMenuBladeList* list);
+    // false while driver 4 is unused; isBladeSelectable asks it for blades 1005-1007
+    static bool isAvailableTora();
     static bool isBladeReleasable(unsigned int blade, const GfMenuBladeList* list);
     static bool isBladeAchivementReleased(unsigned int blade);  // a bond line's achievement released at some level
     static unsigned int getBladeRank(unsigned int blade);
