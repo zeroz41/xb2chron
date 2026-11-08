@@ -33,6 +33,10 @@ public:
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
+    // the row (as in the sibling gimmicks; the name is not the original's)
+    const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
+    void createIcon();
+    void updateIcon();
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(46);
     // user-provided: Vector<GmkClimbing>::resize stores the defaults below only (no zero fill of the element first)

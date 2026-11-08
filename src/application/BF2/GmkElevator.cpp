@@ -3020,6 +3020,43 @@ void GmkMapJump::dispose() {
 }
 
 void GmkMapJump::debugDraw() const { AGmkBase::debugDraw(); }
+
+void GmkMapJump::update(float) {
+    debugUpdateMmf();
+    if (!isValid()) {
+        return;
+    }
+    bool matched = getBdatInfo()->isPopCondMatched();
+    if (pad_e0 != matched) {
+        if (matched) {
+            const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+            if (set == nullptr || !set->m_createInfo.m_flag) {
+                m_phantom.create(*this, nullptr, false);
+            }
+        } else {
+            m_phantom.dispose();
+        }
+        pad_e0 = matched;
+    }
+    if (m_phantom.pad_83) {
+        beginEvent();
+    } else if (pad_e1) {
+        pad_e1 = false;
+    }
+}
+
+void GmkMapJump::beginEvent() {
+    if (pad_e1) {
+        return;
+    }
+    if (!gf::GfGameManager::isMapjumpOK()) {
+        return;
+    }
+    pad_e1 = true;
+    gf::GfMapjumpInfo info(getBdatInfo()->m_mapJumpId);
+    info.m_flags = gf::GfMapjumpInfo::Flags();
+    gf::GfPlayFactory::createMapjump(info);
+}
 void GmkGrave::BdatInfo::create(unsigned char* fp, int row, const AGmkBase& gmk) {
     m_enPopId = 0;
     m_windowArg = 0;
@@ -8238,6 +8275,51 @@ void GmkClimbing::dispose() {
     AGmkBase::dispose();
 }
 
+void GmkClimbing::createIcon() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_iconContext != nullptr) {
+        gf::GfMenuObjFieldIcon::close(m_iconContext);
+        if (m_iconContext != nullptr) {
+            m_iconContext->release();
+            m_iconContext = nullptr;
+        }
+    }
+    m_iconContext = gf::GfMenuCallContext::create();
+    gf::GfMenuObjFieldIcon::OpenParam param;
+    param.m_offset.m_offset = mm::Vec3(0.0f, 0.0f, 0.0f);
+    param.m_offset.m_bone = nullptr;
+    param.m_icon = (unsigned short)Bdat::getValCheck(gf::GfDataBdat::getFP(0x7b), 1, 0x26, 2);
+    param.m_pos.x = m_iconPos.x;
+    param.m_pos.y = m_iconPos.y;
+    param.m_pos.z = m_iconPos.z;
+    gf::GfMenuObjFieldIcon::open(m_iconContext, param);
+}
+
+// shows the icon while nothing stands between the camera and it
+void GmkClimbing::updateIcon() {
+    if (m_iconContext == nullptr) {
+        return;
+    }
+    bool hit = false;
+    const mm::Vec3& iconPos = m_iconPos;
+    ml::Scn* scn = ml::Scn::sys();
+    if (scn != nullptr && scn->getCam(-1) != nullptr) {
+        fw::TColiCheckResult<256> result;
+        result.clear();
+        mm::Vec3 eye = ml::Scn::sys()->getCam(-1)->m_info.m_render->m_transform.m_posGbl;
+        fw::ColiCheckConfig config;
+        config.m_mode = 0;
+        config.m_option = false;
+        config.m_flags = 9;
+        config.m_mask = 0x80000020;
+        hit = fw::ColiCheck::testLineChara(result, eye, iconPos, config);
+    }
+    gf::GfMenuObjFieldIcon::disp(m_iconContext, !hit);
+}
+
 void GmkBlade::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
     m_kind = (unsigned char)Bdat::getValCheck(bdat.m_fp, "BladeSizeCheck", row, 1);
     m_scenarioFlag = ScenarioFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2),
@@ -8259,6 +8341,112 @@ void GmkBlade::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk)
     }
     m_invisibleXZSq = (float)invisibleXZ * (float)invisibleXZ;
     m_invisibleYSq = (float)invisibleY * (float)invisibleY;
+}
+
+bool GmkBlade::BdatInfo::isPopCondMatched(const mm::Vec3& pos) const {
+    if (!isPopCommonCondMatched()) {
+        return false;
+    }
+    if (!isInterestPosExist()) {
+        return false;
+    }
+    const mm::Vec3& interest = getInterestPos();
+    float dy = interest.y - pos.y;
+    if (m_visibleYSq < dy * dy) {
+        return false;
+    }
+    float dx = interest.x - pos.x;
+    float dz = interest.z - pos.z;
+    float distXZSq = dx * dx + dz * dz;
+    if (m_visibleXZSq < distXZSq) {
+        return false;
+    }
+    if (gf::GfGameManager::isBattle() && m_battleReaction == 0) {
+        return false;
+    }
+    return true;
+}
+
+void GmkBlade::update(float) {
+    debugUpdateMmf();
+    if (!isValid()) {
+        return;
+    }
+    if (!isInterestPosExist()) {
+        return;
+    }
+    if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) && m_bladeId != 0 && getBdatInfo()->isPopCondMatched(*m_pos)) {
+        createGobInst();
+    } else if (pad_54 || (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) &&
+                          (m_bladeId == 0 || getBdatInfo()->isDepopCondMatched(*m_pos)))) {
+        gf::GF_OBJ_HANDLE* gob = m_gob;
+        if (gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            gf::GfObjAcc acc(gob);
+            if (acc.getObj() != nullptr && !acc.isDestroy() && !acc.testFlag(17)) {
+                gf::SCOM_DESTROY_GAME_OBJ::create(gob, 1.0f, 0);
+            }
+        }
+    }
+    pad_54 = 0;
+}
+
+void GmkBlade::createGobInst() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    CBdatWrapper bdat(m_list->getBindedBdatFp());
+    m_gob = gf::GfObjFactory::createGmkBlade(bdat, m_createInfo.m_bdatId, m_bladeId);
+    if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    bindToGameObj(m_gob);
+    gf::GF_OBJ_HANDLE* handle = m_gob;
+    if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        bool disp;
+        if (pad_55) {
+            // the original calls getGmkType here and drops its answer
+            getGmkType();
+            disp = true;
+        } else {
+            disp = false;
+        }
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setDisp(gf::OBJDISP(8), disp);
+        }
+    }
+    gf::GfObjSetupNpc* setup = mm::mtl::rttiCast<gf::GfObjSetupNpc>(gf::GfObjManager::getObjInfo(m_gob)->m_setup);
+    const mm::Vec3* xform = m_pos;
+    setup->m_initialPos.x = xform[0].x;
+    setup->m_initialPos.y = xform[0].y;
+    setup->m_initialPos.z = xform[0].z;
+    setup->pad_30.x = xform[1].x;
+    setup->pad_30.y = xform[1].y;
+    setup->pad_30.z = xform[1].z;
+}
+
+void GmkBlade::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3)) {
+        AGmkBase::onGobEvent(evt, handle);
+        if (m_gob == handle && m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            gf::GfObjAcc acc(m_gob);
+            if (acc.m_obj != nullptr) {
+                acc.setUserData(gf::GfObjUserData(0), 0);
+            }
+            gf::GfObjUtil::destroy(m_gob);
+            m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        }
+    }
 }
 
 void GmkDmgGimmick::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {

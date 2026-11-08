@@ -3,6 +3,7 @@
 
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkPhantomSimple.h"
+namespace fw { class ColiUserData; }
 
 namespace gmk {
 // table 0x7100B6E170
@@ -16,6 +17,7 @@ public:
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3
     virtual void dispose();  // slot 5
+    void createGmkPhantom(fw::ColiUserData* userData) const;
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x31);
     // 0x48..0x50: padding (neither stored nor copied by the Vector instances)

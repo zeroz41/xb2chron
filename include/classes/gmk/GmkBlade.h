@@ -20,6 +20,8 @@ public:
         BdatInfo() : m_kind(0), m_condition(0), m_battleReaction(0), m_visibleXZSq(0), m_visibleYSq(0), m_invisibleXZSq(0), m_invisibleYSq(0) {}
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         bool isPopCommonCondMatched() const;
+        bool isPopCondMatched(const mm::Vec3& pos) const;
+        bool isDepopCondMatched(const mm::Vec3& pos) const;
         // GfGmkBladeTraverser::onTraverse compares it with its own; the row's "BladeSizeCheck" (the field names are
         // not the original's: the row's column names)
         unsigned char m_kind;  // 0x0
@@ -41,6 +43,9 @@ public:
     // handle's object gets this as its gimmick user data; its npc behavior's binded info is validated with false
     // (createGobInst calls it)
     void bindToGameObj(gf::GF_OBJ_HANDLE* handle) const;
+    void createGobInst();
+    // the row (as in the sibling gimmicks; the name is not the original's)
+    const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(47);
     // its game object (dispose clears its user data, destroys it and stores -1; the name is not the original's)
