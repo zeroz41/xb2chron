@@ -12,6 +12,7 @@ namespace gf { class GfEvent; }
 namespace gf { class IGfEvent; }
 namespace gf { enum EXEC_STATE : int; }
 namespace gf { enum GF_STATE : int; }
+namespace gf { enum RELOAD_BDAT : int; }
 
 namespace gf {
 // table 0x7100B591E8
@@ -101,6 +102,10 @@ public:
     static void callExecBuy(unsigned int, unsigned int, unsigned int);  // each listener's gevExecBuy
     static void callGetArts(unsigned int, unsigned int, bool);  // each listener's gevGetArts
     static void callChangeWeather(unsigned int, unsigned int);  // each listener's gevChangeWeather
+    // each listener's gevReloadBdat with GfDataBdat's reload count. Inline: no copy in 1.0.0's or 2.0.0's symbols,
+    // SCOM_RELOAD_TEXT::exec has it inlined twice (before and after the reload); defined in gf_req_scom.cpp. The name
+    // is not the original's.
+    static inline void callReloadBdat(RELOAD_BDAT type);
 
 private:
     // the listeners each call* reaches in turn (addEventCallback, removeEventCallback)

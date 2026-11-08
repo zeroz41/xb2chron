@@ -139,6 +139,14 @@
 #include "mm/mtl/FixStr.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "gf/GfGameUtilQuestArts.h"
+#include "fw/LangUtil.h"
+#include "classes/fw/BdatManager.h"
+#include "ui/UIUtil.h"
+#include "classes/ui/UIManager.h"
+#include "classes/gf/GfDataBdat.h"
+#include "classes/gf/IGfEvent.h"
+#include "classes/gf/GfEvent.h"
+#include "classes/gf/SCOM_RELOAD_TEXT.h"
 namespace gf {
 bool SCOM_ADD_MONEY::exec(fw::UpdateInfo const&) {
     GfGameUtil::addMoney(m_money);
@@ -241,6 +249,28 @@ bool SCOM_OBJ_WARP_POS::exec(fw::UpdateInfo const&) {
     return true;
 }
 
+void SCOM_OBJ_WARP_POS::create(GF_OBJ_HANDLE* handle, const mm::Vec3& pos, const mm::Vec3& rot, bool arg) {
+    fw::Transform transform;
+    transform.position = pos;
+    float x = rot.x;
+    float y = rot.y;
+    float z = rot.z;
+    float sx = ::sinf(x * 0.5f);
+    float cx = ::cosf(x * 0.5f);
+    float sy = ::sinf(y * 0.5f);
+    float cy = ::cosf(y * 0.5f);
+    float sz = ::sinf(z * 0.5f);
+    float cz = ::cosf(z * 0.5f);
+    transform.rotation = mm::Quat(sx * cy * cz + cx * sy * sz, cx * sy * cz - sx * cy * sz,
+                                  cx * cy * sz - sx * sy * cz, cx * cy * cz + sx * sy * sz);
+#line 767
+    SCOM_OBJ_WARP_POS* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_OBJ_WARP_POS(SCOM_TYPE(17));
+    request->m_value = handle;
+    request->m_value2 = transform;
+    request->m_value3 = arg;
+    GfReqSmallCom::addRequestParallel(request);
+}
+
 void SCOM_OBJ_WARP_POS::create(GF_OBJ_HANDLE* handle, const fw::Transform& transform, bool arg) {
 #line 782
     SCOM_OBJ_WARP_POS* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_OBJ_WARP_POS(SCOM_TYPE(17));
@@ -288,6 +318,36 @@ bool SCOM_LOADING::exec(fw::UpdateInfo const&) {
     }
     GfMenuFade::setLoading(m_value, m_value2);
     return true;
+}
+
+inline void GfEvent::callReloadBdat(RELOAD_BDAT type) {
+    GfEvent* event = get();
+    unsigned int count = GfDataBdat::getReloadCount();
+    for (unsigned long i = 0; i < event->m_listeners.size(); ++i) {
+        event->m_listeners[i]->gevReloadBdat(type, count);
+    }
+}
+
+bool SCOM_RELOAD_TEXT::exec(fw::UpdateInfo const&) {
+    GfEvent::callReloadBdat(RELOAD_BDAT(0));
+    GfDataBdat::releaseBdatInfo();
+    fw::BdatManager::reloadBdat(1);
+    ui::UIUtil::initBdatFP();
+    GfDataBdat::setupBdatInfo();
+    GfDataUtil::refreshBdatParam();
+    ui::UIManager::get()->reloadText();
+    GfEvent::callReloadBdat(RELOAD_BDAT(1));
+    return true;
+}
+
+unsigned long SCOM_RELOAD_TEXT::create(fw::LangType lang) {
+    if (fw::LangUtil::getLangType() == lang) {
+        return -1;
+    }
+    fw::LangUtil::setLangType(lang);
+#line 1278
+    SCOM_RELOAD_TEXT* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_RELOAD_TEXT(SCOM_TYPE(31));
+    return GfReqSmallCom::addRequest(request);
 }
 
 bool SCOM_EXEC_MOUNT::exec(fw::UpdateInfo const&) {
@@ -1037,6 +1097,28 @@ void SCOM_OBJ_VFADE::fn_710055E1A4(GF_OBJ_HANDLE* obj, float ratio, unsigned int
         request->updateFade(info);
         delete request;
     }
+}
+
+unsigned long SCOM_OBJ_VFADE::createBattleParts(GF_OBJ_HANDLE* obj, float time, float ratio, unsigned int,
+                                                VFPARTS parts) {
+    if (obj == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return -1;
+    }
+    GfObjAcc acc(obj);
+    switch (acc.getType()) {
+    case 4:
+        if (acc.getBladeId() == 1105) {
+            return createParts(obj, time, ratio, parts, VFACC(4));
+        }
+        parts = VFPARTS(0);
+        break;
+    case 5:
+        if (acc.isEnemyBlade()) {
+            return createParts(obj, time, ratio, parts, VFACC(4));
+        }
+        break;
+    }
+    return createPartsWithSingle(obj, time, ratio, parts, VFACC(4));
 }
 
 unsigned long SCOM_QUEST_REACH::createDiscoverLandmark(unsigned int a0) {

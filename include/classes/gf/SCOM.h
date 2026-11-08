@@ -14,8 +14,9 @@ enum SCOM_TYPE : int {};
 class SCOM {
 public:
     // inline: every create function builds its request in place (the handle comes from GfReqSmallCom's counter)
-    explicit SCOM(SCOM_TYPE type, unsigned long handle = GfReqSmallCom::sys()->newHandle())
-        : m_handle(handle), m_state(1), m_count(0), m_type(type) {}
+    // state: SCOM_RELOAD_TEXT's request starts at 2 (stored in the constructor's order, before m_count)
+    explicit SCOM(SCOM_TYPE type, unsigned long handle = GfReqSmallCom::sys()->newHandle(), unsigned short state = 1)
+        : m_handle(handle), m_state(state), m_count(0), m_type(type) {}
     virtual ~SCOM() { m_handle = -1; }  // slot 0
     // true once the request is done
     virtual bool exec(fw::UpdateInfo const&) = 0;  // slot 2
