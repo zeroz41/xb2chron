@@ -140,38 +140,6 @@ void GfMenuObjDamageBuff::ListListener::reciveEvent(const ui::EventData& event, 
     case 1:
         acc.setDisp(false);
         break;
-    case 3: {
-        // the control's end: the screen's index << 16, its root << 12, the control << 8 and its kind
-        unsigned int id = event.m_param0;
-        if (id == 0) {
-            break;
-        }
-        unsigned int unite = (id >> 12) & 0xf;
-        ui::UIObjectAcc screen(unite == 0 ? acc.searchDuplicatedChild("LAY_buff_root", id >> 16)
-                                          : acc.searchDuplicatedChild("LAY_unite_root", id >> 16));
-        if (screen.m_object != nullptr) {
-            switch ((id >> 8) & 0xf) {
-            case 1: {
-                GfMenuObjUtil::CtrlParam param;
-                param.m_time = 0.25f;
-                param.m_eventId = (id & 0xff) | ((id >> 16) << 16) | (unite << 12) | 0x200;
-                param.m_methods = (id & 0xff) != 0 ? 0x42 : 0x22;
-                param.m_distance = 15;
-                int ctrl = GfMenuObjUtil::startCtrl(screen.m_handle, param, nullptr);
-                if (ctrl == -1) {
-                    removeObject(screen);
-                } else {
-                    GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
-                }
-                break;
-            }
-            case 2:
-                removeObject(screen);
-                break;
-            }
-        }
-        break;
-    }
     case 0x21: {
         ui::UIObjectAcc screen(acc.searchDuplicatedChild("LAY_buff_root", event.m_paramShort[3]));
         if (screen.m_object != nullptr) {
@@ -179,15 +147,13 @@ void GfMenuObjDamageBuff::ListListener::reciveEvent(const ui::EventData& event, 
             screen.setDisp(true);
             int unused;
             setupScreen(screen.m_handle, event.m_param0, event.m_paramShort[2], event.m_param2, unused);
-            int type = event.m_param0;
-            // the screen's index (the event's fourth short) << 16
-            unsigned int index = event.m_param1 & 0xffff0000;
+            bool notBuff = event.m_param0 != 0;  // the event's type
             GfMenuObjUtil::CtrlParam param;
             param.m_time = 1.0f;
-            // 1 << 8 for its fade in, and whether it is not a buff
-            param.m_eventId = index | 0x100 | (type != 0);
-            param.m_methods = type != 0 ? 0x40 : 0x20;
+            param.m_methods = notBuff ? 0x40 : 0x20;
             param.m_distance = 60;
+            // the screen's index (the event's fourth short) << 16, 1 << 8 for its fade in, and whether it is not a buff
+            param.m_eventId = (event.m_param1 & 0xffff0000) | 0x100 | notBuff;
             int ctrl = GfMenuObjUtil::startCtrl(screen.m_handle, param, nullptr);
             if (ctrl == -1) {
                 removeObject(screen);
@@ -224,9 +190,9 @@ void GfMenuObjDamageBuff::ListListener::reciveEvent(const ui::EventData& event, 
             }
             GfMenuObjUtil::CtrlParam param;
             param.m_time = 1.0f;
-            param.m_eventId = (event.m_paramShort[3] << 16) | 0x1100;
             param.m_methods = 0x20;
             param.m_distance = 60;
+            param.m_eventId = (event.m_paramShort[3] << 16) | 0x1100;
             int ctrl = GfMenuObjUtil::startCtrl(screen.m_handle, param, nullptr);
             if (ctrl == -1) {
                 removeObject(screen);
@@ -246,6 +212,39 @@ void GfMenuObjDamageBuff::ListListener::reciveEvent(const ui::EventData& event, 
     default:
         UIObjectListener::reciveEvent(event, handle);
         break;
+    case 3: {
+        // the control's end: the screen's index << 16, its root << 12, the control << 8 and its kind
+        unsigned int id = event.m_param0;
+        if (id == 0) {
+            break;
+        }
+        unsigned int index = id >> 16;
+        unsigned int unite = (id >> 12) & 0xf;
+        ui::UIObjectAcc screen(unite == 0 ? acc.searchDuplicatedChild("LAY_buff_root", index)
+                                          : acc.searchDuplicatedChild("LAY_unite_root", index));
+        if (screen.m_object != nullptr) {
+            switch ((id >> 8) & 0xf) {
+            case 1: {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_time = 0.25f;
+                param.m_distance = 15;
+                param.m_methods = (id & 0xff) == 0 ? 0x22 : 0x42;
+                param.m_eventId = (id & 0xff) | (index << 16) | (unite << 12) | 0x200;
+                int ctrl = GfMenuObjUtil::startCtrl(screen.m_handle, param, nullptr);
+                if (ctrl == -1) {
+                    removeObject(screen);
+                } else {
+                    GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+                }
+                break;
+            }
+            case 2:
+                removeObject(screen);
+                break;
+            }
+        }
+        break;
+    }
     }
 }
 
