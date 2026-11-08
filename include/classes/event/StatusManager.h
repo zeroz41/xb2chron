@@ -37,6 +37,9 @@ public:
     // false while the change still waits (evt_status.change then waits)
     bool change(EVT_change type, int param1, int param2, int param3, int param4, const char* name);
     unsigned int getDriverByBladeId(unsigned int bladeId) const;
+    // judge and change call it; it formats into a 512-byte buffer and prints nothing in this build (the first
+    // argument's meaning is not known)
+    void log(const char*, const char* format, ...);
     // 2.0.0's StatusManager::getHomuriFlag (non-const, no parameters); 3.0.1 inlines it (MovieManager::makePath):
     // local game flag 0x89fb, which picks the HOMURA (0) or HIKARI movie; the return type is not known
     unsigned int getHomuriFlag() { return gf::GfGameFlag::getLocal(1, 0x89fb); }

@@ -5330,6 +5330,42 @@ bool QuestManager::entry(unsigned int id, bool* result) {
     return true;
 }
 
+bool QuestManager::setComp(unsigned int id, unsigned int task, bool) {
+    if (!(m_flags & 1)) {
+        gf::GfQuestEvent::setQuestComp(id, task);
+        m_flags |= 1;
+    }
+    if (gf::GfQuestEvent::isActive()) {
+        mm::mtl::Singleton<SkipManager>::getPtr()->skip(false, 0.0f);
+        mm::mtl::Singleton<SkipManager>::getPtr()->setSkipVolume(false);
+        mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(3), true);
+        return false;
+    }
+    mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(3), false);
+    m_flags = 0;
+    return true;
+}
+
+bool QuestManager::disp(unsigned int id, bool result) {
+    if (!(m_flags & 1)) {
+        if (result) {
+            gf::GfQuestEvent::openResult(id);
+        } else {
+            gf::GfQuestEvent::openEntry(id);
+        }
+        m_flags |= 1;
+    }
+    if (gf::GfQuestEvent::isActive()) {
+        mm::mtl::Singleton<SkipManager>::getPtr()->skip(false, 0.0f);
+        mm::mtl::Singleton<SkipManager>::getPtr()->setSkipVolume(false);
+        mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(3), true);
+        return false;
+    }
+    mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(3), false);
+    m_flags = 0;
+    return true;
+}
+
 void QuestManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
     case 4:
@@ -5368,6 +5404,14 @@ void StatusManager::OnEventProc(event::MSG_TYPE msg) {
     default:
         break;
     }
+}
+
+void StatusManager::log(const char*, const char* format, ...) {
+    char buffer[512];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
 }
 
 }  // namespace event
@@ -6214,28 +6258,80 @@ void ShakeManager::OnEventProc(event::MSG_TYPE msg) {
 }  // namespace event
 
 #include "classes/event/CaptureManager.h"
+#include "classes/event/EnvManager.h"
+#include "classes/event/FadeManager.h"
 
 namespace event {
+
+void CaptureManager::stop() {
+    m_flags.reset(1);
+    switch (m_type) {
+    case 0:
+        mm::mtl::Singleton<FadeManager>::getPtr()->pad_10 &= ~1;
+        break;
+    case 1:
+        mm::mtl::Singleton<FadeManager>::getPtr()->pad_10 &= ~1;
+        break;
+    case 2:
+        mm::mtl::Singleton<FadeManager>::getPtr()->pad_10 &= ~1;
+        break;
+    case 3:
+        mm::mtl::Singleton<FadeManager>::getPtr()->pad_10 &= ~1;
+        break;
+    }
+    if (m_colorFilter != 0) {
+        mm::mtl::Singleton<EnvManager>::getPtr()->setColorFilter(static_cast<EnvManager::COLORFILTER_TYPE>(0), 0, 0, 0.0f);
+    }
+}
+
+const char* CaptureManager::MOV_PATH = "/MonolithSoft/BF2/movie";
+const char* CaptureManager::JPG_PATH = "/MonolithSoft/BF2/jpeg";
+
+void CaptureManager::start() {
+    m_flags.set(1);
+    pad_1c = 0;
+    m_names.clear();
+    switch (m_type) {
+    case 0:
+    case 1:
+    case 2:
+        m_dir = m_device + ":" + MOV_PATH;
+        break;
+    case 3:
+    case 4:
+    case 5:
+        m_dir = m_device + ":" + JPG_PATH;
+        break;
+    default:
+        return;
+    }
+    m_base = m_dir;
+    m_base += "/";
+    m_base += mm::mtl::PtrSingleton<Manager>::sys()->m_sceneName.m_str;
+    m_rawAvi.format("%s/raw_%s.avi", m_dir.m_str, mm::mtl::PtrSingleton<Manager>::sys()->m_sceneName.m_str);
+    m_mpg.format("%s/%s.mpg", m_dir.m_str, mm::mtl::PtrSingleton<Manager>::sys()->m_sceneName.m_str);
+    m_halfMpg.format("%s/half_%s.mpg", m_dir.m_str, mm::mtl::PtrSingleton<Manager>::sys()->m_sceneName.m_str);
+}
 
 void CaptureManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
     case 4:
-        if (m_flags & 1) {
+        if (m_flags.test(0)) {
             ready();
         }
         break;
     case 8:
-        if ((m_flags & 3) == 1) {
+        if (m_flags.test(0) && !m_flags.test(1)) {
             start();
         }
         break;
     case 10:
-        if (m_flags & 2) {
+        if (m_flags.test(1)) {
             stop();
         }
         break;
     case 12:
-        if (m_flags & 2) {
+        if (m_flags.test(1)) {
             stop();
         }
         break;
@@ -9416,6 +9512,21 @@ void DofManager::stop() {
     }
 }
 
+void SelectWindow::update() {
+    gf::GfMenuCallContext::GfMenuResult result;
+    if ((pad_8 & 1) && m_context->popResult(result) && result.m_id == 2) {
+        if (m_context != nullptr) {
+            gf::GfMenuObjBalloon::close(m_context, true);
+            if (m_context != nullptr) {
+                m_context->release();
+                m_context = nullptr;
+            }
+        }
+        pad_c = result.m_value + 1;
+        pad_8 = 0;
+    }
+}
+
 SelectManager::SelectManager() : pad_10(0), pad_14(0), pad_38(0), m_result(0) {}
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
@@ -10232,7 +10343,57 @@ void VoiceManager::OnEventProc(event::MSG_TYPE msg) {
     }
 }
 
+void VolumePlayer::update() {
+    for (unsigned int i = 0; i < m_entries.size(); i++) {
+        if (m_entries[i].m_reset) {
+            gf::GfGameEvent::setCategoryVolume(static_cast<fw::SoundCategory>(m_entries[i].m_cate), m_entries[i].m_volume,
+                                               m_entries[i].m_frame * (1.0f / 30.0f));
+            if (m_entries[i].m_cate == 1) {
+                gf::GfGameEvent::setCategoryVolume(static_cast<fw::SoundCategory>(10), m_entries[i].m_volume,
+                                                   m_entries[i].m_frame * (1.0f / 30.0f));
+            }
+        } else {
+            gf::GfGameEvent::setCategoryVolume(static_cast<fw::SoundCategory>(m_entries[i].m_cate), 1.0f,
+                                               m_entries[i].m_frame * (1.0f / 30.0f));
+            if (m_entries[i].m_cate == 1) {
+                gf::GfGameEvent::setCategoryVolume(static_cast<fw::SoundCategory>(10), 1.0f,
+                                                   m_entries[i].m_frame * (1.0f / 30.0f));
+            }
+        }
+    }
+    m_entries.clear();
+}
+
 VolumeManager::VolumeManager() : pad_10(0), pad_14(0) {}
+
+void VolumeManager::init() {
+    m_volumes.assign(1.0f);
+    m_seamless.m_flags = 0;
+    m_seamless.pad_48 = 0;
+    m_seamless.m_timer = 0.0f;
+    m_seamless.pad_10 = 0;
+    m_seamless.m_volumes.assign(1.0f);
+    m_skip.clear();
+    VolumePlayer* player = mm::mtl::Singleton<VolumePlayer>::getPtr();
+    player->update();
+    player->m_entries.clear();
+}
+
+void VolumeManager::clear() {
+    m_volumes.assign(1.0f);
+    for (int cate = 0; cate < 14; cate++) {
+        resetCategoryVolume(static_cast<CATE>(cate), 30.0f);
+    }
+    m_seamless.m_flags = 0;
+    m_seamless.pad_48 = 0;
+    m_seamless.m_timer = 0.0f;
+    m_seamless.pad_10 = 0;
+    m_seamless.m_volumes.assign(1.0f);
+    m_skip.clear();
+    VolumePlayer* player = mm::mtl::Singleton<VolumePlayer>::getPtr();
+    player->update();
+    player->m_entries.clear();
+}
 
 inline void VolumeSeamless::update() {
     if (m_flags & 6) {

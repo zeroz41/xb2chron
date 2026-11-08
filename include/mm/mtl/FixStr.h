@@ -91,6 +91,12 @@ public:
         m_nLen += nBackLen;
         return *this;
     }
+    // a copy with pszBack appended (out of line: event::CaptureManager::start calls FixStr<128>'s copy)
+    FixStr operator+(const char* pszBack) const {
+        FixStr s(m_str);
+        s += pszBack;
+        return s;
+    }
     // the index of the last `c`, -1 when there is none (inline: ml::PathUtil::getFsaPath inlines it; the name is
     // not the original's). The text's start minus one is formed as an integer: its users (ScriptManager::
     // makeFullPath, PathUtil::getNoExtName, LocalizeResource::makeLocalizeFilePath, getFsaPath) keep that address

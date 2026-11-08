@@ -16,6 +16,10 @@ public:
     void clear();
     // StatusManager::judge and change call it: false while the quest event UI runs (it pauses the frame then)
     bool entry(unsigned int id, bool* result);
+    // StatusManager::change calls them (the same wait as entry); the last argument of setComp is unused
+    bool setComp(unsigned int id, unsigned int task, bool);
+    // openResult when result is set, else openEntry (the parameter names are not the original's)
+    bool disp(unsigned int id, bool result);
 
 private:
     // bit 0: active (1.0.0's isActive; setComp sets it); the name is not the original's

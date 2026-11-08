@@ -25,7 +25,8 @@ public:
     void update();  // OnEventProc's update (inlined; the name is not the original's)
     unsigned int pad_10;  // the constructor zeroes it
     unsigned int pad_14;  // the constructor zeroes it
-    unsigned char pad_18[0x38];
+    // init stores 1.0 to each (as VolumeSkip's m_volumes); the name is not the original's
+    mm::mtl::FixedArray<float, 14> m_volumes;  // 0x18
     VolumeSeamless m_seamless;  // 0x50 (the name is not the original's)
     VolumeSkip m_skip;          // 0xa0 (the name is not the original's)
     unsigned char pad_e8[0x8];  // sizeof 0xF0 (s_instance)
