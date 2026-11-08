@@ -7,6 +7,7 @@
 #include "mm/Vec3NA.h"
 #include "ptlib/math/KeyFrameIP.h"
 
+namespace ml { class DrGpuCheckBase; }
 namespace ptlib { class FxHeader; class DrDrawWorkInfoEF; }
 namespace ptlib { namespace renderer { class StreamObj; class RenderSet; } }
 
@@ -106,6 +107,9 @@ public:
     void calcParRot(math::KeyFrameIP& kf, float frame, EmitterObj* pEmitter, bool key, float rate);
     void move_common_keyframe_uv1_full(EmitterObj* pEmitter, float frame, float rate);
     void calcMatColor(float frame, math::KeyFrameIP& kf, EmitterObj* pEmitter, float emitterFrame, bool key);
+    void move01_common_posVec(EmitterObj* pEmitter, int flag);
+    void move01_common_keyframe_uv23(EmitterObj* pEmitter, int flag, float rate);
+    void move_field_clip(EmitterObj* pEmitter, mm::Vec3& min, mm::Vec3& max);
     // the particle's work ("et->getExtParam()")
     Work& getExtParam() { return *m_pWork; }
     // numbers the particle and resets its state (EmitterManager::particleAlloc inlines it; idCounter is its static)
@@ -139,7 +143,10 @@ public:
     float m_frameSpeed;
     unsigned short m_life;  // 0xC0: 0x7FFF lives on (the name is not the original's)
     unsigned char pad_c2;  // createCommon clears it
-    unsigned char pad_c3[0x2D];
+    // 0xC3: frames before the particle starts moving; the move01_type* loops count it down (the name is not the
+    // original's)
+    unsigned char m_delay;
+    unsigned char pad_c4[0x2C];
     float* m_pVecKf;  // 0xF0: EmitterArg::get_kf's key data for m_keyVec (the name is not the original's)
     unsigned char pad_f8[0x38];
     Work* m_pWork;  // 0x130
@@ -236,6 +243,17 @@ struct NoiseParam {
 class EmitterObj : public IntrusiveListNode {
 public:
     void emitter_set_param_sub(EmitterParam* pParam);
+    // true while the GPU check sees the emitter (or it has none), else while m_frame is below 60
+    bool isRenderCheck() const;
+    // the height of the ground below pos (down to height under it; -80 without ground); pAngle gets the ground's
+    // slope and direction
+    static float check_ground(const mm::Vec3& pos, float height, float* pAngle);
+    void move_common_cas_update(EmitterArg* pArg);
+    // a random colour from pRange (hue, saturation and value), as red, green and blue
+    static void calc_scale_col(mm::Vec3* pOut, math::Vec3r* pRange, float, unsigned int& seed);
+    void move01_common_posVec_emitter();
+    // the field's bounds for move_field_clip (the parameter names are not the original's)
+    void move_field_begin(EmitterArg* pArg, mm::Vec3& min, mm::Vec3& max);
     // the move types' count ("m_move_type < MOVE_TYPE_MAX"; only MOVE_TYPE_MAX's name is the original's)
     enum { MOVE_TYPE_MAX = 7 };
     // moves the emitter's particles by its move type (what the int means is not known yet)
@@ -319,6 +337,9 @@ public:
     unsigned char m_viewNum;  // emitter_set_viewnum's
     unsigned char pad_275[0x5B];
     float* m_pKfTable;  // 0x2D0: EmitterArg::get_kf's last argument (the name is not the original's)
+    unsigned char pad_2d8[0x38];
+    // 0x310: emitter_set_param_sub's DrGpuCheckBase::createEffGpuCheckObj (the name is not the original's)
+    ml::DrGpuCheckBase* m_pGpuCheck;
 };
 
 }}  // namespace ptlib::emitter

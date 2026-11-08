@@ -166,6 +166,10 @@ public:
     unsigned char* parse_efs(const char* name, void* pData, unsigned int size);
     // what it returns is not known yet (EmitterManager's callers drop it)
     void update_model_spd(emitter::EmitterObj* pEmitter, float speed);
+    // per-frame update of a particle's model or light (EmitterObj::move01_type_model / move01_type5; what they
+    // return is not known yet)
+    void update_model(emitter::ParticleObj* pParticle, emitter::EmitterObj* pEmitter, emitter::EmitterArg* pArg);
+    void update_plight(emitter::ParticleObj* pParticle, emitter::EmitterObj* pEmitter);
     // applies set_pause's request to the models (update_model_spd of every emitter at speed 1)
     void update_pause();
     FxParam* getFxParam();

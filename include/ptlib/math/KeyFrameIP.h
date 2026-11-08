@@ -36,6 +36,13 @@ inline float randf2(unsigned int& seed) {
     return bits.f - 3.0f;
 }
 
+// a random range of three values: each drawn between m_min's and m_max's (EmitterObj::calc_scale_col draws a colour
+// as hue, saturation and value from it; the field names are not the original's)
+struct Vec3r {
+    float m_min[3];
+    float m_max[3];
+};
+
 // what an emitter keeps per key pair for KeyFrameIP's keyrand_ functions: the keys' ids and the random seeds
 // drawn for them (the names are not the original's: setup_keyrand draws a seed again when an id changes)
 struct EPkey {

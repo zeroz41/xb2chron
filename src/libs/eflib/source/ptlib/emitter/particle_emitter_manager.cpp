@@ -9,6 +9,7 @@
 #include "mm/MMStdBase.h"
 #include "mm/Math.h"
 #include "ptlib/Utility.h"
+#include "ml/ScnObjAccGpuCheck.h"
 #include <new>
 
 namespace ptlib { namespace emitter {
@@ -19,6 +20,27 @@ static EmitterManager* s_pEmitterManager;
 // the instance ComputeManager::init makes (proposed name, not the original's: the symbols leave it unnamed,
 // lbl_71015E9D38)
 static ComputeManager* s_pComputeManager;
+
+float EmitterObj::check_ground(const mm::Vec3& pos, float height, float* pAngle) {
+    mm::Vec3 normal;
+    mm::Vec3 outPos;
+    outPos.y = -80.0f;
+    mm::Vec3 end(pos.x, pos.y - height, pos.z);
+    bool hit = ParticleManager::getPtr()->testLineGround(normal, outPos, pos, end);
+    float ground = outPos.y;
+    if (hit) {
+        if (pAngle != nullptr) {
+            mm::Vec3 n = normal;
+            pAngle[0] = ::atan2f(::sqrtf(n.x * n.x + n.z * n.z), n.y);
+            pAngle[1] = ::atan2f(n.x, n.z);
+        }
+#line 729 "D:/Monolithsoft/BF2/prog/libs/eflib/proj/windows/../../../eflib/source\\ptlib/emitter/particle_emitter.cpp"
+        MM_ASSERT(!outPos.isError());
+    } else if (!mm::Vec3::isValid(ground)) {
+        ground = -80.0f;
+    }
+    return ground;
+}
 
 float EmitterObj::calc_fade() {
     if (m_fadeFrames == 0) {
@@ -131,6 +153,13 @@ void ParticleObj::move01_common_keyframe(EmitterObj* pEmitter, float rate, int f
     }
     move_common_keyframe_uv1_full(pEmitter, frame, rate);
     calcMatColor(frame, kf, pEmitter, emitterFrame, true);
+}
+
+bool EmitterObj::isRenderCheck() const {
+    if (m_pGpuCheck == nullptr || m_pGpuCheck->isRender()) {
+        return true;
+    }
+    return m_frame < 60.0f;
 }
 
 void* EmitterObj::lockStream(const DrDrawWorkInfoEF* pDrInfo) {
