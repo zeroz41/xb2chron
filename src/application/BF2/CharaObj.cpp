@@ -5301,8 +5301,33 @@ void CharaManager::OnEventProc(event::MSG_TYPE msg) {
     }
 }
 
+}  // namespace event
+
+#include "classes/gf/GfQuestEvent.h"
+
+namespace event {
+
 void QuestManager::clear() {
     m_flags = 0;
+}
+
+bool QuestManager::entry(unsigned int id, bool* result) {
+    if (!(m_flags & 1)) {
+        gf::GfQuestEvent::setQuestEntry(id);
+        m_flags |= 1;
+    }
+    if (gf::GfQuestEvent::isActive()) {
+        mm::mtl::Singleton<SkipManager>::getPtr()->skip(false, 0.0f);
+        mm::mtl::Singleton<SkipManager>::getPtr()->setSkipVolume(false);
+        mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(3), true);
+        return false;
+    }
+    mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(3), false);
+    m_flags = 0;
+    if (result != nullptr) {
+        *result = gf::GfQuestEvent::getQuestState(id) != 0;
+    }
+    return true;
 }
 
 void QuestManager::OnEventProc(event::MSG_TYPE msg) {
@@ -6794,13 +6819,13 @@ void ScriptPlayText::undo(const event::Param&) {
     if (!(text->m_flags & 1)) {
         text->m_window.erase();
         text->m_window.pad_218 = -1;
-        text->m_window.pad_110 = "";
-        text->m_window.pad_c = "";
-        text->m_window.pad_8 &= ~3;
+        text->m_window.m_text = "";
+        text->m_window.m_name = "";
+        text->m_window.m_flags &= ~3;
     } else {
         gf::GfMenuObjEventSubtitle::hideText();
-        text->m_caption.pad_c = "";
-        text->m_caption.pad_8 &= ~1;
+        text->m_caption.m_text = "";
+        text->m_caption.m_flags &= ~1;
     }
     text->m_flags &= ~0x3c0;
 }
@@ -7259,6 +7284,90 @@ bool VoiceManager::playAuto(const char* name, float frame, IVoiceEvent* event) {
         return found;
     }
     return m_player.play(mm::mtl::Singleton<Extend>::getPtr()->wav(path), frame, event);
+}
+
+}  // namespace event
+
+#include "classes/gf/GfMenuObjBalloon.h"
+
+namespace event {
+
+void TextWindow::update() {
+    if (!(m_flags & 1)) {
+        return;
+    }
+    if (!(m_flags & 2)) {
+        gf::GfMenuCallContext::GfMenuResult result = {0, 0};
+        if (m_context->popResult(result) && result.m_id == 1) {
+            m_flags |= 2;
+            m_closeWait = 4;
+        }
+    }
+    if (m_flags & 2) {
+        if (m_closeWait-- > 0 && !(mm::mtl::Singleton<TextManager>::getPtr()->m_flags & 0x20)) {
+            return;
+        }
+        erase();
+        m_flags &= ~1;
+    }
+}
+
+void TextWindow::erase() {
+    if (m_context != nullptr) {
+        bool flag = !(mm::mtl::Singleton<TextManager>::getPtr()->m_flags & 0x20);
+        gf::GfMenuObjBalloon::close(m_context, flag);
+        if (m_context != nullptr) {
+            m_context->release();
+            m_context = nullptr;
+        }
+    }
+}
+
+void TextWindow::render() {
+    if (m_flags & 1) {
+        int height = ml::DevGraph::getRootHeight();
+        int y = height - 200;
+        int width = ml::DevGraph::getRootWidth() - 500;
+        fw::debug::drawSquare2D(mm::Rect<int>(250, y, width, 60), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+        fw::debug::drawLineSquare2D(mm::Rect<int>(250, y, width, 60), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFont(260, height - 190, "TEXTWIN");
+        fw::debug::drawFont(335, height - 190, "[%s]", m_name.m_str);
+        fw::debug::drawFont(265, height - 175, m_text.m_str);
+    }
+}
+
+void TextCaption::render() {
+    if (m_flags & 1) {
+        int height = ml::DevGraph::getRootHeight();
+        int y = height - 200;
+        int width = ml::DevGraph::getRootWidth() - 500;
+        fw::debug::drawSquare2D(mm::Rect<int>(250, y, width, 60), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+        fw::debug::drawLineSquare2D(mm::Rect<int>(250, y, width, 60), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFont(260, height - 190, "CAPTION");
+        fw::debug::drawFont(265, height - 175, m_text.m_str);
+    }
+}
+
+void TextManager::clear() {
+    if (m_caption.m_flags & 1) {
+        gf::GfMenuObjEventSubtitle::hideText();
+    }
+    m_caption.m_text = "";
+    m_caption.m_flags = 0;
+    if (m_window.m_context != nullptr) {
+        gf::GfMenuObjBalloon::close(m_window.m_context, true);
+        if (m_window.m_context != nullptr) {
+            m_window.m_context->release();
+            m_window.m_context = nullptr;
+        }
+    }
+    m_window.pad_218 = -1;
+    m_window.m_text = "";
+    m_window.m_name = "";
+    m_window.m_flags = 0;
+    init();
 }
 
 void TextManager::OnEventProc(event::MSG_TYPE msg) {
@@ -11190,6 +11299,35 @@ float Scheduler::getRotY(gf::GfObj* obj, gf::GfObj* target) {
 void Scheduler::func_turn_loop(gf::GfObj* obj) {
     if (!(m_flags & 0x4) || gf::GfGameUtil::isTurnEnd(m_handle)) {
         m_turnFunc = nullptr;
+    }
+}
+
+void Scheduler::func_look(gf::GfObj* obj) {
+    if (!(m_flags & 0x10)) {
+        m_lookFunc = nullptr;
+        return;
+    }
+    gf::GfObj* target;
+    switch (obj->m_type) {
+    case 3:
+        target = gf::GfObjUtil::getObj(mm::mtl::PtrSingleton<Manager>::sys()->m_playHandle);
+        break;
+    case 6:
+        target = gf::GfGameParty::getLeaderTransformObj();
+        break;
+    default:
+        return;
+    }
+    if (target == nullptr) {
+        return;
+    }
+    if (!(m_state & 1)) {
+        lookTo(true, obj, target, m_aimType, false);
+        return;
+    }
+    if (CharaUtil::isCanTarget(obj->m_handle, target->m_handle)) {
+        lookTo(true, obj, target, m_aimType, true);
+        m_state &= ~1;
     }
 }
 

@@ -27,6 +27,8 @@ public:
     }
     // starts a scheduler for handle's object (replacing its running one); type becomes Scheduler::m_type
     void push(gf::GF_OBJ_HANDLE* handle, unsigned int type);
+    // runs every scheduler while the frame steps, then deletes those whose last chain (m_actFunc) has ended
+    void update();
     // clears the step flag of handle's scheduler (the first scheduler with that handle); the name is not the original's
     void cancelStep(gf::GF_OBJ_HANDLE* handle, unsigned int flag) {
         for (Scheduler** it = m_schedulers.begin(); it != m_schedulers.end(); ++it) {

@@ -14,6 +14,8 @@ public:
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // 1.0.0's clear() (0x71000F54E4)
     void clear();
+    // StatusManager::judge and change call it: false while the quest event UI runs (it pauses the frame then)
+    bool entry(unsigned int id, bool* result);
 
 private:
     // bit 0: active (1.0.0's isActive; setComp sets it); the name is not the original's

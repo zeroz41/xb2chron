@@ -20,6 +20,8 @@ public:
     static void setGravity(gf::GF_OBJ_HANDLE* handle, bool on);
     // out of line (0x71000D145C, not written yet); CharaObj::linerPos fits its position's height with it
     static void adjestPosY(mm::Vec3& pos, mm::Vec3*);
+    // out of line (0x71000D11B8, not written yet); Scheduler::func_look aims only once it is true
+    static bool isCanTarget(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* target);
 };
 }  // namespace event
 

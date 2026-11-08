@@ -21,6 +21,7 @@ public:
     void clear();
     void update();
     void render();
+    void write(const char*, unsigned char*, unsigned int, const char*, gf::GF_OBJ_HANDLE*);
     // the symbol _ZN5event11TextManager5replyEPKciPNS_8CharaObjE (RandPlayer::Reply::update calls it)
     void reply(const char* msb, int id, CharaObj* chara);
     // the symbol _ZN5event11TextManager4playEPKcPNS_8CharaObjEfffi (ScriptPlayText::doit tail-calls it)
@@ -32,7 +33,7 @@ public:
         pad_5c8 = 0;
         pad_3c8 = 0;
         pad_600 = 0;
-        memset(m_window.pad_230, 0, 0x2d);
+        memset(&m_window.m_lifeMax, 0, 0x2d);
         memset(&pad_5d0, 0, 0x11);
     }
 
