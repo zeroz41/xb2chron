@@ -650,7 +650,8 @@ public:
     unsigned char pad_EF4_5 : 3;
     // a separate bitfield run: the original reads and writes 0xEF5 as one byte, apart from 0xEF4
     unsigned char : 0;
-    unsigned char pad_EF5_0 : 2;
+    unsigned char pad_EF5_0 : 1;  // DeleteUniteComboDirection clears it for the unite combo's character (meaning unknown)
+    unsigned char pad_EF5_1 : 1;
     // SpAttackManager::DeleteCamera clears it for its camera characters (the name is not the original's)
     unsigned char m_spAttackCamera : 1;
     unsigned char pad_EF5_3 : 5;

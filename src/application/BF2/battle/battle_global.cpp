@@ -31,6 +31,8 @@
 #include "classes/gf/GfMenuObjVision.h"
 #include "classes/fw/CameraManager.h"
 #include "btl/Utility.h"
+#include "classes/gf/GfSound.h"
+#include "ml/MTRand.h"
 
 namespace btl {
 
@@ -197,6 +199,144 @@ void BattleGlobal::SetElementalComboImmortal(gf::GF_OBJ_HANDLE* handle) {
 
 void BattleGlobal::Update(const fw::UpdateInfo& info) {
     sys()->UpdateProc(info);
+}
+
+void BattleGlobal::DeleteUniteComboDirection() {
+    if (m_uniteComboCamera) {
+        fw::CameraManager::get()->m_layers[0].pop(m_uniteComboCamera, 0.0f);
+        m_uniteComboCamera = nullptr;
+    }
+    if (BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(pad_5d10)) {
+        chr->pad_EF5_0 = false;
+    }
+    if (pad_5d20 != 0) {
+        DeleteSlow(pad_5d20);
+    }
+    pad_5d08 = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    pad_5d10 = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    m_uniteComboCamera = nullptr;
+    pad_5d20 = 0;
+    pad_5d24 = 0;
+    pad_5d28 = 0;
+    pad_5d2c = 0;
+    pad_5d30 = 0xFFFF;
+    pad_5d34 = 0;
+    pad_5d38_0 = 0;
+    pad_5d3a = 0;
+    pad_5d3c = 0;
+    pad_5d3e = 0;
+    pad_5d3f = 0;
+}
+
+void BattleGlobal::PlayJingle(JINGLE_TYPE type) {
+    StopJingle(true);
+    if (gf::GfSound* sound = gf::GfSound::get()) {
+        if (m_jingleHandle == reinterpret_cast<gf::GF_SE_CATEGORY_HANDLE*>(-1)) {
+            m_jingleHandle = sound->createCategoryHandle();
+            if (m_jingleHandle == reinterpret_cast<gf::GF_SE_CATEGORY_HANDLE*>(-1)) {
+                return;
+            }
+        }
+        sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(1), 0.0f, 0.7f);
+        sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(4), 0.0f, 0.7f);
+        sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(5), 0.0f, 0.7f);
+        sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(6), 0.0f, 0.7f);
+        sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(7), 0.0f, 0.7f);
+        sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(8), 0.0f, 0.7f);
+        sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(13), 0.0f, 0.7f);
+        sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(14), 0.0f, 0.7f);
+        m_jingleType = type;
+        m_jingleState = 1;
+    }
+}
+
+void BattleGlobal::StopJingle(bool clear) {
+    if (gf::GfSound* sound = gf::GfSound::get()) {
+        if (m_jingleSound.isValid()) {
+            if (sound->isPlaying(m_jingleSound)) {
+                sound->stopBgm(m_jingleSound, 0.13333334f);
+            }
+            m_jingleSound.clear();
+            CharacterManager::sys()->SetupBGM(true, false);
+        }
+        if (m_jingleHandle != reinterpret_cast<gf::GF_SE_CATEGORY_HANDLE*>(-1)) {
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(1), 1.0f, 0.7f);
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(4), 1.0f, 0.7f);
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(5), 1.0f, 0.7f);
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(6), 1.0f, 0.7f);
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(7), 1.0f, 0.7f);
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(8), 1.0f, 0.7f);
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(13), 1.0f, 0.7f);
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(14), 1.0f, 0.7f);
+        }
+    }
+    if (clear) {
+        m_jingleSound.clear();
+        m_jingleType = JINGLE_TYPE(0);
+        m_jingleState = 0;
+        pad_5c90 = 0;
+    }
+}
+
+void BattleGlobal::FinalizeJingle() {
+    if (m_jingleHandle != reinterpret_cast<gf::GF_SE_CATEGORY_HANDLE*>(-1)) {
+        if (gf::GfSound* sound = gf::GfSound::get()) {
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(1), 1.0f, 0.7f);
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(4), 1.0f, 0.7f);
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(5), 1.0f, 0.7f);
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(6), 1.0f, 0.7f);
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(7), 1.0f, 0.7f);
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(8), 1.0f, 0.7f);
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(13), 1.0f, 0.7f);
+            sound->setCategoryVolume(m_jingleHandle, fw::SoundCategory(14), 1.0f, 0.7f);
+            sound->releaseCategoryHandle(m_jingleHandle);
+            m_jingleHandle = reinterpret_cast<gf::GF_SE_CATEGORY_HANDLE*>(-1);
+        }
+    }
+    m_jingleSound.clear();
+    m_jingleType = JINGLE_TYPE(0);
+    m_jingleState = 0;
+    pad_5c90 = 0;
+    m_jingleRequest = 0;
+}
+
+void BattleGlobal::SpeakFutureViewVoice(int trigger, int kind) {
+    BattleCharacter* control = CharacterManager::sys()->GetControlCharacter();
+    if (control == nullptr) {
+        return;
+    }
+    int voices[2];
+    int num = 0;
+    {
+        mm::mtl::FixedVector<unsigned char, 90> list;
+        Utility::GetCharacterList(list, control->m_handle, static_cast<Utility::CHECK_CHR_NUM_MODE>(1), 0x13);
+        if (list.empty()) {
+            return;
+        }
+        CharacterManager* manager = CharacterManager::sys();
+        if (kind != 1 && kind != 2) {
+            for (unsigned char index : list) {
+                BattleCharacter* chr = manager->GetCharacterConst(index);
+                if (chr->m_bdatID == 0x452) {
+                    voices[num++] = chr->m_voiceIndex;
+                }
+            }
+        } else {
+            for (unsigned char index : list) {
+                BattleCharacter* chr = manager->GetCharacterConst(index);
+                if (chr->m_bdatID == 0x452 || chr->m_bdatID == 0x453) {
+                    voices[num++] = chr->m_voiceIndex;
+                }
+            }
+        }
+    }
+    if (num > 0) {
+        int voice = voices[0];
+        if (num != 1) {
+            voice = voices[ml::mtRand(num)];
+        }
+        TalkManager::sys()->NotifyTrigger(voice, static_cast<TalkManager::TRIGGER>(trigger), kind, 0);
+    }
 }
 
 void BattleGlobal::PostUpdate(const fw::UpdateInfo& info) {
@@ -672,7 +812,7 @@ void BattleGlobal::RequestJingle(JINGLE_TYPE type) {
 }
 
 bool BattleGlobal::IsJinglePlaying() const {
-    return m_jingleHandle != -1;
+    return m_jingleHandle != reinterpret_cast<gf::GF_SE_CATEGORY_HANDLE*>(-1);
 }
 
 void BattleGlobal::PlayErrorSE() {

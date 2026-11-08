@@ -6,9 +6,10 @@
 #include "mm/mtl/IntrusivePtr.h"
 #include "classes/btl/ButtonChallenge.h"
 #include "classes/fw/Camera.h"
+#include "gf/SoundHandle.h"
 
 namespace btl { class BattleGlobal; }
-namespace gf { class GfComEffectCaster; }
+namespace gf { class GfComEffectCaster; class GF_SE_CATEGORY_HANDLE; class GfMenuCallContext; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace mm { class Vec3; }
@@ -39,6 +40,9 @@ public:
     // the original's symbol names it; BattleManager::gevMapjump calls it on a map change (GEV 2)
     void NotifyMapChange();
     void Tutorial(BTL_TUTORIAL_COND cond, int, void*);
+    // clears the end conditions and the battle flags, which (unless the game is over) it first copies into local
+    // game flags 0xC710 and up
+    void ResetTutorialByBattleEnd();
     // reads the anti-blade area's revision row (Bdat 0x35) into m_mapRev when the area changes
     void UpdateMapRev();
     // whether a battle can run: not while GfGameManager stops battles
@@ -120,7 +124,9 @@ public:
         // the element whose value the step bursts (ElementalComboManager::Burst; the name is not the original's)
         unsigned char element : 4;
         unsigned char pad_bit7 : 1;
-
+        // the step after this one by index (an empty step: BattleGlobal's pad_5bf0 for stage 1-2 while
+        // m_challengeAnySuccess is set and pad_5c02 is 2, unless the bool is set)
+        unsigned char GetNextID(int index, bool) const;
     };
 
     // one slow-motion request (1.0.0's name: SLOW_PROC_DATA::Finalize); the field names are not the original's
@@ -197,11 +203,18 @@ public:
     const char* GetSeTag(int id) const;
     void RequestJingle(JINGLE_TYPE type);  // 1.0.0's and 2.0.0's RequestJingle(JINGLE_TYPE)
     bool IsJinglePlaying() const;
+    void PlayJingle(JINGLE_TYPE type);
+    void StopJingle(bool clear);
+    void FinalizeJingle();
+    // notifies TalkManager's trigger with the voice of a random party character of BDAT id 0x452 (0x452 or 0x453
+    // for kinds 1-2)
+    void SpeakFutureViewVoice(int trigger, int kind);
     void PlayErrorSE();  // 1.0.0's and 2.0.0's PlayErrorSE
     // 2.0.0's symbols name InitializeIraTalentArtsID, GetElementalComboFlowDataFast.
     // They read this BattleGlobal's fields (callers pass PtrSingleton<BattleGlobal>::sys()). What they do: Initialize:
     // clears pad_8374[0-8], then keeps in pad_8374[driver - 17] the last row of BDAT table 1 whose "IrType" is 3 for
     // each "Driver" 17-25
+    void InitializeNormalAttackArtsID();
     void InitializeIraTalentArtsID();
     unsigned short GetIraTalentArtsID(unsigned int id) const;  // pad_8374[id - 17]; PlayerParameter::InitializeArtsPalette
     const ELEMENTAL_COMBO_FLOW_DATA& GetElementalComboFlowDataFast(int id) const;  // the flow entry, no range check
@@ -228,6 +241,8 @@ public:
     // the next ones read pad_5d9c (and do nothing, or answer false) while m_challengeAnySuccess is set
     bool IsOCG() const;  // pad_5d9c != 0
     void ResultOCG();  // raises pad_5d9c from 1-2 to 3
+    // closes the OCG menu, restores the battle BGM (or the challenge battle's) and resets the OCG state
+    void EndOCG();
     bool IsOCGResult() const;  // pad_5d9c > 2
     void AddOCGDamage(int index, unsigned int add);  // adds to pad_5d78[index] (0-2) while pad_5d9c != 0
     bool IsOCGOrder(bool check) const;  // pad_bit22, or check and pad_5dc0 >= 0
@@ -423,9 +438,15 @@ public:
     unsigned char m_leverGachaCount;  // counts every input that counted (InputLeverGachaButton/Stick)
     bool m_leverGachaInput;  // set by every input that counted
     unsigned char pad_5c73[0x5];
-    // the playing jingle's sound handle, -1 when none plays (IsJinglePlaying; the name is not the original's)
-    long m_jingleHandle;
-    unsigned char pad_5c80[0x18];
+    // the jingle's sound category handle, -1 when none (PlayJingle creates it, FinalizeJingle releases it;
+    // IsJinglePlaying; the name is not the original's)
+    gf::GF_SE_CATEGORY_HANDLE* m_jingleHandle;
+    // the playing jingle (StopJingle stops it; the name is not the original's)
+    gf::SoundHandle m_jingleSound;
+    JINGLE_TYPE m_jingleType;  // PlayJingle's type (the name is not the original's)
+    int m_jingleState;  // PlayJingle sets 1 (the name is not the original's)
+    int pad_5c90;  // StopJingle(true) and FinalizeJingle clear it
+    unsigned char pad_5c94[0x4];
     // per party character, the anti-blade area's revisions: Bdat 0x35's "KizunaCap", "ArtSp", "nba" flag and
     // "PC%02dAtk"/"PC%02dDef" columns (UpdateMapRev; the names are not the original's)
     struct MapRev {
@@ -470,10 +491,22 @@ public:
     // ElementalComboManager deletes the unite combo direction when its character is this one, while pad_5d3f is
     // clear (meaning unknown)
     gf::GF_OBJ_HANDLE* pad_5d08;
-    unsigned char pad_5d10[0x8];
+    // DeleteUniteComboDirection clears the BattleCharacter pad_EF5_0 of its character (meaning unknown)
+    gf::GF_OBJ_HANDLE* pad_5d10;
     // the unite combo direction's camera (DeleteUniteComboDirection pops it; the name is not the original's)
     ::mm::mtl::IntrusivePtr<fw::Camera> m_uniteComboCamera;
-    unsigned char pad_5d20[0x1F];
+    // the next ones are what DeleteUniteComboDirection resets (meanings unknown)
+    unsigned int pad_5d20;  // a slow-motion request id (DeleteUniteComboDirection deletes it)
+    int pad_5d24;
+    int pad_5d28;
+    int pad_5d2c;
+    unsigned int pad_5d30;  // 0xFFFF when reset
+    int pad_5d34;
+    unsigned short pad_5d38_0 : 15;
+    unsigned short pad_5d38_15 : 1;
+    unsigned short pad_5d3a;
+    unsigned short pad_5d3c;
+    unsigned char pad_5d3e;
     unsigned char pad_5d3f;  // see pad_5d08
     unsigned char pad_5d40[0x8];
     // IsFutureViewEnemy compares its handle with it while pad_5d54 is non-zero
@@ -494,11 +527,18 @@ public:
     signed char pad_5d6c;
     unsigned char pad_5d6d;
     unsigned char pad_5d6e;  // FutureViewButtonChllengeResultProc sends a menu event once while it is set, then clears it
-    unsigned char pad_5d6f[0x9];
+    unsigned char pad_5d6f[0x1];
+    // the OCG result menu's context (UpdateOCG creates it, EndOCG releases it; the name is not the original's)
+    gf::GfMenuCallContext* m_ocgContext;
+    // the next ones are what EndOCG resets
     unsigned int pad_5d78[3];  // AddOCGDamage adds to an entry, up to 99999999
-    unsigned char pad_5d84[0x18];
+    unsigned int pad_5d84[6];
     int pad_5d9c;  // IsOCG/DA8C/DAD8/DD4C read it while m_challengeAnySuccess is clear
-    unsigned char pad_5da0[0x18];
+    unsigned int pad_5da0[2];
+    unsigned char pad_5da8;  // a character index (UpdateOCG); 90 (none) when reset
+    unsigned char pad_5da9;
+    unsigned char pad_5daa;  // 1 when reset
+    unsigned char pad_5dab[0xD];
     float pad_5db8;  // IsKakuseiOrder tests it for >= 0
     float pad_5dbc;  // IsMindEyeOrder tests it for >= 0
     float pad_5dc0;  // IsOCGOrder tests it for >= 0
@@ -604,7 +644,8 @@ public:
     bool pad_bit50 : 1;
     // while set, DataManager::SetPartyGauge does not raise the party gauge (meaning unknown)
     bool pad_bit51 : 1;
-    unsigned char : 2;
+    bool pad_bit52 : 1;  // ResetTutorialByBattleEnd sets it (meaning unknown)
+    bool pad_bit53 : 1;  // ResetTutorialByBattleEnd clears it (meaning unknown)
     bool pad_bit54 : 1;  // GROUP_DATA::ProgressCoolTime advances the group's own cool time while it is set
     bool pad_bit55 : 1;  // Utility::AI_IsUseSirenSp returns it
 };
