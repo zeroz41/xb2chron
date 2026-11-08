@@ -319,6 +319,8 @@ public:
     // 2.0.0's symbols name it. What it does: whether blade is in 1124-1132 (DataObjBlade::getNorAtkDmgMin/Max pass a
     // blade id).
     static bool isIra(unsigned int blade);
+    // symbol 0x71002400C4; GfPouchUtil::setPouch passes each engaged blade and the pouch's item
+    static void setUsedFavoriteItemForPouch(unsigned int blade, unsigned int item);
     // 2.0.0's symbols name it. What it does: getCreator on the given game data: the blade's 16-bit m_creator, 0 for
     // blade 0 (tl::TitleStatePlayEvent::enter calls it).
     static int getCreator(const SDataGame& game, unsigned int blade);

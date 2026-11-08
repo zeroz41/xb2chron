@@ -285,6 +285,8 @@ public:
     // 1.0.0's name: GfPouchUtil calls it in both builds (1.0.0: GfDataDriver::setPouchData(unsigned int, unsigned
     // int, const SDataPouch&)); copies the slot into the driver's pouch
     static void setPouchData(unsigned int driver, unsigned int pouch, const SDataPouch& data);
+    // symbol 0x7100248BE8; GfPouchUtil::setPouch passes the driver and the pouch's item
+    static void setUsedFavoriteItemForPouch(unsigned int driver, unsigned int item);
     // 2.0.0's symbols name it. What it does: false for driver 0, else whether the byte at +0x571 of the driver's data
     // (found the getSDataDriver way) is nonzero. Callers: GfGameUtil::execLevelUp, GfGameUtil::addWpForObject,
     // GfAssetSetup::setRefResource.

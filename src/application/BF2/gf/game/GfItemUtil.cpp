@@ -37,6 +37,19 @@
 #include "classes/gf/GfBdatBtl.h"
 #include "gf/GfDataDriverArts.h"
 #include "classes/gf/SCOM_ADD_MONEY.h"
+#include "classes/gf/SCOM_POPUP.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
+#include "classes/gf/SCOM_ITEM_USE.h"
+#include "classes/gf/SCOM_ADD_TRUST.h"
+#include "classes/gf/SCOM_ACHIEV_INC.h"
+#include "fw/UpdateInfo.h"
+#include "gf/GfShopUtil.h"
+#include "classes/gf/GfItemManager.h"
+#include "gf/GfUtil.h"
+#include "mm/mtl/FixStr.h"
+#include "gf/GfDataShop.h"
+#include "gf/GfAchievStats.h"
+#include "classes/gf/SCOM_ADD_DEVELOP.h"
 
 namespace gf {
 
@@ -475,6 +488,58 @@ GfItemHandle GfItemUtil::getNoEquipItemHandle(unsigned int item) {
     return GfItemBox::get()->getNoEquipItemHandle(item);
 }
 
+void GfItemUtil::setupNewGameParam() {
+    GfBdatItem* bdat = GfBdatItem::get();
+    unsigned int start = bdat->getEventStart();
+    unsigned int end = bdat->getEventEnd();
+    for (unsigned int id = start; id < end; id++) {
+        int count = GfItemBox::get()->countItem(id);
+        if (count != 0) {
+            GfItemBox::decItemForNewGame(id, count);
+        }
+    }
+    start = bdat->getInfoStart();
+    end = bdat->getInfoEnd();
+    for (unsigned int id = start; id < end; id++) {
+        if (bdat->getInfoClearNewGame(id) != 0) {
+            int count = GfItemBox::get()->countItem(id);
+            if (count != 0) {
+                GfItemBox::decItemForNewGame(id, count);
+            }
+        }
+    }
+    start = bdat->getPreciousStart();
+    end = bdat->getPreciousIraEnd();
+    for (unsigned int id = start; id < end; id++) {
+        if (GfDataItem::isValidPreciousIra(id) ? bdat->getPreciousIraClearNewGame(id) != 0
+                                               : bdat->getPreciousClearNewGame(id) != 0) {
+            int count = GfItemBox::get()->countItem(id);
+            if (count != 0) {
+                GfItemBox::decItemForNewGame(id, count);
+            }
+        }
+    }
+    start = bdat->getTresureStart();
+    end = bdat->getTresureEnd();
+    for (unsigned int id = start; id < end; id++) {
+        if (bdat->getTresureClearNewGame(id) != 0) {
+            int count = GfItemBox::get()->countItem(id);
+            if (count != 0) {
+                GfItemBox::decItemForNewGame(id, count);
+            }
+        }
+    }
+    GfDataItem::setNoMultiple(45005, false);
+    GfDataItem::setNoMultiple(45009, false);
+    GfDataItem::setNoMultiple(45010, false);
+    if (GfItemBox::get()->countItem(45005) != 0) {
+        GfItemBox::decItemForNewGame(45005, 1);
+    }
+    if (GfItemBox::get()->countItem(45009) != 0) {
+        GfItemBox::decItemForNewGame(45009, 1);
+    }
+}
+
 void GfEquipUtil::equipBladeChip(unsigned int blade, unsigned int chip) {
     GfDataBlade::getBladeWeapon(blade);  // its result is not used
     if (GfItemBox::get()->countItem(chip) != 0 && GfItemBox::decItem(chip, 1)) {
@@ -642,6 +707,73 @@ bool GfEquipUtil::equipIraWpnAcce(unsigned int driver, unsigned int item, GfItem
     return true;
 }
 
+int GfShopUtil::execBuy(unsigned int item, unsigned int num, unsigned int shop) {
+    if (!GfItemUtil::isEnableAddItemBox(item, num)) {
+        return 1;
+    }
+    ItemPrice price;
+    GfItemUtil::getPrice(price, item, shop);
+    unsigned int total = price.m_price * num;
+    if (GfDataUtil::getMoney() < total) {
+        return 3;
+    }
+    GfItemUtil::addItemBox(item, num);
+    SCOM_ADD_MONEY::create(-total);
+    SCOM_ADD_DEVELOP::create(GfGameManager::getMapZoneID(), price.m_hundredth * num);
+    GfDataShop::setBuyItem(shop, item);
+    GfAchievStats::checkBuyItemFromShop(item, num, shop, total);
+    GfEvent::callExecBuy(item, num, shop);
+    return 0;
+}
+
+int GfShopUtil::execSell(unsigned int item, unsigned int num, unsigned int shop, GfItemHandle handle) {
+    if (!GfDataItem::isEnableSell(item)) {
+        return 4;
+    }
+    if (GfItemBox::get()->countItem(item) < num) {
+        return 2;
+    }
+    ItemPrice price;
+    GfItemUtil::getPrice(price, item, shop);
+    if (handle.m_handle != 0) {
+        GfItemUtil::fn_71002FA968(item, 1, false, handle);
+    } else {
+        GfItemUtil::addItemBox(item, -num);
+    }
+    unsigned int total = price.m_sellPrice * num;
+    SCOM_ADD_MONEY::create(total);
+    SCOM_ADD_DEVELOP::create(GfGameManager::getMapZoneID(), price.m_eightHundredth * num);
+    GfAchievStats::checkSellItemFromShop(item, num, shop, total);
+    return 0;
+}
+
+void GfRecipeOrbUtil::execOrbRecipe(unsigned int item, const ::mm::mtl::FixedVector<OrbRecipe, 128>* items) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    unsigned int recipe = bdat->getEmptyOrbRecipe(item);
+    // a debug copy of the item's name the function never reads (the original builds it too)
+    ::mm::mtl::FixStr<128> name;
+    name = util::debugUTF8ToSJIS(GfDataItem::getName(item));
+    ::mm::mtl::FixedVector<OrbRecipe, 128> list;
+    if (items == nullptr) {
+        getRecipeItemsByItemBox(list, recipe);
+        items = &list;
+    }
+    isEnabaleOrbRecipe(recipe, *items);
+    unsigned int orb = bdat->getEmptyOrbEquipItemID(item);
+    // the original reads the singleton again and asks the item's type (unused) before the recipe test
+    bdat = GfBdatItem::get();
+    GfDataItem::getItemType(item);
+    if (bdat->getEmptyOrbRecipe(item) != 0) {
+        for (const OrbRecipe* it = items->begin(); it != items->end(); ++it) {
+            if (it->m_item != 0 && it->m_number != 0) {
+                GfItemUtil::addItemBox(it->m_item, -it->m_number);
+            }
+        }
+    }
+    GfItemUtil::addItemBox(item, -1);
+    GfItemUtil::addItemBox(orb, 1);
+}
+
 unsigned int GfRecipeOrbUtil::getRecipeID(unsigned int item) {
     return GfBdatItem::get()->getEmptyOrbRecipe(item);
 }
@@ -650,9 +782,104 @@ unsigned int GfRecipeOrbUtil::getEquipOrb(unsigned int item) {
     return GfBdatItem::get()->getEmptyOrbEquipItemID(item);
 }
 
+bool GfRecipeOrbUtil::getRecipeInfo(RecipeInfo& info, unsigned int recipe) {
+    if (recipe == 0) {
+        return false;
+    }
+    GfBdatItem* bdat = GfBdatItem::get();
+    info.m_recipe = 0;
+    info.m_recipeType = 0;
+    info.m_resultRarity = RecipeInfo::Result();
+    info.m_resultColleCategory = RecipeInfo::Result();
+    info.m_resultItems.clear();
+    info.m_recipe = recipe;
+    info.m_recipeType = bdat->getOrbRecipeRecipeType(recipe);
+    switch (info.m_recipeType) {
+    case 0:
+        info.m_resultRarity.m_value = bdat->getOrbRecipeRarity(recipe);
+        info.m_resultRarity.m_number = bdat->getOrbRecipeAssortNumber(recipe);
+        break;
+    case 1:
+        info.m_resultColleCategory.m_value = bdat->getOrbRecipeRscCat(recipe);
+        info.m_resultColleCategory.m_number = bdat->getOrbRecipeAssortNumber(recipe);
+        break;
+    case 2:
+        for (unsigned int i = 0; i < 8; i++) {
+            unsigned int id = bdat->getOrbRecipeItemID(recipe, i);
+            if (id != 0) {
+                RecipeInfo::Item entry;
+                entry.m_item = id;
+                entry.m_number = bdat->getOrbRecipeItemNumber(recipe, i);
+                info.m_resultItems.push_back(entry);
+            }
+        }
+        break;
+    default:
+        return false;
+    }
+    return true;
+}
+
 bool GfRecipeOrbUtil::isEnableRecipe(unsigned int recipe) {
     ::mm::mtl::FixedVector<OrbRecipe, 128> items;
     return getRecipeItemsByItemBox(items, recipe);
+}
+
+void GfPouchUtil::updatePouch(unsigned int driver, unsigned int pouch, const SDataPouch& data, const ::fw::UpdateInfo& info) {
+    GfGameManager::isGameTypeIra();  // the original calls it and drops the answer
+    unsigned int item = data.itemId;
+    if (item == 0) {
+        return;
+    }
+    SDataPouch work = data;
+    work.remainTime -= info.m_deltaTime;
+    if (work.remainTime <= 0.0f) {
+        if (fn_71002FDB88(driver, pouch, work)) {
+            SCOM_POPUP::createPouch(driver, data.itemId, 1);
+            SCOM_FIELD_VOICE::createPouchAutoAdd(data.itemId, driver);
+        } else {
+            SCOM_FIELD_VOICE::createPouchAutoAddFailed(item, driver);
+        }
+    }
+    GfDataDriver::setPouchData(driver, pouch, work);
+}
+
+bool GfPouchUtil::fn_71002FDB88(unsigned int driver, unsigned int pouch, SDataPouch& data) {
+    if (GfItemBox::get()->countItem(data.itemId) == 0) {
+        SCOM_POPUP::createPouch(driver, data.itemId, 0);
+        data.itemId = 0;
+        data.remainTime = 0.0f;
+        GfDataDriver::setPouchData(driver, pouch, data);
+        return false;
+    }
+    GfItemUtil::addItemBox(data.itemId, -1);
+    SCOM_ITEM_USE::create(data.itemId, driver);
+    float time = GfDataItem::getFavoriteItemTime(data.itemId);
+    if (time <= 0.0f) {
+        time = 180.0f;
+    }
+    data.remainTime = time;
+    unsigned int trust = GfBdatItem::get()->getFavoriteTrustPoint(data.itemId);
+    if (trust != 0) {
+        if (GfDataDriver::isIra(driver)) {
+            ::mm::mtl::FixedVector<unsigned short, 32> list;
+            GfDataDriver::getIraBack(list, driver);
+            for (const unsigned short& id : list) {
+                if (!GfDataDriver::isActivateUnuse(id)) {
+                    SCOM_ADD_TRUST::create(id, trust);
+                }
+            }
+        } else {
+            for (int i = 0; i < GfDataDriver::getMaxSetBladeNum(driver); i++) {
+                unsigned int blade = GfDataDriver::getBlade(driver, i);
+                if (blade != 0) {
+                    SCOM_ADD_TRUST::create(blade, trust);
+                }
+            }
+        }
+    }
+    GfDataDriver::setPouchData(driver, pouch, data);
+    return true;
 }
 
 SDataPouch& GfPouchUtil::getPouch(unsigned int driver, unsigned int pouch) {
@@ -662,8 +889,74 @@ SDataPouch& GfPouchUtil::getPouch(unsigned int driver, unsigned int pouch) {
     return *GfDataDriver::getPouchData(driver, pouch);
 }
 
+void GfPouchUtil::setPouch(unsigned int driver, unsigned int pouch, const SDataPouch& data) {
+    if (GfGameManager::isGameTypeIra()) {
+        driver = GfDataDriver::getIraFront(driver);
+    }
+    SDataPouch work = data;
+    unsigned int item = data.itemId;
+    if (item != 0) {
+        GfDataDriver::setUsedFavoriteItemForPouch(driver, work.itemId);
+        if (GfDataDriver::isIra(driver)) {
+            ::mm::mtl::FixedVector<unsigned short, 32> list;
+            GfDataDriver::getIraBack(list, driver);
+            for (const unsigned short& id : list) {
+                GfDataDriver::setUsedFavoriteItemForPouch(id, work.itemId);
+            }
+        } else {
+            int num = GfDataDriver::getMaxSetBladeNum(driver);
+            for (int i = 0; i < num; i++) {
+                GfDataBlade::setUsedFavoriteItemForPouch(GfDataDriver::getBlade(driver, i), work.itemId);
+            }
+        }
+        SCOM_ACHIEV_INC::addTotalCount(19, 1);
+        SCOM_ACHIEV_INC::create(19, 1, 0);
+    }
+    work.remainTime = 0.0f;
+    if (item != 0) {
+        fn_71002FDB88(driver, pouch, work);
+    }
+}
+
+bool GfPouchUtil::isEnableSetItem(unsigned int driver, unsigned int pouch, unsigned int item) {
+    if (GfGameManager::isGameTypeIra()) {
+        driver = GfDataDriver::getIraFront(driver);
+    }
+    if (driver == 0 || !GfDataDriver::getPouchData(driver, pouch)->m_open) {
+        return false;
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+        SDataPouch* data = GfDataDriver::getPouchData(driver, i);
+        if (data->itemId == 0 || i == pouch) {
+            continue;
+        }
+        if (data->itemId == item) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool GfPouchUtil::isExistOpenItem() {
     return GfItemBox::get()->countItem(25305) != 0;
+}
+
+void GfPouchUtil::execOpen(unsigned int driver) {
+    if (!isExistOpenItem()) {
+        return;
+    }
+    if (GfGameManager::isGameTypeIra()) {
+        driver = GfDataDriver::getIraFront(driver);
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+        SDataPouch data = *GfDataDriver::getPouchData(driver, i);
+        if (!data.m_open) {
+            data.m_open = 1;
+            GfDataDriver::setPouchData(driver, i, data);
+            GfItemUtil::addItemBox(25305, -1);
+            return;
+        }
+    }
 }
 
 unsigned int GfPouchUtil::getOpenCount(unsigned int driver) {

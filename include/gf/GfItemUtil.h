@@ -171,6 +171,10 @@ public:
     static bool addItemBox(unsigned int item, int count);
     // GfGameManager::setupGame calls it (symbol _ZN2gf10GfItemUtil19setupItemDataFollowEv)
     static void setupItemDataFollow();
+    // empties the box of the event, info, precious and treasure items whose BDAT row clears them on a new game and
+    // of items 45005 and 45009; clears the no-multiple mark of 45005, 45009 and 45010 (symbol
+    // _ZN2gf10GfItemUtil17setupNewGameParamEv)
+    static void setupNewGameParam();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's addItemBox, 168 bytes, did this
     // inline). A member because addItemBox and addItemBoxWithSilent of this unit call it. What it does: refuses a
     // positive count of an item GfDataItem::isNoMultiple marks; adds (GfItemBox::addItem) or removes
