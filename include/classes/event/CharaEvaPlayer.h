@@ -34,8 +34,8 @@ public:
                     unsigned int flags = m_wpnRight.pad_8 & ~1u;
                     flags &= ~4u;
                     m_wpnRight.m_model = m_model;
-                    m_wpnRight.pad_18 = 0;
-                    m_wpnRight.pad_20 = 0;
+                    m_wpnRight.m_param = nullptr;
+                    m_wpnRight.m_speed = 0;
                     m_wpnRight.pad_8 = flags;
                     m_battleWeapon = 1;
                 }

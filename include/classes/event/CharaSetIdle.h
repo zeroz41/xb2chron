@@ -3,6 +3,9 @@
 
 #include "classes/event/ICmd.h"
 
+namespace gf { class GF_OBJ_HANDLE; }
+namespace event { class CharaDysUpdater; }
+
 namespace event {
 // table 0x7100B3E760
 class CharaSetIdle : public ::event::ICmd {
@@ -12,7 +15,11 @@ public:
     virtual int update(event::ICmd::Param const&);  // slot 3
     // set to 0 by init (the command's step; the name is not the original's)
     int m_step;  // 0x8
-    unsigned char pad_c[0x14];
+    unsigned int pad_c;
+    // the character's gf object (update sets its idle state); the name is not the original's
+    gf::GF_OBJ_HANDLE* m_handle;  // 0x10
+    // the character's dynamics updater (update resets its dynamics); the name is not the original's
+    CharaDysUpdater* m_dys;  // 0x18
     // the idle id update stores; ScriptCharaSetIdle::doit reads it back while the command is queued (the name is
     // not the original's)
     int m_id;  // 0x20

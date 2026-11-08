@@ -54,6 +54,7 @@
 #include "classes/event/CharaSetPos.h"
 #include "classes/event/CharaStopAction.h"
 #include "classes/gf/GfComEvtAnim.h"
+#include "classes/gf/GfComPropertyEvent.h"
 #include "classes/gf/GfComTransform.h"
 #include "classes/gf/GfObj.h"
 #include "gf/MsgGameLipAction.h"
@@ -470,7 +471,46 @@ bool CamFree::OnKeyDown(ml::EventView* view) {
 
 void CamField::update(const event::FrameInfo&) {}
 
+void CharaWalkPos::term() {
+    if (m_state == 4 || m_state == 2) {
+        if (gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle)) {
+            gf::GfComPropertyEvent* prop = obj->getComponent<gf::GfComPropertyEvent>(5);
+            if (gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2)) {
+                anim->setState("S_idle");
+            }
+            if (m_state == 2) {
+                gf::GfGameUtil::disposeTurnEnd(m_handle);
+            }
+            m_dys->resetMovement(0);
+            if (m_gravity == 0) {
+                CharaUtil::setGravity(m_handle, true);
+            }
+            if (gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2)) {
+                anim->setVariable("V_speed", 0.0f);
+            }
+            if (prop != nullptr) {
+                prop->setMoveSpeed(0.0f);
+            }
+            m_ik->setFootIK(true, CharaIKUpdater::FOOT_TYPE(1));
+        }
+    }
+    m_state = 0;
+}
+
 void CharaTurnRot::init() {}
+
+void CharaTurnRot::term() {
+    if (m_flags & 1) {
+        if (gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle)) {
+            if (gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2)) {
+                anim->execCmd("C_idle");
+            }
+            gf::GfGameUtil::disposeTurnEnd(m_handle);
+            m_dys->resetMovement(0);
+        }
+        m_flags &= ~1;
+    }
+}
 
 int CharaLinerPos::update(const ICmd::Param& param) {
     if (m_ik == nullptr || m_dys == nullptr) {
@@ -2201,6 +2241,20 @@ void CharaSetIdle::init() {
     m_step = 0;
 }
 
+int CharaSetIdle::update(const ICmd::Param& param) {
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    if (obj != nullptr && param.m_frame <= 0) {
+        int id = param.m_param.val(1).getS32();
+        const char* stat = reinterpret_cast<const char*>(Bdat::getValCheck(Bdat::getFP("EVT_idletype"), "stat", id, 7));
+        if (gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2)) {
+            anim->setState(stat);
+        }
+        m_dys->resetDynamics(0);
+        m_id = id;
+    }
+    return true;
+}
+
 void CharaPlayHead::init() {
     m_flags = 0;
 }
@@ -3660,6 +3714,69 @@ void CharaObj::setScaleWeapon(float scale) {
 
 CharaWpnAsm::~CharaWpnAsm() {}
 
+inline void CharaWpnAsm::clear() {
+    m_mots.clear();
+    m_model = nullptr;
+    m_param = nullptr;
+    pad_50 = 1;
+}
+
+inline bool CharaWpnAsm::isPlayEnd(gf::GfEvtModel* model, bool left) {
+    switch (model->m_modelType) {
+    case 2:
+        return static_cast<gf::GfEvtModelWeapon*>(model)->isPlayEndAnimCS();
+    case 1:
+        return left ? static_cast<gf::GfEvtModelBlade*>(model)->isPlayEndAnimWeaponLeftCS()
+                    : static_cast<gf::GfEvtModelBlade*>(model)->isPlayEndAnimWeaponRightCS();
+    case 0:
+        return left ? static_cast<gf::GfEvtModelDriver*>(model)->isPlayEndAnimWeaponLeftCS()
+                    : static_cast<gf::GfEvtModelDriver*>(model)->isPlayEndAnimWeaponRightCS();
+    default:
+        return true;
+    }
+}
+
+inline void CharaWpnAsm::setSpeed(gf::GfEvtModel* model, float speed, bool left) {
+    switch (model->m_modelType) {
+    case 2:
+        static_cast<gf::GfEvtModelWeapon*>(model)->setAnimSpeedCS(speed);
+        break;
+    case 1:
+        if (left) {
+            static_cast<gf::GfEvtModelBlade*>(model)->setAnimSpeedWeaponLeftCS(speed);
+        } else {
+            static_cast<gf::GfEvtModelBlade*>(model)->setAnimSpeedWeaponRightCS(speed);
+        }
+        break;
+    case 0:
+        if (left) {
+            static_cast<gf::GfEvtModelDriver*>(model)->setAnimSpeedWeaponLeftCS(speed);
+        } else {
+            static_cast<gf::GfEvtModelDriver*>(model)->setAnimSpeedWeaponRightCS(speed);
+        }
+        break;
+    }
+}
+
+void CharaWpnAsm::update(float speed) {
+    if (m_model == nullptr || gf::GfObjUtil::getObj(m_model->m_handle) == nullptr) {
+        clear();
+        return;
+    }
+    if ((pad_8 & 1) && isPlayEnd(m_model, pad_8 & 4)) {
+        pad_8 &= ~1;
+    }
+    if (!(pad_8 & 1) && m_mots.size() != 0) {
+        play(m_model, MOT(m_mots[0]), (pad_8 >> 2) & 1, m_param);
+        m_mots.erase(m_mots.begin());
+        if (m_mots.size() != 0) {
+            pad_8 |= 1;
+        }
+    }
+    setSpeed(m_model, m_speed, pad_8 & 4);
+    m_speed = speed;
+}
+
 CharaEvaPlayer::~CharaEvaPlayer() {
     stop();
 }
@@ -3840,6 +3957,15 @@ void CharaEvaPlayerEff::stop() {
     m_player = nullptr;
 }
 
+void CharaEvaPlayerEff::play(gf::GfEvtModel* model, CharaEffectPlayer* player, void* data) {
+    stop();
+    m_model = model;
+    m_player = player;
+    m_rcha = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) RchaChrEff();
+    m_rcha->setup(mtl::ALLOC_HANDLE(), data);
+    pad_20 = 0;
+}
+
 int CharaSetPos::update(const ICmd::Param& param) {
     if (m_handle == (gf::GF_OBJ_HANDLE*)-1) {
         return true;
@@ -3850,6 +3976,33 @@ int CharaSetPos::update(const ICmd::Param& param) {
     }
     gf::GfComTransform* transform = obj->getComponent<gf::GfComTransform>(0);
     transform->setPosition(mm::Vec3(param.m_param.val(0).getF32(), param.m_param.val(1).getF32(), param.m_param.val(2).getF32()));
+    return true;
+}
+
+int CharaSetRot::update(const ICmd::Param& param) {
+    if (m_handle == (gf::GF_OBJ_HANDLE*)-1) {
+        return true;
+    }
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    if (obj == nullptr) {
+        return false;
+    }
+    gf::GfComTransform* transform = obj->getComponent<gf::GfComTransform>(0);
+    float x = param.m_param.val(0).getF32();
+    float y = param.m_param.val(1).getF32();
+    float z = param.m_param.val(2).getF32();
+    float sx = ::sinf(x * 0.5f);
+    float cx = ::cosf(x * 0.5f);
+    float sy = ::sinf(y * 0.5f);
+    float cy = ::cosf(y * 0.5f);
+    float sz = ::sinf(z * 0.5f);
+    float cz = ::cosf(z * 0.5f);
+    mm::Quat rot;
+    rot.x = sx * cy * cz + cx * sy * sz;
+    rot.y = cx * sy * cz - sx * cy * sz;
+    rot.z = cx * cy * sz - sx * sy * cz;
+    rot.w = cx * cy * cz + sx * sy * sz;
+    transform->setRotation(rot);
     return true;
 }
 

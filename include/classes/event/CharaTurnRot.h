@@ -3,6 +3,9 @@
 
 #include "classes/event/ICmd.h"
 
+namespace gf { class GF_OBJ_HANDLE; }
+namespace event { class CharaDysUpdater; }
+
 namespace event {
 // table 0x7100B3E450
 class CharaTurnRot : public ::event::ICmd {
@@ -12,8 +15,13 @@ public:
     virtual int update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4
 
-    // 0x8: an int, 0x10: the owner, 0x18: zeroed (CharaObj's constructor); not read here yet
-    unsigned char pad_8[0x18];
+    // bit 0: term resets the turn and clears it; the name is not the original's
+    unsigned int m_flags;  // 0x8
+    unsigned int pad_c;
+    // the character's gf object (term ends its turn); the name is not the original's
+    gf::GF_OBJ_HANDLE* m_handle;  // 0x10
+    // the character's dynamics updater (term resets its movement); the name is not the original's
+    CharaDysUpdater* m_dys;  // 0x18
 };
 }  // namespace event
 

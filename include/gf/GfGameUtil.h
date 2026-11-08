@@ -58,6 +58,8 @@ public:
         float m_arg3;
     };
     static bool execTurnCmd(const ExecTurnCmdInfo& info);  // false when no behavior component took it
+    // ends an object's turn (event::CharaTurnRot::term and CharaWalkPos::term call it after the turn)
+    static void disposeTurnEnd(GF_OBJ_HANDLE* handle);
     static bool isTurnEnd(gf::GF_OBJ_HANDLE* handle);
     static bool execActivateReserverForBlade(unsigned int blade);
     static bool execActivateUnuseForBlade(unsigned int blade, bool releaseOrbs);

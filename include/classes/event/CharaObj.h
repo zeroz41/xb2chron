@@ -120,7 +120,7 @@ public:
     unsigned char pad_28[0x8];
     // the command walkPos queues; the name is not the original's
     CharaWalkPos m_walkPos;  // 0x30
-    unsigned char pad_38[0xc8];
+    unsigned char pad_60[0xa0];
     // the liner position command linerPos queues (CharaObj's constructor builds it); the name is not the original's
     CharaLinerPos m_linerPos;  // 0x100
     // the turn and liner rotation commands (RandPlayer::Reply::update tests whether either is queued); the names are
