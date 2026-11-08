@@ -23,7 +23,12 @@ public:
         float pad_10;
         float pad_14;
     };
-    struct UpdateInfo;
+    // what update takes: the member's position, zero by default (StateFieldSquadMember::update fills it from its
+    // transform; the field's name is not the original's)
+    struct UpdateInfo {
+        UpdateInfo() : m_pos(::mm::Vec3::zero) {}
+        ::mm::Vec3 m_pos;
+    };
     // dispose's defaults (GfComBehaviorMob's constructor stores the same values)
     GmkSquadNavi() : m_index(-1), pad_30(::mm::Vec3::zero) {}
     ~GmkSquadNavi() { dispose(); }
@@ -33,6 +38,8 @@ public:
     // while it is in a squad (isInSquad) whose leader is bound (GmkSquad::getBindedGmkSquadLeader): its member's
     // position and y rotation (GmkSquad::getPosRotY) with pad_30 added to the position; false otherwise
     bool getPosRotY(::mm::Vec3& pos, float& rotY) const;
+    // its symbol names it: follows the squad leader with the member's position (GmkElevator's unit)
+    void update(const UpdateInfo& info);
     // it has a squad and an object, and its index is one of the squad's members (GfComBehaviorMob::isSquadMember
     // tests the same); the name is not the original's
     bool isInSquad() const;

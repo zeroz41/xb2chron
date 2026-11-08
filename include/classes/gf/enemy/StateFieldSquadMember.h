@@ -34,8 +34,10 @@ public:
     // what its constructor sets (0x71004B7C28 / 0x71004B8B54; the pads' use is not known)
     TFieldExecCmd<GfComAsm> m_execCmd;
     Seq m_seq;
+    // update: set while the distance to its squad position (pad_64, x and z) is below 0.1; the seqs then stand
+    // and turn instead of moving (the names are not known)
     bool pad_60;
-    unsigned int pad_64;
+    float pad_64;
 };
 }}  // namespace gf::enemy
 

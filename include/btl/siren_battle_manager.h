@@ -104,6 +104,9 @@ public:
     void NotifyLodFieldBreak(bool flag);
     // NotifyDownEnd: clears the side's pad_12_0
     void NotifyDownEnd(bool flag);
+    // 3.0.1's symbol names it; StateFieldSpawn::update hands it the spawning enemy's BDAT id, its idle motion's
+    // local time and state name (the parameter names are not the original's)
+    void NotifySpawnAnimation(unsigned int bdatId, float time, const char* stateName);
     // PreUpdate / Update: BattleManager::update calls them with its UpdateInfo, the first beside the
     //   other managers' PreUpdate (it does nothing), the second beside their Update (singleton's UpdateProc)
     static void PreUpdate(const fw::UpdateInfo& info);
