@@ -4560,6 +4560,20 @@ unsigned int DrGpuCheckObj::isDeleteCall() const {
     return m_flags & (FLAG_RELEASE << DrMan::s_nDblIdx);
 }
 
+void DrGpuCheckObj::render() {
+    if (m_flags & FLAG_QUERY) {
+        DrGpuCheckRender* check = DrMan::get()->m_mdlMan->m_gpuCheckRender;
+        m_query.beginQuery();
+        if (m_flags & FLAG_CREATE) {
+            check->render(m_instansOfs, 2);
+        } else {
+            check->render(m_instansOfs, 1);
+        }
+        m_query.endQuery();
+        m_flags |= FLAG_QUERIED << DrMan::s_nDblIdx;
+    }
+}
+
 bool DrGpuCheckObj::isRender() const {
     return (m_flags & FLAG_RENDER) != 0;
 }
@@ -4707,6 +4721,65 @@ bool DrStmReadCheck::update() {
     return false;
 }
 
+
+void DrResMdoLight::lgtCreate() {
+    if (m_flags & FLAG_CREATED) {
+        return;
+    }
+    DrLightMan* man = DrMan::getIns()->m_lightMan;
+    if (man == nullptr) {
+        return;
+    }
+    const EtcLights* res = m_etcLights;
+    m_flags |= FLAG_CREATED;
+    unsigned long lgtOfs = res->m_lightOfs;
+    unsigned long matOfs = res->m_matOfs;
+    m_num = res->m_num;
+    for (int i = 0; i < res->m_num; i++, lgtOfs += sizeof(EtcLight), matOfs += sizeof(mm::Mat44)) {
+        const EtcLight* lgt = reinterpret_cast<const EtcLight*>(reinterpret_cast<const unsigned char*>(res) + lgtOfs);
+        DrLightObj* light;
+        if (lgt->m_type == 0) {
+            DrLightObjPnt* pnt = man->createInstantPntLight();
+            mm::Vec3 col(lgt->m_color[0], lgt->m_color[1], lgt->m_color[2]);
+            col = col * lgt->m_intensity;
+            pnt->m_color[0] = col.x;
+            pnt->m_color[1] = col.y;
+            pnt->m_color[2] = col.z;
+            pnt->m_lightParam = lgt->m_param == 0.0f ? 1.0f : lgt->m_param;
+            if (lgt->m_flags & 2) {
+                pnt->setSubtractOn(true);
+            }
+            if (lgt->m_size != 0.0f) {
+                pnt->m_size = lgt->m_size;
+            }
+            pnt->m_lightParam2 = lgt->m_param2;
+            pnt->m_lightRate = lgt->m_rate;
+            pnt->setMat(*reinterpret_cast<const mm::Mat44*>(reinterpret_cast<const unsigned char*>(res) + matOfs));
+            light = pnt;
+        } else {
+            DrLightObjSpt* spt = man->createInstantSptLight();
+            mm::Vec3 col(lgt->m_color[0], lgt->m_color[1], lgt->m_color[2]);
+            col = col * lgt->m_intensity;
+            spt->m_color[0] = col.x;
+            spt->m_color[1] = col.y;
+            spt->m_color[2] = col.z;
+            spt->m_lightParam = lgt->m_param == 0.0f ? 1.0f : lgt->m_param;
+            if (lgt->m_size != 0.0f) {
+                spt->m_size = lgt->m_size;
+            }
+            if (lgt->m_flags & 2) {
+                spt->setSubtractOn(true);
+            }
+            spt->m_lightParam2 = lgt->m_param2;
+            spt->m_spotParam = lgt->m_rate;
+            spt->pad_e0 = lgt->m_spotPadE0;
+            spt->m_angle = lgt->m_angle;
+            spt->setMat(*reinterpret_cast<const mm::Mat44*>(reinterpret_cast<const unsigned char*>(res) + matOfs));
+            light = spt;
+        }
+        m_lights[i] = light;
+    }
+}
 
 void DrResMdoLight::setDisp(bool disp) {
     if (disp) {
