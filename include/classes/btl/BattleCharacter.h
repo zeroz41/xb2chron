@@ -76,6 +76,14 @@ public:
     // weapon distance; the controlled character hands it to BattleGlobal
     void SetAttackTarget(gf::GF_OBJ_HANDLE* target);
     void CheckWeaponDistance(gf::GF_OBJ_HANDLE* target);
+    // the first object of the character's weapon (its party slot's, its Ira driver's, or its mount's), the other
+    // one when unset; the second first when the bool is set; (GF_OBJ_HANDLE*)-1 for none
+    gf::GF_OBJ_HANDLE* GetWeaponObjectHandle(bool) const;
+    // m_isBattleIgnore for a player-side non-blade (without pad_F09_3): set unless it is the controlled character
+    // and dead
+    void SetupRescueTarget();
+    // pad_11B3_5 for a player-side non-blade (without pad_F09_3), from its class's "Pot" flag
+    void SetupPickupHealPot();
     // what the enemy's battle states hand an animation annotation to (1.0.0's name)
     void AsmCallback(const gf::MsgObjectNotifyAsmCallback& msg);
     // the PC's battle states hand it the damage message 0x100003A they receive
@@ -500,7 +508,12 @@ public:
     mm::Vec3 m_pos;
     // SetPosition stores its position here (then sets pad_F00_5 and pad_F00_6; meaning unknown)
     mm::Vec3 pad_20;
-    unsigned char pad_30[0x70];
+    unsigned char pad_30[0x20];
+    // the character's direction: ResetWarp sets it and pad_60 to its posture's direction, CheckAttackPosition
+    // measures the target's angle from it (the name is not the original's)
+    mm::Vec3 m_dir;
+    mm::Vec3 pad_60;
+    unsigned char pad_70[0x30];
     // SetWarpPostureByDir sets it to the rotation of mm::Vec3::unitZ onto its direction (then sets pad_F00_7)
     mm::Quat pad_A0;
     // the movement of this frame: GetMoveDataPerSec scales it by 30 (the name is not the original's)
@@ -649,7 +662,10 @@ public:
     // IsControlCharacter's cached answer and whether it is cached (the names are not the original's)
     mutable unsigned int m_isControlChara : 1;
     mutable unsigned int m_isControlCharaCached : 1;
-    unsigned int pad_EFF_2 : 3;
+    // IsControlCharacterGroup's cached answer and whether it is cached (the names are not the original's)
+    mutable unsigned int m_isControlGroup : 1;
+    mutable unsigned int m_isControlGroupCached : 1;
+    unsigned int pad_EFF_4 : 1;
     // unknown: TurnTarget clears it once the target's position is known (the name is not the original's)
     unsigned int m_flagEFF_5 : 1;
     unsigned int pad_EFF_6 : 1;
@@ -852,7 +868,12 @@ public:
     unsigned char m_useNavi : 1;  // Utility::AI_SetUseNavi sets it (the name is not the original's)
     // Utility::AI_IsBattleOpening answers it and clears it (the name is not the original's)
     unsigned char m_battleOpening : 1;
-    unsigned char pad_11B3_4 : 4;
+    unsigned char pad_11B3_4 : 1;
+    // SetupPickupHealPot sets it for a player-side non-blade whose class row has the "Pot" flag (an Ira driver
+    // 17 or 18 in Ira battles; meaning unknown)
+    unsigned char pad_11B3_5 : 1;
+    unsigned char pad_11B3_6 : 1;  // ResetWarp clears it (meaning unknown)
+    unsigned char pad_11B3_7 : 1;
     unsigned char pad_11B4 : 8;
     unsigned char pad_11B5[0xB];
 };

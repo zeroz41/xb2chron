@@ -361,7 +361,11 @@ public:
     // BattleCharacter::CheckRandSatisfyEnhanceCondition shows its buff name this far above m_pos (meaning unknown)
     float pad_38;
     float pad_3c;  // see pad_30
-    unsigned char pad_40[0x20];
+    unsigned char pad_40[0xC];
+    // an angle: BattleCharacter::CheckAttackPosition counts a target within half of it either side of the
+    // character's direction as in front (meaning unknown)
+    float pad_4c;
+    unsigned char pad_50[0x10];
     // Set/Add/Min/GetSpecialEnhanceRate's rate by SPECIAL_ENHANCE_TYPE (22 of them; the name is not the original's)
     float m_specialEnhanceRate[22];
     // the unsigned short those functions store with the rate (the name is not the original's)
@@ -411,7 +415,9 @@ public:
     // EnemyParameter::Initialize stores GfBdatRsc::getRscEnTypeFamily of the enemy's row (the name is not the
     // original's)
     unsigned short m_enTypeFamily : 4;
-    unsigned char pad_5e4 : 8;
+    // BattleCharacter::CheckAttackPosition answers 3 for a kind 9 when asked (meaning unknown)
+    unsigned char pad_5e4_0 : 5;
+    unsigned char pad_5e4_5 : 3;
     // the axis the character spins about when blown (GetBlowRotAxis normalises it; the name is not the original's)
     signed char m_blowRotAxis[3];
     // GetBlowRotSpeed's spin speed in degrees (the name is not the original's)

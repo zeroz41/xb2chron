@@ -896,6 +896,31 @@ bool BattleCharacter::CheckRandFriendEnhanceRate(int id) const {
     return ml::mtRandf1() <= rate;
 }
 
+gf::GF_OBJ_HANDLE* BattleCharacter::GetWeaponObjectHandle(bool second) const {
+    gf::GfWeapon* weapon;
+    if (m_isPlayer) {
+        if (!mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_challengeAnySuccess) {
+            const CharacterParameter* param = GetCharacterParameterConst(false);
+            if (param == nullptr) {
+                return reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+            }
+            weapon = gf::GfGameParty::getHandleWeapon(param->m_groupIndex, -1);
+        } else {
+            weapon = gf::GfGameParty::getHandleWeaponDriver(m_handle);
+        }
+    } else {
+        weapon = gf::GfMountManager::getGfWeapon(m_handle, gf::GFATTACH(0));
+    }
+    if (weapon == nullptr) {
+        return reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    gf::GF_OBJ_HANDLE* const* handles = weapon->getObjHandles();
+    if (second) {
+        return handles[1] == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) ? handles[0] : handles[1];
+    }
+    return handles[0] == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) ? handles[1] : handles[0];
+}
+
 void BattleCharacter::SetAttackTarget(gf::GF_OBJ_HANDLE* target) {
     if (m_aiArtsTarget >= 0) {
         if (BattleCharacter* chr = mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(m_aiArtsTarget)) {
@@ -913,6 +938,63 @@ void BattleCharacter::SetAttackTarget(gf::GF_OBJ_HANDLE* target) {
     if (IsControlCharacter() && target != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_controlTargetHandle = target;
     }
+}
+
+unsigned char BattleCharacter::CheckAttackPosition(gf::GF_OBJ_HANDLE* target, bool flag, bool* out) const {
+    const BattleCharacter* chr = mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(target);
+    if (chr == nullptr) {
+        if (out != nullptr) {
+            *out = true;
+        }
+        return 0;
+    }
+    if (out != nullptr) {
+        *out = false;
+    }
+    const CharacterParameter* param = chr->GetCharacterParameterConst(false);
+    if (!flag || param->pad_5e4_0 != 9) {
+        mm::Vec3 dir = chr->m_dir;
+        mm::Vec3 to;
+        to.x = m_pos.x - chr->m_pos.x;
+        to.y = m_pos.y - chr->m_pos.y;
+        to.z = m_pos.z - chr->m_pos.z;
+        Misc::NormalizeXZ(to);
+        float angle = Misc::CalcAngle(dir, to, true);
+        if (fabsf(angle) <= param->pad_4c * 0.5f) {
+            return 0;
+        }
+        if (fabsf(angle) >= 3.1415927f - param->pad_4c * 0.5f) {
+            return 3;
+        }
+        if (angle >= 0.0f) {
+            return 1;
+        }
+        return 2;
+    }
+    return 3;
+}
+
+void BattleCharacter::CheckWeaponDistance(gf::GF_OBJ_HANDLE* target) {
+    bool inRange = false;
+    bool battle = IsBattle();
+    if (target != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) && battle) {
+        if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
+            unsigned char range = param->m_weaponRange;
+            if (range != 0) {
+                const BattleCharacter* chr = this;
+                if (!param->m_flags622_6 && !param->m_isNotBlade) {
+                    chr = mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(param->m_driverHandle);
+                }
+                if (chr != nullptr) {
+                    if (Misc::CheckInRange(chr->m_pos, target, range, false)) {
+                        inRange = param->m_weaponMinRange == 0 ||
+                                  !Misc::CheckInRange(chr->m_pos, target, param->m_weaponMinRange, false);
+                    }
+                }
+            }
+        }
+    }
+    m_inWeaponDistance = inRange;
 }
 
 const gf::GfComProperty* BattleCharacter::GetComPropertyConst() const {
@@ -1585,6 +1667,33 @@ bool BattleCharacter::IsControlCharacter() const {
         m_isControlCharaCached = true;
     }
     return control;
+}
+
+bool BattleCharacter::IsControlCharacterGroup() const {
+    if (m_isControlGroupCached) {
+        return m_isControlGroup;
+    }
+    bool group = false;
+    if (m_isPlayer) {
+        if (IsControlCharacter()) {
+            group = true;
+        } else if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
+            int index = param->m_groupIndex;
+            if (index >= 0) {
+                gf::GF_OBJ_HANDLE* handle = mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_controlHandle;
+                const BattleCharacter* control = mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(handle);
+                if (control != nullptr) {
+                    const CharacterParameter* controlParam = control->GetCharacterParameterConst(false);
+                    group = index == (controlParam != nullptr ? controlParam->m_groupIndex : -1);
+                }
+            }
+        }
+    }
+    if (!mm::mtl::PtrSingleton<ChainAttackManager>::sys()->IsResult()) {
+        m_isControlGroup = group;
+        m_isControlGroupCached = true;
+    }
+    return group;
 }
 
 void BattleCharacter::ActionRun() {
