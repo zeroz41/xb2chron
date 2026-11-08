@@ -319,6 +319,30 @@ void AudioOutRenderer::OnOutputAvailable(int index, long presentationTimeUs, uns
     }
 }
 
+void AudioOutRenderer::Close() {
+    m_exit = true;
+    if (m_threadCreated) {
+        if (m_threadStarted) {
+            nn::os::WaitThread(&m_thread);
+            m_threadStarted = false;
+        }
+        nn::os::DestroyThread(&m_thread);
+        m_threadCreated = false;
+    }
+    if (m_audioOutOpened) {
+        nn::audio::StopAudioOut(&m_audioOut);
+        nn::audio::CloseAudioOut(&m_audioOut);
+        m_audioOutOpened = false;
+    }
+    nn::os::LockMutex(&m_outputMutex);
+    int count = m_outputBuffers.size();
+    for (int i = 0; i < count; i++) {
+        m_decoder->ReleaseOutputBufferIndex(m_outputBuffers.begin()->m_index);
+        m_outputBuffers.erase(m_outputBuffers.begin());
+    }
+    nn::os::UnlockMutex(&m_outputMutex);
+}
+
 void VideoRendererThreadFunction(void* arg) {
     VideoRenderer* renderer = static_cast<VideoRenderer*>(arg);
     while (!renderer->m_exit) {
@@ -561,6 +585,19 @@ void AudioInputReadThreadFunction(void* arg) {
     player->m_audioInputThreadDone = true;
 }
 
+void MovieDecoderPlayer::StopAudioVideoRenderer() {
+    if (m_audioOutRenderer != nullptr) {
+        m_audioOutRenderer->Flush();
+        m_audioOutRenderer->Close();
+        m_audioOutRenderer->Finalize();
+    }
+    if (m_videoRenderer != nullptr) {
+        m_videoRenderer->Flush();
+        m_videoRenderer->Close();
+        m_videoRenderer->Finalize();
+    }
+}
+
 void MovieDecoderPlayer::DestroypAudioVideoRenderer() {
     if (m_audioOutRenderer != nullptr) {
         delete m_audioOutRenderer;
@@ -570,6 +607,158 @@ void MovieDecoderPlayer::DestroypAudioVideoRenderer() {
         delete m_videoRenderer;
         m_videoRenderer = nullptr;
     }
+}
+
+int MovieDecoderPlayer::CreateExtractor(const char* path, movie::ContainerType type, movie::Extractor** extractor,
+                                        movie::ClientStreamReader** reader) {
+    movie::Extractor* newExtractor = new movie::Extractor(type);
+    nn::fs::FileHandle handle;
+    handle.handle = nullptr;
+    if (nn::fs::OpenFile(&handle, path, nn::fs::OpenMode_Read).IsFailure()) {
+        delete newExtractor;
+        return 0x1008;
+    }
+    nn::fs::CloseFile(handle);
+    StreamReader* newReader = new StreamReader();
+    int status = newExtractor->SetDataSource(newReader, path);
+    if (status == 0) {
+        m_trackCount = 0;
+        status = newExtractor->GetTrackCount(&m_trackCount);
+        if (status == 0) {
+            status = m_trackCount < 1 ? 0x3000 : 0;
+        }
+    }
+    *extractor = newExtractor;
+    *reader = newReader;
+    return status;
+}
+
+int MovieDecoderPlayer::SendEosToDecoder() {
+    movie::Buffer buffer;
+    int count = GetAudioIndexListSize();
+    for (int i = 0; i < count; i++) {
+        int index = GetBufferFromAudioIndexList();
+        if (index != -1) {
+            m_audioDecoder->GetInputBuffer(index, &buffer);
+            m_audioDecoder->SendInputBufferForDecode(index, 0, 0, 0, 4);
+        }
+    }
+    count = GetVideoIndexListSize();
+    for (int i = 0; i < count; i++) {
+        int index = GetBufferFromVideoIndexList();
+        if (index != -1) {
+            m_videoDecoder->GetInputBuffer(index, &buffer);
+            m_videoDecoder->SendInputBufferForDecode(index, 0, 0, 0, 4);
+        }
+    }
+    return 0;
+}
+
+int MovieDecoderPlayer::VideoInputBufferAvailableEvent() {
+    int index = -1;
+    int count = 0;
+    int status = m_videoDecoder->AcquireInputBufferIndex(&index, &count);
+    if (status == 0) {
+        AddBufferToVideoIndexList(index);
+        nn::os::SendMessageQueue(&m_videoInputQueue, 1);
+        for (int i = 0; i < count; i++) {
+            int remaining = 0;
+            status = m_videoDecoder->AcquireInputBufferIndex(&index, &remaining);
+            if (status == 0) {
+                AddBufferToVideoIndexList(index);
+                nn::os::SendMessageQueue(&m_videoInputQueue, 1);
+            }
+        }
+    }
+    return status;
+}
+
+int MovieDecoderPlayer::VideoOutputBufferAvailableEvent() {
+    int index = -1;
+    long presentationTimeUs = 0;
+    unsigned int flags = 0;
+    int count = 0;
+    int status = m_videoDecoder->AcquireOutputBufferIndex(&index, &presentationTimeUs, &flags, &count);
+    if (status == 0) {
+        m_videoRenderer->OnOutputAvailable(index, presentationTimeUs, flags);
+        m_videoOutputCount++;
+        if (flags == 4) {
+            m_videoOutputEos = true;
+        }
+        for (int i = 0; i < count; i++) {
+            int remaining = 0;
+            status = m_videoDecoder->AcquireOutputBufferIndex(&index, &presentationTimeUs, &flags, &remaining);
+            if (status == 0) {
+                if (flags == 4) {
+                    m_videoOutputEos = true;
+                }
+                m_videoRenderer->OnOutputAvailable(index, presentationTimeUs, flags);
+                m_videoOutputCount++;
+            }
+        }
+    }
+    return status;
+}
+
+int MovieDecoderPlayer::VideoFormatChangedEvent() {
+    movie::MediaData format;
+    int status = m_videoDecoder->GetOutputFormat(&format);
+    if (status == 0) {
+        int width = 0;
+        int height = 0;
+        format.FindInt32("width", &width);
+        m_width = width;
+        format.FindInt32("height", &height);
+        m_height = height;
+    }
+    format.Clear();
+    return status;
+}
+
+int MovieDecoderPlayer::AudioInputBufferAvailableEvent() {
+    int index = -1;
+    int count = 0;
+    int status = m_audioDecoder->AcquireInputBufferIndex(&index, &count);
+    if (status == 0) {
+        AddBufferToAudioIndexList(index);
+        nn::os::SendMessageQueue(&m_audioInputQueue, 3);
+        for (int i = 0; i < count; i++) {
+            int remaining = 0;
+            status = m_audioDecoder->AcquireInputBufferIndex(&index, &remaining);
+            if (status == 0) {
+                AddBufferToAudioIndexList(index);
+                nn::os::SendMessageQueue(&m_audioInputQueue, 3);
+            }
+        }
+    }
+    return status;
+}
+
+int MovieDecoderPlayer::AudioOutputBufferAvailableEvent() {
+    int index = -1;
+    long presentationTimeUs = 0;
+    unsigned int flags = 0;
+    int count = 0;
+    int status = m_audioDecoder->AcquireOutputBufferIndex(&index, &presentationTimeUs, &flags, &count);
+    if (status == 0) {
+        m_audioOutRenderer->OnOutputAvailable(index, presentationTimeUs, flags);
+        m_audioOutputCount++;
+        if (flags == 4) {
+            m_audioOutputEos = true;
+        }
+        for (int i = 0; i < count; i++) {
+            int remaining = 0;
+            status = m_audioDecoder->AcquireOutputBufferIndex(&index, &presentationTimeUs, &flags, &remaining);
+            if (status == 0) {
+                m_audioOutputCount++;
+                m_audioOutRenderer->OnOutputAvailable(index, presentationTimeUs, flags);
+            }
+            if (flags == 4) {
+                m_audioOutputEos = true;
+            }
+        }
+    }
+    return status;
 }
 
 namespace CMovieNX {
@@ -618,6 +807,43 @@ void CMovie::pause() {
     if (!s_pause) {
         s_pause = true;
     }
+}
+
+void CMovie::stop() {
+    MovieDecoderPlayer* player = m_player;
+    if (player == nullptr || !player->m_running) {
+        return;
+    }
+    if (m_player->m_audioDecoder != nullptr) {
+        m_player->m_audioDecoder->Stop();
+    }
+    if (m_player->m_videoDecoder != nullptr) {
+        m_player->m_videoDecoder->Stop();
+    }
+    m_player->StopVideoInputReadThread();
+    m_player->StopAudioInputReadThread();
+    m_player->StopAudioVideoRenderer();
+    m_player->DestroypAudioVideoRenderer();
+    if (m_player->m_audioDecoder != nullptr) {
+        delete m_player->m_audioDecoder;
+        m_player->m_audioDecoder = nullptr;
+    }
+    if (m_player->m_videoDecoder != nullptr) {
+        delete m_player->m_videoDecoder;
+        m_player->m_videoDecoder = nullptr;
+    }
+    if (m_player->m_extractor != nullptr) {
+        delete m_player->m_extractor;
+        m_player->m_extractor = nullptr;
+    }
+    if (m_player->m_streamReader != nullptr) {
+        delete m_player->m_streamReader;
+        m_player->m_streamReader = nullptr;
+    }
+    m_player->Finalize();
+    delete m_player;
+    m_player = nullptr;
+    nn::os::SleepThread(nn::TimeSpan::FromMilliSeconds(1));
 }
 
 bool CMovie::isstandby() {

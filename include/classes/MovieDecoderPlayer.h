@@ -119,6 +119,19 @@ public:
     void GenerateFixedSizeAudioFrame();
     void Close();
     void OnOutputAvailable(int index, long presentationTimeUs, unsigned int flags);
+    // inlined (no symbol; name inferred): StopAudioVideoRenderer's return of the queued outputs to the decoder
+    void Flush() {
+        nn::os::LockMutex(&m_outputMutex);
+        int count = m_outputBuffers.size();
+        for (int i = 0; i < count; i++) {
+            if (m_decoder != nullptr) {
+                audioData& data = m_outputBuffers.front();
+                m_decoder->ReleaseOutputBufferIndex(data.m_index);
+            }
+            m_outputBuffers.erase(m_outputBuffers.begin());
+        }
+        nn::os::UnlockMutex(&m_outputMutex);
+    }
 
     movie::Decoder* m_decoder;  // Close returns the queued outputs to it
     bool m_threadStarted;  // Start's: the render thread runs (Close waits for it)
@@ -190,21 +203,56 @@ public:
         }
     }
 
+    // inlined (no symbols; names inferred, Close and Finalize after AudioOutRenderer's): StopAudioVideoRenderer
+    // returns the queued outputs to the decoder, stops the render thread and frees its stack
+    void Flush() {
+        nn::os::LockMutex(&m_outputMutex);
+        int count = m_outputBuffers.size();
+        for (int i = 0; i < count; i++) {
+            m_decoder->ReleaseOutputBufferIndex(m_outputBuffers.begin()->m_index);
+            m_outputBuffers.erase(m_outputBuffers.begin());
+        }
+        nn::os::UnlockMutex(&m_outputMutex);
+    }
+    void Close() {
+        m_exit = true;
+        if (m_threadCreated) {
+            if (m_threadStarted) {
+                nn::os::WaitThread(&m_thread);
+                m_threadStarted = false;
+            }
+            nn::os::DestroyThread(&m_thread);
+            m_threadCreated = false;
+        }
+    }
+    void Finalize() {
+        if (m_threadStack != nullptr) {
+            MultimediaFree(m_threadStack, nullptr);
+            m_threadStack = nullptr;
+        }
+        nn::os::FinalizeMutex(&m_outputMutex);
+    }
+
     int Render();
     bool AVSync(long presentationTimeUs);
     long GetRealTimeUs(long mediaTimeUs, long nowUs);
 
-    unsigned char pad_0[0x9];
+    movie::Decoder* m_decoder;  // Render takes the outputs from it
+    bool m_threadStarted;  // the render thread runs (Close waits for it)
     bool m_exit;  // the render thread runs until it is set
-    unsigned char pad_a[0x6];
+    bool m_threadCreated;  // the render thread exists (Close destroys it)
+    unsigned char pad_b[0x5];
     long m_presentationTimeUs;  // AVSync's: the time of the frame it checks
     unsigned char pad_18[0x10];
     void* m_threadStack;  // StopAudioVideoRenderer frees it with the render thread at 0x30
-    unsigned char pad_30[0x1E0];
+    nn::os::ThreadType m_thread;
+    unsigned char pad_1f0[0x20];
     std::vector<VideoData> m_outputBuffers;  // the decoder's outputs not yet shown, under m_outputMutex
     unsigned char pad_228[0x8];
     nn::os::MutexType m_outputMutex;
-    unsigned char pad_250[0x18];
+    unsigned long m_frameSize;  // Render's capacity and range of the frame buffer
+    void* m_frame;  // Render copies the first shown output into it
+    unsigned char pad_260[0x8];
     bool m_started;  // isstandby's: the first frame is shown
     bool m_eos;  // isplaying's: the video has played out
     unsigned char pad_26a[0x6];
@@ -220,11 +268,17 @@ class MovieDecoderPlayer {
 public:
     int Initialize(unsigned long coreMask);
     void Finalize();
+    void StopAudioVideoRenderer();
     void DestroypAudioVideoRenderer();
+    int CreateExtractor(const char* path, movie::ContainerType type, movie::Extractor** extractor,
+                        movie::ClientStreamReader** reader);
     int VideoInputBufferAvailableEvent();
-    void CheckForInputBuffersAndReadVideoInputData();
-    void CheckForInputBuffersAndReadAudioInputData();
+    int ReadInputDataFromExtractorSendTodecoder(int index, movie::Decoder* decoder);
+    int SendEosToDecoder();
+    int CheckForInputBuffersAndReadVideoInputData();
+    int CheckForInputBuffersAndReadAudioInputData();
     int VideoOutputBufferAvailableEvent();
+    int VideoFormatChangedEvent();
     int AudioInputBufferAvailableEvent();
     int AudioOutputBufferAvailableEvent();
     // inlined helpers (no symbols; names inferred): a free input buffer's index joins the list under its lock
@@ -238,8 +292,61 @@ public:
         m_audioInputBuffers.push_back(bufferIndex);
         nn::os::UnlockMutex(&m_audioInputMutex);
     }
+    // inlined helpers (no symbols; names inferred): CMovie::stop tells an input thread to stop and waits for it
+    void StopVideoInputReadThread() {
+        if (m_videoInputThreadCreated) {
+            m_videoInputThreadDone = true;
+            nn::os::SendMessageQueue(&m_videoInputQueue, 2);
+            nn::os::WaitThread(&m_videoInputThread);
+            nn::os::DestroyThread(&m_videoInputThread);
+            m_videoInputThreadCreated = false;
+        }
+    }
+    void StopAudioInputReadThread() {
+        if (m_audioInputThreadCreated) {
+            m_audioInputThreadDone = true;
+            nn::os::SendMessageQueue(&m_audioInputQueue, 4);
+            nn::os::WaitThread(&m_audioInputThread);
+            nn::os::DestroyThread(&m_audioInputThread);
+            m_audioInputThreadCreated = false;
+        }
+    }
+    // inlined helpers (no symbols; names inferred): the oldest free input buffer's index leaves the list (-1 when it
+    // is empty), and the list's size, each under its lock
+    int GetBufferFromVideoIndexList() {
+        int bufferIndex = -1;
+        nn::os::LockMutex(&m_videoInputMutex);
+        if (static_cast<int>(m_videoInputBuffers.size()) > 0) {
+            bufferIndex = m_videoInputBuffers.front();
+            m_videoInputBuffers.erase(m_videoInputBuffers.begin());
+        }
+        nn::os::UnlockMutex(&m_videoInputMutex);
+        return bufferIndex;
+    }
+    int GetBufferFromAudioIndexList() {
+        int bufferIndex = -1;
+        nn::os::LockMutex(&m_audioInputMutex);
+        if (static_cast<int>(m_audioInputBuffers.size()) > 0) {
+            bufferIndex = m_audioInputBuffers.front();
+            m_audioInputBuffers.erase(m_audioInputBuffers.begin());
+        }
+        nn::os::UnlockMutex(&m_audioInputMutex);
+        return bufferIndex;
+    }
+    int GetVideoIndexListSize() {
+        nn::os::LockMutex(&m_videoInputMutex);
+        int size = m_videoInputBuffers.size();
+        nn::os::UnlockMutex(&m_videoInputMutex);
+        return size;
+    }
+    int GetAudioIndexListSize() {
+        nn::os::LockMutex(&m_audioInputMutex);
+        int size = m_audioInputBuffers.size();
+        nn::os::UnlockMutex(&m_audioInputMutex);
+        return size;
+    }
 
-    unsigned char pad_0[0x8];  // the extractor (ReadInputDataFromExtractorSendTodecoder's reads)
+    movie::Extractor* m_extractor;  // ReadInputDataFromExtractorSendTodecoder's reads
     movie::Decoder* m_audioDecoder;
     movie::Decoder* m_videoDecoder;
     // AudioVideoWorkerThreadFunction waits on all the holders below. A decoder's four events come in the order its
@@ -279,7 +386,9 @@ public:
     int m_trackCount;  // CreateExtractor's: the extractor's track count
     int m_width;  // VideoFormatChangedEvent's "width"
     int m_height;  // VideoFormatChangedEvent's "height"
-    unsigned char pad_44c[0x24];
+    unsigned char pad_44c[0x1C];
+    int m_audioTrackIndex;  // the extractor's track the audio decoder reads
+    int m_videoTrackIndex;  // the extractor's track the video decoder reads
     unsigned long m_threadStackSize;  // each of the three threads' stack size
     void* m_videoInputThreadStack;
     bool m_videoInputThreadDone;  // VideoInputReadThreadFunction sets it when it stops
@@ -302,9 +411,17 @@ public:
     nn::os::MessageQueueType m_videoInputQueue;  // told of each free video input buffer
     unsigned long* m_audioInputQueueBuffer;
     nn::os::MessageQueueType m_audioInputQueue;  // told of each free audio input buffer
-    unsigned char pad_b00[0xC];
+    unsigned char pad_b00[0x4];
+    int m_mode;  // CheckForInputBuffersAndReadAudioInputData tests 1..3 when there is no extractor
+    unsigned char pad_b08[0x1];
+    bool m_running;  // CMovie::stop tears the player down only while it is set
+    bool m_loop;  // at the stream's end the extractor seeks back to the start while it is set
+    unsigned char pad_b0b[0x1];
     int m_loopCount;  // ReadInputDataFromExtractorSendTodecoder counts each rewind to the start at the stream's end
-    unsigned char pad_b10[0x18];
+    // two formats (destroyed with the player as an array, no other user in the unit; name inferred) and the
+    // extractor's reader
+    movie::MediaData m_formats[2];
+    movie::ClientStreamReader* m_streamReader;
     MediaClock* m_mediaClock;  // Initialize news it whether the threads started or not
     bool m_done;  // isplaying sets it once audio and video have played out
     unsigned char pad_b31[0x7];
