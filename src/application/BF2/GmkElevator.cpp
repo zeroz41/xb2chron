@@ -390,7 +390,7 @@ GmkEnemyWave* GmkEnemyWaveExtension::getBindedGmkEnemyWave(const GmkEnemy* enemy
             return nullptr;
         }
         if (list->getGmkType() == GmkEnemy::TYPE) {
-            IGmkList* waves = &static_cast<GmkEnemyList*>(list)->m_waveList;
+            IGmkList* waves = &static_cast<GmkEnemyList*>(list)->m_waveExt.m_waveList;
             for (unsigned int i = 0; i < waves->getInstNum(); i++) {
                 GmkEnemyWave* wave = static_cast<GmkEnemyWave*>(waves->getInst(i));
                 if (wave != nullptr) {
@@ -442,8 +442,42 @@ void GmkEnemyWaveExtension::backHome(const GmkEnemy* enemy) {
     }
 }
 
+void GmkEnemyListWaveExtension::createPopEffect(const mm::Vec3& pos) const {
+    if (m_popEffect == nullptr) {
+        return;
+    }
+    unsigned int handle = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->create(m_popEffect, true);
+    if (handle == 0) {
+        return;
+    }
+    mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setCategory(handle, fw::EF_CATEGORY(2));
+    effect::SendParam param;
+    param.m_mtx.setTrans(pos);
+    mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setParam(handle, &param);
+}
+
 // ---- GmkEnemyWaveList (GmkEnemyList's list at 0x470; placeholder slot symbols: see its header)
 GmkEnemyWaveList::~GmkEnemyWaveList() { dispose(); }
+
+static inline const char* getSheetnameByKindName(const GmkManager* manager, int id, const char* kindName);
+
+void GmkEnemyListWaveExtension::create(IGmkList::CreateInfo& info) {
+    if (!(gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra())) {
+        return;
+    }
+    IGmkList::CreateInfo waveInfo = info;
+    const char* name = getSheetnameByKindName(GmkManager::sys(), static_cast<const GmkSet*>(info.m_param)->m_createInfo.m_bdatId,
+                                              "enemyWave");
+    if (name != nullptr) {
+        waveInfo.m_bdatName = name;
+        m_waveList.create(waveInfo);
+    }
+    if (gf::GfGameManager::isGameTypeIra()) {
+        if (fw::EffectPack* pack = gf::GfFieldManager::getEffectPack()) {
+            m_popEffect = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search("ma40a_01_130_dlc", pack);
+        }
+    }
+}
 
 void GmkEnemyWaveList::create(const IGmkList::CreateInfo& info) { TGmkList::create(info); }
 
@@ -936,6 +970,15 @@ void GmkRoutedEnemyList::dispose() {
     TGmkList::dispose();
 }
 
+void GmkRoutedEnemyList::createGmk(void* data) {
+    TGmkList::createGmk(data);
+    IGmkList::CreateInfo info = getCreateInfo();
+    if (info.m_allocHandle.m_handle != 0 && info.m_path.length() != 0) {
+        info.m_bdatName.clear();
+        m_triggerList.create(info);
+    }
+}
+
 void GmkRoutedEnemyList::update(float dt) {
     m_triggerList.update(dt);
     TGmkList::update(dt);
@@ -956,13 +999,13 @@ void GmkRoutedEnemyList::debugDraw() const {
 }
 
 GmkEnemyList::GmkEnemyList(unsigned int updateGmkNumPerFrame)
-    : TGmkList(updateGmkNumPerFrame), m_triggerList(-1), m_waveList(-1), pad_8d0(nullptr) {}
+    : TGmkList(updateGmkNumPerFrame), m_triggerList(-1) {}
 
 // the wave list is set through an IGmkList pointer to it (the original calls its slot)
 void GmkEnemyList::setUpdateGmkNumPerFrame(unsigned int num) {
     TGmkList::setUpdateGmkNumPerFrame(num);
     m_triggerList.setUpdateGmkNumPerFrame(num);
-    IGmkList* waveList = &m_waveList;
+    IGmkList* waveList = &m_waveExt.m_waveList;
     if (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) {
         waveList->setUpdateGmkNumPerFrame(num);
     }
@@ -979,23 +1022,33 @@ void GmkEnemyList::create(const IGmkList::CreateInfo& info) {
 void GmkEnemyList::dispose() {
     m_triggerList.dispose();
     if (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) {
-        m_waveList.dispose();
-        pad_8d0 = nullptr;
+        m_waveExt.m_waveList.dispose();
+        m_waveExt.m_popEffect = nullptr;
     }
     TGmkList::dispose();
+}
+
+void GmkEnemyList::createGmk(void* data) {
+    TGmkList::createGmk(data);
+    IGmkList::CreateInfo info = getCreateInfo();
+    if (info.m_allocHandle.m_handle != 0 && info.m_path.length() != 0) {
+        info.m_bdatName.clear();
+        m_triggerList.create(info);
+        m_waveExt.create(info);
+    }
 }
 
 bool GmkEnemyList::updateImmediate() {
     return TGmkList::updateImmediate() && m_triggerList.updateImmediate() &&
            (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) &&
-           m_waveList.updateImmediate();
+           m_waveExt.m_waveList.updateImmediate();
 }
 
 void GmkEnemyList::debugUpdateMmf() {
     TGmkList::debugUpdateMmf();
     m_triggerList.debugUpdateMmf();
     if (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) {
-        m_waveList.debugUpdateMmf();
+        m_waveExt.m_waveList.debugUpdateMmf();
     }
 }
 
@@ -1003,7 +1056,7 @@ void GmkEnemyList::debugDraw() const {
     TGmkList::debugDraw();
     m_triggerList.debugDraw();
     if (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) {
-        m_waveList.debugDraw();
+        m_waveExt.m_waveList.debugDraw();
     }
 }
 
@@ -1225,6 +1278,28 @@ void GmkNpcManager::update(float dt) {
     }
 }
 
+
+void GmkNpcIdInfo::dispose() {
+    if (m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        m_gmk->unbindToGameObj(m_handle);
+        gf::GfObjUtil::destroy(m_handle);
+        m_handle = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        m_gmk = nullptr;
+        for (mm::mtl::IntrusiveList<AGmkNpc>::iterator it = m_gmks->begin(); it != m_gmks->end(); ++it) {
+            if (it->isPopCondMatched()) {
+                setActiveGmkNpc(&*it);
+                break;
+            }
+        }
+    }
+    setActiveGmkNpc(nullptr);
+    if (m_gmks != nullptr) {
+        delete m_gmks;
+        m_gmks = nullptr;
+    }
+    m_npcId = 0;
+    m_bdatFp = nullptr;
+}
 
 void GmkNpcIdInfo::update(float, bool flag) {
     if (!isValid() || !isInterestPosExist()) {
@@ -2325,6 +2400,27 @@ void GmkRoute::debugDraw() const {
     if (isValid()) {
         debugDrawRoute(mm::Col4::yellow);
     }
+}
+
+// a squad member other than the leader keeps its place in the squad; any other object takes the first free
+// navigator
+bool GmkRoutedEnemy::PopXformFinder::onPopGob(gf::GF_OBJ_HANDLE* handle) const {
+    {
+        gf::GfObjAcc acc(handle);
+        if (gf::GfObj* obj = acc.getObj()) {
+            if (gf::GfComBehaviorEnemy* behavior = obj->getComponent<gf::GfComBehaviorEnemy>(6)) {
+                const GmkSquadNavi& navi = behavior->m_field.m_squadNavi;
+                if (navi.isInSquad() && navi.m_index != 0) {
+                    return true;
+                }
+            }
+        }
+    }
+    if (GmkRouteNavi* navi = m_gmk->findRouteNavi(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1))) {
+        m_gmk->bindRouteNavi(handle, *navi);
+        return true;
+    }
+    return false;
 }
 
 void GmkRoutedEnemy::bindRouteNavi(gf::GF_OBJ_HANDLE* handle, GmkRouteNavi& navi) {
@@ -3933,10 +4029,10 @@ inline GmkEnemyWave* GmkBattleChallenge::getWave(unsigned int index) const {
         return nullptr;
     }
     unsigned int waveIndex = index + getData()->m_waveBegin;
-    if (enemies->m_waveList.getInstNum() <= waveIndex) {
+    if (enemies->m_waveExt.m_waveList.getInstNum() <= waveIndex) {
         return nullptr;
     }
-    return &enemies->m_waveList.m_gmks[waveIndex];
+    return &enemies->m_waveExt.m_waveList.m_gmks[waveIndex];
 }
 
 // its phantom is made unless the gimmick set says otherwise (on the access's target when there is one); its waves'
@@ -7931,6 +8027,25 @@ bool GmkEnemyInsts::isQuestDead() const {
         }
     }
     return true;
+}
+
+void GmkEnemyInsts::createSquad(unsigned short squadId, unsigned int num, float scale) {
+    if (m_squad != nullptr) {
+        m_squad->release();
+        m_squad = nullptr;
+    }
+    if (squadId != 0) {
+        GmkSquad::CreateInfo info;
+        info.m_gmkSetId = static_cast<const GmkSet*>(m_gmk->m_list->getCreateInfo().m_param)->m_createInfo.m_bdatId;
+        info.pad_4 = squadId - 1;
+        info.pad_8 = num;
+#line 1311 "D:/Monolithsoft/BF2/prog/application/BF2\\gmk/gmk_enemy/gmk_enemy_impl.h"
+        GmkSquad* squad = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) GmkSquad;
+        squad->create(info);
+        m_squad = squad;
+        squad->addRef();
+        m_squad->pad_2c = scale;
+    }
 }
 
 void GmkEnemyInsts::validateDisp(gf::GF_OBJ_HANDLE* handle) const {

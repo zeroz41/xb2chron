@@ -15,7 +15,7 @@ public:
     virtual bool findPosRot(mm::Vec3& pos, mm::Vec3& rot, gf::GF_OBJ_HANDLE* handle,
                             const GmkEnemyInsts::PopInfo::PopEnemyInfo& info) const;  // slot 0
     virtual bool isYSnap() const { return false; }  // slot 1
-    virtual void onPopGob(gf::GF_OBJ_HANDLE* handle) const;  // slot 2
+    virtual bool onPopGob(gf::GF_OBJ_HANDLE* handle) const;  // slot 2
     virtual void onCreateGobInsts(unsigned int num) const { m_gmk->createRouteNavis(num); }  // slot 3
     // 0x8 (the name is not the original's); not const: onCreateGobInsts calls createRouteNavis
     GmkRoutedEnemy* m_gmk;

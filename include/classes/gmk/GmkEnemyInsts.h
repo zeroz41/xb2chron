@@ -9,6 +9,7 @@
 
 class CBdatWrapper;
 #include "classes/mm/mtl/ReferenceObject.h"
+#include "classes/gmk/GmkSquad.h"
 #include "mm/mtl/Vector.h"
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gmk { class AGmkBase; }
@@ -114,7 +115,8 @@ public:
         virtual bool findPosRot(mm::Vec3& pos, mm::Vec3& rot, gf::GF_OBJ_HANDLE* handle,
                                 const PopInfo::PopEnemyInfo& info) const = 0;  // slot 0
         virtual bool isYSnap() const = 0;  // slot 1
-        virtual void onPopGob(gf::GF_OBJ_HANDLE* handle) const = 0;  // slot 2
+        // true when the object has its place (GmkEnemy::PopXformFinder::onPopGob returns true)
+        virtual bool onPopGob(gf::GF_OBJ_HANDLE* handle) const = 0;  // slot 2
         // seqUpdatePopDepop passes the four slots' pad_4 counts summed after PopInfo::create
         virtual void onCreateGobInsts(unsigned int num) const = 0;  // slot 3
     };
@@ -193,11 +195,11 @@ public:
     void dispose() {
         m_flags &= ~7UL;
         disposeGobInsts(false, false);
-        if (pad_150 != nullptr) {
-            pad_150->release();
-            pad_150 = nullptr;
+        if (m_squad != nullptr) {
+            m_squad->release();
+            m_squad = nullptr;
         }
-        pad_0 = 0;
+        m_gmk = nullptr;
         pad_8 = 0;
         pad_10 = -1;
         pad_14 = 100.0f;
@@ -212,6 +214,9 @@ public:
     }
     ~GmkEnemyInsts();
     void disposeGobInsts(bool, bool);
+    // releases the squad, then with a squad id makes one from the gimmick set's row and the id less one, with num
+    // members and scale (GmkSquad's pad_2c)
+    void createSquad(unsigned short squadId, unsigned int num, float scale);
     gf::GF_OBJ_HANDLE* getGobInst(unsigned int index) const;  // the handle of one of them (-1 past the last)
     bool isQuestDead() const;
     // shows or hides one of its objects by pad_140 (display bit 8) when the object is bound to a gimmick
@@ -236,9 +241,10 @@ public:
     void onEnemyDead(gf::GF_OBJ_HANDLE* handle);
     // whether it holds what it pops by: its first two fields set and a positive count at 0x10 (inline in GmkEnemy's
     // and GmkRoutedEnemy's isValid; the name is not the original's)
-    bool isValid() const { return pad_0 != 0 && pad_8 != 0 && pad_10 > 0; }
+    bool isValid() const { return m_gmk != nullptr && pad_8 != 0 && pad_10 > 0; }
     // the defaults: Vector<GmkEnemy>::resize's stores, the same values dispose sets
-    unsigned long pad_0 = 0;
+    // 0x0: its gimmick (create copies CreateInfo::m_gmk; createSquad reaches the gimmick set through its list)
+    const AGmkBase* m_gmk = nullptr;
     // the gimmick's BDAT table (create reads its rows' "ene1num".."ene4num" from it; PopInfo::create gets it)
     unsigned char* pad_8 = nullptr;
     // seqUpdateRepopCounter never counts down for the values 40012 and 40013 (a bdat id? not proven)
@@ -272,8 +278,8 @@ public:
     unsigned char pad_142[0x2];
     // reqForcePopGobInst's info (the name is not the original's)
     mutable ForcePopEnemyInfo m_forcePopInfo;
-    // released by dispose (reference_object.h's `m_RefCount > 0`); what it holds is unknown
-    mm::mtl::ReferenceObject* pad_150 = nullptr;
+    // its squad, counted (createSquad makes it; dispose releases it; the name is not the original's)
+    GmkSquad* m_squad = nullptr;
     unsigned char pad_158 = 0;
     unsigned char pad_159 = 0;
     // set by reqClearRepopCounter (a const member), cleared by seqUpdateRepopCounter as it zeroes m_popWait (the

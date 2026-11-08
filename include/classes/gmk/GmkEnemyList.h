@@ -6,6 +6,7 @@
 #include "classes/gmk/TGmkList.h"
 #include "classes/gmk/GmkTrigger.h"
 #include "classes/gmk/GmkEnemyWaveList.h"
+#include "classes/gmk/GmkEnemyListWaveExtension.h"
 
 namespace gmk { class GmkEnemy; }
 namespace gmk { class GmkEnemyGob; }
@@ -46,8 +47,8 @@ public:
     unsigned char pad_234[0xc];
     // the destructor's TGmkList<GmkTrigger> D2 at 0x240 (the name is not the original's)
     TGmkList<GmkTrigger, GmkTrigger::BdatInfo, 1380405844u, 2u, GmkTriggerGob> m_triggerList;
-    GmkEnemyWaveList m_waveList;  // 0x470: the constructor builds it with -1 (the name is not the original's)
-    void* pad_8d0;  // 0x8d0: the constructor clears it (sizeof 0x8e0: GmkSet::createGmkLists's new)
+    // 0x470: its wave list and pop effect (sizeof 0x8e0: GmkSet::createGmkLists's new; the name is not the original's)
+    GmkEnemyListWaveExtension m_waveExt;
 };
 }  // namespace gmk
 
