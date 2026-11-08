@@ -4,6 +4,7 @@
 #include "classes/gmk/TGmkList.h"
 #include "classes/gmk/GmkSealedStone.h"
 #include "mm/mtl/Vector.h"
+#include "mm/mtl/FixedQueue.h"
 #include "classes/gmk/GmkSealedStoneEnergyEffectManager.h"
 
 namespace gmk {
@@ -15,18 +16,26 @@ namespace gmk {
 class GmkSealedStoneList : public ::gmk::TGmkList< ::gmk::GmkSealedStone, ::gmk::GmkSealedStone::BdatInfo, 1396984915u, 1u, ::gmk::GmkSealedStoneGob> {
 public:
     explicit GmkSealedStoneList(unsigned int updateGmkNumPerFrame)
-        : TGmkList(updateGmkNumPerFrame), pad_2a8(nullptr), pad_2b0(nullptr), pad_2b8(0),
-          m_effects(nullptr) {}
+        : TGmkList(updateGmkNumPerFrame), m_time(0.0f), m_effects(nullptr) {}
     virtual ~GmkSealedStoneList();  // slot 0
     virtual void create(gmk::IGmkList::CreateInfo const& info);  // slot 9 (create)
     virtual void dispose();  // slot 10 (dispose)
     virtual void update(float dt);  // slot 11 (2.0.0's symbols name it)
-    unsigned char pad_228[0x80];  // fields: size from createGmkLists' `new` (0x2d0)
-    // Placeholder members (nothing names them): createGmkLists' inline constructor zeroes all four (8-, 8-, 4- and
-    // 8-byte stores). Its dispose (dispose) frees m_effects and zeroes it, and zeroes pad_2a8, pad_2b0 and pad_2b8 again.
-    void* pad_2a8;
-    void* pad_2b0;
-    int pad_2b8;
+    // a stone's progress to pass on at a time (2.0.0's symbols name it, by
+    // FixedQueue<GmkSealedStoneList::NotifyProgress, 8>::insert; the field names are not the original's)
+    struct NotifyProgress {
+        GmkSealedStone* m_stone;
+        float m_progress;  // what GmkSealedStone::updateProgress gets
+        float m_time;      // m_time's value from which update passes it on
+    };
+    // queues it to pass on progress to stone delay after now, in time order; a full queue drops its least advanced
+    // notification first (GmkEnemyWave::updateProgress calls it; 2.0.0's symbols name it)
+    void postDelayedUpdateProgress(GmkSealedStone* stone, float progress, float delay) const;
+    // 0x228: the notifications in time order (createGmkLists' inline constructor zeroes the count and first, dispose
+    // clears it; postDelayedUpdateProgress is const, so mutable; the names are not the original's)
+    mutable mm::mtl::FixedQueue<NotifyProgress, 8> m_notifies;
+    // 0x2b8: the time update counts up, from 0 at dispose (the name is not the original's)
+    float m_time;
     // 0x2c0: create allocates it and fills it (GmkSealedStoneEnergyEffectManager::create); dispose deletes it (the name is not the original's)
     GmkSealedStoneEnergyEffectManager* m_effects;
 };

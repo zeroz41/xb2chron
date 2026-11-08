@@ -28,6 +28,8 @@ public:
     // allocated. What it does: fills the entries from the field's effect pack (gf::GfFieldManager::getEffectPack,
     // fw::EffectManager::search; asserts; calls dispose and Vector<EffectInfo>::expand).
     void create();
+    // 2.0.0's symbols name it; GmkSealedStoneList::update calls it while it exists
+    void update(float dt);
     // what create finds as "ma40a_01_140_dlc" in the field's effect pack (fw::EffectManager::search; the name is not
     // the original's)
     void* m_effectRes;

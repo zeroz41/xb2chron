@@ -210,6 +210,17 @@
 #include "classes/fw/ParamManager.h"
 #include "classes/fw/ParamList.h"
 #include "gf/ItemGetParam.h"
+#include "classes/fw/ColiUserData.h"
+#include "gf/FileStaticVec3.h"
+
+namespace gmk {
+// the collision gimmicks' types (the unit's static initializer stores them after the shared Vec3 constants and
+// before GmkEnemyWave::sm_progressInfo, in this order)
+mm::mtl::RTTI GmkCollision::m_rtti("gmk::GmkCollision", &::fw::ColiUserData::m_rtti, nullptr);
+mm::mtl::RTTI GmkPhantom::m_rtti("gmk::GmkPhantom", &::fw::ColiUserData::m_rtti, nullptr);
+mm::mtl::RTTI GmkDoor::m_rtti("gmk::GmkDoor", &::fw::ColiUserData::m_rtti, nullptr);
+mm::mtl::RTTI GmkDmgGimmick::m_rtti("gmk::GmkDmgGimmick", &::fw::ColiUserData::m_rtti, nullptr);
+}  // namespace gmk
 
 namespace gf {
 // the resident sound sources' files, by index (getSoundSourceFileName reads it; bindGFSoundSource loads each)
@@ -5638,6 +5649,52 @@ void GmkSealedStone::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::GF_OBJ_HAN
     }
 }
 
+void GmkSealedStoneList::postDelayedUpdateProgress(GmkSealedStone* stone, float progress, float delay) const {
+    if (m_notifies.size() >= 8) {
+        m_notifies.erase(std::min_element(m_notifies.begin(), m_notifies.end(),
+                                          [](const NotifyProgress& a, const NotifyProgress& b) {
+                                              return a.m_progress < b.m_progress;
+                                          }));
+    }
+    float time = m_time + delay;
+    mm::mtl::FixedQueue<NotifyProgress, 8>::iterator it =
+        std::lower_bound(m_notifies.begin(), m_notifies.end(), time,
+                         [](const NotifyProgress& notify, float t) { return notify.m_time < t; });
+    NotifyProgress notify = {stone, progress, time};
+    m_notifies.insert(it, notify);
+}
+
+// a new progress while it runs: the finishing sound and effect at 1 (and it stops), the feedback ones in between
+void GmkSealedStone::updateProgress(float progress) {
+    if (m_seq != &GmkSealedStone::seqUpdate || !pad_6c) {
+        return;
+    }
+    float prev = pad_68;
+    pad_68 = progress;
+    if (prev == progress) {
+        return;
+    }
+    const BdatInfo* info;
+    if (progress == 1.0f) {
+        if (fw::SoundManager* sound = mm::mtl::PtrSingleton<fw::SoundManager>::sys()) {
+            if (gf::GfFieldSound* fieldSound = mm::mtl::PtrSingleton<gf::GfFieldSound>::sys()) {
+                sound->playSe(0x18, fieldSound->getMapPack(), 1.0f, fw::SoundCategory(0));
+            }
+        }
+        info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+        createEffect(info->m_finishEffectName);
+        m_seq = nullptr;
+    } else if (progress > 0.0f && progress < 1.0f) {
+        if (fw::SoundManager* sound = mm::mtl::PtrSingleton<fw::SoundManager>::sys()) {
+            if (gf::GfFieldSound* fieldSound = mm::mtl::PtrSingleton<gf::GfFieldSound>::sys()) {
+                sound->playSe(0x17, fieldSound->getMapPack(), 1.0f, fw::SoundCategory(0));
+            }
+        }
+        info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+        createEffect(info->m_feedbackEffectName);
+    }
+}
+
 GmkSealedStone::~GmkSealedStone() { dispose(); }
 
 gmk::GmkType GmkSealedStone::getGmkType() const { return TYPE; }
@@ -5658,12 +5715,8 @@ void GmkSealedStoneList::dispose() {
             m_effects = nullptr;
         }
     }
-    if (pad_2a8 != nullptr) {
-        pad_2a8 = nullptr;
-    }
-    pad_2b8 = 0;
-    pad_2a8 = nullptr;
-    pad_2b0 = nullptr;
+    m_notifies.clear();
+    m_time = 0.0f;
     TGmkList::dispose();
 }
 
@@ -5692,6 +5745,23 @@ mm::mtl::Vector<gmk::GmkSealedStoneEnergyEffectManager::EffectInfo>::erase(gmk::
 template void mm::mtl::Vector<gmk::GmkSealedStoneEnergyEffectManager::EffectInfo>::push_back(
     const gmk::GmkSealedStoneEnergyEffectManager::EffectInfo&);
 namespace gmk {
+
+// passes on the notifications whose time has come
+void GmkSealedStoneList::update(float dt) {
+    TGmkList::update(dt);
+    if (m_effects != nullptr) {
+        m_effects->update(dt);
+    }
+    m_time += dt;
+    while (!m_notifies.empty()) {
+        const NotifyProgress& notify = m_notifies[0];
+        if (notify.m_time > m_time) {
+            break;
+        }
+        notify.m_stone->updateProgress(notify.m_progress);
+        m_notifies.pop();
+    }
+}
 
 GmkSealedStoneList::~GmkSealedStoneList() { dispose(); }
 
@@ -8116,6 +8186,7 @@ bool GmkDoor::isSeLoop(bool mapPack, unsigned short se) const {
 }
 
 void GmkDoor::seqDoor_BeforeBoot(float) { pollBootGmk(); }
+
 
 void GmkDoor::seqDoor_Shutdowned(float dt) { seqDoor_Booted(dt); }
 

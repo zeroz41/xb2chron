@@ -4,6 +4,9 @@
 #include "mm/MMStdBase.h"
 #include <new>
 
+// the category its iterator states (defined in <algorithm>, which the users of std::lower_bound include)
+namespace std { inline namespace __1 { struct bidirectional_iterator_tag; } }
+
 // mm_lib's fixed_queue.h, as the including file's include path named it (see mm/Math.h; aiLib's ai_state_fsm
 // cites the libs/ form)
 #if defined(MM_LIB_FROM_MONOLIB_MM)
@@ -52,6 +55,13 @@ public:
     template <typename U, unsigned long M>
     class fixed_queue_iterator {
     public:
+        // bidirectional: GmkSealedStoneList::postDelayedUpdateProgress finds a notification's place with
+        // std::lower_bound, whose advance steps back for a negative count
+        typedef std::bidirectional_iterator_tag iterator_category;
+        typedef U value_type;
+        typedef long difference_type;
+        typedef U* pointer;
+        typedef U& reference;
         fixed_queue_iterator(U* array, unsigned long index) : _pArray(array), _index(index) {}
         U& operator*() const {
             return _pArray[_index % M];
@@ -235,7 +245,8 @@ public:
                 }
                 unsigned long from = prev % N;
                 unsigned long to = index % N;
-                data()[to] = data()[from];
+                // the slot by its own storage (as at()), the one before it in place
+                at(to) = data()[from];
             }
         }
         *pos = value;

@@ -56,6 +56,10 @@ public:
     // installs seqUpdate (an empty step).
     void seqValidateResHandle(float);
     void seqUpdate(float);
+    // 2.0.0's symbols name them. updateProgress: takes a new progress (GmkSealedStoneList::update passes on the
+    // queued ones); createEffect: an effect of the name at the stone
+    void updateProgress(float progress);
+    void createEffect(const char* name);
     // the game object (disposeGobInst does nothing when it is -1; the name is not the original's)
     gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);  // 0x48
     // 0x50/0x54: disposeGobInst(true) hands them to SCOM_DESTROY_GAME_OBJ::create and clears the time (the names are
