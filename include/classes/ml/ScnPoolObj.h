@@ -26,7 +26,8 @@ public:
     // ScnObjModelDrSysStandard::create asks it for room for one before it makes a model (the parameter name is not
     // the original's)
     bool isValidInsert(unsigned short num) const;
-    void insert(ScnObj* item);
+    // adds the object to its type's list; false when that list is full
+    bool insert(ScnObj* item);
     // ScnObjLightDrSys's constructor releases the view's fast light when this is false
     bool isExistLgtEnv() const;
     // every camera's, light's and image-based light's apply, then every model's but those set for deletion, under

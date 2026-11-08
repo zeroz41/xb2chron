@@ -28,6 +28,7 @@
 #include "classes/ml/ScnObjIBL.h"
 #include "classes/ml/Scn.h"
 #include "ml/ScnCamUtil.h"
+#include "ml/ScnUtil.h"
 #include "classes/ml/ScnDebug.h"
 #include "classes/ml/ScnDebugManipu.h"
 #include "classes/ml/ScnObj.h"
@@ -488,6 +489,18 @@ bool ScnPoolObj::isExistLgtEnv() const {
     return exist;
 }
 
+bool ScnPoolObj::insert(ScnObj* item) {
+    CS cs(m_cs0);
+    if (!isValidInsert(item->m_type)) {
+        return false;
+    }
+    CS listCs(m_cs);
+    getList(item->m_type)->push_back(item);
+    return true;
+}
+
+ScnObjClip::ScnObjClip(Scn* scn) : ScnObj(scn, 6), m_name("clipList") {}
+
 ScnObjEnvColi::ScnObjEnvColi(Scn* scn) : ScnObj(scn, 6), m_name("envColi") {}
 
 ScnRender::ScnRender(Scn* scn) : m_scn(scn) {}
@@ -744,6 +757,43 @@ void Scn::renderStop() {
 
 bool ScnCamUtil::getScreenPos(mm::Vec3& out, const ScnObjCam* cam, const mm::Vec3& pos) {
     return getScreenPos(out, cam, false, pos);
+}
+
+// whether the screen line from start to end touches the rectangle: an end inside it, else a crossing with its top,
+// right, bottom or left edge
+bool ScnUtil::checkLineRect(const mm::Vec3& start, const mm::Vec3& end, const mm::Rect<int>& rect) {
+    mm::Pnt<int> p0(static_cast<int>(start.x), static_cast<int>(start.y));
+    mm::Pnt<int> p1(static_cast<int>(end.x), static_cast<int>(end.y));
+    if (p0.x >= rect.x && p0.x < rect.x + rect.w && p0.y >= rect.y && p0.y < rect.y + rect.h) {
+        return true;
+    }
+    if (p1.x >= rect.x && p1.x < rect.x + rect.w && p1.y >= rect.y && p1.y < rect.y + rect.h) {
+        return true;
+    }
+    {
+        mm::Pnt<int> e0(rect.x, rect.y);
+        mm::Pnt<int> e1(rect.x + rect.w, rect.y);
+        if (isCrossLine(p0, p1, e0, e1)) {
+            return true;
+        }
+    }
+    {
+        mm::Pnt<int> e0(rect.x + rect.w, rect.y);
+        mm::Pnt<int> e1(rect.x + rect.w, rect.y + rect.h);
+        if (isCrossLine(p0, p1, e0, e1)) {
+            return true;
+        }
+    }
+    {
+        mm::Pnt<int> e0(rect.x, rect.y + rect.h);
+        mm::Pnt<int> e1(rect.x + rect.w, rect.y + rect.h);
+        if (isCrossLine(p0, p1, e0, e1)) {
+            return true;
+        }
+    }
+    mm::Pnt<int> e0(rect.x, rect.y);
+    mm::Pnt<int> e1(rect.x, rect.y + rect.h);
+    return isCrossLine(p0, p1, e0, e1);
 }
 
 void ScnDebugManipu::clear() {
