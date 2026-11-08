@@ -8,6 +8,7 @@
 #include "classes/gf/GfEvent.h"
 #include "classes/gf/GfGameParty.h"
 #include "gf/GfSelectBlade.h"
+#include "gf/GfPartySelect.h"
 #include "gf/MsgUnk_1000033.h"
 #include "classes/gf/GfGameMoverSwitcher.h"
 #include "gf/GfDataParty.h"
@@ -43,8 +44,19 @@
 #include "gf/SDataDriver.h"
 #include "algorithm"
 #include "classes/gf/GfDataManager.h"
+#include "classes/gf/GfGameObj.h"
 
 namespace gf {
+
+GfGameParty::GfGameParty(const GfSetupParam& param)
+    : m_initialized(false),
+      m_memberOKCount(0),
+      m_memberOKReset(false),
+      m_leader(reinterpret_cast<GF_OBJ_HANDLE*>(-1)),
+      m_warpObj(reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+    initialize(param);
+    GfObjManager::addListener(this, static_cast<IGfObjListener::OBJEVT>(0));
+}
 
 GfGameParty::~GfGameParty() {
     GfObjManager::removeListener(this);
@@ -374,6 +386,48 @@ int GfSelectBlade::getStartBattleSetId(unsigned int slot) {
 void GfSelectBlade::resetStartBattleSetId(unsigned int slot) {
     if (slot <= 2 && s_pThis != nullptr) {
         s_pThis->m_startBattleSetId[slot] = -1;
+    }
+}
+
+void GfSelectBlade::resetDefaultBladeForDebug(GF_OBJ_HANDLE* handle) {
+    unsigned int id = GfGameParty::getPartyId(handle);
+    if (id == static_cast<unsigned int>(-1)) {
+        return;
+    }
+    GfSelectBlade* self = s_pThis;
+    BladeOrder& order = self->m_bladeOrder[id];
+    int set = GfDataDriver::getBladeSet(GfDataParty::getPartyMember(id, static_cast<PTPOS>(0))->m_driver);
+    if (set < 0) {
+        return;
+    }
+    switch (set) {
+    case 0:
+        order.m_default[0] = 0;
+        order.m_default[1] = 1;
+        order.m_default[2] = 2;
+        break;
+    case 1:
+        order.m_default[0] = 1;
+        order.m_default[1] = 0;
+        order.m_default[2] = 2;
+        break;
+    case 2:
+        order.m_default[0] = 2;
+        order.m_default[1] = 0;
+        order.m_default[2] = 1;
+        break;
+    }
+    order.m_current[0] = order.m_default[0];
+    order.m_current[1] = order.m_default[1];
+    order.m_current[2] = order.m_default[2];
+}
+
+void GfPartySelect::fn_71002BD018(mm::mtl::FixedVector<unsigned short, 32>& list) {
+    for (unsigned int i = 0; i < 3; ++i) {
+        unsigned int driver = GfDataParty::getDriver(i, static_cast<PTPOS>(0));
+        if (driver != 0 && !GfDataDriver::isDummyDriver(driver)) {
+            list.push_back(driver);
+        }
     }
 }
 
@@ -815,6 +869,22 @@ void GfGameParty::recalcHierarchyIra() {
             }
         }
     }
+}
+
+bool GfGameParty::isExistMismatchScenarioMask(unsigned int index) {
+    for (unsigned int i = 0; i < 3; ++i) {
+        if (index == static_cast<unsigned int>(-1) || index == i) {
+            GF_OBJ_HANDLE* handle = getHandleDriver(i, static_cast<PTPOS>(0));
+            if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                continue;
+            }
+            if (GfGameObj::isValidGameObj(handle, true, nullptr) ==
+                GfDataDriver::isScenarioMask(GfDataParty::getPartyMember(i, static_cast<PTPOS>(0))->m_driver)) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 unsigned int GfGameParty::getLeaderLevel() {

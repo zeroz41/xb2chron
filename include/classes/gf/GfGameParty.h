@@ -55,9 +55,9 @@ public:
     void update(const fw::UpdateInfo& info);
     // 1.0.0's (3.0.1 inlines them in the constructor and destroy)
     void initialize(const GfSetupParam&) {
-        for (int i = 0; i < 3; ++i) {
-            m_partyIdMemberOK[i] = 0;
-        }
+        m_partyIdMemberOK[0] = 0;
+        m_partyIdMemberOK[1] = 0;
+        m_partyIdMemberOK[2] = 0;
         m_initialized = true;
     }
     void finalize() { m_initialized = false; }
@@ -192,6 +192,12 @@ public:
     static int getPartyMemberNum();
     static bool isExistObj();
     bool isReadyAllObjDisplay(bool);
+    // the symbols name it. What it does: false while a request of type 0x16 is under way, true for an empty party;
+    // else whether every party member's object and loaded blade is valid or entered and there is a controlled mover
+    static bool isReadyObj();
+    // the symbols name it (SCOM_PARTY_ADD::exec asks it). What it does: whether a party member driver (the one at
+    // index, every one for -1) has an object whose validity equals its driver's isScenarioMask
+    static bool isExistMismatchScenarioMask(unsigned int index);
     // 2.0.0's symbols name it. What it does: for an object outside battle, hides it (setDispIraParty false) at party
     // position 2, else shows and fades it in (and its weapon for a driver GfDataDriver::isIraHideWeaponOnField takes)
     static void setupChangePartyPos(gf::GF_OBJ_HANDLE* handle);
