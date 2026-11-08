@@ -1721,6 +1721,53 @@ bool WinView::detachWorkEvent(const IWorkEvent* event) {
     return true;
 }
 
+// the client area within the parent view, from the render bank: the frame's corner plus the client offset (written
+// out here), the root's size while full screen, else the view's (inline: initializeClientScreen fills it; the name is
+// not the original's)
+static inline mm::Rect<int> getClientRect(const WinView* view) {
+    const WinView::RENDER_INFO* info = view->m_renderInfo.m_render;
+    const WinView* framed = info->m_frame.m_view;
+    int ofsY = 0;
+    int ofsX = 0;
+    if (framed->m_framed && !framed->m_fullScreen && !framed->m_frameOff) {
+        ofsX = info->m_frame.m_frameWidth;
+        if (framed->m_titleBar) {
+            ofsY = ofsX * 2 + 22;
+        } else {
+            ofsY = ofsX;
+        }
+    }
+    mm::Pnt<int> ofs(ofsX, ofsY);
+    int y = info->m_frame.m_pos.y + ofs.y;
+    int x = info->m_frame.m_pos.x + ofs.x;
+    int w;
+    int h;
+    if (view->m_fullScreen) {
+        w = DevGraph::getRootWidth();
+        h = DevGraph::getRootHeight();
+    } else {
+        mm::Pnt<int> size = info->m_size;
+        w = size.x;
+        h = size.y;
+    }
+    return mm::Rect<int>(x, y, w, h);
+}
+
+void WinView::initializeClientScreen(bool skip) {
+    if (skip) {
+        return;
+    }
+    DebDraw* draw = DebDraw::get(0xFFFFFFFF);
+    draw->setZComp(false);
+    draw->setZWrite(true);
+    draw->pad_14c = 1.0f;
+    draw->setDoubleSide(true);
+    draw->setCol(mm::Col4(m_backCol.r, m_backCol.g, m_backCol.b, m_backCol.a * m_backAlpha));
+    draw->begin(9, 1);
+    draw->add(getClientRect(this));
+    draw->end();
+}
+
 mm::Pnt<int> WinView::getFrameAbsPos(bool cpu) const {
     const RENDER_INFO* info = cpu ? m_renderInfo.m_cpu : m_renderInfo.m_render;
     mm::Pnt<int> pos = info->m_frame.m_pos;
@@ -1757,6 +1804,31 @@ void WinView::wkTail() {
     applyPrio();
 }
 
+WinView* WinViewRoot::getFullScreenView() {
+    if (get() == nullptr) {
+        return nullptr;
+    }
+    WinView* desktop = ProcDesktop::getView();
+    if (desktop == nullptr) {
+        return nullptr;
+    }
+    for (reslist<WorkObj*>::iterator it = desktop->wkGetChild()->begin(); it != desktop->wkGetChild()->end(); ++it) {
+        WinView* view = static_cast<WinView*>(*it);
+        if ((view->m_flags & 1) | view->m_updateStop) {
+            continue;
+        }
+        if (view->m_fullScreen) {
+            return view;
+        }
+        mm::Rect<int> rect = getClientRect(view);
+        if (rect.x == 0 && rect.y == 0 && !view->m_noFullScreen && rect.w == DevGraph::getRootWidth() &&
+            rect.h == DevGraph::getRootHeight()) {
+            return view;
+        }
+    }
+    return desktop;
+}
+
 WorkObj* WinProc::pssGetParentView() {
     WorkObj* view = WorkRootState::getWork(m_viewWid);
     if (view == nullptr) {
@@ -1780,6 +1852,18 @@ WinView* WinViewRoot::getView(unsigned int wid) {
         return static_cast<WinView*>(work);
     }
     return nullptr;
+}
+
+bool WinView::wkStandbyLogin() {
+    if (LibMain::isInitialized() && WinViewRoot::get() != nullptr && WinViewRoot::get()->isLoggedIn()) {
+        m_copyRender = false;
+        if (!m_noLoginMsg && !m_noLoginMsg2) {
+            m_msg.m_queue.push_back(MsgParam<10>::Msg(7));
+            m_lastMsg = static_cast<int>(m_msg.m_queue.size()) - 1;
+        }
+        return WorkObj::wkStandbyLogin();
+    }
+    return false;
 }
 
 bool WinView::wkStandbyLogout() {
@@ -1862,6 +1946,46 @@ mm::Rect<int> WinView::getClientScissorAbsRect(bool cpu) const {
         rect.h = 0;
     }
     return rect;
+}
+
+// the view the work id wid names, if the root holds it or has it entered, with no check of the root (written out as in
+// WinProc::pssDetachView; the name is not the original's)
+static inline WinView* getRootView(unsigned int wid) {
+    WorkObj* view = WorkRootState::getWork(wid);
+    if (WorkRootState::getWork(mm::mtl::PtrSingleton<WinViewRoot>::get(), wid) == nullptr &&
+        !WorkRootState::isEntryWork(wid, mm::mtl::PtrSingleton<WinViewRoot>::get())) {
+        view = nullptr;
+    }
+    return static_cast<WinView*>(view);
+}
+
+void WinViewRoot::invalidCurrent(WinView* view) {
+    WinViewRoot* root = get();
+    if (root == nullptr) {
+        return;
+    }
+    reslist<unsigned int>::iterator it = std::find(root->m_currentList.begin(), root->m_currentList.end(), view->m_wid);
+    if (it != root->m_currentList.end()) {
+        root->m_currentList.erase(it);
+    }
+    if (root->m_currentList.size() > 0) {
+        reslist<unsigned int>::iterator found = root->m_currentList.begin();
+        for (reslist<unsigned int>::iterator cur = root->m_currentList.begin(); cur != root->m_currentList.end();
+             ++cur) {
+            if (getRootView(*cur)->m_currentPrio <= getRootView(*found)->m_currentPrio) {
+                found = cur;
+            }
+            if (getRootView(*cur)->m_wid == root->m_prevWid) {
+                found = cur;
+                break;
+            }
+        }
+        if (root->m_current == view) {
+            root->m_current = getView(*found);
+        }
+    } else {
+        root->m_current = nullptr;
+    }
 }
 
 void WinView::setFullScreen() {

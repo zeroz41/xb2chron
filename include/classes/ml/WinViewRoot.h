@@ -33,6 +33,9 @@ public:
     // renders every view under the root, then darkens the screen by the flow pause's rate; nothing while cut off
     // or with no desktop
     static void renderView();
+    // the desktop's view, or the first of its child views that is full screen or covers the root, logged in and not
+    // stopped
+    static WinView* getFullScreenView();
     virtual ~WinViewRoot();  // slot 0
     virtual bool wkStandbyLogin();  // slot 14
     virtual bool wkStandbyLogout();  // slot 15

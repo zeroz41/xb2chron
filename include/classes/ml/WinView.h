@@ -65,7 +65,10 @@ public:
     // renders the work in the view (WinProc::pssCreateView attaches its process; returns true)
     bool attachRenderWork(const WorkObj* work);
     // registers a work-event listener with the view (GfAssetManager::initialize registers itself, false)
-    void attachWorkEvent(IWorkEvent* event, bool flag);
+    bool attachWorkEvent(IWorkEvent* event, bool flag);
+    // fills the client area with the back colour (its alpha times m_backAlpha) on the render bank, unless skip is set
+    // (the parameter name is not the original's)
+    void initializeClientScreen(bool skip);
     // what each bank of m_renderInfo holds (the field names are not the original's)
     struct RENDER_INFO {
         mm::Pnt<int> m_size;      // 0x00 the constructor sets the root's width and height
@@ -120,22 +123,37 @@ public:
     unsigned int m_fullScreen : 1;  // getClientSize returns the root's size while it is set (the name is not the original's)
     // bit 1: drops the frame like m_fullScreen (WinViewFrame::getClientOfs; the name is not the original's)
     unsigned int m_frameOff : 1;
-    unsigned int : 5;
+    // bit 2: WinViewRoot::getFullScreenView takes a view that covers the root as full screen only while it is clear
+    // (the name is not the original's)
+    unsigned int m_noFullScreen : 1;
+    // bit 3: wkStandbyLogin queues no message 7 while it or bit 9 is set (the name is not the original's)
+    unsigned int m_noLoginMsg : 1;
+    unsigned int : 3;
     // bit 7: wkStandbyLogout detaches the render works and logs out even while some remain (the name is not the
     // original's)
     unsigned int m_forceLogout : 1;
-    unsigned int : 24;
+    unsigned int : 1;
+    // bit 9: as bit 3 (the name is not the original's)
+    unsigned int m_noLoginMsg2 : 1;
+    unsigned int : 22;
     // 0x3BC the frame's style, a word of its own (the names are not the original's)
     unsigned int : 0;
     unsigned int m_framed : 1;    // bit 0: the view has a frame (WinViewFrame::getClientOfs)
     unsigned int m_titleBar : 1;  // bit 1: the frame has a title bar (WinViewFrame::getClientOfs)
     unsigned int : 30;
     MsgParam<10> m_msg;  // 0x3C0 (the name is not the original's)
-    unsigned char pad_4c8[0x4C];
+    // 0x4C8 the m_msg index pushed last (attachWorkEvent sets the argument of that message; as WorkObj's m_lastEvent;
+    // the name is not the original's)
+    unsigned int m_lastMsg;
+    unsigned char pad_4cc[0x48];
     // 0x514 the constructor copies setInitialBackCol's colour into it; tl::TitleApplet::initialize sets it black
     // (the name is not the original's)
     mm::Col4 m_backCol;
-    unsigned char pad_524[0x8];
+    // 0x524 initializeClientScreen multiplies the back colour's alpha by it (the name is not the original's)
+    float m_backAlpha;
+    // 0x528 WinViewRoot::invalidCurrent makes the current view the listed one with the lowest value, up to the one
+    // current before (the name is not the original's)
+    int m_currentPrio;
     // 0x52C the frame's corner and the view's size setFullScreen keeps while the view is full screen and restores
     // after it (the name is not the original's)
     mm::Rect<int> m_windowRect;

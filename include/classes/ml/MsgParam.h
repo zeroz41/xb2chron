@@ -13,8 +13,18 @@ public:
 
     // one queued message: its kind first (WorkObj's EVT), then its argument (the names are not the original's)
     struct Msg {
+        // a message of kind with no argument (WinView::attachWorkEvent and wkStandbyLogin push one, clearing the
+        // argument's first byte and its type, then set the argument of the last one queued)
+        Msg(int kind) : m_kind(kind) {
+            m_param[0] = 0;
+            m_paramType = 0;
+        }
         int m_kind;
-        unsigned char pad_4[0x14];
+        // 0x04 the argument's bytes (WinView::attachWorkEvent stores its IWorkEvent pointer at the start; the name is
+        // not the original's)
+        unsigned char m_param[0x10];
+        // 0x14 what the argument holds: 0 none, 4 a pointer (WinView::attachWorkEvent; the name is not the original's)
+        unsigned char m_paramType;
     };
     mm::mtl::FixedQueue<Msg, T0> m_queue;
 };
