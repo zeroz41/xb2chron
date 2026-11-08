@@ -5,7 +5,11 @@
 
 #include "mm/Vec3.h"
 
+namespace gf { class GF_OBJ_HANDLE; }
+
 namespace event {
+class CharaWeightPlayer;
+
 // table 0x7100B3E610
 class CharaPlayFacial : public ::event::ICmd {
 public:
@@ -13,12 +17,16 @@ public:
     virtual void init();  // slot 2
     virtual int update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4
+    // out of line (0x71000EB640); update passes the command's values 1 to 10
+    void play(int, float, int, float, int, float, int, float, float, float);
     void idle();  // out of line (0x71000EBAB8); term calls it
     // debug box beside the character's head: CharaObj draws it at its position, height above it
     void render(const mm::Vec3& pos, float height);
     // set to 0 by init; bit 0: playing (render draws only then), bit 1: no time limit; the name is not the original's
     unsigned int m_flags;  // 0x8
-    unsigned char pad_c[0x14];
+    unsigned char pad_c[0x4];
+    gf::GF_OBJ_HANDLE* m_handle;  // 0x10: the character (the name is not the original's)
+    CharaWeightPlayer* m_weightPlayer;  // 0x18: plays the facial eases (the name is not the original's)
     // the facial id the running command plays (ScriptCharaFacial::doit saves it for undo); the name is not the original's
     int m_id;  // 0x20
     // the time left render prints as "life"; the name is not the original's

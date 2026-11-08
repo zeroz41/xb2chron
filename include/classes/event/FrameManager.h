@@ -30,6 +30,8 @@ public:
     void setSkipAbleFrame(float frame);
     float getFrame() const;
     float getMaxFrame() const;
+    // pad_15c (setSkipAbleFrame sets it; CsSndManager::play keeps it; the name is not the original's)
+    float getSkipEndFrame() const { return pad_15c; }
     // inline (1.0.0 had it out of line at 0x71000AA78C with no callers; FadeManager::update and OnEventProc inline
     // it): computes this frame's FrameInfo from the frame counters and the pause bits at 0x18
     const FrameInfo& frameInfo() {

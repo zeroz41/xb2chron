@@ -175,6 +175,7 @@
 #include "classes/ml/DevKeyboard.h"
 #include "classes/gf/GfPause.h"
 #include "classes/ml/Scn.h"
+#include "ml/ScnCamUtil.h"
 #include "classes/ml/WinView.h"
 #include "classes/event/CharaMount.h"
 #include "classes/event/CharaPlayAction.h"
@@ -1038,6 +1039,16 @@ void CharaWinkPlayer::idle_waiting() {
     m_count = 7;
 }
 
+void CharaWinkPlayer::idle_wink() {
+    if (m_count-- > 0) {
+        return;
+    }
+    m_weightPlayer->easeOut(static_cast<gf::AnimLayer>(3), "S_eye_close", 4.0f, static_cast<CV_TYPE>(1),
+                            static_cast<WeightLayer>(1));
+    m_stateName = "open";
+    m_state = &CharaWinkPlayer::idle_start;
+}
+
 void CharaMount::init() {}
 
 // undoes the mount: the model leaves its parent and gets its saved transform back
@@ -1088,6 +1099,14 @@ EffectEvaPlayer::~EffectEvaPlayer() {
         m_rcha = nullptr;
     }
     m_ctrl = nullptr;
+}
+
+void EffectEvaPlayer::play(EffectCtrl* ctrl, void* data) {
+    stop();
+    m_ctrl = ctrl;
+    m_rcha = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) RchaEff();
+    m_rcha->setup(mtl::ALLOC_HANDLE(), data);
+    pad_18 = 0;
 }
 
 void EffectPlayEff::term() {
@@ -1336,6 +1355,29 @@ int EffectPlayEva::update(const ICmd::Param& param) {
     }
     m_data = nullptr;
     return 1;
+}
+
+void EffectPlayEva::render(const mm::Vec3& pos) {
+    if (m_ctrl == nullptr || m_data == nullptr) {
+        return;
+    }
+    mm::Vec3 screen;
+    const ml::ScnObjCam* cam = Manager::get()->m_scn->getCam(-1);
+    if (!ml::ScnCamUtil::getScreenPos(screen, cam, pos)) {
+        return;
+    }
+    int x = screen.x;
+    int y = screen.y;
+    fw::debug::drawSquare2D(mm::Rect<int>(x + 115, y - 25, 110, 40), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+    fw::debug::drawLineSquare2D(mm::Rect<int>(x + 115, y - 25, 110, 40), mm::Col4(0.8f, 1.0f, 0.8f, 1.0f));
+    int textX = x + 120;
+    int textY = y - 20;
+    fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFont(textX, textY, "EVA");
+    textX = x + 125;
+    textY = y - 5;
+    fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFont(textX, textY, "life(%.1f)", m_time);
 }
 
 void EffectPlayEva::term() {
@@ -2429,6 +2471,27 @@ int CharaPlayHead::update(const ICmd::Param& param) {
 
 void CharaPlayHead::term() {
     idle();
+}
+
+int CharaPlayFacial::update(const ICmd::Param& param) {
+    if (gf::GfObjUtil::getObj(m_handle) == nullptr) {
+        return 1;
+    }
+    float step = static_cast<CharaObj*>(param.m_param.val(0).getUserdata())->m_frameInfo.m_frameStep;
+    if (param.m_frame <= 0) {
+        play(param.m_param.val(1).getS32(), param.m_param.val(2).getF32(), param.m_param.val(3).getS32(),
+             param.m_param.val(4).getF32(), param.m_param.val(5).getS32(), param.m_param.val(6).getF32(),
+             param.m_param.val(7).getS32(), param.m_param.val(8).getF32(), param.m_param.val(9).getF32(),
+             param.m_param.val(10).getF32());
+    }
+    if (!(m_flags & 2)) {
+        m_time -= step;
+        if (m_time < 0.0f) {
+            idle();
+            return 1;
+        }
+    }
+    return 2;
 }
 
 void CharaPlayFacial::init() {
@@ -5123,6 +5186,18 @@ void CharaManager::loadResource(const char* name) {
         return;
     }
     mm::mtl::Singleton<ResManager>::getPtr()->load(mm::mtl::Singleton<Extend>::getPtr()->anm(name), nullptr, false);
+}
+
+void CharaManager::loadMdlstream(float frame, const char* name, unsigned int id) {
+    bool useHood = isUseHood();
+    if (isOffscrMode()) {
+        id = m_offscrID;
+    }
+    if (isStreamMode()) {
+        mm::mtl::FixStr<128> path(name);
+        gf::GfGameEvent::replaceEquipModel(path);
+        mm::mtl::Singleton<MdlstmManager>::getPtr()->load(frame, path.m_str, id, useHood);
+    }
 }
 
 CharaManager::~CharaManager() {}
@@ -9379,6 +9454,84 @@ inline void CsSndManager::clear() {
         stop1();
     }
     m_flags = 0;
+}
+
+void CsSndManager::update() {
+    if (m_flags & 2) {
+        if (!mm::mtl::PtrSingleton<fw::SoundManager>::sys()->isPlaying(m_bgmHandle1)) {
+            m_bgmHandle1 = 0;
+            m_flags &= ~0xa;
+        }
+        if (!(m_flags & 4) && mm::mtl::PtrSingleton<fw::SoundManager>::sys()->isPlaying(m_bgmHandle1)) {
+            float time = 0.0f;
+            if (mm::mtl::PtrSingleton<fw::SoundManager>::sys()->getPlayTime(m_bgmHandle1, time)) {
+                if (m_lastPlayTime != time) {
+                    m_stallCount = 0;
+                    m_lastPlayTime = time;
+                } else {
+                    switch (m_stallCount++) {
+                    case 18:
+                        mm::mtl::PtrSingleton<fw::SoundManager>::sys()->pause(m_bgmHandle1, true, 0.0f);
+                        break;
+                    case 19:
+                        m_stallCount = 0;
+                        m_stallPauses++;
+                        mm::mtl::PtrSingleton<fw::SoundManager>::sys()->pause(m_bgmHandle1, false, 0.0f);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void CsSndManager::play(const char* name) {
+    if (!(m_flags & 1) && strcmp(m_bgmName0.m_str, name) != 0) {
+        if (m_flags & 2) {
+            stop1();
+        }
+        const char* wav = mm::mtl::Singleton<Extend>::getPtr()->wav(name);
+        unsigned int handle = mm::mtl::PtrSingleton<fw::SoundManager>::sys()->playBgm(
+            wav, 1.0f, false, -1, static_cast<fw::SoundCategory>(9));
+        mm::mtl::PtrSingleton<fw::SoundManager>::sys()->pause(handle, false, 0.0f);
+        m_bgmHandle1 = handle;
+        m_bgmFrame1 = 0.0f;
+        m_startFrame = mm::mtl::Singleton<FrameManager>::getPtr()->getSkipEndFrame();
+        if (m_bgmHandle1 == 0) {
+            return;
+        }
+    } else {
+        m_bgmHandle1 = m_bgmHandle0;
+        mm::mtl::PtrSingleton<fw::SoundManager>::sys()->startBgm(m_bgmHandle0);
+        m_bgmHandle0 = 0;
+        m_bgmName0 = "";
+        m_flags &= ~1;
+    }
+    m_bgmName1 = name;
+    m_lastPlayTime = -1.0f;
+    m_stallCount = 0;
+    m_stallPauses = 0;
+    m_flags |= 2;
+}
+
+void CsSndManager::pause(bool enable) {
+    if ((m_flags & 2) && enable != ((m_flags & 4) != 0)) {
+        if (enable) {
+            m_flags |= 4;
+        } else {
+            m_flags &= ~4;
+        }
+        float time = 0.0f;
+        float total = 0.0f;
+        bool hasTime = mm::mtl::PtrSingleton<fw::SoundManager>::sys()->getPlayTime(m_bgmHandle1, time);
+        bool hasTotal = mm::mtl::PtrSingleton<fw::SoundManager>::sys()->getTotalTime(m_bgmHandle1, total);
+        if (hasTime && hasTotal && total > 0.0f && time > 0.0f && total - 0.5f <= time) {
+            mm::mtl::PtrSingleton<fw::SoundManager>::sys()->pause(m_bgmHandle1, false, 0.0f);
+            mm::mtl::PtrSingleton<fw::SoundManager>::sys()->stopVoice(m_bgmHandle1, 0.0f);
+        } else {
+            mm::mtl::PtrSingleton<fw::SoundManager>::sys()->pause(m_bgmHandle1, enable, 0.0f);
+        }
+    }
 }
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet

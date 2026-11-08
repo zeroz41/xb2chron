@@ -24,6 +24,9 @@ public:
     bool isStreamMode() const { return m_modeFlags & 1; }
     // 1.0.0 0x71000C5718; 3.0.1 inlines it
     bool isAutoTalkMode() const { return m_modeFlags & 4; }
+    // 1.0.0's isOffscrMode (0x71000BF494) and isUseHood (0x71000BF37C); 3.0.1 inlines them (loadMdlstream)
+    bool isOffscrMode() const { return m_modeFlags & 2; }
+    bool isUseHood() const { return m_modeFlags & 0x20; }
     // inlined in 3.0.1 (CharaObj::setTar tests bit 4, which 1.0.0's accessors do not name); the name is not the original's
     unsigned int getModeFlags() const { return m_modeFlags; }
     // 1.0.0's isCharaDisp, isFacialDisp, isBoneDisp (0x71000D78C4, 0x71000D78EC, 0x71000D7914; 3.0.1 inlines

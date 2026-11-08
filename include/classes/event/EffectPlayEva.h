@@ -3,6 +3,7 @@
 
 #include "classes/event/ICmd.h"
 #include "classes/event/EffectEvaPlayer.h"
+#include "mm/Vec3.h"
 
 namespace event {
 // table 0x7100B3E8E8
@@ -12,6 +13,8 @@ public:
     virtual ~EffectPlayEva() {}  // slot 0
     virtual int update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4
+    // debug box beside the effect: ObjectEffect::render draws it at the effect's position
+    void render(const mm::Vec3& pos);
     // EffectObj holds one at 0x988; update plays the named eva on m_ctrl (the names are not the original's)
     EffectCtrl* m_ctrl;  // 0x8: update does nothing without it
     void* m_data;  // 0x10: the eva data played; term frees it from the MotstmManager stream

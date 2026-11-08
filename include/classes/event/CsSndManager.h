@@ -17,6 +17,9 @@ public:
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     void update();  // out of line
     void render();  // out of line
+    // SeqManager's exec plays the named bgm as bgm 1: bgm 0's handle is started when bit 0 is set or bgm 0 has
+    // that name, else the name is played paused (stopping a running bgm 1 first)
+    void play(const char* name);
     // out of line (0x71000EEEA0; FrameManager::pause passes whether a sound pause type is set)
     void pause(bool);
     // OnEventProc's clear (inlined; the names are not the original's): stops each playing bgm
@@ -30,7 +33,12 @@ public:
     unsigned int m_bgmHandle1;  // 0x1c fw::SoundManager::stopBgm's handle
     mm::mtl::FixStr<256> m_bgmName0;  // 0x20 emptied with m_bgmHandle0
     mm::mtl::FixStr<256> m_bgmName1;  // 0x124 emptied with m_bgmHandle1
-    unsigned char pad_228[0x10];
+    // update's watch of bgm 1 (the names are not the original's): the last play time read, how many updates it
+    // stayed there, how many times the stall made it pause, the event frame play started it at
+    float m_lastPlayTime;  // 0x228
+    int m_stallCount;      // 0x22c
+    int m_stallPauses;     // 0x230
+    float m_startFrame;    // 0x234
     unsigned long pad_238;  // the constructor zeroes it
     // SkipManager::setSkipVolume restarts bgm 1 at (FrameManager's frame + this) / 30 seconds (the name is not
     // the original's)
