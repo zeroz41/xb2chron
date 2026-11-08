@@ -36,6 +36,8 @@ public:
     };
     RandPlayer() : m_flags(0) {}
     virtual ~RandPlayer();  // slot 0
+    // RandManager::play starts the row it picked
+    void play(int id, bool);
     // 1.0.0's RandPlayer::clear/update/isPlaying (out of line there; 3.0.1 inlines them)
     void clear() {
         m_queue.clear();

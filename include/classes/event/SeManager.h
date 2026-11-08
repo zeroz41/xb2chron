@@ -23,7 +23,7 @@ public:
     void pan(int id, float pan, float frame, CV_TYPE type);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 
-    unsigned char pad_10[0x4];
+    unsigned int pad_10;
     // load counts the sounds it asked GfGameEvent to create; the name is not the original's
     int m_loadCount;  // 0x14
     // the sound slots play/changeVolume/pan address by id; the name is not the original's

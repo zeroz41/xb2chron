@@ -7,6 +7,7 @@
 #include "classes/mm/mtl/Singleton.h"
 
 namespace event { enum MSG_TYPE : int; }
+namespace csvb { class CCsvbData; }
 
 namespace event {
 class LipsyncRes;
@@ -15,7 +16,7 @@ class LipsyncRes;
 class LipsyncManager : public IManager, public mm::mtl::Singleton<LipsyncManager> {
 public:
     // inline: Singleton<LipsyncManager>::getPtr's static (VoiceManager::playAuto) builds it in place
-    LipsyncManager() : pad_10(0), pad_60(0), pad_f0(0) {}
+    LipsyncManager() : pad_10(0), m_curRes(nullptr), m_csv(nullptr) {}
     virtual ~LipsyncManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     void clear();
@@ -27,10 +28,12 @@ public:
     unsigned char pad_14[0x4];
     // the loaded lip-sync resources (LipsyncManager::load pushes each new LipsyncRes); the name is not the original's
     mm::mtl::FixedVector<LipsyncRes*, 8> m_res;  // 0x18
-    unsigned long pad_60;
+    // the resource setTarget searches a voice's lip-sync data in; the name is not the original's
+    LipsyncRes* m_curRes;  // 0x60
     mm::mtl::FixStr<128> pad_68;
     unsigned char pad_ec[0x4];
-    unsigned long pad_f0;
+    // clear deletes it (csvb::CCsvbData); setTarget loads it; the name is not the original's
+    csvb::CCsvbData* m_csv;  // 0xf0
 };
 }  // namespace event
 

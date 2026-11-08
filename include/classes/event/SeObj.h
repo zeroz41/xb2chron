@@ -14,6 +14,8 @@ namespace event {
 // field names are not the original's.
 class SeObj {
 public:
+    // inline: SeManager's constructor builds the 32 slots in place
+    SeObj() : m_flags(0) {}
     virtual ~SeObj();  // slot 0
     void exec(const FrameInfo& info);
     void draw(int, int, int);

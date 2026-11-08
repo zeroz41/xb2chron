@@ -122,6 +122,7 @@
 #include "classes/event/RandPlayer/Warp.h"
 #include "classes/event/RandPlayer/Wait.h"
 #include "classes/event/RandUtil.h"
+#include "classes/event/RandCalc.h"
 #include "classes/event/CharaStopHead.h"
 #include "classes/event/StmPackMemory.h"
 #include "classes/event/StmPackData.h"
@@ -199,6 +200,7 @@
 
 #include "classes/event/EvtxtManager.h"
 #include "classes/event/LipsyncManager.h"
+#include "csvb/CsvbData.h"
 #include "classes/event/MdlstmManager.h"
 #include "classes/event/MstxtManager.h"
 #include "classes/event/OffscrManager.h"
@@ -2014,6 +2016,43 @@ void LipsyncManager::load(const char* name) {
         return;
     }
     m_res.push_back(new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) LipsyncRes(name));
+}
+
+void LipsyncManager::clear() {
+    for (unsigned long i = 0; i < m_res.size(); i++) {
+        if (m_res[i]) {
+            delete m_res[i];
+            m_res[i] = nullptr;
+        }
+    }
+    m_res.clear();
+    m_curRes = nullptr;
+    if (m_csv) {
+        delete m_csv;
+        m_csv = nullptr;
+    }
+    pad_68 = "";
+    pad_10 = 0;
+}
+
+bool LipsyncManager::setTarget(const char* path) {
+    if (!(pad_10 & 1)) {
+        return false;
+    }
+    int size;
+    const void* data = m_curRes->searchCsv(path, size);
+    if (data == nullptr) {
+        pad_68 = "";
+        pad_10 &= ~2;
+        return false;
+    }
+    if (m_csv == nullptr) {
+        m_csv = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) csvb::CCsvbData();
+    }
+    m_csv->Load(mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, data, size);
+    pad_68 = path;
+    pad_10 |= 2;
+    return true;
 }
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
@@ -7303,6 +7342,8 @@ void SeManager::pan(int id, float pan, float frame, CV_TYPE type) {
     }
 }
 
+SeManager::SeManager() : pad_10(0), m_loadCount(0) {}
+
 SeManager::~SeManager() {}
 
 bool UIManager::openSkip(bool& result) {
@@ -9134,6 +9175,27 @@ void SelectManager::OnEventProc(event::MSG_TYPE msg) {
 
 RandManager::RandManager() : m_flags(0) {}
 
+bool RandManager::play(int no) {
+    if (mm::mtl::Singleton<DebugManager>::getPtr()->testFlag(8)) {
+        return true;
+    }
+    if (!(m_flags & 1)) {
+        int id = RandCalc::calc(no);
+        if (id <= 0) {
+            return true;
+        }
+        m_player.play(id, m_flags & 2);
+        m_flags |= 1;
+    }
+    if (m_player.isPlaying()) {
+        mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(10), true);
+        return false;
+    }
+    mm::mtl::Singleton<FrameManager>::getPtr()->pause(static_cast<FrameManager::PAUSE_TYPE>(10), false);
+    clear();
+    return true;
+}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void RandManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
@@ -9429,6 +9491,32 @@ inline void OutsiderManager::clear() {
     m_tgtType = static_cast<OBJ_TYPE>(0);
 }
 
+void OutsiderManager::update(bool enable) {
+    if (m_field.m_type > 0) {
+        if (m_tgtType & 1) {
+            updateSub(enable, static_cast<gmk::GmkType>(3));
+        }
+        if (m_tgtType & 2) {
+            updateSub(enable, static_cast<gmk::GmkType>(4));
+        }
+        if (m_tgtType & 4) {
+            updateSub(enable, static_cast<gmk::GmkType>(0));
+        }
+        if (m_tgtType & 8) {
+            updateSub(enable, static_cast<gmk::GmkType>(1));
+        }
+        if (m_tgtType & 0x10) {
+            updateSub(enable, static_cast<gmk::GmkType>(7));
+        }
+        if (m_tgtType & 0x20) {
+            updateSub(enable, static_cast<gmk::GmkType>(18));
+        }
+        if (m_tgtType & 0x40) {
+            updateSub(enable, static_cast<gmk::GmkType>(19));
+        }
+    }
+}
+
 // 1.0.0's OutsiderManager::update()
 inline void OutsiderManager::update() {
     if (m_flags & 1) {
@@ -9674,6 +9762,102 @@ void OutsiderManager::OnEventProc(event::MSG_TYPE msg) {
         break;
     default:
         break;
+    }
+}
+
+Object* RandUtil::searchByID(int id) {
+    {
+        ObjectList* scene = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+        if (scene != nullptr && scene->m_categories[0] != nullptr) {
+            for (Object* obj = scene->m_categories[0]->m_child; obj != nullptr; obj = obj->m_next) {
+                if (obj->m_type == 2) {
+                    gf::GfObjAcc acc(static_cast<ObjectChara*>(obj)->m_chara->m_gfHandle);
+                    if (acc.getType() == 3 && acc.getBdatId() == id) {
+                        return obj;
+                    }
+                }
+            }
+        }
+    }
+    {
+        ObjectList* scene = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+        if (scene != nullptr && scene->m_categories[0] != nullptr) {
+            for (Object* obj = scene->m_categories[0]->m_child; obj != nullptr; obj = obj->m_next) {
+                if (obj->m_type == 2) {
+                    gf::GfObjAcc acc(static_cast<ObjectChara*>(obj)->m_chara->m_gfHandle);
+                    if (acc.getType() == 4 && acc.getBdatId() == id) {
+                        return obj;
+                    }
+                }
+            }
+        }
+    }
+    return nullptr;
+}
+
+// 1.0.0's RandCalc::listup
+inline void RandCalc::listup(mm::mtl::FixedVector<int, 1024>& list) {
+    unsigned char* fp = Bdat::getFP("FLD_randomTalk");
+    int top = Bdat::getIdTop(fp);
+    int count = Bdat::getIdCount(fp);
+    list.clear();
+    for (int i = 0; i != count; i++) {
+        list.push_back(top + i);
+    }
+}
+
+// 1.0.0's RandCalc::listupType
+inline void RandCalc::listupType(mm::mtl::FixedVector<int, 1024>& out, mm::mtl::FixedVector<int, 1024>& in, int type) {
+    unsigned char* fp = Bdat::getFP("FLD_randomTalk");
+    out.clear();
+    for (unsigned long i = 0; i < in.size(); i++) {
+        int id = in[i];
+        if (static_cast<signed char>(Bdat::getVal(fp, "type", id)) == type) {
+            out.push_back(id);
+        }
+    }
+}
+
+// 1.0.0's RandCalc::listupRand
+inline void RandCalc::listupRand(mm::mtl::FixedVector<int, 1024>& out, mm::mtl::FixedVector<int, 1024>& in) {
+    int id = in[ml::mtRand(in.size())];
+    out.clear();
+    out.push_back(id);
+}
+
+int RandCalc::calc(int type) {
+    mm::mtl::FixedVector<int, 1024> list;
+    mm::mtl::FixedVector<int, 1024> typed;
+    listup(list);
+    if (list.empty()) {
+        return -1;
+    }
+    listupType(typed, list, type);
+    if (typed.empty()) {
+        return -1;
+    }
+    listupParty(list, typed);
+    if (list.empty()) {
+        return -1;
+    }
+    listupRand(typed, list);
+    return typed[0];
+}
+
+void RandCalc::listupParty(mm::mtl::FixedVector<int, 1024>& out, mm::mtl::FixedVector<int, 1024>& in) {
+    unsigned char* fp = Bdat::getFP("FLD_randomTalk");
+    out.clear();
+    for (unsigned long i = 0; i < in.size(); i++) {
+        int id = in[i];
+        short talk0 = Bdat::getVal(fp, "talk0", id);
+        if (talk0 > 0 && RandUtil::searchByID(talk0) == nullptr) {
+            continue;
+        }
+        short talk1 = Bdat::getVal(fp, "talk1", id);
+        if (talk1 > 0 && RandUtil::searchByID(talk1) == nullptr) {
+            continue;
+        }
+        out.push_back(id);
     }
 }
 

@@ -13,6 +13,8 @@ public:
     LipsyncRes(const char* name);
     virtual void OnResEvent(event::IResEvent::PARAM const&);  // slot 0
     virtual ~LipsyncRes() {}  // slot 1
+    // the data of the csv named name in the archive and its size in bytes, or null (LipsyncManager::setTarget)
+    const void* searchCsv(const char* name, int& size);
     // bit 0: loading (OnResEvent clears it), bit 1: loaded (set on a type 3 event); the name is not the original's
     unsigned int m_flags;  // 0x8
     // the name it was made with (LipsyncManager::load compares it); the name is not the original's

@@ -2,6 +2,8 @@
 #define CLASSES_EVENT_OUTSIDERMANAGER_H
 
 namespace event { enum MSG_TYPE : int; }
+namespace gmk { enum GmkType : int; }
+namespace gf { class GF_OBJ_HANDLE; }
 
 #include "mm/Vec3.h"
 #include "mm/mtl/Bitflag.h"
@@ -36,6 +38,9 @@ public:
     void update();
     void render();
     void update(bool);  // out of line
+    // update(bool) runs the first for each gimmick type m_tgtType selects; the first runs the second per object
+    void updateSub(bool, gmk::GmkType);
+    void updateSub(bool, gf::GF_OBJ_HANDLE*);
     // 0x10 bit 0: render draws the field (the name is not the original's). A Bitflag: render's load of it is
     // 4-aligned (GVN does not widen it over m_flags), as a plain field of this 16-aligned class it would not be
     mm::mtl::Bitflag<32> m_dispFlags;
