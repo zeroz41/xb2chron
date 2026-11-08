@@ -2064,6 +2064,27 @@ void LipsyncManager::OnEventProc(event::MSG_TYPE msg) {
     }
 }
 
+const char* EvtxtManager::EVTXT_PATH = "C:/MonolithSoft/BF2/evtxt";
+
+void EvtxtManager::render() {
+    if (!m_flags.test(0)) {
+        return;
+    }
+    int h = ml::DevGraph::getRootHeight();
+    int y = h - 100;
+    int x = (ml::DevGraph::getRootWidth() >> 1) + 240;
+    fw::debug::drawFontColor(mm::Col4::black);
+    fw::debug::drawFont(x + 1, y + 1, "POS RESERVING..");
+    fw::debug::drawFontColor(mm::Col4::yellow);
+    fw::debug::drawFont(x, y, "POS RESERVING..");
+    x = (ml::DevGraph::getRootWidth() >> 1) + 170;
+    y = h - 75;
+    fw::debug::drawFontColor(mm::Col4::black);
+    fw::debug::drawFont(x + 1, y + 1, "pos path[%s]", EVTXT_PATH);
+    fw::debug::drawFontColor(mm::Col4::yellow);
+    fw::debug::drawFont(x, y, "pos path[%s]", EVTXT_PATH);
+}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void EvtxtManager::OnEventProc(event::MSG_TYPE msg) {
     if (msg == 17) {
@@ -8867,6 +8888,18 @@ MovieManager::~MovieManager() {}
 
 TodoManager::TodoManager() : pad_10(0), pad_14(0), pad_8c20(0) {}
 
+// "<frame> <command name> <parameters>"
+void TodoItem::createString(mm::mtl::FixStr<256>& str) {
+    mm::mtl::FixStr<256> text;
+    text.format("%d", static_cast<int>(pad_8));
+    str += text.m_str;
+    str += " ";
+    str += m_todo->cmdName();
+    str += " ";
+    m_param.createString(text);
+    str += text.m_str;
+}
+
 // makes the command, queues it with a copy of the parameters and runs the next queued one (pad_8c20 counts them)
 void TodoManager::add(ITodo* (*exec)(), const Param& param) {
     float frame = FrameManager::getPtr()->getFrame();
@@ -9098,6 +9131,48 @@ inline void BouManager::clear() {
     m_flags.reset();
 }
 
+void BouManager::render() {
+    if (!m_flags.test(0) || !m_debugFlags.test(0)) {
+        return;
+    }
+    if (m_flags.test(2)) {
+        fw::debug::drawSquare2D(mm::Rect<int>(m_rect), mm::Col4(0.25f, 0.25f, 1.0f, 0.25f));
+        fw::debug::drawLineSquare2D(mm::Rect<int>(m_rect), mm::Col4(0.25f, 0.25f, 1.0f, 1.0f));
+    }
+    for (IBouCallback** it = m_actives.begin(); it != m_actives.end(); ++it) {
+        (*it)->OnBouRender(IBouCallback::RenderParam{mm::Col4(1.0f, 1.0f, 0.8f, 0.5f)});
+    }
+}
+
+// asks every callback whether it lies in the drag rectangle: those that newly do join the active list, those
+// that no longer do leave it
+void BouManager::updateActive(const mm::Pnt<int>& pos) {
+    m_rect.w = pos.x - m_rect.x;
+    m_rect.h = pos.y - m_rect.y;
+    for (unsigned int i = 0; i != m_callbacks.size(); i++) {
+        IBouCallback* callback = m_callbacks[i];
+        int index = -1;
+        for (unsigned long j = 0; j < m_actives.size(); j++) {
+            if (*m_actives.at(j) == callback) {
+                index = j;
+                break;
+            }
+        }
+        if (index >= 0) {
+            if (!callback->OnBouRectSelect(IBouCallback::SelectParam{&m_rect})) {
+                for (IBouCallback** it = m_actives.begin(); it != m_actives.end(); ++it) {
+                    if (*it == callback) {
+                        m_actives.erase(it);
+                        break;
+                    }
+                }
+            }
+        } else if (callback->OnBouRectSelect(IBouCallback::SelectParam{&m_rect})) {
+            m_actives.push_back(callback);
+        }
+    }
+}
+
 bool BouManager::OnMouseMove(ml::EventView* view) {
     if (!m_flags.test(0)) {
         return false;
@@ -9151,8 +9226,82 @@ BouManager::~BouManager() {}
 }  // namespace event
 
 #include "classes/event/ManiManager.h"
+#include "classes/ml/ScnDebug.h"
+#include "classes/event/IManiCallback.h"
 
 namespace event {
+
+// 1.0.0's ManiManager::clearManipulate: drops the targets and the manipulator
+inline void ManiManager::clearManipulate() {
+    m_items.clear();
+    m_type = static_cast<MANI_TYPE>(1);
+    mm::mtl::PtrSingleton<Manager>::sys()->m_scn->m_debug->clrManipulator();
+    m_flags.set(2, false);
+}
+
+// each target draws itself, then the key help: the current manipulator kind's key in red
+void ManiManager::render() {
+    if (!m_flags.test(0) || !m_debugFlags.test(0)) {
+        return;
+    }
+    for (Item* it = m_items.begin(); it != m_items.end(); ++it) {
+        IManiCallback::RenderParam param;
+        param.m_color = mm::Col4(0.8f, 1.0f, 0.8f, 0.5f);
+        it->m_callback->OnManiRender(param);
+    }
+    if (m_items.empty()) {
+        return;
+    }
+    int width = ml::DevGraph::getRootWidth();
+    fw::debug::drawSquare2D(mm::Rect<int>(width - 160, 145, 150, 25), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+    fw::debug::drawLineSquare2D(mm::Rect<int>(width - 160, 145, 150, 25), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    int x1 = width - 155;
+    if (m_type == 1) {
+        fw::debug::drawFontColor(mm::Col4(1.0f, 0.5f, 0.5f, 1.0f));
+    } else {
+        fw::debug::drawFontColor(mm::Col4(0.8f, 0.8f, 0.8f, 1.0f));
+    }
+    fw::debug::drawFont(x1, 150, "W:Pos");
+    int x2 = width - 110;
+    if (m_type == 2) {
+        fw::debug::drawFontColor(mm::Col4(1.0f, 0.5f, 0.5f, 1.0f));
+    } else {
+        fw::debug::drawFontColor(mm::Col4(0.8f, 0.8f, 0.8f, 1.0f));
+    }
+    fw::debug::drawFont(x2, 150, "E:Rot");
+    int x3 = width - 65;
+    if (m_type == 3) {
+        fw::debug::drawFontColor(mm::Col4(1.0f, 0.5f, 0.5f, 1.0f));
+    } else {
+        fw::debug::drawFontColor(mm::Col4(0.8f, 0.8f, 0.8f, 1.0f));
+    }
+    fw::debug::drawFont(x3, 150, "R:Tar");
+}
+
+void ManiManager::removeManipulate(IManiCallback* callback) {
+    if (!m_flags.test(0) || !m_debugFlags.test(0)) {
+        return;
+    }
+    bool found = false;
+    for (unsigned int i = 0; i < m_items.size(); i++) {
+        if (m_items.at(i)->m_callback == callback) {
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        return;
+    }
+    for (Item* it = m_items.begin(); it != m_items.end(); ++it) {
+        if (it->m_callback == callback) {
+            m_items.erase(it);
+            break;
+        }
+    }
+    if (m_items.empty()) {
+        clearManipulate();
+    }
+}
 
 bool ManiManager::OnMouseButtonDown(ml::EventView*) { return false; }
 

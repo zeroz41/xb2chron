@@ -2,6 +2,7 @@
 #define CLASSES_EVENT_IMANICALLBACK_H
 
 #include "mm/Mat44.h"
+#include "mm/Col4.h"
 
 namespace event {
 // table none (its derived classes')
@@ -29,6 +30,12 @@ class IManiCallback::SetParam {
 public:
     unsigned char pad_0[0x80];
     mm::Mat44 m_mtx;  // 0x80
+};
+// what ManiManager::render passes OnManiRender: the colour to draw the target in; the field name is not the
+// original's
+class IManiCallback::RenderParam {
+public:
+    mm::Col4 m_color;  // 0x0
 };
 }  // namespace event
 
