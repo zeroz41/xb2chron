@@ -59,7 +59,11 @@ public:
 // FontLayer::font's this)
 class WinView : public ::ml::WorkObj, public ::ml::FontLayer {
 public:
+    // named name under parent (WinProc::pssCreateView makes it; the parameter names are not the original's)
+    WinView(const char* name, WorkObj* parent);
     static WinView* getView(bool sub);
+    // renders the work in the view (WinProc::pssCreateView attaches its process; returns true)
+    bool attachRenderWork(const WorkObj* work);
     // registers a work-event listener with the view (GfAssetManager::initialize registers itself, false)
     void attachWorkEvent(IWorkEvent* event, bool flag);
     // what each bank of m_renderInfo holds (the field names are not the original's)

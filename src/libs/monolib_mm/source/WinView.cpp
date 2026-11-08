@@ -9,6 +9,8 @@
 #include "classes/ml/Device.h"
 #include "classes/ml/DevFileTh.h"
 #include "classes/ml/MicroThread.h"
+#include "classes/ml/WorkCpu.h"
+#include <algorithm>
 #include "classes/ml/DesktopIcon.h"
 #include "classes/ml/WinProc.h"
 #include "classes/ml/ProcDesktop.h"
@@ -33,6 +35,7 @@
 #include "ml/WorkRoot.h"
 #include "ml/WorkRootState.h"
 #include "ml/WorkUtil.h"
+#include <string.h>
 #include "ml/TimeUtil.h"
 #include "classes/ml/DevClock.h"
 #include "nn/time.h"
@@ -1304,6 +1307,8 @@ void (*s_finalizeNotify)();
 mm::mtl::FixStr<128> s_selectAppName;
 // the static initializer copies the build's __DATE__ " " __TIME__ into it (written out: that is the original's text)
 mm::mtl::FixStr<128> s_revision("Aug 13 2026 12:19:45");
+// counts the desktop's logged-in tails up to 30, then enables the library (wkTail; the name is the original's)
+int s_nEnableHomeBtn;
 
 }  // namespace _dsk
 
@@ -1375,9 +1380,42 @@ void ProcDesktop::wkStandby() {
     WorkObj::wkStandby();
 }
 
+void ProcDesktop::wkTail() {
+    MicroThread* thread = mm::mtl::PtrSingleton<MicroThread>::get();
+    if (thread != nullptr) {
+        thread->tail();
+    }
+    if (isLoggedIn()) {
+        if (_dsk::s_nEnableHomeBtn < 30) {
+            _dsk::s_nEnableHomeBtn++;
+            if (_dsk::s_nEnableHomeBtn >= 30) {
+                WorkCpu::setEnableSystem();
+            }
+        }
+    }
+}
+
 void ProcDesktop::wkRender() {}
 
 void ProcDesktop::wkRenderAfter() {}
+
+WinView* WinProc::pssCreateView(const char* name, WorkObj* parent, short childCapacity) {
+    mm::mtl::FixStr<64> viewName("WinView");
+    viewName += name;
+    WinView* view = WorkUtil::createWork<WinView>(viewName.m_str, parent, false);
+    view->wkReplaceHasChild(childCapacity);
+    view->attachRenderWork(this);
+    unsigned int wid = view->m_wid;
+    m_viewList.push_back(wid);
+    m_viewWid = parent->m_wid;
+    if (m_parent != nullptr && m_parent != mm::mtl::PtrSingleton<WinProcRoot>::get()) {
+        view->updateViewPort(static_cast<WinProc*>(m_parent)->pssMakeClientRect());
+        if (view->m_copyRender) {
+            memcpy(view->m_renderInfo.m_render, view->m_renderInfo.m_cpu, sizeof(WinView::RENDER_INFO));
+        }
+    }
+    return view;
+}
 
 bool ProcDesktop::wkStandbyLogout() {
     if (m_child.size() != 0 ||
@@ -1407,6 +1445,25 @@ bool WinProc::pssDetachView() {
         }
     }
     m_viewList.clear();
+    return true;
+}
+
+bool WinProc::pssDetachView(unsigned int wid) {
+    reslist<unsigned int>::iterator it = std::find(m_viewList.begin(), m_viewList.end(), wid);
+    if (it == m_viewList.end()) {
+        return false;
+    }
+    unsigned int viewWid = *it;
+    WorkObj* view = WorkRootState::getWork(viewWid);
+    if (WorkRootState::getWork(mm::mtl::PtrSingleton<WinViewRoot>::get(), viewWid) == nullptr &&
+        !WorkRootState::isEntryWork(viewWid, mm::mtl::PtrSingleton<WinViewRoot>::get())) {
+        view = nullptr;
+    }
+    if (!((view->m_flags & 1) | view->m_updateStop)) {
+        view->wkSetEvent(EVT(0));
+    }
+    static_cast<WinView*>(view)->detachRenderWork(this);
+    m_viewList.erase(it);
     return true;
 }
 
