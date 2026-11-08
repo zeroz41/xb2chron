@@ -2071,6 +2071,12 @@ const char* Extend::effeva(const char* pszName) {
     return m_path.m_str;
 }
 
+const char* Extend::pack_efb(const char* pszName) {
+    m_path = pszName;
+    m_path += "_pack.wiefb";
+    return m_path.m_str;
+}
+
 const char* Extend::lgt(const char* pszName) {
     m_path = pszName;
     m_path += ".wilgt";
@@ -2321,6 +2327,7 @@ void Param::createString(mm::mtl::FixStr<256>& str) {
 }  // namespace event
 
 #include "classes/event/HideManager.h"
+#include "classes/gf/GfFieldWeather.h"
 #include "classes/event/SelectManager.h"
 #include "classes/event/FrameManager.h"
 #include "classes/event/SkipManager.h"
@@ -7805,6 +7812,19 @@ void DebugManager::OnEventProc(event::MSG_TYPE msg) {
 
 namespace event {
 
+void EffectManager::replaceFile(mm::mtl::FixStr<128>& file) const {
+    if ((m_flags & 4) && m_attrType != 0) {
+        char buf[256] = {};
+        strcpy(buf, file.m_str);
+        char* dark = strstr(buf, "dark");
+        if (dark != nullptr) {
+            unsigned int attr = m_attrType;
+            strcpy(dark, reinterpret_cast<const char*>(Bdat::getValCheck(Bdat::getFP("EVT_attrtype"), "name", attr, 7)));
+            file = buf;
+        }
+    }
+}
+
 void EffectObj::moveTo(const mm::Vec3& pos, float time, CV_TYPE type) {
     if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
         return;
@@ -7848,6 +7868,14 @@ void EffectObj::colorTo(const mm::Col4& color, float time, CV_TYPE type) {
     m_cmdQueue.push_back(&m_linearCol, param);
 }
 
+EffectRes::EffectRes(const char* name) : m_flags(0), m_name(name), m_pack(nullptr) {
+    mm::mtl::FixStr<256> path;
+    path.format("event/evpa/%s", name);
+    mm::mtl::Singleton<ResManager>::getPtr()->load(mm::mtl::Singleton<Extend>::getPtr()->pack_efb(path.m_str), this,
+                                                   true);
+    m_flags |= 1;
+}
+
 EffectRes::~EffectRes() {
     if (m_pack != nullptr) {
         m_pack->release();
@@ -7865,7 +7893,7 @@ void EffectRes::OnResEvent(const IResEvent::PARAM& param) {
     m_flags &= ~1;
 }
 
-EffectManager::EffectManager() : m_flags(0), m_dispFlags(0), pad_a0(0), m_offscrID(0), pad_ac(0) {}
+EffectManager::EffectManager() : m_flags(0), m_dispFlags(0), pad_a0(0), m_offscrID(0), m_attrType(0) {}
 
 void EffectManager::load(const char* name) {
     EffectRes* found = nullptr;
@@ -7886,6 +7914,37 @@ void EffectManager::loadResource(const char* name) {
         return;
     }
     mm::mtl::Singleton<ResManager>::getPtr()->load(mm::mtl::Singleton<Extend>::getPtr()->eva(name), nullptr, false);
+}
+
+void EffectManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 12:
+        for (unsigned long i = 0; i < m_entries.size(); i++) {
+            if (m_entries[i] != nullptr) {
+                delete m_entries[i];
+                m_entries[i] = nullptr;
+            }
+        }
+        m_entries.clear();
+        m_flags = 0;
+        pad_a0 = nullptr;
+        m_offscrID = 0;
+        m_attrType = 0;
+        break;
+    case 4:
+        for (unsigned long i = 0; i < m_entries.size(); i++) {
+            if (m_entries[i] != nullptr) {
+                delete m_entries[i];
+                m_entries[i] = nullptr;
+            }
+        }
+        m_entries.clear();
+        m_flags = 0;
+        pad_a0 = nullptr;
+        m_offscrID = 0;
+        m_attrType = 0;
+        break;
+    }
 }
 
 LightManager::LightManager() : m_flags(0), m_modeFlags(0), m_offScrLights(), m_evtLight(nullptr) {}
@@ -8052,7 +8111,140 @@ void BgmManager::OnEventProc(event::MSG_TYPE msg) {
     }
 }
 
-HideManager::HideManager() : pad_10(0), m_group(), m_firstList(), m_secondList(), m_objs() {}
+HideManager::DispEntry HideManager::s_tbl[18] = {
+    {"EVTDISP_PC", gf::EVTDISP_PC},
+    {"EVTDISP_PC_WEAPON", gf::EVTDISP_PC_WEAPON},
+    {"EVTDISP_BLADE", gf::EVTDISP_BLADE},
+    {"EVTDISP_ENEMY", gf::EVTDISP_ENEMY},
+    {"EVTDISP_EN_WEAPON", gf::EVTDISP_EN_WEAPON},
+    {"EVTDISP_NPC", gf::EVTDISP_NPC},
+    {"EVTDISP_MOB", gf::EVTDISP_MOB},
+    {"EVTDISP_FIELD_OBJ", gf::EVTDISP_FIELD_OBJ},
+    {"EVTDISP_MAP", gf::EVTDISP_MAP},
+    {"EVTDISP_COLLECTION", gf::EVTDISP_COLLECTION},
+    {"EVTDISP_SALVAGE", gf::EVTDISP_SALVAGE},
+    {"EVTDISP_PRECIOUS", gf::EVTDISP_PRECIOUS},
+    {"EVTDISP_TBOX", gf::EVTDISP_TBOX},
+    {"EVTDISP_JUMP", gf::EVTDISP_JUMP},
+    {"EVTDISP_WARP", gf::EVTDISP_WARP},
+    {"EVTDISP_DMG_EFFECT", gf::EVTDISP_DMG_EFFECT},
+    {"EVTDISP_DMG_SE", gf::EVTDISP_DMG_SE},
+    {"EVTDISP_GRAVE", gf::EVTDISP_GRAVE},
+};
+
+void HideManager::Obj::clear() {
+    switch (m_type) {
+    case 1:
+        gf::GfGameEvent::setGmkBdatDisp(gmk::GmkType(3), m_id, !m_baseHide);
+        break;
+    case 2:
+        gf::GfGameEvent::setGmkBdatDisp(gmk::GmkType(4), m_id, !m_baseHide);
+        break;
+    case 3:
+        gf::GfGameEvent::setGmkBdatDisp(gmk::GmkType(6), m_id, !m_baseHide);
+        break;
+    case 4:
+        gf::GfGameEvent::setGmkIdDisp(gmk::GmkType(13), m_id - 1, !m_baseHide);
+        break;
+    case 5:
+        gf::GfGameEvent::setGmkBdatDisp(gmk::GmkType(15), m_id, !m_baseHide);
+        break;
+    case 6:
+        gf::GfGameEvent::setMapLodDisp(m_id, !m_baseHide);
+        break;
+    case 7:
+        gf::GfGameEvent::setGmkBdatDisp(gmk::GmkType(63), m_id, !m_baseHide);
+        break;
+    }
+    m_hide = m_baseHide;
+}
+
+void HideManager::Obj::exec(bool hide) {
+    switch (m_type) {
+    case 1:
+        gf::GfGameEvent::setGmkBdatDisp(gmk::GmkType(3), m_id, !hide);
+        break;
+    case 2:
+        gf::GfGameEvent::setGmkBdatDisp(gmk::GmkType(4), m_id, !hide);
+        break;
+    case 3:
+        gf::GfGameEvent::setGmkBdatDisp(gmk::GmkType(6), m_id, !hide);
+        break;
+    case 4:
+        gf::GfGameEvent::setGmkIdDisp(gmk::GmkType(13), m_id - 1, !hide);
+        break;
+    case 5:
+        gf::GfGameEvent::setGmkBdatDisp(gmk::GmkType(15), m_id, !hide);
+        break;
+    case 6:
+        gf::GfGameEvent::setMapLodDisp(m_id, !hide);
+        break;
+    case 7:
+        gf::GfGameEvent::setGmkBdatDisp(gmk::GmkType(63), m_id, !hide);
+        break;
+    }
+    m_hide = hide;
+}
+
+HideManager::HideManager() : m_flags(), m_group(), m_firstList(), m_secondList(), m_objs() {}
+
+void HideManager::clear() {
+    hideGroup(false);
+    if (m_flags.test(1)) {
+        gf::GfGameEvent::setDisp(6, m_firstList, true);
+        gf::GfGameEvent::setDisp(5, m_secondList, true);
+        m_flags.reset(1);
+    }
+    for (Obj** it = m_objs.begin(); it != m_objs.end(); ++it) {
+        Obj* obj = *it;
+        obj->clear();
+        delete obj;
+    }
+    m_objs.clear();
+    m_flags.reset();
+    m_group = GRP_TYPE();
+}
+
+void HideManager::hideGroup(bool hide) {
+    if (hide) {
+        if (m_flags.test(0)) {
+            return;
+        }
+        for (int i = 0; i < 18; i++) {
+            if ((1 << i) & m_group) {
+                gf::GfGameEvent::setDisp(s_tbl[i].m_disp, false);
+                if (i == 8) {
+                    gf::GfFieldWeather::setDispWeather(false);
+                    ml::ScnRenderDrSysParmAcc acc(mm::mtl::PtrSingleton<Manager>::sys()->m_scn->m_renderDrSys, 0);
+                    acc.setRainDrop(false);
+                    gf::GfGameEvent::setDisp(gf::EVTDISP(20), false);
+                    gf::GfGameEvent::setDisp(gf::EVTDISP(21), false);
+                }
+            }
+        }
+        m_flags.set(0);
+    } else {
+        if (!m_flags.test(0)) {
+            return;
+        }
+        for (int i = 0; i < 18; i++) {
+            gf::GfGameEvent::setDisp(s_tbl[i].m_disp, true);
+            if (i == 8) {
+                gf::GfFieldWeather::setDispWeather(true);
+                ml::ScnRenderDrSysParmAcc acc(mm::mtl::PtrSingleton<Manager>::sys()->m_scn->m_renderDrSys, 0);
+                acc.setRainDrop(true);
+                gf::GfGameEvent::setDisp(gf::EVTDISP(20), true);
+                gf::GfGameEvent::setDisp(gf::EVTDISP(21), true);
+                for (unsigned long j = 0; j < m_objs.size(); j++) {
+                    if (m_objs[j]->m_type == 4 || m_objs[j]->m_type == 5) {
+                        m_objs[j]->exec(m_objs[j]->m_hide);
+                    }
+                }
+            }
+        }
+        m_flags.reset(0);
+    }
+}
 
 HideManager::~HideManager() {}
 

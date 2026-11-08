@@ -19,9 +19,29 @@ namespace fw { enum SoundCategory : int; }
 namespace fw { class UpdateInfo; }
 namespace gf {
 // what an event shows: GfGameEvent::setDisp(EVTDISP, bool) keeps one flag per kind (27 of them, initialize sets
-// them all); the enumerators are not known. No fixed underlying type: stored unsigned (setDisp indexes with uxtw)
-// but promoted to int (applySetDisp's `disp < 16` is a signed compare)
-enum EVTDISP {};
+// them all). No fixed underlying type: stored unsigned (setDisp indexes with uxtw) but promoted to int
+// (applySetDisp's `disp < 16` is a signed compare). The named enumerators come from event::HideManager::s_tbl, which
+// pairs each with its own name string ("EVTDISP_PC" with 3, ...); 0, 2, 8, 11, 13-15, 20 and 21 are not named there
+enum EVTDISP {
+    EVTDISP_MAP = 1,
+    EVTDISP_PC = 3,
+    EVTDISP_BLADE = 4,
+    EVTDISP_ENEMY = 5,
+    EVTDISP_NPC = 6,
+    EVTDISP_MOB = 7,
+    EVTDISP_FIELD_OBJ = 9,
+    EVTDISP_PC_WEAPON = 10,
+    EVTDISP_EN_WEAPON = 12,
+    EVTDISP_COLLECTION = 16,
+    EVTDISP_SALVAGE = 17,
+    EVTDISP_PRECIOUS = 18,
+    EVTDISP_TBOX = 19,
+    EVTDISP_JUMP = 22,
+    EVTDISP_WARP = 23,
+    EVTDISP_DMG_EFFECT = 24,
+    EVTDISP_DMG_SE = 25,
+    EVTDISP_GRAVE = 26,
+};
 
 // table 0x7100B54448
 class GfGameEvent : public ::mm::mtl::PtrSingleton< ::gf::GfGameEvent> {

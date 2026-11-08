@@ -17,8 +17,8 @@ public:
     // bit 0: loading (OnResEvent clears it); the name is not the original's
     unsigned int m_flags;  // 0x8
     // the name it was made with (EffectManager::load compares it); the name is not the original's
-    mm::mtl::FixStr<32> m_name;  // 0xc
-    unsigned char pad_30[0x20];
+    // a FixStr<64>: the constructor's assignment asserts the length below 64 and stores it at 0x4c
+    mm::mtl::FixStr<64> m_name;  // 0xc
     // the pack OnResEvent makes from the loaded file (one reference, the destructor releases it); the name is not
     // the original's
     fw::EffectPack* m_pack;  // 0x50

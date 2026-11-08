@@ -21,6 +21,9 @@ public:
 
     // named by the symbols: makes and keeps an EffectRes for name unless one of that name is kept
     void load(const char* name);
+    // named by the symbols: with bit 2 of m_flags set and an attribute kept, puts the EVT_attrtype row's name in place
+    // of "dark" in file (EffectObj::play calls it)
+    void replaceFile(mm::mtl::FixStr<128>& file) const;
     // 1.0.0's isEffectDisp (0x71000DF598; 3.0.1 inlines it: ObjectManager::render)
     bool isEffectDisp() const { return m_dispFlags & 1; }
     // 1.0.0's getResPack (3.0.1 inlines it: EffectCtrl::genelate): the kept EffectRes's pack
@@ -34,7 +37,8 @@ public:
     EffectRes* pad_a0;  // 0xa0
     // 1.0.0's getOffscrID returns it, setOffscrMode stores it; the name is not the original's
     unsigned int m_offscrID;  // 0xa8
-    unsigned int pad_ac;
+    // the EVT_attrtype row replaceFile reads (0: none); the name is not the original's
+    unsigned int m_attrType;  // 0xac
 };
 }  // namespace event
 

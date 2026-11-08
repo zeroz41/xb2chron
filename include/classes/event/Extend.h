@@ -19,6 +19,8 @@ public:
     const char* eva(const char* pszName);
     // 1.0.0's Extend::effeva (0x71000901DC): the name with "_eff.eva" appended; 3.0.1 inlines it
     const char* effeva(const char* pszName);
+    // 2.0.0's Extend::pack_efb: the name with "_pack.wiefb" appended; 3.0.1 inlines it (EffectRes's constructor)
+    const char* pack_efb(const char* pszName);
     const char* lgt(const char* pszName);
     const char* wav(const char* pszName);
     const char* evpa(const char* pszName);
