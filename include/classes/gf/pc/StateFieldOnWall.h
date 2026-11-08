@@ -2,6 +2,7 @@
 #define CLASSES_GF_PC_STATEFIELDONWALL_H
 
 #include "classes/gf/GfStateBase.h"
+#include "gf/EnviromentSensor.h"
 #include <new>
 
 namespace ai { class State; }
@@ -31,7 +32,10 @@ public:
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
     // the message recieveMessage hands on (1.0.0's symbol; 3.0.1 inlines it, its linker dropped the copy)
     void procMsgPcFieldWallJump(GfComBehaviorPc* behavior, fw::MessageObject* from, MsgPcFieldWallJump& msg);
-    unsigned char pad_18[0x38];
+    unsigned char pad_18[0x8];
+    // enter's copy of the field property's wall, the plane leave tells the wall's children of (the name is not the
+    // original's)
+    gf::EnviromentSensor::WallInfo m_wallInfo;
 };
 }}  // namespace gf::pc
 

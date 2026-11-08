@@ -116,7 +116,7 @@ public:
         mm::Plane m_plane;     // the wall's plane (GfPropertyField::flashWallInfo hands it to the target property)
         float m_blend;         // StateFieldWall::enter copies it to m_wallBlend
         unsigned int m_flags;  // bit 7: StateFieldWall::flushWallType's sound variable 2
-        unsigned char pad_28[0x8];
+        // (8 bytes of tail padding to the plane's 16-byte alignment: StateFieldOnWall::enter's copy skips them)
     };
     WallInfo m_wallInfo;
     // the wall a bit 6 in m_flags says it found (inline: the name is not the original's)

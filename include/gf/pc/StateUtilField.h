@@ -133,6 +133,7 @@ public:
     static bool ignoreOnGroundJump(gf::GfComPropertyPc& property, float time);
     static gf::GfObj* getLureTarget(gf::GfComBehaviorPc& behavior);
     static bool isStartSlidePosuture(gf::GfComBehaviorPc& behavior);
+    static bool isEndSlipPosuture(gf::GfComBehaviorPc& behavior);  // (by its symbol)
     static bool requestBattleStart(gf::GfComPropertyPc& property);
     static bool testVechile(gf::GfComBehaviorPc& behavior);  // whether the PC is a vehicle (GfGameRide::isVehicle)
     static void requestGetOffRider(gf::GfComBehaviorPc& behavior);

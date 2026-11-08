@@ -86,6 +86,11 @@
 #include "gf/SoundVariable.h"
 #include "anm/QsTransform.h"
 #include "classes/gf/SCOM_QUEST_GIMMICK.h"
+#include "gf/MsgPcFieldNotifyWall.h"
+#include "mm/Math.h"
+#include "gf/pc/MoveUtilField.h"
+#include "classes/gf/pc/AccessPlugin.h"
+#include "classes/ai/State.h"
 
 namespace gf {
 namespace pc {
@@ -137,8 +142,43 @@ void StateFieldSlide::leave(GfComBehaviorPc* behavior, ai::State*) {
 
 void StateFieldSlide::update(GfComBehaviorPc*, const fw::UpdateInfo&) {}
 
+void StateFieldSlideMove::enter(GfComBehaviorPc* behavior, ai::State*) {
+    GfComPropertyPc* property = behavior->m_owner->findComponent<GfComPropertyPc>(5);
+    mm::Vec3 velocity =
+        property->m_velocity + mm::Vec3::unitY * property->m_moveVec2.x + property->pad_d0 * property->m_moveSpeed;
+    property->m_moveSpeed = property->pad_d0.dot(velocity);
+    property->m_velocity = mm::Vec3::zero;
+    property->m_moveVec2.x = 0.0f;
+    property->m_moveVec2.y = 0.0f;
+    mm::Vec3 angles(0.7853982f, 0.0f, 0.0f);
+    StateUtil::changeGroundAnglesForMotion(*behavior, angles);
+}
+
 void StateFieldSlideMove::leave(GfComBehaviorPc* behavior, ai::State*) {
     StateUtil::changeGroundAnglesForMotion(*behavior, mm::Vec3::zero);
+}
+
+void StateFieldSlideMove::update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    GfComAsm* comAsm = behavior->m_owner->getComponent<GfComAsm>(2);
+    if (StateUtilField::isEndSlipPosuture(*behavior) && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD_MOVE)) {
+        if (property->existInputXY()) {
+            requestState(7);
+        } else {
+            requestState(0x37);
+        }
+        return;
+    }
+    if (StateUtilField::isFallFromSlideState(*property) && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD_FALL)) {
+        requestState(0xF);
+        return;
+    }
+    if (property->m_inputFlags[2] && (property->m_field.m_statusFlags & 0x20000) &&
+        StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(2))) {
+        requestState(0xC);
+        return;
+    }
+    MoveUtilField::updateMoveSlide(info, *property);
 }
 
 void StateFieldSlideLandBrake::enter(GfComBehaviorPc* behavior, ai::State*) {
@@ -148,6 +188,34 @@ void StateFieldSlideLandBrake::enter(GfComBehaviorPc* behavior, ai::State*) {
 }
 
 void StateFieldSlideLandBrake::leave(GfComBehaviorPc*, ai::State*) {}
+
+void StateFieldSlideLandBrake::update(GfComBehaviorPc* behavior, const fw::UpdateInfo&) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    GfComAsm* comAsm = behavior->m_owner->getComponent<GfComAsm>(2);
+    if (StateUtilField::isFallFromSlideState(*property) && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD_FALL)) {
+        requestState(0xF);
+        return;
+    }
+    if (property->m_inputFlags[2] && (property->m_field.m_statusFlags & 0x20000) &&
+        StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(2))) {
+        requestState(0xC);
+        return;
+    }
+    if (StateUtilField::isStartSlidePosuture(*behavior) && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(0x19))) {
+        requestState(0x36);
+        return;
+    }
+    if (property->existInputXY()) {
+        property->m_moveSpeed = 0.0f;
+        requestState(7);
+        return;
+    }
+    if (StateUtilField::isSlideStop(*property) && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD_IDLE)) {
+        requestState(3);
+        return;
+    }
+    StateUtilField::setAsmSpeedSlideBrake(*property);
+}
 
 void StateFieldWall::flushWallType(GfComBehaviorPc* behavior) {
     GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
@@ -159,6 +227,72 @@ void StateFieldWall::flushWallType(GfComBehaviorPc* behavior) {
         } else {
             const char* name = getSoundVariableName(SoundVariable(2));
             sound->m_variables.setVariable(name, 0);
+        }
+    }
+}
+
+void StateFieldWall::leave(GfComBehaviorPc* behavior, ai::State*) {
+    StateUtil::setEnableLookIK(*behavior, true);
+    StateUtilField::notifyRiderEvent(*behavior, VehicleEvent(1));
+    StateUtilField::setWallMoveMode(*behavior, false);
+    GfComPropertyPc* property = behavior->m_owner->findComponent<GfComPropertyPc>(5);
+    property->m_field.m_statusFlags &= ~0x40;
+    // the facing as Euler angles, kept only about the up axis
+    mm::Quat q = property->m_rot;
+    float x2 = q.x + q.x;
+    float y2 = q.y + q.y;
+    float z2 = q.z + q.z;
+    float xx = q.x * x2;
+    float xy = q.x * y2;
+    float xz = q.x * z2;
+    float yy = q.y * y2;
+    float yz = q.y * z2;
+    float zz = q.z * z2;
+    float wx = q.w * x2;
+    float wy = q.w * y2;
+    float wz = q.w * z2;
+    float m00 = 1.0f - (yy + zz);
+    float m01 = xy + wz;
+    float m02 = xz - wy;
+    float m11 = 1.0f - (xx + zz);
+    float m20 = xz + wy;
+    float m21 = yz - wx;
+    float m22 = 1.0f - (xx + yy);
+    mm::Vec3 r;
+    r.x = mm::asin(-m21);
+    if (r.x < 1.57079637f) {
+        if (r.x > -1.57079637f) {
+            r.z = ::atan2f(m01, m11);
+            r.y = ::atan2f(m20, m22);
+        } else {
+            r.z = -::atan2f(m02, m00);
+            r.y = 0.0f;
+        }
+    } else {
+        r.z = ::atan2f(m02, m00);
+        r.y = 0.0f;
+    }
+    r.x = 0.0f;
+    r.z = 0.0f;
+    float sx = ::sinf(r.x * 0.5f);
+    float cx = ::cosf(r.x * 0.5f);
+    float sy = ::sinf(r.y * 0.5f);
+    float cy = ::cosf(r.y * 0.5f);
+    float sz = ::sinf(r.z * 0.5f);
+    float cz = ::cosf(r.z * 0.5f);
+    property->m_rot = mm::Quat(sx * cy * cz + cx * sy * sz, cx * sy * cz - sx * cy * sz, cx * cy * sz - sx * sy * cz,
+                               cx * cy * cz + sx * sy * sz);
+    property->syncDirection();
+    property->m_field.m_statusFlags &= ~0x80;
+}
+
+void StateFieldWall::update(GfComBehaviorPc* behavior, const fw::UpdateInfo&) {
+    flushWallType(behavior);
+    GfComPropertyPc* property = behavior->m_owner->findComponent<GfComPropertyPc>(5);
+    if (property->m_field.getWallInfo() == nullptr) {
+        GfComAsm* comAsm = behavior->m_owner->getComponent<GfComAsm>(2);
+        if (StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(0))) {
+            requestState(3);
         }
     }
 }
@@ -182,6 +316,25 @@ void StateFieldWallAdsorptionGround::enter(GfComBehaviorPc* behavior, ai::State*
 }
 
 void StateFieldWallAdsorptionGround::leave(GfComBehaviorPc*, ai::State*) {}
+
+void StateFieldWallAdsorptionGround::update(GfComBehaviorPc* behavior, const fw::UpdateInfo&) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    GfComAsm* comAsm = behavior->m_owner->getComponent<GfComAsm>(2);
+    const anm::QsTransform* locomotion = comAsm->getLocomotion();
+    anm::QsTransform transform = *locomotion;
+    transform.m_translation.x = 0.0f;
+    transform.m_translation.z = 0.0f;
+    property->setLocomotion(transform);
+    // an unread parameter lookup: the original asserts the list pointer here (this form is a guess)
+    property->m_field.m_paramList->getAdapter(0);
+    property->m_field.m_wallBlend -= locomotion->m_translation.z;
+    property->m_field.m_wallBlend = property->m_field.m_wallBlend > property->m_field.m_wallBlendTarget
+                                        ? property->m_field.m_wallBlend
+                                        : property->m_field.m_wallBlendTarget;
+    if (comAsm->isEnd(static_cast<AnimLayer>(0)) && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(0xC))) {
+        requestState(0x2E);
+    }
+}
 
 void StateFieldWallAdsorptionUnderGround::enter(GfComBehaviorPc* behavior, ai::State*) {
     GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
@@ -217,9 +370,59 @@ void StateFieldWallClimbEnd::leave(GfComBehaviorPc* behavior, ai::State*) {
     StateUtil::setEnvSensor(*behavior, 0x40, true);
 }
 
+void StateFieldWallClimbEnd::update(GfComBehaviorPc* behavior, const fw::UpdateInfo&) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    GfComAsm* comAsm = behavior->m_owner->getComponent<GfComAsm>(2);
+    const anm::QsTransform* locomotion = comAsm->getLocomotion();
+    anm::QsTransform transform = *locomotion;
+    transform.m_translation.x = 0.0f;
+    transform.m_translation.z = 0.0f;
+    property->setLocomotion(transform);
+    // an unread parameter lookup: the original asserts the list pointer here (this form is a guess)
+    property->m_field.m_paramList->getAdapter(0);
+    property->m_field.m_wallBlend -= locomotion->m_translation.z;
+    if (comAsm->isEnd(static_cast<AnimLayer>(0)) && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(0))) {
+        requestState(3);
+    }
+}
+
 void StateFieldWallLand::enter(GfComBehaviorPc*, ai::State*) {}
 
 void StateFieldWallLand::leave(GfComBehaviorPc*, ai::State*) {}
+
+void StateFieldWallLand::update(GfComBehaviorPc* behavior, const fw::UpdateInfo&) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    GfComAsm* comAsm = behavior->m_owner->getComponent<GfComAsm>(2);
+    const anm::QsTransform* locomotion = comAsm->getLocomotion();
+    anm::QsTransform transform = *locomotion;
+    transform.m_translation.x = 0.0f;
+    transform.m_translation.z = 0.0f;
+    property->setLocomotion(transform);
+    // an unread parameter lookup: the original asserts the list pointer here (this form is a guess)
+    property->m_field.m_paramList->getAdapter(0);
+    property->m_field.m_wallBlend -= locomotion->m_translation.z;
+    if (comAsm->isEnd(static_cast<AnimLayer>(0)) && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(0))) {
+        requestState(3);
+    }
+}
+
+void StateFieldOnWall::enter(GfComBehaviorPc* behavior, ai::State*) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    property->m_field.m_statusFlags |= 0x20;
+    StateUtilField::setAccessFlag(*behavior, true);
+    StateUtil::setEnvSensor(*behavior, 0x100, true);
+    property->m_field.m_wallBlend = property->m_field.m_wallBlendTarget;
+    m_wallInfo = *property->m_field.getWallInfo();
+    MsgPcFieldNotifyWall msg;
+    msg.m_plane = m_wallInfo.m_plane;
+    msg.m_pos = property->m_pos;
+    msg.m_rot = property->m_rot;
+    msg.m_type = 0;
+    StateUtilField::sendMessageWallChilds(*property, msg);
+    if (AccessPlugin* plugin = behavior->getPlugin<AccessPlugin>(4)) {
+        plugin->m_accessKinds = 8;
+    }
+}
 
 bool StateFieldOnWall::recieveMessage(void* owner, fw::MessageObject* from, fw::Message& msg) {
     switch (msg.m_id) {

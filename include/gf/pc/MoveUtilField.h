@@ -23,6 +23,7 @@ public:
     static void updateMoveJump(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
     static void updateMoveJumpBack(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
     static void updateLandBrake(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
+    static void updateMoveSlide(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);  // (by its symbol)
     // the water states'
     static void enterMoveSwim(gf::GfComPropertyPc& property);
     static void updateMoveSwim(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
