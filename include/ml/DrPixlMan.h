@@ -44,7 +44,9 @@ struct DrPixlObjTbl {
     grlib::CGLibDepthTarget* m_depthCheck;
     // 0x1B8, selectLightRenderTarget registers its depth buffer (name inferred)
     grlib::CGLibDepthTarget* m_lightDepth;
-    unsigned char pad_1C0[0x10];
+    // 0x1C0, DrPixlPostObjUnbranchToDepth::renderQuater makes it the render target (name inferred)
+    grlib::CGLibDepthTarget* m_quaterDepth;
+    unsigned char pad_1C8[0x8];
     grlib::CGLibRenderTarget* m_capture;  // 0x1D0, renderEnd invalidates its colour
     unsigned int m_flags;  // 0x1D8, updateShadowDisplayList clears 0x20
     unsigned char pad_1DC[0x1C];

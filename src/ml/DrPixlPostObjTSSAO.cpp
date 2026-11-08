@@ -18,6 +18,7 @@
 #include "classes/navi/NvmshManager.h"
 #include "classes/navi/NvmshResMan.h"
 #include "grlib/CGLibCtl.h"
+#include "grlib/CGLibState.h"
 #include "mm/Math.h"
 #include "mtl/MemManager.h"
 #include "grlib/CGLibUniBaseUtility.h"
@@ -33,6 +34,7 @@
 #include "ml/DrCalcGpuCost.h"
 #include "ml/DrCalcMan.h"
 #include "ml/DrCalcViewWork.h"
+#include "ml/DrIniSys.h"
 #include "ml/DrLightObjGlobalIBL.h"
 #include "ml/DrPixlMan.h"
 #include "ml/DrPixlPostMan.h"
@@ -57,6 +59,10 @@
 #include "navi/NvmshAcMan.h"
 
 namespace ml {
+
+DrLightObjLocalIBL::DrLightObjLocalIBL()
+    : pad_30(0.0f, 0.0f, 0.0f), m_cubeTex(nullptr), m_mipBias(0), m_pos(0.0f, 0.0f, 0.0f), m_radius(0.0f),
+      m_shapeType(2), pad_128(0), pad_1c0(2), pad_240(nullptr) {}
 
 DrLightObjLocalIBL::~DrLightObjLocalIBL() {}
 
@@ -86,6 +92,62 @@ void DrPixlPostObjCapture::render() {
         renderCaputre();
         renderDef();
         m_flags &= ~2;
+    }
+}
+
+void DrPixlPostObjCapture::renderCaputre() {
+    if (m_flags & 2) {
+        m_target.setRenderTarget();
+        DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+        DrShdDataObj* obj = list->getSelectShdObj(1);
+        obj->setDeclarationIdx(obj->getDeclarationOfs("PIXL_TYPE"), 1);
+        obj->setDeclarationIdx(obj->getDeclarationOfs("MRT_NUM"), 1);
+        list->bindTriangleTex();
+        obj->setupShader(0u);
+        unsigned int location = obj->getCurrentShader().getTextureLocation("s0");
+        DrAPCache* cache = m_drMan->m_apCache;
+        cache->beginTexSampling(2, 0);
+        cache->setTexture(*grlib::CGLibState::getMainRenderTarget()->m_pTexture, location);
+        grlib::CGLibUniformEtcUtility uniform(obj);
+        uniform.setUseUniformBlock("U_POST");
+        unsigned int ofs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gScal");
+        float scale[4];
+        scale[0] = 1.0f;
+        scale[1] = 1.0f;
+        scale[2] = 0.0f;
+        scale[3] = 0.0f;
+        uniform.setF32SetVec4(ofs, scale);
+        uniform.updateData();
+        uniform.setUniformBlock();
+        list->renderTriangle();
+    }
+}
+
+void DrPixlPostObjCapture::renderDef() {
+    grlib::CGLibState::setMainFrameBuffer();
+    if (!(m_flags & 2)) {
+        DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+        DrShdDataObj* obj = list->getSelectShdObj(1);
+        obj->setDeclarationIdx(obj->getDeclarationOfs("PIXL_TYPE"), 1);
+        obj->setDeclarationIdx(obj->getDeclarationOfs("MRT_NUM"), 1);
+        list->bindTriangleTex();
+        obj->setupShader(0u);
+        unsigned int location = obj->getCurrentShader().getTextureLocation("s0");
+        DrAPCache* cache = m_drMan->m_apCache;
+        cache->beginTexSampling(2, 0);
+        cache->setTexture(*m_target.m_pTexture, location);
+        grlib::CGLibUniformEtcUtility uniform(obj);
+        uniform.setUseUniformBlock("U_POST");
+        unsigned int ofs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gScal");
+        float scale[4];
+        scale[0] = 1.0f;
+        scale[1] = 1.0f;
+        scale[2] = 0.0f;
+        scale[3] = 0.0f;
+        uniform.setF32SetVec4(ofs, scale);
+        uniform.updateData();
+        uniform.setUniformBlock();
+        list->renderTriangle();
     }
 }
 
@@ -150,12 +212,78 @@ DrPixlPostObjGlassBr::~DrPixlPostObjGlassBr() {
     m_flags = 3;
 }
 
+void DrPixlPostObjGlassBr::setup() {
+    m_flags &= ~1;
+    const GlassData* data = static_cast<const GlassData*>(m_drMan->m_iniSys->getGlassBreakage());
+    m_pGlassData = data;
+    m_memPool.setupBuffer(const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(data)) + data->m_bufferOfs,
+                          data->m_bufferSize);
+    m_vertex.createMemVertexBuff(&m_memPool, data->m_vertexOfs, data->m_vertexSize, 0xC);
+    m_index.createMemIndexBuff(&m_memPool, data->m_indexOfs, data->m_indexCount, static_cast<GrlPrimitiveType>(4),
+                               static_cast<GrlIndexFormat>(1));
+    unsigned int size = data->m_pieceNum << 6;
+    m_pieceNum = data->m_pieceNum;
+    m_pPieceWork = mtl::MemManager::allocate(m_drMan->m_allocHandle, size, 0x10, false, "no name", 0);
+    m_uniform.setup(m_pieceNum * 0x30 + 0x70);
+    m_target.setTextureInfo(m_drMan->m_curViewInfo->m_captureWidth * 0.5f, m_drMan->m_curViewInfo->m_captureHeight * 0.5f,
+                            static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGBA_8), false, 0);
+    posInt();
+}
+
 void DrPixlPostObjGlassBr::render() {
     if (!(m_flags & 4)) {
         DrAPGxType::setupScreenQuads(false);
         renderCaputre();
         renderGlass();
     }
+}
+
+void DrPixlPostObjGlassBr::renderCaputre() {
+    if (m_flags & 2) {
+        m_flags &= ~2;
+        m_target.setRenderTarget();
+        DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+        DrShdDataObj* obj = list->getSelectShdObj(1);
+        obj->setDeclarationIdx(obj->getDeclarationOfs("PIXL_TYPE"), 1);
+        obj->setDeclarationIdx(obj->getDeclarationOfs("MRT_NUM"), 1);
+        list->bindTriangleTex();
+        obj->setupShader(0u);
+        unsigned int location = obj->getCurrentShader().getTextureLocation("s0");
+        DrAPCache* cache = m_drMan->m_apCache;
+        cache->beginTexSampling(2, 1);
+        cache->setTexture(*grlib::CGLibState::getMainRenderTarget()->m_pTexture, location);
+        grlib::CGLibUniformEtcUtility uniform(obj);
+        uniform.setUseUniformBlock("U_POST");
+        unsigned int ofs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gScal");
+        float scale[4];
+        scale[0] = 1.0f;
+        scale[1] = 1.0f;
+        scale[2] = 0.0f;
+        scale[3] = 0.0f;
+        uniform.setF32SetVec4(ofs, scale);
+        uniform.updateData();
+        uniform.setUniformBlock();
+        list->renderTriangle();
+    }
+}
+
+void DrPixlPostObjGlassBr::renderGlass() {
+    grlib::CGLibState::getMainRenderTarget()->clearTexture(mm::Col4(0.0f, 0.0f, 0.0f, 0.0f), static_cast<GrlClaerMask>(0xF));
+    grlib::CGLibState::setMainFrameBuffer();
+    grlib::CGLibPolygon::setCullingFront();
+    grlib::CGLibColorCtl::setBlendControl(static_cast<GrlBlendFunc>(5), static_cast<GrlBlendFunc>(6),
+                                          static_cast<GrlBlendCombine>(1), static_cast<GrlLogicType>(3));
+    DrShdDataObj* obj = m_drMan->m_shdMan->m_dataList->getPostShdObj(0x3D);
+    obj->setupShader(0u);
+    grlib::CGLibCtlVertex::setVertex(m_vertex);
+    unsigned int location = obj->getCurrentShader().getTextureLocation("s0");
+    DrAPCache* cache = m_drMan->m_apCache;
+    cache->beginTexSampling(2, 1);
+    cache->setTexture(*m_target.m_pTexture, location);
+    unsigned int ofs = obj->getCurrentShader().getUniformBlockOfs("U_POST");
+    m_uniform.setUniformBlock(ofs);
+    m_index.drawIndex();
+    grlib::CGLibColorCtl::setBlendOffControl(static_cast<GrlLogicType>(3));
 }
 
 DrPixlPostObjMotionBlur2::DrPixlPostObjMotionBlur2(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
@@ -672,6 +800,63 @@ void DrPixlPostObjUnbranchToDepth::render() {
     if (m_drMan->m_unbranchQuater) {
         renderQuater();
     }
+}
+
+void DrPixlPostObjUnbranchToDepth::renderFull() {
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getPostShdObj(0x3E);
+    obj->setupShader(0u);
+    m_drMan->m_pixlMan->m_objTbl->m_lightDepth->setRenderTarget();
+    DrAPCache* cache = m_drMan->m_apCache;
+    grlib::CGLibRenderTarget* etc = m_drMan->m_pixlMan->getPixlObj(1);
+    grlib::CGLibRenderTarget* col = m_drMan->m_pixlMan->getPixlObj(0);
+    unsigned int etcLocation = obj->getCurrentShader().getTextureLocation("gTEtc");
+    unsigned int stencilLocation = obj->getCurrentShader().getTextureLocation("gTStencil");
+    unsigned int colLocation = obj->getCurrentShader().getTextureLocation("gTCol");
+    cache->setTexture(*etc->m_pTexture, etcLocation);
+    cache->setTexture(*col->m_pTexture, colLocation);
+    cache->setTexture(*m_drMan->m_pixlMan->getDepthObj()->m_pTexture, stencilLocation);
+    DrAPGxType::setupDepthContl(1, 1, 7);
+    list->bindTriangle();
+    grlib::CGLibColorCtl::setColorBufferOff();
+    list->renderTriangle();
+    grlib::CGLibColorCtl::setColorBufferOn();
+}
+
+void DrPixlPostObjUnbranchToDepth::renderQuater() {
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getPostShdObj(0x45);
+    obj->setupShader(0u);
+    m_drMan->m_pixlMan->m_objTbl->m_quaterDepth->setRenderTarget();
+    DrAPCache* cache = m_drMan->m_apCache;
+    grlib::CGLibRenderTarget* etc = m_drMan->m_pixlMan->getPixlObj(1);
+    grlib::CGLibRenderTarget* col = m_drMan->m_pixlMan->getPixlObj(0);
+    unsigned int etcLocation = obj->getCurrentShader().getTextureLocation("gTEtc");
+    unsigned int stencilLocation = obj->getCurrentShader().getTextureLocation("gTStencil");
+    unsigned int colLocation = obj->getCurrentShader().getTextureLocation("gTCol");
+    unsigned int downDepthLocation = obj->getCurrentShader().getTextureLocation("gTDownDepth");
+    cache->beginTexSampling(2, 0);
+    cache->setTexture(*etc->m_pTexture, etcLocation);
+    cache->setTexture(*col->m_pTexture, colLocation);
+    cache->setTexture(*m_drMan->m_pixlMan->getDepthObj()->m_pTexture, stencilLocation);
+    cache->setTexture(*m_drMan->m_pixlMan->m_objTbl->m_postMan->getDownDepth()->m_pTexture, downDepthLocation);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    unsigned int sclOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gScal");
+    unsigned int paramOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gParam");
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    mm::Vec4 v(1.0f, 1.0f, 0.0f, 0.0f);
+    uniform.setVec4SetVec4(sclOfs, v);
+    v.x = parm->m_unbranchQuaterParam;
+    v.y = v.z = v.w = 0.0f;
+    uniform.setVec4SetVec4(paramOfs, v);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    DrAPGxType::setupDepthContl(1, 1, 7);
+    list->bindTriangleTex();
+    grlib::CGLibColorCtl::setColorBufferOff();
+    list->renderTriangle();
+    grlib::CGLibColorCtl::setColorBufferOn();
 }
 
 DrPixlShadowRaytrace::DrPixlShadowRaytrace(DrMan* drMan) : m_drMan(drMan), m_blurOn(true) {

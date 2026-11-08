@@ -253,7 +253,10 @@ public:
     // 0xFE4, DrShdLgtGlobalIBL::resetColorBuff resets the view's IBL colour buffer only when it is 3 (the name is not
     // the original's)
     int m_iblColorMode;
-    unsigned char pad_FE8[0x3C];
+    unsigned char pad_FE8[0x34];
+    // 0x101C, DrPixlPostObjUnbranchToDepth::renderQuater passes it as gParam.x (the name is not the original's)
+    float m_unbranchQuaterParam;
+    unsigned char pad_1020[0x4];
     bool m_shwRaytraceTemporal;  // 0x1024, isShwRaytraceTemporalWithOthers (with DrMan::isIBLHalfRes)
     // 0x1025..0x1028: the debug views DrPixlMan::lastRender draws (names inferred): the shadow map
     // (DrPixlShadowMan::shadowRender), the deferred buffers, the shadow caches (only without the shadow map view)
