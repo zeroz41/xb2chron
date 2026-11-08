@@ -33,6 +33,7 @@
 #include "classes/gf/DataObjGmk.h"
 #include "classes/gf/DataObjBelonging.h"
 #include "classes/gf/GfObjSetupGimmick.h"
+#include "classes/gf/GfObjSetupBelonging.h"
 #include "classes/gf/GfBdatRsc.h"
 #include "classes/gf/GfBdatMaplist.h"
 #include "gf/GfDataNpc.h"
@@ -66,6 +67,12 @@ inline void DataObjDriver::setup(unsigned int id) {
             m_dlc = GfDataDriver::getSDataIra(m_bdatId);
         }
     }
+}
+
+DataObjDriver::DataObjDriver(unsigned int id)
+    : m_sdata(nullptr), m_dlc(nullptr), m_handle(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), m_virtual(nullptr),
+      m_virtualDlc(nullptr), m_virtualWeapons(), pad_44(), m_menuParam(false) {
+    setup(id);
 }
 
 DataObjDriver::DataObjDriver(GF_OBJ_HANDLE* handle)
@@ -1489,6 +1496,31 @@ unsigned int DataObjPcWpn::getWeaponType(bool, int) const {
     return GfBdatItem::sys()->getPcWpnWpnType(getBdatId());
 }
 
+int DataObjPcWpn::getBladeSet(bool virtualParam) const {
+    if (m_handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return -1;
+    }
+    unsigned int party = GfObjUtil::getObjSetup(m_handle)->m_partyId;
+    if (party == static_cast<unsigned int>(-1)) {
+        return -1;
+    }
+    unsigned int driver = GfDataParty::getDriver(party, static_cast<PTPOS>(0));
+    if (driver == 0) {
+        return -1;
+    }
+    int num = GfDataDriver::getMaxSetBladeNum(driver);
+    for (int slot = 0; slot < num; slot++) {
+        unsigned int blade = GfDataDriver::getBlade(driver, slot);
+        if (blade != 0) {
+            DataObjBlade data(blade);
+            if (data.getEquipWeapon(virtualParam, -1) == getBdatId()) {
+                return slot;
+            }
+        }
+    }
+    return -1;
+}
+
 unsigned int DataObjPcWpn::getWeaponDamage(bool) const {
     return GfBdatItem::sys()->getPcWpnDamage(getBdatId());
 }
@@ -1525,6 +1557,12 @@ const char* DataObjEnemy::getEffectResourceName() const {
 
 unsigned int DataObjEnemy::getBdatId() const {
     return m_sdata->m_id;
+}
+
+unsigned int DataObjEnemy::getLevel(bool) const {
+    unsigned int level = m_sdata->m_level;
+    mm::clampSelf(level, 1u, 999u);
+    return level;
 }
 
 unsigned int DataObjEnemy::getHpMax(bool) const {
@@ -1731,6 +1769,25 @@ unsigned int DataObjEnemy::getWeaponType(bool, int) const {
         return 0;
     }
     return GfDataBlade::getBladeWpnType(blade);
+}
+
+unsigned int DataObjEnemy::getAttribute(bool, int) const {
+    unsigned int blade = GfDataEnemy::getEquipBlade(getBdatIdEnArrange());
+    if (blade != 0) {
+        unsigned int arrange = GfDataEnemy::getEquipBladeEnArrangeID(getBdatIdEnArrange());
+        if (arrange != 0) {
+            GfBdatChrEnArrange* bdat = GfBdatChrEnArrange::sys();
+            if (bdat->getChrEnArrangeBladeAtr(arrange) != 0) {
+                return bdat->getChrEnArrangeBladeAtr(arrange);
+            }
+        }
+        return GfDataBlade::getAttribute(blade);
+    }
+    GfBdatChrEnArrange* bdat = GfBdatChrEnArrange::sys();
+    if (bdat->getChrEnArrangeBladeAtr(getBdatIdEnArrange()) != 0) {
+        return bdat->getChrEnArrangeBladeAtr(getBdatIdEnArrange());
+    }
+    return m_sdata->m_attribute;
 }
 
 bool DataObjEnemy::isEnbaleTarget() const {
@@ -1996,6 +2053,16 @@ unsigned int DataObjEnemyBlade::getGender() const {
     return m_sdataBlade->m_gender;
 }
 
+unsigned int DataObjEnemyBlade::getAttribute(bool, int) const {
+    if (m_setup->getEnArrangeID() != 0) {
+        GfBdatChrEnArrange* bdat = GfBdatChrEnArrange::sys();
+        if (bdat->getChrEnArrangeBladeAtr(m_setup->getEnArrangeID()) != 0) {
+            return bdat->getChrEnArrangeBladeAtr(m_setup->getEnArrangeID());
+        }
+    }
+    return m_sdataBlade->m_attribute;
+}
+
 bool DataObjEnemyBlade::isDispInitExtraParts(unsigned int part) const {
     if (m_setup != nullptr && m_setup->m_sdata->m_extraPartsMask != 0) {
         return (m_setup->m_sdata->m_extraPartsMask & (1 << part)) != 0;
@@ -2239,6 +2306,17 @@ bool DataObjGmk::isDispInitExtraParts(unsigned int) const {
         return false;
     }
     return GfBdatRsc::sys()->getRSC_MapObjListExtraParts1(getBdatId()) != 0;
+}
+
+DataObjBelonging::DataObjBelonging(GF_OBJ_HANDLE* handle) : m_handle(handle) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info != nullptr) {
+        if (GfObjSetup* setup = info->m_setup) {
+            if (setup->m_type == info->m_obj->m_type && info->m_obj->m_type == 13) {
+                mm::mtl::rttiCast<GfObjSetupBelonging>(setup);
+            }
+        }
+    }
 }
 
 bool DataObjBelonging::isValid() const {

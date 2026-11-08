@@ -56,7 +56,9 @@ public:
     unsigned short m_eArmor;
     unsigned char m_resistancePower;
     unsigned char m_resistanceEther;
-    unsigned char pad_62[0x1];
+    // its attribute when the arrangement has no BladeAtr and no blade (DataObjEnemy::getAttribute; the name is not
+    // the original's)
+    unsigned char m_attribute;
     unsigned char m_criticalRate;
     unsigned char m_guardRate;
     unsigned char pad_65[0x1];
