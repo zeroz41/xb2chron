@@ -3,8 +3,14 @@
 
 #include "grlib/CGLibDecShader.h"
 
+namespace grlib { class CGLibTextureBuffer; }
+
 namespace ml {
 class DrShdFetchObj;
+class DrShdMdoDecShdObj;
+class DrResMdoSampler;
+struct MdsMatTechnique;
+struct MdsMatTextureInfo;
 class DrShdFetchMan;
 struct MdsMatVertexInfo;
 
@@ -26,12 +32,30 @@ public:
 // original's.
 class DrShdMdoDecExtTbl : public grlib::CGLibDecShdExtTbl {
 public:
+    void setupShderInfo(DrShdMdoDecRes* res, const MdsMatTechnique* tech, const unsigned char* tblData);
     unsigned int getValGlobalParam(int idx);
     void bindShader();
+    void setTextureList(const MdsMatTextureInfo* info, grlib::CGLibTextureBuffer** textures, DrResMdoSampler* sampler);
 
     DrShdMdoDecRes* m_pRes;  // 0x18
-    unsigned char pad_20[0x8];
+    unsigned int* m_pTexLocation;  // 0x20, a location per texture setTextureList binds
     unsigned int* m_pValGlobalParam;  // 0x28
+    // 0x30: the parameter indices of global parameter types 10, 11, 12, 27, 28 and 29
+    unsigned char m_paramIdx[6];
+    unsigned char m_texNum;  // 0x36
+    unsigned char pad_37[0x1];
+};
+
+// A material's extension tables: one DrShdMdoDecExtTbl per shader of the shader object, followed by their value
+// area (getDecWorkSize bytes of work). The field names are not the original's.
+class DrShdMdoExtTblObj {
+public:
+    static int getDecWorkSize(int valNum, const unsigned char* pac);
+    int setDecObj(DrShdMdoDecShdObj* shdObj, unsigned char* work, const unsigned char* tblData, int valNum,
+                  const MdsMatTechnique* tech, const unsigned char* pac);
+
+    DrShdMdoDecShdObj* m_pShdObj;  // 0x0
+    DrShdMdoDecExtTbl* m_pExtTbl;  // 0x8
 };
 }  // namespace ml
 

@@ -15,6 +15,9 @@
 #include "ml/MdsMatTechnique.h"
 #include "ml/MdsMpfMatTopHeader.h"
 #include "ml/MdsMatVertexInfo.h"
+#include "ml/DrResMdoVertex.h"
+#include "grlib/CGLibUniformArray.h"
+#include "grlib/CGLibVtlMemPool.h"
 #include "classes/ml/DrCalcStmListObj.h"
 #include "classes/ml/DrAPCache.h"
 #include "classes/ml/DrCalcClipWorkCone.h"
@@ -527,6 +530,20 @@ void DrShdMdoDecRes::releaseObj() {
     }
 }
 
+int DrShdMdoExtTblObj::getDecWorkSize(int valNum, const unsigned char* pac) {
+    const grlib::CGLibShdPacHeader* header = reinterpret_cast<const grlib::CGLibShdPacHeader*>(pac);
+    int extSize = header->m_num * sizeof(DrShdMdoDecExtTbl);
+    int valSize = valNum * sizeof(unsigned int);
+    const grlib::CGLibShdPacEntry* entry = reinterpret_cast<const grlib::CGLibShdPacEntry*>(pac + header->m_entryOfs);
+    const unsigned char* shd = pac + header->m_shdOfs;
+    unsigned int tblSize = 0;
+    for (int i = 0; i < header->m_num; i++) {
+        tblSize += grlib::CGLibDecShader::calcTblSize(shd + entry[i].m_ofs);
+    }
+    int pad = (tblSize & 3) != 0 ? 4 - (tblSize & 3) : 0;
+    return extSize + valSize + tblSize + pad;
+}
+
 unsigned int DrShdMdoDecExtTbl::getValGlobalParam(int idx) { return m_pValGlobalParam[idx]; }
 
 void DrShdMdoDecExtTbl::bindShader() { DrAPCache::s_pIns->setupShader(this, &m_pRes->m_pFetchObj->m_fetch); }
@@ -578,6 +595,54 @@ void DrShdUniformBlockMan::createUniformRimBloomCalcObj(grlib::CGLibDblUniformAr
     array->m_ofs = 0;
     for (unsigned int i = 0; i < 1; i++) {
         array->m_ofs += array->m_pArray[i].setupArray(size, array->m_mem, array->m_ofs);
+    }
+}
+
+void DrShdUniformBlockMan::createMotionBlendObj(grlib::CGLibOneUniformArray* array, const unsigned char* data,
+                                                DrResMdoVertex* vtx) {
+    const BlockHeader* header =
+        reinterpret_cast<const BlockHeader*>(data + reinterpret_cast<const DataHead*>(data)->m_blockHeaderOfs);
+    grlib::CGLibVtlMemPool* pool = vtx->m_memPool;
+    const unsigned char* poolData = pool->m_pMem;
+    const BlockInfo* info = reinterpret_cast<const BlockInfo*>(data + header->m_infoOfs);
+    array->setupArray(header->m_num);
+    array->m_ofs = 0;
+    for (int i = 0; i < header->m_num; i++, info++) {
+        if (info->m_flags & 1) {
+            int size = info->m_num * info->m_size;
+            array->m_ofs += size + (-size & 0xFF);
+        }
+    }
+    array->allocMem(array->m_ofs);
+    array->m_ofs = 0;
+    info = reinterpret_cast<const BlockInfo*>(data + header->m_infoOfs);
+    for (int i = 0; i < header->m_num; i++, info++) {
+        int size = info->m_num * info->m_size;
+        if (info->m_flags & 1) {
+            array->m_ofs += array->m_pArray[static_cast<unsigned int>(i)].setupArray(size, array->m_mem, array->m_ofs);
+            memcpy(array->m_pArray[static_cast<unsigned int>(i)].m_pBuff, poolData + info->m_dataOfs,
+                   info->m_num * static_cast<long>(info->m_size));
+        } else {
+            unsigned int ofs = info->m_dataOfs;
+            array->m_pArray[static_cast<unsigned int>(i)].setupArray(pool, size, ofs);
+        }
+    }
+    for (unsigned int i = 0; i < array->m_num; i++) {
+        array->m_pArray[i].updateData();
+    }
+}
+
+void DrShdUniformBlockMan::changeMotionBlendObj(grlib::CGLibOneUniformArray* array, const unsigned char* data,
+                                                DrResMdoVertex* vtx) {
+    const BlockHeader* header =
+        reinterpret_cast<const BlockHeader*>(data + reinterpret_cast<const DataHead*>(data)->m_blockHeaderOfs);
+    grlib::CGLibVtlMemPool* pool = vtx->m_memPool;
+    const BlockInfo* info = reinterpret_cast<const BlockInfo*>(data + header->m_infoOfs);
+    for (int i = 0; i < header->m_num; i++, info++) {
+        if (!(info->m_flags & 1)) {
+            int size = info->m_num * info->m_size;
+            array->m_pArray[static_cast<unsigned int>(i)].setupArray(pool, size, info->m_dataOfs);
+        }
     }
 }
 
