@@ -23,6 +23,9 @@ public:
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7
+    // 2.0.0's symbols name them (update calls createEffect, which tail-calls applyEffectParam)
+    void createEffect();
+    void applyEffectParam() const;
     // its kind (getGmkType's; GfGameInsideBattleLock walks the battle locks by it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(11);
 

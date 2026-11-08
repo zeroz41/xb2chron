@@ -17,6 +17,9 @@ public:
         // out of line: initGmkBdatInfo calls it with the table itself (symbol 0x7100592E90)
         void create(unsigned char* fp, int row, const AGmkBase& gmk);
         bool isPopCondMatchedExceptDist() const;
+        // 2.0.0's symbols name them (update calls them with the gimmick's position)
+        bool isPopCondMatched(const mm::Vec3& pos) const;
+        bool isDepopCondMatched(const mm::Vec3& pos) const;
         unsigned short m_condition;  // the row's "Condition" (a GfGameCond id; 0: none)
         // the fields its create stores (names from the columns/flags it reads, not the original's)
         bool m_dig;                  // 0x2: "flag" bit "Digflg"
@@ -38,6 +41,9 @@ public:
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9
     void setTargetable(bool targetable) const;
+    // 2.0.0's symbols name them (GfFieldTbox::seqCheckFs calls successToAccess; update calls createGobInst)
+    void successToAccess();
+    void createGobInst();
     int getProgress() const;
     // AGmkBase's row as this kind's BdatInfo; the name is not the original's
     const BdatInfo* getBdatInfo() const {
@@ -49,8 +55,9 @@ public:
     gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE *>(-1);
     unsigned char pad_50 = 1;
     unsigned char pad_51[0x3];
-    unsigned int pad_54 = 0;
-    unsigned int pad_58 = 0;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
+    // update counts pad_58 up by dt to pad_54 once the box is opened, then has the object destroyed
+    float pad_54 = 0.0f;
+    float pad_58 = 0.0f;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 

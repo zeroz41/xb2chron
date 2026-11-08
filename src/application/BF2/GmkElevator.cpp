@@ -3503,6 +3503,63 @@ void GmkRoutedMapObj::dispose() {
     GmkRoute::dispose();
 }
 
+void GmkRoutedMapObj::update(float dt) {
+    AGmkBase::update(dt);
+    if (!isValid() || !isInterestPosExist()) {
+        return;
+    }
+    if (canPopGobInst()) {
+        createGobInst();
+    } else if (canDepopGobInst() && m_gobInst != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gobInst);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gobInst);
+        m_gobInst = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+}
+
+void GmkRoutedMapObj::createGobInst() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_gobInst != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gobInst);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gobInst);
+        m_gobInst = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    CBdatWrapper bdat(m_list->getBindedBdatFp());
+    m_gobInst = gf::GfObjFactory::createGmkMapObj(bdat, m_createInfo.m_bdatId);
+    {
+        gf::GfObjAcc acc(m_gobInst);
+        acc.setUserData(gf::GfObjUserData(0), reinterpret_cast<unsigned long>(this));
+    }
+    gf::GF_OBJ_HANDLE* handle = m_gobInst;
+    if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        bool disp;
+        if (pad_58) {
+            // the original calls getGmkType here and drops its answer
+            getGmkType();
+            disp = true;
+        } else {
+            disp = false;
+        }
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setDisp(gf::OBJDISP(8), disp);
+        }
+    }
+    gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(m_gobInst)->m_setup);
+    const mm::Vec3* xform = m_pos;
+    setup->m_initialPos = xform[0];
+    setup->pad_30 = xform[1];
+}
+
 void GmkRoutedMapObj::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
     AGmkBase::onGobEvent(evt, handle);
     if (evt == gf::IGfObjListener::OBJEVT(3)) {
@@ -5185,6 +5242,40 @@ void GmkMapObj::update(float dt) {
     }
 }
 
+void GmkMapObj::createGobInst() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    disposeGobInst(false);
+    CBdatWrapper bdat(m_list->getBindedBdatFp());
+    m_gobInst = gf::GfObjFactory::createGmkMapObj(bdat, m_createInfo.m_bdatId);
+    {
+        gf::GfObjAcc acc(m_gobInst);
+        acc.setUserData(gf::GfObjUserData(0), reinterpret_cast<unsigned long>(this));
+    }
+    gf::GF_OBJ_HANDLE* handle = m_gobInst;
+    if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        bool disp;
+        if (pad_50) {
+            // the original calls getGmkType here and drops its answer
+            getGmkType();
+            disp = true;
+        } else {
+            disp = false;
+        }
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setDisp(gf::OBJDISP(8), disp);
+        }
+    }
+    gf::GfObjSetupGimmick* setup = getSetupOf<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(m_gobInst), 8);
+    const mm::Vec3* xform = m_pos;
+    setup->m_initialPos = xform[0];
+    setup->pad_30 = xform[1];
+    setup->setInitialScale(m_pos[2].x);
+}
+
 GmkMapObj::~GmkMapObj() { dispose(); }
 
 GmkCollision::~GmkCollision() { dispose(); }
@@ -5199,6 +5290,34 @@ void GmkBattleLock::dispose() {
 }
 
 GmkBattleLock::~GmkBattleLock() { dispose(); }
+
+void GmkBattleLock::createEffect() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_effectHandle != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effectHandle);
+        m_effectHandle = 0;
+    }
+    const unsigned char* data = m_createInfo.m_data;
+    switch (m_info->m_shape) {
+    case 3:
+        m_effectHandle = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->create(
+            data[0] ? "cmn_204_001" : "cmn_204_011", nullptr, true);
+        break;
+    case 4:
+        m_effectHandle = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->create(
+            data[0] ? "cmn_204_000" : "cmn_204_010", nullptr, true);
+        break;
+    default:
+        return;
+    }
+    if (m_effectHandle != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setCategory(m_effectHandle, fw::EF_CATEGORY(1));
+        applyEffectParam();
+    }
+}
 
 void GmkFieldLock::dispose() {
     m_collision.dispose();
@@ -5952,6 +6071,67 @@ bool GmkTbox::BdatInfo::isPopCondMatchedExceptDist() const {
         return false;
     }
     return true;
+}
+
+bool GmkTbox::BdatInfo::isPopCondMatched(const mm::Vec3& pos) const {
+    if (!isPopCondMatchedExceptDist() || !DistCond::isMatch(m_visibleRadiusSq, pos)) {
+        return false;
+    }
+    return true;
+}
+
+bool GmkTbox::BdatInfo::isDepopCondMatched(const mm::Vec3& pos) const {
+    if (isPopCondMatchedExceptDist() && DistCond::isMatch(m_invisibleRadiusSq, pos)) {
+        return false;
+    }
+    return true;
+}
+
+void GmkTbox::successToAccess() {
+    unsigned int progress;
+    if (getBdatInfo()->m_dig && getProgress() == 0) {
+        progress = 2;
+    } else {
+        setTargetable(false);
+        progress = 1;
+    }
+    gf::GfGameFlag::setLocal(2, m_createInfo.m_bdatId + 31765, progress);
+    if (gf::GfGameManager::isGameTypeIra() && getBdatInfo()->m_noponBarrel) {
+        gf::GfGameFlag::setLocal(1, m_createInfo.m_bdatId + 54134, 1);
+    }
+}
+
+// gmk::disposeGobInst unless there is no object (the name is not the original's)
+static inline void disposeGobInstIfAny(gf::GF_OBJ_HANDLE* gob, float time) {
+    if (gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gmk::disposeGobInst(gob, time);
+    }
+}
+
+void GmkTbox::update(float dt) {
+    AGmkBase::update(dt);
+    if (!isValid()) {
+        return;
+    }
+    if (!(getBdatInfo()->m_visibleRadiusSq > 0.0f) || !(getBdatInfo()->m_invisibleRadiusSq > 0.0f)) {
+        return;
+    }
+    if (isInterestPosExist()) {
+        if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) && !(getBdatInfo()->m_category && getProgress() == 1) &&
+            getBdatInfo()->isPopCondMatched(*m_pos)) {
+            createGobInst();
+        } else if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) && getBdatInfo()->isDepopCondMatched(*m_pos)) {
+            disposeGobInstIfAny(m_gob, 1.0f);
+        }
+    }
+    if (getBdatInfo()->m_category && getProgress() == 1 && m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        if (pad_58 < pad_54) {
+            pad_58 += dt;
+            if (pad_54 <= pad_58) {
+                disposeGobInstIfAny(m_gob, 1.0f);
+            }
+        }
+    }
 }
 
 void GmkAreaWeather::create(const CreateInfo& info) {

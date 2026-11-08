@@ -28,6 +28,8 @@ public:
     // whether update may pop / depop its game object: its row's tests at the route's point nearest the player
     bool canPopGobInst() const;
     bool canDepopGobInst() const;
+    // 2.0.0's symbol names it (update tail-calls it)
+    void createGobInst();
     gf::GF_OBJ_HANDLE* m_gobInst = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     unsigned char pad_58 = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
