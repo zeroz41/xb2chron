@@ -170,6 +170,7 @@
 #include "classes/gf/GfFieldGimmick.h"
 #include "classes/gf/MenuCommonWindowParam.h"
 #include "gf/GfPlayFactory.h"
+#include "classes/fw/CameraManager.h"
 #include "classes/gf/SCOM_DESTROY_GAME_OBJ.h"
 #include "classes/gf/SCOM_QUEST_GIMMICK.h"
 #include "classes/gf/SCOM_QUEST_REACH.h"
@@ -1650,6 +1651,32 @@ float AGmkBase::getYSnapRayLength() const {
     }
 }
 
+// snaps a point of from (its y raised by half the ray length, from the gimmick's own y when useOwnY) onto the
+// ground with the pop finders' line test
+static inline bool getYSnapPosForPop(mm::Vec3& pos, const mm::Vec3& from, float length);
+
+bool AGmkBase::getPositionAppliedYSnap(mm::Vec3& out, const mm::Vec3& from, bool useOwnY) const {
+    float half = getYSnapRayLength() * 0.5f;
+    mm::Vec3 start;
+    start.x = from.x;
+    start.y = half + (useOwnY ? m_pos : &from)->y;
+    start.z = from.z;
+    return getYSnapPosForPop(out, start, half + half);
+}
+
+// names the gimmick: its set's row, its kind and its index in its list
+void GmkAcc::CreateInfo::validate(const AGmkBase& gmk) {
+    IGmkList* list = gmk.m_list;
+    m_bdatId = static_cast<const GmkSet*>(list->getCreateInfo().m_param)->m_createInfo.m_bdatId;
+    m_type = gmk.getGmkType();
+    unsigned int num = list->getInstNum();
+    for (unsigned int i = 0; i < num; i++) {
+        if (list->getInst(i) == &gmk) {
+            pad_8 = i;
+        }
+    }
+}
+
 GmkAcc::GmkAcc() : m_gmk(nullptr) {}
 
 GmkAcc::GmkAcc(const CreateInfo& info) : m_gmk(nullptr) { create(info); }
@@ -1708,6 +1735,44 @@ bool GmkAcc::isValid() const {
     return false;
 }
 
+// finds the gimmick again: by its set's row, kind and index, else by its kind and BDAT row
+void GmkAcc::update() {
+    if (GmkAccManager::sys() == nullptr || isValid()) {
+        return;
+    }
+    if (m_info.isValid()) {
+        AGmkBase* gmk = nullptr;
+        GmkType type = m_info.m_type;
+        GmkManager* manager = GmkManager::sys();
+        unsigned int idx = m_info.pad_8;
+        GmkSet* set = manager->findGmkSet(m_info.m_bdatId);
+        if (set != nullptr) {
+            IGmkList* list = set->getGmkList(type);
+            if (list != nullptr && list->getInstNum() > idx) {
+                gmk = list->getInst(idx);
+            }
+        }
+        m_gmk = gmk;
+    } else if (m_infoByBdatId.isValid()) {
+        m_gmk = GmkManager::sys()->findFirstGmkInstByBdatId(m_infoByBdatId.m_type, m_infoByBdatId.m_bdatId);
+    }
+}
+
+// unlinks a named access from the list it is in (m_list1 while it reaches a valid gimmick)
+void GmkAccManager::removeGmkAcc(GmkAcc* acc) {
+    if (acc == nullptr) {
+        return;
+    }
+    if (!acc->m_info.isValid() && !acc->m_infoByBdatId.isValid()) {
+        return;
+    }
+    if (acc->isValid()) {
+        m_list1.remove(acc);
+    } else {
+        m_list0.remove(acc);
+    }
+}
+
 // the accesses it still holds lose their gimmick
 GmkAccManager::~GmkAccManager() {
     for (::mm::mtl::IntrusiveList<GmkAcc>::iterator it = m_list1.begin(); it != m_list1.end(); ++it) {
@@ -1718,11 +1783,69 @@ GmkAccManager::~GmkAccManager() {
     }
 }
 
+// the accesses that reach a valid gimmick again move to m_list1
+void GmkAccManager::update() {
+    for (::mm::mtl::IntrusiveList<GmkAcc>::iterator it = m_list0.begin(); it != m_list0.end(); ++it) {
+        it->update();
+        if (it->isValid()) {
+            GmkAcc* acc = it.operator->();
+            it = m_list0.erase(it);
+            --it;
+            m_list1.push_back(*acc);
+        }
+    }
+}
+
+// the accesses reaching a gimmick of that list lose it; the valid ones move to m_list0
+void GmkAccManager::invalidateAccs(const IGmkList& list) {
+    if (sys() == nullptr) {
+        return;
+    }
+    for (::mm::mtl::IntrusiveList<GmkAcc>::iterator it = sys()->m_list0.begin(); it != sys()->m_list0.end(); ++it) {
+        if (it->m_gmk != nullptr && it->m_gmk->m_list == &list) {
+            it->m_gmk = nullptr;
+        }
+    }
+    list.getGmkType();
+    for (::mm::mtl::IntrusiveList<GmkAcc>::iterator it = sys()->m_list1.begin(); it != sys()->m_list1.end(); ++it) {
+        if (it->m_gmk->m_list == &list) {
+            it->m_gmk = nullptr;
+            GmkAcc* acc = it.operator->();
+            it = sys()->m_list1.erase(it);
+            --it;
+            sys()->m_list0.push_back(*acc);
+        }
+    }
+}
+
 void disposeGobInst(gf::GF_OBJ_HANDLE* handle, float time) {
     gf::GfObjAcc acc(handle);
     if (acc.getObj() != nullptr && !acc.isDestroy() && !acc.testFlag(17)) {
         gf::SCOM_DESTROY_GAME_OBJ::create(handle, time, 0);
     }
+}
+
+bool GmkCamera::CreateInfo::validateTransform(gf::GF_OBJ_HANDLE* handle) {
+    gf::GfObjAcc acc(handle);
+    if (!acc.isValidTransform()) {
+        return false;
+    }
+    const fw::Transform& transform = acc.getWorldTransformNoSync();
+    const mm::Quat& q = transform.rotation;
+    float x2 = q.x + q.x;
+    float y2 = q.y + q.y;
+    float z2 = q.z + q.z;
+    float xx = q.x * x2;
+    float xz = q.x * z2;
+    float yy = q.y * y2;
+    float wy = q.w * y2;
+    float m20 = xz + wy;
+    float m22 = 1.0f - (xx + yy);
+    float rotY = atan2f(m20, m22);
+    m_hasTransform = true;
+    m_pos = transform.position;
+    m_rotY = rotY;
+    return true;
 }
 
 bool GmkCamera::CreateInfo::validateTransform(unsigned short lodId) {
@@ -1766,6 +1889,29 @@ bool GmkCamera::isEnd() const {
     return static_cast<gf::GimmickCamera*>(m_camera.get())->isPlayEnd();
 }
 
+// once the camera is loaded: an auto camera is pushed (after GfPlayFactory::createGmkCamera when pad_106 is set);
+// then waits for its end
+void GmkCamera::seqWaitToLoaded(float) {
+    if (!isLoaded()) {
+        return;
+    }
+    if (m_info.pad_105) {
+        if (m_info.pad_106 && !gf::GfPlayFactory::createGmkCamera(m_camera)) {
+            return;
+        }
+        fw::CameraManager::sys()->m_layers[0].push(m_camera, 0.0f);
+        switch (m_info.m_attr) {
+        case 1:
+            setDispOfParty(false, false);
+            break;
+        case 2:
+            setDispOfParty(false, true);
+            break;
+        }
+    }
+    m_seq = &GmkCamera::seqWaitToEnd;
+}
+
 void GmkCamera::update(float dt) {
     if (m_info.m_name.length() > 0 && m_seq) {
         (this->*m_seq)(dt);
@@ -1773,6 +1919,45 @@ void GmkCamera::update(float dt) {
 }
 
 void GmkCamera::play() { m_seq = &GmkCamera::seqWaitToPlay; }
+
+// pushes the camera (after GfPlayFactory::createGmkCamera when pad_106 is set) and plays it, then waits for its end
+void GmkCamera::seqWaitToPlay(float) {
+    if (m_info.pad_106 && !gf::GfPlayFactory::createGmkCamera(m_camera)) {
+        return;
+    }
+    fw::CameraManager::sys()->m_layers[0].push(m_camera, 0.0f);
+    static_cast<gf::GimmickCamera*>(m_camera.get())->play();
+    switch (m_info.m_attr) {
+    case 1:
+        setDispOfParty(false, false);
+        break;
+    case 2:
+        setDispOfParty(false, true);
+        break;
+    }
+    m_seq = &GmkCamera::seqWaitToEnd;
+}
+
+// once the camera has played: shows the party again (by m_attr), pops and releases the camera
+void GmkCamera::seqWaitToEnd(float) {
+    if (!static_cast<gf::GimmickCamera*>(m_camera.get())->isPlayEnd()) {
+        return;
+    }
+    switch (m_info.m_attr) {
+    case 1:
+        setDispOfParty(true, false);
+        break;
+    case 2:
+        setDispOfParty(true, true);
+        break;
+    }
+    m_seq = nullptr;
+    if (m_camera.get() != nullptr) {
+        fw::CameraManager::sys()->m_layers[0].pop(m_camera, 0.0f);
+        m_camera = nullptr;
+    }
+    gf::GfGameManager::setStopMainMenuOpenForGimmick(false);
+}
 
 // the entry's matrix: rotation then translation, scaled first unless noScale (AGmkBase::getMatrix calls it,
 // TGmkList::createGmk inlines it)

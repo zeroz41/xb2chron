@@ -47,6 +47,11 @@ public:
     void seqWaitToPlay(float dt);
     // the step create() starts the sequence at
     void seqWaitToLoaded(float dt);
+    // the step the others move on to: shows the party again, pops and releases the camera once it has played
+    void seqWaitToEnd(float dt);
+    // hides (disp false, when the camera starts) or shows the party; m_attr 2 passes true as the second argument,
+    // 1 false (meaning not known)
+    static void setDispOfParty(bool disp, bool);
     void create(const CreateInfo& info);
     unsigned char pad_8[0x8];
     // 0x10: the camera's CreateInfo (the constructor builds its defaults in place: FixStr, 0/1/0/false, Vec3::zero
