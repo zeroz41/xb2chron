@@ -10,7 +10,22 @@ namespace ml {
 // are not the original's.
 struct MdsMpfAutoHead {
     int m_num;  // 0x0: entries; calcWorkSize/setupAutoMpf size the per-entry tables by it
-    unsigned char pad_4[0x58];
+    unsigned int m_entryOfs;  // 0x4: DrMdoCtlMpfAuto::m_pEntry
+    // 0x8..0x28: the one buffer's tables setupAutoMpf builds when m_poliOfs is 0 (same order as
+    // DrResMdoSeamWrkMpf::PoliData)
+    unsigned int m_buffPoliOfs;  // 0x8
+    unsigned int m_buffTblOfs[4];  // 0xC..0x18
+    unsigned int m_buffTreeOfs;  // 0x1C: 0 when there is no tree
+    unsigned int m_buffPoliListOfs;  // 0x20
+    unsigned int m_buffCellOfs;  // 0x24
+    unsigned int m_buffGridOfs;  // 0x28
+    float m_buffMax[2];  // 0x2C: x, z
+    float m_buffMin[2];  // 0x34: x, z
+    int m_instType;  // 0x3C: the instance tables are used only while it is -13
+    unsigned int m_instOfs;  // 0x40: 0 when there are no instance trees
+    unsigned int m_posTreeOfs;  // 0x44
+    unsigned int m_idxTblOfs;  // 0x48
+    unsigned int m_tblOfs[4];  // 0x4C..0x58: DrMdoCtlMpfAuto::m_pPoliData, m_pTbl
     // 0x5C: 0 makes setupAutoMpf build a one-buffer table in the work (0x78 more bytes); seachMpfPoli returns at
     // once while 0
     unsigned int m_poliOfs;
@@ -18,7 +33,11 @@ struct MdsMpfAutoHead {
 
 // One placement polygon (0x24 bytes: the buffer's polygon table steps by it); calcColiChk reads it.
 struct MdsMpfAutoPoli {
-    unsigned char pad_0[0x24];
+    unsigned int m_vtx[3];  // 0x0: x, z pairs of the buffer's first table
+    unsigned int m_col[3];  // 0xC: 4-byte colours (r, g, b, a) of the buffer's fourth table, by vertex
+    unsigned int m_planeIdx;  // 0x18: 3 floats of the buffer's second table, the height over x, z
+    unsigned int m_normalIdx;  // 0x1C: 3 floats of the buffer's third table
+    unsigned int m_lodMask;  // 0x20: tested against DrMdoCtlMpfAuto::m_lodMask
 };
 
 // One grid node of a buffer's placement tree (0xC bytes: the buffer's tree table steps by it). Only the fields this
@@ -48,11 +67,16 @@ struct MdsMpfAutoPosTree {
 // manager's work memory: m_num 0x20-byte points follow it from 0x58. A free block sits in DrMdoMpfMan's free list, a
 // used one in its owner's chain, both through m_pNext/m_pPrev. Field names are not the original's.
 struct _MPFWorkAutoInf {
+    // One stored point (0x20 bytes) of the m_num after the head (the name is not the original's).
+    struct Point {
+        unsigned char pad_0[0x20];
+    };
+
     unsigned short m_num;  // 0x0: points stored after the head
     unsigned short m_flags;  // 0x2: getMemWork sets 2 and the owner's draw bits
-    unsigned int m_param4;  // 0x4: DrMdoCtlMpfAuto::m_workParam4
-    float m_height;  // 0x8
-    unsigned int m_paramC;  // 0xC: DrMdoCtlMpfAuto::m_workParamC
+    // 0x4: x, y (height), z; x and z are DrMdoCtlMpfAuto::m_workParam4/m_workParamC, CreateDisplayList clip tests
+    // the point
+    float m_pos[3];
     unsigned int m_param10;  // 0x10: DrMdoCtlMpfAuto::m_workParam10
     short m_param14[2];  // 0x14: DrMdoCtlMpfAuto::m_workShort
     short m_param18;  // 0x18: DrMdoCtlMpfAuto::m_workParam18
@@ -104,6 +128,7 @@ public:
     ~DrMdoCtlMpfAuto();
     static int calcWorkSize(const unsigned char* data);
     void setupAutoMpf(const unsigned char* data, const unsigned char* autoData, unsigned char* work);
+    void CreateDisplayList(DrCalcViewWork* view, DrMdoCtlMpfWork* work);
     void autoMpfCalc(bool, bool, DrCalcViewWork* view, DrMdoCtlMpfWork* work, DrMdoMpfMan* mpfMan);
     void changeMemAutoMpf(const unsigned char* data, const unsigned char* autoData);
     void setBuffTbl(_wkMpfAutoBuff** buffTbl, int buffNum);
@@ -121,16 +146,28 @@ public:
     bool gridChkColiRange(float maxX, float minX, float maxZ, float minZ);
     bool gridColiRangeChk(const MdsMpfAutoTree* tree);
 
+    // One entry of m_pEntry (0xC bytes; the name is not the original's).
+    struct Entry {
+        unsigned char pad_0[0x4];
+        unsigned char m_objIdx;  // 0x4: the DrMdoCtlMpfWork object CreateDisplayList lists the entry's work under
+        unsigned char pad_5[0x7];
+    };
+
     const MdsMpfAutoHead* m_pHeader;  // 0x0, setupAutoMpf's head argument
-    unsigned char pad_8[0x20];
+    const Entry* m_pEntry;  // 0x8: m_pHeader->m_num entries
+    const unsigned char* m_pTbl[3];  // 0x10..0x20: data + the head's offsets at 0x50..0x58
     const unsigned char* m_pPoliData;  // 0x28: setupAutoMpf sets it to data + the head's offset at 0x4C
-    unsigned char pad_30[0x28];
+    const unsigned int* m_pIdxTbl;  // 0x30: the instance trees' index table
+    const unsigned char* m_pColTbl;  // 0x38: the buffer's fourth table (4-byte colours)
+    unsigned char pad_40[0x10];
+    _wkMpfAutoBuff* m_pBuff;  // 0x50: the one buffer setupAutoMpf builds at the start of the work
     _wkMpfAutoBuff* m_pCurBuff;  // 0x58: the buffer gridInstColiCalc is testing
     _wkMpfAutoBuff** m_pBuffTbl;  // 0x60
     int m_buffNum;  // 0x68
     unsigned int m_autoFlags;  // 0x6C: DrResMdoSeamWrkMpf::seachMpfPoli clears bit 6
     unsigned int m_lodMask;  // 0x70: autoMpfCalc stores 1 << a data byte
-    unsigned char pad_74[0x8];
+    int m_param74;  // 0x74: setupAutoMpf clears it
+    unsigned char pad_78[0x4];
     int m_workIdx;  // 0x7C: the m_pWorkTbl chain getMemWork links new work into
     int m_workNum;  // 0x80: autoMpfCalc's loop bound
     int m_workNum2;  // 0x84: cleared with m_workNum by the constructor
@@ -156,7 +193,8 @@ public:
         Color m_col;  // 0x4
     };
     Color m_col;  // 0xDC: stored with each hit
-    unsigned char pad_E0[0x10];
+    float m_normal[3];  // 0xE0: calcColiChk sets it from the hit polygon's normal (x and z negated)
+    unsigned char pad_EC[0x4];
     Hit* m_pHit;  // 0xF0: m_hitNum entries
     int m_hitNum;  // 0xF8: gridInstColiCalc clears it, the tree tests count up
     unsigned char pad_FC[0xC];

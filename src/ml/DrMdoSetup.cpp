@@ -1657,6 +1657,77 @@ void DrMdoCtlMpf::resourceInit() {
     setupMpfResource();
 }
 
+void DrMdoCtlMpfAuto::setupAutoMpf(const unsigned char* data, const unsigned char* autoData, unsigned char* work) {
+    const MdsMpfAutoHead* head = reinterpret_cast<const MdsMpfAutoHead*>(autoData);
+    m_pHeader = head;
+    m_pEntry = reinterpret_cast<const Entry*>(data + head->m_entryOfs);
+    m_pPoliData = nullptr;
+    m_pBuff = reinterpret_cast<_wkMpfAutoBuff*>(work);
+    m_pCurBuff = reinterpret_cast<_wkMpfAutoBuff*>(work);
+    int size = 0;
+    if (head->m_poliOfs == 0) {
+        m_pBuffTbl = reinterpret_cast<_wkMpfAutoBuff**>(work + 0x70);
+        m_pBuffTbl[0] = reinterpret_cast<_wkMpfAutoBuff*>(work);
+        m_buffNum = 1;
+        m_pCurBuff->m_max[0] = m_pHeader->m_buffMax[0];
+        m_pCurBuff->m_min[0] = m_pHeader->m_buffMin[0];
+        m_pCurBuff->m_max[1] = m_pHeader->m_buffMax[1];
+        m_pCurBuff->m_min[1] = m_pHeader->m_buffMin[1];
+        m_pCurBuff->m_pPoli = reinterpret_cast<const MdsMpfAutoPoli*>(data + m_pHeader->m_buffPoliOfs);
+        m_pCurBuff->m_pTbl[0] = data + m_pHeader->m_buffTblOfs[0];
+        m_pCurBuff->m_pTbl[1] = data + m_pHeader->m_buffTblOfs[1];
+        m_pCurBuff->m_pTbl[2] = data + m_pHeader->m_buffTblOfs[2];
+        m_pCurBuff->m_pTbl[3] = data + m_pHeader->m_buffTblOfs[3];
+        m_pColTbl = m_pCurBuff->m_pTbl[3];
+        if (m_pHeader->m_buffTreeOfs != 0) {
+            m_pCurBuff->m_pTree = reinterpret_cast<const MdsMpfAutoTree*>(data + m_pHeader->m_buffTreeOfs);
+        } else {
+            m_pCurBuff->m_pTree = nullptr;
+        }
+        m_pCurBuff->m_pPoliList = reinterpret_cast<const unsigned int*>(data + m_pHeader->m_buffPoliListOfs);
+        m_pCurBuff->m_pCell = reinterpret_cast<const unsigned int*>(data + m_pHeader->m_buffCellOfs);
+        m_pCurBuff->m_pGrid = reinterpret_cast<const float(*)[2]>(data + m_pHeader->m_buffGridOfs);
+        if (m_pHeader->m_instOfs != 0 && m_pHeader->m_instType == -13) {
+            m_pCurBuff->m_pInstData = reinterpret_cast<const _wkMpfAutoBuff::Inst*>(data + m_pHeader->m_instOfs);
+            m_pCurBuff->m_pPosTree = reinterpret_cast<const MdsMpfAutoPosTree*>(data + m_pHeader->m_posTreeOfs);
+            m_pCurBuff->m_pIdxTbl = reinterpret_cast<const unsigned int*>(data + m_pHeader->m_idxTblOfs);
+            m_pIdxTbl = m_pCurBuff->m_pIdxTbl;
+            m_pTbl[0] = data + m_pHeader->m_tblOfs[1];
+            m_pTbl[1] = data + m_pHeader->m_tblOfs[2];
+            m_pTbl[2] = data + m_pHeader->m_tblOfs[3];
+            m_pPoliData = data + m_pHeader->m_tblOfs[0];
+        } else {
+            m_pCurBuff->m_pInstData = nullptr;
+        }
+        size = 0x78;
+    } else if (head->m_tblOfs[0] != 0 && head->m_instType == -13) {
+        m_pColTbl = data + head->m_buffTblOfs[3];
+        m_pIdxTbl = reinterpret_cast<const unsigned int*>(data + head->m_idxTblOfs);
+        m_pTbl[0] = data + head->m_tblOfs[1];
+        m_pTbl[1] = data + head->m_tblOfs[2];
+        m_pTbl[2] = data + head->m_tblOfs[3];
+        m_pPoliData = data + head->m_tblOfs[0];
+    }
+    m_param74 = 0;
+    m_pWorkTbl = reinterpret_cast<_MPFWorkAutoInf**>(work + size);
+    size += m_pHeader->m_num * sizeof(_MPFWorkAutoInf*);
+    m_pWorkLast = reinterpret_cast<_MPFWorkAutoInf**>(work + size);
+    size += m_pHeader->m_num * sizeof(_MPFWorkAutoInf*);
+    size += (0x10 - size % 0x10) % 0x10;
+    m_pPrePos = reinterpret_cast<mm::Vec3*>(work + size);
+    size += m_pHeader->m_num * sizeof(mm::Vec3);
+    size += (0x10 - size % 0x10) % 0x10;
+    for (int i = 0; i < m_pHeader->m_num; i++) {
+        mm::Vec3* pos = &m_pPrePos[i];
+        pos->x = -100000.0f;
+        pos->y = -100000.0f;
+        pos->z = -100000.0f;
+        m_pWorkTbl[i] = nullptr;
+        m_pWorkLast[i] = nullptr;
+    }
+    m_pHit = reinterpret_cast<Hit*>(work + size);
+}
+
 void DrMdoCtlMpf::update() {
     if (m_ctlFlags2 & 0x40000) {
         m_ctlFlags2 &= ~0x30000;
@@ -1990,6 +2061,58 @@ bool DrMdoCtlMpfAuto::gridChkColiRange(float maxX, float minX, float maxZ, float
 }
 
 DrMdoCtlMpfWork::DrMdoCtlMpfWork() {}
+
+void DrMdoCtlMpfAuto::CreateDisplayList(DrCalcViewWork* view, DrMdoCtlMpfWork* work) {
+    float fadeIn = DrMan::getIns()->m_mpfWindPower * (1.0f / 15.0f);
+    float fadeOut = DrMan::getIns()->m_mpfWindPower * (1.0f / 15.0f);
+    int num = m_pHeader->m_num;
+    for (int i = 0; i < num; i++) {
+        int obj = m_pEntry[i].m_objIdx;
+        for (_MPFWorkAutoInf* inf = m_pWorkTbl[i]; inf != nullptr; inf = inf->m_pNext) {
+            if (inf->m_num != 0 && !(inf->m_flags & 0x100)) {
+                unsigned int flags = inf->m_flags;
+                if (flags & 0x80) {
+                    if ((flags & 0xC) == 4) {
+                        if (view->m_gpuCheckAllVisible) {
+                            inf->m_scale = 0.0f;
+                        } else {
+                            inf->m_scale -= fadeOut;
+                        }
+                        if (inf->m_scale <= 0.0f) {
+                            inf->m_scale = 0.0f;
+                        }
+                    } else {
+                        if (view->m_gpuCheckAllVisible) {
+                            inf->m_scale = 1.0f;
+                        } else {
+                            inf->m_scale += fadeIn;
+                        }
+                        if (inf->m_scale >= 1.0f) {
+                            flags &= ~0x80;
+                            inf->m_scale = 1.0f;
+                            inf->m_flags = flags;
+                        }
+                    }
+                }
+                float radius = (flags & 0x40) ? 56.5685425f
+                             : (flags & 0x20) ? 28.2842712f
+                             : !(flags & 0x200) ? 7.07106781f : 14.1421356f;
+                if (view->m_clipPlane.clipTest(reinterpret_cast<const mm::Vec3&>(inf->m_pos), radius)) {
+                    work->m_pObjWork[obj].m_objChk += inf->m_num;
+                    const _MPFWorkAutoInf::Point* pt = reinterpret_cast<const _MPFWorkAutoInf::Point*>(inf + 1);
+                    int n = inf->m_num;
+                    for (int j = 0; j < n; j++, pt++) {
+                        unsigned int addr = static_cast<unsigned int>(reinterpret_cast<unsigned long>(pt));
+                        unsigned long idx = (addr >> 8) + (addr >> 16) + (addr >> 24);
+                        work->m_pObjWork[obj].m_pHashCount[idx & 0xF]++;
+                    }
+                    _wkMpfAlphaObjBuff* buff = work->m_pObjWork[obj].m_pLastAlphaBuff;
+                    (work->*buff->m_pAutoSet)(buff, inf, obj);
+                }
+            }
+        }
+    }
+}
 
 void DrMdoCtlMpfWork::changeMemWork(const MdsMpfObjData* objData) {
     m_pObjData = objData;

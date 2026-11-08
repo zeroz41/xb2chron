@@ -71,7 +71,10 @@ struct _wkMpfAlphaObjChunk {
 // One MPF object's list state, 0x40 bytes: the createAuto*/createPos*RenderList symbols name the type (their first
 // parameter; createAutoList/createPosList pass &m_pObjSelect[idx]). The field names are not the original's.
 struct _wkMpfObjSelect {
-    unsigned char pad_0[0x20];
+    unsigned char pad_0[0x10];
+    // 0x10: 16 counters DrMdoCtlMpfAuto::CreateDisplayList counts listed auto points into, by a hash of the point
+    unsigned short* m_pHashCount;
+    unsigned char pad_18[0x8];
     unsigned short m_objChk;  // 0x20, returned by getObjChk; a failed allocation takes one off
     // 0x22, bit 0: createAutoList/createPosList build the model render list, else the billboard one
     unsigned char m_selFlags;
