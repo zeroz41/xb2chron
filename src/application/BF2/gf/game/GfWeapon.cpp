@@ -181,6 +181,11 @@
 #include "classes/gf/GfObjSetupDriver.h"
 #include "classes/gf/GfObjSetupBlade.h"
 #include "classes/gf/GfObjSetupEnemy.h"
+#include "classes/gf/GfObjSetupGimmick.h"
+#include "classes/gmk/GmkTbox.h"
+#include "classes/gmk/GmkElevator.h"
+#include "gf/MsgPcBattleStart.h"
+#include "gf/MsgGameChangeTarget.h"
 #include "classes/gf/GfBdatChrEnParam.h"
 #include "gf/GfDataEnemy.h"
 #include "gf/GfObjInfo.h"
@@ -273,6 +278,81 @@ bool GfGameUtil::isUiNameDistMatch(GF_OBJ_HANDLE* handle) {
     }
     const mm::Vec3& pos = acc.getWorldTransform().position;
     return gmk::DistCond::isMatch(dist * dist, pos);
+}
+
+bool GfGameUtil::getNameMsId(unsigned int& out, GF_OBJ_HANDLE* handle) {
+    gmk::AGmkBase* gmk = gmk::getBindedGmkInst(handle);
+    if (gmk == nullptr) {
+        return false;
+    }
+    switch (static_cast<int>(gmk->getGmkType())) {
+    case 0x9: {
+        gmk::GmkTbox* tbox = static_cast<gmk::GmkTbox*>(gmk);
+        unsigned long id;
+        if (tbox->getBdatInfo()->m_dig && tbox->getProgress() == 0) {
+            id = Bdat::getValCheck(GfDataBdat::getFP(0x7B), 1, 0x2B, 2);
+        } else {
+            GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+            if (info == nullptr || info->m_setup == nullptr) {
+                return false;
+            }
+            GfObjSetup* setup = info->m_setup;
+            if (setup->m_type != info->m_obj->m_type || info->m_obj->m_type != 8) {
+                return false;
+            }
+            GfObjSetupGimmick* gimmick = mm::mtl::rttiCast<GfObjSetupGimmick>(setup);
+            if (gimmick == nullptr) {
+                return false;
+            }
+            id = Bdat::getValCheck(GfDataBdat::getFP(0xAC), "MSG_ID", gimmick->m_bdatId, 2);
+        }
+        out = static_cast<unsigned short>(id);
+        return true;
+    }
+    case 0xA:
+        out = static_cast<unsigned short>(Bdat::getValCheck(gmk->getBindedBdatFp(), "Name", gmk->m_createInfo.m_bdatId, 2));
+        return true;
+    case 0x1C:
+        out = static_cast<unsigned short>(Bdat::getValCheck(GfDataBdat::getFP(0x7B), 1, 3, 2));
+        return true;
+    case 0x1F:
+        out = 0x71;
+        return true;
+    case 0x20:
+        if (gmk->m_createInfo.m_data[0] != 2) {
+            return false;
+        }
+        out = 2;
+        return true;
+    case 0x21:
+    case 0x25:
+    case 0x26:
+    case 0x29:
+    case 0x3A:
+        out = static_cast<unsigned short>(Bdat::getValCheck(gmk->getBindedBdatFp(), "tgtMSG_ID", gmk->m_createInfo.m_bdatId, 2));
+        return true;
+    case 0x23:
+        out = static_cast<unsigned short>(Bdat::getValCheck(GfDataBdat::getFP(0x7B), 1, 0x28, 2));
+        return true;
+    case 0x24:
+        out = 0x72;
+        return true;
+    case 0x2A: {
+        gmk::GmkElevator* elevator = static_cast<gmk::GmkElevator*>(gmk);
+        bool call = elevator->isCallSwitch(handle);
+        out = static_cast<unsigned short>(Bdat::getValCheck(gmk->getBindedBdatFp(),
+                                                            call ? "tgt_callswitchMSG_ID" : "tgt_liftswitchMSG_ID",
+                                                            gmk->m_createInfo.m_bdatId, 2));
+        return true;
+    }
+    case 0x3C:
+        out = static_cast<unsigned short>(Bdat::getValCheck(GfDataBdat::getFP(0x7B), 1, 0x47, 2));
+        return true;
+    case 0x3E:
+        out = static_cast<unsigned short>(Bdat::getValCheck(GfDataBdat::getFP(0x7B), 1, 0x5A, 2));
+        return true;
+    }
+    return false;
 }
 
 void GfGameUtil::addMoney(int money) {
@@ -614,6 +694,7 @@ void GfGameUtil::levelupForEnemy(GF_OBJ_HANDLE* handle, unsigned int add) {
     }
     GfGameUtil::refreshEnemyHp(handle);
 }
+
 
 bool GfGameUtil::getMaxHpForUi(GF_OBJ_HANDLE* handle, unsigned int* hp) {
     fn_71002DF8B0(handle);
@@ -1244,6 +1325,30 @@ void GfGameUtil::addSpForObject(unsigned int driver, int sp) {
             GfBdatChrDr* bdat = mm::mtl::PtrSingleton<GfBdatChrDr>::sys();
             fn_71002DBB58(bdat->getChrIrGroupID(bdat->getChrDrIraParam(id)), sp);
         }
+    }
+}
+
+void GfGameUtil::fn_71002DBB58(unsigned int id, int sp) {
+    GfBdatChrDr* bdat = mm::mtl::PtrSingleton<GfBdatChrDr>::sys();
+    bool found = false;
+    for (unsigned int driver = 0x11; driver < 0x1A; driver++) {
+        if (bdat->getChrIrGroupID(bdat->getChrDrIraParam(driver)) == id && !GfDataDriver::isActivateUnuse(driver)) {
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        return;
+    }
+    mm::mtl::FixedVector<unsigned short, 32> drivers;
+    for (unsigned int driver = 0x11; driver < 0x1A; driver++) {
+        if (bdat->getChrIrGroupID(bdat->getChrDrIraParam(driver)) == id &&
+            bdat->getChrIrType(bdat->getChrDrIraParam(driver)) == 0 && GfDataDriver::isAttachedParty(driver)) {
+            drivers.push_back(driver);
+        }
+    }
+    for (const unsigned short& driver : drivers) {
+        addSp(driver, sp);
     }
 }
 
@@ -2178,6 +2283,73 @@ unsigned int GfWeapon::getRscLeft() const {
         return 0;
     }
     return appends[0]->getRscID();
+}
+
+// the enemy nearest the party leader on the ground plane that stands at most 2.0 below it, -1 for none (only
+// enterPlayerBattle uses it, inlined; the name is not the original's)
+static inline GF_OBJ_HANDLE* getNearestEnemy() {
+    GF_OBJ_HANDLE* nearest = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    GfObjAcc leader(GfGameParty::getLeader());
+    if (leader.m_obj == nullptr) {
+        return nearest;
+    }
+    GfGameObj::ObjList& enemies = *GfGameObj::getList(5);
+    float best = 10000.0f;
+    for (GfGameObj::ObjList::iterator it = enemies.begin(); it != enemies.end(); ++it) {
+        GfObjAcc enemy(*it);
+        if (enemy.m_obj == nullptr) {
+            continue;
+        }
+        const mm::Vec3& from = leader.getWorldTransform().position;
+        const mm::Vec3& to = enemy.getWorldTransform().position;
+        float dx = from.x - to.x;
+        float dz = from.z - to.z;
+        float dist = dx * dx + dz * dz;
+        if (dist > best) {
+            continue;
+        }
+        if (leader.getWorldTransform().position.y - enemy.getWorldTransform().position.y > 2.0f) {
+            continue;
+        }
+        nearest = *it;
+        best = dist;
+    }
+    return nearest;
+}
+
+bool GfGameUtil::enterPlayerBattle(bool flag, GF_OBJ_HANDLE* handle, bool flag2) {
+    GF_OBJ_HANDLE* mover = GfGameManager::getControlMover();
+    if (mover == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return false;
+    }
+    GfObjAcc acc(mover);
+    if (acc.isBattle()) {
+        return true;
+    }
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        GfObjAcc target(acc.getTarget());
+        if (target.m_obj == nullptr || target.getType() != 5) {
+            if (!flag2) {
+                return false;
+            }
+            handle = getNearestEnemy();
+            if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                return false;
+            }
+        }
+    }
+    if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        GfObjAcc target(handle);
+        MsgGameChangeTarget msg(handle);
+        acc.getObj()->sendMessage(acc.getObj(), msg);
+    }
+    MsgPcBattleStart start(0);
+    start.m_value = flag;
+    acc.getObj()->sendMessage(acc.getObj(), start);
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->setForceBattleTime(3.0f);
+    }
+    return true;
 }
 
 const char* GfGameUtil::getBladeModel(unsigned int blade, bool flag) {
