@@ -29,6 +29,7 @@
 #include "gf/GfDataUtil.h"
 #include "gf/SDataBlade.h"
 #include "gf/SDataGame.h"
+#include "gf/GfQuestInfo.h"
 #include "gf/GfDataIdea.h"
 #include "gf/GfDataBattle.h"
 #include "classes/gf/GfInitParamDriver.h"
@@ -175,6 +176,23 @@ bool GfDataEnemy::isBoss(unsigned int arrange) {
 
 unsigned int GfDataEnemy::getSavedHpType(unsigned int arrange) {
     return GfBdatChrEnArrange::get()->getChrEnArrangeHpOver(arrange);
+}
+
+void GfDataEnemy::setupNamedDefeatNum() {
+    GfBdatChrEnArrange* bdat = GfBdatChrEnArrange::get();
+    unsigned int arrange = bdat->getChrEnArrangeStart();
+    unsigned int end = bdat->getChrEnArrangeEnd();
+    unsigned int count = 0;
+    for (; arrange < end; arrange++) {
+        bool named = bdat->isChrEnArrangeFlagNamed(arrange);
+        if (named && getEnemySuppress(arrange) != 0) {
+            count++;
+            if (count > 0xFE) {
+                break;
+            }
+        }
+    }
+    GfGameFlag::setLocal(8, 0x874, count);
 }
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B50DC8)
@@ -3346,6 +3364,27 @@ SDataDriver* GfDataDriver::getSDataDriver(unsigned int driver) {
     unsigned int index = driver - 1;
     SDataGame* game = GfDataManager::getDataGame();
     return &game->m_drivers[index < 0x10 ? index : 1];
+}
+
+void GfDataDriver::calcDriverBaseParamByLevel(SDataDriver& data) {
+    unsigned int id = data.m_id;
+    GfBdatChrDr* bdat = GfBdatChrDr::get();
+    if (bdat->getChrDrStart() > data.m_id) {
+        return;
+    }
+    unsigned int level = data.m_level;
+    data.m_hpMax = bdat->getChrDrHpMaxLv1(id) +
+        (bdat->getChrDrHpMaxLv99(id) - bdat->getChrDrHpMaxLv1(id)) * (level - 1) / 98;
+    data.m_strength = bdat->getChrDrStrengthLv1(id) +
+        (bdat->getChrDrStrengthLv99(id) - bdat->getChrDrStrengthLv1(id)) * (level - 1) / 98;
+    data.m_powEther = bdat->getChrDrPowEtherLv1(id) +
+        (bdat->getChrDrPowEtherLv99(id) - bdat->getChrDrPowEtherLv1(id)) * (level - 1) / 98;
+    data.m_dex = bdat->getChrDrDexLv1(id) +
+        (bdat->getChrDrDexLv99(id) - bdat->getChrDrDexLv1(id)) * (level - 1) / 98;
+    data.m_agility = bdat->getChrDrAgilityLv1(id) +
+        (bdat->getChrDrAgilityLv99(id) - bdat->getChrDrAgilityLv1(id)) * (level - 1) / 98;
+    data.m_luck = bdat->getChrDrLuckLv1(id) +
+        (bdat->getChrDrLuckLv99(id) - bdat->getChrDrLuckLv1(id)) * (level - 1) / 98;
 }
 
 inline SDataDriverArtsEx* GfDataDriver::getSDataDriverArtsEx(unsigned int driver) {
@@ -6565,6 +6604,20 @@ unsigned int GfDataMercenaries::getBladeWithLeader(unsigned int mission) {
     return 0;
 }
 
+void GfDataBlade::initSaveData(SDataGame& game) {
+    for (unsigned int i = 0; i < 422; i++) {
+        unsigned int blade = getBladeID(i);
+        if (blade == 0) {
+            continue;
+        }
+        unsigned int index = getBladeIndex(blade);
+        SDataBlade data;
+        setupSDataBlade(data, blade, false);
+        game.m_blades[index] = data;
+        setupSDataBladeAchievement(GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)], true);
+    }
+}
+
 void GfDataBlade::setCreator(unsigned int blade, unsigned int creator) {
     if (blade == 0) {
         return;
@@ -7141,6 +7194,44 @@ void GfDataUtil::setAdvanceContinue(SDataGame& game, bool flag) {
     GfGameFlag::setLocal(game.m_gameFlag, 1, 0xD795, flag);
 }
 
+void GfDataUtil::setupUi1868ForSDataGame(SDataGame& game) {
+    GameFlag& flag = game.m_gameFlag;
+    if (GfGameFlag::getLocal(flag, 8, 0x856) == 1 && GfQuestInfo::getState(game, QuestID(0x46B)) == 3) {
+        unsigned int count = 1;
+        if (GfGameFlag::getLocal(flag, 1, 0xC51B) != 0) {
+            count++;
+        }
+        if (GfGameFlag::getLocal(flag, 1, 0xC4D6) != 0) {
+            count++;
+        }
+        if (GfGameFlag::getLocal(flag, 1, 0xC436) != 0) {
+            count++;
+        }
+        if (GfGameFlag::getLocal(flag, 1, 0xC437) != 0) {
+            count++;
+        }
+        if (GfGameFlag::getLocal(flag, 1, 0xC438) != 0) {
+            count++;
+        }
+        if (GfGameFlag::getLocal(flag, 1, 0xC439) != 0) {
+            count++;
+        }
+        GfGameFlag::setLocal(flag, 8, 0x856, count);
+    }
+    if (GfQuestInfo::getState(game, QuestID(0x46B)) == 3) {
+        unsigned int count = 0;
+        if (GfGameFlag::getLocal(flag, 1, 0xC51B) != 0) {
+            count++;
+        }
+        if (GfGameFlag::getLocal(flag, 1, 0xC4D6) != 0) {
+            count++;
+        }
+        count += (GfGameFlag::getLocal(flag, 1, 0xC436) != 0) + (GfGameFlag::getLocal(flag, 1, 0xC437) != 0) +
+                 (GfGameFlag::getLocal(flag, 1, 0xC438) != 0) + (GfGameFlag::getLocal(flag, 1, 0xC439) != 0);
+        GfGameFlag::setLocal(flag, 8, 0x856, count + 1);
+    }
+}
+
 void GfDataUtil::setIra(SDataGame& game, bool flag) {
     GfGameFlag::setLocal(game.m_gameFlag, 1, 0xD860, flag);
 }
@@ -7151,6 +7242,15 @@ void GfDataUtil::saveAocVersion(SDataGame& game) {
     game.m_aocIds[2] = GfDataAoc::getContentVersion(static_cast<AOC_TYPE>(2)) + 1;
     game.m_aocIds[3] = GfDataAoc::getContentVersion(static_cast<AOC_TYPE>(3)) + 1;
     game.m_aocIds[4] = GfDataAoc::getContentVersion(static_cast<AOC_TYPE>(4)) + 1;
+}
+
+bool GfDataUtil::isInvalidVersionAoc(const SDataGame& game) {
+    for (int i = 1; i < 5; i++) {
+        if (GfDataAoc::getContentVersion(static_cast<AOC_TYPE>(i)) < game.m_aocIds[i] - 1) {
+            return true;
+        }
+    }
+    return false;
 }
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BA04C)
@@ -7372,6 +7472,32 @@ const char* GfDataBlade::getName(const SDataBlade& data, unsigned int kind) {
         }
     }
     return name == nullptr ? "" : name;
+}
+
+bool GfDataBlade::getNameWithMsgID(unsigned char*& bdat, unsigned int& id, const SDataBlade& data) {
+    unsigned int blade = data.m_bladeId;
+    if (blade == 0) {
+        return false;
+    }
+    if (id != 0) {
+        if (blade < GfBdatChrBl::get()->getChrBlEnd()) {
+            bdat = GfDataBdat::getFP(423);
+        } else {
+            bdat = GfDataBdat::getFP(396);
+        }
+        return true;
+    }
+    unsigned int msg = data.m_nameMsg;
+    if (msg == 0) {
+        msg = data.m_nameMsgAlt;
+    }
+    id = msg;
+    if (data.m_nameMsg != 0) {
+        bdat = GfDataBdat::getFP(423);
+    } else {
+        bdat = GfDataBdat::getFP(396);
+    }
+    return id != 0;
 }
 
 bool GfDataEvent::isScenarioEvent(unsigned int id) {

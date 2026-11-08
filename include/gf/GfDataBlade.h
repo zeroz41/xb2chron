@@ -270,6 +270,9 @@ public:
     static unsigned int getRace(unsigned int blade);
     static float getScale(unsigned int blade);
     static void setupSDataBlade(SDataBlade& data, unsigned int blade, bool flag);
+    // the symbols name them: initSaveData sets every listed blade's game entry up afresh
+    static void initSaveData(SDataGame& game);
+    static void setupSDataBladeAchievement(SDataBlade& data, bool flag);
     static unsigned int getSize(unsigned int blade);
     static unsigned int getEquipOrbMax(unsigned int blade);
     // the orb in a blade's slot (GfEquipUtil::getEquipBladeOrb returns it, zero-extended)

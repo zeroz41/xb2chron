@@ -53,6 +53,8 @@ public:
     // 2.0.0's symbols name it. What it does: counts local game flag type 8 index 0x874 up by one, up to 0xFF
     // (GfGameFlag::getLocal/setLocal); GfGameUtil::incEnemySuppress calls it for a named enemy counted the first time.
     static void incNamedDefeatNum();
+    // the symbols name it: counts the named arranges with a defeat count (capped at 255) into local flag (8, 0x874)
+    static void setupNamedDefeatNum();
 };
 }  // namespace gf
 

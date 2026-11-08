@@ -3,7 +3,7 @@
 
 #include "gf/QuestID.h"
 
-namespace gf { class QuestTaskParam; }
+namespace gf { class QuestTaskParam; class SDataGame; }
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
 
 namespace gf {
@@ -19,6 +19,8 @@ public:
     static bool isQuestFin(QuestID id);
     // the quest's state (0 for an empty id)
     static int getState(QuestID id);
+    // the symbols name it: the quest's state as the given game data keeps it
+    static int getState(const SDataGame& game, QuestID id);
     static bool isQuestNotOrder(QuestID id);
     // sets the quest's state flag and tells GfQuestManager (a parent quest finished joins its completed list)
     static void setState(QuestID id, QSTATE state);

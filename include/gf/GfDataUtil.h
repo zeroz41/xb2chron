@@ -104,6 +104,11 @@ public:
     // 2.0.0's symbols name it. What it does: true when local flag 0xD788 (type 1) is set, else when the pointer at
     // 0x7100C294C0 is set and gf::GfDataAoc::getContentVersion(3) is above 0 (GfGameManager::isEnableNamedRecord).
     static bool isVersion150();
+    // the symbols name them: refreshBdatParam re-runs GfDataBlade::setupSDataBlade on every listed blade and
+    // GfDataDriver::calcDriverBaseParamByLevel on drivers 1-25
+    static void refreshBdatParam();
+    static void refreshBladeSaveData();
+    static void setupUi1868ForSDataGame(SDataGame& game);
 };
 }  // namespace gf
 
