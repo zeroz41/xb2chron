@@ -247,7 +247,8 @@ public:
     // the AssetPackInfos holding the pack (AssetPackInfo's destructor drops one); a used pack is not cached (the
     // name is not the original's)
     int m_useCount;
-    unsigned char pad_258[0x24];
+    // a file name the object factory's skeleton loader (fn_7100541780) appends ".skl" to; the constructor empties it
+    mm::mtl::FixStr<32> pad_258;
     // updateCacheCount counts the updates the pack goes unused, up to 99 (the name is not the original's)
     unsigned int m_cacheCount;
     // AssetPackInfo::updateReloadCount counts the updates the pack goes with no reference besides its users', up to

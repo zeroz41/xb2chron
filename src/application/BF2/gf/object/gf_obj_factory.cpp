@@ -69,6 +69,15 @@
 #include "classes/gf/GfBdatChrBl.h"
 #include "classes/gf/GfBdatChrDr.h"
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "anm/SkeletonImporter.h"
+#include "gf/GfUtil.h"
+#include "gf/GfGameUtil.h"
+#include "classes/gf/GfAssetPack.h"
+#include "classes/gf/GfComEffectCaster.h"
+#include "classes/gf/GfComTransform.h"
+#include "classes/gf/GfComDynamics.h"
+#include "skd/DynamicsImporter.h"
+#include <math.h>
 #include <string.h>
 
 #define GF_OBJ_FACTORY_PATH "D:/Monolithsoft/BF2/prog/application/BF2/gf/object/gf_obj_factory.cpp"
@@ -152,6 +161,59 @@ bool checkSoundTriggerPlayer(GfComSound* sound, const fw::ResSoundTriggerInfo& i
         }
     }
     return true;
+}
+
+void fn_7100526BD8(GF_OBJ_HANDLE* handle) {
+    DataParamAcc acc(handle);
+    unsigned int weapon = acc.getEquipWeapon(-1, false);
+    if (acc.getBlade(-1, false) != 0) {
+        GfObjSetup* setup = GfObjUtil::getObjSetup(handle);
+        if (GfObjUtil::getMountHandle(handle, GFATTACH(0)) == reinterpret_cast<GF_MOUNT_HANDLE*>(-1)) {
+            GfMountManager::addMountHandle(GfMountManager::createMount(handle, handle, GFATTACH(0), OPTMNT(1)), handle);
+        }
+        GfInitParamWeapon param;
+        unsigned int value = setup->pad_18;
+        param.m_createType = 7;
+        param.m_objId = weapon;
+        param.pad_120 = handle;
+        param.pad_24 = value;
+        param.pad_90 = false;
+        param.pad_40 = 12;
+        param.pad_81 = false;
+        param.pad_30 = handle;
+        param.pad_38 = handle;
+        GfObjFactory::createDriverWeapon(param);
+    }
+}
+
+void fn_7100527120(GfInitParamDriver& driver, GF_OBJ_HANDLE* handle) {
+    unsigned int blade = driver.m_bladeId;
+    if (blade == 0) {
+        blade = GfDataDriver::getBlade(driver.m_objId, -1);
+    }
+    DataParamAcc acc(4, blade, GimmickType(0));
+    if (GfObjUtil::getMountHandle(handle, GFATTACH(0)) == reinterpret_cast<GF_MOUNT_HANDLE*>(-1)) {
+        GfMountManager::addMountHandle(GfMountManager::createMount(handle, handle, GFATTACH(0), OPTMNT(2)), handle);
+    }
+    if (acc.getEquipWeapon(-1, false) != 0) {
+        GfInitParamWeapon param;
+        int type = driver.m_createType == 3 ? 3 : 2;
+        if (driver.m_createType - 10U < 4) {
+            type = 11;
+        }
+        param.m_createType = type;
+        param.m_objId = acc.getEquipWeapon(-1, false);
+        param.pad_90 = false;
+        param.pad_40 = 9;
+        param.pad_120 = handle;
+        param.pad_12c = blade;
+        param.pad_30 = handle;
+        param.pad_38 = handle;
+        if (driver.pad_83) {
+            param.pad_83 = true;
+        }
+        GfObjFactory::createDriverWeapon(param);
+    }
 }
 
 GF_OBJ_HANDLE* GfObjFactory::createNpc(const GfInitParamNpc& param) {
@@ -845,6 +907,136 @@ void GfObjFactory::destroyObj(GF_OBJ_HANDLE* handle) {
 
 unsigned int GfInitParamEnWeapon::getEnArrangeID() const {
     return m_enArrangeId;
+}
+
+anm::Skeleton* fn_7100540BB4(GF_ASSET_HANDLE* asset) {
+    GfAssetResource* resource = GfAssetManager::getResource(asset, static_cast<GfFileIdx>(0x44), static_cast<GfAssetType>(0));
+    if (resource == nullptr) {
+        return nullptr;
+    }
+    if (GfAssetManager::getAssetPack(asset, static_cast<GfFileIdx>(0x44)) == nullptr) {
+        return nullptr;
+    }
+    mm::mtl::FixStr<64> name = util::getNoPathExtName(resource->getAssetName());
+    arc::CArcData arc(resource->getAssetData());
+    return anm::SkeletonImporter::import(arc.getFileAdr((name + ".skl").m_str));
+}
+
+anm::Skeleton* fn_710054113C(GF_ASSET_HANDLE* asset, GfFileIdx file, const char* name) {
+    GfAssetResource* resource = GfAssetManager::getResource(asset, file, static_cast<GfAssetType>(0));
+    if (resource == nullptr) {
+        return nullptr;
+    }
+    arc::CArcData arc(resource->getAssetData());
+    void* data;
+    if (name != nullptr && arc.m_data != nullptr) {
+        data = arc.getFileAdr(name);
+        if (data == nullptr) {
+            return nullptr;
+        }
+    } else {
+        data = resource->getAssetData();
+    }
+    return anm::SkeletonImporter::import(data);
+}
+
+anm::Skeleton* fn_7100541780(GF_ASSET_HANDLE* asset, GfFileIdx file) {
+    GfAssetResource* resource = GfAssetManager::getResource(asset, file, static_cast<GfAssetType>(0));
+    if (resource == nullptr) {
+        return nullptr;
+    }
+    GfAssetPack* pack = GfAssetManager::getAssetPack(asset, file);
+    arc::CArcData arc(resource->getAssetData());
+    mm::mtl::FixStr<32> name = pack->pad_258;
+    return anm::SkeletonImporter::import(arc.getFileAdr((name + ".skl").m_str));
+}
+
+void fn_7100541A00(GfObj* obj, const mm::Vec3& pos, const mm::Vec3& rot) {
+    GfComTransform* transform = obj->getComponent<GfComTransform>(0);
+    GfComTransform::SetupInfo info;
+    info.frame_max = 1;
+    info.childFrame = false;
+    info.position = pos;
+    mm::Vec3 half = mm::Vec3(rot) * 0.5f;
+    float sx = ::sinf(half.x);
+    float cx = ::cosf(half.x);
+    float sy = ::sinf(half.y);
+    float cy = ::cosf(half.y);
+    float sz = ::sinf(half.z);
+    float cz = ::cosf(half.z);
+    info.rotation.x = sx * cy * cz - cx * sy * sz;
+    info.rotation.y = cx * sy * cz + sx * cy * sz;
+    info.rotation.z = cx * cy * sz - sx * sy * cz;
+    info.rotation.w = cx * cy * cz + sx * sy * sz;
+    transform->setup(info);
+}
+
+void fn_7100543DC8(GfObj* obj, unsigned int kind, float value) {
+    GfObjAcc acc(obj->m_handle);
+    if (GfComEffectCaster* caster = obj->getComponent<GfComEffectCaster>(7)) {
+        GfComEffectCaster::SetupInfo info;
+        info.m_asset = acc.getAssetHandle();
+        info.pad_10 = caster->getLayer();
+        info.m_viewnum = acc.getView();
+        info.m_kind = kind;
+        info.pad_18 = value;
+        caster->setup(info);
+    }
+}
+
+void fn_7100543E68(GfObj* obj, GfFileIdx file, const char* name, bool high) {
+    GF_ASSET_HANDLE* asset = GfObjUtil::getAssetHandle(obj->m_handle);
+    GfComDynamics* dynamics = obj->getComponent<GfComDynamics>(8);
+    GfComDynamics::SetupInfo info;
+    info.colObj = nullptr;
+    info.res = nullptr;
+    info.level = 6;
+    if (GfAssetResource* resource = GfAssetManager::getResource(asset, file, static_cast<GfAssetType>(0))) {
+        void* data = resource->getAssetData();
+        if (name != nullptr) {
+            arc::CArcData arc(data);
+            data = arc.getFileAdr(name);
+        }
+        info.res = skd::DynamicsImporter::import(data);
+        if (high) {
+            info.level = 30;
+        }
+    }
+    dynamics->setup(info);
+}
+
+void fn_7100543F98(GF_OBJ_HANDLE* handle) {
+    DataParamAcc acc(handle);
+    if (acc.isValid() && acc.getObjType() == 3) {
+        switch (acc.getBdatId()) {
+        case 1:
+            GfGameUtil::dispRexCrystal(handle, GfGameUtil::isDispRexCrystal());
+            break;
+        case 8:
+            GfGameUtil::dispMetsuCrystal(handle, GfGameUtil::isDispMetsuCrystal());
+            break;
+        case 0x11:
+            GfGameUtil::dispLauraMedal(handle, GfGameUtil::isDispLauraMedal());
+            break;
+        case 0x14:
+            fn_71005442A4(handle);
+            break;
+        }
+    }
+}
+
+void fn_71005442A4(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    acc.setupExtraParts();
+    if (strstr(GfObjUtil::getModelBaseName(handle), "np100201") != nullptr) {
+        GfGameUtil::dispMetsuCrystal(handle, GfGameUtil::isDispMetsuCrystal());
+    }
+    if (strstr(GfObjUtil::getModelBaseName(handle), "np100101") != nullptr) {
+        GfGameUtil::dispSinMask(handle, GfGameUtil::isDispSinMask());
+    }
+    if (strstr(GfObjUtil::getModelBaseName(handle), "pc700401") != nullptr) {
+        GfGameUtil::dispSinMask(handle, GfGameUtil::isDispSinMask());
+    }
 }
 
 }  // namespace gf
