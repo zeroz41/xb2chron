@@ -21,8 +21,37 @@
 #include "classes/gf/GfObj.h"
 #include "fw/ColiCheck.h"
 #include "algorithm"
+#include <new>
+#include "classes/gf/GfComEnvSensor.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfComModel.h"
+#include "classes/gmk/AGmkBase.h"
+#include "gf/GfObjAcc.h"
+#include "gf/GfObjUtil.h"
+#include "gf/GfFieldUndulator.h"
+#include "gf/MsgPcGetLookPoint.h"
+#include "classes/gf/GfComBehaviorEnemy.h"
+#include "classes/gf/GfComTransform.h"
+#include "fw/Transform.h"
+#include "classes/fw/LookIkSolver.h"
+#include "classes/fw/LookAtIkSolver.h"
+#include "classes/fw/SpineIkSolver.h"
 
 namespace gf {
+
+void GfEnemySensor::update(GF_OBJ_HANDLE* handle) {
+    if (GfGameManager::isGameTypeIra()) {
+        updateIra(handle);
+    } else {
+        updateMain(handle);
+    }
+}
+
+EnviromentSensor::GroundInfo::GroundInfo()
+    : m_pos(mm::Vec3::zero), m_attr(0), m_obj(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), m_velocity(mm::Vec3::zero),
+      pad_50(mm::Col4::white), pad_60(0) {
+    new (&m_plane) mm::Plane(mm::Vec3::unitY, mm::Vec3::zero);
+}
 
 EnviromentSensor::EnviromentSensor() : m_checkFlags(0), m_flags(0) {
     pad_290 = 1.0f;
@@ -77,6 +106,74 @@ void GfComBehaviorEvent::setFootIK(bool enable) {
     }
 }
 
+// turns the look IK toward its target (fades it in, or over to the new target once on) or fades it out; with
+// lookOnly the spine is left alone. Bit 1 of m_flags: the look IK is on
+void GfComBehaviorEvent::setTarget(bool enable, float time, bool lookOnly) {
+    if (GfComIK* ik = m_owner->getComponent<GfComIK>(3)) {
+        GfComEvtAnim* evtAnim = m_owner->getComponent<GfComEvtAnim>(2);
+        if (evtAnim != nullptr && evtAnim->m_asm.m_control != nullptr) {
+            if (fw::LookIkSolver* look = ik->getSolver<fw::LookIkSolver>(3)) {
+                fw::SpineIkSolver* spine = look->m_spine.get();
+                fw::LookAtIkSolver* lookAt = look->m_lookAt.get();
+                if (enable) {
+                    if (m_flags & 2) {
+                        if (lookAt != nullptr) {
+                            lookAt->startTargetFade(time);
+                        }
+                        if (spine != nullptr && !lookOnly) {
+                            spine->startTargetFade(time);
+                        }
+                    } else {
+                        if (lookAt != nullptr) {
+                            lookAt->fadeIn(time);
+                        }
+                        if (spine != nullptr && !lookOnly) {
+                            spine->fadeIn(time);
+                        }
+                    }
+                    m_flags |= 2;
+                } else {
+                    if (lookAt != nullptr) {
+                        lookAt->fadeOut(time);
+                    }
+                    if (spine != nullptr && !lookOnly) {
+                        spine->fadeOut(time);
+                    }
+                    m_flags &= ~2;
+                }
+            }
+        }
+    }
+}
+
+void GfComBehaviorEvent::setTargetPos(const mm::Vec3& pos) {
+    if (GfComIK* ik = m_owner->getComponent<GfComIK>(3)) {
+        GfComEvtAnim* evtAnim = m_owner->getComponent<GfComEvtAnim>(2);
+        if (evtAnim != nullptr && evtAnim->m_asm.m_control != nullptr) {
+            if (fw::LookIkSolver* look = ik->getSolver<fw::LookIkSolver>(3)) {
+                fw::SpineIkSolver* spine = look->m_spine.get();
+                fw::LookAtIkSolver* lookAt = look->m_lookAt.get();
+                if (lookAt != nullptr) {
+                    lookAt->m_target = pos;
+                }
+                if (spine != nullptr) {
+                    spine->m_target = pos;
+                }
+            }
+        }
+    }
+}
+
+void GfComBehaviorEvent::execTurnCmd(float rotY, float speed, float threshold, float delay) {
+    TFieldExecCmdTurn<GfComEvtAnim>::CreateInfo info;
+    info.handle = static_cast<GfObj*>(m_owner)->m_handle;
+    info.pad_8 = rotY;
+    info.pad_c = threshold;
+    info.pad_14 = speed;
+    info.pad_18 = delay;
+    m_turnCmd.create(info);
+}
+
 GfComBehaviorEvent::~GfComBehaviorEvent() {}
 
 template <typename T>
@@ -88,6 +185,22 @@ void TFieldExecCmd<T>::create(const CreateInfo& info) {
 
 // TFieldExecCmdTurn<GfComEvtAnim>::create's (not written yet)
 template void TFieldExecCmd<GfComEvtAnim>::create(const CreateInfo& info);
+
+// whether the command's state is already the current one ("S_..." for "C_...") or the component executes it
+template <typename T>
+bool TFieldExecCmd<T>::execCmd(T& com, const char* name) const {
+    if (com.getStateName() == nullptr) {
+        return false;
+    }
+    mm::mtl::FixStr<32> state(com.getStateName());
+    if (strcmp(name + 1, state.m_str + 1) == 0) {
+        return true;
+    }
+    return com.execCmd(name);
+}
+
+// TFieldExecCmd<GfComEvtAnim>::update's (not written yet)
+template bool TFieldExecCmd<GfComEvtAnim>::execCmd(GfComEvtAnim& com, const char* name) const;
 
 mm::mtl::RTTI GfComBehaviorEvent::m_rtti("GfComBehaviorEvent", &GfComBehavior::m_rtti, nullptr);
 

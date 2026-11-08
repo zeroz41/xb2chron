@@ -19,9 +19,7 @@ public:
         GroundInfo();
 
         mm::Vec3 m_pos;          // the point found (the constructor: zero)
-        mm::Vec3 m_normal;       // the ground's plane: its normal (the constructor: unit Y)
-        float m_planeDist;       // and the plane's distance term, -m_normal.dot(m_pos)
-        unsigned char pad_24[0xC];
+        mm::Plane m_plane;       // the ground's plane (the constructor: facing unit Y through zero)
         // what kind of ground it is: bit 5 a ground the PC slides on (StateUtil::isOnSlideGround; the name is not the
         // original's). The constructor: 0
         unsigned long m_attr;
@@ -37,10 +35,9 @@ public:
     struct WaterInfo {
         float m_height;          // the water surface's height
         unsigned char pad_4[0xC];
-        // the water surface's plane: its normal and distance term (the names are not the original's)
-        mm::Vec3 m_normal;
-        float m_planeDist;
-        unsigned char pad_24[0xC];
+        // the water surface's plane (VerticalData's constructor: facing unit Y through zero; the name is not the
+        // original's)
+        mm::Plane m_plane;
         unsigned int m_damageId; // the terrain damage the water deals (GfFieldDmgManager::findBdatInfo's)
         // what kind of water it is: 11 is the cloud sea (StateUtilField::testCloud; the name is not the original's)
         unsigned int m_kind;
@@ -72,10 +69,9 @@ public:
         // is within the AI's enableJumpCeil above the PC; the name is not the original's)
         float m_ceilHeight;
         unsigned char pad_e4[0xC];
-        // what is above the object: its plane's normal and distance term (the names are not the original's)
-        mm::Vec3 m_ceilNormal;
-        float m_ceilPlaneDist;
-        unsigned char pad_104[0xC];
+        // what is above the object: its plane (the constructor: facing unit Y through zero; the name is not the
+        // original's)
+        mm::Plane m_ceilPlane;
         unsigned int pad_110;  // the constructor: 0
         unsigned char pad_114[0xC];
     };

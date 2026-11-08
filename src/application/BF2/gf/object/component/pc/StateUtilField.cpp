@@ -508,7 +508,7 @@ bool StateUtilField::isWallDetach(gf::GfComPropertyPc& property) {
         return false;
     }
     const EnviromentSensor::GroundInfo& ground = sensor->m_vertical.m_ground;
-    float dist = property.m_pos.dot(ground.m_normal) + ground.m_planeDist;
+    float dist = property.m_pos.dot(ground.m_plane.normal) + ground.m_plane.d;
     return dist < -property.m_field.m_downLanding1Height;
 }
 

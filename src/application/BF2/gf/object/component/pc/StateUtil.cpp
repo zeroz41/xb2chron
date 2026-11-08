@@ -175,7 +175,7 @@ void StateUtil::reflectionAdsorption(GfComBehaviorPc& behavior) {
         const GfComPropertyPc::GravityParam* param =
             property->m_paramList->getAdapter(1).get<GfComPropertyPc::GravityParam>();
         if (const EnviromentSensor::GroundInfo* ground = getGroundInfo(behavior)) {
-            float cosine = mm::clamp(ground->m_normal.dot(mm::Vec3::unitY), 0.0f, 1.0f);
+            float cosine = mm::clamp(ground->m_plane.normal.dot(mm::Vec3::unitY), 0.0f, 1.0f);
             float rate = mm::clamp(mm::acos(cosine) * 57.2957764f / param->m_slopeAngle, 0.0f, 1.0f);
             coli->setAdsorption(param->m_adsorption * (1.0f - rate) + param->m_slopeAdsorption * rate);
         } else {

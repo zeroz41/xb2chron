@@ -14,6 +14,7 @@
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
 namespace fw { class Transform; }
+namespace gf { class GF_OBJ_HANDLE; }
 
 namespace gf {
 // no table: 2 bytes setup makes on request (its info's last flag); flushEnv keeps what a line test from the
@@ -21,6 +22,10 @@ namespace gf {
 class GfEnemySensor {
 public:
     GfEnemySensor() : m_blocked(false), m_counter(0) {}
+    // updateIra in the Ira game type, updateMain otherwise
+    void update(GF_OBJ_HANDLE* handle);
+    void updateIra(GF_OBJ_HANDLE* handle);
+    void updateMain(GF_OBJ_HANDLE* handle);
     bool m_blocked;           // the line test's result
     unsigned char m_counter;  // flushEnv tests again each time it wraps past 10
 };
