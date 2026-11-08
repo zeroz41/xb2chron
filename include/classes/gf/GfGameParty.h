@@ -156,6 +156,16 @@ public:
     // 1.0.0's getHierarchyMax (same place, after getBladeBdatId; it took the largest m_hierarchyDriver /
     // m_hierarchyBlade of the members 0-2, 3.0.1 does so over every party in m_hierarchy)
     static unsigned int getHierarchyMax();
+    // the symbols name it (recalcHierarchy calls it). What it does: clears the hierarchy fields of the members 0-2 of
+    // every party in m_hierarchy, makes the leader's driver hierarchy 1 (a leader of type 3 is the driver of party 0's
+    // member 0; else the first member with a driver becomes the leader), then numbers from 2 the drivers left: the
+    // leader's slot first, then the members 0-2, parties other than 2 before party 2
+    static void recalcHierarchyIra();
+    // the symbols name it (1.0.0 has it too). What it does: in an Ira game recalcHierarchyIra; else clears the
+    // hierarchy fields of the members 0-2, gives the leader (type 3 a driver, 4 a blade; else the first member with a
+    // driver becomes a type 3 leader) hierarchy 1, then numbers the leader's member and the members 0-2 on: driver,
+    // then blade, or blade first when the driver's DataParamAcc answers isScenarioMask
+    static void recalcHierarchy();
     // 2.0.0's symbols name it. What it does: resets m_hierarchy to {0}, adding 1 and 2 when
     // GfGameManager::isGameTypeIra answers true.
     void setupGame();
@@ -167,6 +177,9 @@ public:
     // Ira game) into its record, valid when the object has a transform
     static void getPartyPosition(GfPartyPosInfo& info);
     static gf::GfWeapon* getHandleWeapon(unsigned int index, int set);
+    // the symbols name it. What it does: destroys every object of getHandleWeapon's weapon, both sets (the second,
+    // then the first, each made the one in use), clearing their handles (GfGameUnit::destroyParty calls it)
+    static void destroyHandleWeapon(unsigned int index, int set);
     // 2.0.0's symbols name it. What it does: for a driver object, its weapon: its own mount
     // (GfMountManager::getGfWeapon) when GfDataDriver::isIra accepts its driver id, else its party slot's
     // (getHandleWeapon with set -1); null for others (BattleCharacter::AttackTimingProc calls it).

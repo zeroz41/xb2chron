@@ -406,6 +406,60 @@ void GfGameParty::listenerGfObj(IGfObjListener::OBJEVT evt, GF_OBJ_HANDLE* handl
     }
 }
 
+void GfGameParty::entryHandle(GF_OBJ_HANDLE* handle, unsigned int type) {
+    switch (type) {
+    case 3: {
+        GfObjSetupDriver* setup =
+            mm::mtl::rttiCast<GfObjSetupDriver>(GfObjManager::getObjInfo(handle)->m_setup);
+        unsigned int index = setup->m_partyId;
+        if (index == static_cast<unsigned int>(-1)) {
+            return;
+        }
+        m_members[index].m_handles[GfObjUtil::getPartyPos(handle)] = handle;
+        break;
+    }
+    case 10: {
+        GfObjSetupWeapon* setup = mm::mtl::rttiCast<GfObjSetupWeapon>(GfObjManager::getObjInfo(handle)->m_setup);
+        if (setup->m_partyId == static_cast<unsigned int>(-1)) {
+            return;
+        }
+        int set = getBladeSetId(setup->m_partyId, setup->pad_6c);
+        GF_OBJ_HANDLE* owner;
+        if (GfGameManager::isGameTypeIra()) {
+            owner = GfObjUtil::getMaster(handle);
+        } else {
+            owner = getHandleBlade(setup->m_partyId, set);
+        }
+        GfWeapon* weapon = GfMountManager::getGfWeapon(owner, GFATTACH(0));
+        GfAppend* append = GfObjUtil::getAppend(handle, GFATTACH(0));
+        if (append != nullptr && setup->m_partyId != static_cast<unsigned int>(-1)) {
+            unsigned short index = append->getMountIndex();
+            (weapon->m_useSecond ? weapon->m_secondHandles : weapon->m_handles)[index] = handle;
+        }
+        break;
+    }
+    case 4: {
+        GfObjSetupBlade* setup = mm::mtl::rttiCast<GfObjSetupBlade>(GfObjManager::getObjInfo(handle)->m_setup);
+        if (setup->m_partyId == static_cast<unsigned int>(-1)) {
+            return;
+        }
+        int set = getBladeSetId(setup->m_partyId, setup->pad_6c);
+        GfMemberInfo& member = m_members[setup->m_partyId];
+        if (GfObjUtil::isTrinityBlade(handle)) {
+            member.m_handles[8] = handle;
+        } else {
+            member.m_handles[3 + set] = handle;
+        }
+        break;
+    }
+    default:
+        if (GfObjUtil::isDummyMover(handle)) {
+            m_warpObj = handle;
+        }
+        break;
+    }
+}
+
 // the slot lookups' results go unused (3.0.1 keeps only their calls)
 void GfGameParty::destroyedObject(GF_OBJ_HANDLE* handle) {
     switch (GfObjUtil::getObjType(handle)) {
@@ -439,6 +493,59 @@ void GfGameParty::destroyedObject(GF_OBJ_HANDLE* handle) {
                 GfEvent::callPartyIDMemberOK(false, id);
             }
         }
+    }
+}
+
+void GfGameParty::removeHandle(GF_OBJ_HANDLE* handle) {
+    switch (GfObjUtil::getObjType(handle)) {
+    case 3: {
+        GfObjSetupDriver* setup =
+            mm::mtl::rttiCast<GfObjSetupDriver>(GfObjManager::getObjInfo(handle)->m_setup);
+        unsigned int index = setup->m_partyId;
+        if (index == static_cast<unsigned int>(-1)) {
+            return;
+        }
+        m_members[index].m_handles[GfObjUtil::getPartyPos(handle)] = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+        break;
+    }
+    case 10: {
+        GfObjSetupWeapon* setup = mm::mtl::rttiCast<GfObjSetupWeapon>(GfObjManager::getObjInfo(handle)->m_setup);
+        unsigned int index = setup->m_partyId;
+        if (index == static_cast<unsigned int>(-1)) {
+            return;
+        }
+        int set = getBladeSetId(index, setup->pad_6c);
+        GfWeapon* weapon = GfMountManager::getGfWeapon(getHandleBlade(setup->m_partyId, set), GFATTACH(0));
+        if (weapon == nullptr) {
+            return;
+        }
+        GfAppend* append = GfObjUtil::getAppend(handle, GFATTACH(0));
+        if (append != nullptr) {
+            unsigned short slot = append->getMountIndex();
+            (weapon->m_useSecond ? weapon->m_secondHandles : weapon->m_handles)[slot] =
+                reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+        }
+        break;
+    }
+    case 4: {
+        GfObjSetupBlade* setup = mm::mtl::rttiCast<GfObjSetupBlade>(GfObjManager::getObjInfo(handle)->m_setup);
+        unsigned int index = setup->m_partyId;
+        if (index == static_cast<unsigned int>(-1)) {
+            return;
+        }
+        if (GfObjUtil::isTrinityBlade(handle)) {
+            m_members[index].m_handles[8] = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+        } else {
+            m_members[index].m_handles[3 + getBladeSetId(setup->m_partyId, setup->pad_6c)] =
+                reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+        }
+        break;
+    }
+    default:
+        if (m_warpObj == handle) {
+            m_warpObj = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+        }
+        break;
     }
 }
 
@@ -562,6 +669,154 @@ void GfGameParty::gevChangeBlade(GF_OBJ_HANDLE* handle, int, int) {
     GfMountManager::setMountType(driver, GFATTACH(0), type);
 }
 
+void GfGameParty::recalcHierarchy() {
+    if (GfGameManager::isGameTypeIra()) {
+        recalcHierarchyIra();
+        return;
+    }
+    SDataParty* data = GfDataParty::getSDataParty();
+    for (unsigned int i = 0; i < 3; ++i) {
+        GfDataParty::PartyMember* member = GfDataParty::getPartyMember(i, static_cast<PTPOS>(0));
+        member->m_hierarchyDriver = 0;
+        member->m_hierarchyBlade = 0;
+    }
+    unsigned int leader = 0;
+    switch (data->m_leaderType) {
+    case 3:
+        for (unsigned int i = 0; i < 3; ++i) {
+            GfDataParty::PartyMember* member = GfDataParty::getPartyMember(i, static_cast<PTPOS>(0));
+            if (GfDataParty::getPartyMember(i, static_cast<PTPOS>(0))->m_driver == data->m_leader) {
+                member->m_hierarchyDriver = 1;
+                leader = i;
+                break;
+            }
+        }
+        break;
+    case 4:
+        for (unsigned int i = 0; i < 3; ++i) {
+            GfDataParty::PartyMember* member = GfDataParty::getPartyMember(i, static_cast<PTPOS>(0));
+            if (getBladeSetId(i, -1) >= 0 && getBladeBdatId(i, -1) == data->m_leader) {
+                member->m_hierarchyBlade = 1;
+                leader = i;
+                break;
+            }
+        }
+        break;
+    default:
+        for (unsigned int i = 0; i < 3; ++i) {
+            if (GfDataParty::getPartyMember(i, static_cast<PTPOS>(0))->m_driver != 0) {
+                data->m_leaderType = 3;
+                data->m_leader = GfDataParty::getPartyMember(i, static_cast<PTPOS>(0))->m_driver;
+                for (unsigned int j = 0; j < 3; ++j) {
+                    GfDataParty::PartyMember* member = GfDataParty::getPartyMember(j, static_cast<PTPOS>(0));
+                    if (member->m_hierarchyDriver == 0) {
+                        member->m_hierarchyDriver = 1;
+                        leader = j;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        break;
+    }
+    unsigned short hierarchy = 1;
+    // numbers a member's driver and blade that have no hierarchy yet
+    auto number = [&](GfDataParty::PartyMember* member) {
+        if (member->m_driver == 0) {
+            return;
+        }
+        if (member->m_hierarchyDriver == 0) {
+            if (member->m_hierarchyBlade == 0) {
+                DataParamAcc acc(3, member->m_driver, GimmickType(0));
+                if (acc.isScenarioMask()) {
+                    member->m_hierarchyBlade = ++hierarchy;
+                    member->m_hierarchyDriver = ++hierarchy;
+                } else {
+                    member->m_hierarchyDriver = ++hierarchy;
+                    member->m_hierarchyBlade = ++hierarchy;
+                }
+            } else {
+                member->m_hierarchyDriver = ++hierarchy;
+            }
+        } else if (member->m_hierarchyBlade == 0) {
+            member->m_hierarchyBlade = ++hierarchy;
+        }
+    };
+    number(GfDataParty::getPartyMember(leader, static_cast<PTPOS>(0)));
+    for (unsigned int i = 0; i < 3; ++i) {
+        number(GfDataParty::getPartyMember(i, static_cast<PTPOS>(0)));
+    }
+}
+
+void GfGameParty::recalcHierarchyIra() {
+    SDataParty* data = GfDataParty::getSDataParty();
+    for (unsigned int i = 0; i < 3; ++i) {
+        for (unsigned int& party : get()->m_hierarchy) {
+            GfDataParty::PartyMember* member = GfDataParty::getPartyMember(i, static_cast<PTPOS>(party));
+            member->m_hierarchyDriver = 0;
+            member->m_hierarchyBlade = 0;
+        }
+    }
+    unsigned int leader = 0;
+    if (data->m_leaderType == 3) {
+        data->m_leader = GfDataParty::getPartyMember(0, static_cast<PTPOS>(0))->m_driver;
+        for (unsigned int i = 0; i < 3; ++i) {
+            GfDataParty::PartyMember* member = GfDataParty::getPartyMember(i, static_cast<PTPOS>(0));
+            if (GfDataParty::getPartyMember(i, static_cast<PTPOS>(0))->m_driver == data->m_leader) {
+                member->m_hierarchyDriver = 1;
+                leader = i;
+                break;
+            }
+        }
+    } else {
+        for (unsigned int i = 0; i < 3; ++i) {
+            if (GfDataParty::getPartyMember(i, static_cast<PTPOS>(0))->m_driver != 0) {
+                data->m_leaderType = 3;
+                data->m_leader = GfDataParty::getPartyMember(i, static_cast<PTPOS>(0))->m_driver;
+                for (unsigned int j = 0; j < 3; ++j) {
+                    GfDataParty::PartyMember* member = GfDataParty::getPartyMember(j, static_cast<PTPOS>(0));
+                    if (member->m_hierarchyDriver == 0) {
+                        member->m_hierarchyDriver = 1;
+                        leader = j;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+    }
+    unsigned short hierarchy = 1;
+    for (unsigned int& party : get()->m_hierarchy) {
+        if (party != 2) {
+            GfDataParty::PartyMember* member = GfDataParty::getPartyMember(leader, static_cast<PTPOS>(party));
+            if (member->m_driver != 0 && member->m_hierarchyDriver == 0) {
+                member->m_hierarchyDriver = ++hierarchy;
+            }
+        }
+    }
+    for (unsigned int i = 0; i < 3; ++i) {
+        for (unsigned int& party : get()->m_hierarchy) {
+            if (party != 2) {
+                GfDataParty::PartyMember* member = GfDataParty::getPartyMember(i, static_cast<PTPOS>(party));
+                if (member->m_driver != 0 && member->m_hierarchyDriver == 0) {
+                    member->m_hierarchyDriver = ++hierarchy;
+                }
+            }
+        }
+    }
+    for (unsigned int i = 0; i < 3; ++i) {
+        for (unsigned int& party : get()->m_hierarchy) {
+            if (party == 2) {
+                GfDataParty::PartyMember* member = GfDataParty::getPartyMember(i, static_cast<PTPOS>(party));
+                if (member->m_driver != 0 && member->m_hierarchyDriver == 0) {
+                    member->m_hierarchyDriver = ++hierarchy;
+                }
+            }
+        }
+    }
+}
+
 unsigned int GfGameParty::getLeaderLevel() {
     SDataParty* data = GfDataParty::getSDataParty();
     unsigned int driver = 0;
@@ -607,6 +862,23 @@ GfWeapon* GfGameParty::getHandleWeaponDriver(GF_OBJ_HANDLE* handle) {
         }
     }
     return nullptr;
+}
+
+void GfGameParty::destroyHandleWeapon(unsigned int index, int set) {
+    GfWeapon* weapon = getHandleWeapon(index, set);
+    if (weapon == nullptr) {
+        return;
+    }
+    weapon->m_useSecond = true;
+    for (int i = 0; i < 10; ++i) {
+        GfObjUtil::destroy((weapon->m_useSecond ? weapon->m_secondHandles : weapon->m_handles)[i]);
+        (weapon->m_useSecond ? weapon->m_secondHandles : weapon->m_handles)[i] = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    weapon->m_useSecond = false;
+    for (int i = 0; i < 10; ++i) {
+        GfObjUtil::destroy((weapon->m_useSecond ? weapon->m_secondHandles : weapon->m_handles)[i]);
+        (weapon->m_useSecond ? weapon->m_secondHandles : weapon->m_handles)[i] = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
 }
 
 void GfGameParty::setupGame() {
