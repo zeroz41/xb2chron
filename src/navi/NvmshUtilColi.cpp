@@ -460,6 +460,55 @@ bool NvmshUtilConect::seachConectAStar(NvmshConectResult* result, bool flag) {
     return calcConectAStar();
 }
 
+void NvmshUtilConect::stockResult(int node, const unsigned char* pri, int fastNum, int endNum) {
+    // the fast part of the route is stocked at the end of the route buffer, with room for the end part after it
+    int fastMax = fastNum + 10;
+    int fastCount = stockFastResult(
+        reinterpret_cast<unsigned short*>(m_result->m_route + (m_result->m_routeSize - (fastNum + (endNum + 10) + 12) *
+                                                                                         sizeof(unsigned short))),
+        node, fastMax);
+    unsigned short* work = reinterpret_cast<unsigned short*>(
+        m_result->m_route + (m_result->m_routeSize - (endNum + fastCount + 12) * sizeof(unsigned short)));
+    int endCount;
+    if (endNum + 10 >= 2) {
+        endCount = stockEndResult(work + fastCount, node, endNum + 10);
+    } else {
+        work[fastCount] = node;
+        endCount = 1;
+    }
+    int total = endCount + fastCount;
+    m_result->m_routeNum = total;
+    unsigned short* dst = reinterpret_cast<unsigned short*>(m_result->m_route + m_result->m_routeSize);
+    for (int i = total - 1; i >= 0; i--) {
+        dst[i - total] = work[i];
+    }
+    m_result->m_linkIdx = 0;
+    if (m_result->m_routeNum > 1) {
+        const unsigned short* route = reinterpret_cast<const unsigned short*>(
+            m_result->m_route + (m_result->m_routeSize - m_result->m_routeNum * sizeof(unsigned short)));
+        const _NaviCalcResTbl* tbl = m_result->m_tbl;
+        const _NvMhConectNode* nodes = reinterpret_cast<const _NvMhConectNode*>(tbl->m_conectBlocks[2]);
+        unsigned short next = route[1];
+        int linkNum = nodes[route[0]].m_linkNum;
+        if (linkNum != 0) {
+            const unsigned int* link =
+                reinterpret_cast<const unsigned int*>(tbl->m_conectBlocks[3]) + nodes[route[0]].m_linkOfs;
+            int best = 10000;
+            for (int j = 0; j < linkNum; j++) {
+                unsigned int end = link[j];
+                const _NvMhConectPair* pairs = reinterpret_cast<const _NvMhConectPair*>(tbl->m_conectBlocks[4]);
+                if ((pairs[end & 0xfffffff].m_ends + (end >> 31))->m_node == next) {
+                    int cost = pri[j];
+                    if (best > cost) {
+                        m_result->m_linkIdx = j;
+                        best = cost;
+                    }
+                }
+            }
+        }
+    }
+}
+
 int NvmshUtilConect::stockFastResult(unsigned short* route, int node, int num) {
     const _NaviCalcResTbl* tbl = m_result->m_tbl;
     const unsigned int* bits = reinterpret_cast<const unsigned int*>(m_result->m_info->m_bufs[0]);
@@ -507,6 +556,20 @@ bool NvmshUtilSeach::seachAStar(NvmshAStarResult* result) {
     m_result = result;
     result->m_count = 0;
     return calcAStar();
+}
+
+void NvmshUtilSeach::stockGridTbl(const unsigned int* bits) {
+    for (int y = 0; y < 5; y++) {
+        for (int x = 0; x < 5; x++) {
+            int idx = y * 5 + x;
+            if (bits[idx >> 5] & (1 << (idx & 0x1f))) {
+                NvmshAStarResult* result = m_result;
+                NvmshAcObjBase::ReadCell* cell = result->m_cells + result->m_count++;
+                cell->x = m_grid->m_base.x + x;
+                cell->y = m_grid->m_base.y + y;
+            }
+        }
+    }
 }
 
 const int NvmshUtil::NAVI_UTIL_OFFX[4] = {1, 0, -1, 0};

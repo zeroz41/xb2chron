@@ -198,13 +198,17 @@ public:
     NvmshUtilSeach();
     bool seachAStar(NvmshAStarResult* result);
     bool calcAStar();
+    // adds the cells of the 5x5 grid whose bit is set to m_result's cells
+    void stockGridTbl(const unsigned int* bits);
 
     NvmshAStarResult* m_result;
     // NvmshAcObjBase::findPosRoot sets them from its status bits 17 and 18; the constructor clears them (the names
     // are not the original's)
     bool m_option0;
     bool m_option1;
-    unsigned char pad_A[0x126];  // the object is 0x130 bytes (findPosRoot's stack)
+    unsigned char pad_A[0x16];
+    NaviCalcGrid* m_grid;  // m_result's m_tbl->m_info (calcAStar; the name is not the original's)
+    unsigned char pad_28[0x108];  // the object is 0x130 bytes (findPosRoot's stack)
 };
 
 }  // namespace navi
