@@ -1012,6 +1012,13 @@ void CGLibTriUniformBlock::setUniformBlock(unsigned int location) {
     pSys->m_pipeline.m_pShader->setUniformBlock(location, pSys->m_pipeline.m_pCmdBuf, m_gpuAddress[CGLibManager::s_nTriNowIdx], m_size);
 }
 
+void CGLibTriUniformBlock::setOldUniformBlock(unsigned int location) {
+    int idx = CGLibManager::s_nTriNowIdx;
+    int oldIdx = idx < 1 ? 2 : idx - 1;
+    ::grlib::context::CGLibSystemContext* pSys = ::grlib::context::CGLibSystemContext::sys();
+    pSys->m_pipeline.m_pShader->setUniformBlock(location, pSys->m_pipeline.m_pCmdBuf, m_gpuAddress[oldIdx], m_size);
+}
+
 CGLibEtcUniformBlock::CGLibEtcUniformBlock() : m_size(0) {
     ::grlib::context::CGLibSystemContext::sys()->getGlbUniformParam(m_pBuff, m_gpuAddress);
 }
