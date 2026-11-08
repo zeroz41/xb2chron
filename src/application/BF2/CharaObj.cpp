@@ -1553,6 +1553,20 @@ const char* Extend::webm(const char* pszName) {
     return m_path.m_str;
 }
 
+const char* Extend::dirname(const char* pszPath) {
+    // the buffer's name is not the original's
+    static mm::mtl::FixStr<256> s_dir;
+    const char* p = strrchr(pszPath, '\\');
+    if (p == nullptr) {
+        p = strrchr(pszPath, '/');
+        if (p == nullptr) {
+            return pszPath;
+        }
+    }
+    s_dir.set(pszPath, p - pszPath);
+    return s_dir.m_str;
+}
+
 const char* Extend::filename(const char* pszPath) {
     const char* p = strrchr(pszPath, '\\');
     if (p != nullptr) {
@@ -1724,6 +1738,28 @@ void ParamVariable::setStr(const char* value) {
 void ParamVariable::setUserdata(void* value) {
     m_type = 5;
     m_value.userdata = value;
+}
+
+void ParamVariable::createString(mm::mtl::FixStr<256>& str) {
+    str = "";
+    switch (m_type) {
+    case 1:
+        str.format("%d", m_value.intValue);
+        break;
+    case 2:
+        // the original passes the stored bits as an int (no float conversion)
+        str.format("%f", m_value.intValue);
+        break;
+    case 3:
+        str = m_value.boolValue ? "true" : "false";
+        break;
+    case 4:
+        str = m_value.strValue;
+        break;
+    case 5:
+        str.format("%lld", m_value.userdata);
+        break;
+    }
 }
 
 ParamVariable& Param::val(unsigned int i) {
@@ -4880,6 +4916,42 @@ ResPack::~ResPack() {
     clear();
 }
 
+void ResPack::draw() {
+    fw::debug::drawSquare2D(mm::Rect<int>(0x14A, 0xB4, 0xBE, 0x2D), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+    fw::debug::drawLineSquare2D(mm::Rect<int>(0x14A, 0xB4, 0xBE, 0x2D), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+    fw::debug::drawFont(0x14F, 0xB9, "PACK");
+    if (m_res != nullptr) {
+        if (PackData* data = static_cast<PackData*>(m_res->getAssetData())) {
+            fw::debug::drawFont(0x186, 0xB9, "       %d", data->m_count);
+        }
+        const char* state;
+        if (m_func) {
+            fw::debug::drawFontColor(mm::Col4(0.5f, 0.5f, 0.5f, 1.0f));
+            state = "LOADING.. ->";
+        } else {
+            fw::debug::drawFontColor(mm::Col4(0.7f, 0.7f, 1.0f, 1.0f));
+            state = "COMPLEATE ->";
+        }
+        fw::debug::drawFont(0x154, 0xCD, state);
+    }
+}
+
+void ResPack::load(mtl::ALLOC_HANDLE handle, const char* name, IResPackEvent* event) {
+    m_handle = handle;
+    m_name = name;
+    m_event = event;
+    m_res = fw::RenderResource::request(mm::mtl::Singleton<MemoryManager>::getPtr()->pad_24,
+                                        mm::mtl::Singleton<Extend>::getPtr()->evpa(m_name.m_str), 0);
+    m_func = &ResPack::func_loading;
+}
+
+void ResPackManager::load(mtl::ALLOC_HANDLE handle, const char* name, IResPackEvent* event) {
+    ResPack* pack = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) ResPack();
+    pack->load(handle, name, event);
+    m_packs.push_back(pack);
+}
+
 // inline here: the original's out-of-line copy (0x71000B8D70, called from another unit) stores in an order no source
 // form gives yet, while the copies Singleton<ResManager>::getPtr inlines (EffectPlayEva::update) match this one
 ResManager::ResManager() : pad_0x18(0), pad_0x10b8(0), pad_0x10bc(0) {}
@@ -4949,6 +5021,30 @@ void ResManager::OnEventProc(event::MSG_TYPE msg) {
         break;
     default:
         break;
+    }
+}
+
+}  // namespace event
+
+#include "classes/event/AlphaObj.h"
+
+namespace event {
+
+void AlphaManager::render() {
+    if ((m_debugFlags & 1) && (m_flags & 1)) {
+        int h = m_objs.size() * 20 + 50;
+        fw::debug::drawSquare2D(mm::Rect<int>(0xD2, 0x8C, 700, h), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+        fw::debug::drawLineSquare2D(mm::Rect<int>(0xD2, 0x8C, 700, h), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFont(0xD7, 0x91, "ALPHA");
+        fw::debug::drawFont(0x230, 0x91, "TOTAL %d", m_objs.size());
+        for (unsigned long i = 0; i < m_objs.size(); i++) {
+            m_objs.begin()[i]->draw(0xE6, 0xAA + i * 20);
+            if (i > 40) {
+                fw::debug::drawFont(0x244, 0xC3 + i * 20, "and more..");
+                return;
+            }
+        }
     }
 }
 

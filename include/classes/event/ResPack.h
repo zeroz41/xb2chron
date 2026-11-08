@@ -10,6 +10,22 @@ namespace event {
 // table 0x7100B3C058
 class ResPack {
 public:
+    // the pack file func_loading walks (draw shows its count); the names are not the original's
+    struct PackData {
+        struct Entry {
+            unsigned int m_offset;  // 0x0: the file's data, from the pack's start
+            unsigned int m_size;  // 0x4
+            unsigned char pad_8[8];
+            char m_name[0x80];  // 0x10
+        };
+        unsigned int pad_0;
+        unsigned int m_count;  // 0x4
+        unsigned char pad_8[8];
+        Entry m_entries[1];  // 0x10, m_count of them (0x90 bytes each)
+    };
+
+    // inline: ResPackManager::load builds it
+    ResPack() : m_event(nullptr), m_func(nullptr), m_res(nullptr) {}
     // out of line, the key function: D2/D0 sit before draw (0x71000B87A0)
     virtual ~ResPack();  // slot 0
     void draw();

@@ -14,15 +14,19 @@ enum ALPHA_ATTR : int {};
 class AlphaManager : public IManager, public mm::mtl::Singleton<AlphaManager> {
 public:
     // inline: getPtr's static is built in its callers (CharaFade::update)
-    AlphaManager() : m_flags(0), pad_14(0) {}
+    AlphaManager() : m_flags(0), m_debugFlags(0) {}
     // out of line (0x71000BA2B8); CharaFade::update sets a character's alpha with attribute 1
     void setAlpha(gf::GF_OBJ_HANDLE* handle, ALPHA_ATTR attr, float alpha, float time);
+    // drops the objects that are gone or opaque again
+    void update();
+    // the debug list (while m_debugFlags bit 0 is set)
+    void render();
     virtual ~AlphaManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 
 private:
     unsigned int m_flags;  // 0x10 bit 0: update walks the objects (the name is not the original's)
-    unsigned int pad_14;
+    unsigned int m_debugFlags;  // 0x14 bit 0: render draws the list (the name is not the original's)
     // update and render walk it; render deletes (slot 1) and erases each finished one; the name is not the original's
     mm::mtl::FixedVector<AlphaObj*, 256> m_objs;  // 0x18 (count at 0x818)
 };

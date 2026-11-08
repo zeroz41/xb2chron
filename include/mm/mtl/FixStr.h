@@ -66,7 +66,7 @@ public:
     void set(const char* psz, int len) {
 #line 227 MM_MTL_FIXSTR_H_FILE
         MM_ASSERT(len<LEN);
-        strncpy(m_str, psz, len);
+        memcpy(m_str, psz, len);
         m_str[len] = '\0';
     }
     // ordered by strcmp (a Map keyed by it compares so: PadRelay's maps; the name is the operator's)
