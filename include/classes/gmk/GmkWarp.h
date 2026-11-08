@@ -53,6 +53,11 @@ public:
     void clearGobInsts();
     // makes the icon effect of the point at index (0 or 1) in m_iconEffects
     void createIcon(unsigned int index);
+    // places both icon effects on the ground under their points (getYSnapPos from 3 above, 6 down), turned by the
+    // point's m_param
+    void validateIconPos();
+    // shows or hides both objects and both icon effects by pad_6d
+    void validateDisp() const;
     void reqDeadIcon();
     void reqRecreateIcon();
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)

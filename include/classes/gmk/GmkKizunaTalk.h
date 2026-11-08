@@ -27,12 +27,16 @@ public:
     };
     GmkKizunaTalk() {}
     virtual ~GmkKizunaTalk();  // slot 0
+    const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9
+    // makes its object (a collection object from its sheet's row), shows it, makes it targetable and puts it at the
+    // gimmick's position; sets local game flag 2 of its row to 1
+    void createGfObjHandle();
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(36);
     // its game object (dispose clears its user data, destroys it and stores -1; the name is not the original's)

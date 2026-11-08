@@ -3088,6 +3088,53 @@ void GmkGrave::debugDraw() const {
     AGmkBase::debugDraw();
     isValid();
 }
+
+void GmkGrave::createGobInst() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    CBdatWrapper bdat(m_list->getBindedBdatFp());
+    m_gob = gf::GfObjFactory::createGmkMapObj(bdat, m_createInfo.m_bdatId);
+    {
+        gf::GfObjAcc acc(m_gob);
+        acc.setUserData(gf::GfObjUserData(0), reinterpret_cast<unsigned long>(this));
+    }
+    {
+        gf::GF_OBJ_HANDLE* gob = m_gob;
+        gf::GfObjAcc acc(gob);
+        if (acc.m_obj != nullptr) {
+            gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(gob)->m_setup);
+            setup->pad_6c |= 7;
+        }
+        if (gf::GfObj* obj = acc.getObj()) {
+            obj->pad_110 |= 7;
+        }
+    }
+    {
+        gf::GF_OBJ_HANDLE* handle = m_gob;
+        // the original calls getGmkType here and drops its answer
+        getGmkType();
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setDisp(gf::OBJDISP(8), true);
+        }
+    }
+    gf::GfObjSetupGimmick* setup = getSetupOf<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(m_gob), 8);
+    const mm::Vec3* xform = m_pos;
+    setup->m_initialPos = xform[0];
+    setup->pad_30 = xform[1];
+    // the first byte of the gimmick's data: its scale in tenths
+    setup->setInitialScale(m_createInfo.m_data[0] * 0.1f);
+}
 void GmkDmgEffect::update(float dt) { AGmkBase::update(dt); }
 
 int IGmkList::debugGetDocId() const { return 0; }
@@ -5215,6 +5262,100 @@ void GmkKizunaTalk::debugDraw() const {
     }
 }
 
+void GmkKizunaTalk::update(float) {
+    debugUpdateMmf();
+    if (!isValid()) {
+        return;
+    }
+    if (getBdatInfo()->isCondMatched()) {
+        const mm::Vec3* pos = m_pos;
+        float distSq = m_popDistSq;
+        if (DistCond::isMatch(distSq, *pos)) {
+            if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+                createGfObjHandle();
+            }
+            return;
+        }
+    }
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+}
+
+void GmkKizunaTalk::createGfObjHandle() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    CBdatWrapper bdat(m_list->getBindedBdatFp());
+    m_gob = gf::GfObjFactory::createGmkCollection(bdat, m_createInfo.m_bdatId);
+    {
+        gf::GfObjAcc acc(m_gob);
+        acc.setUserData(gf::GfObjUserData(0), reinterpret_cast<unsigned long>(this));
+    }
+    {
+        gf::GF_OBJ_HANDLE* handle = m_gob;
+        // the original calls getGmkType here and drops its answer
+        getGmkType();
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setDisp(gf::OBJDISP(8), true);
+        }
+    }
+    {
+        gf::GF_OBJ_HANDLE* gob = m_gob;
+        gf::GfObjAcc acc(gob);
+        if (acc.m_obj != nullptr) {
+            gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(gob)->m_setup);
+            setup->pad_6c |= 7;
+        }
+        if (gf::GfObj* obj = acc.getObj()) {
+            obj->pad_110 |= 7;
+        }
+    }
+    gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(m_gob)->m_setup);
+    const mm::Vec3* xform = m_pos;
+    setup->m_initialPos = xform[0];
+    setup->pad_30 = xform[1];
+    gf::GfGameFlag::setLocal(2, m_createInfo.m_bdatId, 1);
+}
+
+void GmkKizunaTalk::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    if (getBdatInfo()->m_evCondition == 0 || gf::GfGameCond::isGameCond(getBdatInfo()->m_evCondition)) {
+        unsigned short eventId = (unsigned short)Bdat::getValCheck(m_list->getBindedBdatFp(), "EventID", m_createInfo.m_bdatId, 2);
+        gf::GfPlayFactory::createOneEvent(eventId);
+        gf::GfGameFlag::setLocal(2, m_createInfo.m_bdatId, 2);
+    } else {
+        const BdatInfo* info = getBdatInfo();
+        gf::GfMenuObjCommonText::OpenKizunaParam param;
+        param.m_bdat = gf::GfDataBdat::getFP(0x1B2);
+        param.m_id = info->m_title;
+        param.m_value = info->m_evCondition;
+        gf::GfPlayFactory::createMenuObjCommonText(param);
+    }
+}
+
 GmkBlade::~GmkBlade() { dispose(); }
 
 // 1.0.0's out-of-line member; 3.0.1 inlines it (it reads m_current again through the singleton)
@@ -6314,6 +6455,15 @@ void GmkLandmarkManager::dispose() {
 
 GmkSquadManager::~GmkSquadManager() {
     clearGmkSquads();
+}
+
+// releases every squad's reference, then empties the list (clear(): the explicit erase loop lays the size check out
+// the other way)
+void GmkSquadManager::clearGmkSquads() {
+    for (mm::mtl::IntrusiveList<GmkSquad>::iterator it = m_list.begin(); it != m_list.end(); ++it) {
+        (*it).release();
+    }
+    m_list.clear();
 }
 
 // the list emptied by its own loop (written out here: the list's clear() inlined lays the size check out the other way)
@@ -7879,6 +8029,56 @@ void GmkWarp::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* hand
         }
         if (gob != nullptr) {
             *gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        }
+    }
+}
+
+// the icon effect "cmn_100_100" of the point at index
+void GmkWarp::createIcon(unsigned int index) {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    unsigned int& effect = m_iconEffects[index];
+    if (effect != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(effect);
+        effect = 0;
+    }
+    void* efb = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search("cmn_100_100", nullptr);
+    if (efb == nullptr) {
+        return;
+    }
+    effect = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->create(efb, true);
+    if (effect != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setCategory(effect, fw::EF_CATEGORY(1));
+        validateIconPos();
+    }
+}
+
+void GmkWarp::validateDisp() const {
+    bool disp;
+    if (pad_6d) {
+        // the original calls getGmkType here and drops its answer
+        getGmkType();
+        disp = true;
+    } else {
+        disp = false;
+    }
+    if (m_firstHandle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_firstHandle);
+        if (acc.m_obj != nullptr) {
+            acc.setDisp(gf::OBJDISP(8), disp);
+        }
+    }
+    if (m_secondHandle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_secondHandle);
+        if (acc.m_obj != nullptr) {
+            acc.setDisp(gf::OBJDISP(8), disp);
+        }
+    }
+    for (unsigned int i = 0; i < 2; i++) {
+        if (m_iconEffects[i] != 0) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setDisp(m_iconEffects[i], disp);
         }
     }
 }
