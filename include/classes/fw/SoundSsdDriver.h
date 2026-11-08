@@ -189,6 +189,19 @@ public:
         }
         return nullptr;
     }
+    // the bank registered under an id, null when none is (SoundSsdSource's constructors inline it; the name is not
+    // the original's)
+    SoundSsdBank* findBank(int id) {
+        for (mm::mtl::List<SoundSsdBank*>::iterator it = m_banks.begin(); it != m_banks.end(); ++it) {
+            SoundSsdBank* bank = *it;
+            if (bank->m_id == id) {
+                return bank;
+            }
+        }
+        return nullptr;
+    }
+    // the volume sound/bgm_vol.csvb gives a stream (fw::SoundSsdBank::addStream)
+    float getBgmVolume(const char* name);
     void stopSoundAll(fw::SoundType type, float fadeTime);
     void destroyResourceAll();  // destroys and releases every bank
     // a handle's notification (registered on each handle the driver plays): a handle whose voice is freed drops the

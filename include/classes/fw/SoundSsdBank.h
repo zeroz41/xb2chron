@@ -59,6 +59,7 @@ public:
     void stopAll();
     void update();
     mm::mtl::IntrusivePtr<SoundSsdSource> addWave(const WaveInfo& info);
+    mm::mtl::IntrusivePtr<SoundSsdSource> addStream(const char* name, SoundCategory category, SoundPriority priority);
 
     ssd::SoundBank m_bank;  // 0x10 (stopAll stops it; the name is not the original's)
     // 0x130: the bank's one sound group (the constructor builds it, SoundBank::AddSoundGroup adds it; the name is

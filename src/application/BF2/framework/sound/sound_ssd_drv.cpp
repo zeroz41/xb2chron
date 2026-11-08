@@ -35,6 +35,7 @@
 #include "classes/fw/SoundPoolMemory.h"
 #include "classes/fw/SsdObjectAllocator.h"
 #include "classes/ssd/Delegate/Object.h"
+#include "ml/PathUtil.h"
 
 #define SOUND_SSD_DRV_PATH "D:/Monolithsoft/BF2/prog/application/BF2/framework/sound/sound_ssd_drv.cpp"
 
@@ -79,6 +80,26 @@ int SoundReferenceObject::release() {
         mtl::MemManager::deallocate(this, 0, false);
     }
     return count;
+}
+
+SoundSsdSource::SoundSsdSource(const SetupInfo& info)
+    : m_wave(nullptr), m_entry(nullptr), m_bankId(info.bankId), m_name(info.name), m_label(), m_labelHash(0),
+      m_uniqueId(0), m_isStream(false), m_is3D(false), pad_240_2(0), pad_244(6) {
+    m_nameHash = mm::mtl::hashStrCrc(m_name.m_str);
+    m_label = ml::PathUtil::getFilePtrFromPath(info.name);
+    m_labelHash = mm::mtl::hashStrCrc(m_label.m_str);
+    m_bank = SoundSsdDriver::sys()->findBank(m_bankId);
+}
+
+SoundSsdSource::SoundSsdSource(const SetupWaveInfo& info)
+    : m_wave(nullptr), m_entry(nullptr), m_bankId(info.bankId), m_name(info.name), m_label(), m_labelHash(0),
+      m_uniqueId(0), m_isStream(false), m_is3D(false), pad_240_2(0), pad_244(6) {
+    m_nameHash = mm::mtl::hashStrCrc(m_name.m_str);
+    if (info.label != nullptr && info.label[0] != '\0') {
+        m_label = info.label;
+        m_labelHash = mm::mtl::hashStrCrc(m_label.m_str);
+    }
+    m_bank = SoundSsdDriver::sys()->findBank(m_bankId);
 }
 
 SoundSsdSource::~SoundSsdSource() {
@@ -142,7 +163,19 @@ void SoundSsdBank::stopAll() {
     m_bank.Stop(0.0f);
 }
 
-// the log method SoundCore::Init installs: drops every message
+void SoundSsdBank::update() {
+    for (mm::mtl::List<SoundSsdSource*>::iterator it = m_sources.begin(); it != m_sources.end();) {
+        SoundSsdSource* source = *it;
+        if (source->m_RefCount == 1 && (source->m_wave == nullptr || source->m_wave->referenceCount_ == 0)) {
+            it = m_sources.erase(it);
+            source->release();
+        } else {
+            ++it;
+        }
+    }
+}
+
+//the log method SoundCore::Init installs: drops every message
 static ssd::Result fn_71001A384C(ssd::LogMessage::Type, const char16_t*) {
     return ssd::Result(0);
 }
@@ -432,7 +465,7 @@ SoundCategory SoundSsdDriver::getCategory(unsigned int handle) {
     ml::CS lock(m_cs);
     if (m_players.isValid(handle)) {
         if (SoundSsdPlayer* player = getPlayer(handle)) {
-            return player->m_category;
+            return player->m_setup.category;
         }
     }
     return static_cast<SoundCategory>(0);
@@ -575,7 +608,7 @@ void SoundSsdDriver::pauseCategory(SoundCategory category, bool pause, float fad
     ml::CS lock(m_cs);
     for (PtrMapIterator it = m_players.begin(); it != m_players.end(); ++it) {
         SoundSsdPlayer* player = static_cast<SoundSsdPlayer*>(const_cast<void*>(it.m_param->m_ptr));
-        if (player != nullptr && player->m_category == category) {
+        if (player != nullptr && player->m_setup.category == category) {
             player->pause(pause, fadeTime);
         }
     }
@@ -672,9 +705,9 @@ void SoundSsdDriver::setCategoryPitch(SoundCategory category, float pitch, float
     ml::CS lock(m_cs);
     for (PtrMapIterator it = m_players.begin(); it != m_players.end(); ++it) {
         SoundSsdPlayer* player = static_cast<SoundSsdPlayer*>(const_cast<void*>(it.m_param->m_ptr));
-        if (player != nullptr && player->m_category == category && player->isValid()) {
-            player->m_pitchRate = pitch;
-            player->m_handle->SetPitch(pitch, fadeTime);
+        if (player != nullptr && player->m_setup.category == category && player->isValid()) {
+            player->m_setup.pitchRate = pitch;
+            player->m_setup.handle->SetPitch(pitch, fadeTime);
         }
     }
     CategoryInfo* info = findCategory(category);
@@ -701,7 +734,7 @@ bool SoundSsdDriver::findSe(const char* name) const {
     for (PtrMapIterator it = m_players.begin(); it != m_players.end();) {
         const SoundSsdPlayer* player = static_cast<const SoundSsdPlayer*>(it.m_param->m_ptr);
         ++it;
-        if (player != nullptr && player->m_type == 3 && strcmp(player->m_source->m_label.m_str, name) == 0) {
+        if (player != nullptr && player->m_setup.type == 3 && strcmp(player->m_setup.source->m_label.m_str, name) == 0) {
             return true;
         }
     }
