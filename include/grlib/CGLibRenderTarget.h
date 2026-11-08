@@ -126,9 +126,20 @@ public:
     bool m_isSetup;                  // 0xB8: cleared by releaseWork
     unsigned int m_width;  // 0xBC
     unsigned int m_height;  // 0xC0
-    unsigned short m_mipNum;          // 0xC4: cleared by the destructor
+    // one entry of the cache of pool-resident textures setTextureInfo keeps in m_mipTextures (the names are not the
+    // original's; the layout is what setTextureInfo compares and stores)
+    struct MipWork {
+        unsigned short m_width;   // 0x0
+        unsigned short m_height;  // 0x2
+        short m_age;              // 0x4: setTextureInfo calls since last use, at most 10
+        unsigned int m_offset;    // 0x8: the pool offset the texture was made at
+        GrlSurfaceFormat m_format;  // 0xC
+    };
+
+    // 0xC4: bit i = m_mipWork[i] / m_mipTextures[i] in use (setTextureInfo); cleared by the destructor
+    unsigned short m_mipNum;
     unsigned char pad_c6[2];          // 0xC6
-    unsigned char m_mipWork[0x60];    // 0xC8: zeroed by the constructor (contents unknown; the memset starts at 0xC8)
+    MipWork m_mipWork[6];             // 0xC8: zeroed by the constructor
     CGLibTextureBuffer m_mipTextures[6];  // 0x128 (0x3C8 bytes: CGLibDisplay holds an array of two)
 };
 
@@ -179,6 +190,9 @@ public:
     ~CGLibDepthTarget();
     void releaseWork();
     void release();
+    // the depth buffer's size and format; flag: kept in the pool-resident cache at offset (the parameter names are
+    // not the original's)
+    void setTextureInfo(float width, float height, GrlDepthFormat format, bool flag, unsigned int offset);
     // clears the depth buffer (CGLibDepthCtl::clearDepthBuffer)
     void clearDepth(bool);
     // makes the depth buffer current, with no colour buffer
@@ -194,9 +208,20 @@ public:
     CGLibTextureBuffer* m_pSubTexture;   // 0x128: &m_subTexture
     // 0x130: &m_texture, the texture DrMdoSetup::varStTex_StencilTex binds (DrPixlMan::getDepthObj's)
     CGLibTextureBuffer* m_pTexture;
-    unsigned short m_mipNum;             // 0x138: cleared by the destructor
+    // one entry of the cache of pool-resident depth buffers setTextureInfo keeps in the m_mip arrays (the names are
+    // not the original's; the layout is what setTextureInfo compares and stores)
+    struct MipWork {
+        unsigned short m_width;   // 0x0
+        unsigned short m_height;  // 0x2
+        short m_age;              // 0x4: setTextureInfo calls since last use, at most 10
+        unsigned int m_offset;    // 0x8: the pool offset the buffer was made at
+        GrlDepthFormat m_format;  // 0xC
+    };
+
+    // 0x138: bit i = m_mipWork[i] and the m_mip arrays' entry i in use (setTextureInfo); cleared by the destructor
+    unsigned short m_mipNum;
     unsigned char pad_13a[2];            // 0x13A
-    unsigned char m_mipWork[0x60];       // 0x13C: zeroed by the constructor (contents unknown)
+    MipWork m_mipWork[6];                // 0x13C: zeroed by the constructor
     CGLibDepthBuffer m_mipDepthBuffers[6];     // 0x1A0
     // two arrays, not one [2][6]: the destructor destroys them from two base registers
     CGLibTextureBuffer m_mipSubTextures[6];    // 0x2C0

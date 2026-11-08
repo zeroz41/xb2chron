@@ -1223,17 +1223,9 @@ void CGLibSamplerParam::releaseParams() {
 void CGLibTexture::createTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
                                      GrlSurfaceFormat format) {
     buffer.release();
-    NVNtextureBuilder builder;
-    nvnTextureBuilderSetDefaults(&builder);
-    nvnTextureBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
-    nvnTextureBuilderSetTarget(&builder, NVN_TEXTURE_TARGET_2D);
-    nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(format));
-    nvnTextureBuilderSetSize2D(&builder, width, height);
-    nvnTextureBuilderSetDepth(&builder, 1);
-    nvnTextureBuilderSetLevels(&builder, 1);
-    nvnTextureBuilderSetFlags(&builder, 0xC);
-    unsigned int size = nvnTextureBuilderGetStorageSize(&builder);
-    unsigned int align = nvnTextureBuilderGetStorageAlignment(&builder);
+    unsigned int size;
+    unsigned int align;
+    getDefPixelSize(size, align, width, height, 0, format);
     buffer.m_pData = static_cast<unsigned char*>(
         mtl::MemManager::allocate(CGLibMemHandle::s_hPxlHandle, size, align, false, "no name", 0));
     buffer.m_dataSize = size;
@@ -1534,6 +1526,92 @@ inline void CGLibTexture::createColorTextureBuff(CGLibColorBuffer* buffer, CGLib
     nvnTextureViewSetDefaults(&buffer->m_view);
     nvnTextureViewSetFormat(&buffer->m_view, static_cast<NVNformat>(format));
     nvnTextureViewSetTarget(&buffer->m_view, NVN_TEXTURE_TARGET_2D);
+}
+
+inline void CGLibTexture::createTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
+                                            GrlSurfaceFormat format, unsigned int offset) {
+    buffer.release();
+    unsigned int size;
+    unsigned int align;
+    getDefPixelSize(size, align, width, height, 0, format);
+    buffer.m_dataSize = size;
+    context::CGLibSystemContext* ctx = context::CGLibSystemContext::sys();
+    CGLibTexture_plf::setupTextureBuff(buffer, width, height, 0, format, ctx->m_pixelPool,
+                                       ctx->getPixelResAreaOffset(offset));
+}
+
+void CGLibRenderTarget::setTextureInfo(float width, float height, GrlSurfaceFormat format, bool flag,
+                                       unsigned int offset) {
+    releaseWork();
+    m_isSetup = flag;
+    m_width = width;
+    m_height = height;
+    if (!flag) {
+        for (int i = 0; i < 6; i++) {
+            if (m_mipNum & (1 << i)) {
+                m_mipTextures[i].delayRelease();
+            }
+        }
+        m_mipNum = 0;
+        m_pTexture = &m_texture;
+        CGLibTexture::createTextureBuff(m_texture, m_width, m_height, format);
+    } else {
+        int w = width;
+        int h = height;
+        m_pTexture = nullptr;
+        int found = -1;
+        for (int i = 0; i < 6; i++) {
+            if ((m_mipNum & (1 << i)) && m_mipWork[i].m_width == w && m_mipWork[i].m_height == h &&
+                m_mipWork[i].m_offset == offset && m_mipWork[i].m_format == format) {
+                m_pTexture = &m_mipTextures[i];
+                found = i;
+                break;
+            }
+        }
+        if (m_pTexture == nullptr) {
+            int idx;
+            for (idx = 0; idx < 6; idx++) {
+                if (!(m_mipNum & (1 << idx))) {
+                    break;
+                }
+            }
+            if (idx == 6) {
+                short oldest = -1;
+                idx = 0;
+                for (int i = 0; i < 6; i++) {
+                    if (oldest < m_mipWork[i].m_age) {
+                        oldest = m_mipWork[i].m_age;
+                        idx = i;
+                    }
+                }
+                m_mipTextures[idx].delayRelease();
+            }
+            for (int i = 0; i < 6; i++) {
+                if ((m_mipNum & (1 << i)) && ++m_mipWork[i].m_age > 10) {
+                    m_mipWork[i].m_age = 10;
+                }
+            }
+            m_mipWork[idx].m_width = w;
+            m_mipWork[idx].m_height = h;
+            m_mipWork[idx].m_offset = offset;
+            m_mipWork[idx].m_format = format;
+            m_mipWork[idx].m_age = 0;
+            m_pTexture = &m_mipTextures[idx];
+            m_mipNum |= 1 << idx;
+            CGLibTexture::createTextureBuff(*m_pTexture, m_width, m_height, format, offset);
+        } else {
+            for (int i = 0; i < 6; i++) {
+                if (m_mipNum & (1 << i)) {
+                    if (i == found) {
+                        m_mipWork[i].m_age = 0;
+                    } else if (++m_mipWork[i].m_age > 10) {
+                        m_mipWork[i].m_age = 10;
+                    }
+                }
+            }
+        }
+    }
+    CGLibTexture::createColorTextureBuff(&m_colorBuffer, *m_pTexture, m_width, m_height, format);
 }
 
 void CGLibRenderTarget::setTextureInfo(CGLibTextureBuffer& texture) {

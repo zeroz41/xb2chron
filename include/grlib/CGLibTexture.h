@@ -86,6 +86,10 @@ public:
     // buffer made empty, width by height texels of the format
     static void createTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
                                   GrlSurfaceFormat format);
+    // the same in the pixel pool's resident area at offset (CGLibRenderTarget::setTextureInfo inlines it; the
+    // overload follows createDepthBuff's pair, it has no symbol)
+    static void createTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
+                                  GrlSurfaceFormat format, unsigned int offset);
     // the mip levels down to a 4x4 block for a width by height texture (0 below 2, at most 17)
     static unsigned int getMipMapCnt(unsigned int width, unsigned int height);
     // the texture's first texel, into pValue (the return type is not known)
