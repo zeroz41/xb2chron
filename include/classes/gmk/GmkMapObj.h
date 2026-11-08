@@ -35,6 +35,7 @@ public:
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     void disposeGobInst(bool);
+    void createGobInst();
     void reqDisposeGob(float wait, unsigned int arg) const;
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)

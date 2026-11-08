@@ -20,6 +20,9 @@ public:
     void removeGmkNpc(AGmkNpc* npc);
     void setActiveGmkNpc(AGmkNpc* npc);
     void createGobInst();
+    // inline: unbinds and destroys its game object, then activates the first gimmick whose pop conditions hold
+    // (dispose, removeGmkNpc and the NPC gimmicks' onGobEvent; the name is not the original's)
+    void disposeGobInst();
     // an NPC id, its table and its gimmick list set (GmkNpcManager::update and addGmkNpc test these three; the name is
     // not the original's)
     bool isValid() const { return m_npcId != 0 && m_bdatFp != nullptr && m_gmks != nullptr; }

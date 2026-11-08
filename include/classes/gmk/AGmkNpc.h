@@ -33,7 +33,8 @@ public:
     // GmkNpc's (base at 0x48) and GmkRoutedNpc's (base at 0x50) Vector<T>::resize store it at the base's +0x18
     // 0x18: its NPC id's entry in the set's GmkNpcManager; GmkRoutedNpc::isPopCondMatchedExceptDist tests that the
     // entry names this gimmick and getGobInst reads the entry's game object (the name is not the original's)
-    const GmkNpcIdInfo* m_npcIdInfo = nullptr;
+    // not const: onGobEvent disposes the entry's game object through it
+    GmkNpcIdInfo* m_npcIdInfo = nullptr;
 };
 }  // namespace gmk
 

@@ -47,8 +47,9 @@ public:
     GmkRouteNavi* m_navi = nullptr;  // 0x70: create allocates it, dispose deletes it (the name is not the original's)
     unsigned char pad_78 = 1;
     unsigned char pad_79 = 1;
-    mm::Vec3 pad_80 = mm::Vec3::zero;  // the 16-aligned field (resize copies Vec3::zero's x, y, z)
-    mm::Quat pad_90 = mm::Quat::zero;
+    // unbindToGameObj (const) keeps the game object's last world position and rotation here
+    mutable mm::Vec3 pad_80 = mm::Vec3::zero;  // the 16-aligned field (resize copies Vec3::zero's x, y, z)
+    mutable mm::Quat pad_90 = mm::Quat::zero;
 };
 }  // namespace gmk
 

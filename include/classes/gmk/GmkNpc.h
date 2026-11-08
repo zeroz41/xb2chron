@@ -63,7 +63,7 @@ public:
     // user-provided: Vector<GmkNpc>::resize stores the defaults below only (no zero fill of the element first)
     GmkNpc() {}
     unsigned char pad_68 = 1;
-    unsigned char pad_69 = 1;  // fields: size from TGmkList::getInst's stride (0x70)
+    mutable unsigned char pad_69 = 1;  // setDispSpecified (const) stores it; fields: size from TGmkList::getInst's stride (0x70)
 };
 }  // namespace gmk
 

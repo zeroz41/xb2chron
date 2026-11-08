@@ -1345,6 +1345,64 @@ void GmkNpcIdInfo::update(float, bool flag) {
     }
 }
 
+inline void GmkNpcIdInfo::disposeGobInst() {
+    if (m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        m_gmk->unbindToGameObj(m_handle);
+        gf::GfObjUtil::destroy(m_handle);
+        m_handle = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        m_gmk = nullptr;
+        for (mm::mtl::IntrusiveList<AGmkNpc>::iterator it = m_gmks->begin(); it != m_gmks->end(); ++it) {
+            if (it->isPopCondMatched()) {
+                setActiveGmkNpc(&*it);
+                break;
+            }
+        }
+    }
+}
+
+// an object's setup as T when the setup and the object are of the given type, null otherwise (as gf_obj_factory's;
+// the name is not the original's: the original's code is inline in each caller)
+template <class T>
+static inline T* getSetupOf(gf::GFOBJ_INFO* info, int type) {
+    if (info == nullptr || info->m_setup == nullptr) {
+        return nullptr;
+    }
+    gf::GfObjSetup* setup = info->m_setup;
+    gf::GfObj* obj = info->m_obj;
+    if (setup->m_type == static_cast<int>(obj->m_type) && type == static_cast<int>(obj->m_type)) {
+        return setup->getRTTI()->isKindOf(&T::m_rtti) ? static_cast<T*>(setup) : nullptr;
+    }
+    return nullptr;
+}
+
+void GmkNpcIdInfo::createGobInst() {
+    disposeGobInst();
+    m_handle = gf::GfObjFactory::createGmkNpc(CBdatWrapper(m_gmk->getBindedBdatFp()), m_gmk->getBindedBdatId());
+    if (m_handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    m_gmk->bindToGameObj(m_handle);
+    m_gmk->validateDisp();
+    gf::GfObjSetupNpc* setup = getSetupOf<gf::GfObjSetupNpc>(gf::GfObjManager::getObjInfo(m_handle), 6);
+    mm::Vec3 pos;
+    mm::Vec3 rot;
+    m_gmk->findPopPosRot(pos, rot);
+    setup->m_initialPos = pos;
+    setup->pad_30 = rot;
+}
+
+void GmkNpcIdInfo::removeGmkNpc(AGmkNpc* npc) {
+    if (npc == nullptr) {
+        return;
+    }
+    npc->m_npcIdInfo = nullptr;
+    if (m_gmk == npc) {
+        disposeGobInst();
+        m_gmk = nullptr;
+    }
+    m_gmks->remove(npc);
+}
+
 void GmkNpcManager::create() {
     m_npcIdInfos.setAllocator(fw::FrameworkMemory::getAllocator(5));
     unsigned char* fpA8 = gf::GfDataBdat::getFP(0xa8);
@@ -2565,6 +2623,36 @@ bool GmkNpc::isPopCondMatchedExceptDist() const {
     return isPopCondMatched();
 }
 
+// the NPC ids setDispSpecified keeps hidden unless asked to show them (the name is not the original's)
+static inline bool isDispSpecifiedHiddenNpc(unsigned short npcId) {
+    switch (npcId) {
+    case 0xd20:
+    case 0xd21:
+    case 0xd22:
+    case 0xd23:
+    case 0xd75:
+    case 0xdf1:
+    case 0xe3b:
+    case 0xe3c:
+    case 0xe3d:
+    case 0xe3e:
+    case 0xe3f:
+    case 0xe40:
+    case 0xe41:
+        return true;
+    }
+    return false;
+}
+
+void GmkNpc::setDispSpecified(bool disp) const {
+    if (!isValid()) {
+        return;
+    }
+    unsigned char* fp = getBindedBdatFp();
+    pad_69 = disp || !isDispSpecifiedHiddenNpc(Bdat::getValCheck(fp, "NpcID", getBindedBdatId(), 2));
+    validateDisp();
+}
+
 bool GmkNpc::isPopCondMatched() const {
     if (isValid()) {
         const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
@@ -2650,6 +2738,17 @@ void GmkNpc::bindToGameObj(gf::GF_OBJ_HANDLE* handle) const {
     if (obj != nullptr && !acc.isDestroy() && !acc.testFlag(0x11)) {
         if (gf::GfComBehaviorNpc* behavior = obj->getComponent<gf::GfComBehaviorNpc>(6)) {
             behavior->validateBindedGmkInstInfo(true);
+        }
+    }
+}
+
+void GmkNpc::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3)) {
+        unbindToGameObj(handle);
+        GmkNpcIdInfo* info = m_npcIdInfo;
+        if (info->m_handle == handle) {
+            info->disposeGobInst();
         }
     }
 }
@@ -2746,6 +2845,36 @@ void GmkRoutedNpc::bindToGameObj(gf::GF_OBJ_HANDLE* handle) const {
     if (gf::GfObj* obj = acc.getObj()) {
         if (gf::GfComBehaviorNpc* behavior = obj->getComponent<gf::GfComBehaviorNpc>(6)) {
             behavior->validateBindedGmkInstInfo(true);
+        }
+    }
+}
+
+// keeps the game object's last world position and rotation, then clears its user data
+void GmkRoutedNpc::unbindToGameObj(gf::GF_OBJ_HANDLE* handle) const {
+    {
+        gf::GfObjAcc acc(handle);
+        if (acc.isValidTransform()) {
+            fw::Transform transform = acc.getWorldTransformNoSync();
+            pad_80 = transform.position;
+            pad_90 = transform.rotation;
+        }
+    }
+    if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+    }
+}
+
+void GmkRoutedNpc::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3)) {
+        unbindToGameObj(handle);
+        pad_78 = 1;
+        GmkNpcIdInfo* info = m_npcIdInfo;
+        if (info->m_handle == handle) {
+            info->disposeGobInst();
         }
     }
 }
@@ -5017,6 +5146,45 @@ void GmkMapObj::dispose() {
     AGmkBase::dispose();
 }
 
+void GmkMapObj::disposeGobInst(bool req) {
+    gf::GF_OBJ_HANDLE* gob = m_gobInst;
+    if (gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    if (req && m_disposeWait > 0.0f) {
+        float wait = m_disposeWait;
+        unsigned int arg = m_disposeArg;
+        gf::GfObjAcc acc(gob);
+        if (acc.getObj() != nullptr && !acc.isDestroy() && !acc.testFlag(0x11)) {
+            gf::SCOM_DESTROY_GAME_OBJ::create(gob, wait, arg);
+        }
+        m_disposeWait = 0.0f;
+    } else {
+        {
+            gf::GfObjAcc acc(gob);
+            if (acc.m_obj != nullptr) {
+                acc.setUserData(gf::GfObjUserData(0), 0);
+            }
+        }
+        gmk::disposeGobInst(m_gobInst, 0.0f);
+        m_gobInst = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+}
+
+void GmkMapObj::update(float dt) {
+    AGmkBase::update(dt);
+    if (!isValid() || !isInterestPosExist()) {
+        return;
+    }
+    if (m_gobInst == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) &&
+        static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->isPopCondMatched(*m_pos) && (!pad_51 || pad_52)) {
+        createGobInst();
+    } else if (m_gobInst != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) &&
+               (static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->isDepopCondMatched(*m_pos) || (pad_51 && !pad_52))) {
+        disposeGobInst(true);
+    }
+}
+
 GmkMapObj::~GmkMapObj() { dispose(); }
 
 GmkCollision::~GmkCollision() { dispose(); }
@@ -5510,6 +5678,7 @@ void GmkNpc::unbindToGameObj(gf::GF_OBJ_HANDLE* handle) const {
     }
 }
 
+
 void GmkNpc::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
     m_group = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Group", row, 2);
     m_battleReaction = (unsigned short)Bdat::getValCheck(bdat.m_fp, "BattleReaction", row, 2);
@@ -5537,6 +5706,7 @@ void GmkNpc::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
     m_invisibleXZSq = (float)invisibleXZ * (float)invisibleXZ;
     m_invisibleYSq = (float)invisibleY * (float)invisibleY;
 }
+
 
 unsigned char* GmkRoutedNpc::getBindedBdatFp() const { return m_list->getBindedBdatFp(); }
 
