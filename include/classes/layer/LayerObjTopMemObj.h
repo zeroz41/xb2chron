@@ -10,6 +10,7 @@
 
 namespace grlib { class CGLibTextureBuffer; }
 namespace layer { class LayerRenderView; }
+namespace layer { class LayerResViewPortInfo; }
 namespace layer { class LayerResColor; }
 namespace layer { class LayerResMatrix; }
 namespace layer { class LayerSortMan; }
@@ -25,6 +26,8 @@ public:
     void setRender(bool render);
     void setupRender();
     void lastRender();
+    // sets up m_uniform and the buffers for the size and type (the constructor)
+    void createWorkBuffer();
     enum { RENDER_ON = 0x4 };  // the name is not the original's
     // set by the constructor; resourceInit clears it once it has set the render target up (the name is not the
     // original's)
@@ -32,7 +35,9 @@ public:
 
     // The field names follow LayerAccMemObj's accessors that read them (not the original's).
     // The field names follow the functions that use them (not the original's).
-    const void* m_viewData;  // applyParams copies LayerRenderView::m_viewData (the name is not the original's)
+    // applyParams copies LayerRenderView::m_viewData; finalRender sets it as the viewport (the name is not the
+    // original's)
+    LayerResViewPortInfo* m_viewData;
     LayerObjSortMemObj m_sortObj;  // 0x258: what setDrawList puts in the sort lists
     unsigned int m_renderFlags;  // setRender sets or clears RENDER_ON
     unsigned char pad_274[0x4];
@@ -42,9 +47,16 @@ public:
     grlib::CGLibOneUniformBlock m_oneUniform;  // 0x678: the destructor releases it first of the five
     grlib::CGLibOneUniformBlock m_buffers[2];  // getBuffer, indexed by LayerManager::s_nDebIdx
     grlib::CGLibOneUniformBlock m_clearBuffers[2];  // updateBufer zeroes its first 16 bytes before flushing
-    unsigned int m_memWidth;  // getMemWidth
-    unsigned int m_memHeight;  // getMemHeight
-    unsigned char pad_748[0x8];
+    // the buffer's size (the type and names are not the original's; createWorkBuffer reads both as one 8-byte copy)
+    struct MemSize {
+        unsigned int m_width;  // LayerAccMemObj::getMemWidth
+        unsigned int m_height;  // LayerAccMemObj::getMemHeight
+    };
+    MemSize m_memSize;  // 0x740
+    // LayerMemType 3: the second plane's offset and size in m_buffers (createWorkBuffer, setupRender; the names are
+    // not the original's)
+    unsigned int m_planeOfs;
+    unsigned int m_planeSize;
     LayerMemType m_memType;  // 0x750: the constructor's; resourceInit halves the second size pair for 3
     unsigned char pad_754[0xC];  // createStaticMemObj allocates 0x760
     virtual void resourceInit();  // slot 3

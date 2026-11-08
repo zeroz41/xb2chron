@@ -103,6 +103,8 @@
 #include "layer/LayerRenderView.h"
 #include "classes/layer/LayerObjTopLayout.h"
 #include "classes/layer/LayerObjSortLayout.h"
+#include "grlib/CGLibCtl.h"
+#include "grlib/CGLibDecShader.h"
 
 namespace layer {
 
@@ -1297,6 +1299,90 @@ void LayerObjUtil::calcLayerRenderView(LayerRenderView& view, LayerResViewPortIn
 void LayerObjUtil::getLayoutInfo(float* pos, const LyrLayoutPosData* data, LayerCenterType type, float sclX, float sclY) {
     s_CallDataPos[mm::mtl::PtrSingleton<LayerManager>::sys()->m_coordinate](pos, data, type, sclX, sclY);
 }
+void LayerObjTopTexObj::finalRender() {
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    const LayerObjTopMaskObj* maskObj = static_cast<const LayerObjTopMaskObj*>(m_curMaskObj);
+    if (maskObj != nullptr && !(maskObj->m_stateFlags & STATE_NO_DRAW)) {
+        if (maskObj->m_dispInfo.m_minX <= 0.0f || maskObj->m_dispInfo.m_minY <= 0.0f ||
+            maskObj->m_dispInfo.m_maxX >= 1.0f || maskObj->m_dispInfo.m_maxY >= 1.0f) {
+            return;
+        }
+        shdManager->setShaderMaskMode(maskObj);
+    } else if (m_viewData != nullptr) {
+        shdManager->setViewPort(m_viewData);
+    } else {
+        shdManager->setShaderMaskOff();
+        shdManager->resetViewPort();
+    }
+    unsigned int blend = LayerShdManager::s_resDefBlend[m_curBlendType];
+    if (shdManager->m_curBlend != blend) {
+        LayerShdManager::s_CallBlend[blend]();
+        shdManager->m_curBlend = blend;
+    }
+    if (!(m_stateFlags & STATE_3D_SPACE)) {
+        shdManager->setDepthBufferCheckOff();
+    } else if (!(m_stateFlags & STATE_RAW_POS)) {
+        shdManager->setDepthBufferCheckOn();
+    } else {
+        shdManager->set3DSpaceMode(m_defUniform);
+    }
+    shdManager->m_select.m_gaugeType = 1;
+    shdManager->setSecTexture(m_secTexture[2]);
+    shdManager->setupVertex(static_cast<LayerDefVertType>(1));
+    shdManager->m_select.m_shaderType = 1;
+    shdManager->setupShader(&m_uniform);
+    shdManager->setupTexture(*m_texture, static_cast<LayerSamplerType>(m_texFilterType), 0);
+    shdManager->renderQuadsIndex();
+}
+// the render size and the buffers' size of memSize (inline in createWorkBuffer; the name is not the original's)
+static inline unsigned int calcWorkSize(LayerObjTopMemObj* obj, LayerObjTopMemObj::MemSize memSize) {
+    obj->m_renderInfo.m_width = 1.0f;
+    obj->m_renderInfo.m_height = static_cast<float>(obj->m_memSize.m_height) / static_cast<float>(memSize.m_width);
+    if (memSize.m_width > memSize.m_height) {
+        obj->m_renderInfo.m_scale[0] = 1.0f;
+        obj->m_renderInfo.m_scale[1] = static_cast<float>(memSize.m_height) / static_cast<float>(memSize.m_width);
+    } else {
+        obj->m_renderInfo.m_scale[0] = static_cast<float>(memSize.m_width) / static_cast<float>(memSize.m_height);
+        obj->m_renderInfo.m_scale[1] = 1.0f;
+    }
+    obj->m_renderInfo.m_pixelX = 0;
+    obj->m_renderInfo.m_pixelY = 0;
+    obj->m_renderInfo.m_pixelWidth = memSize.m_width;
+    obj->m_renderInfo.m_pixelHeight = memSize.m_height;
+    unsigned int size;
+    if (obj->m_memType == 2) {
+        size = memSize.m_width * 2 * memSize.m_height;
+    } else {
+        size = memSize.m_width * memSize.m_height;
+        if (obj->m_memType == 3) {
+            size += -size & 0xFF;
+            obj->m_planeOfs = size;
+            unsigned int chromaSize = (memSize.m_width & ~1) * (memSize.m_height >> 1);
+            chromaSize += -chromaSize & 0xF;
+            obj->m_planeSize = chromaSize;
+            size = chromaSize + size;
+        } else {
+            size *= 3;
+        }
+    }
+    size += -size & 0xF;
+    return size;
+}
+void LayerObjTopMemObj::createWorkBuffer() {
+    m_uniform.setup(0x80);
+    unsigned int size = calcWorkSize(this, m_memSize);
+    m_buffers[0].setup(size);
+    m_buffers[1].setup(size);
+    m_oneUniform.setup(0x10);
+    m_clearBuffers[0].setup(0x10);
+    unsigned long* clear = reinterpret_cast<unsigned long*>(m_clearBuffers[0].m_pBuff);
+    clear[0] = 0;
+    clear[1] = 0;
+    m_clearBuffers[1].setup(0x10);
+    clear = reinterpret_cast<unsigned long*>(m_clearBuffers[1].m_pBuff);
+    clear[0] = 0;
+    clear[1] = 0;
+}
 LayerObjTopMemObj::~LayerObjTopMemObj() {
     baseRelease();
     m_renderTarget.release();
@@ -1322,17 +1408,17 @@ void LayerObjTopMemObj::updateBufer() {
 void LayerObjTopMemObj::resourceInit() {
     if (m_renderFlags & RENDER_INIT) {
         m_renderFlags &= ~RENDER_INIT;
-        m_renderTarget.setTextureInfo(m_memWidth, m_memHeight, static_cast<GrlSurfaceFormat>(37), false, 0);
+        m_renderTarget.setTextureInfo(m_memSize.m_width, m_memSize.m_height, static_cast<GrlSurfaceFormat>(37), false, 0);
         m_renderTarget.clearTexture(mm::Col4(0.0f, 0.0f, 0.0f, 0.0f), static_cast<GrlClaerMask>(15));
         unsigned int* size = reinterpret_cast<unsigned int*>(m_oneUniform.m_pBuff);
-        size[0] = m_memWidth;
-        size[1] = m_memHeight;
+        size[0] = m_memSize.m_width;
+        size[1] = m_memSize.m_height;
         if (m_memType == 3) {
-            size[2] = m_memWidth >> 1;
-            size[3] = m_memHeight >> 1;
+            size[2] = m_memSize.m_width >> 1;
+            size[3] = m_memSize.m_height >> 1;
         } else {
-            size[2] = m_memWidth;
-            size[3] = m_memHeight;
+            size[2] = m_memSize.m_width;
+            size[3] = m_memSize.m_height;
         }
         m_oneUniform.updateData();
     }
@@ -1362,6 +1448,65 @@ void LayerObjTopMemObj::setDrawList(LayerSortMan* sortMan, bool use3D) {
     } else {
         set2DSpace(sortMan, &m_sortObj);
     }
+}
+void LayerObjTopMemObj::setupRender() {
+    unsigned int index = LayerManager::s_nDebIdx;
+    m_renderFlags &= ~(1 << index);
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    shdManager->m_select.m_shaderType = 9;
+    shdManager->m_select.m_option = m_memType;
+    grlib::CGLibDecShader* shader = shdManager->setupShader();
+    m_renderTarget.setRenderTarget();
+    m_oneUniform.setUniformBlock(shader->getCurrentShader().getUniformBlockOfs("U_MENU"));
+    m_buffers[index].setStorageBuffer(0);
+    if (m_memType != 1) m_buffers[index].setStorageBuffer(1, m_planeOfs, m_planeSize);
+    m_clearBuffers[index].setStorageBuffer(2);
+    shdManager->setupVertex(static_cast<LayerDefVertType>(3));
+    shdManager->renderQuadsIndex();
+    grlib::CGLibCtlShader::setMemoryBarrierBit(0x25);
+    shdManager->m_select.m_shaderType = 9;
+    shdManager->m_select.m_option = 4;
+    shdManager->setupShader();
+    m_clearBuffers[index].setStorageBuffer(2);
+    shdManager->setupVertex(static_cast<LayerDefVertType>(3));
+    grlib::CGLibCtlVertex::renderVertex(static_cast<GrlPrimitiveType>(0), 1);
+    grlib::CGLibCtlShader::setMemoryBarrierBit(0x21);
+    shdManager->getDefRenderTarget()->setRenderTarget();
+}
+void LayerObjTopMemObj::lastRender() {
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    const LayerObjTopMaskObj* maskObj = static_cast<const LayerObjTopMaskObj*>(m_curMaskObj);
+    if (maskObj != nullptr && !(maskObj->m_stateFlags & STATE_NO_DRAW)) {
+        if (maskObj->m_dispInfo.m_minX <= 0.0f || maskObj->m_dispInfo.m_minY <= 0.0f ||
+            maskObj->m_dispInfo.m_maxX >= 1.0f || maskObj->m_dispInfo.m_maxY >= 1.0f) {
+            return;
+        }
+        shdManager->setShaderMaskMode(maskObj);
+    } else if (m_viewData != nullptr) {
+        shdManager->setViewPort(m_viewData);
+    } else {
+        shdManager->setShaderMaskOff();
+        shdManager->resetViewPort();
+    }
+    unsigned int blend = LayerShdManager::s_resDefBlend[m_curBlendType];
+    if (shdManager->m_curBlend != blend) {
+        LayerShdManager::s_CallBlend[blend]();
+        shdManager->m_curBlend = blend;
+    }
+    if (!(m_stateFlags & STATE_3D_SPACE)) {
+        shdManager->setDepthBufferCheckOff();
+    } else if (!(m_stateFlags & STATE_RAW_POS)) {
+        shdManager->setDepthBufferCheckOn();
+    } else {
+        shdManager->set3DSpaceMode(m_defUniform);
+    }
+    shdManager->m_select.m_gaugeType = 1;
+    shdManager->setSecTexture(m_secTexture[2]);
+    shdManager->setupVertex(static_cast<LayerDefVertType>(1));
+    shdManager->m_select.m_shaderType = 1;
+    shdManager->setupShader(&m_uniform);
+    shdManager->setupTexture(*m_renderTarget.m_pTexture, static_cast<LayerSamplerType>(m_texFilterType), 0);
+    shdManager->renderQuadsIndex();
 }
 LayerObjTopTexObj::~LayerObjTopTexObj() {
     baseRelease();
@@ -1396,7 +1541,7 @@ LayerObjTopPolyObj::~LayerObjTopPolyObj() {
         m_polyBuffer = nullptr;
     }
 }
-void LayerObjTopPolyObj::LockVertex() { m_locked = m_vertices[LayerManager::s_nStkIdx]; }
+void LayerObjTopPolyObj::LockVertex() { m_locked = m_polyWork.m_vertices[LayerManager::s_nStkIdx]; }
 void LayerObjTopPolyObj::setVertex(unsigned int index, const LayerPolyVertex& vertex) {
     static_cast<LayerPolyVertex*>(m_locked)[index] = vertex;
 }
@@ -1404,7 +1549,7 @@ void LayerObjTopPolyObj::UnlockVertex() {
     m_updateFlags |= UPDATE_VERTEX << LayerManager::s_nStkIdx;
     m_locked = nullptr;
 }
-void LayerObjTopPolyObj::LockIndex() { m_locked = m_indices[LayerManager::s_nStkIdx]; }
+void LayerObjTopPolyObj::LockIndex() { m_locked = m_polyWork.m_indices[LayerManager::s_nStkIdx]; }
 void LayerObjTopPolyObj::setIndex(unsigned int index, unsigned short value) {
     static_cast<unsigned short*>(m_locked)[index] = value;
 }
@@ -1475,6 +1620,47 @@ void LayerObjTopPolyObj::setDrawList(LayerSortMan* sortMan, bool use3D) {
     }
 }
 void LayerObjTopPolyObj::applyPartsSetup() { updateVertexBuffer(); }
+void LayerObjTopPolyObj::finalRender() {
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    const LayerObjTopMaskObj* maskObj = static_cast<const LayerObjTopMaskObj*>(m_curMaskObj);
+    if (maskObj != nullptr && !(maskObj->m_stateFlags & STATE_NO_DRAW)) {
+        if (maskObj->m_dispInfo.m_minX <= 0.0f || maskObj->m_dispInfo.m_minY <= 0.0f ||
+            maskObj->m_dispInfo.m_maxX >= 1.0f || maskObj->m_dispInfo.m_maxY >= 1.0f) {
+            return;
+        }
+        shdManager->setShaderMaskMode(maskObj);
+    } else if (m_viewData != nullptr) {
+        shdManager->setViewPort(m_viewData);
+    } else {
+        shdManager->setShaderMaskOff();
+        shdManager->resetViewPort();
+    }
+    unsigned int blend = LayerShdManager::s_resDefBlend[m_curBlendType];
+    if (shdManager->m_curBlend != blend) {
+        LayerShdManager::s_CallBlend[blend]();
+        shdManager->m_curBlend = blend;
+    }
+    if (!(m_stateFlags & STATE_3D_SPACE)) {
+        shdManager->setDepthBufferCheckOff();
+    } else if (!(m_stateFlags & STATE_RAW_POS)) {
+        shdManager->setDepthBufferCheckOn();
+    } else {
+        shdManager->set3DSpaceMode(m_defUniform);
+    }
+    if (m_texture != nullptr && m_texture->isInitialized()) {
+        shdManager->m_select.m_option = 2;
+    } else {
+        shdManager->m_select.m_option = 1;
+    }
+    shdManager->setSecTexture(m_secTexture[2]);
+    grlib::CGLibCtlVertex::setVertex(*m_polyWork.m_vertex[m_vertexBufIdx]);
+    shdManager->m_select.m_shaderType = 6;
+    shdManager->setupShader(&m_uniform);
+    if (m_texture != nullptr && m_texture->isInitialized()) {
+        shdManager->setupTexture(*m_texture, static_cast<LayerSamplerType>(m_texFilterType), 0);
+    }
+    m_polyWork.m_index[m_indexBufIdx]->drawIndex(m_drawIndexCount, m_drawIndexStart * 2);
+}
 void LayerObjTopMaskObj::resourceInit() {
     if (m_texture != nullptr) {
         m_texture->setupResource();
@@ -1591,6 +1777,7 @@ void LayerObjUtil::calcPosData_Correction_Up(float* pos, const LyrLayoutPosData*
         break;
     }
 }
+const unsigned int LayerShdManager::s_resDefBlend[6] = {0, 3, 5, 7, 2, 0};
 void (*LayerObjUtil::s_CallScl[2])(float*, const LayerBasePos&, const LayerResRenderInfo&) = {
     LayerObjUtil::calcScl_Pixel_Up, LayerObjUtil::calcScl_Correction_Up};
 void (*LayerObjUtil::s_CallPos[2])(float*, const LayerBasePos&) = {LayerObjUtil::calcPos_Pixel_Up,

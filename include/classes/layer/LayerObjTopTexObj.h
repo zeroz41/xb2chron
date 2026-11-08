@@ -6,6 +6,7 @@
 #include "classes/layer/LayerObjSortTexObj.h"
 
 namespace layer { class LayerRenderView; }
+namespace layer { class LayerResViewPortInfo; }
 namespace layer { class LayerResColor; }
 namespace layer { class LayerResMatrix; }
 namespace layer { class LayerSortMan; }
@@ -20,9 +21,11 @@ public:
     virtual void setDrawList(layer::LayerSortMan*, bool);  // slot 7
     virtual void applyParams(layer::LayerRenderView const*, layer::LayerResMatrix const&, layer::LayerResColor const&);  // slot 9
 
-    const void* m_viewData;  // applyParams copies LayerRenderView::m_viewData (the name is not the original's)
+    // applyParams copies LayerRenderView::m_viewData; finalRender sets it as the viewport (the name is not the
+    // original's)
+    LayerResViewPortInfo* m_viewData;
     LayerObjSortTexObj m_sortObj;  // 0x258: what setDrawList puts in the sort lists (the name is not the original's)
-    unsigned char pad_270[0x8];
+    const grlib::CGLibTextureBuffer* m_texture;  // 0x270: finalRender draws it (the name is not the original's)
     grlib::CGLibDblUniformBlock m_uniform;  // 0x278: the destructor releases it (the name is not the original's)
 };
 }  // namespace layer

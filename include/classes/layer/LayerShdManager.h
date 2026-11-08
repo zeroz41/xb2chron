@@ -127,6 +127,8 @@ public:
     static const unsigned int s_eFetchTbl[13];
     // the blend modes' setup functions (LayerObj's draws call them)
     static void (*s_CallBlend[8])();
+    // the s_CallBlend mode of each blend type (LayerObj's .rodata; the finalRender functions)
+    static const unsigned int s_resDefBlend[6];
 
     // Field names are not the original's: they follow the accessors and functions that read and write them.
     void* m_pShdData;  // 0x08: "/monolib/shader/shd_layout.wishp" (OnFileEvent takes it, shaderRelease frees it)
@@ -170,7 +172,8 @@ public:
     bool m_viewPortSet;  // 0x528, a viewport other than the full screen is set (resetViewPort resets it)
     bool m_depthCheck;  // 0x529, whether the depth test is on (setDepthBufferCheckOn/Off)
     bool m_renderTargetSet;  // 0x52A, setViewPort bound a render target (the next viewport is set unconditionally)
-    unsigned char pad_52B[0x5];
+    unsigned char pad_52B[0x1];
+    unsigned int m_curBlend;  // 0x52C: the s_CallBlend mode last set (the finalRender functions; the name is not the original's)
     float m_screenWidth;  // LayerAccManager::getScreenWidth
     float m_screenHeight;  // LayerAccManager::getScreenHeight
     float m_screenDivWidth;  // LayerManager::getScreenDivWidth

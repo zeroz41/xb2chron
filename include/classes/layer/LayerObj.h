@@ -254,7 +254,9 @@ public:
     unsigned char m_matrixIdx;  // getMatrix
     unsigned char m_space;  // setSpace (a LAYER_SPACE_TYPE)
     unsigned char m_blendType;  // setBlendType (a LayerBlendType)
-    unsigned char pad_C5[0x1];
+    // the blend the finalRender functions draw with (LayerShdManager::s_resDefBlend index; the name is not the
+    // original's)
+    unsigned char m_curBlendType;
     unsigned char m_texFilterType;  // setTexFilterType (a LayerTexFilterType)
     unsigned char pad_C7[0x1];
     // what setPos/setRot/setScale/setMulCol/setAddCol write, one per m_flags entry and a third the getters fall
