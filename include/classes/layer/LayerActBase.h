@@ -4,37 +4,26 @@
 #include "classes/layer/LayerObj.h"
 
 namespace layer {
-// one action's record (the layout is not the original's)
-struct LyrActionInfo {
-    unsigned char pad_0[0x8];
-    unsigned int m_id;  // LayerAccAction::actionID looks for it
-    // its name's offset in the action data's m_nameTbl is the sum of these two (LayerAccAction::actionName; the
-    // names are not the original's)
-    unsigned int m_nameBase;
-    unsigned char pad_10[0x4];
+// one action's record (0x2C bytes; LayerActBase::updateAction passes the running one to updatePartsAction, which
+// hands it to the s_pCallActEnd function its m_endType picks). The field names are not the original's
+class LyrActionData {
+public:
+    // bits 1..6 turn the object's STATE_ flags on/off when the action starts (LayerActBase::setupAction,
+    // updateAction); bit 0 (FLAG_LOOP) makes updatePartsAction go on with m_nextIdx when the action ends
+    enum { FLAG_LOOP = 0x1 };
+    unsigned int m_flags;
+    unsigned short m_nextIdx;  // 0x4: the action that follows (FLAG_LOOP)
+    unsigned short m_endType;  // 0x6: the s_pCallActEnd index
+    unsigned int m_id;  // 0x8: LayerAccAction::actionID looks for it
+    // 0xC: the action's commands, from the action data's start (updatePartsAction); earlier notes read it as the
+    // base of the action's name offset in LayerAccAction::actionName, with m_nameOfs
+    unsigned int m_cmdOfs;
+    short m_cmdNum;  // 0x10: how many commands updatePartsAction runs
+    unsigned char pad_12[0x2];
     unsigned short m_nameOfs;
     unsigned char pad_16[0x2];
     float m_sec;  // LayerAccAction::getActionSec
     unsigned char pad_1C[0x10];
-};
-// an object's action data (only the action count is known; the layout is not the original's)
-class LyrActionData {
-public:
-    const char* m_nameTbl;  // the actions' names (LayerAccAction::actionName; the name is not the original's)
-    const LyrActionInfo* m_actions;  // m_actionMax records
-    int m_actionMax;  // LayerAccAction::getActionMax
-    // the action running when the object's STATE_PARTS_ACTION is set (LayerAccAction::getRunningActIdx and
-    // setRunningActSec; the names are not the original's)
-    float m_runningSec;
-    // the running action's time step and its reciprocal: the actcmd_ interpolations move 1 / ((end - m_runningSec) *
-    // m_stepRate) of the way each update, none when m_stepSec is 0 (the names are not the original's)
-    float m_stepSec;   // 0x18
-    float m_stepRate;  // 0x1C
-    int m_runningIdx;
-    // bit 0 (FLAG_CMD_START) is set when the running action's commands start over: LayerActDef::actcmd_animfrm then
-    // takes the command's start and end frames (the names are not the original's)
-    enum { FLAG_CMD_START = 0x1 };
-    unsigned char m_flags;  // 0x24
 };
 }  // namespace layer
 
@@ -65,7 +54,30 @@ public:
     bool actcmd_mulcol(const unsigned char*& cmd);
     bool actcmd_addcol(const unsigned char*& cmd);
 
-    LyrActionData* m_actionData;  // its actions, or null (LayerAccAction::isActionData; the name is not the original's)
+    // an object's running action data (only the action count is known; the type and field names are not the
+    // original's)
+    struct ActionWork {
+        const unsigned char* m_data;  // the action data setupAction was given (LyrActionData::m_cmdOfs counts from it)
+        const LyrActionData* m_actions;  // m_actionMax records
+        int m_actionMax;  // LayerAccAction::getActionMax
+        // the action running when the object's STATE_PARTS_ACTION is set (LayerAccAction::getRunningActIdx and
+        // setRunningActSec)
+        float m_runningSec;
+        // the running action's time step and its reciprocal: the actcmd_ interpolations move 1 / ((end -
+        // m_runningSec) * m_stepRate) of the way each update, none when m_stepSec is 0
+        float m_stepSec;   // 0x18
+        float m_stepRate;  // 0x1C
+        unsigned int m_runningIdx;
+        // bit 0 (FLAG_CMD_START) is set when the running action's commands start over: LayerActDef::actcmd_animfrm
+        // then takes the command's start and end frames
+        enum { FLAG_CMD_START = 0x1 };
+        unsigned int m_flags;  // 0x24
+        int* m_cmdWork;  // 0x28: one int per command, cleared by setupAction (the block follows this one)
+    };
+    // the action end types' functions (by LyrActionData::m_endType)
+    static bool (LayerActBase::*s_pCallActEnd[3])(const LyrActionData* data, bool cmdEnd);
+
+    ActionWork* m_actionData;  // its actions, or null (LayerAccAction::isActionData; the name is not the original's)
 };
 }  // namespace layer
 

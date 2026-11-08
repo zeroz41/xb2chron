@@ -15,6 +15,10 @@ public:
     unsigned short m_renderIdx;  // LayerVertexObj::render's index
     unsigned int m_texIdx;
     unsigned char m_texNum;
+    unsigned char pad_D[0x2];
+    // the window draws' sampler: 0 takes the object's m_texFilterType, 1..4 pick from a constant table (the name is
+    // not the original's)
+    unsigned char m_samplerSel;
 };
 
 // table none in 3.0.1: the draws LayerObjTopDef::finalRender calls through s_pCallDraw (its base place between

@@ -278,6 +278,25 @@ void LayerObj::setFlip(LayerFlipType type, bool flip) {
         offFlag(FLAG_FLIP_ON << type);
     }
 }
+bool (LayerActBase::*LayerActBase::s_pCallActEnd[3])(const LyrActionData* data, bool cmdEnd) = {
+    &LayerActBase::actend_no,
+    &LayerActBase::actend_cmdend,
+    &LayerActBase::actend_on,
+};
+bool (LayerActDef::*LayerActDef::s_pCallActCmd[14])(const unsigned char*& cmd) = {
+    &LayerActBase::actcmd_no,     &LayerActDef::actcmd_iconnum,   &LayerActDef::actcmd_animicon,
+    &LayerActBase::actcmd_pos,    &LayerActBase::actcmd_rot,      &LayerActBase::actcmd_scl,
+    &LayerActBase::actcmd_numrot, &LayerActBase::actcmd_mulcol,   &LayerActBase::actcmd_addcol,
+    &LayerActBase::actcmd_priority, &LayerActBase::actcmd_wait,   &LayerActDef::actcmd_animfrm,
+    &LayerActDef::actcmd_animdef, &LayerActBase::actcmd_ctrlspd,
+};
+bool (LayerActLayout::*LayerActLayout::s_pCallActCmd[14])(const unsigned char*& cmd) = {
+    &LayerActBase::actcmd_no,       &LayerActLayout::actcmd_notcmd01, &LayerActLayout::actcmd_notcmd03,
+    &LayerActBase::actcmd_pos,      &LayerActBase::actcmd_rot,        &LayerActBase::actcmd_scl,
+    &LayerActBase::actcmd_mulcol,   &LayerActBase::actcmd_addcol,     &LayerActBase::actcmd_priority,
+    &LayerActBase::actcmd_wait,     &LayerActLayout::actcmd_notcmd02, &LayerActLayout::actcmd_notcmd01,
+    &LayerActBase::actcmd_ctrlspd,
+};
 void LayerActBase::actionIdx(unsigned int index) {
     int stkIdx = LayerManager::s_nStkIdx;
     onFlag(stkIdx, FLAG_ACTION_RUNNING);
@@ -289,7 +308,7 @@ bool LayerActBase::actcmd_no(const unsigned char*& cmd) {
     return false;
 }
 bool LayerActBase::actcmd_pos(const unsigned char*& cmd) {
-    const LyrActionData* data = m_actionData;
+    const ActionWork* data = m_actionData;
     bool wait = true;
     if (data->m_stepSec != 0.0f) {
         const float* arg = reinterpret_cast<const float*>(cmd);
@@ -308,7 +327,7 @@ bool LayerActBase::actcmd_pos(const unsigned char*& cmd) {
     return wait;
 }
 bool LayerActBase::actcmd_rot(const unsigned char*& cmd) {
-    const LyrActionData* data = m_actionData;
+    const ActionWork* data = m_actionData;
     bool wait = true;
     if (data->m_stepSec != 0.0f) {
         const float* arg = reinterpret_cast<const float*>(cmd);
@@ -330,7 +349,7 @@ bool LayerActBase::actcmd_rot(const unsigned char*& cmd) {
     return wait;
 }
 bool LayerActBase::actcmd_scl(const unsigned char*& cmd) {
-    const LyrActionData* data = m_actionData;
+    const ActionWork* data = m_actionData;
     bool wait = true;
     if (data->m_stepSec != 0.0f) {
         const float* arg = reinterpret_cast<const float*>(cmd);
@@ -349,7 +368,7 @@ bool LayerActBase::actcmd_scl(const unsigned char*& cmd) {
     return wait;
 }
 bool LayerActBase::actcmd_numrot(const unsigned char*& cmd) {
-    const LyrActionData* data = m_actionData;
+    const ActionWork* data = m_actionData;
     bool wait = true;
     if (data->m_stepSec != 0.0f) {
         const float* arg = reinterpret_cast<const float*>(cmd);
@@ -383,6 +402,26 @@ bool LayerActBase::actcmd_ctrlspd(const unsigned char*& cmd) {
 bool LayerActBase::actend_no(const LyrActionData* data, bool cmdEnd) { return false; }
 bool LayerActBase::actend_cmdend(const LyrActionData* data, bool cmdEnd) { return !cmdEnd; }
 bool LayerActBase::actend_on(const LyrActionData* data, bool cmdEnd) { return true; }
+void LayerActDef::updatePartsAction(const LyrActionData* action) {
+    const unsigned char* cmd = m_actionData->m_data + action->m_cmdOfs;
+    int i = 0;
+    bool wait = false;
+    for (; i < action->m_cmdNum; i++) {
+        wait |= (this->*s_pCallActCmd[*reinterpret_cast<const unsigned short*>(cmd)])(cmd);
+    }
+    ActionWork* work = m_actionData;
+    if (work->m_stepSec != 0.0f) {
+        const LyrActionData* running = work->m_actions + work->m_runningIdx;
+        if ((this->*s_pCallActEnd[running->m_endType])(running, wait)) {
+            if (running->m_flags & LyrActionData::FLAG_LOOP) {
+                m_actionData->m_runningSec = 0.0f;
+                m_actionData->m_runningIdx = running->m_nextIdx;
+            } else {
+                m_stateFlags &= ~STATE_PARTS_ACTION;
+            }
+        }
+    }
+}
 bool LayerActDef::actcmd_iconnum(const unsigned char*& cmd) {
     m_iconNum = reinterpret_cast<const unsigned short*>(cmd)[1];
     cmd += 4;
@@ -403,7 +442,7 @@ bool LayerActDef::actcmd_animicon(const unsigned char*& cmd) {
     return wait;
 }
 bool LayerActDef::actcmd_animfrm(const unsigned char*& cmd) {
-    if (m_actionData->m_flags & LyrActionData::FLAG_CMD_START) {
+    if (m_actionData->m_flags & ActionWork::FLAG_CMD_START) {
         const unsigned short* anim = reinterpret_cast<const unsigned short*>(cmd);
         m_texRefs->m_frameStart = anim[2];
         m_texRefs->m_frameEnd = anim[3];
@@ -424,6 +463,26 @@ bool LayerActDef::actcmd_animdef(const unsigned char*& cmd) {
     m_frameTime = 0.0f;
     cmd += 4;
     return false;
+}
+void LayerActLayout::updatePartsAction(const LyrActionData* action) {
+    const unsigned char* cmd = m_actionData->m_data + action->m_cmdOfs;
+    int i = 0;
+    bool wait = false;
+    for (; i < action->m_cmdNum; i++) {
+        wait |= (this->*s_pCallActCmd[*reinterpret_cast<const unsigned short*>(cmd)])(cmd);
+    }
+    ActionWork* work = m_actionData;
+    if (work->m_stepSec != 0.0f) {
+        const LyrActionData* running = work->m_actions + work->m_runningIdx;
+        if ((this->*s_pCallActEnd[running->m_endType])(running, wait)) {
+            if (running->m_flags & LyrActionData::FLAG_LOOP) {
+                m_actionData->m_runningSec = 0.0f;
+                m_actionData->m_runningIdx = running->m_nextIdx;
+            } else {
+                m_stateFlags &= ~STATE_PARTS_ACTION;
+            }
+        }
+    }
 }
 bool LayerActLayout::actcmd_notcmd01(const unsigned char*& cmd) {
     cmd += 4;
@@ -472,6 +531,40 @@ void LayerObjDraw::draw_call_res_tex(grlib::CGLibDblUniformBlock* block, const L
     shdManager->setupShader(block);
     const TexRef* ref = m_texRefs->m_refs + data->m_texIdx;
     shdManager->setupTexture(*m_textures[ref->m_texIdx], static_cast<LayerSamplerType>(m_texFilterType), 0);
+    m_vertexObj->render(data->m_renderIdx);
+}
+void LayerObjDraw::draw_call_win_def(grlib::CGLibDblUniformBlock* block, const LyrDrawData* data) {
+    // lbl_71009B7AB8 (a 16-byte literal); the name is not the original's
+    static const LayerSamplerType s_samplerTbl[] = {static_cast<LayerSamplerType>(3), static_cast<LayerSamplerType>(7),
+                                                    static_cast<LayerSamplerType>(8), static_cast<LayerSamplerType>(1)};
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    shdManager->setupVertex(m_vertexObj, data->m_vertexIdx);
+    shdManager->m_select.m_shaderType = 3;
+    shdManager->setupShader(block);
+    LayerSamplerType sampler = data->m_samplerSel != 0 ? s_samplerTbl[data->m_samplerSel - 1]
+                                                       : static_cast<LayerSamplerType>(m_texFilterType);
+    unsigned int texNum = data->m_texNum;
+    const TexRef* ref = &m_texRefs->m_refs[data->m_texIdx];
+    for (unsigned int i = 0; i < texNum; i++, ref++) {
+        shdManager->setupTexture(*m_textures[ref->m_texIdx], sampler, i);
+    }
+    m_vertexObj->render(data->m_renderIdx);
+}
+void LayerObjDraw::draw_call_win_tex(grlib::CGLibDblUniformBlock* block, const LyrDrawData* data) {
+    // lbl_71009B7AB8 (a 16-byte literal); the name is not the original's
+    static const LayerSamplerType s_samplerTbl[] = {static_cast<LayerSamplerType>(3), static_cast<LayerSamplerType>(7),
+                                                    static_cast<LayerSamplerType>(8), static_cast<LayerSamplerType>(1)};
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    shdManager->setupVertex(m_vertexObj, data->m_vertexIdx);
+    shdManager->m_select.m_shaderType = 3;
+    shdManager->setupShader(block);
+    LayerSamplerType sampler = data->m_samplerSel != 0 ? s_samplerTbl[data->m_samplerSel - 1]
+                                                       : static_cast<LayerSamplerType>(m_texFilterType);
+    unsigned int texNum = data->m_texNum;
+    const TexRef* ref = &m_texRefs->m_refs[data->m_texIdx];
+    for (unsigned int i = 0; i < texNum; i++, ref++) {
+        shdManager->setupTexture(*m_textures[ref->m_texIdx], sampler, i);
+    }
     m_vertexObj->render(data->m_renderIdx);
 }
 void LayerObjDraw::draw_call_icon(grlib::CGLibDblUniformBlock* block, const LyrDrawData* data) {

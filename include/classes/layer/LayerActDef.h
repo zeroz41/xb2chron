@@ -45,6 +45,8 @@ public:
     bool actcmd_animicon(const unsigned char*& cmd);
     bool actcmd_animfrm(const unsigned char*& cmd);
     bool actcmd_animdef(const unsigned char*& cmd);
+    // updatePartsAction runs each command through it (by the command's first u16)
+    static bool (LayerActDef::*s_pCallActCmd[14])(const unsigned char*& cmd);
 
     // The field names follow LayerAccDefObj's accessors (its objects of type 1; not the original's). They are
     // LayerActDef's: actcmd_iconnum and actcmd_animicon write m_iconNum (LayerObjMesh and LayerObjTopDef add none).

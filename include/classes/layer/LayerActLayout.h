@@ -16,6 +16,8 @@ public:
     bool actcmd_notcmd01(const unsigned char*& cmd);
     bool actcmd_notcmd03(const unsigned char*& cmd);
     bool actcmd_notcmd02(const unsigned char*& cmd);
+    // updatePartsAction runs each command through it (by the command's first u16; the last entry is empty)
+    static bool (LayerActLayout::*s_pCallActCmd[14])(const unsigned char*& cmd);
 };
 }  // namespace layer
 

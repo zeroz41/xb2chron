@@ -152,7 +152,7 @@ void LayerAccAction::setRunningActSec(float sec) {
 }
 
 unsigned int LayerAccAction::getActionMax() const {
-    LyrActionData* data = static_cast<LayerActBase*>(m_layer)->m_actionData;
+    LayerActBase::ActionWork* data = static_cast<LayerActBase*>(m_layer)->m_actionData;
     if (data == nullptr) {
         return 0;
     }
@@ -160,7 +160,7 @@ unsigned int LayerAccAction::getActionMax() const {
 }
 
 float LayerAccAction::getActionSec(unsigned int index) const {
-    LyrActionData* data = static_cast<LayerActBase*>(m_layer)->m_actionData;
+    LayerActBase::ActionWork* data = static_cast<LayerActBase*>(m_layer)->m_actionData;
     if (data != nullptr && index < data->m_actionMax) {
         return data->m_actions[index].m_sec;
     }
@@ -169,7 +169,7 @@ float LayerAccAction::getActionSec(unsigned int index) const {
 
 bool LayerAccAction::actionIdx(unsigned int index) {
     LayerActBase* act = static_cast<LayerActBase*>(m_layer);
-    LyrActionData* data = act->m_actionData;
+    LayerActBase::ActionWork* data = act->m_actionData;
     if (data == nullptr) {
         return false;
     }
@@ -182,7 +182,7 @@ bool LayerAccAction::actionIdx(unsigned int index) {
 
 bool LayerAccAction::actionID(unsigned int id) {
     LayerActBase* act = static_cast<LayerActBase*>(m_layer);
-    LyrActionData* data = act->m_actionData;
+    LayerActBase::ActionWork* data = act->m_actionData;
     if (data == nullptr) {
         return false;
     }
