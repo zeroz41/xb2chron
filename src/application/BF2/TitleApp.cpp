@@ -50,6 +50,71 @@ inline void releaseLoading(TitleApp* app) {
 }
 }  // namespace
 
+// the loading spinner on a 1280x720 memory layer: false makes it (or draws its next frame), true drops it
+void TitleApp::now_loading(bool release) {
+    if (!release) {
+        if (m_loadLayer != nullptr) {
+            unsigned char* trail = static_cast<unsigned char*>(m_loadBuffer);
+            for (int i = 0; i < 0x1000; i++) {
+                int value = trail[i] - 16;
+                trail[i] = value < 0 ? 0 : value;
+            }
+            float time = (static_cast<unsigned int>(ml::WorkCpu::getFrameCount()) & 0xffff) * 0.05f;
+            int count = (static_cast<int>(time / 3.1415927f) & 3) + 5;
+            if (count == 8) {
+                count = 6;
+            }
+            for (int i = 0; i < count; i++) {
+                float angle = i * 6.2831855f / count + time * 0.7f;
+                float radius = sinf(time) * 31.0f;
+                int x = static_cast<int>(cosf(angle) * radius);
+                int y = static_cast<int>(radius * sinf(angle));
+                trail[x + y * 64 + 0x820] = 0xff;
+            }
+            layer::LayerAccMemObj memObj(m_loadLayer);
+            const unsigned char* src = static_cast<unsigned char*>(m_loadBuffer);
+            unsigned char* dst = static_cast<unsigned char*>(memObj.getMemBufer());
+            unsigned int width = memObj.getMemWidth();
+            unsigned int height = memObj.getMemHeight();
+            memset(dst, 0, width * 3 * height);
+            dst += (width * 624 + 1184) * 3;
+            for (int y = 0; y < 64; y++) {
+                unsigned char* row = dst;
+                for (int x = 0; x < 64; x++) {
+                    unsigned int blue = *src * 4;
+                    row[0] = *src;
+                    row[1] = *src;
+                    row[2] = blue > 0xff ? 0xff : blue;
+                    row += 3;
+                    src++;
+                }
+                dst += width * 3;
+            }
+            memObj.updateMemBufer();
+        } else if (mm::mtl::PtrSingleton<ml::Scn>::get() != nullptr &&
+               mm::mtl::PtrSingleton<layer::LayerManager>::get() != nullptr) {
+            layer::LayerAccManager manager;
+            m_loadLayer = manager.createMemObj(1280, 720, static_cast<layer::LayerMemType>(1));
+            layer::LayerAccMemObj memObj(m_loadLayer);
+            grlib::CGLibTextureBuffer* texture = memObj.getTexture();
+            ml::ScnRenderDrSysParmAcc acc(mm::mtl::PtrSingleton<ml::Scn>::get()->m_renderDrSys, 0);
+            ml::ScnRenderDrMdlTexture modelTexture = {texture, 0, true};
+            acc.setModelTexture(modelTexture);
+            m_loadBuffer = fw::FrameworkMemory::getAllocator(5)->allocate(0x1000, 4);
+            memset(m_loadBuffer, 0, 0x1000);
+        }
+    } else {
+        ml::ScnRenderDrSysParmAcc acc(mm::mtl::PtrSingleton<ml::Scn>::get()->m_renderDrSys, 0);
+        acc.resetModelTexture(0);
+        if (m_loadLayer != nullptr) {
+            m_loadLayer->release();
+        }
+        m_loadLayer = nullptr;
+        fw::FrameworkMemory::getAllocator(5)->deallocate(m_loadBuffer);
+        m_loadBuffer = nullptr;
+    }
+}
+
 bool TitleApp::wkStandbyLogin() {
     if (!s_backColSet) {
         ml::WinView::setInitialBackCol(mm::Col4::black);
