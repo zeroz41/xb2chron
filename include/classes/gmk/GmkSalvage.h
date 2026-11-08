@@ -33,6 +33,10 @@ public:
         unsigned int m_formPcIdx;  // 0x8: its formation's element in the TGmkFormPc list
         // 0xc: getGmkFormPc gives none unless it exceeds m_formPcIdx (its difference is a count: an int)
         unsigned int pad_c;
+        // 0x10, 0x14: its locators' range in the GmkSalvageLocator list (seqValidateGmkSalvageLocatorDetails binds
+        // them; the names are not the original's)
+        unsigned int m_locatorBegin;
+        unsigned int m_locatorEnd;
     };
     const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     // what the last raffle drew (createRaffle fills it, disposeRaffle resets it; GfGameSalvage::getRaffleResult reads
@@ -105,6 +109,8 @@ public:
     void disposeRaffle(bool);
     // the step create installs
     void seqValidateGmkSalvageLocatorDetails(float);
+    // the step seqValidateGmkSalvageLocatorDetails installs
+    void seqUpdatePopDepop(float);
 
     // 0x48: the sequence step update runs (create installs seqValidateGmkSalvageLocatorDetails, dispose clears it)
     void (GmkSalvage::*m_seq)(float);

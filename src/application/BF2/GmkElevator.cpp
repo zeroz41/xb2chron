@@ -2755,6 +2755,52 @@ void GmkSalvage::disposeRaffle(bool req) {
     }
 }
 
+void GmkSalvage::popByRaffleResult() {
+    const mm::mtl::FixedVector<GmkSalvageLocator*, 3>& drops = m_dropLocators;
+    for (unsigned int i = 0; i < 3; i++) {
+        if (m_raffleResult.m_dropDrawn[i]) {
+            GmkSalvageLocator* locator = drops[i];
+            CreateInfo info = locator->m_createInfo;
+            locator->create(info);
+            locator->pad_e8 = m_raffleResult.m_dropIds[i];
+            locator->m_popWait = 0.0f;
+            locator->m_popTimer = 0.0f;
+            locator->m_seq = &GmkSalvageLocator::seqWaitPop;
+        }
+    }
+    const mm::mtl::FixedVector<GmkSalvageLocator*, 3>& tboxes = m_tboxLocators;
+    for (unsigned int i = 0; i < 3; i++) {
+        if (m_raffleResult.m_tboxDrawn[i]) {
+            GmkSalvageLocator* locator = tboxes[i];
+            CreateInfo info = locator->m_createInfo;
+            locator->create(info);
+            locator->pad_e8 = m_raffleResult.m_tboxIds[i];
+            locator->m_popWait = 0.0f;
+            locator->m_popTimer = 0.0f;
+            locator->m_seq = &GmkSalvageLocator::seqWaitPop;
+        }
+    }
+    const mm::mtl::FixedVector<GmkSalvageLocator*, 3>& enemies = m_enemyLocators;
+    for (unsigned int i = 0; i < 3; i++) {
+        if (m_raffleResult.m_enemyDrawn[i]) {
+            GmkSalvageLocator* locator = enemies[i];
+            CreateInfo info = locator->m_createInfo;
+            locator->create(info);
+            const RaffleResult::Enemy& enemy = m_raffleResult.m_enemies[i];
+            int id = m_raffleResult.m_enemyIds[i];
+            unsigned int enemyId = enemy.m_id;
+            unsigned char enemyPad = enemy.pad_2;
+            locator->pad_e8 = id;
+            locator->pad_ec = enemyId;
+            locator->pad_f0 = enemyPad;
+            locator->m_popWait = 0.0f;
+            locator->m_popTimer = 0.0f;
+            locator->m_seq = &GmkSalvageLocator::seqWaitPop;
+        }
+    }
+    pad_d1 = true;
+}
+
 void GmkSalvage::create(const CreateInfo& info) {
     AGmkBase::create(info);
     unsigned char* fp = gf::GfDataBdat::getFP(0x7B);
@@ -2763,6 +2809,58 @@ void GmkSalvage::create(const CreateInfo& info) {
     unsigned int dist = Bdat::getValCheck(fp, 0, 0x3A, 8);
     pad_64 = *reinterpret_cast<float*>(&dist) * *reinterpret_cast<float*>(&dist);
     m_seq = &GmkSalvage::seqValidateGmkSalvageLocatorDetails;
+}
+
+// the salvage's index-th locator, none when the locator list has no such element (an inferred helper; the name is
+// not the original's)
+static inline GmkSalvageLocator* getSalvageLocator(const GmkSalvage* salvage, unsigned int index) {
+    GmkSalvageLocatorList* locators = static_cast<GmkSalvageLocatorList*>(
+        static_cast<const GmkSalvageList*>(salvage->m_list)->m_gmkSet.m_gmkLists[GmkSalvageLocator::TYPE]);
+    if (locators == nullptr) {
+        return nullptr;
+    }
+    unsigned int locatorIndex = salvage->getData()->m_locatorBegin + index;
+    if (locators->getInstNum() <= locatorIndex) {
+        return nullptr;
+    }
+    return &locators->m_gmks[locatorIndex];
+}
+
+void GmkSalvage::seqValidateGmkSalvageLocatorDetails(float) {
+    const Data* data = getData();
+    unsigned int num = data->m_locatorEnd - data->m_locatorBegin;
+    if (num != 0) {
+        if (getSalvageLocator(this, 0) == nullptr) {
+            return;
+        }
+        for (unsigned int i = 0; i < num; i++) {
+            GmkSalvageLocator* locator = getSalvageLocator(this, i);
+            locator->m_salvage = this;
+            switch (locator->m_createInfo.m_data[0]) {
+            case 1:
+                if (m_dropLocators.size() != m_dropLocators.capacity()) {
+                    m_dropLocators.push_back(locator);
+                }
+                break;
+            case 2:
+                if (m_tboxLocators.size() != m_tboxLocators.capacity()) {
+                    m_tboxLocators.push_back(locator);
+                }
+                break;
+            case 3:
+                if (m_eventLocator == nullptr) {
+                    m_eventLocator = locator;
+                }
+                break;
+            case 4:
+                if (m_enemyLocators.size() != m_enemyLocators.capacity()) {
+                    m_enemyLocators.push_back(locator);
+                }
+                break;
+            }
+        }
+    }
+    m_seq = &GmkSalvage::seqUpdatePopDepop;
 }
 
 void GmkSalvage::dispose() {
