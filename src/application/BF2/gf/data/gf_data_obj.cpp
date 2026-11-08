@@ -62,7 +62,7 @@ namespace gf {
 inline void DataObjDriver::setup(unsigned int id) {
     m_bdatId = id;
     if (id != 0) {
-        m_sdata = GfDataDriver::getSDataDriver(id);
+        m_sdata = &GfDataDriver::getSDataDriver(id);
         if (GfDataDriver::isIra(m_bdatId)) {
             m_dlc = GfDataDriver::getSDataIra(m_bdatId);
         }
@@ -97,7 +97,7 @@ void DataObjDriver::setVirtualLevel(unsigned int level) {
     setupVirtualParam();
     SDataDriver* data = m_sdata;
     if (GfDataDriver::isIra(getBdatId())) {
-        *data = *GfDataDriver::getSDataDriver(GfDataDriver::getIraFront(getBdatId()));
+        *data = GfDataDriver::getSDataDriver(GfDataDriver::getIraFront(getBdatId()));
     }
     GfDataDriver::setLevel(*data, level);
     GfDataDriver::calcDriverBaseParamByLevel(*data);
@@ -214,6 +214,10 @@ unsigned short DataObjDriver::getDataType() const {
     return m_sdata->m_dataType;
 }
 
+const SDataIdea* DataObjDriver::getIdea() const {
+    return &GfDataDriver::getSDataDriver(getBdatId()).m_idea;
+}
+
 // GEN-HPMAX-BEGIN
 void fn_71002255EC(unsigned int& value, const SDataDriver& data, unsigned int rateEffect, unsigned int addEffect);
 void fn_710022571C(unsigned int& value, const SDataIra& data, unsigned int rateEffect, unsigned int addEffect);
@@ -251,7 +255,7 @@ unsigned int DataObjDriver::getHpMax(bool virtualParam) const {
         DataParamAcc acc(3, GfDataDriver::getIraFront(getBdatId()), static_cast<GimmickType>(0));
         return acc.getHpMax(virtualParam);
     }
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
     unsigned int value = data->m_hpMax;
     fn_71002255EC(value, *data, 1, 11);
     if (m_dlc != nullptr) {
@@ -302,26 +306,26 @@ void fn_710022571C(unsigned int& value, const SDataIra& data, unsigned int rateE
 }
 
 unsigned int DataObjDriver::getLevel(bool virtualParam) const {
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
     unsigned int level = GfDataDriver::getLevel(*data);
     return level > 99 ? 99 : level;
 }
 
 unsigned int DataObjDriver::getExp() const {
-    return GfDataDriver::getExp(*GfDataDriver::getSDataDriver(getBdatId()));
+    return GfDataDriver::getExp(GfDataDriver::getSDataDriver(getBdatId()));
 }
 
 unsigned int DataObjDriver::getBattleExp() const {
-    return GfDataDriver::getBattleExp(*GfDataDriver::getSDataDriver(getBdatId()));
+    return GfDataDriver::getBattleExp(GfDataDriver::getSDataDriver(getBdatId()));
 }
 
 unsigned int DataObjDriver::getExpNext(bool virtualParam) const {
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
     return GfDataDriver::getExpNextLevel(*data);
 }
 
 unsigned int DataObjDriver::getBattleExpNext(bool virtualParam) const {
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
     return GfDataDriver::getBattleExpNextLevel(*data);
 }
 
@@ -349,11 +353,11 @@ void DataObjDriver::addWeaponPoint(unsigned int wpnType, int point) {
 }
 
 unsigned int DataObjDriver::getSkillPoint() const {
-    return GfDataDriver::getSkillPoint(*GfDataDriver::getSDataDriver(getBdatId()));
+    return GfDataDriver::getSkillPoint(GfDataDriver::getSDataDriver(getBdatId()));
 }
 
 void DataObjDriver::addSkillPoint(int point) {
-    GfDataDriver::addSkillPoint(*GfDataDriver::getSDataDriver(getBdatId()), point);
+    GfDataDriver::addSkillPoint(GfDataDriver::getSDataDriver(getBdatId()), point);
 }
 
 unsigned int DataObjDriver::getBladeArts(bool virtualParam, unsigned int index) const {
@@ -526,7 +530,7 @@ void DataObjDriver::setDriverArtsLevel(unsigned int arts, unsigned int level) {
 }
 
 unsigned int DataObjDriver::getClass(bool virtualParam) const {
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
     return GfDataDriver::getClass(*data);
 }
 
@@ -536,8 +540,8 @@ unsigned int DataObjDriver::getStrength(bool virtualParam) const {
         DataParamAcc acc(3, GfDataDriver::getIraFront(getBdatId()), static_cast<GimmickType>(0));
         return acc.getStrength(virtualParam);
     }
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
-    unsigned int value = (virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId()))->m_strength;
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
+    unsigned int value = (virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId()))->m_strength;
     fn_71002255EC(value, *data, 2, 12);
     if (m_dlc != nullptr) {
         fn_710022571C(value, *m_dlc, 2, 12);
@@ -553,8 +557,8 @@ unsigned int DataObjDriver::getPowerEther(bool virtualParam) const {
         DataParamAcc acc(3, GfDataDriver::getIraFront(getBdatId()), static_cast<GimmickType>(0));
         return acc.getPowerEther(virtualParam);
     }
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
-    unsigned int value = (virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId()))->m_powEther;
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
+    unsigned int value = (virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId()))->m_powEther;
     fn_71002255EC(value, *data, 3, 13);
     if (m_dlc != nullptr) {
         fn_710022571C(value, *m_dlc, 3, 13);
@@ -570,8 +574,8 @@ unsigned int DataObjDriver::getDex(bool virtualParam) const {
         DataParamAcc acc(3, GfDataDriver::getIraFront(getBdatId()), static_cast<GimmickType>(0));
         return acc.getDex(virtualParam);
     }
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
-    unsigned int value = (virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId()))->m_dex;
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
+    unsigned int value = (virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId()))->m_dex;
     fn_71002255EC(value, *data, 4, 14);
     if (m_dlc != nullptr) {
         fn_710022571C(value, *m_dlc, 4, 14);
@@ -587,8 +591,8 @@ unsigned int DataObjDriver::getAgility(bool virtualParam) const {
         DataParamAcc acc(3, GfDataDriver::getIraFront(getBdatId()), static_cast<GimmickType>(0));
         return acc.getAgility(virtualParam);
     }
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
-    unsigned int value = (virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId()))->m_agility;
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
+    unsigned int value = (virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId()))->m_agility;
     fn_71002255EC(value, *data, 5, 15);
     if (m_dlc != nullptr) {
         fn_710022571C(value, *m_dlc, 5, 15);
@@ -604,8 +608,8 @@ unsigned int DataObjDriver::getLuck(bool virtualParam) const {
         DataParamAcc acc(3, GfDataDriver::getIraFront(getBdatId()), static_cast<GimmickType>(0));
         return acc.getLuck(virtualParam);
     }
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
-    unsigned int value = (virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId()))->m_luck;
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
+    unsigned int value = (virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId()))->m_luck;
     fn_71002255EC(value, *data, 6, 16);
     if (m_dlc != nullptr) {
         fn_710022571C(value, *m_dlc, 6, 16);
@@ -618,7 +622,7 @@ unsigned int DataObjDriver::getLuck(bool virtualParam) const {
 
 // GEN-STATS-END
 unsigned int DataObjDriver::getPArmor(bool virtualParam) const {
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
     DataObjBlade blade(getBlade(virtualParam, -1));
     if (blade.getBdatId() == 0 || blade.m_sdata->m_bladeId == 0) {
         return data->m_pArmor;
@@ -628,7 +632,7 @@ unsigned int DataObjDriver::getPArmor(bool virtualParam) const {
         blade.setVirtualEquipWpn(m_virtualWeapons[slot], slot);
     }
     unsigned int value = blade.getPArmor(virtualParam);
-    data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
     value += data->m_pArmor;
     return value > 100 ? 100 : value;
 }
@@ -663,7 +667,7 @@ unsigned int DataObjBlade::getPArmor(bool virtualParam) const {
 }
 
 unsigned int DataObjDriver::getEArmor(bool virtualParam) const {
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
     DataObjBlade blade(getBlade(virtualParam, -1));
     if (blade.getBdatId() == 0 || blade.m_sdata->m_bladeId == 0) {
         return data->m_eArmor;
@@ -692,7 +696,7 @@ unsigned int DataObjBlade::getEArmor(bool virtualParam) const {
 }
 
 unsigned int DataObjDriver::getCriticalRate(bool virtualParam) const {
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
     unsigned int value = data->m_criticalRate;
     if (GfDataDriver::isIra(getBdatId())) {
         if (!GfDataDriver::isIraFront(getBdatId())) {
@@ -733,7 +737,7 @@ unsigned int DataObjBlade::getCriticalRate(bool virtualParam) const {
 }
 
 unsigned int DataObjDriver::getGuardRate(bool virtualParam) const {
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
     unsigned int value = data->m_guardRate;
     if (GfDataDriver::isIra(getBdatId())) {
         if (!GfDataDriver::isIraFront(getBdatId())) {
@@ -891,17 +895,17 @@ unsigned int DataObjBlade::getNorAtkDmgMax(bool virtualParam) const {
 }
 
 unsigned int DataObjDriver::getEquipAcce(unsigned int slot, bool virtualParam) const {
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
     return GfDataDriver::getEquipAcce(*data, slot);
 }
 
 unsigned int DataObjDriver::getEquipAcceResult(unsigned int slot, unsigned int accessory, bool virtualParam) const {
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
     return GfEquipUtil::getEquipAcceResult(*data, slot, accessory);
 }
 
 int DataObjDriver::getBladeSet(bool virtualParam) const {
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
     return GfDataDriver::getBladeSet(*data);
 }
 
@@ -935,7 +939,7 @@ unsigned int DataObjDriver::getBlade(bool virtualParam, int slot) const {
     if (set < 0) {
         return 0;
     }
-    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    const SDataDriver* data = virtualParam ? m_sdata : &GfDataDriver::getSDataDriver(getBdatId());
     return GfDataDriver::getBlade(*data, set);
 }
 

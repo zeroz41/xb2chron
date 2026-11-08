@@ -2274,7 +2274,7 @@ void GfGameUtil::execEquipDriverDefaultAcce(unsigned int driver) {
     if (driver == 0 || GfDataDriver::isEquipDefaultAcce(driver)) {
         return;
     }
-    GfDataDriver::getSDataDriver(driver)->m_defaultAcceDone = true;
+    GfDataDriver::getSDataDriver(driver).m_defaultAcceDone = true;
     unsigned int accessory = mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->getChrDrDefAcce(driver);
     if (accessory != 0) {
         if (GfItemUtil::isEnableAddItemBox(accessory, 1)) {

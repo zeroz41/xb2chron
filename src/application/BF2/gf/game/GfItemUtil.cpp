@@ -589,7 +589,7 @@ bool GfEquipUtil::equipDriverAcce(unsigned int driver, unsigned int slot, unsign
 }
 
 unsigned int GfEquipUtil::getEquipAcceResult(unsigned int driver, unsigned int slot, unsigned int accessory) {
-    return getEquipAcceResult(*GfDataDriver::getSDataDriver(driver), slot, accessory);
+    return getEquipAcceResult(GfDataDriver::getSDataDriver(driver), slot, accessory);
 }
 
 unsigned int GfEquipUtil::getEquipOrbMax(unsigned int blade) {

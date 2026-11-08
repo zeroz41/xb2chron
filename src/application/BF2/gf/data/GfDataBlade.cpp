@@ -339,12 +339,12 @@ const char* GfDataDriver::getCamBone(unsigned int driver) {
 }
 
 void GfDataDriver::setKizunaringComplete(unsigned int driver, bool flag) {
-    SDataDriver* data = getSDataDriver(driver);
+    SDataDriver* data = &getSDataDriver(driver);
     data->m_kizunaRingFlags |= flag ? 2 : 1;
 }
 
 bool GfDataDriver::isKizunaringComplete(unsigned int driver, bool flag) {
-    return (getSDataDriver(driver)->m_kizunaRingFlags & (flag ? 2 : 1)) != 0;
+    return (getSDataDriver(driver).m_kizunaRingFlags & (flag ? 2 : 1)) != 0;
 }
 
 bool GfDataDriver::equipDriverBladeFromReserverBlade(unsigned int driver) {
@@ -407,7 +407,7 @@ bool GfDataDriver::isAttachedParty(unsigned int driver) {
     if (driver == 0) {
         return false;
     }
-    return getSDataDriver(driver)->m_stateFlag != 0;
+    return getSDataDriver(driver).m_stateFlag != 0;
 }
 
 unsigned int GfDataDriverArts::getNeedLevelupWp(unsigned int driver, unsigned int arts) {
@@ -1274,7 +1274,7 @@ bool GfDataDriver::isActivateParty(unsigned int driver) {
     if (driver == 0) {
         return false;
     }
-    if (getSDataDriver(driver)->m_dataType != 1) {
+    if (getSDataDriver(driver).m_dataType != 1) {
         return false;
     }
     return static_cast<unsigned int>(GfDataParty::getDriverPartyID(driver)) < 3;
@@ -1285,7 +1285,7 @@ bool GfDataBlade::isBladeID(unsigned int blade) {
 }
 
 SDataPouch* GfDataDriver::getPouchData(unsigned int driver, unsigned int pouch) {
-    return getSDataDriver(driver)->m_pouches + pouch;
+    return getSDataDriver(driver).m_pouches + pouch;
 }
 
 bool GfDataBlade::isMatchIdeaAttribute(unsigned int blade, unsigned int idea) {
@@ -1387,7 +1387,7 @@ bool GfDataDriver::isActivateWeaponType(unsigned int driver, unsigned int index)
         SDataDriverArtsEx* ex = getSDataDriverArtsEx(driver);
         return ex->m_flags.test(index - 0x1C);
     }
-    SDataDriver* data = getSDataDriver(driver);
+    SDataDriver* data = &getSDataDriver(driver);
     return data->m_flags.test(index);
 }
 
@@ -1400,7 +1400,7 @@ void GfDataDriver::setActivateWeaponType(unsigned int driver, unsigned int index
         ex->m_flags.set(index - 0x1C);
         return;
     }
-    SDataDriver* data = getSDataDriver(driver);
+    SDataDriver* data = &getSDataDriver(driver);
     data->m_flags.set(index);
 }
 
@@ -1434,7 +1434,7 @@ unsigned int GfDataDriver::getWeaponEfbFileIdx(int index) {
 }
 
 bool GfDataDriver::getEquipAcceEnahnce(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver) {
-    return getEquipAcceEnhance(enhances, *getSDataDriver(driver));
+    return getEquipAcceEnhance(enhances, getSDataDriver(driver));
 }
 
 bool GfDataDriver::getEquipAcceEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriver& data) {
@@ -1493,7 +1493,7 @@ bool GfDataItem::isTukiItem(unsigned int item) {
 }
 
 unsigned int GfDataDriver::getLevel(unsigned int driver) {
-    return getLevel(*getSDataDriver(driver));
+    return getLevel(getSDataDriver(driver));
 }
 
 bool GfDataEvent::isBladeCreateEvent(unsigned int event) {
@@ -2776,7 +2776,7 @@ unsigned int GfDataDriverSkill::getSkill(unsigned int driver, unsigned int line,
     if (level == 0) {
         return 0;
     }
-    SDataDriver* data = GfDataDriver::getSDataDriver(driver);
+    SDataDriver* data = &GfDataDriver::getSDataDriver(driver);
     unsigned int index = level - 1;
     if (index >= 3) {
         return 0;
@@ -2838,7 +2838,7 @@ bool GfDataDriverSkill::isSkillUnlock(unsigned int driver, unsigned int line, un
 }
 
 unsigned int GfDataDriverSkill::getSkillLevel(unsigned int driver, unsigned int line, bool round) {
-    SDataDriver* data = GfDataDriver::getSDataDriver(driver);
+    SDataDriver* data = &GfDataDriver::getSDataDriver(driver);
     unsigned int id = data->m_id;
     if (id - 1 >= 6 && id - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
@@ -3424,13 +3424,13 @@ void GfDataBlade::setUnselect(unsigned int blade, bool unselect) {
     GfEvent::callBladeUnselect(blade, unselect);
 }
 
-SDataDriver* GfDataDriver::getSDataDriver(unsigned int driver) {
+SDataDriver& GfDataDriver::getSDataDriver(unsigned int driver) {
     if (driver - 0x11 < 9) {
-        return &GfDataManager::getDataGameIra()->m_drivers[driver - 0x11].m_driver;
+        return GfDataManager::getDataGameIra()->m_drivers[driver - 0x11].m_driver;
     }
     unsigned int index = driver - 1;
     SDataGame* game = GfDataManager::getDataGame();
-    return &game->m_drivers[index < 0x10 ? index : 1];
+    return game->m_drivers[index < 0x10 ? index : 1];
 }
 
 void GfDataDriver::calcDriverBaseParamByLevel(SDataDriver& data) {
@@ -3475,7 +3475,7 @@ unsigned int GfDataDriver::getLevel(const SDataDriver& data) {
 }
 
 bool GfDataDriver::getEnableLevel(unsigned int& level, unsigned int& value, unsigned int driver) {
-    return GfDataDriver::getEnableLevel(level, value, *getSDataDriver(driver));
+    return GfDataDriver::getEnableLevel(level, value, getSDataDriver(driver));
 }
 
 unsigned int GfDataDriver::getExp(const SDataDriver& data) {
@@ -3483,7 +3483,7 @@ unsigned int GfDataDriver::getExp(const SDataDriver& data) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
         if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
-            return getExp(*getSDataDriver(getIraFront(data.m_id)));
+            return getExp(getSDataDriver(getIraFront(data.m_id)));
         }
     }
     return data.m_exp;
@@ -3494,7 +3494,7 @@ unsigned int GfDataDriver::getBattleExp(const SDataDriver& data) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
         if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
-            return getBattleExp(*getSDataDriver(getIraFront(data.m_id)));
+            return getBattleExp(getSDataDriver(getIraFront(data.m_id)));
         }
     }
     return data.m_battleExp;
@@ -3505,7 +3505,7 @@ bool GfDataDriver::isEnableLevelUp(const SDataDriver& data) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
         if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
-            return isEnableLevelUp(*getSDataDriver(getIraFront(data.m_id)));
+            return isEnableLevelUp(getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int level = getLevel(data);
@@ -3522,7 +3522,7 @@ unsigned int GfDataDriver::getBattleExpNextLevel(const SDataDriver& data) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
         if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
-            return getBattleExpNextLevel(*getSDataDriver(getIraFront(data.m_id)));
+            return getBattleExpNextLevel(getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int level = getLevel(data);
@@ -3542,7 +3542,7 @@ unsigned int GfDataDriver::getExpNextLevel(const SDataDriver& data) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
         if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
-            return getExpNextLevel(*getSDataDriver(getIraFront(data.m_id)));
+            return getExpNextLevel(getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int level = getLevel(data);
@@ -3564,7 +3564,7 @@ unsigned int GfDataDriver::getExpUsed(unsigned int driver) {
             return getExpUsed(getIraFront(driver));
         }
     }
-    unsigned int level = getLevel(*getSDataDriver(driver));
+    unsigned int level = getLevel(getSDataDriver(driver));
     unsigned int exp = 0;
     for (unsigned int i = 0; i < level; i++) {
         exp += GfDataUtil::getGrowLevelExp(i + 1);
@@ -3577,7 +3577,7 @@ unsigned int GfDataDriver::getHpMaxRev(const SDataDriver& data) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
         if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
-            return getHpMaxRev(*getSDataDriver(getIraFront(data.m_id)));
+            return getHpMaxRev(getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int rev = 0;
@@ -3600,7 +3600,7 @@ unsigned int GfDataDriver::getStrengthRev(const SDataDriver& data) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
         if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
-            return getStrengthRev(*getSDataDriver(getIraFront(data.m_id)));
+            return getStrengthRev(getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int rev = 0;
@@ -3618,7 +3618,7 @@ unsigned int GfDataDriver::getPowEtherRev(const SDataDriver& data) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
         if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
-            return getPowEtherRev(*getSDataDriver(getIraFront(data.m_id)));
+            return getPowEtherRev(getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int rev = 0;
@@ -3636,7 +3636,7 @@ unsigned int GfDataDriver::getDexRev(const SDataDriver& data) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
         if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
-            return getDexRev(*getSDataDriver(getIraFront(data.m_id)));
+            return getDexRev(getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int rev = 0;
@@ -3654,7 +3654,7 @@ unsigned int GfDataDriver::getAgilityRev(const SDataDriver& data) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
         if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
-            return getAgilityRev(*getSDataDriver(getIraFront(data.m_id)));
+            return getAgilityRev(getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int rev = 0;
@@ -3672,7 +3672,7 @@ unsigned int GfDataDriver::getLuckRev(const SDataDriver& data) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
         if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
-            return getLuckRev(*getSDataDriver(getIraFront(data.m_id)));
+            return getLuckRev(getSDataDriver(getIraFront(data.m_id)));
         }
     }
     unsigned int rev = 0;
@@ -3690,7 +3690,7 @@ unsigned int GfDataDriver::getSkillPoint(const SDataDriver& data) {
 }
 
 void GfDataDriver::addSkillPoint(unsigned int driver, int point) {
-    addSkillPoint(*getSDataDriver(driver), point);
+    addSkillPoint(getSDataDriver(driver), point);
 }
 
 int GfDataDriver::getBladeSet(const SDataDriver& data) {
@@ -3708,7 +3708,7 @@ unsigned int GfDataDriver::getBlade(unsigned int driver, int slot) {
     if (driver == 0) {
         return 0;
     }
-    SDataDriver* data = getSDataDriver(driver);
+    SDataDriver* data = &getSDataDriver(driver);
     unsigned int id = data->m_id;
     if (id - 0x11 < 9) {
         return GfBdatChrDr::get()->getChrDrDefBlade1(id);
@@ -3763,7 +3763,7 @@ unsigned int* GfDataDriver::getDriverWeaponType(unsigned int driver, unsigned in
         SDataDriverArtsEx* ex = getSDataDriverArtsEx(driver);
         return ex->m_arts[index - 0x1C];
     }
-    SDataDriver* data = getSDataDriver(driver);
+    SDataDriver* data = &getSDataDriver(driver);
     return data->m_arts[index];
 }
 
@@ -3788,7 +3788,7 @@ unsigned int* GfDataDriver::getDriverWeaponTypeIraSwitch(unsigned int driver, un
 }
 
 GfItemHandle GfDataDriver::getEquipAcceHandle(unsigned int driver, unsigned int slot) {
-    SDataDriver* data = getSDataDriver(driver);
+    SDataDriver* data = &getSDataDriver(driver);
     if (slot < 2) {
         return data->m_equipAcce[slot].m_handle;
     }
@@ -3799,7 +3799,7 @@ void GfDataDriver::setEquipAcce(unsigned int driver, unsigned int slot, unsigned
     if (driver == 0) {
         return;
     }
-    setEquipAcce(*getSDataDriver(driver), slot, accessory);
+    setEquipAcce(getSDataDriver(driver), slot, accessory);
 }
 
 void GfDataDriver::setEquipAcce(SDataDriver& data, unsigned int slot, unsigned int accessory) {
@@ -3814,7 +3814,7 @@ void GfDataDriver::setEquipAcceHandle(unsigned int driver, unsigned int slot, Gf
     if (driver == 0) {
         return;
     }
-    SDataDriver* data = getSDataDriver(driver);
+    SDataDriver* data = &getSDataDriver(driver);
     if (slot < 2) {
         data->m_equipAcce[slot].m_handle = handle;
     } else {
@@ -3823,7 +3823,7 @@ void GfDataDriver::setEquipAcceHandle(unsigned int driver, unsigned int slot, Gf
 }
 
 void GfDataDriver::setEnableExtendEquipAcce(unsigned int driver, bool flag) {
-    SDataDriver* data = getSDataDriver(getSDataDriver(driver)->m_id);
+    SDataDriver* data = &getSDataDriver(getSDataDriver(driver).m_id);
     if (flag) {
         data->m_equipAcceEx |= 0x80000000;
     } else {
@@ -3832,11 +3832,11 @@ void GfDataDriver::setEnableExtendEquipAcce(unsigned int driver, bool flag) {
 }
 
 bool GfDataDriver::isEnableExtendEquipAcce(unsigned int driver) {
-    return getSDataDriver(getSDataDriver(driver)->m_id)->m_equipAcceEx >> 31;
+    return getSDataDriver(getSDataDriver(driver).m_id).m_equipAcceEx >> 31;
 }
 
 void GfDataDriver::getEquipWpnType(mm::mtl::FixedVector<unsigned int, 50>& types, unsigned int driver) {
-    getEquipWpnType(types, *getSDataDriver(driver));
+    getEquipWpnType(types, getSDataDriver(driver));
 }
 
 void GfDataDriver::addSkillPoint(SDataDriver& data, int point) {
@@ -3857,7 +3857,7 @@ void GfDataDriver::addSkillPoint(SDataDriver& data, int point) {
 }
 
 void GfDataDriver::getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver) {
-    getValidEnhance(enhances, *getSDataDriver(driver));
+    getValidEnhance(enhances, getSDataDriver(driver));
 }
 
 bool GfDataDriver::getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataIra& data) {
@@ -3989,7 +3989,7 @@ unsigned int GfDataDriver::getFavorite(unsigned int driver, FAVORITE favorite) {
 }
 
 void GfDataDriver::setPouchData(unsigned int driver, unsigned int pouch, const SDataPouch& data) {
-    SDataPouch* dst = getSDataDriver(driver)->m_pouches + pouch;
+    SDataPouch* dst = getSDataDriver(driver).m_pouches + pouch;
     dst->m_open = data.m_open;
     dst->itemId = data.itemId;
     dst->remainTime = data.remainTime;
@@ -5391,7 +5391,7 @@ int GfDataParty::getDriverPartyID(unsigned int driver) {
 }
 
 int GfDataDriver::getSetIdByBlade(unsigned int driver, unsigned int blade) {
-    return getSetIdByBlade(*getSDataDriver(driver), blade);
+    return getSetIdByBlade(getSDataDriver(driver), blade);
 }
 
 // 1.0.0's symbols have it out of line (0x71002A83E0); 3.0.1 keeps no copy, so it is inline here
@@ -5406,7 +5406,7 @@ inline int GfDataDriver::getSetIdByBlade(const SDataDriver& data, unsigned int b
 }
 
 int GfDataDriver::getSetIdByDummyBlade(unsigned int driver) {
-    SDataDriver* data = getSDataDriver(driver);
+    SDataDriver* data = &getSDataDriver(driver);
     for (int slot = 0; slot < 3; slot++) {
         if (GfDataBlade::isDummyBlade(data->m_blades[slot])) {
             return slot;
@@ -5519,27 +5519,27 @@ unsigned int GfDataBlade::getFavorite(unsigned int blade, FAVORITE favorite) {
 }
 
 SDataIdea* GfDataDriver::getSDataIdea(unsigned int driver) {
-    return &getSDataDriver(driver)->m_idea;
+    return &getSDataDriver(driver).m_idea;
 }
 
 unsigned short GfDataDriver::getDefaultWpnType(unsigned int driver) {
-    return getDefaultWpnType(*getSDataDriver(driver));
+    return getDefaultWpnType(getSDataDriver(driver));
 }
 
 bool GfDataDriver::isEnableLevelUp(unsigned int driver) {
-    return isEnableLevelUp(*getSDataDriver(driver));
+    return isEnableLevelUp(getSDataDriver(driver));
 }
 
 unsigned int GfDataDriver::getExp(unsigned int driver) {
-    return getExp(*getSDataDriver(driver));
+    return getExp(getSDataDriver(driver));
 }
 
 unsigned int GfDataDriver::getBattleExp(unsigned int driver) {
-    return getBattleExp(*getSDataDriver(driver));
+    return getBattleExp(getSDataDriver(driver));
 }
 
 unsigned int GfDataDriver::getBattleExpNextLevel(unsigned int driver) {
-    return getBattleExpNextLevel(*getSDataDriver(driver));
+    return getBattleExpNextLevel(getSDataDriver(driver));
 }
 
 unsigned int GfDataDriver::getExpSetLevel(unsigned int driver, unsigned int level) {
@@ -5641,11 +5641,11 @@ bool GfDataParty::isPartyBattleMember(unsigned int chara) {
 
 bool GfDataParty::isActivateMember(unsigned int chara) {
     if (chara <= 1000) {
-        return GfDataDriver::getSDataDriver(chara)->m_dataType != 0;
+        return GfDataDriver::getSDataDriver(chara).m_dataType != 0;
     } else if (chara <= 2000) {
         if (chara != 1011) {
             unsigned int driver = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(chara)].m_setDriver;
-            if (driver == 0 || GfDataDriver::getSDataDriver(driver)->m_dataType == 0) {
+            if (driver == 0 || GfDataDriver::getSDataDriver(driver).m_dataType == 0) {
                 return false;
             }
         }
@@ -5859,7 +5859,7 @@ unsigned int GfDataDriverArts::getArtsLevel(unsigned int driver, unsigned int ar
         SDataDriverArtsEx* ex = GfDataDriver::getSDataDriverArtsEx(driver);
         return ex->m_artsLevels[arts - 0x280];
     }
-    SDataDriver* data = GfDataDriver::getSDataDriver(driver);
+    SDataDriver* data = &GfDataDriver::getSDataDriver(driver);
     return data->m_artsLevels[arts];
 }
 
@@ -5868,7 +5868,7 @@ unsigned int GfDataDriver::getDriverArtsLevel(unsigned int driver, unsigned int 
         SDataDriverArtsEx* ex = getSDataDriverArtsEx(driver);
         return ex->m_artsLevels[arts - 0x280];
     }
-    SDataDriver* data = getSDataDriver(driver);
+    SDataDriver* data = &getSDataDriver(driver);
     return data->m_artsLevels[arts];
 }
 
@@ -5878,7 +5878,7 @@ void GfDataDriver::setDriverArtsLevel(unsigned int driver, unsigned int arts, un
         ex->m_artsLevels[arts - 0x280] = level;
         return;
     }
-    SDataDriver* data = getSDataDriver(driver);
+    SDataDriver* data = &getSDataDriver(driver);
     data->m_artsLevels[arts] = level;
 }
 
@@ -6964,7 +6964,7 @@ unsigned int GfDataHana::getRole(unsigned int hana) {
 }
 
 bool GfDataDriver::isActivateUnuse(unsigned int driver) {
-    return getSDataDriver(driver)->m_dataType == 0;
+    return getSDataDriver(driver).m_dataType == 0;
 }
 
 void GfDataDriver::setLevel(SDataDriver& data, unsigned int level) {
@@ -6972,7 +6972,7 @@ void GfDataDriver::setLevel(SDataDriver& data, unsigned int level) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
         if (bdat->getChrIrType(bdat->getChrDrIraParam(data.m_id)) != 0) {
-            setLevel(*getSDataDriver(getIraFront(data.m_id)), level);
+            setLevel(getSDataDriver(getIraFront(data.m_id)), level);
             return;
         }
     }
@@ -6981,7 +6981,7 @@ void GfDataDriver::setLevel(SDataDriver& data, unsigned int level) {
 }
 
 void GfDataDriver::setLevel(unsigned int driver, unsigned int level) {
-    setLevel(*getSDataDriver(driver), level);
+    setLevel(getSDataDriver(driver), level);
 }
 
 void GfDataDriver::setExp(unsigned int driver, unsigned int exp) {
@@ -6992,7 +6992,7 @@ void GfDataDriver::setExp(unsigned int driver, unsigned int exp) {
             return;
         }
     }
-    getSDataDriver(driver)->m_exp = exp;
+    getSDataDriver(driver).m_exp = exp;
 }
 
 void GfDataDriver::setBattleExp(unsigned int driver, unsigned int exp) {
@@ -7003,7 +7003,7 @@ void GfDataDriver::setBattleExp(unsigned int driver, unsigned int exp) {
             return;
         }
     }
-    getSDataDriver(driver)->m_battleExp = exp;
+    getSDataDriver(driver).m_battleExp = exp;
 }
 
 bool GfDataMercenaries::isEnableOrder(unsigned int mission) {
@@ -7107,14 +7107,14 @@ int GfDataDriver::getBladeSet(unsigned int driver) {
     if (driver == 0) {
         return -1;
     }
-    return getBladeSet(*getSDataDriver(driver));
+    return getBladeSet(getSDataDriver(driver));
 }
 
 bool GfDataDriver::isScenarioMask(unsigned int driver) {
     if (driver == 0) {
         return false;
     }
-    return getSDataDriver(driver)->m_scenarioMask == 1;
+    return getSDataDriver(driver).m_scenarioMask == 1;
 }
 
 unsigned int GfDataWeapon::getNewWeapon(unsigned int weapon, unsigned int chip) {
@@ -7130,14 +7130,14 @@ bool GfDataDriver::isEquipDefaultAcce(unsigned int driver) {
     if (driver == 0) {
         return false;
     }
-    return getSDataDriver(driver)->m_defaultAcceDone;
+    return getSDataDriver(driver).m_defaultAcceDone;
 }
 
 int GfDataDriver::getMaxSetBladeNum(unsigned int driver) {
     if (driver == 0) {
         return 0;
     }
-    return getMaxSetBladeNum(*getSDataDriver(driver));
+    return getMaxSetBladeNum(getSDataDriver(driver));
 }
 
 ItemBox* GfDataItem::getItemBox() {
@@ -7488,7 +7488,7 @@ bool GfDataUtil::isStartChapterSave() {
 }
 
 bool GfDataDriver::isActivatePartyAll(unsigned int driver) {
-    return driver != 0 && getSDataDriver(driver)->m_dataType == 1;
+    return driver != 0 && getSDataDriver(driver).m_dataType == 1;
 }
 
 bool GfDataBlade::getListReserver(mm::mtl::FixedVector<unsigned short, 422>& list) {
@@ -7559,16 +7559,16 @@ bool GfDataBlade::getListParty(mm::mtl::FixedVector<unsigned short, 422>& list, 
 }
 
 unsigned int GfDataDriver::getSkillPoint(unsigned int driver) {
-    return getSkillPoint(*getSDataDriver(driver));
+    return getSkillPoint(getSDataDriver(driver));
 }
 
 void GfDataDriver::setScenarioMask(unsigned int driver, bool mask) {
-    SDataDriver* data = getSDataDriver(driver);
+    SDataDriver* data = &getSDataDriver(driver);
     data->m_scenarioMask = mask;
 }
 
 unsigned int GfDataDriver::getEquipAcce(unsigned int driver, unsigned int slot) {
-    return getEquipAcce(*getSDataDriver(driver), slot);
+    return getEquipAcce(getSDataDriver(driver), slot);
 }
 
 unsigned int GfDataBlade::getEndCommonBlade() {

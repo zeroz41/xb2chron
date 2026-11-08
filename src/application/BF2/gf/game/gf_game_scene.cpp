@@ -739,7 +739,7 @@ void GfGameScene::gevDriverActivate(unsigned int driver, ActivateType from, Acti
             if (acce != 0) {
                 GfItemUtil::addItemBox(acce, -1);
             }
-            GfDataDriver::getSDataDriver(12)->m_defaultAcceDone = false;
+            GfDataDriver::getSDataDriver(12).m_defaultAcceDone = false;
             break;
         }
         }

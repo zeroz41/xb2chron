@@ -28,7 +28,7 @@ public:
     // push_back checks 50, its count sits 0xC8 bytes past the room; 1.0.0's symbol named the type with 27)
     static void getEquipWpnType(mm::mtl::FixedVector<unsigned int, 50>& types, const SDataDriver& data);
     // 1.0.0's and 2.0.0's names (same call sites, same arguments; 3.0.1's also cover the DLC drivers)
-    static SDataDriver* getSDataDriver(unsigned int driver);  // getSDataDriver
+    static SDataDriver& getSDataDriver(unsigned int driver);  // getSDataDriver
     // the driver's arts records past the ones its data keeps, found the getSDataDriver way (DLC rows 0x11-0x19 in
     // GfDataManager::getDataGameIra's, others in getDataGame's 16, clamped as getSDataDriver clamps); inline in
     // getDriverWeaponType, getDriverArtsLevel, setDriverArtsLevel and GfDataDriverArts::getArtsLevel. The name is not the original's.
