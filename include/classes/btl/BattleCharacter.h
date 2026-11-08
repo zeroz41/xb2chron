@@ -297,6 +297,9 @@ public:
     void ResetAlphaRate(int id);
     void RegisterAlphaAnimation(ALPHA_PROC_ID id, float rate, float time, bool all);
     void AlphaAnimation(ALPHA_PROC_ID id);
+    // 2.0.0's symbols name it. Mounts the weapon (gf::GfMountManager::execMount) by pad_EE8_6 and keeps the mount
+    // state in pad_F05_4; called from PostManagerUpdate.
+    void WeaponMountProc();
     void DeleteAnimSpecialProc();
     // 1.0.0's name: its ResetAlphaAnimation (0x710001F77C) has the same three BladeChangeManager callers and the
     // same body over 17 entries (2.0.0's symbols name it too)
@@ -606,7 +609,9 @@ public:
     unsigned char pad_EE6[0x2];
     // GetDriverType answers it (a blade answers its driver's; the name is not the original's)
     unsigned int m_driverType : 3;
-    unsigned int pad_EE8_3 : 6;
+    unsigned int pad_EE8_3 : 3;
+    // WeaponMountProc mounts the weapon at option 1 while it is 2, at option 2 while it is 1 (meaning unknown)
+    unsigned int pad_EE8_6 : 3;
     // the BLADE_TIMER_MODE m_bladeTimer runs for (the name is not the original's)
     unsigned int m_bladeTimerMode : 3;
     // a one-shot attribute for PlaySE's sound (9 = none: PlaySE then uses the parameter's GetAttribute; the
@@ -700,7 +705,9 @@ public:
     unsigned int pad_F05_3 : 1;
     // DeleteAnimSpecialProc fades alpha set 6 back in and remounts only while it is set (run bit 60; meaning unknown)
     unsigned int pad_F05_4 : 1;
-    unsigned int pad_F05_5 : 4;
+    // WeaponMountProc clears it, then sets it when it starts mounting (run bit 61; meaning unknown)
+    unsigned int pad_F05_5 : 1;
+    unsigned int pad_F05_6 : 3;
     // CharacterManager::NotifyChallengeNextWave sets it on every dead enemy that does not have it yet (run bit 65; meaning
     // unknown)
     unsigned int pad_F06_1 : 1;

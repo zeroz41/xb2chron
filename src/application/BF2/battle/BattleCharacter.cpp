@@ -39,6 +39,10 @@
 #include "classes/btl/SpAttackManager.h"
 #include "classes/btl/UIManager.h"
 #include "btl/siren_battle_manager.h"
+#include "classes/btl/BladeChangeManager.h"
+#include "classes/gf/GfMountManager.h"
+#include "classes/gf/GfGameMount.h"
+#include "classes/gf/GfWeapon.h"
 
 namespace btl {
 
@@ -1897,5 +1901,85 @@ void BattleCharacter::ActionCommandEndFormationChange() {}
 void BattleCharacter::LandingCallback() {}
 
 void BattleCharacter::BoundCallback() {}
+
+void BattleCharacter::WeaponMountProc() {
+    pad_F05_5 = false;
+    if (GetDriverType() == 2) {
+        return;
+    }
+    gf::OPTMNT type = gf::GfMountManager::getMountType(m_handle, gf::GFATTACH());
+    if (type == 0) {
+        return;
+    }
+    bool mount;
+    if (BattleGlobal::sys()->m_challengeAnySuccess) {
+        mount = true;
+    } else {
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        if (param != nullptr && param->IsBlade(false)) {
+            mount = type == 3;
+        } else {
+            mount = type != 3;
+        }
+    }
+    if (!pad_F05_4 && mount) {
+        pad_F05_5 = true;
+        float rate = -1.0f;
+        if (gf::GfGameMount* gameMount =
+                gf::GfMountManager::getMount(gf::GfObjUtil::getMountHandle(m_handle, gf::GFATTACH()))) {
+            gf::GfWeapon* weapon = gameMount->m_weapon;
+            for (int i = 0; i < 10; i++) {
+                gf::GF_OBJ_HANDLE* handle = weapon->getObjHandles()[i];
+                if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+                    rate = Misc::GetVolumeFadeAlphaRate(handle);
+                }
+            }
+        }
+        m_alphaRate[2] = rate;
+        if (!BattleGlobal::sys()->m_challengeAnySuccess &&
+            !mm::mtl::PtrSingleton<BladeChangeManager>::sys()->IsRegister(m_handle)) {
+            if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
+                gf::GF_OBJ_HANDLE* driverHandle = param->m_driverHandle;
+                if (const BattleCharacter* driver =
+                        mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(driverHandle)) {
+                    if (m_alphaAnimations[4].m_time <= 0.0f) {
+                        m_alphaAnimations[4].m_targetRate = m_alphaAnimations[4].m_rate = driver->m_alphaAnimations[4].m_rate;
+                    }
+                    if (m_alphaAnimations[5].m_time <= 0.0f) {
+                        m_alphaAnimations[5].m_targetRate = m_alphaAnimations[5].m_rate = driver->m_alphaAnimations[5].m_rate;
+                    }
+                    if (m_alphaAnimations[7].m_time <= 0.0f) {
+                        m_alphaAnimations[7].m_targetRate = m_alphaAnimations[7].m_rate = driver->m_alphaAnimations[7].m_rate;
+                    }
+                }
+            }
+        }
+    }
+    pad_F05_4 = mount;
+    if (!mount) {
+        return;
+    }
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param != nullptr && param->IsBlade(true)) {
+        return;
+    }
+    switch (pad_EE8_6) {
+    case 1:
+        if (type == 2 || pad_F00_3) {
+            return;
+        }
+        gf::GfMountManager::execMount(m_handle, gf::GFATTACH(), static_cast<gf::OPTMNT>(2));
+        break;
+    case 2:
+        if (type == 1) {
+            return;
+        }
+        gf::GfMountManager::execMount(m_handle, gf::GFATTACH(), static_cast<gf::OPTMNT>(1));
+        break;
+    default:
+        return;
+    }
+    gf::GfObjUtil::resetWeaponMotion(m_handle, static_cast<gf::OPTMNT>(-1));
+}
 
 }  // namespace btl
