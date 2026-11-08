@@ -16,7 +16,7 @@ class StateMove : public ::gf::GfStateBase {
 public:
     // a step of the state: the sequence the update runs, none when null
     typedef void (StateMove::*Seq)(GfComBehaviorMob& owner, const fw::UpdateInfo& info);
-    StateMove() : m_seq(nullptr), pad_60(0) {}
+    StateMove() : m_seq(nullptr), pad_60(0.0f) {}
     // what GfComBehaviorMob::createFsm registers with its Hfsm: the state made in a state buffer
     static ai::State* create(void* buffer) { return new (buffer) StateMove; }
     virtual ~StateMove() {}  // slot 0: inline (emitted with the table by the registering unit)
@@ -41,7 +41,8 @@ public:
     // whether the state may run: the owner has its object at 0xb8
     static bool isCondMatch(const GfComBehaviorMob& owner);
     Seq m_seq;
-    unsigned int pad_60;
+    // the time seqInterpPosRotToGoal has moved the owner toward its goal; seqWaitMoveEnd clears it
+    float pad_60;
 };
 }}  // namespace gf::mob
 

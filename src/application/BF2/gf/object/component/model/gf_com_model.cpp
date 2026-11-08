@@ -33,8 +33,29 @@
 #include "classes/anm/Pose.h"
 #include "classes/anm/ExtraTruckBuffer.h"
 #include "mm/mtl/Delegate.h"
+#include "classes/gf/GfObjManager.h"
+#include "classes/gf/GfObjSetupMob.h"
+#include "classes/gf/GfComAsm.h"
+#include "gf/GfObjInfo.h"
+#include "gf/GfObjAcc.h"
+#include "mm/mtl/RTTI.h"
+#include "mm/mtl/FixStr.h"
+#include <string.h>
 
 namespace gf {
+namespace {
+// a mob's setup when its info holds one of its own kind (7), as gf_game_obj.cpp's enemy setup (inline, the name is
+// not the original's)
+inline GfObjSetupMob* getMobSetup(GF_OBJ_HANDLE* handle) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info != nullptr && info->m_setup != nullptr && info->m_setup->m_type == info->m_obj->m_type &&
+        info->m_obj->m_type == 7) {
+        return mm::mtl::rttiCast<GfObjSetupMob>(info->m_setup);
+    }
+    return nullptr;
+}
+}  // namespace
+
 namespace mob {
 
 void StateApproachPc::enter(GfComBehaviorMob* owner, ai::State*) {
@@ -65,6 +86,90 @@ void StateApproachPc::update(GfComBehaviorMob* owner, const fw::UpdateInfo& info
     }
 }
 
+void StateApproachPc::seqApproachPc(GfComBehaviorMob& owner, const fw::UpdateInfo& info) {
+    if (!m_execCmd.m_done) {
+        return;
+    }
+    if (m_execCmd.m_executed) {
+        owner.init(true);
+    }
+    if (!gmk::isPlayerExist()) {
+        return;
+    }
+    gmk::AGmkBase* gmk = owner.getBindedGmkInst();
+    if (gmk == nullptr) {
+        return;
+    }
+    owner.setGoalPos(gmk::getPlayerPos());
+    if (!isCondMatch(owner)) {
+        owner.pad_53d9 = false;
+        requestState(1);
+        return;
+    }
+    bool far;
+    {
+        GfObjAcc acc(static_cast<GfObj*>(owner.m_owner));
+        const mm::Vec3& pos = acc.getWorldTransform().position;
+        const mm::Vec3& playerPos = gmk::getPlayerPos();
+        mm::Vec3 toPlayer = playerPos - pos;
+        toPlayer.y = 0.0f;
+        far = !(playerPos.y - pos.y < 1.0f && toPlayer.dot(toPlayer) < 1.0f);
+    }
+    if (far) {
+        GfObjAcc acc(static_cast<GfObj*>(owner.m_owner));
+        const mm::Vec3& mobPos = acc.getWorldTransform().position;
+        mm::Vec3 gmkPos = *gmk->m_pos;
+        mm::Vec3 toGmk = mobPos - gmkPos;
+        float dy = toGmk.y;
+        toGmk.y = 0.0f;
+        float distSq = toGmk.dot(toGmk);
+        if (!(2.0f < dy) && !(owner.m_bdatInfo.m_approachDistSq < distSq)) {
+            owner.moveToGoal(info.m_deltaTime);
+            return;
+        }
+    }
+    TFieldExecCmd<GfComAsm>::CreateInfo idle;
+    idle.handle = static_cast<GfObj*>(owner.m_owner)->m_handle;
+    idle.cmdName = "C_idle";
+    idle.timeout = 5.0f;
+    m_execCmd.create(idle);
+    m_seq = &StateApproachPc::seqApproachPcIdle;
+}
+
+bool StateApproachPc::isCondMatch(const GfComBehaviorMob& owner) {
+    bool result = false;
+    if (gmk::isPlayerExist() && owner.m_bdatInfo.m_approachDistSq > 0.0f && !(owner.pad_53d4 > 4.0f) &&
+        !(owner.m_bdatInfo.m_approachDistSq < owner.pad_53d0)) {
+        result = true;
+    }
+    return result;
+}
+
+void StateApproachPc::seqApproachPcIdle(GfComBehaviorMob& owner, const fw::UpdateInfo&) {
+    if (m_execCmd.m_executed) {
+        owner.init(false);
+    }
+    if (!isCondMatch(owner)) {
+        owner.pad_53d9 = false;
+        requestState(1);
+    }
+}
+
+void StateIdle::enter(GfComBehaviorMob* owner, ai::State* prev) {
+    if (prev != nullptr) {
+        execEndSchedule(*owner);
+    }
+    GfComAsm* com = owner->m_owner->getComponent<GfComAsm>(2);
+    const char* state = com != nullptr ? com->getStateName(AnimLayer(0)) : nullptr;
+    const char* idle = getMobSetup(static_cast<GfObj*>(owner->m_owner)->m_handle)->m_stateName.m_str;
+    if (state == nullptr || strcmp(idle, state) != 0) {
+        mm::mtl::FixStr<32> cmd(idle);
+        cmd[0] = 'C';
+        m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner->m_owner)->m_handle, cmd.m_str));
+    }
+    owner->pad_53d9 = true;
+}
+
 void StateIdle::leave(GfComBehaviorMob* owner, ai::State*) { execEndSchedule(*owner); }
 
 void StateSquadMember::enter(GfComBehaviorMob* owner, ai::State*) {
@@ -85,7 +190,60 @@ void StateSquadMember::seqUpdateIdle(GfComBehaviorMob& owner, const fw::UpdateIn
     }
 }
 
+void StateSquadMember::seqUpdateMove(GfComBehaviorMob& owner, const fw::UpdateInfo& info) {
+    if (m_execCmd.m_info.handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) && m_execCmd.m_info.cmdName.length() != 0 &&
+        !m_execCmd.m_done) {
+        return;
+    }
+    const mm::Vec3& pos = owner.getPos();
+    float dx = owner.pad_110.x - pos.x;
+    float dz = owner.pad_110.z - pos.z;
+    float dist = sqrtf(dx * dx + dz * dz);
+    GfFieldMoveSpeed& speed = owner.m_moveSpeed;
+    float rate;
+    if (dist < pad_18) {
+        if (!pad_68) {
+            m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, "C_idle"));
+            m_seq = &StateSquadMember::seqUpdateIdle;
+            owner.initMoveSpeed(0.5f);
+            owner.init(false);
+            return;
+        }
+        rate = (dist - 0.1f) / pad_18;
+        rate = rate < 0.0f ? 0.0f : rate;
+    } else if (dist < 1.0f) {
+        float t = (dist - pad_18) / (1.0f - pad_18);
+        float max = speed.m_speedMin < 1e-6f ? 0.0f : speed.m_speedMax / speed.m_speedMin;
+        rate = 1.0f + (max - 1.0f) * t;
+    } else {
+        rate = speed.m_speedMin < 1e-6f ? 0.0f : speed.m_speedMax / speed.m_speedMin;
+    }
+    speed.setSpeedKmph(rate * speed.m_speedMin, 0.5f);
+    owner.moveToGoal(info.m_deltaTime);
+}
+
 void StateSquadMember::leave(GfComBehaviorMob*, ai::State*) {}
+
+void StateSquadMember::update(GfComBehaviorMob* owner, const fw::UpdateInfo& info) {
+    if (!(owner->m_squadNavi.isInSquad() && owner->m_squadNavi.m_index != 0)) {
+        requestState(0);
+        owner->initMoveSpeed(0.5f);
+        return;
+    }
+    mm::Vec3 pos;
+    float rotY;
+    if (owner->m_squadNavi.getPosRotY(pos, rotY)) {
+        mm::Vec3 prev = owner->pad_110;
+        owner->setGoalPos(pos);
+        float dx = pos.x - prev.x;
+        float dz = pos.z - prev.z;
+        pad_68 = dx * dx + dz * dz > 0.0001f;
+        m_execCmd.update(info.m_deltaTime);
+        if (m_seq) {
+            (this->*m_seq)(*owner, info);
+        }
+    }
+}
 
 bool StateSquadMember::isCondMatch(const GfComBehaviorMob& owner) { return owner.isSquadMember(); }
 
@@ -94,6 +252,31 @@ void StateMove::enter(GfComBehaviorMob* owner, ai::State*) {
     owner->init(true);
     m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner->m_owner)->m_handle, "C_move"));
     m_seq = &StateMove::seqUpdateMove;
+}
+
+void StateMove::seqWaitMoveEnd(GfComBehaviorMob& owner, const fw::UpdateInfo& info) {
+    m_execCmd.update(info.m_deltaTime);
+    if (m_execCmd.m_done) {
+        if (gmk::AGmkBase* gmk = owner.getBindedGmkInst()) {
+            mm::Vec3 half = gmk->m_pos[1];
+            half = half * 0.5f;
+            float sx = sinf(half.x);
+            float cx = cosf(half.x);
+            float sy = sinf(half.y);
+            float cy = cosf(half.y);
+            float sz = sinf(half.z);
+            float cz = cosf(half.z);
+            mm::Quat rot;
+            rot.x = sx * cy * cz - cx * sy * sz;
+            rot.y = cx * sy * cz + sx * cy * sz;
+            rot.z = cx * cy * sz - sx * sy * cz;
+            rot.w = cx * cy * cz + sx * sy * sz;
+            mm::Vec3 front = rot.rotate(mm::Vec3::unitZ);
+            owner.execTurnCmd(atan2f(front.x, front.z));
+            m_seq = &StateMove::seqInterpPosRotToGoal;
+            pad_60 = 0.0f;
+        }
+    }
 }
 
 void StateMove::seqWaitTurnEnd(GfComBehaviorMob& owner, const fw::UpdateInfo&) {
@@ -105,6 +288,28 @@ void StateMove::seqWaitTurnEnd(GfComBehaviorMob& owner, const fw::UpdateInfo&) {
 }
 
 void StateMove::leave(GfComBehaviorMob*, ai::State*) {}
+
+void StateMove::update(GfComBehaviorMob* owner, const fw::UpdateInfo& info) {
+    if (owner->m_squadNavi.isInSquad() && owner->m_squadNavi.m_index != 0) {
+        requestState(3);
+        return;
+    }
+    if (m_seq) {
+        (this->*m_seq)(*owner, info);
+    }
+}
+
+void StateMove::seqInterpPosRotToGoal(GfComBehaviorMob& owner, const fw::UpdateInfo& info) {
+    if (owner.m_turnCmd.pad_6c && owner.getBindedGmkInst() != nullptr) {
+        fw::Transform& transform = owner.m_owner->getComponent<GfComTransform>(0)->getFrame()->getWorldTransformForWrite();
+        transform.position += (owner.pad_110 - transform.position) * (info.m_deltaTime / 0.5f);
+        pad_60 += info.m_deltaTime;
+        if (pad_60 >= 0.5f) {
+            transform.position = owner.pad_110;
+            requestState(0);
+        }
+    }
+}
 
 bool StateMove::isCondMatch(const GfComBehaviorMob& owner) { return owner.pad_b8 != nullptr; }
 
