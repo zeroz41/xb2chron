@@ -24,6 +24,10 @@ public:
         StmPackData m_data;  // 0x98
     };
 
+    // inline: no constructor symbol (MotstmManager::create's inlined copy clears every field)
+    explicit StmPackMemory(const mtl::ALLOC_HANDLE& handle)
+        : pad_8(0), pad_c(handle), pad_10(nullptr), pad_18(0), pad_20(0), pad_28(0), pad_5838(0), pad_5840(0),
+          pad_5848(0), pad_5850(0), pad_5858(0), pad_58e8(0), pad_58f0(0) {}
     virtual ~StmPackMemory();  // slot 0
     virtual void update();  // slot 2
     virtual void render(mm::Rect<int> const&, float);  // slot 3

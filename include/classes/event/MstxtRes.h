@@ -12,6 +12,10 @@ public:
     MstxtRes(const char* name);
     virtual void OnResEvent(event::IResEvent::PARAM const&);  // slot 0
     virtual ~MstxtRes();  // slot 1
+    // registers the loaded BDAT (the ResManager item named m_fileName) as BDAT 2 once it has loaded
+    void registerBdat();
+    // the message text whose label is the text ("" for none)
+    const char* getText(const char* label);
     // bit 0: loading (OnResEvent clears it), bit 1: loaded (set on a type 3 event), bit 2: its BDAT is registered (the destructor unregisters it); the name is not the original's
     unsigned int m_flags;  // 0x8
     // the name it was made with (the constructor copies it; MstxtManager::load compares it); the name is not the original's

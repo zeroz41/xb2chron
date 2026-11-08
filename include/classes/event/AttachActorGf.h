@@ -6,6 +6,7 @@
 enum EVT_attachtype : int;
 namespace mm { class Mat44; }
 namespace mm { class Vec3; }
+namespace gf { class GF_OBJ_HANDLE; }
 
 namespace event {
 // table 0x7100B3C360
@@ -17,6 +18,9 @@ public:
     virtual bool getMtpMat(mm::Mat44&, char const*) const;  // slot 7
     virtual bool getEfpMat(mm::Mat44&, char const*) const;  // slot 10
     virtual bool getBoneMat(mm::Mat44&, char const*) const;  // slot 13
+
+    // the object whose effect caster setEffectCaster and setEffectMount use (-1: none); the name is not the original's
+    gf::GF_OBJ_HANDLE* m_handle;  // 0xa0
 };
 }  // namespace event
 

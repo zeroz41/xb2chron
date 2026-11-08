@@ -199,6 +199,13 @@
 #include "classes/event/MdlstmManager.h"
 #include "classes/event/MstxtManager.h"
 #include "classes/event/OffscrManager.h"
+#include "ml/ScnRenderDrSysParmAcc.h"
+#include "ml/ScnRenderDrViewCtrl.h"
+#include "ml/MlMem.h"
+#include "classes/event/ModelUtil.h"
+#include "classes/gf/EffectCaster.h"
+#include "classes/gf/EffectMountSetupEv.h"
+#include "classes/event/AttachUtil.h"
 
 namespace event {
 
@@ -207,6 +214,26 @@ CmdVariable::~CmdVariable() {}
 ParamVariable::~ParamVariable() {}
 
 Param::Param() {}
+
+void AttachUtil::setMount(bool on, gf::GF_OBJ_HANDLE* handle, unsigned int id, const char* name, const mm::Vec3& pos,
+                          bool flag, EVT_attachtype type) {
+    if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    gf::GfComEffectCaster* caster = gf::GfObjUtil::getObj(handle)->getComponent<gf::GfComEffectCaster>(7);
+    if (on) {
+        gf::EffectMountSetupEv setup;
+        setup.m_id = id;
+        setup.m_boneName = name;
+        setup.pad_41 = flag;
+        setup.m_pos = pos;
+        setup.pad_40 = false;
+        setup.pad_42 = type == 1;
+        caster->addMountEffectEv(setup);
+    } else {
+        caster->removeMountEffectEv(id);
+    }
+}
 
 AttachActorCS::~AttachActorCS() {
     while (m_casters.size() != 0) {
@@ -223,6 +250,34 @@ bool AttachActorCS::getMtpMat(mm::Mat44& mat, const char*) const {
 }
 
 AttachActorGf::~AttachActorGf() {}
+
+void AttachActorGf::setEffectCaster(bool on, unsigned int effect) {
+    if (on) {
+        if (m_handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            return;
+        }
+        gf::EffectCaster* caster =
+            gf::GfObjUtil::getObj(m_handle)->findComponent<gf::GfComEffectCaster>(7)->m_caster;
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setParam(effect, caster, 1.0f);
+    } else {
+        if (m_handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            return;
+        }
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setParam(effect, nullptr, 1.0f);
+    }
+}
+
+void AttachActorGf::setEffectMount(bool on, unsigned int id, const char* name, const mm::Vec3& pos, bool flag,
+                                   EVT_attachtype type) {
+    if (on) {
+        AttachUtil::setMount(true, m_handle, id, name, pos, flag, type);
+    } else {
+        if (m_handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            return;
+        }
+        gf::GfObjUtil::getObj(m_handle)->getComponent<gf::GfComEffectCaster>(7)->removeMountEffectEv(id);
+    }
+}
 
 bool AttachActorGf::getMtpMat(mm::Mat44& mat, const char*) const {
     mat = mm::Mat44::identity;
@@ -1095,10 +1150,37 @@ mm::mtl::FixedVector<gf::GF_OBJ_HANDLE*, 3> ObjectPartyList::s_drlist;
 mm::mtl::FixedVector<gf::GF_OBJ_HANDLE*, 3> ObjectPartyList::s_bllist;
 
 
+void OffscrManager::clear() {
+    for (int i = 1; i < 4; i++) {
+        if (m_views[i] != nullptr) {
+            ml::ScnRenderDrSysParmAcc acc(mm::mtl::PtrSingleton<Manager>::sys()->m_scn->m_renderDrSys, 0);
+            acc.deleteAddRenderView(m_views[i]);
+            if (m_views[i] != nullptr) {
+                delete m_views[i];
+                m_views[i] = nullptr;
+            }
+        }
+    }
+}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void OffscrManager::OnEventProc(event::MSG_TYPE msg) {
     if (msg == 12) {
         clear();
+    }
+}
+
+void ModelUtil::setupRenderState(gf::GF_OBJ_HANDLE* handle) {
+    gf::GfComModel* model = gf::GfObjUtil::getObj(handle)->getComponent<gf::GfComModel>(1);
+    if (model->m_model != nullptr) {
+        gf::GfObjAcc acc(handle);
+        ml::ScnObjAccResMdlInfo info(model->m_model->getInterface());
+        acc.setCameraFadeDisableForEvent(true);
+        acc.setGpuClip(false);
+        info.setDblBuffAlpha(false);
+        info.setAlwaysMiddleTexStm(true);
+        info.setAlwaysTexStm(false);
+        gf::GfObjUtil::setVolumeFadeUserFlag(handle, true);
     }
 }
 
@@ -1384,6 +1466,17 @@ inline void MotstmManager::render() {
     }
 }
 
+inline void StmManager::create(mtl::ALLOC_HANDLE mem, mtl::ALLOC_HANDLE handle) {
+    m_stm = new (mem, nullptr, 0, 4, false) StmPackMemory(handle);
+    pad_8 |= 1;
+}
+
+void MotstmManager::create(mtl::ALLOC_HANDLE handle) {
+    m_stmManager.create(mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, handle);
+    m_flags.set(0);
+    m_flags.set(2);
+}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void MotstmManager::OnEventProc(event::MSG_TYPE msg) {
     if (msg == 14) {
@@ -1414,6 +1507,39 @@ MstxtRes::~MstxtRes() {
     }
 }
 
+void MstxtRes::registerBdat() {
+    if ((m_flags & 7) != 2) {
+        return;
+    }
+    ResManager::Item* item = mm::mtl::Singleton<ResManager>::getPtr()->search(m_fileName.m_str);
+    void* data = nullptr;
+    if (item != nullptr && item->m_data != nullptr && item->m_size != 0) {
+        data = item->m_data;
+    }
+    fw::BdatManager::loadBdatFromMemory(2, data);
+    m_flags |= 4;
+}
+
+const char* MstxtRes::getText(const char* label) {
+    if (label == nullptr || label[0] == '\0') {
+        return "";
+    }
+    unsigned char* fp = fw::BdatManager::getFp(m_fileName.m_str);
+    int id = 0;
+    int top = Bdat::getIdTop(fp);
+    int end = Bdat::getIdEnd(fp);
+    for (int i = top; i <= end; i++) {
+        if (strcmp(label, Bdat::getMSLabel(fp, i)) == 0) {
+            id = i;
+            break;
+        }
+    }
+    if (id < 1) {
+        return "";
+    }
+    return Bdat::getMSText(fw::BdatManager::getFp(m_fileName.m_str), id);
+}
+
 void MstxtRes::OnResEvent(const IResEvent::PARAM& param) {
     if (param.m_type == 3) {
         m_flags |= 2;
@@ -1427,6 +1553,25 @@ void Manager::failureSkip() {
     mm::mtl::Singleton<DebugManager>::getPtr()->setFlag(8);
     mm::mtl::Singleton<DebugManager>::getPtr()->setFlag(0);
     mm::mtl::Singleton<DebugManager>::getPtr()->playMessage("failure skip!! [%s.sb]", m_eventName.m_str);
+}
+
+void MstxtManager::clear() {
+    if (m_bdatRes != nullptr) {
+        MstxtRes* res = m_bdatRes;
+        if (res->m_flags & 4) {
+            gf::GfMenuObjEventSubtitle::endText();
+            fw::BdatManager::unregistBdat(2);
+            res->m_flags &= ~4;
+        }
+        m_bdatRes = nullptr;
+    }
+    for (unsigned long i = 0; i < m_res.size(); i++) {
+        if (m_res[i] != nullptr) {
+            delete m_res[i];
+            m_res[i] = nullptr;
+        }
+    }
+    m_res.clear();
 }
 
 void MstxtManager::load(const char* name) {

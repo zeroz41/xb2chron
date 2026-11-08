@@ -12,6 +12,10 @@ public:
     virtual ~StmManager();  // slot 0 (the key function)
     // 1.0.0's StmManager::destroy (3.0.1 inlines it into MotstmManager::OnEventProc)
     inline void destroy();
+    // news (from mem) the StmPackMemory with the handle and sets pad_8 bit 0 (inline: MotstmManager::create's copy
+    // loads the handle after the memory manager's and before the allocation, as by-value parameters of an inlined
+    // call; defined in CharaObj.cpp; the names are not the original's)
+    inline void create(mtl::ALLOC_HANDLE mem, mtl::ALLOC_HANDLE handle);
     // 1.0.0's StmManager(const char*) (0x71000A4F7C, out of line there; 3.0.1 inlines it into
     // Singleton<MotstmManager>::getPtr)
     explicit StmManager(const char* name) : pad_8(0), pad_c(name), m_stm(nullptr) {}

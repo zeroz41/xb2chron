@@ -27,6 +27,7 @@ namespace gf { class MsgFxForceCancel; }
 namespace gf { class MsgFxBuff; }
 namespace gf { class MsgFxWeapon; }
 namespace gf { class GfObj; }
+namespace gf { struct EffectMountSetupEv; }
 
 namespace gf {
 // table 0x7100B65990
@@ -181,6 +182,8 @@ public:
     // drops the mounted effect with that id, handing its bone frame back first when it took one; false without one
     // (the parameter name is not the original's)
     bool removeMountEffectEv(unsigned int id);
+    // mounts an event's effect (event::AttachUtil::setMount); out of line, not written yet
+    void addMountEffectEv(const EffectMountSetupEv& setup);
     // the pack holding the named efb: an m_packs entry of the owner's weapon effect type (any entry when
     // GfGameManager::isGameTypeIra() holds), else pad_48, or for pad_117ac kinds 3 and 4 with a parent a pack made
     // from the owner's efb resource; null for "cmn" names (the parameter name is not the original's)

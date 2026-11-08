@@ -4,6 +4,7 @@
 #include "classes/mm/mtl/Singleton.h"
 #include "classes/event/StmManager.h"
 #include "mm/mtl/Bitflag.h"
+#include "mtl/AllocHandle.h"
 
 namespace event { enum MSG_TYPE : int; }
 
@@ -20,6 +21,8 @@ public:
     void free(void* p) { m_stmManager.free(p, 0); }
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     void update();  // out of line
+    // news the StmPackMemory (with the handle) into the StmManager (SeqManager::setupScene)
+    void create(mtl::ALLOC_HANDLE handle);
     // 1.0.0's clear and render (3.0.1 inlines them into OnEventProc; defined inline in CharaObj.cpp)
     void clear();
     void render();
