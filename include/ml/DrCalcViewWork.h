@@ -85,7 +85,7 @@ public:
     mm::Mat44 m_oldBillboard;       // 0x100
     mm::Mat44 m_saveBillboard;      // 0x140: DrCalcMan::shadowEnd restores m_billboard from it (the name is not the original's)
     mm::Mat44 m_proj;               // 0x180
-    unsigned char pad_1C0[0x40];
+    mm::Mat44 m_godRayProj;         // 0x1C0: DrPixlSkyDome::godRayRender sends it as "proj" (name inferred)
     mm::Mat44 m_viewProj;           // 0x200
     mm::Mat44 m_billboardYVec;      // 0x240
     mm::Mat44 m_oldView;            // 0x280: m_view as DrCalcMan::renderEnd leaves it (the name is not the original's)

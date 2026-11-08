@@ -118,7 +118,9 @@ public:
     // 0x12C: DrCalcViewWork::unistatic_lightAmb's colour; DrEnvironmentObjLgt::updatePosLgt copies its m_ambColor
     // here (the name is not the original's)
     mm::Col3 m_ambColor;
-    unsigned char pad_138[0x28];
+    unsigned char pad_138[0x8];
+    mm::Col3 m_godRayColor;  // 0x140, DrPixlSkyDome::godRayRender sends it in gParm (name inferred)
+    unsigned char pad_14C[0x14];
     // 0x160: DrPixlDeferred::shadowTexRender renders no shadow while it is not above 0 (name inferred)
     float m_shadowRate;
     unsigned char pad_164[0x4];

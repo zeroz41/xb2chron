@@ -30,7 +30,10 @@ public:
     float m_parmA;  // 0x48
     float m_pow;  // 0x4C
     float m_parmB[4];  // 0x50
-    unsigned char pad_60[0x70];
+    unsigned char pad_60[0x60];
+    // 0xC0: DrPixlSkyDome::godRayRender renders while one channel is above 0, scaled by the sky's visibility (name inferred)
+    mm::Col3 m_godRayColor;
+    unsigned char pad_CC[0x4];
     bool m_fogOn;  // 0xD0, isFogOn (the constructor clears it)
     bool m_enable;  // 0xD1, the constructor sets it
 };

@@ -22,6 +22,7 @@
 #include "ml/DrCalcMan.h"
 #include "ml/DrPixlRenderTarget.h"
 #include "ml/DrPixlFormat.h"
+#include "ml/DrFogMan.h"
 #include "ml/DrLightMan.h"
 #include "ml/DrMdlMan.h"
 #include "classes/ml/DrPixlShadowObjDir.h"
@@ -1275,6 +1276,38 @@ DrPixlMemMan::~DrPixlMemMan() {}
 DrPixlPostObj::DrPixlPostObj(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
     : m_drMan(drMan), m_pixlMan(pixlMan), m_postMan(postMan) {}
 
+void DrPixlSkyDome::godRayRender() {
+    DrFogMan* fog = m_drMan->m_fogMan;
+    if (!fog->isFogOn()) {
+        return;
+    }
+    if (fog->m_godRayColor.r <= 0.0f && fog->m_godRayColor.g <= 0.0f && fog->m_godRayColor.b <= 0.0f) {
+        return;
+    }
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getPostShdObj(0x14);
+    DrCalcViewWork* viewWork = m_drMan->m_calcMan->m_pViewWork;
+    DrAPGxType::setupStencilTest(1, 0, 2, 0, 0, 0, 2, 0, 0, 0);
+    DrAPGxType::setupBlend(0);
+    list->bindShdVertex();
+    obj->setupShader(0u);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    unsigned int projOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "proj");
+    unsigned int parmOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gParm[0]");
+    uniform.setMat44SetMat44(projOfs, viewWork->m_godRayProj);
+    DrLightMan* light = m_drMan->m_lightMan;
+    float parm[8] = {light->m_godRayColor.r, light->m_godRayColor.g, light->m_godRayColor.b, fog->m_parmB[3],
+                     fog->m_godRayColor.r * m_visible, m_visible * fog->m_godRayColor.g,
+                     fog->m_godRayColor.b * m_visible, 1.0f};
+    uniform.setF32SetF32Array(parmOfs, parm, 8);
+    m_query->begin(m_drMan->m_pixlMan->m_occQuery);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    list->renderQuads();
+    m_query->end();
+}
+
 float DrPixlPostObj::gaussianDistribution(float x, float y, float rho) {
     float g = 1.0f / sqrtf(2.0f * 3.14159265f * rho * rho);
     return g * expf((x * x + y * y) / (-2.0f * rho * rho));
@@ -1293,6 +1326,33 @@ void DrPixlPostObj::setUVScale_UB(grlib::CGLibUniformEtcUtility& uniform, DrShdD
     }
     cache->setTexture(*target->m_pTexture, location);
     uniform.setF32SetVec4(ofs, &scale.x);
+}
+
+void DrPixlPostObj::setScaleShader(DrPixlRenderTarget* target) {
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getSelectShdObj(1);
+    obj->setDeclarationIdx(obj->getDeclarationOfs("PIXL_TYPE"), 1);
+    obj->setDeclarationIdx(obj->getDeclarationOfs("MRT_NUM"), 1);
+    list->bindQuadsTex();
+    obj->setupShader(0u);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    unsigned int sclOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gScal");
+    float width = (float)target->m_width;
+    float height = (float)target->m_height;
+    float val[4];
+    val[0] = (width - 1.0f) / width;
+    val[1] = (height - 1.0f) / height;
+    val[2] = 1.0f / (width + width);
+    val[3] = 1.0f / (height + height);
+    grlib::ShdF32SetVec4(reinterpret_cast<float*>(uniform.getBuff() + sclOfs), val);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    unsigned int location = obj->getCurrentShader().getTextureLocation("s0");
+    DrAPCache* cache = m_drMan->m_apCache;
+    cache->beginTexSampling(2, 1);
+    cache->setTexture(*target->m_pTexture, location);
+    list->renderQuads();
 }
 
 void DrPixlPostObj::calc1PixlOfs(float& width, float& height) {
@@ -1738,6 +1798,73 @@ void DrPixlPostObjDepthofField::renderDofScaleDown() {
     m_calcBuff[0]->setColorInvalidate();
 }
 
+void DrPixlPostObjMotionBlur::renderCalcBlur() {
+    DrAPGxType::setupScreenQuads(false);
+    m_blurOut->setRenderTarget();
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = m_drMan->m_postParm[m_drMan->m_postParmIdx]->m_motBlurHLvMode ? list->getPostShdObj(0x1D) : list->getPostShdObj(0xE);
+    list->bindTriangleTex();
+    obj->setupShader(0u);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    unsigned int location = obj->getCurrentShader().getTextureLocation("s0");
+    unsigned int velLocation = obj->getCurrentShader().getTextureLocation("s1");
+    unsigned int ofs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "ofs[0]");
+    float velWidth = (float)m_blurVel[0]->m_width;
+    DrPixlRenderTarget* hdr = m_pixlMan->m_objTbl->m_hdrBuff[0];
+    float velHeight = (float)m_blurVel[0]->m_height;
+    float width = (float)hdr->m_width;
+    float height = (float)hdr->m_height;
+    DrAPCache* cache = m_drMan->m_apCache;
+    float val[8];
+    val[0] = (width - 1.0f) / width;
+    val[1] = (height - 1.0f) / height;
+    val[2] = 1.0f / (width + width);
+    val[3] = 1.0f / (height + height);
+    val[4] = (velWidth - 1.0f) / velWidth;
+    val[5] = (velHeight - 1.0f) / velHeight;
+    val[6] = 1.0f / (velWidth + velWidth);
+    val[7] = 1.0f / (velHeight + velHeight);
+    uniform.setF32SetF32Array(ofs, val, 8);
+    cache->beginTexSampling(2, 1);
+    cache->setTexture(*m_pixlMan->m_objTbl->m_hdrBuff[0]->m_pTexture, location);
+    cache->setTexture(*m_blurVel[0]->m_pTexture, velLocation);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    list->renderTriangle();
+    m_blurOut->setColorInvalidate();
+}
+
+void DrPixlPostObjMotionBlur::lastRender() {
+    m_pixlMan->m_objTbl->m_hdrBuff[0]->setRenderTarget();
+    DrAPGxType::setupBlend(1);
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getSelectShdObj(1);
+    obj->setDeclarationIdx(obj->getDeclarationOfs("PIXL_TYPE"), 1);
+    obj->setDeclarationIdx(obj->getDeclarationOfs("MRT_NUM"), 1);
+    list->bindTriangleTex();
+    obj->setupShader(0u);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    unsigned int sclOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gScal");
+    float width = (float)m_blurOut->m_width;
+    float height = (float)m_blurOut->m_height;
+    float val[4];
+    val[0] = (width - 1.0f) / width;
+    val[1] = (height - 1.0f) / height;
+    val[2] = 1.0f / (width + width);
+    val[3] = 1.0f / (height + height);
+    grlib::ShdF32SetVec4(reinterpret_cast<float*>(uniform.getBuff() + sclOfs), val);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    unsigned int location = obj->getCurrentShader().getTextureLocation("s0");
+    DrAPCache* cache = m_drMan->m_apCache;
+    cache->beginTexSampling(2, 1);
+    cache->setTexture(*m_blurOut->m_pTexture, location);
+    list->renderTriangle();
+    DrAPGxType::setupBlend(0);
+}
+
 DrPixlPostObjMotionBlur::~DrPixlPostObjMotionBlur() {
     for (int i = 0; i < 2; i++) {
         if (m_blurVel[i] != nullptr) {
@@ -1750,6 +1877,58 @@ DrPixlPostObjMotionBlur::~DrPixlPostObjMotionBlur() {
         m_blurOut = nullptr;
     }
 }
+
+DrPixlPostObjToneMap::~DrPixlPostObjToneMap() {
+    for (int i = 0; i < 6; i++) {
+        if (m_sclDown[i] != nullptr) {
+            delete m_sclDown[i];
+            m_sclDown[i] = nullptr;
+        }
+    }
+    for (int i = 0; i < 2; i++) {
+        if (m_lumBuff[i] != nullptr) {
+            delete m_lumBuff[i];
+            m_lumBuff[i] = nullptr;
+        }
+    }
+    m_uniform[0].release();
+    m_uniform[1].release();
+}
+
+void DrPixlPostObjToneMap::createSclDow() {
+    m_sclDown[0]->setRenderTarget();
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getPostShdObj(0);
+    list->bindQuadsTex();
+    obj->setupShader(0u);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    unsigned int paramOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gParam");
+    mm::Vec4 param = mm::Vec4::zero;
+    param.x = m_drMan->m_lightMan->getSkyLuminance();
+    uniform.setVec4SetVec4(paramOfs, param);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    unsigned int location = obj->getCurrentShader().getTextureLocation("s0");
+    unsigned int depthLocation = obj->getCurrentShader().getTextureLocation("gTDownDepth");
+    DrPixlRenderTarget* hdr = m_pixlMan->m_objTbl->m_hdrBuff[0];
+    grlib::CGLibRenderTarget* depth = m_pixlMan->m_objTbl->m_postMan->getDownDepth();
+    DrAPCache* cache = m_drMan->m_apCache;
+    cache->beginTexSampling(2, 0);
+    cache->setTexture(*hdr->m_pTexture, location);
+    cache->setTexture(*depth->m_pTexture, depthLocation);
+    list->renderQuads();
+    m_sclDown[0]->setColorInvalidate();
+}
+
+DrPixlPostObjVolume::DrPixlPostObjVolume(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
+    : DrPixlPostObj(drMan, pixlMan, postMan), m_pos(0.0f, 0.0f, 0.0f) {
+    m_volumeBuff[0] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(drMan);
+    m_volumeBuff[1] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(drMan);
+    m_volumeBuff[2] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(drMan);
+    calcColorBuff();
+}
+
 
 DrPixlPostObjVolume::~DrPixlPostObjVolume() {
     for (int i = 0; i < 3; i++) {
