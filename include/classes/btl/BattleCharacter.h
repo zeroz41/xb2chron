@@ -442,6 +442,15 @@ public:
     // functions and reads its fields. What it does: false when dead (IsDead(0), unless the flag is set), while
     // m_reactionID is non-zero or while pad_F09_2 is set; else true. Callers: TalkManager, Utility.
     bool IsEnableSpeakVoice(bool flag) const;
+    // The original's symbol names it. What it does: true while m_isRunHold is set, while a formation change request runs
+    // (pad_EF4) unless ChainAttackManager::IsSelectAction, while a unite combo / elemental combo / special attack
+    // camera runs, BattleGlobal pad_bit12, SirenBattleManager::IsCameraProc or UIManager pad_bit17; else
+    // BattleGlobal::IsFutureView.
+    bool IsBanOperate() const;
+    // The original's symbol names it. What it does: true unless the battle is enabled (or the flag is set) and the character
+    // is not BattleGlobal's elemental combo immortal; for a player also during ChainAttackManager::IsProc(false) and
+    // for a registered blade arts character of DataManager's pad_15D10 group while pad_15D12 is 3.
+    bool IsInvalidDead(bool flag) const;
     // 2.0.0's symbols name it. What it does: for a character whose parameter's m_isNotBlade is clear, sets pad_F01_0
     // unless, with the BattleGlobal flag (+0x83CA bit 3) set, pad_F09_3 is set or FormationChangeManager::IsRegister
     // answers true for the character's object or its parameter's m_driverHandle. Caller: SetPosition, on its

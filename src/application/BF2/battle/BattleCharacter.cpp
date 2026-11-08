@@ -43,6 +43,8 @@
 #include "classes/gf/GfMountManager.h"
 #include "classes/gf/GfGameMount.h"
 #include "classes/gf/GfWeapon.h"
+#include "classes/btl/BladeArtsManager.h"
+#include "classes/event/CharaEffectPlayer.h"
 
 namespace btl {
 
@@ -149,6 +151,25 @@ bool BattleCharacter::IsOverlapVert(const BattleCharacter* other) const {
 
 bool BattleCharacter::IsEnableTurnAI() const {
     return ((1 << m_state) & ((1 << 1) | (1 << 4))) != 0;
+}
+
+bool BattleCharacter::IsInvalidDead(bool flag) const {
+    gf::GF_OBJ_HANDLE* handle = m_handle;
+    if ((!flag && !BattleGlobal::sys()->IsEnableBattle()) || BattleGlobal::sys()->m_elementalCombo.m_immortal == handle) {
+        return true;
+    }
+    if (m_isPlayer) {
+        if (mm::mtl::PtrSingleton<ChainAttackManager>::sys()->IsProc(false)) {
+            return true;
+        }
+        if (mm::mtl::PtrSingleton<BladeArtsManager>::sys()->IsRegister(handle)) {
+            int group = mm::mtl::PtrSingleton<DataManager>::sys()->pad_15D10;
+            if (GetGroupIndex() == group && mm::mtl::PtrSingleton<DataManager>::sys()->pad_15D12 == 3) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 void BattleCharacter::GetMoveDataPerSec(mm::Vec3& move) const {
@@ -1333,6 +1354,22 @@ bool BattleCharacter::SetAngry(bool angry, float time) {
 }
 
 
+bool BattleCharacter::IsBanOperate() const {
+    if (m_isRunHold) {
+        return true;
+    }
+    if ((pad_EF4_0 || pad_EF4_1 || pad_EF4_2 || pad_EF4_4 || pad_EF4_5) &&
+        !ChainAttackManager::sys()->IsSelectAction()) {
+        return true;
+    }
+    if (BattleGlobal::sys()->m_uniteComboCamera || BattleGlobal::sys()->pad_bit12 ||
+        BattleGlobal::sys()->m_elementalCombo.m_camera || SpAttackManager::sys()->m_camera ||
+        SirenBattleManager::sys()->IsCameraProc() || UIManager::sys()->pad_bit17) {
+        return true;
+    }
+    return BattleGlobal::sys()->IsFutureView();
+}
+
 bool BattleCharacter::IsForward() const {
     if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
         return param->m_isNotBlade;
@@ -1345,6 +1382,21 @@ void BattleCharacter::SetExitBattle(bool exit, bool flag) {
     m_exitBattleFlag = flag;
     if (flag && IsControlCharacter()) {
         mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_controlExitBattle = true;
+    }
+}
+
+void BattleCharacter::SetOneShotRimBloom(int id) {
+    if (id < 23 || id > 30) {
+        return;
+    }
+    event::CharaEffectPlayer::RimBloomMessage msg;
+    msg.m_type = id;
+    const gf::GfComProperty* prop = GetComPropertyConst();
+    gf::GfComEffectCaster* caster = GetEffectCaster();
+    if (prop != nullptr && caster != nullptr) {
+        gf::GfObj* owner = static_cast<gf::GfObj*>(prop->m_owner);
+        caster->recieveMessage(owner, msg);
+        m_oneShotRimBloom = true;
     }
 }
 
