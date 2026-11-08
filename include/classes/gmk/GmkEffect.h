@@ -63,6 +63,12 @@ public:
         bool m_inOutDoor0;  // 0x1F: InOutDoorCond's first flag
         bool m_inOutDoor1;  // 0x20: its second
         bool m_cloud[2];                     // 0x21: CloudCond 0 for the first alone, 1 for the second alone
+        unsigned char pad_23[0x5];
+        float pad_28[4];
+        bool pad_38;
+        // 0x3c: the GmkEffectLocator gimmick that places it, negative for none (getLocatorPosRotXYZ takes that
+        // gimmick's position and rotation; the name is not the original's)
+        int m_locatorId;
     };
     const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     // the step create installs
@@ -72,6 +78,8 @@ public:
     // update's check of the pop conditions before each step
     void updatePopDepopCond();
     void applyEffectParam(bool) const;
+    // its position and XYZ rotation: its own, or its locator gimmick's when it has a valid one
+    void getLocatorPosRotXYZ(mm::Vec3& pos, mm::Vec3& rot) const;
 
     unsigned long pad_48;
     // 0x50..0x90: when it shows, from its gimmick data (create fills them; the names are not the original's)

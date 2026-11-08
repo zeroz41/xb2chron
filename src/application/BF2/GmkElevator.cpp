@@ -5128,6 +5128,41 @@ void GmkSeLine::dispose() {
 
 GmkSeLine::~GmkSeLine() { dispose(); }
 
+void GmkSeLine::update(float) {
+    debugUpdateMmf();
+    if (!isValid()) {
+        return;
+    }
+    m_popCondMatched = getBdatInfo()->isPopCondMatched();
+    if (m_seHandle == 0) {
+        if (m_popCondMatched && isPlayerInsideAabb()) {
+            createInst();
+            return;
+        }
+        if (m_seHandle == 0) {
+            return;
+        }
+    }
+    if (m_popCondMatched && isPlayerInsideAabb()) {
+        return;
+    }
+    if (m_seHandle != 0) {
+        mm::mtl::PtrSingleton<fw::SoundManager>::sys()->stopSe(m_seHandle, 1.0f);
+        m_seHandle = 0;
+        TGmkActiveList<GmkSeLine>::removeGmk(this);
+    }
+}
+
+bool GmkSeLine::isPlayerInsideAabb() const {
+    if (!isPlayerExist()) {
+        return false;
+    }
+    const mm::Vec3& pos = getPlayerPos();
+    const Data* data = getData();
+    return data->m_aabbMin[0] <= pos.x && pos.x < data->m_aabbMax[0] && data->m_aabbMin[1] <= pos.y &&
+           pos.y < data->m_aabbMax[1] && data->m_aabbMin[2] <= pos.z && pos.z < data->m_aabbMax[2];
+}
+
 void GmkTrigger::create(const CreateInfo& info) {
     AGmkBase::create(info);
     const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
@@ -5325,6 +5360,19 @@ void GmkFieldLock::dispose() {
 }
 
 GmkFieldLock::~GmkFieldLock() { dispose(); }
+void GmkEffect::getLocatorPosRotXYZ(mm::Vec3& pos, mm::Vec3& rot) const {
+    pos = m_pos[0];
+    rot = m_pos[1];
+    const Data* data = getData();
+    if (data->m_locatorId >= 0) {
+        const IGmkList* list = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param)->m_gmkLists[GmkEffectLocator::TYPE];
+        if (list != nullptr && list->isValid()) {
+            const AGmkBase* locator = list->getInst(data->m_locatorId);
+            pos = locator->m_pos[0];
+            rot = locator->m_pos[1];
+        }
+    }
+}
 
 // the gimmick data's show conditions into its conditions (bytes 0x14..0x22)
 void GmkEffect::create(const CreateInfo& info) {
@@ -5660,6 +5708,24 @@ void GmkMobInsts::seqWaitToFadeOutOfGobInst(const UpdateInfo& info) {
         m_popInfo.m_mobIds.clear();
         m_seq = &GmkMobInsts::seqUpdatePopDepop;
     }
+}
+
+// within its visible distances of the interest position, and that within the mob slots' pop distance limit
+bool GmkMobInsts::BdatInfo::isPopDistCondMatched(const mm::Vec3& pos) const {
+    if (!m_visible.isMatch(pos)) {
+        return false;
+    }
+    if (!isInterestPosExist()) {
+        return false;
+    }
+    const mm::Vec3& interest = getInterestPos();
+    float dx = interest.x - pos.x;
+    float dy = interest.y - pos.y;
+    float dz = interest.z - pos.z;
+    float distSq = dx * dx + dy * dy + dz * dz;
+    gf::GfFieldGimmick* fieldGimmick = mm::mtl::PtrSingleton<gf::GfFieldGimmick>::sys();
+    float limit = fieldGimmick != nullptr ? fieldGimmick->m_mobSlotMgr.m_popDistSqLimit : 1.0e12f;
+    return !(limit < distSq);
 }
 
 void GmkMobInsts::validateDisp() const {
