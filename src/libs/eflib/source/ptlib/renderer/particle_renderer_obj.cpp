@@ -13,6 +13,7 @@
 #include "ptlib/emitter/EmitterObj.h"
 #include "mm/Col4.h"
 #include "mm/MMStdBase.h"
+#include "classes/effect/IEffectCallBack.h"
 
 #line 1 "D:/Monolithsoft/BF2/prog/libs/eflib/proj/windows/../../../eflib/source\\ptlib/renderer/particle_renderer_obj.cpp"
 
@@ -21,6 +22,144 @@ namespace ptlib { namespace renderer {
 void RenderGrObj::term() {
     m_backBuffer.release();
     m_shaderManager.term();
+}
+
+void RenderManager::setEmitterDraw(emitter::EmitterObj* pObj, emitter::EmitterArg* pArg) {
+    // lbl_71009D5624: the blend mode of the shaders below 0x30 (the name is not the original's)
+    static const int s_blendModeTbl[0x30] = {
+        2, 3, 6, 2, 10, 2, 12, 2, 9, 8, 14, 2, 11, 2, 2, 1, 2, 2, 2, 2, 2, 7, 4, 2,
+        13, 5, 2, 2, 15, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    };
+    // lbl_71009D56E4: shaders 0x30 and 0x40's blend mode by the emitter's shader number (the name is not the original's)
+    static const int s_shaderBlendTbl[0x30] = {
+        6, 1, 2, 2, 6, 6, 3, 6, 4, 5, 1, 6, 6, 6, 6, 6, 6, 6, 6, 6, 4, 5, 1, 6,
+        6, 2, 6, 6, 6, 6, 6, 6, 6, 4, 6, 4, 4, 6, 4, 6, 0, 0, 0, 0, 0, 0, 0, 0,
+    };
+    int shader = -1;
+    switch (pArg->m_type) {
+    case 0:
+    case 12:
+        switch (pArg->m_shaderType) {
+        case 5:
+        case 29:
+        case 30:
+        case 40:
+        case 41:
+        case 42:
+        case 43:
+        case 44:
+        case 45:
+        case 46:
+        case 47:
+            shader = 0;
+            break;
+        case 3:
+            shader = 2;
+            break;
+        default:
+            shader = pArg->m_shaderType;
+            break;
+        }
+        break;
+    case 1:
+        shader = 0x30;
+        break;
+    case 2:
+        shader = 0x53;
+        break;
+    case 4:
+        shader = 0x50;
+        break;
+    case 5:
+        shader = 0x51;
+        break;
+    case 9:
+        shader = 0x40;
+        break;
+    }
+    if (pArg->m_type == 13 || pArg->m_type == 14) {
+        pObj->m_shaderGroup = 0;
+        pObj->m_blendMode = 0;
+        return;
+    }
+    if (shader == -1) {
+        efMsg("SHADER ERROR!!!");
+        return;
+    }
+    if (m_pGrObj != nullptr) {
+        int blend = shader < 0x30 ? s_blendModeTbl[shader] : 2;
+        int group = 0;
+        switch (shader) {
+        case 0x50:
+        case 0x51:
+        case 0x52:
+        case 0x54:
+        case 0x55:
+        case 0x56:
+        case 0x57:
+        case 0x58:
+        case 0x59:
+        case 0x5B:
+        case 0x5D:
+            group = 0;
+            blend = -1;
+            break;
+        case 0x30:
+            group = 1;
+            blend = s_shaderBlendTbl[pArg->m_shaderType];
+            break;
+        case 0x31:
+            group = 1;
+            blend = 1;
+            break;
+        case 0x32:
+            group = 1;
+            blend = 2;
+            break;
+        case 0x36:
+            group = 1;
+            blend = 3;
+            break;
+        case 0x38:
+            group = 1;
+            blend = 4;
+            break;
+        case 0x39:
+            group = 1;
+            blend = 5;
+            break;
+        case 0x40:
+            group = 9;
+            blend = s_shaderBlendTbl[pArg->m_shaderType];
+            break;
+        case 0x41:
+            group = 2;
+            blend = 6;
+            break;
+        case 0x46:
+            group = 2;
+            blend = 3;
+            break;
+        case 0x48:
+            group = 2;
+            blend = 4;
+            break;
+        case 0x49:
+            group = 2;
+            blend = 5;
+            break;
+        case 0x53:
+            group = 4;
+            blend = 1;
+            break;
+        case 0x42:
+            group = 2;
+            blend = 2;
+            break;
+        }
+        pObj->m_blendMode = blend;
+        pObj->m_shaderGroup = group;
+    }
 }
 
 void RenderGrObj::fxcore_setup_target_update(int view) {
@@ -237,6 +376,27 @@ void RenderGrObj::setEffectRenderTarget(grlib::CGLibRenderTarget* pTarget, grlib
     }
 }
 
+bool getFramePos(mm::Vec3& pos0, mm::Vec3& pos1, float frame, effect::IEffectCallBack* pCallBack, short type) {
+    unsigned int size;
+    const unsigned int* pData = static_cast<const unsigned int*>(pCallBack->getBindData(size));
+    if (pData != nullptr) {
+        SwtPackData pack(pData, size);
+        const char* pName = pCallBack->getStateName() + 2;
+        SwtData swt = [&]() {
+            for (unsigned int i = 0; i < pack.m_num; i++) {
+                if (strstr(reinterpret_cast<const char*>(pData + 1) + i * 0x80, pName) != nullptr) {
+                    return pack.getAddr(frame, i, type);
+                }
+            }
+            return SwtData(nullptr);
+        }();
+        if (swt.m_pData != nullptr) {
+            return calcFrame(swt, frame, pos0, pos1, type);
+        }
+    }
+    return false;
+}
+
 void RenderGrObj::draw_common_uconst(float* pOut, emitter::EmitterObj* pEmitter) {
     emitter::EmitterArg* pData = pEmitter->m_pData;
     if (pData != nullptr) {
@@ -265,6 +425,33 @@ void RenderGrObj::draw_common_uconst(float* pOut, emitter::EmitterObj* pEmitter)
         pOut[14] = value;
         pOut[15] = fade;
     }
+}
+
+SwtData SwtPackData::getAddr(float& frame, unsigned int index, short type) {
+    if (index < m_num) {
+        // after the names: one offset per state to its SwtData block (u32 key count, block number, block count)
+        const unsigned int* pOffset = m_pData + m_num * 32 + 1;
+        const unsigned int* p = reinterpret_cast<const unsigned int*>(reinterpret_cast<const char*>(m_pData) + pOffset[index]);
+        unsigned int block = p[1];
+        unsigned int blockNum = p[2];
+        float size = calcFrameSize(p, type);
+        if (size <= frame) {
+            if (block + 1 >= blockNum) {
+                return SwtData(nullptr);
+            }
+            frame -= size;
+            index++;
+        } else if (frame < 0.0f) {
+            if (block == 0) {
+                return SwtData(nullptr);
+            }
+            index--;
+            const unsigned int* pPrev = reinterpret_cast<const unsigned int*>(reinterpret_cast<const char*>(m_pData) + pOffset[index]);
+            frame = calcFrameSize(pPrev, type) + frame - 1.0f;
+        }
+        return SwtData(reinterpret_cast<const unsigned int*>(reinterpret_cast<const char*>(m_pData) + pOffset[index]));
+    }
+    return SwtData(nullptr);
 }
 
 }}  // namespace ptlib::renderer

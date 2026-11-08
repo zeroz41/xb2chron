@@ -5,9 +5,11 @@
 #include "grlib/CGLibTexture.h"
 #include "ptlib/renderer/ShaderManager.h"
 #include "mm/Vec3.h"
+#include <string.h>
 
 namespace ptlib { class DrDrawWorkInfoEF; class FxParam; class StaticAllocObj; }
 namespace ptlib { namespace emitter { class EmitterManager; class EmitterObj; } }
+namespace effect { class IEffectCallBack; }
 
 namespace ptlib { namespace renderer {
 
@@ -132,6 +134,51 @@ public:
     int m_blendState;          // 0x270: draw and draw_capture reset it (the name is not the original's)
     unsigned char pad_274[0xC];
 };
+
+// one state's frame block in a caster's bind data (SwtPackData::getAddr returns it by value in x8, and getFramePos
+// keeps 0x30 bytes for it; the fields past 0x8 are not read here)
+class SwtData {
+public:
+    SwtData(const unsigned int* pData) : m_pData(pData), pad_8(0) {}
+
+    // u32 count, two u32s, then count entries: char name[0x20], u32 key count, key count * {short frame?, x, y, z}
+    const unsigned int* m_pData;  // 0x0
+    unsigned int pad_8;           // 0x8: cleared by the constructor
+    unsigned char pad_c[0x24];
+};
+
+// a caster's bind data (effect::IEffectCallBack::getBindData): u32 state count, count * char[0x80] state names,
+// then count u32 offsets of each state's SwtData block
+class SwtPackData {
+public:
+    // m_size is stored before m_num is read (the original stores in that order)
+    SwtPackData(const unsigned int* pData, unsigned int size) : m_pData(pData), m_size(size) { m_num = *pData; }
+
+    // the key count of the entry named pArrayName[type * 2] (inline in getAddr; the static's symbol names it)
+    static unsigned int calcFrameSize(const unsigned int* pData, short type) {
+        static const char* pArrayName[] = {
+            "locusPoint_armR_00",  "locusPoint_armR_01",  "locusPoint_armL_00",  "locusPoint_armL_01",
+            "locusPoint_footR_01", "locusPoint_footR_00", "locusPoint_footL_01", "locusPoint_footL_00",
+        };
+        unsigned int num = pData[0];
+        const unsigned int* p = pData + 3;
+        for (unsigned int i = 0; i < num; i++) {
+            if (strstr(reinterpret_cast<const char*>(p), pArrayName[type * 2]) != nullptr) {
+                return p[8];
+            }
+            p = p + p[8] * 2 + 9;
+        }
+        return 0;
+    }
+    SwtData getAddr(float& frame, unsigned int index, short type);
+
+    const unsigned int* m_pData;  // 0x0
+    unsigned int m_num;           // 0x8
+    unsigned int m_size;          // 0xC
+};
+
+bool calcFrame(const SwtData& data, float frame, mm::Vec3& pos0, mm::Vec3& pos1, short type);
+bool getFramePos(mm::Vec3& pos0, mm::Vec3& pos1, float frame, effect::IEffectCallBack* pCallBack, short type);
 
 }}  // namespace ptlib::renderer
 

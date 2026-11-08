@@ -185,7 +185,10 @@ public:
     unsigned short m_vecKfCount;  // 0xE2: move01_common_keyframe's get_kf count (the name is not the original's)
     unsigned char pad_e4[0x19];
     unsigned char m_hashValue;  // 0xFD: HashManager::build records it with the handle (the name is not the original's)
-    unsigned char pad_fe[0x6];
+    unsigned char pad_fe[0x2];
+    // 0x100: the shader number RenderManager::setEmitterDraw picks the emitter's shader and blend by for m_type 0 and
+    // 12 (the name is not the original's)
+    unsigned int m_shaderType;
     // 0x104: the draw type: 0x9X and 0xD, 4 and 5 pick draw_common_uparam's values (the name is not the original's)
     unsigned char m_drawType;
     unsigned char pad_105[0x3];
@@ -333,7 +336,11 @@ public:
     unsigned int m_handle;  // the handle the emitter_set_* setters look for
     unsigned int m_seed;  // 0x268: the emitter's random seed (the name is not the original's)
     unsigned char m_flags;  // 0x26C: HashManager::build skips the emitter while bit 4 is set (the name is not the original's)
-    unsigned char pad_26d[0x7];
+    unsigned char pad_26d;
+    // 0x26E, 0x26F: RenderManager::setEmitterDraw's shader group and blend mode (the names are not the original's)
+    unsigned char m_shaderGroup;
+    unsigned char m_blendMode;
+    unsigned char pad_270[0x4];
     unsigned char m_viewNum;  // emitter_set_viewnum's
     unsigned char pad_275[0x5B];
     float* m_pKfTable;  // 0x2D0: EmitterArg::get_kf's last argument (the name is not the original's)
