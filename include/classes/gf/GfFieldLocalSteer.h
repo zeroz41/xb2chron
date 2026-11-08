@@ -3,6 +3,7 @@
 
 #include "classes/gf/TGfTween.h"
 #include "mm/Vec3.h"
+#include "fw/ColiCheck.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gmk { class GmkRouteNavi; }
@@ -34,13 +35,8 @@ public:
     template <typename T>
     class TIsTargetNotSameSquad;
     GfFieldLocalSteer(const CreateInfo* info);
-    // GfComBehaviorMob's destructor: dispose, then pad_5040 cleared when set
-    ~GfFieldLocalSteer() {
-        dispose();
-        if (pad_5040 != nullptr) {
-            pad_5040 = nullptr;
-        }
-    }
+    // GfComBehaviorMob's destructor: dispose, then m_result's hits emptied (its member destructor)
+    ~GfFieldLocalSteer() { dispose(); }
     void create(const CreateInfo& info);
     void dispose();
     // whether it has an object and pad_24 (seconds, as the 5.0 limit reads) passed 5
@@ -50,6 +46,8 @@ public:
     // in turned by the steering into out (GfComBehaviorMob::moveToGoal passes its velocity as both; out of line,
     // 0x71002D0C94)
     void apply(mm::Vec3& out, const mm::Vec3& in) const;
+    // a line test (flags 2, all groups) against the characters from the object towards pos, at most pad_8 long
+    // and raised by pad_c
     void castRay(const mm::Vec3& pos);  // 0x71002D0610
     void update(const UpdateInfo& info);  // 0x71002D0798
 
@@ -57,12 +55,7 @@ public:
     bool pad_20;
     float pad_24;
     TGfTween<float> m_angle;  // getCurAngle's value; create resets it to 0
-    unsigned char pad_40[0x5000];
-    void* pad_5040;
-    unsigned char pad_5048[0x8];
-    int pad_5050;
-    bool pad_5054;
-    unsigned char pad_5055[0xB];
+    fw::TColiCheckResult<256> m_result;  // castRay's line test (0x5020 bytes: hits, count, hit flag)
 };
 
 // advances navi to its next point once the steering is on and pos is within the steering's pad_8 of the next

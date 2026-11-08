@@ -39,6 +39,7 @@
 #include "ml/MTRand.h"
 #include "gf/GfGameStuckMeter.h"
 #include "classes/fw/ColiMoveObject.h"
+#include "classes/fw/RotateIkSolver.h"
 
 
 namespace gf {
@@ -76,7 +77,7 @@ bool execEndSchedule(fw::ComponentObject& com) {
     return comAsm->execCmd(cmd.m_str, AnimLayer(0));
 }
 
-GfFieldLocalSteer::GfFieldLocalSteer(const CreateInfo* info) : pad_20(false), pad_24(0.0f), pad_5040(nullptr), pad_5050(0), pad_5054(false) {
+GfFieldLocalSteer::GfFieldLocalSteer(const CreateInfo* info) : pad_20(false), pad_24(0.0f) {
     if (info) {
         create(*info);
     }
@@ -124,9 +125,20 @@ void GfFieldLocalSteer::apply(mm::Vec3& out, const mm::Vec3& in) const {
                    in.x * rot.m[0][2] + in.y * rot.m[1][2] + in.z * rot.m[2][2]);
 }
 
+void GfFieldUndulator::BdatInfo::create(int id) {
+    unsigned char* fp = GfDataBdat::getFP(0xA7);
+    m_flag.m_x = Bdat::getFlagVal(fp, "Flag", id, "UndX") != 0;
+    m_flag.m_z = Bdat::getFlagVal(fp, "Flag", id, "UndZ") != 0;
+    pad_4 = static_cast<signed char>(Bdat::getValCheck(fp, "UndMinX", id, 4)) * 0.017453292f;
+    pad_8 = static_cast<signed char>(Bdat::getValCheck(fp, "UndMaxX", id, 4)) * 0.017453292f;
+    pad_c = static_cast<signed char>(Bdat::getValCheck(fp, "UndMinZ", id, 4)) * 0.017453292f;
+    pad_10 = static_cast<signed char>(Bdat::getValCheck(fp, "UndMaxZ", id, 4)) * 0.017453292f;
+    pad_14 = static_cast<unsigned int>(static_cast<unsigned char>(Bdat::getValCheck(fp, "UndDeg", id, 1))) * 0.0017453292f;
+}
+
 void GfFieldUndulator::create(const CreateInfo& info) {
-    m_bdat.pad_1 = false;
-    m_bdat.pad_0 = false;
+    m_bdat.m_flag.m_z = false;
+    m_bdat.m_flag.m_x = false;
     m_info = info;
     unsigned short paramId = Bdat::getValCheck(GfDataBdat::getFP(0x8B), "ParamID", info.m_id, 2);
     unsigned int resourceId = (unsigned short)Bdat::getValCheck(GfDataBdat::getFP(0x8C), "ResourceID", paramId, 2);
@@ -134,8 +146,18 @@ void GfFieldUndulator::create(const CreateInfo& info) {
 }
 
 void GfFieldUndulator::dispose() {
-    m_bdat.pad_0 = false;
-    m_bdat.pad_1 = false;
+    m_bdat.m_flag.m_x = false;
+    m_bdat.m_flag.m_z = false;
+}
+
+void GfFieldUndulator::update(mm::mtl::IntrusivePtr<fw::ReferenceFrame>& frame, bool skipRay) {
+    BdatInfo::Flag flag = m_bdat.getFlag();
+    if (flag.m_x || flag.m_z) {
+        if (!skipRay) {
+            castRay(frame, false);
+        }
+        apply(frame);
+    }
 }
 
 GfFieldPitchRollController::GfFieldPitchRollController(const CreateInfo* info) : pad_10(nullptr), m_seq(nullptr), pad_28(0), pad_30(false), pad_31(false) {
@@ -154,6 +176,22 @@ void GfFieldPitchRollController::dispose() {
     pad_10 = nullptr;
     m_seq = nullptr;
     m_info = CreateInfo();
+}
+
+void GfFieldPitchRollController::seqInit(const gmk::GmkRouteNavi&) {
+    GfObjAcc acc(m_info.m_handle);
+    GfObj* obj = acc.getObj();
+    if (obj == nullptr) {
+        dispose();
+        return;
+    }
+    if (GfComIK* ik = obj->getComponent<GfComIK>(3)) {
+        pad_10 = ik->getSolver<fw::RotateIkSolver>(0);
+        if (pad_10 != nullptr) {
+            pad_10->fadeIn(0.0f);
+            m_seq = &GfFieldPitchRollController::seqUpdate;
+        }
+    }
 }
 
 void GfFieldPitchRollController::update(const gmk::GmkRouteNavi& navi) {
@@ -537,6 +575,26 @@ void GfGameStuckMeter::update(float deltaTime) {
             coli->m_scale = m_scale < scale ? m_scale : scale;
         }
     }
+}
+
+bool GfGameStuckMeter::checkStuck(float deltaTime) {
+    fw::ColiMoveObject* coli = m_info.m_coli;
+    if (static_cast<int>(coli->m_followType) != 1) {
+        return false;
+    }
+    if (mm::Vec3(coli->m_dir.x, 0.0f, coli->m_dir.z).length() > 1e-6f) {
+        mm::Vec3 pos = m_info.m_coli->getMatrix().getTrans();
+        mm::Vec3 avgPos = (pos + m_pos) * 0.5f;
+        m_pos = pos;
+        mm::Vec3 move = avgPos - m_avgPos;
+        m_avgPos = avgPos;
+        mm::Vec3 diff;
+        if (!((diff = m_pos - pos).dot(m_info.m_coli->m_dir) < 0.0f)) {
+            return move.dot(move) < deltaTime * deltaTime * m_info.m_minSpeedSq;
+        }
+        return true;
+    }
+    return false;
 }
 
 void GfBigObjUnique::create(

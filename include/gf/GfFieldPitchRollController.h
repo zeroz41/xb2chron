@@ -2,6 +2,7 @@
 #define GF_GFFIELDPITCHROLLCONTROLLER_H
 
 namespace gf { class GF_OBJ_HANDLE; }
+namespace fw { class RotateIkSolver; }
 namespace gmk { class GmkRouteNavi; }
 
 namespace gf {
@@ -28,7 +29,7 @@ public:
     void seqUpdate(const gmk::GmkRouteNavi& navi);
 
     CreateInfo m_info;
-    void* pad_10;
+    fw::RotateIkSolver* pad_10;  // seqInit: the GfComIK's solver 0, faded in
     Seq m_seq;  // the step update runs; create starts it at seqInit
     unsigned long pad_28;
     // GfComBehaviorEnemy::setStateId sets both on battle start; StateFieldWalk::seqWaitToIdle sets pad_30
