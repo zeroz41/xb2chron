@@ -37,6 +37,7 @@
 #include "classes/gf/GfBdatChrEnParam.h"
 #include "classes/gf/GfBdatBlade.h"
 #include "string.h"
+#include <algorithm>
 #include "math.h"
 #include "classes/gf/GfBdatCond.h"
 #include "classes/gf/GfBdatBtl.h"
@@ -1123,6 +1124,23 @@ bool GfDataBlade::getListIraBlade(mm::mtl::FixedVector<unsigned short, 422>& lis
     return !list.empty();
 }
 
+void GfDataBlade::removeSameBlade(mm::mtl::FixedVector<unsigned short, 422>& list) {
+    mm::mtl::FixedVector<unsigned short, 422> group;
+    group.push_back(1001);
+    group.push_back(1002);
+    group.push_back(1003);
+    fn_7100239560(list, group);
+    group.clear();
+    group.push_back(1005);
+    group.push_back(1006);
+    group.push_back(1007);
+    fn_7100239560(list, group);
+    group.clear();
+    group.push_back(1022);
+    group.push_back(1050);
+    fn_7100239560(list, group);
+}
+
 ActivateType GfDataBlade::getBladeActivateType(unsigned int blade) {
     unsigned int index = getBladeIndex(blade);
     SDataGame* game = GfDataManager::getDataGame();
@@ -1785,6 +1803,16 @@ bool GfDataBlade::isKizunaringComplete(unsigned int blade) {
 bool GfDataBlade::isReleasedRareBlade(unsigned int blade) {
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
     return data.m_attachedParty == 2;
+}
+
+void GfDataBlade::resetAttachedParty(unsigned int blade) {
+    unsigned int index = getBladeIndex(blade);
+    SDataGame* game = GfDataManager::getDataGame();
+    game->m_blades[index].m_attachedParty = 2;
+    if (blade >= 1014 && blade < GfBdatChrBl::get()->getChrBlEnd()) {
+        game->m_blades[index].m_equipWeapon = GfBdatChrBl::get()->getChrBlDefWeapon(blade);
+    }
+    GfEvent::callBladeActivate(blade, ActivateType(0), ActivateType(0));
 }
 
 bool GfDataBlade::isActivateReserver(unsigned int blade) {
@@ -3291,6 +3319,45 @@ unsigned int GfDataQuest::getAchievementBlade(unsigned int achieveId) {
 
 void GfDataQuest::registAchievementBlade(unsigned int achieveId, unsigned short blade) {
     m_achieve2blade[achieveId] = blade;
+}
+
+void GfDataBlade::setupAchievQuest(AchievQuest& quest) {
+    quest.m_count = 0;
+    quest.m_countMax = 0;
+    quest.m_stats = 0;
+    QuestListAcc* acc = QuestListAcc::get();
+    unsigned int purpose = GfDataQuest::getListPurposeID(GfDataQuest::getListNextQuestA(quest.m_questId));
+    if (purpose == 0) {
+        return;
+    }
+    unsigned int type = acc->getTaskTaskType(purpose, 0);
+    unsigned int task = acc->getTaskTaskID(purpose, 0);
+    if (type == 0) {
+        return;
+    }
+    quest.m_countType = type;
+    unsigned int count;
+    switch (type) {
+    case 1:
+        count = acc->getBattleCount(task);
+        break;
+    case 3:
+        count = acc->getCollectCount(task);
+        break;
+    case 4:
+        count = acc->getUseItemNumber(task);
+        break;
+    case 11:
+        count = acc->getFieldSkillCountCount(task);
+        break;
+    case 12:
+        quest.m_countMax = acc->getAchievementCount(task);
+        quest.m_stats = acc->getAchievementStatsID(task);
+        return;
+    default:
+        return;
+    }
+    quest.m_countMax = count;
 }
 
 const char* GfDataQuest::getTaskLog(QuestID id, unsigned int msg) {
@@ -5266,6 +5333,17 @@ unsigned int GfDataDriver::getDriverBySetBlade(unsigned int blade) {
     return GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(blade)].m_setDriver;
 }
 
+unsigned int GfDataBlade::getDriverSetID(unsigned int blade) {
+    if (blade == 0) {
+        return -1;
+    }
+    unsigned int driver = getSetDriver(blade);
+    if (driver == 0) {
+        return -1;
+    }
+    return GfDataDriver::getSetIdByBlade(driver, blade);
+}
+
 unsigned int GfDataDriver::getDummyBlade(unsigned int driver) {
     switch (driver) {
     case 1:
@@ -5312,6 +5390,21 @@ int GfDataParty::getDriverPartyID(unsigned int driver) {
     return -1;
 }
 
+int GfDataDriver::getSetIdByBlade(unsigned int driver, unsigned int blade) {
+    return getSetIdByBlade(*getSDataDriver(driver), blade);
+}
+
+// 1.0.0's symbols have it out of line (0x71002A83E0); 3.0.1 keeps no copy, so it is inline here
+inline int GfDataDriver::getSetIdByBlade(const SDataDriver& data, unsigned int blade) {
+    int max = getMaxSetBladeNum(data);
+    for (int slot = 0; slot < max; slot++) {
+        if (getBlade(data, slot) == blade) {
+            return slot;
+        }
+    }
+    return -1;
+}
+
 int GfDataDriver::getSetIdByDummyBlade(unsigned int driver) {
     SDataDriver* data = getSDataDriver(driver);
     for (int slot = 0; slot < 3; slot++) {
@@ -5338,11 +5431,73 @@ int GfDataDriver::getRuleSetBlade(unsigned int driver, unsigned int blade, int s
     return slot;
 }
 
+bool GfDataDriver::leaveOneCommonBlade(unsigned int driver) {
+    for (int slot = 2; slot >= 0; slot--) {
+        unsigned int blade = getBlade(driver, slot);
+        if (blade == 0) {
+            return true;
+        }
+        if (GfDataBlade::isCommonBlade(blade)) {
+            unsetBlade(blade);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GfDataDriver::leaveOneRareBlade(unsigned int driver) {
+    for (int slot = 2; slot >= 0; slot--) {
+        unsigned int blade = getBlade(driver, slot);
+        if (blade == 0) {
+            return true;
+        }
+        if (GfDataBlade::isRareBlade(blade)) {
+            unsetBlade(blade);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GfDataDriver::leaveOneScenarioBlade(unsigned int driver) {
+    for (int slot = 2; slot >= 0; slot--) {
+        unsigned int blade = getBlade(driver, slot);
+        if (blade == 0) {
+            return true;
+        }
+        if (blade != 1001 && GfDataBlade::isRegularBlade(blade)) {
+            unsetBlade(blade);
+            return true;
+        }
+    }
+    return false;
+}
+
 bool GfDataBlade::getCommonBladeName(const char* path) {
     if (path == nullptr || strlen(path) < 6) {
         return false;
     }
     return strncmp(path, "bl/bl2", 6) == 0;
+}
+
+unsigned int GfDataBlade::addCommonBlade(const SDataBlade& data) {
+    unsigned int start = data.m_bladeId != 0 ? data.m_bladeId : 1198;
+    unsigned int end = data.m_bladeId != 0 ? data.m_bladeId + 1 : 1397;
+    for (unsigned int blade = start; blade < end; blade++) {
+        if (!isActivateUnuse(blade)) {
+            continue;
+        }
+        GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)] = data;
+        GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_bladeId = blade;
+        setupSDataBladeAchievement(GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)], false);
+        setActivateReserver(blade);
+        unsigned int creator = getCreator(blade);
+        DataParamAcc acc(4, blade, GimmickType(0));
+        GfDataDriver::setActivateWeaponType(creator, acc.getWeaponType(-1, false));
+        GfDataDriver::fn_7100244A44(creator, blade, false);
+        return blade;
+    }
+    return 0;
 }
 
 unsigned int GfDataBlade::getFavorite(unsigned int blade, FAVORITE favorite) {
@@ -6694,6 +6849,41 @@ bool GfDataBlade::isActivateMercenaryTeam(unsigned int blade) {
         return false;
     }
     return GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_dataType == 2;
+}
+
+bool GfDataBlade::getListReserverWithSolo(mm::mtl::FixedVector<unsigned short, 422>& list) {
+    getListReserver(list);
+    for (unsigned short* it = list.begin(); it != list.end();) {
+        if (*it != 0 && isActivateDriver(*it)) {
+            it = list.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    return !list.empty();
+}
+
+bool GfDataBlade::getListForAchievement(mm::mtl::FixedVector<unsigned short, 422>& list) {
+    for (unsigned int i = 0; i < 422; i++) {
+        unsigned int blade = getBladeID(i);
+        if (blade == 0) {
+            continue;
+        }
+        DataParamAcc acc(4, blade, GimmickType(0));
+        if (!acc.isValid()) {
+            continue;
+        }
+        if (isActivateUnuse(blade) && !isAttachedParty(blade)) {
+            continue;
+        }
+        if (isIra(blade) || !isDummyBlade(blade)) {
+            const char* name = acc.getName();
+            if (name != nullptr && name[0] != '\0') {
+                list.push_back(blade);
+            }
+        }
+    }
+    return !list.empty();
 }
 
 unsigned int GfDataParty::getDriver(unsigned int index, PTPOS party) {

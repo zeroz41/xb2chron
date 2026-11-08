@@ -140,7 +140,7 @@ public:
     static unsigned int getDriverSetID(unsigned int blade);
     static AchievInfo* getAchievInfo(unsigned int blade, unsigned int line);
     // the blades with an affinity chart
-    static void getListForAchievement(mm::mtl::FixedVector<unsigned short, 422>& list);
+    static bool getListForAchievement(mm::mtl::FixedVector<unsigned short, 422>& list);  // whether the list is not empty
     static unsigned int getKeyReleaseLevel(unsigned int blade);
     // 2.0.0's symbols name it. What it does: 0 for blade 0, else the blade's SDataBlade::m_gender (game data slot via
     // getBladeIndex); fn_710028AF64 calls it.
@@ -300,9 +300,17 @@ public:
     // the reserve blades (GfDataMercenaries::getReserver fills its list with them)
     // whether the list is not empty
     static bool getListReserver(mm::mtl::FixedVector<unsigned short, 422>& list);
+    // the symbols name it. What it does: getListReserver's blades less the ones set to a driver (isActivateDriver);
+    // whether the list is not empty
+    static bool getListReserverWithSolo(mm::mtl::FixedVector<unsigned short, 422>& list);
     // drops the list's repeated blades (GfAchievStats's blade counts call it after getListReserver; returns nothing
     // its caller reads)
     static void removeSameBlade(mm::mtl::FixedVector<unsigned short, 422>& list);
+    // Placeholder name: the symbols leave it unnamed. A member because removeSameBlade, its only caller, passes it the
+    // list it was given and a local group of blade ids. What it does: when the list holds any of the group's blades,
+    // erases the first copy of each of the group's other blades from it.
+    static void fn_7100239560(mm::mtl::FixedVector<unsigned short, 422>& list,
+                              const mm::mtl::FixedVector<unsigned short, 422>& group);
     static unsigned int getBladeRelativeID(unsigned int blade);  // getBladeIndex
     // whether a model path names a common blade (it starts with "bl/bl2")
     static bool getCommonBladeName(const char* path);

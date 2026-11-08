@@ -349,6 +349,17 @@ public:
     // 1, 4 for blade 1003 and 3 for blade 1002 while blade 1001 has no driver set (getDriverSetID); else the slot it is
     // given.
     static int getRuleSetBlade(unsigned int driver, unsigned int blade, int slot);
+    // the symbols name it. What it does: the slot (0 to getMaxSetBladeNum - 1) of the driver's data whose blade
+    // (getBlade) is the given one, -1 for none.
+    static int getSetIdByBlade(unsigned int driver, unsigned int blade);
+    // the same for a driver's data (1.0.0's symbols name it; 3.0.1 has it only inlined, defined in GfDataBlade.cpp)
+    static int getSetIdByBlade(const SDataDriver& data, unsigned int blade);
+    // the symbols name them. What they do: unsetBlade the first common (GfDataBlade::isCommonBlade) / regular blade
+    // other than 1001 (GfDataBlade::isRegularBlade) found in the driver's slots 2, 1, 0 (getBlade); true when one
+    // was unset or a slot is empty, false when none qualifies.
+    static bool leaveOneCommonBlade(unsigned int driver);
+    static bool leaveOneRareBlade(unsigned int driver);  // the same for a rare blade (GfDataBlade::isRareBlade)
+    static bool leaveOneScenarioBlade(unsigned int driver);
     // 2.0.0's symbols name it. What it does: the index getSDataDriver uses: driver - 0x11 for a DLC row (0x11-0x19),
     // else driver - 1 clamped to 1 past 0x10 (caller fn_71002EAF78).
     static unsigned int getDriverRelativeID(unsigned int driver);
