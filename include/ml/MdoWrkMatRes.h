@@ -159,7 +159,21 @@ struct MdsMdlInfoHeader {
 // The material data MdoWrkMatRes::m_pMatData points to; only the offset DrMdoShdSet::setOneTexShaderSet reads is
 // known. The type and field names are not the original's.
 struct MdsMatDataHeader {
-    unsigned char pad_0[0x3C];
+    // One MPF material's parameters (0x34 bytes): DrMdoSetup::updateMpfMatUniformBlock writes them into the
+    // material's uniform block. The type and field names are not the original's.
+    struct MpfMatParam {
+        unsigned int m_val[6];  // 0x0: copied as they are; m_val[3] takes m_shift << 4 in
+        float m_fadeNear;  // 0x18: 7000 when the three floats are 0
+        float m_fadeFar;  // 0x1C: 8000 when the three floats are 0
+        float m_fadeScale;  // 0x20: 1 when the three floats are 0
+        unsigned short m_shift;  // 0x24
+        unsigned char pad_26[0xE];
+    };
+
+    unsigned char pad_0[0x10];
+    unsigned int m_mpfParamOfs;  // 0x10, from the header's start: the MpfMatParam array
+    int m_mpfParamNum;  // 0x14
+    unsigned char pad_18[0x24];
     unsigned int m_texEntryOfs;  // 0x3C, from the header's start: the MdsMatTexEntry array
 };
 // One texture entry of the material data, 8 bytes: DrMdoShdSet::setOneTexShaderSet binds texture m_texIdx with

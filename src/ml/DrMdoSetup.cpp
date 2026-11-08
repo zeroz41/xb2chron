@@ -1765,6 +1765,78 @@ void DrMdoCtlMpf::update() {
     }
 }
 
+void DrMdoSetup::updateMpfMatUniformBlock() {
+    const MdsMatDataHeader* head = reinterpret_cast<const MdsMatDataHeader*>(m_pWrkMatRes->m_pMatData);
+    if (head->m_mpfParamNum > 0) {
+        const MdsMatDataHeader::MpfMatParam* param = reinterpret_cast<const MdsMatDataHeader::MpfMatParam*>(
+            reinterpret_cast<const unsigned char*>(head) + head->m_mpfParamOfs);
+        for (int i = 0; i < head->m_mpfParamNum; i++, param++) {
+            grlib::CGLibDblUniformBlock* block = &m_pWrkMatRes->m_pMatUniformArray->m_pArray[static_cast<unsigned int>(i)];
+            float* dst = reinterpret_cast<float*>(block->getBuff());
+            struct {
+                unsigned int m_val[6];
+                float m_zero[2];
+                float m_fade[4];
+            } buf;
+            buf.m_val[0] = param->m_val[0];
+            buf.m_val[1] = param->m_val[1];
+            buf.m_val[2] = param->m_val[2];
+            buf.m_val[3] = param->m_val[3] | param->m_shift << 4;
+            buf.m_val[4] = param->m_val[4];
+            buf.m_val[5] = param->m_val[5];
+            buf.m_zero[0] = 0.0f;
+            buf.m_zero[1] = 0.0f;
+            float fadeNear = param->m_fadeNear;
+            float fadeFar = param->m_fadeFar;
+            float fadeScale = param->m_fadeScale;
+            if (fadeNear == 0.0f && fadeFar == 0.0f && fadeScale == 0.0f) {
+                fadeNear = 7000.0f;
+                fadeFar = 8000.0f;
+                fadeScale = 1.0f;
+            }
+            buf.m_fade[0] = fadeNear;
+            buf.m_fade[1] = 1.0f / (fadeFar - fadeNear + 1e-06f);
+            buf.m_fade[2] = fadeScale;
+            buf.m_fade[3] = 0.0f;
+            grlib::ShdF32SetF32Array(dst, reinterpret_cast<const float*>(&buf), 12);
+            block->updateData();
+        }
+    }
+}
+
+void DrMdoCtlMpfWork::beginList() {
+    char* work = m_pMpfMan->getFrameWork(m_objNum * (sizeof(_wkMpfObjBuff) + sizeof(_wkMpfAlphaObjBuff)));
+    _wkMpfObjBuff* buff = reinterpret_cast<_wkMpfObjBuff*>(work);
+    _wkMpfAlphaObjBuff* alphaBuff = reinterpret_cast<_wkMpfAlphaObjBuff*>(work + m_objNum * sizeof(_wkMpfObjBuff));
+    const MdsMpfObjData* objData = m_pObjData;
+    for (long i = 0; i < m_objNum; i++) {
+        m_ppObjBuff[i] = &buff[i];
+        m_ppAlphaObjBuff[i] = &alphaBuff[i];
+        m_pObjWork[i].m_pLastBuff = m_ppObjBuff[i];
+        m_pObjWork[i].m_pLastBuff->m_num = 0;
+        m_pObjWork[i].m_pLastBuff->m_pNext = nullptr;
+        m_pObjWork[i].m_pLastAlphaBuff = m_ppAlphaObjBuff[i];
+        m_pObjWork[i].m_pLastAlphaBuff->m_num = 0;
+        m_pObjWork[i].m_pLastAlphaBuff->m_pNext = nullptr;
+        m_pObjWork[i].m_selFlags &= ~8;
+        m_pObjWork[i].m_objChk = 0;
+        switch (objData[i].m_type) {
+        case 1:
+        case 3:
+            m_pObjWork[i].m_pLastBuff->m_pAutoSet = &DrMdoCtlMpfWork::auto_fastSet;
+            m_pObjWork[i].m_pLastAlphaBuff->m_pAutoSet = &DrMdoCtlMpfWork::auto_alpha_fastSet;
+            break;
+        default:
+            m_pObjWork[i].m_pLastBuff->m_pPosSet = &DrMdoCtlMpfWork::mpf_fastSet;
+            m_pObjWork[i].m_pLastAlphaBuff->m_pPosSet = &DrMdoCtlMpfWork::mpf_alpha_fastSet;
+            break;
+        }
+    }
+    m_pPntAlphaMan->update(DrMan::getIns()->m_mpfWindPower);
+    int size = m_objNum << 7;
+    memset(m_pWorkBuf, 0, size);
+}
+
 void DrMdoCtlMpf::defMpfrender() {
     m_curShaderIdx = -1;
     m_curBindIdx = -1;
@@ -1919,6 +1991,104 @@ DrMdoCtlMpfAuto::DrMdoCtlMpfAuto() {
 
 DrMdoCtlMpfAuto::~DrMdoCtlMpfAuto() {
     autoMpfRelease();
+}
+
+void DrMdoMpfMan::freeMemWork(_MPFWorkAutoInf* inf) {
+    _MPFWorkAutoInf* prev = inf->m_pBlockPrev;
+    bool link;
+    if (prev == nullptr || (prev->m_flags & 2)) {
+        link = true;
+    } else {
+        prev->m_size += inf->m_size;
+        _MPFWorkAutoInf* blockNext = inf->m_pBlockNext;
+        prev->m_pBlockNext = blockNext;
+        if (blockNext != nullptr) {
+            blockNext->m_pBlockPrev = prev;
+        }
+        memset(inf, 0, sizeof(_MPFWorkAutoInf));
+        link = false;
+        inf = prev;
+    }
+    _MPFWorkAutoInf* blockNext = inf->m_pBlockNext;
+    if (blockNext != nullptr && !(blockNext->m_flags & 2)) {
+        inf->m_size += blockNext->m_size;
+        _MPFWorkAutoInf* after = blockNext->m_pBlockNext;
+        inf->m_pBlockNext = after;
+        if (after != nullptr) {
+            after->m_pBlockPrev = inf;
+        }
+        _MPFWorkAutoInf* next = blockNext->m_pNext;
+        _MPFWorkAutoInf* prevFree = blockNext->m_pPrev;
+        if (next == nullptr) {
+            if (prevFree == nullptr) {
+                m_pFreeHead = nullptr;
+                m_pFreeTail = nullptr;
+            } else {
+                m_pFreeTail = prevFree;
+                prevFree->m_pNext = nullptr;
+            }
+        } else if (prevFree == nullptr) {
+            m_pFreeHead = next;
+            next->m_pPrev = nullptr;
+        } else {
+            next->m_pPrev = prevFree;
+            blockNext->m_pPrev->m_pNext = blockNext->m_pNext;
+        }
+    }
+    if (link) {
+        inf->m_flags = 0;
+        if (m_pFreeTail == nullptr) {
+            m_pFreeHead = inf;
+            inf->m_pPrev = nullptr;
+        } else {
+            inf->m_pPrev = m_pFreeTail;
+            m_pFreeTail->m_pNext = inf;
+        }
+        inf->m_pNext = nullptr;
+        m_pFreeTail = inf;
+    }
+}
+
+void DrMdoCtlMpfAuto::changeMemAutoMpf(const unsigned char* data, const unsigned char* autoData) {
+    const MdsMpfAutoHead* head = reinterpret_cast<const MdsMpfAutoHead*>(autoData);
+    m_pHeader = head;
+    m_pEntry = reinterpret_cast<const Entry*>(data + head->m_entryOfs);
+    m_pCurBuff = m_pBuff;
+    if (head->m_poliOfs == 0) {
+        m_pCurBuff->m_pPoli = reinterpret_cast<const MdsMpfAutoPoli*>(data + m_pHeader->m_buffPoliOfs);
+        m_pCurBuff->m_pTbl[0] = data + m_pHeader->m_buffTblOfs[0];
+        m_pCurBuff->m_pTbl[1] = data + m_pHeader->m_buffTblOfs[1];
+        m_pCurBuff->m_pTbl[2] = data + m_pHeader->m_buffTblOfs[2];
+        m_pCurBuff->m_pTbl[3] = data + m_pHeader->m_buffTblOfs[3];
+        m_pColTbl = m_pCurBuff->m_pTbl[3];
+        if (m_pHeader->m_buffTreeOfs != 0) {
+            m_pCurBuff->m_pTree = reinterpret_cast<const MdsMpfAutoTree*>(data + m_pHeader->m_buffTreeOfs);
+        } else {
+            m_pCurBuff->m_pTree = nullptr;
+        }
+        m_pCurBuff->m_pPoliList = reinterpret_cast<const unsigned int*>(data + m_pHeader->m_buffPoliListOfs);
+        m_pCurBuff->m_pCell = reinterpret_cast<const unsigned int*>(data + m_pHeader->m_buffCellOfs);
+        m_pCurBuff->m_pGrid = reinterpret_cast<const float(*)[2]>(data + m_pHeader->m_buffGridOfs);
+        if (m_pHeader->m_instOfs != 0 && m_pHeader->m_instType == -13) {
+            m_pCurBuff->m_pInstData = reinterpret_cast<const _wkMpfAutoBuff::Inst*>(data + m_pHeader->m_instOfs);
+            m_pCurBuff->m_pPosTree = reinterpret_cast<const MdsMpfAutoPosTree*>(data + m_pHeader->m_posTreeOfs);
+            m_pCurBuff->m_pIdxTbl = reinterpret_cast<const unsigned int*>(data + m_pHeader->m_idxTblOfs);
+            m_pIdxTbl = m_pCurBuff->m_pIdxTbl;
+            m_pTbl[0] = data + m_pHeader->m_tblOfs[1];
+            m_pTbl[1] = data + m_pHeader->m_tblOfs[2];
+            m_pTbl[2] = data + m_pHeader->m_tblOfs[3];
+            m_pPoliData = data + m_pHeader->m_tblOfs[0];
+        } else {
+            m_pCurBuff->m_pInstData = nullptr;
+        }
+    } else if (head->m_tblOfs[0] != 0 && head->m_instType == -13) {
+        m_pColTbl = data + head->m_buffTblOfs[3];
+        m_pIdxTbl = reinterpret_cast<const unsigned int*>(data + head->m_idxTblOfs);
+        m_pTbl[0] = data + head->m_tblOfs[1];
+        m_pTbl[1] = data + head->m_tblOfs[2];
+        m_pTbl[2] = data + head->m_tblOfs[3];
+        m_pPoliData = data + head->m_tblOfs[0];
+    }
 }
 
 void DrMdoCtlMpfAuto::resetPrePos() {
