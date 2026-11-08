@@ -20,6 +20,7 @@ public:
     virtual void debugInfo();  // slot 10
 
     bool setAddObjPos(mm::Vec3 const& pos, float radius);
+    void calcLgtMat();
 
     DrCalcClipWorkPlane m_clip;  // 0x1A0 (the name is not the original's)
     // 0x270: DrPixlShadowMan::clipDirShadowChk keeps only spheres wholly behind it (the name is not the original's)

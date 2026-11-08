@@ -21,6 +21,9 @@
 #include "ml/DrPixlMdlSampler.h"
 #include "ml/DrCalcMan.h"
 #include "ml/DrPixlRenderTarget.h"
+#include "ml/DrPixlFormat.h"
+#include "ml/DrLightMan.h"
+#include "ml/DrMdlMan.h"
 #include "classes/ml/DrPixlShadowObjDir.h"
 #include "classes/ml/DrPixlMemMan.h"
 #include "classes/ml/DrPixlShadowObjSpt.h"
@@ -61,6 +64,61 @@
 
 namespace ml {
 
+GrlSurfaceFormat DrPixlFormat::s_MrtFormat[19] = {
+    static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGBA_8),        static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGBA_8),
+    static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGB10A2_UNORM), static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGB10A2_UNORM),
+    static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGBA_8),        static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGB_11),
+    static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGB_11),        static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGBA_8),
+    static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGBA_8),        static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGB_11),
+    static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGB_11),        static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGB_11),
+    static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_R_UI8),         static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGBA_8),
+    static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGB_11),        static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGB_11),
+    static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGBA_8),        static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_HALF_X1),
+    static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_R_8),
+};
+GrlSurfaceFormat DrPixlFormat::s_SeparateCol = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_HALF_X4);
+GrlSurfaceFormat DrPixlFormat::s_ResponsiveAAMask = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_R_8);
+GrlSurfaceFormat DrPixlFormat::s_BackFaceDepth = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_FLOAT_X1);
+GrlSurfaceFormat DrPixlFormat::s_LgtLinkGIBFadeList = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RG_UI32);
+GrlSurfaceFormat DrPixlFormat::s_LgtLinkGIBIndexMask = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_R_UI32);
+GrlSurfaceFormat DrPixlFormat::s_DirShadowFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGB_5);
+GrlSurfaceFormat DrPixlFormat::s_QuaterNormalFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGB10A2_UNORM);
+GrlSurfaceFormat DrPixlFormat::s_DepthBufferFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_FLOAT_X1);
+GrlSurfaceFormat DrPixlFormat::s_BloomFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGB_11);
+GrlSurfaceFormat DrPixlFormat::s_VolumeFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGB_11);
+GrlSurfaceFormat DrPixlFormat::s_TMAAFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGB_11);
+GrlSurfaceFormat DrPixlFormat::s_DofCalcFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_HALF_X4);
+GrlSurfaceFormat DrPixlFormat::s_DofLastFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGB_11);
+GrlSurfaceFormat DrPixlFormat::s_DofCalcSampFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_FLOAT_X2);
+GrlSurfaceFormat DrPixlFormat::s_DofAutoFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_FLOAT_X1);
+GrlSurfaceFormat DrPixlFormat::s_SimilarityFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_R_8);
+GrlSurfaceFormat DrPixlFormat::s_BlurVelFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGBA_8);
+GrlSurfaceFormat DrPixlFormat::s_BlurOutFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_HALF_X4);
+GrlSurfaceFormat DrPixlFormat::s_BlurMaskFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_R_8);
+GrlSurfaceFormat DrPixlFormat::s_SsrFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_HALF_X4);
+GrlSurfaceFormat DrPixlFormat::s_ToneMapFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_HALF_X1);
+GrlSurfaceFormat DrPixlFormat::s_SSAOOutFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_R_8);
+GrlSurfaceFormat DrPixlFormat::s_SSAOWorkFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_R_8);
+GrlSurfaceFormat DrPixlFormat::s_SSAOHistory = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_R_8);
+GrlSurfaceFormat DrPixlFormat::s_SSAOMaskFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_R_8);
+GrlSurfaceFormat DrPixlFormat::s_ShwRayFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_R_8);
+GrlSurfaceFormat DrPixlFormat::s_ShwRaytraceFormat = static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_R_8);
+
+
+DrPixlDeferred::DrPixlDeferred(DrMan* drMan, DrPixlMan* pixlMan)
+    : pad_0(), m_drMan(drMan), m_pixlMan(pixlMan), m_shadowTarget(nullptr) {
+    m_shdMan = drMan->m_shdMan;
+    m_shadowTarget = new (drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    m_shadowTarget->setTextureInfo(1.0f, 1.0f, DrPixlFormat::s_DirShadowFormat, true,
+                                   (DrPixlMemMan::get()->m_viewMem + DrMan::getIns()->m_postParmIdx)->m_dirShadowOfs[0]);
+    for (int i = 0; i < 2; i++) {
+        m_shadowTargetDbl[i] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    }
+    m_shadowWidth = 1;
+    m_shadowHeight = 1;
+}
+
+
 DrPixlDeferred::~DrPixlDeferred() {
     if (m_shadowTarget != nullptr) {
         delete m_shadowTarget;
@@ -71,6 +129,33 @@ DrPixlDeferred::~DrPixlDeferred() {
             delete m_shadowTargetDbl[i];
             m_shadowTargetDbl[i] = nullptr;
         }
+    }
+}
+
+void DrPixlDeferred::displayUpdate() {
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    int width;
+    int height;
+    if (!parm->m_shadowMapDbl[0]) {
+        width = m_drMan->m_curViewInfo->m_width;
+        height = m_drMan->m_curViewInfo->m_height;
+    } else {
+        m_pixlMan->m_objTbl->m_postMan->setDownDepth();
+        float scale = parm->m_shadowMapScale;
+        width = (int)(scale * m_drMan->m_curViewInfo->m_width);
+        height = (int)(scale * m_drMan->m_curViewInfo->m_height);
+    }
+    if ((m_shadowWidth != 0 || m_shadowHeight != 0) && (width != m_shadowWidth || height != m_shadowHeight)) {
+        m_shadowTarget->setTextureInfo(width, height, DrPixlFormat::s_DirShadowFormat, true,
+                                       (DrPixlMemMan::get()->m_viewMem + DrMan::getIns()->m_postParmIdx)->m_dirShadowOfs[0]);
+        if (m_drMan->m_postParm[m_drMan->m_postParmIdx]->m_shadowMapDbl[0]) {
+            m_shadowTargetDbl[0]->setTextureInfo(width, height, DrPixlFormat::s_DirShadowFormat, true,
+                                                 (DrPixlMemMan::get()->m_viewMem + DrMan::getIns()->m_postParmIdx)->m_dirShadowOfs[1]);
+            m_shadowTargetDbl[1]->setTextureInfo(width, height, DrPixlFormat::s_DirShadowFormat, true,
+                                                 (DrPixlMemMan::get()->m_viewMem + DrMan::getIns()->m_postParmIdx)->m_dirShadowOfs[2]);
+        }
+        m_shadowWidth = width;
+        m_shadowHeight = height;
     }
 }
 
@@ -185,6 +270,31 @@ void DrPixlMan::toneMapRender(bool depth) {
     }
 }
 
+bool DrPixlDeferred::shadowTexRender(int mode) {
+    if (m_drMan->m_shadowRenderOff) {
+        return false;
+    }
+    DrLightMan* lightMan = m_drMan->m_lightMan;
+    if (lightMan->m_shadowRate <= 0.0f || !lightMan->m_shadowOn) {
+        return false;
+    }
+    DrPixlShadowMan* shadowMan = m_pixlMan->m_objTbl->m_shadowMan;
+    DrMdlMan* mdlMan = shadowMan->m_drMan->m_mdlMan;
+    for (int i = 0; i < shadowMan->m_objNum; i++) {
+        if (shadowMan->m_objs[i]->dispChk() && shadowMan->m_objs[i]->m_active == 0) {
+            mdlMan->shadowRender(shadowMan->m_objs[i]);
+        }
+    }
+    DrAPGxType::setupStencilTest(0, 0, 7, 0, 0, 0, 2, 0, 0, 0);
+    if (((m_pixlMan->m_shadowCacheMan->m_flags >> 3) & 1) && mode == 0) {
+        shadowBuffCacheRender();
+    } else if (!shadowBuffDefRender()) {
+        m_shadowTarget->clearTexture(mm::Col4::white, static_cast<GrlClaerMask>(0xF));
+    }
+    m_shadowTarget->setColorInvalidate();
+    return true;
+}
+
 DrPixlMan* DrPixlMan::get() { return s_pInstance; }
 
 DrPixlMan::~DrPixlMan() { releaseColorBuffer(); }
@@ -235,6 +345,23 @@ void DrPixlMan::displayUpdate() { m_objTbl->m_deferred->displayUpdate(); }
 void DrPixlMan::updateShadowDisplayList() {
     if (m_objTbl->m_flags & 0x20) {
         m_objTbl->m_flags &= ~0x20;
+    }
+}
+
+void DrPixlMan::afterUpdate(int mode) {
+    m_objTbl->m_postMan->update();
+    if (mode == 0) {
+        m_objTbl->m_postMan->setDownDepth();
+    }
+    if (m_drMan->m_mdlMan->m_pPassReq[4]) {
+        m_objTbl->m_postMan->m_flags |= 0x200000;
+    }
+    DrPixlShadowMan* shadowMan = m_objTbl->m_shadowMan;
+    if (shadowMan->m_dirShadow != nullptr) {
+        shadowMan->m_dirShadow->calcLgtMat();
+    }
+    for (int i = 0; i < shadowMan->m_objNum; i++) {
+        shadowMan->m_objs[i]->afterUpdate();
     }
 }
 
@@ -541,6 +668,38 @@ void DrPixlMan::lastRender() {
     }
     if (m_drMan->m_postParm[m_drMan->m_postParmIdx]->m_dbgReduction) {
         debugReductionRender();
+    }
+}
+
+void DrPixlShadowMan::shadowRender() {
+    int size = m_drMan->m_curViewInfo->m_captureWidth / 5;
+    int y = 0;
+    int x = 0;
+    int count = 0;
+    for (int i = 0; i < m_objNum; i++) {
+        if (m_objs[i]->dispChk()) {
+            m_pixlMan->debugRender(*m_objs[i]->m_depthTarget->m_pSubTexture, x, y, size, size, false, false, 1.0f,
+                                   true);
+            if (count > 2) {
+                x = 0;
+                y += size;
+                count = 0;
+            } else {
+                x += size;
+                count++;
+            }
+            for (DrPixlShadowObj* obj = m_objs[i]->m_next; obj != nullptr; obj = obj->m_next) {
+                m_pixlMan->debugRender(*obj->m_depthTarget->m_pSubTexture, x, y, size, size, false, false, 1.0f, true);
+                if (count > 2) {
+                    x = 0;
+                    y += size;
+                    count = 0;
+                } else {
+                    x += size;
+                    count++;
+                }
+            }
+        }
     }
 }
 
@@ -1926,7 +2085,7 @@ void DrPixlShadowObjSpt::renderLight() {}
 
 grlib::CGLibRenderTarget* DrPixlMan::getPixlObj(int index) {
     bool dbl = (0x27200ull >> (unsigned int)index) & 1;
-    DrPixlObjTbl* tbl = m_objTbl;
+    wkPixlManRes* tbl = m_objTbl;
     if (dbl) {
         return tbl->m_obj[index][DrMan::s_nDblIdx];
     }

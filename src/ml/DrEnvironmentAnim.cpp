@@ -1447,6 +1447,7 @@ void DrLightMan::releaseAll() {
 
 void DrLightMan::stockBegin() {
     m_stockState = 0;
+    m_shadowOn = false;
     m_stockCount = 0;
     m_drMan->m_shdMan->m_lgtMan->stockBegin();
 }

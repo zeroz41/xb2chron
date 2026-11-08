@@ -5,10 +5,16 @@ namespace grlib { class CGLibTextureBuffer; }
 namespace ml { class DrMan; class DrShdMan; class DrPixlMan; class DrPixlRenderTarget; }
 
 namespace ml {
-// DrPixlObjTbl::m_deferred. Only what DrMdoSetup and DrPixlMan call is declared.
+// wkPixlManRes::m_deferred. Only what DrMdoSetup and DrPixlMan call is declared.
 class DrPixlDeferred {
 public:
+    DrPixlDeferred(DrMan* drMan, DrPixlMan* pixlMan);
     ~DrPixlDeferred();
+    void resetColorBuff();
+    // false when no shadow was rendered
+    bool shadowTexRender(int);
+    void shadowBuffCacheRender();
+    bool shadowBuffDefRender();
     void debugRender();
     void lgtCalcRender();
     grlib::CGLibTextureBuffer* getShadowMapTexture() const;
@@ -26,7 +32,10 @@ public:
     DrPixlRenderTarget* m_shadowTarget;
     // 0x28, getShadowMapTexture by DrMan::s_nDblIdx while both DrPixlPostParm::m_shadowMapDbl are set
     DrPixlRenderTarget* m_shadowTargetDbl[2];
-    unsigned char pad_38[0x4];  // 0x38, the constructor stores 0x10001
+    // 0x38: the size the shadow targets were last set up with (displayUpdate redoes them when it changes); the
+    // constructor sets 1, 1, resetColorBuff 0, 0 (the names are not the original's)
+    short m_shadowWidth;
+    short m_shadowHeight;  // 0x3A
 };
 }  // namespace ml
 

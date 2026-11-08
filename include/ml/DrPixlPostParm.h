@@ -268,9 +268,14 @@ public:
     // 0x102C: DrPixlShadowCacheMan::debugShadowCacheRender draws the work table this selects, from 1 (the name is
     // not the original's)
     float m_dbgShadowCacheLevel;
-    unsigned char pad_1030[0xE];
+    unsigned char pad_1030[0xC];
+    // 0x103C: DrPixlDeferred renders the directional shadow at m_shadowMapScale of the view size into its
+    // double-buffered targets while [0] is set; debugRender shows them while both are set (names inferred)
+    bool m_shadowMapDbl[2];
     bool m_shadowAddObjPos;  // 0x103E, DrPixlShadowMan::setAddObjPos forwards only when set (name inferred)
-    unsigned char pad_103F[0x22];
+    unsigned char pad_103F[0x9];
+    float m_shadowMapScale;  // 0x1048, see m_shadowMapDbl (name inferred)
+    unsigned char pad_104C[0x15];
     bool m_iblSel;  // 0x1061, DrPixlMan::getSpecIBLObj/getDiffIBLObj pick the second IBL pair when set (name inferred)
     unsigned char pad_1062[0x1A];
     int m_weatherNum;  // 0x107C, DrEnvironmentObjLgt::update passes setWeatherNum whether it changed (name inferred)

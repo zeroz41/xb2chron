@@ -20,7 +20,7 @@ namespace ml {
 // DrPixlMan::setupCate points m_objTbl at one of four entries 0x1F8 bytes apart from DrPixlMan+0x10.
 // The table is really 0x10-byte entries of two object pointers (getPixlObj(i): entry i, the second pointer for the
 // double-buffered entries 17, 20, 21, 22, 25 by DrMan::s_nDblIdx); the fields below name what callers read.
-struct DrPixlObjTbl {
+struct wkPixlManRes {
   union {
     // getPixlObj(i): entry i; the double-buffered entries (9, 12, 13, 14, 17) by DrMan::s_nDblIdx
     grlib::CGLibRenderTarget* m_obj[31][2];
@@ -61,6 +61,11 @@ public:
     DrPixlMan(DrMan* drMan);
     ~DrPixlMan();
     void createColorBuffer();
+    void resetColorBuff(bool);
+    void calcColorBuffer(wkPixlManRes* res, float, float, float, float);
+    void afterUpdate(int);
+    void fastDeferredRender();
+    void debugGBuffRender();
     static DrPixlMan* get();
     void releaseColorBuffer();
     void occRenderEnd();
@@ -137,8 +142,8 @@ public:
     DrMan* m_drMan;  // 0x8, shadowDirBegin reaches DrMan::m_apCache through it
     // 0x10, one table per category; setupCate points m_objTbl at one. varStTex_Capture* read
     // m_cate[0..3].m_capture (main, 1, 2, 3).
-    DrPixlObjTbl m_cate[4];
-    DrPixlObjTbl* m_objTbl;  // 0x7F0
+    wkPixlManRes m_cate[4];
+    wkPixlManRes* m_objTbl;  // 0x7F0
     DrPixlOccQuery* m_occQuery;  // 0x7F8, DrPixlSkyDome::godRayRender passes it to DrResUseQueryObj::begin
     DrPixlShadowCacheMan* m_shadowCacheMan;  // 0x800, fastRender calls shadowCacheRender on it
     grlib::CGLibTextureBuffer* m_movieTex[4];  // 0x808

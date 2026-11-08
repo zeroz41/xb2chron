@@ -18,7 +18,7 @@ namespace ml { class DrPixlPostObjToneMap; class DrPixlPostObjBloom; class DrPix
 namespace ml { class DrPixlPostObjSSR; class DrPixlPostObjTSSAO; class DrPixlPostObjExpStencil; class DrPixlShadowRaytrace; class DrPixlPostObjUnbranchToDepth; }
 
 namespace ml {
-// DrPixlObjTbl::m_postMan. Only what DrMdoSetup reads is known; the field names are not the original's.
+// wkPixlManRes::m_postMan. Only what DrMdoSetup reads is known; the field names are not the original's.
 class DrPixlPostMan {
 public:
     // m_volumeWork's render volume: a CGLibRenderVolume that keeps its DrMan (inline constructor and destructor; no

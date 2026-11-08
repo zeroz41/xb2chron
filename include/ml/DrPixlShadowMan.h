@@ -5,11 +5,12 @@
 
 namespace mm { class Vec3; }
 namespace ml { class DrMan; }
+namespace ml { class DrPixlMan; }
 namespace ml { class DrPixlShadowObj; }
 namespace ml { class DrPixlShadowObjDir; }
 
 namespace ml {
-// DrPixlObjTbl::m_shadowMan. Only what the light objects call is declared.
+// wkPixlManRes::m_shadowMan. Only what the light objects call is declared.
 class DrPixlShadowMan {
 public:
     // one of the 16 pooled shadow depth targets (DrPixlShadowObj::m_depthTarget); the type and field names are not
@@ -38,7 +39,7 @@ public:
     int m_objNum;  // 0x8900 (the name is not the original's)
     unsigned char pad_8904[0x4];
     DrMan* m_drMan;  // 0x8908 (the name is not the original's)
-    unsigned char pad_8910[0x8];
+    DrPixlMan* m_pixlMan;  // 0x8910, shadowRender draws its debug views with it (the name is not the original's)
     // 0x8918: setAddObjPos forwards to it when the post parameters allow (the name is not the original's)
     DrPixlShadowObjDir* m_dirShadow;
 };

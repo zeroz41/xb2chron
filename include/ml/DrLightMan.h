@@ -118,7 +118,10 @@ public:
     // 0x12C: DrCalcViewWork::unistatic_lightAmb's colour; DrEnvironmentObjLgt::updatePosLgt copies its m_ambColor
     // here (the name is not the original's)
     mm::Col3 m_ambColor;
-    unsigned char pad_138[0x30];
+    unsigned char pad_138[0x28];
+    // 0x160: DrPixlDeferred::shadowTexRender renders no shadow while it is not above 0 (name inferred)
+    float m_shadowRate;
+    unsigned char pad_164[0x4];
     // stockBegin clears both (the names are not the original's)
     int m_stockCount;  // 0x168
     // 0x16C: the stocked directional lights' colours; DrCalcViewWork::unistatic_lightCol hands the first
@@ -129,7 +132,9 @@ public:
     // and turned into view space, to the shader (the name is not the original's)
     mm::Vec3 m_stockDir[2];
     unsigned char pad_1B0[0x8];
-    short m_stockState;  // 0x1B8
+    unsigned char m_stockState;  // 0x1B8
+    // 0x1B9: DrPixlDeferred::shadowTexRender renders no shadow while it is clear (name inferred)
+    bool m_shadowOn;
 };
 }  // namespace ml
 
