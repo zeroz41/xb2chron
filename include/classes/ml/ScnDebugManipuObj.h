@@ -6,6 +6,18 @@
 
 namespace ml { class DebDraw; }
 namespace ml { class EventView; }
+namespace ml { class Scn; }
+namespace mm { class Mat44; }
+namespace mm { class Vec3; }
+
+namespace ml {
+// the manipulator kinds: ScnDebugManipu::createTrans makes a 0, createRot a 1 (the enumerator names are not the
+// original's)
+enum SCNMANIPU {
+    SCNMANIPU_TRANS = 0,
+    SCNMANIPU_ROT = 1,
+};
+}  // namespace ml
 
 namespace ml {
 // table 0x7100B78270
@@ -16,6 +28,7 @@ public:
     struct RENDER_INFO {
         AttrTransform m_trans;  // (the name is not the original's)
     };
+    ScnDebugManipuObj(SCNMANIPU type, Scn* scn, const mm::Mat44* mtx, const mm::Vec3* pos);
     virtual ~ScnDebugManipuObj();  // slot 0
     // the slots ScnDebugManipuRot and ScnDebugManipuTrans fill (their names)
     virtual void checkMouseButtonDown(ml::EventView*) = 0;  // slot 2

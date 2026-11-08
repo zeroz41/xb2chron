@@ -26,11 +26,12 @@ public:
     mm::Mat44 m_worldMat;  // 0x70, clear sets the identity
     unsigned char pad_B0[0x40];  // clear sets an identity matrix here
     mm::Vec3 m_rot;     // ScnObjModel::setRot's; clear zeroes it
-    unsigned char pad_100[0x10];  // clear zeroes a Vec3 here
+    // clear zeroes it; a Vec3: ScnDebugManipu::setTrans's copy copies its three floats one by one
+    mm::Vec3 pad_100;
     mm::Quat m_quat;    // ScnObjModel::addRot(Quat)'s
     unsigned char pad_120[0x10];  // clear sets an identity Quat here
     unsigned int m_flags;  // clear zeroes it; setMat sets bit 0, addRot(Quat) bit 1
-    unsigned char pad_134[0xC];
+    // 0x134-0x140 is tail padding: ScnDebugManipu::setTrans's copy ends its last memcpy at m_flags
 };
 }  // namespace ml
 

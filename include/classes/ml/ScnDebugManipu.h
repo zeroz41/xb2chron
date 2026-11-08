@@ -23,6 +23,15 @@ public:
     virtual ~ScnDebugManipu();  // slot 0
     // the manipulator given up (1.0.0 keeps it out of line; 3.0.1's ScnDebug::clrManipulator inlines it)
     void clear();
+    // shows or hides the manipulator (1.0.0 keeps it out of line; 3.0.1's createTrans/createRot inline it)
+    void setDisp(bool disp) {
+        CS cs(m_cs);
+        m_disp = disp;
+        if (m_obj != nullptr) {
+            m_obj->m_disp = disp;
+        }
+    }
+    void setTrans(const AttrTransform& trans);
     // whether the manipulator is picked (1.0.0 keeps it out of line; 3.0.1's ScnDebug::isPickManipu inlines it)
     bool isPick() const;
     // the manipulator's transform: the calculation thread's (true) or the render thread's (false); none without one

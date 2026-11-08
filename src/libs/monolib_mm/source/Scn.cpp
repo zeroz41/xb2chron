@@ -355,6 +355,59 @@ void Scn::move() {
     }
 }
 
+void Scn::callbackToListener(SCNCB type) {
+    for (int i = 0; i < m_renderCBNum; i++) {
+        RENDER_CB& cb = m_renderCB[i];
+        if (cb.m_removed) {
+            continue;
+        }
+        switch (type) {
+        case 0:
+            cb.m_render->cbPreUpdate(this, cb.m_prio);
+            break;
+        case 1:
+            DevGraph::cmdOpenDisplayList(0);
+            if (!cb.m_after) {
+                cb.m_render->cbRenderAfter(this, cb.m_prio);
+            }
+            if (m_debDraw[0].m_prio == cb.m_prio) {
+                DebDraw::flushPrio(-2, getCam(-1)->m_info.m_render->m_proj,
+                                   getCam(-1)->m_info.m_render->m_transform.m_worldMat);
+            }
+            DevGraph::cmdCloseDisplayList();
+            break;
+        case 2:
+            cb.m_render->cbManipuPickOn(this, cb.m_prio);
+            break;
+        case 3:
+            cb.m_render->cbManipuPickOff(this, cb.m_prio);
+            break;
+        case 4:
+            cb.m_render->cbManipuPickMove(this, cb.m_prio);
+            break;
+        }
+    }
+}
+
+void ScnCamMan::update() {
+    WinView* view = getView(-1);
+    if (view != nullptr) {
+        ScnObjCam* cam = getCam(-1);
+        mm::Pnt<int> size = view->getClientSize(false);
+        ScnObjCam::RENDER_INFO* info = cam->m_info.m_cpu;
+        if (info->m_size != size) {
+            info->m_size.x = size.x;
+            info->m_size.y = size.y;
+            float aspect = 1.0f;
+            if (size.x != 0 && size.y != 0) {
+                aspect = static_cast<float>(size.x) / static_cast<float>(size.y);
+            }
+            info->m_aspect = aspect;
+            cam->updateViewMatrix(false);
+        }
+    }
+}
+
 void ScnPoolObj::apply() {
     CS cs(m_cs0);
     for (reslist<ScnObj*>::iterator it = m_cam.begin(); it != m_cam.end(); ++it) {
@@ -484,8 +537,22 @@ void ScnDebug::setManipulatorTrans(const mm::Mat44* mtx, const mm::Vec3* pos) {
     m_manipu->createTrans(mtx, pos);
 }
 
+void ScnDebugManipu::createTrans(const mm::Mat44* mtx, const mm::Vec3* pos) {
+    CS cs(m_cs);
+    clear();
+    m_obj = new (MlMem::getProductMem(), nullptr, 0, 4, false) ScnDebugManipuTrans(m_scn, mtx, pos);
+    setDisp(m_disp);
+}
+
 void ScnDebug::setManipulatorRot(const mm::Mat44* mtx, const mm::Vec3* pos) {
     m_manipu->createRot(mtx, pos);
+}
+
+void ScnDebugManipu::createRot(const mm::Mat44* mtx, const mm::Vec3* pos) {
+    CS cs(m_cs);
+    clear();
+    m_obj = new (MlMem::getProductMem(), nullptr, 0, 4, false) ScnDebugManipuRot(m_scn, mtx, pos);
+    setDisp(m_disp);
 }
 
 void ScnObjModel::setPos(const mm::Vec3& pos) {
@@ -611,8 +678,8 @@ inline void ScnObjCam::RENDER_INFO::initialize() {
     m_transform.m_flags |= 8;
     int width = DevGraph::getRootWidth();
     int height = DevGraph::getRootHeight();
-    m_width = width;
-    m_height = height;
+    m_size.x = width;
+    m_size.y = height;
 }
 
 ScnObjCam::ScnObjCam(Scn* scn, const char* name)
@@ -701,6 +768,14 @@ const AttrTransform* ScnDebugManipu::getTrans(bool cpu) const {
         return &(cpu ? m_obj->m_info.m_cpu : m_obj->m_info.m_render)->m_trans;
     }
     return nullptr;
+}
+
+void ScnDebugManipu::setTrans(const AttrTransform& trans) {
+    CS cs(m_cs);
+    if (m_obj != nullptr) {
+        m_obj->m_info.m_cpu->m_trans = trans;
+        m_obj->m_info.m_cpu->m_trans.update();
+    }
 }
 
 ScnDebugManipu::~ScnDebugManipu() {

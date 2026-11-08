@@ -13,6 +13,9 @@ public:
     Pnt() {}
     Pnt(T x, T y) : x(x), y(y) {}
     Pnt(const Pnt& p) : x(p.x), y(p.y) {}
+    // ScnCamMan::update compares a camera's size with a view's this way: the halves are read one by one, through
+    // the 4-aligned Pnt, where a 16-aligned owner's two ints would be read as one word
+    bool operator!=(const Pnt& p) const { return x != p.x || y != p.y; }
     T x;
     T y;
 };

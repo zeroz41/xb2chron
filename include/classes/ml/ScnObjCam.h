@@ -7,6 +7,7 @@
 #include "mm/Plane.h"
 #include "mm/Mat44.h"
 #include "mm/Vec3.h"
+#include "mm/Pnt.h"
 #include "ml/AttrTransform.h"  // tree: ml/AttrTransform.h (new)
 
 namespace ml { class DebDraw; }
@@ -28,8 +29,9 @@ public:
         float m_nearExtent[4];
         unsigned char pad_160[0x40];  // setLookAt builds a matrix here
         mm::Mat44 m_proj;  // 0x1A0 the constructor's DevGraph::getPers (the name is not the original's)
-        int m_width;   // 0x1E0 the root's width from the constructor (the name is not the original's)
-        int m_height;  // 0x1E4 the root's height from the constructor (the name is not the original's)
+        // 0x1E0 the root's width and height from the constructor; ScnCamMan::update compares it with the view's
+        // client size through Pnt's != (one 32-bit load per half) (the name is not the original's)
+        mm::Pnt<int> m_size;
         float m_fov;     // 0x1E8 degrees: 40 by default (setDefault) (the name is not the original's)
         float m_invTan;  // 0x1EC 1 / tan(fov / 2) (updateFovNearFar) (the name is not the original's)
         float m_aspect;  // 0x1F0 the viewport's width / height, else 1 (apply) (the name is not the original's)

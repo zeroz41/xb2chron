@@ -23,6 +23,7 @@ namespace ml { class WinView; }
 namespace ml { class IScnRender; }
 namespace ml { enum SCNCAM : int; }
 namespace ml { enum SCNPRIO_CB : int; }
+namespace ml { enum SCNCB : int; }
 
 namespace ml {
 // table 0x7100B77AC8; the destructor stores mm::mtl::PtrSingleton<ml::Scn>'s table at 0x18 and clears its
@@ -38,6 +39,10 @@ public:
     // the entry resource of the file (DrShdLgtMan::reloadShader takes its shader package from it)
     FileResTh* allocEntryRes(const char* path);
     void draw();
+    // every render callback not marked removed gets one of its IScnRender calls: 0 cbPreUpdate, 1 cbRenderAfter
+    // (unless added with the after flag) inside a display list that also flushes the debug drawing of the
+    // callback's priority, 2 to 4 cbManipuPickOn/Off/Move
+    void callbackToListener(SCNCB type);
     // a camera by index; -1 the current view's (fw::NaviManager::update's)
     ScnObjCam* getCam(int index);
     // a light or image-based light made from a resource, by the scene's renderer (gf::MapLIBL and MapGIBL keep
