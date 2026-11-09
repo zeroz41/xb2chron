@@ -54,27 +54,23 @@ bool ManagerRegister::initialize() {
     return result;
 }
 
-// finalize (0x710018F9D8) is 14 words off as written below: the original indexes the element from the
-// decremented index in its own register (this + (i - 1) * 8 + 8, no x26) where this form folds it to this + i * 8
-// (zkit sweep found no rewrite; for-loop, while (i-- > 0), m_objects[i - 1] and begin()[index] give the same)
-// bool ManagerRegister::finalize() {
-//     if (m_objects.empty()) {
-//         return true;
-//     }
-//     unsigned char result = true;
-//     for (int i = m_objects.size(); i > 0;) {
-//         i--;
-//         ManagerObject* object = m_objects[i];
-//         if (!object->isFinalized()) {
-//             bool finalized = object->finalize();
-//             result = false;
-//             if (finalized) {
-//                 object->m_flags |= 2;
-//             }
-//         }
-//     }
-//     return result;
-// }
+bool ManagerRegister::finalize() {
+    if (m_objects.empty()) {
+        return true;
+    }
+    unsigned char result = true;
+    for (int i = m_objects.size(); i > 0; i--) {
+        ManagerObject* object = m_objects[i - 1];
+        if (!object->isFinalized()) {
+            bool finalized = object->finalize();
+            result = false;
+            if (finalized) {
+                object->m_flags |= 2;
+            }
+        }
+    }
+    return result;
+}
 
 void ManagerRegister::enterFinalizeApplet() {
     for (mm::mtl::FixedVector<ManagerObject*, 256>::iterator it = m_objects.begin(); it != m_objects.end(); ++it) {

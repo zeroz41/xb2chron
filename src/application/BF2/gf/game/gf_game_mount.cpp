@@ -400,6 +400,26 @@ unsigned int GfGameMount::getAllWeapons() const {
     return count;
 }
 
+// the index-th object set in either set (both sets walked together), none: -1
+GF_OBJ_HANDLE* GfGameMount::getAllWeapons(unsigned int index) const {
+    unsigned int count = 0;
+    for (unsigned int i = 0; i < 10; i++) {
+        if (m_weapon->m_handles[i] != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            if (count == index) {
+                return m_weapon->m_handles[i];
+            }
+            count++;
+        }
+        if (m_weapon->m_secondHandles[i] != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            if (count == index) {
+                return m_weapon->m_secondHandles[i];
+            }
+            count++;
+        }
+    }
+    return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+}
+
 bool GfGameMount::setWeaponOwner(OPTMNT option) {
     switch (option) {
     case 0:
