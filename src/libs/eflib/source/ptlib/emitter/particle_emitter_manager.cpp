@@ -11,7 +11,9 @@
 #include "ptlib/Utility.h"
 #include "ml/ScnObjAccGpuCheck.h"
 #include "ptlib/forcefield/TurbulenceN.h"
+#include "ptlib/material/MaterialManager.h"
 #include <new>
+#include <string.h>
 
 namespace ptlib { namespace emitter {
 
@@ -234,6 +236,26 @@ void ComputeManager::term() {
     getPtr() = nullptr;
 }
 
+void EmitterManager::clear() {
+    if (pad_1788 != nullptr) {
+        pad_1788 = nullptr;
+    }
+    m_flip = 0;
+    pad_1748 = 0;
+    for (IntrusiveList<EmitterObj>::iterator it = m_emitterActiveList.begin(); it != m_emitterActiveList.end();) {
+        it = m_emitterActiveList.erase(it);
+    }
+    for (IntrusiveList<EmitterObj>::iterator it = m_emitterFreeList.begin(); it != m_emitterFreeList.end();) {
+        it = m_emitterFreeList.erase(it);
+    }
+    m_emitterSetList.clear();
+    m_emitterSetFreeList.clear();
+    pad_1798 = 0;
+    for (int i = 4; i >= 0; i--) {
+        m_pDrawTop[i] = nullptr;
+    }
+}
+
 EmitterObj* EmitterManager::getEmitterFree() {
     if (m_emitterFreeList.m_size == 0) {
         return nullptr;
@@ -318,6 +340,28 @@ void EmitterManager::emitter_set_param(FxHeader* pHeader, EmitterParam* pParam) 
     }
 }
 
+void EmitterManager::emitter_set_casname(unsigned int handle, const void* pModel, const char* name, int, float scale,
+                                         int mode) {
+    if (name != nullptr && strlen(name) >= 0x10) {
+        efAstMsg("0", "emitter_set_casname:too long name[%s]", name);
+    }
+    for (IntrusiveList<EmitterObj>::iterator it = m_emitterActiveList.begin(); it != m_emitterActiveList.end(); ++it) {
+        if (it->m_handle == handle && it->m_pAttach == nullptr) {
+            if (pModel != nullptr) {
+                it->m_pCas->m_pModel = pModel;
+                it->m_casScale = scale;
+                it->m_casMode = mode;
+                if (name != nullptr) {
+                    strcpy(it->m_pCas->m_name, name);
+                }
+            } else {
+                it->m_pCas->m_pModel = nullptr;
+                it->m_pCas->m_name[0] = '\0';
+            }
+        }
+    }
+}
+
 void EmitterManager::emitter_set_casparam(unsigned int handle, const void* pModel, EmitterParam* pParam) {
     for (IntrusiveList<EmitterObj>::iterator it = m_emitterActiveList.begin(); it != m_emitterActiveList.end(); ++it) {
         if (it->m_handle == handle && it->m_pAttach == nullptr) {
@@ -377,6 +421,32 @@ void EmitterManager::emitter_set_nowait(unsigned int handle, int nowait) {
     }
 }
 
+void EmitterManager::emitter_set_free_all_sub(bool flag) {
+    while (!m_emitterActiveList.empty()) {
+        emitter_free_core(&*m_emitterActiveList.begin());
+    }
+    for (;;) {
+        IntrusiveList<EmitterSetNode>::iterator it = m_emitterSetList.begin();
+        if (m_emitterSetList.end() == it) {
+            break;
+        }
+        FxHeader* pHeader = it->m_pHeader;
+        if (pHeader->m_userParam == 0) {
+            emitter_set_free(pHeader, 1);
+        } else {
+            emitter_pack_free(pHeader->m_userParam);
+        }
+    }
+    IntrusiveList<EmitterObj> list;
+    for (IntrusiveList<EmitterObj>::iterator it = m_emitterFreeList.begin(); it != m_emitterFreeList.end(); ++it) {
+        if (it->m_pStream != nullptr) {
+            it->m_pStream->release();
+        }
+        it->releaseParticleAll();
+    }
+    material::MaterialManager::get()->allClear(flag);
+}
+
 void EmitterManager::emitter_pack_free(unsigned long pack) {
     int count = 0;
     for (IntrusiveList<EmitterSetNode>::iterator it = m_emitterSetList.begin(); it != m_emitterSetList.end(); ++it) {
@@ -419,6 +489,76 @@ bool EmitterManager::emitter_set_check(FxHeader* pHeader) {
         }
     }
     return false;
+}
+
+void EmitterManager::move() {
+    EmitterObj* pTail0 = nullptr;
+    EmitterObj* pTail2 = nullptr;
+    EmitterObj* pTail1 = nullptr;
+    for (IntrusiveList<EmitterObj>::iterator it = m_emitterActiveList.begin(); it != m_emitterActiveList.end(); ++it) {
+        EmitterObj* pEmitter = &*it;
+        EmitterArg* pArg = pEmitter->m_pData;
+        bool seen = pEmitter->isRenderCheck();
+        if (pArg == nullptr || !seen) {
+            continue;
+        }
+        if ((pArg->m_type & 0xFE) != 4 && (pEmitter->m_disp == 0 || !(pEmitter->m_alpha > 0.0f))) {
+            continue;
+        }
+        switch (pArg->m_type) {
+        case 0:
+        case 1:
+        case 9:
+            if (pTail0 != nullptr) {
+                pTail0->m_pDrawNext = pEmitter;
+            } else {
+                m_pDrawTop[0] = pEmitter;
+            }
+            pTail0 = pEmitter;
+            break;
+        case 2:
+            if (pTail2 != nullptr) {
+                pTail2->m_pDrawNext = pEmitter;
+            } else {
+                m_pDrawTop[2] = pEmitter;
+            }
+            pTail2 = pEmitter;
+            break;
+        case 4:
+        case 5:
+            if (pTail1 != nullptr) {
+                pTail1->m_pDrawNext = pEmitter;
+            } else {
+                m_pDrawTop[1] = pEmitter;
+            }
+            pTail1 = pEmitter;
+            break;
+        case 12:
+            if (pTail0 != nullptr) {
+                pTail0->m_pDrawNext = pEmitter;
+            } else {
+                m_pDrawTop[0] = pEmitter;
+            }
+            pTail0 = pEmitter;
+            break;
+        }
+        if (pTail0 != nullptr) {
+            pTail0->m_pDrawNext = nullptr;
+        } else {
+            m_pDrawTop[0] = nullptr;
+        }
+        if (pTail2 != nullptr) {
+            pTail2->m_pDrawNext = nullptr;
+        } else {
+            m_pDrawTop[2] = nullptr;
+        }
+        if (pTail1 != nullptr) {
+            pTail1->m_pDrawNext = nullptr;
+        } else {
+            m_pDrawTop[1] = nullptr;
+        }
+        m_pDrawTop[3] = nullptr;
+    }
 }
 
 ParticleObj* EmitterManager::createCommon(EmitterObj* pEmitter) {

@@ -296,7 +296,9 @@ public:
     EmitterArg* m_pData;  // 0x98 (the name is not the original's)
     unsigned char pad_a0[0x20];
     EmitterCas* m_pCas;
-    unsigned char pad_c8[0x8];
+    // 0xC8: the next emitter of EmitterManager::m_pDrawTop's chain (EmitterManager::move; the name is not the
+    // original's)
+    EmitterObj* m_pDrawNext;
     int m_move_type;  // 0xD0: below MOVE_TYPE_MAX; move_func dispatches on it ("m_move_type < MOVE_TYPE_MAX")
     unsigned char pad_d4[0xC];
     mm::Mat44 m_mtx;  // the emitter's placement: EmitterParam::m_mtx
@@ -310,7 +312,9 @@ public:
     unsigned char pad_150[0x1];
     unsigned char m_disp;    // emitter_set_disp's
     unsigned char m_nowait;  // emitter_set_nowait's
-    unsigned char pad_153[0x4];
+    // 0x153: emitter_set_casname's last argument, set with its model (the name is not the original's)
+    unsigned char m_casMode;
+    unsigned char pad_154[0x3];
     bool m_drawFlag;  // 0x157: sets draw_common_uparam's flag bit 1 (the name is not the original's)
     float m_speed;  // emitter_set_speed's
     unsigned char pad_15c[0x14];

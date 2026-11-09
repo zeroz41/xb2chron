@@ -61,12 +61,12 @@ public:
     unsigned char m_type;  // 0x8: 1 an effect, 'P' textures, 'Q' ParticleManager::m_pReserved (the name is not the original's)
     unsigned char m_loop;
     unsigned char m_containsCamAxis;
-    unsigned char pad_b[0x1];
+    unsigned char m_nameLength;  // 0xB: m_name's (EmitterManager::emitter_set_search; the name is not the original's)
     // 0xC: of a pack ('a'), its first file; of a file in a pack, the next one; relative to the header, 0 for none
     // (parse_efs; the name is not the original's)
     unsigned int m_nextOffset;
     unsigned int m_materialTableOffset;  // from the header; 0 for none (the name is not the original's)
-    unsigned char pad_14[0x34];
+    char m_name[0x34];  // 0x14: m_nameLength characters, not terminated (emitter_set_search; the name is not the original's)
     unsigned long m_userParam;  // 0x48: parseEfb's third argument for a type-1 file (the name is not the original's)
 
     const FxMaterialTable* getMaterialTable() const {

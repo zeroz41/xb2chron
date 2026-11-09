@@ -88,6 +88,13 @@ public:
         return next;
     }
     void remove(T* p) { erase(find(p)); }
+    // every element unlinked (EmitterManager::clear calls IntrusiveList<EmitterSetNode>::clear out of line; the
+    // loop written here, not through an erase(first, last), keeps it out of line)
+    void clear() {
+        for (iterator it = begin(); it != end();) {
+            it = erase(it);
+        }
+    }
     // links ptr in first (the name is not the original's)
     void push_front(T* ptr) {
 #line 221 PTLIB_INTRUSIVE_LIST_PATH

@@ -21,13 +21,22 @@ public:
     static void term();
 
     // ParticleManager's emitter_set_* forward to these (what they return is not known yet)
+    // frees every emitter and effect file, releases the free emitters' streams and particles and clears the
+    // materials (allClear's flag)
     void emitter_set_free_all_sub(bool flag);
-    void emitter_set_search(int a, const char* b, void* c, unsigned int d);
+    // frees an active emitter: its particles cleared, unlinked and moved to the free list; returns the emitter that
+    // followed it
+    EmitterObj* emitter_free_core(EmitterObj* pEmitter);
+    // the effect file named name (a backslash matches a slash; with id, of that user parameter), or pHeader when
+    // it is linked (the last argument is unused)
+    FxHeader* emitter_set_search(int id, const char* name, void* pHeader, unsigned int);
     void emitter_set_param_pos_only(unsigned int handle, EmitterParam* pParam);
     void emitter_set_param_pos_only2(unsigned int handle, EmitterParam* pParam);
     void emitter_set_param(unsigned int handle, EmitterParam* pParam);
     void emitter_set_param(FxHeader* pHeader, EmitterParam* pParam);
-    void emitter_set_casname(unsigned int handle, const void* a, const char* b, int c, float d, int e);
+    // gives the emitters of a handle a model, its scale and up to 15 characters of name (no model: clears both;
+    // the int before the scale is unused)
+    void emitter_set_casname(unsigned int handle, const void* pModel, const char* name, int, float scale, int mode);
     void emitter_set_casparam(unsigned int handle, const void* a, EmitterParam* pParam);
     void emitter_set_disp(unsigned int handle, int disp);
     void emitter_set_alpha(unsigned int handle, float alpha);
@@ -45,7 +54,10 @@ public:
     void emitter_set_link(FxHeader* pHeader);
     // gives an effect file's nodes back to the free list (what it returns is not known yet)
     void emitter_set_unlink(FxHeader* pHeader);
+    // rebuilds the draw chains (m_pDrawTop) from the active emitters that are seen and visible
     void move();
+    // empties the emitter lists and the effect files' node lists and resets the draw chains
+    void clear();
     // what it returns is not known yet
     void emitter_update(unsigned int handle, float frames, bool flag);
     bool emitter_set_check(FxHeader* pHeader);
@@ -66,10 +78,19 @@ public:
     // other (the name is not the original's)
     effect::SystemManager::KizunaWork m_kizunaWorks[2][8];
     float m_categorySpeed[1];  // indexed by category; the count is not known yet
-    unsigned char pad_1704[0x8C];
+    unsigned char pad_1704[0x44];
+    unsigned long pad_1748;  // clear zeroes it
+    // 0x1750: the first emitter of each draw chain, linked through EmitterObj::m_pDrawNext; move rebuilds [0]
+    // (emitter types 0, 1, 9, 12), [1] (4, 5) and [2] (2) and clears [3]; clear zeroes all five (the name is not
+    // the original's)
+    EmitterObj* m_pDrawTop[5];
+    unsigned char pad_1778[0x10];
+    void* pad_1788;  // clear zeroes it when set
     // ParticleManager::tail flips it between 0 and 1 after moveAfter each frame (the name is not the original's)
     unsigned int m_flip;
-    unsigned char pad_1794[0x14];
+    unsigned char pad_1794[0x4];
+    unsigned long pad_1798;  // clear zeroes it
+    unsigned char pad_17a0[0x8];
     IntrusiveList<EmitterObj> m_emitterActiveList;  // getEmitterActiveList's; the emitter_set_* setters walk it
     // the emitters not in use (getEmitterFree takes them; the name is not the original's)
     IntrusiveList<EmitterObj> m_emitterFreeList;
