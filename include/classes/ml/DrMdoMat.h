@@ -103,6 +103,7 @@ public:
     void releaseMpfMapSeamMat(MdoWrkMatRes* res);
     // builds the flag wave work of data + ofs in buf (when given) and hands it to res; returns the bytes it takes
     int getFlagWaveRes(const unsigned char* data, unsigned int ofs, unsigned char* buf, MdoWrkMatRes* res);
+    void updateFlagWaveTbl();
 
     static void (DrMdoMat::*s_pCallMatVal[35])(const MdsMatInfoHeader*, int, int);
 

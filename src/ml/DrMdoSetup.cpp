@@ -92,6 +92,8 @@
 #include "ml/DrMdoZSortMan.h"
 #include "ml/DrPixlDeferred.h"
 #include "ml/DrPixlMan.h"
+#include "ml/DrPixlOccQuery.h"
+#include "ml/DrMdoNomAfterImage.h"
 #include "ml/DrPixlPostMan.h"
 #include "ml/DrPixlPostObjCubeMapIBL.h"
 #include "ml/DrPixlPostParm.h"
@@ -2681,6 +2683,85 @@ void DrMdoCtlNom::shadowMapDirRender(int idx) {
     }
 }
 
+void DrMdoCtlNom::shadowCacheOnlyRender() {
+    if ((m_stateFlags & 0x10000000) && (m_stateFlags & 0x3800)) {
+        DrPixlMan* pixl = m_pDrMan->m_pixlMan;
+        if ((!(m_stateFlags & 0x80000000) || pixl->m_objTbl->m_shadowMan->clipDirShadowChk(m_center, m_length, true)) &&
+            m_viewNum == 0 && !m_pDrMan->m_shadowRenderOff) {
+            if (!(m_mdlFlags & 0x8)) {
+                if (m_nodeMax != 0) {
+                    calcOfsMat();
+                }
+                updateMdlUniformBlock();
+                m_mdlFlags |= 0x8;
+            }
+            updateFlagWaveTbl();
+            if (m_nodeMax != 0) {
+                grlib::CGLibCtlShader::setMemoryBarrierBit(1);
+                createWeightVtx(0, m_ctlFlags2, m_lodObj->m_dispBits, false);
+                grlib::CGLibCtlShader::setMemoryBarrierBit(0x21);
+            }
+            pixl->shadowDirBegin();
+            if (m_stateFlags & 0x800) {
+                pixl->setShadowDirRenderTarget(0);
+                shadowMapDirRender(0);
+            }
+            if (m_stateFlags & 0x1000) {
+                pixl->setShadowDirRenderTarget(1);
+                shadowMapDirRender(1);
+            }
+            if (m_stateFlags & 0x2000) {
+                pixl->setShadowDirRenderTarget(2);
+                shadowMapDirRender(2);
+            }
+            pixl->shadowDirEnd();
+        }
+    }
+}
+
+void DrMdoCtlNom::shadowRender() {
+    if (!(m_mdlFlags & 0x20) || !(m_ctlFlags & 0x1)) {
+        return;
+    }
+    DrPixlShadowObj* shadow = m_pDrMan->m_pixlMan->m_shadowObj;
+    if (!(m_mdlFlags & 0x40) && shadow->m_active == 1) {
+        return;
+    }
+    bool on = (m_ctlFlags & 0x100) ? shadow->m_lightObj->isBaseMapShadow() : shadow->m_lightObj->isCharShadow();
+    if (on && shadow->clipTypeChk(m_center, m_length) != 0) {
+        if (!(m_mdlFlags & 0x8)) {
+            if (m_nodeMax != 0) {
+                calcOfsMat();
+            }
+            updateMdlUniformBlock();
+            m_mdlFlags |= 0x8;
+        }
+        updateFlagWaveTbl();
+        if (m_nodeMax != 0) {
+            grlib::CGLibCtlShader::setMemoryBarrierBit(1);
+            createWeightVtx(0, m_ctlFlags2, m_lodObj->m_dispBits, false);
+            grlib::CGLibCtlShader::setMemoryBarrierBit(0x21);
+        }
+        shadow->renderSetup();
+        m_renderPass = 6;
+        m_renderTech = 0;
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        if (shadow->m_active == 1) {
+            m_bindFlags[0] |= 4;
+        }
+        const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop;
+        for (int i = 0; i < m_pWrkMatRes->m_mdlTopNum; i++, top++) {
+            if (*(m_passChk[i] + m_renderPass) != nullptr) {
+                shwRender(top, *(m_passChk[i] + m_renderPass));
+            }
+        }
+    }
+}
+
 void DrMdoCtlNom::callNomSetupRender() {
     if ((m_ctlFlags & 0x1) && m_morpObj != nullptr && (m_lodObj->m_flags & 0x2)) {
         m_morpObj->update(m_pWrkMatRes, m_etcParams);
@@ -2814,12 +2895,45 @@ void DrMdoCtlNom::callCldBackAlphaNomRender() {
     }
 }
 
+void DrMdoCtlNom::occRender() {
+    if (m_mdlFlags & 0x2) {
+        m_pDrMan->m_pixlMan->m_occQuery->occRenderAABB(m_queryAcc, m_center, pad_140);
+    }
+    if (m_mdlFlags & 0x4) {
+        MdoWrkMatRes::InstOcc* occ = m_pWrkMatRes->m_pInstOcc;
+        m_pDrMan->m_pixlMan->m_occQuery->occRenderPosAABB(occ->m_queryAcc, occ->m_mtx, occ->m_bits, occ->m_num);
+    }
+}
+
 bool DrMdoCtlNom::cloneMdlObj(DrMdlObj* obj) {
     bool cloned = DrMdoNomClone::cloneMdlObj(static_cast<DrMdoCtlNom*>(obj), this);
     if (cloned) {
         m_dispFlags &= ~0x60;
     }
     return cloned;
+}
+
+void DrMdoCtlNom::createAfterImage(float a0, float a1, float a2, const mm::Col3& c0, float a3, float a4, float a5,
+                                   const mm::Col3& c1, float a6, float a7, float a8) {
+    if (m_afterImage != nullptr) {
+        m_afterImage->m_flags |= 1 << DrMan::s_nDblStockIdx;
+    }
+    DrMdoNomAfterImage* image = new (DrMan::getIns()->m_workHandle, nullptr, 0, 4, false) DrMdoNomAfterImage;
+    image->create(this, a0, a1, a2, c0, a3, a4, a5, c1, a6, a7, a8);
+    m_afterImageStock[DrMan::s_nDblStockIdx] = image;
+}
+
+void DrMdoCtlNom::releaseAfterImage() {
+    if (m_afterImage != nullptr) {
+        m_afterImage->m_flags |= 1 << DrMan::s_nDblStockIdx;
+    }
+    if (m_afterImageStock[DrMan::s_nDblMemIdx] != nullptr) {
+        m_afterImageStock[DrMan::s_nDblMemIdx]->m_flags |= 1 << DrMan::s_nDblStockIdx;
+    }
+    if (m_afterImageStock[DrMan::s_nDblStockIdx] != nullptr) {
+        delete m_afterImageStock[DrMan::s_nDblStockIdx];
+        m_afterImageStock[DrMan::s_nDblStockIdx] = nullptr;
+    }
 }
 
 void DrMdoCtlPos::releasePos() {
@@ -5493,6 +5607,22 @@ int DrMdoSetup::unimate_AvatarMapWrk(float* out, DrResMdoMat* mat, const MdsMatI
     out[11] = 0.0f;
     return DrResMdoUniformBlock::s_nVarSizeTbl[51];
 }
+// Opaque objects: buckets 4..505 (the comment is inferred).
+void DrMdoZSortMan::setViewWorldPos(DrMdoZSortObj* obj, const mm::Vec3& pos) {
+    float dx = pos.x - m_viewPos.x;
+    float dy = pos.y - m_viewPos.y;
+    float dz = pos.z - m_viewPos.z;
+    float dist = sqrtf(dx * dx + dy * dy + dz * dz) / m_sortFar;
+    if (dist >= 1.0f) {
+        stockObj(obj, 505);
+    } else if (dist <= 0.001f) {
+        stockObj(obj, 4);
+    } else {
+        int idx = static_cast<int>(powf(dist, m_sortRate) * 502.0f);
+        stockObj(obj, idx + 4 > 505 ? 505 : (idx < 0 ? 4 : idx + 4));
+    }
+}
+
 // Last alpha objects: buckets 0..3.
 void DrMdoZSortMan::setViewWorldPosLastAlpha(DrMdoZSortObj* obj, const mm::Vec3& pos) {
     float dx = pos.x - m_viewPos.x;
@@ -5506,6 +5636,22 @@ void DrMdoZSortMan::setViewWorldPosLastAlpha(DrMdoZSortObj* obj, const mm::Vec3&
     } else {
         int idx = static_cast<int>(powf(dist, m_sortRate) * 4.0f);
         stockObj(obj, idx > 3 ? 3 : (idx < 0 ? 0 : idx));
+    }
+}
+
+// Fast alpha objects: buckets 506..509 (the comment is inferred).
+void DrMdoZSortMan::setViewWorldPosFastAlpha(DrMdoZSortObj* obj, const mm::Vec3& pos) {
+    float dx = pos.x - m_viewPos.x;
+    float dy = pos.y - m_viewPos.y;
+    float dz = pos.z - m_viewPos.z;
+    float dist = sqrtf(dx * dx + dy * dy + dz * dz) / m_sortFar;
+    if (dist >= 1.0f) {
+        stockObj(obj, 509);
+    } else if (dist <= 0.001f) {
+        stockObj(obj, 506);
+    } else {
+        int idx = static_cast<int>(powf(dist, m_sortRate) * 4.0f);
+        stockObj(obj, idx + 506 >= 509 ? 509 : (idx < 0 ? 506 : idx + 506));
     }
 }
 

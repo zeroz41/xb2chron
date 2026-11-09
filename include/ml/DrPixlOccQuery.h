@@ -3,8 +3,11 @@
 
 #include "ml/DrResQueryObj.h"
 
+namespace mm { class Vec3; class Mat44; }
+
 namespace ml {
 class DrResQueryObj;
+class DrResQueryAcc;
 class DrShdDataList;
 class DrShdDataObj;
 
@@ -18,6 +21,8 @@ class DrPixlOccQuery {
 public:
     DrPixlOccQuery(DrMan* drMan, DrPixlMan* pixlMan);
     DrResQueryObj* createObj();
+    void occRenderAABB(DrResQueryAcc* acc, const mm::Vec3& center, const mm::Vec3& extent);
+    void occRenderPosAABB(DrResQueryAcc* acc, const mm::Mat44* mtx, const unsigned int* bits, int num);
     // moves obj from the used list to the end of the free list (1.0.0 has it out of line; 3.0.1 inlines it into
     // DrPixlMan::lastUpdate)
     void releaseObj(DrResQueryObj* obj) {

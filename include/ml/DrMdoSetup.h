@@ -155,7 +155,7 @@ public:
     unsigned int pad_164;
     // 0x168, bit 9: uniformBlock_OldMdl/OldBone bind this frame's blocks instead of last frame's (the name is not
     // the original's)
-    short m_mdlFlags;
+    unsigned short m_mdlFlags;  // unsigned: DrMdoCtlNom::shadowRender reads it with ldrh where a short gave ldrsh
     unsigned char pad_16A;
     unsigned char pad_16B;
     unsigned char pad_16C[0x4];

@@ -13,6 +13,8 @@ namespace cloud { class CloudMdlDataObj; }
 namespace ml { class DrResMdoVtxMeshObj; }
 namespace mm { class Col3; }
 namespace ml { class DrResChkList; }
+namespace ml { class DrResQueryAcc; }
+namespace ml { class DrMdoNomAfterImage; }
 namespace ml { class DrResMdoLodObj; }
 namespace ml { class DrResEtcPamObj; }
 namespace ml { class DrResMdoMorpObj; }
@@ -68,6 +70,7 @@ public:
     void updateNom();
     void createShadowRenderList(bool);
     void updateRimBloomCalcUniformBlock();
+    void updateMdlUniformBlock();
 
     // What m_alphaSort points to: setupWorkMdl places it in the work buffer (0x30 bytes) and fills each sort object
     // and its per-MdoWrkMatRes::m_mdlTopNum check-list table when the model has that alpha pass. The type and field
@@ -102,12 +105,16 @@ public:
     // 0x1F0: setupWorkMdl creates it in the work buffer; the alpha passes hand its m_dispBits to createWeightVtx
     // (the name is not the original's)
     DrResMdoLodObj* m_lodObj;
-    unsigned char pad_1F8[0x8];
+    DrResQueryAcc* m_queryAcc;  // 0x1F8, occRender's box query (the name is not the original's)
     DrResEtcPamObj* m_etcParams;  // 0x200, ScnObjAccEtcParams's
     unsigned char pad_208[0x8];
     // 0x210: setDeleteCall stops its display (the name is not the original's)
     cloud::CloudMdlDataObj* m_cldMdlData;
-    unsigned char pad_218[0x18];
+    // 0x218: the after image updateAfterImage shows; it takes over m_afterImageStock[s_nDblStockIdx] (the name is
+    // not the original's)
+    DrMdoNomAfterImage* m_afterImage;
+    // 0x220: by DrMan::s_nDblStockIdx, the after image createAfterImage made (the name is not the original's)
+    DrMdoNomAfterImage* m_afterImageStock[2];
     // 0x230, callShadowCacheUpdate clears the bits it is given (the name is not the original's)
     unsigned long m_shadowCacheBits;
 };

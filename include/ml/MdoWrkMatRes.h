@@ -11,6 +11,8 @@ namespace grlib { class CGLibOneUniformBlock; }
 
 namespace grlib { class CGLibTextureBuffer; }
 namespace grlib { class CGLibSampler; }
+namespace mm { class Mat44; }
+namespace ml { class DrResQueryAcc; }
 
 namespace ml {
 class DrResMdoMat;
@@ -320,7 +322,17 @@ struct MdoWrkMatRes {
     unsigned char pad_150[0x8];
     MdoVanishEffectWrk* m_pVanishEffectWrk;  // 0x158, three banks per material (DrMdoMat::getVanishEffectWrk)
     MdoRimBloomWrk* m_pRimBloomWrk;  // 0x160, DrMdlObj::getRimBloomWrk (the name is not the original's)
-    unsigned char pad_168[0x8];
+    // 0x168: per-instance occlusion boxes; DrMdoCtlNom::occRender passes them to DrPixlOccQuery::occRenderPosAABB
+    // (the type and field names are not the original's)
+    struct InstOcc {
+        unsigned char pad_0[0x18];
+        int m_num;  // 0x18
+        unsigned char pad_1C[0x4];
+        const mm::Mat44* m_mtx;  // 0x20
+        unsigned char pad_28[0x8];
+        const unsigned int* m_bits;  // 0x30, a bit per instance
+        DrResQueryAcc* m_queryAcc;  // 0x38
+    }* m_pInstOcc;
     // 0x170/0x178: the model's top headers and their count; DrMdoCtlNom's alpha passes walk them (the names are not
     // the original's)
     const MdsMdlTopHeader* m_pMdlTop;
