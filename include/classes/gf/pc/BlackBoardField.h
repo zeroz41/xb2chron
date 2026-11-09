@@ -3,6 +3,8 @@
 
 #include "mm/mtl/RTTI.h"
 #include "classes/ai/BlackBoard.h"
+#include "fw/Transform.h"
+#include "mm/mtl/FixedQueue.h"
 #include "mm/Vec3.h"
 #include "mm/Plane.h"
 
@@ -63,8 +65,9 @@ public:
     // where the PC climbs off a wall (TaskFieldWallFollow::update hands it to AgentUtilField::setFollowWallEndInput;
     // the name is not the original's)
     mm::Vec3 m_wallEndPos;
-    unsigned char pad_a0[0x140];
-    void* pad_1e0[2];  // two words the constructor clears
+    // the transforms the PC follows a wall climber by: AgentUtilField::getWallFollowTransform reads the one its
+    // player index / 2 times the wall AI's delay back (the name is not the original's)
+    mm::mtl::FixedQueue<fw::Transform, 10> m_wallFollowTransforms;
     mm::Vec3 m_retreatPos;            // TaskFieldRetreat routes the PC to it while farther than 1 from it
     // bits 0-2: TaskFieldSensor::update (0 the PC is stuck, 1 an obstacle is in its way, 2 it can jump onto it);
     // bit 3: set by TaskFieldRetreat::update and the follow tasks' update, cleared by TaskFieldIdle::update;

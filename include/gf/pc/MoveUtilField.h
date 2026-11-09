@@ -3,10 +3,12 @@
 
 #include "classes/gf/GfMoveJumpControler.h"
 #include "classes/gf/GfMoveRunControler.h"
+#include "classes/gf/GfMoveSlideControler.h"
 
 namespace fw { class UpdateInfo; }
 namespace mm { class Vec3; }
 namespace gf { class GfComPropertyPc; }
+namespace gf { namespace pc { struct SlideParam; } }
 
 namespace gf { namespace pc {
 
@@ -40,6 +42,8 @@ void setMoveRunPacket(gf::GfComPropertyPc& property, gf::GfMoveRunControler::Pac
 void setMoveSwimPacket(gf::GfComPropertyPc& property, gf::GfMoveRunControler::Packet* packet);
 // the jump controler's packet from the property (its velocity, turning speed and param list entry)
 void setMoveJumpPacket(gf::GfComPropertyPc& property, gf::GfMoveJumpControler::Packet* packet);
+// the slide controler's packet from the property and its slide parameters (by its symbol)
+void setMoveSlidePacket(gf::GfComPropertyPc& property, const SlideParam& param, gf::GfMoveSlideControler::Packet* packet);
 
 }}  // namespace gf::pc
 

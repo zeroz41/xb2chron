@@ -88,7 +88,9 @@ public:
         // not the original's)
         float m_swimMoveFromAirSpeed;
         float m_swimSinkTime;  // StateFieldWaterSwimSink::update: how long the PC sinks swimming
-        unsigned char pad_10[0x4];
+        // MoveUtilField::updateMoveWaterRise/updateMoveWaterHoleRise: the rise slows once the child frame is within
+        // this height of the surface (the name is not the original's)
+        float m_riseSlowHeight;
         // StateUtilField::setAsmSpeedSwim: the swim motion's playback speed at the slowest swim (SwimSpeedParam's
         // m_minSpeed); it rises to 1 at m_maxSpeed (the name is not the original's)
         float m_swimMinAnimSpeed;

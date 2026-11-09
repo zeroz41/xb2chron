@@ -18,6 +18,7 @@ public:
         float m_minSpeed;      // the size the slowing speed keeps
     };
     struct Packet {
+        Packet() : m_decelerate(false) {}  // the speed left for the caller (MoveUtilField::updateMoveWaterRise)
         float m_speed;  // vertical, upwards positive
         fw::ParamAdapter m_param;
         bool m_decelerate;  // slow down instead of rising (set near the surface)

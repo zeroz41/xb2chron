@@ -13,6 +13,8 @@
 #include "classes/gf/GfMoveTurnControler.h"
 #include "classes/gf/GfMoveBrakeControler.h"
 #include "classes/gf/GfMoveWaterSinkControler.h"
+#include "classes/gf/GfMoveWaterRiseControler.h"
+#include "classes/gf/GfMoveSlideControler.h"
 #include "classes/fw/ParamList.h"
 #include "classes/gf/GfComBehaviorPc.h"
 #include "gf/pc/AgentUtilField.h"
@@ -33,6 +35,8 @@
 #include "gf/pc/StateUtilField.h"
 #include "classes/navi/NvmshAcObj.h"
 #include "gf/GfObjUtil.h"
+#include "classes/gf/GfObjProperty.h"
+#include "gf/GfTargetProperty.h"
 #include "gf/pc/AIAgentField.h"
 #include "mm/Math.h"
 #include "mm/mtl/RTTI.h"
@@ -109,6 +113,21 @@ void AgentUtilField::setFollowWallEndInput(const mm::Vec3& pos, GfComPropertyPc&
     }
 }
 
+// the transform the PC follows a wall climber by while the blackboard's bit 4 is set: its player index / 2 times
+// the wall AI's delay back in the blackboard's queue; false when the queue is not that long
+bool AgentUtilField::getWallFollowTransform(const BlackBoardField& bb, fw::Transform* transform) {
+    GfComPropertyPc& property = *bb.m_property;
+    fw::ParamAdapter adapter = getAIParamAdapter(property, PARAM_ID_FIELD_AI(5));
+    if (bb.m_flags.m_value & 0x10) {
+        unsigned int index = adapter.get<WallAiParam>()->delay * (property.m_setupKind >> 1);
+        if (bb.m_wallFollowTransforms.size() > index) {
+            *transform = bb.m_wallFollowTransforms[index];
+            return true;
+        }
+    }
+    return false;
+}
+
 fw::ParamAdapter AgentUtilField::getAIParamAdapter(GfComPropertyPc& property, PARAM_ID_FIELD_AI id) {
     GfComBehaviorPc* behavior = property.m_owner->findComponent<GfComBehaviorPc>(6);
     AIAgent* agent = mm::mtl::rttiCast<AIAgent>(behavior->m_agent.get());
@@ -124,6 +143,34 @@ bool AgentUtilField::isWallEndMove(const BlackBoardField& bb) {
     GfComPropertyPc& property = *bb.m_property;
     const WallAiParam* param = getAIParamAdapter(property, PARAM_ID_FIELD_AI(5)).get<WallAiParam>();
     return !StateUtilField::isNearPlayer(property, bb.m_wallEndPos, param->climbEndSafeRange);
+}
+
+// whether the PC may climb by input: not while another player is within the wall AI's nearRange of where the
+// stick would take it along the wall
+bool AgentUtilField::isEnableWallMove(GfComPropertyPc& property, const mm::Vec2& input) {
+    float front = input.y * (input.y >= 0.0f ? property.m_field.m_climbUpTime : property.m_field.m_climbDownTime);
+    float side = input.x * property.m_field.m_climbSideTime;
+    mm::Vec3 pos = property.m_frontDir * front + property.m_sideDir * side + property.m_pos;
+    const WallAiParam* param = getAIParamAdapter(property, PARAM_ID_FIELD_AI(5)).get<WallAiParam>();
+    mm::Vec3 push;
+    return !calcParentPlayerPush(property, pos, param->nearRange, &push);
+}
+
+// whether any player of the formation that is climbing (its target state 3) is within the wall AI's nearRange of pos
+bool AgentUtilField::existNearChimbPlayer(GfComPropertyPc& property, const mm::Vec3& pos) {
+    GfGamePlayerFormation* formation = GfGamePlayerFormation::get();
+    const WallAiParam* param = getAIParamAdapter(property, PARAM_ID_FIELD_AI(5)).get<WallAiParam>();
+    bool exist = false;
+    for (int i = 0; i < 9; i++) {
+        if (formation->m_players[i].m_standalone) {
+            GfObjProperty* player = GfObjUtil::getProperty(formation->m_players[i].m_handle);
+            if (player != nullptr && player->m_target->m_state == 3) {
+                mm::Vec3 diff = player->m_target->pad_10 - pos;
+                exist |= diff.length() - param->nearRange < 0.0f;
+            }
+        }
+    }
+    return exist;
 }
 
 // whether any player of the formation jumps off a wall (its field status bits 4 and 10)
@@ -330,6 +377,42 @@ void MoveUtilField::updateMoveWaterSink(const fw::UpdateInfo& info, GfComPropert
     packet.m_param = property.m_field.m_paramList->getAdapter(12);
     controler.update(info, packet);
     property.m_moveVec2.x = packet.m_speed;
+}
+
+// rising through water: slowing once the child frame is near the surface (entry 13's rise parameters)
+void MoveUtilField::updateMoveWaterRise(const fw::UpdateInfo& info, GfComPropertyPc& property) {
+    GfMoveWaterRiseControler controler;
+    GfMoveWaterRiseControler::Packet packet;
+    packet.m_speed = property.m_moveVec2.x;
+    packet.m_param = property.m_field.m_paramList->getAdapter(13);
+    const GfPropertyField::WaterParam* water =
+        property.m_field.m_paramList->getAdapter(9).get<GfPropertyField::WaterParam>();
+    packet.m_decelerate = fabsf(StateUtilField::getChildFrameHeight(property)) <= water->m_riseSlowHeight;
+    controler.update(info, packet);
+    property.m_moveVec2.x = packet.m_speed;
+}
+
+// the same rise out of a water hole (entry 14's rise parameters)
+void MoveUtilField::updateMoveWaterHoleRise(const fw::UpdateInfo& info, GfComPropertyPc& property) {
+    GfMoveWaterRiseControler controler;
+    GfMoveWaterRiseControler::Packet packet;
+    packet.m_speed = property.m_moveVec2.x;
+    packet.m_param = property.m_field.m_paramList->getAdapter(14);
+    const GfPropertyField::WaterParam* water =
+        property.m_field.m_paramList->getAdapter(9).get<GfPropertyField::WaterParam>();
+    packet.m_decelerate = fabsf(StateUtilField::getChildFrameHeight(property)) <= water->m_riseSlowHeight;
+    controler.update(info, packet);
+    property.m_moveVec2.x = packet.m_speed;
+}
+
+void MoveUtilField::updateMoveSlide(const fw::UpdateInfo& info, GfComPropertyPc& property) {
+    const SlideParam* param = property.getParamAdapter(4).get<SlideParam>();
+    GfMoveSlideControler controler;
+    GfMoveSlideControler::Packet packet;
+    setMoveSlidePacket(property, *param, &packet);
+    controler.update(info, packet);
+    property.m_velocity = packet.m_velocity;
+    property.m_moveVec2.y = packet.m_angularVelocity;
 }
 
 }}  // namespace gf::pc

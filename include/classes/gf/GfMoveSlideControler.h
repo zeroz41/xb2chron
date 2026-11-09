@@ -20,6 +20,11 @@ public:
         float m_maxAngularSpeed;  // the limit when facing up it (angularVelMax)
     };
     struct Packet {
+        // MoveUtilField::updateMoveSlide's packet starts zeroed, its slide speed floor at 10
+        Packet()
+            : m_velocity(mm::Vec3::zero), m_angularVelocity(0.0f), m_slideSpeed(0.0f), m_inputRate(0.0f),
+              m_inputDirection(mm::Vec3::zero), m_direction(mm::Vec3::zero), m_normal(mm::Vec3::zero),
+              m_minSlideSpeed(10.0f) {}
         mm::Vec3 m_velocity;      // across the slope
         float m_angularVelocity;  // radians per second about the up axis
         float m_slideSpeed;       // down the slope

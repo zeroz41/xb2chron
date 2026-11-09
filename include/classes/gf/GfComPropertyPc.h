@@ -22,6 +22,23 @@ namespace gf { class MsgObjectGetVelocity; }
 namespace gf { class MsgPcFieldNotifyChangePlayerID; }
 namespace gf { class MsgDebugActivateComponentWindow; }
 
+namespace gf { namespace pc {
+// GfComPropertyPc's m_paramList entry 4 (gf::pc::SlideParam by setMoveSlidePacket's symbol; the field names are
+// not the original's)
+struct SlideParam {
+    unsigned char pad_0[0x14];
+    float m_stopSpeed;  // StateUtilField::isSlideStop: the slide stops once m_moveSpeed is no more than it
+    // StateUtilField::isStartSlidePosuture: on slide ground the PC starts sliding while pad_f0 is at least
+    // m_startSlideValue or its speed along pad_d0 at least m_startSlideSpeed (the names are not the original's)
+    float m_startSlideValue;
+    float m_startSlideSpeed;
+    // and StateUtilField::isEndSlipPosuture: off a slide slope the slip ends once that speed is no more than it
+    float m_landSpeed;  // StateUtilField::onLandSliding: the most speed a landing keeps
+    // StateUtilField::isFallFromSlideState: the PC falls once this far above the ground under it
+    float m_fallHeight;
+};
+}}  // namespace gf::pc
+
 namespace gf {
 // table 0x7100B69448
 class GfComPropertyPc : public ::gf::GfComProperty {
@@ -83,19 +100,8 @@ public:
         // original's)
         float m_bigSplashFallSpeed;
     };
-    // m_paramList's entry 4 (the names are not the original's)
-    struct SlideParam {
-        unsigned char pad_0[0x14];
-        float m_stopSpeed;  // StateUtilField::isSlideStop: the slide stops once m_moveSpeed is no more than it
-        // StateUtilField::isStartSlidePosuture: on slide ground the PC starts sliding while pad_f0 is at least
-        // m_startSlideValue or its speed along pad_d0 at least m_startSlideSpeed (the names are not the original's)
-        float m_startSlideValue;
-        float m_startSlideSpeed;
-        // and StateUtilField::isEndSlipPosuture: off a slide slope the slip ends once that speed is no more than it
-        float m_landSpeed;  // StateUtilField::onLandSliding: the most speed a landing keeps
-        // StateUtilField::isFallFromSlideState: the PC falls once this far above the ground under it
-        float m_fallHeight;
-    };
+    // m_paramList's entry 4 (gf::pc's, by setMoveSlidePacket's symbol)
+    typedef pc::SlideParam SlideParam;
     // by its symbol (GfComBehaviorPc's warps call it)
     void flush();
     // by its symbol: the camera's directions from the inverse of the view matrix (flush passes CameraManager's)
