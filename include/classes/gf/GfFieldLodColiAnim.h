@@ -9,6 +9,7 @@ namespace fw { class UpdateInfo; class ColiObject; }
 namespace ml { class ScnObjModel; class ScnObjAccPartsPos; }
 namespace mm { class Mat44; }
 namespace gf { class GfFieldLod; class GF_OBJ_HANDLE; }
+namespace idcoli { class IDColiObj; }
 
 namespace gf {
 // what a LOD part is doing, by which its effect assets are chosen (GfFieldLodEffect::getAsset takes it; 5 = none).
@@ -34,7 +35,7 @@ public:
     void createInst(GfFieldLodState state, ml::ScnObjAccPartsPos& pos, bool flag);
 
     void* m_assets[LOD_STATE_NONE];  // 0x00: by state (the name is not the original's)
-    unsigned char pad_28[2];
+    unsigned short m_skipFrame;      // 0x28: BDAT column effect_skipframe (createInst hands it on)
     bool m_hasAsset;                 // 0x2a: createAsset found one (the name is not the original's)
     unsigned int m_handle;           // 0x2c: the playing effect's (EffectManager::remove takes it)
     GfFieldLodState m_state;         // 0x30: the playing effect's state (the name is not the original's)
@@ -49,7 +50,7 @@ public:
     struct CreateInfo {
         CreateInfo() : m_model(nullptr), m_coli(nullptr), m_lod(nullptr), m_flag(false) {}
         ml::ScnObjModel* m_model;  // 0x00
-        void* m_coli;              // 0x08: the ground collision's (GfMapManager::getColiObject()'s member 0x20)
+        idcoli::IDColiObj* m_coli;  // 0x08: the ground collision's (GfMapManager::getColiObject()'s m_coliObj)
         const GfFieldLod* m_lod;   // 0x10: the owner
         bool m_flag;               // 0x18: createColiAnim's flag (createPosInfos takes it)
     };
@@ -99,7 +100,8 @@ public:
     GfFieldLodEffect m_effect;     // 0x08
     unsigned int m_lodId;          // 0x40: the part's id (ScnObjAccPartsPos::getID)
     int m_index;                   // 0x44: the part's index in the model's seam positions (-1: none)
-    unsigned char pad_48[8];
+    int m_moveObjIdx;              // 0x48: the collision's move object (IDColiParmsGrand::getMoveObjIdx; -1: none; the name is not the original's)
+    unsigned char pad_4c[4];
     GF_OBJ_HANDLE* m_objHandle;    // 0x50: -1 while no object carries it
     ColiUserData m_userData;       // 0x58
     bool m_playing;                // 0x68

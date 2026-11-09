@@ -17,6 +17,14 @@
 #include "plugin/Bdat.h"
 #include <string.h>
 #include "mm/mtl/Vector.h"
+#include "classes/gf/GfFieldManager.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfObj.h"
+#include "classes/gf/GfComTransform.h"
+#include "gf/GfObjUtil.h"
+#include "effect/SendParam.h"
+#include "mm/mtl/FixStr.h"
+#include "idcoli/IDColiParms.h"
 
 namespace gf {
 
@@ -33,6 +41,47 @@ void* GfFieldLodEffect::getAsset(GfFieldLodState state) const {
     return nullptr;
 }
 
+void GfFieldLodEffect::createAsset(int bdatId) {
+    disposeAsset();
+    m_hasAsset = true;
+    fw::EffectPack* pack = GfFieldManager::getEffectPack();
+    if (pack == nullptr) {
+        return;
+    }
+    unsigned char* fp = GfDataBdat::getFP(0x72);
+    const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "effect_anime_normal", bdatId, 7));
+    if (name != nullptr && *name != '\0') {
+        if (void* asset = fw::EffectManager::get()->search(name, pack)) {
+            m_assets[LOD_STATE_ANIM] = asset;
+        }
+    }
+    name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "effect_anime_reverse", bdatId, 7));
+    if (name != nullptr && *name != '\0') {
+        if (void* asset = fw::EffectManager::get()->search(name, pack)) {
+            m_assets[LOD_STATE_ANIM_REVERSE] = asset;
+        }
+    }
+    name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "effect_visibleON", bdatId, 7));
+    if (name != nullptr && *name != '\0') {
+        if (void* asset = fw::EffectManager::get()->search(name, pack)) {
+            m_assets[LOD_STATE_POP] = asset;
+        }
+    }
+    name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "effect_visibleOFF", bdatId, 7));
+    if (name != nullptr && *name != '\0') {
+        if (void* asset = fw::EffectManager::get()->search(name, pack)) {
+            m_assets[LOD_STATE_DEPOP] = asset;
+        }
+    }
+    name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "effect_fadeOUT", bdatId, 7));
+    if (name != nullptr && *name != '\0') {
+        if (void* asset = fw::EffectManager::get()->search(name, pack)) {
+            m_assets[LOD_STATE_DEPOP_FADE] = asset;
+        }
+    }
+    m_skipFrame = Bdat::getValCheck(fp, "effect_skipframe", bdatId, 2);
+}
+
 void GfFieldLodEffect::disposeAsset() {
     if (m_handle != 0) {
         fw::EffectManager::get()->remove(m_handle);
@@ -41,6 +90,104 @@ void GfFieldLodEffect::disposeAsset() {
     m_hasAsset = false;
     for (int i = 0; i < LOD_STATE_NONE; i++) {
         m_assets[i] = nullptr;
+    }
+}
+
+void GfFieldLodEffect::createInst(GfFieldLodState state, ml::ScnObjAccPartsPos& pos, bool flag) {
+    void* current = getAsset(m_state);
+    if (current != nullptr && fw::EffectManager::get()->isLoop(current)) {
+        if (m_handle != 0) {
+            fw::EffectManager::get()->dead(m_handle);
+            m_handle = 0;
+        }
+    } else {
+        m_handle = 0;
+    }
+    m_state = state;
+    if (getAsset(state) == nullptr) {
+        return;
+    }
+    if (flag && !fw::EffectManager::get()->isLoop(getAsset(state))) {
+        return;
+    }
+    unsigned int handle = fw::EffectManager::get()->create(getAsset(state), true);
+    if (handle == 0) {
+        return;
+    }
+    fw::EffectManager::get()->setCategory(handle, static_cast<fw::EF_CATEGORY>(1));
+    effect::SendParam param;
+    pos.getMatrix(param.m_mtx);
+    param.m_valueA = m_skipFrame;
+    fw::EffectManager::get()->setParam(handle, &param);
+    m_handle = handle;
+}
+
+void GfFieldLodColiAnim::PosInfo::updateAnim(ml::ScnObjAccPartsPos& pos, float frame) {
+    if (!m_playing) {
+        return;
+    }
+    bool loop = pos.isLoop();
+    float posFrame = pos.getPosFrame();
+    float nodeFrame = pos.getNodeFrame();
+    if (m_reverse) {
+        posFrame -= frame;
+        nodeFrame -= frame;
+        if (posFrame < 0.0f) {
+            posFrame = loop ? pos.getPosMaxFrame() : 0.0f;
+        }
+        if (nodeFrame < 0.0f) {
+            nodeFrame = loop ? pos.getNodeMaxFrame() : 0.0f;
+        }
+    } else {
+        posFrame += frame;
+        nodeFrame += frame;
+        if (pos.getPosMaxFrame() < posFrame) {
+            posFrame = loop ? 0.0f : pos.getPosMaxFrame();
+        }
+        if (pos.getNodeMaxFrame() < nodeFrame) {
+            nodeFrame = loop ? 0.0f : pos.getNodeMaxFrame();
+        }
+    }
+    mm::Mat44 mat;
+    if (pos.isPosAnm()) {
+        pos.getAnmMatrix(&mat);
+    }
+    pos.setPosFrame(posFrame);
+    pos.setNodeFrame(nodeFrame);
+    if (pos.isPosAnm()) {
+        pos.setMatrix(mat);
+        syncGfTransform(mat);
+        pos.getAnmMatrix(&mat);
+        if (m_moveObjIdx >= 0 && m_owner->m_info.m_coli != nullptr) {
+            idcoli::IDColiParmsGrand parms(m_owner->m_info.m_coli);
+            parms.getMoveObj(m_moveObjIdx).setMatrix(mat);
+        }
+    }
+}
+
+void GfFieldLodColiAnim::PosInfo::updatePopDepopEffect(ml::ScnObjAccPartsPos& pos) {
+    if (!m_effect.m_hasAsset || !pos.isPosMatrix()) {
+        return;
+    }
+    GfFieldLodState state = m_effect.m_state;
+    if (m_effect.getAsset(state) == nullptr || (state != LOD_STATE_POP && state != LOD_STATE_DEPOP)) {
+        return;
+    }
+    GfObj* mover = GfObjUtil::getObj(GfGameManager::getControlMover());
+    if (mover == nullptr) {
+        return;
+    }
+    const mm::Vec3& moverPos = mover->getComponent<GfComTransform>(0)->getPosition();
+    mm::Mat44 mat;
+    pos.getMatrix(mat);
+    mm::Vec3 diff = moverPos - mat.getTrans();
+    if (diff.dot(diff) <= m_popDistSq) {
+        if (m_effect.m_handle == 0) {
+            m_effect.createInst(state, pos, true);
+        }
+    } else if (m_effect.m_handle != 0) {
+        fw::EffectManager::get()->dead(m_effect.m_handle);
+        m_effect.m_handle = 0;
     }
 }
 
@@ -204,6 +351,40 @@ void GfFieldLod::BdatInfo::dirtyCache() {
         m_conds[0].m_cached = false;
         m_conds[1].m_cached = false;
         m_conds[2].m_cached = false;
+    }
+}
+
+void GfFieldLod::BdatInfo::create(unsigned short bdatId) {
+    m_bdatId = bdatId;
+    unsigned char* fp = GfDataBdat::getFP(0x72);
+    m_lodId = Bdat::getValCheck(fp, "LODID", bdatId, 2);
+    unsigned int fadeIn = Bdat::getValCheck(fp, "LOD_fadeIN_TIME", bdatId, 8);
+    m_fadeInTime = *reinterpret_cast<float*>(&fadeIn);
+    unsigned int fadeOut = Bdat::getValCheck(fp, "LOD_fadeOUT_TIME", bdatId, 8);
+    m_fadeOutTime = *reinterpret_cast<float*>(&fadeOut);
+    mm::mtl::FixStr<32> column;
+    for (size_t i = 0; i < 3; i++) {
+        CondInfo& cond = m_conds[i];
+        cond.m_cached = false;
+        column.format("ScenarioFlagMin%d", i + 1);
+        unsigned short scenarioMin = Bdat::getValCheckU16(fp, column.m_str, bdatId);
+        column.format("ScenarioFlagMax%d", i + 1);
+        unsigned short scenarioMax = Bdat::getValCheckU16(fp, column.m_str, bdatId);
+        if (scenarioMin <= scenarioMax) {
+            cond.m_scenarioFlag = gmk::ScenarioFlagCond(scenarioMin, scenarioMax);
+        }
+        column.format("QuestFlag%d", i + 1);
+        unsigned short quest = Bdat::getValCheck(fp, column.m_str, bdatId, 2);
+        column.format("QuestFlagMin%d", i + 1);
+        unsigned char questMin = Bdat::getValCheckU8(fp, column.m_str, bdatId);
+        column.format("QuestFlagMax%d", i + 1);
+        unsigned char questMax = Bdat::getValCheckU8(fp, column.m_str, bdatId);
+        if (questMin > questMax) {
+            return;
+        }
+        cond.m_questFlag = gmk::QuestFlagCond(quest, questMin, questMax);
+        column.format("Condition%d", i + 1);
+        cond.m_gameCond = Bdat::getValCheck(fp, column.m_str, bdatId, 2);
     }
 }
 
