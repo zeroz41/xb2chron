@@ -117,6 +117,7 @@
 #include "gf/GfDataBtlDif.h"
 #include "gf/GfDataFobj.h"
 #include "gf/GfDataHitonowa.h"
+#include "gf/GfDataField.h"
 
 namespace gf {
 
@@ -263,6 +264,134 @@ unsigned int GfDataBlade::getBladeWeaponRank(unsigned int blade) {
     return GfBdatItem::get()->getPcWpnRank(weapon);
 }
 
+void GfDataBlade::setUsedFavoriteItemForPouch(unsigned int blade, unsigned int item) {
+    if (blade == 0) {
+        return;
+    }
+    if (!(blade - 1124 < 9)) {
+        switch (blade) {
+        case 1001:
+            if (isHikariCurrent()) {
+                return;
+            }
+            break;
+        case 1002:
+            if (!isHikariCurrent()) {
+                return;
+            }
+            break;
+        case 1012:
+        case 1013:
+        case 1073:
+        case 1110:
+            return;
+        }
+    }
+    unsigned int index = getBladeIndex(blade);
+    SDataGame* game = GfDataManager::getDataGame();
+    SDataBlade& data = game->m_blades[index];
+    for (int i = 0; i < 2; i++) {
+        BladeFavorite& favorite = data.m_favorites[i];
+        if (favorite.m_itemUsed == 0 && favorite.m_item == item) {
+            favorite.m_itemUsed = 1;
+        }
+        if (favorite.m_categoryUsed == 0) {
+            unsigned int category = GfDataItem::getCategory(item);
+            if (favorite.m_category == category) {
+                favorite.m_categoryUsed = 1;
+            }
+        }
+    }
+}
+
+const char* GfDataBlade::getFieldSkillVoice(unsigned int blade, unsigned int skill) {
+    QuestListAcc* acc = QuestListAcc::get();
+    unsigned int index = getBladeIndex(blade);
+    SDataGame* game = GfDataManager::getDataGame();
+    SDataBlade& data = game->m_blades[index];
+    if (data.m_fieldSkills[0].m_id == skill || data.m_fieldSkills[1].m_id == skill ||
+        data.m_fieldSkills[2].m_id == skill) {
+        unsigned int category = acc->getFLD_FieldSkillListVoiceCategory(skill);
+        if (category != 0) {
+            return GfDataField::getFieldSkillVoice(blade, category);
+        }
+    }
+    return nullptr;
+}
+
+const char* GfDataField::getFieldSkillVoice(unsigned int driver, unsigned int category) {
+    if (category == 0) {
+        return nullptr;
+    }
+    GfBdatRsc* rsc = GfBdatRsc::get();
+    const char* voice = nullptr;
+    if (driver - 1 < 6) {
+        voice = rsc->getVoiceTableDriver(category, driver - 1);
+    } else if (driver - 0x11 < 9) {
+        voice = rsc->getVoiceTableIra(category, driver - 0x11);
+    } else if (driver - 0x464 < 9) {
+        voice = rsc->getVoiceTableIra(category, driver - 0x464);
+    } else if (driver - 0x3E9 < 11) {
+        voice = rsc->getVoiceTableBladeBlade(category, driver - 0x3E9);
+    } else if (driver - 0x3F6 < 37) {
+        voice = rsc->getVoiceTableRareBlade(category, driver - 0x3F6);
+    } else {
+        switch (driver) {
+        case 0x450:
+            voice = rsc->getVoiceTableRareBlade(category, 37);
+            break;
+        case 0x451:
+            voice = rsc->getVoiceTableRareBlade(category, 38);
+            break;
+        case 0x452:
+            voice = rsc->getVoiceTableRareBlade(category, 39);
+            break;
+        case 0x453:
+            voice = rsc->getVoiceTableRareBlade(category, 40);
+            break;
+        case 0x454:
+            voice = rsc->getVoiceTableRareBlade(category, 41);
+            break;
+        case 0x455:
+            voice = rsc->getVoiceTableRareBlade(category, 42);
+            break;
+        case 0x457:
+            voice = rsc->getVoiceTableRareBlade(category, 43);
+            break;
+        default:
+            if (driver - 0x4AD < 200) {
+                unsigned int personality = GfDataBlade::getSDataBlade(driver)->m_personality;
+                unsigned int id = GfBdatBtl::get()->getBTL_Bl_PersonalityVoiceID(personality);
+                if (id - 0x3D < 0x20) {
+                    voice = rsc->getVoiceTableCommonCommonBlade(category, id - 0x3D);
+                }
+            }
+            break;
+        }
+    }
+    if (voice == nullptr || *voice == '\0') {
+        return nullptr;
+    }
+    return voice;
+}
+
+bool GfDataDriver::getListDriver(mm::mtl::FixedVector<unsigned short, 32>& drivers) {
+    for (unsigned int driver = 1; driver <= 9; driver++) {
+        drivers.push_back(driver);
+    }
+    return !drivers.empty();
+}
+
+bool GfDataDriver::getListIra(mm::mtl::FixedVector<unsigned short, 32>& drivers) {
+    GfBdatChrDr* bdat = GfBdatChrDr::get();
+    unsigned int row = bdat->getChrIrStart();
+    unsigned int end = bdat->getChrIrEnd();
+    for (; row < end; row++) {
+        drivers.push_back(bdat->getChrIrdriverID(row));
+    }
+    return !drivers.empty();
+}
+
 bool GfDataDriver::getIraBack(mm::mtl::FixedVector<unsigned short, 32>& list, unsigned int driver) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
@@ -296,6 +425,38 @@ unsigned int GfDataDriver::getIraFront(unsigned int driver) {
         }
     }
     return driver;
+}
+
+unsigned int GfDataDriver::getIraFromPos(unsigned int driver, PTPOS pos) {
+    mm::mtl::FixedVector<unsigned short, 32> list;
+    unsigned int front = getIraFront(driver);
+    list.push_back(front);
+    getIraBack(list, front);
+    for (unsigned short& id : list) {
+        if (getPartyPos(id) == pos) {
+            return id;
+        }
+    }
+    return 0;
+}
+
+unsigned int GfDataDriver::getIraBack(unsigned int driver) {
+    if (driver == 0 || driver - 0x11 >= 9) {
+        return 0;
+    }
+    unsigned int front = getIraFront(driver);
+    mm::mtl::FixedVector<unsigned short, 32> list;
+    getIraBack(list, front);
+    list.push_back(front);
+    for (unsigned short& id : list) {
+        if (!isActivateParty(id)) {
+            continue;
+        }
+        if (getPartyPos(id) == 1) {
+            return id;
+        }
+    }
+    return 0;
 }
 
 unsigned int GfDataDriver::getChestHeight(unsigned int driver) {
@@ -5699,6 +5860,29 @@ void GfDataParty::getIraParty(RQ_SETUP_PARTY& party, unsigned int id) {
         party.m_iraDrivers[i][0] = bdat->getIRA_PartyDriver(id, i);
         party.m_iraDrivers[i][1] = bdat->getIRA_PartyBlade1(id, i);
         party.m_iraDrivers[i][2] = bdat->getIRA_PartyBlade2(id, i);
+    }
+}
+
+void GfDataDriver::fn_71002443AC(SDataDriver& data) {
+    unsigned int blade = getBlade(data, -1);
+    if (blade == 0x3E9) {
+        if (GfDataBlade::isHikariCurrent()) {
+            int slot = getSetIdByBlade(data, 0x3EA);
+            if (slot >= 0) {
+                data.m_bladeSet = slot;
+                return;
+            }
+            GfDataBlade::setHikariCurrent(false);
+        }
+    } else if (blade == 0x3EA) {
+        if (!GfDataBlade::isHikariCurrent()) {
+            int slot = getSetIdByBlade(data, 0x3E9);
+            if (slot >= 0) {
+                data.m_bladeSet = slot;
+                return;
+            }
+            GfDataBlade::setHikariCurrent(true);
+        }
     }
 }
 

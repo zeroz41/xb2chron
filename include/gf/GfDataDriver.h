@@ -76,6 +76,8 @@ public:
     // 2.0.0's symbols name it. What it does: pushes every GfBdatChrDr row id from getChrIrStart up to (not including)
     // getChrIrEnd (getChrIrdriverID) into drivers; true when drivers is not empty.
     static bool getListIra(mm::mtl::FixedVector<unsigned short, 32>& drivers);
+    // 2.0.0's symbols name it. What it does: pushes the main drivers 1-9 into drivers; true when drivers is not empty.
+    static bool getListDriver(mm::mtl::FixedVector<unsigned short, 32>& drivers);
     // whether the driver (data type 1) is in a party slot below 3 (GfDataParty::getDriverPartyID)
     static bool isActivateParty(unsigned int driver);
     static unsigned int getExp(const SDataDriver& data);  // getExp
@@ -238,6 +240,11 @@ public:
     // What it does: opens the driver's arts (all of them when arts is 0, else the one whose id matches) and, per
     // opened art, calls GfEvent::callGetArts(driver, art, event).
     static void fn_7100244A44(unsigned int driver, unsigned int arts, bool event);
+    // Placeholder name: nothing in 1.0.0's or 2.0.0's symbols names it. A member because its callers are
+    // GfDataDriver::setBlade and unsetBlade, in this unit, and it takes the driver's data. What it does: when the
+    // engaged blade (getBlade(data, -1)) is 1002 while isHikariCurrent is false, engages the slot holding 1001 or, with
+    // none, sets isHikariCurrent; the same the other way round for 1001 while it is true.
+    static void fn_71002443AC(SDataDriver& data);
     // 2.0.0's symbols name them. What they do: test / set flag `index` of the driver's 56 flags, 0..0x1B in its
     // SDataDriver's m_flags, 0x1C.. in its SDataDriverArtsEx's (fn_7100244A44 tests them, addRareBlade and
     // addCommonBlade set them); false for driver 0.
