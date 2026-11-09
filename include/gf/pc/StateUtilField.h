@@ -151,6 +151,9 @@ public:
     // on ground (sensor flag 0, ground attribute bit 4 clear) more than m_downLanding1Height below the PC: the PC
     // lets go of the wall (by its symbol)
     static bool isWallDetach(gf::GfComPropertyPc& property);
+    // the wall move mode for the PC's input on its wall (by its symbol; StateFieldWallIdle::update hands it to
+    // isMovableWall and getAsmID)
+    static gf::pc::GfPropertyField::WALL_MOVE_MODE decideWallMoveMode(gf::GfComPropertyPc& property);
     // modes 0, 1 and 7 climb up (by its symbol)
     static bool isWallUpMove(gf::pc::GfPropertyField::WALL_MOVE_MODE mode);
     // whether the PC can climb on in a wall move mode (0-7; none upwards while status bit 7 is set): with a wall

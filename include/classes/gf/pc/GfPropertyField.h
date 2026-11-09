@@ -73,7 +73,10 @@ public:
 
     // m_paramList's entry 15 (the name is not the original's)
     struct WallParam {
-        unsigned char pad_0[0x38];
+        unsigned char pad_0[0x34];
+        // StateFieldWallJumpMove::enter: the wall jump covers its distance at this speed (the name is not the
+        // original's)
+        float m_jumpSpeed;
         float m_heightRate;  // getWallHeightOffset scales m_upLanding1Height by it (the name is not the original's)
     };
 
@@ -125,7 +128,10 @@ public:
     // resetStatus and flush set its bits; bit 2: TaskFieldIdle::update clears the field AI blackboard's bit 3
     // while it is set, TaskFieldIdleTurn::testCondition requires it
     unsigned int m_statusFlags;
-    int pad_14;  // the constructor sets -1
+    // the wall move mode the PC climbs in: StateFieldWallIdle/WallMove::update keep
+    // StateUtilField::decideWallMoveMode's once its climb command runs, -1 when it stops (the constructor sets -1;
+    // the name is not the original's)
+    int m_wallMoveMode;
     // StateFieldWall::enter takes it from the wall info (+0x130) when status bit 0x40 is set;
     // StateFieldWallAdsorptionAir::update blends it to m_wallBlendTarget over a parameter's time (the names are not the
     // original's)

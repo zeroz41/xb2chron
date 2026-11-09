@@ -43,7 +43,7 @@
 namespace gf { namespace pc {
 
 GfPropertyField::GfPropertyField()
-    : m_statusFlags(0), pad_14(-1), m_wallBlend(0.25f), m_upLanding0Dist(0.0f), m_upLanding0Height(0.0f),
+    : m_statusFlags(0), m_wallMoveMode(-1), m_wallBlend(0.25f), m_upLanding0Dist(0.0f), m_upLanding0Height(0.0f),
       m_upLanding1Dist(0.0f), m_upLanding1Height(0.0f), m_downLanding0Dist(0.0f), m_downLanding0Height(0.0f),
       m_downLanding1Dist(0.0f), m_downLanding1Height(0.0f), m_climbUpTime(0.0f), m_climbDownTime(0.0f),
       m_climbSideTime(0.0f), m_climbJumpHeight(0.0f), m_wallBlendTarget(0.25f), m_warpRiseDepth(5.0f),

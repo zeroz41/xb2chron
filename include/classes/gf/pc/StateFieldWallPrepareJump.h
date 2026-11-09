@@ -2,6 +2,7 @@
 #define CLASSES_GF_PC_STATEFIELDWALLPREPAREJUMP_H
 
 #include "classes/gf/GfStateBase.h"
+#include "fw/Message.h"
 #include <new>
 
 namespace ai { class State; }
@@ -31,6 +32,15 @@ public:
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
     // the message recieveMessage hands on (1.0.0's symbol; 3.0.1 inlines it, its linker dropped the copy)
     void procMsgPcFieldNotifyWallJump(GfComBehaviorPc* behavior, fw::MessageObject* from, MsgPcFieldNotifyWallJump& msg);
+    // message 0x1000012: update broadcasts it to the main characters (StateUtil::broadcastMainChar) as the wall jump
+    // starts, with the kept wall jump notice. No name for it is known: nested here, and the name is not the
+    // original's
+    class JumpStartMessage : public ::fw::Message {
+    public:
+        explicit JumpStartMessage(const MsgPcFieldNotifyWallJump* info) : fw::Message(0x1000012, 0x40), m_info(info) {}
+
+        const MsgPcFieldNotifyWallJump* m_info;
+    };
     // set once a wall jump notice came (procMsgPcFieldNotifyWallJump; the name is not the original's)
     bool m_notified;
     unsigned char pad_19[0x7];
