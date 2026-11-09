@@ -11,6 +11,8 @@ public:
     // one morph target's blend weight (0x20 bytes; names are not the original's): DrMdoMorphing::parmsUpdate
     // copies m_weight to m_prevWeight, isBlendCheck compares them
     struct Target {
+        // create builds each target in the work buffer with both weights 0
+        Target() : m_weight(0.0f), m_prevWeight(0.0f) {}
         float m_weight;      // 0x0
         float m_prevWeight;  // 0x4
         const void* m_data0;   // 0x8: m_data->m_ofs0 bytes from the MdoMorphs

@@ -258,6 +258,67 @@ void DrResMdoMeshParts::setDefAlpha(float alpha) {
     m_alpha[DrMan::s_nDblIdx] = alpha;
 }
 
+unsigned int DrResMdoMeshObj::setup(const unsigned char* mdo, unsigned char* work) {
+    // The original sets the part fields through inline setters: each part's address is computed before the value.
+    auto setData = [](DrResMdoMeshParts& part, const unsigned char* data) { part.m_data = data; };
+    auto setVanishNo = [](DrResMdoMeshParts& part, unsigned char no) { part.m_vanishNo = no; };
+    auto setWork = [](DrResMdoMeshParts& part, unsigned char* buf, const unsigned char* src, short idx) {
+        const unsigned char* tail = src + 0x40;
+        part.m_work = buf;
+        part.m_ext = src;
+        part.m_extTail = tail;
+        memcpy(buf, src, 0x40);
+        part.m_triIdx = idx;
+    };
+    auto setAlpha = [](DrResMdoMeshParts& part, float alpha) {
+        part.m_flags &= ~6;
+        part.m_alpha[0] = part.m_alpha[1] = part.m_alpha[2] = alpha;
+    };
+    const MdoHeader* header = reinterpret_cast<const MdoHeader*>(mdo);
+    if (header->m_partsNum == 0) {
+        return 0;
+    }
+    const MdoParts* parts = reinterpret_cast<const MdoParts*>(mdo + header->m_partsOfs);
+    const unsigned char* ext = mdo + header->m_extOfs;
+    m_parts = reinterpret_cast<DrResMdoMeshParts*>(work + sizeof(DrResMdoMeshObj));
+    m_num = header->m_partsNum;
+    unsigned int partsSize = sizeof(DrResMdoMeshObj) + m_num * sizeof(DrResMdoMeshParts);
+    unsigned int size = partsSize + header->m_extNum * 0x40;
+    unsigned char* extWork = work + partsSize;
+    short triIdx = 1;
+    for (unsigned int i = 0; i < m_num; i++) {
+        const MdoParts* rec = &parts[i];
+        m_parts[i].m_name = reinterpret_cast<const char*>(mdo + rec->m_nameOfs);
+        setData(m_parts[i], mdo + rec->m_dataOfs);
+        m_parts[i].m_flags = 0;
+        setAlpha(m_parts[i], 1.0f);
+        setVanishNo(m_parts[i], (rec->m_flags >> 20) & 7);
+        if (rec->m_flags & 0x10) {
+            m_parts[i].m_flags |= 0x10;
+        }
+        if (rec->m_flags & 2) {
+            setWork(m_parts[i], extWork, ext, triIdx);
+            m_parts[i].m_flags |= DrResMdoMeshParts::FLAG_WORK;
+            if (rec->m_flags & 4) {
+                m_parts[i].m_flags |= 0x4000000;
+            }
+            if (rec->m_flags & 0x400) {
+                m_parts[i].m_flags |= 0x10000000;
+            }
+            triIdx++;
+            if (rec->m_flags & 0x800) {
+                m_parts[i].m_flags |= 0x20000000;
+            }
+            ext += 0x80;
+            extWork += 0x40;
+        }
+        if (rec->m_flags & 8) {
+            setAlpha(m_parts[i], 0.0f);
+        }
+    }
+    return size;
+}
+
 int DrResMdoMeshObj::getIdx(const char* name) const {
     for (unsigned int i = 0; i < m_num; i++) {
         if (strcmp(m_parts[i].m_name, name) == 0) {
@@ -265,6 +326,24 @@ int DrResMdoMeshObj::getIdx(const char* name) const {
         }
     }
     return -1;
+}
+
+unsigned int DrResMdoMeshObj::calcWorkSize(const unsigned char* mdo) {
+    const MdoHeader* header = reinterpret_cast<const MdoHeader*>(mdo);
+    unsigned int size = 0;
+    if (header->m_partsNum != 0) {
+        size = sizeof(DrResMdoMeshObj) + header->m_partsNum * sizeof(DrResMdoMeshParts);
+        if (header->m_extNum != 0) {
+            size += header->m_extNum * 0x40;
+        }
+    }
+    return size;
+}
+
+// The original builds a grlib::CGLibVtxInstans at the work start before setup fills the object.
+unsigned int DrResMdoMeshObj::create(unsigned char* work, const unsigned char* mdo) {
+    new (work) grlib::CGLibVtxInstans;
+    return reinterpret_cast<DrResMdoMeshObj*>(work)->setup(mdo, work);
 }
 
 DrResMdoMeshObj& DrResMdoMeshObj::operator=(const DrResMdoMeshObj& other) {
@@ -339,6 +418,30 @@ void DrResMdoMorpObj::update(MdoWrkMatRes* wrkMatRes, DrResEtcPamObj* pamObj) {
 unsigned int DrResMdoMorpObj::calcWorkSize(const unsigned char* mdo) {
     const MdoHeader* header = reinterpret_cast<const MdoHeader*>(mdo);
     const MdoMorphs* morphs = reinterpret_cast<const MdoMorphs*>(mdo + header->m_morphOfs);
+    return morphs->m_num * sizeof(Target) + sizeof(DrResMdoMorpObj);
+}
+
+unsigned int DrResMdoMorpObj::create(unsigned char* work, const unsigned char* mdo) {
+    // The original sets the target pointers through an inline setter: the target's address comes before the value.
+    auto setData0 = [](Target& target, const void* data) { target.m_data0 = data; };
+    auto setData1 = [](Target& target, const void* data) { target.m_data1 = data; };
+    const MdoHeader* header = reinterpret_cast<const MdoHeader*>(mdo);
+    const unsigned char* res = mdo + header->m_morphOfs;
+    const MdoMorphs* morphs = reinterpret_cast<const MdoMorphs*>(res);
+    DrResMdoMorpObj* obj = reinterpret_cast<DrResMdoMorpObj*>(work);
+    unsigned int flags = morphs->m_flags;
+    const MdoMorphData* data = reinterpret_cast<const MdoMorphData*>(res + morphs->m_dataOfs);
+    obj->m_flag0 = 0;
+    obj->m_blended = false;
+    obj->m_pTarget = reinterpret_cast<Target*>(work + sizeof(DrResMdoMorpObj));
+    obj->m_oldPos = flags & 1;
+    obj->m_targetNum = morphs->m_num;
+    for (int i = 0; i < static_cast<int>(morphs->m_num); i++, data++) {
+        new (&obj->m_pTarget[i]) Target;
+        setData0(obj->m_pTarget[i], res + data->m_ofs0);
+        setData1(obj->m_pTarget[i], res + data->m_ofs1);
+        obj->m_pTarget[i].m_data = data;
+    }
     return morphs->m_num * sizeof(Target) + sizeof(DrResMdoMorpObj);
 }
 
