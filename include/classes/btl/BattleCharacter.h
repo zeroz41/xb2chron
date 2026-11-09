@@ -507,6 +507,14 @@ public:
     // updates the target lock arrow, the others their effect's position and scale (3.0.1's symbols spell
     // UpdateBuffEffect)
     void UpdateBuffEffect(int id);
+    // 3.0.1's symbols name them
+    bool IsEnableBladeChangeAction(ACTION_ID id) const;
+    void TakeOverChangeIra(BattleCharacter* other);
+    bool IsNoDamage(bool, bool) const;
+    bool IsSlide(bool) const;
+    void UpdateInvincible(bool);
+    float GetLandHeight() const;
+    bool IsImmortal(bool, bool*);
     void UpdateBladeGuardEffect(const mm::Vec3* pos);
     void UpdateTargetLockArrow();
     // 2.0.0's symbols name it. The node name falls back to the 0xC50 string when null; the two vectors are optional.
@@ -751,7 +759,11 @@ public:
     // whether SetBattleFace eased the battle eye animation in (the name is not the original's)
     unsigned int m_battleFace : 1;
     unsigned int m_oneShotRimBloom : 1;  // SetOneShotRimBloom sets it (the name is not the original's)
-    unsigned int pad_F08_5 : 5;
+    // UpdateInvincible's cached gf::GfObjUtil::testInvincible answer for a non-player out of battle, and whether
+    // it is cached (meaning unknown)
+    unsigned int pad_F08_5 : 1;
+    unsigned int pad_F08_6 : 1;
+    unsigned int pad_F08_7 : 3;
     unsigned int pad_F09_2 : 1;  // IsEnableSpeakVoice answers false while it is set (meaning unknown)
     unsigned int pad_F09_3 : 1;  // SetIraReserve's argument (meaning unknown)
     // Utility::AI_IsEnableTalentArts answers false unless it is set and pad_F09_3 is clear (meaning unknown)
@@ -827,7 +839,10 @@ public:
     unsigned char pad_10B0;
     // SetAttackTarget keeps CheckAttackPosition's answer for its target here, 0 for none (the name is not the original's)
     unsigned char m_attackPosition;
-    unsigned char pad_10B2[0x6];
+    unsigned char pad_10B2[0x3];
+    // TakeOverChangeIra copies it from the character it takes over from (meaning unknown)
+    unsigned char pad_10B5;
+    unsigned char pad_10B6[0x2];
     // a 32-bit bitfield run (CheckWeaponDistance stores bit 22 as a word)
     unsigned int pad_10B8 : 8;
     // Utility::AI_GetAutoAttackState answers m_autoAttackStep only while it is set (the name is not the original's)

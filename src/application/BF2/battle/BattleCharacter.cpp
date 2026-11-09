@@ -45,6 +45,10 @@
 #include "classes/gf/GfWeapon.h"
 #include "classes/btl/BladeArtsManager.h"
 #include "classes/event/CharaEffectPlayer.h"
+#include "btl/challenge_battle_manager.h"
+#include "classes/gf/GfComBehaviorPc.h"
+#include "gf/pc/StateUtil.h"
+#include "gf/GfTargetProperty.h"
 
 namespace btl {
 
@@ -1643,6 +1647,166 @@ void BattleCharacter::UpdateBuffEffect(int id) {
         UpdateEffectPositionScale(id, nullptr, -1.0f, nullptr, nullptr);
         break;
     }
+}
+
+bool BattleCharacter::IsEnableBladeChangeAction(ACTION_ID id) const {
+    if ((1 << id) & ((1 << 1) | (1 << 4) | (1 << 6))) {
+        return true;
+    }
+    if (id == 7) {
+        if (!BattleGlobal::sys()->m_challengeAnySuccess) {
+            return true;
+        }
+        if (m_autoAttackStep != 7 || pad_11B3_1) {
+            return true;
+        }
+        if (BattleGlobal::sys()->IsPlayerAutoOperate()) {
+            return false;
+        }
+        if (IsControlCharacter()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void BattleCharacter::TakeOverChangeIra(BattleCharacter* other) {
+    m_targetHandle = other->m_targetHandle;
+    if (m_isPlayer) {
+        gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+        if (obj != nullptr) {
+            gf::GfComProperty* property = obj->getComponent<gf::GfComProperty>(5);
+            if (property != nullptr && property->m_target.get() != nullptr) {
+                gf::GF_OBJ_HANDLE* current = property->m_target.get()->m_target;
+                if (m_targetHandle != current) {
+                    gf::GfComBehaviorPc* behavior =
+                        gf::GfObjUtil::getObj(m_handle)->getComponent<gf::GfComBehaviorPc>(6);
+                    if (behavior != nullptr) {
+                        gf::pc::StateUtil::setTarget(*behavior, m_targetHandle);
+                    }
+                }
+            }
+        }
+    }
+    pad_10B5 = other->pad_10B5;
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param != nullptr && !param->m_isNotBlade && !pad_F09_3) {
+        pad_ED0 = other->pad_ED0;
+        return;
+    }
+    const CharacterParameter* otherParam = other->GetCharacterParameterConst(false);
+    if (otherParam != nullptr && !otherParam->m_isNotBlade && !other->pad_F09_3) {
+        other->pad_ED0 = pad_ED0;
+    }
+}
+
+bool BattleCharacter::IsNoDamage(bool, bool force) const {
+    if (!force && pad_108C > 0.0f) {
+        return true;
+    }
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    int type = param->pad_5e4_0;
+    if (type == 10 || type == 15) {
+        return true;
+    }
+    if (param->IsInvalidTarget()) {
+        return true;
+    }
+    if (ChallengeBattleManager::sys()->IsResult()) {
+        return true;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess) {
+        if (!param->m_isNotBlade) {
+            return true;
+        }
+        if (SirenBattleManager::sys()->IsCameraProc()) {
+            return true;
+        }
+    }
+    if (m_isPlayer) {
+        if (BattleGlobal::sys()->m_uniteComboCamera || BattleGlobal::sys()->pad_bit12 ||
+            BattleGlobal::sys()->m_elementalCombo.m_camera || SpAttackManager::sys()->m_camera ||
+            SirenBattleManager::sys()->IsCameraProc()) {
+            return true;
+        }
+        if (ChainAttackManager::sys()->IsProc(false)) {
+            return true;
+        }
+    } else if (BattleGlobal::sys()->IsGameOver()) {
+        return true;
+    }
+    return false;
+}
+
+void BattleCharacter::UpdateInvincible(bool flag) {
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param != nullptr && !param->m_isNotBlade) {
+        return;
+    }
+    if (!m_isPlayer && !m_isBattle) {
+        if (!pad_F08_6) {
+            pad_F08_5 = gf::GfObjUtil::testInvincible(m_handle);
+            pad_F08_6 = true;
+        }
+        if (pad_F08_5) {
+            gf::GfObjUtil::setInvincible(m_handle, true, false);
+            return;
+        }
+    }
+    if (m_isRunHold) {
+        gf::GfObjUtil::setInvincible(m_handle, false, false);
+    } else {
+        bool noDamage = IsNoDamage(false, flag);
+        gf::GfObjUtil::setInvincible(m_handle, noDamage, noDamage);
+        if (noDamage) {
+            return;
+        }
+    }
+    param = GetCharacterParameterConst(false);
+    if (param == nullptr) {
+        return;
+    }
+    unsigned int limit = 0;
+    if (param->pad_5de != 0) {
+        limit = param->GetMaxHP() * (param->pad_5de * 0.01f);
+    }
+    limit += IsImmortal(false, nullptr);
+    gf::GfObjUtil::setLimitHP(m_handle, limit);
+}
+
+bool BattleCharacter::IsSlide(bool flag) const {
+    if ((1 << m_state) & ((1 << 16) | (1 << 17) | (1 << 18) | (1 << 19))) {
+        return true;
+    }
+    gf::GF_OBJ_HANDLE* handle = m_handle;
+    if (BladeChangeManager::sys()->IsRegister(handle)) {
+        if (flag) {
+            return false;
+        }
+        if (IsBlade(false)) {
+            return false;
+        }
+        if (m_state == 10) {
+            return false;
+        }
+    }
+    if (BladeArtsManager::sys()->IsRegister(handle)) {
+        if (IsBlade(false)) {
+            return false;
+        }
+        if (pad_EEE != 6) {
+            return false;
+        }
+    }
+    if (!SpAttackManager::sys()->IsRegister(handle) && !FormationChangeManager::sys()->IsRegister(handle)) {
+        if (ChainAttackManager::sys()->IsProc(false)) {
+            return false;
+        }
+        if (GetLandHeight() > m_pos.y - 2999.0f) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void BattleCharacter::StartBladeTimer(BLADE_TIMER_MODE mode) {
