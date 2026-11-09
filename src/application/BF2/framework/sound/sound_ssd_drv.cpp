@@ -127,6 +127,24 @@ SoundSsdSource::~SoundSsdSource() {
     }
 }
 
+SoundSsdPlayer::SoundSsdPlayer(const SoundPlayerSetupParam& param)
+    : m_setup(param), m_soundHandle(0), pad_bc(-1.0f), m_flags(0), m_pauseCount(0) {
+    m_actor.Init();
+    m_actor.SetVolume(1.0f, 0.0f);
+    m_actor.SetListener(param.listener);
+    m_actor.SetPosition(ssd::Vec3{0.0f, 0.0f, 0.0f});
+    m_actor.SetVelocity(ssd::Vec3{0.0f, 0.0f, 0.0f});
+    m_actor.SetCategoryId(param.category);
+    if (param.source->m_isStream) {
+        m_flags |= 0x4;
+    }
+    if (param.listener != nullptr) {
+        m_flags |= 0x8;
+    } else {
+        m_flags &= ~0x8;
+    }
+}
+
 SoundSsdBank::SoundSsdBank(const SoundBankSetup& setup) : m_allocator(setup.allocator) {
     m_id = setup.id;
     m_name = setup.name;

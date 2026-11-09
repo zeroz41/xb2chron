@@ -26,6 +26,28 @@ void GfFieldMapSe::destroy() {
     destroyMapSe();
 }
 
+inline void GfFieldMapSe::destroySeObj(SEOBJ* obj) {
+    if (GfSound* sound = GfSound::get()) {
+        sound->stopSe(obj->m_handle, 1.0f);
+        m_seObjs.deallocate(obj);
+    }
+}
+
+void GfFieldMapSe::destroyMapSe() {
+    for (SEDATA*& data : m_datas) {
+        for (SEOBJ* obj : data->m_objs) {
+            destroySeObj(obj);
+        }
+        data->m_objs.clear();
+        if (data != nullptr) {
+            delete data;
+            data = nullptr;
+        }
+    }
+    m_datas.clear();
+    m_objMax = 0;
+}
+
 void GfFieldMapSe::update(const fw::UpdateInfo& info) {
     updateSeObj(info);
 }

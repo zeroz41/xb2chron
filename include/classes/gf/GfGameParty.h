@@ -173,6 +173,9 @@ public:
     static void setupNewGameParty();
     static void setupPoweredNewGameParty();
     static void setupPartyPositionByPartyPosition(const GfPartyPosInfo& info);
+    // Placeholder name: setupPartyPositionByPartyPosition (for a slot without a position) and
+    // refreshPartyMemberPosition call it with a handle and the positions
+    static void fn_71002BBEA8(gf::GF_OBJ_HANDLE* handle, const GfPartyPosInfo& info);
     // the symbols name it. What it does: the position and y rotation of every hierarchy's object (1-6, 1-9 in an
     // Ira game) into its record, valid when the object has a transform
     static void getPartyPosition(GfPartyPosInfo& info);

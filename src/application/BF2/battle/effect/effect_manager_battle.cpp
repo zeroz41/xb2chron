@@ -157,6 +157,12 @@ bool EffectManager::IsExistChrHitEffect(gf::GF_OBJ_HANDLE* handle, bool flag) co
     return false;
 }
 
+void EffectManager::AddCircleDamageBonus(int index, int value) {
+    int rate = m_rates[index] + value;
+    m_rates[index] = rate < 0 ? 0 : (rate > 0xFFFF ? 0xFFFF : rate);
+    m_ratesDirty = true;
+}
+
 float EffectManager::GetCircleDamageBonusRate(int index) const {
     return m_rates[index] * 0.01f;
 }

@@ -204,6 +204,41 @@ GF_SLOT_HANDLE* GfSlotAll::setupSlotNum(GfAssetType type, unsigned int num, unsi
     return handle;
 }
 
+GF_SLOT_HANDLE* GfSlotAll::setupSlotNumTail(GfAssetType type, unsigned int num, unsigned int param) {
+    mm::mtl::FixedVector<GfSlotBase*, 1304>& slots = m_slots[type - 3];
+    GF_SLOT_HANDLE* handle = reinterpret_cast<GF_SLOT_HANDLE*>(-1);
+    if (slots.empty()) {
+        return handle;
+    }
+    for (int start = slots.size() - 1; start >= 0; start--) {
+        if (start + num > slots.size()) {
+            continue;
+        }
+        bool found = false;
+        for (unsigned int i = start; i < start + num; i++) {
+            if (slots[i]->getSlotHandle() != reinterpret_cast<GF_SLOT_HANDLE*>(-1)) {
+                break;
+            }
+            if (i == start + num - 1) {
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            handle = createSlotHandle(type, start);
+            for (int i = start; i < static_cast<int>(start + num); i++) {
+                slots[i]->setSlotHandle(handle, param);
+                if (i > start) {
+                    slots[i]->setParentSlot(slots[start]);
+                }
+            }
+            slots[start]->setMultiSlot(num);
+            break;
+        }
+    }
+    return handle;
+}
+
 void GfSlotAll::releaseSlot(GF_SLOT_HANDLE* handle) {
     unsigned long value = reinterpret_cast<unsigned long>(handle);
     unsigned int index = value & 0xFFFF;
@@ -290,6 +325,22 @@ void* GfSlotAll::allocateSize(GfAssetType type, unsigned long size, unsigned lon
     unsigned long bufferSize;
     getSlotInfo(allocator, buffer, bufferSize, handle);
     return buffer;
+}
+
+void GfSlotAll::deallocateSize(void* memory) {
+    for (int type = 3; type < 20; type++) {
+        const mm::mtl::FixedVector<GfSlotBase*, 1304>& slots = m_slots[type - 3];
+        void* first = slots[0]->getBuffer();
+        void* last = slots[slots.size() - 1]->getBuffer();
+        if (first <= memory && memory <= last) {
+            for (int i = static_cast<int>(slots.size()) - 1; i >= 0; i--) {
+                if (slots[i]->getBuffer() == memory) {
+                    releaseSlot(slots[i]->getSlotHandle());
+                    return;
+                }
+            }
+        }
+    }
 }
 
 }  // namespace gf

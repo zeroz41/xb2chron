@@ -911,6 +911,24 @@ void GfGameParty::getPartyPosition(GfPartyPosInfo& info) {
     }
 }
 
+void GfGameParty::setupPartyPositionByPartyPosition(const GfPartyPosInfo& info) {
+    unsigned int hierarchy = 1;
+    for (const GfPartyPosInfo::Pos& pos : info.m_pos) {
+        GF_OBJ_HANDLE* handle = getHandleByHierarchy(hierarchy);
+        GfObjSetup* setup = GfObjUtil::getObjSetup(handle);
+        if (setup != nullptr) {
+            if (pos.m_isValid) {
+                float rotY = pos.m_rotY;
+                setup->m_initialPos = pos.m_pos;
+                setup->pad_30 = mm::Vec3(0.0f, rotY, 0.0f);
+            } else {
+                fn_71002BBEA8(handle, info);
+            }
+        }
+        ++hierarchy;
+    }
+}
+
 GfWeapon* GfGameParty::getHandleWeapon(unsigned int index, int set) {
     GF_OBJ_HANDLE* handle;
     if (GfDataDriver::isIra(getDriverBdatId(index, static_cast<PTPOS>(0)))) {

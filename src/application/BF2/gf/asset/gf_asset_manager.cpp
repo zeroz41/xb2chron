@@ -441,3 +441,6 @@ void GfAssetManager::update(const fw::UpdateInfo& info) {
 }
 
 }  // namespace gf
+
+// instantiated for gf::GfAssetManager::updateCheckCacheReload, gf::GfAssetManager::updateCheckDestroy (not written yet)
+template mm::mtl::FixedList<gf::GfAssetPack*, 2048>::iterator mm::mtl::FixedList<gf::GfAssetPack*, 2048>::erase(mm::mtl::FixedList<gf::GfAssetPack*, 2048>::iterator);
