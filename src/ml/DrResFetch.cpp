@@ -4988,12 +4988,21 @@ DrResMdoPos* DrResMdoPosAddList::createAdd() {
     return &m_buff[m_cnt++];
 }
 
-DrResMdoInstAnmObj::DrResMdoInstAnmObj() : m_header(0), m_parts(0), pad_10() {}
+DrResMdoInstAnmObj::DrResMdoInstAnmObj() : m_header(0), m_parts(0), m_partsAnm(0), pad_18() {}
 
 void DrResMdoInstAnmObj::release() {
     m_header = nullptr;
     m_parts = nullptr;
-    memset(pad_10, 0, sizeof(pad_10));
+    m_partsAnm = nullptr;
+    memset(pad_18, 0, sizeof(pad_18));
+}
+
+void DrResMdoInstAnmObj::update() {
+    if (m_header) {
+        for (int i = 0; i < m_header->linkTopB; i++) {
+            m_partsAnm[i].update();
+        }
+    }
 }
 
 void DrResMdoInstAnmObj::setupLink(DrResMdoPos* pos) const {
@@ -5010,6 +5019,44 @@ void DrResMdoInstAnmObj::setupLink(DrResMdoPos* pos) const {
 DrResMdoSeamParmRead::DrResMdoSeamParmRead() : m_flags(0), m_readPos(0.0f, 0.0f, 0.0f), pad_62C() { m_posCnt = 0; }
 
 DrResMdoSeamParmRead::~DrResMdoSeamParmRead() {}
+
+void DrResMdoSeamParmRead::begin(wkSeamReadPacDataInf* pac) {
+    m_stockEnvMdl = 0;
+    m_stockBaseMapCnt = 0;
+    m_stockInstMapCnt = 0;
+    m_stockLowMdlCnt = 0;
+    m_stockMpfMdlCnt = 0;
+    m_stockLightCnt = 0;
+    pad_5DA[0] = 0;
+    pad_5DA[1] = 0;
+    pad_5DA[2] = 0;
+    pad_5DA[3] = 0;
+    pad_5DA[4] = 0;
+    pad_5DA[5] = 0;
+    pad_5DA[6] = 0;
+    m_heightLvTexCnt = 0;
+    pad_5FE[0] = 0;
+    m_mpfPoliMaxId = 0;
+    pad_5EA[6] = 0;
+    pad_5EA[4] = 0;
+    pad_5EA[2] = 0;
+    pad_5EA[0] = 0;
+    pad_5FE[2] = 0;
+    pad_5FE[3] = 0;
+    pad_5FE[4] = 0;
+    m_stockMpfPoliCnt = 0;
+    pad_5FE[1] = 0xFFFF;
+    m_mpfPoliMinId = 0xFFFF;
+    pad_5EA[7] = 0xFFFF;
+    pad_5EA[5] = 0xFFFF;
+    pad_5EA[3] = 0xFFFF;
+    pad_5EA[1] = 0xFFFF;
+    m_pacData = pac;
+    memset(pac->m_buf, 0, pac->m_bufSize);
+    m_posCnt = 0;
+    pad_62C[0] = 0;
+    m_flags &= ~0xD;
+}
 
 void DrResMdoSeamParmRead::setStockBaseMap(int no) {
     if (m_stockBaseMapCnt < STOCK_BASE_MAP_MAX) {
@@ -5428,12 +5475,29 @@ int DrResMdoSeamRead::getReadMax() {
 int DrResMdoSeamTexList::SEAMRES_TEXLIST_CNTMAX = 0x3C;
 
 DrResMdoSeamTexList::DrResMdoSeamTexList(int no)
-    : m_prev(nullptr), m_next(nullptr), m_memObj(nullptr), m_texture(nullptr), pad_28(nullptr), m_buf(nullptr),
-      m_no(no), m_cnt(0), pad_3B(0), m_dataIdx(0), m_num(0) {}
+    : m_prev(nullptr), m_next(nullptr), m_memObj(nullptr), m_texture(nullptr), m_data(nullptr), m_buf(nullptr),
+      m_no(no), m_cnt(0), m_readIn(0), m_dataIdx(0), m_num(0) {}
 
 DrResMdoSeamTexList::~DrResMdoSeamTexList() {
     release();
     m_memObj = nullptr;
+}
+
+bool DrResMdoSeamTexList::update(DrResMdoSeamParmRead*) {
+    if (++m_cnt >= SEAMRES_TEXLIST_CNTMAX) {
+        return true;
+    }
+    m_readIn = 0;
+    if (m_data != nullptr && (m_memObj->m_flags & 2)) {
+        m_data = m_memObj->m_pData;
+        const Table* table = reinterpret_cast<const Table*>(m_data + reinterpret_cast<const DataHead*>(m_data)->tableOfs);
+        const Entry* entry = table->entries;
+        for (int i = 0; i < m_num; i++, entry++) {
+            grlib::CGLibTexture::changeTextureImagePtrs(m_texture[i], m_data + entry->imageOfs, entry->size);
+        }
+        m_readIn = 1;
+    }
+    return false;
 }
 
 void DrResMdoSeamTexList::release() {
@@ -5446,7 +5510,7 @@ void DrResMdoSeamTexList::release() {
             m_buf = nullptr;
         }
     }
-    pad_28 = nullptr;
+    m_data = nullptr;
     m_num = 0;
 }
 

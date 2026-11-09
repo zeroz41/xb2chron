@@ -6,10 +6,13 @@
 namespace ml {
 class DrResMdoSeamWrkInst;
 class DrResMdoSeamWrkMpf;
-// The pac data DrResMdoSeamParmRead::begin takes. Only the field DrResMdoSeamWrkMpf::seachMpfPoliPos uses is spelled
-// out; its name is not the original's.
+// The pac data DrResMdoSeamParmRead::begin takes (begin clears its buffer; DrResMdoSeamWrkMpf::seachMpfPoliPos reads the bits);
+// the field names are not the original's.
 struct wkSeamReadPacDataInf {
-    unsigned char pad_0[0x28];
+    unsigned int m_bufSize;  // 0x0: begin clears m_bufSize bytes at m_buf
+    unsigned char pad_4[0x4];
+    void* m_buf;             // 0x8
+    unsigned char pad_10[0x18];
     unsigned int* m_mpfPoliBits;  // 0x28: one bit per mpf polygon cache id to read
 };
 struct _wkSeamReadWait;
@@ -78,12 +81,13 @@ public:
     unsigned short m_stockLowMdlCnt;                     // 0x5D4
     unsigned short m_stockMpfMdlCnt;                     // 0x5D6
     unsigned short m_stockLightCnt;                      // 0x5D8
-    unsigned char pad_5DA[0xE];
+    unsigned short pad_5DA[7];                           // 0x5DA: begin clears them
     unsigned short m_heightLvTexCnt;                     // 0x5E8 (resetHeightLvTexture clears it)
-    unsigned char pad_5EA[0x10];
+    // 0x5EA: begin resets four more (0, 0xFFFF) pairs like m_mpfPoliMaxId/m_mpfPoliMinId
+    unsigned short pad_5EA[8];
     unsigned short m_mpfPoliMaxId;                       // 0x5FA: the largest id seachMpfPoliPos stocked
     unsigned short m_mpfPoliMinId;                       // 0x5FC: the smallest one
-    unsigned char pad_5FE[0xA];
+    unsigned short pad_5FE[5];                           // 0x5FE: begin sets 0, 0xFFFF, 0, 0, 0
     unsigned short m_stockMpfPoliCnt;                    // 0x608
     unsigned char pad_60A[0x22];
     unsigned char pad_62C[0x2];                          // the constructor clears it

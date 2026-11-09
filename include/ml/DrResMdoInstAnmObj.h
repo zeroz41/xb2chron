@@ -2,6 +2,7 @@
 #define ML_DRRESMDOINSTANMOBJ_H
 
 namespace ml {
+class DrResMdoInstPartsAnm;
 class DrResMdoInstPartsObj;
 class DrResMdoPos;
 // A model's instanced parts (0x30: release clears six words). Field names are not the original's.
@@ -29,10 +30,14 @@ public:
     // the work bytes the header's objects take, rounded up to 0x10 (getWorkSize multiplies linkTopB by 0x78 and
     // linkTopA by 0x28 + 0x160, so those two are counts too)
     static unsigned int getWorkSize(const unsigned char* data);
+    // updates every animated part (DrMdoCtlPos::createMdlList, DrMdoCtlSeam::calcFastUpdate)
+    void update();
 
     const Header* m_header;           // 0x0
     DrResMdoInstPartsObj** m_parts;   // 0x8: partsMax objects
-    unsigned char pad_10[0x20];
+    // 0x10: linkTopB animated parts (setup builds them after the m_parts table; update updates each)
+    DrResMdoInstPartsAnm* m_partsAnm;
+    unsigned char pad_18[0x18];
 };
 }  // namespace ml
 
