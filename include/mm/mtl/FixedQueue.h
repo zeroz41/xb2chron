@@ -213,6 +213,15 @@ public:
         --m_size;
         return at(index);
     }
+    // takes the first element off into out, asserting there is one (fixed_queue.h line 458: GfMenuOrderMgr::
+    // pickLogOrder inlines it, the element copied before the start moves on; the name is not the original's)
+    void pop_front(T& out) {
+#line 458 MM_MTL_FIXED_QUEUE_PATH
+        MM_ASSERT(!empty());
+        out = at(m_head);
+        m_head = (m_head + 1) % N;
+        --m_size;
+    }
     // takes the first element off, asserting there is one (GfEvtBgm::updateBgmTask and GfReqManager::reqUpdate
     // inline it; 1.0.0's FixedQueue<FixStr<32>, 8>::pop_front asserts the same at line 470; the name is not the
     // original's)

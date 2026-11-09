@@ -1,5 +1,8 @@
 #include "classes/gf/GfMenuOrderMgr.h"
 #include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfMenuReference.h"
+#include "gf/GfMenuObjUtil.h"
 #include "classes/ui/UIManager.h"
 
 namespace gf {
@@ -44,6 +47,9 @@ void GfMenuOrderMgr::setOrder(int channel, unsigned int handle, const ui::EventD
     mgr->m_logs.push_back(log);
 }
 
+// cancelLogOrder (0x71003639E0): not identical yet (the original keeps the `channel == 2` test inside the loop;
+// ours unswitches it)
+
 void GfMenuOrderMgr::finishOrder(int channel) {
     GfMenuOrderMgr* mgr = get();
     if (mgr->m_current.m_channel == channel) {
@@ -76,6 +82,22 @@ void GfMenuOrderMgr::postUpdate(const fw::UpdateInfo& info) {
         ui::UIManager::get()->requestObjectEvent(mgr->m_current.m_handle, mgr->m_current.m_event, 0.0f);
         mgr->m_state = 1;
     }
+}
+
+bool GfMenuOrderMgr::pickLogOrder(sLog& order) {
+    if (!m_logs.empty()) {
+        if (GfMenuObjUtil::isValidExpansion(3) && (GfMenuManager::hasNpcEntry() || GfMenuReference::isIraFlag(6))) {
+            if (m_logs.first().m_channel == 2) {
+                return false;
+            }
+        }
+        m_logs.pop_front(order);
+        return true;
+    }
+    order.m_channel = 0;
+    order.m_handle = 0;
+    order.m_priority = 0;
+    return false;
 }
 
 }  // namespace gf
