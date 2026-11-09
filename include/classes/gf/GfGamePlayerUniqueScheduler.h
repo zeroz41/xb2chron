@@ -3,7 +3,6 @@
 
 #include "classes/fw/MessageObject.h"
 #include "classes/fw/ParamList.h"
-#include "classes/fw/ParamManager.h"
 #include "classes/gf/GfBdatUniqueMotion.h"
 #include "classes/gf/GfEvent.h"
 #include "classes/gf/IGfEvent.h"
@@ -49,11 +48,10 @@ public:
     static void destroy();
     static void update(const fw::UpdateInfo& info);
     static void onReload();
-    // 1.0.0's (3.0.1 has no copies: build, destroy, update, onReload and gevPartyMemberOK inline them)
-    void setup() {
-        GfEvent::addEventCallback(this);
-        m_paramList = fw::ParamManager::get()->m_paramLists[12];
-    }
+    // 1.0.0's (3.0.1 has no copies: build, destroy, update, onReload and gevPartyMemberOK inline them). Defined
+    // inline in the unit: the original gf_bdat_unique_motion, which includes this header, does not instantiate
+    // fw::ParamManager's map sentinels (their static initializers).
+    void setup();
     void cleanup() { GfEvent::removeEventCallback(this); }
     void executeRequest(const fw::UpdateInfo& info);
     void judge(const fw::UpdateInfo& info);

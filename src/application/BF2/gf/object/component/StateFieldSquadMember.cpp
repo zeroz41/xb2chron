@@ -300,6 +300,16 @@ void StateFieldSquadMember::seqUpdateMove(GfComBehaviorEnemy& owner, const fw::U
     }
 }
 
+bool StateFieldSquadMember::isCondMatch(const GfComBehaviorEnemy& owner) {
+    bool result = false;
+    if (owner.m_field.m_squadNavi.isInSquad()) {
+        if (owner.m_field.m_squadNavi.m_index != 0) {
+            result = true;
+        }
+    }
+    return result;
+}
+
 StateFieldSquadMember::~StateFieldSquadMember() {}
 
 const char* StateFieldSquadMember::getName() const { return "StateFieldSquadMember"; }

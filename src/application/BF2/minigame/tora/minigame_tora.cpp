@@ -72,9 +72,9 @@ void minigame::finalize() {
 void minigame::update_pad() {
     PadBits prev = m_padHold;
     PadBits hold;
-    hold.m_all = (unsigned short)gf::GfGamePad::getPadPlayer()->m_btn;
-    float lx = gf::GfGamePad::getPadPlayer()->m_lx;
-    float ly = gf::GfGamePad::getPadPlayer()->m_ly;
+    hold.m_all = (unsigned short)gf::GfGamePad::getPadPlayer().m_btn;
+    float lx = gf::GfGamePad::getPadPlayer().m_lx;
+    float ly = gf::GfGamePad::getPadPlayer().m_ly;
     if (fabsf(lx * lx + ly * ly) > fw::PadManager::ANALOG_TRIGGER_THRESHOLD) {
         float ax = fabsf(lx);
         float ay = fabsf(ly);

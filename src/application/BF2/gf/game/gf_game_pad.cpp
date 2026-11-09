@@ -99,6 +99,14 @@ void GfGamePad::checkEmergencyEscape() {
     static_cast<fw::MessageObject*>(obj)->recieveMessage(&static_cast<fw::MessageObject&>(*obj), msg);
 }
 
+const fw::PadData& GfGamePad::getPadPlayer() {
+    GfGamePad* pad = get();
+    if (pad != nullptr) {
+        return pad->m_padData;
+    }
+    return fw::PadManager::getControlPadData(0);
+}
+
 bool GfGamePad::isEventPause() {
     GfGamePad* pad = get();
     if (pad == nullptr) {

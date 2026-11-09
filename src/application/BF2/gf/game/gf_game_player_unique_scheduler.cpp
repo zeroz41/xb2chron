@@ -4,6 +4,7 @@
 #include "gf/MsgPcFieldSetUniqueMotion.h"
 #include "gf/MsgPcFieldTestEnableUniqueMotion.h"
 #include "algorithm"
+#include "classes/fw/ParamManager.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfGameParty.h"
 #include "classes/gf/GfObj.h"
@@ -14,6 +15,11 @@
 #include "ml/MTRand.h"
 
 namespace gf {
+
+inline void GfGamePlayerUniqueScheduler::setup() {
+    GfEvent::addEventCallback(this);
+    m_paramList = fw::ParamManager::get()->m_paramLists[12];
+}
 
 void GfGamePlayerUniqueScheduler::build(const GfSetupParam& param) {
 #line 31

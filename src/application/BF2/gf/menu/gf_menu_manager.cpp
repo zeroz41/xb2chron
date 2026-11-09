@@ -1004,7 +1004,7 @@ void GfMenuManager::qevChangeCurrentQuest(const QuestChangeParam&) {
 }
 
 const fw::PadData& GfMenuMnagerPadRead::uiGetControlPad() const {
-    return *GfGamePad::getPadPlayer();
+    return GfGamePad::getPadPlayer();
 }
 
 void GfMenuManager::beginUpdate(const fw::UpdateInfo& info) {
