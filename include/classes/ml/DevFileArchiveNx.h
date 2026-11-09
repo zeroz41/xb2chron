@@ -4,6 +4,7 @@
 #include "classes/ml/DevFileAccessor.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "ml/CriticalSection.h"
+#include "nn/fs.h"
 #include "ml/OpenReadParam.h"
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedArray.h"
@@ -54,11 +55,10 @@ public:
     // the device's state (0x2A48), built by the constructor with the handle it is given; DevFileNxTh::Impl's
     // members first
     struct Param {
-        // a thread's file (0x118; Param::finalize passes pad_8 to the thread's release; the name is not the
-        // original's)
+        // a thread's file (0x118; Param::finalize closes m_file; the names are not the original's)
         struct ThreadFile {
             unsigned long pad_0;
-            void* pad_8;
+            nn::fs::FileHandle m_file;  // 0x8
             unsigned char pad_10[0x108];
         };
 

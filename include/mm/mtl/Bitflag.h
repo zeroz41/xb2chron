@@ -69,8 +69,13 @@ public:
     }
 
     // clears one flag in its word (mm::mtl::FixedObjectAllocator's deallocate asserts at line 169; the
-    // name is not the original's)
+    // name is not the original's). A one-word set clears it as reset(index) does: FixedObjectAllocator<, 16>'s
+    // deallocate (ml::DevFileArchiveNx::Param::finalize) asserts at line 181 and masks the one word
     void resetAt(unsigned int index) {
+        if ((Size + 31) / 32 == 1) {
+            reset(index);
+            return;
+        }
 #line 169 MM_MTL_BITFLAG_PATH
         MM_ASSERT(index < Size);
         unsigned int word = index >> 5;

@@ -2837,6 +2837,15 @@ void FileLoader::readFile() {
 }
 }  // namespace detail
 
+void DevFileArchiveNx::Param::finalize() {
+    CS lock(m_cs);
+    while (!m_threadFileQueue.empty()) {
+        ThreadFile* file = m_threadFileQueue.take_back();
+        nn::fs::CloseFile(file->m_file);
+        m_threadFiles.deallocate(file);
+    }
+}
+
 DevFileArchiveNx::DevFileArchiveNx(mtl::ALLOC_HANDLE handle)
     : m_alloc(handle), pad_18(0), m_impl(new (handle, nullptr, 0, 4, false) Param()) {
     __atomic_store_n(&m_impl->pad_17FC, 0, __ATOMIC_SEQ_CST);
@@ -2944,6 +2953,22 @@ void DevFileArchiveNx::normalizeFileName(mm::mtl::FixStr<256>& name) {
             }
         }
     }
+}
+
+// Inferred helper (the name is not the original's; inlined): the files block's empty buffer. The original copies
+// the handle before clearing size and keeps that copy's slot above its own locals, as a by-value parameter of an
+// inlined function gives.
+static void allocArchiveFilesBlock(char*& buffer, int& size, mtl::ALLOC_HANDLE handle) {
+    size = 0;
+    buffer = static_cast<char*>(mtl::MemManager::allocate(handle, 0x100000, 4, false, "no name", 0));
+    buffer[0] = '\0';
+}
+
+bool DevFileArchiveNx::getFilesBlock(char*& buffer, int& size, mtl::ALLOC_HANDLE handle, const char* path,
+                                     const char*) {
+    mm::mtl::FixStr<256> pattern = mm::mtl::FixStr<256>(path) + "/";
+    allocArchiveFilesBlock(buffer, size, handle);
+    return true;
 }
 
 bool DevFileArchiveNx::rfOpen(FileHandleTh* handle, const char* path) {
