@@ -12,6 +12,7 @@
 #include "ml/ScnRenderDrSysParmAcc.h"
 #include "ml/DevFileParamTh.h"
 #include "mm/mtl/FixStr.h"
+#include "mm/VAL64.h"
 #include "mtl/MemManager.h"
 #include "mm/mtl/Vector.h"
 
@@ -55,10 +56,41 @@ CommonResource* CommonResource::request_detail(mtl::ALLOC_HANDLE handle, const c
     return resource;
 }
 
-// updateBlock (0x7100199A58) is not written yet: the closest attempt is ~99 words off. The control flow and calls are
-// right; the original's frame is 0x20 bigger (one more callee-saved register: it keeps m_path's address in x20 and
-// the FixStr's in x22) and its locals sit 0x18 higher (FixStr at sp+0x98, DevFileParamTh at sp+0x28, the VAL64 at
-// sp+0x10), which no declaration order or VAL64 size tried here reproduces.
+void CommonResource::updateBlock() {
+    m_state = 2;
+    const char* name = m_path.m_str;
+    if (m_handle.m_handle != 0) {
+        m_asset = AssetData::CreateFromCache(m_handle, name);
+    } else if (m_allocator != nullptr) {
+        m_asset = AssetData::CreateFromCache(m_allocator, name);
+    }
+    if (m_asset != nullptr) {
+        if (m_isRender) {
+            mm::mtl::PtrSingleton<ResourceManager>::get()->addSafeObject(m_asset, static_cast<eResourceType>(0));
+        }
+        return;
+    }
+    mm::mtl::FixStr<256> path;
+    ml::DevFileTh::normalizeDvdFileName(path, name);
+    ml::DevFileParamTh param;
+    param.m_hMem = m_handle;
+    param.pad_10 = m_allocator;
+    param.m_align = 0x1000;
+    param.m_path = path.m_str;
+    int size = 0;
+    mm::VAL64 timeStamp;
+    void* data = ml::DevFileTh::readFileBlock(param, &size, &timeStamp);
+    if (data != nullptr) {
+        if (m_handle.m_handle != 0) {
+            m_asset = AssetData::AssignFromMemory(m_handle, data, size, path.m_str, timeStamp.m_value);
+        } else if (m_allocator != nullptr) {
+            m_asset = AssetData::AssignFromMemory(m_allocator, data, size, path.m_str, timeStamp.m_value);
+        }
+        if (m_isRender) {
+            mm::mtl::PtrSingleton<ResourceManager>::get()->addSafeObject(m_asset, static_cast<eResourceType>(0));
+        }
+    }
+}
 
 CommonResource* CommonResource::request_detail(mm::mtl::IAllocator* allocator, const char* path, int prio,
                                                bool delayRelease, bool block) {

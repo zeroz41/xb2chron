@@ -196,6 +196,56 @@ Result SystemCorePlatform::InitI3dl2ReverbEffect(unsigned char bus, SoundI3dl2Re
     return Result(0);
 }
 
+Result SystemCorePlatform::QuitEffect(SoundEffecter* effect) {
+    unsigned char bus;
+    if (effectBus_[0].effect == effect) {
+        bus = 0;
+    } else if (effectBus_[1].effect == effect) {
+        bus = 1;
+    } else {
+        return Result(-1);
+    }
+    if (effectBus_[bus].activeFlags[1]) {
+        return Result(-1);
+    }
+    Result result;
+    switch (effect->type_) {
+    case 0:
+        result = QuitDelayEffect(bus);
+        break;
+    case 1:
+        result = QuitI3dl2ReverbEffect(bus);
+        break;
+    default:
+        result = Result(-1);
+        break;
+    }
+    effect->attached_ = false;
+    return result;
+}
+
+inline Result SystemCorePlatform::QuitDelayEffect(unsigned char bus) {
+    EffectBusInfo& info = effectBus_[bus];
+    nn::audio::SetBufferMixerEnabled(&info.mixer, false);
+    nn::audio::SetDelayEnabled(&info.delay, false);
+    info.activeFlags[1] = true;
+    info.activeFlags[0] = false;
+    info.effect = nullptr;
+    DeleteEffect(info);
+    return Result(0);
+}
+
+inline Result SystemCorePlatform::QuitI3dl2ReverbEffect(unsigned char bus) {
+    EffectBusInfo& info = effectBus_[bus];
+    nn::audio::SetBufferMixerEnabled(&info.mixer, false);
+    nn::audio::SetI3dl2ReverbEnabled(&info.reverb, false);
+    info.activeFlags[1] = true;
+    info.activeFlags[0] = false;
+    info.effect = nullptr;
+    DeleteEffect(info);
+    return Result(0);
+}
+
 void SystemCorePlatform::DeleteEffect(EffectBusInfo& bus) {
     if (!bus.activeFlags[1]) {
         return;

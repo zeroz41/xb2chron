@@ -69,6 +69,9 @@ public:
     Result InitDelayEffect(unsigned char bus, SoundDelayEffecter* effect);
     Result InitI3dl2ReverbEffect(unsigned char bus, SoundI3dl2ReverbEffecter* effect);
     void DeleteEffect(EffectBusInfo& bus);
+    // QuitEffect's two kinds: 2.0.0's symbols name them (out of line there); 3.0.1 has no copy, so inline
+    Result QuitDelayEffect(unsigned char bus);
+    Result QuitI3dl2ReverbEffect(unsigned char bus);
     // 2.0.0's symbols name it. What it does: returns 0x400 (1024, InitAudioDevice's voice-count ceiling); reads
     // nothing.
     int GetSdkVoiceCountMax();

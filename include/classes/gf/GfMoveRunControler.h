@@ -37,6 +37,9 @@ public:
     void enter(Packet& packet, bool accelerate);
     void update(const fw::UpdateInfo& info, Packet& packet);
     void calcAngularVelocity(float deltaTime, Packet& packet);
+    // packet's speed moved toward the input's by the acceleration/deceleration, along the direction faced (2.0.0's
+    // symbols name it; out of line there, inlined into update in 3.0.1)
+    void calcVelocity(float deltaTime, Packet& packet);
 };
 }  // namespace gf
 
