@@ -570,6 +570,38 @@ unsigned int GfObjAcc::getLayer() const { return m_obj != nullptr ? m_obj->m_upd
 
 bool GfObjAcc::isLayerPause() const { return fw::Framework::isLayerPause(getLayer()); }
 
+void GfObjAcc::setCollisionChar(bool on) {
+    if (m_obj != nullptr) {
+        if (GfComCollider* collider = m_obj->getComponent<GfComCollider>(4)) {
+            for (unsigned int i = 0; i < collider->m_coliObjects.size(); i++) {
+                if (collider->getColiObject(i) != nullptr) {
+                    if (on) {
+                        collider->getColiObject(i)->setState(static_cast<fw::ColiState>(1));
+                    } else {
+                        collider->getColiObject(i)->clearState(static_cast<fw::ColiState>(1));
+                    }
+                }
+            }
+        }
+    }
+}
+
+void GfObjAcc::setCollisionGround(bool on) {
+    if (m_obj != nullptr) {
+        if (GfComCollider* collider = m_obj->getComponent<GfComCollider>(4)) {
+            for (unsigned int i = 0; i < collider->m_coliObjects.size(); i++) {
+                if (collider->getColiObject(i) != nullptr) {
+                    if (on) {
+                        collider->getColiObject(i)->setState(static_cast<fw::ColiState>(0));
+                    } else {
+                        collider->getColiObject(i)->clearState(static_cast<fw::ColiState>(0));
+                    }
+                }
+            }
+        }
+    }
+}
+
 void GfObjAcc::setExtMeshAlpha(unsigned int mesh, float alpha) {
     if (m_obj != nullptr) {
         if (GfComModel* model = m_obj->getComponent<GfComModel>(1)) {

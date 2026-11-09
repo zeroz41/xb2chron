@@ -129,6 +129,25 @@ void GfComEvtAnim::Mot::stop(unsigned int layer) {
     m_speed = 1.0f;
 }
 
+void GfComEvtAnim::Mot::cleanup(unsigned int layer) {
+    stop(layer);
+    for (unsigned long i = 0; i < m_easeControls.size(); ++i) {
+        m_blender->removeControl(m_easeControls[i]);
+        if (m_easeControls[i] != nullptr) {
+            m_easeControls[i]->release();
+            m_easeControls[i] = nullptr;
+        }
+    }
+    m_sampler.unbind();
+    m_updater.unbind();
+    if (m_blender != nullptr) {
+        m_blender->release();
+        m_blender = nullptr;
+    }
+    m_easeControls.clear();
+    m_easeNames.clear();
+}
+
 void GfComEvtAnim::Mot::init(unsigned int layer, void** data, unsigned long*, unsigned long count) {
     if (count == 0 || m_blender == nullptr) {
         return;

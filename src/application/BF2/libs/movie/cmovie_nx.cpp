@@ -1089,3 +1089,6 @@ void CMovie::doHomeMenu(bool homeMenu) {
 
 // VideoRenderer::OnOutputAvailable's growth path (its caller, MovieDecoderPlayer::VideoOutputBufferAvailableEvent, is not written yet)
 template void std::vector<VideoRenderer::VideoData>::__push_back_slow_path<const VideoRenderer::VideoData&>(const VideoRenderer::VideoData&);
+
+// AudioOutRenderer::GenerateFixedSizeAudioFrame's growth path (it emplaces filled buffers; not written yet)
+template void std::vector<movie::Buffer>::__emplace_back_slow_path<movie::Buffer&>(movie::Buffer&);

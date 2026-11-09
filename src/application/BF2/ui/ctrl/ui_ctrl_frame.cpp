@@ -117,3 +117,6 @@ void UICtrlFrame::movePoint(mm::Pnt<short> pos, bool anim) {
 // update (0x710066E0B0) is not here yet: the best candidate is 4 words off (two registers swapped)
 
 }  // namespace ui
+
+// update (not identical yet) erases the finished object moves
+template mm::mtl::Vector<ui::UICtrlFrame::ObjPosInfo>::iterator mm::mtl::Vector<ui::UICtrlFrame::ObjPosInfo>::erase(mm::mtl::Vector<ui::UICtrlFrame::ObjPosInfo>::iterator);

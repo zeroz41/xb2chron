@@ -113,6 +113,24 @@ void TFieldExecCmd<T>::create(const CreateInfo& info) {
     m_info = info;
 }
 
+template <typename T>
+bool TFieldExecCmd<T>::execCmd(T& com, const char* name) const {
+    bool result = false;
+    if (com.getStateName(AnimLayer(0)) != nullptr) {
+        // the command "C_xxx" plays the state "S_xxx": it runs already when the names match after the prefix
+        mm::mtl::FixStr<32> state(com.getStateName(AnimLayer(0)));
+        if (strcmp(name + 1, state.m_str + 1) == 0) {
+            result = true;
+        } else {
+            result = com.execCmd(name, AnimLayer(0));
+        }
+    }
+    return result;
+}
+
+// update's (not identical yet)
+template bool TFieldExecCmd<GfComAsm>::execCmd(GfComAsm& com, const char* name) const;
+
 namespace enemy {
 
 void StateFieldAreaWalk::seqMoveToGoal(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info) {

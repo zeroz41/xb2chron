@@ -1,6 +1,7 @@
 #include "classes/gf/GfComEnvSensor.h"
 #include "anm/QsTransform.h"
 #include "classes/anm/Pose.h"
+#include "classes/anm/Skeleton.h"
 #include "classes/fw/ParamManager.h"
 #include "classes/gf/GfComModel.h"
 #include "classes/gf/GfComProperty.h"
@@ -164,3 +165,7 @@ namespace gf {
 mm::mtl::RTTI GfComEnvSensor::m_rtti("GfComEnvSensor", &GfComponent::m_rtti, nullptr);
 
 }  // namespace gf
+
+// setup (not identical yet) looks bones up by label (anm::Skeleton::getBoneFromLabel)
+template anm::ArrayIterartor<const anm::SkelLabel> std::__lower_bound<anm::Skeleton::CompLable&, anm::ArrayIterartor<const anm::SkelLabel>, anm::Skeleton::LabelKey>(
+    anm::ArrayIterartor<const anm::SkelLabel>, anm::ArrayIterartor<const anm::SkelLabel>, const anm::Skeleton::LabelKey&, anm::Skeleton::CompLable&);

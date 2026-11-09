@@ -80,3 +80,6 @@ void UICtrlRadarGraph::update(const fw::UpdateInfo& info) {
 }
 
 }  // namespace ui
+
+// create (not identical yet) reserves one value per vertex
+template void mm::mtl::Array<ui::UICtrlRadarGraph::Value>::reserve(unsigned long);

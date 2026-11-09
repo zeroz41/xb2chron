@@ -602,3 +602,6 @@ void GfComModel::destroyMountReferenceFrameImpl(mm::mtl::IntrusivePtr<fw::Refere
 mm::mtl::RTTI GfComModel::m_rtti("GfComModel", &GfComponent::m_rtti, nullptr);
 
 }  // namespace gf
+
+// destroyBoneReferenceFrame (not identical yet) erases bone and mount frames
+template mm::mtl::Vector<gf::GfComModel::BoneFrameInfo>::iterator mm::mtl::Vector<gf::GfComModel::BoneFrameInfo>::erase(mm::mtl::Vector<gf::GfComModel::BoneFrameInfo>::iterator);

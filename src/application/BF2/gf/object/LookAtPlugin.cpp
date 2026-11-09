@@ -97,5 +97,6 @@ mm::mtl::RTTI LookAtPlugin::m_rtti("LookAtPlugin", &Plugin::m_rtti, nullptr);
 }}  // namespace gf::pc
 
 // updateHoldHandles (not written yet) adds and drops targets
+template void mm::mtl::Map<gf::GF_OBJ_HANDLE*, gf::pc::LookAtPlugin::TargetInfo>::tree_type::erase(mm::mtl::Map<gf::GF_OBJ_HANDLE*, gf::pc::LookAtPlugin::TargetInfo>::node*);
 template void mm::mtl::Map<gf::GF_OBJ_HANDLE*, gf::pc::LookAtPlugin::TargetInfo>::tree_type::rebalance_after_erase(mm::mtl::Map<gf::GF_OBJ_HANDLE*, gf::pc::LookAtPlugin::TargetInfo>::node*);
 template mm::mtl::Map<gf::GF_OBJ_HANDLE*, gf::pc::LookAtPlugin::TargetInfo>::node* mm::mtl::Map<gf::GF_OBJ_HANDLE*, gf::pc::LookAtPlugin::TargetInfo>::tree_type::insert(const mm::mtl::Map<gf::GF_OBJ_HANDLE*, gf::pc::LookAtPlugin::TargetInfo>::tree_type::value_type&);
