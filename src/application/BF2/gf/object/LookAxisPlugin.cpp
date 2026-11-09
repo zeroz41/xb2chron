@@ -4,6 +4,13 @@
 #include "fw/UpdateInfo.h"
 #include "mm/Math.h"
 #include "mm/mtl/IntrusivePtr.h"
+#include "mm/Quat.h"
+#include "classes/fw/LookIkSolver.h"
+#include "classes/fw/LookAtIkSolver.h"
+#include "classes/gf/GfComIK.h"
+#include "classes/gf/GfObj.h"
+#include "classes/gf/pc/TargetIKPlugin.h"
+#include "math.h"
 
 namespace gf { namespace pc {
 
@@ -27,8 +34,30 @@ void LookAxisPlugin::onDeactivate() {
     m_changing = false;
 }
 
-// setYaw (0x710051B72C) is not matched yet: 12 words of instruction scheduling and one register differ in its
-// quaternion block (candidate in the worker's notes)
+// the PC's front in its own space: unit z turned about y by the yaw in degrees; the look solvers and the target
+// plugin take it
+void LookAxisPlugin::setYaw(float yaw) {
+    m_yaw = yaw;
+    mm::Vec3 front = mm::Vec3::unitZ;
+    float rad = yaw * 0.0174532924f;
+    if (::fabsf(yaw) > 1.1920929e-07f) {
+        float half = rad * 0.5f;
+        float s = ::sinf(half);
+        float c = ::cosf(half);
+        mm::Quat rotation(0.0f, s, 0.0f, c);
+        front = rotation.rotate(front);
+    }
+    if (GfComIK* ik = m_behavior->m_owner->getComponent<GfComIK>(3)) {
+        if (fw::LookIkSolver* look = ik->getSolver<fw::LookIkSolver>(3)) {
+            look->setFrontMS(front);
+        } else if (fw::LookAtIkSolver* lookAt = ik->getSolver<fw::LookAtIkSolver>(5)) {
+            lookAt->m_limit.limitAxisMS = front;
+        }
+    }
+    if (TargetIKPlugin* target = m_behavior->getPlugin<TargetIKPlugin>(6)) {
+        target->m_front = front;
+    }
+}
 
 void LookAxisPlugin::update(gf::GfComBehaviorPc&, const fw::UpdateInfo& info) {
     if (m_changing) {
