@@ -52,10 +52,8 @@ void ChallengeBattleManager::Destroy() {
     delete ChallengeBattleManager::get();
 }
 
-void ChallengeBattleManager::Start() {
-    if (pad_26 != 0) {
-        return;
-    }
+// 2.0.0 has it out of line (0x7100027470); 3.0.1 inlines it into Start, End and Retry.
+inline void ChallengeBattleManager::ResetData() {
     if (pad_8 != nullptr) {
         pad_8->release();
         pad_8 = nullptr;
@@ -76,6 +74,13 @@ void ChallengeBattleManager::Start() {
     pad_2b = 0;
     pad_2c = 0;
     pad_2d = 0;
+}
+
+void ChallengeBattleManager::Start() {
+    if (pad_26 != 0) {
+        return;
+    }
+    ResetData();
     pad_20 = gmk::GmkBattleChallenge::sm_battleStatus.m_waveNum;
     pad_22 = gmk::GmkBattleChallenge::sm_battleStatus.m_waveIndex;
     pad_26 = 1;
@@ -83,6 +88,15 @@ void ChallengeBattleManager::Start() {
 
 bool ChallengeBattleManager::IsProc() const {
     return pad_26 != 0;
+}
+
+void ChallengeBattleManager::End() {
+    if (!IsProc()) {
+        return;
+    }
+    ResetData();
+    pad_26 = 0;
+    DataManager::get()->RegisterUpdateAttackParam(true, false);
 }
 
 void ChallengeBattleManager::NotifyStartTelop() {
@@ -94,26 +108,7 @@ void ChallengeBattleManager::Retry() {
     if (pad_26 == 0) {
         return;
     }
-    if (pad_8 != nullptr) {
-        pad_8->release();
-        pad_8 = nullptr;
-    }
-    pad_10 = 0.0f;
-    pad_14 = 0.0f;
-    pad_18 = 0.0f;
-    pad_1c = 0.0f;
-    gf::GfMenuReference::setBattleTime(0.0f);
-    pad_20 = 0;
-    pad_22 = 0;
-    DataManager::get()->SetPartyGauge(0, false);
-    gf::GfMenuObjBtlTime::reset();
-    pad_24 = 0;
-    pad_28 = 0;
-    pad_29 = 4;
-    pad_2a = 0;
-    pad_2b = 0;
-    pad_2c = 0;
-    pad_2d = 0;
+    ResetData();
     pad_20 = gmk::GmkBattleChallenge::sm_battleStatus.m_waveNum;
     pad_22 = gmk::GmkBattleChallenge::sm_battleStatus.m_waveIndex;
     pad_26 = 1;
@@ -691,6 +686,19 @@ bool ChallengeBattleManager::IsEnableOperate() const {
         return true;
     }
     return pad_2b != 0;
+}
+
+bool ChallengeBattleManager::IsEnableEnemyBattle() const {
+    if (!IsProc()) {
+        return true;
+    }
+    bool result = false;
+    if (!(pad_26 < 50)) {
+        if (!IsResult()) {
+            result = true;
+        }
+    }
+    return result;
 }
 
 bool ChallengeBattleManager::IsEnableReturnHome() const {

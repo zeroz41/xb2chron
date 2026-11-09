@@ -47,6 +47,7 @@ public:
     // (GfMenuReference::setBattleTime(0), DataManager's SetPartyGauge(0, false), gf::GfMenuObjBtlTime::reset); Start
     // only while pad_26 is 0 and then loads pad_20/pad_22 from lbl_7100EB7DBC and sets pad_26; End only while pad_26 is
     // set, clears it and sets bit 15 of a halfword in each of DataManager's 18 entries; Retry only while pad_26 is set.
+    void ResetData();
     void Start();
     void End();
     void Retry();

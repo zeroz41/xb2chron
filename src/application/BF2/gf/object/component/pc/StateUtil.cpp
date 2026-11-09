@@ -23,6 +23,7 @@
 #include "gf/GfPlayFactory.h"
 #include "gf/GfTargetProperty.h"
 #include "gf/MsgObjectNotifyDead.h"
+#include "gf/MsgGameChangeTarget.h"
 #include "gf/pc/StateUtilField.h"
 #include "classes/gf/GfComIK.h"
 #include "classes/gf/pc/TargetIKPlugin.h"
@@ -129,6 +130,23 @@ bool StateUtil::isManualCamera() {
 
 GF_OBJ_HANDLE* StateUtil::getTarget(const GfComBehaviorPc& behavior) {
     return behavior.m_owner->findComponent<GfComProperty>(5)->m_target.get()->m_target;
+}
+
+bool StateUtil::setTarget(GfComBehaviorPc& behavior, GF_OBJ_HANDLE* target) {
+    GfComPropertyPc* property = behavior.m_owner->findComponent<GfComPropertyPc>(5);
+    if (property->m_target) {
+        property->m_target->m_target = target;
+    }
+    if (property->m_setupKind != 0) {
+        GfObj* self = static_cast<GfObj*>(behavior.m_owner);
+        MsgGameChangeTarget msg(target);
+        self->sendMessage(self, msg);
+        return false;
+    }
+    GfGameTarget* gameTarget = GfGameTarget::get();
+    MsgGameChangeTarget msg(target);
+    fw::MessageObject* to = gameTarget;
+    return static_cast<GfObj*>(behavior.m_owner)->sendMessage(to, msg);
 }
 
 void StateUtil::setTargetLock(bool lock) {
@@ -244,6 +262,17 @@ void StateUtil::setEnableLookIK(GfComBehaviorPc& behavior, bool enable) {
 void StateUtil::setEnableSpineIK(GfComBehaviorPc& behavior, bool enable) {
     if (fw::LookIkSolver* solver = behavior.m_owner->getComponent<GfComIK>(3)->getSolver<fw::LookIkSolver>(3)) {
         solver->setEnableSpine(enable);
+    }
+}
+
+void StateUtil::setEnableSpineRotate(GfComBehaviorPc& behavior, bool enable, float time) {
+    if (fw::SpineRotateIKSolver* solver =
+            behavior.m_owner->getComponent<GfComIK>(3)->getSolver<fw::SpineRotateIKSolver>(4)) {
+        if (enable) {
+            solver->fadeIn(time);
+        } else {
+            solver->fadeOut(time);
+        }
     }
 }
 
