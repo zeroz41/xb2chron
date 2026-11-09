@@ -8,6 +8,13 @@
 namespace fw { class CommonResource; }
 namespace gf { class GfSetupParam; }
 
+// the camera parameters' files GfStaticRes loads, the base game's and the DLC's (new in 3.0.1; the symbols name them
+// _gfstr::szCameraXB2 at 0x7100B59570 and _gfstr::szCameraIRA at 0x7100B59578)
+namespace _gfstr {
+extern const char* szCameraXB2;
+extern const char* szCameraIRA;
+}  // namespace _gfstr
+
 namespace gf {
 // the game's resident resources, loaded at start
 class GfStaticRes {
@@ -36,9 +43,6 @@ public:
     // into the same entry.
     static void replaceLoad(const char* oldPath, const char* newPath);
 
-    // the camera parameters' files, the DLC's second (new in 3.0.1: the names are not the original's)
-    static const char* s_cameraParam;
-    static const char* s_cameraParamDlc;
     static mtl::ALLOC_HANDLE s_hMem;
     static ::mm::mtl::FixedList<ResourceInfo, 64> s_aResource;
 };

@@ -11,11 +11,15 @@
 #include "ml/MlMem.h"
 #include "gf/GfSoundSource.h"
 
+namespace _gfstr {
+
+const char* szCameraXB2 = "/camera/params.gca";
+
+const char* szCameraIRA = "/camera/params_dlc.gca";
+
+}  // namespace _gfstr
+
 namespace gf {
-
-const char* GfStaticRes::s_cameraParam = "/camera/params.gca";
-
-const char* GfStaticRes::s_cameraParamDlc = "/camera/params_dlc.gca";
 
 mtl::ALLOC_HANDLE GfStaticRes::s_hMem;
 
@@ -41,7 +45,7 @@ void GfStaticRes::loadRequest(bool dlcCamera) {
     for (unsigned int i = 0; i != count; ++i) {
         loadStaticRes(getSoundSourceFileName(i));
     }
-    loadStaticRes(dlcCamera ? s_cameraParamDlc : s_cameraParam);
+    loadStaticRes(dlcCamera ? _gfstr::szCameraIRA : _gfstr::szCameraXB2);
 }
 
 void GfStaticRes::loadStaticRes(const char* path) {
@@ -59,9 +63,9 @@ fw::CommonResource* GfStaticRes::search(const char* path) {
 
 void GfStaticRes::setupGameType(bool dlcCamera) {
     if (dlcCamera) {
-        replaceLoad(s_cameraParam, s_cameraParamDlc);
+        replaceLoad(_gfstr::szCameraXB2, _gfstr::szCameraIRA);
     } else {
-        replaceLoad(s_cameraParamDlc, s_cameraParam);
+        replaceLoad(_gfstr::szCameraIRA, _gfstr::szCameraXB2);
     }
 }
 
