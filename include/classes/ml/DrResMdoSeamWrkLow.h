@@ -4,7 +4,7 @@
 namespace grlib { class CGLibVtxInstans; }
 namespace grlib { class CGLibTriUniformArray; }
 namespace mtl { class ALLOC_HANDLE; }
-namespace ml { struct MdoWrkMatRes; class DrResMdoSeamMemObj; struct MdsSeamLowData; }
+namespace ml { struct MdoWrkMatRes; class DrResMdoSeamMemObj; struct MdsSeamLowData; class DrResMdoAlpTbl; }
 
 namespace ml {
 // The head of a seam low map's data (the name is from setupWork's symbol; the field names are not the original's,
@@ -23,6 +23,15 @@ struct MdsSeamLowMapHead {
 // The field names are not the original's.
 class DrResMdoSeamWrkLow {
 public:
+    // a render list entry (0xC bytes; DrMdoCtlSeamLowMap::createLowZPrePassDisplayList); names are not the original's
+    struct RenderEntry {
+        unsigned int m_infoOfs;   // 0x0: the MdsMdlInfoHeader, from MdoWrkMatRes::m_pMdlInfo
+        unsigned short m_next;    // 0x4: the next entry + 1 in m_renderEntries, 0 at the list's end
+        unsigned short pad_6;
+        unsigned short m_alpIdx;  // 0x8: partsZPrePassRender's alpha table entry
+        // 0xA: bit 1 sets DrMdoSetup::m_stateFlags bit 29 for the part's pre-pass render
+        unsigned short m_flags;
+    };
     DrResMdoSeamWrkLow();
     virtual ~DrResMdoSeamWrkLow();  // slot 0
     void release();
@@ -38,12 +47,19 @@ public:
     // 0x30: the memory its stream reads into (callLowMdlStream); zeroed by the constructor and release (the name is
     // not the original's)
     DrResMdoSeamMemObj* m_memObj;
-    unsigned char pad_38[0x8];
-    grlib::CGLibVtxInstans* m_instans;    // 0x40: released and destroyed by release
-    unsigned char pad_48[0x40];
+    RenderEntry* m_renderEntries;         // 0x38: RenderEntry::m_next - 1 indexes it
+    // 0x40: its m_inst is released and destroyed by release; createLowZPrePassDisplayList passes it to
+    // partsZPrePassRender as the DrResMdoAlpTbl* (symbol)
+    DrResMdoAlpTbl* m_instans;
+    unsigned char pad_48[0x10];
+    RenderEntry** m_renderList;           // 0x58: by pass, the first entry
+    unsigned char pad_60[0x18];
+    int* m_renderNum;                     // 0x78: [0] the pre-pass lists in m_renderList
+    unsigned char pad_80[0x8];
     void* m_buf2;                         // 0x88: deallocated by release
     unsigned char pad_90[0xC];
-    int m_num;                            // 0x9C: zeroed by the constructor and release
+    // 0x9C: zeroed by the constructor and release; createLowZPrePassDisplayList skips the work without bit 2
+    unsigned int m_cacheFlags;
     int m_dataIdx;                        // 0xA0: its MapHead::m_lowMdlTblOfs entry (callLowMdlStream); zeroed by the constructor
     int pad_A4;
     int pad_A8;

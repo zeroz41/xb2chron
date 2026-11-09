@@ -132,7 +132,8 @@ public:
     // 0x4C: zeroed by the constructor; its m_mapEntry's index (DrMdoCtlSeamRead::callMpfMdlStream; the name is not the
     // original's)
     unsigned short m_dataIdx;
-    unsigned char pad_4E[0x2];
+    // 0x4E: DrMdoCtlSeamMpfMap::createMpfZPrePassDisplayList skips the work while 0 (the name is not the original's)
+    unsigned short m_dispOn;
     short m_etcNum;   // 0x50: head's m_etcNum (the name is not the original's)
     short m_objNum;   // 0x52 (the name is not the original's)
     // 0x54: etc works in m_etcWorkTbl (setEtcMpfCache); setupWork and the destructor clear it (the name is not the

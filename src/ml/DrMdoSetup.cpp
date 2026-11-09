@@ -3765,6 +3765,12 @@ void DrMdoCtlSeam::releaseFreeSeamVertex(DrResMdoSeamVertex* vtx, bool keepMem) 
     }
 }
 
+DrMdoCtlSeamAll::DrMdoCtlSeamAll(const void* data, const char* name, DrMan* drMan, int viewNum)
+    : DrMdoCtlSeamRead(viewNum) {
+    m_pDrMan = drMan;
+    setupSeamMapHead(data, name);
+}
+
 void DrMdoCtlSeamAll::releaseSeamAll() {
     if (m_viewNum == 0) {
         m_pDrMan->m_pixlMan->m_shadowCacheMan->delShadowCacheUpdate();
@@ -3821,6 +3827,58 @@ void DrMdoCtlSeamAll::callShadowCacheUpdate(unsigned long bits) {
             wrk->callShadowCacheInstUpdate(bits);
         }
     }
+}
+
+bool DrMdoCtlSeamAll::callDeleteUpdate() {
+    if (!(m_seamFlags & 0x10000000)) {
+        return true;
+    }
+    if (m_seamFlags & 0x20000000) {
+        resourceRelease();
+        if (m_seamFlags & 0x2000) {
+            for (DrResMdoSeamWrkBase* wrk = m_basePool.m_list; wrk != nullptr;) {
+                DrResMdoSeamWrkBase* next = wrk->m_prev;
+                releaseFreeSeamBase(wrk);
+                wrk = next;
+            }
+            m_baseMemSize = 0;
+            for (DrResMdoSeamWrkLow* wrk = m_lowPool.m_list; wrk != nullptr;) {
+                DrResMdoSeamWrkLow* next = wrk->m_prev;
+                releaseFreeSeamLow(wrk);
+                wrk = next;
+            }
+            m_lowMemSize = 0;
+            for (DrResMdoSeamWrkInst* wrk = m_instPool.m_list; wrk != nullptr;) {
+                DrResMdoSeamWrkInst* next = wrk->m_pLink;
+                releaseFreeSeamInst(wrk);
+                wrk = next;
+            }
+            for (DrResMdoSeamWrkMpf* wrk = m_mpfPool.m_list; wrk != nullptr;) {
+                DrResMdoSeamWrkMpf* next = wrk->m_prev;
+                releaseFreeSeamMpf(wrk);
+                wrk = next;
+            }
+            m_baseMemSize = 0;
+            for (DrResMdoSeamWrkEnv* wrk = m_envPool.m_list; wrk != nullptr;) {
+                DrResMdoSeamWrkEnv* next = wrk->m_prev;
+                releaseFreeSeamEnvMap(wrk);
+                wrk = next;
+            }
+            m_envMemSize = 0;
+            for (DrResMdoSeamWrkLight* wrk = m_lightPool.m_list; wrk != nullptr;) {
+                DrResMdoSeamWrkLight* next = wrk->m_prev;
+                releaseFreeSeamLight(wrk);
+                wrk = next;
+            }
+            m_lightMemSize = 0;
+            m_lightNum = 0;
+            m_seamFlags &= ~0x2000;
+        }
+    }
+    if (m_cldMdlData != nullptr) {
+        m_cldMdlData->setCallDisp(false);
+    }
+    return false;
 }
 
 void DrMdoCtlSeamAll::dispOffUpdate() {
@@ -4170,6 +4228,68 @@ void DrMdoCtlSeamBaseMap::createBaseZPrePassDisplayList() {
             }
         }
         wrk->endRender();
+    }
+}
+
+void DrMdoCtlSeamMpfMap::createMpfZPrePassDisplayList() {
+    if (!(m_seamFlags & 0x8) || m_pDrMan->m_seamMpfRenderOff) {
+        return;
+    }
+    DrResMdoSeamWrkMpf* wrk = m_mpfPool.m_list;
+    grlib::CGLibVtxInstans* inst = m_pDrMan->m_mdlMan->m_vertexMan->m_instans;
+    m_pDrMan->m_apCache->setupCulling(static_cast<DrApCullType>(2));
+    for (; wrk != nullptr; wrk = wrk->m_prev) {
+        m_pWrkMatRes = wrk->m_matRes;
+        if (m_pWrkMatRes == nullptr || wrk->m_dispOn == 0) {
+            continue;
+        }
+        int num = wrk->m_objNum;
+        DrMdoCtlMpfWork* work = wrk->m_mpfWork;
+        for (int i = 0; i < num; i++) {
+            if (work->getObjChk(i) == 0) {
+                continue;
+            }
+            const MdsMdlTopHeader* top = &m_pWrkMatRes->m_pMdlTop[i];
+            int infoNum = top->m_infoNum;
+            const MdsMdlInfoHeader* info =
+                reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs);
+            for (int j = 0; j < infoNum; j++, info++) {
+                mpfZPrePassRender(i, info, work, inst);
+            }
+        }
+    }
+}
+
+void DrMdoCtlSeamLowMap::createLowZPrePassDisplayList() {
+    m_stateFlags &= ~0x40000000;
+    for (DrResMdoSeamWrkLow* wrk = m_lowPool.m_list; wrk != nullptr; wrk = wrk->m_prev) {
+        m_pWrkMatRes = wrk->m_matRes;
+        if (m_pWrkMatRes == nullptr || !(wrk->m_cacheFlags & 0x4)) {
+            continue;
+        }
+        int num = wrk->m_renderNum[0];
+        if (num == 0) {
+            continue;
+        }
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[1] = 0;
+        m_bindFlags[0] |= 0x10;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        DrResMdoAlpTbl* alpTbl = wrk->m_instans;
+        for (int i = 0; i < num; i++) {
+            for (DrResMdoSeamWrkLow::RenderEntry* entry = wrk->m_renderList[i]; entry != nullptr;
+                 entry = entry->m_next != 0 ? &wrk->m_renderEntries[entry->m_next - 1] : nullptr) {
+                const MdsMdlInfoHeader* info =
+                    reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + entry->m_infoOfs);
+                if (entry->m_flags & 0x2) {
+                    m_stateFlags |= 0x20000000;
+                } else {
+                    m_stateFlags &= ~0x20000000;
+                }
+                partsZPrePassRender(info, 0, 0, alpTbl, entry->m_alpIdx);
+            }
+        }
     }
 }
 

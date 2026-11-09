@@ -11,6 +11,8 @@ namespace ml {
 // DrMdoCtlSeam and DrMdoCtlSeamAll. The order of the chain is not proven (every part sits at offset 0).
 class DrMdoCtlSeamLowMap : public ::ml::DrMdoCtlSeamMpfMap {
 public:
+    // inline: DrMdoCtlSeamAll's constructor calls DrMdoCtlSeam(int) directly
+    explicit DrMdoCtlSeamLowMap(int viewNum) : DrMdoCtlSeamMpfMap(viewNum) {}
     void initLowMapParts(DrResMdoSeamWrkLow* wrk);
     void releaseFreeSeamLow(DrResMdoSeamWrkLow* wrk);
     void createLowZPrePassDisplayList();

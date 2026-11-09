@@ -64,6 +64,8 @@ struct _wkSeamReadWait {
 // DrMdoCtlSeam and DrMdoCtlSeamAll. The order of the chain is not proven (every part sits at offset 0).
 class DrMdoCtlSeamRead : public ::ml::DrMdoCtlSeamLight {
 public:
+    // inline: DrMdoCtlSeamAll's constructor calls DrMdoCtlSeam(int) directly
+    explicit DrMdoCtlSeamRead(int viewNum) : DrMdoCtlSeamLight(viewNum) {}
     void waitBaseMapStream(_wkSeamReadCall* call, bool ok);
     void waitLowMdlStream(_wkSeamReadCall* call, bool ok);
     void waitInstMapStream(_wkSeamReadCall* call, bool ok);

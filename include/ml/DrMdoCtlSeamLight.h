@@ -10,6 +10,8 @@ class DrResMdoSeamWrkLight;
 // DrMdoCtlSeam and DrMdoCtlSeamAll. The order of the chain is not proven (every part sits at offset 0).
 class DrMdoCtlSeamLight : public ::ml::DrMdoCtlSeamEnvMap {
 public:
+    // inline: DrMdoCtlSeamAll's constructor calls DrMdoCtlSeam(int) directly
+    explicit DrMdoCtlSeamLight(int viewNum) : DrMdoCtlSeamEnvMap(viewNum) {}
     void releaseFreeSeamLight(DrResMdoSeamWrkLight* wrk);
 };
 }  // namespace ml

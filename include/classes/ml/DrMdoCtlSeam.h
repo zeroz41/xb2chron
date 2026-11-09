@@ -49,6 +49,7 @@ class DrMdoCtlSeam : public ::ml::DrMdlObj {
 public:
     // slot 0. Inline: the original emits it (and the deleting destructor) after the unit's own functions; its
     // body only destroys the members
+    explicit DrMdoCtlSeam(int viewNum);
     virtual ~DrMdoCtlSeam() {}
     void resourceRelease();
     // DrMdoCtlSeamAll::dispOffUpdate: true when DrMdoCtlSeamAll::callDeleteUpdate is to run (the meaning is inferred)
@@ -61,6 +62,7 @@ public:
     void updateTexutreSeam();
     void updateVertexSeam();
     void releaseSeam();
+    void setupSeamMapHead(const void* data, const char* name);
 
     // a placed effect position (0x10; ScnObjAccPartsEtcPos reads it). Type and field names are not the original's.
     struct EtcPos {

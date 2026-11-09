@@ -10,6 +10,8 @@ class DrResMdoSeamWrkMpf;
 // DrMdoCtlSeam and DrMdoCtlSeamAll. The order of the chain is not proven (every part sits at offset 0).
 class DrMdoCtlSeamMpfMap : public ::ml::DrMdoCtlSeamInstMap {
 public:
+    // inline: DrMdoCtlSeamAll's constructor calls DrMdoCtlSeam(int) directly
+    explicit DrMdoCtlSeamMpfMap(int viewNum) : DrMdoCtlSeamInstMap(viewNum) {}
     void createMpfZPrePassDisplayList();
     void createMpfMapDisplayList();
     void releaseFreeSeamMpf(DrResMdoSeamWrkMpf* wrk);

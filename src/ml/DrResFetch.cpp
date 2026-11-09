@@ -5859,10 +5859,10 @@ void DrResMdoSeamWrkLight::setupWork(const MdsSeamLgtMapData* data) {
 DrResMdoSeamWrkLow::~DrResMdoSeamWrkLow() { release(); }
 
 void DrResMdoSeamWrkLow::release() {
-    grlib::CGLibVtxInstans* instans = m_instans;
+    DrResMdoAlpTbl* instans = m_instans;
     if (instans != nullptr) {
-        instans->release();
-        instans->~CGLibVtxInstans();
+        instans->m_inst.release();
+        instans->m_inst.~CGLibVtxInstans();
         m_instans = nullptr;
     }
     if (m_matRes != nullptr) {
@@ -5873,7 +5873,7 @@ void DrResMdoSeamWrkLow::release() {
         mtl::MemManager::deallocate(m_buf2, 0, false);
         m_buf2 = nullptr;
     }
-    m_num = 0;
+    m_cacheFlags = 0;
     m_memObj = nullptr;
 }
 

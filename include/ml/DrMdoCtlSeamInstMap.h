@@ -14,6 +14,8 @@ namespace ml {
 // DrMdoCtlSeam and DrMdoCtlSeamAll. The order of the chain is not proven (every part sits at offset 0).
 class DrMdoCtlSeamInstMap : public ::ml::DrMdoCtlSeamBaseMap {
 public:
+    // inline: DrMdoCtlSeamAll's constructor calls DrMdoCtlSeam(int) directly
+    explicit DrMdoCtlSeamInstMap(int viewNum) : DrMdoCtlSeamBaseMap(viewNum) {}
     void initInstMapParts(DrResMdoSeamWrkInst* wrk, DrResMdoSeamWrkInst* wrk2);
     void releaseFreeSeamInst(DrResMdoSeamWrkInst* wrk);
     void readInstMapCheck();
