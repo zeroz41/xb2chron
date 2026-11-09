@@ -113,7 +113,8 @@ public:
     // instant lights in use: releaseInstant*Light count them down, never below 0 (the names are not the original's)
     int m_instantPntNum;  // 0x108
     int m_instantSptNum;  // 0x10C
-    unsigned char pad_110[0x10];
+    // 0x110: DrPixlSkyDome::updateUniform places the volume 1000 units back along it from the view (name inferred)
+    mm::Vec3 m_godRayDir;
     float m_lumColor[3];  // 0x120, getSkyLuminance weighs it with m_ambColor (the name is not the original's)
     // 0x12C: DrCalcViewWork::unistatic_lightAmb's colour; DrEnvironmentObjLgt::updatePosLgt copies its m_ambColor
     // here (the name is not the original's)

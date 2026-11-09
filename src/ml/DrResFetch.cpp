@@ -4269,7 +4269,7 @@ void DrResQueryObj::end() {
     m_query.endQuery();
 }
 
-DrResUseQueryObj::DrResUseQueryObj() : m_query(nullptr), m_pixel(0) {}
+DrResUseQueryObj::DrResUseQueryObj() : m_pixel(0) {}
 
 DrResUseQueryObj::~DrResUseQueryObj() {
     if (m_query != nullptr) {

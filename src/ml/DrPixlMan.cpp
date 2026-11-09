@@ -32,6 +32,7 @@
 #include "ml/DrAPGxType.h"
 #include "grlib/CGLibCtl.h"
 #include "ml/DrResQueryObj.h"
+#include "ml/DrIniSys.h"
 #include "mm/Col4.h"
 #include "grlib/CGLibState.h"
 #include "grlib/CGLibTexture.h"
@@ -1036,6 +1037,35 @@ DrResQueryObj* DrPixlOccQuery::createObj() {
     return obj;
 }
 
+void DrPixlOccQuery::occRenderAABB(DrResQueryAcc* acc, const mm::Vec3& center, const mm::Vec3& extent) {
+    DrResQueryObj* obj = acc->m_query;
+    if (obj == nullptr) {
+        obj = createObj();
+        if (obj == nullptr) {
+            return;
+        }
+        acc->m_query = obj;
+        obj->m_user = acc;
+    }
+    obj->m_flags |= 1;
+    if (m_renderCount != 1) {
+        m_shader->setDeclarationIdx(m_occTypeOfs, 1);
+        m_shader->setupShader(0u);
+        m_renderCount = 1;
+    }
+    grlib::CGLibUniformEtcUtility uniform(m_shader);
+    uniform.setUseUniformBlock(m_uniformOfs);
+    float* buf = reinterpret_cast<float*>(uniform.getBuff());
+    grlib::ShdMat44SetMat44(buf, m_drMan->m_calcMan->m_pViewWork->m_viewProj);
+    grlib::ShdVec3SetVec3(buf + 16, extent);
+    grlib::ShdVec3SetVec3(buf + 20, center);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    obj->begin();
+    m_shdList->renderBox();
+    obj->end();
+}
+
 inline DrPixlPostMan::VolumeWork::VolumeWork(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
     : m_drMan(drMan), m_pixlMan(pixlMan), m_postMan(postMan), m_flag(false) {
     m_volume[0] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) RenderVolume(m_drMan);
@@ -2031,6 +2061,73 @@ float DrPixlPostParm::getBorderBlmMul() const { return m_borderBlmMul; }
 
 bool DrPixlPostParm::isBlm2PassExtract() const { return m_blm2PassExtract && m_tmaa; }
 
+bool DrPixlPostParm::updateSpec() {
+    int lv = DrMan::get()->m_specLv;
+    if (m_specLv == DrMan::get()->m_specLv) {
+        if (m_specLv != 1) {
+            return false;
+        }
+    } else {
+        m_specLv = DrMan::get()->m_specLv;
+        if (m_specLv != 1) {
+            if (lv == 0) {
+                DrPixlPostParm& ini = DrMan::getIns()->m_iniSys->m_postParm;
+                m_bloomReductionScale[0] = ini.m_bloomReductionScale[0];
+                m_bloomReductionScale[1] = ini.m_bloomReductionScale[1];
+                m_hdrFilter = ini.m_hdrFilter;
+                pad_FE8 = 0;
+                m_tmaa = ini.m_tmaa;
+                pad_FC = ini.pad_FC;
+                pad_194 = ini.pad_194;
+                m_ssao = ini.m_ssao;
+                m_ssr = ini.m_ssr;
+                m_motBlur = ini.m_motBlur;
+                m_motBlurDefault = ini.m_motBlurDefault;
+                m_godRay = ini.m_godRay;
+                pad_EC = ini.pad_EC;
+                m_shadowAddObjPos = ini.m_shadowAddObjPos;
+                m_shwRaytrace = ini.m_shwRaytrace;
+                m_rainDrop = ini.m_rainDrop;
+                *DrMan::getIns()->m_pAutoReduction = true;
+                pad_16D = ini.pad_16D;
+                m_tmaaSharpness[0] = ini.m_tmaaSharpness[0];
+                DrMan::get()->pad_1D92 = false;
+            }
+            if (m_specLv == 2) {
+                DrPixlPostParm& ini = DrMan::getIns()->m_iniSys->m_postParm;
+                *DrMan::getIns()->m_pAutoReduction = false;
+                pad_16D = ini.pad_16D;
+                m_tmaaSharpness[0] = 0.4f;
+            }
+            if (m_specLv == 3) {
+                DrPixlPostParm& ini = DrMan::getIns()->m_iniSys->m_postParm;
+                pad_16D = false;
+                m_tmaaSharpness[0] = ini.m_tmaaSharpness[0];
+                *DrMan::getIns()->m_pAutoReduction = true;
+            }
+            return false;
+        }
+    }
+    m_bloomReductionScale[0] = 0.5f;
+    m_bloomReductionScale[1] = 0.5f;
+    m_hdrFilter = true;
+    pad_FE8 = 0;
+    m_tmaa = false;
+    pad_FC = true;
+    pad_194 = false;
+    m_ssao = false;
+    m_ssr = false;
+    m_motBlur = false;
+    m_motBlurDefault = false;
+    m_godRay = false;
+    pad_EC = false;
+    m_shadowAddObjPos = false;
+    m_shwRaytrace = false;
+    m_rainDrop = false;
+    DrMan::get()->pad_1D92 = true;
+    return false;
+}
+
 void DrPixlPostParm::calcOfsRenderCheck(float x, float y) {
     m_ofsRenderCheck = (unsigned int)(x * 100.0f) | ((unsigned int)(y * 100.0f) << 8);
 }
@@ -2240,6 +2337,28 @@ bool DrPixlShadowMan::setSptCalcPos(mm::Vec3 const& pos, float radius) {
     return result;
 }
 
+bool DrPixlShadowMan::clipDirShadowChk(mm::Vec3 const& pos, float radius, bool skipView) {
+    if (m_dirShadow == nullptr) {
+        return false;
+    }
+    if (!skipView &&
+        !m_drMan->m_calcMan->m_pViewWork->m_clipPoli.clipLineTest(pos, m_dirShadow->m_shadowDir, radius)) {
+        return false;
+    }
+    DrPixlShadowObjDir* dir = m_dirShadow;
+    if (!(dir->m_flags & 8) || dir->m_typeClipRange <= radius) {
+        return false;
+    }
+    if (dir->m_clip.clipTypeTest(pos, radius) != 0) {
+        float depth = pos.x * dir->m_shadowPlane.normal.x + pos.y * dir->m_shadowPlane.normal.y +
+                      pos.z * dir->m_shadowPlane.normal.z + dir->m_shadowPlane.d;
+        if (depth < -radius) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void DrPixlShadowObj::renderSetup() {
     if (!(m_flags & 1)) {
         m_depthTarget->clearDepth(false);
@@ -2359,6 +2478,37 @@ DrPixlShadowObjSpt::~DrPixlShadowObjSpt() {
     delete m_next;
 }
 
+void DrPixlShadowObjSpt::afterUpdate() {
+    if (!(m_flags & 0x40)) {
+        return;
+    }
+    m_flags |= 2;
+    float* buf = reinterpret_cast<float*>(m_uniform.getBuff());
+    grlib::ShdMat44TransposeMat34(buf, m_viewProjMtx);
+    if (m_calcMax[0] > 1.0f) {
+        m_calcMax[0] = 1.0f;
+    }
+    if (m_calcMax[1] > 1.0f) {
+        m_calcMax[1] = 1.0f;
+    }
+    if (m_calcMin[0] < -1.0f) {
+        m_calcMin[0] = -1.0f;
+    }
+    if (m_calcMin[1] < -1.0f) {
+        m_calcMin[1] = -1.0f;
+    }
+    float width = m_calcMax[0] - m_calcMin[0];
+    float height = m_calcMax[1] - m_calcMin[1];
+    m_sptParmTbl[0] = 1.0f / m_range;
+    m_sptParmTbl[1] = -m_calcMin[0];
+    m_sptParmTbl[2] = -m_calcMin[1];
+    m_sptParmTbl[3] = -1.0f;
+    m_sptParmTbl[4] = 1.0f / width * 2.0f;
+    m_sptParmTbl[5] = 1.0f / height * 2.0f;
+    grlib::ShdF32SetF32Array(buf + 12, m_sptParmTbl, 8);
+    m_uniform.updateData();
+}
+
 bool DrPixlShadowObjSpt::clipChk(mm::Vec3 const& pos, float radius, bool) {
     if (m_clipRange < radius) {
         return false;
@@ -2373,6 +2523,45 @@ int DrPixlShadowObjSpt::clipTypeChk(mm::Vec3 const& pos, float radius) {
     return m_clip.clipTypeTest(pos, radius);
 }
 
+bool DrPixlShadowObjSpt::setSptCalcPos(mm::Vec3 const& pos, float radius) {
+    if (m_clipRange < radius || !(m_flags & 8)) {
+        return false;
+    }
+    if (!(m_flags & 0x20)) {
+        return true;
+    }
+    if (!m_clip.clipTest(pos, radius)) {
+        return false;
+    }
+    float x = pos.x * m_viewMtx.m[0][0] + pos.y * m_viewMtx.m[1][0] + pos.z * m_viewMtx.m[2][0] + m_viewMtx.m[3][0];
+    float y = pos.x * m_viewMtx.m[0][1] + pos.y * m_viewMtx.m[1][1] + pos.z * m_viewMtx.m[2][1] + m_viewMtx.m[3][1];
+    float z = pos.x * m_viewMtx.m[0][2] + pos.y * m_viewMtx.m[1][2] + pos.z * m_viewMtx.m[2][2] + m_viewMtx.m[3][2];
+    float rx = m_projMtx.m[0][0] * radius;
+    float ry = m_projMtx.m[1][1] * radius;
+    float scale = 1.0f;
+    if (fabsf(z) > 1.0f) {
+        scale = 1.0f / fabsf(z);
+    }
+    float maxX = (x + rx) * scale;
+    float maxY = (y + ry) * scale;
+    float minX = (x - rx) * scale;
+    float minY = (y - ry) * scale;
+    if (m_calcMax[0] < maxX) {
+        m_calcMax[0] = maxX;
+    }
+    if (m_calcMax[1] < maxY) {
+        m_calcMax[1] = maxY;
+    }
+    if (m_calcMin[0] > minX) {
+        m_calcMin[0] = minX;
+    }
+    if (m_calcMin[1] > minY) {
+        m_calcMin[1] = minY;
+    }
+    m_flags |= 0x40;
+    return true;
+}
+
 bool DrPixlShadowObjSpt::dispChk() { return (m_flags >> 1) & 1; }
 
 void DrPixlShadowObjSpt::stockTile() {
@@ -2381,6 +2570,29 @@ void DrPixlShadowObjSpt::stockTile() {
 }
 
 void DrPixlShadowObjSpt::renderLight() {}
+
+void DrPixlSkyDome::renderColorBackground(mm::Vec4 const& color) {
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getPostShdObj(0x12);
+    obj->setDeclarationIdx(obj->getDeclarationOfs("DEB_SKY_VISIBILITY"), 2);
+    obj->setDeclarationIdx(obj->getDeclarationOfs("DEB_SKY_AMBIENT"), 1);
+    obj->setDeclarationIdx(obj->getDeclarationOfs("OUTPUT_VELOCITY"), 2);
+    DrCalcViewWork* viewWork = m_drMan->m_calcMan->m_pViewWork;
+    DrAPGxType::setupStencilTest(1, 0, 2, 0, 0, 0, 2, 0, 0, 0);
+    DrAPGxType::setupBlend(0);
+    list->bindShdVertex();
+    obj->setupShader(0u);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    unsigned int projOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "proj");
+    unsigned int colorOfs =
+        uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "cSkyAmbient");
+    uniform.setMat44SetMat44(projOfs, viewWork->m_godRayProj);
+    uniform.setF32SetVec4(colorOfs, &color.x);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    list->renderQuads();
+}
 
 grlib::CGLibRenderTarget* DrPixlMan::getPixlObj(int index) {
     bool dbl = (0x27200ull >> (unsigned int)index) & 1;

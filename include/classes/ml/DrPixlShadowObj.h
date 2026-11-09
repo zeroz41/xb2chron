@@ -50,8 +50,17 @@ public:
     // 0x60: what getParmTbl returns; the uniform block is set up with 0x40 or 0x50 bytes, a 4x4 matrix plus a vector;
     // renderSetup passes the matrix to DrCalcViewWork::shadowBegin (the name is not the original's)
     mm::Mat44 m_parmTbl;
-    unsigned char pad_A0[0xD0];
-    unsigned char pad_170[0x8];
+    // 0xA0: DrPixlShadowObjSpt::setSptCalcPos moves a sphere's centre into the shadow's view with it (the name is
+    // not the original's)
+    mm::Mat44 m_viewMtx;
+    // 0xE0: setSptCalcPos scales the radius by its [0][0] and [1][1] (the name is not the original's)
+    mm::Mat44 m_projMtx;
+    // 0x120: DrPixlShadowObjSpt::afterUpdate sends it (transposed 3x4) to the uniform block (the name is not the
+    // original's)
+    mm::Mat44 m_viewProjMtx;
+    unsigned char pad_160[0x10];
+    float m_range;  // 0x170: DrPixlShadowObjSpt::afterUpdate sends 1 / it (the name is not the original's)
+    unsigned char pad_174[0x4];
     DrMan* m_drMan;  // 0x178: renderEnd ends the shadow pass of its DrCalcMan (the name is not the original's)
     unsigned char pad_180[0x10];
     // 0x190: the next object of a chain (DrPixlShadowMan::shadowRender walks it); the derived destructors delete it

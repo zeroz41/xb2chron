@@ -253,7 +253,10 @@ public:
     float m_seamBaseVertexMiddle;
     unsigned char pad_1D0C[0x14];
     unsigned int* m_dispOffBits;  // 0x1D20: a bit per display index, set = hidden (ScnObjAccPartsEtcPos::isDisp; name inferred)
-    unsigned char pad_1D28[0x8];
+    // 0x1D28: DrPixlPostParm::updateSpec applies the post parameters of this level when it changes: 1 turns most
+    // effects off, 0 restores DrIniSys's, 2 and 3 adjust (name inferred)
+    int m_specLv;
+    unsigned char pad_1D2C[0x4];
     mm::Vec3 m_globalWind[2];           // 0x1D30, by s_nDblNowIdx (getGlobalWind)
     // 0x1D50: ScnRenderDrSysParmAcc::setRenderTexMode stores its flag here (fw::CommonResource passes it); what reads
     // it is not known (the name is not the original's)
@@ -279,7 +282,8 @@ public:
     bool m_clusteredRenderOff;
     unsigned char pad_1D8D[0x4];
     bool m_iblSkip;                     // 0x1D91: isIBLSkip is true, isTemporalUPSToGlobalIBL false while set (name inferred)
-    unsigned char pad_1D92[0x4];
+    bool pad_1D92;  // 0x1D92: DrPixlPostParm::updateSpec sets it at spec 1 and clears it at spec 0
+    unsigned char pad_1D93[0x3];
     // 0x1D96: DrMdlMan::shadowRender renders nothing while set (the name is not the original's)
     bool m_shadowRenderOff;
     bool m_mdlDblPause;

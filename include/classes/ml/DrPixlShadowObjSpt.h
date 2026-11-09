@@ -23,7 +23,13 @@ public:
     virtual const float* getParmTbl() const { return m_sptParmTbl; }  // slot 11
 
     DrCalcClipWorkCone m_clip;  // 0x1A0 (the name is not the original's)
-    float m_sptParmTbl[0xC];  // 0x200: what getParmTbl returns (the name and element type are not the original's)
+    // 0x200: what getParmTbl returns; afterUpdate fills and sends the 8 floats (the name and element type are not
+    // the original's)
+    float m_sptParmTbl[8];
+    // 0x220: the view rectangle of the spheres setSptCalcPos accepted this frame (max x, y then min x, y), clamped
+    // to -1..1 by afterUpdate (the names are not the original's)
+    float m_calcMax[2];
+    float m_calcMin[2];
     float m_clipRange;  // 0x230: clipChk/clipTypeChk reject spheres larger than it (the name is not the original's)
 };
 }  // namespace ml

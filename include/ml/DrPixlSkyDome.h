@@ -3,6 +3,7 @@
 
 #include "ml/DrResQueryObj.h"
 #include "mm/Vec3.h"
+#include "mm/Vec4.h"
 #include "mtl/MemManager.h"
 
 namespace ml {
@@ -24,6 +25,9 @@ public:
     void baseRender();
     void godRayRender();
     void updateUniform();
+    // draws a full-screen quad with post shader 0x12 (DEB_SKY_VISIBILITY 2, DEB_SKY_AMBIENT 1, OUTPUT_VELOCITY 2),
+    // color as "cSkyAmbient"
+    void renderColorBackground(mm::Vec4 const& color);
 
     DrMan* m_drMan;  // 0x0
     DrResUseQueryObj* m_query;  // 0x8, DrPixlPostMan::update updates it and fades m_visible to whether it passed

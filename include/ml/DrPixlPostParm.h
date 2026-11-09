@@ -63,6 +63,8 @@ public:
     float getToonDirLightScale() const;
     void calcOfsRenderCheck(float x, float y);
     void calcReductionBuffer(int& width, int& height);
+    // applies DrMan::m_specLv when it changed (1 also every call); always returns false (return type inferred)
+    bool updateSpec();
     float getWeatherFrame() const;
     void resetWeatherFrame();
     void resetScene();
@@ -121,7 +123,11 @@ public:
     float m_lensFlareAngle;  // 0xD4
     float m_lensFlareRatio[4];  // 0xD8, the "ratio" uniform ([2] times 0.1)
     float m_lensFlareSpread;  // 0xE8, the "spuv" uniform's z less 0.8
-    unsigned char pad_EC[0x25];
+    // 0xEC, 0xFC: updateSpec copies them from DrIniSys's parameters (spec 1: clears 0xEC, sets 0xFC)
+    bool pad_EC;
+    unsigned char pad_ED[0xF];
+    bool pad_FC;
+    unsigned char pad_FD[0x14];
     bool m_tmaa;  // 0x111, getTMAAOn
     unsigned char pad_112[0x2];
     // by SHARPNESS_TYPE; getTMAASharpness reads m_tmaaSharpnessAlt while DrMan::m_qualityMode is 0 (names inferred)
@@ -130,11 +136,16 @@ public:
     unsigned char pad_144[0x14];
     // 0x158, DrPixlPostObjTMAA::render restarts the history (its flag 1) and clears it (the name is not the original's)
     bool m_tmaaReset;
-    unsigned char pad_159[0x1B];
+    unsigned char pad_159[0x14];
+    // 0x16D: updateSpec copies it from DrIniSys's parameters (spec 2 too; spec 3 clears it)
+    bool pad_16D;
+    unsigned char pad_16E[0x6];
     bool m_ssao;  // 0x174, DrPixlPostObjTSSAO::render_beforeTemporal runs its passes only while set (name inferred)
     unsigned char pad_175[0x13];
     float m_ssaoBlurAfter;  // 0x188, DrPixlPostObjTSSAO::render_afterTemporal's passBlur_Sub value (name inferred)
-    unsigned char pad_18C[0x3E];
+    unsigned char pad_18C[0x8];
+    bool pad_194;  // 0x194: updateSpec copies it from DrIniSys's parameters (spec 1 clears it)
+    unsigned char pad_195[0x35];
     bool m_motBlur;  // 0x1CA
     unsigned char pad_1CB[0x2];
     // 0x1CD: DrPixlPostObjMotionBlur2::render runs calcVelocityBlur while it is set (the name is not the original's)
@@ -253,7 +264,8 @@ public:
     // 0xFE4, DrShdLgtGlobalIBL::resetColorBuff resets the view's IBL colour buffer only when it is 3 (the name is not
     // the original's)
     int m_iblColorMode;
-    unsigned char pad_FE8[0x34];
+    int pad_FE8;  // 0xFE8: updateSpec clears it
+    unsigned char pad_FEC[0x30];
     // 0x101C, DrPixlPostObjUnbranchToDepth::renderQuater passes it as gParam.x (the name is not the original's)
     float m_unbranchQuaterParam;
     unsigned char pad_1020[0x4];
@@ -291,7 +303,9 @@ public:
     unsigned char m_frameReq;
     unsigned char pad_10FD[0x1];
     bool m_dbgReduction;  // 0x10FE, DrPixlMan::lastRender then draws debugReductionRender (name inferred)
-    unsigned char pad_10FF[0x5];
+    unsigned char pad_10FF[0x1];
+    // 0x1100: the DrMan spec level (DrMan::m_specLv) updateSpec last applied (name inferred)
+    int m_specLv;
     // 0x1104, getSSROn is false while set and DrCalcViewWork::m_gpuCheckAllVisible is (name inferred)
     bool m_ssrGpuCheckOff;
     bool m_resetScene[2];  // 0x1105, resetScene sets [DrMan::s_nDblStockIdx]
