@@ -288,7 +288,9 @@ public:
     bool IsBladeArtsEnd() const;
     // 2.0.0's symbols name it. What it does: as NotifyAngryEnd for the effect at 0x154 (m_subEffect): removed at once
     // while BattleGlobal::m_removeEffect is set, else faded out over 5.
+    void NotifyElementalAwakeStart();
     void NotifyElementalAwakeEnd();
+    void FinalizeArtsEffect(bool);
     bool IsMove() const;
     bool IsScout() const;
     void GetMoveDataPerSec(mm::Vec3& move) const;
@@ -808,7 +810,10 @@ public:
     // the party index of the character AI_StartActionArts aimed its arts at (-1 for none; the name is not the
     // original's)
     signed char m_aiArtsTarget;
-    unsigned short pad_1076_0 : 12;
+    unsigned short pad_1076_0 : 5;
+    // ActionCommandIdle clears it when a command sets m_actionID to 3 or 5 (meaning unknown)
+    unsigned short pad_1076_5 : 1;
+    unsigned short pad_1076_6 : 6;
     unsigned short pad_1076_12 : 1;  // IsIraEventGetupEnd answers true while it is clear (meaning unknown)
     unsigned short pad_1076_13 : 1;  // IsIraEventGetupEnd's answer once it counts (meaning unknown)
     unsigned short pad_1076_14 : 2;
@@ -860,7 +865,9 @@ public:
     unsigned short m_enhanceNameId : 8;
     unsigned short m_enhanceNameBuff : 1;
     unsigned short pad_10DF_1 : 7;
-    unsigned char pad_10E0[0x40];
+    // FinalizeArtsEffect acts only while it is set and clears it (meaning unknown)
+    bool pad_10E0;
+    unsigned char pad_10E1[0x3F];
     // the moving kind's own state, 0x14 while it rescues m_moveRescueTarget (IsRescue, GetRescueTarget, MoveStop;
     // the names are not the original's). A 32-bit bitfield run and a plain int: IsRescue and MoveStop compare the
     // state as a 32-bit value, GetRescueTarget's one 8-byte load is GVN widening its two loads.

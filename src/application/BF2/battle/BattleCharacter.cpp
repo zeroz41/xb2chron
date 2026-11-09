@@ -1832,6 +1832,23 @@ void BattleCharacter::StartBladeTimer(BLADE_TIMER_MODE mode) {
     m_bladeTimerMode = mode;
 }
 
+void BattleCharacter::AchieveCondition(int cond, unsigned int value) const {
+    if (!m_isPlayer) {
+        return;
+    }
+    gf::GF_OBJ_HANDLE* handle;
+    if (cond == 0x11 ? IsBlade(false) : (BattleGlobal::sys()->m_challengeAnySuccess || !IsBlade(false))) {
+        handle = m_handle;
+    } else {
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        if (param == nullptr || param->m_flags622_6) {
+            return;
+        }
+        handle = param->m_driverHandle;
+    }
+    Utility::AchieveCondition(static_cast<Utility::BTL_ACHIEVE_COND>(cond), handle, value);
+}
+
 void BattleCharacter::NotifyAngryStart() {
     if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->CheckOnceSE(BattleGlobal::SE_ONCE_ID(6))) {
         PlaySE(static_cast<BTL_SE>(1), 0x3C, nullptr, true);
@@ -1856,6 +1873,46 @@ void BattleCharacter::NotifyAngryEnd() {
         }
         m_effects[6] = 0;
     }
+}
+
+void BattleCharacter::NotifyElementalAwakeStart() {
+    if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->CheckOnceSE(BattleGlobal::SE_ONCE_ID(6))) {
+        PlaySE(static_cast<BTL_SE>(1), 0x3C, nullptr, true);
+    }
+    mm::mtl::PtrSingleton<TalkManager>::sys()->NotifyTrigger(m_voiceIndex, static_cast<TalkManager::TRIGGER>(0x2F), 0,
+                                                              0);
+    m_effects[7] = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->create(
+        mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_challengeAnySuccess ? "cmn_500_020" : "ex_kakusei_01", nullptr,
+        true);
+    float scale = pad_EE4 * 0.01f;
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param != nullptr) {
+        scale *= param->m_distanceScale;
+    }
+    UpdateEffectPositionScale(7, nullptr, scale, nullptr, nullptr);
+}
+
+void BattleCharacter::FinalizeArtsEffect(bool flag) {
+    if (!pad_10E0) {
+        return;
+    }
+    CharacterParameter* param = GetCharacterParameter(false);
+    param->SetArtsEffect(0);
+    param->pad_5e4_5 = 0;
+    if (flag) {
+        param->SetAdditionalEnhance(CharacterParameter::ADD_ENHANCE_TYPE(0), 0);
+        param->SetAdditionalEnhance(CharacterParameter::ADD_ENHANCE_TYPE(2), 0);
+    }
+    param->ClearBuff(0x16, false, true);
+    m_elementalCombo.pad_ab2_2 = 0;
+    if (!Utility::IsThirdCharacter(m_handle)) {
+        if (pad_F09_3 || !pad_F03_4) {
+            pad_F03_4 = true;
+            pad_F03_5 = true;
+            WriteBackChrCollisionFlag();
+        }
+    }
+    pad_10E0 = false;
 }
 
 void BattleCharacter::NotifyElementalAwakeEnd() {
@@ -2094,6 +2151,39 @@ int BattleCharacter::GetArtsSlotIndex(int artsID) const {
     }
     return index;
 }
+void BattleCharacter::ActionCommandIdle(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type) {
+    switch (type) {
+    case ActionCommand::COMMAND_MOVE_DIR_RATE: {
+        mm::Vec3 dir;
+        static_cast<const act_cmd::MOVE_DIR_RATE*>(cmd)->GetDirection(dir);
+        TurnDirection(dir, false, true);
+        SetAction(ACTION_KIZUNA_MAX, false, false, 0, 0.0f);
+        break;
+    }
+    case ActionCommand::COMMAND_MOVE_LOCK:
+        if (static_cast<const act_cmd::MOVE_LOCK*>(cmd)->IsTurnTarget()) {
+            TurnTarget(false, false, true);
+        }
+        SetAction(ACTION_KIZUNA_MAX, false, false, 0, 0.0f);
+        break;
+    case ActionCommand::COMMAND_SUFFER_DAMAGE:
+        m_actionID = 3;
+        pad_1076_5 = 0;
+        break;
+    case 5:
+        if (IsBlade(true)) {
+            SetAction(static_cast<ACTION_ID>(14), false, false, 0, 0.0f);
+        }
+        break;
+    case 6:
+        m_actionID = 5;
+        pad_1076_5 = 0;
+        break;
+    default:
+        break;
+    }
+}
+
 void BattleCharacter::ActionCommandEndIdle() {}
 
 void BattleCharacter::ActionCommandPutOutWeapon(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}

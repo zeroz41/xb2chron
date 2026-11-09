@@ -183,6 +183,7 @@ public:
     // BattleCharacter::NotifyBuffEnd(buff, its m_effect, the first bool); then recomputes m_flags622_7 from BattleGlobal's buff
     // mask.
     void ClearBuff(int buff, bool, bool notify);
+    void SetArtsEffect(int);
     // What it does: sets m_flags622_7 while IsBuff holds for a buff of BattleGlobal's
     // debuff mask (pad_778)
     void CheckDebuff();
