@@ -40,6 +40,36 @@ void GfMenuObjOperationInfo::update() {
     GfMenuObject::update();
 }
 
+void GfMenuObjOperationInfo::createIconTable(ui::UIObjectAcc& acc, mm::mtl::FixedVector<DupItem, 16>& items) {
+    unsigned int move = acc.searchChild("LAY_move");
+    unsigned int prev = acc.searchChild("IMG_bg");
+    ui::UIObjectAcc moveAcc(move);
+    bool first = true;
+    bool next = true;
+    for (unsigned int i = 0; next && i < 16; i++) {
+        unsigned int dup = moveAcc.duplicateChild("LAY_item");
+        ui::UIObjectAcc dupAcc(dup);
+        if (dupAcc.m_object != nullptr) {
+            ui::UIObjectDockPlugin* dock = ui::UIObjectDockPlugin::create(dup, -24, 0, prev);
+            dock->m_side = first;
+            dock->m_inside = first;
+            dock->release();
+            DupItem item;
+            item.m_handle = dup;
+            item.m_key = 0;
+            item.m_text = 0;
+            item.m_order = 0;
+            item.m_used = false;
+            items.push_back(item);
+            dupAcc.setDisp(false);
+            first = false;
+            prev = dup;
+        } else {
+            next = false;
+        }
+    }
+}
+
 bool GfMenuObjOperationInfo::setupIconTable(mm::mtl::FixedVector<DupItem, 16>& items, unsigned int index,
                                             unsigned int key, unsigned int text, unsigned int order2) {
     if (index < items.size()) {

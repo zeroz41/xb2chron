@@ -179,6 +179,53 @@ GfMenuQuestAdapter* GfMenuQuestAdapter::createFromList(unsigned int handle, GfMe
     return adapter;
 }
 
+bool GfMenuQuestAdapter::getParamText(QuestID id, unsigned int type, const char** text) {
+    if (id.empty()) {
+        return false;
+    }
+    unsigned int msg;
+    switch (type) {
+    case 0:
+        msg = GfQuestUtil::getMsgQuestTitle(id);
+        break;
+    case 1:
+        msg = GfQuestUtil::getMsgQuestSummary(id);
+        break;
+    case 2:
+        msg = GfQuestUtil::getMsgQuestResult(id);
+        break;
+    case 15:
+    case 16:
+        msg = GfQuestUtil::getMsgQuestNeedFieldSkill(type - 15, id);
+        break;
+    case 17: {
+        const char* ms = GfMenuObjUtil::getMenuMS(GfQuestInfo::getQuestNeedTaskCond(id) ? 0x88 : 0x89);
+        *text = ms;
+        return ms != nullptr;
+    }
+    case 46: {
+        GfQuestTaskLogResult result;
+        if (!GfQuestUtil::getMsgQuestTaskLog(result, QuestTaskParam(id, m_task, TASK_STATE(0)))) {
+            return false;
+        }
+        const char* log;
+        if (result.m_log == 0 || (log = GfDataQuest::getTaskLog(id, result.m_log)) == nullptr) {
+            log = "<error> no text";
+        }
+        *text = log;
+        return true;
+    }
+    default:
+        return false;
+    }
+    const char* str;
+    if (msg == 0 || (str = GfDataQuest::getTaskLog(id, msg)) == nullptr) {
+        str = "<error> no text";
+    }
+    *text = str;
+    return true;
+}
+
 bool GfMenuQuestAdapter::getParamIcon(QuestID id, unsigned int type, unsigned int& icon) {
     if (id.empty()) {
         return false;

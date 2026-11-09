@@ -21,6 +21,20 @@ void GfGameSearchObj::destroy() {
     delete self;
 }
 
+void GfGameSearchObj::finalize() {
+    for (unsigned long i = 0; i < 64; ++i) {
+        if (m_infos.isUsed(i)) {
+            destroyList(m_infos[i].m_list);
+            if (m_infos[i].m_list != nullptr) {
+                delete m_infos[i].m_list;
+                m_infos[i].m_list = nullptr;
+            }
+        }
+    }
+    m_objs.clear();
+    m_initialized = false;
+}
+
 void GfGameSearchObj::destroyList(InfoList* list) {
     if (list != nullptr) {
         for (InfoList::iterator it = list->begin(); it != list->end(); ++it) {
