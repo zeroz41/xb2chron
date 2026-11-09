@@ -1109,6 +1109,96 @@ bool BattleCharacter::CheckTalentMinochi(unsigned int id) {
     return false;
 }
 
+void BattleCharacter::FluctuateTrust(int type, int value) {
+    if (!m_isPlayer) {
+        return;
+    }
+    unsigned short point = Bdat::getValCheckU16(gf::GfDataBdat::getFP(0xF), "Point", type);
+    if (point == 0) {
+        return;
+    }
+    if (type == 1) {
+        mm::mtl::FixedVector<unsigned char, 90> list;
+        Utility::GetCharacterList(list, m_handle, static_cast<Utility::CHECK_CHR_NUM_MODE>(1), 0xB);
+        CharacterManager* manager = mm::mtl::PtrSingleton<CharacterManager>::sys();
+        for (unsigned char index : list) {
+            manager->GetCharacterConst(index)->AddTrust(point, value);
+        }
+    } else {
+        AddTrust(point, value);
+    }
+}
+
+void BattleCharacter::StartAngryArts(const ARTS_DATA& arts) {
+    CharacterParameter* param = GetCharacterParameter(false);
+    if (param == nullptr) {
+        return;
+    }
+    if (param->IsAngry() && param->IsAngryArts() && arts.pad_2D_0 && arts.pad_0_11 != 0 &&
+        (arts.m_kind == 1 || arts.m_kind == 2)) {
+        CharacterParameter* target = param->m_isNotBlade ? param : param->GetBuddyCharacterParameterConst();
+        if (target == nullptr) {
+            return;
+        }
+        mm::Vec3 pos = m_pos;
+        pos.y += param->pad_38;
+        target->SetBuff(0x23, 1.0f, 1.0f, &pos);
+        param->UseAngryArts();
+    }
+}
+
+void BattleCharacter::RecoverNextBladeArtsRecast() {
+    if (!IsBlade(false)) {
+        return;
+    }
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr) {
+        return;
+    }
+    const ARTS_PALETTE_DATA* palette = param->GetArtsPaletteDataConst(-1);
+    for (int i = 0; i < 3; i++) {
+        const ARTS_SLOT_DATA* slot = palette->GetSlotDataConst(i, false);
+        if (slot->m_artsID == 0) {
+            return;
+        }
+        if (slot->m_recast < 1.0f) {
+            const_cast<ARTS_SLOT_DATA*>(slot)->AddRecast(1.0f, true);
+            return;
+        }
+    }
+}
+
+bool BattleCharacter::CheckPermitArts(unsigned int id) {
+    if (!m_isPlayer) {
+        return false;
+    }
+    if (!mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_challengeAnySuccess && m_state != 12) {
+        if (!IsBlade(false)) {
+            return false;
+        }
+    }
+    if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->IsPermitArts(id)) {
+        return true;
+    }
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr) {
+        return false;
+    }
+    const GROUP_DATA& group = *(mm::mtl::PtrSingleton<DataManager>::sys()->m_groups + param->m_groupIndex);
+    if (!group.m_needPermit) {
+        return false;
+    }
+    bool permit = group.m_requestPermit & 1;
+    pad_1076_2 = permit;
+    if (!permit) {
+        return false;
+    }
+    if (id != 0) {
+        mm::mtl::PtrSingleton<BattleGlobal>::sys()->SetPermitArts(id);
+    }
+    return true;
+}
+
 bool BattleCharacter::CheckAngryArts(unsigned int id) {
     CharacterParameter* param = GetCharacterParameter(false);
     if (param == nullptr) {

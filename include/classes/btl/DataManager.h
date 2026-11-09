@@ -26,17 +26,20 @@ struct alignas(16) ARTS_DATA {
     enum DATA_TYPE : int;
     // clears the bit fields (the first 0x20 bytes) only
     ARTS_DATA()
-        : pad_0_0(0), m_kind(0), m_subKind(0), pad_0_32(0), m_hitWeightTotal(0), m_initialRecast(0), pad_8_0(0),
-          m_category(0), m_hitCount(0), m_range(0), pad_8_19(0), pad_8_28(0), m_fightCombo(0), pad_C_3(0), m_hitRow(0),
-          pad_10_12(0), pad_10_23(0), pad_10_28(0), pad_14(0), pad_18(0), m_distance(0), pad_1C_12(0),
-          m_iconType(0) {}
+        : pad_0_0(0), pad_0_11(0), pad_0_22(0), m_kind(0), m_subKind(0), pad_0_32(0), m_hitWeightTotal(0),
+          m_initialRecast(0), pad_8_0(0), m_category(0), m_hitCount(0), m_range(0), pad_8_19(0), pad_8_28(0),
+          m_fightCombo(0), pad_C_3(0), m_hitRow(0), pad_10_12(0), pad_10_23(0), pad_10_28(0), pad_14(0), pad_18(0),
+          m_distance(0), pad_1C_12(0), m_iconType(0) {}
     // the share of the hits' damage that hit takes (the hits' weights, divided by the two counts and the BDAT
     // table 0x12 row's "AddAtkNum" + 1)
     float GetHitWeightRate(int hit) const;
     // 2.0.0's symbols name it. What it does: 1 when m_kind is 3; else 2 when the enhance of m_enhance[index - 1]
     // (DataManager::GetEnhanceData) is effect 0x182; else 0 (BattleCharacter::ActionArts).
     int CheckHealArts(int index) const;
-    unsigned long long pad_0_0 : 24;
+    unsigned long long pad_0_0 : 11;
+    // BattleCharacter::StartAngryArts needs it non-zero (meaning unknown)
+    unsigned long long pad_0_11 : 11;
+    unsigned long long pad_0_22 : 2;
     unsigned long long m_kind : 5;  // CheckHealArts answers 1 for 3 (the name is not the original's)
     // with m_kind 3, GfMenuObjUtil::getArtsIconInfo gives range icon 3 for 3 (the name is not the original's)
     unsigned long long m_subKind : 3;
@@ -79,7 +82,10 @@ struct alignas(16) ARTS_DATA {
         unsigned int m_endFrame : 13;
     };
     GRAVITY m_gravity;
-    unsigned char pad_24[0xC];
+    unsigned char pad_24[0x9];
+    // BattleCharacter::StartAngryArts acts only while it is set (meaning unknown)
+    unsigned int pad_2D_0 : 1;
+    unsigned int pad_2D_1 : 23;
     // one hit's share (GetHitWeightRate; the names are not the original's)
     struct HIT {
         unsigned char pad_0[0x2];

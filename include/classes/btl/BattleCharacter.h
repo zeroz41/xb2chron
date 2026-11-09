@@ -110,6 +110,16 @@ public:
     // (SetAngryArtsAttack) and clears the buff; answers whether the buff was on. Callers: ActionArts,
     // ActionBladeArts, ActionSpAttack.
     bool CheckAngryArts(unsigned int id);
+    // with the parameter angry and holding its angry arts, an arts of kind 1 or 2 gives the non-blade (itself or its
+    // buddy) buff 0x23 at the character's head, then uses the angry arts up
+    void StartAngryArts(const ARTS_DATA& arts);
+    // a player-side character's trust change of BDAT 0xF row type ("Point"): every party character's for type 1, else
+    // its own (AddTrust)
+    void FluctuateTrust(int type, int value);
+    void AddTrust(unsigned int point, int value);
+    void RecoverNextBladeArtsRecast();
+    bool CheckPermitArts(unsigned int);
+    void SpeakArtsVoice(const ARTS_DATA& arts);
     // sends the effect caster a MsgFxRimBloom for the one-shot rim blooms 23-30
     void SetOneShotRimBloom(int id);
     // sets the collision object's and the object info's priority, keeping the first values they replace
@@ -285,6 +295,11 @@ public:
     void CreateDeadEffect();
     void NotifyAngryEnd();
     void ActionRun();
+    void ActionBladeGuard();
+    void ActionRepelled();
+    void ActionKnockBack();
+    void ActionBreak();
+    void ActionHanaBusterReboot();
     bool IsBladeArtsEnd() const;
     // 2.0.0's symbols name it. What it does: as NotifyAngryEnd for the effect at 0x154 (m_subEffect): removed at once
     // while BattleGlobal::m_removeEffect is set, else faded out over 5.
@@ -810,7 +825,11 @@ public:
     // the party index of the character AI_StartActionArts aimed its arts at (-1 for none; the name is not the
     // original's)
     signed char m_aiArtsTarget;
-    unsigned short pad_1076_0 : 5;
+    unsigned short pad_1076_0 : 2;
+    // CheckPermitArts keeps the group's m_requestPermit (low bit) here and answers true only while it is set
+    // (meaning unknown)
+    unsigned short pad_1076_2 : 1;
+    unsigned short pad_1076_3 : 2;
     // ActionCommandIdle clears it when a command sets m_actionID to 3 or 5 (meaning unknown)
     unsigned short pad_1076_5 : 1;
     unsigned short pad_1076_6 : 6;

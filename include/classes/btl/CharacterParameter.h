@@ -183,6 +183,9 @@ public:
     // BattleCharacter::NotifyBuffEnd(buff, its m_effect, the first bool); then recomputes m_flags622_7 from BattleGlobal's buff
     // mask.
     void ClearBuff(int buff, bool, bool notify);
+    // 2.0.0's symbols name it (BattleCharacter::StartAngryArts gives buff 0x23, 1, 1 and its position; the return
+    // type is not recovered, the result is unused)
+    void SetBuff(int buff, float, float, const mm::Vec3* pos);
     void SetArtsEffect(int);
     // What it does: sets m_flags622_7 while IsBuff holds for a buff of BattleGlobal's
     // debuff mask (pad_778)
