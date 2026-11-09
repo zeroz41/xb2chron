@@ -11,12 +11,22 @@ namespace btl {
 // the field names are not the original's)
 struct ENHANCE_EFFECT_DATA {
     unsigned short m_effect;  // the row's "EnhanceEffect"
+    // CharacterParameter::GetAdditionalEnhanceEffect hands the largest on (ENHANCE_DATA::pad_4; meaning unknown)
     unsigned short pad_2;
+    // GetAdditionalEnhanceEffect answers the last one through its out parameter, else scales the value by it
+    // (0: percent, 1: as is, 2: 1.0, else 0; meaning unknown)
     unsigned char pad_4;
-    unsigned char pad_5;
-    unsigned char pad_6;
+    unsigned char pad_5;  // GetAdditionalEnhanceEffect hands a nonzero one on with pad_6_0 (meaning unknown)
+    // GetAdditionalEnhanceEffect's flags (meanings unknown): pad_6_1 and pad_6_2 are handed on as ENHANCE_DATA's bits;
+    // with pad_6_3 the value is the largest, with pad_6_4 the smallest nonzero, else the sum
+    unsigned char pad_6_0 : 1;
+    unsigned char pad_6_1 : 1;
+    unsigned char pad_6_2 : 1;
+    unsigned char pad_6_3 : 1;
+    unsigned char pad_6_4 : 1;
+    unsigned char pad_6_5 : 3;
     unsigned char pad_7;
-    unsigned int pad_8;
+    float pad_8;  // the value (GetAdditionalEnhanceEffect; 1e6 for a row without one)
 };
 
 // one palette slot (ARTS_PALETTE_DATA::GetSlotDataConst); 0x18 bytes (the palette's stride; EnemyParameter's
@@ -83,7 +93,13 @@ public:
     // GetAdditionalEnhanceEffect fills it; ApplyStatusEnhanceAndDifficulty reads the float at its start
     struct ENHANCE_DATA {
         float m_value;  // the name is not the original's
-        unsigned char pad_4[0x4];
+        // GetAdditionalEnhanceEffect fills the rest from the enhances' ENHANCE_EFFECT_DATA (meanings unknown)
+        unsigned short pad_4;
+        unsigned char pad_6;
+        unsigned char pad_7_0 : 1;
+        unsigned char pad_7_1 : 1;
+        unsigned char pad_7_2 : 1;
+        unsigned char pad_7_3 : 5;
     };
     // the enumerators are not known (1.0.0's symbols give the type names only)
     enum SPECIAL_ENHANCE_TYPE {};
@@ -128,8 +144,15 @@ public:
     unsigned int CalcDamageArmor(unsigned int damage);
     // SetSpecialEnhanceRate(type, 0, 0) for types 0-21; without the flag, only 0-14 while BattleGlobal's pad_bit1 is set
     void ResetSpecialEnhanceRate(bool all);
+    // with the flag or while m_flags622_12 is set: drops pad_428, clears pad_5ec and m_addEnhances,
+    // ResetSpecialEnhanceRate(all) and clears m_flags622_12
+    void ResetEnhance(bool all);
     // removes every buff (ClearBuff(buff, false, true) for each set one of buffs 1-35), then clears the list
     void ClearAllBuff();
+    // while m_flags622_7 is set (for a player in a chain attack, or while BattleGlobal's pad_bit17 is and the
+    // character's BattleCharacter::IsKakuseiEffect gives its second flag) clears the buffs of BattleGlobal's debuff
+    // mask; then counts the timed buffs down by the frame time (30 per second) and clears those that ran out
+    void UpdateBuff(const fw::UpdateInfo& info);
     // GetHP over GetMaxHP, 0 when either is not positive, at most 1
     float GetHPRate() const;
     // 2.0.0's symbols name it. What it does: sets m_isNotBlade, while BattleGlobal's m_challengeAnySuccess is set, to
@@ -365,12 +388,20 @@ public:
     // an angle: BattleCharacter::CheckAttackPosition counts a target within half of it either side of the
     // character's direction as in front (meaning unknown)
     float pad_4c;
-    unsigned char pad_50[0x10];
+    // Reset sets them to 0, 0, -1 and -1 (meaning unknown)
+    float pad_50;
+    float pad_54;
+    float pad_58;
+    float pad_5c;
     // Set/Add/Min/GetSpecialEnhanceRate's rate by SPECIAL_ENHANCE_TYPE (22 of them; the name is not the original's)
     float m_specialEnhanceRate[22];
     // the unsigned short those functions store with the rate (the name is not the original's)
     unsigned short m_specialEnhanceTime[22];
-    unsigned char pad_e4[0x7];
+    // InitializeAttackParam clears 0xE4-0xE5 and 0xE8-0xF0 (with Reset and the constructor) and sets pad_f0_6
+    // (meaning unknown)
+    unsigned short pad_e4;
+    unsigned char pad_e6[0x2];
+    unsigned char pad_e8[0x3];
     // BattleCharacter::CheckWeaponDistance's ranges: a target within m_weaponRange and beyond m_weaponMinRange (0:
     // none) is in weapon distance (the names are not the original's)
     unsigned char m_weaponMinRange;
@@ -379,7 +410,8 @@ public:
     // one 16-bit storage unit from 0xEF (DataManager::RegisterUpdateAttackParam sets its bit 15 with a halfword load
     // and store; meaning unknown)
     unsigned char pad_ef : 8;
-    unsigned char pad_f0_0 : 7;
+    unsigned char pad_f0_0 : 6;
+    unsigned char pad_f0_6 : 1;  // InitializeAttackParam sets it (meaning unknown)
     bool pad_f0_7 : 1;  // DataManager::RegisterUpdateAttackParam sets it on every valid character (meaning unknown)
     unsigned char pad_f1[0x3];
     // GetFightComboDataConst answers the second while m_flags622_9 is set and its id is not 0 (the name is not the
@@ -393,7 +425,7 @@ public:
     // IsBuff tests bit (buff & 7) of byte buff >> 3 (the name is not the original's); ClearAllBuff clears m_buffs up
     // to the end of these 5 bytes (one memset of 0x146)
     unsigned char m_buffFlags[5];
-    unsigned char pad_5d6[0x2];
+    unsigned short pad_5d6;  // Reset sets it to 0xFFFF (meaning unknown)
     unsigned short pad_5d8;  // Utility::AI_GetResistantAttrNum passes it on
     unsigned short pad_5da;  // GetKizunaLinkBdatID answers it
     unsigned char pad_5dc[0x2];
@@ -426,7 +458,9 @@ public:
     // measures from it; the name is not the original's)
     unsigned char m_charaIndex;
     signed char pad_5ea;  // GetClass answers it when it is not negative (meaning unknown)
-    unsigned char pad_5eb[0x37];
+    unsigned char pad_5eb;
+    // ResetEnhance clears it (one memset of 0x36; meaning unknown)
+    unsigned char pad_5ec[0x36];
     unsigned short m_flags622_0 : 1;  // unknown
     // GetHateTarget answers -1 while it is clear (the name is not the original's)
     bool m_hasHateTarget : 1;
