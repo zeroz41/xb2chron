@@ -30,11 +30,34 @@ void UIMotionLibrary::reset() {
     }
 }
 
-// update (0x710067EFC4) is not here yet: 15 words apart (the latch's ++it is placed differently)
+void UIMotionLibrary::update(const fw::UpdateInfo& info) {
+    for (mm::mtl::Vector<MotionInfo>::iterator it = m_motions.begin(); it != m_motions.end();) {
+        bool erased = false;
+        if (it->m_data == nullptr && it->m_resource != nullptr && it->m_resource->valid()) {
+            if (it->m_resource->getAssetSize() != 0) {
+#line 78
+                UIMotionData* data = new (UIUtil::getProgAllocator(), 16, __FILE__, __LINE__)
+                    UIMotionData(UIUtil::getProgAllocator());
+                data->deserialize(it->m_resource->getAssetData(), it->m_resource->getAssetSize());
+                it->m_data = data;
+            } else {
+                if (it->m_resource != nullptr) {
+                    it->m_resource->release();
+                    it->m_resource = nullptr;
+                }
+                it = m_motions.erase(it);
+                erased = true;
+            }
+        }
+        if (!erased) {
+            ++it;
+        }
+    }
+}
 
 }  // namespace ui
 
-// the motion list's erase (its user, update, is not written yet)
+// the motion list's erase (its user is update)
 template mm::mtl::Vector<ui::UIMotionLibrary::MotionInfo>::iterator mm::mtl::Vector<ui::UIMotionLibrary::MotionInfo>::erase(
     ui::UIMotionLibrary::MotionInfo*);
 

@@ -23,12 +23,17 @@ public:
     };
     // one object's circle (addObject's)
     struct RollSetting {
+        // user constructor: addObject zeroes its new entry before copying the parameters in (the 12 zero
+        // bytes the original stores at the entry's radius/angle/speed before the copy)
+        RollSetting() : m_reverse(false), m_radius(0), m_startAngle(0.0f), m_speed(0.0f) {}
         bool m_reverse;            // true: the angle grows (wrapping past 360), false: it shrinks (wrapping below 0)
         unsigned int m_radius;     // the distance from the centre
         float m_startAngle;        // the angle the entry starts at (degrees)
         float m_speed;             // degrees per update
     };
     struct RollObjInfo {
+        // user constructor (addObject's entry; needed for the same zero stores)
+        RollObjInfo() : m_handle(0), m_angle(0.0f) {}
         RollSetting m_param;
         unsigned int m_handle;  // the object it turns
         float m_angle;          // its angle now (degrees)

@@ -86,9 +86,42 @@ void UIGroup::disp(bool disp) {
         m_flags |= 4;
     }
 }
+void UIGroup::updateObject(const fw::UpdateInfo& info) {
+    if (m_objList == nullptr || (m_flags & 1) != 0) {
+        return;
+    }
+    for (RootObjInfo* it = m_rootObjs.begin(); it != m_rootObjs.end();) {
+        bool erased = false;
+        if (it->m_terminate && it->m_release) {
+            if (it->m_releaseWait == 0) {
+                if (UIUtil::getLayoutObject(it->m_handle)->isTermWithChild()) {
+                    m_objList->release(it->m_name.m_str);
+                    UIEventManager::EventInfo event;
+                    event.m_data.m_type = 6;
+                    event.m_handle = it->m_handle;
+                    UIEventManager::get()->pushGameEvent(event);
+                    it->m_handle = 0;
+                    it->m_releaseWait = 2;
+                }
+            } else if (--it->m_releaseWait == 0) {
+                if (it->m_resource != nullptr) {
+                    it->m_resource->release();
+                    it->m_resource = nullptr;
+                }
+                it = m_rootObjs.erase(it);
+                erased = true;
+            }
+        }
+        if (!erased) {
+            ++it;
+        }
+    }
+    m_objList->update();
+}
+
 }  // namespace ui
 
-// instantiated for ui::UIGroup::updateObject (not written yet)
+// instantiated for ui::UIGroup::updateObject
 template mm::mtl::Vector<ui::UIGroup::RootObjInfo>::iterator mm::mtl::Vector<ui::UIGroup::RootObjInfo>::erase(ui::UIGroup::RootObjInfo*);
 
 namespace ui {

@@ -32,6 +32,23 @@ void UICtrlRoll::reset() {
     m_entries.clear();
 }
 
+void UICtrlRoll::addObject(unsigned int handle, const RollSetting& param) {
+    if (m_entries.size() == m_entries.capacity()) {
+        return;
+    }
+    for (unsigned int i = 0; i < m_entries.size(); i++) {
+        if (m_entries[i].m_handle == handle) {
+            m_entries[i].m_param = param;
+            return;
+        }
+    }
+    RollObjInfo entry;
+    entry.m_handle = handle;
+    entry.m_angle = param.m_startAngle;
+    entry.m_param = param;
+    m_entries.push_back(entry);
+}
+
 void UICtrlRoll::delObject(unsigned int handle) {
     if (m_entries.size() == m_entries.capacity()) {
         return;
