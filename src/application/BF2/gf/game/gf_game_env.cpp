@@ -180,7 +180,17 @@ void GfLayerPause::destroyLayerPause() {
 }
 
 GfGameSpeed::GfGameSpeed(const GfSetupParam& param) : m_timedSpeed(1.0f), m_timer(0.0f) {
+    initialize(param);
+}
+
+void GfGameSpeed::initialize(const GfSetupParam& param) {
     m_valid = true;
+}
+
+void GfGameSpeed::build(const GfSetupParam& param) {
+#line 355
+    new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfGameSpeed(param);
+    setGlobalSpeed(param.m_gameSpeed);
 }
 
 void GfGameSpeed::setGlobalSpeed(float speed) {

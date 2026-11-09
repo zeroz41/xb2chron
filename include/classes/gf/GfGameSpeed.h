@@ -49,6 +49,8 @@ public:
 
     GfGameSpeed(const GfSetupParam& param);
     virtual ~GfGameSpeed();  // slot 0
+    // 2.0.0 symbol: sets m_valid; only the constructor calls it (inlined, gone from 3.0.1's symbols)
+    void initialize(const GfSetupParam& param);
     static void build(const GfSetupParam& param);
     static void destroy();
     static void update(const fw::UpdateInfo& info);
