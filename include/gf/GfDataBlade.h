@@ -312,6 +312,9 @@ public:
     static void fn_7100239560(mm::mtl::FixedVector<unsigned short, 422>& list,
                               const mm::mtl::FixedVector<unsigned short, 422>& group);
     static unsigned int getBladeRelativeID(unsigned int blade);  // getBladeIndex
+    // named by the symbols (not written yet); GfDataDriver::getDefaultWpnType keeps the weapon types it finds a
+    // blade for
+    static unsigned int getBladeByWeaponType(unsigned int weaponType, unsigned int driver, bool);
     // whether a model path names a common blade (it starts with "bl/bl2")
     static bool getCommonBladeName(const char* path);
     // a blade's mercenary name message (none for the common blades' ids 1197-1422)

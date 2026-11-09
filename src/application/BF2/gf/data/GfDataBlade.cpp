@@ -1578,6 +1578,30 @@ bool GfDataParty::isExistDriver(unsigned int driver) {
     return false;
 }
 
+bool GfDataDriver::isEnableEquipBlade(unsigned int driver, unsigned int blade) {
+    if (blade == 0) {
+        return false;
+    }
+    unsigned int setDriver = GfDataBlade::getSetDriver(blade);
+    if (setDriver != 0 && setDriver != driver) {
+        return false;
+    }
+    if (driver != 4 && blade >= 1005 && blade < 1008) {
+        return false;
+    }
+    unsigned int creator = GfDataBlade::getCreator(blade);
+    if (driver == 1) {
+        if (creator == 0) {
+            return false;
+        }
+        if (creator == 1) {
+            return true;
+        }
+        return GfGameManager::isRexAwakening();
+    }
+    return creator != 0 && creator == driver;
+}
+
 bool GfDataDriver::isDummyDriver(unsigned int driver) {
     return false;
 }
@@ -3503,6 +3527,27 @@ bool GfDataQuest::getListVisible(QuestID id) {
         return false;
     }
     return QuestListAcc::get()->getListVisible(id) != 0;
+}
+
+void GfDataQuest::setOrderTimming(QuestID quest) {
+    // quests below 6000 (the main and blade quest ranges; an inline the original passes the id to by value)
+    auto isOrderTimmingQuest = [](QuestID id) { return id.m_id < 6000; };
+    if (!isOrderTimmingQuest(quest)) {
+        return;
+    }
+    if (QuestListAcc::get()->getListAutoStart(quest) != 0) {
+        return;
+    }
+    for (unsigned int i = 0x619; i < 0x763; i++) {
+        unsigned int value = GfGameFlag::getLocal(16, i);
+        if (value == quest.m_id) {
+            return;
+        }
+        if (value == 0) {
+            GfGameFlag::setLocal(16, i, quest.m_id);
+            return;
+        }
+    }
 }
 
 unsigned short GfDataQuest::m_achieve2blade[0x4D80];
@@ -5716,8 +5761,50 @@ SDataIdea* GfDataDriver::getSDataIdea(unsigned int driver) {
     return &getSDataDriver(driver).m_idea;
 }
 
+bool GfDataDriver::getListBlade(mm::mtl::FixedVector<unsigned short, 422>& list, unsigned int driver) {
+    int num = getMaxSetBladeNum(driver);
+    for (int i = 0; i < num; i++) {
+        unsigned int blade = getBlade(driver, i);
+        if (blade != 0) {
+            list.push_back(blade);
+        }
+    }
+    return !list.empty();
+}
+
+unsigned int GfDataDriver::getDriverWpnType(unsigned int driver) {
+    unsigned int blade = getBlade(getSDataDriver(driver), -1);
+    if (blade == 0) {
+        return 0;
+    }
+    return GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(blade)].m_weaponType;
+}
+
 unsigned short GfDataDriver::getDefaultWpnType(unsigned int driver) {
     return getDefaultWpnType(getSDataDriver(driver));
+}
+
+unsigned short GfDataDriver::getDefaultWpnType(const SDataDriver& data) {
+    unsigned int blade = getBlade(data, -1);
+    if (blade != 0) {
+        unsigned char type = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(blade)].m_weaponType;
+        if (type != 0) {
+            return type;
+        }
+    }
+    mm::mtl::FixedVector<unsigned short, 32> types;
+    unsigned int id = data.m_id;
+    GfBdatChrDr* chrDr = GfBdatChrDr::get();
+    for (unsigned int type = 1; type < 50; type++) {
+        if (type < 37 && chrDr->getChrDrWpnType(id, type - 1) - 1 < 4 &&
+            GfDataBlade::getBladeByWeaponType(type, id, false) != 0) {
+            types.push_back(type);
+        }
+    }
+    if (types.empty()) {
+        return 0;
+    }
+    return types[0];
 }
 
 bool GfDataDriver::isEnableLevelUp(unsigned int driver) {

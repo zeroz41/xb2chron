@@ -210,7 +210,14 @@ public:
     static bool isEnableLevelUp(unsigned int driver);
     // the weapon type of the driver's data (found the getSDataDriver way); named by the symbols
     static unsigned short getDefaultWpnType(unsigned int driver);
-    static unsigned short getDefaultWpnType(const SDataDriver& data);  // named by the symbols (not written yet)
+    static unsigned short getDefaultWpnType(const SDataDriver& data);  // named by the symbols
+    // named by the symbols: the m_weaponType of the driver's engaged blade (getBlade(data, -1)), 0 for none
+    static unsigned int getDriverWpnType(unsigned int driver);
+    // named by the symbols (GfAssetSetupDriver::setup asks them for the driver's blade)
+    static bool isNeedAttributeResource(unsigned int driver, unsigned int blade);
+    static bool isNeedAttributeResourceDeathBlow(unsigned int driver, unsigned int blade);
+    // named by the symbols: whether the driver may engage the blade (its m_setDriver and m_creator)
+    static bool isEnableEquipBlade(unsigned int driver, unsigned int blade);
     static SDataIdea* getSDataIdea(unsigned int driver);
     static unsigned int getExpUsed(unsigned int driver);  // (appended by chardata)
     // takes the blade off the driver it is set to (GfGameUtil::execActivateReserverForBlade)
