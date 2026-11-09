@@ -35,12 +35,17 @@ struct ColorFilter {
 };
 // a cloud sea request (createCloudSea's queue entry; the field names are not the original's)
 struct CloudSea {
+    // FixedQueue<CloudSea, 16>::insert's new end slot stores the first field alone and the other two as one word:
+    // members initialized one by one by a user constructor
+    CloudSea() : m_type(), m_prio(), m_handle() {}
     CLOUD_SEA m_type;
     CLOUD_SEA_PRIO m_prio;
     CLOUD_SEA_HANDLE m_handle;  // (count + 1) | (serial << 8)
 };
 // a temporary weather request (createTempWeather's queue entry; the field names are not the original's)
 struct WeatherSet {
+    // as CloudSea: FixedQueue<WeatherSet, 16>::insert's new end slot is initialized member by member
+    WeatherSet() : m_weather(), m_prio(), m_handle() {}
     WEATHERID m_weather;
     WEATHER_PRIO m_prio;
     WEATHER_HANDLE m_handle;  // (count + 1) | (serial << 8)

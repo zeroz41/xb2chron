@@ -106,6 +106,10 @@ public:
     // SCOM_RELOAD_TEXT::exec has it inlined twice (before and after the reload); defined in gf_req_scom.cpp. The name
     // is not the original's.
     static inline void callReloadBdat(RELOAD_BDAT type);
+    // each listener's gevLayerPause (IGfEvent slot 38) with the layer and whether it pauses. Inline: no copy in 1.0.0's
+    // or 2.0.0's symbols, GfLayerPause::setLayerPause and destroyLayerPause have it inlined per layer; defined in
+    // gf_game_env.cpp. The name is not the original's (call + the slot's name, as the other call* functions).
+    static inline void callLayerPause(unsigned int layer, bool pause);
 
 private:
     // the listeners each call* reaches in turn (addEventCallback, removeEventCallback)

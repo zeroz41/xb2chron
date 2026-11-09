@@ -10,6 +10,9 @@
 #include "classes/fw/Framework.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataManager.h"
+#include "classes/gf/GfEvent.h"
+#include "classes/gf/IGfEvent.h"
+#include "classes/gf/GfObj.h"
 #include "classes/gf/GfGameFlag.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfLayerPause.h"
@@ -66,6 +69,101 @@ void GfLayerPause::gevPause(unsigned int prev, unsigned int next) {
     } else if (next & 0x200) {
         self->m_eventPause10 = setLayerPause(10);
     }
+}
+
+inline void GfEvent::callLayerPause(unsigned int layer, bool pause) {
+    GfEvent* event = get();
+    for (unsigned long i = 0; i < event->m_listeners.size(); ++i) {
+        event->m_listeners[i]->gevLayerPause(layer, pause);
+    }
+}
+
+void GfLayerPause::destroyLayerPause(GF_LP_HANDLE*& handle) {
+    if (handle == reinterpret_cast<GF_LP_HANDLE*>(-1)) {
+        return;
+    }
+    unsigned long value = reinterpret_cast<unsigned long>(handle);
+    unsigned int bit = static_cast<unsigned int>(value) >> 8;
+    unsigned int layer = value & 0xFF;
+    GfLayerPause* self = get();
+    unsigned int* pauses = nullptr;
+    switch (layer) {
+    case 0:
+        pauses = &self->m_layer0Pauses;
+        break;
+    case 1:
+        pauses = &self->m_layer1Pauses;
+        break;
+    case 4:
+        pauses = &self->m_layer4Pauses;
+        break;
+    case 7:
+        pauses = &self->m_layer7Pauses;
+        break;
+    case 10:
+        pauses = &self->m_layer10Pauses;
+        break;
+    }
+    *pauses &= ~(1 << bit);
+    if (*pauses == 0) {
+        // the layer's group runs again once its last handle is gone
+        auto resume = [](unsigned int index) {
+            if (fw::Framework::isLayerPause(index)) {
+                fw::Framework::setLayerPause(index, false);
+                GfObjLayerSpeed::reqApplyModelLayerSpeed(index, 1.0f);
+                GfEvent::callLayerPause(index, false);
+            }
+        };
+        resume(layer);
+        if (layer != 0) {
+            resume(layer + 1);
+            resume(layer + 2);
+        }
+    }
+    handle = reinterpret_cast<GF_LP_HANDLE*>(-1);
+}
+
+GF_LP_HANDLE* GfLayerPause::setLayerPause(unsigned int layer) {
+    GfLayerPause* self = get();
+    unsigned int* pauses = nullptr;
+    switch (layer) {
+    case 0:
+        pauses = &self->m_layer0Pauses;
+        break;
+    case 1:
+        pauses = &self->m_layer1Pauses;
+        break;
+    case 4:
+        pauses = &self->m_layer4Pauses;
+        break;
+    case 7:
+        pauses = &self->m_layer7Pauses;
+        break;
+    case 10:
+        pauses = &self->m_layer10Pauses;
+        break;
+    }
+    auto pause = [](unsigned int index) {
+        if (!fw::Framework::isLayerPause(index)) {
+            fw::Framework::setLayerPause(index, true);
+            GfObjLayerSpeed::reqApplyModelLayerSpeed(index, 0.0f);
+            GfEvent::callLayerPause(index, true);
+        }
+    };
+    // the first free bit of the group is the handle's
+    unsigned int mask = 1;
+    for (unsigned int bit = 0; bit < 32; ++bit, mask <<= 1) {
+        if ((*pauses & mask) == 0) {
+            *pauses |= mask;
+            if (layer != 0) {
+                pause(layer + 1);
+                pause(layer + 2);
+            }
+            pause(layer);
+            return reinterpret_cast<GF_LP_HANDLE*>(static_cast<unsigned long>(layer | (bit << 8)));
+        }
+    }
+    return reinterpret_cast<GF_LP_HANDLE*>(-1);
 }
 
 bool GfLayerPause::isLayerPause(unsigned int layer) {
@@ -382,6 +480,18 @@ void GfGameEnv::destroyCloudSea(CLOUD_SEA_HANDLE handle) {
     } else {
         env->m_cloudSeas.erase(it);
     }
+}
+
+void GfGameEnv::setCloudSea(CLOUD_SEA_HANDLE handle, CLOUD_SEA type) {
+    GfGameEnv* env = get();
+    mm::mtl::FixedQueue<CloudSea, 16>::iterator it =
+        mm::mtl::find_if(env->m_cloudSeas.begin(), env->m_cloudSeas.end(),
+                         [handle](const CloudSea& sea) { return sea.m_handle == handle; });
+    if (it == env->m_cloudSeas.end()) {
+        return;
+    }
+    (*it).m_type = type;
+    fw::RenderParam::setCloudSea(env->m_cloudSeas.first().m_type);
 }
 
 CLOUD_SEA GfGameEnv::getCurrentCloudSea() {
