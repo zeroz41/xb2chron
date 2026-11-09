@@ -3015,6 +3015,13 @@ bool DevFileArchiveNx::rfClose(FileHandleTh* handle) {
     return false;
 }
 
+}  // namespace ml
+
+// instantiated for ml::DevFileArchiveNx::getFilesBlock and getFileSize (not written yet)
+template mm::mtl::FixStr<256> mm::mtl::FixStr<256>::operator+(const char*) const;
+
+namespace ml {
+
 bool DevFileArchiveNx::rfIsUsedChannel(unsigned int channel) {
     return m_impl->m_params[channel].m_isOpen;
 }
@@ -3707,6 +3714,12 @@ DevFileArchiver::~DevFileArchiver() {
         m_medias[i].m_archives.clear();
     }
 }
+}  // namespace ml
+
+// instantiated for ml::DevFileArchiver::addArchive (not written yet); brings restoreBlock, restoreNinfo, reallocArray
+template void ml::DevFileDictionary<int, ml::DevFileDicAllocator, -1, -2, true>::loadFromMemory(void*, unsigned long, void*, unsigned long);
+
+namespace ml {
 
 int DevPad::getPadMax() {
     return 11;

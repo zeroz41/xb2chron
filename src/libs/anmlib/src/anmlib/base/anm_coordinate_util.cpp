@@ -22,6 +22,22 @@ void CoordinateUtil::convertRCSToSPC(mm::Vec3* pVec) {
     pVec->z = azimuth;
 }
 
-// convertSPCToRCS (0x71008845F8) is not matched yet
+void CoordinateUtil::convertSPCToRCS(mm::Vec3* pVec) {
+#line 45
+    MM_ASSERT(pVec);
+    float elevation = pVec->y;
+    float sinElevation = ::sinf(elevation);
+    float cosElevation = ::cosf(elevation);
+    float azimuth = pVec->z;
+    float sinAzimuth = ::sinf(azimuth);
+    float cosAzimuth = ::cosf(azimuth);
+    float radius = pVec->x;
+    float horizontal = cosElevation * radius;
+    float z = cosAzimuth * horizontal;
+    float x = sinAzimuth * horizontal;
+    pVec->x = x;
+    pVec->y = sinElevation * radius;
+    pVec->z = z;
+}
 
 }  // namespace anm

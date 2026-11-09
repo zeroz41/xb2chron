@@ -1848,6 +1848,15 @@ int DrCalcViewWork::unistatic_lightCol(float* pDst) {
     return DrResMdoUniformBlock::s_nVarSizeTbl[29];
 }
 
+int DrCalcViewWork::unistatic_lightAmb(float* pDst) {
+    DrLightMan* pLightMan = m_pDrMan->m_lightMan;
+    pDst[0] = pLightMan->m_ambColor.r;
+    pDst[1] = pLightMan->m_ambColor.g;
+    pDst[2] = pLightMan->m_ambColor.b;
+    pDst[3] = 1.0f;
+    return DrResMdoUniformBlock::s_nVarSizeTbl[30];
+}
+
 int DrCalcViewWork::unistatic_diffuseIBL(float* pDst) {
     mm::Mat44 mtx[3];
     memset(mtx, 0, sizeof(mtx));

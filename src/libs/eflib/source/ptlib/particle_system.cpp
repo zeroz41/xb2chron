@@ -715,7 +715,43 @@ void TurbulenceN::updateTime(float time) {
     s_fTotalTime += time;
 }
 
-// turb3d (0x7100859DFC) and ImprovedNoise::noise (0x7100859F9C) are not identical yet: session31/pforce/wip
+// turb3d (0x7100859DFC) is not identical yet: session31/pforce/wip
+
+static inline float fade(float t) {
+    return t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
+}
+
+static inline float lerp(float t, float a, float b) {
+    return a + t * (b - a);
+}
+
+static inline float grad(int hash, float x, float y, float z) {
+    const mm::Vec3& g = s_grad[hash & 15];
+    return x * g.x + y * g.y + z * g.z;
+}
+
+float ImprovedNoise::noise(float x, float y, float z) {
+    int X = (int)floorf(x) & 255;
+    int Y = (int)floorf(y) & 255;
+    int Z = (int)floorf(z) & 255;
+    x -= floorf(x);
+    y -= floorf(y);
+    z -= floorf(z);
+    float u = fade(x);
+    float v = fade(y);
+    float w = fade(z);
+    int A = p[X] + Y;
+    int AA = p[A] + Z;
+    int AB = p[A + 1] + Z;
+    int B = p[X + 1] + Y;
+    int BA = p[B] + Z;
+    int BB = p[B + 1] + Z;
+    return lerp(w,
+                lerp(v, lerp(u, grad(p[AA], x, y, z), grad(p[BA], x - 1.0f, y, z)),
+                     lerp(u, grad(p[AB], x, y - 1.0f, z), grad(p[BB], x - 1.0f, y - 1.0f, z))),
+                lerp(v, lerp(u, grad(p[AA + 1], x, y, z - 1.0f), grad(p[BA + 1], x - 1.0f, y, z - 1.0f)),
+                     lerp(u, grad(p[AB + 1], x, y - 1.0f, z - 1.0f), grad(p[BB + 1], x - 1.0f, y - 1.0f, z - 1.0f))));
+}
 
 ImprovedNoise::ImprovedNoise() {
     for (int i = 0; i < 256; i++) {

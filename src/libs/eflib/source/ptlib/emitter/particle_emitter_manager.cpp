@@ -10,6 +10,7 @@
 #include "mm/Math.h"
 #include "ptlib/Utility.h"
 #include "ml/ScnObjAccGpuCheck.h"
+#include "ptlib/forcefield/TurbulenceN.h"
 #include <new>
 
 namespace ptlib { namespace emitter {
@@ -442,6 +443,24 @@ ParticleObj* EmitterManager::createCommon(EmitterObj* pEmitter) {
         pParticle->getExtParam().m_pMdl = nullptr;
     }
     return pParticle;
+}
+
+void ParticleObj::calcNoise(EmitterObj* pEmitter, mm::Vec3& speed) {
+    const NoiseParam* pNoise = pEmitter->m_pNoise;
+    if (pNoise == nullptr) {
+        return;
+    }
+    float rate = move_common_check_begin_end_fin_fout(pEmitter, pNoise->m_begin, pNoise->m_end, pNoise->m_fadeIn,
+                                                      pNoise->m_fadeOut, pNoise->m_frameType) *
+                 pEmitter->getEmitterScale();
+    if (rate > 0.0f) {
+        mm::Vec3 noise;
+        TurbulenceN::turb3d(noise, m_pos, pNoise->m_frequency, pNoise->m_amplitude, pNoise->m_octaves);
+        m_pWork->m_noise += noise;
+        speed.x += rate * m_pWork->m_noise.x;
+        speed.y += rate * m_pWork->m_noise.y;
+        speed.z += rate * m_pWork->m_noise.z;
+    }
 }
 
 void ParticleObj::calcIsFit(int isFit, EmitterObj* pEmitter, mm::Vec3& dir) {
