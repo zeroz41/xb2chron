@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFAUTOTALK_H
 
 #include "classes/gmk/GmkAcc.h"
+#include "classes/gmk/DistHvCond.h"
 
 class CBdatWrapper;
 namespace gf { class GfMenuCallContext; }
@@ -33,7 +34,7 @@ public:
     };
 
     GfAutoTalk(const CreateInfo* info = nullptr)
-        : m_info(), m_bdatInfo(), m_rangeSq(0.0f), m_rangeSq2(0.0f), m_context(nullptr), m_disp(false),
+        : m_info(), m_bdatInfo(), m_dist(), m_context(nullptr), m_disp(false),
           m_dispTime(0.0f) {
         if (info != nullptr) {
             create(*info);
@@ -45,7 +46,7 @@ public:
         return m_info.m_fp != nullptr && m_info.m_fpMs != nullptr && m_info.m_id > 0 && m_gmkAcc.isValid();
     }
     bool isDispEnd() const {
-        return m_disp && m_dispTime <= 0.0f;
+        return m_disp && !(m_dispTime > 0.0f);
     }
     void dispose() {
         disposeMenuObj();
@@ -63,8 +64,9 @@ public:
 
     CreateInfo m_info;
     BdatInfo m_bdatInfo;   // 0x20
-    float m_rangeSq;       // 0x2c: Range squared (the names are not the original's)
-    float m_rangeSq2;      // 0x30: the same
+    // 0x2c: Range squared on both axes (canDispText calls gmk::DistHvCond::isMatch on it with the mob's position;
+    // the name is not the original's)
+    gmk::DistHvCond m_dist;
     unsigned char pad_34[0x4];
     gmk::GmkAcc m_gmkAcc;  // 0x38: the MOBID's mob
     GfMenuCallContext* m_context;  // 0x78: the balloon's call context (the name is not the original's)

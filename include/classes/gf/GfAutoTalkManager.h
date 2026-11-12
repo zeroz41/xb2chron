@@ -6,6 +6,7 @@
 #include "classes/gf/GfAutoTalkList.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/mtl/IntrusiveList.h"
+#include "plugin/Bdat.h"
 
 namespace gf { class GfAutoTalkManager; }
 namespace gf { class GfSetupParam; }
@@ -63,7 +64,18 @@ public:
         }
     }
     void seqUpdate(float dt);
-    GfAutoTalk* findGfAutoTalkByBdatId(unsigned char* fp, int id) const;
+    // the talk of that row in the list of that table, none when no list has the table (inline: canDispText's
+    // chain test; the name is 1.0.0's)
+    const GfAutoTalk* findGfAutoTalkByBdatId(unsigned char* fp, int id) const {
+        for (mm::mtl::IntrusiveList<GfAutoTalkList>::iterator it = m_lists.begin(); it != m_lists.end(); ++it) {
+            if (it->m_info.m_fp == fp) {
+                const mm::mtl::Vector<GfAutoTalk>& talks = it->m_talks;
+                unsigned int index = id - Bdat::getIdTop(fp);
+                return &talks[index];
+            }
+        }
+        return nullptr;
+    }
 
     mm::mtl::IntrusiveList<GfAutoTalkList> m_lists;  // 0x10 (the names are not the original's)
     void (GfAutoTalkManager::*m_seq)(float);         // 0x28: seqInit, then seqUpdate

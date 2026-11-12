@@ -10,6 +10,18 @@
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/fw/FrameworkMemory.h"
 #include "classes/gmk/GmkManager.h"
+#include "classes/gmk/GmkMob.h"
+#include "classes/gf/GfObjManager.h"
+#include "classes/gf/GfObjSetupMob.h"
+#include "classes/gf/GfDataBdat.h"
+#include "gf/GfObjInfo.h"
+#include "gf/GfMenuBdat.h"
+#include "mm/mtl/RTTI.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfGameCond.h"
+#include "classes/gf/GfObj.h"
+#include "classes/gf/GfComBehaviorMob.h"
+#include "gf/GfObjAcc.h"
 #include "fw/UpdateInfo.h"
 #include "plugin/Bdat.h"
 
@@ -25,6 +37,143 @@ void GfAutoTalk::disposeMenuObj() {
             m_context = nullptr;
         }
     }
+}
+
+void GfAutoTalk::BdatInfo::create(const CBdatWrapper& bdat, int id) {
+    dispose();
+    m_mobId = Bdat::getValCheckU16(bdat.m_fp, "MOBID", id);
+    m_range = Bdat::getValCheckU16(bdat.m_fp, "Range", id);
+    m_condition = Bdat::getValCheckU16(bdat.m_fp, "Condition", id);
+    m_text = Bdat::getValCheckU16(bdat.m_fp, "Text", id);
+    m_ontime = Bdat::getValCheckU16(bdat.m_fp, "Ontime", id);
+    m_beforeId = Bdat::getValCheckU16(bdat.m_fp, "BeforeID", id);
+    if (m_beforeId != 0) {
+        int count = Bdat::getIdCount(bdat.m_fp);
+        unsigned short before = m_beforeId;
+        unsigned short next;
+        int i = 0;
+        do {
+            next = Bdat::getValCheckU16(bdat.m_fp, "BeforeID", before);
+            if (next == 0) {
+                break;
+            }
+            before = next;
+            ++i;
+        } while (count > i);
+        m_range = Bdat::getValCheckU16(bdat.m_fp, "Range", before);
+        m_condition = Bdat::getValCheckU16(bdat.m_fp, "Condition", before);
+    }
+}
+
+void GfAutoTalk::create(const CreateInfo& info) {
+    dispose();
+    m_info = info;
+    m_bdatInfo.create(CBdatWrapper(info.m_fp), info.m_id);
+    const BdatInfo& bdat = m_bdatInfo;
+    if (bdat.m_mobId == 0) {
+        dispose();
+    } else {
+        float range = bdat.m_range;
+        m_dist.m_horizontalSq = range * range;
+        m_dist.m_verticalSq = range * range;
+        gmk::GmkAcc::CreateInfoByBdatId accInfo;
+        accInfo.m_type = gmk::GmkType(0x12);
+        accInfo.m_bdatId = bdat.m_mobId;
+        m_gmkAcc.create(accInfo);
+    }
+}
+
+void GfAutoTalk::update(float dt) {
+    if (!isValid()) {
+        return;
+    }
+    if (m_context != nullptr && (m_context->isTerm() || !GfGameManager::isAutoTalkOK())) {
+        disposeMenuObj();
+    }
+    if (m_disp && m_dispTime > 0.0f) {
+        m_dispTime -= dt;
+        if (m_dispTime <= 0.0f) {
+            disposeMenuObj();
+        }
+    }
+    if (static_cast<gmk::GmkMob*>(m_gmkAcc.m_gmk)->getGobInstNum() == 0) {
+        return;
+    }
+    bool disp = canDispText();
+    if (m_disp != disp) {
+        m_disp = disp;
+        if (disp) {
+            m_dispTime = m_bdatInfo.m_ontime;
+            createMenuObj();
+        } else {
+            m_dispTime = 0.0f;
+            disposeMenuObj();
+        }
+    }
+}
+
+bool GfAutoTalk::canDispText() const {
+    if (!GfGameManager::isAutoTalkOK()) {
+        return false;
+    }
+    if (m_bdatInfo.m_condition != 0 && !GfGameCond::isGameCond(m_bdatInfo.m_condition)) {
+        return false;
+    }
+    if (!m_gmkAcc.isValid()) {
+        return false;
+    }
+    if (m_bdatInfo.m_beforeId != 0) {
+        const GfAutoTalk* before =
+            GfAutoTalkManager::get()->findGfAutoTalkByBdatId(m_info.m_fp, m_bdatInfo.m_beforeId);
+        if (before != nullptr && !before->isDispEnd()) {
+            return false;
+        }
+    }
+    if (!m_dist.isMatch(*m_gmkAcc.m_gmk->m_pos)) {
+        return false;
+    }
+    gmk::GmkMob* mob = static_cast<gmk::GmkMob*>(m_gmkAcc.m_gmk);
+    if (mob->getGobInstNum() == 0) {
+        return false;
+    }
+    GfObjAcc acc(mob->getGobInst(0));
+    if (acc.m_obj == nullptr) {
+        return false;
+    }
+    if (!acc.isDisp(OBJDISP(0))) {
+        return false;
+    }
+    if (acc.isMultiBindWaiting()) {
+        return false;
+    }
+    GfObj* obj = acc.getObj();
+    if (obj == nullptr) {
+        return false;
+    }
+    if (GfGameManager::isGameTypeIra()) {
+        GfComBehaviorMob* behavior = obj->getComponent<GfComBehaviorMob>(6);
+        if (behavior != nullptr && !behavior->pad_53d9) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void GfAutoTalk::createMenuObj() {
+    disposeMenuObj();
+    m_context = GfMenuCallContext::create();
+    GfMenuObjBalloon::OpenParam param;
+    param.m_bdat = m_info.m_fpMs;
+    param.m_msgId = m_bdatInfo.m_text;
+    param.m_object = static_cast<gmk::GmkMob*>(m_gmkAcc.m_gmk)->getGobInst(0);
+    int id = mm::mtl::rttiCast<GfObjSetupMob>(GfObjManager::getObjInfo(param.m_object)->m_setup)->m_bdatId;
+    if (id > 0) {
+        GfMenuBdat::getMenuOffset(Bdat::getValCheckU16(GfDataBdat::getFP(0xaa), "OffsetID", id), param.m_offset);
+    } else {
+        param.m_offset.m_bone = nullptr;
+        param.m_offset.m_offset = mm::Vec3::zero;
+    }
+    GfMenuObjBalloon::openAutoTalk(m_context, param);
 }
 
 void GfAutoTalkList::create(const CreateInfo& info) {

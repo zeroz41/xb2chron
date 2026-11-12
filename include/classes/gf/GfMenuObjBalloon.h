@@ -34,9 +34,15 @@ public:
     // openEvent's and openAutoTalk's: the text and the object the balloon shows at (the field names are not the
     // original's)
     struct OpenParam {
+        // GfAutoTalk::createMenuObj builds one so (stores 0x10, 0x18, 0x20, 0x30, 0x38, 0x40 in that order), then
+        // sets the text and the object
+        OpenParam() : pad_10(0.0f, 0.0f, 0.0f), m_object(reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            m_offset.m_offset = mm::Vec3(0.0f, 0.0f, 0.0f);
+            m_offset.m_bone = nullptr;
+        }
         unsigned char* m_bdat;
         unsigned int m_msgId;
-        unsigned char pad_C[0x20 - 0xC];
+        mm::Vec3 pad_10;  // 0x10: 12 bytes the constructor zeroes (a mm::Vec3 by its size and alignment)
         GF_OBJ_HANDLE* m_object;  // 0x20
         unsigned char pad_28[8];
         MenuOffset m_offset;  // 0x30
