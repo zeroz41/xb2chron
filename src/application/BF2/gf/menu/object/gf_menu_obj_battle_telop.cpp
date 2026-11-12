@@ -1,5 +1,7 @@
 #include "classes/gf/GfMenuObjBattleTelop.h"
 #include "classes/gf/GfMenuObjBattleTelop/MainListener.h"
+#include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfMenuObject.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
@@ -11,6 +13,47 @@ namespace {
 // lbl_7100B5FD58: MainListener's telop layouts by the open event's index (0: none). The name is not the original's
 const char* const s_telopLayouts[] = {nullptr, "TXT_unit"};
 }  // namespace
+
+GfMenuObjBattleTelop::GfMenuObjBattleTelop(unsigned int handle)
+    : GfMenuObject(handle), m_telop(0), m_seq(this), pad_2B8(false), m_numbers(), m_combos() {
+    m_numbers[0] = GfMenuReferenceNumber::create();
+    m_numbers[1] = GfMenuReferenceNumber::create();
+    m_numbers[2] = GfMenuReferenceNumber::create();
+}
+
+GfMenuObjBattleTelop::~GfMenuObjBattleTelop() {
+    m_numbers[0] = nullptr;
+    m_numbers[1] = nullptr;
+    m_numbers[2] = nullptr;
+}
+
+void GfMenuObjBattleTelop::open(const OpenParam& param) {
+    if (param.m_index == 1 && GfGameManager::isBattleArenaActive()) {
+        return;
+    }
+    ui::UIObjectAcc root(GfMenuObject::getAttachedObject(0x4E));
+    if (root.m_object != nullptr) {
+        ui::EventData event;
+        event.m_type = 0x21;
+        event.m_param0Short = param.m_index;
+        GfMenuObject::sendEvent(root.searchChild("LAY_telop"), event, 0.0f);
+    }
+}
+
+void GfMenuObjBattleTelop::openUniteCombo(const OpenUniteParam& param) {
+    ui::UIObjectAcc root(GfMenuObject::getAttachedObject(0x4E));
+    if (root.m_object != nullptr) {
+#line 103
+        OpenUniteParam* copy = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) OpenUniteParam();
+        if (copy != nullptr) {
+            *copy = param;
+            ui::EventData event;
+            event.m_type = 0x100;
+            event.m_paramPtr = copy;
+            GfMenuObject::sendEvent(root.searchChild("LAY_fusion_combo"), event, 0.0f);
+        }
+    }
+}
 
 void GfMenuObjBattleTelop::finalize() {
     GfMenuObject::finalize();
