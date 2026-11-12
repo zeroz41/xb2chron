@@ -15,6 +15,11 @@ class DrResMdoVertex;
 class DrPixlShadowObj;
 class DrMdoCtlSeamInstMap;
 class DrResMdoSeamParmRead;
+class DrResMdoSeamTexture;
+class DrResMdoSeamTexList;
+class DrCalcViewWork;
+struct MdsPosRangeTreeData;
+struct MdoArgSeamInst;
 // the head of a seam instance map's data (name from setupWork's symbol; the field names are not the original's)
 struct MdsSeamInstMapHead {
     unsigned char pad_0[0xC];
@@ -23,14 +28,15 @@ struct MdsSeamInstMapHead {
     unsigned int m_dataOfs[3];
     unsigned int m_baseOfs;    // 0x18: offset of the base positions' data
     unsigned int m_vertexOfs;  // 0x1C: offset of the vertex data, 0 when there is none
-    unsigned char pad_20[0x4];
+    unsigned int m_streamOfs;  // 0x20: offset of the m_matArg StreamEntry (seachCheckStreamList)
     int m_matArg;  // 0x24: initInstMapMaterial's and resetInstMapMaterial's last argument
     unsigned char pad_28[0x10];
     unsigned int m_etcOfs;     // 0x38: offset of the m_etcNum EtcInfo
     int m_etcNum;              // 0x3C
     unsigned char pad_40[0x4];
     unsigned int m_extOfs;  // 0x44
-    unsigned char pad_48[0xC];
+    unsigned char pad_48[0x8];
+    unsigned int m_coliOfs;     // 0x50: offset of the read collision table (an OffColiTbl), 0 when there is none
     unsigned int m_offColiOfs;  // 0x54: offset of the off-collision table, 0 when there is none
 };
 // table 0x7100B7DB48
@@ -67,6 +73,13 @@ public:
         unsigned char pad_4[0x1C];
     };
     // an etc position's fade state (8 bytes; the names are not the original's)
+    // one stream entry of the seam map's data (8 bytes, m_header->m_streamOfs; the names are not the original's)
+    struct StreamEntry {
+        unsigned short pad_0;
+        unsigned short m_listIdx;  // 0x2: into m_texLists (flag bit 0)
+        unsigned short m_texIdx;   // 0x4: into seachCheckStreamList's texNo (flag bit 1)
+        unsigned short m_flags;    // 0x6
+    };
     struct FadeItem {
         unsigned int m_flags;  // bit 1: still placed (calcEtcInstPosUpdate drops the item without it), bit 2: fading in
         float m_alpha;
@@ -105,8 +118,15 @@ public:
     void changeMemCall();
     void calcCacheInfo();
     bool callReadOffColiTest(const mm::Vec3& pos, const DrResMdoSeamParmRead* parm);
+    // false when pos is inside one of the read collision boxes; with update, the result is kept in m_cacheFlags bit 3
+    // (the boxes then grow by 10 while it is set)
+    bool callReadColiTest(const mm::Vec3& pos, bool update);
     void calcEtcInstPosUpdate(DrMdoCtlSeamInstMap* ctl);
     void beginMdl();
+    // one bit of m_streamBits per StreamEntry whose texture (list) is read in
+    void seachCheckStreamList(unsigned short* texNo, DrResMdoSeamTexture* textures);
+    bool chankRenderMdl(const MdsPosRangeTreeData* tree, MdoArgSeamInst& arg);
+    bool clipRenderMdl(const MdsPosRangeTreeData* tree, MdoArgSeamInst& arg);
     // the next of the m_mdlNum model infos (0x20 bytes each), null after the last
     MdlInfo* getMdlInfo();
     void callShadowCacheInstUpdate(unsigned long mask);
@@ -139,15 +159,19 @@ public:
     unsigned char pad_8C[0x4];
     void** m_bufList;  // 0x90: m_bufNum buffers freed by release (the name is not the original's)
     int m_bufNum;      // 0x98 (the name is not the original's)
-    unsigned char pad_9C[0x4C];
+    unsigned char pad_9C[0x3C];
+    unsigned int* m_streamBits;  // 0xD8: seachCheckStreamList's bits (the name is not the original's)
+    unsigned char pad_E0[0x8];
     unsigned int* m_etcBits;  // 0xE8: one bit per etc position block set up (the name is not the original's)
     unsigned char pad_F0[0x18];
     DrResMdoSeamMemObj* m_memObj;  // 0x108: the block holding the seam map's data (the name is not the original's)
-    unsigned char pad_110[0x8];
+    // 0x110: the texture lists StreamEntry::m_listIdx picks (the name is not the original's)
+    DrResMdoSeamTexList** m_texLists;
     // 0x118: 1 + m_header->m_etcNum position works, the base positions first (the name is not the original's)
     DrResMdoSeamWrkPosInst* m_posInsts;
     DrResMdoSeamWrkPosInst** m_posInstList;  // 0x120: the m_posInstNum position works set up (the name is not the original's)
-    void* pad_128;
+    // 0x128: the position work chankRenderMdl walks (the name is not the original's)
+    DrResMdoSeamWrkPosInst* m_curPosInst;
     // 0x130: a work pointing back at this one; release clears its link (the name is not the original's)
     DrResMdoSeamWrkInst* m_pPair;
     unsigned char pad_138[0x8];
@@ -168,7 +192,7 @@ public:
     void* pad_1B0;
     void* pad_1B8;
     // 0x1C8 bytes: DrMdoCtlSeam's instance work pool destroys its works at that stride
-    unsigned char pad_1C0[0x8];
+    const DrCalcViewWork* m_viewWork;  // 0x1C0: chankRenderMdl's view (the name is not the original's)
 };
 }  // namespace ml
 

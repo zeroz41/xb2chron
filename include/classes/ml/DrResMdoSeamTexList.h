@@ -26,7 +26,7 @@ public:
     // The list data update reads (type and field names are not the original's): the header gives the offset of
     // a table whose entries (from +0x4, 0x10 each) give each texture's image offset in the data and size.
     struct DataHead {
-        unsigned char pad_0[0x4];
+        int num;                // 0x0: the texture count (createTextureList)
         unsigned int tableOfs;  // 0x4
     };
     struct Entry {

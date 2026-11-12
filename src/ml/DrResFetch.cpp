@@ -5514,6 +5514,24 @@ void DrResMdoSeamTexList::release() {
     m_num = 0;
 }
 
+void DrResMdoSeamTexList::createTextureList(mtl::ALLOC_HANDLE handle) {
+    release();
+    m_data = m_memObj->m_pData;
+    const DataHead* head = reinterpret_cast<const DataHead*>(m_data);
+    int size = head->num * sizeof(grlib::CGLibTextureBuffer);
+    void* buf = mtl::MemManager::allocate(handle, size, 0x40, false, "no name", 0);
+    m_buf = buf;
+    m_texture = static_cast<grlib::CGLibTextureBuffer*>(buf);
+    m_num = head->num;
+    const Table* table = reinterpret_cast<const Table*>(m_data + head->tableOfs);
+    const Entry* entry = table->entries;
+    for (int i = 0; i < m_num; i++, entry++) {
+        new (&m_texture[i]) grlib::CGLibTextureBuffer();
+        grlib::CGLibTexture::createTextureImagePtrs(m_texture[i], m_data + entry->imageOfs, entry->size, false,
+                                                    nullptr, false);
+    }
+}
+
 void DrResMdoSeamTexList::setListCnt(int cnt) { SEAMRES_TEXLIST_CNTMAX = cnt; }
 
 int DrResMdoSeamTexture::SEAMRES_NOM_CNTMAX = 0x78;
@@ -5893,6 +5911,27 @@ bool DrResMdoSeamWrkInst::setEtcPosCache(mtl::ALLOC_HANDLE handle, int cacheIdx,
         }
     }
     return false;
+}
+
+void DrResMdoSeamWrkInst::seachCheckStreamList(unsigned short* texNo, DrResMdoSeamTexture* textures) {
+    int num = m_header->m_matArg;
+    int size = (num / 32) * 4 + 4;
+    size = size + (0x20 - size % 0x20) % 0x20;
+    memset(m_streamBits, 0, size);
+    const StreamEntry* entry = reinterpret_cast<const StreamEntry*>(reinterpret_cast<const unsigned char*>(m_header) +
+                                                                    m_header->m_streamOfs);
+    for (int i = 0; i < num; i++, entry++) {
+        unsigned short no;
+        if ((entry->m_flags & 2) && (no = texNo[entry->m_texIdx]) != 0) {
+            if (textures[no - 1].m_readIn) {
+                m_streamBits[i >> 5] |= 1 << (i & 0x1F);
+            }
+        } else if (entry->m_flags & 1) {
+            if (m_texLists[entry->m_listIdx]->m_readIn) {
+                m_streamBits[i >> 5] |= 1 << (i & 0x1F);
+            }
+        }
+    }
 }
 
 DrResMdoSeamWrkLight::DrResMdoSeamWrkLight()
