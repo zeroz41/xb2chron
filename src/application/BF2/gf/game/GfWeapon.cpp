@@ -204,6 +204,10 @@
 #include "gf/GfGameUtilDiff.h"
 #include "gf/ItemCountLowLevel.h"
 #include "classes/gf/SCOM_CURRENT_BLADE.h"
+#include "classes/gf/GfBdatBgm.h"
+#include "classes/gf/GfBdatCond.h"
+#include "gf/GfQuestInfo.h"
+#include "gf/GfGameUtilQuestArts.h"
 
 namespace gf {
 
@@ -3170,6 +3174,26 @@ bool GfGameUtil::setupSaveAchievementPopup(unsigned int blade, unsigned int line
     return true;
 }
 
+const char* GfGameUtil::getFieldBgmNameByMapId(unsigned int mapId) {
+    if (mapId == 0) {
+        return nullptr;
+    }
+    unsigned int cond = mm::mtl::PtrSingleton<GfBdatMaplist>::sys()->getMaplistbgm_cndID(mapId);
+    if (cond == 0) {
+        return nullptr;
+    }
+    GfBdatBgm* bgm = mm::mtl::PtrSingleton<GfBdatBgm>::sys();
+    for (unsigned int i = 0; i < 4; i++) {
+        unsigned int gameCond = bgm->getBgmConditionCondition(cond, i);
+        if (gameCond != 0 && GfGameCond::isGameCond(gameCond)) {
+            if (unsigned int id = bgm->getBgmConditionBgmID(cond, i)) {
+                return bgm->getBgmListfilename(id);
+            }
+        }
+    }
+    return nullptr;
+}
+
 unsigned int GfGameUtilDiff::getBtlDifficult() {
     return getActiveOptionData()->m_soundUi.m_keyD;
 }
@@ -3265,6 +3289,79 @@ bool GfGameUtil::isDefeatNamed(unsigned int enemy, GFDIFF mode) {
     return (GfDataManager::getDataGame()->m_namedRecords[row].m_flags & (1 << mode)) != 0;
 }
 
+unsigned int GfGameUtil::getClearNamedTime(unsigned int enemy, GFDIFF mode) {
+    unsigned int row = GfGameUtil::getNamedListIndex(enemy);
+    if (row == 0) {
+        return -1;
+    }
+    SDataGame* game = GfDataManager::getDataGame();
+    unsigned long index = row;
+    unsigned int time = -1;
+    switch (mode) {
+    case 0:
+        time = game->m_namedRecords[index].m_time[0];
+        break;
+    case 1:
+        time = game->m_namedRecords[index].m_time[1];
+        break;
+    case 2:
+        time = game->m_namedRecords[index].m_time[2];
+        break;
+    case 4:
+        time = game->m_namedRecords[index].m_time[3];
+        break;
+    default:
+        break;
+    }
+    return time;
+}
+
+unsigned int GfGameUtil::getClearNamedTime(unsigned int enemy) {
+    return GfGameUtil::getClearNamedTime(enemy, GFDIFF(GfGameManager::getBtlDifficult()));
+}
+
+void GfGameUtil::setClearNamedTime(unsigned int enemy, unsigned int time, GFDIFF mode) {
+    if (!GfGameManager::isEnableNamedRecord()) {
+        return;
+    }
+    if (GfGameManager::isBattleArenaActive()) {
+        return;
+    }
+    unsigned int row = GfGameUtil::getNamedListIndex(enemy);
+    if (row == 0) {
+        return;
+    }
+    if (GfGameUtil::isDefeatNamed(enemy, mode)) {
+        if (GfGameUtil::getClearNamedTime(enemy, mode) <= time) {
+            return;
+        }
+    } else if (GfGameManager::isGameTypeIra()) {
+        unsigned char count = GfGameFlag::getLocal(8, 0xFAF);
+        if (count != 0xFF) {
+            GfGameFlag::setLocal(8, 0xFAF, count + 1);
+        }
+    }
+    SDataGame* game = GfDataManager::getDataGame();
+    unsigned long index = row;
+    switch (mode) {
+    case 0:
+        game->m_namedRecords[index].m_time[0] = time;
+        break;
+    case 1:
+        game->m_namedRecords[index].m_time[1] = time;
+        break;
+    case 2:
+        game->m_namedRecords[index].m_time[2] = time;
+        break;
+    case 4:
+        game->m_namedRecords[index].m_time[3] = time;
+        break;
+    default:
+        break;
+    }
+    game->m_namedRecords[index].m_flags |= 1 << mode;
+}
+
 void GfGameUtil::setIraBoneMountR(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag) {
     if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
         scene->setIraBoneMount(handle, target, flag, IRA_MOUNT(0));
@@ -3355,6 +3452,21 @@ void GfGameUtil::playSeForPartySwitch() {
     GfMenuObjUtil::playSE(0x2E);
 }
 
+bool GfGameUtil::isGameCondOpenHitonowa() {
+    if (tl::TitleMain* title = mm::mtl::PtrSingleton<tl::TitleMain>::sys()) {
+        if (GfManager::isExecModeAdvertize() || GfManager::isExecModeThater()) {
+            GfBdatCond* bdat = mm::mtl::PtrSingleton<GfBdatCond>::sys();
+            unsigned int cond = bdat->getConditionListCondition(0xED9, 0);
+            unsigned int quest = bdat->getConditionQuestQuestFlag(cond, 0);
+            unsigned int min = bdat->getConditionQuestQuestFlagMin(cond, 0);
+            unsigned int max = bdat->getConditionQuestQuestFlagMax(cond, 0);
+            unsigned int state = GfQuestInfo::getState(title->getSaveBuffer()->m_game, QuestID(quest));
+            return min <= state && state <= max;
+        }
+    }
+    return GfGameCond::isGameCond(0xED9);
+}
+
 fw::SoundPack* GfGameUtil::getDlcSePack(const char* name) {
     if (GfFieldSound* sound = mm::mtl::PtrSingleton<GfFieldSound>::sys()) {
         return sound->getDlcSePack(name);
@@ -3367,6 +3479,47 @@ const char* GfGameUtil::getDlcSeName(const char* name) {
         return sound->getDlcSeName(name);
     }
     return nullptr;
+}
+
+namespace {
+// a row of GfGameUtilQuestArts::calcQuestArtsCount's table (lbl_71009BBDC4, 8 rows): the counter is local flag 8
+// at m_counter + 0xF9E, raised while the blade's arts slot holds m_arts at level m_level or more (and m_quest, when
+// set, is ordered); reaching m_count sets local flag 1 m_doneFlag. The type and names are not the original's.
+struct QuestArtsRow {
+    int m_counter;
+    unsigned int m_doneFlag;
+    unsigned int m_arts;
+    unsigned int m_level;
+    unsigned int m_count;
+    unsigned int m_quest;
+};
+}  // namespace
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BBDC4)
+static const QuestArtsRow s_questArtsRows[] = {
+    {0, 0xC616, 0xC7, 1, 1, 0x14EE}, {1, 0xC617, 0xA7, 1, 1, 0x14EE}, {2, 0xC618, 0xD5, 1, 1, 0x14EF},
+    {3, 0xC619, 0x96, 1, 1, 0x14EF}, {4, 0xC61A, 0xC8, 1, 1, 0x14EF}, {5, 0xC61B, 0xCE, 1, 1, 0x14F0},
+    {6, 0xC61C, 0xAE, 1, 1, 0x14F0}, {7, 0xC61D, 0xA2, 1, 1, 0x14F0},
+};
+
+void GfGameUtilQuestArts::calcQuestArtsCount(unsigned int blade, unsigned int slot) {
+    for (const QuestArtsRow& row : s_questArtsRows) {
+        DataParamAcc acc(3, blade, GimmickType(0));
+        if (acc.getBladeArts(slot, false) == row.m_arts && acc.getBladeArtsLevel(slot, false) >= row.m_level) {
+            if (row.m_quest == 0 || GfQuestInfo::isQuestOrder(QuestID(row.m_quest))) {
+                if (GfGameFlag::getLocal(8, row.m_counter + 0xF9E) < row.m_count) {
+                    int flag = row.m_counter + 0xF9E;
+                    unsigned char count = GfGameFlag::getLocal(8, flag);
+                    if (count != 0xFF) {
+                        GfGameFlag::setLocal(8, flag, count + 1);
+                    }
+                    if (GfGameFlag::getLocal(8, flag) >= row.m_count) {
+                        GfGameFlag::setLocal(1, row.m_doneFlag, 1);
+                    }
+                }
+            }
+        }
+    }
 }
 
 void* GfGameUtilDiff::getUseSoundUiOption() {

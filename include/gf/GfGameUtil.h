@@ -387,6 +387,10 @@ public:
     // GfGameUtil::execEquipMercenariesBlade, then the equipped one) and answers whether one was equipped;
     // GfArenaParty::removeFieldBlade passes (false, true).
     static bool execPartyBladeFollow(bool, bool);
+    // 2.0.0's symbols name it. What it does: nullptr for map 0 or a map without a GfBdatMaplist bgm_cndID, else
+    // GfBdatBgm::getBgmListfilename of the first of the condition row's four BGMs whose condition is set and holds
+    // (GfGameCond::isGameCond) and whose BGM id is not 0; tl::TitleStatePlayEvent::enter calls it.
+    static const char* getFieldBgmNameByMapId(unsigned int mapId);
     // 2.0.0's symbols name it. What it does: in the arena (GfGameArena::fn_7100291D54 holds)
     // GfGameArena::getWeaponDamage(handle), else DataParamAcc(handle).getWeaponDamage(false), as
     // GfGameUtil::getWpnStability does for the stability; btl::PlayerParameter::InitializeAttackParam calls it.
@@ -459,6 +463,10 @@ public:
     // difficulty lists use its answer to show all four difficulties.
     static bool isAdvancedDifficulity();
     static void playSeForPartySwitch();
+    // 2.0.0's symbols name it. What it does: in the theater or advertise mode (with TitleMain up) whether quest
+    // condition 0 of condition 0xED9 (GfBdatCond) lies between its flag min and max in TitleMain's save buffer game data
+    // (GfQuestInfo::getState), else GfGameCond::isGameCond(0xED9); GfMenuObjOption's difficulty lists call it.
+    static bool isGameCondOpenHitonowa();
     static fw::SoundPack* getDlcSePack(const char* name);
     static const char* getDlcSeName(const char* name);
 };
