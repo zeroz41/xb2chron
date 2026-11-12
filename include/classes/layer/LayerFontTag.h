@@ -50,6 +50,11 @@ public:
     void calcTagColorStart(const LayerTagTbl* tbl, unsigned int num);
     void calcTagIconStart(const LayerTagTbl* tbl, unsigned int num);
     void calcTagRubyEnd();
+    // callTagStart's for one of its tags: writes the Korean particle (L"\uB294"/L"\uC740" ...) that fits after
+    // m_lastCode for the tbl entry named "char" (inferred: a particle tag; the name is not known)
+    void fn_710083DB30(const LayerTagTbl* tbl, unsigned int num);
+    // the particle's index (1 "ha" ... 7 "san", 0 for another name)
+    static int fn_710083DDD8(const char* name);
 
     // its tags' names: "System:Color", "System:Ruby" and two more (callTagStart, callTagEnd)
     static const char* s_resTagTbl[4];
@@ -73,8 +78,11 @@ public:
     Vertex* m_rubyVertex;     // 0x60
     mm::Col4 m_color;         // 0x68: what the characters take (System:Color sets it)
     mm::Col4 m_defaultColor;  // 0x78: what callTagEnd puts back at the end of a System:Color tag
-    unsigned char pad_88[0x408];
-    int m_width;     // 0x490: zeroed by beginParseString (its use is not known yet)
+    // 0x88: the characters of the open System:Ruby tag, drawn by calcTagRubyEnd
+    unsigned short m_rubyCode[0x200];
+    // 0x488: where the ruby text starts along a line (calcTagRubyEnd compares it with m_pos)
+    unsigned int m_rubyPos[2];
+    int m_rubyNum;  // 0x490: m_rubyCode's count (beginParseString and calcTagRubyEnd zero it)
     // 0x494: the next character's position (the constructor starts it at minus the font's border times the
     // style's scale); createFontCode advances m_pos[m_axis]
     int m_pos[2];

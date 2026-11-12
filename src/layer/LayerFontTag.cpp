@@ -305,11 +305,58 @@ void LayerFontStyleObj::release() {
 }
 
 void LayerFontTag::beginParseString() {
-    m_width = 0;
+    m_rubyNum = 0;
     m_pos[0] = 0;
     m_pos[1] = 0;
     m_lineNum = 0;
     m_lastCode = 0;
+}
+
+void LayerFontTag::parseNotTag(const unsigned char* text, unsigned int& pos) {
+    signed char c = text[pos];
+    if (m_isCreate) {
+        if ((unsigned char)c == '\n') {
+            pos = text[pos + 1] == '\r' ? pos + 2 : pos + 1;
+            createLineBreak();
+            return;
+        }
+        if ((unsigned char)c == '\\') {
+            pos++;
+        }
+        unsigned short code;
+        unsigned int length;
+        changeUtf8ToUtf16(code, text + pos, length);
+        pos += length;
+        if (code >= 0x20 && code != 0x7F) {
+            switch (code) {
+            case 0x20:
+            case 0x3000:
+                break;
+            default:
+                m_lastCode = code;
+                break;
+            }
+        }
+        createFontCode(code);
+    } else {
+        if ((unsigned char)c == '\n') {
+            pos = text[pos + 1] == '\r' ? pos + 2 : pos + 1;
+            m_lineNum++;
+            return;
+        }
+        if (c >= 0) {
+            pos += 1;
+        } else if (c >= (signed char)0xC2 && c <= (signed char)0xDF) {
+            pos += 2;
+        } else if ((c & 0xF0) == 0xE0) {
+            pos += 3;
+        } else if ((c & 0xF8) == 0xF0) {
+            pos += 4;
+        } else {
+            pos += 1;
+        }
+        m_work->m_charNum++;
+    }
 }
 
 void LayerFontTag::calcTagColorStart(const LayerTagTbl* tbl, unsigned int num) {
@@ -342,6 +389,43 @@ void LayerFontTag::calcTagIconStart(const LayerTagTbl* tbl, unsigned int num) {
     }
 }
 
+// fn_710083DB30's particles: [whether m_lastCode ends in a consonant][fn_710083DDD8's index]
+// (lbl_7100B806F0; the name is not the original's)
+static const wchar_t* const s_particleTbl[2][8] = {
+    {nullptr, L"\uB294", L"\uB97C", L"\uAC00", L"\uC640", L"\uB85C", nullptr, L"\uC57C"},
+    {nullptr, L"\uC740", L"\uC744", L"\uC774", L"\uACFC", L"\uC73C\uB85C", L"\uC774", L"\uC544"},
+};
+
+void LayerFontTag::fn_710083DB30(const LayerTagTbl* tbl, unsigned int num) {
+    const wchar_t* particle = nullptr;
+    for (unsigned int i = 0; i < num; i++) {
+        if (strcmp(tbl[i].m_name, "char") == 0) {
+            unsigned short code = m_lastCode;
+            int kind = fn_710083DDD8(tbl->m_value);
+            unsigned int consonant = 0;
+            unsigned int syllable = code - 0xAC00;
+            unsigned int digit = code - '0';
+            if (syllable < 0x2BA4) {
+                // a Hangul syllable: its final consonant (none, or for "ni" a final rieul, takes the first row)
+                unsigned int final = syllable % 28;
+                if (final != 0) {
+                    consonant = kind != 5 || final != 8;
+                }
+            } else if (digit <= 9) {
+                // the digits read with a final consonant: 0 3 6, and 1 7 8 (rieul) except for "ni"
+                unsigned int mask = kind == 5 ? 0x49 : 0x1CB;
+                consonant = (mask & (1 << digit)) != 0;
+            }
+            particle = s_particleTbl[consonant][kind];
+        }
+    }
+    if (particle != nullptr) {
+        for (; *particle != 0; particle++) {
+            createFontCode(*particle);
+        }
+    }
+}
+
 bool LayerFontTag::callTagEnd(const char* name) {
     if (m_isCreate) {
         if (strcasecmp(s_resTagTbl[0], name) == 0) {
@@ -352,6 +436,31 @@ bool LayerFontTag::callTagEnd(const char* name) {
         }
     }
     return true;
+}
+
+int LayerFontTag::fn_710083DDD8(const char* name) {
+    if (strcmp(name, "ha") == 0) {
+        return 1;
+    }
+    if (strcmp(name, "wo") == 0) {
+        return 2;
+    }
+    if (strcmp(name, "ga") == 0) {
+        return 3;
+    }
+    if (strcmp(name, "to") == 0) {
+        return 4;
+    }
+    if (strcmp(name, "ni") == 0) {
+        return 5;
+    }
+    if (strcmp(name, "ya") == 0) {
+        return 6;
+    }
+    if (strcmp(name, "san") == 0) {
+        return 7;
+    }
+    return 0;
 }
 
 }  // namespace layer
