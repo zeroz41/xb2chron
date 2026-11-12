@@ -435,6 +435,55 @@ void GfComEvtAnim::setSpeed(float speed, AnimLayer layer) {
     m_mot.m_speed = speed;
 }
 
+bool GfComEvtAnim::easeIn(const char* name, AnimLayer layer) {
+    updateSetup();
+    bool result = false;
+    if (m_asm.m_control != nullptr && layer <= 6) {
+        result = m_asm.m_control->m_stateMachines[layer].doEaseInAdditive(name, 0.0f, 1.0f, anm::InterpolateType(1),
+                                                                          anm::InterpolateCurve(0));
+    }
+    return result | m_mot.easeIn(name, layer);
+}
+
+bool GfComEvtAnim::easeOut(const char* name, AnimLayer layer) {
+    bool result = false;
+    if (m_asm.m_control != nullptr && layer <= 6) {
+        result = m_asm.m_control->m_stateMachines[layer].doEaseOutAdditive(name, 0.0f, anm::InterpolateType(1),
+                                                                           anm::InterpolateCurve(0));
+    }
+    return result | m_mot.easeOut(name, layer);
+}
+
+bool GfComEvtAnim::setEaseWeight(const char* name, AnimLayer layer, float weight) {
+    bool result = false;
+    if (m_asm.m_control != nullptr && layer <= 6) {
+        result = m_asm.m_control->m_stateMachines[layer].setAdditiveStateWeight(name, weight);
+    }
+    mm::mtl::FixStr<32>* easeName = m_mot.m_easeNames.begin();
+    for (anm::Control** it = m_mot.m_easeControls.begin(); it != m_mot.m_easeControls.end(); ++it, ++easeName) {
+        if (strcmp(easeName->m_str, name) == 0) {
+            (*it)->m_weight = weight;
+            return true;
+        }
+    }
+    return result;
+}
+
+bool GfComEvtAnim::setEaseSpeed(const char* name, AnimLayer layer, float speed) {
+    bool result = false;
+    if (m_asm.m_control != nullptr && layer <= 6) {
+        result = m_asm.m_control->m_stateMachines[layer].setAdditiveStateSpeed(name, speed);
+    }
+    mm::mtl::FixStr<32>* easeName = m_mot.m_easeNames.begin();
+    for (anm::Control** it = m_mot.m_easeControls.begin(); it != m_mot.m_easeControls.end(); ++it, ++easeName) {
+        if (strcmp(easeName->m_str, name) == 0) {
+            (*it)->m_speed = speed;
+            return true;
+        }
+    }
+    return result;
+}
+
 mm::mtl::RTTI GfComEvtAnim::m_rtti("GfComEvtAnim", &GfComAnimation::m_rtti, nullptr);
 
 }  // namespace gf
