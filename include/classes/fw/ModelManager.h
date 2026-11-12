@@ -24,17 +24,23 @@ public:
     class Group : public ::mm::mtl::IntrusiveList<Element> {
     public:
         // obj linked last unless it is listed already (ModelObject's and VisibleObject's create and changeLayer
-        // inline it; the name is not the original's)
+        // inline it; the name is not the original's). Linked by reference: the original has no `ptr` assertion and
+        // no null-checked node cast there
         void add(Element* obj) {
-            iterator it = begin();
-            for (; it != end(); ++it) {
-                if (it.m_node == obj) {
-                    break;
+            iterator it = find(begin(), end(), obj);
+            if (end() == it) {
+                push_back(*obj);
+            }
+        }
+        // first's element obj, last when it is not between them (add inlines it: the search's own returns and the
+        // `end() == it` test keep the original's loop exits; the name is not the original's)
+        static iterator find(iterator first, iterator last, Element* obj) {
+            for (; first != last; ++first) {
+                if (first.m_node == obj) {
+                    return first;
                 }
             }
-            if (it == end()) {
-                push_back(obj);
-            }
+            return last;
         }
     };
     virtual ~ModelManager();  // slot 0

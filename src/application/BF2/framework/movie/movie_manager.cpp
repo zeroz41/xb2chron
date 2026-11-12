@@ -55,6 +55,14 @@ ml::ScnObjModel* ModelObject::getInterface() {
     return m_model;
 }
 
+void ModelObject::changeLayer(unsigned int layer) {
+    if (m_layer != layer) {
+        ModelManager::get()->m_groups[m_layer].remove(this);
+        m_layer = layer;
+        ModelManager::get()->m_groups[m_layer].add(this);
+    }
+}
+
 bool ModelObject::isRender() const {
     return ml::ScnObjAccResMdlInfo(m_model).isGpuRender();
 }
@@ -65,6 +73,15 @@ void ModelObject::setScale(float scale) {
         mm::Vec3 scl(scale, scale, scale);
         m_model->setScl(scl);
     }
+}
+
+VisibleObject* VisibleObject::create(const SetupInfo& info, mm::mtl::IAllocator* allocator) {
+    VisibleObject* obj = new (Framework::getMemHandle(), nullptr, 0, 4, false) VisibleObject();
+    obj->addRef();
+    obj->m_gpuCheck = ml::ScnObjAccGpuCheck::create(0);
+    obj->m_layer = info.layer;
+    ModelManager::get()->m_groups[obj->m_layer].add(obj);
+    return obj;
 }
 
 VisibleObject::~VisibleObject() {
@@ -81,6 +98,14 @@ void VisibleObject::update() {
         pos += m_offset;
         ml::ScnObjAccGpuCheck check(m_gpuCheck);
         check.setPos(pos, 10.0f);
+    }
+}
+
+void VisibleObject::changeLayer(unsigned int layer) {
+    if (m_layer != layer) {
+        ModelManager::get()->m_groups[m_layer].remove(this);
+        m_layer = layer;
+        ModelManager::get()->m_groups[m_layer].add(this);
     }
 }
 
@@ -136,6 +161,35 @@ void MovieManager::close() {
         }
         m_layer = 0;
     }
+}
+
+void MovieManager::open(mm::mtl::IAllocator* allocator, int width, int height, unsigned int layer) {
+    if (m_movie != nullptr) {
+        close();
+    }
+    layer::LayerAccManager manager;
+    m_layer = layer;
+    layer::LayerBase* obj;
+    if (layer == 0) {
+        obj = manager.createMemObj(width, height, (layer::LayerMemType)3);
+        m_pixelSize = 1;
+    } else {
+        ui::UIObjectAcc acc(layer);
+        m_pixelSize = acc.getOnMemoryPixelSize();
+        obj = ui::UIUtil::getObject(acc.m_handle)->m_layer;
+    }
+    m_layerObj = obj;
+    layer::LayerAccMemObj memObj(obj);
+    if (layer == 0) {
+        memObj.setRender(false);
+    }
+    grlib::CGLibTextureBuffer* texture = memObj.getTexture();
+    ml::ScnRenderDrSysParmAcc acc(mm::mtl::PtrSingleton<ml::Scn>::get()->m_renderDrSys, 0);
+    ml::ScnRenderDrMdlTexture modelTexture = {texture, 0, true};
+    acc.setModelTexture(modelTexture);
+#line 104
+    m_movie = new (FrameworkMemory::getAllocator(5), 16, __FILE__, __LINE__) CMovie;
+    m_movie->initialize(FrameworkMemory::getAllocator(9));
 }
 
 void MovieManager::stop() {
