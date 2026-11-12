@@ -18,12 +18,17 @@ public:
     static bool isOff();
     // the system work made (WorkRootState::initialize; the return type is not in the symbols)
     static WorkSystem* create();
+    // inline: create builds it in place (32 children, both off flags and 0x1B6 cleared; the parameter names are not
+    // the original's)
+    WorkSystem(const char* name, WorkObj* parent)
+        : WorkObj(name, parent, 32), m_systemMem(), m_offRequest(false), m_off(false), pad_1b6(0) {}
 
     // 0x1B0 the system's own allocator: wkStandbyLogin creates it in the product memory, wkStandbyLogout erases it
     // (the name is not the original's)
     mtl::ALLOC_HANDLE m_systemMem;
     bool m_offRequest;  // 0x1B4 isOff (the name is not the original's)
     bool m_off;         // 0x1B5 isOff (the name is not the original's)
+    unsigned char pad_1b6;  // 0x1B6 the constructor clears it
 };
 }  // namespace ml
 

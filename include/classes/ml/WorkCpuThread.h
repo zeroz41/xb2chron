@@ -26,6 +26,9 @@ public:
     // the first of the thread's jobs whose 0x30 is 0, moved to dst's m_transferJob; nullptr for none (the parameter
     // name is not the original's)
     TJOB* transferJob(WorkCpuThread* dst);
+    // the thread's next job in job: the first one (m_transferJob too), or with search the first whose 0x3C is set;
+    // whether there was one (the parameter names are not the original's)
+    bool getJobThread(TJOB*& job, bool search);
 
     // 0x1A8 the CPU the thread runs on (WorkCpu::getCurrentCPUID and getThreadId compare it; the name is not the
     // original's)

@@ -40,6 +40,17 @@ public:
     // evt queued on this, on every child (the parameter names are not the original's)
     void wkSetEvent(EVT evt);
     void wkSetEventChild(EVT evt);
+    // evt queued on this and every child with value as its argument (WorkControl::endFrame passes a pause
+    // request's name; the parameter names are not the original's)
+    template <typename T>
+    void wkSetEvent(EVT evt, const T& value);
+    // inline: endFrame and wkSetEvent<T> walk the children so (the name is the non-template one's)
+    template <typename T>
+    void wkSetEventChild(EVT evt, const T& value) {
+        for (reslist<WorkObj*>::iterator it = m_child.begin(); it != m_child.end(); ++it) {
+            (*it)->wkSetEvent(evt, value);
+        }
+    }
     // the children's list made anew with room for capacity children (the parameter name is not the original's)
     void wkReplaceHasChild(int capacity);
 

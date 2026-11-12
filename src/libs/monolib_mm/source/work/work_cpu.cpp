@@ -3,6 +3,8 @@
 #include "classes/ml/WorkCpu.h"
 #include "classes/ml/DevGraph.h"
 #include "classes/ml/WorkCpuThread.h"
+#include "classes/ml/Scn.h"
+#include "classes/ml/ScnRenderDrSys.h"
 #include "mm/mtl/FixedList.h"
 #include "mm/mtl/FixedList.h"
 #include "mm/Col3.h"
@@ -629,6 +631,35 @@ bool WorkCpuThread::wkStandbyLogin() {
     return true;
 }
 
+bool WorkCpuThread::wkStandbyLogout() {
+    if (m_child.size() != 0 || mm::mtl::PtrSingleton<WorkControl>::get() != nullptr) {
+        return false;
+    }
+    switch (pad_1c0) {
+    case 0:
+        pad_672 = 1;
+        if (m_th != nullptr) {
+            m_th->setSignalEvent(true);
+        }
+        pad_1c0++;
+    case 1:
+        if (m_th != nullptr) {
+            if (!m_th->isTerminated()) {
+                return false;
+            }
+            if (m_th != nullptr) {
+                m_th->release();
+                m_th = nullptr;
+            }
+        }
+        pad_1c0++;
+        WorkCpu::get()->m_thread[m_cpu - 1] = nullptr;
+        return WorkObj::wkStandbyLogout();
+    default:
+        return false;
+    }
+}
+
 float WorkObjFlowSystemPause::getRate() {
     if (WorkObjFlowSystemPause* pause = get()) {
         float rate = (pause->m_frame + 1) / 5.0f;
@@ -687,6 +718,59 @@ void WorkControl::pause(bool pause, const char* name) {
     request.m_pause = pause;
     request.m_name = name;
     _wkcnt::s_quePause.push_back(request);
+}
+
+void WorkControl::endFrame() {
+    if (get() == nullptr) {
+        return;
+    }
+    CS lock(_wkcnt::getPauseCriticalSection());
+    while (!_wkcnt::s_quePause.empty()) {
+        if (_wkcnt::s_quePause.first().m_pause) {
+            if (s_nPauseNum++ == 0) {
+                get()->wkSetEventChild(EVT(5), _wkcnt::s_quePause.first().m_name);
+                if (Scn* scn = mm::mtl::PtrSingleton<Scn>::get()) {
+                    if (scn->m_renderDrSys != nullptr) {
+                        scn->m_renderDrSys->setMdlDblPause(true);
+                    }
+                }
+            }
+        } else {
+            if (s_nPauseNum == 1) {
+                if (Scn* scn = mm::mtl::PtrSingleton<Scn>::get()) {
+                    if (scn->m_renderDrSys != nullptr) {
+                        scn->m_renderDrSys->setMdlDblPause(false);
+                    }
+                }
+                get()->wkSetEventChild(EVT(6), _wkcnt::s_quePause.first().m_name);
+            }
+            s_nPauseNum--;
+        }
+        _wkcnt::s_quePause.pop_front();
+    }
+    while (!_wkcnt::s_quePauseS.empty()) {
+        if (_wkcnt::s_quePauseS.first().m_pause) {
+            if (s_nSysPauseNum++ == 0) {
+                if (WorkSystem* system = WorkSystem::get()) {
+                    system->wkSetEvent(EVT(7));
+                }
+                if (LibMain* main = LibMain::get()) {
+                    main->wkSetEvent(EVT(7));
+                }
+            }
+        } else {
+            if (s_nSysPauseNum == 1) {
+                if (WorkSystem* system = WorkSystem::get()) {
+                    system->wkSetEvent(EVT(8));
+                }
+                if (LibMain* main = LibMain::get()) {
+                    main->wkSetEvent(EVT(8));
+                }
+            }
+            s_nSysPauseNum--;
+        }
+        _wkcnt::s_quePauseS.pop_front();
+    }
 }
 
 bool WorkControl::wkStandbyLogin() {
@@ -765,6 +849,10 @@ bool WorkSystem::wkStandbyLogout() {
         m_systemMem = mtl::ALLOC_HANDLE();
     }
     return WorkObj::wkStandbyLogout();
+}
+
+WorkSystem* WorkSystem::create() {
+    return WorkUtil::createWork<WorkSystem>("WorkSystem", WorkControl::get(), false);
 }
 
 WorkCpuThread::WorkCpuThread(const char* name, WorkObj* parent)
