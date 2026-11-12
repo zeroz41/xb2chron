@@ -144,8 +144,13 @@ void GfFobjGottenEffectManager::dispose() {
     m_info = CreateInfo();
 }
 
+GfDropitemParams::GfDropitemParams() {
+    m_idTop = 0;
+    setAllocator(gf::getAllocator(ALLOCATOR(0)));
+}
+
 GfDropitemParams::~GfDropitemParams() {
-    m_params.destroy();
+    destroy();
 }
 
 void GfDropitemParam::loadFromBdat(int& id) {
@@ -179,19 +184,19 @@ void GfDropitemParam::loadFromBdat(int& id) {
 }
 
 void GfDropitemParams::update() {
-    if (m_params.size() != 0) {
+    if (size() != 0) {
         return;
     }
     unsigned char* fp = Bdat::isExistFP("RSC_dropitemParam");
     if (fp == nullptr) {
         return;
     }
-    m_params.resize(Bdat::getIdCount(fp));
+    resize(Bdat::getIdCount(fp));
     m_idTop = Bdat::getIdTop(fp);
     int count = Bdat::getIdCount(fp);
     for (int i = 0; i < count; i++) {
         int id = m_idTop + i;
-        m_params.at(i).loadFromBdat(id);
+        at(i).loadFromBdat(id);
     }
 }
 
@@ -255,6 +260,27 @@ void GfDropitemEmitter::seqWaitEndDrop(float dt) {
     }
     m_isEmitted = true;
     m_seq = nullptr;
+}
+
+GfFobjDropitem::GfFobjDropitem(GF_OBJ_HANDLE* handle) {
+    m_se[0] = 0;
+    m_se[1] = 0;
+    m_limitType = 0;
+    m_rarity = 0;
+    m_handle = handle;
+    m_velocity[0] = 0.0f;
+    m_velocity[1] = 0.0f;
+    m_velocity[2] = 0.0f;
+    m_bounceCount = 0;
+    m_time = 0.0f;
+    m_blinkTime = 0.0f;
+    m_restTime = 0.0f;
+    m_param = nullptr;
+    m_jumpHeight = 0.0f;
+    m_jumpDistance = 0.0f;
+    m_destroyRequested = false;
+    m_effect = 0;
+    pad_0x58[0] = 0;
 }
 
 GfFobjDropitem::~GfFobjDropitem() {}

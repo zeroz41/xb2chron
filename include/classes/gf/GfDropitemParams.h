@@ -43,13 +43,14 @@ struct GfDropitemParam {
 };
 
 // table 0x7100B528F0
-class GfDropitemParams {
+// The rows' Vector is a base, not a member: the constructor builds it before storing the vtable pointer
+// (a member is built after it). Inferred from the constructor's store order.
+class GfDropitemParams : public mm::mtl::Vector<GfDropitemParam> {
 public:
     GfDropitemParams();
     virtual ~GfDropitemParams();  // slot 0
     void update();
 
-    mm::mtl::Vector<GfDropitemParam> m_params;  // RSC_dropitemParam's rows (the name is not the original's)
     int m_idTop;  // RSC_dropitemParam's first id (Bdat::getIdTop's; the name is not the original's)
 };
 }  // namespace gf
