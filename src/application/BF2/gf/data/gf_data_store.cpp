@@ -72,9 +72,8 @@ void SSoundUiOption::clear() {
 }
 
 void SSoundUiOption::initializeReserverArea() {
-    m_keyA = 0xED;
-    m_keyB = 0x1EB0;
-    m_keyC = 0x5F;
+    static const unsigned char s_key[] = {0xED, 0xB0, 0x1E, 0x5F};
+    memcpy(&m_keyA, s_key, sizeof(s_key));
     m_byte3B = 0;
     memset(m_list, 0, sizeof(m_list));
     m_keyD = 6;
@@ -85,6 +84,31 @@ void SSoundUiOption::initializeReserverArea() {
     m_flagD = 0;
     m_flagE = 0;
     m_flagF = 0;
+}
+
+bool SSoundUiOption::isUninitializeReserverArea() const {
+    if (m_keyA != 0xED) {
+        return true;
+    }
+    if (m_keyB != 0x1EB0) {
+        return true;
+    }
+    if (m_keyC != 0x5F) {
+        return true;
+    }
+    if (m_keyD > 6) {
+        return true;
+    }
+    if (m_flagA > 1) {
+        return true;
+    }
+    if (m_flagB > 1) {
+        return true;
+    }
+    if (m_flagC > 1) {
+        return true;
+    }
+    return m_flagD > 1;
 }
 
 }  // namespace gf

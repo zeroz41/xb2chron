@@ -32,15 +32,15 @@ struct SSoundUiOption {
     // not the original's)
     unsigned char m_langType;
     // 0x1E-0x3C: what these hold is not known; the names are not the original's. clear() stores 0 at 0x1E;
-    // initializeReserverArea stores the 0x1F-0x22 key (one 32-bit run of bitfields: a single unaligned store, separate loads in
-    // SSoundUiOption::isUninitializeReserverArea), 6 at 0x23, clears m_list and 0x3B, and clears the flags after GfDataBtlDif::setOptionGameDifficult. The flags
+    // initializeReserverArea stores the 0x1F-0x22 key with one unaligned 32-bit store (copied as one 4-byte block), 6 at 0x23,
+    // clears m_list and 0x3B, and clears the flags after GfDataBtlDif::setOptionGameDifficult. The flags
     // 0x33-0x38 are plain bytes: gf::GfGameUtilDiff::isEnableAutoSave, GfGameUtilDiff::isEnableSpecialBgm..GfGameUtilDiff::isEnableHitonowaSkip load each with one ldrb.
-    // SSoundUiOption::isUninitializeReserverArea loads 0x22 and 0x23 with one ldrh, as if m_keyD were in the key's run; that layout breaks
-    // initializeReserverArea's store order, so m_keyD stays a byte here
+    // The key fields are plain (not a bitfield run): SSoundUiOption::isUninitializeReserverArea loads 0x22-0x23 and 0x34-0x35
+    // with one ldrh each (adjacent byte loads widened), which a bitfield run ending at 0x22 does not give
     unsigned char m_byte1E;
-    unsigned int m_keyA : 8;
-    unsigned int m_keyB : 16;
-    unsigned int m_keyC : 8;
+    unsigned char m_keyA;
+    unsigned short m_keyB;
+    unsigned char m_keyC;
     unsigned char m_keyD;
     unsigned char m_list[0xF];
     unsigned char m_flagA;
