@@ -3,16 +3,21 @@
 #include "classes/fw/Applet.h"
 #include "classes/fw/EffectManager.h"
 #include "classes/fw/Framework.h"
+#include "classes/fw/FrameworkMemory.h"
 #include "classes/fw/ResourceManager.h"
 #include "classes/ml/DevKeyboard.h"
 #include "classes/ml/MicroThread.h"
 #include "classes/ml/Scn.h"
+#include "classes/ml/ScnObjCam.h"
 #include "classes/ml/ScnRenderDrSys.h"
 #include "classes/ml/WinProc.h"
 #include "classes/ml/WinView.h"
 #include "classes/ml/WorkCpu.h"
 #include "fw/Allocator.h"
 #include "fw/UpdateState.h"
+#include "ml/MlMem.h"
+#include "ml/ScnRenderDrSysParmAcc.h"
+#include "ml/WorkRoot.h"
 #include "ml/WorkRootState.h"
 #include "ml/WorkUtil.h"
 
@@ -57,6 +62,50 @@ FrameworkLauncher::~FrameworkLauncher() {
     }
 }
 
+void FrameworkLauncher::update() {
+    if (m_request & 0x90) {
+        return;
+    }
+    fw::Framework* framework = fw::Framework::sys();
+    fw::UpdateState state;
+    state.m_pause = m_debugPause;
+    if (framework != nullptr) {
+        framework->beginFrame(state);
+        if (!m_debugPause) {
+            framework->preUpdate();
+        }
+    }
+    if (getScn() != nullptr) {
+        getScn()->move();
+    }
+    if (framework != nullptr) {
+        if (!m_debugPause) {
+            framework->update();
+            if (!m_debugPause) {
+                framework->postUpdate();
+            }
+        }
+        // read through a reference: the original tests the request flags with 4-byte loads (no widening into
+        // m_procWid's)
+        const unsigned int& flags = m_request;
+        unsigned int wid;
+        if (!(flags & 0x20000000) && (framework->isAppletClosed() || (flags & 0x10000000)) &&
+            (wid = m_procWid) != static_cast<unsigned int>(-1)) {
+            m_debugPauseStepOk = false;
+            m_debugPause = false;
+            unsigned int request = m_request;
+            m_request = (request & ~0x30000000) | 0x20000000;
+            ml::WorkObj* proc = ml::WorkRootState::getWork(wid);
+            if (request & 0x40000000) {
+                proc->wkSetEventChild(EVT(0));
+            } else if (proc != nullptr) {
+                proc->wkSetEvent(EVT(0));
+            }
+        }
+        framework->endFrame(state);
+    }
+}
+
 bool FrameworkLauncher::createBuildThread(ml::WinProc* proc, SceneBuildInfo& info, const fw::FrameworkConfig& config,
                                           void (*onBuilt)(), void (*onTerminated)()) {
     FrameworkLauncher* launcher = sys();
@@ -91,6 +140,82 @@ ml::WinView* FrameworkLauncher::getView() {
     return sys()->m_view;
 }
 
+nn::os::FiberType* FrameworkLauncher::mlthFnBuild(void*) {
+    FrameworkLauncher* launcher = sys();
+    launcher->m_request = (launcher->m_request & ~0x10) | 0x80;
+    fw::Allocator::setSysMemHandle(ml::MlMem::getProductMem());
+    fw::Allocator::setDebMemHandle(ml::MlMem::getDebugMem());
+    fw::Allocator::setTmpMemHandle(ml::WorkRoot::getMemTMP());
+    fw::FrameworkMemory::initialize(ml::MlMem::getProductMem(), launcher->m_config.m_memorySize);
+    fw::MemorySectionInfo info;
+    info.m_kind = 5;
+    info.m_parent = ml::MlMem::getProductMem();
+    info.m_size = launcher->m_config.m_procMemSize;
+    info.m_alignment = launcher->m_config.m_procMemAlignment;
+    info.m_flag = true;
+    info.m_name = "fw::Proc";
+    info.m_type = mtl::AllocatorType(1);
+    fw::FrameworkMemory::getPtr()->createSection(info);
+    fw::Allocator::setProcMemHandle(fw::FrameworkMemory::getMem(5));
+    ml::WinProc* proc = static_cast<ml::WinProc*>(ml::WorkRootState::getWork(launcher->m_procWid));
+    launcher->m_view =
+        proc->pssCreateView(proc->m_name.m_str, proc->pssGetParentView(), launcher->m_buildInfo.m_viewPriority);
+    ml::WinView* view = getView();
+    view->m_framed = true;
+    view->m_titleBar = true;
+    getView()->setTitle(proc->m_name.m_str);
+    getView()->setFullScreen();
+    getView()->fontSetMaxQue(0x1000);
+    if (launcher->m_buildInfo.m_flags & 0x1) {
+        getView()->m_backCol = launcher->m_buildInfo.m_backCol;
+    }
+    {
+        ml::ScnSetup setup;
+        setup = launcher->m_buildInfo.m_scnSetup;
+        setup.m_name = proc->m_name.m_str;
+        launcher->m_scn = ml::Scn::create(&setup);
+    }
+    getScn()->setView(launcher->m_view, 0);
+    getScn()->getCam(-1)->setCopydataCam(true);
+    getScn()->getCam(-1)->setDefault();
+    getScn()->addRenderCB(launcher, ml::SCNPRIO_CB(0xE), false, false);
+    getScn()->addRenderCB(launcher, ml::SCNPRIO_CB(0x13), false, false);
+    getScn()->setDebDraw(ml::SCNCAM(0), ml::SCNPRIO_CB(0xE));
+    ml::ScnRenderDrSys::createDrRender(getScn());
+    ml::MicroThread::sys()->sleep(3, true);
+    {
+        ml::ScnRenderDrSysParmAcc acc(sys()->m_scn->m_renderDrSys, 0);
+        acc.setToonDirLightScale(launcher->m_buildInfo.m_flags & 0x10);
+        acc.setToneMap(launcher->m_buildInfo.m_flags & 0x20);
+        acc.setToonAmbient(launcher->m_buildInfo.m_flags & 0x40);
+        acc.setCameraLight(!(launcher->m_buildInfo.m_flags & 0x100));
+        if (launcher->m_buildInfo.m_flags & 0x80) {
+            acc.setMotBlur(false);
+        }
+        if (launcher->m_buildInfo.m_flags & 0x200) {
+            acc.setAutoReduction(false);
+        }
+    }
+    new (ml::MlMem::getProductMem(), nullptr, 0, 4, false) fw::Framework();
+    fw::FrameworkEnv env;
+    env.pad_0 = reinterpret_cast<unsigned long>(proc);
+    env.m_scn = getScn();
+    env.m_view = getView();
+    env.m_memHandle = fw::FrameworkMemory::getMem(5);
+    env.pad_20 = reinterpret_cast<unsigned long>(static_cast<TUnk_B3A170*>(launcher));
+    fw::Framework::sys()->initialize(launcher->m_config, env);
+    while (!fw::Framework::sys()->initializeManager()) {
+        ml::MicroThread::sys()->sleep(0, true);
+    }
+    if (launcher->m_onBuilt != nullptr) {
+        launcher->m_onBuilt();
+    }
+    launcher->m_request = (launcher->m_request & ~0x80) | 0x2;
+    launcher->m_threads[1] = reinterpret_cast<ml::MLTH*>(-1);
+    ml::MicroThread::sys()->exit();
+    return nullptr;
+}
+
 bool FrameworkLauncher::destroy() {
     FrameworkLauncher* launcher = sys();
     if (launcher == nullptr) {
@@ -109,6 +234,43 @@ bool FrameworkLauncher::destroy() {
         return true;
     }
     return false;
+}
+
+nn::os::FiberType* FrameworkLauncher::mlthFnTermUpdate(void*) {
+    FrameworkLauncher* launcher = sys();
+    while (!(launcher->m_request & 0x2)) {
+        ml::MicroThread::sys()->sleep(0, true);
+    }
+    launcher->m_request &= ~0x2;
+    launcher->m_debugPauseStepOk = false;
+    launcher->m_debugPause = false;
+    ml::MicroThread::sys()->sleep(2, true);
+    if (fw::Framework::sys() != nullptr) {
+        fw::Framework::sys()->enterFinalizeApplet();
+        fw::Framework::sys()->destroyApplet();
+        fw::Framework::sys()->prepareExit();
+        while (!fw::Framework::sys()->finalizeManager()) {
+            ml::MicroThread::sys()->sleep(2, true);
+        }
+    }
+    if (launcher->m_onTerminated != nullptr) {
+        launcher->m_onTerminated();
+    }
+    delete fw::Framework::sys();
+    ml::MicroThread::sys()->sleep(2, true);
+    ml::Scn::removeRenderCB(launcher);
+    fw::FrameworkMemory::finalize();
+    ml::MicroThread::sys()->sleep(2, true);
+    if (launcher->m_scn != nullptr) {
+        launcher->m_scn->release();
+        launcher->m_scn = nullptr;
+    }
+    launcher->m_procWid = -1;
+    launcher->m_request = (launcher->m_request & ~0x20000000) | 0x10;
+    launcher->m_threads[0] = reinterpret_cast<ml::MLTH*>(-1);
+    launcher->wkSetEvent(EVT(0));
+    ml::MicroThread::sys()->exit();
+    return nullptr;
 }
 
 bool FrameworkLauncher::createWaitLoadResourceThread() {
@@ -233,6 +395,15 @@ bool FrameworkLauncher::wkStandbyLogout() {
     }
     return false;
 }
+
+}  // namespace apps
+
+void ml::WinView::setTitle(const char* title) {
+    m_title = title;
+    m_name = title;
+}
+
+namespace apps {
 
 void FrameworkLauncher::rdkReaded(const char*, void*, int) {}
 

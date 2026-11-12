@@ -110,6 +110,8 @@ public:
     void applyPrio();
     void renderView();
     void setFullScreen();
+    // names the view: its title and its work name (FrameworkLauncher's build thread names it after the process)
+    void setTitle(const char* title);
     // the frame's corner from the root: its own frame position plus each parent view's frame position and client
     // offset, from the calculation bank when cpu is set
     mm::Pnt<int> getFrameAbsPos(bool cpu) const;
@@ -145,7 +147,9 @@ public:
     // 0x4C8 the m_msg index pushed last (attachWorkEvent sets the argument of that message; as WorkObj's m_lastEvent;
     // the name is not the original's)
     unsigned int m_lastMsg;
-    unsigned char pad_4cc[0x48];
+    unsigned char pad_4cc[0x4];
+    // 0x4D0 setTitle assigns it with WorkObj's m_name (the name is not the original's)
+    mm::mtl::FixStr<64> m_title;
     // 0x514 the constructor copies setInitialBackCol's colour into it; tl::TitleApplet::initialize sets it black
     // (the name is not the original's)
     mm::Col4 m_backCol;

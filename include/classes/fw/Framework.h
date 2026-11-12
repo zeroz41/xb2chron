@@ -133,6 +133,7 @@ public:
         bool m_threadFlag;
     };
     PostUpdateThread m_postUpdateThread;
+    unsigned char pad_460[0x8];  // the object is 0x468 bytes (FrameworkLauncher::mlthFnBuild's new)
 };
 }  // namespace fw
 

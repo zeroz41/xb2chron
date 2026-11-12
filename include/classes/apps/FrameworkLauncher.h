@@ -7,6 +7,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "fw/FrameworkConfig.h"
 #include "ml/ScnSetup.h"
+#include "mm/Col4.h"
 #include "mm/Rect.h"
 
 namespace apps { class FrameworkLauncher; }
@@ -25,11 +26,13 @@ class SceneBuildInfo {
 public:
     SceneBuildInfo() : m_flags(0x7e), m_viewPriority(0x40) {}
 
-    // 0x00 the build thread tests 0x1 (m_viewRect applies), 0x10, 0x20, 0x40 (the render system's toon light scale,
+    // 0x00 the build thread tests 0x1 (m_backCol applies), 0x10, 0x20, 0x40 (the render system's toon light scale,
     // tone map, toon ambient), 0x80 (no motion blur), 0x100 (no camera light), 0x200 (no auto reduction)
     unsigned int m_flags;
     ml::ScnSetup m_scnSetup;  // 0x08 the scene's setup
-    mm::Rect<int> m_viewRect;  // 0x50 copied to the view when m_flags 0x1 is set
+    // 0x50 the view's back colour (the build thread copies it into WinView's m_backCol when m_flags 0x1 is set; the
+    // name is not the original's)
+    mm::Col4 m_backCol;
     int m_viewPriority;  // 0x60 WinProc::pssCreateView's fourth
 };
 }  // namespace apps
