@@ -7,6 +7,7 @@
 namespace gf { class GF_ASSET_HANDLE; }
 namespace gf { enum GfAssetType : int; }
 namespace gf { class GfInitParamDriver; }
+namespace gf { class GfAssetFilesInfo; }
 
 namespace gf {
 // table 0x7100B437D8
@@ -40,6 +41,9 @@ public:
     // symbols name it)
     static bool makeAssetNameWpnType(mm::mtl::FixStr<128>& name, GfAssetType type, unsigned int driver,
                                      unsigned int weaponType, unsigned int blade);
+    // for an Ira driver: the "IraD" and "IraB" SE packs (CHR_Dr's Ira SE files, slots 54 and 55) named after the
+    // driver's model (1.0.0's symbols name it; void is inferred)
+    void requestIraSePackFile(GfAssetFilesInfo& info);
 
     int pad_1fc;  // the constructor sets -1
 };

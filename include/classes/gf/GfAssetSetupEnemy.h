@@ -40,6 +40,17 @@ public:
     // the enemy's attribute: its CHR_EnArrange row's BladeAtr, else (for a common blade model or a row with a
     // driver level) its blade's attribute, else for Hana her attribute or 5/1/5 for blades 1005..1007, else 0
     unsigned int getEnemyAttribute(const GfInitParamEnemy& param);
+    // the effect asset name: the eab file's prefix name, then "_<asm weapon type>" (two digits) when the blade has
+    // a weapon, then "_<attribute file name>"; nothing appended for attribute 0 (1.0.0's symbols name these
+    // three; void is inferred)
+    void makeEnemyEffectAssetName(mm::mtl::FixStr<128>& name, const GfInitParamEnemy& param, unsigned int attribute);
+    // the eab/efb file name: effect path + file (+ the blade's base weapon name, + attribute name) + extension
+    void getEnemyEabFileName(mm::mtl::FixStr<128>& name, const GfInitParamEnemy& param, GfAssetType type);
+    void getEnemyEfbFileName(mm::mtl::FixStr<128>& name, const GfInitParamEnemy& param, GfAssetType type,
+                             unsigned int attribute);
+    // for the CHR_EnArrange rows of the Ira drivers: their "IraBtl" eab and attribute efb packs (1.0.0's
+    // symbols name it; void is inferred)
+    void requestIraDriverEffect();
     static mm::mtl::RTTI m_rtti;
 
     // the parameter setup was given (setup stores it first; the model/motion getters read its m_createType and

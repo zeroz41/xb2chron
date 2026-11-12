@@ -65,6 +65,7 @@
 #include "classes/gf/GfObjSetup.h"
 #include "classes/gf/GfAssetResource.h"
 #include "gf/GfDataSound.h"
+#include "gf/GfDataUtil.h"
 
 namespace gf {
 
@@ -299,6 +300,56 @@ void GfAssetSetup::requestWpnSePackFile(GfAssetFilesInfo& info, unsigned int wea
 }
 
 GfAssetSetupDriver::GfAssetSetupDriver() : pad_1fc(-1) {}
+
+bool GfAssetSetupDriver::makeAssetNameWpnType(mm::mtl::FixStr<128>& name, GfAssetType type, unsigned int driver,
+                                              unsigned int weaponType, unsigned int blade) {
+    name = "";
+    mm::mtl::FixStr<128> anim;
+    bool found = GfDataDriver::getDriverAddAnim(anim, driver, weaponType);
+    if (anim.m_nLen == 0 || !found) {
+        return false;
+    }
+    mm::mtl::FixStr<32> suffix;
+    if (blade < 10) {
+        suffix.format("_bl000%d", blade);
+    } else if (blade < 100) {
+        suffix.format("_bl00%d", blade);
+    } else if (blade < 1000) {
+        suffix.format("_bl0%d", blade);
+    } else {
+        suffix.format("_bl%2d", blade);
+    }
+    makeAssetNamePrefix(name, type, anim.m_str, suffix.m_str);
+    return true;
+}
+
+void GfAssetSetupDriver::requestIraSePackFile(GfAssetFilesInfo& info) {
+    if (!GfDataDriver::isIra(m_objId)) {
+        return;
+    }
+    mm::mtl::FixStr<128> name;
+    info.m_type = static_cast<GfAssetType>(19);
+    info.m_backupTypes.clear();
+    info.m_backupTypes.push_back(static_cast<GfAssetType>(18));
+    info.m_name = name.m_str;
+    GfBdatChrDr* chrDr = GfBdatChrDr::sys();
+    unsigned int ira = chrDr->getChrDrIraParam(m_objId);
+    const char* model = GfAssetSetupDriver::getMdlFile(getAssetType());
+    if (model == nullptr) {
+        return;
+    }
+    makeAssetNamePrefix(name, info.m_type, model, "IraD");
+    GfAssetPack* pack = GfAssetManager::createAssetFiles(info);
+    mm::mtl::FixStr<128> path;
+    path.format("%s%s%s", GfAssetPath::getSePack(), chrDr->getChrIrSeDriver(ira), ".xsp");
+    pack->m_files.addResource(static_cast<GfFileIdx>(54), path.m_str);
+    pack->m_sePackId = static_cast<GfFileIdx>(54);
+    makeAssetNamePrefix(name, info.m_type, model, "IraB");
+    pack = GfAssetManager::createAssetFiles(info);
+    path.format("%s%s%s", GfAssetPath::getSePack(), chrDr->getChrIrSeBlade(ira), ".xsp");
+    pack->m_files.addResource(static_cast<GfFileIdx>(55), path.m_str);
+    pack->m_sePackId = static_cast<GfFileIdx>(55);
+}
 
 const char* GfAssetSetupDriver::getMdlFile(GfAssetType type) {
     RefResource* resource = findRefResource(getMdlSlot());
@@ -766,6 +817,27 @@ const char* GfAssetSetupEventBlade::getRetargetMotFile(GfAssetType type) {
 
 GfAssetSetupEnemy::GfAssetSetupEnemy() : m_enemyParam(nullptr) {}
 
+void GfAssetSetupEnemy::makeEnemyEffectAssetName(mm::mtl::FixStr<128>& name, const GfInitParamEnemy& param,
+                                                 unsigned int attribute) {
+    makeAssetNamePrefix(name, static_cast<GfAssetType>(13), getEabFile(static_cast<GfAssetType>(13)), "");
+    if (attribute == 0) {
+        return;
+    }
+    mm::mtl::FixStr<16> weapon;
+    if (GfDataBlade::getBladeWpnType(param.getBladeID()) != 0) {
+        unsigned int type = GfDataWeapon::getAsmWeaponType(GfDataBlade::getBladeWpnType(param.getBladeID()));
+        if (type >= 10) {
+            weapon.format("%d", type);
+        } else {
+            weapon.format("0%d", type);
+        }
+        name += "_";
+        name += weapon.m_str;
+    }
+    name += "_";
+    name += GfDataUtil::getAttributeFileName(attribute);
+}
+
 unsigned int GfAssetSetupEnemy::getEnemyAttribute(const GfInitParamEnemy& param) {
     unsigned int attr = GfBdatChrEnArrange::sys()->getChrEnArrangeBladeAtr(param.getEnArrangeID());
     unsigned int blade = param.getBladeID();
@@ -793,6 +865,37 @@ unsigned int GfAssetSetupEnemy::getEnemyAttribute(const GfInitParamEnemy& param)
         }
     }
     return attr;
+}
+
+void GfAssetSetupEnemy::getEnemyEabFileName(mm::mtl::FixStr<128>& name, const GfInitParamEnemy& param,
+                                            GfAssetType type) {
+    const char* file = getEabFile(type);
+    if (file != nullptr && (strstr(file, "en/") != nullptr || strstr(file, "np/") != nullptr)) {
+        name.format("%s%s%s", getEffPath(), file, ".wieab");
+        return;
+    }
+    unsigned int blade = param.getBladeID();
+    if (!GfDataBlade::isRegularBlade(blade) || param.m_createType == 5 || GfDataHana::isValid(blade)) {
+        name.format("%s%s%s%s", getEffPath(), file, GfDataBlade::getBaseEabWeaponName(blade), ".wieab");
+    } else {
+        name.format("%s%s%s%s", getEffPath(), file, GfDataBlade::getBaseEfbWeaponName(blade), ".wieab");
+    }
+}
+
+void GfAssetSetupEnemy::getEnemyEfbFileName(mm::mtl::FixStr<128>& name, const GfInitParamEnemy& param,
+                                            GfAssetType type, unsigned int attribute) {
+    unsigned int blade = param.getBladeID();
+    const char* file = getEfbFile(type);
+    if ((file != nullptr && (strstr(file, "en/") != nullptr || strstr(file, "np/") != nullptr)) ||
+        (GfDataBlade::isRegularBlade(blade) && param.m_createType == 5 && !GfDataHana::isValid(blade))) {
+        name.format("%s%s%s", getEffPath(), file, ".wiefb");
+        return;
+    }
+    if (blade == 1010) {
+        attribute = 0;
+    }
+    name.format("%s%s%s%s%s", getEffPath(), file, GfDataBlade::getBaseEfbWeaponName(blade),
+                GfDataBlade::getBaseEfbAttributeName(blade, attribute), ".wiefb");
 }
 
 const char* GfAssetSetupEnemy::getMdlFile(GfAssetType type) {
@@ -1445,6 +1548,33 @@ const char* GfAssetSetupWeapon::getPath() const {
 }
 
 GfAssetSetupWeaponEventCS::GfAssetSetupWeaponEventCS() {}
+
+void GfAssetSetupWeaponEventCS::setup(GF_ASSET_HANDLE* handle, const GfInitParamWeapon& param) {
+    GfAssetSetupWeapon::setup(handle, param);
+    if (getMdlFile(getAssetType()) == nullptr || *getMdlFile(getAssetType()) == '\0') {
+        GfAssetManager::destroy(m_handle);
+        m_handle = reinterpret_cast<GF_ASSET_HANDLE*>(-1);
+        return;
+    }
+    mm::mtl::FixStr<128> name;
+    GfAssetFilesInfo info;
+    info.m_handle = handle;
+    info.m_name = name.m_str;
+    info.pad_40 = param.pad_44;
+    info.m_type = static_cast<GfAssetType>(18);
+    const char* mot = getEvtMotFile(info.m_type);
+    if (mot == nullptr) {
+        return;
+    }
+    makeAssetNamePrefix(name, info.m_type, mot, "Evt");
+    GfAssetPack* pack = GfAssetManager::createAssetFiles(info);
+    if (setupReference(pack, mot, static_cast<GfFileIdx>(getEvtMotSlot()))) {
+        return;
+    }
+    mm::mtl::FixStr<128> path;
+    path.format("%s%s%s", getEvtPath(), mot, ".mot");
+    pack->m_files.addResource(static_cast<GfFileIdx>(getEvtMotSlot()), path.m_str);
+}
 
 const char* GfAssetSetupWeaponEventCS::getEvtMotFile(GfAssetType type) {
     if (type == 18) {
