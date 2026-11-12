@@ -82,6 +82,15 @@ public:
     // (GfDataUtil::getScenarioFlag) is 10012, 10014 or 10017, off (its effect killed, the colour filter reset) otherwise
     void updateSepia(const fw::UpdateInfo& info);
     void updateRideRequest(const fw::UpdateInfo& info);
+    // Ira only: the hidden field weapons of the party's drivers faded in (battle) or out (field)
+    void updateWeaponFadeForIra(const fw::UpdateInfo& info);
+    // Ira only, out of battle: a party-2 driver 10 or more away from its party-1 driver is warped to it (every 90 frames)
+    void updateReserverFollowForIra(const fw::UpdateInfo& info);
+    // once m_flag6A1 is set and control is free: the party's drivers and blades faded in with the portal particle
+    void updatePortalFade(const fw::UpdateInfo& info);
+    // the affinity chart quests of blades 1111 and 1108 set up as ordered once their next task's condition holds
+    // (each once: local flags 0xDFC2 up)
+    void updateCollectKizunaRingWithContition(const fw::UpdateInfo& info);
     // an enemy with a saved hit-point value (its setup's word at 0xB4) gets it back once it is in battle, then the value is cleared
     void updateEnemySaveHp(const fw::UpdateInfo& info);
     // the field blade change time counts up while the leader driver and its blade are out of battle in a free field

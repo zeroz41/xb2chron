@@ -108,6 +108,16 @@
 #include "classes/gf/GfComAsm.h"
 #include "classes/gf/GfComCollider.h"
 #include "classes/fw/ColiObject.h"
+#include "classes/gf/GfAppendHandles.h"
+#include "classes/gf/GfInfo.h"
+#include "classes/gf/SCOM_OBJ_ALPHA.h"
+#include "classes/gf/SCOM_OBJ_VFADE.h"
+#include "classes/gf/SCOM_OBJ_WARP_POS.h"
+#include "gf/AchievQuest.h"
+#include "gf/GfDataQuest.h"
+#include "gf/GfQuestInfo.h"
+#include "gf/GfQuestTask.h"
+#include "gf/QuestTaskParam.h"
 
 namespace gf {
 
@@ -1534,6 +1544,118 @@ void GfGameScene::setRideOn(unsigned int id) {
         m_rideRequest = false;
         if (!GfGameRide::testRideOn()) {
             m_rideRequest = true;
+        }
+    }
+}
+
+void GfGameScene::updateWeaponFadeForIra(const fw::UpdateInfo&) {
+    if (!GfGameManager::isGameTypeIra()) {
+        return;
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+        for (int party = 0; party < 3; party++) {
+            if (!GfDataDriver::isIraHideWeaponOnField(GfGameParty::getDriverBdatId(i, static_cast<PTPOS>(party)))) {
+                continue;
+            }
+            GfObjAcc acc(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(party)));
+            if (acc.m_obj == nullptr) {
+                continue;
+            }
+            GfAppendHandles* handles = GfMountManager::getAppendHandles(acc.getHandle(), static_cast<GFATTACH>(0));
+            if (handles == nullptr) {
+                continue;
+            }
+            DataParamAcc param(acc.getHandle());
+            bool battle = acc.isBattle();
+            for (int j = 0; j < 10; j++) {
+                GF_OBJ_HANDLE* handle = handles->getObjHandles()[j];
+                if (GfGameObj::isValidGameObj(handle, true, nullptr)) {
+                    GfObjAcc weapon(handle);
+                    if (battle) {
+                        if (weapon.getAlphaNormal() <= 0.0f) {
+                            SCOM_OBJ_VFADE::createBattle(handle, 1.0f, param.getAttribute(-1, false));
+                            SCOM_OBJ_ALPHA::create(handle, 0.5f, 1.0f);
+                        }
+                    } else if (weapon.getAlphaNormal() >= 1.0f) {
+                        SCOM_OBJ_ALPHA::create(handle, 0.5f, 0.0f);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void GfGameScene::updateReserverFollowForIra(const fw::UpdateInfo&) {
+    if (!GfGameManager::isGameTypeIra() || GfGameManager::isBattle()) {
+        return;
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+        GfObjAcc reserver(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(2)));
+        if (!reserver.isValidTransform()) {
+            continue;
+        }
+        GfObjAcc driver(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(1)));
+        if (!driver.isValidTransform()) {
+            continue;
+        }
+        if ((driver.getWorldTransform().position - reserver.getWorldTransform().position).length() < 10.0f) {
+            continue;
+        }
+        if ((GfInfo::getFrameCount32() + i * 30) % 90 == 0) {
+            fw::Transform transform = driver.getWorldTransform();
+            transform.position += mm::Vec3(0.01f, 0.0f, 0.0f);
+            SCOM_OBJ_WARP_POS::create(reserver.getHandle(), transform, false);
+        }
+    }
+}
+
+namespace _gfgsc {
+// updateCollectKizunaRingWithContition's blades and the affinity chart quest each one waits for (the names are not
+// the original's)
+struct KizunaRingQuest {
+    unsigned int m_blade;
+    unsigned int m_quest;
+};
+static const KizunaRingQuest s_kizunaRingQuests[13] = {
+    {0x457, 0x3325}, {0x457, 0x3327}, {0x457, 0x3329}, {0x457, 0x332B}, {0x457, 0x332D},
+    {0x454, 0x3265}, {0x454, 0x326B}, {0x454, 0x3271}, {0x454, 0x3281}, {0x454, 0x3283},
+    {0x454, 0x3285}, {0x454, 0x3287}, {0x454, 0x3289},
+};
+}  // namespace _gfgsc
+
+void GfGameScene::updateCollectKizunaRingWithContition(const fw::UpdateInfo&) {
+    for (int i = 0; i < 13; i++) {
+        unsigned int blade = _gfgsc::s_kizunaRingQuests[i].m_blade;
+        if (GfDataBlade::isActivateUnuse(blade)) {
+            continue;
+        }
+        if (GfGameFlag::getLocal(1, 0xDFC2 + i) != 0) {
+            continue;
+        }
+        unsigned int quest = _gfgsc::s_kizunaRingQuests[i].m_quest;
+        for (unsigned int line = 0; line < 10; line++) {
+            AchievInfo* info = GfDataBlade::getAchievInfo(blade, line);
+            if (info->m_achievementId == 0) {
+                continue;
+            }
+            AchievQuest* found = nullptr;
+            for (int level = 0; level < 5; level++) {
+                if (info->m_quests[level].m_questId.m_id == quest) {
+                    found = &info->m_quests[level];
+                    break;
+                }
+            }
+            if (found == nullptr) {
+                continue;
+            }
+            QuestTaskParam param(GfDataQuest::getListNextQuestA(found->m_questId), 0, static_cast<TASK_STATE>(0));
+            if (GfQuestTask::isEnableTaskCondition(param)) {
+                if (GfQuestInfo::isQuestOrder(found->m_questId)) {
+                    GfQuestTask::setupOrderTask(found->m_questId);
+                }
+                GfGameFlag::setLocal(1, 0xDFC2 + i, 1);
+            }
+            break;
         }
     }
 }
