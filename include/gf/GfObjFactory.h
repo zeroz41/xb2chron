@@ -13,6 +13,8 @@ namespace gf { class GfComSound; class GfExtendPacking; class GfObj; class GF_AS
 namespace fw { struct ResSoundTriggerInfo; }
 namespace gf { enum GfFileIdx : int; }
 namespace anm { class Skeleton; }
+namespace fw { class ForceCalculator; }
+namespace mm { namespace mtl { template <typename T> class IntrusivePtr; } }
 
 namespace gf {
 // makes the game's objects (functions, by its symbols)
@@ -124,6 +126,20 @@ void fn_7100543F98(GF_OBJ_HANDLE* handle);
 // extra parts (GfObjAcc::setupExtraParts), then shows or hides Metsu's crystal on an "np100201" model and the sin
 // mask on an "np100101" or "pc700401" model.
 void fn_71005442A4(GF_OBJ_HANDLE* handle);
+// Placeholder name (no symbol names it). Called by GfObjFactory::createComponent: sets up the object's transform
+// (component slot 0) at pos, rotated by the half-angle quaternion of the angles rot, with two frames per list and a
+// child frame (fn_7100541A00's with other settings).
+void fn_7100544354(GfObj* obj, const mm::Vec3& pos, const mm::Vec3& rot);
+// Placeholder name (no symbol names it). Called by GfObjFactory::createComponent: sets up the object's dynamics
+// (component slot 8) from the dynamics resource of the asset's file 0x3B (the named file of its archive when name is
+// given), level 6, driven by force.
+void fn_71005444A0(GfObj* obj, const char* name, mm::mtl::IntrusivePtr<fw::ForceCalculator> force);
+// Placeholder name (no symbol names it). Called by GfObjFactory::createComponent: gives the object's collider
+// (component slot 4) its character collision 0, a kind 3 shape of height and radius, at collision priority.
+void fn_710054461C(GfObj* obj, unsigned int priority, float height, float radius);
+// Placeholder name (no symbol names it). Called by GfObjFactory::createComponent: when the object's model component
+// (slot 1) has a model, gives its IK component (slot 3) a blow-rotate solver on the object data's rotate bone.
+void fn_710054473C(GfObj* obj);
 }  // namespace gf
 
 #endif
