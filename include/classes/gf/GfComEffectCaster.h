@@ -69,12 +69,16 @@ public:
     // an effect an event mounted (removeMountEffectEv looks one up by m_id and hands m_boneName back; the copy
     // assignment is the implicit one, out of line in the original: name, id, pointer, Vec3, three bytes)
     struct EventEfHandleTbl {
+        // addMountEffectEv's (built on its stack: empty name, id 0, no frame, zero vector, flags clear)
+        EventEfHandleTbl() : m_id(0), pad_30(mm::Vec3::zero), pad_40(false), pad_41(false), pad_42(false) {}
+
         // the bone whose frame removeMountEffectEv hands back (the name is not the original's)
         mm::mtl::FixStr<32> m_boneName;
         unsigned int m_id;  // removeMountEffectEv's key (the name is not the original's)
-        // released by the destructor (reference_object.h's `m_RefCount > 0`); what it holds is unknown
+        // released by the destructor (reference_object.h's `m_RefCount > 0`); addMountEffectEv stores the bone's
+        // frame from the effect point's createFrame or GfComModel::createBoneReferenceFrame when pad_41 is set
         mm::mtl::IntrusivePtr<mm::mtl::ReferenceObject> pad_28;
-        mm::Vec3 pad_30;
+        mm::Vec3 pad_30;  // addMountEffectEv's EffectMountSetupEv::m_pos
         bool pad_40;
         // removeMountEffectEv hands the bone's frame back only when it is set
         bool pad_41;
@@ -142,6 +146,9 @@ public:
     void asmCallback(GfComAsm* com, const CallBackCache& cache);
     void evtAnimCallback(GfComEvtAnim* com, const CallBackCache& cache);
     void callbackImpl(const CallBackCache& cache);
+    // the caster's matrix times the named effect point's transform; false without a caster, its point or a point of
+    // that name (the parameter names are not the original's)
+    bool getEfpMatrix(const char* name, mm::Mat44& mtx);
     // the effect's matrix and scale for the parameter set (the parameter names are not the original's)
     void calcMtxAndScale(GfComEffectCaster* caster, Param* param, float rate, bool flag, effect::SendParam& sendParam);
     // 0: hand the parameters to the effect, 1: the same without m_flagB, 2: kill the effect (by m_followKind)
@@ -182,7 +189,8 @@ public:
     // drops the mounted effect with that id, handing its bone frame back first when it took one; false without one
     // (the parameter name is not the original's)
     bool removeMountEffectEv(unsigned int id);
-    // mounts an event's effect (event::AttachUtil::setMount); out of line, not written yet
+    // mounts an event's effect (event::AttachUtil::setMount): an m_eventEfHandles entry with the setup's name, id,
+    // position and flags, and the bone's frame when pad_41 is set; nothing for id 0
     void addMountEffectEv(const EffectMountSetupEv& setup);
     // the pack holding the named efb: an m_packs entry of the owner's weapon effect type (any entry when
     // GfGameManager::isGameTypeIra() holds), else pad_48, or for pad_117ac kinds 3 and 4 with a parent a pack made

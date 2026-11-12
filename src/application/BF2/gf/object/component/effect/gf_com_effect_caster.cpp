@@ -40,6 +40,7 @@
 #include "classes/gf/EffectCaster.h"
 #include "classes/gf/GfComEffectCaster.h"
 #include "mm/mtl/Delegate.h"
+#include "classes/gf/EffectMountSetupEv.h"
 
 // the ASM annotation name registerAsmCallbackEffect registers effects under
 const char* ASM_CB_NAME_EFFECT = "asm_effect";
@@ -425,6 +426,20 @@ void GfComEffectCaster::updateParam(GfComEffectCaster* caster, Param* param, flo
     }
 }
 
+bool GfComEffectCaster::getEfpMatrix(const char* name, mm::Mat44& mtx) {
+    if (m_caster) {
+        if (m_caster->m_pPoint == nullptr) {
+            return false;
+        }
+        int index = m_caster->m_pPoint->getPointIndex(name);
+        if (index != -1) {
+            mtx.mulSafe(m_caster->m_pPoint->getPointTransform(index), m_caster->m_mtx);
+            return true;
+        }
+    }
+    return false;
+}
+
 int GfComEffectCaster::calcFollowAnnotetionTag(Param* param, effect::SendParam& sendParam) {
     int result;
     switch (param->m_followKind) {
@@ -527,6 +542,28 @@ void GfComEffectCaster::createFromFileName(const mm::Mat44& mtx, const char* fil
     }
 }
 
+void GfComEffectCaster::addMountEffectEv(const EffectMountSetupEv& setup) {
+    if (setup.m_id == 0) {
+        return;
+    }
+    EventEfHandleTbl handle;
+    handle.m_boneName = setup.m_boneName;
+    handle.m_id = setup.m_id;
+    handle.pad_28 = nullptr;
+    handle.pad_30 = setup.m_pos;
+    handle.pad_41 = setup.pad_41;
+    handle.pad_40 = setup.pad_40;
+    handle.pad_42 = setup.pad_42;
+    if (handle.pad_41) {
+        if (m_pPoint) {
+            handle.pad_28 = m_pPoint->m_createFrame(handle.m_boneName.m_str);
+        } else if (GfComModel* model = m_owner->getComponent<GfComModel>(1)) {
+            handle.pad_28 = model->createBoneReferenceFrame(handle.m_boneName.m_str);
+        }
+    }
+    m_eventEfHandles.push_back(handle);
+}
+
 bool GfComEffectCaster::removeMountEffectEv(unsigned int id) {
     for (EventEfHandleTbl& handle : m_eventEfHandles) {
         if (handle.m_id == id) {
@@ -590,6 +627,44 @@ bool GfComEffectCaster::getWeaponEffectPack(mm::mtl::FixedVector<fw::EffectPack*
 void GfComEffectCaster::applyEffpointByMatrix(const mm::Mat44& mtx) {
     if (m_caster) {
         m_caster->flushDirectMatrix(mtx);
+    }
+}
+
+void EffectCaster::flushDirectMatrix(const mm::Mat44& mtx) {
+    m_mtx = mtx;
+    mm::Mat44 pointMtx(mtx);
+    setEfpMat(pointMtx, "root", 0);
+    if (m_pPoint != nullptr) {
+        int index = 1;
+        for (int i = 0; i < m_pPoint->getPointCount(); i++) {
+            const char* name = m_pPoint->getPointName(i);
+            pointMtx.mulSafe(m_pPoint->getPointTransform(i), mtx);
+            setEfpMat(pointMtx, name, index);
+            m_pPoint->setDirty(i, true);
+            index++;
+        }
+    }
+}
+
+void EffectCaster::update(const fw::UpdateInfo&) {
+    if (pad_8.get() != nullptr) {
+        pad_8.get()->syncWorldMatrix();
+        m_mtx = pad_8->m_worldMatrix;
+        mm::Mat44 pointMtx(m_mtx);
+        setScl(1.0f);
+        setEfpMat(m_mtx, "root", 0);
+        if (m_pPoint != nullptr) {
+            int index = 1;
+            for (int i = 0; i < m_pPoint->getPointCount(); i++) {
+                const char* name = m_pPoint->getPointName(i);
+                if (m_pPoint->isDirty(i)) {
+                    pointMtx.mulSafe(m_pPoint->getPointTransform(i), m_mtx);
+                    setEfpMat(pointMtx, name, index);
+                    m_pPoint->setDirty(i, false);
+                    index++;
+                }
+            }
+        }
     }
 }
 }  // namespace gf

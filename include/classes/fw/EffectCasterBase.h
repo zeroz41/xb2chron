@@ -4,6 +4,7 @@
 #include "mm/mtl/FixedVector.h"
 #include "mm/mtl/IntrusivePtr.h"
 #include "classes/mm/mtl/ReferenceObject.h"
+#include "classes/fw/ReferenceFrame.h"
 
 namespace fw { class EffectPoint; }
 namespace mm { class Mat44; }
@@ -33,9 +34,10 @@ public:
     // original's)
     void changeLayer(unsigned int index, unsigned int layer);
 
-    // cleared by the constructor, released by the destructor (reference_object.h's `m_RefCount > 0`); what it
-    // holds is unknown
-    mm::mtl::IntrusivePtr<mm::mtl::ReferenceObject> pad_8;
+    // cleared by the constructor, released by the destructor (reference_object.h's `m_RefCount > 0`); the frame the
+    // caster follows: GfComEffectCaster::setupCaster stores its transform's frame, gf::EffectCaster::update syncs
+    // its world matrix and copies it
+    mm::mtl::IntrusivePtr<ReferenceFrame> pad_8;
     EffectPoint* m_pPoint;  // the constructor's, counted (the name is not the original's)
     // the constructor clears 0x18..0x2C; GfComEffectCaster::setupCaster stores its model's getInterface() here and
     // EffectCasterSend::getMdl reads it as a ml::ScnObjModelDrSys (the name is not the original's)

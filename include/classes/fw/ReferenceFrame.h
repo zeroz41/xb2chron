@@ -27,8 +27,9 @@ public:
     // m_worldMatrix, rebuilt from the synced world transform when bit 2 of m_syncFlags is clear
     const mm::Mat44& getSyncedWorldMatrix();
     // m_worldMatrix rebuilt from the synced world transform when bit 2 of m_syncFlags is clear (1.0.0's name;
-    // inline: TransformUpdater::resolveWorldTrasform inlines it, gf_com_effect_caster emits a copy)
-    inline void syncWorldMatrix() {
+    // inline: TransformUpdater::resolveWorldTrasform inlines it, gf_com_effect_caster emits a copy; no `inline`
+    // keyword: its hint (threshold 325, cost 300) inlines it into gf::EffectCaster::update, which calls it)
+    void syncWorldMatrix() {
         if ((m_syncFlags & 4) == 0) {
             syncWorldTransform();
             const mm::Quat& q = m_worldTransform.rotation;
