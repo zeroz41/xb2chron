@@ -700,6 +700,45 @@ bool DrMdoCtlSeamMpfMap::readMpfModelCheck(const mm::Vec3& pos) {
     return ret;
 }
 
+void DrMdoCtlSeamMpfMap::createMpfMapDisplayList() {
+    if (m_pDrMan->m_seamMpfRenderOff) {
+        return;
+    }
+    DrResMdoSeamWrkMpf* wrk = m_mpfPool.m_list;
+    grlib::CGLibVtxInstans* inst = m_pDrMan->m_mdlMan->m_vertexMan->m_instans;
+    DrAPCache* cache = m_pDrMan->m_apCache;
+    cache->setupCulling(static_cast<DrApCullType>(2));
+    m_pDrMan->m_pixlMan->selectGBuffRenderTarget(0x1F);
+    cache->setupDepthStencil(0x18, 1, 0, 3);
+    cache->setupAlphaBlend(0);
+    for (; wrk != nullptr; wrk = wrk->m_prev) {
+        m_pWrkMatRes = wrk->m_matRes;
+        if (m_pWrkMatRes == nullptr || wrk->m_dispOn == 0) {
+            continue;
+        }
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        int num = wrk->m_objNum;
+        DrMdoCtlMpfWork* work = wrk->m_mpfWork;
+        for (int i = 0; i < num; i++) {
+            if (work->getObjChk(i) == 0) {
+                continue;
+            }
+            const MdsMdlTopHeader* top = &m_pWrkMatRes->m_pMdlTop[i];
+            int infoNum = top->m_infoNum;
+            const MdsMdlInfoHeader* info =
+                reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs);
+            for (int j = 0; j < infoNum; j++, info++) {
+                mpfDrawRender(i, info, work, inst);
+            }
+        }
+    }
+    cache->setupAlphaBlend(0);
+}
+
 void DrMdoMat::releaseMpfMapSeamMat(MdoWrkMatRes* res) {
     if (res->m_pVertex != nullptr) {
         delete res->m_pVertex;
@@ -1121,6 +1160,26 @@ void DrMdoAnim::anmNodeParm_SclY(mm::Vec3* srt, float value) {
 
 void DrMdoAnim::anmNodeParm_SclZ(mm::Vec3* srt, float value) {
     srt[2].z = value;
+}
+
+void DrMdoNomAfterImage::captureObj(const DrMdoCtlNom* nom) {
+    wrkObjList* wrk = &m_list[m_cur];
+    DrMdlObj* mdl = wrk->m_mdl;
+    cloneMdlObj(static_cast<DrMdoCtlNom*>(mdl), nom);
+    wrk->m_time = 0.0f;
+    wrk->m_pos = mdl->m_matrix.getTrans();
+    mdl->setDisp(false);
+    m_cur++;
+    if (m_num <= m_cur) {
+        m_cur = 0;
+    }
+    if (mdl->getRimBloomWrk(2) != nullptr) {
+        MdoRimBloomWrk* rim = mdl->getRimBloomWrk(2);
+        rim->m_color = m_rimColorStart;
+        rim->m_emissive = m_rimEmissiveStart;
+        rim->m_power = m_rimPowerStart;
+        rim->m_blackRatio = m_rimBlackRatioStart;
+    }
 }
 
 DrMdoMpfMan::~DrMdoMpfMan() {
@@ -4996,6 +5055,51 @@ void DrMdoCtlSeamBaseMap::callShadowMapRenderSeamBaseMap(DrPixlShadowObj* shadow
             m_bindFlags[0] |= 0x10;
             wrk->seachDefShadowBaseMapRender(shadow, this);
         }
+    }
+}
+
+void DrMdoCtlSeamInstMap::callInstShadowCacheAddRender(int idx) {
+    if (!(m_seamFlags & 0x4000) || m_pDrMan->m_seamOccRenderOff) {
+        return;
+    }
+    DrResMdoSeamWrkInst* wrk = m_instPool.m_list;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[1] = 0;
+    m_bindFlags[0] |= 0x10;
+    grlib::CGLibVtxInstans* inst = m_pDrMan->m_mdlMan->m_vertexMan->m_instans;
+    for (; wrk != nullptr; wrk = wrk->m_pLink) {
+        m_pWrkMatRes = wrk->m_pWrkMatRes;
+        if (m_pWrkMatRes == nullptr || !(wrk->m_cacheFlags & 0x10)) {
+            continue;
+        }
+        int num = wrk->m_shadowMdlNum;
+        if (num != 0) {
+            const unsigned int* vtxNo = reinterpret_cast<const unsigned int*>(
+                reinterpret_cast<const unsigned char*>(wrk->m_header) + wrk->m_header->m_vtxNoOfs);
+            DrResMdoSeamWrkInst::MdlInfo** list = wrk->m_shadowMdlList;
+            for (int i = 0; i < num; i++, list++) {
+                DrResMdoSeamWrkInst::MdlInfo* info = *list;
+                const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop + info->m_topIdx;
+                if (!(top->m_shadowFlags & 0x4)) {
+                    continue;
+                }
+                unsigned int no = vtxNo[info->m_topIdx];
+                if (no == 0xFFFF) {
+                    m_pWrkMatRes->m_pVertex = wrk->m_vertex;
+                } else {
+                    unsigned int vtx = m_pVertexNo[no];
+                    if (vtx == 0) {
+                        continue;
+                    }
+                    m_pWrkMatRes->m_pVertex = m_vertexPool.m_works[vtx - 1].m_vertex;
+                }
+                m_pWrkMatRes->m_pVertex->beginVertexSetup();
+                m_pWrkMatRes->m_pEtcRef->m_etcIdx = info->m_etcIdx;
+                partsPosNoamShadowRender(top, inst, info->m_count, 0x34, info->m_num);
+            }
+        }
+        wrk->renderShadowPosAnime(this, &m_instAnm, idx);
     }
 }
 

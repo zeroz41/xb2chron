@@ -30,7 +30,10 @@ struct MdsSeamInstMapHead {
     unsigned int m_vertexOfs;  // 0x1C: offset of the vertex data, 0 when there is none
     unsigned int m_streamOfs;  // 0x20: offset of the m_matArg StreamEntry (seachCheckStreamList)
     int m_matArg;  // 0x24: initInstMapMaterial's and resetInstMapMaterial's last argument
-    unsigned char pad_28[0x10];
+    // 0x28: offset of the vertex numbers by MdoWrkMatRes::m_pMdlTop index (u32 each, 0xFFFF: the work's own
+    // m_vertex; the name is not the original's)
+    unsigned int m_vtxNoOfs;
+    unsigned char pad_2C[0xC];
     unsigned int m_etcOfs;     // 0x38: offset of the m_etcNum EtcInfo
     int m_etcNum;              // 0x3C
     unsigned char pad_40[0x4];
@@ -63,7 +66,10 @@ public:
         unsigned short m_topIdx;  // 0xC: index into MdoWrkMatRes::m_pMdlTop
         // 0xE: index into DrMdoCtlSeam::m_pVertexNo, 0xFFFF: the work's own m_vertex
         unsigned short m_vtxNo;
-        unsigned char pad_10[0x4];
+        unsigned char pad_10[0x2];
+        // 0x12: DrMdoCtlSeamInstMap::callInstShadowCacheAddRender binds this etc uniform block (MdoWrkMatRes's
+        // m_pEtcRef->m_etcIdx; the name is not the original's)
+        unsigned short m_etcIdx;
         unsigned int m_count;     // 0x14: MdoInstancePrePassArg::m_count
         unsigned char pad_18[0x8];
     };
@@ -133,6 +139,8 @@ public:
     // DrMdoCtlSeamRead::waitInstPosStream: false when the position stream's data cannot be kept (the block is freed)
     bool setEtcPosCache(mtl::ALLOC_HANDLE handle, int cacheIdx, DrResMdoSeamMemObj* memObj, const DrResMdoInstAnmObj* anm);
     void occRender();
+    // DrMdoCtlSeamInstMap::callInstShadowCacheAddRender calls it after the work's models
+    void renderShadowPosAnime(DrMdoCtlSeamInstMap* ctl, DrResMdoInstAnmObj* anm, unsigned int idx);
     void seachDefShadowInstMapRender(DrPixlShadowObj* shadow, DrMdoCtlSeamInstMap* ctl);
     // 0x08: the next work of DrMdoCtlSeam::m_instPool.m_list (the name is not the original's)
     DrResMdoSeamWrkInst* m_pLink;
@@ -182,13 +190,15 @@ public:
     // 0x152: DrMdoCtlSeamInstMap::createInstZPrePassDisplayList skips the work while it is 0 (the name is not the
     // original's)
     unsigned short m_prePassNum;
-    unsigned char pad_154[0x2];
+    // 0x154: how many of m_shadowMdlList DrMdoCtlSeamInstMap::callInstShadowCacheAddRender draws (the name is not
+    // the original's)
+    unsigned short m_shadowMdlNum;
     unsigned short m_readOff;  // 0x156: callReadOffColiTest sets a bit from bit 7 (the name is not the original's)
     unsigned int m_shadowCacheDone;  // 0x158: callShadowCacheInstUpdate clears the bits it is given (the name is not the original's)
     unsigned char pad_15C[0x3C];
     FadeList* m_fadeList;     // 0x198 (the name is not the original's)
     MdlInfo* m_mdlInfo;       // 0x1A0 (the name is not the original's)
-    unsigned char pad_1A8[0x8];
+    MdlInfo** m_shadowMdlList;  // 0x1A8 (the name is not the original's)
     void* pad_1B0;
     void* pad_1B8;
     // 0x1C8 bytes: DrMdoCtlSeam's instance work pool destroys its works at that stride

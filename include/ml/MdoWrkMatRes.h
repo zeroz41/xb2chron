@@ -142,7 +142,9 @@ struct MdsMdlTopHeader {
     // 0x4: how many MdsMdlInfoHeaders follow m_infoOfs (DrMdoCtlSeamEnvMap's passes walk them; the name is not the
     // original's)
     unsigned int m_infoNum;
-    unsigned char pad_8[0x4];
+    // 0x8, bit 2: DrMdoCtlSeamInstMap::callInstShadowCacheAddRender draws the model (the name is not the original's)
+    unsigned char m_shadowFlags;
+    unsigned char pad_9[0x3];
     float m_max[3];  // 0xC
     float m_min[3];  // 0x18
     unsigned char pad_24[0x20];

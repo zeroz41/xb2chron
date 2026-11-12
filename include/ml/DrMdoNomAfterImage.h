@@ -6,8 +6,8 @@
 #include "ml/DrMdoNomClone.h"
 #include "mm/mtl/FixStr.h"
 #include "mtl/MemManager.h"
-
-namespace mm { class Col3; class Vec3; }
+#include "mm/Col3.h"
+#include "mm/Vec3.h"
 
 namespace ml {
 class DrMdoCtlNom;
@@ -19,16 +19,18 @@ class DrMdoNomAfterImage : public DrMdoNomClone {
 public:
     // one clone (0x20 bytes)
     struct wrkObjList {
-        unsigned char pad_0[0x10];
+        mm::Vec3 m_pos;  // 0x0: captureObj takes the model's matrix translation (the name is not the original's)
         DrMdlObj* m_mdl;  // 0x10
-        float m_alpha;  // 0x18, set from 0x18 of the after image (the name is not the original's)
+        // 0x18: updateParam advances it by its time step up to m_life; captureObj restarts it at 0 (the name is
+        // not the original's)
+        float m_time;
         unsigned char pad_1C[0x4];
     };
 
     DrMdoNomAfterImage() {
         m_list = nullptr;
         m_num = 0;
-        pad_A = 0;
+        m_cur = 0;
         m_flags = 0;
     }
     // the clones get setDeleteCall for the stock buffer, then the list is freed (create starts with the same)
@@ -52,12 +54,25 @@ public:
 
     wrkObjList* m_list;  // 0x0
     short m_num;  // 0x8
-    short pad_A;
-    unsigned char pad_C[0x14];
+    short m_cur;  // 0xA: the clone captureObj fills next, wrapping at m_num (the name is not the original's)
+    unsigned char pad_C[0x8];
+    // updateParam fades a clone's alpha out between m_fadeStart and m_life and blends its rim bloom from the
+    // start set (0x24) to the end set (0x3C) over m_life (the names are not the original's)
+    float m_fadeStart;  // 0x14
+    float m_life;  // 0x18
+    unsigned char pad_1C[0x4];
     // 0x20: a bit per double-buffer index, set by DrMdoCtlNom::createAfterImage/releaseAfterImage on the
     // after image they replace (the name is not the original's)
     unsigned int m_flags;
-    unsigned char pad_24[0x30];
+    // 0x24/0x3C: the rim bloom work (MdoRimBloomWrk's first 0x18 bytes) at the start and the end of a clone's life
+    mm::Col3 m_rimColorStart;  // 0x24
+    float m_rimPowerStart;  // 0x30
+    float m_rimBlackRatioStart;  // 0x34
+    float m_rimEmissiveStart;  // 0x38
+    mm::Col3 m_rimColorEnd;  // 0x3C
+    float m_rimPowerEnd;  // 0x48
+    float m_rimBlackRatioEnd;  // 0x4C
+    float m_rimEmissiveEnd;  // 0x50
     mm::mtl::FixStr<128> m_name;  // 0x54, create copies the model's name (DrMdoCtlNom 0x238) into it
 };
 }  // namespace ml
