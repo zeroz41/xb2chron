@@ -336,7 +336,7 @@ void GfComModel::cleanup() {
         mm::mtl::PtrSingleton<fw::AnimationManager>::sys()->removePoseModifier(getLayer(), m_poseModifier);
     }
     if (m_volumeFade.m_model != nullptr) {
-        m_volumeFade.pad_58 = nullptr;
+        m_volumeFade.m_condition.m_invoker = nullptr;
         m_volumeFade.unbind();
         mm::mtl::PtrSingleton<fw::AnimationManager>::sys()->removeAfterModifier(getLayer(), m_volumeFade);
     }
