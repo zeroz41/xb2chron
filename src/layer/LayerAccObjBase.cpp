@@ -367,7 +367,7 @@ mm::mtl::Vector<LayerStrInfo>* LayerAccFontStyle::createIconInfo(unsigned int co
     return static_cast<LayerFontStyleObj*>(m_layer)->createIconInfo(count);
 }
 
-LayerAccFontObj::LayerAccFontObj(LayerBase* layer) : m_layer(layer) {}
+LayerAccFontObj::LayerAccFontObj(LayerBase* layer) : LayerAccObjBase(layer) {}
 
 void LayerAccFontObj::setHorizontal(LayerFontHorizontal horizontal) { static_cast<LayerObjFont*>(m_layer)->m_horizontal = horizontal; }
 

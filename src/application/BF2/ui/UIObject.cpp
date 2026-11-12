@@ -19,7 +19,7 @@ namespace ui {
 static const layer::LayerBlendType s_blendTypes[] = {(layer::LayerBlendType)0, (layer::LayerBlendType)1};
 
 UIObject::UIObject(layer::LayerBase* layer, const mm::mtl::FixStr<32>& name, unsigned int type)
-    : UIObjectBase(name), m_layer(layer), m_layerAcc(layer), m_type(type), pad_DA(0), m_parent(0), m_plugins(nullptr) {
+    : UIObjectBase(name), m_layer(layer), m_layerAcc(layer), m_type(type), m_duplicateCount(0), m_parent(0), m_plugins(nullptr) {
     m_handle = UIUtil::registObject(this);
     m_nameHash = mm::mtl::hashStrCrc(m_name.m_str);
 }
@@ -68,6 +68,39 @@ void UIObject::updatePlugin() {
             plugin->execute(acc);
         }
     }
+}
+
+void UIObject::applyTransform(const UIObjectParam::AdditionalParam&) {
+    layer::LayerBase* layer = m_layer;
+    layer::LayerAccManager manager;
+    const mm::Pnt<short>& pos = m_transform.m_pos;
+    float x = pos.x;
+    float y = pos.y;
+    if (m_type == 1 && m_displayInfo.m_center == 1) {
+        layer::LayerAccFontObj font(m_layer);
+        if (font.getDisplayArea() == 0) {
+            x = x - m_displayInfo.m_pixelWidth / 2U + font.getPixelWidth() / 2U;
+            y += (font.getPixelHeight() >> 1) - (m_displayInfo.m_pixelHeight >> 1);
+        }
+    }
+    mm::Vec2 offs;
+    getTransformPosOffs(offs);
+    x += offs.x;
+    y += offs.y;
+    if (manager.getCoordinate() == 1) {
+        x /= manager.getScreenWidth();
+        y /= manager.getScreenWidth();
+    }
+    m_layerAcc.setPos(x, y);
+    float scaleX = m_transform.m_scale.x;
+    float scaleY = m_transform.m_scale.y;
+    if (manager.getCoordinate() == 1 && layer->m_objType == 1) {
+        float ratio = m_layerAcc.getPixelWidth() / manager.getScreenWidth();
+        scaleX *= ratio;
+        scaleY *= ratio;
+    }
+    m_layerAcc.setScale(scaleX, scaleY);
+    m_layerAcc.setRot(m_flags.test(10) ? 0.0f : m_transform.m_rotation);
 }
 
 void UIObject::setParent(unsigned int handle) {
@@ -159,6 +192,30 @@ void UIObject::setAddColor(const mm::Col3& color) {
 
 bool UIObject::isDebugDraw() const {
     return false;
+}
+
+void UIObject::importTransform(UITransform& transform, layer::LayerBase* layer) {
+    float rot;
+    layer::LayerAccManager manager;
+    layer::LayerAccObjBase acc(layer);
+    float aspect = manager.getScreenWidth() / manager.getScreenHeight();
+    float pos[2];
+    acc.getPos(pos[0], pos[1]);
+    float scale[2];
+    acc.getScale(scale[0], scale[1]);
+    acc.getRot(rot);
+    if (layer->m_objType == 1 && manager.getCoordinate() == 1) {
+        float ratio = acc.getPixelWidth() / manager.getScreenWidth();
+        scale[0] /= ratio;
+        scale[1] /= ratio;
+    }
+    if (manager.getCoordinate() == 1) {
+        transform.setPos(pos[0] * manager.getScreenWidth(), aspect * (pos[1] * manager.getScreenHeight()));
+    } else {
+        transform.setPos(pos[0], pos[1]);
+    }
+    transform.setScale(scale[0], scale[1]);
+    transform.m_rotation = rot;
 }
 
 void UIObject::importDisplaySize(UIDisplayInfo& info, layer::LayerBase* layer) {

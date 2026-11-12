@@ -1,6 +1,8 @@
 #ifndef LAYER_LAYERACCFONTOBJ_H
 #define LAYER_LAYERACCFONTOBJ_H
 
+#include "layer/LayerAccObjBase.h"
+
 namespace layer { class LayerBase; }
 
 namespace layer {
@@ -13,8 +15,9 @@ enum LayerFontHorizontal {};
 // a font object's vertical alignment (0-2: UITextObject::setTextAlignV's)
 enum LayerFontVertical {};
 
-// access to a font layer object
-class LayerAccFontObj {
+// access to a font layer object; a LayerAccObjBase (UIObject::applyTransform reads a font object's pixel size
+// through LayerAccObjBase::getPixelWidth/getPixelHeight on it)
+class LayerAccFontObj : public LayerAccObjBase {
 public:
     LayerAccFontObj(LayerBase* layer);
     unsigned short getFontPixelWidth() const;
@@ -35,8 +38,6 @@ public:
     void setMsg(const char* text, const LayerBase* font, unsigned int style);  // in that font and style
     void setMsg(const char* text);
     void setColorMap(const LayerBase* colorMap, unsigned int pattern);
-
-    LayerBase* m_layer;  // the constructor's
 };
 }  // namespace layer
 
