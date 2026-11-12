@@ -308,6 +308,41 @@ void GfFieldBgm::gevPlayEvent(GEV gev, unsigned int param) {
     }
 }
 
+// the BGM condition ids getBgmFileInfo marks in BgmFileInfo::m_listed (lbl_71009BA7C8; the name is not the original's)
+static const unsigned short s_listedBgmCondIDs[] = {
+    0x02, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D,
+    0x1E, 0x1F, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x2D, 0x2E, 0x2F,
+    0x30, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D,
+};
+
+bool GfFieldBgm::getBgmFileInfo(BgmFileInfo& info, const char* fileName) const {
+    mm::mtl::FixStr<64> name = util::getNoPathExtName(fileName);
+    GfBdatBgm* bdat = GfBdatBgm::sys();
+    unsigned int id = bdat->getBgmConditionStart();
+    unsigned int end = bdat->getBgmConditionEnd();
+    for (; id < end; ++id) {
+        for (unsigned int no = 0; no < 4; ++no) {
+            bdat->getBgmConditionCondition(id, no);
+            unsigned int bgmID = bdat->getBgmConditionBgmID(id, no);
+            if (bgmID != 0 && strcmp(name.m_str, util::getNoPathExtName(bdat->getBgmListfilename(bgmID)).m_str) == 0) {
+                info.m_bgmCondID = id;
+                info.m_condNo = no;
+                bool listed = false;
+                for (unsigned long i = 0; i < 41; ++i) {
+                    if (s_listedBgmCondIDs[i] == id) {
+                        listed = true;
+                        break;
+                    }
+                }
+                info.m_listed = listed;
+                info.m_bgmID = bgmID;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void BgmTrack::setPause(bool pause) {
     m_pause = pause;
     if (GfSound* sound = GfSound::get()) {
@@ -323,6 +358,83 @@ void BgmTrack::setPause(bool pause) {
 bool GfFieldBgm::isBossBgmCopied() const {
     BgmBattleBoss* boss = BgmBattleBoss::get();
     return boss != nullptr ? boss->m_copied : false;
+}
+
+void BgmTrack::copyPlayParam(BgmTrack* src) {
+    stopBGM(0.0f);
+    m_bgmCondID = src->m_bgmCondID;
+    m_fadeVolume = src->m_fadeVolume;
+    m_baseVolume = src->m_baseVolume;
+    m_conds = src->m_conds;
+    m_copied = true;
+    if (!m_conds[0].m_handle.isValid() && m_conds[1].m_handle.isValid()) {
+        m_conds[0].m_requested = m_conds[1].m_requested;
+        m_conds[0].m_playNo = m_conds[1].m_playNo;
+        m_conds[0].m_playing = m_conds[1].m_playing;
+        m_conds[0].m_handle = m_conds[1].m_handle;
+        m_conds[0].m_bgmFileName = m_conds[1].m_bgmFileName;
+        m_conds[0].m_volume = m_conds[1].m_volume;
+        m_conds[1].clear();
+    }
+    if (m_bgmCondID == 0 && m_conds[0].m_bgmFileName.length() != 0) {
+        const char* name = m_conds[0].m_bgmFileName.m_str;
+        // the condition id of the first BGM condition row with entry 0's BGM file (".wav" added to its name
+        // without path and extension) in one of its entries, 0 when none has
+        m_bgmCondID = [&]() -> unsigned int {
+            GfBdatBgm* bdat = GfBdatBgm::sys();
+            if (bdat == nullptr || name[0] == '\0') {
+                return 0u;
+            }
+            mm::mtl::FixStr<64> file = util::getNoPathExtName(name);
+            file += ".wav";
+            unsigned int bgmID = 0;
+            unsigned int i = bdat->getBgmListStart();
+            unsigned int end = bdat->getBgmListEnd();
+            for (; i < end; ++i) {
+                const char* listName = bdat->getBgmListfilename(i);
+                if (listName != nullptr && strcmp(file.m_str, listName) == 0) {
+                    bgmID = i;
+                    break;
+                }
+            }
+            if (bgmID != 0) {
+                unsigned int c = bdat->getBgmConditionStart();
+                unsigned int condEnd = bdat->getBgmConditionEnd();
+                for (; c < condEnd; ++c) {
+                    if (bdat->getBgmConditionBgmID(c, 0) == bgmID || bdat->getBgmConditionBgmID(c, 1) == bgmID ||
+                        bdat->getBgmConditionBgmID(c, 2) == bgmID || bdat->getBgmConditionBgmID(c, 3) == bgmID) {
+                        return c;
+                    }
+                }
+            }
+            return 0u;
+        }();
+    }
+    if (GfSound* sound = GfSound::get()) {
+        for (BGMCOND& cond : src->m_conds) {
+            if (cond.m_handle.isValid()) {
+                sound->setCategory(cond.m_handle, fw::SoundCategory(m_category));
+            }
+        }
+    }
+    src->m_bgmCondID = 0;
+    src->m_baseVolume = 0.0f;
+    src->m_fadeVolume = 0.0f;
+    for (BGMCOND& cond : src->m_conds) {
+        cond.clear();
+    }
+}
+
+BgmTrack* GfFieldBgm::getCurrentPlayBgmTrack() {
+    BgmTrack* current = nullptr;
+    float volume = 0.0f;
+    for (BgmTrack*& track : m_tracks) {
+        if (track->isPlaying() && !(volume >= track->getVolume())) {
+            current = track;
+            volume = current->getVolume();
+        }
+    }
+    return current;
 }
 
 void GfFieldBgm::playFieldBgmForce(const char* name) {
@@ -393,6 +505,36 @@ void BgmTrack::stopBGM(float time) {
         m_bgmCondID = 0;
     }
     m_conds[0].m_bgmFileName = "";
+}
+
+void BgmEvent::updatePlaying(const fw::UpdateInfo& info) {
+    GfEvtBgm* evtBgm = GfEvtBgm::sys();
+    if (evtBgm->m_setup.pad_64) {
+        m_fadeScale = evtBgm->m_setup.m_volume;
+    }
+    const char* name = evtBgm->m_setup.m_name.m_str;
+    if (evtBgm != nullptr && strcmp(m_conds[0].m_bgmFileName.m_str, name) != 0) {
+        float time;
+        if (GfManager::isExecModeThater()) {
+            if (evtBgm->m_setup.pad_62 && evtBgm->m_setup.pad_61) {
+                time = 1.0f;
+            } else {
+                time = m_useFadeTime ? m_fadeTime : 0.5f;
+            }
+        } else {
+            time = m_useFadeTime ? m_fadeTime : 0.5f;
+        }
+        stopBGM(time);
+    } else if (!m_playing && evtBgm->isPlayBgm()) {
+        evtBgm->setFadeoutVolume();
+    }
+    if (m_overTime > 0.0f && !GfGameManager::isEvent(false)) {
+        m_overTime -= info.m_deltaTime;
+        if (m_overTime <= 0.0f) {
+            m_overTime = 0.0f;
+            evtBgm->setFadeoutVolume();
+        }
+    }
 }
 
 bool BgmTrack::makePlayFileName(mm::mtl::FixStr<64>& name) const {

@@ -6,7 +6,7 @@
 #include "mm/mtl/FixedVector.h"
 
 namespace fw { class UpdateInfo; }
-namespace gf { class GfFieldBgm; class BgmTrack; class MapjumpCallbackInfo; enum GEV : int; }
+namespace gf { class GfFieldBgm; class BgmTrack; struct BgmFileInfo; class MapjumpCallbackInfo; enum GEV : int; }
 
 namespace gf {
 // table 0x7100B511B8
@@ -33,6 +33,9 @@ public:
     bool isBossBgmCopied() const;  // 1.0.0's symbol at the same place, with the same caller (GfFieldSound::gevBattleEnd)
     // the playing track with the highest volume (1.0.0's symbol), none when nothing plays
     BgmTrack* getCurrentPlayBgmTrack();
+    // 3.0.1's symbol names it. What it does: finds the BGM condition row and entry whose BGM file has the given
+    // file's name (path and extension dropped); false when none has
+    bool getBgmFileInfo(BgmFileInfo& info, const char* fileName) const;
     // 1.0.0's out-of-line getters (3.0.1 inlines them)
     unsigned int getRscFieldBgmID() const;
     unsigned int getRscGimmickBgmID() const { return m_rscGimmickBgmID; }

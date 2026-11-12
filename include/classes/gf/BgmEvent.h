@@ -30,11 +30,21 @@ public:
     // 2.0.0's symbols name it. What it does: when GfGameManager::isGameTypeIra() holds and m_overTime is negative, sets
     // m_overTimeStop.
     void setBgmClearByStopBgm();
+    // 3.0.1's symbol names it. What it does: when GfEvtBgm's BGM changed from the one entry 0 plays, stops the
+    // track (fading over m_fadeTime when m_useFadeTime, else 0.5, or 1 in theater mode for a set flag pair);
+    // counts m_overTime down outside events and then fades the event BGM out
+    void updatePlaying(const fw::UpdateInfo& info);
 
-    unsigned char pad_638[0x5C];
+    unsigned char pad_638[0x4C];
+    // the time updatePlaying stops the track over when m_useFadeTime is set (the name is not the original's)
+    float m_fadeTime;
+    unsigned char pad_688[0xC];
     // cancelOverTime clears it (the name is not the original's)
     float m_overTime;
-    unsigned char pad_698[0x8];
+    unsigned char pad_698[0x2];
+    // updatePlaying stops over m_fadeTime instead of 0.5 while it is set (the name is not the original's)
+    bool m_useFadeTime;
+    unsigned char pad_69B[0x5];
     // cleared by gevPlayEvent on GEV 13 (the name is not the original's)
     bool m_requested;
     unsigned char pad_6A1[0x7F];

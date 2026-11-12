@@ -78,6 +78,8 @@ struct BgmFileInfo {
     unsigned int m_bgmCondID;
     unsigned int m_bgmID;
     unsigned int m_condNo;
+    // getBgmFileInfo sets it when the condition id is in its fixed list of 41 ids (the name is not the original's)
+    bool m_listed;
 };
 
 // table 0x7100B51390
@@ -137,6 +139,9 @@ public:
     void calcMultiplyVolume(const fw::UpdateInfo& info);
     bool getPlayVolume(float& volume, const fw::UpdateInfo& info, const BGMCOND& cond, bool fadeOut);
     bool makePlayFileName(mm::mtl::FixStr<64>& name) const;
+    // 3.0.1's symbol names it. What it does: takes over src's condition id, volumes and entries (entry 1 moved to
+    // entry 0 when only it plays), finds the condition id from entry 0's file when src had none, then clears src
+    void copyPlayParam(BgmTrack* src);
     void copyPlayParam(BgmTrack* src, const BgmFileInfo& info);
 
     // one entry of m_multiplyVolumes: a delegate calcMultiplyVolume calls with the three values (in s0-s2), the first
