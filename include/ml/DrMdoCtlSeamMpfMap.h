@@ -15,6 +15,9 @@ public:
     void createMpfZPrePassDisplayList();
     void createMpfMapDisplayList();
     void releaseFreeSeamMpf(DrResMdoSeamWrkMpf* wrk);
+    // stocks every mpf model whose box (40 around it) holds pos and that is not in yet; false when it stocked one
+    void readMpfMapCheck();
+    bool readMpfModelCheck(const mm::Vec3& pos);
     void updateMpfMapRenderList();
 };
 }  // namespace ml

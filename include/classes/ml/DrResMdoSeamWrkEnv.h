@@ -10,7 +10,13 @@ namespace grlib { class CGLibTriUniformArray; }
 namespace ml {
 class DrResMdoSeamMemObj;
 struct MdoWrkMatRes;
-struct MdsSeamEnvMapHead;
+// The head of a seam env map's data (DrResMdoSeamMemObj::m_pData); the field names are not the original's.
+struct MdsSeamEnvMapHead {
+    // 0x0..0x18: offsets of data blocks from the head: [1], [0], [3], [6] and [4] go to
+    // DrMdoMat::resetBaseMapMaterial, [2] (0 when there is none) is the MdsSeamInstMatBlock of the material
+    // resources (DrMdoCtlSeamEnvMap::readEnvMapCheck)
+    unsigned int m_dataOfs[7];
+};
 // The env map data setupWork reads; the field name is not the original's.
 struct MdsSeamEnvMapData {
     unsigned char pad_0[0x38];

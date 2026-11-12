@@ -78,9 +78,19 @@ struct MdsNodeTable {
 
 struct MdoMdlData {
     unsigned int m_flags;  // 0x0, 0x2000: DrMdoMat::getVanishEffectMax reads m_vanishEffectMax
-    unsigned char pad_4[0x24];
+    unsigned char pad_4[0x18];
+    // 0x1C/0x20: the MdsMdlTopHeader array and its count (DrMdoCtlSeamMpfMap::readMpfMapCheck puts them in
+    // MdoWrkMatRes::m_pMdlTop/m_mdlTopNum; the names are not the original's)
+    unsigned int m_mdlTopOfs;
+    int m_mdlTopNum;
+    unsigned char pad_24[0x4];
     unsigned int m_nodeTblOfs;  // 0x28, from this header (the name is not the original's)
-    unsigned char pad_2C[0x28];
+    unsigned char pad_2C[0x4];
+    // 0x30/0x34: a data block and its count; readMpfMapCheck puts the block in MdoWrkMatRes::m_pMdlSubData when the
+    // count is not 0 (the names are not the original's)
+    unsigned int m_subDataOfs;
+    int m_subDataNum;
+    unsigned char pad_38[0x1C];
     // 0x54: DrMdoCtlMpf::setupMpf keeps a 4-byte render list entry per one (the name is not the original's)
     unsigned int m_infoTotal;
     unsigned char pad_58[0xC];
@@ -184,7 +194,10 @@ struct MdsMatDataHeader {
         unsigned char pad_26[0xE];
     };
 
-    unsigned char pad_0[0x10];
+    // 0x0: from the header's start, MdoWrkMatRes::m_pMatInfo (DrMdoCtlSeamMpfMap::readMpfMapCheck; the name is not
+    // the original's)
+    unsigned int m_matInfoOfs;
+    unsigned char pad_4[0xC];
     unsigned int m_mpfParamOfs;  // 0x10, from the header's start: the MpfMatParam array
     int m_mpfParamNum;  // 0x14
     unsigned char pad_18[0x24];
@@ -338,6 +351,8 @@ struct MdoWrkMatRes {
     const MdsMdlTopHeader* m_pMdlTop;
     int m_mdlTopNum;
     unsigned char pad_17C[0x4];
+    // 0x180: MdoMdlData::m_subDataOfs's block (DrMdoCtlSeamMpfMap::readMpfMapCheck; the name is not the original's)
+    const unsigned char* m_pMdlSubData;
 };
 }  // namespace ml
 

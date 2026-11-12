@@ -112,19 +112,22 @@ public:
         unsigned int m_baseMapTblOfs;     // 0x1C: DrResMdoSeamWrkBase::MapEntry entries (callBaseMapStream)
         unsigned char pad_20[0x4];
         unsigned int m_instMapTblOfs;     // 0x24: DrResMdoSeamWrkInst::MapEntry entries (callInstMapStream)
-        unsigned char pad_28[0xC];
+        unsigned char pad_28[0x8];
+        int m_envMdlNum;                  // 0x30: entries of the env model table (the name is not the original's)
         unsigned int m_envMdlTblOfs;      // 0x34: MdlEntry entries (callEnvMdlStream)
         unsigned char pad_38[0x1C];
         unsigned int m_vertexTblOfs;   // 0x54: ResSize entries, by DrResMdoSeamVertex::m_dataIdx
         unsigned char pad_58[0x4];
         unsigned int m_textureTblOfs;  // 0x5C: TexSize entries, by DrResMdoSeamTexture::m_dataIdx
-        unsigned char pad_60[0x8];
+        unsigned char pad_60[0x4];
+        int m_mpfMdlNum;                  // 0x64: entries of the mpf model table (the name is not the original's)
         unsigned int m_mpfMdlTblOfs;      // 0x68: MdlEntry entries (callMpfMdlStream, waitMpfMdlStream)
         unsigned char pad_6C[0x4];
         unsigned int m_instPosTblOfs;     // 0x70: ResSize entries (callInstPosStream)
         unsigned char pad_74[0x4];
         unsigned int m_mpfEtcTblOfs;      // 0x78: ResSize entries (callMpfEtclStream)
-        unsigned char pad_7C[0x10];
+        unsigned char pad_7C[0xC];
+        int m_lightEntryNum;              // 0x88: entries of the light table (the name is not the original's)
         unsigned int m_lightTblOfs;    // 0x8C: MdsSeamLgtMapData entries, by DrResMdoSeamWrkLight::m_dataIdx
         unsigned char pad_90[0x4];
         unsigned int m_texListTblOfs;  // 0x94: ResSize entries, by DrResMdoSeamTexList::m_dataIdx
@@ -237,7 +240,11 @@ public:
     unsigned int* m_pInstBits;
     unsigned char pad_B88[0x8];
     unsigned int* m_pMpfBits;        // 0xB90: a bit per mpf model table entry, set by waitMpfMdlStream
-    unsigned char pad_B98[0x28];
+    unsigned char pad_B98[0x8];
+    // 0xBA0: a bit per env map table entry, cleared by DrMdoCtlSeamEnvMap::releaseFreeSeamEnvMap and tested by
+    // readEnvMapCheck (the name is not the original's)
+    unsigned int* m_pEnvBits;
+    unsigned char pad_BA8[0x18];
     unsigned int* m_pLightBits;      // 0xBC0: a bit per light table entry, set by waitLightStream
     unsigned char pad_BC8[0x8];
     unsigned short* m_pVertexNo;     // 0xBD0: by vertex table entry, the DrResMdoSeamVertex::m_no + 1 holding it
@@ -253,9 +260,11 @@ public:
     short m_lowNum;
     // 0xC04: the inst maps in use; releaseFreeSeamInst counts them down (the name is not the original's)
     short m_instNum;
-    unsigned short m_mpfNum;         // 0xC06: waitMpfMdlStream counts the mpf models in
-    unsigned char pad_C08[0x4];
-    unsigned short m_lightNum;       // 0xC0C: waitLightStream counts the lights in
+    short m_mpfNum;                  // 0xC06: waitMpfMdlStream counts the mpf models in (readMpfMapCheck: signed)
+    // 0xC08: the env maps in use; releaseFreeSeamEnvMap counts them down (the name is not the original's)
+    short m_envNum;
+    unsigned char pad_C0A[0x2];
+    short m_lightNum;                // 0xC0C: waitLightStream counts the lights in
     // 0xC0E..0xC14: calcEnd's frame counters: 0xC12 counts frames with no stream started (m_seamFlags bit 16) up to
     // 4, then sets bit 15; 0xC14 counts frames after that up to 900, then sets bit 17. 0xC0E/0xC10 do the same for
     // bit 10 with bits 11 and 20 (bit 11 clear: DrMan::setSeamMapStmOk(true)). The names are not the original's.

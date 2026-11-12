@@ -37,7 +37,11 @@ public:
         unsigned char pad_18[0xC];
         // 0x24: when not 0, a bit of DrResMdoSeamParmRead::m_mpfBits that makes update read it
         unsigned short m_bitIdx;
-        unsigned char pad_26[0xE];
+        unsigned char pad_26[0x2];
+        // 0x28: bit 0 clear keeps DrMdoCtlSeamMpfMap::readMpfModelCheck from reading it while the seam flags' bit 8
+        // is set
+        unsigned int m_flags;
+        unsigned char pad_2C[0x8];
         unsigned int m_ofs;   // 0x34: where the mpf model data starts (DrMdoCtlSeamRead::callMpfMdlStream)
         unsigned int m_size;  // 0x38
     };

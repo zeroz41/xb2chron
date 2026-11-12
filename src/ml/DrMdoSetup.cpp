@@ -475,6 +475,231 @@ void DrMdoCtlSeamBaseMap::readBaseMapCheck() {
 float DrMdoCtlSeamBaseMap::SEAM_BASEMAP_READ_DEN_CHECK = 100.0f;
 float DrMdoCtlSeamBaseMap::SEAM_BASEMAP_READ_IN_CHECK = 5.0f;
 
+void DrMdoCtlSeamEnvMap::releaseFreeSeamEnvMap(DrResMdoSeamWrkEnv* wrk) {
+    DrResMdoSeamMemObj* memObj = wrk->m_memObj;
+    if (wrk->m_matRes != nullptr) {
+        unsigned int idx = wrk->m_dataIdx;
+        m_pEnvBits[idx >> 5] &= ~(1 << (idx & 0x1F));
+        m_envMemSize += wrk->m_dispNum;
+        releaseBaseMapSeamMat(wrk->m_matRes);
+        wrk->release();
+        m_envNum--;
+    }
+    DrResMdoSeamWrkEnv* after = wrk->m_prev;
+    DrResMdoSeamWrkEnv* before = wrk->m_next;
+    if (after == nullptr) {
+        if (before != nullptr) {
+            before->m_prev = nullptr;
+        }
+    } else {
+        if (before != nullptr) {
+            before->m_prev = after;
+        }
+        after->m_next = before;
+    }
+    if (m_envPool.m_usedTail == wrk) {
+        m_envPool.m_usedTail = before;
+    }
+    if (m_envPool.m_list == wrk) {
+        m_envPool.m_list = after;
+        if (after != nullptr) {
+            after->m_next = nullptr;
+        }
+    }
+    if (m_envPool.m_freeTail == nullptr) {
+        m_envPool.m_freeHead = wrk;
+        m_envPool.m_freeTail = wrk;
+        wrk->m_next = nullptr;
+    } else {
+        m_envPool.m_freeTail->m_prev = wrk;
+        wrk->m_next = m_envPool.m_freeTail;
+        m_envPool.m_freeTail = wrk;
+    }
+    wrk->m_prev = nullptr;
+    m_envPool.m_freeNum++;
+    m_envPool.m_usedNum--;
+    if (memObj != nullptr) {
+        wrk->m_memObj = nullptr;
+        m_memMan.releaseFreeObj(memObj);
+    }
+}
+
+void DrMdoCtlSeamEnvMap::readEnvMapCheck() {
+    DrCalcViewWork* view = m_pDrMan->m_calcMan->m_pViewWork;
+    bool readAll = (m_seamFlags & 0x1000) || m_releaseVertexAll;
+    DrResMdoSeamWrkEnv* wrk = m_envPool.m_list;
+    while (wrk != nullptr) {
+        bool release = wrk->update(view->m_viewPos, readAll);
+        if (!release) {
+            if (wrk->m_flags & DrResMdoSeamWrkEnv::FLAG_READ) {
+                MdoWrkMatRes* matRes = wrk->m_matRes;
+                const MdsSeamEnvMapHead* head = reinterpret_cast<const MdsSeamEnvMapHead*>(wrk->m_memObj->m_pData);
+                const unsigned char* data = reinterpret_cast<const unsigned char*>(head);
+                resetBaseMapMaterial(matRes, data + head->m_dataOfs[1], data + head->m_dataOfs[0],
+                                     data + head->m_dataOfs[3], data + head->m_dataOfs[6], data + head->m_dataOfs[4],
+                                     0);
+                if (head->m_dataOfs[2] != 0) {
+                    const unsigned char* blockData = data + head->m_dataOfs[2];
+                    const MdsSeamInstMatBlock* block = reinterpret_cast<const MdsSeamInstMatBlock*>(blockData);
+                    matRes->m_pSeamMatBlock = blockData;
+                    matRes->m_pFixAnmInf = reinterpret_cast<const MdsFixAnmInf*>(blockData + block->m_ofs0);
+                    matRes->m_pFixAnmKey = reinterpret_cast<const MdsFixAnmKey*>(blockData + block->m_ofs1);
+                    matRes->m_pSeamMatData = blockData + block->m_ofs2;
+                }
+                wrk->changeMemCall(head);
+            }
+        }
+        DrResMdoSeamWrkEnv* next = wrk->m_prev;
+        if (release) {
+            releaseFreeSeamEnvMap(wrk);
+        }
+        wrk = next;
+    }
+    if (m_seamFlags & 0x81200) {
+        return;
+    }
+    if (m_envNum > 0) {
+        return;
+    }
+    int num = m_pMapHead->m_envMdlNum;
+    for (int i = 0; i < num; i++) {
+        unsigned int idx = i;
+        if (!(m_pEnvBits[idx >> 5] & (1 << (idx & 0x1F)))) {
+            m_parmRead.setStockEnvMdl(i + 1);
+            return;
+        }
+    }
+}
+
+void DrMdoCtlSeamMpfMap::releaseFreeSeamMpf(DrResMdoSeamWrkMpf* wrk) {
+    DrResMdoSeamMemObj* memObj = wrk->m_memObj;
+    if (wrk->m_matRes != nullptr) {
+        unsigned int idx = wrk->m_dataIdx;
+        m_pMpfBits[idx >> 5] &= ~(1 << (idx & 0x1F));
+        m_mpfMemSize -= wrk->m_readSize;
+        releaseMpfMapSeamMat(wrk->m_matRes);
+        wrk->releaseCache(this);
+        m_mpfNum--;
+    }
+    DrResMdoSeamWrkMpf* after = wrk->m_prev;
+    DrResMdoSeamWrkMpf* before = wrk->m_next;
+    if (after == nullptr) {
+        if (before != nullptr) {
+            before->m_prev = nullptr;
+        }
+    } else {
+        if (before != nullptr) {
+            before->m_prev = after;
+        }
+        after->m_next = before;
+    }
+    if (m_mpfPool.m_usedTail == wrk) {
+        m_mpfPool.m_usedTail = before;
+    }
+    if (m_mpfPool.m_list == wrk) {
+        m_mpfPool.m_list = after;
+        if (after != nullptr) {
+            after->m_next = nullptr;
+        }
+    }
+    if (m_mpfPool.m_freeTail == nullptr) {
+        m_mpfPool.m_freeHead = wrk;
+        m_mpfPool.m_freeTail = wrk;
+        wrk->m_next = nullptr;
+    } else {
+        m_mpfPool.m_freeTail->m_prev = wrk;
+        wrk->m_next = m_mpfPool.m_freeTail;
+        m_mpfPool.m_freeTail = wrk;
+    }
+    wrk->m_prev = nullptr;
+    m_mpfPool.m_freeNum++;
+    m_mpfPool.m_usedNum--;
+    if (memObj != nullptr) {
+        wrk->m_memObj = nullptr;
+        m_memMan.releaseFreeObj(memObj);
+    }
+}
+
+void DrMdoCtlSeamMpfMap::readMpfMapCheck() {
+    if (m_parmRead.m_posCnt == 0) {
+        DrResMdoSeamWrkMpf::SEAM_MPFMAP_READ_CHECK = !(m_seamFlags & 0x40) ? 60.0f : 40.5f;
+    } else {
+        DrResMdoSeamWrkMpf::SEAM_MPFMAP_READ_CHECK = 40.5f;
+    }
+    bool readAll = (m_seamFlags & 0x1000) || m_releaseVertexAll;
+    for (DrResMdoSeamWrkMpf* wrk = m_mpfPool.m_list; wrk != nullptr;) {
+        bool release = wrk->update(&m_parmRead, readAll, m_seamFlags);
+        if (wrk->m_cacheFlags & 0x10) {
+            const MdsSeamMpfMapHead* head = reinterpret_cast<const MdsSeamMpfMapHead*>(wrk->m_memObj->m_pData);
+            const unsigned char* data = reinterpret_cast<const unsigned char*>(head);
+            const unsigned char* mat = data + head->m_dataOfs[1];
+            const unsigned char* vtx = data + head->m_dataOfs[3];
+            const unsigned char* mdl = data + head->m_dataOfs[0];
+            const unsigned char* tex = data + head->m_dataOfs[4];
+            MdoWrkMatRes* res = wrk->m_matRes;
+            res->m_pMatData = mat;
+            res->m_pTexData = tex;
+            res->m_pVertexData = vtx;
+            res->m_pMatInfo = reinterpret_cast<const MdsMatInfoHeader*>(
+                mat + reinterpret_cast<const MdsMatDataHeader*>(mat)->m_matInfoOfs);
+            if (res->m_texNum != 0) {
+                res->m_pTexList->changeMemTexList(tex);
+            }
+            const MdoMdlData* mdlData = reinterpret_cast<const MdoMdlData*>(mdl);
+            res->m_pMdlInfo = mdl;
+            res->m_pMdlData = mdlData;
+            res->m_mdlTopNum = mdlData->m_mdlTopNum;
+            res->m_pMdlTop = reinterpret_cast<const MdsMdlTopHeader*>(mdl + mdlData->m_mdlTopOfs);
+            if (mdlData->m_subDataNum != 0) {
+                res->m_pMdlSubData = mdl + mdlData->m_subDataOfs;
+            }
+            if (res->m_pVertexData != nullptr && res->m_pVertex != nullptr) {
+                res->m_pVertex->changeMemVertex(res->m_pVertexData);
+            }
+        }
+        DrResMdoSeamWrkMpf* next = wrk->m_prev;
+        if (release) {
+            releaseFreeSeamMpf(wrk);
+        }
+        wrk = next;
+    }
+    if (m_seamFlags & 0x81200) {
+        return;
+    }
+    if (m_mpfNum < 3) {
+        readMpfModelCheck(m_parmRead.m_readPos);
+    }
+}
+
+bool DrMdoCtlSeamMpfMap::readMpfModelCheck(const mm::Vec3& pos) {
+    const MapHead* head = m_pMapHead;
+    int num = head->m_mpfMdlNum;
+    bool ret = true;
+    const unsigned int* offBits = m_pDrMan->m_dispOffBits;
+    const DrResMdoSeamWrkMpf::MapEntry* entry = reinterpret_cast<const DrResMdoSeamWrkMpf::MapEntry*>(
+        reinterpret_cast<const unsigned char*>(head) + head->m_mpfMdlTblOfs);
+    for (int i = 0; i < num; i++, entry++) {
+        unsigned int idx = i;
+        if (m_pMpfBits[idx >> 5] & (1 << (idx & 0x1F))) {
+            continue;
+        }
+        unsigned int bit = entry->m_bitIdx;
+        if (bit != 0 && (offBits[bit >> 5] & (1 << (bit & 0x1F)))) {
+            continue;
+        }
+        if ((m_seamFlags & 0x100) && !(entry->m_flags & 1)) {
+            continue;
+        }
+        if (entry->m_max[0] + 40.0f < pos.x || entry->m_min[0] - 40.0f > pos.x || entry->m_max[1] + 40.0f < pos.y ||
+            entry->m_min[1] - 40.0f > pos.y || entry->m_max[2] + 40.0f < pos.z || entry->m_min[2] - 40.0f > pos.z) {
+            continue;
+        }
+        m_parmRead.setStockMpfMdl(i);
+        ret = false;
+    }
+    return ret;
+}
+
 void DrMdoMat::releaseMpfMapSeamMat(MdoWrkMatRes* res) {
     if (res->m_pVertex != nullptr) {
         delete res->m_pVertex;
@@ -4179,6 +4404,58 @@ void DrMdoCtlSeamInstMap::beginResAll(MdoWrkMatRes* res) {
 
 void DrMdoCtlSeamInstMap::endResAll() {
     m_pWrkMatRes = m_pSavedWrkMatRes;
+}
+
+void DrMdoCtlSeamLight::releaseFreeSeamLight(DrResMdoSeamWrkLight* wrk) {
+    DrResMdoSeamMemObj* memObj = wrk->m_memObj;
+    // gives the work back to the free list; the original has this code on both paths (the name is not the original's)
+    auto freeWork = [&]() {
+        DrResMdoSeamWrkLight* after = wrk->m_prev;
+        DrResMdoSeamWrkLight* before = wrk->m_next;
+        if (after == nullptr) {
+            if (before != nullptr) {
+                before->m_prev = nullptr;
+            }
+        } else {
+            if (before != nullptr) {
+                before->m_prev = after;
+            }
+            after->m_next = before;
+        }
+        if (m_lightPool.m_usedTail == wrk) {
+            m_lightPool.m_usedTail = before;
+        }
+        if (m_lightPool.m_list == wrk) {
+            m_lightPool.m_list = after;
+            if (after != nullptr) {
+                after->m_next = nullptr;
+            }
+        }
+        if (m_lightPool.m_freeTail == nullptr) {
+            m_lightPool.m_freeHead = wrk;
+            m_lightPool.m_freeTail = wrk;
+            wrk->m_next = nullptr;
+        } else {
+            m_lightPool.m_freeTail->m_prev = wrk;
+            wrk->m_next = m_lightPool.m_freeTail;
+            m_lightPool.m_freeTail = wrk;
+        }
+        wrk->m_prev = nullptr;
+        m_lightPool.m_freeNum++;
+        m_lightPool.m_usedNum--;
+    };
+    if (memObj != nullptr) {
+        m_lightMemSize -= wrk->m_id;
+        unsigned int idx = wrk->m_dataIdx;
+        m_pLightBits[idx >> 5] &= ~(1 << (idx & 0x1F));
+        m_lightNum--;
+        wrk->release();
+        freeWork();
+        wrk->m_memObj = nullptr;
+        m_memMan.releaseFreeObj(memObj);
+    } else {
+        freeWork();
+    }
 }
 
 void DrMdoCtlSeamAll::callZPrePassSeamAll() {

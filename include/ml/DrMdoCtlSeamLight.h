@@ -13,6 +13,7 @@ public:
     // inline: DrMdoCtlSeamAll's constructor calls DrMdoCtlSeam(int) directly
     explicit DrMdoCtlSeamLight(int viewNum) : DrMdoCtlSeamEnvMap(viewNum) {}
     void releaseFreeSeamLight(DrResMdoSeamWrkLight* wrk);
+    void readLightCheck();
 };
 }  // namespace ml
 

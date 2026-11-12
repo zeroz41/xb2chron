@@ -15,6 +15,7 @@ public:
     explicit DrMdoCtlSeamEnvMap(int viewNum) : DrMdoCtlSeamLowMap(viewNum) {}
     void initEnvMapParts(DrResMdoSeamWrkEnv* wrk);
     void releaseFreeSeamEnvMap(DrResMdoSeamWrkEnv* wrk);
+    void readEnvMapCheck();
     void callRenderSeamEnvMap();
     void callGBuffRenderSeamEnvMap();
     void callLightPrePassRenderSeamEnvMap();
