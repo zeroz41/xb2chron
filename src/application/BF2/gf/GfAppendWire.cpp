@@ -35,6 +35,8 @@
 #include "gf/GfGameUtilDiff.h"
 #include "gf/GfGameUtil.h"
 #include "gf/GfKizunaringBlade.h"
+#include "gf/GfPlayFactory.h"
+#include "gf/MapJumpForBattleStart.h"
 
 namespace gf {
 
@@ -219,6 +221,37 @@ GfArenaBattle::~GfArenaBattle() {
     }
 }
 
+void GfArenaBattle::mapjumpForBattleStart() {
+    m_best.m_value8 = 0;
+    m_best.m_flag8 = 0;
+    m_best.m_value0 = 0;
+    m_best.m_value4 = 0;
+    pad_7C = 0;
+    m_score = ArenaBattleInfo();
+    m_result = 0;
+    m_resultScore.m_id = 0;
+    m_resultScore.pad_4 = 0;
+    m_resultScore.m_value = 0;
+    m_resultScore.pad_C = 0;
+    m_score.m_id = m_key.m_id;
+    pad_98 = false;
+    pad_AC = false;
+    m_owner->m_record.m_value2C = 0;
+    m_owner->m_record.m_value28 = 0;
+    GfArenaUtil::setupBattleMapWeather(m_key.m_id);
+    GfMenuObjBtlTime::reset();
+    pad_94 = 1;
+    MapJumpForBattleStart param;
+    param.m_mapjumpId = GfBdatBtl::get()->getBTL_ChBtlMapJump(m_key.m_id);
+    param.pad_4 = 1;
+    param.pad_5 = 0;
+    GfPlayFactory::createMapJumpForBattleStart(param);
+    m_isWaiting = true;
+    do {
+        m_owner->sleep(0);
+    } while (m_isWaiting);
+}
+
 void GfArenaBattle::execBattleStart(fw::UpdateInfo const&) {
     m_isDone = false;
     pad_A8 = 1;
@@ -324,6 +357,18 @@ void GfArenaJingle::update(const fw::UpdateInfo& info) {
     }
     if (m_handle.isValid() && !sound->isPlaying(m_handle)) {
         stop();
+    }
+}
+
+void GfArenaJingle::playJingle(unsigned int bgm, float fadeTime, float delay) {
+    if (m_handle.isValid()) {
+        return;
+    }
+    if (GfSound* sound = GfSound::get()) {
+        m_fadeTime = fadeTime;
+        m_delay = delay + 0.001f;
+        m_bgm = bgm;
+        sound->setCategoryVolume(m_category, static_cast<fw::SoundCategory>(1), 0.0f, 1.0f);
     }
 }
 
