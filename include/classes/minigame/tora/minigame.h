@@ -84,7 +84,7 @@ public:
     // what getResult fills: the best score, then id/count pairs ended by a zero pair
     struct _sResult {
         unsigned int m_score;
-        ResultItem m_items[0x83];
+        ResultItem m_items[0x100];  // MinigameUpdatableObject::update's copy is 0x404 bytes
     };
     // one ranking row (8 bytes)
     struct RankEntry {
@@ -121,7 +121,13 @@ public:
         Record m_record;            // 0x30
     };
 
+    // inline: 3.0.1 has no out-of-line copy (MinigameUpdatableObject::myinit holds its stores)
+    minigame() : m_screen(nullptr), m_res(nullptr), m_task(nullptr) {}
     virtual ~minigame();  // slot 0
+
+    void initialize();
+    // a frame: draws into buffer (pitch bytes a row, height rows) from the resource's asset data
+    void update(unsigned char* buffer, int pitch, int height, void* asset, void* sound);
 
     void finalize();
     void getResult(_sResult* result);
@@ -144,7 +150,10 @@ public:
     unsigned int* m_res;
     fw::SoundResource* m_sound;  // 0x28: none, no sound effects
     SprtSet m_sprt[65];       // 0x30
-    unsigned char pad_648[0x14];
+    unsigned char pad_648[0x4];
+    // 0x64C: the game's phase; past 10 the game is over (MinigameUpdatableObject::update then takes the result)
+    unsigned int m_phase;
+    unsigned char pad_650[0xC];
     unsigned char m_pal[16][0x30];  // 0x65C: 16 palettes of 16 RGB colours (decode_4bpp_sprt's argument >> 12)
     unsigned char pad_95C[0x904];
     const MapData* m_map;     // 0x1260: none, check_map hits nothing
@@ -171,6 +180,7 @@ public:
     unsigned char m_oamNum;   // 0x40B0: sprites queued in m_screen->m_oam
     unsigned char pad_40B1[0x7];
     mytask* m_task;           // 0x40B8
+    unsigned char pad_40C0[0x8];  // MinigameUpdatableObject::myinit news 0x40C8 bytes
 };
 
 void effect_move(void* task);
