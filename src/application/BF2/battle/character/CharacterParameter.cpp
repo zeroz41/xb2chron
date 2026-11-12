@@ -33,21 +33,6 @@ inline int GetBaseLuck(const CharacterParameter& param) {
     gf::DataParamAcc acc(param.IsBlade(true) ? param.m_driverHandle : param.m_handle);
     return acc.getLuck(false);
 }
-// what Reset and InitializeAttackParam clear of the attack parameters at 0xE4-0xF0 (the name is not the original's)
-inline void ClearAttackParam(CharacterParameter& param) {
-    param.pad_e4 = 0;
-    param.pad_e8[0] = 0;
-    param.pad_e8[1] = 0;
-    param.pad_e8[2] = 0;
-    param.m_weaponMinRange = 0;
-    param.m_weaponRange = 0;
-    param.pad_ed[0] = 0;
-    param.pad_ed[1] = 0;
-    param.pad_ef = 0;
-    param.pad_f0_0 = 0;
-    param.pad_f0_6 = 0;
-    param.pad_f0_7 = 0;
-}
 }  // namespace
 
 CharacterParameter* CharacterParameter::GetBuddyCharacterParameterConst() const {
@@ -86,9 +71,7 @@ void CharacterParameter::ResetEnhance(bool all) {
     if (!all && !m_flags622_12) {
         return;
     }
-    if (pad_428 != nullptr) {
-        pad_428 = nullptr;
-    }
+    m_enhances.clear();
     memset(pad_5ec, 0, sizeof(pad_5ec));
     memset(m_addEnhances, 0, sizeof(m_addEnhances));
     ResetSpecialEnhanceRate(all);
@@ -96,7 +79,7 @@ void CharacterParameter::ResetEnhance(bool all) {
 }
 
 void CharacterParameter::InitializeAttackParam() {
-    ClearAttackParam(*this);
+    ClearAttackParam();
     pad_f0_6 = true;
 }
 

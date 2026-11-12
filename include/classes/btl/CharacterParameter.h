@@ -1,6 +1,8 @@
 #ifndef CLASSES_BTL_CHARACTERPARAMETER_H
 #define CLASSES_BTL_CHARACTERPARAMETER_H
 
+#include "mm/mtl/FixedVector.h"
+
 namespace btl { class GROUP_DATA; struct ARTS_DATA; }
 namespace fw { class UpdateInfo; }
 namespace mm { class Vec3; }
@@ -144,9 +146,25 @@ public:
     unsigned int CalcDamageArmor(unsigned int damage);
     // SetSpecialEnhanceRate(type, 0, 0) for types 0-21; without the flag, only 0-14 while BattleGlobal's pad_bit1 is set
     void ResetSpecialEnhanceRate(bool all);
-    // with the flag or while m_flags622_12 is set: drops pad_428, clears pad_5ec and m_addEnhances,
+    // with the flag or while m_flags622_12 is set: clears m_enhances, pad_5ec and m_addEnhances,
     // ResetSpecialEnhanceRate(all) and clears m_flags622_12
     void ResetEnhance(bool all);
+    // what every InitializeAttackParam (CharacterParameter's, PlayerParameter's and EnemyParameter's, which inline
+    // it) clears of the attack parameters at 0xE4-0xF0 (the name is not the original's)
+    void ClearAttackParam() {
+        pad_e4 = 0;
+        pad_e8 = 0;
+        pad_ea = 0;
+        m_weaponMinRange = 0;
+        m_weaponRange = 0;
+        pad_ed = 0;
+        pad_ee = 0;
+        pad_ef_0 = 0;
+        pad_ef_5 = 0;
+        pad_f0_0 = 0;
+        pad_f0_6 = 0;
+        pad_f0_7 = 0;
+    }
     // removes every buff (ClearBuff(buff, false, true) for each set one of buffs 1-35), then clears the list
     void ClearAllBuff();
     // while m_flags622_7 is set (for a player in a chain attack, or while BattleGlobal's pad_bit17 is and the
@@ -346,11 +364,8 @@ public:
     void TailInitialize(gf::GF_OBJ_HANDLE* handle);
     CharacterParameter();  // out of line (0x710007D674, unit battle/character/CharacterParameter)
     // inline: its body is part of both EnemyParameter destructors (the D0 drops the dead store)
-    virtual ~CharacterParameter() {
-        if (pad_428 != nullptr) {
-            pad_428 = nullptr;
-        }
-    }  // slots 81, 82
+    // (m_enhances' destructor clears it)
+    virtual ~CharacterParameter() {}  // slots 81, 82
     int GetSTR() const;
     int GetDEX() const;
     int GetAGI() const;
@@ -403,26 +418,33 @@ public:
     unsigned short m_specialEnhanceTime[22];
     // InitializeAttackParam clears 0xE4-0xE5 and 0xE8-0xF0 (with Reset and the constructor) and sets pad_f0_6
     // (meaning unknown)
-    unsigned short pad_e4;
-    unsigned char pad_e6[0x2];
-    unsigned char pad_e8[0x3];
+    // the fields are named after the BDAT columns InitializeAttackParam reads them from (not the original's names)
+    unsigned short pad_e4;  // PlayerParameter's: GetWeaponID(-1), the row of table 0x92 the rest is read from
+    unsigned short pad_e6;  // PlayerParameter's: GetEquipAccessory()
+    unsigned short pad_e8;  // table 0x92's "Damage" (GfGameUtil::getWpnDamage in a challenge); EnemyParameter's: 1
+    unsigned char pad_ea;  // table 0x92's "Stability"; EnemyParameter's: BtlSystemBalanceAccess's byte at 0x2C
     // BattleCharacter::CheckWeaponDistance's ranges: a target within m_weaponRange and beyond m_weaponMinRange (0:
     // none) is in weapon distance (the names are not the original's)
     unsigned char m_weaponMinRange;
     unsigned char m_weaponRange;
-    unsigned char pad_ed[0x2];
+    unsigned char pad_ed;  // EnemyParameter's: "RstFiCombo" of table 0x8C
+    unsigned char pad_ee;  // EnemyParameter's: "IvdFiCombo" of table 0x8C
     // one 16-bit storage unit from 0xEF (DataManager::RegisterUpdateAttackParam sets its bit 15 with a halfword load
     // and store; meaning unknown)
-    unsigned char pad_ef : 8;
-    unsigned char pad_f0_0 : 6;
+    // EnemyParameter's "GrdDirFront/Left/Right/Back" flags of table 0x8C as bits 0-3 (meaning unknown)
+    unsigned char pad_ef_0 : 5;
+    unsigned char pad_ef_5 : 3;  // PlayerParameter's: "EffType" of table 0x96; EnemyParameter's: 2
+    unsigned char pad_f0_0 : 6;  // PlayerParameter's: "WpnType" of table 0x92 (the row of table 0x96)
     unsigned char pad_f0_6 : 1;  // InitializeAttackParam sets it (meaning unknown)
     bool pad_f0_7 : 1;  // DataManager::RegisterUpdateAttackParam sets it on every valid character (meaning unknown)
     unsigned char pad_f1[0x3];
     // GetFightComboDataConst answers the second while m_flags622_9 is set and its id is not 0 (the name is not the
     // original's)
     FIGHT_COMBO_DATA m_fightCombos[2];
-    unsigned char pad_124[0x304];
-    void* pad_428;  // cleared by the destructor when set; meaning unknown
+    unsigned char pad_124[0x4];
+    // the enhances InitializeEnhance gathers, one per effect, the values of an effect's repeats added up (mutable:
+    // InitializeEnhance is const; the name is not the original's)
+    mutable mm::mtl::FixedVector<ENHANCE_EFFECT_DATA, 64> m_enhances;
     ADD_ENHANCE_DATA m_addEnhances[6];  // by ADD_ENHANCE_TYPE (the name is not the original's)
     BUFF_DATA m_buffs[20];  // the names are not the original's; 20 fill the space up to m_buffNum
     unsigned char m_buffNum;
@@ -432,7 +454,8 @@ public:
     unsigned short pad_5d6;  // Reset sets it to 0xFFFF (meaning unknown)
     unsigned short pad_5d8;  // Utility::AI_GetResistantAttrNum passes it on
     unsigned short pad_5da;  // GetKizunaLinkBdatID answers it
-    unsigned char pad_5dc[0x2];
+    // InitializeEnhance's effect 0x119 value, 0 without one (mutable: InitializeEnhance is const; meaning unknown)
+    mutable unsigned short pad_5dc;
     // a percentage of the max HP: ChainAttackManager::AddOverKillDamage starts no overkill while it is set and
     // BattleGlobal's pad_bit5 is (meaning unknown)
     unsigned char pad_5de;
@@ -464,7 +487,8 @@ public:
     signed char pad_5ea;  // GetClass answers it when it is not negative (meaning unknown)
     unsigned char pad_5eb;
     // ResetEnhance clears it (one memset of 0x36; meaning unknown)
-    unsigned char pad_5ec[0x36];
+    // bit (effect & 7) of byte effect >> 3 set for each effect in m_enhances (mutable: InitializeEnhance is const)
+    mutable unsigned char pad_5ec[0x36];
     unsigned short m_flags622_0 : 1;  // unknown
     // GetHateTarget answers -1 while it is clear (the name is not the original's)
     bool m_hasHateTarget : 1;

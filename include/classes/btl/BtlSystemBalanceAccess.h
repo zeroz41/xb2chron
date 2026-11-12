@@ -26,7 +26,9 @@ public:
     // index, divided by 100.
     float GetTemporaryDamageChangeRate(float rate) const;
 
-    unsigned char pad_8[0x2C];
+    unsigned char pad_8[0x24];
+    unsigned char pad_2c;  // EnemyParameter::InitializeAttackParam copies it to CharacterParameter::pad_ea (meaning unknown)
+    unsigned char pad_2d[0x7];
     // ElementalComboManager::CheckCharacterID: a player character's maximum elemental value (the name is not the
     // original's)
     unsigned char m_elementalValueMax;

@@ -30,7 +30,7 @@ public:
     static bool isHideExtraParts(unsigned int rsc, unsigned int part);
     static const char* getSePack(unsigned int arrange);
     // the BTL_Enhance rows of the enemy's blade's valid enhances (DataObjEnemy's stat helper reads them)
-    static void getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int arrange);
+    static bool getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int arrange);  // answers whether it found any
     static unsigned int getBladeID(unsigned int arrange);
     static unsigned int getEquipBladeEnArrangeID(unsigned int arrange);
     static bool isNamed(unsigned int arrange);

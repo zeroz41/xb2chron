@@ -1,4 +1,5 @@
 #include "classes/btl/CharacterParameter.h"
+#include <algorithm>
 #include "classes/btl/PlayerParameter.h"
 #include "classes/btl/BtlSystemBalanceAccess.h"
 #include "classes/btl/BattleCharacter.h"
@@ -23,6 +24,7 @@
 #include "classes/btl/EnemyParameter.h"
 #include "mm/mtl/FixedVector.h"
 #include "gf/SDataEnemy.h"
+#include "gf/GfDataEnemy.h"
 #include "classes/gf/GfMountManager.h"
 #include "classes/gf/GfBdatChrEnArrange.h"
 #include "classes/gf/GfBdatRsc.h"
@@ -138,6 +140,47 @@ void PlayerParameter::CheckChangeArtsPalette() {
     if (m_flags622_0 && !m_hasHateTarget && !BattleGlobal::sys()->pad_bit1) {
         InitializeArtsPalette(0);
     }
+}
+
+void PlayerParameter::InitializeAttackParam() {
+    ClearAttackParam();
+    pad_f0_6 = true;
+    unsigned int weapon = GetWeaponID(-1);
+    pad_e6 = GetEquipAccessory();
+    pad_e4 = weapon;
+    unsigned char* wpn = gf::GfDataBdat::getFP(0x92);
+    int type = 0;
+    if (weapon != 0) {
+        type = Bdat::getValCheckU8(wpn, "WpnType", weapon);
+    }
+    pad_f0_0 = type;
+    if (type != 0) {
+        unsigned char* eff = gf::GfDataBdat::getFP(0x96);
+        pad_ef_5 = Bdat::getValCheck(eff, "EffType", pad_f0_0, 1);
+        m_weaponMinRange = Bdat::getValCheck(eff, "JustRange", pad_f0_0, 1);
+        m_weaponRange = Bdat::getValCheck(eff, "JustRange2", pad_f0_0, 1);
+    } else {
+        pad_ef_5 = 0;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess) {
+        gf::GF_OBJ_HANDLE* handle = m_handle;
+        pad_e8 = gf::GfGameUtil::getWpnDamage(handle);
+        pad_ea = gf::GfGameUtil::getWpnStability(handle);
+    } else if (weapon != 0) {
+        pad_e8 = Bdat::getValCheck(wpn, "Damage", weapon, 2);
+        if (ChallengeBattleManager::sys()->IsProc()) {
+            pad_e8 = gf::GfGameUtil::getWpnDamage(m_handle);
+        } else {
+            pad_e8 = Bdat::getValCheck(wpn, "Damage", weapon, 2);
+        }
+        pad_ea = Bdat::getValCheck(wpn, "Stability", weapon, 1);
+    } else {
+        pad_e8 = 0;
+        pad_ea = 0;
+    }
+    pad_ef_0 = 0;
+    pad_ed = 0;
+    pad_ee = 0;
 }
 
 int PlayerParameter::GetIraDummyBladeID() const {
@@ -446,6 +489,16 @@ inline float GetSpecialEnhanceRateInline(const CharacterParameter* param, int ty
     }
     return param->m_specialEnhanceRate[type];
 }
+// the entry of that effect in the list, nullptr for none (InitializeEnhance's search; the name is not the original's)
+inline ENHANCE_EFFECT_DATA* FindEnhanceEffect(
+    mm::mtl::FixedVector<ENHANCE_EFFECT_DATA, 64>& list, unsigned short effect) {
+    for (ENHANCE_EFFECT_DATA& data : list) {
+        if (data.m_effect == effect) {
+            return &data;
+        }
+    }
+    return nullptr;
+}
 }  // namespace
 
 EnemyParameter::~EnemyParameter() {
@@ -521,6 +574,80 @@ void EnemyParameter::Initialize(gf::GF_OBJ_HANDLE* handle) {
 const gf::SDataEnemy* EnemyParameter::GetEnemyData() const {
     gf::DataParamAcc acc(m_handle);
     return acc.getSDataEnemy();
+}
+
+void EnemyParameter::InitializeAttackParam() {
+    ClearAttackParam();
+    pad_f0_6 = true;
+    int id;
+    {
+        gf::DataParamAcc acc(m_handle);
+        id = acc.getBdatIdEnParam();
+    }
+    pad_e4 = GetWeaponID(-1);
+    pad_ef_5 = 2;
+    pad_f0_0 = 0;
+    pad_e8 = 1;
+    pad_ea = BtlSystemBalanceAccess::sys()->pad_2c;
+    unsigned char* fp = gf::GfDataBdat::getFP(0x8C);
+    unsigned char dir = Bdat::getFlagVal(fp, "Flag", id, "GrdDirFront") != 0;
+    if (Bdat::getFlagVal(fp, "Flag", id, "GrdDirLeft") != 0) {
+        dir |= 2;
+    }
+    if (Bdat::getFlagVal(fp, "Flag", id, "GrdDirRight") != 0) {
+        dir |= 4;
+    }
+    if (Bdat::getFlagVal(fp, "Flag", id, "GrdDirBack") != 0) {
+        dir |= 8;
+    }
+    pad_ef_0 = dir;
+    pad_ed = Bdat::getValCheck(fp, "RstFiCombo", id, 2);
+    pad_ee = Bdat::getValCheck(fp, "IvdFiCombo", id, 2);
+}
+
+bool EnemyParameter::InitializeEnhance() const {
+    const unsigned int* arrange;
+    if (IsBlade(false)) {
+        gf::GF_OBJ_HANDLE* driver = m_driverHandle;
+        const CharacterParameter* param = nullptr;
+        const BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(driver);
+        if (chr != nullptr) {
+            param = chr->GetCharacterParameterConst(true);
+        }
+        if (param == nullptr) {
+            param = DataManager::sys()->SearchCharacterParameterConst(driver, true);
+            if (param == nullptr) {
+                return false;
+            }
+        }
+        arrange = &param->m_enArrangeID;
+    } else {
+        arrange = &m_enArrangeID;
+    }
+    unsigned int id = *arrange;
+    if (id == 0) {
+        return false;
+    }
+    mm::mtl::FixedVector<unsigned short, 64> enhances;
+    if (gf::GfDataEnemy::getValidEnhance(enhances, id)) {
+        std::for_each(enhances.begin(), enhances.end(), [this](unsigned short enhance) {
+            ENHANCE_EFFECT_DATA data;
+            if (!DataManager::GetEnhanceData(enhance, data, false)) {
+                return;
+            }
+            ENHANCE_EFFECT_DATA* found = FindEnhanceEffect(m_enhances, data.m_effect);
+            if (found != nullptr) {
+                found->pad_8 += data.pad_8;
+            } else {
+                m_enhances.push_back(data);
+                pad_5ec[data.m_effect >> 3] |= 1 << (data.m_effect & 7);
+            }
+        });
+    }
+    m_flags622_12 = true;
+    ENHANCE_DATA effect;
+    pad_5dc = GetEnhanceEffect(effect, 0x119) ? (int)(effect.m_value + 0.0f) : 0;
+    return true;
 }
 
 void EnemyParameter::BattleStart(int) {
@@ -791,6 +918,43 @@ void EnemyParameter::PreUpdate(fw::UpdateInfo const& info) {
         }
     }
 }
+
+void EnemyParameter::SetupElementalAwakeParam() {
+    if (pad_5d8 == 0) {
+        EndElementalAwake();
+        return;
+    }
+    unsigned int num = Misc::GetFlagBitNum(pad_5d8);
+    if (num == pad_8a3_4) {
+        return;
+    }
+    unsigned char* fp = gf::GfDataBdat::getFP(0x25);
+    int level = pad_8a3_0;
+    int attack = Bdat::getValCheckU8(fp, "AttackBonus", level);
+    int recast = Bdat::getValCheckU8(fp, "RecastBonus", level);
+    pad_8a4 = attack * num;
+    pad_8a6 = recast * num;
+    pad_8a8 = Bdat::getValCheck(fp, "ReduceElmCombo", level, 2);
+    pad_8a3_4 = num;
+    if (!pad_bit1) {
+        BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(m_charaIndex);
+        if (chr != nullptr) {
+            int name = Bdat::getValCheckU16(fp, "Name", level);
+            if (name != 0) {
+                gf::GfMenuObjDamageBuff::OpenParam param;
+                param.m_type = 0;
+                param.m_bdat = gf::GfDataBdat::getFP(0x196);
+                param.m_nameId = name;
+                param.m_pos = chr->m_pos;
+                param.m_pos.y += pad_38;
+                gf::GfMenuObjDamageBuff::open(param);
+            }
+            chr->NotifyElementalAwakeStart();
+        }
+    }
+    pad_bit1 = true;
+}
+
 
 int EnemyParameter::GetAngryAttr() const {
     if (IsBlade(0)) {
