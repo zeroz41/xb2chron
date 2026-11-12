@@ -3092,6 +3092,30 @@ const char* GfDataNpc::getName(unsigned int npc) {
     return nullptr;
 }
 
+bool GfDataNpc::getName(unsigned char*& bdat, unsigned int& id, unsigned int npc) {
+    if (npc <= 25) {
+        id = GfBdatChrDr::get()->getChrDrName(npc);
+        bdat = GfBdatMsg::getFpChrDr();
+        return id != 0;
+    }
+    if (npc <= 2000) {
+        return GfDataBlade::getName(bdat, id, npc);
+    }
+    GfDataBdat::getFP(0xA8);
+    int n = npc;
+    if (n < 26) {
+        bdat = GfDataBdat::getFP(424);
+    } else if (n < static_cast<int>(GfBdatChrBl::get()->getChrBlEnd())) {
+        bdat = GfDataBdat::getFP(423);
+    } else if (npc - 1197 < 226) {
+        bdat = GfDataBdat::getFP(396);
+    } else {
+        bdat = GfDataBdat::getFP(437);
+    }
+    id = GfBdatRsc::get()->getRscNpcListName(npc);
+    return id != 0;
+}
+
 bool GfDataItem::getName(unsigned char*& bdat, unsigned int& id, unsigned int item) {
     GfBdatItem* data = GfBdatItem::get();
     bdat = nullptr;
@@ -3281,6 +3305,21 @@ int GfDataNpc::getOffsetID(unsigned int npc) {
         return data.m_offsetId;
     }
     return GfBdatRsc::get()->getRscNpcListOffsetID(npc);
+}
+
+unsigned char* GfDataNpc::getRscBdatFp(int npc) {
+    unsigned char* npcList = GfDataBdat::getFP(0x88);
+    unsigned char* npcList2 = GfDataBdat::getFP(0x8A);
+    unsigned char* npcList3 = GfDataBdat::getFP(0xA8);
+    unsigned char* fp = nullptr;
+    if (npc >= Bdat::getIdTop(npcList) && npc < Bdat::getIdTop(npcList) + Bdat::getIdCount(npcList)) {
+        fp = npcList;
+    } else if (npc >= Bdat::getIdTop(npcList2) && npc < Bdat::getIdTop(npcList2) + Bdat::getIdCount(npcList2)) {
+        fp = npcList2;
+    } else if (npc >= Bdat::getIdTop(npcList3) && npc < Bdat::getIdTop(npcList3) + Bdat::getIdCount(npcList3)) {
+        fp = npcList3;
+    }
+    return fp;
 }
 
 unsigned int GfDataNpc::getFootStep(unsigned int npc) {
@@ -4761,6 +4800,21 @@ const char* GfDataFobj::getFobjModelName(unsigned int id) {
     return model == nullptr ? "" : model;
 }
 
+unsigned int GfDataSalvage::getSalvageSkillLevel(unsigned int blade) {
+    unsigned char level = 0;
+    if (blade != 0) {
+        unsigned int index = GfDataBlade::getBladeIndex(blade);
+        SDataGame* game = GfDataManager::getDataGame();
+        for (int i = 0; i < 3; i++) {
+            if (game->m_blades[index].m_fieldSkills[i].m_id == 9 &&
+                level < game->m_blades[index].m_fieldSkills[i].m_level) {
+                level = game->m_blades[index].m_fieldSkills[i].m_level;
+            }
+        }
+    }
+    return level;
+}
+
 unsigned int GfDataItem::getItemType(unsigned int item) {
     ItemType::Type type;
     unsigned int index;
@@ -5563,6 +5617,35 @@ int GfDataEvent::getEventPlayFlag(unsigned int event) {
     return -1;
 }
 
+unsigned int GfDataEvent::getMapjumpID(unsigned int event) {
+    if (event == 0) {
+        return 0;
+    }
+    unsigned char* fp = GfDataBdat::getFP(fn_710024EBD8(event));
+    if (fp == nullptr) {
+        return 0;
+    }
+    int top = Bdat::getIdTop(fp);
+    int count = Bdat::getIdCount(fp);
+    unsigned short zone = Bdat::getValCheckU16(fp, "zoneID", event);
+    if (zone == 0) {
+        return 0;
+    }
+    unsigned int jump = GfDataMap::getMapJumpID(zone);
+    if (jump != 0) {
+        return jump;
+    }
+    unsigned char* dlc = GfDataBdat::getFP(183);
+    unsigned int begin = Bdat::getIdTop(dlc);
+    unsigned int end = Bdat::getIdCount(dlc) + begin;
+    for (unsigned int id = begin; id < end; id++) {
+        if (static_cast<unsigned char>(Bdat::getValCheck(dlc, "MapList", id, 1)) == zone) {
+            return id;
+        }
+    }
+    return 0;
+}
+
 
 SDataBlade* GfDataBlade::getSDataBlade(unsigned int blade) {
     return &GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
@@ -5910,6 +5993,27 @@ bool GfDataBattle::getClassName(unsigned char*& fp, unsigned int& id, unsigned i
     }
     fp = GfBdatMsg::getFpBtlClass();
     return true;
+}
+
+void GfDataIdea::getIdeaAttribute(mm::mtl::FixedVector<unsigned int, 2>& attributes, unsigned int idea) {
+    switch (idea) {
+    case 0:
+        attributes.push_back(1);
+        attributes.push_back(2);
+        break;
+    case 1:
+        attributes.push_back(3);
+        attributes.push_back(6);
+        break;
+    case 2:
+        attributes.push_back(4);
+        attributes.push_back(5);
+        break;
+    case 3:
+        attributes.push_back(7);
+        attributes.push_back(8);
+        break;
+    }
 }
 
 bool GfDataParty::isPartyMember(unsigned int chara) {
