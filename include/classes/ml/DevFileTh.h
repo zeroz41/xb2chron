@@ -107,9 +107,12 @@ public:
         unsigned int m_handleCursor;
         unsigned char pad_5cca4[0xC];
     };
-    // what setup copies for Impl's constructor (nnMain fills it)
+    // what setup copies for Impl's constructor (nnMain fills it). 6 bytes, 2-aligned: setup copies 2 bytes at 0x4,
+    // then 4 at 0x0 (a 6-byte copy; a 4-byte first field would make it an 8-byte one). The static's initial value is
+    // {3, 0, 1}.
     struct SetupParam {
-        unsigned int m_loaderThreadNum;  // 0x0 (Impl() starts this many loader threads; the name is not the original's)
+        unsigned short m_loaderThreadNum;  // 0x0 (Impl() starts this many loader threads; the name is not the original's)
+        unsigned short pad_2;
         unsigned short pad_4;
     };
 

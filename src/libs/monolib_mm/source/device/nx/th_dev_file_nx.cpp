@@ -3415,6 +3415,14 @@ void DevFileTh::wkTail() {
     }
 }
 
+// lbl_7100B77718: what setup stores and Impl's constructor reads (the name is not the original's)
+// (used: Impl's constructor, its reader, is not written yet)
+__attribute__((used)) static DevFileTh::SetupParam s_setupParam = {3, 0, 1};
+
+void DevFileTh::setup(const SetupParam& param) {
+    s_setupParam = param;
+}
+
 void DevFileTh::icbDecide(ml::CERR_STRUCT*, ml::ERR_DECIDE) {}
 
 bool DevFileTh::icbError(ml::CERR_STRUCT*) {
@@ -3668,6 +3676,81 @@ FileResTh::FileResTh()
 
 FileResTh::~FileResTh() {
     release();
+}
+
+bool FileResTh::loadBlock(mtl::ALLOC_HANDLE handle, const char* path, unsigned int align, unsigned int arg) {
+    release();
+    DevFileParamTh param;
+    param.m_hMem = handle;
+    param.m_path = path;
+    param.m_align = align;
+    param.pad_5c = arg;
+    SetName(PathUtil::getFilePtrFromPath(path));
+    m_data = DevFileTh::readFileBlock(param, &m_size, reinterpret_cast<mm::VAL64*>(&m_timeStamp));
+    if (m_data != nullptr) {
+        m_state = 2;
+    } else {
+        m_size = -2;
+        m_state = 3;
+    }
+    return m_data != nullptr;
+}
+
+bool FileResTh::loadBlock(mm::mtl::IAllocator* allocator, const char* path, unsigned int align) {
+    release();
+    DevFileParamTh param;
+    param.pad_10 = allocator;
+    param.m_path = path;
+    param.m_align = align;
+    SetName(PathUtil::getFilePtrFromPath(path));
+    m_data = DevFileTh::readFileBlock(param, &m_size, reinterpret_cast<mm::VAL64*>(&m_timeStamp));
+    if (m_data != nullptr) {
+        m_state = 2;
+    } else {
+        m_size = -2;
+        m_state = 3;
+    }
+    return m_data != nullptr;
+}
+
+bool FileResTh::load(mtl::ALLOC_HANDLE handle, const char* path, unsigned int align, FILE_PRIO prio) {
+    release();
+    DevFileParamTh param;
+    param.m_hMem = handle;
+    param.m_path = path;
+    param.m_listener = this;
+    param.m_align = align;
+    param.m_prio = prio;
+    param.pad_6d = true;
+    SetName(PathUtil::getFilePtrFromPath(path));
+    m_handle = DevFileTh::readFile(param);
+    if (m_handle != nullptr) {
+        m_state = 1;
+    } else {
+        m_size = -2;
+        m_state = 3;
+    }
+    return m_handle != nullptr;
+}
+
+bool FileResTh::load(mm::mtl::IAllocator* allocator, const char* path, unsigned int align, FILE_PRIO prio) {
+    release();
+    DevFileParamTh param;
+    param.pad_10 = allocator;
+    param.m_path = path;
+    param.m_listener = this;
+    param.m_align = align;
+    param.m_prio = prio;
+    param.pad_6d = true;
+    SetName(PathUtil::getFilePtrFromPath(path));
+    m_handle = DevFileTh::readFile(param);
+    if (m_handle != nullptr) {
+        m_state = 1;
+    } else {
+        m_size = -2;
+        m_state = 3;
+    }
+    return m_handle != nullptr;
 }
 
 bool FileResTh::isExist() const {
