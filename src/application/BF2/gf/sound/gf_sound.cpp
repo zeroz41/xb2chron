@@ -500,4 +500,12 @@ void GfMasterVolume::setGameSeVolume(float volume) {
     }
 }
 
+int GfMasterVolume::getU16Volume(float volume) {
+    if (volume >= 1.0f) {
+        return 255;
+    }
+    // a 16-bit value (the name), widened to the int return
+    return static_cast<unsigned short>(volume * 255.0f);
+}
+
 }  // namespace gf

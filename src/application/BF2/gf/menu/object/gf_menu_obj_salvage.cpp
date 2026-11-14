@@ -369,6 +369,32 @@ bool GfMenuObjSalvage::seqRecordWaitConfirm() {
     return m_inputClosed;
 }
 
+bool GfMenuObjSalvage::seqRecordBoxOpen() {
+    ui::UIObjectAcc record(m_handle, "LAY_record");
+    unsigned int count = record.countChild("LAY_ether_box@%02d", 1);
+    mm::mtl::FixStr<32> name;
+    int slot = -1;
+    for (unsigned int i = 0; i < count; i++) {
+        name.format("LAY_ether_box_icon@%02d", i + 1);
+        ui::UIObjectAcc icon(record.m_handle, name.m_str);
+        if (!icon.isDisp()) {
+            name.format("LAY_ether_box_loop@%02d", i + 1);
+            ui::UIObjectAcc loop(record.m_handle, name.m_str);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x22;
+            param.m_time = 0.5f;
+            param.m_distance = 40;
+            param.m_curve = 2;
+            param.m_setDefault = true;
+            param.m_delay = i * 0.2f;
+            param.m_startFlags = 10;
+            slot = GfMenuObjUtil::startCtrl(loop.m_handle, param, nullptr);
+        }
+    }
+    m_ctrlSlot = slot;
+    return true;
+}
+
 bool GfMenuObjSalvage::seqRecordFadeout() {
     ui::UIObjectAcc record(m_handle, "LAY_record");
     record.setDisp(true);

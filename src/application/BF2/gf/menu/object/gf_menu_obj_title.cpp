@@ -6,6 +6,7 @@
 #include "classes/gf/GfMenuMsgList.h"
 #include "classes/gf/GfMenuObjCommonText.h"
 #include "classes/gf/GfMenuObjOption.h"
+#include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/gf/GfMenuReferenceNumber.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfMenuReferenceAdapter.h"
@@ -23,6 +24,7 @@
 #include "plugin/Bdat.h"
 #include "ui/EventData.h"
 #include "ui/UIUtil.h"
+#include "ui/UIStr.h"
 
 namespace gf {
 
@@ -357,6 +359,56 @@ bool GfMenuObjTitle::seqInfoFadeIn() {
     }
     m_confirmOpen = true;
     return false;
+}
+
+void GfMenuObjTitle::AnnounceListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        unsigned char* fp = GfDataBdat::getFP(0x10C);
+        unsigned char* text = GfDataBdat::getFP(0x13B);
+        unsigned short title = Bdat::getVal(fp, "title", 1);
+        unsigned short summary = Bdat::getVal(fp, "summary", 1);
+        ui::UIObjectAcc(acc.m_handle, "TXT_page_index").setText(ui::UIStr(text, title));
+        ui::UIObjectAcc(acc.m_handle, "TXT_page_summary").setText(ui::UIStr(text, summary));
+        acc.setDisp(false);
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+            GfMenuObjOperationInfo::open(acc.m_handle, 0, 0, 0);
+            GfMenuObjOperationInfo::setGuideDisp(false);
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 1, false);
+        }
+        break;
+    case 8:
+        if (event.m_param1 == 9) {
+            GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_ang_info"), 0, 0.0f);
+            GfMenuObjUtil::playSECommonDecide();
+        } else if (event.m_param1 == 2) {
+            ui::UIObjectAcc main(m_owner->m_handle, "LAY_main");
+            ui::EventData close;
+            close.m_type = 0x101;
+            GfMenuObject::sendEvent(main.m_handle, close, 0.0f);
+            GfMenuObjUtil::playSECommonCancel();
+            GfMenuObjOperationInfo::close();
+        } else {
+            break;
+        }
+        GfMenuObject::disableInput(acc.m_handle);
+        GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+        break;
+    case 0x21:
+        GfMenuObjUtil::setCommonFadeIn(acc.m_handle, 1, 0);
+        break;
+    case 0x22:
+        GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 2, 0);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 bool GfMenuObjTitle::seqTipsDifficulity() {

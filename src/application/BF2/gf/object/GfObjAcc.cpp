@@ -228,6 +228,15 @@ bool GfObjAcc::isCameraFadeDisableForBattle() const { return GfObjUtil::testFlag
 
 void GfObjAcc::setCameraFadeDisableForBattle(bool on) { GfObjUtil::setFlag(m_info, 12, on); }
 
+bool GfObjAcc::isCameraFadeAllOK() const {
+    float alpha = getAlphaCamera();
+    if (testFlag(10) && (!isCameraFadeDisableForEvent() || (isCameraFadeDisableForEvent() && alpha < 1.0f)) &&
+        (!isCameraFadeDisableForBattle() || (isCameraFadeDisableForBattle() && alpha < 1.0f)) && !hasParent()) {
+        return true;
+    }
+    return false;
+}
+
 bool GfObjAcc::hasParent() const {
     return m_obj != nullptr && GfObjUtil::getParentObj(m_obj) != nullptr;
 }

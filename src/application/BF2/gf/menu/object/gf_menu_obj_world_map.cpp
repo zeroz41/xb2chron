@@ -758,6 +758,8 @@ mm::Col3 GfMenuObjWorldMap::getShopIconColor(unsigned int id) {
 
 // instantiated for gf::GfMenuObjWorldMap::ZoneSelectListener::reciveEvent, gf::GfMenuObjWorldMap::initialize (not written yet)
 template mm::mtl::Vector<gf::MenuZoneMapInfo>::iterator mm::mtl::Vector<gf::MenuZoneMapInfo>::erase(gf::MenuZoneMapInfo*);
+// instantiated for gf::GfMenuObjWorldMap::initialize, gf::GfMenuObjWorldMap::ZoneSelectListener::reciveEvent (not written yet)
+template void mm::mtl::Array<gf::GfMenuObjWorldMap::MapJumpInfo>::reserve(unsigned long);
 
 namespace gf {
 
