@@ -12,6 +12,9 @@ public:
     virtual ~BtlSystemBalanceAccess();  // slot 0
     static void Create();
     static void Destroy();
+    void Initialize();
+    // 2.0.0's symbols name it. What it does: pad_78 while BattleGlobal's m_challengeAnySuccess is set, else pad_76.
+    unsigned short GetChainAttackStartDamageBonusPercent() const;
     bool IsOneBoundEnemy(unsigned int enemyId) const;
     // answers 0 when the ID matches, -1 otherwise (an index into a one-entry list; callers test the sign)
     int IsSpSizeEnemy(unsigned int enemyId) const;
@@ -41,7 +44,10 @@ public:
     unsigned char m_buttonChallengeRate1;
     unsigned char m_buttonChallengeRate2;
     unsigned char m_buttonChallengeRate3;
-    unsigned char pad_5F[0x1B];
+    unsigned char pad_5F[0x17];
+    // GetChainAttackStartDamageBonusPercent's percentages: pad_78 while BattleGlobal's m_challengeAnySuccess is set
+    unsigned short pad_76;
+    unsigned short pad_78;
     // ChainAttackManager::GetBonusRate's base rate, in percent (meaning unknown)
     unsigned short pad_7A;
     unsigned char pad_7C[0xE];

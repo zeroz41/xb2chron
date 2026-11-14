@@ -472,6 +472,10 @@ public:
     void NotifyBuffStart(int buff, bool playSe);
     // the chance of an enhance's condition (the bool is passed false by CheckRandSatisfyEnhanceCondition)
     float SatisfyEnhanceCondition(int type, int, float, void*, bool);
+    // the symbol's name; BladeChangeManager::AppearBuff calls it (its return value is not used there, so the
+    // return type is not recovered)
+    void AttackProc(const ARTS_SLOT_DATA& slot, const ARTS_DATA& arts, int, gf::GF_OBJ_HANDLE* target,
+                    const mm::Vec3*, const mm::Vec3*, unsigned int, bool);
     // rolls SatisfyEnhanceCondition's chance; on success shows m_enhanceNameId's name above the character
     bool CheckRandSatisfyEnhanceCondition(int type, int, float, void*);
     void CreateBuffEffect(int buff, bool);
@@ -970,7 +974,10 @@ public:
     // CheckWeaponDistance's answer: the target is within the parameter's weapon ranges (the name is not the original's)
     unsigned int m_inWeaponDistance : 1;
     unsigned int pad_10BA_7 : 9;
-    unsigned char pad_10BC[0x22];
+    unsigned char pad_10BC[0x20];
+    // BladeChangeManager::AppearBuff attacks with the arts of this id (ARTS_SLOT_DATA::m_artsID, data type 1; meaning
+    // unknown)
+    unsigned short pad_10DC;
     // CheckRandSatisfyEnhanceCondition's buff name: its id in BDAT 0x196 (0 for none) and whether it is a buff
     // (set: GfMenuObjDamageBuff type 0) or a debuff (type 1; the names are not the original's)
     unsigned short m_enhanceNameId : 8;

@@ -5,6 +5,10 @@
 #include "classes/btl/BattleCharacter.h"
 #include "classes/btl/CharacterManager.h"
 #include "classes/gf/GfAllocator.h"
+#include "btl/Utility.h"
+#include "classes/btl/ChainAttackManager.h"
+#include "classes/btl/CharacterParameter.h"
+#include "classes/btl/DataManager.h"
 
 namespace btl {
 
@@ -77,6 +81,45 @@ void BladeChangeManager::UpdateProc(const fw::UpdateInfo& info) {
                     effect->setParam(data.m_effect, pos, mm::Vec3::unit);
                 }
             }
+        }
+    }
+}
+
+void BladeChangeManager::AppearBuff(int type, BattleCharacter* first, BattleCharacter* second) {
+    if (first == nullptr || second == nullptr) {
+        return;
+    }
+    if (type == 2) {
+        mm::mtl::FixedVector<unsigned char, 90> list;
+        Utility::GetCharacterList(list, first->m_handle, static_cast<Utility::CHECK_CHR_NUM_MODE>(1), 0x23);
+        CharacterManager* manager = CharacterManager::get();
+        for (unsigned char id : list) {
+            BattleCharacter* target = manager->GetCharacterConst(id);
+            CharacterParameter* param = target->GetCharacterParameter(true);
+            if (param != nullptr) {
+                mm::Vec3 pos = target->m_pos;
+                pos.y += param->pad_38;
+                param->SetBuff(5, 1.0f, 1.0f, &pos);
+            }
+        }
+    } else if (!ChainAttackManager::get()->IsProc(true)) {
+        second->SatisfyEnhanceCondition(0x118, 0, 0.0f, nullptr, true);
+        second->SatisfyEnhanceCondition(0x160, 0, 0.0f, nullptr, true);
+        float level = second->SatisfyEnhanceCondition(0x15C, 0, 0.0f, nullptr, true);
+        if (level > 0.0f) {
+            ARTS_SLOT_DATA slot;
+            slot.m_charaIndex = second->m_voiceIndex;
+            slot.m_artsID = second->pad_10DC;
+            slot.m_dataType = 1;
+            slot.pad_0_18 = static_cast<int>(level);
+            slot.m_level = slot.pad_0_18;
+            ARTS_DATA arts;
+            slot.GetArtsData(arts);
+            gf::GF_OBJ_HANDLE* target = first->m_subTargetHandle;
+            if (target == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+                target = first->m_targetHandle;
+            }
+            second->AttackProc(slot, arts, 0, target, nullptr, nullptr, 0, true);
         }
     }
 }

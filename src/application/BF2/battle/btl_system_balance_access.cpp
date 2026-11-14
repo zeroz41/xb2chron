@@ -1,8 +1,16 @@
 #include "classes/btl/BtlSystemBalanceAccess.h"
+#include "classes/btl/BattleGlobal.h"
+#include "classes/gf/GfAllocator.h"
 
 namespace btl {
 
 BtlSystemBalanceAccess::~BtlSystemBalanceAccess() {}
+
+void BtlSystemBalanceAccess::Create() {
+#line 48
+    BtlSystemBalanceAccess* access = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) BtlSystemBalanceAccess;
+    access->Initialize();
+}
 
 void BtlSystemBalanceAccess::Destroy() {
     if (sys() != nullptr) {
@@ -54,6 +62,10 @@ float BtlSystemBalanceAccess::GetTemporaryDamageChangeRate(float rate) const {
         return 2.0f;
     }
     return pad_121[index] * 0.01f;
+}
+
+unsigned short BtlSystemBalanceAccess::GetChainAttackStartDamageBonusPercent() const {
+    return BattleGlobal::sys()->m_challengeAnySuccess ? pad_78 : pad_76;
 }
 
 }  // namespace btl
