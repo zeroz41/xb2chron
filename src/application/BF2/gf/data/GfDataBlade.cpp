@@ -6397,6 +6397,41 @@ QuestID GfDataQuest::getListPRTQuestID(QuestID id) {
     return quest;
 }
 
+unsigned int GfDataIdea::calcLevel(unsigned int point) {
+    GfBdatBlade* bdat = GfBdatBlade::get();
+    if (point < bdat->getBLD_IdeaNeedPoint(1)) {
+        return 0;
+    }
+    if (point < bdat->getBLD_IdeaNeedPoint(2)) {
+        return 1;
+    }
+    if (point < bdat->getBLD_IdeaNeedPoint(3)) {
+        return 2;
+    }
+    if (point < bdat->getBLD_IdeaNeedPoint(4)) {
+        return 3;
+    }
+    if (point < bdat->getBLD_IdeaNeedPoint(5)) {
+        return 4;
+    }
+    if (point < bdat->getBLD_IdeaNeedPoint(6)) {
+        return 5;
+    }
+    if (point < bdat->getBLD_IdeaNeedPoint(7)) {
+        return 6;
+    }
+    if (point < bdat->getBLD_IdeaNeedPoint(8)) {
+        return 7;
+    }
+    if (point < bdat->getBLD_IdeaNeedPoint(9)) {
+        return 8;
+    }
+    if (point < bdat->getBLD_IdeaNeedPoint(10)) {
+        return 9;
+    }
+    return 10;
+}
+
 void SDataIdea::setPoint(unsigned int idea, unsigned int point) {
     Idea& data = m_ideas[idea];
     data.m_point = point;

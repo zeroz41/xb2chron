@@ -318,6 +318,48 @@ void StateSalvageDiveFadeOut::update(GfGameSalvage* salvage, const fw::UpdateInf
     }
 }
 
+void StateSalvageDiveFadeWait::enter(GfGameSalvage* salvage, ai::State* prev) {
+    ml::DevClock::getClockNow(m_clock);
+    if (salvage->getBindedBdatId() == 42 || salvage->isChaseKikuInSupervia()) {
+        salvage->setLogLapsedTime(0);
+    } else {
+        int lapsed = ml::mtRand(-120, 121) + 300;
+        int hour = GfFieldTime::get()->getHour();
+        int min = GfFieldTime::get()->getMin();
+        int minutes = hour * 60 + lapsed + min;
+        if (minutes >= 1440) {
+            minutes -= 1440;
+        }
+        hour = minutes / 60;
+        min = minutes - hour * 60;
+        GfFieldTime::get()->setHour(hour);
+        GfFieldTime::get()->setMin(min);
+        salvage->setLogLapsedTime(lapsed);
+    }
+    unsigned int item = salvage->m_item;
+    unsigned char* fp = salvage->getBindedBdatFp();
+    unsigned int id = salvage->getBindedBdatId();
+    unsigned short eventId = Bdat::getValCheckU16(fp, "SpecialEventID", id);
+    unsigned short specialItem = Bdat::getValCheckU16(fp, "SpecialItem", id);
+    int table = item - 20000;
+    if (table >= 5) {
+        table = 5;
+    }
+    mm::mtl::FixStr<16> column;
+    column.format("SalvageTable%d", table);
+    if (eventId == 0 || specialItem != item) {
+        unsigned short grade = Bdat::getValCheckU16(fp, column.m_str, id);
+        GfGameSalvage::RaffleInfo info;
+        info.m_grade = grade == 0 ? 1 : grade;
+        info.m_point = salvage->m_challengePoint;
+        info.m_skillLevel = salvage->m_skillLevel;
+        salvage->execRaffle(info);
+    }
+    salvage->calcClimb();
+    salvage->playSE(GfGameSalvage::SEID(604));
+    salvage->playDiveVibration();
+}
+
 void StateSalvageDiveFadeWait::leave(GfGameSalvage* salvage, ai::State* next) {
     salvage->destroyCameraDive();
     mm::Mat44 mtx;
@@ -372,6 +414,32 @@ void StateSalvageClimbStart::enter(GfGameSalvage* salvage, ai::State* prev) {
     if (GfComBehaviorSalvage* behavior = salvage->getGfComBehaviorSalvage()) {
         behavior->m_stepCallback.set(this, &StateSalvageClimbStart::callback);
     }
+}
+
+void StateSalvageClimbStart::callback() {
+    int vibration = 15;
+    switch (m_animType) {
+    case 5:
+        vibration = 13;
+        break;
+    case 6:
+        vibration = m_step == 0 ? 10 : 13;
+        break;
+    case 7:
+        vibration = 7;
+        break;
+    case 8:
+        vibration = 14;
+        break;
+    case 9:
+        vibration = 22;
+        break;
+    case 10:
+        vibration = m_step == 0 ? 8 : 14;
+        break;
+    }
+    fw::PadManager::playVibration(ml::PadVibrationInfo(vibration));
+    ++m_step;
 }
 
 void StateSalvageClimbStart::leave(GfGameSalvage* salvage, ai::State* next) {

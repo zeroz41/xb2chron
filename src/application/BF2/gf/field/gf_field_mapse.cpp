@@ -92,6 +92,44 @@ void GfFieldMapSe::createMapSe() {
     }
 }
 
+void GfFieldMapSe::updateSeObjDataForFindActivate(fw::UpdateInfo info, SEDATA& data, ml::ScnObjAccSeamEtcPos& acc) {
+    GfBdatRsc* bdat = GfBdatRsc::get();
+    int matrix = data.m_nextMatrix;
+    int i = 0;
+    int found = 0;
+    for (; i < data.m_matrixMax; ++i) {
+        for (SEOBJ* obj : data.m_objs) {
+            if (obj->m_matrix == matrix) {
+                goto next;
+            }
+        }
+        {
+            float minDist = bdat->getFLD_actorSEmin_volume_Dist(data.m_seId);
+            ml::ScnObjAccPartsEtcPos obj = acc.getObj(data.m_obj);
+            GfGameScene* scene = GfGameScene::get();
+            SECOND second(matrix, 1000000.0f);
+            if (obj.isDisp(matrix) && scene != nullptr) {
+                const mm::Mat44& mtx = obj.getMatrix(matrix);
+                mm::Vec3 t = mtx.getTrans();
+                float dx = scene->m_listenerPos[0] - t.x;
+                float dy = scene->m_listenerPos[1] - t.y;
+                float dz = scene->m_listenerPos[2] - t.z;
+                second.m_dist = dx * dx + dy * dy + dz * dz;
+            }
+            if (second.m_dist < minDist * minDist) {
+                data.m_founds.push_back(second);
+            }
+            ++found;
+        }
+    next:
+        matrix = matrix + 1 < data.m_matrixMax ? matrix + 1 : 0;
+        if (found >= 2) {
+            break;
+        }
+    }
+    data.m_nextMatrix = matrix;
+}
+
 float GfFieldMapSe::getVolume(const SEOBJ* obj) {
     GfBdatRsc* bdat = GfBdatRsc::get();
     float maxDist = bdat->getFLD_actorSEmax_volume_Dist(obj->m_seId);
