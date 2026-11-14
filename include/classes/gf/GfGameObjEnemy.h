@@ -38,6 +38,9 @@ public:
     // works out up to 8 queued pairs' genus links, each queued again, until the first one comes round again
     void update(const fw::UpdateInfo& info);
     void calcGenusLink(Pair& pair);
+    // GfFieldEnemySensor::update calls it: whether the object is in pad_1890; false with no instance or for a
+    // battle object
+    static bool isGenusLink(GF_OBJ_HANDLE* handle);
 
     mm::mtl::FixedList<GINFO, 64> pad_8;
     mm::mtl::FixedList<GF_OBJ_HANDLE*, 256> pad_670;

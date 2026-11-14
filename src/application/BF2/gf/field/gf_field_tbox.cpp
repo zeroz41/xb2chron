@@ -12,6 +12,10 @@
 #include "classes/gf/GfObj.h"
 #include "fw/UpdateInfo.h"
 #include "gf/GfObjAcc.h"
+#include "plugin/Bdat.h"
+#include "classes/gmk/GmkBattleChallengeReward.h"
+#include "classes/gmk/GmkSalvageLocator.h"
+#include "classes/gf/GfDataBdat.h"
 
 namespace gf {
 
@@ -25,6 +29,39 @@ void GfFieldTbox::gevMapjump(GEV gev, const MapjumpCallbackInfo&) {
     if (gev == 1) {
         end();
     }
+}
+
+void GfFieldTbox::start(GF_OBJ_HANDLE* handle) {
+    m_seqTime = 0.0f;
+    m_emitter.dispose();
+    m_isExcavation = false;
+    m_seq = nullptr;
+    m_rscId = -1;
+    m_isUIEnd = false;
+    m_isFsOK = false;
+    m_handle = handle;
+    gmk::AGmkBase* gmk = gmk::getBindedGmkInst(handle);
+    if (gmk == nullptr) {
+        return;
+    }
+    gmk::GmkType type = gmk->getGmkType();
+    if (type == gmk::GmkTbox::TYPE) {
+        gmk::GmkTbox* tbox = static_cast<gmk::GmkTbox*>(gmk);
+        m_rscId = Bdat::getValCheckU16(tbox->getBindedBdatFp(), "RSC_ID", tbox->m_createInfo.m_bdatId);
+        m_isExcavation = tbox->getBdatInfo()->m_dig && tbox->getProgress() == 0;
+    } else if (type == gmk::GmkSalvageLocator::TYPE) {
+        m_rscId = Bdat::getValCheckU16(GfDataBdat::getFP(0x77), "RSC_ID",
+                                       static_cast<gmk::GmkSalvageLocator*>(gmk)->pad_e8);
+    } else if (type == gmk::GmkBattleChallengeReward::TYPE) {
+        m_rscId = static_cast<gmk::GmkBattleChallengeReward*>(gmk)->getBdatId_RSC_TboxList();
+    }
+    unsigned char* fp = GfDataBdat::getFP(0xac);
+    Bdat::uVal time;
+    time.ulong = Bdat::getValCheck(fp, "FS_starttime", m_rscId, 8);
+    m_fsStartTime = time.real;
+    time.ulong = Bdat::getValCheck(fp, "TBOX_open_starttime", m_rscId, 8);
+    m_openStartTime = time.real;
+    m_seq = &GfFieldTbox::seqWaitCheckFs;
 }
 
 void GfFieldTbox::seqWaitCheckFs(float dt) {

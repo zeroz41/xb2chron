@@ -619,6 +619,18 @@ GfGameObjEnemy::~GfGameObjEnemy() {}
 
 namespace gf {
 
+bool GfGameObjEnemy::isGenusLink(GF_OBJ_HANDLE* handle) {
+    GfGameObjEnemy* self = get();
+    if (self == nullptr) {
+        return false;
+    }
+    GfObjAcc acc(handle);
+    if (acc.isBattle()) {
+        return false;
+    }
+    return self->pad_1890.find(handle) != self->pad_1890.end();
+}
+
 static bool fn_71002B5A34(float angle, mm::Vec3& pos, const GfObjSetupEnemy* setup) {
     float r = mm::normalizeRadian(setup->pad_30.y + angle);
     float dist = 3.0f;

@@ -151,6 +151,52 @@ void LocatorEventPreorder::update() {
     }
     m_posNum = 1;
 }
+void LocatorPrecious::create(QuestID questId, unsigned short preciousId) {
+    dispose();
+    m_questId = questId;
+    m_preciousId = preciousId;
+    int row = -1;
+    if (gmk::GmkManager::sys()->traverseGmkInst(gmk::GmkPrecious::TYPE, *this) && m_accs.size() != 0) {
+        int bdatId = m_accs.begin()->m_gmk->m_createInfo.m_bdatId;
+        if (bdatId > 0) {
+            row = gmk::GmkManager::sys()->findFirstBdatId_RSC_GmkSetList(gmk::GmkPrecious::TYPE, bdatId);
+        }
+    } else {
+        unsigned char* fp = gmk::GmkManager::sys()->m_bdatFp;
+        int count = Bdat::getIdCount(fp);
+        int top = Bdat::getIdTop(fp);
+        for (int id = top; id < top + count; ++id) {
+            const char* sheet = gmk::GmkManager::sys()->getSheetnameByType(id, gmk::GmkPrecious::TYPE);
+            if (sheet == nullptr || *sheet == '\0') {
+                continue;
+            }
+            unsigned char* sheetFp = Bdat::isExistFP(sheet);
+            if (sheetFp == nullptr) {
+                continue;
+            }
+            int itemCount = Bdat::getIdCount(sheetFp);
+            int itemTop = Bdat::getIdTop(sheetFp);
+            unsigned char found = false;
+            for (int i = itemTop; i < itemTop + itemCount && !found; ++i) {
+                if ((unsigned short)Bdat::getValCheck(sheetFp, "itmID", i, 2) == preciousId) {
+                    row = id;
+                    found = true;
+                }
+            }
+            if (row > 0) {
+                break;
+            }
+        }
+    }
+    if (row < 0) {
+        dispose();
+        return;
+    }
+    m_mapBdatId = GfFieldGimmick::getBdatIdFrom_RSC_GmkSetList_To_FLD_maplist(row);
+    int iconId =
+        gmk::getBdatIdOfQuestTargetIcon(GfQuestTarget::getIconTypeCollect(2, preciousId, m_questId, m_mapBdatId, true));
+    m_iconBdatId = iconId < 0 ? 0x19f : iconId;
+}
 void LocatorPrecious::update() {
     if (m_preciousId == 0) {
         return;

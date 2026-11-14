@@ -12,6 +12,9 @@ namespace gf {
 class TUnk_B51CF0 {
 public:
     virtual void onTraverse(gmk::AGmkBase const&) = 0;
+    // GmkManager::traverseGmkInst calls its F with each gimmick (LocatorPrecious::create passes the locator, the
+    // call goes through this base's slot 0; inline; the name is not the original's)
+    void operator()(gmk::AGmkBase const& gmk) { onTraverse(gmk); }
 };
 // table 0x7100B51CA0; base at 0x18 unknown (TUnk_B51CF0)
 class LocatorPrecious : public ::gf::AFieldLocator, public TUnk_B51CF0 {
