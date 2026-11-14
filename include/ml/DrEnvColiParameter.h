@@ -7,6 +7,7 @@ class DrEnvColiMan;
 class DrEnvColiObj;
 class DrEnvColiResult;
 struct EnvColiPostData;
+struct EnvColiPostHeader;
 
 // an envcoli file's post-effect parameter set, by format version (the field names are not the original's)
 template <int Ver>
@@ -30,8 +31,8 @@ public:
     DrEnvColiMan* m_man;     // 0x8
     DrEnvColiResult* m_result;  // 0x10
     DrEnvColiObj* m_hitObj;  // 0x18
-    const void* m_postData;  // 0x20, the hit object's data + its header's 0x18 offset
-    int pad_28;              // 0x28, the hit object's header 0x4 word
+    const EnvColiPostHeader* m_postData;  // 0x20, the hit object's data + its header's m_postOfs
+    int pad_28;              // 0x28, the hit object's EnvColiDataHeader::pad_4
 };
 }  // namespace ml
 

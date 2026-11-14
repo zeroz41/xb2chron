@@ -133,7 +133,7 @@ public:
     bool m_gpuCheckAllVisible;      // 0x9AA
     // 0x9AB: DrMdoCtlMpf::calcMpfRenderList passes it as DrMdoCtlMpfAuto::autoMpfCalc's first flag
     bool pad_9AB;
-    unsigned char pad_9AC[0x1];
+    bool pad_9AC;  // 0x9AC, DrEnvColiMan::update resets its fade while set
     bool m_renderReq;               // 0x9AD: DrCalcMan::renderEnd clears it (the name is not the original's)
     unsigned char pad_9AE[0x132];
     float m_jitter[2];              // 0xAE0

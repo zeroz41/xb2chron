@@ -311,7 +311,8 @@ public:
     // 0x1DA8: end copies it to the next byte (the names are not the original's)
     bool m_endFlagReq;
     bool m_endFlag;                     // 0x1DA9
-    unsigned char pad_1DAA[0x6];
+    bool pad_1DAA;  // 0x1DAA, DrEnvColiMan::update skips the collision test while set
+    unsigned char pad_1DAB[0x5];
     // 0x1DB0: the priority DrResMdoSeamRead::read gives its reads (the name is not the original's)
     FILE_PRIO m_seamReadPrio;
     unsigned char pad_1DB4[0x4];

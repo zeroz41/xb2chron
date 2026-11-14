@@ -8,8 +8,35 @@
 #include "classes/ml/DrMan.h"
 #include "ml/DrIniSys.h"
 #include "mtl/MemManager.h"
+#include "ml/DrEnvironmentMan.h"
+#include "ml/DrCalcMan.h"
+#include "ml/DrCalcViewWork.h"
+#include "ml/DrPixlPostParm.h"
+#include "mm/Math.h"
 
 namespace ml {
+
+// the store order decides which stores the compiler pairs (this one gives the original's)
+DrEnvColiMan::DrEnvColiMan(DrMan* drMan) {
+    m_time = 0.0f;
+    m_list.m_head = nullptr;
+    m_list.m_tail = nullptr;
+    for (int i = 0; i < 2; i++) {
+        m_stock[i].m_head = nullptr;
+        m_stock[i].m_tail = nullptr;
+    }
+    m_drMan = drMan;
+    m_hitObj = nullptr;
+    pad_78 = 1.0f;
+    m_hitGroup = -1;
+    m_weather = 0;
+    m_rate = 1.0f;
+    m_frame = 0.0f;
+    pad_80 = 0;
+    pad_7C = 0;
+    pad_88 = 1.0f;
+    pad_84 = 0.0f;
+}
 
 DrEnvColiMan::~DrEnvColiMan() { clear(); }
 
@@ -38,6 +65,108 @@ DrEnvColiObj* DrEnvColiMan::createObj(const void* resource) {
     obj->setDataAdd(resource);
     m_stock[DrMan::s_nDblStockIdx].push_back(obj);
     return obj;
+}
+
+void DrEnvColiMan::update() {
+    bool changed = false;
+    for (DrEnvColiObj* obj = m_stock[DrMan::s_nDblIdx].m_head; obj;) {
+        DrEnvColiObj* next = obj->m_next;
+        m_list.push_back(obj);
+        obj = next;
+        changed = true;
+    }
+    m_stock[DrMan::s_nDblIdx].m_head = nullptr;
+    m_stock[DrMan::s_nDblIdx].m_tail = nullptr;
+    for (DrEnvColiObj* obj = m_list.m_head; obj;) {
+        DrEnvColiObj* next = obj->m_next;
+        if (obj->m_flags & (1 << DrMan::s_nDblIdx)) {
+            m_list.remove(obj);
+            if (obj->m_work) {
+                mtl::MemManager::deallocate(obj->m_work, 0, false);
+            }
+            delete obj;
+            changed = true;
+        }
+        obj = next;
+    }
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    parm->m_ssrGpuCheckOff = parm->m_resetScene[DrMan::s_nDblIdx];
+    parm->m_resetScene[DrMan::s_nDblIdx] = false;
+    if (m_drMan->pad_1DAA) {
+        DrEnvColiParameter::updateBloomParams();
+        return;
+    }
+    DrEnvColiObj* head = m_list.m_head;
+    if (!head) {
+        m_hitObj = nullptr;
+        m_hitGroup = -1;
+        DrEnvColiParameter::updateBloomParams();
+        return;
+    }
+    DrEnvColiResult result;
+    mm::Vec3 pos = m_drMan->m_calcMan->m_pViewWork->m_viewPos;
+    DrEnvColiObj* hit = nullptr;
+    for (DrEnvColiObj* obj = head; obj;) {
+        DrEnvColiObj* next = obj->m_next;
+        if (!(obj->m_flags & 7) && obj->m_data && obj->testTreeColi(&result, obj->m_tree, pos, 0.0f)) {
+            hit = obj;
+        }
+        obj = next;
+    }
+    if (!hit) hit = head;
+    if (m_hitObj != hit || m_hitGroup != result.m_group) {
+        m_frame = m_drMan->m_postParm[m_drMan->m_postParmIdx]->getWeatherFrame();
+    }
+    DrPixlPostParm* post = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    int weather = post->m_weather;
+    int prevWeather = m_weather;
+    if (prevWeather != weather) {
+        m_frame = post->getWeatherFrame();
+    } else {
+        m_frame -= m_drMan->m_mpfWindPower;
+        if (m_frame < 0.0f) m_frame = 0.0f;
+    }
+    if (m_drMan->isWeatherFrmEnd()) {
+        m_frame = 0.0f;
+        m_rate = 1.0f;
+    } else if (m_frame != 0.0f) {
+        m_rate = 1.0f / m_frame;
+        if (m_rate > 1.0f) m_rate = 1.0f;
+    } else {
+        m_rate = 1.0f;
+    }
+    m_time = m_drMan->m_hour;
+    pad_88 = 1.0f;
+    if (prevWeather != weather) {
+        pad_84 = 600.0f;
+        pad_88 = 0.0f;
+    } else {
+        pad_84 -= m_drMan->m_mpfWindPower;
+        if (pad_84 < 0.0f) {
+            pad_84 = 0.0f;
+        } else {
+            pad_88 = mm::clamp(1.0f / pad_84, 0.0f, 1.0f);
+        }
+    }
+    if (m_drMan->m_postParm[m_drMan->m_postParmIdx]->m_ssrGpuCheckOff) changed = true;
+    if (changed || m_drMan->m_calcMan->m_pViewWork->pad_9AC) {
+        pad_84 = 0.0f;
+        pad_88 = 1.0f;
+    }
+    m_weather = weather;
+    DrEnvColiParameter param;
+    param.m_result = &result;
+    param.m_hitObj = hit;
+    param.m_drMan = m_drMan;
+    param.m_man = this;
+    param.m_postData = reinterpret_cast<const EnvColiPostHeader*>(
+        hit->m_data + reinterpret_cast<const EnvColiDataHeader*>(hit->m_data)->m_postOfs);
+    param.pad_28 = reinterpret_cast<const EnvColiDataHeader*>(hit->m_data)->pad_4;
+    const EnvColiPostGroup* group = reinterpret_cast<const EnvColiPostGroup*>(
+        reinterpret_cast<const unsigned char*>(param.m_postData) + param.m_postData->m_groupOfs) + result.m_group;
+    param.calcParams(group->m_first, group->m_num, prevWeather != weather);
+    m_hitObj = hit;
+    m_hitGroup = result.m_group;
 }
 
 void DrEnvColiParameter::updateBloomParams() {

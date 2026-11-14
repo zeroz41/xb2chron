@@ -36,11 +36,63 @@ public:
 
 // the start of an environment collision resource as setDataAdd reads it (the names are not the original's)
 struct EnvColiDataHeader {
-    unsigned char pad_0[0x8];
+    unsigned char pad_0[0x4];
+    int pad_4;                  // 0x4, DrEnvColiMan::update hands it to DrEnvColiParameter
     int m_listNum;              // 0x8
     unsigned int m_listOfs;     // 0xC, to m_listNum 0x20-byte entries
     unsigned char pad_10[0x4];
     unsigned int m_treeOfs;     // 0x14, to the collision tree's nodes
+    unsigned int m_postOfs;     // 0x18, to the post-effect block (EnvColiPostHeader)
+};
+
+// a list entry of the resource (0x20 bytes, at the header's m_listOfs); testTreeColi tests it and copies it into
+// the result. The names are not the original's.
+struct EnvColiListData {
+    unsigned int m_dataOfs;       // 0x0, from the resource: the shape's data
+    unsigned short m_type;        // 0x4, the shape type (DrEnvColiObj::s_pColiTest index)
+    unsigned short m_flags;       // 0x6, or-ed into the result; bit 1: m_option is set
+    short m_priority;             // 0x8
+    short m_subPriority;          // 0xA
+    unsigned short m_dispBit;     // 0xC, when not 0 a DrMan::m_dispOffBits bit that hides the entry
+    short m_option;               // 0xE
+    unsigned char m_param0;       // 0x10
+    unsigned char m_param1;       // 0x11
+    unsigned char m_param2;       // 0x12
+    unsigned char pad_13;
+    unsigned short m_param3;      // 0x14
+    unsigned short m_group;       // 0x16, the EnvColiPostGroup index
+    unsigned char pad_18[0x8];
+};
+
+// the post-effect block of the resource (at the header's m_postOfs; the names are not the original's)
+struct EnvColiPostHeader {
+    unsigned char pad_0[0x4];
+    unsigned int m_groupOfs;      // 0x4, from this block: 0x18-byte EnvColiPostGroup entries
+    unsigned char pad_8[0x4];
+    unsigned int m_dataOfs;       // 0xC, from this block: 0x34-byte EnvColiPostData records
+};
+
+// a group of post-effect records, by the list entry's m_group (0x18 bytes; the names are not the original's)
+struct EnvColiPostGroup {
+    unsigned char pad_0[0x4];
+    unsigned int m_first;         // 0x4, the first record
+    int m_num;                    // 0x8, the record count
+    unsigned char pad_C[0xC];
+};
+
+// a post-effect record (0x34 bytes): the one of the current weather that started last before the time of day
+// applies (the names are not the original's)
+struct EnvColiPostData {
+    unsigned char pad_0[0x4];
+    unsigned int m_weatherMask;   // 0x4, a bit per weather (DrEnvColiMan::m_weather)
+    unsigned int m_flags;         // 0x8
+    unsigned short m_weatherNum;  // 0xC, calcParams sets DrPixlPostParm::m_weatherNum to it
+    unsigned short pad_E;
+    unsigned short m_minute;      // 0x10, the minute of the day it starts at
+    unsigned short m_fadeMinute;  // 0x12, calcParams fades from the previous record over these minutes
+    unsigned char pad_14[0x12];
+    unsigned short m_windId;      // 0x26, testTreeColi's result wind id
+    unsigned char pad_28[0xC];
 };
 
 // a node of the collision tree in the resource (0x24 bytes; the names are not the original's)
