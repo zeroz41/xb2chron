@@ -264,25 +264,25 @@ bool ScriptInfo::isActive() const {
     return (m_flags & FLAG_ACTIVE) != 0;
 }
 
-// OnFileEvent (0x710019D0E0) is one word off as written below: the original ORs the flags with the selected bit
-// (orr w9, w9, w8), this ORs the bit with the flags (orr w9, w8, w9); the ternary, if/else, `m_flags = m_flags | x`
-// and a local for the bit all keep it (zkit sweep found no rewrite).
-// bool ScriptInfo::OnFileEvent(ml::EventFileTh* event) {
-//     if (m_handle != event->m_handle) {
-//         return false;
-//     }
-//     int result = event->m_result;
-//     m_flags &= ~FLAG_LOADING;
-//     if (event->m_kind == 2 && result != 0) {
-//         m_flags |= FLAG_LOADED;
-//     } else {
-//         m_flags |= FLAG_LOAD_ERR;
-//     }
-//     m_handle = nullptr;
-//     if (m_manager != nullptr) {
-//         m_manager->notifyEvent(m_id, static_cast<ScriptEventParam::State>(isLoaded()));
-//     }
-//     return true;
-// }
+// the flag bit is set through a small local setter (an inlined helper in the original: its parameter's debug value
+// orders the OR as flags | bit; a plain `m_flags |= bit` gives bit | flags)
+bool ScriptInfo::OnFileEvent(ml::EventFileTh* event) {
+    if (m_handle != event->m_handle) {
+        return false;
+    }
+    int result = event->m_result;
+    auto set = [this](unsigned int bit) { m_flags |= bit; };
+    m_flags &= ~FLAG_LOADING;
+    if (event->m_kind == 2 && result != 0) {
+        set(FLAG_LOADED);
+    } else {
+        set(FLAG_LOAD_ERR);
+    }
+    m_handle = nullptr;
+    if (m_manager != nullptr) {
+        m_manager->notifyEvent(m_id, static_cast<ScriptEventParam::State>(isLoaded()));
+    }
+    return true;
+}
 
 }  // namespace fw

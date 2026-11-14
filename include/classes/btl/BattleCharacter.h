@@ -351,6 +351,15 @@ public:
     const GROUP_DATA* GetGroupDataConst() const;
     void ResetRequestPermit();
     bool CheckRandFriendEnhanceRate(int id) const;
+    // a heal-mode class (BDAT 0x18 "HealMode") with a party member at or below BtlSystemBalanceAccess's pad_A5 HP
+    // percentage
+    bool CheckBladeChangeHealMode() const;
+    // the lever gacha's input while the action is 16 and the fight combo's id is 2 or 3 (left stick, buttons of
+    // the control pad's m_down), else its state is reset
+    void LeverReduceProc(ACTION_ID id);
+    // sends the character's effect caster the elemental combo effect (BDAT 0x23 "Effect"; MsgUnk_1000050) and plays
+    // its "SE"; answers the effect handle (0: none)
+    int CreateElementalComboEffect(int id);
     bool IsRescue() const;
 
     void ActionCommandIdle(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);

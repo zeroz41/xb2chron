@@ -48,7 +48,11 @@ public:
     // DataManager::AddPartyGauge scales a gain by the percentage of the gauge's level (hundreds, 0-2; the name is
     // not the original's)
     unsigned char m_partyGaugeLevelRate[3];
-    unsigned char pad_8D[0x23];
+    unsigned char pad_8D[0x18];
+    // BattleCharacter::CheckBladeChangeHealMode: a party member at or below this HP percentage puts a heal-mode
+    // class into heal mode (meaning inferred)
+    unsigned char pad_A5;
+    unsigned char pad_A6[0xA];
     // while BattleGlobal's pad_bit30 is set, the distance every enemy's GfEnemyBattleProperty returns home at (the
     // name is not the original's)
     unsigned short m_returnHomeDistance;

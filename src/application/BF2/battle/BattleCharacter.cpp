@@ -25,6 +25,7 @@
 #include "classes/gf/GfDataBdat.h"
 #include "plugin/Bdat.h"
 #include "gf/MsgFxComboBuff.h"
+#include "gf/MsgUnk_1000050.h"
 #include "btl/Utility.h"
 #include "classes/btl/TalkManager.h"
 #include "gf/GfObjAcc.h"
@@ -50,6 +51,7 @@
 #include "gf/pc/StateUtil.h"
 #include "gf/GfTargetProperty.h"
 #include "gf/EnviromentSensor.h"
+#include "classes/fw/PadManager.h"
 
 namespace btl {
 
@@ -922,6 +924,54 @@ bool BattleCharacter::CheckRandFriendEnhanceRate(int id) const {
     return ml::mtRandf1() <= rate;
 }
 
+void BattleCharacter::LeverReduceProc(ACTION_ID id) {
+    if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->IsPlayerAutoOperate()) {
+        return;
+    }
+    if (id == static_cast<ACTION_ID>(16)) {
+        const CharacterParameter::FIGHT_COMBO_DATA* combo = GetCharacterParameterConst(false)->GetFightComboDataConst();
+        if ((combo->m_id | 1) == 3) {
+            const fw::PadData& pad = fw::PadManager::getControlPadData(0);
+            unsigned int down = pad.m_down;
+            mm::Vec3 stick(pad.m_lx, 0.0f, pad.m_ly);
+            if (Misc::CalcLengthXZ(stick) >= 0.7f && Misc::NormalizeXZ(stick)) {
+                float angle = Misc::CalcAngle(mm::Vec3::unitX, stick, true) + 3.1415927f;
+                mm::mtl::PtrSingleton<BattleGlobal>::sys()->InputLeverGachaStick(angle);
+            }
+            if (down == 0) {
+                return;
+            }
+            if (down & 8) {
+                mm::mtl::PtrSingleton<BattleGlobal>::sys()->InputLeverGachaButton(
+                    static_cast<BattleGlobal::LEVER_GACHA_DATA::BUTTON>(0));
+            }
+            if (down & 2) {
+                mm::mtl::PtrSingleton<BattleGlobal>::sys()->InputLeverGachaButton(
+                    static_cast<BattleGlobal::LEVER_GACHA_DATA::BUTTON>(2));
+            }
+            if (down & 1) {
+                mm::mtl::PtrSingleton<BattleGlobal>::sys()->InputLeverGachaButton(
+                    static_cast<BattleGlobal::LEVER_GACHA_DATA::BUTTON>(3));
+            }
+            if (down & 4) {
+                mm::mtl::PtrSingleton<BattleGlobal>::sys()->InputLeverGachaButton(
+                    static_cast<BattleGlobal::LEVER_GACHA_DATA::BUTTON>(1));
+            }
+            return;
+        }
+    }
+    BattleGlobal* global = mm::mtl::PtrSingleton<BattleGlobal>::sys();
+    global->m_leverGachaButtonTime[0] = 0.0f;
+    global->m_leverGachaButtonTime[1] = 0.0f;
+    global->m_leverGachaButtonTime[2] = 0.0f;
+    global->m_leverGachaButtonTime[3] = 0.0f;
+    global->m_leverGachaStickAngle = 0xFFFF;
+    global->m_leverGachaStickLastAngle = 0xFFFF;
+    global->pad_5c70 = 0;
+    global->m_leverGachaCount = 0;
+    global->m_leverGachaInput = false;
+}
+
 gf::GF_OBJ_HANDLE* BattleCharacter::GetWeaponObjectHandle(bool second) const {
     gf::GfWeapon* weapon;
     if (m_isPlayer) {
@@ -1468,6 +1518,40 @@ void BattleCharacter::NotifyLostHateTarget(int) {
         return;
     }
     PlayCustomVoice(5);
+}
+
+int BattleCharacter::CreateElementalComboEffect(int id) {
+    if (id == 0) {
+        return 0;
+    }
+    gf::GfComEffectCaster* caster = GetEffectCaster();
+    if (caster == nullptr) {
+        return 0;
+    }
+    const gf::GfComProperty* prop = GetComPropertyConst();
+    if (prop == nullptr) {
+        return 0;
+    }
+    unsigned char* fp = gf::GfDataBdat::getFP(0x23);
+    gf::MsgUnk_1000050 msg;
+    msg.m_name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "Effect", id, 7));
+    int handle = 0;
+    if (*msg.m_name != '\0') {
+        gf::GfObj* owner = static_cast<gf::GfObj*>(prop->m_owner);
+        caster->recieveMessage(owner, msg);
+        BattleGlobal* global = mm::mtl::PtrSingleton<BattleGlobal>::sys();
+        gf::GF_OBJ_HANDLE* self = m_handle;
+        bool own = global->m_elementalCombo.pad_0 == self;
+        if (msg.m_handle != 0) {
+            if (own) {
+                global->RegisterElementalComboInvalidSlowEffect(1, msg.m_handle, caster);
+            }
+            handle = msg.m_handle;
+            caster->startTimer(handle);
+        }
+        PlaySE(static_cast<BTL_SE>(1), static_cast<unsigned char>(Bdat::getValCheck(fp, "SE", id, 1)), nullptr, own);
+    }
+    return handle;
 }
 
 void BattleCharacter::CreateElementalEffect(int id) {
@@ -2667,6 +2751,24 @@ void BattleCharacter::WeaponMountProc() {
         return;
     }
     gf::GfObjUtil::resetWeaponMotion(m_handle, static_cast<gf::OPTMNT>(-1));
+}
+
+
+bool BattleCharacter::CheckBladeChangeHealMode() const {
+    int cls = GetCharacterParameterConst(false)->GetClass();
+    if (cls != 0 && Bdat::getFlagVal(gf::GfDataBdat::getFP(0x18), "Flag", cls, "HealMode") != 0) {
+        mm::mtl::FixedVector<unsigned char, 90> list;
+        Utility::GetCharacterList(list, m_handle, static_cast<Utility::CHECK_CHR_NUM_MODE>(1), 0x22);
+        CharacterManager* manager = mm::mtl::PtrSingleton<CharacterManager>::sys();
+        float rate = mm::mtl::PtrSingleton<BtlSystemBalanceAccess>::sys()->pad_A5 * 0.01f;
+        for (unsigned char index : list) {
+            const BattleCharacter* chr = manager->GetCharacterConst(index);
+            if (chr->GetCharacterParameterConst(false)->GetHPRate() <= rate) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 }  // namespace btl
