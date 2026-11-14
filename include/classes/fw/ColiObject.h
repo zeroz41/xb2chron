@@ -13,6 +13,7 @@
 namespace mm { class Vec3; }
 namespace idcoli { class IDColiObj; }
 namespace fw { class ColiCharacterInfo; }
+namespace fw { class ColiPhantomInfo; }
 namespace fw { class ColiUserData; }
 
 namespace fw {
@@ -34,6 +35,11 @@ class ColiShapeCharacter : public ColiShape {
 public:
     float m_height;
     float m_radius;
+};
+// kind 4's: createColiGrand keeps the ground's resource in it (the name is not the original's)
+class ColiShapeGrand : public ColiShape {
+public:
+    const void* m_resource;
 };
 // how a collision object follows its frame (setColiType); no value has a name yet
 enum ColiType {};
@@ -86,6 +92,12 @@ public:
     // a character's collision object, registered with the ColiManager, that follows `frame`
     static ColiObject* createColiCharacter(ColiCharacterInfo const& info,
                                            mm::mtl::IntrusivePtr<fw::ReferenceFrame> const& frame);
+    // a phantom's collision object, registered with the ColiManager, that follows `frame`
+    static ColiObject* createColiPhantom(ColiPhantomInfo const& info,
+                                         mm::mtl::IntrusivePtr<fw::ReferenceFrame> const& frame);
+    // as setupColiCharacter, for a phantom (a null object is skipped)
+    static void setupColiPhantom(ColiObject* object, ColiPhantomInfo const& info,
+                                 mm::mtl::IntrusivePtr<fw::ReferenceFrame> const& frame);
     // (inline: the name is not the original's; GfComCollider::createColi sets its own)
     void setUserData(fw::ColiUserData* userData) { m_userData = userData; }
     static mm::mtl::RTTI m_rtti;

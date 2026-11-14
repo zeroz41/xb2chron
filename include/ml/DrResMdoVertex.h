@@ -39,9 +39,34 @@ public:
         unsigned char pad_C[0x4];
     };
     // the head of the vertex data (0x28): the weight vertex buffer number per weight index from 0x10 (0 = none)
+    // (the count of weightVertexNo is inferred from morphOfs that follows it)
     struct VertexHead {
         unsigned char pad_0[0x10];
-        unsigned short weightVertexNo[1];  // 0x10
+        unsigned short weightVertexNo[12];  // 0x10
+        unsigned int morphOfs;  // 0x28: offset of the MorphHead from the data
+    };
+    // the morph block of the vertex data (DrMdoMorphing's passes walk its entries)
+    struct MorphHead {
+        int entryNum;            // 0x0
+        unsigned int entryOfs;   // 0x4: offset of the MorphEntry list from the data
+        unsigned char pad_8[0x4];
+        unsigned int bufferOfs;  // 0xC: offset of the MorphBuffer list from the data
+    };
+    // one morph entry (0x14 bytes): its uniform blocks in MdoWrkMatRes::m_pMofBlendArray start at uniformNo
+    // (the default vertices, then the old positions, then one per target)
+    struct MorphEntry {
+        unsigned char pad_0[0x4];
+        unsigned int uniformNo;   // 0x4
+        int targetNum;            // 0x8
+        unsigned int targetOfs;   // 0xC: offset of the targets' unsigned short numbers from the data
+        signed char declIdx;      // 0x10: the stream-out shader's declaration
+        unsigned char pad_11[0x3];
+    };
+    // one 0x10-byte buffer info, indexed like the uniform blocks
+    struct MorphBuffer {
+        unsigned char pad_0[0x4];
+        int vertexNum;  // 0x4
+        unsigned char pad_8[0x8];
     };
     // the extra vertex buffer and uniform block (0x70)
     struct EtcBlock {

@@ -10,10 +10,45 @@
 #include "classes/fw/ColiManager.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/ml/WorkCpu.h"
+#include "idcoli/IDColiAccMan.h"
+#include "classes/fw/FrameworkMemory.h"
+#include "classes/mm/mtl/IAllocator.h"
 
 namespace fw {
 
+ColiObject* ColiObject::createColiGrand(const void* resource) {
+    idcoli::IDColiAccMan accMan;
+    idcoli::IDColiObj* coliObj = accMan.createColiGrand(resource);
+#line 44
+    ColiObject* object = new (FrameworkMemory::getAllocator(5), 16, __FILE__, __LINE__) ColiObject();
+    object->addRef();
+    object->setColiObject(coliObj);
+#line 54
+    ColiShapeGrand* shape = new (FrameworkMemory::getAllocator(5), 16, __FILE__, __LINE__) ColiShapeGrand;
+    shape->m_kind = 4;
+    shape->m_resource = resource;
+    object->m_shape.reset(shape);
+    mm::mtl::PtrSingleton<ColiManager>::get()->registObject(object);
+    return object;
+}
+
 void ColiObject::setColiObject(idcoli::IDColiObj* coliObj) { m_coliObj = coliObj; }
+
+ColiObject* ColiObject::createColiCharacter(ColiCharacterInfo const& info,
+                                            mm::mtl::IntrusivePtr<ReferenceFrame> const& frame) {
+    idcoli::IDColiAccMan accMan;
+    idcoli::IDColiObj* coliObj = accMan.createColiCharacter();
+#line 71
+    ColiObject* object = new (FrameworkMemory::getAllocator(5), 16, __FILE__, __LINE__) ColiObject();
+    object->addRef();
+    object->setColiObject(coliObj);
+    object->setHitMaterialFlag(~5u);
+    mm::mtl::PtrSingleton<ColiManager>::get()->registObject(object);
+    if (object != nullptr) {
+        setupColiCharacter(object, info, frame);
+    }
+    return object;
+}
 
 void ColiObject::setHitMaterialFlag(unsigned int flag) {
     if (isChar()) {
@@ -23,6 +58,21 @@ void ColiObject::setHitMaterialFlag(unsigned int flag) {
         idcoli::IDColiParmsPhantom parms(m_coliObj);
         parms.setOffMaterialBit(~flag);
     }
+}
+
+ColiObject* ColiObject::createColiPhantom(ColiPhantomInfo const& info,
+                                          mm::mtl::IntrusivePtr<ReferenceFrame> const& frame) {
+    idcoli::IDColiAccMan accMan;
+    idcoli::IDColiObj* coliObj = accMan.createColiPhantom();
+#line 100
+    ColiObject* object = new (FrameworkMemory::getAllocator(5), 16, __FILE__, __LINE__) ColiObject();
+    object->addRef();
+    object->setColiObject(coliObj);
+    mm::mtl::PtrSingleton<ColiManager>::get()->registObject(object);
+    if (object != nullptr) {
+        setupColiPhantom(object, info, frame);
+    }
+    return object;
 }
 
 void ColiObject::setColiType(ColiType type) {

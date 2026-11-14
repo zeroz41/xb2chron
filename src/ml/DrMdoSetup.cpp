@@ -69,6 +69,7 @@
 #include "ml/DrMdoVertexMan.h"
 #include "ml/DrPixlMdlSampler.h"
 #include "ml/DrResMdoMorpObj.h"
+#include "ml/DrResShdStreamOut.h"
 #include "ml/DrResMdoLodObj.h"
 #include "ml/DrResChkList.h"
 #include "ml/DrResMdoMeshObj.h"
@@ -6521,6 +6522,55 @@ void DrMdoMorphing::updateParms() {
             }
         }
     }
+}
+
+void DrMdoMorphing::resetDefVertex() {
+    const unsigned char* data = m_pWrkMatRes->m_pVertex->m_vtxData;
+    const DrResMdoVertex::MorphHead* head = reinterpret_cast<const DrResMdoVertex::MorphHead*>(
+        data + reinterpret_cast<const DrResMdoVertex::VertexHead*>(data)->morphOfs);
+    const DrResMdoVertex::MorphEntry* entry = reinterpret_cast<const DrResMdoVertex::MorphEntry*>(data + head->entryOfs);
+    const DrResMdoVertex::MorphBuffer* buffer =
+        reinterpret_cast<const DrResMdoVertex::MorphBuffer*>(data + head->bufferOfs);
+    DrShdDataList* list = DrMan::getIns()->m_shdMan->m_dataList;
+    grlib::CGLibPolygon::setRasterizer(1);
+    DrResShdStreamOut* stmOut = list->getStmOutObj(5);
+    int decl = -1;
+    for (int i = 0; i < head->entryNum; i++, entry++) {
+        int idx = entry->declIdx;
+        if (idx != decl) {
+            stmOut->m_data->setDeclarationIdx(0, idx);
+            stmOut->setupStreamShader(0);
+            decl = idx;
+        }
+        unsigned int no = entry->uniformNo;
+        grlib::CGLibCtlVertex::setUniformVertex(m_pWrkMatRes->m_pMofBlendArray->m_pArray[no + 1], 0x20, 0, 0, 0);
+        grlib::CGLibOneUniformArray* array = m_pWrkMatRes->m_pMofBlendArray;
+        array->m_pArray[entry->uniformNo].setStorageBuffer(0);
+        grlib::CGLibCtlVertex::renderVertex(static_cast<GrlPrimitiveType>(0), buffer[no + 1].vertexNum);
+    }
+    grlib::CGLibPolygon::setRasterizer(0);
+    grlib::CGLibCtlShader::setMemoryBarrierBit(1);
+}
+
+void DrMdoMorphing::oldPosVertex() {
+    const unsigned char* data = m_pWrkMatRes->m_pVertex->m_vtxData;
+    const DrResMdoVertex::MorphHead* head = reinterpret_cast<const DrResMdoVertex::MorphHead*>(
+        data + reinterpret_cast<const DrResMdoVertex::VertexHead*>(data)->morphOfs);
+    const DrResMdoVertex::MorphEntry* entry = reinterpret_cast<const DrResMdoVertex::MorphEntry*>(data + head->entryOfs);
+    const DrResMdoVertex::MorphBuffer* buffer =
+        reinterpret_cast<const DrResMdoVertex::MorphBuffer*>(data + head->bufferOfs);
+    DrShdDataList* list = DrMan::getIns()->m_shdMan->m_dataList;
+    grlib::CGLibPolygon::setRasterizer(1);
+    list->getStmOutObj(8)->setupStreamShader(0);
+    for (int i = 0; i < head->entryNum; i++, entry++) {
+        unsigned int no = entry->uniformNo;
+        grlib::CGLibCtlVertex::setUniformVertex(m_pWrkMatRes->m_pMofBlendArray->m_pArray[no + 1], 0x20, 0, 0, 0);
+        grlib::CGLibOneUniformArray* array = m_pWrkMatRes->m_pMofBlendArray;
+        array->m_pArray[entry->uniformNo].setStorageBuffer(0);
+        grlib::CGLibCtlVertex::renderVertex(static_cast<GrlPrimitiveType>(0), buffer[no + 1].vertexNum);
+    }
+    grlib::CGLibPolygon::setRasterizer(0);
+    grlib::CGLibCtlShader::setMemoryBarrierBit(1);
 }
 
 const unsigned char DrMdoShdSetShadow::s_pShwUseShdader[30] = {0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4,
