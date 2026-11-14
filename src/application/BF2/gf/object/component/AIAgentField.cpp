@@ -287,6 +287,14 @@ void AIAgentField::procMsgPcFieldNotifyWaterWarpBuddy(fw::MessageObject* sender,
     }
 }
 
+mm::mtl::RTTI BlackBoardField::m_rtti("BlackBoardField", &::ai::BlackBoard::m_rtti, nullptr);
+
+BlackBoardField::BlackBoardField()
+    : m_property(nullptr), m_nvmshAcObj(nullptr), m_updateInfo(nullptr), m_targetPos(mm::Vec3::zero),
+      m_targetDist(0.0f), m_followPos(mm::Vec3::zero), m_followDist(0.0f), m_wallPos(mm::Vec3::zero),
+      m_wallPlane(mm::Vec3::unitY, 0.0f), m_wallEndPos(mm::Vec3::zero), m_retreatPos(mm::Vec3::zero), m_flags(),
+      m_noticeTimer(0.0f) {}
+
 BlackBoardField::~BlackBoardField() {}
 
 }}  // namespace gf::pc

@@ -604,7 +604,10 @@ public:
     // (gf::GfQuestUtil::getCurrentEnemyWithEvent; meaning unknown)
     bool pad_bit6 : 1;
     bool pad_bit7 : 1;  // Utility::NotifyNeedPutAwayWeapon sets it
-    unsigned char : 2;
+    // pc::StateBattle sets it for the leader: Enter and Update (manual camera) to whether it has a target, Update
+    // clears it without the manual camera, Leave clears it (meaning unknown)
+    bool pad_bit8 : 1;
+    unsigned char : 1;
     bool pad_bit10 : 1;  // ChainAttackManager::Start sets it
     unsigned char : 1;
     bool pad_bit12 : 1;  // DeleteElementalComboCamera clears it

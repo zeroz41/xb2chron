@@ -18,6 +18,7 @@
 #include "gf/MsgPcBattleStart.h"
 #include "gf/MsgPcFieldNotifyBigJump.h"
 #include "gf/MsgPcFieldNotifyRiderEvent.h"
+#include "anm/StringPtr.h"
 #include "gf/MsgGameTalkAction.h"
 #include "gf/MsgGameLipAction.h"
 #include "gf/MsgUnk_1000030.h"
@@ -660,6 +661,21 @@ bool StateFieldRideOn::recieveMessage(void* owner, fw::MessageObject* from, fw::
         return true;
     }
     return false;
+}
+
+void StateFieldRideOn::procMsgPcFieldNotifyRiderEvent(GfComBehaviorPc* behavior, fw::MessageObject* from,
+                                                      MsgPcFieldNotifyRiderEvent& msg) {
+    if (msg.m_event == 2) {
+        m_cmdQueue.clear();
+        behavior->m_owner->getComponent<GfComAsm>(2)->setState("S_ride", AnimLayer(0));
+        return;
+    }
+    // the asm command each rider event runs (proposed name, not the original's: the symbols leave it unnamed,
+    // lbl_7100EAC318, guard lbl_7100EAC310). Its guarded initialization says the element type has a constructor;
+    // anm::StringPtr is inferred
+    static const anm::StringPtr s_cmdNames[3] = {"C_rideclimbidle", "C_ride", nullptr};
+    mm::mtl::FixStr<32> cmd(s_cmdNames[msg.m_event].m_str);
+    m_cmdQueue.push_back(cmd);
 }
 
 void StateFieldDead::enter(GfComBehaviorPc* behavior, ai::State* prev) {

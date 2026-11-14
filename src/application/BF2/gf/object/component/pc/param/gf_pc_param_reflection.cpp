@@ -37,9 +37,62 @@ void AccessPlugin::onDeactivate() {
     }
 }
 
-// update (0x7100516C54) is not matched yet: its last step keeps two stores of the target where the candidate
-// compiles one select; isActiveRange (0x7100516DBC) calls GfObjAcc's getTargetSearchOffset, which has no name yet;
-// drawDebug (0x7100516FD4) stores the matrix's [2][2] and [2][3] as one word
+void AccessPlugin::update(gf::GfComBehaviorPc& behavior, const fw::UpdateInfo&) {
+    gf::GF_OBJ_HANDLE* target = StateUtil::getTarget(behavior);
+    if (target != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        GfComPropertyPc* property = behavior.m_owner->findComponent<GfComPropertyPc>(5);
+        bool flag = (property->m_stateFlags & 0x80000000) != 0;
+        unsigned int bit = (property->m_field.m_statusFlags >> 4) & 1;
+        unsigned int index = flag ? (bit | 2) : bit;
+        const AccessParam* param = m_paramList->getAdapter(index).get<AccessParam>();
+        if (!isActiveRange(*property, *param, target)) {
+            target = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        }
+    } else {
+        target = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    if (m_target != target) {
+        MsgPcFieldGetAccessType msg;
+        GfObj* obj = GfObjUtil::getObj(target);
+        if (obj == nullptr) {
+            target = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+            m_target = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        } else {
+            static_cast<GfObj*>(behavior.m_owner)->sendMessage(obj, msg);
+            if (m_accessKinds != 0) {
+                m_target = target;
+            } else {
+                target = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+                m_target = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+            }
+        }
+        SCOM_ACCESS_TARGET::create(target);
+    }
+}
+
+bool isActiveRange(gf::GfComPropertyPc& property, const gf::AccessParam& param, gf::GF_OBJ_HANDLE* handle) {
+    gf::GfObj* obj = GfObjUtil::getObj(handle);
+    if (obj == nullptr || (obj->pad_110 & 1) == 0 || !GfGameManager::isEnableFieldAccess()) {
+        return false;
+    }
+    MsgPcFieldGetAccessType msg;
+    static_cast<GfObj*>(property.m_owner)->sendMessage(obj, msg);
+    if (!msg.m_enable) {
+        return false;
+    }
+    GfObjAcc acc(obj);
+    const fw::Transform& transform = acc.getWorldTransform();
+    mm::Vec3 center = property.m_pos + property.m_rot.rotate(mm::Vec3::unitZ * param.offsetFront);
+    mm::Vec3 diff = transform.position - center;
+    float upper = param.accessUpper;
+    float down = -param.accessDown;
+    bool inHeight = (diff.y <= upper) & (down <= diff.y);
+    float distance = mm::Vec3(diff.x, 0.0f, diff.z).length();
+    float range = param.accessRadius + acc.getTargetSearchOffset();
+    return inHeight & (distance < range);
+}
+
+// drawDebug (0x7100516FD4) is not matched yet: it stores the matrix's [2][2] and [2][3] as one word
 
 void AccessPlugin::onActivate() {}
 

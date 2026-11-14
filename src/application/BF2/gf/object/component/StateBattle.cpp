@@ -33,6 +33,10 @@
 #include "classes/fw/NaviManager.h"
 #include "ai/Hfsm.h"
 #include "gf/pc/StateUtil.h"
+#include "classes/btl/BattleCharacter.h"
+#include "classes/btl/BattleGlobal.h"
+#include "btl/Utility.h"
+#include "classes/gf/GfObj.h"
 
 namespace gf {
 namespace pc {
@@ -65,6 +69,25 @@ void registerBattleStates(ai::Hfsm& hfsm) {
     hfsm.registerState<StateBattleOCG>(85, 62);
     hfsm.registerState<StateBattleHanaBusterReboot>(86, 62);
     hfsm.registerState<StateBattleFormationChange>(87, 62);
+}
+
+void StateBattle::Update(btl::BattleCharacter* chr, GfComBehaviorPc* behavior, const fw::UpdateInfo& info) {
+    GF_OBJ_HANDLE* leader = btl::Utility::GetLeader();
+    if (static_cast<GfObj*>(behavior->m_owner)->m_handle != leader) {
+        return;
+    }
+    if (chr->pad_F00_3) {
+        btl::BattleGlobal::sys()->pad_bit8 = false;
+        return;
+    }
+    GfComPropertyPc* property = behavior->m_owner->findComponent<GfComPropertyPc>(5);
+    if (property->m_inputFlags.test(19)) {
+        if (StateUtil::isManualCamera()) {
+            btl::BattleGlobal::sys()->pad_bit8 = StateUtil::getTarget(*behavior) != reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+        }
+    } else if (btl::BattleGlobal::sys()->pad_bit8) {
+        btl::BattleGlobal::sys()->pad_bit8 = !StateUtil::isManualCamera();
+    }
 }
 
 const char* StateBattle::getName() const {
