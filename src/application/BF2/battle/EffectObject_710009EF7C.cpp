@@ -8,10 +8,20 @@
 #include "classes/btl/BtlSystemBalanceAccess.h"
 #include "classes/btl/CharacterManager.h"
 #include "classes/btl/CharacterParameter.h"
+#include "classes/btl/DataManager.h"
 #include "plugin/Bdat.h"
 #include "mm/Math.h"
 
 namespace btl {
+
+void KIZUNA_GAUGE_DATA::ResetGauge(int groupIndex, bool usePouchBuff) {
+    float value = Bdat::getValCheckU16(gf::GfDataBdat::getFP(10), "KizunaDef", m_kizunaBase);
+    if (usePouchBuff && groupIndex < 3) {
+        value += DataManager::sys()->GetPouchBuffParam(6, groupIndex);
+    }
+    m_lock = false;
+    setGaugeValue(value);
+}
 
 void KIZUNA_GAUGE_DATA::SetGauge(float value, bool) {
     if (m_lock) {

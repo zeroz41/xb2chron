@@ -11,6 +11,9 @@ namespace btl {
 // One driver-blade bond gauge (0x1C bytes: GROUP_BLADE_DATA's fields start at 0x1C).
 class KIZUNA_GAUGE_DATA {
 public:
+    // the gauge back to the blade's "KizunaDef" (the Kizuna table's row m_kizunaBase), plus the group's pouch buff
+    // 6 when bool is set and the group index is a party's (below 3); clears m_lock
+    void ResetGauge(int groupIndex, bool usePouchBuff);
     void SetGauge(float value, bool);
     void SetKizunaMax(int max);
     void AddGauge(float value, bool useRevision);

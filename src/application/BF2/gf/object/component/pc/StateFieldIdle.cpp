@@ -423,6 +423,40 @@ void StateFieldMove::leave(GfComBehaviorPc* behavior, ai::State* next) {
     StateUtil::resetPlacementDownDist(*behavior);
 }
 
+void StateFieldMove::update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    behavior->m_owner->getComponent<GfComAsm>(2);
+    if (StateUtilField::isTurnRange(*property, m_inputQueue)) {
+        requestState(8);
+        return;
+    }
+    MoveUtilField::updateMoveRun(info, *property);
+    StateUtilField::setAsmSpeedMove(*property);
+}
+
+void StateFieldTurn::enter(GfComBehaviorPc* behavior, ai::State* prev) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    StateUtilField::setAsmSpeedMove(*property);
+    property->m_velocity = mm::Vec3::zero;
+    property->m_moveVec2.y = 0.0f;
+    m_walk = prev->m_stateID != 7;
+    m_dir = property->m_inputDir.y * property->m_groundFrontDir + property->m_inputDir.x * property->m_stickSideDir;
+    if (!m_dir.isZero()) {
+        float length = m_dir.length();
+        if (length <= 1e-6f) {
+            m_dir = mm::Vec3::zero;
+        } else {
+            float scale = 1.0f / length;
+            m_dir.x = scale * m_dir.x;
+            m_dir.y = scale * m_dir.y;
+            m_dir.z = scale * m_dir.z;
+        }
+    } else {
+        m_dir = property->m_moveDirInv;
+    }
+    StateUtilField::notifyTurn(*behavior);
+}
+
 void StateFieldTurn::leave(GfComBehaviorPc* behavior, ai::State* next) {
     GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
     if (next != nullptr && next->m_stateID != 0xC) {
@@ -489,6 +523,19 @@ void StateFieldOnGround::enter(GfComBehaviorPc* behavior, ai::State* prev) {
     StateUtilField::setEnableLure(*behavior, true);
     if (AccessPlugin* plugin = behavior->getPlugin<AccessPlugin>(4)) {
         plugin->m_accessKinds = 0x2E;
+    }
+}
+
+void StateFieldOnGround::leave(GfComBehaviorPc* behavior, ai::State* next) {
+    if (!m_keepAccess) {
+        StateUtilField::setAccessFlag(*behavior, false);
+    }
+    StateUtil::setEnableFootStep(*behavior, false);
+    if (!m_keepLure) {
+        StateUtilField::setEnableLure(*behavior, false);
+    }
+    if (AccessPlugin* plugin = behavior->getPlugin<AccessPlugin>(4)) {
+        plugin->m_accessKinds = 0;
     }
 }
 

@@ -39,6 +39,8 @@
 #include <algorithm>
 #include "classes/gf/pc/LurePlugin.h"
 #include "classes/gf/pc/WaterInPlugin.h"
+#include "classes/gf/GfComCollider.h"
+#include "classes/fw/ColiObject.h"
 
 namespace gf { namespace pc {
 
@@ -50,6 +52,19 @@ GfPropertyField::GfPropertyField()
       m_uniqueIdleSpace(0.0f), m_autoRunDir(mm::Vec3::zero), m_autoRunPower(0.0f),
       m_noticeSender(reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {}
 
+bool GfPropertyField::recieveMessage(const gf::GfComPropertyPc& property, fw::MessageObject*, fw::Message& msg) {
+    switch (msg.m_id) {
+    case 0x100003E:
+        flashWallInfo(property);
+        if (GfObjProperty::TargetInfo* target =
+                GfObjUtil::getProperty(static_cast<GfObj*>(property.m_owner)->m_handle)->m_target) {
+            target->pad_7C = (m_statusFlags & 0x100) != 0;
+        }
+        return true;
+    }
+    return false;
+}
+
 void GfPropertyField::resetStatus(const gf::GfComPropertyPc& property) {
     if (property.m_stateFlags & 0x400) {
         m_statusFlags |= 0x8;
@@ -58,6 +73,13 @@ void GfPropertyField::resetStatus(const gf::GfComPropertyPc& property) {
 }
 
 void GfPropertyField::cleanup(const gf::GfComPropertyPc&) {}
+
+void GfPropertyField::flush(const gf::GfComPropertyPc& property) {
+    if (fw::ColiObject* coli = property.m_owner->getComponent<GfComCollider>(4)->getColiObject(0)) {
+        m_statusFlags =
+            !coli->testAttribute(fw::ColiAtrr(3)) ? (m_statusFlags & ~0x20000) : (m_statusFlags | 0x20000);
+    }
+}
 
 void GfPropertyField::flushOwner(gf::GfComPropertyPc& property) {
     if (m_statusFlags & 0x800) {
@@ -102,6 +124,21 @@ void GfPropertyField::setWallJump(const gf::MsgPcFieldNotifyWallJump* msg) {
 
 const gf::MsgPcFieldNotifyWallJump* GfPropertyField::getWallJumpInfo() const {
     return (m_statusFlags & 0x4000) ? &m_wallJump : nullptr;
+}
+
+void GfPropertyField::flashWallInfo(const gf::GfComPropertyPc& property) {
+    if (GfObjProperty::TargetInfo* target =
+            GfObjUtil::getProperty(static_cast<GfObj*>(property.m_owner)->m_handle)->m_target) {
+        if (const WallInfo* wall = getWallInfo()) {
+            target->m_wallPlane = wall->m_plane;
+            target->m_onWall = true;
+        } else {
+            target->m_wallPlane.normal = mm::Vec3(0.0f, 1.0f, 0.0f);
+            target->m_wallPlane.normal.normalize();
+            target->m_wallPlane.d = 0.0f;
+            target->m_onWall = false;
+        }
+    }
 }
 
 float GfPropertyField::getWallHeightOffset() const {
