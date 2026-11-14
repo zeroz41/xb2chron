@@ -1,6 +1,9 @@
 #ifndef PTLIB_DRDRAWWORKINFOEF_H
 #define PTLIB_DRDRAWWORKINFOEF_H
 
+#include "mm/Mat44.h"
+#include "mm/Vec3.h"
+
 namespace grlib { class CGLibRenderTarget; }
 
 namespace ptlib {
@@ -21,7 +24,14 @@ public:
     grlib::CGLibRenderTarget* m_pCapture;  // 0x60: RenderGrObj::draw_capture draws the captured screen to it
     grlib::CGLibRenderTarget* m_pDepthColor;  // "depCol"; its size is the separation's
     grlib::CGLibRenderTarget* m_pDepthBloom;  // "depBlm", none without bloom
-    unsigned char pad_78[0x158];
+    unsigned char pad_78[0x38];
+    // the camera (effect::SystemManager::updateCam reads them; the names are not the original's)
+    mm::Vec3 m_eye;
+    mm::Vec3 m_target;
+    mm::Mat44 m_cameraMtx;  // updateCam takes its m[3][1] as the height
+    mm::Mat44 m_viewMtx;
+    unsigned char pad_150[0x40];
+    mm::Mat44 m_projMtx;
     unsigned int m_effectBufOfs;  // 0x1D0: where BackBuffer::createAll puts its textures in the pool
     unsigned char pad_1D4[0x370];
     float m_fadeFrames;  // 0x544: RenderGrObj::draw_common_uparam's divisor (the name is not the original's)

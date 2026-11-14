@@ -10,6 +10,7 @@
 #include "mm/MMStdBase.h"
 #include "effect/SendParam.h"
 #include "string.h"
+#include <utility>
 
 namespace effect {
 
@@ -98,6 +99,66 @@ void SystemManager::setUserDrFunc(void* (*a)(const void*, const char*, int, cons
                                   void (*l)(unsigned int, void*, void*), void (*m)(void*), void* (*n)(int, int),
                                   void (*o)(void*)) {
     ptlib::ParticleManager::setUserDrFunc(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o);
+}
+
+void SystemManager::setDisableCollision(bool flag) {
+    ptlib::ParticleManager::get()->m_initFlags[1] = flag;
+}
+
+// reads no member: the callers pass `this` as whatever x0 holds (LLVM's dead-argument pass)
+void SystemManager::updateCam(const ptlib::DrDrawWorkInfoEF* info) {
+    if (info == nullptr) {
+        return;
+    }
+    ptlib::CamParam* cam = ptlib::ParticleManager::get()->getCamParam();
+    cam->m_viewMtx = info->m_viewMtx;
+    cam->m_cameraMtx = info->m_cameraMtx;
+    cam->m_view = info->m_view;
+    cam->m_viewProjMtx.mulSafe(info->m_viewMtx, info->m_projMtx);
+    mm::Mat34& bill = cam->m_billboard;
+    bill = mm::Mat34::identity;
+    bill.m[0][0] = info->m_cameraMtx.m[0][0];
+    bill.m[0][1] = info->m_cameraMtx.m[0][1];
+    bill.m[0][2] = info->m_cameraMtx.m[0][2];
+    bill.m[1][0] = info->m_cameraMtx.m[1][0];
+    bill.m[1][1] = info->m_cameraMtx.m[1][1];
+    bill.m[1][2] = info->m_cameraMtx.m[1][2];
+    std::swap(bill.m[0][1], bill.m[1][0]);
+    std::swap(bill.m[0][2], bill.m[2][0]);
+    std::swap(bill.m[1][2], bill.m[2][1]);
+    // the eye goes in as a copy: the original loads it before the target and sums x*x + z*z in that order
+    mm::Vec3 dir = info->m_target - mm::Vec3(info->m_eye);
+    float length = dir.length();
+    if (length <= 1e-6f) {
+        dir = mm::Vec3::zero;
+    } else {
+        float scale = 1.0f / length;
+        dir.x = scale * dir.x;
+        dir.y = scale * dir.y;
+        dir.z = scale * dir.z;
+    }
+    cam->m_pitch = ::atan2f(dir.y, ::sqrtf(dir.x * dir.x + dir.z * dir.z));
+    cam->m_yaw = -::atan2f(dir.x, -dir.z);
+    cam->m_height = info->m_cameraMtx.m[3][1];
+}
+
+void SystemManager::MainLoop(const ptlib::DrDrawWorkInfoEF* info) {
+    if (info->m_view == 0) {
+        m_frameCount++;
+    }
+    updateCam(info);
+    if (info->m_view == 0) {
+        es_command_core();
+    }
+    ptlib::ParticleManager::get()->move();
+    if (info->m_view == 0 && m_clearAllCount >= 3) {
+        m_commands[0].clear();
+        m_commands[1].clear();
+        ptlib::ParticleManager::get()->emitter_set_free_all(m_clearAllFlag);
+        m_clearAllFlag = false;
+        m_clearAllCount = 0;
+    }
+    ptlib::emitter::ComputeManager::getPtr()->resetUpdate();
 }
 
 void SystemManager::es_pause(bool pause) {
@@ -448,10 +509,28 @@ void SystemManager::apply(const ptlib::DrDrawWorkInfoEF* info) {
 
 void SystemManager::opacityRender(const ptlib::DrDrawWorkInfoEF* info) {}
 
+void SystemManager::alphaRender(const ptlib::DrDrawWorkInfoEF* info) {
+    if (m_enableAlphaRender) {
+        ptlib::ParticleManager::get()->setDrInfo(info);
+        updateCam(info);
+        ptlib::emitter::ComputeManager::getPtr()->update(info->m_view);
+        int view = info->m_view;  // read before ParticleManager::get, as the original does
+        ptlib::ParticleManager::get()->draw(info, view, false);
+    }
+}
+
 void SystemManager::lastRender(const ptlib::DrDrawWorkInfoEF* info) {}
 
 void SystemManager::finalRender(const ptlib::DrDrawWorkInfoEF* info) {
     testRender(info);
+}
+
+void SystemManager::blurRender(const ptlib::DrDrawWorkInfoEF* info) {
+    if (info->m_view == 0) {
+        updateCam(info);
+        int view = info->m_view;
+        ptlib::ParticleManager::get()->draw(info, view, true);
+    }
 }
 
 void SystemManager::moveMain() {

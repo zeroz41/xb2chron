@@ -225,7 +225,9 @@ unsigned char* ParticleManager::parseEfb(unsigned char* pData, const char*, unsi
     return pData;
 }
 
-void ParticleManager::getCamParam() {}
+CamParam* ParticleManager::getCamParam() {
+    return &m_camParam;
+}
 
 void efMsg(const char* format, ...) {
     va_list arguments;

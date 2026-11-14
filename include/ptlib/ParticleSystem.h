@@ -1,12 +1,29 @@
 #ifndef PTLIB_PARTICLESYSTEM_H
 #define PTLIB_PARTICLESYSTEM_H
 
+#include "mm/Mat34.h"
+#include "mm/Mat44.h"
+
 namespace mtl { class ALLOC_HANDLE; }
 namespace mm { class Vec3; class Col4; }
 namespace ptlib { namespace emitter { class EmitterParam; class EmitterObj; class EmitterArg; class ParticleObj; } }
 
 namespace ptlib {
 class DrDrawWorkInfoEF;
+
+// the camera of the view being drawn, as effect::SystemManager::updateCam stores it from the draw info
+// (ParticleManager::getCamParam's; the type and field names are not the original's)
+struct CamParam {
+    mm::Mat44 m_viewMtx;      // the draw info's view matrix
+    mm::Mat44 m_cameraMtx;    // the draw info's camera matrix
+    mm::Mat44 m_viewProjMtx;  // view * projection
+    mm::Mat34 m_billboard;    // the camera matrix's first two rows, transposed
+    unsigned char pad_f0[0x30];
+    float m_pitch;  // atan2 of the view direction's height over its ground length
+    float m_yaw;    // -atan2(x, -z) of the view direction
+    float m_height;  // the camera matrix's m[3][1]
+    int m_view;     // the draw info's view
+};
 
 // one entry of an effect resource's material table (the names are not the original's:
 // ParticleManager::convert_key_by_material_index reads the key of entry <index>)
@@ -173,7 +190,7 @@ public:
     // applies set_pause's request to the models (update_model_spd of every emitter at speed 1)
     void update_pause();
     FxParam* getFxParam();
-    void getCamParam();
+    CamParam* getCamParam();
     void set_pause(bool pause);
     int convert_key_by_material_index(int index, FxHeader* pHeader) const;
 
@@ -244,7 +261,7 @@ public:
         m_pGrp[3] = nullptr;
     }
 
-    unsigned char pad_0[0x130];
+    CamParam m_camParam;  // getCamParam returns it (at 0: its code is a bare ret)
     FxParam m_fxParam;
     // clear() sets them to 0.25, 0, 1, 1, 1; what they are is not known yet (separate members: as an array the
     // stores do not pair the way the original's do)
