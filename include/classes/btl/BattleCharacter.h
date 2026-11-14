@@ -139,6 +139,8 @@ public:
     void NotifyDirectDamage(const DIRECT_DAMAGE_DATA& data);
     // heals rate of the max HP (at least 1) as a direct damage of the given type from attacker
     void HealHpRate(float rate, int type, BattleCharacter* attacker);
+    // HealHpRate on every character Utility::GetCharacterList gives for the character's handle (mode 1, flags 0x23)
+    void HealFriendHpRate(float rate, int type, BattleCharacter* attacker);
     // heals the balance's revive rate plus enhances 0xA8 (own) and 0xA9 (the rescuer's), at most all of the max HP
     void ReviveHeal(BattleCharacter* rescuer);
     // sets or clears pad_F03_7 by the arts' gravity window against the stage and the animation frame
@@ -443,6 +445,15 @@ public:
     // DispReactionUI. Answers whether it was not resisted. Body not written yet.
     bool SetReaction(int reaction, int level, BattleCharacter* attacker, bool, int* result,
                        const RACTION_FCOMBO_DATA* combo, bool disp);
+    // the original's symbol names it (and its arguments' types); the result is the int CheckFightCombo stores
+    int CheckResistReaction(int reaction, BattleCharacter* attacker, bool);
+    // the original's symbol names it. What it does: for reactions 1 and 2 of a living character, shows BDAT 0x3A's
+    // "Name" (kind 2, level 2 / 1 set the two resist texts) at pos, or above the character
+    void DispReactionUI(int reaction, int level, const mm::Vec3* pos);
+    // the original's symbol names it. What it does: none while a chain attack runs; unless forced or enhance 0x188
+    // holds, the target's fight combo must be BDAT 0x2E's "PreCombo" of the id; then the target's resist of the id's
+    // "Reaction" goes to result (0 for none) and the id is answered (0 when it does not combo)
+    int CheckFightCombo(gf::GF_OBJ_HANDLE* target, int id, bool force, int& result);
     // 2.0.0's symbols name it. Caller CharacterParameter::SetBuff: CreateBuffEffect, then (when the flag is set and the
     // buff has an effect) its BDAT 0x11 "SE" flag plays SE 0x35 (with the "Buff" flag) or 0x36; buff 0x1E first applies
     // reaction 1 (SetReaction(1, 1, ...))

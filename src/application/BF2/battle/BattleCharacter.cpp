@@ -1100,6 +1100,7 @@ void BattleCharacter::SuccessChain(int param, bool full) {
     pad_107C = -1.0f;
 }
 
+
 void BattleCharacter::StartFullBurst(int value) {
     pad_102C = 0xFFFF;
     pad_1030 = 0.0f;
@@ -1416,6 +1417,27 @@ void BattleCharacter::ReviveHeal(BattleCharacter* rescuer) {
     NotifyDirectDamage(data);
 }
 
+int BattleCharacter::CheckFightCombo(gf::GF_OBJ_HANDLE* handle, int id, bool force, int& result) {
+    if (ChainAttackManager::sys()->IsProc(true)) {
+        return 0;
+    }
+    BattleCharacter* target = CharacterManager::sys()->GetCharacterConst(handle);
+    unsigned char* fp = gf::GfDataBdat::getFP(0x2E);
+    if (!force && !(SatisfyEnhanceCondition(0x188, 0, 0.0f, nullptr, true) > 0.0f)) {
+        if (target->GetCharacterParameterConst(false)->GetFightComboDataConst()->m_id !=
+            Bdat::getValCheckU8(fp, "PreCombo", id)) {
+            return 0;
+        }
+    }
+    unsigned char reaction = Bdat::getValCheckU8(fp, "Reaction", id);
+    if (reaction != 0) {
+        result = target->CheckResistReaction(reaction, this, true);
+    } else {
+        result = 0;
+    }
+    return id;
+}
+
 void BattleCharacter::NotifyGetHateTarget(int, bool flag) {
     if (IsControlCharacter() && mm::mtl::PtrSingleton<BattleGlobal>::sys()->CheckOnceSE(BattleGlobal::SE_ONCE_ID(0))) {
         PlaySystemSE(static_cast<BTL_SE>(1), 0x32, true, false);
@@ -1463,6 +1485,44 @@ void BattleCharacter::CreateElementalEffect(int id) {
     if (prop != nullptr) {
         gf::GfObj* owner = static_cast<gf::GfObj*>(prop->m_owner);
         caster->recieveMessage(owner, msg);
+    }
+}
+
+void BattleCharacter::DispReactionUI(int reaction, int level, const mm::Vec3* pos) {
+    if (reaction != 1 && reaction != 2) {
+        return;
+    }
+    if (IsDead(0)) {
+        return;
+    }
+    unsigned char name = Bdat::getValCheckU8(gf::GfDataBdat::getFP(0x3A), "Name", reaction);
+    if (name == 0) {
+        return;
+    }
+    gf::GfMenuObjDamageBuff::OpenParam param;
+    param.m_type = 2;
+    param.m_bdat = gf::GfDataBdat::getFP(0x196);
+    param.m_nameId = name;
+    if (level == 1) {
+        param.m_resist2 = true;
+    } else if (level == 2) {
+        param.m_resist = true;
+    }
+    if (pos != nullptr) {
+        param.m_pos = *pos;
+    } else {
+        param.m_pos = m_pos;
+        param.m_pos.y += GetCharacterParameterConst(false)->pad_38;
+    }
+    gf::GfMenuObjDamageBuff::open(param);
+}
+
+void BattleCharacter::HealFriendHpRate(float rate, int type, BattleCharacter* attacker) {
+    mm::mtl::FixedVector<unsigned char, 90> list;
+    Utility::GetCharacterList(list, m_handle, static_cast<Utility::CHECK_CHR_NUM_MODE>(1), 0x23);
+    CharacterManager* manager = CharacterManager::sys();
+    for (unsigned char index : list) {
+        manager->GetCharacterConst(index)->HealHpRate(rate, type, attacker);
     }
 }
 
