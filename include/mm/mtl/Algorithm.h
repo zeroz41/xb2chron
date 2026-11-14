@@ -147,6 +147,33 @@ inline void fill_4byte(void* top, unsigned int value, size_t size) {
     }
 }
 
+// assigns value to the n elements from first on, unrolled by 8 with the remainder first (FixStr<256>::insert(int,
+// int, char) inlines it: its jump table on n & 7; the name is not the original's)
+template <typename T>
+inline void fill_n(T* first, int n, const T& value) {
+    T* last = first + n;
+    switch (n & 7) {
+        case 0:
+            while (first != last) {
+                *first++ = value;
+                case 7:
+                    *first++ = value;
+                case 6:
+                    *first++ = value;
+                case 5:
+                    *first++ = value;
+                case 4:
+                    *first++ = value;
+                case 3:
+                    *first++ = value;
+                case 2:
+                    *first++ = value;
+                case 1:
+                    *first++ = value;
+            }
+    }
+}
+
 // assigns [first, last) to result on, front to back, as std::copy does (Vector's and FixedVector's erase
 // shift: the original keeps the source and destination pointers apart, Vector<IntrusivePtr<fw::ReferenceFrame>>::erase
 // and GfMenuSequence<GfMenuObjQuestLog, 8>::wait_anim)

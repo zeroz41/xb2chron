@@ -11,6 +11,7 @@
 #include "mm/Pnt.h"
 #include "mm/Rect.h"
 #include "mm/Vec3.h"
+#include "mm/mtl/FixStr.h"
 
 namespace fw { namespace debug {
 
@@ -161,3 +162,6 @@ namespace fw {
 mm::mtl::RTTI ForceCalculator::m_rtti("ForceCalculator", nullptr, nullptr);
 
 }  // namespace fw
+
+// out of line in the original, this unit's copy kept (ml::DevFileArchiveNx::normalizeFileName calls it)
+template mm::mtl::FixStr<256>& mm::mtl::FixStr<256>::insert(int, int, char);

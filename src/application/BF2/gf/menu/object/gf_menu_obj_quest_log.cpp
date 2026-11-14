@@ -462,6 +462,45 @@ bool GfMenuObjQuestLog::seqTitleStart() {
     return true;
 }
 
+bool GfMenuObjQuestLog::seqLogOpen() {
+    ui::UIObjectAcc base(m_handle, "IMG_log_base");
+    if (!pad_940) {
+        ui::UIObjectAcc log(m_handle, "LAY_log");
+        m_logSeq.addAnimJob(base.m_handle, "info_fade_in");
+        log.setDispChild(true, "LAY_log_info");
+        log.setDispChild(true, "LAY_log_index@02");
+        if (m_listVisible) {
+            log.setDispChild(true, "LAY_log_to_detail");
+        }
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_r";
+        param.m_setDefault = true;
+        param.m_startFlags = 8;
+        GfMenuObjUtil::startCtrl(m_handle, param, "LAY_log_info");
+        GfMenuObjUtil::startCtrl(m_handle, param, "LAY_log_index@02");
+        if (m_listVisible) {
+            GfMenuObjUtil::startCtrl(m_handle, param, "LAY_log_to_detail");
+        } else {
+            ui::UIObjectAcc(m_handle, "LAY_log_to_detail").setDisp(false);
+        }
+        setupLogClear();
+        setupLogItem();
+        log.setDispChild(false, "LAY_log_index@01");
+        pad_940 = true;
+        return false;
+    }
+    if (base.isPlayingAnimation()) {
+        return false;
+    }
+    m_logOpened = true;
+    pad_940 = false;
+    ui::UIObjectAcc log(m_handle, "LAY_log");
+    GfMenuObject::enableInput(log.m_handle);
+    return true;
+}
+
 bool GfMenuObjQuestLog::seqLogNext() {
     ui::UIObjectAcc log(m_handle, "LAY_log");
     // the task reference is asserted held and not used further (operator-> only)

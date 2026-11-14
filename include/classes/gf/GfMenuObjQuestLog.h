@@ -52,6 +52,7 @@ public:
     bool seqTitleFadeInNormal();
     bool seqTitleFadeOutNormal();
     bool seqLogIn();
+    bool seqLogOpen();
     bool seqOrderStart();
     bool seqLogNext();
     void setupLog();

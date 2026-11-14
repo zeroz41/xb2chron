@@ -22,6 +22,7 @@
 #include "gf/GfMenuTypes.h"
 #include "gf/gf_data_aoc.h"
 #include "mm/mtl/FixStr.h"
+#include "mm/mtl/Delegate.h"
 #include "plugin/Bdat.h"
 #include "ui/UIStr.h"
 #include "ui/EventData.h"
@@ -431,3 +432,5 @@ bool GfMenuObjGiftBox::seqReturnSub() {
 // the item and count vectors' growth (their users, initialize and seqGetItemAll, are not written yet)
 template void mm::mtl::Vector<int>::expand(size_t, size_t);
 template void mm::mtl::Vector<gf::GfMenuObjGiftBox::AddedItem>::expand(size_t, size_t);
+// the sequence jobs the listeners queue (their reciveEvent bodies are not written yet)
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuObjGiftBox>(const mm::mtl::Delegate<bool()>*);

@@ -144,6 +144,30 @@ void GfMenuObjItemList2::setupItemList(ui::UIObjectAcc& acc, GfMenuItemList* lis
     GfMenuAdapterManager::endAddAfter();
 }
 
+void GfMenuObjItemList2::updateItemList(GfMenuItemList* list, ui::UISelectObjList* select, unsigned int filter,
+                                        unsigned int) {
+    GfMenuItemList::ItemBoxSetup setup;
+    setup.m_setup.m_pageRowSize = select->getSize();
+    setup.m_setup.m_pageScroll = true;
+    setup.pad_28 = 0;
+    setup.pad_29 = 0;
+    if (filter != 0) {
+        unsigned int type = s_filterItemTypes[filter];
+        setup.m_type = type;
+        list->setupFromBox(setup);
+        GfMenuReference::setReferenceItemType(static_cast<ItemType::Type>(type));
+    } else {
+        list->setup(getAllocator(ALLOCATOR(0)), setup.m_setup);
+        for (int i = 1; i < 13; ++i) {
+            setup.m_type = s_filterItemTypes[i];
+            list->addListFromBox(setup);
+        }
+        GfMenuReference::setReferenceItemType(static_cast<ItemType::Type>(0));
+    }
+    list->sort(1, false);
+    list->setIndex(0);
+}
+
 void GfMenuObjItemList2::refreshItemList(ui::UIObjectAcc& acc, GfMenuItemList* list, ui::UISelectObjList* select,
                                          unsigned int filter) {
     if (list != nullptr && select != nullptr) {

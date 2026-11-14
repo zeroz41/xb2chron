@@ -245,6 +245,27 @@ FixStr<LEN>& FixStr<LEN>::insert(int index, const char* pszStr, int n) {
     return *this;
 }
 
+// n copies of c inserted at index, an index before the start taken as the start (fixstr.h asserts `newSize <
+// capacity()` at line 686 and `index <= nowSize` at 687; the body's form is inferred from the code)
+template <int LEN>
+FixStr<LEN>& FixStr<LEN>::insert(int index, int n, char c) {
+    int nowSize = m_nLen;
+    if (index < 0) {
+        index = 0;
+    }
+    int newSize = nowSize + n;
+#line 686 MM_MTL_FIXSTR_H_FILE
+    MM_ASSERT(newSize < capacity());
+#line 687 MM_MTL_FIXSTR_H_FILE
+    MM_ASSERT(index <= nowSize);
+    char* p = m_str + index;
+    move_n(p, m_nLen - index, p + n);
+    fill_n(p, n, c);
+    m_nLen = newSize;
+    m_str[newSize] = '\0';
+    return *this;
+}
+
 template <int LEN>
 FixStr<LEN>& FixStr<LEN>::replace(int index, int n, const char* strNew) {
 #line 761 MM_MTL_FIXSTR_H_FILE

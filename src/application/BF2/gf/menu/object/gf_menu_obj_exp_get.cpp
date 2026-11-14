@@ -203,8 +203,13 @@ void GfMenuObjExpGet::setupPlugin(unsigned int handle, unsigned int type) {
     }
 }
 
-// open (the queue push) is in wip/ (not identical yet)
-
+unsigned int GfMenuObjExpGet::open(const OpenParam& param) {
+    if (s_queue.full()) {
+        s_queue.pop();
+    }
+    s_queue.push_back(param);
+    return 0;
+}
 
 void GfMenuObjExpGet::close(unsigned int handle) {
     ui::UIObjectAcc root(GfMenuObject::getAttachedObject(0x2e));
