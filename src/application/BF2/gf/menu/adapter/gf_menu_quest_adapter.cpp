@@ -280,4 +280,61 @@ bool GfMenuQuestAdapter::getParamIcon(QuestID id, unsigned int type, unsigned in
     }
 }
 
+bool GfMenuQuestAdapter::getParamRewardText(QuestID id, unsigned int type, mm::mtl::FixStr<64>& text) {
+    unsigned char valid = !id.empty();  // not bool: a bool folds the original's eor into the branch
+    bool result = false;
+    switch (type) {
+    case 30:
+    case 31:
+    case 32:
+    case 33:
+    case 34:
+    case 35:
+    case 36:
+    case 37:
+        if (valid) {
+            GfQuestReward reward;
+            if (GfQuestManager::getRewardItem(reward, id, true)) {
+                text = reward.m_items[type - 30].m_text.m_str;
+                result = text.m_str[0] != '\0';
+            }
+        }
+        break;
+    }
+    return result;
+}
+
+bool GfMenuQuestAdapter::getParamDisp(QuestID id, unsigned int type) {
+    if (id.empty()) {
+        return false;
+    }
+    switch (type) {
+    case 53: {
+        QuestID progress = GfQuestInfo::getProgressQuest(id);
+        if (GfQuestInfo::getQuestTaskWeatherInfo(QuestTaskParam(progress, m_task, TASK_STATE(0))) != -1) {
+            return true;
+        }
+        if (GfQuestInfo::getQuestTaskTimeInfo(QuestTaskParam(progress, m_task, TASK_STATE(0))) != -1) {
+            return true;
+        }
+        mm::mtl::FixedVector<unsigned short, 32> characters;
+        if (GfQuestUtil::getNeedCharacterByQuestTask(characters, id, 0)) {
+            if (characters.size() != 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+    case 54:
+        return GfQuestTask::isCompleteFlag(
+            QuestTaskParam(GfQuestInfo::getProgressQuest(id), m_task, TASK_STATE(0)));
+    case 55:
+        return GfQuestInfo::isQuestFin(id);
+    case 56:
+        return GfQuestManager::getCurrentQuest(QTYPE(0)) == id;
+    default:
+        return false;
+    }
+}
+
 }  // namespace gf

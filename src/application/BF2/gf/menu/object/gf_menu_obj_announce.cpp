@@ -250,6 +250,46 @@ void GfMenuObjAnnounce::ScheduleListener::reciveEvent(const ui::EventData& event
     }
 }
 
+int GfMenuObjAnnounce::ctrlScheduleDown() {
+    ui::UIObjectAcc schedule(m_handle, "LAY_schedule");
+    mm::mtl::FixStr<32> name;
+    pad_308--;
+    int result = -1;
+    for (unsigned int i = 0; i < m_idList->getPageRowSize(); i++) {
+        name.format("LAY_schedule@%02d", i + 1);
+        ui::UIObjectAcc row(schedule.m_handle, name.m_str);
+        if (row.isDisp()) {
+            if (i == m_idList->getPageRowSize() - 1) {
+                row.setDisp(false);
+            } else {
+                GfMenuObjUtil::CtrlParam param;
+                mm::Rect<short> rect;
+                {
+                    mm::mtl::FixStr<32> group;
+                    group.format("schedule_group_%d", i + 2);
+                    schedule.getLayoutRect(group.m_str, rect);
+                }
+                short top = rect.y;
+                mm::Pnt<short> pos;
+                row.getPos(pos);
+                param.m_methods = 0x44;
+                param.m_time = 0.15f;
+                param.m_distance = top - pos.y;
+                param.m_eventId = 3;
+                param.m_alpha = s_scheduleAlpha[i + 1];
+                param.m_slot = GfMenuObjUtil::getCtrlID(row.m_handle);
+                param.m_curve = 1;
+                int ctrl = GfMenuObjUtil::startCtrl(row.m_handle, param, nullptr);
+                if (i == m_idList->getPageRowSize() / 2) {
+                    result = ctrl;
+                }
+            }
+        }
+    }
+    m_mainSeq.clear();
+    return result;
+}
+
 void GfMenuObjAnnounce::closeScheduleBody() {
     ui::UIObjectAcc schedule(m_handle, "LAY_schedule");
     unsigned char* fp = GfDataBdat::getFP(0x10D);
