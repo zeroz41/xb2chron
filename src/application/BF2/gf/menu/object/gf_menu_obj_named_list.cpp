@@ -107,8 +107,48 @@ void GfMenuObjNamedList::update() {
     GfMenuObject::update();
 }
 
-// ListListener::reciveEvent and FilterListener::reciveEvent are not identical yet (the listeners' tables and
-// destructors come with their reciveEvent): $W/wip/full_draft.cpp (session 27 namedlist)
+// ListListener::reciveEvent is not identical yet (its table and destructor come with it): $W/wip/full_draft.cpp (session 27 namedlist)
+
+void GfMenuObjNamedList::FilterListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        if (index != -1) {
+            unsigned int zone = m_owner->m_zones[index];
+            m_owner->m_zoneIndex = index;
+            m_owner->refreshFilterIcon();
+            GfMenuReference::setReferenceWorldMapID(zone);
+            {
+                ui::UIObjectAcc main(m_owner->m_handle, "LAY_main");
+                main.setDispChild(zone != 0, "LAY_list_index_zone");
+            }
+            ui::EventData changed(0x101);
+            GfMenuObject::sendEvent(acc.getParentHandle(), changed, 0.0f);
+        }
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonTab();
+        }
+        break;
+    }
+    case 0x21:
+        GfMenuObject::resetInputSelection(acc.m_handle);
+        GfMenuObject::setupInputSelection(acc.m_handle, m_owner->m_zoneIndex, m_owner->m_zones.size());
+        GfMenuObject::enableInput(acc.m_handle);
+        m_owner->refreshFilterIcon();
+        break;
+    case 0x22:
+        GfMenuObject::disableInput(handle);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
 
 void GfMenuObjNamedList::refreshFilterIcon() {
     ui::UIObjectAcc filter(m_handle, "LAY_list_filter");

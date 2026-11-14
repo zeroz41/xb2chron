@@ -3,6 +3,9 @@
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfGameParty.h"
+#include "gf/ArenaMenuInfo.h"
+#include "mm/mtl/FixedVector.h"
 #include "classes/gf/GfGameVoice.h"
 #include "classes/gf/GfMenuAdapterManager.h"
 #include "classes/gf/GfMenuBladeList.h"
@@ -126,6 +129,60 @@ void GfMenuObjBtlchOrder::refreshDifficulty() {
         item.setMulColor(s_difficultyColors[m_difficulty]);
     }
     GfMenuReference::setReferenceBtlchDifficulty(static_cast<GFDIFF>(value));
+}
+
+// whether challenge id's two conditions hold (inlined in updateInputEnable and canOrder; the name is not the
+// original's)
+static inline bool isConditionMet(unsigned int id) {
+    ArenaMenuInfo info;
+    if (!GfGameManager::getBattleArenaMenuInfo(info, id,
+                                               static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
+        return false;
+    }
+    if (!info.m_flag12) {
+        return false;
+    }
+    return info.m_text14.m_flag != 0;
+}
+
+void GfMenuObjBtlchOrder::updateInputEnable(unsigned int id) {
+    ArenaMenuInfo info;
+    if (GfGameManager::getBattleArenaMenuInfo(info, id,
+                                              static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
+        ui::UIObjectAcc list(m_handle, "LAY_list");
+        bool enable = info.m_kind == 3 ? false : isConditionMet(id);
+        GfMenuObjOperationInfo::setActionEnable(list.m_handle, 9, enable);
+    }
+}
+
+bool GfMenuObjBtlchOrder::canOrder(unsigned int id) {
+    if (!isConditionMet(id)) {
+        return false;
+    }
+    ArenaMenuInfo info;
+    if (!GfGameManager::getBattleArenaMenuInfo(info, id,
+                                               static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
+        return false;
+    }
+    if (info.m_kind == 3) {
+        return true;
+    }
+    mm::mtl::FixedVector<unsigned short, 32> drivers;
+    for (unsigned int i = 0; i < 3; i++) {
+        unsigned int driver = GfGameParty::getDriverBdatId(i, PTPOS(0));
+        if (driver != 0) {
+            drivers.push_back(driver);
+        }
+    }
+    if (info.m_valueA < drivers.size()) {
+        return false;
+    }
+    for (unsigned long i = 0; i < drivers.size(); i++) {
+        if (info.m_values1E[i] != 0 && drivers[i] != info.m_values1E[i]) {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool GfMenuObjBtlchOrder::seqWaitVoice() {

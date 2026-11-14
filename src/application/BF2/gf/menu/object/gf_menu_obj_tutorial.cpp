@@ -156,6 +156,66 @@ void GfMenuObjTutorial::update() {
     GfMenuObject::update();
 }
 
+bool GfMenuObjTutorial::seqTelopStart() {
+    ui::UIObjectAcc img(m_handle, "IMG_start");
+    if (!m_telopStarted) {
+        ui::UIObjectAcc lay(m_handle, "LAY_start");
+        lay.setDisp(true);
+        img.startAnimation("start", false);
+        {
+            ui::UIObjectAcc text(m_handle, "TXT_start");
+            text.setDisp(true);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_in_l";
+            param.m_setDefault = true;
+            param.m_startFlags = 8;
+            GfMenuObjUtil::startCtrl(text.m_handle, param, nullptr);
+        }
+        m_telopStarted = true;
+        m_termWait = 5;
+        GfMenuObjUtil::playJingle(0xB);
+        return false;
+    }
+    if (m_termWait != 0 && --m_termWait == 0) {
+        ui::UIObjectAcc main(m_handle, "LAY_main");
+        GfMenuObject::termCallContext(main.m_handle);
+    }
+    if (img.isPlayingAnimation()) {
+        return false;
+    }
+    m_telopStarted = false;
+    return true;
+}
+
+bool GfMenuObjTutorial::seqTelopEnd() {
+    ui::UIObjectAcc img(m_handle, "IMG_start");
+    if (!m_telopStarted) {
+        img.startAnimation("end", false);
+        {
+            ui::UIObjectAcc text(m_handle, "TXT_start");
+            text.setDisp(true);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_l";
+            param.m_setDefault = true;
+            param.m_startFlags = 10;
+            GfMenuObjUtil::startCtrl(text.m_handle, param, nullptr);
+        }
+        m_telopStarted = true;
+        return false;
+    }
+    if (img.isPlayingAnimation()) {
+        return false;
+    }
+    ui::UIObjectAcc lay(m_handle, "LAY_start");
+    lay.setDisp(false);
+    m_telopStarted = false;
+    return true;
+}
+
 bool GfMenuObjTutorial::seqEnd() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     ui::EventData event;

@@ -384,6 +384,55 @@ bool GfMenuModelView::checkGfObj(unsigned int type, unsigned int bdatId) {
     return false;
 }
 
+GfMenuModelView::CtrlParam::CtrlParam(GF_OBJ_HANDLE* handle, float time, bool loop)
+    : m_handle(handle), m_curveType(0), m_time(time), m_loop(loop) {
+    GfObjAcc acc(handle);
+    fw::Transform& transform = getObjectTransformLocal(m_handle);
+    m_posX = transform.position.x;
+    m_posY = transform.position.y;
+    m_posZ = transform.position.z;
+    const mm::Quat& q = transform.rotation;
+    float x2 = q.x + q.x;
+    float y2 = q.y + q.y;
+    float z2 = q.z + q.z;
+    float xx = q.x * x2;
+    float xy = q.x * y2;
+    float xz = q.x * z2;
+    float yy = q.y * y2;
+    float yz = q.y * z2;
+    float zz = q.z * z2;
+    float wx = q.w * x2;
+    float wy = q.w * y2;
+    float wz = q.w * z2;
+    float m00 = 1.0f - (yy + zz);
+    float m01 = xy + wz;
+    float m02 = xz - wy;
+    float m11 = 1.0f - (xx + zz);
+    float m20 = xz + wy;
+    float m21 = yz - wx;
+    float m22 = 1.0f - (xx + yy);
+    mm::Vec3 r;
+    r.x = mm::asin(-m21);
+    if (r.x < 1.57079637f) {
+        if (r.x > -1.57079637f) {
+            r.z = ::atan2f(m01, m11);
+            r.y = ::atan2f(m20, m22);
+        } else {
+            r.z = -::atan2f(m02, m00);
+            r.y = 0.0f;
+        }
+    } else {
+        r.z = ::atan2f(m02, m00);
+        r.y = 0.0f;
+    }
+    m_rotY = r.y;
+    m_scaleX = acc.getModelScaleXYZ().x;
+    m_scaleY = acc.getModelScaleXYZ().y;
+    m_scaleZ = acc.getModelScaleXYZ().z;
+    m_alpha = acc.getAlpha(OBJ_ALPHA(0));
+    m_vanishRatio = getVanishRatio(handle);
+}
+
 void GfMenuModelView::CtrlParam::setAddPosY(float y) {
     fw::Transform& transform = getObjectTransformLocal(m_handle);
     m_flags |= 2;
@@ -417,3 +466,6 @@ template void mm::mtl::Vector<mm::mtl::IntrusivePtr<fw::Camera> >::destroy();
 namespace gf {
 
 }  // namespace gf
+
+// out of line in the original (GfMenuModelView::update calls it; not written yet)
+template void ui::UICtrlSimple<9>::update(float);
