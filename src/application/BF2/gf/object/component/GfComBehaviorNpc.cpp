@@ -65,6 +65,41 @@
 
 namespace gf {
 
+void GfComBehaviorNpc::BdatInfo::create(const CBdatWrapper& bdat, int id, const GfComBehaviorNpc& owner) {
+    m_shopId = Bdat::getValCheck(bdat.m_fp, "ShopID", id, 2);
+    unsigned short close = Bdat::getValCheckU16(bdat.m_fp, "CloseRange", id);
+    m_approachDistSq = close * close;
+    m_moveSpeed = Bdat::getValCheckU16(bdat.m_fp, "MoveSpeed", id);
+    unsigned short range = Bdat::getValCheckU16(bdat.m_fp, "ReactionRange", id);
+    m_reactionRangeSq = range * range;
+    m_reactionPercent = Bdat::getValCheck(bdat.m_fp, "ReactionPercent", id, 2);
+    m_reactionMot = Bdat::getValCheck(bdat.m_fp, "ReactionMot", id, 2);
+    m_battleReaction = Bdat::getValCheck(bdat.m_fp, "BattleReaction", id, 2);
+    m_battleMot = Bdat::getValCheck(bdat.m_fp, "BattleMot", id, 2);
+    gmk::AGmkBase* gmk = owner.getBindedGmkInst();
+    switch (gmk->getGmkType()) {
+    case 3:
+    case 4:
+    case 0x3d:
+        m_talkEventId = Bdat::getValCheck(bdat.m_fp, "EventID", id, 2);
+        break;
+    case gmk::GmkBlade::TYPE:
+        if (int blade = static_cast<gmk::GmkBlade*>(gmk)->m_bladeId) {
+            m_talkEventId = GfDataBlade::getNormalTalk(blade);
+        }
+        break;
+    default:
+        break;
+    }
+    if (m_talkEventId != 0) {
+        unsigned char* fp = GfDataBdat::getFP(0xeb);
+        if (Bdat::getIdTop(fp) <= m_talkEventId && m_talkEventId < Bdat::getIdTop(fp) + Bdat::getIdCount(fp) &&
+            m_shopId == 0) {
+            pad_1a = true;
+        }
+    }
+}
+
 float GfComBehaviorNpc::BdatInfo::getDistYThreshold() {
     return 2.0f;
 }

@@ -41,6 +41,10 @@
 #include "classes/gmk/GmkSquadLeader.h"
 #include "fw/Allocator.h"
 #include "gf/MsgObjectGetVelocity.h"
+#include "classes/gmk/GmkMob.h"
+#include "classes/gmk/GmkRoutedMob.h"
+#include "classes/gf/EyeBlinkPlugin.h"
+#include "classes/gf/GfAllocator.h"
 
 namespace gf {
 
@@ -282,6 +286,43 @@ void GfComBehaviorMob::init(bool moving) {
     }
 }
 
+// the move speed's low speed scaled by the setup's percentage (GfObjSetupMob's pad_90), reached over duration
+void GfComBehaviorMob::initMoveSpeed(float duration) {
+    GfObjSetup* setup = GfObjManager::getObjInfo(static_cast<GfObj*>(m_owner)->m_handle)->m_setup;
+    const GfObjSetupMob* mob =
+        setup->getRTTI()->isKindOf(&GfObjSetupMob::m_rtti) ? static_cast<GfObjSetupMob*>(setup) : nullptr;
+    float rate = mob->pad_90 * 0.01f;
+    m_moveSpeed.setSpeedKmph(m_moveSpeed.m_speedMin * rate, duration);
+}
+
+// joins the squad of the mob gimmick it is bound to (GmkMob's or GmkRoutedMob's)
+void GfComBehaviorMob::createSquadNavi() {
+    m_squadNavi.dispose();
+    gmk::AGmkBase* gmk = getBindedGmkInst();
+    if (gmk == nullptr) {
+        return;
+    }
+    gmk::GmkSquadNavi::CreateInfo info;
+    gmk::GmkMob* mob = gmk->getGmkType() == gmk::GmkMob::TYPE ? static_cast<gmk::GmkMob*>(gmk) : nullptr;
+    gmk::GmkRoutedMob* routed =
+        gmk->getGmkType() == gmk::GmkRoutedMob::TYPE ? static_cast<gmk::GmkRoutedMob*>(gmk) : nullptr;
+    if (mob != nullptr) {
+        info.m_squad = mob->m_insts.m_squad;
+    } else if (routed != nullptr) {
+        info.m_squad = routed->m_insts.m_squad;
+    }
+    // the original looks up the mob setup here and drops it (its isKindOf call stays; likely an unused local)
+    GFOBJ_INFO* objInfo = GfObjManager::getObjInfo(static_cast<GfObj*>(m_owner)->m_handle);
+    if (objInfo != nullptr && objInfo->m_setup != nullptr && objInfo->m_setup->m_type == objInfo->m_obj->m_type &&
+        objInfo->m_obj->m_type == 7) {
+        objInfo->m_setup->getRTTI()->isKindOf(&GfObjSetupMob::m_rtti);
+    }
+    info.m_handle = static_cast<GfObj*>(m_owner)->m_handle;
+    if (info.m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) && info.m_squad != nullptr) {
+        m_squadNavi.create(info);
+    }
+}
+
 void GfComBehaviorMob::execTurnCmdToGoal() {
     mm::Vec3 pos;
     if (getMoveVec(pos, pad_a8)) {
@@ -383,6 +424,11 @@ bool GfComBehaviorMob::isArrivedToGoal() const {
 
 void GfComBehaviorMob::Listener::onWkStandbyLogout() {
     m_owner->pad_53b8 = nullptr;
+}
+
+Plugin* EyeBlinkPlugin::create() {
+#line 26 "D:/Monolithsoft/BF2/prog/application/BF2\\gf/object/component/behavior/plugin/gf_eye_blink_plugin.h"
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) EyeBlinkPlugin;
 }
 
 namespace npc {
