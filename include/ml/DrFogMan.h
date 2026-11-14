@@ -15,6 +15,7 @@ public:
     ~DrFogMan();
     void releaseAll();
     void update();
+    void calcTbl();
     bool isFogOn() const;
 
     DrMan* m_drMan;  // 0x0, the constructor stores its argument

@@ -116,12 +116,9 @@ public:
     DrMdoZSortMan* m_zsortMan[4];
     // 0x70: a flag per render pass a model of this frame needs; DrMdoCtlPos::update sets entries 0-4 and 7-9 from
     // its m_stateFlags bits. m_pPassReq points at it (the name is not the original's)
-    bool m_passReq[0x10];
-    void* pad_80;
-    void* pad_88;
-    void* pad_90;
-    void* pad_98;
-    int pad_A0;
+    // by view: begin, apply and applyView point m_pPassReq at the view's 13 flags
+    bool m_passReq[4][13];
+    unsigned char pad_A4[0x4];
     // 0xA8: the lists (the constructor clears them with one memset). The names are not the original's.
     MdlList m_mdlLists[4];  // 0xA8: by view (addDelList moves the view's new models here)
     MdlList m_mdlAddLists[2];  // 0xE8: createMdl adds by DrMan::s_nDblStockIdx; setupEnd empties by s_nDblIdx

@@ -18,6 +18,7 @@ namespace ml { class DrShdMan; }
 namespace ml { class DrLightMan; }
 namespace ml { class DrFogMan; }
 namespace ml { class DrGlobalIBLMan; }
+namespace ml { class DrIBLMan; }
 namespace ml { class DrCalcTexStreamMan; }
 namespace ml { class DrIniSys; }
 namespace ml { class DrIrrVolMan; }
@@ -90,6 +91,11 @@ public:
     bool loopCnt();
     void apply(int);
     void render(int);
+    void beginSetup();
+    void reloadUpdate();
+    void applyView(int);
+    void renderView(int);
+    void GBuffRender();
     void tail();
     void setCallBack(IDrDrawCallback* callback);
     void releaseCallBack(IDrDrawCallback* callback);
@@ -150,7 +156,8 @@ public:
     // the constructor makes one per view (index 0 here), after the DrLightMan/DrFogMan it is built from
     DrEnvironmentMan* m_envMan[4];
     DrPixlPostParm* m_postParm[4];      // the constructor makes them; ScnRenderDrSysParmAcc takes one per view
-    unsigned char pad_140[0x20];
+    // 0x140: one per view; begin updates each one set, applyView the view's (the name is not the original's)
+    DrIBLMan* m_viewIBLMan[4];
     // one per view: ScnObjIBLDr makes and releases its IBL pack with it (the name is not the original's)
     DrGlobalIBLMan* m_iblMan[4];        // 0x160
     // 0x180: DrMdoCtlSeamAll::callRenderSeamAll brackets the seam mpf display list with its begin/end (the name is
@@ -184,8 +191,11 @@ public:
         int m_captureWidth;
         int m_captureHeight;  // 0x2C
         unsigned char pad_30[0x8];
-        bool m_enable : 1;  // 0x38
-        unsigned char pad_39[0x7];
+        unsigned int m_enable : 1;  // 0x38
+        // render draws the enabled views without it first, then those with it (the name is not the original's)
+        unsigned int m_renderLate : 1;
+        unsigned int pad_38_bits : 30;  // unread so far; a 32-bit unit (render loads the word)
+        unsigned char pad_3C[0x4];
     };
     ViewInfo m_viewInfo[4];
     unsigned char pad_540[0x40];
@@ -197,7 +207,10 @@ public:
     // 0x598: the current view's DrEnvironmentMan (DrResMdoSeamWrkLight::setupWork makes its environment object with
     // it; the name is not the original's)
     DrEnvironmentMan* m_curEnvMan;
-    unsigned char pad_5A0[0x10];
+    // 0x5A0/0x5A8: the current view's m_viewIBLMan and m_iblMan; applyView updates them (the names are not the
+    // original's)
+    DrIBLMan* m_curIBLMan;
+    DrGlobalIBLMan* m_curIBLGlobalMan;
     DrCalcTexStreamMan* m_texStreamMan;  // 0x5B0, DrStmReadCheck makes its stream lists with it (the name is not the original's)
     // 0x5B8: the current view's record in m_viewInfo (end resets it to [0]; the name is not the original's)
     ViewInfo* m_curViewInfo;
@@ -221,7 +234,7 @@ public:
     unsigned char m_captureMode[2];     // by s_nDblStockIdx: 1 on, 2 off
     unsigned char pad_1C83[0x1];
     float m_glbSpd;
-    unsigned char pad_1C88[0x4];
+    float m_mpfWindRate;  // 0x1C88: apply sets m_mpfWindPower to m_glbSpd times it (the name is not the original's)
     // 0x1C8C: DrMdoMpfMan::update scales its wind calculators' update by it (the name is not the original's)
     float m_mpfWindPower;
     float m_gamma;
@@ -263,10 +276,13 @@ public:
     int m_commonFlag;
     // 0x1D54: 1 makes DrIniSys load the DLC toon gradients and filter LUT (the name is not the original's)
     int m_dlcShaderMode;
-    unsigned char pad_1D58[0x25];
+    int m_renderStop;  // 0x1D58: render draws nothing while it is not 0 (the name is not the original's)
+    unsigned char pad_1D5C[0x21];
     // 0x1D7D: DrMdoCtlSeamAll's render passes return at once while set (the name is not the original's)
     bool m_seamRenderOff;
-    unsigned char pad_1D7E[0x6];
+    // 0x1D7E: applyView copies it to the view's IDrDrawWorkInfo::m_viewFlag (the name is not the original's)
+    bool m_viewFlag;
+    unsigned char pad_1D7F[0x5];
     // 0x1D84: DrMdlMan::shadowRender renders nothing while set (the name is not the original's)
     bool m_mdlShadowOff;
     // 0x1D85: DrMdoCtlSeamBaseMap::callShadowMapRenderSeamBaseMap renders nothing while set (the name is not the

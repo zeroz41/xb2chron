@@ -17,6 +17,7 @@ public:
     DrEnvironmentMan(DrMan* drMan, DrLightMan* lightMan, DrFogMan* fogMan, int);
     ~DrEnvironmentMan();
     DrEnvironmentObj* createObj(const void* resource);
+    void update();
 
     // a head/tail list of environment objects (the destructor deletes each through its table, walking m_next)
     struct ObjList {

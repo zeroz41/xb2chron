@@ -21,8 +21,10 @@ public:
     float m_flowVec[3];      // 0x4E0, cloud::CloudObjFlow::update's second uniform
     unsigned char pad_4EC[0x74];
     // layer::LayerManager's apply and finalRender draw only when it is 0 (the name is not the original's)
-    int m_subPass;
-    unsigned char pad_564[0x1C];  // sizeof 0x580: DrMan keeps one per view at 0x660
+    int m_subPass;  // DrMan::applyView stores the view index
+    unsigned char pad_564[0x4];
+    bool m_viewFlag;  // 0x568: DrMan::applyView copies DrMan::m_viewFlag here (the name is not the original's)
+    unsigned char pad_569[0x17];  // sizeof 0x580: DrMan keeps one per view at 0x660
 };
 }  // namespace ml
 

@@ -63,6 +63,7 @@ public:
     void createColorBuffer();
     void resetColorBuff(bool);
     void calcColorBuffer(wkPixlManRes* res, float, float, float, float);
+    void beforUpdate(int);
     void afterUpdate(int);
     void fastDeferredRender();
     void debugGBuffRender();

@@ -59,6 +59,12 @@
 #include "ml/DrPixlPostMan.h"
 #include "ml/DrPixlPostObjRainDrop.h"
 #include "classes/ml/ScnObjModel.h"
+#include "ml/DrIBLMan.h"
+#include "ml/DrFogMan.h"
+#include "ml/DrLightMan.h"
+#include "ml/DrPixlTileParm.h"
+#include "ml/DrPixlPostParm.h"
+#include "ml/DrGlobalIBLMan.h"
 
 namespace cloud {
 using namespace grlib;
@@ -491,13 +497,110 @@ void DrMan::end() {
     m_curEnvMan = m_envMan[0];
     m_pixlMan->setupCate(0);
     DrMdlMan* mdlMan = m_mdlMan;
-    mdlMan->m_pPassReq = mdlMan->m_passReq;
+    mdlMan->m_pPassReq = mdlMan->m_passReq[0];
     mdlMan->m_curZSortMan = mdlMan->m_zsortMan[0];
     mdlMan->m_pMdlList = &mdlMan->m_mdlLists[0];
     mdlMan->pad_238 = 0;
     mdlMan->m_pGpuCheckList = &mdlMan->m_gpuCheckLists[0];
     mdlMan->m_smlShadowMan->m_viewIdx = 0;
     m_shdMan->setupCate(0);
+}
+
+void DrMan::apply(int) {
+    m_mpfWindPower = m_glbSpd * m_mpfWindRate;
+    DrMdlMan* mdlMan = m_mdlMan;
+    if (mdlMan->m_mpfMan != nullptr) {
+        mdlMan->m_mpfMan->begin();
+    }
+    mdlMan->m_vertexMan->begin();
+    mdlMan->m_occUniform->begin();
+    mdlMan->m_etcUniform->begin();
+    mdlMan->m_samplerMan->begin();
+    for (long i = 0; i < 4; i++) {
+        if (m_viewInfo[static_cast<int>(i)].m_enable) {
+            applyView(i);
+        } else {
+            DrMdlMan* mdlMan = m_mdlMan;
+            mdlMan->pad_238 = i;
+            mdlMan->m_pPassReq = mdlMan->m_passReq[i];
+            mdlMan->m_pMdlList = &mdlMan->m_mdlLists[i];
+            mdlMan->m_pGpuCheckList = &mdlMan->m_gpuCheckLists[i];
+            for (DrMdlBase* obj = mdlMan->m_pMdlList->m_pTop; obj != nullptr; obj = obj->m_pNext) {
+                obj->noOffScreenUpdate();
+            }
+            for (DrGpuCheckObj* check = mdlMan->m_pGpuCheckList->m_head; check != nullptr; check = check->m_next) {
+                check->update();
+            }
+        }
+    }
+    m_calcMan = m_viewCalcMan[0];
+    m_lightMan = m_viewLightMan[0];
+    m_fogMan = m_viewFogMan[0];
+    m_curEnvMan = m_envMan[0];
+    m_curIBLMan = m_viewIBLMan[0];
+    m_curIBLGlobalMan = m_iblMan[0];
+    m_pixlMan->setupCate(0);
+    mdlMan = m_mdlMan;
+    mdlMan->m_pPassReq = mdlMan->m_passReq[0];
+    mdlMan->m_curZSortMan = mdlMan->m_zsortMan[0];
+    mdlMan->m_pMdlList = &mdlMan->m_mdlLists[0];
+    mdlMan->pad_238 = 0;
+    mdlMan->m_pGpuCheckList = &mdlMan->m_gpuCheckLists[0];
+    mdlMan->m_smlShadowMan->m_viewIdx = 0;
+    m_shdMan->setupCate(0);
+    mdlMan = m_mdlMan;
+    if (mdlMan->m_mpfMan != nullptr) {
+        mdlMan->m_mpfMan->update();
+    }
+    mdlMan->m_vertexMan->end();
+    mdlMan->m_occUniform->end();
+    mdlMan->m_etcUniform->end();
+    m_pixlMan->lastUpdate();
+    m_texStreamMan->entryJob();
+}
+
+void DrMan::applyView(int view) {
+    m_curViewInfo = &m_viewInfo[view];
+    m_postParmIdx = view;
+    m_drawWorkInfo[view].m_subPass = view;
+    m_drawWorkInfo[view].m_viewFlag = m_viewFlag;
+    m_filterData->m_curFilter = view;
+    m_calcMan = m_viewCalcMan[view];
+    m_lightMan = m_viewLightMan[view];
+    m_fogMan = m_viewFogMan[view];
+    m_curEnvMan = m_envMan[view];
+    m_curIBLMan = m_viewIBLMan[view];
+    m_curIBLGlobalMan = m_iblMan[view];
+    DrMdlMan* mdlMan = m_mdlMan;
+    mdlMan->pad_238 = view;
+    mdlMan->m_pPassReq = mdlMan->m_passReq[view];
+    mdlMan->m_curZSortMan = mdlMan->m_zsortMan[view];
+    mdlMan->m_pMdlList = &mdlMan->m_mdlLists[view];
+    mdlMan->m_pGpuCheckList = &mdlMan->m_gpuCheckLists[view];
+    mdlMan->m_smlShadowMan->m_viewIdx = view;
+    m_shdMan->setupCate(view);
+    m_pixlMan->setupCate(view);
+    m_apCache->begin();
+    m_pixlMan->updateShadowDisplayList();
+    m_calcMan->begin();
+    m_lightMan->stockBegin();
+    m_lightMan->update();
+    m_fogMan->update();
+    m_curEnvMan->update();
+    m_filterData->update(view);
+    m_curIBLMan->update();
+    m_curIBLGlobalMan->update();
+    m_shdMan->beforeUpdateCate(view);
+    m_fogMan->calcTbl();
+    m_pixlMan->beforUpdate(view);
+    for (int i = 0; i < m_callBackNum; i++) {
+        m_callBack[i]->apply(&m_drawWorkInfo[m_postParmIdx]);
+    }
+    m_mdlMan->apply();
+    m_lightMan->stockEnd();
+    m_shdMan->updateCate(view);
+    m_pixlMan->afterUpdate(view);
+    m_calcMan->end();
 }
 
 void DrMdlMan::apply() {
@@ -543,6 +646,27 @@ void DrMdlMan::apply() {
 }
 
 bool DrMan::loopCnt() { return true; }
+
+void DrMan::render(int) {
+    if (m_renderStop != 0) {
+        return;
+    }
+    m_tileParm->begin(DrPixlTileParm::TileType(0));
+    for (int i = 3; i >= 0; i--) {
+        if (m_viewInfo[i].m_enable && !m_viewInfo[i].m_renderLate) {
+            renderView(i);
+        }
+    }
+    for (int i = 3; i >= 0; i--) {
+        if (m_viewInfo[i].m_enable && m_viewInfo[i].m_renderLate) {
+            renderView(i);
+        }
+    }
+    m_postParm[m_postParmIdx]->resetWeatherFrame();
+    m_weatherFrameReq[s_nDblIdx] = false;
+    m_pixlMan->setMainRenderTarget();
+    m_tileParm->end(DrPixlTileParm::TileType(0));
+}
 
 void DrMan::blurCallBackRender() {
     for (int i = 0; i < m_callBackNum; i++) {

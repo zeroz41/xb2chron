@@ -42,6 +42,8 @@ public:
     grlib::CGLibTextureBuffer* findFilterTexture(unsigned int id) const;
     // takes the data of the filter LUT file DrIniSys::loadFilterLutTexture read
     void setFilterData(const void* data);
+    // DrMan::applyView's call with the view index
+    void update(int);
 
     DrMan* m_drMan;                        // 0x00
     const Entry* m_entries;                // 0x08: setFilterData's data
