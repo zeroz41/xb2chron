@@ -144,6 +144,11 @@ public:
     mm::mtl::FixedVector<AssetFile*, 16> m_files;
     // (file index & 0xFFFF) | (replacement index << 16): getFileName looks a file up through them
     mm::mtl::FixedVector<unsigned int, 8> m_fileMap;
+    // GfAssetPack::loadStart's: the files' resources are created from it (the name is not the original's)
+    mm::mtl::IAllocator* m_allocator;
+    // AssetPackInfo::lockEnterRersource sets it; addResource returns false while it is set (the name is not the
+    // original's)
+    bool m_enterLocked;
 };
 
 // table 0x7100B43648; counted: releaseResource and AssetPackInfo's destructor release their references
@@ -222,10 +227,6 @@ public:
     };
     mm::mtl::FixedVector<Resource, 16> m_resources;  // releaseResource releases them
     GfAssetFiles m_files;
-    // loadStart's: the files' resources are created from it (the name is not the original's)
-    mm::mtl::IAllocator* m_allocator;
-    bool m_enterLocked;  // AssetPackInfo::lockEnterRersource sets it (the name is not the original's)
-    unsigned char pad_229[0x7];
     GF_SLOT_HANDLE* m_slotHandle;  // -1 while it has none
     // releaseRefResource sets it when one of the pack's resources holds the data it is given; the constructor clears
     // it (the name is not the original's)

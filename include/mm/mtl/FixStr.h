@@ -116,6 +116,23 @@ public:
         return -1;
     }
 
+    // the index of the last `s`, -1 when there is none (inline: gf::GfAssetFiles::AssetFile's constructor inlines
+    // it for ".wimdo"; the name is not the original's)
+    int findLast(const char* s) const {
+        if (m_nLen == 0) {
+            return -1;
+        }
+        int len = strlen(s);
+        const char* top = reinterpret_cast<const char*>(reinterpret_cast<unsigned long>(m_str) - 1);
+        long i = m_nLen;
+        do {
+            if (strncmp(&top[i], s, len) == 0) {
+                return &top[i] - m_str;
+            }
+        } while (--i != 0);
+        return -1;
+    }
+
     // the len characters from s (all the rest for -1), none from an empty one (fw::LocalizeResource::
     // makeLocalizeFilePath; fixstr.h asserts `s < m_nLen && s+len <= m_nLen`; the name is not the original's)
     FixStr substr(int s, int len = -1) const {

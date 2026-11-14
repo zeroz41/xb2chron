@@ -12,11 +12,13 @@
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfAssetManager.h"
 #include "classes/gf/GfFileSizePool.h"
+#include "classes/ml/DevFileTh.h"
 #include "gf/GfAssetUtil.h"
 #include "gf/GfUtil.h"
 #include "mm/mtl/Hash.h"
 #include "fw/Reflection.h"
 
+#include <algorithm>
 #include <string.h>
 
 namespace gf {
@@ -389,7 +391,7 @@ bool AssetPackInfo::isFullResource() const {
 void AssetPackInfo::lockEnterRersource() {
     for (GfAssetPack* pack : m_packs) {
         pack->m_resourceLocked = true;
-        pack->m_enterLocked = true;
+        pack->m_files.m_enterLocked = true;
     }
 }
 
@@ -532,7 +534,7 @@ bool GfAssetPack::isExistReferenceMemory() const {
 }
 
 void GfAssetPack::loadStart(mm::mtl::IAllocator* allocator) {
-    m_allocator = allocator;
+    m_files.m_allocator = allocator;
     for (const GfAssetFiles::AssetFile* file : m_files.m_files) {
         GfFileIdx idx = file->m_idx;
         const mm::mtl::FixStr<128>& name = m_files.getFileName(idx);
@@ -618,6 +620,30 @@ bool GfAssetPack::isExistSameAsset(const GfAssetPack& other) const {
     return m_files.isExistSameAsset(other.m_files);
 }
 
+bool GfAssetFiles::addResource(GfFileIdx idx, const char* path) {
+    for (AssetFile* file : m_files) {
+        if (file->m_idx == idx && strcmp(file->m_path.m_str, path) == 0) {
+            return true;
+        }
+    }
+    for (AssetFile* file : m_files) {
+        if (file->m_idx != idx) {
+            unsigned int map = idx | (file->m_idx << 16);
+            if (std::find(m_fileMap.begin(), m_fileMap.end(), map) != m_fileMap.end()) {
+                return true;
+            }
+            if (strcmp(file->m_path.m_str, path) == 0) {
+                m_fileMap.push_back(map);
+                return true;
+            }
+        }
+    }
+#line 665
+    AssetFile* file = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) AssetFile(idx, path);
+    m_files.push_back(file);
+    return !m_enterLocked;
+}
+
 const mm::mtl::FixStr<128>& GfAssetFiles::getFileName(GfFileIdx idx) const {
     // the name returned for a file the pack does not have (the name is not the original's)
     static mm::mtl::FixStr<128> s_noName;
@@ -650,6 +676,15 @@ void GfAssetFiles::setInitializeParam(const GfAssetFilesInfo& info) {
     }
     m_fileMap.clear();
     m_files.clear();
+}
+
+GfAssetFiles::AssetFile::AssetFile(GfFileIdx idx, const char* path)
+    : m_idx(idx), m_path(path), m_fileSize(-2), m_isWimdo(false) {
+    int size = ml::DevFileTh::getFileSize(path, nullptr);
+    m_fileSize = size < 0 ? -1 : size;
+    if (m_path.findLast(".wimdo") != -1) {
+        m_isWimdo = true;
+    }
 }
 
 }  // namespace gf
