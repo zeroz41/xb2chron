@@ -20,6 +20,8 @@
 #include "gf/GfDataBlade.h"
 #include "gf/OwnerBonus.h"
 #include "plugin/Bdat.h"
+#include "classes/gf/GfMenuObjDamageBuff.h"
+#include "ml/MTRand.h"
 
 namespace btl {
 
@@ -40,6 +42,27 @@ void DataManager::Destroy() {
     if (manager != nullptr) {
         delete manager;
     }
+}
+
+void DataManager::ClearCache() {
+    ml::CS lock(m_criticalSection);
+    m_artsCache.m_ids.clear();
+    m_artsCache1.m_ids.clear();
+    m_artsCache2.m_ids.clear();
+    m_artsCache3.m_ids.clear();
+    for (int i = 0; i < 100; i++) {
+        m_artsCache.m_data[i].pad_0_0 = 0;
+    }
+    for (int i = 0; i < 45; i++) {
+        m_artsCache1.m_data[i].pad_0_0 = 0;
+    }
+    for (int i = 0; i < 30; i++) {
+        m_artsCache2.m_data[i].pad_0_0 = 0;
+    }
+    for (int i = 0; i < 30; i++) {
+        m_artsCache3.m_data[i].pad_0_0 = 0;
+    }
+    pad_15CF0 = 0;
 }
 
 void DataManager::UnregisterCharacterParameter(int id) {
@@ -118,6 +141,27 @@ void DataManager::RegisterUpdateAttackParam(bool players, bool enemies) {
     }
 }
 
+void DataManager::UpdateCacheID(const ARTS_DATA* data) const {
+    if (data == nullptr) {
+        return;
+    }
+    unsigned char age = data->m_cacheAge;
+    switch (data->pad_0_22) {
+    case 3:
+        m_artsCache3.UpdateAge(data, age);
+        break;
+    case 1:
+        m_artsCache1.UpdateAge(data, age);
+        break;
+    case 2:
+        m_artsCache2.UpdateAge(data, age);
+        break;
+    default:
+        m_artsCache.UpdateAge(data, age);
+        break;
+    }
+}
+
 void DataManager::FluctuatePartyGauge(int id, int groupIndex) {
     float value;
     bool flag;
@@ -156,6 +200,54 @@ void DataManager::FluctuatePartyGauge(int id, int groupIndex) {
         flag = false;
     }
     AddPartyGauge(value, groupIndex, flag);
+}
+
+void DataManager::SetElementalEffect(int effect, int chr) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess) {
+        return;
+    }
+    if (effect == 0) {
+        m_elementalEffectID = 0;
+        return;
+    }
+    CharacterManager* manager = CharacterManager::sys();
+    BattleCharacter* chara = manager->GetCharacterConst(chr);
+    if (chara == nullptr || chara->m_isPlayer) {
+        return;
+    }
+    float rate = chara->GetFriendEnhanceRate(0xA0, false, false);
+    if (rate > 0.0f && ml::mtRandf1() <= rate) {
+        m_elementalEffectID = 0;
+        return;
+    }
+    m_elementalEffectID = effect;
+    unsigned char* bdat = gf::GfDataBdat::getFP(0x24);
+    mm::mtl::FixedVector<unsigned char, 90> list;
+    Utility::GetCharacterList(list, chara->m_handle, static_cast<Utility::CHECK_CHR_NUM_MODE>(1), 0x23);
+    bool created = false;
+    for (unsigned char id : list) {
+        BattleCharacter* target = manager->GetCharacterConst(id);
+        if (target == nullptr) {
+            continue;
+        }
+        target->CreateElementalEffect(effect);
+        created = true;
+        unsigned char name = Bdat::getValCheckU8(bdat, "Name", effect);
+        if (name == 0) {
+            continue;
+        }
+        gf::GfMenuObjDamageBuff::OpenParam param;
+        param.m_type = 1;
+        param.m_resist = false;
+        param.m_bdat = gf::GfDataBdat::getFP(0x199);
+        param.m_nameId = name;
+        param.m_pos = target->m_pos;
+        param.m_pos.y += target->GetCharacterParameterConst(true)->pad_38;
+        gf::GfMenuObjDamageBuff::open(param);
+    }
+    if (created) {
+        chara->PlaySE(static_cast<BTL_SE>(1), Bdat::getValCheckU8(bdat, "SE", effect), nullptr, true);
+    }
 }
 
 int DataManager::GetPartyGauge() const {

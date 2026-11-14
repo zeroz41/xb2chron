@@ -5,6 +5,7 @@
 #include "classes/btl/PlayerParameter.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "ml/CriticalSection.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace btl { class CharacterParameter; }
 namespace btl { class DataManager; }
@@ -19,10 +20,9 @@ namespace btl {
 // an art's data as DataManager::GetArtsData fills it (layout not recovered yet)
 // DataManager::GetArtsData fills it; only what BattleCharacter reads is recovered (two runs of unsigned int
 // bitfields at 0x8 and 0x18: clang reads each as one 64-bit unit)
-// 16-byte aligned, 0xE8 bytes of data in 0xF0: DataManager::GetArtsData's assignment copies 0xE8 bytes (clang copies
-// a non-POD's data size), and the frames that hold one put it at sp+0 of 0xF0 bytes (a 16-aligned member, perhaps an
-// mm::Vec3, is not recovered yet)
-struct alignas(16) ARTS_DATA {
+// 0xE8 bytes, 8-aligned: DataManager's arts caches hold them at a 0xE8 stride (UpdateCacheID, ClearCache) and
+// GetArtsData's assignment copies 0xE8 bytes
+struct ARTS_DATA {
     enum DATA_TYPE : int;
     // clears the bit fields (the first 0x20 bytes) only
     ARTS_DATA()
@@ -82,10 +82,19 @@ struct alignas(16) ARTS_DATA {
         unsigned int m_endFrame : 13;
     };
     GRAVITY m_gravity;
-    unsigned char pad_24[0x9];
+    unsigned char pad_24[0x4];
+    // in DataManager's arts caches: how many other entries were used since this one (UpdateCacheID clears it on use
+    // and ages the younger ones; the name is not the original's)
+    unsigned char m_cacheAge;
+    unsigned char pad_29[0x4];
     // BattleCharacter::StartAngryArts acts only while it is set (meaning unknown)
     unsigned int pad_2D_0 : 1;
-    unsigned int pad_2D_1 : 23;
+    unsigned int pad_2D_1 : 6;
+    // while set, DataManager::GetArtsData re-caches the entry when Utility::IsSatisfyCondition(0) differs from
+    // pad_2D_8 (meaning unknown)
+    bool pad_2D_7 : 1;
+    bool pad_2D_8 : 1;
+    unsigned int pad_2D_9 : 15;
     // one hit's share (GetHitWeightRate; the names are not the original's)
     struct HIT {
         unsigned char pad_0[0x2];
@@ -181,16 +190,50 @@ public:
     // counts each party group's pouch buff timer (m_params[12]) up while params 4 or 9 are set, in 30-unit steps
     void UpdatePouchBuff(float dt);
 
+    // an arts cache: the indices of the used entries in m_ids, the entries in m_data (layout from UpdateCacheID and
+    // ClearCache; the names are not the original's)
+    template <unsigned long N>
+    struct ARTS_CACHE {
+        // ages every used entry younger than data and makes data the youngest (UpdateCacheID's loop, the same for
+        // each cache; age is data's; the name is not the original's)
+        void UpdateAge(const ARTS_DATA* data, unsigned char age) {
+            for (unsigned char id : m_ids) {
+                ARTS_DATA& entry = m_data[id];
+                if (&entry == data) {
+                    entry.m_cacheAge = 0;
+                } else if (entry.m_cacheAge < age) {
+                    entry.m_cacheAge++;
+                }
+            }
+        }
+        ::mm::mtl::FixedVector<unsigned char, N> m_ids;
+        ARTS_DATA m_data[N];
+    };
+
+    // the symbols name it (the return type is inferred: GetArtsData passes it on to CacheArtsData; the cached entry
+    // for type and id, else null)
+    ARTS_DATA* GetCacheArtsDataConst(ARTS_DATA::DATA_TYPE type, int id) const;
+    // the symbols name it (fills an entry for type and id, the given one or a free one, and returns it)
+    ARTS_DATA* CacheArtsData(ARTS_DATA::DATA_TYPE type, int id, ARTS_DATA* data) const;
+    // the symbols name it. What it does: makes data the youngest entry of the cache its type (pad_0_22) selects
+    void UpdateCacheID(const ARTS_DATA* data) const;
+
     ml::CriticalSection m_criticalSection;  // the destructor destroys it (the name is not the original's)
     // GetCharacterParameterConst answers ids below 1000 from here (the name is not the original's)
     PlayerParameter m_playerParameters[18];
     // GetCharacterParameterConst answers ids from 1000 from here (the name is not the original's)
     CharacterParameter* m_enemyParameters[70];
-    unsigned char pad_7370[0xBAC0];
+    // the arts caches by type (pad_0_22): 1, 2, 3, and every other type (the names are not the original's)
+    mutable ARTS_CACHE<100> m_artsCache;
+    mutable ARTS_CACHE<45> m_artsCache1;
+    mutable ARTS_CACHE<30> m_artsCache2;
+    mutable ARTS_CACHE<30> m_artsCache3;
     GROUP_DATA m_groups[38];  // BattleCharacter::GetGroupDataConst indexes it by group (the name is not the original's)
     ENEMY_GROUP m_enemyGroups[35];   // the name is not the original's
     POUCH_BUFF m_pouchBuffs[3];      // indexed by group (the name is not the original's)
-    unsigned char pad_15CEC[0xC];
+    unsigned char pad_15CEC[0x4];
+    int pad_15CF0;  // ClearCache clears it (meaning unknown)
+    unsigned char pad_15CF4[0x4];
     // AddPartyGauge keeps the gain's fraction below one point here (the name is not the original's)
     float m_partyGaugeFraction;
     unsigned char pad_15CFC[0x4];
