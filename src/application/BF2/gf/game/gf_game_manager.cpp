@@ -661,6 +661,33 @@ bool GfGameManager::isFieldLockMsgOK() {
     return false;
 }
 
+bool GfGameManager::isEnableFieldAccess() {
+    if (GfSequentialPlay::isInnerState(static_cast<GF_STATE>(24))) {
+        return false;
+    }
+    if (GfSequentialPlay::isInnerState(static_cast<GF_STATE>(10))) {
+        return false;
+    }
+    if (!isEnableOpenMainMenuSequence()) {
+        return false;
+    }
+    if (GfGameScene* scene = GfGameScene::get()) {
+        DataParamAcc acc(GfGameParty::getHandleDriver(0, static_cast<PTPOS>(0)));
+        if (acc.isValid() && (acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0) == 2) {
+            bool needChange = scene->isNeedFieldBladeChange(0);
+            if (needChange) {
+                return false;
+            }
+            unsigned int id = acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0;
+            if (GfDataDriver::getBlade(id, -1) == 1004 &&
+                GfObjUtil::getParentHandle(acc.m_handle) != GfGameParty::getHandleBlade(0, -1)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 bool GfGameManager::isEnableFieldBattleTarget() {
     GfObjAcc acc(getPartyLeaderDriver());
     bool battle = acc.isBattle();
