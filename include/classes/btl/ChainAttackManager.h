@@ -40,10 +40,15 @@ public:
             // a set id and a non-negative attribute (the name is not the original's; an inline member: its two
             // loads become one 32-bit load, as in GetIraChainAttackSlotByBdatID)
             bool IsValid() const { return id != 0 && attr >= 0; }
+
+            ENTRY() : recast(0.0f), id(0), attr(-1) {}
         };
+        SP_ATTACK_DATA() : level(1), pad_19(0), pad_1A(0) {}
+
         ENTRY entries[3];
         unsigned char level;  // GetSpAttackLevel
-        unsigned char pad_19[0x3];
+        unsigned char pad_19;
+        unsigned char pad_1A;
     };
 
     ChainAttackManager();
@@ -51,6 +56,8 @@ public:
     static void Create();
     static void Destroy();
     void Reset(int);
+    // tops the bond gauge of every valid blade of group (DataManager's m_groups) up to 300
+    void RecoveryKizuna(int group);
     // whether the chain attack of group slot (m_groupSlot when negative) must end
     bool IsExitChainAttack(int slot) const;
     static void PreUpdate(const fw::UpdateInfo& info);
@@ -101,11 +108,16 @@ public:
 
     // ElementalComboManager::CreateBreakEffect compares it with its character's handle (meaning unknown)
     gf::GF_OBJ_HANDLE* pad_8;
-    unsigned char pad_10[0x10];
+    void* pad_10;
+    void* pad_18;
     gf::GfMenuCallContext* m_menuContext;  // AddOverKillDamage opens the overkill menu with it (the name is not the original's)
     unsigned char pad_28[0x8];
     ::mm::mtl::FixedVector<DROP_ITEM_DATA, 32> m_dropItems;  // AddDropData's (the name is not the original's)
-    unsigned char pad_1838[0x108];
+    unsigned char pad_1838[0xF8];
+    unsigned short pad_1930;  // the constructor sets 0x5A5A
+    unsigned char pad_1932_0 : 4;
+    unsigned char pad_1932_4 : 4;
+    unsigned char pad_1933[0xD];
     float pad_1940;  // GetBonusRate gives no rate after the result states while it is 0.2 or more (meaning unknown)
     float m_addedValue;  // AddCriticalBonus adds to it (the name is not the original's)
     unsigned int m_totalDamage;  // AddTotalDamage (the name is not the original's)
@@ -113,15 +125,23 @@ public:
     // rates their ratio (the names are not the original's)
     unsigned int m_overkillMaxHp;
     unsigned int m_overkillDamage;
-    unsigned char pad_1954[0x4];
+    unsigned int pad_1954;
     unsigned int m_slowId;  // AddOverKillDamage's BattleGlobal::RegisterSlow id (the name is not the original's)
     unsigned char pad_195C[0x4];
     ::mm::mtl::IntrusivePtr<fw::Camera> m_startCamera;  // ChainAttackStartDirectionProc pops it (the name is not the original's)
-    unsigned char pad_1968[0x10];
+    void* pad_1968;
+    void* pad_1970;
     unsigned char m_startStep;  // ChainAttackStartDirectionProc's step (the name is not the original's)
-    unsigned char pad_1979[0xF];
+    unsigned char pad_1979[0x3];
+    unsigned int pad_197C;
+    unsigned int pad_1980;
+    unsigned int pad_1984;
     ::mm::mtl::IntrusivePtr<fw::Camera> m_camera;  // UpdateProc pops it (the name is not the original's)
-    unsigned char pad_1990[0x14];
+    unsigned int pad_1990;
+    unsigned int pad_1994;
+    unsigned int pad_1998;
+    unsigned char pad_199C[0x4];
+    unsigned int pad_19A0;
     SP_ATTACK_DATA m_spAttacks[3];  // GetSpAttackLevel (the name is not the original's)
     unsigned char pad_19F8[0x4];
     unsigned short m_damageRate;  // GetDamageRate (the name is not the original's)

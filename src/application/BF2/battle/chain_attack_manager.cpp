@@ -5,6 +5,7 @@
 #include "classes/btl/BtlSystemBalanceAccess.h"
 #include "classes/btl/CharacterManager.h"
 #include "classes/btl/CharacterParameter.h"
+#include "classes/btl/DataManager.h"
 #include "classes/btl/TalkManager.h"
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuObjChainAttack.h"
@@ -39,6 +40,18 @@ void ChainAttackManager::PreUpdate(const fw::UpdateInfo& info) {
 
 void ChainAttackManager::Update(const fw::UpdateInfo& info) {
     sys()->UpdateProc(info);
+}
+
+void ChainAttackManager::RecoveryKizuna(int group) {
+    GROUP_DATA& data = DataManager::sys()->m_groups[group];
+    for (int i = 0; i < 5; i++) {
+        if (data.GetBladeDataConst(i)->m_isValid) {
+            GROUP_BLADE_DATA* blade = const_cast<GROUP_BLADE_DATA*>(data.GetBladeDataConst(i));
+            if (blade->m_gauge < 300.0f) {
+                blade->SetGauge(300.0f, false);
+            }
+        }
+    }
 }
 
 int ChainAttackManager::GetIraChainAttackSlotByBdatID(int index, unsigned int bdatId) const {
