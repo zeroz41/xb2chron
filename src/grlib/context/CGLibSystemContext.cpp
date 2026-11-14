@@ -50,9 +50,83 @@ const ml::CriticalSection& CGLibSystemContext::getCriticalSection() {
     return s_cs;
 }
 
-CGLibSystemContext::CGLibSystemContext() : pad_2448(0), pad_2450(0), pad_2540(0) {}
+CGLibSystemContext::CGLibSystemContext() : pad_2448(0), pad_2450(0), m_isSetup(false) {}
 
 CGLibSystemContext::~CGLibSystemContext() {}
+
+}}  // namespace grlib::context
+
+namespace grlib {
+
+void CGLibDisplay::setup(NVNdevice* device) {
+    m_init = true;
+    nvnSyncInitialize(&m_sync, device);
+    nvnSyncInitialize(&m_sync2, device);
+    nvnWindowBuilderSetDefaults(&m_windowBuilder);
+    nvnWindowBuilderSetDevice(&m_windowBuilder, device);
+    nvnWindowBuilderSetNativeWindow(&m_windowBuilder, CGLibManager::sys()->m_vi.m_nativeWindow);
+    NVNtextureBuilder builder;
+    nvnTextureBuilderSetDevice(&builder, device);
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetTarget(&builder, NVN_TEXTURE_TARGET_2D);
+    nvnTextureBuilderSetFormat(&builder, (NVNformat)0x25);
+    nvnTextureBuilderSetSize2D(&builder, 1280, 720);
+    m_storageSize[0] = nvnTextureBuilderGetStorageSize(&builder);
+    m_storageAlign[0] = nvnTextureBuilderGetStorageAlignment(&builder);
+    nvnTextureBuilderSetDevice(&builder, device);
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetTarget(&builder, NVN_TEXTURE_TARGET_2D);
+    nvnTextureBuilderSetFormat(&builder, (NVNformat)0x35);
+    nvnTextureBuilderSetSize2D(&builder, 1280, 720);
+    m_storageSize[1] = nvnTextureBuilderGetStorageSize(&builder);
+    m_storageAlign[1] = nvnTextureBuilderGetStorageAlignment(&builder);
+    resize(1280, 720);
+}
+
+}  // namespace grlib
+
+namespace grlib { namespace context {
+
+bool CGLibSystemContext::cleanup() {
+    if (m_isSetup) {
+        m_utilObj.release();
+        for (int i = 0; i < 2; i++) {
+            m_cmdBuffers[i].release();
+            m_subCmdBuffers[i].release();
+        }
+        m_gpuTimeStamp.release();
+        m_samplerTbl.release();
+        m_texDescriptor.release();
+        m_samplerDescriptor.release();
+        m_occlusion.release();
+        m_textureAlloc.release();
+        m_memPoolAdder.release();
+        if (m_pPixelResArea != nullptr) {
+            mtl::MemManager::deallocate(m_pPixelResArea, 0, false);
+            m_pPixelResArea = nullptr;
+        }
+        for (int i = 0; i < 2; i++) {
+            if (m_pPixelResAreaPrev[i] != nullptr) {
+                mtl::MemManager::deallocate(m_pPixelResAreaPrev[i], 0, false);
+                m_pPixelResAreaPrev[i] = nullptr;
+            }
+        }
+        m_releaseTbl.release();
+        for (int i = 0; i < 5; i++) {
+            m_etcBuffer[i].release();
+        }
+        m_memPoolList0.release();
+        m_memPoolList1.release();
+        m_display.release();
+        m_reportPool.release();
+        m_pixelPool.release();
+        m_extraPool0.release();
+        m_extraPool1.release();
+        m_memPoolTbl.release();
+        m_isSetup = false;
+    }
+    return true;
+}
 
 bool CGLibSystemContext::isRelease() {
     return true;
@@ -647,6 +721,23 @@ void CGLibGPUCache::releaseMemPoolBuffer(void* buffer) {
     CGLibSystemContext::get()->m_memPoolAdder.releaseAdder(buffer);
 }
 
+void CGLibDisplay::resize(unsigned int width, unsigned int height) {
+    if (m_windowInit) {
+        nvnWindowFinalize(&m_window);
+    }
+    m_windowInit = true;
+    m_renderTargets[0].m_pTexture->m_flags |= 4;
+    m_renderTargets[1].m_pTexture->m_flags |= 4;
+    m_renderTargets[0].setTextureInfo(width, height, (GrlSurfaceFormat)0x25, false, 0);
+    m_renderTargets[1].setTextureInfo(width, height, (GrlSurfaceFormat)0x25, false, 0);
+    m_depthTarget.setTextureInfo(width, height, (GrlDepthFormat)0x35, false, 0);
+    memset(m_renderTargets[0].m_pTexture->m_pData, 0, m_renderTargets[0].m_pTexture->m_dataSize);
+    memset(m_renderTargets[1].m_pTexture->m_pData, 0, m_renderTargets[1].m_pTexture->m_dataSize);
+    NVNtexture* textures[2] = {m_renderTargets[0].m_pTexture->m_pNvnTexture, m_renderTargets[1].m_pTexture->m_pNvnTexture};
+    nvnWindowBuilderSetTextures(&m_windowBuilder, 2, textures);
+    nvnWindowInitialize(&m_window, &m_windowBuilder);
+}
+
 void CGLibDisplay::updateSignaled() {
     m_needWait = !m_signaled;
 }
@@ -659,15 +750,7 @@ void CGLibDisplay::swapChain(NVNqueue* queue) {
 }
 
 CGLibDisplay::~CGLibDisplay() {
-    if (m_init) {
-        m_init = false;
-        nvnSyncFinalize(&m_sync);
-        nvnSyncFinalize(&m_sync2);
-        m_renderTargets[0].releaseTexture();
-        m_renderTargets[1].releaseTexture();
-        nvnWindowFinalize(&m_window);
-        m_windowInit = false;
-    }
+    release();
 }
 
 }  // namespace grlib

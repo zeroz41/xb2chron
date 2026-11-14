@@ -156,6 +156,24 @@ static inline void nvnSyncFinalize(NVNsync* sync) { pfnc_nvnSyncFinalize(sync); 
 typedef void (*PFNNVNWINDOWFINALIZEPROC)(NVNwindow* window);
 extern PFNNVNWINDOWFINALIZEPROC pfnc_nvnWindowFinalize;
 static inline void nvnWindowFinalize(NVNwindow* window) { pfnc_nvnWindowFinalize(window); }
+typedef NVNboolean (*PFNNVNSYNCINITIALIZEPROC)(NVNsync* sync, NVNdevice* device);
+extern PFNNVNSYNCINITIALIZEPROC pfnc_nvnSyncInitialize;
+static inline NVNboolean nvnSyncInitialize(NVNsync* sync, NVNdevice* device) { return pfnc_nvnSyncInitialize(sync, device); }
+typedef void (*PFNNVNWINDOWBUILDERSETDEFAULTSPROC)(NVNwindowBuilder* builder);
+extern PFNNVNWINDOWBUILDERSETDEFAULTSPROC pfnc_nvnWindowBuilderSetDefaults;
+static inline void nvnWindowBuilderSetDefaults(NVNwindowBuilder* builder) { pfnc_nvnWindowBuilderSetDefaults(builder); }
+typedef void (*PFNNVNWINDOWBUILDERSETDEVICEPROC)(NVNwindowBuilder* builder, NVNdevice* device);
+extern PFNNVNWINDOWBUILDERSETDEVICEPROC pfnc_nvnWindowBuilderSetDevice;
+static inline void nvnWindowBuilderSetDevice(NVNwindowBuilder* builder, NVNdevice* device) { pfnc_nvnWindowBuilderSetDevice(builder, device); }
+typedef void (*PFNNVNWINDOWBUILDERSETNATIVEWINDOWPROC)(NVNwindowBuilder* builder, NVNnativeWindow nativeWindow);
+extern PFNNVNWINDOWBUILDERSETNATIVEWINDOWPROC pfnc_nvnWindowBuilderSetNativeWindow;
+static inline void nvnWindowBuilderSetNativeWindow(NVNwindowBuilder* builder, NVNnativeWindow nativeWindow) { pfnc_nvnWindowBuilderSetNativeWindow(builder, nativeWindow); }
+typedef void (*PFNNVNWINDOWBUILDERSETTEXTURESPROC)(NVNwindowBuilder* builder, int numTextures, NVNtexture* const* textures);
+extern PFNNVNWINDOWBUILDERSETTEXTURESPROC pfnc_nvnWindowBuilderSetTextures;
+static inline void nvnWindowBuilderSetTextures(NVNwindowBuilder* builder, int numTextures, NVNtexture* const* textures) { pfnc_nvnWindowBuilderSetTextures(builder, numTextures, textures); }
+typedef NVNboolean (*PFNNVNWINDOWINITIALIZEPROC)(NVNwindow* window, const NVNwindowBuilder* builder);
+extern PFNNVNWINDOWINITIALIZEPROC pfnc_nvnWindowInitialize;
+static inline NVNboolean nvnWindowInitialize(NVNwindow* window, const NVNwindowBuilder* builder) { return pfnc_nvnWindowInitialize(window, builder); }
 
 typedef void (*PFNNVNCOMMANDBUFFERBINDBLENDSTATEPROC)(NVNcommandBuffer* cmdBuf, const NVNblendState* blend);
 extern PFNNVNCOMMANDBUFFERBINDBLENDSTATEPROC pfnc_nvnCommandBufferBindBlendState;

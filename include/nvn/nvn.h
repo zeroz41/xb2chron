@@ -83,6 +83,8 @@ typedef struct NVNtexture { char reserved[192]; } NVNtexture;
 typedef struct NVNtextureBuilder { char reserved[128]; } NVNtextureBuilder;
 typedef struct NVNtexturePool { char reserved[32]; } NVNtexturePool;
 typedef struct NVNwindow { char reserved[384]; } NVNwindow;
+typedef struct NVNwindowBuilder { char reserved[64]; } NVNwindowBuilder;
+typedef void* NVNnativeWindow;
 typedef struct NVNtextureView { char reserved[40]; } NVNtextureView;
 typedef struct NVNvertexAttribState { char reserved[4]; } NVNvertexAttribState;
 typedef struct NVNvertexStreamState { char reserved[8]; } NVNvertexStreamState;

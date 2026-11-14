@@ -112,7 +112,7 @@ public:
     CGLibMemPool m_extraPool0;  // 0x2498 (the name is not the original's)
     CGLibMemPool m_extraPool1;  // 0x24B8 (the name is not the original's)
     CGLibGpuTimeStamp m_gpuTimeStamp;  // 0x24D8: end() ends it, CGLibManager::getGpuTimeStamp reads it
-    unsigned char pad_2540;  // cleared as made
+    bool m_isSetup;  // 0x2540: cleared as made; cleanup releases everything only while it holds, then clears it (the name is not the original's)
     unsigned char pad_2541[0x7];
     unsigned long m_glbUniformGpuAddress;  // 0x2548
     unsigned char* m_pGlbUniformBuffer;  // 0x2550

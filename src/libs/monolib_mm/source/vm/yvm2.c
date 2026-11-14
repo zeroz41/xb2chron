@@ -104,7 +104,7 @@ typedef struct VMLink {
 
 typedef struct VMPlugin {
     const char* name;
-    void* pPlugin;
+    VMPluginFunc* pPlugin;  // vmPluginRegist's table
 } VMPlugin;
 
 typedef struct VMWork {
@@ -728,6 +728,41 @@ s32 vmSelectorSearch(VMOC* pOC, const char* name) {
         }
     }
     return -1;
+}
+
+// Calls function func of plugin pluginNo on the thread (whose stack holds the call's argument count and expected
+// return count) and drops the arguments; pc continues at nextPc unless the plugin threw or waits. 1 when the plugin
+// set the thread waiting. The name is the one its assertion reports (__func__, lbl_71009AAB75); `used` keeps it
+// until vmCodeExecSub, its one caller, is written.
+#line 2966
+__attribute__((used)) static s32 vmc_plugin_sub(VMThread* pThread, s32 pluginNo, s32 func, s32 nextPc) {
+    s32 info = pThread->stack[pThread->reg.sp - 1].v.i;
+    s32 ret;
+    s32 sp;
+    u8 argc;
+    u8 retc;
+    pThread->waitMode = 0;
+    ret = s_vmWork.plugin[pluginNo].pPlugin[func].func(pThread);
+    if (pThread->reg.excCode != 0) {
+        return 0;
+    }
+    if (pThread->waitMode != 0) {
+        return 1;
+    }
+    argc = info;
+    retc = info >> 8;
+    if (ret > 1 || retc > ret) {
+        vmExceptionThrow(pThread, 8);
+        return 0;
+    }
+    sp = pThread->reg.sp;
+    pThread->reg.sp = sp + (-1 - argc - ret);
+    if (retc != 0) {
+        vmPush(pThread, &pThread->stack[sp - 1]);
+    }
+    assert(pThread->reg.sp < pThread->stackSize && pThread->reg.sp >= 0);
+    pThread->reg.pc = nextPc;
+    return 0;
 }
 
 void vmArgErr(void) {
