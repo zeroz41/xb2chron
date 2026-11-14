@@ -50,6 +50,12 @@
 #include "gf/GfDataShop.h"
 #include "gf/GfAchievStats.h"
 #include "classes/gf/SCOM_ADD_DEVELOP.h"
+#include "gf/GfKizunaringUtil.h"
+#include "gf/GfQuestReward.h"
+#include "gf/GfQuestTask.h"
+#include "gf/GfDataQuest.h"
+#include "gf/GfGameUtil.h"
+#include "gf/GfQuestUtil.h"
 
 namespace gf {
 
@@ -990,6 +996,87 @@ void GfKizunaringBlade::removeAchievement(unsigned int blade) {
             resetAchievQuests(info);
         }
     }
+}
+
+void GfKizunaringBlade::refreshAchievementCount(unsigned int blade) {
+    if (blade == 0) {
+        return;
+    }
+    for (unsigned int line = 0; line < 10; line++) {
+        AchievInfo* info = GfDataBlade::getAchievInfo(blade, line);
+        if (info->m_achievementId == 0) {
+            return;
+        }
+        for (int i = 0; i < 5; i++) {
+            GfQuestTask::refreshTaskParam(GfDataQuest::getListNextQuestA(info->m_quests[i].m_questId));
+        }
+    }
+}
+
+unsigned int GfKizunaringBlade::getReleaseAchievement(unsigned int blade, unsigned int line, unsigned int level) {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BC0BC). The state by the bits
+    // ordered (1), finished (2), released flag (4) and no quest (8).
+    static const unsigned int s_releaseState[16] = {1, 2, 3, 0, 4, 4, 4, 4, 0, 0, 0, 0, 4, 0, 0, 0};
+    unsigned int state = 1;
+    if (blade != 0) {
+        AchievInfo* info = GfDataBlade::getAchievInfo(blade, line);
+        if (info->m_achievementId == 0) {
+            state = 0;
+        } else {
+            AchievQuest& quest = info->m_quests[level - 1];
+            unsigned long bits = GfQuestInfo::isQuestOrder(quest.m_questId);
+            bits |= GfQuestInfo::isQuestFin(quest.m_questId) ? 2 : 0;
+            bits |= quest.m_flags & 1 ? 4 : 0;
+            bits |= quest.m_questId.empty() ? 8 : 0;
+            state = s_releaseState[bits];
+        }
+    }
+    if (level == 1 && line == 9) {
+        state = 5;
+    }
+    return state;
+}
+
+void GfKizunaringBlade::releaseAchievement(unsigned int blade, unsigned int line, unsigned int level) {
+    if (blade == 0) {
+        return;
+    }
+    AchievInfo* info = GfDataBlade::getAchievInfo(blade, line);
+    info->m_quests[level - 1].m_flags |= 1;
+    if (GfDataBlade::getAchievReleaseLevel(blade, line) < level) {
+        GfGameUtil::setAchievementReleaseLevel(blade, line, level);
+        if (line == 9 && static_cast<int>(GfDataBlade::getTrustRank(blade)) < static_cast<int>(level)) {
+            GfGameUtil::addTrustRankForKizunaRing(blade);
+        }
+        if (GfDataBlade::isCompleteAchievement(blade)) {
+            if (static_cast<int>(GfDataBlade::getTrustRank(blade)) <= 5) {
+                GfGameUtil::addTrustRankForKizunaRing(blade);
+            }
+            GfQuestReward reward;
+            if (GfKizunaringUtil::getCompleteKizunaringReward(reward, blade)) {
+                GfQuestUtil::execReward(reward);
+            }
+        }
+        for (unsigned int next = level + 1; next <= 5; next++) {
+            AchievQuest& quest = info->m_quests[next - 1];
+            if (GfQuestInfo::isQuestOrder(quest.m_questId)) {
+                int count = GfAchievStats::getAchievementTotalCount(quest);
+                if (count >= 1) {
+                    quest.setCount(count);
+                } else {
+                    GfQuestTask::setupOrderTask(quest.m_questId);
+                }
+                break;
+            }
+        }
+        if (level < 5) {
+            AchievQuest& quest = GfDataBlade::getAchievInfo(blade, line)->m_quests[level];
+            if (quest.isCountComplete()) {
+                GfQuestTask::updateQuestTask(GfDataQuest::getListNextQuestA(quest.m_questId));
+            }
+        }
+    }
+    GfAchievStats::checkBladeActivate(info->m_quests[level - 1].m_blade);
 }
 
 unsigned int GfKizunaringBlade::getAchievementCategory(unsigned int blade, unsigned int line, unsigned int level) {

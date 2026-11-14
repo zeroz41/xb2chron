@@ -58,4 +58,11 @@ bool GfBladeCreate::setupCoreCrystal(unsigned int item) {
     return false;
 }
 
+void GfBladeCreate::setupAddBooster(unsigned int item) {
+    m_boosters.push_back(item);
+    int idea = GfBdatItem::get()->getBoosterIdea(item);
+    unsigned int category = GfBdatItem::get()->getBoosterCategory(item);
+    m_idea.setLevel(category, m_idea.m_ideas[category].m_level + idea);
+}
+
 }  // namespace gf
