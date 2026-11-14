@@ -21,8 +21,8 @@ void GfEnemyBattleProperty::Initialize(const GfComPropertyEnemy& property) {
     pad_0 = mm::Vec3::zero;
     m_returnHomeDistance = -1.0f;
     m_returnHomeCharacterDistance = -1.0f;
-    pad_1C[0] = 0;
-    pad_1C[1] = 0;
+    m_batAreaType = 0;
+    m_actType = 0;
     pad_1e = false;
     pad_1f = false;
 }

@@ -268,6 +268,9 @@ public:
     };
 
     void SetAction(ACTION_ID id, bool, bool, int param, float value);
+    // gf::enemy::StateBattle::Enter and Leave call them as the enemy enters and leaves its battle state
+    void NotifyBattleStart(bool);
+    void NotifyBattleEnd();
     // the AI's action requests (Utility's AI_StartAction*/AI_StartMove* call them with m_state)
     bool IsProcAI(bool) const;
     bool AI_Attack(ACTION_ID id, bool);

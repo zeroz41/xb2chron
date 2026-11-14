@@ -253,6 +253,7 @@ public:
     typedef _Dp deleter_type;
 
     _LIBCPP_INLINE_VISIBILITY unique_ptr() noexcept : __ptr_(pointer()), __deleter_() {}
+    _LIBCPP_INLINE_VISIBILITY unique_ptr(pointer __p, deleter_type __d) noexcept : __ptr_(__p), __deleter_(__d) {}
     _LIBCPP_INLINE_VISIBILITY ~unique_ptr() { reset(); }
 
     _LIBCPP_INLINE_VISIBILITY _Tp& operator[](size_t __i) const { return __ptr_[__i]; }

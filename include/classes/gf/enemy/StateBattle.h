@@ -24,9 +24,14 @@ public:
     virtual bool Enter(gf::GfComBehaviorEnemy*, ai::State*);  // slot 8
     virtual void Leave(gf::GfComBehaviorEnemy*, ai::State*);  // slot 9
     virtual void Update(btl::BattleCharacter*, gf::GfComBehaviorEnemy*, fw::UpdateInfo const&);  // slot 11
+    // whether the enemy is to return home (Update then sends a driver's character home)
+    bool CheckReturnHome(btl::BattleCharacter* chara, gf::GfComBehaviorEnemy* behavior);
     // what Enter answered: onStep runs the update slots only when set (registerState<StateBattle> sizes it 0x28;
     // the name is not the original's)
     bool m_entered;
+    // seconds until Update shows the next system message 7 (Enter: 0; every 4 seconds while the enemy with BDAT
+    // id 0x51C fights with special effect 2; the name is not the original's)
+    float m_messageTimer;
 };
 }}  // namespace gf::enemy
 

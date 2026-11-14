@@ -67,10 +67,18 @@ private:
     __table __table_;
 
 public:
+    typedef _Alloc allocator_type;
     typedef typename __table::iterator iterator;
     typedef typename __table::const_iterator const_iterator;
 
+    _LIBCPP_INLINE_VISIBILITY unordered_map() {}
+    _LIBCPP_INLINE_VISIBILITY explicit unordered_map(const allocator_type& __a) : __table_(__allocator_type(__a)) {}
+
+    _LIBCPP_INLINE_VISIBILITY iterator begin() noexcept { return __table_.begin(); }
     _LIBCPP_INLINE_VISIBILITY iterator end() noexcept { return __table_.end(); }
+    _LIBCPP_INLINE_VISIBILITY const_iterator end() const noexcept { return __table_.end(); }
+    _LIBCPP_INLINE_VISIBILITY void clear() noexcept { __table_.clear(); }
+    _LIBCPP_INLINE_VISIBILITY void reserve(size_t __n) { __table_.reserve(__n); }
     _LIBCPP_INLINE_VISIBILITY iterator find(const key_type& __k) { return __table_.find(__k); }
     _LIBCPP_INLINE_VISIBILITY const_iterator find(const key_type& __k) const { return __table_.find(__k); }
     _LIBCPP_INLINE_VISIBILITY iterator erase(const_iterator __p) { return __table_.erase(__p); }

@@ -30,7 +30,10 @@ public:
     float m_returnHomeDistance;
     // GetReturnHomeCharacterDistance returns it (Initialize: -1.0; the name is not the original's)
     float m_returnHomeCharacterDistance;
-    unsigned char pad_1C[0x2];  // Initialize zeroes it
+    // Initialize zeroes both; StateBattle::Enter sets them from the enemy's getChrEnArrangeBatAreaType and its
+    // getRscEnActType (the names are not the original's)
+    unsigned char m_batAreaType;
+    unsigned char m_actType;
     bool pad_1e;  // the constructor and Initialize clear it, Update tests, sets and clears it
     bool pad_1f;  // the constructor and Initialize clear it, Update tests and clears it, sets it at its end
 };
