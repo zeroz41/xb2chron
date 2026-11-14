@@ -40,8 +40,22 @@
 #include "ml/CriticalSection.h"
 #include "mm/Vec3.h"
 #include "mtl/MemManager.h"
+#include "idcoli/IDColiDef.h"
+#include "idcoli/IDColiPhantom.h"
+#include "idcoli/IDColiCheckObj.h"
+#include "idcoli/IDColiInput.h"
+#include "idcoli/IDColiInputUtil.h"
+#include "classes/fw/ColiCheckCallback.h"
 
 namespace idcoli {
+
+IDColiDef::IDColiDef() {
+    pad_0 = false;
+    m_radiusSq = 0.0f;
+    pad_1 = true;
+    pad_2 = true;
+    m_callback = nullptr;
+}
 
 void IDColiMove::setShapeParms(float parm0, float parm1) {
     m_shapeParms[0] = parm0;
@@ -82,6 +96,128 @@ bool IDColiMove::moveColi(IDColiObj* obj, const mm::Vec3& move) {
     IDColiPrimitive::s_CallBasePos[data->m_baseType](m_basePos, m_baseOffset, m_baseFlag, m_shapeParms[0],
                                                      m_shapeParms[1], data->m_base);
     return moveDefColi();
+}
+
+IDColiPhantom::IDColiPhantom() {
+    pad_0 = false;
+    m_radiusSq = 0.0f;
+    pad_1 = true;
+    pad_2 = true;
+    m_callback = nullptr;
+}
+
+IDColiCheckObj::IDColiCheckObj() {
+    pad_0 = false;
+    m_radiusSq = 0.0f;
+    pad_1 = true;
+    pad_2 = true;
+    m_callback = nullptr;
+}
+
+bool IDColiCheckObj::testLine(const IDColiObj* obj, const mm::Vec3& start, const mm::Vec3& end) {
+    IDColiInput input;
+    m_result.m_nearLength = 100000.0f;
+    m_result.m_secNearLength = -100000.0f;
+    m_result.m_tblNum = 0;
+    m_result.m_nearHit = false;
+    m_result.m_secNearHit = false;
+    m_result.m_near.m_vector = mm::Vec3(0.0f, 0.0f, 0.0f);
+    m_result.m_secNear.m_vector = mm::Vec3(0.0f, 0.0f, 0.0f);
+    m_result.pad_f8 = nullptr;
+    m_result.m_callback = m_callback;
+    IDColiInputUtil::getLine(input, start, end, true);
+    input.m_instSizeMin = m_radiusSq;
+    m_result.pad_f8 = obj;
+    m_result.m_obj = obj->m_userData;
+    switch (obj->m_type) {
+    case 1: {
+        IDColiObjCharCheck* chr = static_cast<IDColiObjCharCheck*>(const_cast<IDColiObj*>(obj));
+        if (m_result.m_type != 0) {
+            if (!chr->testResultLine(m_result, input)) return false;
+        } else {
+            if (!chr->testCheckLine(m_result, input)) return false;
+        }
+        break;
+    }
+    case 2: {
+        IDColiObjPhantomCheck* phantom = static_cast<IDColiObjPhantomCheck*>(const_cast<IDColiObj*>(obj));
+        if (m_result.m_type != 0) {
+            if (!phantom->testResultLine(m_result, input)) return false;
+        } else {
+            if (!phantom->testCheckLine(m_result, input)) return false;
+        }
+        break;
+    }
+    case 3: {
+        if (obj->m_flags & 0x80) return false;
+        // the grand test's IDColiGrandObj sits above the input on the stack: an inlined helper's local
+        bool hit = [&]() {
+            IDColiGrandObj grand(&static_cast<IDColiObjGrand*>(const_cast<IDColiObj*>(obj))->m_work);
+            return grand.testLine(m_result, input);
+        }();
+        if (!hit) return false;
+        break;
+    }
+    default:
+        return false;
+    }
+    if (m_result.m_type == 1 && m_callback != nullptr) {
+        m_callback->coli_param_callback(m_result.m_nearObj, m_result.m_near);
+    }
+    return true;
+}
+
+bool IDColiCheckObj::testSphere(const IDColiObj* obj, const mm::Vec3& pos, float radius) {
+    IDColiInput input;
+    m_result.m_nearLength = 100000.0f;
+    m_result.m_secNearLength = -100000.0f;
+    m_result.m_tblNum = 0;
+    m_result.m_nearHit = false;
+    m_result.m_secNearHit = false;
+    m_result.m_near.m_vector = mm::Vec3(0.0f, 0.0f, 0.0f);
+    m_result.m_secNear.m_vector = mm::Vec3(0.0f, 0.0f, 0.0f);
+    m_result.pad_f8 = nullptr;
+    m_result.m_callback = m_callback;
+    IDColiInputUtil::getSphere(input, pos, radius, true);
+    input.m_instSizeMin = m_radiusSq;
+    m_result.pad_f8 = obj;
+    m_result.m_obj = obj->m_userData;
+    switch (obj->m_type) {
+    case 1: {
+        IDColiObjCharCheck* chr = static_cast<IDColiObjCharCheck*>(const_cast<IDColiObj*>(obj));
+        if (m_result.m_type != 0) {
+            if (!chr->testResultSphere(m_result, input)) return false;
+        } else {
+            if (!chr->testCheckSphere(m_result, input)) return false;
+        }
+        break;
+    }
+    case 2: {
+        IDColiObjPhantomCheck* phantom = static_cast<IDColiObjPhantomCheck*>(const_cast<IDColiObj*>(obj));
+        if (m_result.m_type != 0) {
+            if (!phantom->testResultSphere(m_result, input)) return false;
+        } else {
+            if (!phantom->testCheckSphere(m_result, input)) return false;
+        }
+        break;
+    }
+    case 3: {
+        if (obj->m_flags & 0x80) return false;
+        // the grand test's IDColiGrandObj sits above the input on the stack: an inlined helper's local
+        bool hit = [&]() {
+            IDColiGrandObj grand(&static_cast<IDColiObjGrand*>(const_cast<IDColiObj*>(obj))->m_work);
+            return grand.testSphere(m_result, input, false);
+        }();
+        if (!hit) return false;
+        break;
+    }
+    default:
+        return false;
+    }
+    if (m_result.m_type == 1 && m_callback != nullptr) {
+        m_callback->coli_param_callback(m_result.m_nearObj, m_result.m_near);
+    }
+    return true;
 }
 
 void* IDColiMemHandleAllocator::allocate(unsigned long size, unsigned long alignment) {
