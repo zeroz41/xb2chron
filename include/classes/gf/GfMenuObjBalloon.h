@@ -64,6 +64,17 @@ public:
         mm::mtl::FixedVector<unsigned int, 3> m_selectIds;  // 0x10
         mm::mtl::FixedVector<unsigned short, 3> pad_28;
     };
+    // openEventSelectExp's: event::UIManager::openExperienceUI fills it from its arguments (the exp values, the
+    // choices' registered strings); it news a copy for the open event (the field names are not the original's)
+    struct OpenSelectExpParam {
+        OpenSelectExpParam() : m_bdat(nullptr), m_msgId(0), pad_C(0), pad_38(nullptr) {}
+        unsigned char* m_bdat;
+        unsigned int m_msgId;
+        unsigned short pad_C;
+        mm::mtl::FixedVector<unsigned int, 3> m_values;  // 0x10
+        mm::mtl::FixedVector<unsigned short, 3> pad_28;
+        void* pad_38;
+    };
     // openGetItem's: the get-item table's row (BDAT 0xDD: ItemID1-3, ItemNumber1-3; the field name is not the
     // original's)
     struct OpenGetItemParam {
@@ -80,6 +91,7 @@ public:
     static void openAutoTalk(GfMenuCallContext* context, const OpenParam& param);
     static void openEventSelectBox(GfMenuCallContext* context, const OpenSelectBoxParam& param);
     static void openEventSelectMoney(GfMenuCallContext* context, const OpenSelectMoneyParam& param);
+    static void openEventSelectExp(GfMenuCallContext* context, const OpenSelectExpParam& param);
     // false when the row has no item to show (its context aborted when every item was skipped)
     static bool openGetItem(GfMenuCallContext* context, const OpenGetItemParam& param);
     // 1.0.0's name: shows a talk balloon's text (TXT_ev_talk_msg, the message's ML:Feeling tag); EvTalkListener

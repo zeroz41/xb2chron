@@ -193,6 +193,24 @@ void GfMenuObjBalloon::nextEvent(GfMenuCallContext* context, const NextParam& pa
     }
 }
 
+void GfMenuObjBalloon::openEventSelectBox(GfMenuCallContext* context, const OpenSelectBoxParam& param) {
+    if (context->getState() == 0 && param.m_selectIds.size() != 0) {
+        unsigned int handle = GfMenuObject::getAttachedObject(7);
+        unsigned short text = GfMenuObject::registString(ui::UIStr(param.m_bdat, param.m_msgId));
+        for (int i = 0; i < (int)param.m_selectIds.size(); i++) {
+            GfMenuCallManager::sys()->m_strLinker.addSelectString(ui::UIStr(param.m_selectBdat, param.m_selectIds[i]));
+        }
+        if (context != nullptr) {
+            GfMenuObject::startCallContext(context, 7, handle);
+        }
+        ui::EventData event;
+        event.m_type = 0x105;
+        event.m_param0 = text;
+        GfMenuObject::sendEvent(handle, event, 0.0f);
+        ui::UIObjectAcc(handle).setSuspend(false);
+    }
+}
+
 void GfMenuObjBalloon::openEventSelectMoney(GfMenuCallContext* context, const OpenSelectMoneyParam& param) {
     if (GfMenuObjUtil::checkCCStart(context) && param.m_selectIds.size() != 0) {
         unsigned int handle = GfMenuObject::getAttachedObject(8);
@@ -205,6 +223,28 @@ void GfMenuObjBalloon::openEventSelectMoney(GfMenuCallContext* context, const Op
         *copy = param;
         event.m_type = 0x21;
         event.m_paramPtr = copy;
+        GfMenuObject::sendEvent(handle, event, 0.0f);
+        ui::UIObjectAcc(handle).setSuspend(false);
+    }
+}
+
+void GfMenuObjBalloon::openEventSelectExp(GfMenuCallContext* context, const OpenSelectExpParam& param) {
+    if (GfMenuObjUtil::checkCCStart(context)) {
+        if (param.m_values.size() == 0) {
+            context->abort();
+            return;
+        }
+        unsigned int handle = GfMenuObject::getAttachedObject(8);
+        if (context != nullptr) {
+            GfMenuObject::startCallContext(context, 8, handle);
+        }
+        ui::EventData event;
+#line 2977
+        OpenSelectExpParam* copy = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) OpenSelectExpParam();
+        *copy = param;
+        event.m_type = 0x21;
+        event.m_paramPtr = copy;
+        event.m_param2 = 1;
         GfMenuObject::sendEvent(handle, event, 0.0f);
         ui::UIObjectAcc(handle).setSuspend(false);
     }
