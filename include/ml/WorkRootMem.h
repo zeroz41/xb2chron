@@ -5,6 +5,13 @@
 
 namespace ml {
 struct WorkRootParam;
+// a finalizer WorkRootMem::finalize calls before it erases the memories (the 3.0.1 binary has no implementer; the
+// class name is the original's, from FixedVector<ml::IMemManagerFinalize*, 32>'s destructor)
+class IMemManagerFinalize {
+public:
+    // slot 0, called on every entry of the finalize list (the name is not the original's)
+    virtual void finalize() = 0;
+};
 // the work root's memories (its own unit, before WorkRoot.cpp's range)
 class WorkRootMem {
 public:
