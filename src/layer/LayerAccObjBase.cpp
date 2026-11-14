@@ -195,6 +195,21 @@ bool LayerAccAction::actionID(unsigned int id) {
     return false;
 }
 
+bool LayerAccAction::actionName(const char* name) {
+    LayerActBase* act = static_cast<LayerActBase*>(m_layer);
+    LayerActBase::ActionWork* data = act->m_actionData;
+    if (data != nullptr) {
+        for (int i = 0; i < data->m_actionMax; i++) {
+            const LyrActionData& action = data->m_actions[i];
+            if (strcmp(name, reinterpret_cast<const char*>(data->m_data) + (action.m_cmdOfs + action.m_nameOfs)) == 0) {
+                act->actionIdx(i);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void LayerAccAction::actionEnd() {
     LayerActBase* act = static_cast<LayerActBase*>(m_layer);
     if (act->m_actionData != nullptr) {

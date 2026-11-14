@@ -302,6 +302,46 @@ void NvmshAcObjBase::calcTargetVecLine(const mm::Vec3& from, const mm::Vec3& to)
     setMoveVec(vec);
 }
 
+void NvmshAcObjBase::calcTargetVecColi(const mm::Vec3& from, const mm::Vec3& to) {
+    mm::Vec3 vec;
+    vec.x = to.x - from.x;
+    vec.y = to.y - from.y;
+    vec.z = to.z - from.z;
+    if (::fabsf(vec.x) <= 0.001f && ::fabsf(vec.z) <= 0.001f) {
+        vec = mm::Vec3(0.0f, 0.0f, 1.0f);
+    } else {
+        vec.y = 0.0f;
+        normalizeVec(vec);
+    }
+    if (!(m_flags & 0x10)) {
+        vec.y = to.y - from.y;
+        vec.x = vec.x * 2.0f;
+        vec.z = vec.z * 2.0f;
+        normalizeVec(vec);
+    }
+    setMoveVec(vec);
+}
+
+void NvmshAcObjBase::calcTargetVecColiAddPos(const mm::Vec3& from, const mm::Vec3& to, const mm::Vec3& pos) {
+    mm::Vec3 vec;
+    vec.x = to.x - from.x;
+    vec.y = to.y - from.y;
+    vec.z = to.z - from.z;
+    if (::fabsf(vec.x) <= 0.001f && ::fabsf(vec.z) <= 0.001f) {
+        vec = mm::Vec3(0.0f, 0.0f, 1.0f);
+    } else {
+        vec.y = 0.0f;
+        normalizeVec(vec);
+    }
+    if (!(m_flags & 0x10)) {
+        vec.y = pos.y - from.y;
+        vec.x = vec.x * 2.0f;
+        vec.z = vec.z * 2.0f;
+        normalizeVec(vec);
+    }
+    setMoveVec(vec);
+}
+
 void NvmshAcObjBase::createPosRootReadInfo(const _NaviCalcResTbl* tbl) {
     const NaviCalcGrid* info = tbl->m_info;
     unsigned int bits = 0;

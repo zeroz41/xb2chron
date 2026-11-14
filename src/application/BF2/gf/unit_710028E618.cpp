@@ -6,12 +6,34 @@
 #include "classes/gf/GfBdatBtl.h"
 #include "classes/gf/GfGameParty.h"
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/GmkBattleChallengeReward.h"
+#include "classes/gmk/GmkBattleChallengeRewardList.h"
+#include "classes/gmk/GmkManager.h"
+#include "classes/gmk/GmkSet.h"
+#include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfFobjDropitem.h"
+#include "classes/fw/FrameworkMemory.h"
+#include "plugin/Bdat.h"
 
 namespace gf {
 
 GfArenaReward::GfArenaReward(GfGameArena* owner) : m_owner(owner) {}
 
 GfArenaReward::~GfArenaReward() {}
+
+void GfArenaReward::createTresureBox(const ArenaBattleInfo& info) {
+    unsigned int num = getTresureBoxNum(info);
+    Bdat::uVal wait;
+    wait.ulong = Bdat::getValCheck(GfDataBdat::getFP(0x7B), 0, 0x51, 8);
+    unsigned int max = m_gmks.size();
+    unsigned int count = num < max ? num : max;
+    for (unsigned int i = 0; i < count; i++) {
+        gmk::GmkBattleChallengeReward* box = static_cast<gmk::GmkBattleChallengeReward*>(m_gmks[i]);
+        box->m_bdatRow = info.m_id;
+        box->m_index = i;
+        box->initWaitPopTime(wait.real * i);
+    }
+}
 
 int GfArenaReward::getTresureBoxNum(const ArenaBattleInfo& score) const {
     GfBdatBtl* btl = GfBdatBtl::get();
@@ -49,6 +71,25 @@ void GfArenaReward::playCameraCut01() {
     }
 }
 
+void GfArenaReward::listUpTBox() {
+    m_gmks.clear();
+    gmk::GmkManager* manager = gmk::GmkManager::sys();
+    for (gmk::GmkSet* const* it = manager->m_gmkSets.begin(); it != manager->m_gmkSets.end(); ++it) {
+        gmk::GmkBattleChallengeRewardList* list =
+            static_cast<gmk::GmkBattleChallengeRewardList*>((*it)->getGmkList(gmk::GmkBattleChallengeReward::TYPE));
+        if (list == nullptr) {
+            continue;
+        }
+        unsigned int num = list->getInstNum();
+        for (unsigned int i = 0; i < num; i++) {
+            m_gmks.push_back(&list->m_gmks[i]);
+            if (m_gmks.size() == 8) {
+                break;
+            }
+        }
+    }
+}
+
 void GfArenaReward::playVoice(const ArenaBattleInfo& score) {
     SCOM_BATTLE_ARENA::createAfterVoice(getTresureBoxNum(score));
 }
@@ -63,6 +104,24 @@ void GfArenaReward::playReturnVoice(bool flag) {
         }
     }
     SCOM_BATTLE_ARENA::createReturnVoice(handles, count != 0, flag);
+}
+
+void GfArenaReward::dropClearReward(const ArenaBattleInfo& info) {
+    unsigned int itemId = GfBdatBtl::get()->getBTL_ChBtlClearReward(info.m_id);
+    if (itemId != 0) {
+        GfFobjDropitem::EmitInfo emit;
+        emit.m_items.setAllocator(fw::FrameworkMemory::getAllocator(5));
+        emit.m_items.reserve(1);
+        GfDropitemInfo item;
+        item.pad_0x0 = itemId;
+        item.pad_0x4 = 1;
+        item.pad_0x5 = 100;
+        item.pad_0x8 = 0;
+        item.pad_0xc = 0;
+        item.pad_0x10 = 0.0f;
+        emit.m_items.push_back(item);
+        GfFobjDropitem::emitDropitems(emit);
+    }
 }
 
 }  // namespace gf

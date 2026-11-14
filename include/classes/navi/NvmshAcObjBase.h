@@ -108,6 +108,12 @@ public:
     // setMoveVec with the direction from from to to (in the xz plane with m_flags bit 4), or (0, 0, 1) when they
     // are within 0.001 on each axis (the parameter names are not the original's)
     void calcTargetVecLine(const mm::Vec3& from, const mm::Vec3& to);
+    // setMoveVec with the xz direction from from to to ((0, 0, 1) when they are within 0.001 on x and z); without
+    // m_flags bit 4 that direction doubled with the height difference added, normalized (the parameter names are not
+    // the original's)
+    void calcTargetVecColi(const mm::Vec3& from, const mm::Vec3& to);
+    // the same with the height difference taken from pos instead of to
+    void calcTargetVecColiAddPos(const mm::Vec3& from, const mm::Vec3& to, const mm::Vec3& pos);
     // as seachNaviMesh, the end search over the wide area
     int seachWideAreaNaviMesh(_NaviTempColiResl& result, _NaviCalcResTbl* tbl, _NaviCalcResInfo* info);
     bool seachWideAreaNaviMesh(NvmshColiResult& result, int idx);
