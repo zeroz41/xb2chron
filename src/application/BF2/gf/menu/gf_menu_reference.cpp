@@ -285,6 +285,14 @@ float GfMenuReference::getBattleTime() {
     return 0.0f;
 }
 
+void GfMenuReference::setVisionTimeRatio(float ratio) {
+    GfMenuReference* self = get();
+    if (self) {
+        mm::clampSelf(ratio, 0.0f, 1.0f);
+        self->m_challengeRatio = ratio;
+    }
+}
+
 float GfMenuReference::getVisionTimeRatio() {
     GfMenuReference* self = get();
     if (self) return self->m_challengeRatio;

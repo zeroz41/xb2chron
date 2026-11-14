@@ -218,6 +218,15 @@ void GfGameVoice::gevMapjump(GEV gev, const MapjumpCallbackInfo& info) {
     }
 }
 
+bool GfVoiceName::getVoicePath(mm::mtl::FixStr<16>& path) const {
+    if (!isValid()) {
+        return false;
+    }
+    path = m_name.substr(0, m_number);
+    path += "/";
+    return true;
+}
+
 bool GfGameVoice::isPlayEnemyVoice() const {
     GfGameVoice* self = const_cast<GfGameVoice*>(this);
     for (mm::mtl::FixedList<VoiceInfo*, 6>::iterator it = self->m_playList.begin(); it != self->m_playList.end();

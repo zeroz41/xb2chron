@@ -22,7 +22,9 @@ public:
     // user-declared: PJOB_PLAY's slot 0 is its own empty destructor (a member with a non-trivial destructor), not
     // PJOB's as in PJOB_STOP's and PJOB_WAIT_STOP's tables
     ~GfVoiceName() {}
-    void getVoicePath(mm::mtl::FixStr<16>& path) const;
+    // the name's first m_number characters (all of it for -1) and a '/' into path; false, path untouched, without a
+    // number (the return type is not in the symbol: inferred from the body's w0)
+    bool getVoicePath(mm::mtl::FixStr<16>& path) const;
     // the name holds a character ID (1.0.0's gf::GfVoiceName::isValid() const, 0x71003599EC; 3.0.1 inlines it)
     bool isValid() const { return m_number != 0; }
     // the number the name's first m_number digits spell (1.0.0's gf::GfVoiceName::getCharaId() const, 0x710035B8D0;
