@@ -19,24 +19,6 @@
 
 namespace fw {
 
-// castRay (0x7100187030) is not here yet: written as
-//     if (m_ground == nullptr) return false;
-//     const mm::Plane* plane = m_ground->getPlane();
-//     if (plane == nullptr) return false;
-//     float fromDistance = plane->d + from.dot(plane->normal);
-//     if (fromDistance < 0.0f) return false;
-//     if (plane->d + plane->normal.dot(to) > 0.0f) return false;
-//     mm::Vec3 dir = to - from;
-//     float denom = fabsf(dir.dot(plane->normal));
-//     float t = denom > 1.1920929e-07f ? fabsf(fromDistance) / denom : 0.0f;
-//     *pHitPos = mm::Vec3(dir.x * t + from.x, dir.y * t + from.y, dir.z * t + from.z);
-//     *pNormal = plane->normal;
-//     return true;
-// its data flow is the original's; the original keeps the result in one register for every early return (its
-// false set before the plane's check) where this returns each false on its own
-// (and multiplies the difference's x by the normal's x, dir first: its normal is loaded after the difference, where
-// this reuses the first check's loads and puts the normal first)
-
 LookAtIkSolver* LookAtIkSolver::create(const ParamAdapter& param, const char* bone,
                                        mm::mtl::IntrusivePtr<ReferenceFrame>& frame, anm::Pose& pose) {
 #line 42
