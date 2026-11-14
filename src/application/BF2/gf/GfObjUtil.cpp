@@ -47,6 +47,9 @@
 #include "classes/gf/GfComDynamics.h"
 #include "gf/MsgUnk_1000007.h"
 #include "classes/gf/GfComBehavior.h"
+#include "classes/gf/GfComAsm.h"
+#include "classes/gf/GfComEvtAnim.h"
+#include "gf/GfObjUpdate.h"
 #include "classes/gf/EyeBlinkPlugin.h"
 #include "classes/gf/GfComPropertyPc.h"
 #include "gf/GfAppend.h"
@@ -90,6 +93,25 @@ inline void enableSolver(fw::SphericalCoordinatesIkSolver* solver, bool) {
     solver->m_enable = true;
 }
 }  // namespace
+
+void GfObjUpdate::updateComponent(GfObj* obj, const fw::UpdateInfo& info) {
+    if (!obj->m_execUpdate) {
+        return;
+    }
+    if (GfComAsm* com = obj->getComponent<GfComAsm>(2)) {
+        com->executeCallback();
+    } else if (GfComEvtAnim* anim = obj->getComponent<GfComEvtAnim>(2)) {
+        anim->m_asm.executeCallback(anim);
+    }
+    if (GfComBehavior* behavior = obj->getComponent<GfComBehavior>(6)) {
+        behavior->update(info);
+    }
+    if (GfComAsm* com = obj->getComponent<GfComAsm>(2)) {
+        com->executeCallback();
+    } else if (GfComEvtAnim* anim = obj->getComponent<GfComEvtAnim>(2)) {
+        anim->m_asm.executeCallback(anim);
+    }
+}
 
 GfAppend* GfObjUtil::getAppend(GF_OBJ_HANDLE* handle, GFATTACH attach) {
     // a weapon set up for the second list takes its append from there

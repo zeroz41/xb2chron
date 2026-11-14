@@ -6,6 +6,7 @@
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
 #include "classes/gf/GfObjManager.h"
+#include "classes/gmk/DistHvCond.h"
 #include "mm/Vec3.h"
 #include "mm/mtl/Vector.h"
 
@@ -43,7 +44,7 @@ public:
     };
 
     GfRelSmnEnemy()
-        : m_popRadius(1.0f), m_limitRadius(5.0f), m_gmkPopDistSq(0.0f), m_gmkDepopDistSq(0.0f) {
+        : m_popRadius(1.0f), m_limitRadius(5.0f), m_depopCond() {
         GfObjManager::addListener(this, OBJEVT(0));
     }
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 0
@@ -73,8 +74,8 @@ public:
     CreateInfo m_info;                                                 // 0x10
     float m_popRadius;                                                 // 0x40
     float m_limitRadius;                                               // 0x44
-    float m_gmkPopDistSq;                                              // 0x48
-    float m_gmkDepopDistSq;                                            // 0x4C
+    // 0x48: updateDepopEnemy destroys the enemies whose setup position it no longer matches (both distances set)
+    gmk::DistHvCond m_depopCond;
     mm::mtl::Vector<PopInfo> m_popInfos;                               // 0x50
     mm::mtl::Vector<std::pair<PopInfo*, GF_OBJ_HANDLE*> > m_waitEnemies;  // 0x78: popped, waiting to appear
     mm::mtl::Vector<GF_OBJ_HANDLE*> m_enemies;                         // 0xA0

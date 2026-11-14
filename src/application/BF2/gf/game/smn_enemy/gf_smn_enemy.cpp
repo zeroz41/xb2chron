@@ -19,6 +19,10 @@
 #include "plugin/Bdat.h"
 #include "gf/GfObjAcc.h"
 #include "gf/GfObjUtil.h"
+#include "gf/GfObjInfo.h"
+#include "classes/gf/GfObj.h"
+#include "classes/gf/GfObjSetupEnemy.h"
+#include "mm/mtl/RTTI.h"
 
 #include <algorithm>
 
@@ -81,6 +85,34 @@ void GfRelSmnEnemy::disposeWaitEnemies() {
             }
         }
         m_waitEnemies.destroy();
+    }
+}
+
+namespace {
+// an enemy's setup when its object's info holds one of its own kind (5), as gf_game_obj's _gfgob::getEnemySetup
+// (inline; the name is not the original's)
+inline GfObjSetupEnemy* getEnemySetup(GF_OBJ_HANDLE* handle) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info != nullptr && info->m_setup != nullptr && info->m_setup->m_type == info->m_obj->m_type &&
+        info->m_obj->m_type == 5) {
+        return mm::mtl::rttiCast<GfObjSetupEnemy>(info->m_setup);
+    }
+    return nullptr;
+}
+}  // namespace
+
+void GfRelSmnEnemy::updateDepopEnemy() {
+    if (m_enemies.size() == 0) {
+        return;
+    }
+    for (GF_OBJ_HANDLE*& handle : m_enemies) {
+        GfObjSetupEnemy* setup = getEnemySetup(handle);
+        if (m_depopCond.m_horizontalSq > 0.0f && m_depopCond.m_verticalSq > 0.0f &&
+            !m_depopCond.isMatch(setup->m_initialPos)) {
+            m_enemies.erase(&handle);
+            SCOM_DESTROY_GAME_OBJ::create(handle, 0.5f, 0);
+            return;
+        }
     }
 }
 
