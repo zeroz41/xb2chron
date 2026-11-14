@@ -5,8 +5,10 @@
 #include "classes/effect/SystemManager.h"
 
 namespace ptlib { class FxHeader; }
+namespace ptlib { namespace math { class KeyFrameIP; } }
 
 namespace ptlib { namespace emitter {
+class EmitterArg;
 class EmitterParam;
 class EmitterObj;
 class EmitterSetNode;
@@ -67,6 +69,10 @@ public:
     // allocates a particle for an emitter and places it at the emitter's start (create_local01; nullptr when none
     // is left)
     ParticleObj* createCommon(EmitterObj* pEmitter);
+    // a new particle's speed: the emitter's SpeedParam with a random range, keyed by kf when key is set, times the
+    // emitter's scale (create_local01)
+    void createSpd(EmitterObj* pEmitter, EmitterArg* pArg, math::KeyFrameIP& kf, float frame, ParticleObj* pParticle,
+                   bool key);
     // takes a particle off the free list and resets it, nullptr when none is left
     ParticleObj* getFreeParticle();
     // takes an emitter off the free list, nullptr when none is left

@@ -572,7 +572,7 @@ ParticleObj* EmitterManager::createCommon(EmitterObj* pEmitter) {
         mm::Vec3 goal;
         EmitterObj::calc_start2goal01(pEmitter, &pParticle->m_pos, &goal);
         pParticle->m_goal = goal;
-        pParticle->pad_c2 = 0;
+        pParticle->m_rotSign = 0;
         pParticle->m_prevPos = pParticle->m_pos;
         pParticle->pad_40 = mm::Vec3::zero;
         pParticle->pad_50 = mm::Vec3::zero;
@@ -583,6 +583,199 @@ ParticleObj* EmitterManager::createCommon(EmitterObj* pEmitter) {
         pParticle->getExtParam().m_pMdl = nullptr;
     }
     return pParticle;
+}
+
+void EmitterManager::createSpd(EmitterObj* pEmitter, EmitterArg* pArg, math::KeyFrameIP& kf, float frame,
+                               ParticleObj* pParticle, bool key) {
+    const SpeedParam* pSpeed = pEmitter->m_pSpeed;
+    if (pSpeed == nullptr) {
+        pParticle->m_speed = 0.0f;
+        pParticle->m_baseSpeed = 0.0f;
+        return;
+    }
+    float speed = pSpeed->m_speed + pSpeed->m_speedRange * math::randf2(pEmitter->m_seed);
+    if (key && (pSpeed->m_kfCount != 0 || pSpeed->m_kfCount2 != 0)) {
+        pArg->get_kf(&kf, pSpeed->m_kfCount != 0 ? pSpeed->m_kfCount : pSpeed->m_kfCount2, 2, frame,
+                     pEmitter->m_spdKeyIndex, &pEmitter->m_spdKey, &pParticle->m_pSpdKf, pEmitter->m_pSpdKfTable);
+        float value = kf.keyrand_get_ip1(&pEmitter->m_spdKey, pEmitter->m_seed);
+        if (pSpeed->m_kfCount != 0) {
+            pParticle->m_speedKey = value;
+        }
+        speed *= value;
+    }
+    pParticle->m_baseSpeed = speed;
+    pParticle->m_speed = speed * pEmitter->getEmitterScale();
+}
+
+ParticleObj* EmitterObj::move_type1_sort(ParticleObj** pTable, EmitterObj* pEmitter) {
+    if (pTable != nullptr) {
+        memset(pTable, 0, sizeof(ParticleObj*) * 100);
+    }
+    ParticleObj* pLast = nullptr;
+    for (IntrusiveList<ParticleObj>::iterator it = pEmitter->m_particleList.begin();
+         it != pEmitter->m_particleList.end(); ++it) {
+        ParticleObj* pParticle = it.get();
+        short life = pParticle->m_life;
+        if (life < 0 || life > 100) {
+            pLast = pParticle;
+            if (pTable == nullptr) {
+                break;
+            }
+        } else if (pTable != nullptr) {
+            pTable[life - 1] = pParticle;
+        }
+    }
+    return pLast;
+}
+
+void EmitterObj::move_common_cas_update(EmitterArg* pArg) {
+    // never set: calc_start2goal_axis gets whatever the register holds (the original passes it uninitialized)
+    unsigned int seed;
+    calc_start2goal_axis(m_pCas->m_mtx, m_pCas->m_scale, this, pArg->m_axisType, seed, false);
+    EmitterCas* pCas = m_pCas;
+    const mm::Mat44& mtx = pCas->m_mtx;
+    mm::Quat& rot = pCas->m_rot;
+    float trace[4];
+    trace[0] = mtx.m[0][0] - mtx.m[1][1] - mtx.m[2][2] + 1.0f;
+    trace[1] = -mtx.m[0][0] + mtx.m[1][1] - mtx.m[2][2] + 1.0f;
+    trace[2] = -mtx.m[0][0] - mtx.m[1][1] + mtx.m[2][2] + 1.0f;
+    trace[3] = mtx.m[0][0] + mtx.m[1][1] + mtx.m[2][2] + 1.0f;
+    unsigned int index = trace[1] > trace[0] ? 1 : 0;
+    if (trace[2] > trace[index]) {
+        index = 2;
+    }
+    if (trace[3] > trace[index]) {
+        index = 3;
+    }
+    if (trace[index] < 0.0f) {
+        rot = mm::Quat::identity;
+        return;
+    }
+    float* q[4] = {&rot.x, &rot.y, &rot.z, &rot.w};
+    float s = ::sqrtf(trace[index]) * 0.5f;
+    *q[index] = s;
+    s = 0.25f / s;
+    switch (index) {
+    case 0:
+        rot.y = s * (mtx.m[0][1] + mtx.m[1][0]);
+        rot.z = s * (mtx.m[2][0] + mtx.m[0][2]);
+        rot.w = s * (mtx.m[1][2] - mtx.m[2][1]);
+        break;
+    case 1:
+        rot.x = s * (mtx.m[0][1] + mtx.m[1][0]);
+        rot.z = s * (mtx.m[1][2] + mtx.m[2][1]);
+        rot.w = s * (mtx.m[2][0] - mtx.m[0][2]);
+        break;
+    case 2:
+        rot.x = s * (mtx.m[2][0] + mtx.m[0][2]);
+        rot.y = s * (mtx.m[1][2] + mtx.m[2][1]);
+        rot.w = s * (mtx.m[0][1] - mtx.m[1][0]);
+        break;
+    case 3:
+        rot.x = s * (mtx.m[1][2] - mtx.m[2][1]);
+        rot.y = s * (mtx.m[2][0] - mtx.m[0][2]);
+        rot.z = s * (mtx.m[0][1] - mtx.m[1][0]);
+        break;
+    }
+}
+
+// mm::Vec3::isValid read through the float's memory (calcParSize's check loads each component once, as an integer;
+// the name is not the original's)
+static inline bool isValidBits(const float& f) {
+    unsigned int bits = *reinterpret_cast<const unsigned int*>(&f);
+    return bits != 0xCCCCCCCC && (bits & 0x7F800000) != 0x7F800000;
+}
+
+void ParticleObj::calcParSize(int flag, EmitterObj* pEmitter, math::KeyFrameIP& kf, float frame, float emitterFrame,
+                              bool key) {
+    if (flag != 0) {
+        return;
+    }
+    EmitterArg* pArg = pEmitter->m_pData;
+    float scale = pEmitter->getEmitterScale() * m_sizeRate;
+    mm::Vec3NA size = {scale, scale, scale};
+    if (pArg->m_sizeKfCount != 0) {
+        pArg->get_kf(&kf, pArg->m_sizeKfCount, 6, frame, m_pWork->m_sizeKeyIndex, &m_pWork->m_sizeKey, &m_pSizeKf,
+                     pEmitter->m_pSizeKfTable);
+        kf.keyrand_mul_ip3(&size, &m_pWork->m_sizeKey, pEmitter->m_seed);
+    } else {
+        size.x = scale * m_baseSize.x;
+        size.y = scale * m_baseSize.y;
+        size.z = scale * m_baseSize.z;
+    }
+    if (key) {
+        if (pArg->m_sizeScaleCount != 0) {
+            size.x = size.x * m_sizeScale.x;
+            size.y = size.y * m_sizeScale.y;
+            size.z = size.z * m_sizeScale.z;
+        } else if (pArg->m_emSizeKfCount != 0) {
+            pArg->get_kf(&kf, pArg->m_emSizeKfCount, 6, emitterFrame, pEmitter->m_sizeKeyIndex, &pEmitter->m_sizeKey,
+                         &m_pSizeKf, pEmitter->m_pSizeKfTable);
+            kf.keyrand_mul_ip3(&size, &pEmitter->m_sizeKey, pEmitter->m_seed);
+        }
+    }
+    if (isValidBits(m_sizeMul.x) && isValidBits(m_sizeMul.y) && isValidBits(m_sizeMul.z)) {
+        size.x = size.x * m_sizeMul.x;
+        size.y = size.y * m_sizeMul.y;
+        size.z = size.z * m_sizeMul.z;
+    }
+    m_size.x = size.x;
+    m_size.y = size.y;
+    m_size.z = size.z;
+}
+
+void ParticleObj::calcParRot(math::KeyFrameIP& kf, float frame, EmitterObj* pEmitter, bool key, float rate) {
+    EmitterArg* pArg = pEmitter->m_pData;
+    if (pArg->m_rotKfCount == 0) {
+        return;
+    }
+    pArg->get_kf(&kf, pArg->m_rotKfCount, 6, frame, m_pWork->m_rotKeyIndex, &m_pWork->m_rotKey, &m_pRotKf,
+                 pEmitter->m_pRotKfTable);
+    if (pArg->m_rotMode == 0 && key) {
+        kf.keyrand_get_ip3(&m_rot, &m_pWork->m_rotKey, pEmitter->m_seed);
+        return;
+    }
+    mm::Vec3 add;
+    kf.keyrand_get_ip3(&add, &m_pWork->m_rotKey, pEmitter->m_seed);
+    add.x *= rate;
+    add.y *= rate;
+    add.z *= rate;
+    switch (pArg->m_rotMode) {
+    case 2:
+        if (m_rotSign & 1) {
+            add.x = -add.x;
+        }
+        if (m_rotSign & 2) {
+            add.y = -add.y;
+        }
+        if (m_rotSign & 4) {
+            add.z = -add.z;
+        }
+    case 1: {
+        float rot = add.x + m_rot.x;
+        if (rot > 3.14159274f) {
+            rot -= 6.28318548f;
+        } else if (rot < -3.14159274f) {
+            rot += 6.28318548f;
+        }
+        m_rot.x = rot;
+        rot = add.y + m_rot.y;
+        if (rot > 3.14159274f) {
+            rot -= 6.28318548f;
+        } else if (rot < -3.14159274f) {
+            rot += 6.28318548f;
+        }
+        m_rot.y = rot;
+        rot = add.z + m_rot.z;
+        if (rot > 3.14159274f) {
+            rot -= 6.28318548f;
+        } else if (rot < -3.14159274f) {
+            rot += 6.28318548f;
+        }
+        m_rot.z = rot;
+        break;
+    }
+    }
 }
 
 void ParticleObj::calcNoise(EmitterObj* pEmitter, mm::Vec3& speed) {
@@ -603,6 +796,43 @@ void ParticleObj::calcNoise(EmitterObj* pEmitter, mm::Vec3& speed) {
     }
 }
 
+void ParticleObj::calcNewton(EmitterObj* pEmitter, mm::Vec3& speed) {
+    const NewtonParam* pNewton = pEmitter->m_pNewton;
+    if (pNewton == nullptr) {
+        return;
+    }
+    unsigned short begin = pNewton->m_begin;
+    unsigned short end = pNewton->m_end;
+    float frame = pNewton->m_frameType <= 1 ? pEmitter->m_frame : m_frame * m_frameSpeed;
+    unsigned int now = static_cast<int>(frame);
+    if (now < begin) {
+        return;
+    }
+    if (end != 0 && now > end) {
+        return;
+    }
+    mm::Vec3 dir = m_pos - pEmitter->m_newtonCenter;
+    float dist = dir.length();
+    if (dist > pNewton->m_radius) {
+        float power = pNewton->m_power * ::powf(dist, pNewton->m_exponent);
+        float length = dir.length();
+        mm::Vec3 pull = dir;
+        if (length <= 1e-6f) {
+            pull = mm::Vec3::zero;
+        } else {
+            float scale = 1.0f / length;
+            pull.x = scale * pull.x;
+            pull.y = scale * pull.y;
+            pull.z = scale * pull.z;
+        }
+        mm::Vec3 force = pull * power;
+        m_pWork->m_newton -= force;
+    }
+    speed.x += m_pWork->m_newton.x;
+    speed.y += m_pWork->m_newton.y;
+    speed.z += m_pWork->m_newton.z;
+}
+
 void ParticleObj::calcIsFit(int isFit, EmitterObj* pEmitter, mm::Vec3& dir) {
     if (isFit == 0) {
         return;
@@ -619,11 +849,11 @@ void ParticleObj::calcIsFit(int isFit, EmitterObj* pEmitter, mm::Vec3& dir) {
     if (pData->m_fitParent && (pParent = pEmitter->m_pAttach) != nullptr &&
         (pParentEmitter = pParent->m_pWork->m_pEmParent) != nullptr && pEmitter->m_attachId == pParent->m_id &&
         pParentEmitter->m_pData != nullptr && (pParentEmitter->m_pData->m_fitType & 8) != 0) {
-        m_rotX = pParent->m_rotX;
-        m_rotY = pEmitter->m_pAttach->m_rotY;
+        m_rot.x = pParent->m_rot.x;
+        m_rot.y = pEmitter->m_pAttach->m_rot.y;
     } else {
-        m_rotX = -atan2f(dir.y, sqrtf(dir.x * dir.x + dir.z * dir.z));
-        m_rotY = atan2f(dir.x, dir.z);
+        m_rot.x = -atan2f(dir.y, sqrtf(dir.x * dir.x + dir.z * dir.z));
+        m_rot.y = atan2f(dir.x, dir.z);
     }
 }
 

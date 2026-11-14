@@ -3,6 +3,7 @@
 
 #include "ptlib/IntrusiveList.h"
 #include "mm/Mat44.h"
+#include "mm/Quat.h"
 #include "mm/Vec3.h"
 #include "mm/Vec3NA.h"
 #include "ptlib/math/KeyFrameIP.h"
@@ -39,7 +40,9 @@ public:
     // 0x10: ParticleObj::emitter_create_local_common_grav_wind turns the wind by its rotation rows (the name is not
     // the original's)
     mm::Mat44 m_mtx;
-    unsigned char pad_50[0x20];
+    // 0x50: m_mtx's rotation as a quaternion (EmitterObj::move_common_cas_update; the name is not the original's)
+    mm::Quat m_rot;
+    unsigned char pad_60[0x10];
     char m_name[0x10];  // emitter_set_casname's name (at most 15 characters); _casparam empties it
     unsigned char pad_80[0x8];
     float m_scale;
@@ -63,7 +66,9 @@ public:
         unsigned char pad_24[0xC];
         mm::Vec3 m_wind;
         mm::Vec3 m_noise;  // 0x40: ParticleObj::calcNoise sums its turbulence here (the name is not the original's)
-        unsigned char pad_50[0xB8];
+        unsigned char pad_50[0x40];
+        mm::Vec3 m_newton;  // 0x90: ParticleObj::calcNewton's pull, added to the speed (the name is not the original's)
+        unsigned char pad_a0[0x68];
         void* m_pLgt;  // 0x108: the light ParticleManager::deleteLgt deletes (the name is not the original's)
         // the particle's model or, with a light, the light's id (the names are not the original's)
         union {
@@ -82,10 +87,17 @@ public:
         unsigned char pad_178[0x4];
         unsigned int m_rgba;   // 0x17C: m_color and m_alpha as Utility::conv_rgba bytes (the name is not the original's)
         unsigned int m_rgba2;  // 0x180: m_color2's (the name is not the original's)
-        unsigned char pad_184[0x30];
+        unsigned char pad_184[0x18];
+        // 0x19C, 0x1A8: the keys ParticleObj::calcParSize and calcParRot draw the size and rotation with (the names
+        // are not the original's)
+        math::EPkey m_sizeKey;
+        math::EPkey m_rotKey;
         // 0x1B4: the keys ParticleObj::move01_common_keyframe draws its vector with (the name is not the original's)
         math::EPkey m_vecKey;
-        unsigned char pad_1c0[0x5A];
+        unsigned char pad_1c0[0x56];
+        // 0x216, 0x218: EmitterArg::get_kf's key indices for m_sizeKey and m_rotKey (the names are not the original's)
+        short m_sizeKeyIndex;
+        short m_rotKeyIndex;
         short m_vecKeyIndex;  // 0x21A: EmitterArg::get_kf's key index for m_vecKey (the name is not the original's)
     };
     // deletes the particle's model or light and clears its work
@@ -108,6 +120,8 @@ public:
     void move_common_keyframe_uv1_full(EmitterObj* pEmitter, float frame, float rate);
     void calcMatColor(float frame, math::KeyFrameIP& kf, EmitterObj* pEmitter, float emitterFrame, bool key);
     void move01_common_posVec(EmitterObj* pEmitter, int flag);
+    // adds the emitter's NewtonParam pull, kept in the work block, to speed
+    void calcNewton(EmitterObj* pEmitter, mm::Vec3& speed);
     void move01_common_keyframe_uv23(EmitterObj* pEmitter, int flag, float rate);
     void move_field_clip(EmitterObj* pEmitter, mm::Vec3& min, mm::Vec3& max);
     // the particle's work ("et->getExtParam()")
@@ -130,23 +144,39 @@ public:
     mm::Vec3 m_goal;  // 0x30: calc_start2goal01's goal (EmitterManager::createCommon; the name is not the original's)
     mm::Vec3 pad_40;  // createCommon zeroes it
     mm::Vec3 pad_50;  // createCommon zeroes it
-    unsigned char pad_60[0x34];
-    // 0x94, 0x98: the particle's pitch and yaw (calcIsFit turns it along a direction; the names are not the original's)
-    float m_rotX;
-    float m_rotY;
-    unsigned char pad_9c[0x4];
+    unsigned char pad_60[0x10];
+    // 0x70: the particle's size: calcParSize's base or keyed size, scaled (the name is not the original's)
+    mm::Vec3NA m_size;
+    mm::Vec3NA m_baseSize;   // 0x7C: calcParSize's size without key frames (the name is not the original's)
+    mm::Vec3NA m_sizeScale;  // 0x88: calcParSize's scale while the emitter's size keys are per particle (the name is not the original's)
+    // 0x94: the particle's pitch, yaw and roll (calcIsFit turns it along a direction, calcParRot keys or turns it
+    // within -pi..pi; the name is not the original's)
+    mm::Vec3NA m_rot;
     mm::Vec3NA m_keyVec;  // 0xA0: move01_common_keyframe's keyed vector (the name is not the original's)
-    unsigned char pad_ac[0xC];
+    // 0xAC, 0xB0, 0xB4: EmitterManager::createSpd's speed times the emitter's scale, the speed and its key value
+    // (the names are not the original's)
+    float m_speed;
+    float m_baseSpeed;
+    float m_speedKey;
     // 0xB8, 0xBC: their product is the particle's frame for move_common_check_begin_end_fin_fout (the names are not the
     // original's)
     float m_frame;
     float m_frameSpeed;
     unsigned short m_life;  // 0xC0: 0x7FFF lives on (the name is not the original's)
-    unsigned char pad_c2;  // createCommon clears it
+    // 0xC2: bits 0..2 negate calcParRot's turn per axis for the emitter's rotation mode 2; createCommon clears it
+    // (the name is not the original's)
+    unsigned char m_rotSign;
     // 0xC3: frames before the particle starts moving; the move01_type* loops count it down (the name is not the
     // original's)
     unsigned char m_delay;
-    unsigned char pad_c4[0x2C];
+    float m_sizeRate;  // 0xC4: calcParSize's scale of the emitter's (the name is not the original's)
+    unsigned char pad_c8[0x4];
+    // 0xCC: calcParSize's last scale, used only when every component is valid (the name is not the original's)
+    mm::Vec3NA m_sizeMul;
+    // 0xD8, 0xE0, 0xE8: EmitterArg::get_kf's key data for the speed, size and rotation (the names are not the original's)
+    float* m_pSpdKf;
+    float* m_pSizeKf;
+    float* m_pRotKf;
     float* m_pVecKf;  // 0xF0: EmitterArg::get_kf's key data for m_keyVec (the name is not the original's)
     unsigned char pad_f8[0x38];
     Work* m_pWork;  // 0x130
@@ -173,12 +203,25 @@ public:
     unsigned char m_type;
     unsigned char pad_1[0x8];
     bool m_fitParent;  // 0x9: ParticleObj::calcIsFit takes the parent particle's rotation (the name is not the original's)
-    unsigned char pad_a[0x8A];
+    unsigned char pad_a[0x6];
+    // 0x10: EmitterObj::move_common_cas_update's calc_start2goal_axis argument (the name is not the original's)
+    unsigned short m_axisType;
+    unsigned char pad_12[0x82];
     unsigned char m_constParam;  // 0x94: RenderGrObj::draw_common_uconst's fourth constant (the name is not the original's)
-    unsigned char pad_95[0x2F];
+    unsigned char pad_95[0xF];
+    // 0xA4, 0xA6, 0xA8: ParticleObj::calcParSize's key counts: the particle's scale when the first is set, else the
+    // emitter's size keys; the particle's size keys (the names are not the original's)
+    unsigned short m_sizeScaleCount;
+    unsigned short m_emSizeKfCount;
+    unsigned short m_sizeKfCount;
+    unsigned char pad_aa[0x1A];
     // 0xC4: 8 and 9 turn the particles along their motion (ParticleObj::calcIsFit; the name is not the original's)
     unsigned char m_fitType;
-    unsigned char pad_c5[0x1B];
+    // 0xC5: ParticleObj::calcParRot: 0 sets the keyed rotation, 1 adds it, 2 adds it negated by the particle's
+    // m_rotSign bits (the name is not the original's)
+    unsigned char m_rotMode;
+    unsigned short m_rotKfCount;  // 0xC6: calcParRot's get_kf count (the name is not the original's)
+    unsigned char pad_c8[0x18];
     // 0xE0: RenderGrObj::draw_common_uconst's thirteenth constant (the name is not the original's)
     unsigned char m_constParam2;
     unsigned char pad_e1[0x1];
@@ -209,12 +252,35 @@ public:
     char m_name[4];  // 0x24C: HashManager::build's entry name; the length is not known yet
 };
 
+// a particle's start speed: a speed, its random range and two key counts (EmitterManager::createSpd; the type and
+// field names are not the original's; the size is not known yet)
+struct SpeedParam {
+    float m_speed;
+    float m_speedRange;
+    // createSpd keys the speed by m_kfCount (and keeps the key value) or else by m_kfCount2
+    unsigned short m_kfCount;
+    unsigned short m_kfCount2;
+};
+
 // an emitter's gravity: a speed and its random range (ParticleObj::emitter_create_local_common_grav_wind; the type
 // and field names are not the original's; the size is not known yet)
 struct GravityParam {
     unsigned char pad_0[0x14];
     float m_speed;
     float m_speedRange;
+};
+
+// an emitter's pull toward a point: from frame m_begin to m_end (0: on), outside m_radius, m_power times the
+// distance to the m_exponent (ParticleObj::calcNewton; the type and field names are not the original's; the size is
+// not known yet)
+struct NewtonParam {
+    unsigned short m_begin;
+    unsigned short m_end;
+    unsigned short m_frameType;  // up to 1 the emitter's frame, else the particle's
+    unsigned char pad_6[0xE];
+    float m_radius;
+    float m_power;
+    float m_exponent;
 };
 
 // an emitter's wind: a direction, turned by the model's rotation unless m_type is 0, 8, 10 or 11, and a strength
@@ -269,6 +335,12 @@ public:
     int move01_type12(float frame, int flag);
     // a new particle's start and goal (EmitterManager::createCommon passes the particle's m_pos and m_goal)
     static void calc_start2goal01(EmitterObj* pEmitter, mm::Vec3* pStart, mm::Vec3* pGoal);
+    // what the arguments mean is not known yet (move_common_cas_update passes the model's matrix and scale)
+    static void calc_start2goal_axis(mm::Mat44& mtx, float& scale, EmitterObj* pEmitter, unsigned short type,
+                                     unsigned int seed, bool flag);
+    // with pTable (100 entries, cleared first): each particle whose m_life is 0..100 at index m_life - 1; returns the
+    // last particle outside that range (without pTable the first one), nullptr when none is
+    static ParticleObj* move_type1_sort(ParticleObj** pTable, EmitterObj* pEmitter);
     // m_fadeCount out of m_fadeFrames, 1 without a fade
     float calc_fade();
     // EmitterManager's speed of the emitter's category
@@ -326,13 +398,25 @@ public:
     unsigned char m_fadeFrames;  // calc_fade's denominator
     unsigned char pad_183[0x9];
     float m_frame;  // 0x18C: the emitter's frame (move_common_check_begin_end_fin_fout; the name is not the original's)
-    unsigned char pad_190[0x38];
+    unsigned char pad_190[0x30];
+    const SpeedParam* m_pSpeed;  // 0x1C0: EmitterManager::createSpd's (the name is not the original's)
     const GravityParam* m_pGravity;  // 0x1C8 (the name is not the original's)
-    unsigned char pad_1d0[0x20];
+    const NewtonParam* m_pNewton;  // 0x1D0 (the name is not the original's)
+    unsigned char pad_1d8[0x8];
+    mm::Vec3 m_newtonCenter;  // 0x1E0: the point ParticleObj::calcNewton pulls toward (the name is not the original's)
     const WindParam* m_pWind;  // 0x1F0 (the name is not the original's)
     // 0x1F8: the particles' noise (ParticleObj::calcNoise; the type and name are not the original's)
     const NoiseParam* m_pNoise;
-    unsigned char pad_200[0x60];
+    unsigned char pad_200[0x20];
+    // 0x220, 0x22C: the keys createSpd and ParticleObj::calcParSize draw the speed and the size with (the names are
+    // not the original's)
+    math::EPkey m_spdKey;
+    math::EPkey m_sizeKey;
+    unsigned char pad_238[0x1E];
+    // 0x256, 0x258: EmitterArg::get_kf's key indices for m_spdKey and m_sizeKey (the names are not the original's)
+    short m_spdKeyIndex;
+    short m_sizeKeyIndex;
+    unsigned char pad_25a[0x6];
     unsigned char m_drawLayer;  // 0x260: 0xFF gives the draw constants -3 (the name is not the original's)
     // 0x261: low four bits; 1 makes createCommon link the particle in first (the name is not the original's)
     unsigned char m_allocMode : 4;
@@ -346,7 +430,12 @@ public:
     unsigned char m_blendMode;
     unsigned char pad_270[0x4];
     unsigned char m_viewNum;  // emitter_set_viewnum's
-    unsigned char pad_275[0x5B];
+    unsigned char pad_275[0x43];
+    // 0x2B8, 0x2C0, 0x2C8: EmitterArg::get_kf's last argument for the speed, size and rotation keys (the names are
+    // not the original's)
+    float* m_pSpdKfTable;
+    float* m_pSizeKfTable;
+    float* m_pRotKfTable;
     float* m_pKfTable;  // 0x2D0: EmitterArg::get_kf's last argument (the name is not the original's)
     unsigned char pad_2d8[0x38];
     // 0x310: emitter_set_param_sub's DrGpuCheckBase::createEffGpuCheckObj (the name is not the original's)
