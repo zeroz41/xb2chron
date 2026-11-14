@@ -40,6 +40,14 @@
 #include "gf/GfObjAcc.h"
 #include "mm/mtl/RTTI.h"
 #include "mm/mtl/FixStr.h"
+#include "anm/TransformUtil.h"
+#include "classes/gf/GfAssetManager.h"
+#include "classes/gf/GfAssetResource.h"
+#include "classes/gf/GfManager.h"
+#include "gf/GfSetupParam.h"
+#include "anm/Factory.h"
+#include "ml/ScnObjAccEtcParams.h"
+#include "classes/fw/AnimationManager.h"
 #include <string.h>
 
 namespace gf {
@@ -317,6 +325,56 @@ bool StateMove::isCondMatch(const GfComBehaviorMob& owner) { return owner.pad_b8
 
 GfComModel::~GfComModel() {}
 
+void GfComModel::setup(const SetupInfo& info) {
+    if (info.m_handle == reinterpret_cast<GF_ASSET_HANDLE*>(-1)) {
+        return;
+    }
+    pad_10 = info.m_handle;
+    m_scale = info.m_scale;
+    fw::ModelObject::ModelSetup modelSetup;
+    if (GfAssetResource* resource = GfAssetManager::getResource(pad_10, info.m_file, static_cast<GfAssetType>(0))) {
+        modelSetup.name = resource->getAssetName();
+        modelSetup.resource = resource->getAssetData();
+        modelSetup.scn = GfManager::getSetupParam().m_scn;
+        modelSetup.layer = getLayer();
+        modelSetup.arg = info.m_arg;
+        modelSetup.keepScale = info.m_keepScale;
+        modelSetup.scale = info.m_scale;
+        m_model = fw::ModelObject::create(getAllocator(ALLOCATOR(0)), modelSetup);
+        if (GfComTransform* transform = m_owner->getComponent<GfComTransform>(0)) {
+            m_frame = transform->getFrame();
+            m_model->m_frame = m_frame;
+        }
+        if (info.pad_20) {
+            ml::ScnObjAccEtcParams params(m_model->getInterface());
+            params.setRimBloom(false);
+        }
+    }
+    if (m_model != nullptr && info.m_skeleton != nullptr) {
+        m_skeleton = info.m_skeleton;
+        m_skeleton->addRef();
+        m_pose = anm::Factory::createPose(m_skeleton, getAllocator(ALLOCATOR(0)));
+        m_pose->setReferencePose();
+        anm::Pose* pose = m_pose;
+        pose->syncLocalSpace();
+        pose->syncModelSpace();
+        m_extraTruckBuffer = anm::Factory::createExtraTruckBuffer(m_skeleton, "EX_extraControl", getAllocator(ALLOCATOR(0)));
+        m_poseModifier.bind(m_pose, m_model, m_extraTruckBuffer, getAllocator(ALLOCATOR(0)));
+        mm::mtl::PtrSingleton<fw::AnimationManager>::sys()->addPoseModifier(getLayer(), m_poseModifier);
+        if (!info.pad_20) {
+            m_volumeFade.bind(m_model);
+            m_volumeFade.m_condition.set(this, &GfComModel::isVolumeFadeForUser);
+            mm::mtl::PtrSingleton<fw::AnimationManager>::sys()->addAfterModifier(getLayer(), m_volumeFade);
+        }
+    }
+    if (info.m_boneFrameCount != 0) {
+        m_boneFrames.setAllocator(getAllocator(ALLOCATOR(0)));
+        m_boneFrames.reserve(info.m_boneFrameCount);
+        pad_1168.setAllocator(getAllocator(ALLOCATOR(0)));
+        pad_1168.reserve(info.m_boneFrameCount);
+    }
+}
+
 void GfComModel::cleanup() {
     if (m_boneFrames.capacity() != 0) {
         for (unsigned int i = 0; i < m_boneFrames.size(); i++) {
@@ -357,7 +415,7 @@ void GfComModel::cleanup() {
         m_model->release();
         m_model = nullptr;
     }
-    pad_10 = -1;
+    pad_10 = reinterpret_cast<GF_ASSET_HANDLE*>(-1);
 }
 
 bool GfComModel::recieveMessage(fw::MessageObject*, fw::Message& msg) {
@@ -371,7 +429,7 @@ bool GfComModel::recieveMessage(fw::MessageObject*, fw::Message& msg) {
 }
 
 GfComModel::GfComModel()
-    : pad_10(-1), m_model(nullptr), m_skeleton(nullptr), m_pose(nullptr), m_extraTruckBuffer(nullptr), m_scale(1.0f),
+    : pad_10(reinterpret_cast<GF_ASSET_HANDLE*>(-1)), m_model(nullptr), m_skeleton(nullptr), m_pose(nullptr), m_extraTruckBuffer(nullptr), m_scale(1.0f),
       m_pViewer(nullptr) {
     m_viewerListener.m_pOwner = this;
 }
@@ -597,6 +655,33 @@ void GfComModel::destroyMountReferenceFrameImpl(mm::mtl::IntrusivePtr<fw::Refere
 #line 604
     MM_ASSERT(com_trans != NULL);
     com_trans->removeAfterReferenceFrame(frame);
+}
+
+bool GfComModel::clacBoneRotateMS(unsigned short bone, mm::Quat* rot) const {
+    const anm::Skeleton* skeleton = m_skeleton;
+    if (skeleton == nullptr || bone >= skeleton->m_referencePose.size()) {
+        return false;
+    }
+    anm::QsTransform transform = skeleton->m_referencePose[bone];
+    for (short parent = m_skeleton->getParentIndex(bone); parent != -1; parent = m_skeleton->getParentIndex(parent)) {
+        anm::TransformUtil::mul(skeleton->m_referencePose[parent], transform, &transform);
+    }
+    *rot = transform.m_rotation;
+    return true;
+}
+
+void GfComModel::changeLayer(unsigned int oldLayer, unsigned int layer) {
+    if (oldLayer == layer) {
+        return;
+    }
+    fw::AnimationManager* manager = mm::mtl::PtrSingleton<fw::AnimationManager>::sys();
+    if (manager != nullptr && m_model != nullptr && m_skeleton != nullptr) {
+        manager->removePoseModifier(getLayer(), m_poseModifier);
+        manager->addPoseModifier(layer, m_poseModifier);
+        manager->removeAfterModifier(getLayer(), m_volumeFade);
+        manager->addAfterModifier(layer, m_volumeFade);
+    }
+    m_model->changeLayer(layer);
 }
 
 mm::mtl::RTTI GfComModel::m_rtti("GfComModel", &GfComponent::m_rtti, nullptr);

@@ -16,6 +16,10 @@ namespace fw {
 class ModelObject : public ::fw::ModelManager::Element {
 public:
     struct ModelSetup {
+        // gf::GfComModel::setup's: zeroes, -1 at 0x28 and a scale of 1 (byte 0x27 is left as it was)
+        ModelSetup()
+            : scn(nullptr), resource(nullptr), name(nullptr), altName(nullptr), arg(0), pad_24(), keepScale(false),
+              pad_28(-1), layer(0), scale(1.0f) {}
         ml::Scn* scn;  // the scene the model is made in
         const void* resource;  // createMdl's resource
         const char* name;  // createMdl's name when altName is null
@@ -23,7 +27,8 @@ public:
         int arg;  // createMdl's last argument
         unsigned char pad_24[0x2];
         bool keepScale;  // true: the model is not scaled by scale on creation (the name is not the original's)
-        unsigned char pad_27[0x5];
+        unsigned char pad_27;
+        int pad_28;
         unsigned int layer;
         float scale;
     };

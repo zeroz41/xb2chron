@@ -15,6 +15,8 @@ namespace fw { class ModelObject; }
 namespace fw { class MessageObject; }
 
 namespace anm { class Skeleton; }
+namespace gf { class GF_ASSET_HANDLE; }
+namespace gf { enum GfFileIdx : int; }
 
 namespace gf {
 // table 0x7100B667B8
@@ -36,6 +38,18 @@ public:
         // how many createBoneReferenceFrame calls share the frame (the name is not the original's)
         int count;
     };
+    // what setup takes (the field names are not the original's)
+    struct SetupInfo {
+        GfFileIdx m_file;  // the model's file in the asset (GfAssetManager::getResource's)
+        const anm::Skeleton* m_skeleton;  // no pose, extra truck buffer or modifiers without one
+        unsigned int m_boneFrameCount;  // the room both bone frame vectors get
+        int m_arg;  // ModelSetup::arg
+        GF_ASSET_HANDLE* m_handle;  // the asset the model is in: setup does nothing for -1
+        // no rim bloom on the model and no volume fade
+        bool pad_20;
+        bool m_keepScale;  // ModelSetup::keepScale
+        float m_scale;  // ModelSetup::scale, kept in m_scale
+    };
     GfComModel();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComModel();  // slot 1
@@ -43,6 +57,7 @@ public:
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     // undoes setup (GfObjFactory::destroyComponent): frees the bone frames, unbinds the modifiers, releases the
     // model, frame, skeleton, pose and extra truck buffer
+    void setup(const SetupInfo& info);
     void cleanup();
     mm::mtl::IntrusivePtr<fw::ReferenceFrame> createBoneReferenceFrame(const char* bone);
     void destroyBoneReferenceFrame(const char* bone);
@@ -65,10 +80,13 @@ public:
     bool isRender() const;
     // the model's scale, every axis the same (GfObjAcc::setModelScale forwards to it)
     void setModelScale(float scale);
+    // the bone's model-space rotation from the reference pose (its transform times every parent's); false when the
+    // skeleton has no such bone
+    bool clacBoneRotateMS(unsigned short bone, mm::Quat* rot) const;
     static mm::mtl::RTTI m_rtti;
 
-    // setup copies its setup info's value at 0x18 here, cleanup sets it back to -1
-    long pad_10;
+    // setup copies its setup info's asset handle here, cleanup sets it back to -1
+    GF_ASSET_HANDLE* pad_10;
     // the model's object: GFOBJ_INFO::createVolumeFade fades its interface (the name is not the original's)
     fw::ModelObject* m_model;
     // the model's frame (GfComDynamics binds its dynamics to it) (the name is not the original's)
