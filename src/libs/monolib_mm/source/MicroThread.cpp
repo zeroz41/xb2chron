@@ -80,6 +80,18 @@ MicroThreadNx::~MicroThreadNx() {
     destroyAll();
 }
 
+void MicroThread::destroyAll() {
+    for (MTHREAD** it = m_newThreads.begin(); it != m_newThreads.end(); ++it) {
+        releaseThread((*it)->m_id);
+    }
+    m_newThreads.clear();
+    for (GROUP* group : m_groups) {
+        if (group != nullptr) {
+            releaseGroup(group->m_id);
+        }
+    }
+}
+
 MicroThread::~MicroThread() {}
 
 void MicroThreadNx::setupThread(MTHREAD* thread, nn::os::FiberType* (*func)(void*)) {
@@ -208,6 +220,48 @@ void MicroThread::sleep(unsigned int frames, bool wait) {
     MTHREAD* current = m_currentGroup->m_current;
     m_currentGroup->m_current = nullptr;
     switchThreadMain(current);
+}
+
+void MicroThread::update(MLTHG* id) {
+    if (id == reinterpret_cast<MLTHG*>(-1)) {
+        return;
+    }
+    m_cs.lock();
+    GROUP* group = m_groups[reinterpret_cast<unsigned long>(id)];
+    m_currentGroup = group;
+    for (::mm::mtl::FixedList<MTHREAD*, 64>::iterator it = group->m_list.begin(); it != group->m_list.end();) {
+        ::mm::mtl::FixedList<MTHREAD*, 64>::iterator next = it;
+        ++next;
+        if ((*it)->m_exit) {
+            releaseThread((*it)->m_id);
+        }
+        it = next;
+    }
+    if (group->m_threadNum == 0) {
+        m_currentGroup = nullptr;
+        m_cs.unlock();
+        return;
+    }
+    group->m_current = nullptr;
+    for (::mm::mtl::FixedList<MTHREAD*, 64>::iterator it = group->m_list.begin(); it != group->m_list.end(); ++it) {
+        MTHREAD* thread = *it;
+        if (thread->isAwake()) {
+            thread->m_sleepTime = 0;
+            group->m_current = thread;
+            break;
+        }
+    }
+    m_cs.unlock();
+    if (group->m_current != nullptr) {
+        switchThread(nullptr, group->m_current);
+    }
+    for (::mm::mtl::FixedList<MTHREAD*, 64>::iterator it = group->m_list.begin(); it != group->m_list.end(); ++it) {
+        MTHREAD* thread = *it;
+        if (thread->m_waitFrames && thread->m_sleepTime != 0) {
+            --thread->m_sleepTime;
+        }
+    }
+    m_currentGroup = nullptr;
 }
 
 void MicroThread::tail() {
