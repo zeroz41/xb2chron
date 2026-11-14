@@ -10,6 +10,7 @@ namespace fw { class Message; }
 namespace fw { class MessageObject; }
 namespace gf { class GfGameMoverSwitcher; }
 namespace gf { class GfSetupParam; }
+namespace gf { enum PTPOS : unsigned int; }
 
 namespace gf {
 // table 0x7100B54E28: swaps the party's leader with the player behind it (the first two of GfGamePlayerFormation's)
@@ -28,6 +29,8 @@ public:
     void setup() { GfEvent::addEventCallback(this); }
     void cleanup() { GfEvent::removeEventCallback(this); }
     void switchMover();
+    // GfGameParty::switchFormationForIra* ask it through MsgUnk_1000033
+    void switchMoverForIra(unsigned int slot, PTPOS, PTPOS);
 
     // whether the leader may be switched: gevPartyMemberOK sets it when the party leader's object is of type 4 and
     // not riding a pair (the name is not the original's)

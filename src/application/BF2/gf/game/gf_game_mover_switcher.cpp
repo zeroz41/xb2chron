@@ -7,6 +7,10 @@
 #include "classes/gf/GfGameRide.h"
 #include "gf/MsgPcFieldChangeControlMode.h"
 #include "gf/MsgPcFieldWarp.h"
+#include "gf/MsgPcBattleStart.h"
+#include "gf/MsgUnk_1000032.h"
+#include "gf/MsgUnk_1000033.h"
+#include "classes/gf/GfGameTarget.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfObj.h"
 #include "gf/GfObjUtil.h"
@@ -64,6 +68,29 @@ void GfGameMoverSwitcher::switchMover() {
             sendMessage(obj, warp);
         }
     }
+}
+
+bool GfGameMoverSwitcher::recieveMessage(fw::MessageObject*, fw::Message& msg) {
+    switch (msg.m_id) {
+    case 0x1000032:
+        if (m_enable) {
+            switchMover();
+            if (static_cast<MsgUnk_1000032&>(msg).m_value == 1) {
+                GfGameTarget::disableTargetWithoutEnemy();
+                if (GfObj* obj = GfObjUtil::getObj(GfGameManager::getPartyLeaderDriver())) {
+                    MsgPcBattleStart message(0);
+                    static_cast<fw::MessageObject*>(obj)->recieveMessage(this, message);
+                }
+            }
+        }
+        return true;
+    case 0x1000033: {
+        MsgUnk_1000033& ira = static_cast<MsgUnk_1000033&>(msg);
+        switchMoverForIra(ira.m_slot, static_cast<PTPOS>(ira.m_value0), static_cast<PTPOS>(ira.m_value1));
+        return true;
+    }
+    }
+    return false;
 }
 
 }  // namespace gf

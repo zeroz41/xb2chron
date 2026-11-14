@@ -13,6 +13,7 @@
 #include "classes/ml/DrResMdoSortSeamEnvMap.h"
 #include "classes/ml/DrResMdoSortCloud.h"
 #include "classes/ml/DrShdLgtClustered.h"
+#include "classes/ml/DrLightObjPnt.h"
 #include "classes/navi/NvmshAcObjBaseGbl.h"
 #include "ml/DrResEtcParams.h"
 #include "ml/DrResFetch.h"
@@ -162,6 +163,37 @@ void DrShdLgtClustered::addViewInfo(int idx) {
 }
 
 void DrShdLgtClustered::delViewInfo(int) {}
+
+// a light entry's last word: the light's parameter, 2.0 without its flag (a file-static inline helper: the original's
+// select tests a bool parameter; the name is not the original's)
+static inline float getEntryParam(bool flag, float param) { return flag ? param : 2.0f; }
+
+void DrShdLgtClustered::stockPntList(DrLightObjPnt* light) {
+    ViewWork& view = m_viewWork[m_cateIdx];
+    if (getClusterSetting(m_cateIdx).lightMax != view.pntNum) {
+        const mm::Mat44& mtx = m_pDrMan->m_calcMan->m_pViewWork->m_view;
+        m_pntBuffRest -= sizeof(PntLightEntry);
+        PntLightEntry* entry = m_pPntBuff++;
+        const float* pos = &light->m_pos.x;
+        float px = mtx.m[3][0] + (pos[0] * mtx.m[0][0] + pos[1] * mtx.m[1][0] + pos[2] * mtx.m[2][0]);
+        float py = mtx.m[3][1] + (pos[0] * mtx.m[0][1] + pos[1] * mtx.m[1][1] + pos[2] * mtx.m[2][1]);
+        float pz = (pos[0] * mtx.m[0][2] + pos[1] * mtx.m[1][2] + pos[2] * mtx.m[2][2]) + mtx.m[3][2];
+        entry->pos[0] = px;
+        entry->pos[1] = py;
+        entry->pos[2] = pz;
+        entry->size = light->m_size;
+        entry->color[0] = light->m_color[0];
+        entry->color[1] = light->m_color[1];
+        entry->color[2] = light->m_color[2];
+        entry->param2 = light->m_lightParam2;
+        float param = getEntryParam(light->m_bLightFlag, light->m_lightParam);
+        entry->invSize = 1.0f / light->m_size;
+        entry->zero = 0.0f;
+        entry->rate = light->m_lightRate;
+        entry->param = param;
+        view.pntNum++;
+    }
+}
 
 bool DrShdLgtClustered::planeVsCone(const mm::Vec3& planePos, const mm::Vec3& planeNormal, const mm::Vec3& conePos,
                                     const mm::Vec3& coneDir, float range, float angle) const {

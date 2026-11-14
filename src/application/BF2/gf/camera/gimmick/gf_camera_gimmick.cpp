@@ -9,6 +9,10 @@
 #include "string.h"
 #include "math.h"
 #include "mm/Quat.h"
+#include "classes/gf/CameraUtilities.h"
+#include "classes/gf/DataParamAcc.h"
+#include "gf/GfObjAcc.h"
+#include "fw/Transform.h"
 
 namespace gf {
 
@@ -28,6 +32,20 @@ static inline mm::Quat getRotation(const mm::Vec3& rot) {
     float sx = ::sinf(hx), cx = ::cosf(hx), sy = ::sinf(hy), cy = ::cosf(hy), sz = ::sinf(hz), cz = ::cosf(hz);
     return mm::Quat(sx * cy * cz - cx * sy * sz, sx * cy * sz + cx * sy * cz, cx * cy * sz - sx * sy * cz,
                     sx * sy * sz + cx * cy * cz);
+}
+
+void CameraUtilities::getCameraLookBonePosition(GF_OBJ_HANDLE* handle, mm::Vec3& pos) {
+    GfObjAcc acc(handle);
+    pos = acc.getWorldTransform().position;
+    pos.y += 1.5f;
+    DataParamAcc param(handle);
+    const char* bone = param.getCamBone();
+    if (bone != nullptr) {
+        fw::Transform transform;
+        if (acc.getBoneTransform(transform, bone)) {
+            pos = transform.position;
+        }
+    }
 }
 
 GimmickCamera::~GimmickCamera() {}

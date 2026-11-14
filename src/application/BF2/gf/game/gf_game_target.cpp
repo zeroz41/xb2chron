@@ -32,6 +32,8 @@
 #include "gf/GfTargetProperty.h"
 #include "gf/MsgPcFieldGetAccessType.h"
 #include "mm/Math.h"
+#include "btl/siren_battle_manager.h"
+#include "btl/challenge_battle_manager.h"
 
 namespace gf {
 
@@ -585,6 +587,28 @@ void GfGameTarget::StateBattleTarget::onLeave(void* owner, ai::State* next) {
 
 void GfGameTarget::StateBattleTarget::onStep(void* owner, const void* arg) {
     update(static_cast<GfGameTarget*>(owner), *static_cast<const fw::UpdateInfo*>(arg));
+}
+
+void GfGameTarget::StateBattleTarget::update(GfGameTarget* owner, const fw::UpdateInfo& info) {
+    if (owner->m_lock) {
+        return;
+    }
+    SearchList* list = GfGameSearchObj::getObj(owner->m_enemySearch);
+    if (isLostTarget(owner->m_target)) {
+        if (!owner->setTargetNearestEnemyBattle(*list) && btl::SirenBattleManager::get()->pad_1cb) {
+            owner->resetTarget();
+        }
+        if (btl::ChallengeBattleManager::get()->IsProc()) {
+            if (btl::ChallengeBattleManager::get()->IsWin()) {
+                owner->resetTarget();
+            } else if (!btl::ChallengeBattleManager::get()->IsResult() && isLostTarget(owner->m_target)) {
+                owner->setTargetNearestEnemy(*list);
+            }
+        }
+    } else if (owner->m_reqNearTarget) {
+        owner->setTargetNearestEnemy(*list);
+    }
+    owner->selectTarget(*list);
 }
 
 }  // namespace gf
