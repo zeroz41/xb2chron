@@ -35,6 +35,9 @@ public:
     static bool checkFileType(const void* data);
     enum {
         FLAG_HIDE = 0x1,  // ScnObjIBLDr::apply sets it while the IBL is not displayed (the name is not the original's)
+        // DrGlobalIBLMan::releaseObj sets it shifted by DrMan::s_nDblStockIdx, update releases the pack when it
+        // finds it shifted by DrMan::s_nDblIdx (the name is not the original's)
+        FLAG_RELEASE = 0x40000000,
     };
     DrGlobalIBLPack* m_prev;  // 0x8, DrGlobalIBLMan's list links (the names are not the original's)
     DrGlobalIBLPack* m_next;  // 0x10

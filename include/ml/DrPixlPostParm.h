@@ -103,18 +103,25 @@ public:
     static DrPixlPostParm* s_pIns;  // setInst
 
     bool m_toneMap;
-    unsigned char pad_1[0x3B];
+    unsigned char pad_1[0x7];
+    // 0x8: DrEnvColiParameter::resetToneMapParams blends them between two envcoli parameter sets (the name is not
+    // the original's)
+    float m_toneMapParam[11];
+    unsigned char pad_34[0x8];
     bool m_godRay;  // 0x3C, DrPixlMan::setupGodRay clears the god ray target only when set (name inferred)
     unsigned char pad_3D[0x1];
     // 0x3E, DrPixlPostObjBloom::calculateGaussBlur adds the flare and lens flare only while set (name inferred)
     bool m_lensFlare;
-    unsigned char pad_3F[0x5];
+    unsigned char pad_3F[0x1];
+    // 0x40..0xE8: DrEnvColiParameter::updateBloomParams copies them (but m_bloomBlend) from DrIniSys's parameters
+    float pad_40;
     float m_borderBlmMul;  // 0x44
-    unsigned char pad_48[0x70];
+    float m_bloomParam[28];  // 0x48 (the name is not the original's)
     // 0xB8: DrPixlPostObjBloom::bloomRender maps each through a table to GrlBlendFunc for setupBloomAddMaterial
     // (source and destination; the name is not the original's)
     int m_bloomBlend[2];
-    unsigned char pad_C0[0x8];
+    float pad_C0;
+    float pad_C4;
     // 0xC8: DrPixlPostObjBloom::calculateFlareBuff passes {[0], [1] / 3} as the "ratio" uniform (name inferred)
     float m_flareRatio[2];
     // 0xD0..0xE8: DrPixlPostObjBloom::calculateLensFlare's settings (the names are not the original's): it draws

@@ -1,10 +1,12 @@
 #include "classes/ml/DrGlobalIBLPack.h"
 #include "ml/DrEnvColiObj.h"
+#include "ml/DrEnvColiParameter.h"
 #include "ml/DrEnvColiMan.h"
 #include "ml/DrGlobalIBLMan.h"
 #include "ml/DrEnvColiMan.h"
 #include "ml/DrGlobalIBLMan.h"
 #include "classes/ml/DrMan.h"
+#include "ml/DrIniSys.h"
 #include "mtl/MemManager.h"
 
 namespace ml {
@@ -36,6 +38,53 @@ DrEnvColiObj* DrEnvColiMan::createObj(const void* resource) {
     obj->setDataAdd(resource);
     m_stock[DrMan::s_nDblStockIdx].push_back(obj);
     return obj;
+}
+
+void DrEnvColiParameter::updateBloomParams() {
+    DrMan* drMan = DrMan::getIns();
+    DrPixlPostParm* parm = drMan->m_postParm[drMan->m_postParmIdx];
+    const DrPixlPostParm& ini = DrMan::getIns()->m_iniSys->m_postParm;
+    parm->pad_40 = ini.pad_40;
+    parm->m_borderBlmMul = ini.m_borderBlmMul;
+    parm->m_bloomParam[0] = ini.m_bloomParam[0];
+    parm->m_bloomParam[1] = ini.m_bloomParam[1];
+    parm->m_bloomParam[2] = ini.m_bloomParam[2];
+    parm->m_bloomParam[3] = ini.m_bloomParam[3];
+    parm->m_bloomParam[4] = ini.m_bloomParam[4];
+    parm->m_bloomParam[5] = ini.m_bloomParam[5];
+    parm->m_bloomParam[6] = ini.m_bloomParam[6];
+    parm->m_bloomParam[7] = ini.m_bloomParam[7];
+    parm->m_bloomParam[8] = ini.m_bloomParam[8];
+    parm->m_bloomParam[9] = ini.m_bloomParam[9];
+    parm->m_bloomParam[10] = ini.m_bloomParam[10];
+    parm->m_bloomParam[11] = ini.m_bloomParam[11];
+    parm->m_bloomParam[12] = ini.m_bloomParam[12];
+    parm->m_bloomParam[13] = ini.m_bloomParam[13];
+    parm->m_bloomParam[14] = ini.m_bloomParam[14];
+    parm->m_bloomParam[15] = ini.m_bloomParam[15];
+    parm->m_bloomParam[16] = ini.m_bloomParam[16];
+    parm->m_bloomParam[17] = ini.m_bloomParam[17];
+    parm->m_bloomParam[18] = ini.m_bloomParam[18];
+    parm->m_bloomParam[19] = ini.m_bloomParam[19];
+    parm->m_bloomParam[20] = ini.m_bloomParam[20];
+    parm->m_bloomParam[21] = ini.m_bloomParam[21];
+    parm->m_bloomParam[22] = ini.m_bloomParam[22];
+    parm->m_bloomParam[23] = ini.m_bloomParam[23];
+    parm->m_bloomParam[24] = ini.m_bloomParam[24];
+    parm->m_bloomParam[25] = ini.m_bloomParam[25];
+    parm->m_bloomParam[26] = ini.m_bloomParam[26];
+    parm->m_bloomParam[27] = ini.m_bloomParam[27];
+    parm->pad_C0 = ini.pad_C0;
+    parm->pad_C4 = ini.pad_C4;
+    parm->m_flareRatio[0] = ini.m_flareRatio[0];
+    parm->m_flareRatio[1] = ini.m_flareRatio[1];
+    parm->m_lensFlareNum = ini.m_lensFlareNum;
+    parm->m_lensFlareAngle = ini.m_lensFlareAngle;
+    parm->m_lensFlareRatio[0] = ini.m_lensFlareRatio[0];
+    parm->m_lensFlareRatio[1] = ini.m_lensFlareRatio[1];
+    parm->m_lensFlareRatio[2] = ini.m_lensFlareRatio[2];
+    parm->m_lensFlareRatio[3] = ini.m_lensFlareRatio[3];
+    parm->m_lensFlareSpread = ini.m_lensFlareSpread;
 }
 
 bool DrEnvColiMan::testEnvColi(DrEnvColiResult* result, const mm::Vec3& pos, float range) {
@@ -198,6 +247,37 @@ bool (DrEnvColiObj::*DrEnvColiObj::s_pColiTest[5])(const unsigned char*, const m
     &DrEnvColiObj::envcoli_notrot_box, &DrEnvColiObj::envcoli_notrot_cylinder,
 };
 
+void DrEnvColiParameter::resetToneMapParams(const EnvColiPostParameterVer<10006>* first,
+                                            const EnvColiPostParameterVer<10006>* second, float rate) {
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    if (rate != 0.0f) {
+        float inv = 1.0f - rate;
+        parm->m_toneMapParam[0] = first->m_toneMapParam[0] * rate + inv * second->m_toneMapParam[0];
+        parm->m_toneMapParam[1] = first->m_toneMapParam[1] * rate + inv * second->m_toneMapParam[1];
+        parm->m_toneMapParam[2] = first->m_toneMapParam[2] * rate + inv * second->m_toneMapParam[2];
+        parm->m_toneMapParam[3] = first->m_toneMapParam[3] * rate + inv * second->m_toneMapParam[3];
+        parm->m_toneMapParam[4] = first->m_toneMapParam[4] * rate + inv * second->m_toneMapParam[4];
+        parm->m_toneMapParam[5] = first->m_toneMapParam[5] * rate + inv * second->m_toneMapParam[5];
+        parm->m_toneMapParam[6] = first->m_toneMapParam[6] * rate + inv * second->m_toneMapParam[6];
+        parm->m_toneMapParam[7] = first->m_toneMapParam[7] * rate + inv * second->m_toneMapParam[7];
+        parm->m_toneMapParam[8] = first->m_toneMapParam[8] * rate + inv * second->m_toneMapParam[8];
+        parm->m_toneMapParam[9] = first->m_toneMapParam[9] * rate + inv * second->m_toneMapParam[9];
+        parm->m_toneMapParam[10] = first->m_toneMapParam[10] * rate + inv * second->m_toneMapParam[10];
+    } else {
+        parm->m_toneMapParam[0] = first->m_toneMapParam[0];
+        parm->m_toneMapParam[1] = first->m_toneMapParam[1];
+        parm->m_toneMapParam[2] = first->m_toneMapParam[2];
+        parm->m_toneMapParam[3] = first->m_toneMapParam[3];
+        parm->m_toneMapParam[4] = first->m_toneMapParam[4];
+        parm->m_toneMapParam[5] = first->m_toneMapParam[5];
+        parm->m_toneMapParam[6] = first->m_toneMapParam[6];
+        parm->m_toneMapParam[7] = first->m_toneMapParam[7];
+        parm->m_toneMapParam[8] = first->m_toneMapParam[8];
+        parm->m_toneMapParam[9] = first->m_toneMapParam[9];
+        parm->m_toneMapParam[10] = first->m_toneMapParam[10];
+    }
+}
+
 DrGlobalIBLMan::DrGlobalIBLMan(DrMan* drMan, int view) : m_drMan(drMan), m_view(view) {
     for (int i = 0; i < 2; i++) {
         m_stock[i].m_head = nullptr;
@@ -216,5 +296,43 @@ DrGlobalIBLMan::~DrGlobalIBLMan() {
     m_release.clear();
     m_list.clear();
 }
+
+void DrGlobalIBLMan::update() {
+    m_release.clear();
+    int idx = DrMan::s_nDblIdx;
+    List& stock = m_stock[idx];
+    for (DrGlobalIBLPack* pack = stock.m_head; pack;) {
+        pack->resourceInit();
+        DrGlobalIBLPack* next = pack->m_next;
+        m_list.push_back(pack);
+        pack = next;
+    }
+    stock.m_head = nullptr;
+    stock.m_tail = nullptr;
+    DrGlobalIBLPack* pack = m_list.m_head;
+    while (pack) {
+        if (pack->m_flags & (DrGlobalIBLPack::FLAG_RELEASE << idx)) {
+            DrGlobalIBLPack* next = pack->m_next;
+            m_list.remove(pack);
+            pack->release();
+            m_release.push_back(pack);
+            pack = next;
+        } else {
+            pack->update();
+            pack = pack->m_next;
+        }
+    }
+}
+
+DrGlobalIBLPack* DrGlobalIBLMan::createObj(const void* resource) {
+    if (!DrGlobalIBLPack::checkFileType(resource)) {
+        return nullptr;
+    }
+    DrGlobalIBLPack* pack = new (m_drMan->m_resHandle, nullptr, 0, 4, false) DrGlobalIBLPack(resource, m_view);
+    m_stock[DrMan::s_nDblStockIdx].push_back(pack);
+    return pack;
+}
+
+void DrGlobalIBLMan::releaseObj(DrGlobalIBLPack* pack) { pack->m_flags |= DrGlobalIBLPack::FLAG_RELEASE << DrMan::s_nDblStockIdx; }
 
 }  // namespace ml

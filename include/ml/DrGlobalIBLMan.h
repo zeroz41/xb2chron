@@ -20,6 +20,37 @@ public:
             m_head = nullptr;
             m_tail = nullptr;
         }
+        // pack linked last
+        void push_back(DrGlobalIBLPack* pack) {
+            if (m_tail) {
+                m_tail->m_next = pack;
+                pack->m_prev = m_tail;
+                m_tail = pack;
+            } else {
+                m_head = pack;
+                m_tail = pack;
+                pack->m_prev = nullptr;
+            }
+            pack->m_next = nullptr;
+        }
+        // pack unlinked
+        void remove(DrGlobalIBLPack* pack) {
+            if (pack->m_prev && pack->m_next) {
+                pack->m_prev->m_next = pack->m_next;
+                pack->m_next->m_prev = pack->m_prev;
+            } else if (pack->m_prev) {
+                m_tail = pack->m_prev;
+                m_tail->m_next = nullptr;
+            } else if (pack->m_next) {
+                m_head = pack->m_next;
+                m_head->m_prev = nullptr;
+            } else {
+                m_head = nullptr;
+                m_tail = nullptr;
+            }
+            pack->m_prev = nullptr;
+            pack->m_next = nullptr;
+        }
     };
 
     DrGlobalIBLMan(DrMan* drMan, int view);
