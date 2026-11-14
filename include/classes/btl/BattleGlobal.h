@@ -579,7 +579,12 @@ public:
     unsigned char pad_83bc[3];  // flags by index, 8 to a byte (SetTutorialBattleFlag sets)
     mutable unsigned char pad_83bf[1];  // (mutable: 2.0.0's symbols make CheckOnceSE const) flags by index, 8 to a byte (CheckOnceSE tests and sets)
     mutable unsigned char pad_83c0[2];  // (mutable: 2.0.0's symbols make UsePartyPerfectAvoid const) two counters by side (AddPartyPerfectAvoidNum adds, UsePartyPerfectAvoid counts down)
-    unsigned char pad_83c2[0x6];
+    unsigned char pad_83c2;
+    // BattleCharacter::IsDisableActionByTacticsCall needs bit 1 set (with m_challengeAnySuccess; meanings unknown)
+    unsigned char pad_83c3_0 : 1;
+    unsigned char pad_83c3_1 : 1;
+    unsigned char pad_83c3_2 : 6;
+    unsigned char pad_83c4[0x4];
     // the highest level of an enemy that joined through a link, +15 for a named one (NotifyLinkJoinBattle; the name
     // is not the original's)
     unsigned char m_linkJoinLevel;

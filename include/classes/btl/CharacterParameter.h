@@ -399,7 +399,9 @@ public:
     // ElementalComboManager::CheckCharacterID takes a tenth of it or a sixth of pad_3c, whichever is larger, as
     // the elemental rate (meaning unknown)
     float pad_30;
-    unsigned char pad_34[0x4];
+    // BattleCharacter::IsEnableArtsHeight lets the character stand this much into water above its land height
+    // (meaning unknown)
+    float pad_34;
     // BattleCharacter::CheckRandSatisfyEnhanceCondition shows its buff name this far above m_pos (meaning unknown)
     float pad_38;
     float pad_3c;  // see pad_30

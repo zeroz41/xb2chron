@@ -49,6 +49,7 @@
 #include "classes/gf/GfComBehaviorPc.h"
 #include "gf/pc/StateUtil.h"
 #include "gf/GfTargetProperty.h"
+#include "gf/EnviromentSensor.h"
 
 namespace btl {
 
@@ -1038,6 +1039,38 @@ gf::GfComEffectCaster* BattleCharacter::GetEffectCaster() {
     return obj->getComponent<gf::GfComEffectCaster>(7);
 }
 
+bool BattleCharacter::IsEnableArtsHeight(bool withDriver) const {
+    const BattleCharacter* chrs[2] = {this, nullptr};
+    int num = 1;
+    if (withDriver) {
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        chrs[1] = CharacterManager::sys()->GetCharacterConst(param->m_driverHandle);
+        num = 2;
+    }
+    for (int i = 0; i < num; i++) {
+        const BattleCharacter* chr = chrs[i];
+        if (chr == nullptr) {
+            return false;
+        }
+        if (chr->m_isFly || chr->pad_F03_1) {
+            continue;
+        }
+        float y = chr->m_pos.y;
+        float land = chr->GetLandHeight();
+        if (y - 3.0f > land) {
+            return false;
+        }
+        const gf::EnviromentSensor* sensor = chr->GetEnviromentSensor();
+        if (sensor->m_flags & 2) {
+            float water = sensor->m_vertical.m_water.m_height;
+            if (water > land && water - chr->GetCharacterParameterConst(false)->pad_34 >= land) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 bool BattleCharacter::StartBladeSupport(int param) {
     const CharacterParameter* chrParam = GetCharacterParameter(false);
     if (chrParam->m_hasHateTarget && !chrParam->m_isNotBlade) {
@@ -1048,6 +1081,23 @@ bool BattleCharacter::StartBladeSupport(int param) {
         }
     }
     return false;
+}
+
+// the original's symbol names it; ChainAttackManager-time chain success: enhances 0xAF/0xB0/0x1A2, recast, chain UI
+void BattleCharacter::SuccessChain(int param, bool full) {
+    if (ChainAttackManager::sys()->IsProc(true) || !IsForward()) return;
+    if (full) SatisfyEnhanceCondition(0xAF, GetCharacterParameterConst(false)->GetMaxHP(), 0.0f, nullptr, true);
+    AddBladeArtsRecast(param, SatisfyEnhanceCondition(0xB0, 0, 0.0f, nullptr, true));
+    if (m_isPlayer) {
+        bool control = IsControlCharacter();
+        BattleGlobal::sys()->AddChainCount(control);
+        if (control) {
+            UIManager::sys()->DispChainUI(m_handle);
+            PlaySystemSE(static_cast<BTL_SE>(1), 0x46, true, false);
+        }
+    }
+    SatisfyEnhanceCondition(0x1A2, 0, 0.0f, nullptr, true);
+    pad_107C = -1.0f;
 }
 
 void BattleCharacter::StartFullBurst(int value) {
@@ -1252,6 +1302,21 @@ void BattleCharacter::HealHpRate(float rate, int type, BattleCharacter* attacker
     NotifyDirectDamage(data);
 }
 
+bool BattleCharacter::IsDisableActionByTacticsCall() const {
+    BattleGlobal* global = BattleGlobal::sys();
+    if (!global->m_challengeAnySuccess || !global->pad_83c3_1) {
+        return false;
+    }
+    if (IsControlCharacter() || !m_isPlayer) {
+        return false;
+    }
+    const BattleCharacter* control = CharacterManager::sys()->GetControlCharacter();
+    if (control == nullptr) {
+        return true;
+    }
+    return Misc::CalcLength(m_pos, control->m_pos) >= 5.0f;
+}
+
 void BattleCharacter::ArtsGravityProc(const ARTS_DATA& arts, int stage) {
     if (arts.m_gravity.m_startStage == 0 && arts.m_gravity.m_startFrame == 0 && arts.m_gravity.m_endStage == 0 &&
         arts.m_gravity.m_endFrame == 0) {
@@ -1267,6 +1332,63 @@ void BattleCharacter::ArtsGravityProc(const ARTS_DATA& arts, int stage) {
                (gravity.m_startStage == stage && frame >= static_cast<unsigned int>(gravity.m_startFrame))) {
         pad_F03_7 = false;
     }
+}
+
+void BattleCharacter::RegisterWarp(const mm::Vec3* pos) {
+    gf::GF_OBJ_HANDLE* handle = GetCharacterParameterConst(false)->m_driverHandle;
+    const BattleCharacter* driver = CharacterManager::sys()->GetCharacterConst(handle);
+    mm::Vec3 position;
+    if (pos == nullptr) {
+        Misc::GetObjectTransform(handle, position, Misc::TRANS_TYPE_POS);
+    } else {
+        position = *pos;
+    }
+    SetPosition(position, true);
+    SetWarpPostureByDir(driver->pad_60);
+}
+
+void BattleCharacter::WarpMirrorCoppy() {
+    if (BattleGlobal::sys()->m_challengeAnySuccess) {
+        gf::GF_OBJ_HANDLE* handle = GetCharacterParameterConst(false)->m_driverHandle;
+        BattleCharacter* driver = CharacterManager::sys()->GetCharacterConst(handle);
+        driver->pad_105D = true;
+        if (pad_EEE == driver->pad_105C) {
+            if (pad_CD4 == driver->pad_1058) {
+                float frame = GetAnimationFrame();
+                float rest = driver->pad_1050 - frame;
+                if (rest > 0.0f) {
+                    pad_CD8 = rest;
+                    RegisterWarp(&driver->pad_1040);
+                    return;
+                }
+            } else if (pad_CD4 > driver->pad_1058) {
+                pad_CD8 = 0.0f;
+                return;
+            } else {
+                pad_CD8 = 1.0f;
+                RegisterWarp(&driver->pad_1040);
+                return;
+            }
+        }
+        pad_CD8 = 0.0f;
+        return;
+    }
+    RegisterWarp(nullptr);
+}
+
+float BattleCharacter::GetArtsAttackDistance(const ARTS_DATA& arts) const {
+    float distance = arts.m_distance;
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param != nullptr) {
+        if (arts.m_category == 12) {
+            CharacterParameter::ENHANCE_DATA data;
+            if (param->GetEnhanceEffect(data, 0xC3)) {
+                distance += data.m_value;
+            }
+        }
+        distance *= param->m_distanceScale;
+    }
+    return distance;
 }
 
 void BattleCharacter::ReviveHeal(BattleCharacter* rescuer) {

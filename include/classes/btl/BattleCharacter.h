@@ -92,6 +92,8 @@ public:
     void SetExitBattle(bool, bool);
     void NotifyChangeAttr(gf::GF_OBJ_HANDLE* handle, unsigned int attr, unsigned int prevAttr);
     bool StartBladeSupport(int param);
+    // the original's symbol names it; enhances 0xAF (with full) / 0xB0 / 0x1A2, recast, chain count and UI
+    void SuccessChain(int param, bool full);
     // the sensor of the object's GfComEnvSensor (a player's through GfComPropertyPc::getEnvSensor, else slot 11 of
     // its property's owner)
     const gf::EnviromentSensor* GetEnviromentSensor() const;
@@ -189,6 +191,16 @@ public:
     // is 1 (while parameter slot 64 holds) or 1003; both false while m_challengeAnySuccess is set
     void IsKakuseiEffect(bool&, bool&) const;
     bool IsInAttackRange(int, float*) const;
+    // with BattleGlobal's m_challengeAnySuccess and pad_83c3_1 set, holds for
+    // a player-side character the player does not control that stands 5 or more from the controlled one (or when
+    // there is none).
+    bool IsDisableActionByTacticsCall() const;
+    // false when the character (and with the argument its parameter's
+    // driver) stands more than 3 above its land height, or in water reaching pad_34 above it; fliers pass.
+    bool IsEnableArtsHeight(bool) const;
+    // takes SirenBattleManager's situation point for the argument and keeps
+    // the offset to it (pad_1000) and its direction (pad_60).
+    void SirenModifySetting(int);
     bool IsEnableTurnAI() const;
     void TurnTarget(bool, bool, bool);
     // 2.0.0's symbols name it; 1.0.0's ButtonChallenge::ResultProc calls IsBlade() const, with no argument.
@@ -504,6 +516,37 @@ public:
     void ForceDeleteEffect();
     void ResetAllEffect();
     void SetWarpPostureByDir(const mm::Vec3& dir);
+    // moves the character to the position (with none, to its parameter's driver's object) and turns it the
+    // driver's pad_60 way
+    void RegisterWarp(const mm::Vec3* pos);
+    // with BattleGlobal's m_challengeAnySuccess set, warps a blade to its driver's pad_1040 when their warp ids
+    // match (see pad_1040); else RegisterWarp(nullptr)
+    void WarpMirrorCoppy();
+    // SetPosition(pos, true), turns the character to face its target (BattleGlobal's m_challengeAnySuccess or
+    // IsForward) or its parameter's driver, and clears the warp state (pad_F01_0, pad_11A0, ...)
+    void SetWarpDirect(const mm::Vec3& pos);
+    // what CheckValidPosition checks and finds; SetWarp fills it (the field names are not the original's,
+    // meanings unknown but for m_result, m_pos and m_dir)
+    struct CHECK_VALID_POS_DATA {
+        mm::Vec3 m_result;  // the position found (SetWarp warps there)
+        mm::Vec3 m_pos;     // the position asked for
+        mm::Vec3 pad_20;    // SetWarp: the position asked for too
+        mm::Vec3 m_dir;     // with m_useDir, the direction SetWarp turned toward the camera
+        float pad_40;       // SetWarp: 1.5
+        float pad_44;       // SetWarp: 0.5
+        float pad_48;       // SetWarp's float argument
+        float pad_4C;       // SetWarp: 0.5
+        int pad_50;         // SetWarp: 8
+        int pad_54;         // SetWarp: 10
+        bool pad_58;
+        bool m_useDir;
+        bool pad_5A;
+        bool pad_5B;        // SetWarp: true
+    };
+    bool CheckValidPosition(CHECK_VALID_POS_DATA& data) const;
+    // looks for a valid position near pos (turned toward the camera with the flag) and warps there (SetWarpDirect);
+    // false when there is none
+    bool SetWarp(const mm::Vec3& pos, bool turn, float);
     float GetAnimationMoveLength(float, float, bool);
     bool GetObjectNearPosition(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* target, mm::Vec3& out, mm::Vec3*,
                                mm::Vec3*) const;
@@ -596,7 +639,10 @@ public:
     unsigned char pad_CD0[0x4];
     // SpAttackManager::MovieProc compares it with PROC_DATA::m_pair51.pad_0 (signed; meaning unknown)
     int pad_CD4;
-    unsigned char pad_CD8[0x8];
+    // WarpMirrorCoppy sets it from its driver's warp timing (pad_1050 less the animation frame, 1 or 0; meaning
+    // unknown)
+    float pad_CD8;
+    unsigned char pad_CDC[0x4];
     // ManagerUpdate_Attack counts its timers down by pad_CE0 * pad_EC8 (pad_107C by pad_CE4; meaning unknown)
     float pad_CE0;
     float pad_CE4;
@@ -609,7 +655,11 @@ public:
     // CalcLocomotionMoveRate sets pad_CFC to the clamped rate and pad_D00 to 1 (meanings unknown)
     float pad_CFC;
     float pad_D00;
-    unsigned char pad_D04[0xD4];
+    unsigned char pad_D04[0xA0];
+    // SirenModifySetting sets them to 3 and 18 degrees in radians (meaning unknown)
+    float pad_DA4;
+    float pad_DA8;
+    unsigned char pad_DAC[0x2C];
     // what GetIKData hands out while m_ikType is set (the names are not the original's)
     float m_ikValue0;
     float m_ikValue1;
@@ -735,10 +785,19 @@ public:
     unsigned int pad_F01_7 : 2;
     // StartBackHome sets it (the name is not the original's)
     unsigned int m_reqBackHome : 1;
-    unsigned int pad_F00_18 : 5;
+    unsigned int pad_F00_18 : 3;
+    // SirenModifySetting sets pad_F02_5 and clears pad_F02_6 (run bits 37 and 38; meaning unknown)
+    unsigned int pad_F02_5 : 1;
+    unsigned int pad_F02_6 : 1;
     // Utility::AI_IsFly returns it (the name is not the original's)
     unsigned int m_isFly : 1;
-    unsigned int pad_F03_0 : 4;
+    unsigned int pad_F03_0 : 1;
+    // IsEnableArtsHeight passes over a character with it or m_isFly set (run bit 41; meaning unknown)
+    unsigned int pad_F03_1 : 1;
+    unsigned int pad_F03_2 : 1;
+    // SetWarp clears it around CheckValidPosition for a blade (IsBlade(true)) of BDAT id 0x3EB, then puts it back
+    // (run bit 43; meaning unknown)
+    unsigned int pad_F03_3 : 1;
     // SetIraReserve's: the value it last wrote back, set once written, and the value it keeps (meaning unknown)
     unsigned int pad_F03_4 : 1;
     unsigned int pad_F03_5 : 1;
@@ -802,7 +861,8 @@ public:
     // what the action runs for: the party index of the character to rescue while m_state is 0x14 (GetRescueTarget;
     // the name is not the original's)
     int m_actionParam;
-    unsigned char pad_1000[0xC];
+    // SirenModifySetting sets it to the situation point's position less m_pos (meaning unknown)
+    float pad_1000[3];
     // the name is not the original's: SetAction's float argument
     float m_actionValue;
     unsigned char pad_1010[0x1C];
@@ -811,7 +871,16 @@ public:
     unsigned char pad_102E;
     unsigned char pad_102F;
     float pad_1030;
-    unsigned char pad_1034[0x38];
+    unsigned char pad_1034[0xC];
+    // a blade's WarpMirrorCoppy warps to its driver's pad_1040 when its pad_EEE and pad_CD4 match the driver's
+    // pad_105C and pad_1058, and sets the driver's pad_105D (meanings unknown)
+    mm::Vec3 pad_1040;
+    float pad_1050;
+    unsigned char pad_1054[0x4];
+    int pad_1058;
+    unsigned char pad_105C;
+    bool pad_105D;
+    unsigned char pad_105E[0xE];
     // a ButtonChallenge id: ResetAllEffect cancels it (BattleGlobal's m_buttonChallenge) when not 0 and clears it
     unsigned int pad_106C;
     unsigned int pad_1070 : 16;
@@ -907,11 +976,20 @@ public:
     // IsScout returns it (the name is not the original's)
     unsigned int m_isScout : 1;
     unsigned int pad_1140_5 : 27;
-    unsigned char pad_1144[0x64];
+    unsigned char pad_1144[0xC];
+    // SetWarpDirect clears pad_1150, pad_1158, pad_1160 and pad_11A0 (meanings unknown)
+    unsigned int pad_1150;
+    unsigned char pad_1154[0x4];
+    unsigned long pad_1158;
+    unsigned int pad_1160;
+    unsigned char pad_1164[0x3C];
+    unsigned int pad_11A0;
+    unsigned char pad_11A4[0x4];
     // Utility::AI_GetStamp returns it while the character lives (the name is not the original's)
     int m_stamp;
     // CharacterManager's slots are 0x11D0 apart with their in-use flag at 0x11C0, after the character
-    unsigned char pad_11AC[0x6];
+    unsigned short pad_11AC;  // SetWarpDirect clears it (meaning unknown)
+    unsigned char pad_11AE[0x4];
     // one bitfield run of 3 bytes (IsEnableCancel reads it with a halfword load at 0x11B2, as a 3-byte unit loads)
     unsigned char pad_11B2 : 8;
     unsigned char pad_11B3_0 : 1;
