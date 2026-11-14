@@ -8,6 +8,9 @@
 #include "classes/fw/ReferenceFrame.h"
 #include "classes/fw/UpdatableObject.h"
 #include "classes/gf/GfComTransform.h"
+#include "classes/gf/GfComCollider.h"
+#include "classes/gf/GfObj.h"
+#include "classes/fw/ColiObject.h"
 #include "fw/Message.h"
 #include "fw/Transform.h"
 #include "fw/ColiCheck.h"
@@ -83,6 +86,24 @@ void GfComEnvSensor::setEnableSensor(bool enable) {
                 manager->removeUpdaterBeforeGame(getLayer(), m_rootUpdater);
             }
         }
+    }
+}
+
+void GfComEnvSensor::flushEnv(const fw::Transform& transform) {
+    m_sensor.check(transform, m_param);
+    if (GfComProperty* property = m_owner->getComponent<GfComProperty>(5)) {
+        if (GfEnvProperty* env = property->m_env.get()) {
+            bool onGround = true;
+            if (GfComCollider* collider = m_owner->getComponent<GfComCollider>(4)) {
+                if (fw::ColiObject* object = collider->getColiObject(0)) {
+                    onGround = object->testAttribute(fw::ColiAtrr(0));
+                }
+            }
+            m_sensor.writeBackProperty(onGround, env);
+        }
+    }
+    if (m_enemySensor) {
+        m_enemySensor->update(static_cast<GfObj*>(m_owner)->m_handle);
     }
 }
 

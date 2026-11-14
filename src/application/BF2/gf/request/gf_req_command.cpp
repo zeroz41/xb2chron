@@ -18,6 +18,9 @@
 #include "mm/mtl/FixedVector.h"
 #include "mm/mtl/RTTI.h"
 #include "classes/gf/MapjumpCamera.h"
+#include "classes/gf/GfWeapon.h"
+#include "classes/gf/GfGameObj.h"
+#include "gf/GfObjUtil.h"
 
 namespace gf {
 
@@ -243,6 +246,30 @@ void GfReqCommand::execStartScript(const GfReqParam* param) {
     if (script->m_start) {
         GfScriptManager::startScript(script->m_id);
     }
+}
+
+// Placeholder name (no symbol names it; execRebuildPartyWeapon calls it for both sets). What it does: the objects
+// of one set (second) of the party member's weapon destroyed, then waited for until none is valid.
+void fn_7100557AB4(unsigned int index, int set, bool second) {
+    GfAppendHandles handles = *GfGameParty::getHandleWeapon(index, set);
+    handles.m_useSecond = second;
+    GF_OBJ_HANDLE* const* objs = handles.getObjHandles();
+    for (int i = 0; i < 10; i++) {
+        GfObjUtil::destroy(objs[i]);
+    }
+    bool valid;
+    do {
+        valid = false;
+        for (int i = 0; i < 10; i++) {
+            if (objs[i] != reinterpret_cast<GF_OBJ_HANDLE*>(-1) && GfObjUtil::isValid(objs[i])) {
+                valid = true;
+                break;
+            }
+        }
+        if (valid) {
+            GfSleep(1);
+        }
+    } while (valid);
 }
 
 }  // namespace gf

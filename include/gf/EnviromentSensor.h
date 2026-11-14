@@ -6,6 +6,9 @@
 #include "mm/Col4.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GfEnvProperty; }
+namespace fw { class ParamAdapter; }
+namespace fw { class Transform; }
 
 namespace gf {
 
@@ -91,6 +94,11 @@ public:
 
     EnviromentSensor();
     static void searchVertical(const mm::Vec3& pos, VerticalPacket* packet);
+    // what is around the object at transform, by param's settings (GfComEnvSensor::flushEnv)
+    void check(const fw::Transform& transform, fw::ParamAdapter param);
+    // the findings written into property; onGround: the object's collision touches the ground (flushEnv's
+    // attribute 0 test; the parameter name is not the original's)
+    void writeBackProperty(bool onGround, GfEnvProperty* property) const;
 
     // the obstacle a bit 4 in m_flags says it found (the name is not the original's)
     const ObstacleInfo* getObstacleInfo() const { return (m_flags & 0x10) ? &m_obstacle : nullptr; }

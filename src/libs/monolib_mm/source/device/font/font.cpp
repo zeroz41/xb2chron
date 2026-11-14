@@ -11,25 +11,14 @@
 #include "ml/font/Stream.h"
 #include "string.h"
 
-// the font file's header: its signature, its glyphs' count and cell, read in place (read is inline: the original
-// emits it after the getters, its strings after theirs). The names of the fields no assertion names are not the
-// original's.
+// the font file's header: its signature, its glyphs' count and cell, read in place (read is defined at the end of
+// the file: the original emits its strings after the getters'). The names of the fields no assertion names are not
+// the original's.
 struct FontSys::Header {
     Header()
         : m_signature(0), m_version(0), m_count(0), m_offset(0), m_fontSize(0.0f), m_width(0.0f), m_height(0.0f),
           m_cmp(false) {}
-    void read(Stream* stream) {
-        m_signature = stream->read_u32();
-        m_cmp = m_signature == 0x43544e46;
-#line 31
-        assert(m_signature == 0x00544e46 || m_cmp);
-        m_version = stream->read_u32();
-        m_count = stream->read_u16();
-        m_offset = stream->read_u8();
-        m_fontSize = stream->read_u8();
-        m_width = stream->read_u8();
-        m_height = stream->read_u8();
-    }
+    void read(Stream* stream);
 
     unsigned int m_signature;  // "FNT" or "FNTC"
     unsigned int m_version;
@@ -70,19 +59,28 @@ Color::operator unsigned int() const {
     return (r << 24) | (g << 16) | (b << 8) | a;
 }
 
-// FontSys::FontSys (0x71006F34B4) is not here yet: the original calls memset with a frame (bl), where this
-// compiles to a tail call (b); the body is the original's memset of the whole object:
-// FontSys::FontSys() {
-//     memset(this, 0, sizeof(*this));
-// }
+// the fields cleared one by one: the table's loop becomes a memset the optimizer extends over the whole object
+// (called with a frame, not tail-called)
+FontSys::FontSys() : m_head(nullptr) {
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        m_table[i] = nullptr;
+    }
+    m_data = nullptr;
+    m_width = 0.0f;
+    m_height = 0.0f;
+    m_ux = 0.0f;
+    m_vy = 0.0f;
+    m_uw = 0.0f;
+    m_vh = 0.0f;
+    m_texobj = nullptr;
+}
 
 FontSys::~FontSys() {}
 
 // construct (0x71006F34D4) is not here yet: this reading has the original's data flow and most of its code (the
 // insertion is FontSys::insert); it still differs in the operand order of `half + texels % half` (instcombine puts
 // the remainder first), two float registers of the uw/vh sums, the four-bit loop's schedule and the insertion's
-// block layout (the original hoists the loop's count and index updates above the bucket test). Header::read is
-// emitted only with it (identical then):
+// block layout (the original hoists the loop's count and index updates above the bucket test):
 // void FontSys::construct(void* data, int size) {
 // #line 113
 //     assert(m_data == NULL);
@@ -273,4 +271,18 @@ float FontSys::get_uw() const {
 
 float FontSys::get_vh() const {
     return m_vh;
+}
+
+// out of line: construct calls it, the original emits it after construct and its strings after the getters'
+void FontSys::Header::read(Stream* stream) {
+    m_signature = stream->read_u32();
+    m_cmp = m_signature == 0x43544e46;
+#line 31
+    assert(m_signature == 0x00544e46 || m_cmp);
+    m_version = stream->read_u32();
+    m_count = stream->read_u16();
+    m_offset = stream->read_u8();
+    m_fontSize = stream->read_u8();
+    m_width = stream->read_u8();
+    m_height = stream->read_u8();
 }
