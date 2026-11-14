@@ -36,6 +36,7 @@
 #include "classes/fw/SsdObjectAllocator.h"
 #include "classes/ssd/Delegate/Object.h"
 #include "ml/PathUtil.h"
+#include "mm/mtl/StrUtil.h"
 
 #define SOUND_SSD_DRV_PATH "D:/Monolithsoft/BF2/prog/application/BF2/framework/sound/sound_ssd_drv.cpp"
 
@@ -705,6 +706,52 @@ void SoundSsdDriver::removeCategory(SoundCategory category) {
     }
 }
 
+void SoundSsdDriver::setCategoryMute(SoundCategory category, bool mute, float fadeTime) {
+    if (m_core == nullptr) {
+        return;
+    }
+    CategoryInfo* info = findCategory(category);
+    if (info == categoryEnd()) {
+        return;
+    }
+    if (!mute && info->muteCount == 0) {
+        return;
+    }
+    if (info->active != 0) {
+        if (mute) {
+            if (info->muteCount == 0) {
+                info->mute.set(0.0f, fadeTime);
+            }
+            info->muteCount++;
+        } else {
+            info->muteCount--;
+            if (info->muteCount == 0) {
+                info->mute.set(1.0f, fadeTime);
+            }
+        }
+    }
+    info->applyVolume();
+    m_core->SetCategory(info->category);
+}
+
+void SoundSsdDriver::setCategoryVolume(SoundCategory category, float volume, float fadeTime) {
+    if (m_core == nullptr) {
+        return;
+    }
+    CategoryInfo* info = findCategory(category);
+    if (info == categoryEnd()) {
+        return;
+    }
+    if (info->active != 0) {
+        info->active = 1;
+        info->volume.set(volume, fadeTime);
+        // applyVolume's product, the new volume first (it keeps the original's operand order)
+        float value = info->volume.current * (info->masterVolume * info->baseVolume);
+        info->category.volume_ = value * info->mute.current;
+    }
+    m_core->SetCategory(info->category);
+}
+
 float SoundSsdDriver::getCategoryVolume(SoundCategory category) const {
     float volume = 0.0f;
     if (m_core != nullptr) {
@@ -770,3 +817,7 @@ template mm::mtl::Map<ssd::SoundHandle*, fw::SoundSsdPlayer*>::node* mm::mtl::Ma
 
 // FixStr<256>'s insert (its caller is not written yet)
 template mm::mtl::FixStr<256>& mm::mtl::FixStr<256>::insert(int, const char*, int);
+
+// playStream (not written yet) replaces in a stream's name; playStream and playSeLocal allocate a handle
+template void mm::mtl::replacestr<mm::mtl::FixStr<256> >(mm::mtl::FixStr<256>&, const char*, const char*);
+template ssd::SoundHandle* mm::mtl::ObjectAllocator<ssd::SoundHandle>::allocate();

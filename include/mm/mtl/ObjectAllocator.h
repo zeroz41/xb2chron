@@ -65,6 +65,39 @@ public:
     unsigned int m_capacity;  // 0x34: the slots reserved
 };
 
+// a new T in the first free slot, null when every slot is in use
+template <typename T>
+T* ObjectAllocator<T>::allocate() {
+#line 132 MM_MTL_OBJECT_ALLOCATOR_PATH
+    MM_ASSERT(m_allocated <= m_capacity);
+    if (m_allocated != m_capacity) {
+        for (unsigned int word = 0; word < m_used.m_elementNum; word++) {
+            if (m_used.m_element[word] == 0xFFFFFFFF) {
+                continue;
+            }
+            unsigned int last = word * 32 + 32 > m_capacity ? m_capacity : word * 32 + 32;
+            for (unsigned int i = word * 32; i < last; i++) {
+                if (!m_used.getLocal(i)) {
+                    // the slot's address through an inline the original's null test survives (a test on the
+                    // operator[] reference itself folds away)
+                    T* p = [&](unsigned int index) -> T* {
+                        return reinterpret_cast<T*>(&m_buffer[index * static_cast<unsigned int>(sizeof(T)) / sizeof(unsigned long)]);
+                    }(i);
+                    if (p != nullptr) {
+                        T* object = new (p) T();
+                        m_used.setLocal(i, true);
+                        ++m_allocated;
+#line 220 MM_MTL_OBJECT_ALLOCATOR_PATH
+                        MM_ASSERT(m_allocated <= m_capacity);
+                        return object;
+                    }
+                }
+            }
+        }
+    }
+    return nullptr;
+}
+
 template <typename T>
 void ObjectAllocator<T>::destroy() {
     for (unsigned int i = 0; i < m_capacity; i++) {

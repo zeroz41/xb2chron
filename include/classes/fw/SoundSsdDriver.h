@@ -142,7 +142,10 @@ public:
         };
         // an unused category: no id, every factor 1 (the driver's constructor fills each entry with one)
         CategoryInfo() : baseVolume(1.0f), masterVolume(1.0f), muteCount(0), pitch(1.0f), active(0), name("noname") {}
-        void applyVolume() { category.volume_ = volume.current * (masterVolume * baseVolume) * mute.current; }
+        void applyVolume() {
+            float value = masterVolume * baseVolume * volume.current;
+            category.volume_ = value * mute.current;
+        }
 
         ssd::SoundCategory category;  // 0x00
         float baseVolume;  // 0x10 (addCategory's volume)
