@@ -149,6 +149,14 @@ void UITransform::setScale(float x, float y) {
     m_scale.y = y;
 }
 
+void UITransform::operator=(const UITransform& other) {
+    m_pos = other.m_pos;
+    m_scale = other.m_scale;
+    m_rotation = other.m_rotation;
+    m_rotation = other.m_rotation;  // the original reads and stores the rotation twice
+    m_changed = true;
+}
+
 UIUioLibrary::UIUioLibrary() {}
 
 UIUioLibrary::~UIUioLibrary() {

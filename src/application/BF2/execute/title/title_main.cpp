@@ -119,6 +119,10 @@ void TitleMain::update(const fw::UpdateInfo& info) {
     title->m_updater->update();
 }
 
+void TitleMain::sleep(unsigned int frames) {
+    ml::MicroThread::sys()->sleep(frames, true);
+}
+
 void TitleMain::returnTitle(gf::SAVESLOT slot) {
     TitleMain* title = sys();
     if (title == nullptr) {
@@ -181,6 +185,34 @@ void TitleMain::destroy() {
     TitleMain* title = sys();
     title->finalize();
     delete title;
+}
+
+void TitleMain::finalize() {
+    gf::GfSound* sound = gf::GfSound::sys();
+    if (sound != nullptr) {
+        sound->releaseCategoryHandle(m_seCategory);
+        sound->releaseCategoryHandle(m_seCategorySub);
+    }
+    m_reqDestroy = true;
+    while (m_fsm.m_pState->m_stateID != 9) {
+        sleep(1);
+    }
+    stopTitleBGM(0.0f);
+    m_menu.destroyMenuCallContext();
+    if (m_updater != nullptr) {
+        delete m_updater;
+        m_updater = nullptr;
+    }
+    m_fsm.cleanup();
+    if (m_saveBuffer != nullptr) {
+        // in a lambda: the inline ~SDataSaveIra's stores are then removed (the original calls only operator delete)
+        [](gf::SDataSaveIra* save) { delete save; }(m_saveBuffer);
+        m_saveBuffer = nullptr;
+    }
+    if (m_optionBuffer != nullptr) {
+        delete m_optionBuffer;
+        m_optionBuffer = nullptr;
+    }
 }
 
 void TitleMain::createSaveBuffer() {
