@@ -8,10 +8,7 @@
 
 namespace ssd {
 
-// not identical yet: defining it emits the static initializer (identical) but also the inline ~MemoryManager,
-// whose D2/D0 and ~List<BlockNode> differ because clang inlines List::Delete into ~List where the original keeps
-// it out of line (the inliner defers DeleteInstanceImpl out of Delete)
-// MemoryManager MemoryManager::memoryManager_;
+MemoryManager MemoryManager::memoryManager_;
 
 inline void MemoryManager::FreeBlock(Allocator::Block* block) {
     ScopedLock lock(mutex_);
@@ -188,7 +185,9 @@ Allocator::Block* MemoryManager::GetAllocatorBlock(void* address) {
     return freeBlock;
 }
 
-// not identical yet: the original multiplies count*size in 32 bits and adds (size + alignment) - 1; ours reassociates (12 words)
+// not identical yet (11 words, register choice and schedule of the tail): the original multiplies count*size in
+// 32 bits and adds (size + alignment) - 1; reading the product back from the block and a 32-bit alignment
+// helper give that arithmetic (wip/acq_lam2.cpp in session43/a46sm), but the arguments land in other registers
 /*
 Allocator::Block* MemoryManager::AcquireBlock(Allocator* allocator, unsigned long size, unsigned long count,
                                               unsigned long alignment) {
@@ -216,3 +215,7 @@ Allocator::Block* MemoryManager::AcquireBlock(Allocator* allocator, unsigned lon
 */
 
 }  // namespace ssd
+
+// explicit instantiation: as a weak_odr function Delete is no candidate for the inliner's deferral, so
+// DeleteInstanceImpl is inlined into it and Delete stays out of line in ~List, as in the original
+template ssd::List<ssd::MemoryManager::BlockNode>& ssd::List<ssd::MemoryManager::BlockNode>::Delete();

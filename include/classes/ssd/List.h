@@ -25,17 +25,11 @@ public:
     };
 
     List() : count_(0) {}
-    // gives every node back as Delete does, written out here: ~List<SoundEntry> (SoundBank) has the loop in
-    // its own body, which keeps it out of SoundBank's destructor
+    // gives every node back (List<MemoryManager::BlockNode>'s destructor calls Delete out of line; the other
+    // instances inline it)
     virtual ~List() {  // slot 0
         if (count_ != 0) {
-            T0* item = static_cast<T0*>(head_.next);
-            while (item != static_cast<T0*>(&head_)) {
-                T0* next = static_cast<T0*>(static_cast<Node*>(item)->next);
-                Remove(item);
-                SoundMemory::allocator_->DeleteInstance(item);
-                item = next;
-            }
+            Delete();
         }
     }
 
@@ -67,8 +61,9 @@ public:
         }
     }
 
-    // unlinks every node and gives it back to SoundMemory::allocator_ (each one heads an instance block)
-    List* Delete() {
+    // unlinks every node and gives it back to SoundMemory::allocator_ (each one heads an instance block); returns
+    // a reference: List<MemoryManager::BlockNode>'s destructor calls it without a tail call
+    List& Delete() {
         T0* item = static_cast<T0*>(head_.next);
         while (item != static_cast<T0*>(&head_)) {
             T0* next = static_cast<T0*>(static_cast<Node*>(item)->next);
@@ -76,7 +71,7 @@ public:
             SoundMemory::allocator_->DeleteInstance(item);
             item = next;
         }
-        return this;
+        return *this;
     }
 
     Node head_;
