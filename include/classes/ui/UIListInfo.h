@@ -18,6 +18,9 @@ public:
     virtual void clear();  // slot 2
     virtual void setup(mm::mtl::IAllocator* allocator, const ui::UIListInfoBase::SetupParam& param);  // slot 4
     void addContents(const T0& contents);
+    // exchanges the contents at two indices when both are inside the list (2.0.0's symbols name it;
+    // GfMenuObjPartyForm3::DriverSelectListener::reciveEvent calls it)
+    void swapContents(unsigned int a, unsigned int b);
     // orders the list by a comparator (1.0.0 has it; GfMenuItemList::sort builds the comparators)
     void sort(std::function<bool(const T0&, const T0&)> compare);
     // the content at an index, m_dummy past the end; the name is not the original's (1.0.0 has addContents)
@@ -77,6 +80,15 @@ void UIListInfo<T0>::addContents(const T0& contents) {
     m_list.push_back(contents);
     addSize(1);
     m_changed = true;
+}
+
+template <typename T0>
+void UIListInfo<T0>::swapContents(unsigned int a, unsigned int b) {
+    if (a < getSize() && b < getSize()) {
+        T0 contents = m_list[a];
+        m_list[a] = m_list[b];
+        m_list[b] = contents;
+    }
 }
 
 template <typename T0>

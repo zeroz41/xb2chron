@@ -8,12 +8,14 @@
 #include "classes/gf/GfMenuObjEnBook/MainListener.h"
 #include "classes/gf/GfMenuObjEnBook/TopListener.h"
 #include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfBdatChrEnArrange.h"
 #include "classes/gf/GfBdatRsc.h"
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfMenuIDList.h"
 #include "classes/gf/GfMenuModelView.h"
 #include "classes/gf/GfMenuMsgList.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
+#include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/ui/UICtrlCursorSelect.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UISelectObjList.h"
@@ -519,6 +521,59 @@ void GfMenuObjEnBook::LocationSelListener::reciveEvent(const ui::EventData& even
         UIObjectListener::reciveEvent(event, handle);
         break;
     }
+}
+
+bool GfMenuObjEnBook::seqDeleteEnmey() {
+    if (m_enBookList->getSize() != 0) {
+        unsigned int id = m_enBookList->getContents(m_enBookList->getIndex(false)).m_id;
+        unsigned int enemy = mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys()->getBTL_EnBookBaseEnemyID(id);
+        if (pad_88 == enemy) {
+            return true;
+        }
+    }
+    if (pad_88 != 0) {
+        m_modelView->delGfObj(5, pad_88);
+        pad_88 = 0;
+    }
+    return !m_modelView->isLoading();
+}
+
+bool GfMenuObjEnBook::seqCreateEnmey() {
+    if (!pad_320) {
+        unsigned int id = m_enBookList->getContents(m_enBookList->getIndex(false)).m_id;
+        unsigned int enemy = mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys()->getBTL_EnBookBaseEnemyID(id);
+        if (pad_88 == enemy) {
+            return true;
+        }
+        fw::Transform transform;
+        transform.position = mm::Vec3::zero;
+        transform.rotation = mm::Quat::identity;
+        transform.position.x = 1.5f;
+        m_modelView->addEnemyObject(enemy, transform);
+        pad_88 = enemy;
+        pad_320 = true;
+    } else if (!m_modelView->isLoading()) {
+        pad_320 = false;
+        return true;
+    }
+    return false;
+}
+
+bool GfMenuObjEnBook::seqFadeOutEnmey() {
+    if (!pad_320) {
+        if (pad_88 == 0) {
+            return true;
+        }
+        GfMenuModelView::CtrlParam param(m_modelView->findGfObj(5, pad_88), 0.25f, false);
+        param.setMoveAlpha(0.0f);
+        m_modelView->startObjectCtrl(param);
+        pad_320 = true;
+    }
+    if (m_modelView->isObjectCtrlBusy(m_modelView->findGfObj(5, pad_88))) {
+        return false;
+    }
+    pad_320 = false;
+    return true;
 }
 
 void GfMenuObjEnBook::DetailListener::reciveEvent(const ui::EventData& event, unsigned int handle) {

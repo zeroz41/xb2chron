@@ -32,6 +32,8 @@
 #include "algorithm"
 #include "classes/gf/GfMenuQuestList.h"
 #include "classes/gf/GfMenuReferenceNumber.h"
+#include "classes/ui/UICtrlCursorSelect.h"
+#include "classes/ui/UICtrlRoll.h"
 
 namespace gf {
 
@@ -62,6 +64,44 @@ GfMenuObjHitonowa::GfMenuObjHitonowa(unsigned int handle)
     m_levelNum = GfMenuReferenceNumber::create();
     m_nextNum = GfMenuReferenceNumber::create();
     m_questList = GfMenuQuestList::create();
+}
+
+GfMenuObjHitonowa::~GfMenuObjHitonowa() {
+    for (int i = 0; i < 4; ++i) {
+        if (m_idLists[i] != nullptr) {
+            m_idLists[i]->release();
+            m_idLists[i] = nullptr;
+        }
+        if (m_selectLists[i] != nullptr) {
+            m_selectLists[i]->release();
+            m_selectLists[i] = nullptr;
+        }
+        m_refNums[i] = nullptr;
+    }
+    if (m_listItems != nullptr) {
+        m_listItems->release();
+        m_listItems = nullptr;
+    }
+    if (m_listCursor != nullptr) {
+        m_listCursor->release();
+        m_listCursor = nullptr;
+    }
+    if (m_questList != nullptr) {
+        m_questList->release();
+        m_questList = nullptr;
+    }
+    if (m_list != nullptr) {
+        m_list->release();
+        m_list = nullptr;
+    }
+    if (m_roll != nullptr) {
+        m_roll->release();
+        m_roll = nullptr;
+    }
+    if (pad_68 != nullptr) {
+        pad_68->release();
+        pad_68 = nullptr;
+    }
 }
 
 void GfMenuObjHitonowa::setBootFromEvent() {
@@ -149,6 +189,47 @@ int GfMenuObjHitonowa::getNpcChange(unsigned int id, unsigned int& value) {
 void GfMenuObjHitonowa::setupGame() {
     s_CurLevel = GfGameManager::getHitonowaLevel();
     GfMenuLocation::startNpcNavigate(0);
+}
+
+unsigned int GfMenuObjHitonowa::createNpcObj(unsigned int id, unsigned int kind) {
+    ui::UIObjectAcc main(m_handle, "LAY_main");
+    unsigned int parent = [&]() -> unsigned int {
+        ui::UIObjectAcc layout(m_handle, "LAY_main");
+        switch (kind) {
+        case 0:
+            return layout.searchChild("LAY_icon_complete");
+        case 1:
+            return layout.searchChild("LAY_icon_group_a");
+        case 2:
+            return layout.searchChild("LAY_icon_group_b");
+        case 3:
+            return layout.searchChild("LAY_icon_group_c");
+        default:
+            return 0;
+        }
+    }();
+    if (parent == 0) {
+        return 0;
+    }
+    ui::UIObjectAcc icon(m_handle, "LAY_icon");
+    unsigned int handle = icon.duplicate(parent);
+    if (handle != 0) {
+        ui::UIObjectAcc obj(handle);
+        {
+            ui::UIObjectAcc face(obj.m_handle, "IMG_icon_face");
+            unsigned int index = GfDataNpc::getHitonowaFlag2Index(id);
+            setFaceStream(face, id);
+            face.setImageIndex(index - 0xED03);
+            ui::UIObjectAcc faceMask(obj.m_handle, "IMG_icon_face");
+            ui::UIObjectAcc base(obj.m_handle, "IMG_icon_base");
+            faceMask.setMaskObject(obj.searchChild("IMG_icon_mask"));
+            base.setMaskObject(obj.searchChild("IMG_icon_mask"));
+        }
+        obj.setDispChild(kind == 0, "IMG_icon_frame");
+        obj.setDispChild(true, "IMG_icon_frame_non");
+        obj.setDisp(true);
+    }
+    return handle;
 }
 
 void GfMenuObjHitonowa::finalize() {

@@ -7,6 +7,7 @@
 #include "mm/mtl/FixedArray.h"
 #include "mm/mtl/FixedVector.h"
 #include "mm/mtl/IntrusivePtr.h"
+#include "classes/mm/mtl/ReferenceObject.h"
 
 namespace gf { class GAME_VOICE_HANDLE; class GfMenuIDList; class GfMenuQuestList; class GfMenuReferenceNumber; }
 namespace mm { template <typename T> class Pnt; }
@@ -53,6 +54,11 @@ public:
     // group, adds id with GfDataHitonowa::getEntryComplete's (kind 0) or GfDataHitonowa::getEntryOn's value, sorts the list ascending (sortFromWork)
     // and stores its size in m_refNums[kind].
     void addNpc(unsigned char kind, unsigned int id);
+    // 2.0.0's symbols name it. What it does: duplicates LAY_icon under the main layout's LAY_icon_complete (kind 0) or
+    // LAY_icon_group_a..c (kind 1-3), sets its IMG_icon_face to id's face (setFaceStream, image
+    // GfDataNpc::getHitonowaFlag2Index - 0xED03), masks face and base with IMG_icon_mask and shows it; returns the
+    // new object, 0 for another kind
+    unsigned int createNpcObj(unsigned int id, unsigned int kind);
     // the order addNpc's std::sort gives a list: ascending GfDataHitonowa::getEntryOn (the name is the original's, from
     // the sort's template arguments; stateless)
     struct CompareEntry {
@@ -187,7 +193,8 @@ public:
     // ctor and destructor create and release four of each; the names are not the original's)
     GfMenuIDList* m_idLists[4];
     ui::UISelectObjList* m_selectLists[4];
-    unsigned char pad_68[0x8];
+    // a reference-counted object the destructor releases (after m_roll); nothing in this unit sets it
+    mm::mtl::ReferenceObject* pad_68;
     // the roll control seqMoveLost takes the list object off (UICtrlRoll::delObject; the name is not the original's)
     ui::UICtrlRoll* m_roll;
     unsigned char pad_78[0x8];

@@ -7,6 +7,8 @@ namespace gf {
 // a driver list's element (4 bytes: setupFromParty adds the drivers' BDAT ids); the field name is not the original's
 class MenuDriverInfo {
 public:
+    // Vector<MenuDriverInfo>::insert zeroes the new end slot before moving the tail
+    MenuDriverInfo() : m_driver(0) {}
     unsigned int m_driver;
 };
 

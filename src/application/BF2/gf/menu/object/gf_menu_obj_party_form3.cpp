@@ -15,6 +15,7 @@
 #include "classes/gf/GfMenuFullScreen.h"
 #include "classes/gf/GfMenuObjCommonText.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
+#include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
 #include "gf/GfMenuTypes.h"
@@ -141,6 +142,33 @@ void GfMenuObjPartyForm3::update() {
     GfMenuObject::update();
 }
 
+void GfMenuObjPartyForm3::refreshRemoveAddOperation(unsigned int handle, int count) {
+    if (m_moveIndex >= 0) {
+        return;
+    }
+    unsigned int partyCount = m_partyCount;
+    if (m_canRemoveAdd) {
+        if (partyCount > static_cast<unsigned int>(count)) {
+            if (partyCount <= 1) {
+                GfMenuObjOperationInfo::setActionEnable(handle, 9, false);
+            } else {
+                GfMenuObjOperationInfo::setActionEnable(handle, 9, true);
+                GfMenuObjOperationInfo::changeText(handle, 9, false);
+            }
+            return;
+        }
+    } else if (partyCount > static_cast<unsigned int>(count)) {
+        GfMenuObjOperationInfo::setActionEnable(handle, 9, false);
+        return;
+    }
+    if (partyCount >= 3) {
+        GfMenuObjOperationInfo::setActionEnable(handle, 9, false);
+    } else {
+        GfMenuObjOperationInfo::setActionEnable(handle, 9, true);
+        GfMenuObjOperationInfo::changeText(handle, 9, true);
+    }
+}
+
 bool GfMenuObjPartyForm3::seqAnnounceChange() {
     if (GfMenuObjUtil::isValidExpansion(3) && m_openType == 2) {
         return true;
@@ -176,6 +204,10 @@ void GfMenuObjPartyForm3::BGListener::reciveEvent(const ui::EventData& event, un
 }  // namespace gf
 
 template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuObjPartyForm3>(const mm::mtl::Delegate<bool()>*);
+
+// instantiated for gf::GfMenuObjPartyForm3::DriverSelectListener::reciveEvent (not written yet)
+template void ui::UIListInfo<gf::MenuDriverInfo>::swapContents(unsigned int, unsigned int);
+template mm::mtl::Vector<gf::MenuDriverInfo>::iterator mm::mtl::Vector<gf::MenuDriverInfo>::insert(gf::MenuDriverInfo*, gf::MenuDriverInfo const&);
 
 namespace gf {
 
