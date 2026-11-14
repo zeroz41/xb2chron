@@ -419,6 +419,24 @@ void GfMenuObjCampMenu::ShopListener::reciveEvent(const ui::EventData& event, un
     }
 }
 
+unsigned int GfMenuObjCampMenu::refreshShopInfo() {
+    ui::UIObjectAcc shop(m_handle, "LAY_shop");
+    unsigned int driver = m_driverList0->getContents(m_driverList0->getIndex(false)).m_driver;
+    ShopInfo info;
+    if (getDriverShopInfo(driver, info)) {
+        {
+            ui::UIObjectAcc guide(shop.m_handle, "TXT_shop_header_guide");
+            ui::UIObjectAcc guideSw(shop.m_handle, "TXT_shop_header_guide_sw");
+            guide.setText(ui::UIStr(GfDataBdat::getFP(0x13C), info.m_summaryMsg));
+            guideSw.setText(ui::UIStr(GfDataBdat::getFP(0x13C), info.m_summaryMsg));
+        }
+        GfMenuReference::setReferenceDriverID(0, driver);
+        GfMenuReference::setReferenceShopID(info.m_shopId);
+        return info.m_shopId;
+    }
+    return 0;
+}
+
 bool GfMenuObjCampMenu::seqWaitShop() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     if (m_context->isTerm()) {

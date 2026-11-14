@@ -328,6 +328,29 @@ void GfMenuObjCommonText::openGetItem(GfMenuCallContext* context, const GfMenuIt
     }
 }
 
+void GfMenuObjCommonText::openSubMenu(GfMenuCallContext* context, const GfMenuIDList* ids, const SubMenuOption& param) {
+    unsigned int handle = GfMenuObject::getAttachedObject(100);
+    if (ui::UIObjectAcc(handle).m_object != nullptr) {
+        bool term = ui::UIObjectAcc(handle).isTerm();
+        if (context != nullptr && !term) {
+            s_pSubMenuIDList->clear();
+            for (unsigned int i = 0; i < ids->getSize(); i++) {
+                s_pSubMenuIDList->addContents(ids->getContents(i));
+            }
+            s_pSubMenuIDList->setIndex(param.m_index);
+            ui::EventData event;
+            event.m_type = 0x21;
+            event.m_param0 = 0;
+            event.m_paramShort[2] = param.pad_0;
+            event.m_paramShort[3] = param.pad_4;
+            event.m_paramShort[4] = param.pad_6;
+            event.m_paramShort[7] = 5;
+            GfMenuObject::sendEvent(handle, event, 0.0f);
+            GfMenuObject::startCallContext(context, 100, handle);
+        }
+    }
+}
+
 void GfMenuObjCommonText::openSelectItem(GfMenuCallContext* context, const GfMenuItemList* items, unsigned int value) {
     unsigned int handle = GfMenuObject::getAttachedObject(100);
     if (ui::UIObjectAcc(handle).m_object != nullptr) {
