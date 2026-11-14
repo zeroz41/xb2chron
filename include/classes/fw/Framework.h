@@ -88,10 +88,6 @@ public:
     bool initializeManager();
     static void createMemorySection();  // the sound and movie memory sections (kinds 6..9)
     void createManager();
-    // 2.0.0's symbols name it (1.0.0 has no update thread). A member
-    // because initialize starts it as the "PosuUpdateThread" thread's entry with &m_postUpdateThread. What it does:
-    // until m_threadExit, runs ColiManager::postUpdate while m_threadFlag is set, then waits on m_threadEvent; 0.
-    static unsigned int fnThread(void* arg);
     bool finalizeManager();
     void destroyApplet();
     static mtl::ALLOC_HANDLE getMemHandle();  // the memory resources are made in (ResourceManager::getMemSYS)
@@ -125,6 +121,10 @@ public:
     // the "PosuUpdateThread" thread's state: the thread's entry gets its address (the name is not the original's)
     struct PostUpdateThread {
         PostUpdateThread() : m_thread(nullptr), m_threadEvent(false, true), m_threadExit(false), m_threadFlag(true) {}
+        // 2.0.0's symbols name it (fw::Framework::PostUpdateThread::fnThread; 1.0.0 has no update thread).
+        // initialize starts it as the "PosuUpdateThread" thread's entry with &m_postUpdateThread. What it does:
+        // until m_threadExit, runs ColiManager::postUpdate while m_threadFlag is set, then waits on m_threadEvent; 0.
+        static unsigned int fnThread(void* arg);
         ml::Thread* m_thread;
         mm::threading::EventWait m_threadEvent;  // startThreadPostUpdate signals it, waitThreadPostUpdate waits on it (name inferred)
         bool m_threadExit;   // the destructor sets it before waking the thread (the name is not the original's)

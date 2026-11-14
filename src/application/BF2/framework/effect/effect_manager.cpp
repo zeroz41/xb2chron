@@ -27,6 +27,9 @@
 #include "classes/ml/DevFileTh.h"
 #include <string.h>
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "grlib/CGLibTexture.h"
+#include "grlib/CGLibTextureBuffer.h"
+#include "classes/fw/RenderResource.h"
 
 namespace fw {
 
@@ -1117,6 +1120,34 @@ void EffectManager::end() {
         effect::SystemManager::getPtr()->end();
     }
 }
+
+void EffectManager::apply(ml::IDrDrawWorkInfo const* info) {
+    efSystemStart(info);
+    if (m_kizunaLoadState == 2) {
+        m_kizunaLoadState = 3;
+        for (unsigned int i = 0; i < m_kizunaLinkResources.size(); ++i) {
+            ResourceEntry& entry = *m_kizunaLinkResources.at(i);
+            if (entry.m_resource != nullptr && entry.m_resource->getAssetSize() != 0) {
+#line 2704
+                grlib::CGLibTextureBuffer* buffer = new (Framework::getAllocator(), 16, __FILE__, __LINE__) grlib::CGLibTextureBuffer();
+                grlib::CGLibTexSwizzle swizzle;
+                swizzle.r = 1;
+                swizzle.g = 1;
+                swizzle.b = 1;
+                swizzle.a = 2;
+                grlib::CGLibTexture::createTextureImagePtrs(*buffer, entry.m_resource->getAssetData(),
+                                                            entry.m_resource->getAssetSize(), false, &swizzle, false);
+                m_textureBuffers.push_back(buffer);
+            }
+        }
+    }
+    if (effect::SystemManager::getPtr() != nullptr) {
+        for (unsigned int i = 0; i < 8; ++i) {
+            effect::SystemManager::getPtr()->setCategorySpd(i, m_categorySpeed[i]);
+        }
+        effect::SystemManager::getPtr()->apply(reinterpret_cast<const ptlib::DrDrawWorkInfoEF*>(info));
+    }
+}
 }  // namespace fw
 
 template mm::mtl::PtrSingleton<fw::EffectManager>::~PtrSingleton();
@@ -1134,5 +1165,16 @@ FW_EFFECT_RENDER(alphaRender)
 FW_EFFECT_RENDER(lastRender)
 FW_EFFECT_RENDER(blurRender)
 FW_EFFECT_RENDER(finalRender)
+
+float RimBloomCalc::getVal(float frame, unsigned int index) const {
+    const mm::mtl::FixedVector<Key, 64>& keys = m_curves[index].m_keys;
+    if (frame <= keys.front().m_frame) {
+        return keys.front().m_value;
+    }
+    if (keys.front().m_frame < frame && frame < keys.back().m_frame) {
+        return calcValFromCurve(frame, index);
+    }
+    return keys.back().m_value;
+}
 
 }  // namespace fw

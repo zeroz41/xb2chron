@@ -405,6 +405,19 @@ IPauseTrigger::~IPauseTrigger() {
     Framework::removePauseCallback(this);
 }
 
+unsigned int Framework::PostUpdateThread::fnThread(void* arg) {
+    PostUpdateThread* thread = static_cast<PostUpdateThread*>(arg);
+    while (!thread->m_threadExit) {
+        if (thread->m_threadFlag) {
+            if (ColiManager* coli = mm::mtl::PtrSingleton<ColiManager>::get()) {
+                coli->postUpdate();
+            }
+        }
+        thread->m_threadEvent.waitSignal(0);
+    }
+    return 0;
+}
+
 CameraManager::~CameraManager() {
     for (int i = 0; i < 4; i++) {
         m_layers[i].cleanup();

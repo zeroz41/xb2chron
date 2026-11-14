@@ -288,6 +288,23 @@ public:
         MM_ASSERT(index < size());
         return *at(index);
     }
+    // the const first and last elements and the const index check (fixed_vector.h lines 163, 166 and 203:
+    // fw::RimBloomCalc::getVal inlines them; the names are not the original's)
+    const T& front() const {
+#line 163 MM_MTL_FIXED_VECTOR_PATH
+        MM_ASSERT(0 < m_size);
+        return *at(0);
+    }
+    const T& back() const {
+#line 166 MM_MTL_FIXED_VECTOR_PATH
+        MM_ASSERT(0 < m_size);
+        return element(m_size - 1);
+    }
+    const T& element(unsigned long index) const {
+#line 203 MM_MTL_FIXED_VECTOR_PATH
+        MM_ASSERT(index < size());
+        return *at(index);
+    }
     // the index-th unit of the room (fw::SoundPack::findSource, findSourceFromID); the name is not the original's
     const T* at(unsigned long index) const {
         return Room::element(m_buffer, index);
