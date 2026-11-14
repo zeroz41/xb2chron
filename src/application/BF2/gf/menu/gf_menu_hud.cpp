@@ -1,5 +1,6 @@
 #include "classes/gf/GfMenuHUD.h"
 #include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfMenuAdapterManager.h"
 #include "classes/ui/UIManager.h"
 #include "plugin/Bdat.h"
@@ -7,11 +8,35 @@
 
 namespace gf {
 
-// initialize (0x7100353630) is not here yet: see the report
+void GfMenuHUD::initialize(const GfSetupParam& param) {
+    m_initialized = true;
+    finalize();
+    if (ui::UIUtil::isEnableExpType(3) && GfGameManager::isGameTypeIra()) {
+        m_layerType = 3;
+    }
+    m_system.set(this, &GfMenuHUD::systemStart);
+    unsigned char* fp = ui::UIUtil::getLayerBdat(m_layerType);
+    if (fp != nullptr) {
+        for (int i = 0; i < Bdat::getIdCount(fp); i++) {
+            int id = Bdat::getIdTop(fp) + i;
+            unsigned char group = Bdat::getVal(fp, "group", id);
+            if (group < 3 || group == 4) {
+                ui::UIManager::sys()->createLayer(id);
+            }
+        }
+    }
+    if (m_layerType == 0 && ui::UIUtil::isEnableExpType(1)) {
+        addExpansionLayer(1);
+    }
+}
 
 GfMenuHUD::~GfMenuHUD() {}
 
-// build (0x71003537D8) is not here yet: see the report
+void GfMenuHUD::build(const GfSetupParam& param) {
+#line 75
+    GfMenuHUD* hud = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfMenuHUD;
+    hud->initialize(param);
+}
 
 void GfMenuHUD::destroy() {
     GfMenuHUD* hud = get();

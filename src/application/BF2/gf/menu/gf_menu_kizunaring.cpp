@@ -2,10 +2,12 @@
 #include "classes/gf/GfMenuKizunaring.h"
 #include "classes/gf/GfBdatItem.h"
 #include "classes/gf/GfItemBox.h"
+#include "gf/GfDataBlade.h"
 #include "gf/GfDataDriver.h"
 #include "gf/GfDataItem.h"
 #include "gf/GfDataUtil.h"
 #include "gf/GfEquipUtil.h"
+#include "gf/GfGameUtil.h"
 #include "gf/GfItemUtil.h"
 #include "gf/GfMenuBdat.h"
 #include "gf/GfMenuItemUtil.h"
@@ -151,6 +153,37 @@ unsigned short GfMenuItemUtil::searchEquipAcc(unsigned int item, GfItemHandle ha
                     *slot = 0;
                 }
                 return driver;
+            }
+        }
+    }
+    return 0;
+}
+
+unsigned short GfMenuItemUtil::searchEquipOrb(unsigned int item, GfItemHandle handle, unsigned int* slot) {
+    ::mm::mtl::FixedVector<unsigned short, 422> blades;
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
+        GfDataBlade::getListRegular(blades);
+        GfDataBlade::getListRare(blades);
+        GfGameUtil::getListDlcRare(blades);
+        GfDataBlade::getListCommon(blades);
+    } else {
+        GfDataBlade::getListIraBlade(blades);
+    }
+    for (unsigned int i = 0; i < blades.size(); i++) {
+        unsigned short blade = *(blades.begin() + i);
+        if (blade == 0) {
+            continue;
+        }
+        unsigned int slotCount = GfEquipUtil::getEquipOrbMax(blade);
+        for (unsigned int j = 0; j < slotCount; j++) {
+            unsigned int orb = GfEquipUtil::getEquipBladeOrb(blade, j);
+            GfItemHandle equipped;
+            if (orb != 0 && orb == item &&
+                (equipped = GfDataBlade::getEquipOrbHandle(blade, j)).m_handle == handle.m_handle) {
+                if (slot != nullptr) {
+                    *slot = j;
+                }
+                return blade;
             }
         }
     }

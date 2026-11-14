@@ -20,7 +20,11 @@ public:
         const char* m_name;
         unsigned int m_id;
     };
+    // 3.0.1 has no out-of-line copy: build inlines it
+    GfMenuHUD() : m_initialized(false), m_sceneId(0), m_nextSceneId(0), m_layerType(0) {}
     virtual ~GfMenuHUD();  // slot 0
+    // starts the system sequence and creates the menu layers of m_layerType (and type 1's expansion layers)
+    void initialize(const GfSetupParam& param);
     static void build(const GfSetupParam& param);
     static void destroy();
     static bool isInitialized();
