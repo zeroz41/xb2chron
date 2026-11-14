@@ -27,6 +27,38 @@
 
 namespace layer {
 
+LayerRceManager::LayerRceManager(LayerManager* manager) : m_pManager(manager) {
+    for (int i = 0; i < 2; i++) {
+        m_lists[i] = LayerLinkList<Work>();
+    }
+}
+
+void LayerRceManager::update() {
+    m_deleteList.deleteAll();
+
+    for (Work* work = m_lists[LayerManager::s_nDebIdx].m_head; work != nullptr;) {
+        Work* next = work->m_next;
+        m_lists[LayerManager::s_nDebIdx].removeList(work);
+        m_freeList.addListNotNull(work);
+        work = next;
+    }
+    m_lists[LayerManager::s_nDebIdx].m_num = 0;
+    m_lists[LayerManager::s_nDebIdx].m_head = nullptr;
+    m_lists[LayerManager::s_nDebIdx].m_tail = nullptr;
+
+    Work* work = m_freeList.m_head;
+    while (work != nullptr) {
+        if (work->isFlag(LayerManager::s_nDebIdx)) {
+            Work* next = work->m_next;
+            m_freeList.removeList(work);
+            m_deleteList.addListNotNull(work);
+            work = next;
+        } else {
+            work = work->m_next;
+        }
+    }
+}
+
 LayerRceManager::~LayerRceManager() {}
 
 LayerShdManager::~LayerShdManager() {

@@ -1024,6 +1024,25 @@ ScnObjModelDrSys::ScnObjModelDrSys(Scn* scn, const void* res, const char* name)
 
 void ScnObjModelDrSys::update() {}
 
+void ScnObjModelDrSys::apply() {
+    getTrans(false)->update();
+    if (isDisp()) {
+        if (m_pMdlObj != nullptr) {
+            m_pMdlObj->setDisp(true);
+            DrMdlObj* mdl = m_pMdlObj;
+            if (isClip()) {
+                mdl->m_dispFlags |= 0x2;
+            } else {
+                mdl->m_dispFlags &= ~0x2;
+            }
+            float& speed = m_pMdlObj->m_speed;
+            speed = m_unkFlag6 ? m_frameSpd : 0.0f;
+        }
+    } else if (m_pMdlObj != nullptr) {
+        m_pMdlObj->setDisp(false);
+    }
+}
+
 void ScnObjModelDrSys::setGroups(int groups) { m_pMdlObj->setGroups(groups); }
 
 int ScnObjModelDrSys::getGroups() { return m_pMdlObj->getGroups(); }
