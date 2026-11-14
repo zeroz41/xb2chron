@@ -20,6 +20,7 @@ public:
     void* Allocate(unsigned long size);
     void* Allocate(unsigned long size, unsigned long alignment);
     void Free(void* address);
+    void* Reallocate(void* address, unsigned long newSize);
 
 private:
     bool m_Initialized;

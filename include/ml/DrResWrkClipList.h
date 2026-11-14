@@ -13,6 +13,14 @@ public:
         unsigned int m_ofs;  // 0x0: the entries, from the data
         int m_num;           // 0x4
     };
+    // one 8-byte clip entry of a list (update): the entries are walked while their level is not below the last
+    // clipped one's; a clipped entry of type 0 makes the list visible, an unclipped entry of type 1 too
+    struct ClipEntry {
+        unsigned short m_bitNo;  // 0x0: DrCalcClipMan::m_pBitTbl's bit
+        unsigned short m_type;   // 0x2
+        unsigned short m_level;  // 0x4
+        unsigned short pad_6;
+    };
     // the bits' bytes, rounded up to 0x20
     static int calcWorkSize(const unsigned char* data, unsigned int ofs);
     int setupWork(unsigned char* work, const unsigned char* data, unsigned int ofs);

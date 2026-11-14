@@ -13,6 +13,7 @@ struct MdoWrkMatRes;
 class DrResMdoSeamMemObj;
 class DrResMdoVertex;
 class DrPixlShadowObj;
+class DrPixlShadowCacheObj;
 class DrMdoCtlSeamInstMap;
 class DrResMdoSeamParmRead;
 class DrResMdoSeamTexture;
@@ -22,7 +23,8 @@ struct MdsPosRangeTreeData;
 struct MdoArgSeamInst;
 // the head of a seam instance map's data (name from setupWork's symbol; the field names are not the original's)
 struct MdsSeamInstMapHead {
-    unsigned char pad_0[0xC];
+    unsigned char m_flags;  // 0x0: the shadow searches skip the map while bit 2 is set
+    unsigned char pad_1[0xB];
     // 0xC..0x14: offsets of data blocks: [1], [0] and m_extOfs go to DrMdoMat::initInstMapMaterial and
     // resetInstMapMaterial, [2] (0 when there is none) is the MdsSeamInstMatBlock of the material resources
     unsigned int m_dataOfs[3];
@@ -51,7 +53,9 @@ public:
         unsigned char pad_0[0x34];
         unsigned int m_ofs;   // 0x34: where the instance map data starts (DrMdoCtlSeamRead::callInstMapStream)
         unsigned int m_size;  // 0x38
-        unsigned char pad_3C[0x4];
+        unsigned char pad_3C[0x2];
+        unsigned char m_flags;  // 0x3E: the shadow searches skip the map while bit 0 is set
+        unsigned char pad_3F;
     };
     // a model info (0x20 bytes); the name is not the original's
     struct MdlInfo {
@@ -141,7 +145,13 @@ public:
     void occRender();
     // DrMdoCtlSeamInstMap::callInstShadowCacheAddRender calls it after the work's models
     void renderShadowPosAnime(DrMdoCtlSeamInstMap* ctl, DrResMdoInstAnmObj* anm, unsigned int idx);
+    // false when the cache is done for this work (it is then marked done)
+    bool seachShadowInstMapRender(DrPixlShadowCacheObj& cache, DrMdoCtlSeamInstMap* ctl);
+    bool seachShadowInstMapRenderChild(DrPixlShadowCacheObj& cache, DrMdoCtlSeamInstMap* ctl,
+                                       const MdsPosRangeTreeData* tree);
     void seachDefShadowInstMapRender(DrPixlShadowObj* shadow, DrMdoCtlSeamInstMap* ctl);
+    void seachDefShadowInstMapRenderChild(DrPixlShadowObj* shadow, DrMdoCtlSeamInstMap* ctl,
+                                          const MdsPosRangeTreeData* tree);
     // 0x08: the next work of DrMdoCtlSeam::m_instPool.m_list (the name is not the original's)
     DrResMdoSeamWrkInst* m_pLink;
     DrResMdoSeamWrkInst* m_pBackLink;  // 0x10: the previous work (the name is not the original's)
@@ -150,7 +160,9 @@ public:
     const DrResMdoSeamWrkPosInst::BaseData* m_baseData;  // 0x28: the base positions' data (the name is not the original's)
     const unsigned char* pad_30;  // 0x30: m_baseData + its offset at 0x8
     const unsigned char* pad_38;  // 0x38: m_baseData + its offset at 0x10
-    unsigned char pad_40[0x10];
+    unsigned char pad_40[0x8];
+    // 0x48: the current position work's shadow cache buffer (seachShadowInstMapRender; the name is not the original's)
+    void* m_curShadowCacheBuf;
     // 0x50: DrMdoCtlSeamAll::occRender renders with it; freed by release (the name is not the original's)
     MdoWrkMatRes* m_pWrkMatRes;
     void* pad_58;  // 0x58: freed by release
@@ -158,7 +170,10 @@ public:
     int m_dataIdx;  // 0x68: its m_mapEntry's index (DrMdoCtlSeamRead::callInstMapStream; the name is not the original's)
     unsigned char pad_6C[0x4];
     void* pad_70;
-    unsigned char pad_78[0xC];
+    unsigned char pad_78[0x8];
+    // 0x80: seachShadowInstMapRender sets it from DrPixlShadowCacheMan::SHADOW_CHECK_RANGE_TBL (the name is not the
+    // original's)
+    float m_shadowRange;
     unsigned int m_readSize;  // 0x84: m_mapEntry's size (DrMdoCtlSeamRead::callInstMapStream; the name is not the original's)
     unsigned short pad_88;
     // 0x8A: waitInstPosStream sets bit 5 when the position stream ends without its data (the name is not the

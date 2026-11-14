@@ -1,6 +1,8 @@
 #ifndef CLASSES_PTLIB_EMITTER_COMPUTEMANAGER_H
 #define CLASSES_PTLIB_EMITTER_COMPUTEMANAGER_H
 
+#include "grlib/CGLibDblUniformBlock.h"
+
 namespace ptlib { namespace emitter {
 // one uniform block of the particle compute pass (particle_emitter_compute_uniform.cpp); 0x40 bytes
 // (ComputeManager holds them 0x40 apart)
@@ -12,7 +14,11 @@ public:
     void releaseUniform();
     void createParticlesUniform();
 
-    unsigned char pad_0[0x40];
+    // each type's block size (createUniform multiplies it by the count)
+    static unsigned int s_nUniformBlockSize[5];
+
+    unsigned int m_type;  // 0x0, createUniform's type
+    grlib::CGLibDblUniformBlock m_uniform;  // 0x8
 };
 
 // table 0x7100B80790 (particle_emitter_compute_impl.h). The field names are not the original's: each uniform is

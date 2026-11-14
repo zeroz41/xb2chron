@@ -103,6 +103,7 @@
 #include "ml/DrPixlRenderTarget.h"
 #include "ml/DrResWrkClipList.h"
 #include "ml/DrResMdoSampler.h"
+#include "ml/DrPixlMdlSampler.h"
 #include "grlib/CGLibSampler.h"
 #include "ml/DrResFilterData.h"
 #include "ml/DrResMdoTexSimple.h"
@@ -915,6 +916,33 @@ int DrResWrkClipList::setupWork(unsigned char* work, const unsigned char* data, 
 void DrResWrkClipList::changeMemCall(const unsigned char* data, unsigned int ofs) {
     m_data = data;
     m_list = data + reinterpret_cast<const ListHead*>(data + ofs)->m_ofs;
+}
+
+void DrResWrkClipList::update(DrCalcClipMan* clipMan) {
+    memset(m_work, 0, m_workSize);
+    if (clipMan->m_pBitTbl == nullptr) {
+        return;
+    }
+    const ListHead* head = reinterpret_cast<const ListHead*>(m_list);
+    for (int i = 0; i < m_num; i++, head++) {
+        const ClipEntry* entry = reinterpret_cast<const ClipEntry*>(m_data + head->m_ofs);
+        int level = 0;
+        bool visible = false;
+        for (int j = 0; j < head->m_num; j++, entry++) {
+            if (level > entry->m_level) {
+                break;
+            }
+            if (clipMan->m_pBitTbl[entry->m_bitNo >> 5] & (1 << (entry->m_bitNo & 0x1F))) {
+                visible = entry->m_type == 0;
+                level = entry->m_level;
+            } else if (entry->m_type == 1) {
+                visible = true;
+            }
+        }
+        if (visible) {
+            m_work[i >> 5] |= 1 << (i & 0x1F);
+        }
+    }
 }
 
 void DrResMdoSeamWrkPosMpf::setupMpfBasePos(const unsigned char* data) {
@@ -4323,6 +4351,33 @@ DrResMdoSampler::~DrResMdoSampler() {
     }
 }
 
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_71009B5700). The min filter of each
+// DrPixlMdlSampler setting (setupSampler and setup).
+static const unsigned char s_mdlMinFilter[4] = {2, 3, 4, 5};
+
+void DrResMdoSampler::setup() {
+    DrPixlMdlSampler* mdl = DrMan::get()->m_pMdlSampler;
+    for (int i = 0; i < m_samplerNum; i++) {
+        if (!m_samplers[i].m_params.m_magFilter || m_samplers[i].m_params.m_minFilter < 2) {
+            continue;
+        }
+        bool lod = false;
+        if (!mdl->m_cur.m_flag && m_samplers[i].m_params.m_lod != 0.0f) {
+            lod = true;
+        }
+        int aniso = mdl->m_cur.m_value0;
+        unsigned int minFilter = s_mdlMinFilter[mdl->m_cur.m_value1];
+        if (minFilter != m_samplers[i].m_params.m_minFilter || aniso != m_samplers[i].m_params.m_aniso || lod) {
+            m_samplers[i].setFilter(static_cast<GrlTexMagFilterType>(1), static_cast<GrlTexMinFilterType>(minFilter),
+                                    static_cast<GrlTexTexAnisoRatio>(aniso));
+            if (!mdl->m_cur.m_flag) {
+                m_samplers[i].setLOD(0.0f);
+            }
+            m_samplers[i].updateData();
+        }
+    }
+}
+
 DrResOccUniformObj::DrResOccUniformObj(DrMan* man, int max) : m_max(max), m_cnt(0), m_buf(nullptr) {
     int size = m_max * 0x40;
     m_buf = m_matTbl = static_cast<mm::Mat44*>(mtl::MemManager::allocate(man->m_allocHandle, size, 0x10, false, "no name", 0));
@@ -4367,6 +4422,67 @@ void DrResMdoSeamWrkInst::callShadowCacheInstUpdate(unsigned long mask) {
         }
     }
     m_shadowCacheDone &= ~mask;
+}
+
+bool DrResMdoSeamWrkInst::seachShadowInstMapRender(DrPixlShadowCacheObj& cache, DrMdoCtlSeamInstMap* ctl) {
+    if ((m_mapEntry->m_flags & 1) || (m_shadowCacheDone & cache.m_cacheBit)) {
+        return false;
+    }
+    if (!(m_header->m_flags & 4)) {
+        m_shadowRange = DrPixlShadowCacheMan::SHADOW_CHECK_RANGE_TBL[static_cast<unsigned int>(cache.m_level)];
+        bool hit = false;
+        if (cache.m_level != 0 && (cache.m_flags & 8)) {
+            m_shadowRange = 15.0f;
+            hit = true;
+        }
+        m_curPosInst = m_posInstList[0];
+        m_curShadowCacheBuf = m_curPosInst->m_shadowCacheBufSize != 0
+                                  ? m_curPosInst->m_shadowCacheBuf[static_cast<unsigned int>(cache.m_cacheIdx)]
+                                  : nullptr;
+        const DrResMdoSeamWrkPosInst::BaseData* base = m_baseData;
+        for (int i = 0; i < base->m_treeNum; i++) {
+            hit |= seachShadowInstMapRenderChild(
+                cache, ctl, reinterpret_cast<const MdsPosRangeTreeData*>(m_curPosInst->m_tbl18) + i);
+        }
+        for (int j = 1; j < m_posInstNum; j++) {
+            m_curPosInst = m_posInstList[j];
+            m_curShadowCacheBuf = m_curPosInst->m_shadowCacheBufSize != 0
+                                      ? m_curPosInst->m_shadowCacheBuf[static_cast<unsigned int>(cache.m_cacheIdx)]
+                                      : nullptr;
+            const DrResMdoSeamWrkPosInst::EtcData* data =
+                reinterpret_cast<const DrResMdoSeamWrkPosInst::EtcData*>(m_curPosInst->m_data);
+            for (int i = 0; i < data->m_treeNum; i++) {
+                hit |= seachShadowInstMapRenderChild(
+                    cache, ctl, reinterpret_cast<const MdsPosRangeTreeData*>(m_curPosInst->m_tbl18) + i);
+            }
+        }
+        if (hit) {
+            return true;
+        }
+    }
+    m_shadowCacheDone |= cache.m_cacheBit;
+    return false;
+}
+
+void DrResMdoSeamWrkInst::seachDefShadowInstMapRender(DrPixlShadowObj* shadow, DrMdoCtlSeamInstMap* ctl) {
+    if ((m_mapEntry->m_flags & 1) || (m_header->m_flags & 4)) {
+        return;
+    }
+    m_curPosInst = m_posInstList[0];
+    const DrResMdoSeamWrkPosInst::BaseData* base = m_baseData;
+    for (int i = 0; i < base->m_treeNum; i++) {
+        seachDefShadowInstMapRenderChild(shadow, ctl,
+                                         reinterpret_cast<const MdsPosRangeTreeData*>(m_curPosInst->m_tbl18) + i);
+    }
+    for (int j = 1; j < m_posInstNum; j++) {
+        m_curPosInst = m_posInstList[j];
+        const DrResMdoSeamWrkPosInst::EtcData* data =
+            reinterpret_cast<const DrResMdoSeamWrkPosInst::EtcData*>(m_curPosInst->m_data);
+        for (int i = 0; i < data->m_treeNum; i++) {
+            seachDefShadowInstMapRenderChild(shadow, ctl,
+                                             reinterpret_cast<const MdsPosRangeTreeData*>(m_curPosInst->m_tbl18) + i);
+        }
+    }
 }
 
 mm::Mat44* DrResOccUniformObj::getMatTbl(int idx) {
@@ -5980,6 +6096,42 @@ void DrResMdoSeamWrkLow::release() {
     m_memObj = nullptr;
 }
 
+void DrResMdoSeamWrkLow::stockRenderListLowMap(int base, unsigned int pass, unsigned int infoOfs, int alpIdx,
+                                               bool zPrePass) {
+    long idx = m_renderCnt;
+    RenderEntry* entries = m_renderEntries;
+    RenderEntry* entry = &entries[idx];
+    int list = base + pass;
+    if (!zPrePass) {
+        if (m_drawLast[list] != nullptr) {
+            m_drawLast[list]->m_next = idx + 1;
+        } else {
+            m_drawList[m_drawNum[pass] + m_matRes->m_matNum * pass] = entry;
+            m_drawNum[pass]++;
+        }
+        m_drawLast[list] = entry;
+        entries[idx].m_flags &= ~2;
+    } else {
+        if (m_renderLast[list] != nullptr) {
+            m_renderLast[list]->m_next = idx + 1;
+        } else {
+            m_renderList[m_renderNum[pass] + m_matRes->m_matNum * pass] = entry;
+            m_renderNum[pass]++;
+        }
+        m_renderLast[list] = entry;
+        if (m_cacheFlags & 8) {
+            entries[idx].m_flags |= 2;
+        } else {
+            entries[idx].m_flags &= ~2;
+        }
+    }
+    entries[idx].m_alpIdx = alpIdx;
+    entry->m_infoOfs = infoOfs;
+    entries[idx].m_next = 0;
+    entries[idx].pad_6 = 0;
+    m_renderCnt++;
+}
+
 
 void DrResMdoVtxMeshObj::setActive(bool active, unsigned int count) {
     if (active) {
@@ -6234,6 +6386,31 @@ DrResMdoVertex::DrResMdoVertex(const unsigned char* data)
 }
 
 DrResMdoVertex::~DrResMdoVertex() { vertexRelease(); }
+
+void DrResMdoVertex::vertexRelease() {
+    if (m_work == nullptr) {
+        return;
+    }
+    for (int i = 0; i < m_vertexNum; i++) {
+        m_vertex[i].~CGLibVtxVertex();
+    }
+    for (int i = 0; i < m_etcVertexNum; i++) {
+        m_etcVertex[i].~CGLibVtxVertex();
+    }
+    for (int i = 0; i < m_indexNum; i++) {
+        m_index[i].~CGLibVtxIndex();
+    }
+    if (m_etc != nullptr) {
+        m_etc->vertex->~CGLibVtxVertex();
+        m_etc->uniform->~CGLibOneUniformBlock();
+        m_etc = nullptr;
+    }
+    m_memPool->~CGLibVtlMemPool();
+    if (m_work != nullptr) {
+        mtl::MemManager::deallocate(m_work, 0, false);
+        m_work = nullptr;
+    }
+}
 
 void DrResMdoVertex::update() {
     if (m_stream != nullptr) {

@@ -73,7 +73,8 @@ public:
         unsigned int m_ofs20;
         unsigned int pad_24;
         int m_ofs28;
-        unsigned char pad_2C[0x20];
+        int m_treeNum;  // 0x2C: the MdsPosRangeTreeData nodes at m_ofs28 (m_tbl18)
+        unsigned char pad_30[0x1C];
         unsigned int m_subOfs;  // 0x4C
         unsigned int pad_50;
         unsigned int m_headOfs;  // 0x54
@@ -86,7 +87,8 @@ public:
         unsigned int m_ofsC;
         unsigned int pad_10;
         int m_ofs14;
-        unsigned char pad_18[0x14];
+        int m_treeNum;  // 0x18: the MdsPosRangeTreeData nodes at m_ofs14 (m_tbl18)
+        unsigned char pad_1C[0x10];
         unsigned int m_subOfs;  // 0x2C
         unsigned int pad_30;
         unsigned int m_headOfs;  // 0x34
