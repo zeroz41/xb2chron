@@ -74,6 +74,7 @@ public:
         bool hit;
     };
 
+    FootPlacementIKSolver(const Description& desc, mm::mtl::IAllocator& allocator);  // 0x7100869F44
     virtual ~FootPlacementIKSolver();  // slot 0
     static FootPlacementIKSolver* create(const Description& desc, mm::mtl::IAllocator& allocator);
     void doFootPlacement(const Input& input, Output* output, Pose* pose);
@@ -85,6 +86,7 @@ public:
     float m_raycastDown;  // solveImpl's default raycastDown is the foot's height less it, plus 0.1
     unsigned char pad_78[0x28];
     float m_weight;  // solveImpl sets fw's flag 4 while it is at least 1
+    unsigned char pad_a4[0x5C];  // 0x100 bytes: create allocates that many (the constructor stores up to 0xF8)
 };
 }  // namespace anm
 

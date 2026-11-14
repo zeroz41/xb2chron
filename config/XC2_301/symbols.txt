@@ -34609,7 +34609,7 @@ _ZN3anm12StateMachine16doEaseInAdditiveEPKcffNS_15InterpolateTypeENS_16Interpola
 _ZN3anm12StateMachine17doEaseOutAdditiveEPKcfNS_15InterpolateTypeENS_16InterpolateCurveE = .text:0x0087AEA0; // type:function size:0xC0 scope:global
 _ZN3anm12StateMachine22setAdditiveStateWeightEPKcf = .text:0x0087AF60; // type:function size:0x13C scope:global
 _ZN3anm12StateMachine21setAdditiveStateSpeedEPKcf = .text:0x0087B09C; // type:function size:0xA4 scope:global
-fn_710087B140 = .text:0x0087B140; // type:function size:0x5C scope:global
+__cxx_global_var_init.6 = .text:0x0087B140; // type:function size:0x5C scope:global
 _ZN2mm3mtl16RedBlackTreeBaseINS0_3MapIN3anm9StringPtrENS0_12IntrusivePtrINS3_8AsmStateEEEE9MapTraitsIS4_S7_EEE4nodeD2Ev = .text:0x0087B19C; // type:function size:0x8C scope:weak
 _ZN2mm3mtl16RedBlackTreeBaseINS0_3MapIN3anm9StringPtrENS0_12IntrusivePtrINS3_8AsmStateEEEE9MapTraitsIS4_S7_EEE9free_nodeEPNSB_4nodeEb = .text:0x0087B228; // type:function size:0x124 scope:weak
 _ZN2mm3mtl16RedBlackTreeBaseINS0_3MapIN3anm9StringPtrENS3_12AdditiveInfoEE9MapTraitsIS4_S5_EEE9free_nodeEPNS9_4nodeEb = .text:0x0087B34C; // type:function size:0x124 scope:weak

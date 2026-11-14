@@ -9,6 +9,11 @@ ResStateData::ResStateData() : m_pInfo(nullptr) {
     memset(m_attributes, 0, sizeof(m_attributes));
 }
 
+void ResStateData::setFrameAnnotation(unsigned int kind, unsigned int clip, float frame,
+                                      const AsmAnnotetion& annotation) {
+    m_clips[clip].setFrameAnnotation(kind, frame, annotation);
+}
+
 void ResStateData::sortAnnotation(unsigned int kind) {
     for (unsigned int i = 0; i < m_clips.size(); i++) {
         if (m_clips[i].m_unsorted) {
