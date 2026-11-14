@@ -245,7 +245,9 @@ public:
     float pad_117b8;
     unsigned int m_tailId;  // the tail number setupEfTail loaded last (the name is not the original's)
     unsigned char pad_117c0[0x4];
-    unsigned short pad_117c4;  // cleared by the constructor
+    unsigned char pad_117c4;  // cleared by the constructor
+    // FootStepPlugin::update copies its m_running here (cleared by the constructor; the name is not the original's)
+    bool m_running;
 };
 }  // namespace gf
 

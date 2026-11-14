@@ -127,7 +127,7 @@ void GfComEffectCaster::procMsgFxWeapon(fw::MessageObject*, MsgFxWeapon& msg) {
 
 GfComEffectCaster::GfComEffectCaster()
     : m_waterDepthLimit(FLT_MIN), m_chestHeight(FLT_MIN), pad_30(0), pad_38(0), m_resData(nullptr), pad_48(nullptr),
-      m_caster(nullptr), m_pPoint(nullptr), pad_117ac(0), pad_117c4(0) {
+      m_caster(nullptr), m_pPoint(nullptr), pad_117ac(0), pad_117c4(0), m_running(false) {
     pad_116e0 = mm::Mat44(mm::Mat44::identity);
     pad_11720 = mm::Mat44(mm::Mat44::identity);
     pad_18 = 0.0f;

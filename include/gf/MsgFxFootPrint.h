@@ -9,6 +9,8 @@ namespace gf {
 // (GfEffectGround::emitFootStepEffect). The field names are not the original's.
 class MsgFxFootPrint : public ::fw::Message {
 public:
+    // FootStepPlugin::notifyStep's: it sets m_alternate after
+    explicit MsgFxFootPrint(int groundIndex) : fw::Message(0x100004D, 0x80), m_groundIndex(groundIndex) {}
     // which ground (1.0.0's FootStepPlugin::emissionEffect stores its GfEnvProperty::GROUND_INDEX here)
     int m_groundIndex;
     // 1.0.0's FootStepPlugin::emissionEffect copies its byte at 0x9 here; emitFootStepEffect then emits effect

@@ -34,9 +34,12 @@ public:
     void updateGoalPos(GfComBehaviorNpc& owner);
     void seqWaitTurnEnd(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
     void seqUpdateMove(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
+    void seqWaitMoveEnd(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
+    void seqInterpPosRotToGoal(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
     TFieldExecCmd<GfComAsm> m_execCmd;
     Seq m_seq;
-    unsigned int pad_60;
+    // seqWaitMoveEnd clears it; seqInterpPosRotToGoal adds the frame time and ends after 0.5 seconds
+    float pad_60;
 };
 }}  // namespace gf::npc
 

@@ -46,8 +46,29 @@
 #include "classes/gf/GfComBehaviorNpc.h"
 #include "classes/gf/GfComAsm.h"
 #include "classes/gf/TFieldExecCmd.h"
+#include "classes/gmk/GmkRouteNavi.h"
+#include "classes/gmk/AGmkBase.h"
+#include "classes/gf/GfComTransform.h"
+#include "math.h"
 
 namespace gf { namespace npc {
+
+void StateWalk::updateGoalPos(GfComBehaviorNpc& owner) {
+    if (gmk::GmkRouteNavi* navi = owner.getGmkRouteNavi()) {
+        const mm::Vec3& pos = owner.getPos();
+        validateGmkRouteNaviConsideringGfLocalSteer(*navi, owner.m_localSteer, pos);
+        gmk::GmkRouteNavi::UpdateInfo naviInfo;
+        naviInfo.m_pos.x = pos.x;
+        naviInfo.m_pos.y = pos.y;
+        naviInfo.m_pos.z = pos.z;
+        navi->update(naviInfo);
+        if (navi->isValid()) {
+            owner.setGoalPos(navi->pad_90);
+        }
+    } else if (gmk::AGmkBase* gmk = owner.getBindedGmkInst()) {
+        owner.setGoalPos(*gmk->m_pos);
+    }
+}
 
 void StateWalk::enter(GfComBehaviorNpc* owner, ai::State* prev) {
     updateGoalPos(*owner);
@@ -74,6 +95,43 @@ void StateWalk::update(GfComBehaviorNpc* owner, const fw::UpdateInfo& info) {
 }
 
 void StateWalk::leave(GfComBehaviorNpc* owner, ai::State* next) {}
+
+void StateWalk::seqWaitMoveEnd(GfComBehaviorNpc& owner, const fw::UpdateInfo& info) {
+    m_execCmd.update(info.m_deltaTime);
+    if (m_execCmd.m_done) {
+        if (gmk::AGmkBase* gmk = owner.getBindedGmkInst()) {
+            mm::Vec3 half = gmk->m_pos[1];
+            half = half * 0.5f;
+            float sx = sinf(half.x);
+            float cx = cosf(half.x);
+            float sy = sinf(half.y);
+            float cy = cosf(half.y);
+            float sz = sinf(half.z);
+            float cz = cosf(half.z);
+            mm::Quat rot;
+            rot.x = sx * cy * cz - cx * sy * sz;
+            rot.y = cx * sy * cz + sx * cy * sz;
+            rot.z = cx * cy * sz - sx * sy * cz;
+            rot.w = cx * cy * cz + sx * sy * sz;
+            mm::Vec3 front = rot.rotate(mm::Vec3::unitZ);
+            owner.execTurnCmd(atan2f(front.x, front.z));
+            m_seq = &StateWalk::seqInterpPosRotToGoal;
+            pad_60 = 0.0f;
+        }
+    }
+}
+
+void StateWalk::seqInterpPosRotToGoal(GfComBehaviorNpc& owner, const fw::UpdateInfo& info) {
+    if (owner.m_turnCmd.pad_6c && owner.getBindedGmkInst() != nullptr) {
+        fw::Transform& transform = owner.m_owner->getComponent<GfComTransform>(0)->getFrame()->getWorldTransformForWrite();
+        transform.position += (owner.m_goalPos - transform.position) * (info.m_deltaTime / 0.5f);
+        pad_60 += info.m_deltaTime;
+        if (pad_60 >= 0.5f) {
+            transform.position = owner.m_goalPos;
+            requestState(0);
+        }
+    }
+}
 
 }}  // namespace gf::npc
 
