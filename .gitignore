@@ -1,11 +1,13 @@
 # The original game and everything derived from it stay local
-orig/
+orig/*
+!orig/.gitkeep
 build/
 objdiff.json
-*.iso
-*.gcm
+__pycache__/
 *.nsp
 *.xci
+*.nsz
+*.xcz
 *.nca
 *.keys
 rom/
