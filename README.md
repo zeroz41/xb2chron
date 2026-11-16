@@ -27,35 +27,54 @@ repository contains no game code or assets; you need your own copy of the game.
 
 ## Building
 
-You need your own dump of the game with the 3.0.1 update, and Ninja.
+You need:
 
-1. Extract `main` from the 3.0.1 update's ExeFS and place it at `orig/XC2_301/main`. An update replaces the
-   whole ExeFS, so this one file is the executable; running the game still needs the base game as well, whose
-   data the update patches.
-2. Install the build tooling, [zkit](https://github.com/zeroz41/zkit-gcnx), then run:
+- **Python 3.11 or newer** ([python.org](https://www.python.org/downloads/); on Windows, type `py` where this says
+  `python`).
+- **A C++ compiler** on Linux (`g++`) or macOS (`xcode-select --install`). An Arm Mac also needs Rosetta 2
+  (`softwareupdate --install-rosetta`). Windows needs nothing else.
+- **Your own copy of the game**, dumped from your Switch: Xenoblade Chronicles 2 with the 3.0.1 update, as `.nsp`
+  or `.xci` files, and your console's `prod.keys`.
 
-       zkit use xc2.project.json
-       zkit build --download
-       zkit build
+Everything else (zkit, Ninja, the compilers the game was built with) the build downloads into `build/`.
 
-The first build fetches the compiler and tools into `build/`. Every build then rebuilds `main` from the compiled
-units and the original (`build/XC2_301/link/main.nso`), places each matched unit where the original holds it,
-checks the result against the segment hashes in the original's header and marks the units it proves as linked.
-Code that is not decompiled yet still comes from your copy of the game, so a passing build does not mean the
-decompilation is complete.
+### 1. Put the game in `orig/`
 
-## Objdiff and the progress page
+Copy your game files into the `orig/` folder: the game, its updates and DLC, as many as you have. The build finds
+the 3.0.1 update among them and takes the executable out of it; the rest is ignored.
 
-`zkit build` also writes `objdiff.json` in the repository folder, the match report `build/XC2_301/report.json`,
-and a page that browses it, `build/progress/index.html`.
+    orig/
+        Xenoblade Chronicles 2 [0100E95004038000][v0].nsp
+        Xenoblade Chronicles 2 [0100E95004038800][v1114112].nsp     <- the 3.0.1 update
+        prod.keys
 
-- **objdiff.** Download [objdiff](https://github.com/encounter/objdiff/releases) and open the repository folder
-  in it. It reads `objdiff.json`, rebuilds a unit when you save its source and shows each function next to the
-  original.
-- **Progress page.** Open `build/progress/index.html` in a browser. It shows code and data matched and linked for
-  the whole executable, each source folder and each unit, down to every function and data section, with search
-  and filters, and works offline. `zkit report` rewrites it from the last report; `zkit report --readme` also
-  refreshes the table above.
+If you play on Ryujinx or yuzu (or suyu, sudachi, citron, eden), the build finds your keys by itself and
+`prod.keys` can stay where it is. Compressed `.nsz` and `.xcz` files need decompressing first.
+
+Already keep your games somewhere else? Point the build there instead: `python build.py --rom <folder>`.
+
+### 2. Build
+
+    python build.py
+
+The first run sets up its tools and downloads the compilers (a few hundred MB, about 2 GB once unpacked into
+`build/`) and takes a few minutes; later runs only rebuild what changed. The build compiles every source file with the game's own compiler (clang 3.9.1), compares each function
+with the original, and then rebuilds the game's executable, `build/XC2_301/link/main.nso`, from the matching code,
+checking it is identical to yours. Code that is not decompiled yet still comes from your copy, so a passing build
+does not mean the decompilation is complete.
+
+On Windows, three source files (130 functions) do not match: their code needs a small plugin that the Windows
+build of clang 3.9.1 cannot load. The rebuilt executable is identical all the same. Build under WSL to match them.
+
+## Seeing the progress
+
+- **Progress page.** Open `build/progress/index.html` in a browser: what is matched and linked, for the whole
+  game, each folder and each file, down to every function, with search and filters. It works offline.
+- **objdiff.** Download [objdiff](https://github.com/encounter/objdiff/releases) and open this folder in it. It
+  shows each function next to the original and rebuilds a file when you save it.
+
+The build runs on [zkit](https://github.com/zeroz41/zkit-gcnx); `python build.py zkit <command>` runs it, for
+example `python build.py zkit progress`.
 
 ## Contributing
 

@@ -6,9 +6,11 @@ lives in the unit that owns its address, is a real member of its class and is na
 
 ## Setup
 
-Follow [Building](README.md#building) in the README. `zkit doctor` checks the setup and says how to fix what is
-missing. Never commit the original or anything cut or built from it: `orig/`, `build/` and `objdiff.json` are
-ignored.
+Follow [Building](README.md#building) in the README. The commands below are zkit's: run them as
+`python build.py zkit <command>`, or install [zkit](https://github.com/zeroz41/zkit-gcnx) yourself and run
+`zkit use xc2.project.json` once (zkit's MCP server gives an AI assistant the same tools). `zkit doctor` checks
+the setup and says how to fix what is missing. Never commit the game or anything cut or built from it: `orig/`,
+`build/` and `objdiff.json` are ignored.
 
 ## Recovering a function
 
