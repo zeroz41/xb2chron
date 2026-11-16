@@ -25,7 +25,7 @@
 #include "gf/GfDataDriver.h"
 #include "classes/gf/GfBdatBlade.h"
 #include "classes/gf/GfBdatChrDr.h"
-#include "ml/MtRand.h"
+#include "ml/MTRand.h"
 #include "classes/gf/SCOM_ACHIEV_INC.h"
 #include "gf/GfDataHana.h"
 #include "gf/GfGameUtil.h"

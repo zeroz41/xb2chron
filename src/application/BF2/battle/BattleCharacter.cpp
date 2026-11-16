@@ -7,7 +7,7 @@
 #include "classes/btl/CharacterParameter.h"
 #include "classes/gf/GfGameParty.h"
 #include "gf/GfObjUtil.h"
-#include "ml/MtRand.h"
+#include "ml/MTRand.h"
 #include "classes/gf/GfObj.h"
 #include "classes/gf/GfComAsm.h"
 #include "classes/btl/CharacterManager.h"

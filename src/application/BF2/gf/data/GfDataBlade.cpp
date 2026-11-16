@@ -100,7 +100,7 @@
 #include "gf/GfReqParam.h"
 #include "classes/gf/GfGameFlag.h"
 #include "classes/gf/GfGameCond.h"
-#include "ml/MtRand.h"
+#include "ml/MTRand.h"
 #include "classes/gf/GfEvent.h"
 #include "classes/gf/GfBdatMsg.h"
 #include "gf/QuestListAcc.h"

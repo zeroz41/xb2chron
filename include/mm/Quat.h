@@ -1,7 +1,7 @@
 #ifndef MM_QUAT_H
 #define MM_QUAT_H
 
-#include "math.h"
+#include <math.h>
 #include "mm/MMStdBase.h"
 #include "mm/Vec3.h"
 

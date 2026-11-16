@@ -25,7 +25,7 @@
 #include "gf/GfObjAcc.h"
 #include "classes/fw/Camera.h"
 #include "btl/siren_battle_manager.h"
-#include "ml/MtRand.h"
+#include "ml/MTRand.h"
 #include "math.h"
 #include "classes/gf/GfDataBdat.h"
 #include "plugin/Bdat.h"

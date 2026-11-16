@@ -35,7 +35,7 @@
 #include "classes/gf/GfObjSetupEnemy.h"
 #include "fw/Transform.h"
 #include "fw/ColiCheck.h"
-#include "ml/MtRand.h"
+#include "ml/MTRand.h"
 
 namespace gf {
 

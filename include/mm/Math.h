@@ -1,7 +1,7 @@
 #ifndef MM_MATH_H
 #define MM_MATH_H
 
-#include "math.h"
+#include <math.h>
 #include "mm/MMStdBase.h"
 
 // mm_lib's mm_math/mm_math.h: inline, so known only by what callers inline and the assertions they cite.

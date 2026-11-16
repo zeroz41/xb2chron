@@ -1,7 +1,7 @@
 #ifndef MM_VEC3_H
 #define MM_VEC3_H
 
-#include "math.h"
+#include <math.h>
 
 namespace mm {
 

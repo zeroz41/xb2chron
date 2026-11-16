@@ -11,7 +11,7 @@
 #include "plugin/Bdat.h"
 #include "btl/Misc.h"
 #include "btl/Utility.h"
-#include "ml/MtRand.h"
+#include "ml/MTRand.h"
 #include "classes/btl/EffectManager.h"
 
 namespace btl {

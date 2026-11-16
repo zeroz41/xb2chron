@@ -39,7 +39,7 @@
 #include "classes/gmk/GmkRoutedMob.h"
 #include "classes/gmk/GmkRoutedNpc.h"
 #include "classes/gmk/GmkRouteNavi.h"
-#include "ml/MtRand.h"
+#include "ml/MTRand.h"
 #include "classes/gmk/GmkSe.h"
 #include "classes/gmk/GmkSeLine.h"
 #include "classes/gmk/GmkSeLinePoint.h"

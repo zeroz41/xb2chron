@@ -18,7 +18,7 @@
 #include "classes/fw/EffectManager.h"
 #include "classes/fw/SoundManager.h"
 #include "fw/FwDebug.h"
-#include "ml/MtRand.h"
+#include "ml/MTRand.h"
 #include "gf/FileStaticVec3.h"
 #include "classes/gf/GfReqManager.h"
 #include "classes/gf/GfScriptManager.h"
