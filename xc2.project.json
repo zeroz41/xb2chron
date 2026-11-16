@@ -102,7 +102,10 @@
             "layer/",
             "Stream.cpp",
             "WriteChar.cpp",
-            "WriteStr.cpp"
+            "WriteStr.cpp",
+            "File.cpp",
+            "idcoli/",
+            "navi/"
           ]
         },
         {
@@ -138,7 +141,15 @@
           "name": "skdlib",
           "paths": [
             "libs/skdlib/",
-            "skt/"
+            "skt/",
+            "skd/"
+          ]
+        },
+        {
+          "id": "bin",
+          "name": "bin (binary resources)",
+          "paths": [
+            "bin/"
           ]
         },
         {
@@ -164,9 +175,12 @@
             "unit_71000001B0.cpp",
             "nn/",
             "unit_71008AC858.cpp",
-            "unit_71008912C0.cpp",
-            "unit_7100891460.cpp",
-            "unit_710089194C.cpp"
+            "unit_71008912C0.c",
+            "unit_7100891460.c",
+            "unit_710089194C.c",
+            "unit_7100891294.cpp",
+            "unit_71008AA7BC.cpp",
+            "unit_71008ACC24.cpp"
           ]
         }
       ],
