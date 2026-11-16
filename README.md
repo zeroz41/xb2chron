@@ -38,12 +38,12 @@ You need:
 
 Everything else (zkit, Ninja, the compilers the game was built with) the build downloads into `build/`.
 
-### 1. Put the game in `orig/`
+### 1. Put the game in `rom/`
 
-Copy your game files into the `orig/` folder: the game, its updates and DLC, as many as you have. The build finds
-the 3.0.1 update among them and takes the executable out of it; the rest is ignored.
+Copy your game files into the `rom/` folder, subfolders too: the game, its updates and DLC, as many as you have.
+The build finds the 3.0.1 update among them and takes the executable out of it; the rest is ignored.
 
-    orig/
+    rom/
         Xenoblade Chronicles 2 [0100E95004038000][v0].nsp
         Xenoblade Chronicles 2 [0100E95004038800][v1114112].nsp     <- the 3.0.1 update
         prod.keys

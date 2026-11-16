@@ -1,6 +1,7 @@
-# The original game and everything derived from it stay local
-orig/*
-!orig/.gitkeep
+# The game and everything taken or built from it stay local
+rom/*
+!rom/.gitkeep
+orig/
 build/
 objdiff.json
 __pycache__/
@@ -10,4 +11,3 @@ __pycache__/
 *.xcz
 *.nca
 *.keys
-rom/

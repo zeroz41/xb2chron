@@ -2,7 +2,7 @@
 """Builds the Xenoblade Chronicles 2 decompilation. Needs Python 3.11 or newer.
 
     python build.py                   build (the first run sets everything up)
-    python build.py --rom FOLDER      take the game from FOLDER instead of orig/
+    python build.py --rom FOLDER      take the game from FOLDER instead of rom/
     python build.py --keys FILE       use this prod.keys
     python build.py zkit ARGS...      run the build's zkit, e.g. `python build.py zkit progress`
 
@@ -21,11 +21,11 @@ ROOT = Path(__file__).resolve().parent
 PROJECT = ROOT / "xc2.project.json"
 ENV = ROOT / "build" / "env"
 EXECUTABLE = ROOT / "orig" / "XC2_301" / "main"
-GAME_FOLDERS = (ROOT / "orig" / "XC2_301", ROOT / "orig", ROOT)
+ROMS = ROOT / "rom"
 GAME_FILES = (".nsp", ".xci", ".nsz", ".xcz")
 
 # The build tooling, pinned: zkit at a commit, Ninja at a release.
-ZKIT = "zkit @ https://github.com/zeroz41/zkit-gcnx/archive/0f7b871cd90800c06fe63701a2e0436cc683e267.zip"
+ZKIT = "zkit @ https://github.com/zeroz41/zkit-gcnx/archive/b4129fcde288b02c8c2047376b2f6b3558d19cce.zip"
 NINJA = "ninja==1.13.0"
 
 
@@ -78,11 +78,8 @@ def check_host():
 
 
 def has_game():
-    """Whether the executable is out already, or game files are where the build looks for them."""
-    if EXECUTABLE.is_file():
-        return True
-    return any(path.suffix.lower() in GAME_FILES for folder in GAME_FOLDERS if folder.is_dir()
-               for path in folder.iterdir())
+    """Whether the executable is out already, or there are game files in rom/ (or its subfolders)."""
+    return EXECUTABLE.is_file() or any(path.suffix.lower() in GAME_FILES for path in ROMS.rglob("*"))
 
 
 def zkit(*args):
@@ -110,7 +107,7 @@ def main():
     args = parser.parse_args()
 
     if not (args.rom or args.keys or has_game()):
-        fail("The game is missing. Put your copy of Xenoblade Chronicles 2 in the orig/ folder: the files of the\n"
+        fail("The game is missing. Put your copy of Xenoblade Chronicles 2 in the rom/ folder: the files of the\n"
              "game and its 3.0.1 update (.nsp or .xci), and prod.keys unless an emulator on this computer has it.\n"
              "Or point the build at the folder they are in:\n"
              "  python build.py --rom <folder>")

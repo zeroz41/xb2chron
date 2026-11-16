@@ -31,6 +31,7 @@
       "platform": "switch",
       "module": "main",
       "original": "orig/XC2_301/main",
+      "packages": "rom",
       "sha1": "55a82580cd6826cfb9ffbbb2da5fe9a4c5a4b4c8",
       "symbols": "config/XC2_301/symbols.txt",
       "splits": "config/XC2_301/splits.txt",
