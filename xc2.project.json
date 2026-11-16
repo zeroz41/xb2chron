@@ -186,7 +186,7 @@
       ],
       "report": "build/XC2_301/report.json",
       "build": {
-        "compiler": "build/compilers/clang+llvm-3.9.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang++",
+        "compiler": "build/compilers/clang-3.9/bin/clang++",
         "cflags": [
           "--target=aarch64-none-elf",
           "-mcpu=cortex-a57+fp+simd+crypto+crc",
@@ -214,17 +214,42 @@
         "source_root": "D:/Monolithsoft/BF2/prog",
         "units": {
           "ssd/*": {
-            "compiler": "build/compilers/clang+llvm-4.0.1-x86_64-linux-gnu-debian8/bin/clang++",
+            "compiler": "build/compilers/clang-4.0/bin/clang++",
             "compiler_version": "clang version 4.0.1",
             "clang_plugins": [],
             "compiler_download": {
-              "url": "https://releases.llvm.org/4.0.1/clang+llvm-4.0.1-x86_64-linux-gnu-debian8.tar.xz",
-              "sha256": "ca48a4def4cbc9dd6af3f46ce1dc2bd903d26c7ad51387f57884ad1eaa58e42f"
+              "folder": "build/compilers/clang-4.0",
+              "linux-x86_64": [
+                {
+                  "url": "https://releases.llvm.org/4.0.1/clang+llvm-4.0.1-x86_64-linux-gnu-debian8.tar.xz",
+                  "sha256": "ca48a4def4cbc9dd6af3f46ce1dc2bd903d26c7ad51387f57884ad1eaa58e42f"
+                },
+                {
+                  "url": "https://snapshot.debian.org/archive/debian/20230507T205304Z/pool/main/n/ncurses/libtinfo5_6.4-4_amd64.deb",
+                  "sha256": "dd347f794e651039e7b4c391f86c674fed7f415b3dca6b0937beb0d470f09c1a",
+                  "folder": "build/compilers/clang-4.0/lib",
+                  "strip": 2,
+                  "members": [
+                    "libtinfo.so.5*"
+                  ]
+                }
+              ],
+              "macos-x86_64": {
+                "url": "https://releases.llvm.org/4.0.1/clang+llvm-4.0.1-x86_64-apple-darwin.tar.xz",
+                "sha256": "5f697801a46239c04251730b7ccccd3ebbacb9043ad381a061ae6812409e9eae"
+              },
+              "windows-x86_64": {
+                "url": "https://releases.llvm.org/4.0.1/LLVM-4.0.1-win64.exe",
+                "sha256": "139ba95f9f88199cdc419a674f0a85df3568367623486336843207a4982e36e9"
+              }
             }
           },
           "ssd/Delegate/MultiCast.cpp": {
-            "compiler": "build/compilers/clang+llvm-3.9.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang++",
-            "compiler_version": "clang version 3.9.1",
+            "compiler": "build/compilers/clang-3.9/bin/clang++",
+            "compiler_version": [
+              "clang version 3.9.1",
+              "clang version 3.9.0"
+            ],
             "clang_plugins": [
               "bare-return-atexit"
             ]
@@ -257,10 +282,35 @@
             ]
           }
         },
-        "compiler_version": "clang version 3.9.1",
+        "compiler_version": [
+          "clang version 3.9.1",
+          "clang version 3.9.0"
+        ],
         "compiler_download": {
-          "url": "https://releases.llvm.org/3.9.1/clang+llvm-3.9.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz",
-          "sha256": "99d1ffd4be8fd3331b4d2478ada7ee6ed352729bfe4a1070450cdb9a3ce8ef9b"
+          "folder": "build/compilers/clang-3.9",
+          "linux-x86_64": [
+            {
+              "url": "https://releases.llvm.org/3.9.1/clang+llvm-3.9.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz",
+              "sha256": "99d1ffd4be8fd3331b4d2478ada7ee6ed352729bfe4a1070450cdb9a3ce8ef9b"
+            },
+            {
+              "url": "https://snapshot.debian.org/archive/debian/20230507T205304Z/pool/main/n/ncurses/libtinfo5_6.4-4_amd64.deb",
+              "sha256": "dd347f794e651039e7b4c391f86c674fed7f415b3dca6b0937beb0d470f09c1a",
+              "folder": "build/compilers/clang-3.9/lib",
+              "strip": 2,
+              "members": [
+                "libtinfo.so.5*"
+              ]
+            }
+          ],
+          "macos-x86_64": {
+            "url": "https://releases.llvm.org/3.9.0/clang+llvm-3.9.0-x86_64-apple-darwin.tar.xz",
+            "sha256": "bd689aaeafa19832016d5a4917405a73b21bc5281846c0cb816e9545cf99e82b"
+          },
+          "windows-x86_64": {
+            "url": "https://releases.llvm.org/3.9.1/LLVM-3.9.1-win64.exe",
+            "sha256": "7ea2b7bc0de6b96a6ce11e6cfece7b84a31fb0c86c977f42ee178cba41517606"
+          }
         }
       }
     }
