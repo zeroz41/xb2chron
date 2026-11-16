@@ -63,8 +63,9 @@ with the original, and then rebuilds the game's executable, `build/XC2_301/link/
 checking it is identical to yours. Code that is not decompiled yet still comes from your copy, so a passing build
 does not mean the decompilation is complete.
 
-On Windows, three source files (130 functions) do not match: their code needs a small plugin that the Windows
-build of clang 3.9.1 cannot load. The rebuilt executable is identical all the same. Build under WSL to match them.
+Three source files need a small plugin for the game's clang. The Windows build of clang 3.9.1 cannot load
+plugins, so on Windows the build patches a copy of it the same way (`clang++-bare_return_atexit.exe`, beside it
+in `build/compilers`) and compiles those files with that.
 
 ## Seeing the progress
 

@@ -339,4 +339,8 @@ other than the function's entry block: dlmalloc's `mspace_free`, `dispose_chunk`
 the `this`-adjusting thunk of `gf::GfComBehaviorEnemy::getTransformToSearchPlayer`. Entry blocks still fold:
 `idcoli::IDColiPrimitive::calcBoxAaBb` merges its stack allocation into a store.
 
+A Windows `clang.exe` can load no plugin, so there zkit applies the `bare-return-atexit` plugin's rule as a
+checked byte patch to a copy of the official release's `clang++.exe` (`clang++-bare_return_atexit.exe`, beside
+it) and compiles the plugin's units with that copy.
+
 `xc2.project.json` pins all of this: the original's SHA-1, the compiler archive and its SHA-256, and the flags.

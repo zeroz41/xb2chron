@@ -25,7 +25,7 @@ ROMS = ROOT / "rom"
 GAME_FILES = (".nsp", ".xci", ".nsz", ".xcz")
 
 # The build tooling, pinned: zkit at a commit, Ninja at a release.
-ZKIT = "zkit @ https://github.com/zeroz41/zkit-gcnx/archive/b4129fcde288b02c8c2047376b2f6b3558d19cce.zip"
+ZKIT = "zkit @ https://github.com/zeroz41/zkit-gcnx/archive/3e624e14d6266cf36ed65c45637fca9bd5a8e865.zip"
 NINJA = "ninja==1.13.0"
 
 
