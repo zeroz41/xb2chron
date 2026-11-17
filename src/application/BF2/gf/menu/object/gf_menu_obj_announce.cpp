@@ -16,6 +16,12 @@
 #include "ui/UIStr.h"
 #include "mm/Pnt.h"
 #include "mm/Rect.h"
+#include "classes/gf/GfMenuObjGiftBox.h"
+#include "classes/gf/GfMenuManager.h"
+#include "classes/fw/SoundManager.h"
+#include "classes/ml/ControllerApplet.h"
+#include "classes/ml/WorkCpu.h"
+#include "fw/LangUtil.h"
 
 namespace gf {
 
@@ -63,6 +69,127 @@ void GfMenuObjAnnounce::update() {
     GfMenuObject::update();
 }
 
+void GfMenuObjAnnounce::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+        GfMenuObjUtil::setCommonFadeIn(acc.m_handle, 1, 0);
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            GfMenuObject::sendOpenEvent(acc.searchChild("LAY_page"), 0, 0.0f);
+        } else {
+            GfMenuObject::sendOpenEvent(acc.searchChild("LAY_top"), 0, 0.0f);
+            acc.setDispChild(GfMenuObjGiftBox::hasFreeGift(), "LAY_button_gift");
+        }
+        break;
+    case 2:
+        acc.setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+        GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+        if (m_owner->pad_310 != 0) {
+            GfMenuObject::disableInput(m_owner->pad_310);
+            GfMenuObjOperationInfo::remove(m_owner->pad_310, 0, 0, 0);
+            m_owner->pad_310 = 0;
+        }
+        GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 2, 0);
+        break;
+    case 3:
+        switch (event.m_param0) {
+        case 1:
+            GfMenuObject::enableInput(acc.m_handle);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+            GfMenuObject::setInputActionEnable(acc.m_handle, 9, !GfMenuObjAnnounce::hasAnyDLC());
+            GfMenuObject::setInputActionEnable(acc.m_handle, 10, GfMenuObjGiftBox::hasFreeGift());
+            break;
+        case 2:
+            acc.setTerm();
+            break;
+        }
+        break;
+    case 8:
+        switch (event.m_param1) {
+        case 9: {
+            GfMenuObjMainMenu2::setSystemKeyEnable(false);
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            if (m_owner->pad_310 != 0) {
+                GfMenuObject::disableInput(m_owner->pad_310);
+                GfMenuObjOperationInfo::remove(m_owner->pad_310, 0, 0, 0);
+                GfMenuObject::sendCloseEvent(m_owner->pad_310, 0, 0.0f);
+            }
+            GfMenuObject::sendEvent(acc.m_handle, ui::EventData(0x101), 0.3f);
+            GfMenuObjUtil::setCommonFadeOut(acc.searchChild("LAY_button"), 0, 0);
+            m_owner->m_seq.clear();
+            m_owner->m_seq.addJob(&GfMenuObjAnnounce::seqCloseImage2);
+            break;
+        }
+        case 10:
+            if (m_owner->pad_314 == 1) {
+                GfMenuObjGiftBox::setCloseToAnnounceEx();
+            } else {
+                GfMenuObjGiftBox::setCloseToAnnounce();
+            }
+            GfMenuObject::changeFSSubLayer(m_owner->m_handle, GfMenuFullScreen::getLayerGroup(m_owner->m_fsLayer), 0x46,
+                                           false);
+            GfMenuObjMainMenu2::setSystemKeyEnable(false);
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            if (m_owner->pad_310 != 0) {
+                GfMenuObject::disableInput(m_owner->pad_310);
+                GfMenuObjOperationInfo::remove(m_owner->pad_310, 0, 0, 0);
+                m_owner->pad_310 = 0;
+            }
+            GfMenuObjMainMenu2::setSubIndexText(0x1F);
+            break;
+        }
+        break;
+    case 0x101:
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            int lang = fw::LangUtil::getLangType();
+            int flag = 1;
+            if (lang == 0 || lang == 6 || lang == 11) {
+                flag = 0;
+            }
+            mm::mtl::PtrSingleton<fw::SoundManager>::get()->pauseAll(true, 0.0f);
+            ml::WorkCpu::setBackground(true);
+            ml::ShopApplicationApplet::showApplet(flag);
+            ml::WorkCpu::setBackground(false);
+            mm::mtl::PtrSingleton<fw::SoundManager>::get()->pauseAll(false, 0.0f);
+            ui::EventData ev;
+            ev.m_type = 0x102;
+            GfMenuObject::sendEvent(acc.m_handle, ev, 0.0f);
+            GfMenuObject::sendOpenEvent(acc.searchChild("LAY_page"), 0, 0.0f);
+        } else {
+            bool region = GfMenuManager::getRegion() != 0;
+            mm::mtl::PtrSingleton<fw::SoundManager>::get()->pauseAll(true, 0.0f);
+            ml::WorkCpu::setBackground(true);
+            ml::ShopAddOnContentApplet::showApplet(region);
+            ml::WorkCpu::setBackground(false);
+            mm::mtl::PtrSingleton<fw::SoundManager>::get()->pauseAll(false, 0.0f);
+            if (GfMenuObjAnnounce::hasAnyDLC()) {
+                ui::EventData ev;
+                ev.m_type = 0x102;
+                GfMenuObject::sendEvent(acc.m_handle, ev, 0.0f);
+                GfMenuObject::sendOpenEvent(acc.searchChild("LAY_top"), 0, 0.0f);
+            } else {
+                GfMenuObject::sendOpenEvent(acc.searchChild("LAY_alert"), 0, 0.0f);
+            }
+        }
+        break;
+    case 0x102:
+        GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_button"), 0, 0);
+        GfMenuObject::enableInput(acc.m_handle);
+        GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        GfMenuObject::setInputActionEnable(acc.m_handle, 9, !GfMenuObjAnnounce::hasAnyDLC());
+        GfMenuObject::setInputActionEnable(acc.m_handle, 10, GfMenuObjGiftBox::hasFreeGift());
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 bool GfMenuObjAnnounce::seqCloseImage2() {
     ui::UIObjectAcc img(m_handle, "LAY_contents_img");
     float alpha;
@@ -74,6 +201,133 @@ bool GfMenuObjAnnounce::seqCloseImage2() {
         GfMenuObjUtil::startCtrl(img.m_handle, param, nullptr);
     }
     return true;
+}
+
+void GfMenuObjAnnounce::TopListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        GfMenuObject::disableInput(1);
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        if (index != -1) {
+            m_owner->pad_24 = index;
+            m_owner->m_cursor->setIndex(index);
+            m_owner->m_cursor->setDisp(true);
+            mm::mtl::FixStr<32> name;
+            if (prev != -1) {
+                name.format("TXT_top_item@%02d", prev + 1);
+                ui::UIObjectAcc item(acc.m_handle, name.m_str);
+                GfMenuObjUtil::setColDefault(item.m_handle);
+            }
+            name.format("TXT_top_item@%02d", index + 1);
+            ui::UIObjectAcc item(acc.m_handle, name.m_str);
+            GfMenuObjUtil::setColMulandAdd(item.m_handle, "txt_main_select");
+        }
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 1) {
+            if (!m_owner->pad_30C) {
+                if (m_owner->pad_314 == 0) {
+                    GfMenuObjMainMenu2::setSystemKeyEnable(true);
+                }
+                GfMenuObject::enableInput(acc.m_handle);
+                GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+                GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 2, m_owner->pad_314 != 0);
+            }
+            GfMenuObject::resetInputSelection(acc.m_handle);
+            GfMenuObject::setupInputSelection(acc.m_handle, m_owner->pad_24, m_owner->pad_28);
+            ui::UIObjectAcc(acc.m_handle, "IMG_top_list_cursor").startAnimationFromIndex(1, false);
+        }
+        break;
+    case 8:
+        switch (event.m_param1) {
+        case 1: {
+            int index = event.m_param0;
+            GfMenuObjMainMenu2::setSystemKeyEnable(false);
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            if (index < static_cast<int>(m_owner->pad_28)) {
+                m_owner->pad_24 = index;
+                unsigned char* fp = GfDataBdat::getFP(0x10B);
+                m_owner->m_imageIndex = static_cast<unsigned short>(Bdat::getVal(fp, "image", m_owner->pad_24 + 1));
+                m_owner->m_seq.clear();
+                m_owner->m_seq.addJob(&GfMenuObjAnnounce::seqCloseImage);
+                GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+                GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_page"), 0, 0.0f);
+            } else {
+                GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+                GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_schedule"), 0, 0.0f);
+            }
+            GfMenuObjUtil::playSECommonDecide();
+            break;
+        }
+        case 2:
+            if (m_owner->pad_314 == 1) {
+                GfMenuObject::changeFSSubLayer(m_owner->m_handle, GfMenuFullScreen::getLayerGroup(m_owner->m_fsLayer),
+                                               0x46, false);
+                GfMenuObject::disableFSInput();
+                GfMenuObjMainMenu2::setSystemKeyEnable(false);
+                GfMenuObjMainMenu2::setSubIndexText(0x1D);
+            }
+            break;
+        case 11: {
+            GfMenuObjMainMenu2::setSystemKeyEnable(false);
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+            GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_schedule"), 0, 0.0f);
+            {
+                ui::UIObjectAcc anim(acc.m_handle, "IMG_top_to_schedule");
+                anim.startAnimation("push", false);
+            }
+            GfMenuObjUtil::playSECommonDecide();
+            break;
+        }
+        }
+        break;
+    case 0x21: {
+        if (event.m_param0 == 0) {
+            m_owner->m_imageIndex = 1;
+            m_owner->m_seq.clear();
+            m_owner->m_seq.addJob(&GfMenuObjAnnounce::seqCloseImage);
+        }
+        GfMenuObjUtil::setCommonFadeIn(acc.m_handle, 1, 1);
+        {
+            ui::UIObjectAcc anim(acc.m_handle, "IMG_top_to_schedule");
+            anim.startAnimation("wait", false);
+        }
+        m_owner->pad_310 = acc.m_handle;
+        break;
+    }
+    case 0x22: {
+        mm::mtl::FixStr<32> name;
+        for (unsigned int i = 0; i < m_owner->pad_28; i++) {
+            name.format("TXT_top_item@%02d", i + 1);
+            ui::UIObjectAcc item(acc.m_handle, name.m_str);
+            GfMenuObjUtil::setColDefault(item.m_handle);
+        }
+        GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 2, 1);
+        m_owner->m_cursor->setDisp(false);
+        break;
+    }
+    case 0x102:
+        GfMenuObjMainMenu2::setSystemKeyEnable(true);
+        GfMenuObject::enableInput(acc.m_handle);
+        GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 2, m_owner->pad_314 != 0);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 bool GfMenuObjAnnounce::seqCloseImage() {

@@ -72,6 +72,9 @@ public:
     static const unsigned long& getFrameCount();  // the work CPU's frame counter (fw::Framework::getFrameCount)
     // a listener told of the HOME menu no more (fw::MovieManager's destructor)
     static void addBackgroundListener(IWorkBackground* listener);
+    // sets the HOME-menu background flag and, when it changes, tells the background listeners (the shop applets'
+    // caller GfMenuObjAnnounce::MainListener::reciveEvent brackets them with true / false)
+    static void setBackground(bool background);
     static void removeBackgroundListener(IWorkBackground* listener);
     // a listener of system information (operation and performance mode) no more (ml::DevPerfNx's destructor)
     static void addSystemInfoListener(IWorkInfomation* listener);
