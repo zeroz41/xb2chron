@@ -4481,11 +4481,11 @@ void GmkEnemyWave::create(const CreateInfo& info) {
         GmkEnemy* enemy = getBindedEnemy(i);
         if (enemy->isValid()) {
             if (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) {
-                enemy->m_insts.m_waveFlags |= 2;
+                enemy->m_insts.m_waveExt.m_flags |= 2;
             }
             if ((gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) &&
                 (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra())) {
-                enemy->m_insts.m_waveFlags |= 1;
+                enemy->m_insts.m_waveExt.m_flags |= 1;
             }
             GmkEnemyWaveExtension::WavePopInfo popInfo;
             enemy->pad_1d0.getWavePopInfo(enemy, popInfo);
@@ -4763,7 +4763,7 @@ void GmkEnemyWave::seqWaitPlayerIntoPhantom(float) {
             GmkEnemy* enemy = entry.m_enemy;
             enemy->m_insts.reqClearRepopCounter();
             if (gf::GfGameManager::isGameTypeIra()) {
-                enemy->m_insts.m_waveFlags &= ~4;
+                enemy->m_insts.m_waveExt.m_flags &= ~4;
             }
             entry.pad_e = 0;
             entry.pad_8 = 0;
@@ -4938,7 +4938,7 @@ void GmkEnemyWave::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {
         GmkEnemy* enemy = entry.m_enemy;
         enemy->m_insts.reqClearRepopCounter();
         if (gf::GfGameManager::isGameTypeIra()) {
-            enemy->m_insts.m_waveFlags &= ~4;
+            enemy->m_insts.m_waveExt.m_flags &= ~4;
         }
         entry.pad_e = 0;
         entry.pad_8 = 0;
@@ -6619,6 +6619,35 @@ void GmkBattleLock::dispose() {
 
 GmkBattleLock::~GmkBattleLock() { dispose(); }
 
+void GmkBattleLock::update(float) {
+    debugUpdateMmf();
+    if (!isValid()) {
+        return;
+    }
+    if (pad_c4 > 0) {
+        if (m_collision.m_coliObject == nullptr && gf::GfGameManager::isEnableCreateBattleLock()) {
+            createGmkCollision();
+            createEffect();
+        }
+    } else if (m_collision.m_coliObject != nullptr) {
+        if (!(gf::GfDataUtil::getScenarioFlag() == 7039 && gf::GfGameManager::isBattle())) {
+            m_collision.dispose();
+            if (m_effectHandle != 0) {
+                if (mm::mtl::PtrSingleton<fw::EffectManager>::sys()->getDeadFlag(m_effectHandle)) {
+                    mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(m_effectHandle);
+                } else {
+                    mm::mtl::PtrSingleton<fw::EffectManager>::sys()->fadeOutDead(m_effectHandle, 5);
+                }
+                m_effectHandle = 0;
+            }
+        }
+    }
+    if (m_effectHandle != 0) {
+        bool disp = !gf::GfGameManager::isPlayEvent();
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setDisp(m_effectHandle, disp);
+    }
+}
+
 void GmkBattleLock::createEffect() {
     const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
     if (set != nullptr && set->m_createInfo.m_flag) {
@@ -6653,6 +6682,35 @@ void GmkFieldLock::dispose() {
 }
 
 GmkFieldLock::~GmkFieldLock() { dispose(); }
+
+void GmkFieldLock::update(float dt) {
+    debugUpdateMmf();
+    if (!isValid()) {
+        return;
+    }
+    if (m_collision.m_leaderEntered && pad_c0 > 2.0f && gf::GfGameManager::isFieldLockMsgOK()) {
+        unsigned short msgId = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->m_txtId;
+        gf::MenuCommonWindowParam param;
+        param.m_bdat = gf::GfDataBdat::getFP(0x1b1);
+        param.m_msgId = msgId;
+        gf::GfPlayFactory::createCommonMessage(param);
+    }
+    if (m_collision.m_coliObject != nullptr) {
+        m_collision.m_leaderEntered = false;
+        m_collision.m_leaderLeft = false;
+    }
+    pad_c0 = m_collision.m_leaderInside ? 0.0f : pad_c0 + dt;
+    const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+    if ((info->m_scenarioFlag.m_scenarioFlagMax == 0 || info->m_scenarioFlag.isMatch()) &&
+        (!info->m_questFlag.isSet() || info->m_questFlag.isMatch()) &&
+        (info->m_condition == 0 || gf::GfGameCond::isGameCond(info->m_condition))) {
+        if (m_collision.m_coliObject == nullptr) {
+            createGmkCollision();
+        }
+    } else if (m_collision.m_coliObject != nullptr) {
+        m_collision.dispose();
+    }
+}
 void GmkEffect::getLocatorPosRotXYZ(mm::Vec3& pos, mm::Vec3& rot) const {
     pos = m_pos[0];
     rot = m_pos[1];
@@ -6731,6 +6789,33 @@ void GmkEffect::seqValidateResHandle(float) {
     }
     pad_a8 = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->containsCamAxis(pad_a0);
     m_seq = &GmkEffect::seqUpdate;
+}
+
+void GmkEffect::seqUpdate(float) {
+    if (m_effectHandle == 0 && !(gf::GfGameManager::isGameTypeIra() && pad_b1 && !pad_b2) && m_flags.test(0) &&
+        m_flags.test(1)) {
+        const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+        if (set != nullptr && set->m_createInfo.m_flag) {
+            return;
+        }
+        m_effectHandle = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->create(pad_a0, true);
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setCategory(m_effectHandle, fw::EF_CATEGORY(1));
+        applyEffectParam(false);
+        return;
+    }
+    if (m_effectHandle != 0 && ((gf::GfGameManager::isGameTypeIra() && pad_b1 && !pad_b2) ||
+                                !(m_flags.test(0) && !m_flags.test(2)))) {
+        if (m_effectHandle != 0) {
+            if (pad_c1) {
+                mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effectHandle);
+            } else if (mm::mtl::PtrSingleton<fw::EffectManager>::sys()->getDeadFlag(m_effectHandle)) {
+                mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(m_effectHandle);
+            } else {
+                mm::mtl::PtrSingleton<fw::EffectManager>::sys()->fadeOutDead(m_effectHandle, 5);
+            }
+            m_effectHandle = 0;
+        }
+    }
 }
 
 void GmkEffect::dispose() {
@@ -8370,6 +8455,7 @@ void GmkElevator::onPlayerAccessed(gf::GF_OBJ_HANDLE* gob) {
     }
 }
 
+
 bool ScenarioFlagCond::isMatch() const {
     unsigned short flag = gf::GfDataUtil::getScenarioFlag();
     if (m_scenarioFlagMin > flag) {
@@ -9860,6 +9946,58 @@ bool BootedGmkCond::isMatch() const {
     return result;
 }
 
+void GmkEnemyInstsWaveExtension::setBattleStateEnemy(gf::GF_OBJ_HANDLE* handle, unsigned char popActType) const {
+    if (!(m_flags & 1)) {
+        return;
+    }
+    const GmkEnemy* enemy = static_cast<const GmkEnemy*>(getBindedGmkInst(handle));
+    const GmkEnemyInsts::BdatInfo& bdat = enemy->m_insts.m_bdatInfo;
+    if (bdat.m_mutekiCondition != 0 || bdat.m_mutekiQuestFlag.isSet()) {
+        return;
+    }
+    gf::GfObjAcc acc(handle);
+    gf::GfObj* obj = acc.getObj();
+    if (obj == nullptr) {
+        return;
+    }
+    gf::GfComBehaviorEnemy* behavior = obj->getComponent<gf::GfComBehaviorEnemy>(6);
+    if (behavior == nullptr) {
+        return;
+    }
+    if (popActType != 0) {
+        behavior->reqChangeBattleAfterIdle();
+    } else if (behavior->pad_5504 > 0.0f) {
+        behavior->reqChangeBattle();
+    } else {
+        behavior->setStateId(gf::enemy::STATE_ID(0));
+    }
+    behavior->pad_550c = true;
+}
+
+void GmkEnemyInstsWaveExtension::createPopupEffect(gf::GF_OBJ_HANDLE* handle, unsigned char popActType,
+                                                   const mm::Vec3& pos) const {
+    bool ira = gf::GfGameManager::isGameTypeIra();
+    if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) || (popActType >= 3 && popActType <= 6) || !ira) {
+        return;
+    }
+    AGmkBase* gmk = getBindedGmkInst(handle);
+    if (gmk == nullptr || gmk->getGmkType() != GmkEnemy::TYPE) {
+        return;
+    }
+    const GmkEnemy* enemy = static_cast<const GmkEnemy*>(gmk);
+    if (!(enemy->m_insts.m_waveExt.m_flags & 2)) {
+        return;
+    }
+    const GmkEnemyInsts::BdatInfo& bdat = enemy->m_insts.m_bdatInfo;
+    if (bdat.m_mutekiCondition != 0 || bdat.m_mutekiQuestFlag.isSet()) {
+        return;
+    }
+    if (enemy->m_list == nullptr) {
+        return;
+    }
+    static_cast<GmkEnemyList*>(enemy->m_list)->m_waveExt.createPopEffect(pos);
+}
+
 bool GmkEnemyInsts::BdatInfo::isPopCondMatched() const {
     if (m_smnGroups != 0) {
         return false;
@@ -10156,6 +10294,59 @@ void GmkEnemy::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk)
                   : static_cast<unsigned char>(Bdat::getValCheck(bdat.m_fp, "ene_disp_h", row, 1));
 }
 
+// a squad member other than the leader takes its place in the squad once the leader's object stands (false before);
+// any other object the gimmick's position and rotation (a point shape) or a point in its shape facing at random;
+// snapped on the ground, and kept only on the navigation mesh, when the slot and the gimmick data say so
+bool GmkEnemy::PopXformFinder::findPosRot(mm::Vec3& pos, mm::Vec3& rot, gf::GF_OBJ_HANDLE* handle,
+                                          const GmkEnemyInsts::PopInfo::PopEnemyInfo& info) const {
+    const gf::GfComBehaviorEnemy* behavior = nullptr;
+    {
+        gf::GfObjAcc acc(handle);
+        if (gf::GfObj* obj = acc.getObj()) {
+            behavior = obj->getComponent<gf::GfComBehaviorEnemy>(6);
+        }
+    }
+    if (behavior != nullptr && behavior->getSquadNavi().isInSquad() && behavior->getSquadNavi().m_index != 0) {
+        int index = behavior->getSquadNavi().m_index;
+        bool found = false;
+        unsigned int num = m_gmk->getGobInstNum();
+        for (unsigned int i = 0; i < num; i++) {
+            gf::GfObjAcc leaderAcc(m_gmk->getGobInst(i));
+            gf::GfObj* leaderObj = leaderAcc.getObj();
+            const gf::GfComBehaviorEnemy* leader =
+                leaderObj != nullptr ? leaderObj->getComponent<gf::GfComBehaviorEnemy>(6) : nullptr;
+            if (leader != nullptr && leader->getSquadNavi().isInSquad() && leader->getSquadNavi().m_index == 0 &&
+                leaderAcc.isValidTransform()) {
+                m_gmk->m_insts.m_squad->getPosRotY(pos, rot.y, index);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            return false;
+        }
+        rot.z = 0.0f;
+        rot.x = 0.0f;
+    } else if (m_gmk->m_info->m_shape == 1) {
+        pos = m_gmk->m_pos[0];
+        rot = m_gmk->m_pos[1];
+    } else {
+        m_gmk->getPositionInShape(pos, false);
+        rot.y = ml::mtRandf1(-3.14159274f, 3.14159274f);
+        rot.z = 0.0f;
+        rot.x = 0.0f;
+    }
+    if (info.pad_c && m_gmk->getData()->m_ySnap) {
+        if (!m_gmk->getPositionAppliedYSnap(pos, pos, false)) {
+            return false;
+        }
+        if (!isNaviMeshExist(pos)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // with no row only disposes; else keeps the CreateInfo and creates the insts from the row's distances (the list's
 // defaults where the row has none)
 void GmkEnemy::create(const AGmkBase::CreateInfo& info) {
@@ -10228,7 +10419,7 @@ void GmkEnemy::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* han
     AGmkBase::onGobEvent(evt, handle);
     bool ira = gf::GfGameManager::isGameTypeIra();
     if (evt == gf::IGfObjListener::OBJEVT(3) && ira) {
-        m_insts.m_waveFlags |= 4;
+        m_insts.m_waveExt.m_flags |= 4;
     }
     if (evt == gf::IGfObjListener::OBJEVT(3)) {
         m_insts.m_popInfo.removeGobInst(handle, false);

@@ -178,9 +178,12 @@ public:
     // bit 0: the right, bit 1: the left weapon object whose alpha updateWeapon still has to set
     unsigned char pad_5500;
     unsigned char pad_5501;  // bit 0 / 1: the alpha updateWeapon gives that weapon object is 1 (else 0)
-    unsigned char pad_5502[0x6];
+    unsigned char pad_5502[0x2];
+    // gmk::GmkEnemyInstsWaveExtension::setBattleStateEnemy asks for battle (reqChangeBattle) while it is above 0, else
+    // sets state 0 (setStateId)
+    float pad_5504;
     int pad_5508;  // setStateId clears it on entering battle
-    bool pad_550c;  // zeroed by the constructor
+    bool pad_550c;  // zeroed by the constructor; gmk::GmkEnemyInstsWaveExtension::setBattleStateEnemy sets it
     bool pad_550d;  // onPopped: set for pop action types 5 and 6
 };
 }  // namespace gf

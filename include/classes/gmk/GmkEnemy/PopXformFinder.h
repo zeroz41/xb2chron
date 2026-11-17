@@ -14,9 +14,10 @@ public:
     explicit PopXformFinder(const GmkEnemy* gmk) : m_gmk(gmk) {}
     virtual bool findPosRot(mm::Vec3& pos, mm::Vec3& rot, gf::GF_OBJ_HANDLE* handle,
                             const GmkEnemyInsts::PopInfo::PopEnemyInfo& info) const;  // slot 0
-    virtual bool isYSnap() const;  // slot 1
+    // slot 1 (0x71005BC69C, emitted with the table)
+    virtual bool isYSnap() const { return m_gmk->getData()->m_ySnap; }
     virtual bool onPopGob(gf::GF_OBJ_HANDLE*) const { return true; }  // slot 2 (0x71005BC6AC, emitted with the table)
-    virtual void onCreateGobInsts(unsigned int) const {}  // slot 3
+    virtual void onCreateGobInsts(unsigned int) const {}  // slot 3 (0x71005BC6B4, emitted with the table)
     // 0x8 (the name is not the original's)
     const GmkEnemy* m_gmk;
 };
