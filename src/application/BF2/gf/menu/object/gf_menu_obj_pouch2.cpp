@@ -25,6 +25,7 @@
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuItemList.h"
 #include "classes/gf/GfMenuObjCharSelect.h"
+#include "classes/gf/GfMenuObjCommonText.h"
 #include "classes/gf/GfMenuObjSort.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/gf/GfMenuReference.h"
@@ -119,6 +120,13 @@ inline int setFadeOut(unsigned int handle, unsigned int type) {
 // filters shown in their place.
 const unsigned int s_filterItemKinds[13] = {0, 0xC, 0xD, 0xE, 0xF, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17};
 const unsigned int s_filterExpansionKinds[10] = {0, 1, 2, 3, 4, 5, 8, 9, 0xB, 0xC};
+// the filter a stock filter icon stands for (the expansion's icons are a subset); FilterListener2 converts the
+// selected icon twice (the name is not the original's)
+// the context mode ItemListListener opens per pouch slot (lbl_71009C39D8; the name is not the original's)
+const int s_setItemModes[] = {0x17, 0xA1, 0xA2};
+inline unsigned int getFilterKind(unsigned int index) {
+    return GfMenuObjUtil::isValidExpansion(3) ? s_filterExpansionKinds[index] : index;
+}
 
 // Proposed names, not the original's: the symbols leave them unnamed (lbl_7100B641E8, lbl_7100B64208). procFavFlag's
 // images of each FAVORITE: the flash effect and the heart animation (read through getFavImage so they stay in .data).
@@ -302,6 +310,185 @@ void GfMenuObjPouch2::setupSlot(ui::UIObjectAcc& acc, mm::mtl::IntrusivePtr<GfMe
     }
 }
 
+void GfMenuObjPouch2::SlotListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        setupSlot(acc, m_owner->m_number);
+        updateSlotList(m_owner->m_slotItems);
+        refreshSlot(acc, 0);
+        GfMenuObjUtil::CursorParam param;
+        param.m_parent = ui::UIObjectAcc(handle).getParentHandle();
+        param.m_cursor = acc.searchChild("IMG_slotcursor");
+        param.m_type = 0;
+        param.m_setting.m_dockType = 0;
+        param.m_pickup = "IMG_eqpouch_slbase@%02d";
+        m_owner->m_slotCursor = GfMenuObjUtil::createCursor(param);
+        m_owner->m_slotCursor->open(0);
+        GfMenuObject::setupInputSelection(handle, 0, m_owner->m_slotItems->getSize());
+        GfMenuObject::disableInput(handle);
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            GfMenuObjMainMenu2::setSubIndexText(0x16);
+        }
+        sendEvent(handle, 0x101, 0);
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 1) {
+            if (!m_owner->m_slotActive) {
+                m_owner->m_slotCursor->setDisp(true);
+            }
+            if (m_owner->pad_3E8) {
+                GfMenuObjMainMenu2::openCharChange(acc.m_handle, 0, false);
+                GfMenuObject::enableInput(handle);
+            }
+        }
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+        if (m_owner->m_slotCursor->inputChange(index)) {
+            m_owner->m_number->m_value = index;
+            SDataPouch& pouch = GfPouchUtil::getPouch(driver, index);
+            ui::UIObjectAcc cursor(acc.searchChild("IMG_slotcursor"));
+            cursor.setImageIndex(pouch.itemId != 0);
+        }
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 8:
+        if (GfMenuObjCharSelect::getCharBusy()) {
+            break;
+        }
+        switch (event.m_param1) {
+        case 1:
+            if (m_owner->m_items->getSize() != 0) {
+                if (!GfMenuObjUtil::isValidExpansion(3)) {
+                    GfMenuBladeList::DriverSetup setup;
+                    setup.pad_1C = true;
+                    setup.pad_1D = false;
+                    setup.pad_1E = false;
+                    setup.m_driver = GfMenuReference::getReferenceDriverID(0);
+                    setup.m_type = 1;
+                    m_owner->m_blades->setupFromDriver(setup);
+                } else {
+                    ui::UIListInfoBase::SetupParam param;
+                    param.m_pageRowSize = 2;
+                    m_owner->m_blades->setup(getAllocator(ALLOCATOR(0)), param);
+                    unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+                    mm::mtl::FixedVector<unsigned short, 32> drivers;
+                    GfDataDriver::getIraBack(drivers, driver);
+                    for (unsigned int i = 0; i < drivers.size(); i++) {
+                        if (GfDataDriver::isActivateParty(*drivers.at(i))) {
+                            MenuBladeInfo info;
+                            info.m_blade = GfDataDriver::getIraBlade(drivers[i], -1);
+                            info.m_creator = drivers[i];
+                            m_owner->m_blades->addContents(info);
+                        }
+                    }
+                }
+                sendEvent(handle, 0x102, 0);
+                sendEvent(owner.searchChild("LAY_chr_fevinfo"), 0x101, 0);
+                sendEvent(owner.searchChild("LAY_fvstock_fevitem"), 0x21, 0);
+                sendEvent(owner.searchChild("LAY_stock_filter2"), 0x21, 0);
+                GfMenuObjMainMenu2::closeCharChange();
+                GfMenuObjUtil::playSECommonDecide();
+            } else {
+                GfMenuObjCommonText::openError(m_owner->m_context, 0x15, 0);
+                GfMenuObjUtil::playSECommon(2);
+            }
+            break;
+        case 2:
+            sendEvent(owner.searchChild("LAY_main"), 0x22, 0);
+            sendEvent(handle, 0x102, 0);
+            GfMenuObjMainMenu2::disableCharChange();
+            GfMenuObjUtil::playSECommonCancel();
+            break;
+        case 9: {
+            unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+            bool open0 = GfDataDriver::getPouchData(driver, 0)->m_open;
+            SDataPouch* pouch1 = GfDataDriver::getPouchData(driver, 1);
+            if (open0 && pouch1->m_open) {
+                GfMenuObjCommonText::openError(m_owner->m_context, 0x14, 0);
+                GfMenuObjUtil::playSECommon(2);
+            } else if (GfPouchUtil::isExistOpenItem()) {
+                m_owner->m_cursorMode = 0x48;
+                GfMenuObjCommonText::open(m_owner->m_context, m_owner->m_cursorMode, 0);
+                GfMenuObject::setCallContextEventHandler(m_owner->m_context, handle);
+            } else {
+                GfMenuObjCommonText::openError(m_owner->m_context, 0x13, 0);
+                GfMenuObjUtil::playSECommon(2);
+            }
+            break;
+        }
+        case 10: {
+            GfMenuBladeList::DriverSetup setup;
+            setup.pad_1C = true;
+            setup.pad_1D = false;
+            setup.pad_1E = false;
+            setup.m_driver = GfMenuReference::getReferenceDriverID(0);
+            setup.m_type = 1;
+            m_owner->m_blades->setupFromDriver(setup);
+            sendEvent(handle, 0x102, 0);
+            sendEvent(owner.searchChild("LAY_result"), 0x101, 0);
+            GfMenuObjCharSelect::dispOffChar(0);
+            m_owner->m_fvStock = 0;
+            GfMenuObjMainMenu2::closeCharChange();
+            GfMenuObjUtil::playSECommonOpenSubMenu();
+            break;
+        }
+        }
+        break;
+    case 0x41: {
+        GfMenuCallContext* context = m_owner->m_context;
+        if (context != nullptr && context->m_id == event.m_param0) {
+            unsigned short cancel = event.m_paramShort[4];
+            unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+            if (cancel == 0 && m_owner->m_cursorMode == 0x48) {
+                GfPouchUtil::execOpen(driver);
+                updateSlotList(m_owner->m_slotItems);
+                refreshSlot(acc, m_owner->m_slotItems->getIndex(false));
+                GfMenuObject::resetInputSelection(handle);
+                GfMenuObject::setupInputSelection(handle, 0, m_owner->m_slotItems->getSize());
+            }
+        }
+        break;
+    }
+    case 0x101:
+        GfMenuObjOperationInfo::setGuideText(0x20, 0);
+        GfMenuObjOperationInfo::add(handle, 0, 0, 0);
+        if (!GfMenuObjUtil::isValidExpansion(3)) {
+            GfMenuObjMainMenu2::setSubIndexText(0x16);
+        }
+        GfMenuObjUtil::setChildDisp(handle, "IMG_eqpouch_sellect", true);
+        m_owner->m_slotCursor->setDisp(false);
+        setFadeIn(handle, 1);
+        m_owner->pad_3E8 = event.m_param0 == 0;
+        break;
+    case 0x102:
+        GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+        GfMenuObjUtil::setChildDisp(handle, "IMG_eqpouch_sellect", false);
+        GfMenuObject::disableInput(handle);
+        setFadeOut(handle, 1);
+        break;
+    case 0x140:
+        GfMenuReference::setReferenceDriverID(0, event.m_param0);
+        updateSlotList(m_owner->m_slotItems);
+        refreshSlot(acc, m_owner->m_slotItems->getIndex(false));
+        GfMenuObject::resetInputSelection(handle);
+        GfMenuObject::setupInputSelection(handle, 0, m_owner->m_slotItems->getSize());
+        GfMenuObjCharSelect::execCharPosScale(0);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjPouch2::updateSlotList(GfMenuItemList* items) {
     unsigned int driver = GfMenuReference::getReferenceDriverID(0);
     items->clear();
@@ -361,6 +548,172 @@ void GfMenuObjPouch2::refreshSlot(ui::UIObjectAcc& acc, unsigned int index) {
     GfMenuObjUtil::placeObjectH(list, mm::Pnt<short>(rect.x + rect.w / 2, rect.y + rect.h / 2), range.x - rect.x - 1);
     if (list != nullptr) {
         list->release();
+    }
+}
+
+void GfMenuObjPouch2::ItemListListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        updateItemList(m_owner->m_items, m_owner->m_select, 0, 0);
+        setupItemList(acc, m_owner->m_items);
+        m_owner->m_select->pickupObject(handle, "LAY_fvstock_listtag@%02d", 1);
+        GfMenuObjUtil::createVScrollBarPlugin(acc.searchChild("IMG_fvstock_scpoint"), m_owner->m_items,
+                                              "IMG_fvstock_scline", true);
+        unsigned int id = m_owner->m_items->getContents(0).m_id;
+        refreshItemList(acc, m_owner->m_items, m_owner->m_select, id);
+        GfMenuObject::disableInput(handle);
+        acc.setDisp(false);
+        GfMenuObjSort::setSortLabelText(GfMenuObjSort::getSortID(0x10, 0), owner.searchChild("TXT_item_sort_label"));
+        m_owner->m_sort = 0;
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(handle);
+        }
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        m_owner->m_items->setIndex(index);
+        unsigned int id = m_owner->m_items->getContents(index).m_id;
+        refreshItemList(acc, m_owner->m_items, m_owner->m_select, id);
+        sendEvent(owner.searchChild("LAY_chr_fevinfo"), 0x103, id);
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 8:
+        switch (event.m_param1) {
+        case 1: {
+            unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+            unsigned int slot = m_owner->m_number->m_value;
+            GfPouchUtil::getPouch(driver, slot);
+            if (m_owner->m_items->getSize() != 0) {
+                GfMenuItemList* items = m_owner->m_items;
+                unsigned int id = items->getContents(items->getIndex(false)).m_id;
+                m_owner->m_context->reset();
+                if (GfPouchUtil::isEnableSetItem(driver, slot, id)) {
+                    m_owner->m_cursorMode = s_setItemModes[slot];
+                    GfMenuObjCommonText::open(m_owner->m_context, m_owner->m_cursorMode, 0);
+                    GfMenuObject::setCallContextEventHandler(m_owner->m_context, handle);
+                    GfMenuObject::disableInput(handle);
+                    GfMenuObject::disableInput(owner.searchChild("LAY_stock_filter2"));
+                    break;
+                }
+                m_owner->m_cursorMode = 0x18;
+                GfMenuObjCommonText::openError(m_owner->m_context, m_owner->m_cursorMode, 0);
+            }
+            GfMenuObjUtil::playSECommon(2);
+            break;
+        }
+        case 2:
+            sendEvent(handle, 0x22, 0);
+            sendEvent(owner.searchChild("LAY_stock_filter2"), 0x22, 0);
+            sendEvent(owner.searchChild("LAY_chr_fevinfo"), 0x102, 0);
+            sendEvent(owner.searchChild("LAY_eqp_fevitem"), 0x101, 0);
+            GfMenuObjUtil::playSECommonCancel();
+            break;
+        case 10:
+            sendEvent(handle, 0x102, 0);
+            sendEvent(owner.searchChild("LAY_result"), 0x101, 0);
+            setFadeOut(handle, 1);
+            setFadeOut(owner.searchChild("LAY_chr_fevinfo"), 2);
+            m_owner->m_fvStock = 1;
+            GfMenuObjUtil::playSECommonOpenSubMenu();
+            break;
+        case 0xC:
+            GfMenuObjSort::open(acc.m_handle, owner.searchChild("TXT_item_sort_label"), 0x10, m_owner->m_sort);
+            GfMenuObject::disableInput(handle);
+            GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+            break;
+        }
+        break;
+    case 0x21:
+        GfMenuObjCharSelect::dispOffChar(0);
+        setFadeIn(handle, 1);
+        sendEvent(handle, 0x101, 0);
+        GfMenuObject::disableInput(handle);
+        break;
+    case 0x22:
+        GfMenuObjCharSelect::setCharPosScale(0, GfMenuReference::getReferenceDriverID(0), 4, false);
+        GfMenuObjCharSelect::dispOnChar(0);
+        setFadeOut(handle, 1);
+        sendEvent(handle, 0x102, 0);
+        break;
+    case 0x41: {
+        GfMenuCallContext* context = m_owner->m_context;
+        if (context != nullptr && context->m_id == event.m_param0) {
+            unsigned short cancel = event.m_paramShort[4];
+            if (m_owner->m_cursorMode == 0x17 || m_owner->m_cursorMode == 0xA1 || m_owner->m_cursorMode == 0xA2) {
+                if (cancel == 0) {
+                    unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+                    unsigned int slot = m_owner->m_number->m_value;
+                    SDataPouch pouch = GfPouchUtil::getPouch(driver, slot);
+                    GfMenuItemList* items = m_owner->m_items;
+                    unsigned int id = items->getContents(items->getIndex(false)).m_id;
+                    setFavFlag(driver, id, m_owner->m_favBefore, m_owner->m_blades);
+                    pouch.itemId = id;
+                    GfPouchUtil::setPouch(driver, slot, pouch);
+                    GfDataDriver::setUsedFavoriteItemForPouch(driver, id);
+                    setFavFlag(driver, id, m_owner->m_favAfter, m_owner->m_blades);
+                    m_owner->m_seq.clear();
+                    m_owner->m_seq.addJob(&GfMenuObjPouch2::seqFavOpen);
+                    m_owner->m_seq.addJob(&GfMenuObjPouch2::seqFavLoop);
+                    m_owner->m_seq.addJob(&GfMenuObjPouch2::seqFavClose);
+                    m_owner->m_seq.addJob(&GfMenuObjPouch2::seqFavPouchIn);
+                    GfMenuObject::disableInput(handle);
+                    m_owner->m_slotCursor->setAlpha(0.0f);
+                } else {
+                    GfMenuObject::enableInput(handle);
+                    GfMenuObject::enableInput(owner.searchChild("LAY_stock_filter2"));
+                }
+            }
+        }
+        break;
+    }
+    case 0x101:
+        GfMenuObjOperationInfo::setGuideText(0x17, 0);
+        GfMenuObjOperationInfo::add(handle, 0, 0, 0);
+        m_owner->m_filter = 0;
+        m_owner->m_sort = 0;
+        sendEvent(owner.searchChild("LAY_stock_filter2"), 0x101, 0);
+        sendEvent(handle, 0x104, 0);
+        GfMenuObjSort::setSortLabelText(GfMenuObjSort::getSortID(0x10, m_owner->m_sort),
+                                        owner.searchChild("TXT_item_sort_label"));
+        updateItemList(m_owner->m_items, m_owner->m_select, m_owner->m_filter, m_owner->m_sort);
+        break;
+    case 0x102:
+        GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+        sendEvent(owner.searchChild("LAY_stock_filter2"), 0x102, 0);
+        refreshItemList(acc, m_owner->m_items, m_owner->m_select, 0);
+        GfMenuObject::disableInput(handle);
+        break;
+    case 0x104: {
+        m_owner->m_items->setIndex(0);
+        GfMenuItemList* items = m_owner->m_items;
+        unsigned int id = items->getContents(items->getIndex(false)).m_id;
+        refreshItemList(acc, m_owner->m_items, m_owner->m_select, id);
+        GfMenuObject::resetInputSelection(handle);
+        GfMenuObject::setupInputSelectionFromList(handle, *m_owner->m_items);
+        break;
+    }
+    case 0x148:
+        GfMenuObject::enableInput(handle);
+        GfMenuObjOperationInfo::add(handle, 0, 0, 0);
+        if (m_owner->m_sort != event.m_param0) {
+            unsigned short sortId = GfMenuObjSort::getSortID(0x10, event.m_param0);
+            m_owner->m_slotItems->getIndex(true);  // the original calls it and drops the result
+            m_owner->m_items->sort(sortId, false);
+            m_owner->m_sort = event.m_param0;
+        }
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
     }
 }
 
@@ -620,6 +973,82 @@ void GfMenuObjPouch2::ResultListener::reciveEvent(ui::EventData const& event, un
     }
 }
 
+void GfMenuObjPouch2::FilterListener2::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        setupFilter(acc, m_owner->m_filter);
+        GfMenuObject::disableInput(handle);
+        acc.setDisp(false);
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        mm::mtl::FixStr<32> name;
+        if (prev >= 0) {
+            name.format("IMG_ficon@%02d", prev + 1);
+            ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+            icon.loadDefColor();
+        }
+        if (index >= 0) {
+            name.format("IMG_ficon@%02d", index + 1);
+            ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+            icon.setMulColor("sys_select");
+        }
+        ui::UIStr text;
+        getFilterText(getFilterKind(index), text);
+        ui::UIObjectAcc indexText(acc.searchChild("TXT_fvstock_index"));
+        indexText.setText(text);
+        m_owner->m_filter = getFilterKind(index);
+        updateItemList(m_owner->m_items, m_owner->m_select, m_owner->m_filter, m_owner->m_sort);
+        GfMenuItemList* items = m_owner->m_items;
+        unsigned int id = items->getContents(items->getIndex(false)).m_id;
+        sendEvent(owner.searchChild("LAY_chr_fevinfo"), 0x103, id);
+        sendEvent(owner.searchChild("LAY_fvstock_fevitem"), 0x104, 0);
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonTab();
+        }
+        break;
+    }
+    case 0x21:
+        acc.setDisp(true);
+        break;
+    case 0x22:
+        acc.setDisp(false);
+        GfMenuObject::disableInput(handle);
+        m_owner->m_filter = 0;
+        updateItemList(m_owner->m_items, m_owner->m_select, m_owner->m_filter, m_owner->m_sort);
+        break;
+    case 0x101: {
+        m_owner->m_filter = 0;
+        m_owner->m_prevFilter = m_owner->m_filter;
+        unsigned int list = acc.searchChild("LAY_iconlist");
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 0;
+        param.m_eventId = 1;
+        GfMenuObject::hookCtrlEvent(list, GfMenuObjUtil::startPresetCtrl(list, param));
+        GfMenuObject::setupInputSelection(handle, m_owner->m_filter, GfMenuObjUtil::isValidExpansion(3) ? 10 : 13);
+        GfMenuObject::enableInput(handle);
+        break;
+    }
+    case 0x102: {
+        unsigned int list = acc.searchChild("LAY_iconlist");
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 1;
+        param.m_eventId = 2;
+        GfMenuObject::hookCtrlEvent(list, GfMenuObjUtil::startPresetCtrl(list, param));
+        GfMenuObject::disableInput(handle);
+        break;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjPouch2::setupFilter(ui::UIObjectAcc& acc, unsigned int filter) {
     mm::mtl::FixStr<32> name;
     for (unsigned int i = 0; i < 13; i++) {
@@ -667,6 +1096,95 @@ void GfMenuObjPouch2::getFilterText(unsigned int filter, ui::UIStr& text) {
     } else {
         ui::UIStr str(GfDataBdat::getFP(0x11D), GfMenuObjUtil::getMsgIDFromList(0x14C, filter + 1));
         text.copy(str);
+    }
+}
+
+void GfMenuObjPouch2::PartyInfoListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        setupPartyInfo(acc);
+        GfMenuObject::disableInput(handle);
+        acc.setDisp(false);
+        break;
+    case 0x101:
+        setFadeIn(handle, 2);
+        break;
+    case 0x102:
+        setFadeOut(handle, 2);
+        break;
+    case 0x103: {
+        unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+        unsigned int item = event.m_param0;
+        unsigned int category = GfDataItem::getCategory(item);
+        mm::mtl::FixStr<32> name;
+        for (unsigned int fav = 0; fav < 2; fav++) {
+            name.format("IMG_chr_fvicon%02dlike@01", fav + 1);
+            ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+            if (GfMenuObjUtil::getFavoriteStat(3, driver, FAVORITE(fav)) == 0 &&
+                category == GfDataDriver::getFavorite(driver, FAVORITE(fav))) {
+                icon.setImageIndex(0);
+                icon.setDisp(true);
+            } else {
+                icon.setDisp(false);
+            }
+        }
+        for (unsigned int fav = 2; fav < 4; fav++) {
+            name.format("IMG_chr_fviconit%02dlike@01", fav - 1);
+            ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+            if (GfMenuObjUtil::getFavoriteStat(3, driver, FAVORITE(fav)) == 0 &&
+                item == GfDataDriver::getFavorite(driver, FAVORITE(fav))) {
+                icon.setImageIndex(1);
+                icon.setDisp(true);
+            } else {
+                icon.setDisp(false);
+            }
+        }
+        for (unsigned int i = 1; i <= 2; i++) {
+            name.format("IMG_chr_fviconit%02dlike2@01", i);
+            ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+            icon.setDisp(false);
+        }
+        DataParamAcc param(3, driver, GimmickType(0));
+        for (unsigned int i = 0; i < 3; i++) {
+            unsigned int blade = 0;
+            if (i < static_cast<unsigned int>(m_owner->m_blades->getSize())) {
+                blade = m_owner->m_blades->getContents(i).m_blade;
+            }
+            for (unsigned int fav = 0; fav < 2; fav++) {
+                name.format("IMG_chr_fvicon%02dlike@%02d", fav + 1, i + 2);
+                ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+                    if (GfMenuObjUtil::getFavoriteStat(4, blade, FAVORITE(fav)) == 0 && blade != 0 &&
+                    category == GfDataBlade::getFavorite(blade, FAVORITE(fav))) {
+                    icon.setImageIndex(0);
+                    icon.setDisp(true);
+                } else {
+                    icon.setDisp(false);
+                }
+            }
+            for (unsigned int fav = 2; fav < 4; fav++) {
+                name.format("IMG_chr_fviconit%02dlike@%02d", fav - 1, i + 2);
+                ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+                    if (GfMenuObjUtil::getFavoriteStat(4, blade, FAVORITE(fav)) == 0 && blade != 0 &&
+                    item == GfDataBlade::getFavorite(blade, FAVORITE(fav))) {
+                    icon.setImageIndex(1);
+                    icon.setDisp(true);
+                } else {
+                    icon.setDisp(false);
+                }
+            }
+            for (unsigned int n = 1; n <= 2; n++) {
+                name.format("IMG_chr_fviconit%02dlike2@%02d", n, i + 2);
+                ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+                icon.setDisp(false);
+            }
+        }
+        break;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
     }
 }
 
