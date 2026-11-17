@@ -114,14 +114,151 @@ inline void GfMenuObjExpGet::removeObject(ui::UIObjectAcc screen) {
 inline void GfMenuObjExpGet::sendOpen(unsigned int root, const ExpGetInfo& info) {
     ui::EventData event;
     event.m_type = 0x21;
-    event.m_param01 = *reinterpret_cast<const unsigned long*>(&info.m_param.m_type);
+    event.m_param0 = info.m_param.m_type;
+    event.m_param1 = info.m_param.m_value;
     event.m_paramShort[4] = ui::UIObjectAcc(info.m_handle).getDuplicateIndex();
     event.m_paramShort[5] = info.m_param.m_extra;
     event.m_param3 = info.m_param.m_bonus;
     GfMenuObject::sendEvent(root, event, 0.0f);
 }
 
-// ListListener::reciveEvent is not identical yet
+void GfMenuObjExpGet::ListListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        break;
+    case 0x21: {
+        ui::UIObjectAcc screen(acc.searchDuplicatedChild("LAY_main_root", event.m_paramShort[4]));
+        if (screen.m_object != nullptr) {
+            int type = event.m_param0;
+            ui::UIObjectAcc target(screen.m_handle);
+            GfMenuObjUtil::CtrlParam param;
+            switch (type) {
+            case 0:
+                param.m_methods = 1;
+                param.m_time = 1.0f;
+                break;
+            case 1:
+            case 2:
+                param.m_motionLib = "cmn_fade_btresult";
+                param.m_methods = 0x10000000;
+                param.m_motion = "fadein";
+                break;
+            case 3:
+                param.m_motionLib = "cmn_zoomin_a";
+                param.m_methods = 0x10000000;
+                param.m_motion = "fadein";
+                break;
+            }
+            param.m_eventId = (type << 24) | (event.m_paramShort[4] << 8) | 1;
+            int ctrl = GfMenuObjUtil::startCtrl(target.m_handle, param, nullptr);
+            if (ctrl == -1) {
+                if (type == 1) {
+                    removeObject2(screen);
+                } else {
+                    removeObject(screen);
+                }
+            } else {
+                GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+            }
+        }
+        break;
+    }
+    case 0x22: {
+        ui::UIObjectAcc screen(acc.searchDuplicatedChild("LAY_main_root", event.m_paramShort[0]));
+        if (screen.m_object != nullptr) {
+            if (event.m_paramShort[1] == 0) {
+                removeObject(screen);
+                if (!GfMenuManyObjects::get()->m_hold[4]) {
+                    mm::mtl::Queue<ExpGetInfo>* queue = GfMenuManyObjects::getQueue<ExpGetInfo>(4);
+                    if (queue != nullptr && !queue->empty()) {
+                        ExpGetInfo info = queue->front();
+                        sendOpen(handle, info);
+                    }
+                }
+            } else {
+                removeObject2(screen);
+                if (!GfMenuManyObjects::get()->m_hold[5]) {
+                    mm::mtl::Queue<ExpGetInfo>* queue = GfMenuManyObjects::getQueue<ExpGetInfo>(5);
+                    if (queue != nullptr && !queue->empty()) {
+                        ExpGetInfo info = queue->front();
+                        sendOpen(handle, info);
+                    }
+                }
+            }
+        }
+        break;
+    }
+    case 3: {
+        // the control's end: the type << 24, the screen's index << 8, then 1 opened, 2 shown, 3 closed
+        unsigned int id = event.m_param0;
+        if (id == 0) {
+            break;
+        }
+        ui::UIObjectAcc screen(acc.searchDuplicatedChild("LAY_main_root", id >> 8));
+        if (screen.m_object == nullptr) {
+            break;
+        }
+        unsigned int type = id >> 24;
+        switch (id & 0xff) {
+        case 1: {
+            GfMenuObjUtil::CtrlParam param;
+            if (type == 3) {
+                ui::UIObjectAcc anim(screen.searchChild("IMG_lvup_anim"));
+                anim.startAnimation("start", false);
+                param.m_time = 2.0f;
+            } else if (type == 0) {
+                param.m_time = 2.0f;
+            } else {
+                param.m_time = 0.01f;
+            }
+            param.m_eventId = (type << 24) | (id & 0xffff00) | 2;
+            param.m_methods = 0;
+            int ctrl = GfMenuObjUtil::startCtrl(screen.m_handle, param, nullptr);
+            if (ctrl == -1) {
+                removeExpGet(acc, screen, type);
+            } else {
+                GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+            }
+            break;
+        }
+        case 2: {
+            GfMenuObjUtil::CtrlParam param;
+            switch (type) {
+            case 3:
+                param.m_motionLib = "cmn_zoomin_a";
+                param.m_methods = 0x10000000;
+                param.m_motion = "fadeout";
+                break;
+            case 0:
+                param.m_methods = 2;
+                param.m_time = 1.0f;
+                break;
+            default:
+                param.m_methods = 0;
+                param.m_time = 0.01f;
+                break;
+            }
+            param.m_eventId = (type << 24) | (id & 0xffff00) | 3;
+            int ctrl = GfMenuObjUtil::startCtrl(screen.m_handle, param, nullptr);
+            if (ctrl == -1) {
+                removeExpGet(acc, screen, type);
+            } else {
+                GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+            }
+            break;
+        }
+        case 3:
+            removeExpGet(acc, screen, type);
+            break;
+        }
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
 
 
 // removeExpGet is not identical yet

@@ -251,6 +251,51 @@ void GfMenuObjEnBook::setupEnBookIDList() {
     }
 }
 
+void GfMenuObjEnBook::refreshEnBookList() {
+    ui::UIStr text;
+    mm::mtl::FixStr<32> name;
+    unsigned int index = m_enBookList->getIndex(true);
+    GfDataBdat::getFP(0x28);
+    for (unsigned int i = 0; i < pad_70->getSize(); i++) {
+        ui::UIObjectAcc acc(pad_70->getObject(i));
+        if (i < m_enBookList->getSize()) {
+            unsigned int id = m_enBookList->getContents(i).m_id;
+            bool attack = false;
+            unsigned char* bdat = GfDataBdat::getFP(0x28);
+            if (bdat != nullptr) {
+                unsigned short enemy = Bdat::getVal(bdat, "BaseEnemyID", id);
+                attack = GfDataEnBook::isAttackFlag(enemy);
+            }
+            bool mask = !attack;  // shows TXT_en_list_item_mask (the names are not the original's)
+            acc.setDisp(true);
+            name.format("TXT_en_list_item_name@%02d", i + 1);
+            {
+                ui::UIObjectAcc child(acc.m_handle, name.m_str);
+                if (i == index) {
+                    GfMenuObjUtil::setColMulandAdd(child.m_handle, "txt_highlight");
+                } else {
+                    child.loadDefColor();
+                }
+            }
+            name.format("LAY_en_list_item_name@%02d", i + 1);
+            acc.setDispChild(attack, name.m_str);
+            name.format("TXT_en_list_item_mask@%02d", i + 1);
+            acc.setDispChild(mask, name.m_str);
+            name.format("IMG_en_list_item_icon@%02d", i + 1);
+            ui::UIObjectAcc icon(acc.m_handle, name.m_str);
+            bool defeated = false;
+            bdat = GfDataBdat::getFP(0x28);
+            if (bdat != nullptr) {
+                unsigned short enemy = Bdat::getVal(bdat, "BaseEnemyID", id);
+                defeated = GfDataEnBook::getDefeatNum(enemy) != 0;
+            }
+            icon.setImageIndex(defeated);
+        } else {
+            acc.setDisp(false);
+        }
+    }
+}
+
 void GfMenuObjEnBook::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
