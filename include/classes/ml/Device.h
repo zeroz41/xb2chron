@@ -37,6 +37,8 @@ public:
 
     // starts the platform SDK (forwards to DeviceNx::initializeSDK)
     static void initializeSDK(const InitParam& param);
+    // shuts the platform SDK down (nnMain; tail-calls DevFileNxTh::finalizeSDK)
+    static void finalizeSDK();
     // every device ready (WinViewRoot::wkStandbyLogin waits on it)
     static bool isAllReady();
     // DevFont::wkStandbyLogin waits for it before making its font (0x71006A0AB0)

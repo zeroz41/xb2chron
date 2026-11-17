@@ -107,6 +107,23 @@ public:
         buf->m_group[buf->m_groupNum].m_end = buf->m_cur;
         return true;
     }
+    // empties one bank (odd: the render side) unless swapping is suspended and resets the font scale and z write
+    // (1.0.0 has it out of line; 3.0.1 inlines it into the constructor)
+    void clearSystem(bool odd) {
+        if (m_suspendSwap == 0) {
+            BUF* buf = getBuf(odd);
+            buf->m_cur = buf->m_top;
+            buf->m_groupNum = 0;
+            for (int i = 0; i < 0x200; i++) {
+                buf->m_group[buf->m_groupNum].m_end = nullptr;
+                buf->m_group[buf->m_groupNum].m_begin = nullptr;
+                buf->m_group[buf->m_groupNum].m_prim = -1;
+            }
+        }
+        m_fontScaleX = 1.0f;
+        m_fontScaleY = 1.0f;
+        m_zWrite = true;
+    }
 
     // replays the commands of priority prio (DebDraw::flushPrio)
     void flush(int prio, const mm::Mat44& view, const mm::Mat44& proj);

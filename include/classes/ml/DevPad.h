@@ -12,6 +12,17 @@ namespace ml {
 // table there and clears its instance)
 class DevPad : public ::ml::WorkObj, public ::mm::mtl::PtrSingleton<DevPad>, public ::ml::DevGraphCB {
 public:
+    // a button's auto-repeat timer: the seconds since it went down or last repeated, the repeat interval (the first
+    // repeat waits five intervals) and whether it repeats (updateLocal; the name and the field names are not the
+    // original's)
+    struct Repeat {
+        float m_time;
+        float m_interval;
+        int m_repeating;
+    };
+
+    // DeviceNx::createDevice builds a DevPadNx so (WorkObj with no room for children)
+    DevPad(const char* name, WorkObj* parent);
     // inline: the original keeps its copies in the weak tail with the inline slots (wkUpdate is the key function)
     virtual ~DevPad() {}  // slot 0
     virtual void wkUpdate();  // slot 9
@@ -57,14 +68,24 @@ public:
     static void stopVibration(int pad);
     static void loadVibration(unsigned int id, void* data, unsigned long size);
 
-    unsigned char pad_1b8[0x34];
-    // the per-pad button words getDown/getUp/getBtn/getDbl return, one per pad of getPadMax()
-    // (the names are not the original's)
+    unsigned char pad_1b8[0x8];
+    // the per-pad button words getDown/getUp/getBtn/getDbl return, one per pad of getPadMax(), and the buttons of
+    // the frame before (updateLocal derives down/up from them) (the names are not the original's)
+    unsigned int m_old[11];   // 0x1C0
     unsigned int m_down[11];  // 0x1EC
     unsigned int m_up[11];    // 0x218
     unsigned int m_btn[11];   // 0x244
     unsigned int m_dbl[11];   // 0x270
-    unsigned char pad_29c[0x2A4];
+    // down plus the auto-repeats of held buttons (updateLocal; the name is not the original's)
+    unsigned int m_repeat[11];  // 0x29C
+    // the down words of the last 11 frames, a ring at m_downLogIndex: m_dbl is down again within them (updateLocal;
+    // the names are not the original's)
+    unsigned int m_downLog[11][11];  // 0x2C8
+    Repeat m_repeatTime[11];         // 0x4AC (the name is not the original's)
+    int m_downLogIndex;              // 0x530
+    // DevClock::getClockNow's clock of the last update (updateLocal times the frame from it; the name is not the
+    // original's)
+    long m_clock;  // 0x538
     // getALX..getARY return 0 for a stick value inside (-m_deadZone, m_deadZone) when asked to
     // (the name is not the original's)
     float m_deadZone;  // 0x540

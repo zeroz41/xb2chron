@@ -256,6 +256,21 @@ static inline mm::Vec3 mulDir(const mm::Mat44& mtx, const mm::Vec3& v) {
 
 // ---- ml::CacheDraw: queueing a command (one per DebDraw call) ----
 
+CacheDraw::CacheDraw(mtl::ALLOC_HANDLE mem, unsigned long size)
+    : m_handle(mem), m_prim(-1), m_wid(-1), m_fontScaleX(1.0f), m_fontScaleY(1.0f), m_forceRenderQueue(false),
+      m_suspendSwap(0), m_zWrite(true) {
+    m_section = new (mem, nullptr, 0, 4, false) CriticalSectionNC();
+    m_section->setCostIgnore(true);
+    size >>= 1;
+    for (int i = 0; i < 2; i++) {
+        m_buf[i].m_size = size;
+        m_buf[i].m_top = static_cast<unsigned char*>(mtl::MemManager::allocate(mem, size, 0x10, false, "no name", 0));
+        m_buf[i].m_cur = m_buf[i].m_top;
+    }
+    clearSystem(true);
+    clearSystem(false);
+}
+
 CacheDraw::~CacheDraw() {
     for (int i = 0; i < 2; i++) {
         mtl::MemManager::deallocate(m_buf[i].m_top, 0, false);
@@ -604,6 +619,30 @@ bool CacheDraw::fontScale(float x, float y) {
     m_fontScaleX = x;
     m_fontScaleY = y;
     return calcCurrentBuf(sizeof(DFONT_SCALE));
+}
+
+bool CacheDraw::font(short x, short y, const char* text) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    BUF* buf = getBuf(false);
+    unsigned long len = strlen(text);
+    unsigned long size;
+    if (len < 0x20) {
+        new (buf->m_cur) DFONT32(x, y, text);
+        size = sizeof(DFONT32);
+    } else if (len < 0x40) {
+        new (buf->m_cur) DFONT64(x, y, text);
+        size = sizeof(DFONT64);
+    } else if (len < 0x80) {
+        new (buf->m_cur) DFONT128(x, y, text);
+        size = sizeof(DFONT128);
+    } else {
+        new (buf->m_cur) DFONT256(x, y, text);
+        size = sizeof(DFONT256);
+    }
+    return calcCurrentBuf(size);
 }
 
 void CacheDraw::DCLEAR::flush(DebDraw* draw) {
@@ -1076,7 +1115,7 @@ void CacheDraw::DADDV3_1::flush(DebDraw* draw) {
 }
 
 void CacheDraw::DFONT32::flush(DebDraw*) {
-    WinView::getView(false)->font(m_pos.x, m_pos.y, m_text);
+    WinView::getView(false)->font(m_pos.x, m_pos.y, m_text.m_str);
 }
 
 void FontLayer::font(int x, int y, const char* format, ...) {
@@ -1093,15 +1132,15 @@ void FontLayer::font(int x, int y, const char* format, ...) {
 }
 
 void CacheDraw::DFONT64::flush(DebDraw*) {
-    WinView::getView(false)->font(m_pos.x, m_pos.y, m_text);
+    WinView::getView(false)->font(m_pos.x, m_pos.y, m_text.m_str);
 }
 
 void CacheDraw::DFONT128::flush(DebDraw*) {
-    WinView::getView(false)->font(m_pos.x, m_pos.y, m_text);
+    WinView::getView(false)->font(m_pos.x, m_pos.y, m_text.m_str);
 }
 
 void CacheDraw::DFONT256::flush(DebDraw*) {
-    WinView::getView(false)->font(m_pos.x, m_pos.y, m_text);
+    WinView::getView(false)->font(m_pos.x, m_pos.y, m_text.m_str);
 }
 
 void CacheDraw::DFONT_COL::flush(DebDraw*) {
@@ -1212,6 +1251,10 @@ void DeviceNx::initializeSDK(const Device::InitParam& param) {
         DevFileNxTh::initializeSave();
         m_onceInitialize = true;
     }
+}
+
+void Device::finalizeSDK() {
+    DevFileNxTh::finalizeSDK();
 }
 
 bool Device::isAllReady() {
@@ -3828,6 +3871,20 @@ DevFileArchiver::~DevFileArchiver() {
 template void ml::DevFileDictionary<int, ml::DevFileDicAllocator, -1, -2, true>::loadFromMemory(void*, unsigned long, void*, unsigned long);
 
 namespace ml {
+
+DevPad::DevPad(const char* name, WorkObj* parent)
+    : WorkObj(name, parent, 0), pad_1b8(), m_old(), m_down(), m_up(), m_btn(), m_dbl() {
+    for (int i = 0; i < 11; i++) {
+        memcpy(m_downLog[i], m_down, sizeof(m_down));
+    }
+    m_downLogIndex = 0;
+    DevClock::getClockNow(m_clock);
+    m_deadZone = 0.15f;
+    const Repeat repeat = {0.0f, 0.1f, 0};
+    for (int i = 0; i < 11; i++) {
+        m_repeatTime[i] = repeat;
+    }
+}
 
 int DevPad::getPadMax() {
     return 11;
