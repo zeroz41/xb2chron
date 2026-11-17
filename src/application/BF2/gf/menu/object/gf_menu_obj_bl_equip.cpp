@@ -27,6 +27,8 @@
 #include "classes/gf/GfMenuObjCommonText.h"
 #include "classes/ui/UIObjectScrollBarPlugin.h"
 #include "gf/GfMenuItemUtil.h"
+#include "classes/gf/DataParamAcc.h"
+#include "gf/GfItemUtil.h"
 
 namespace gf {
 
@@ -341,6 +343,44 @@ void GfMenuObjBlEquip::refreshSlot(ui::UIObjectAcc& acc) {
     }
 }
 
+void GfMenuObjBlEquip::refreshItemList(ui::UIObjectAcc& acc, GfMenuItemList* items, ui::UISelectObjList* select,
+                                       unsigned int slot) {
+    unsigned int blade = GfMenuReference::getReferenceBladeID(0);
+    for (unsigned int i = 0; i < select->getSize();) {
+        MenuItemInfo& item = items->getContents(items->getPageIndex(i));
+        mm::mtl::FixStr<32> name;
+        unsigned int equipped = GfMenuItemUtil::searchEquipOrb(item.m_id, item.m_entry, nullptr);
+        bool isUsed = equipped != 0;
+        i++;
+        name.format("TXT_list_use@%02d", i);
+        ui::UIObjectAcc use(acc.searchChild(name.m_str));
+        use.setDisp(isUsed);
+        if (equipped != 0) {
+            DataParamAcc param(4, equipped, GimmickType(0));
+            use.setText(GfMenuObjUtil::getName(param));
+            GfMenuObjUtil::setColMulandAdd(use.m_handle, equipped == blade ? "txt_normal" : "txt_disable");
+        }
+        unsigned int type = item.m_type;
+        name.format("LAY_list_use@%02d", i);
+        ui::UIObjectAcc(acc.searchChild(name.m_str)).setDisp(type == 3);
+        name.format("LAY_list_num@%02d", i);
+        ui::UIObjectAcc(acc.searchChild(name.m_str)).setDisp(type != 3);
+        name.format("TXT_aslist_name@%02d", i);
+        ui::UIObjectAcc text(acc.searchChild(name.m_str));
+        switch (GfMenuItemUtil::canEquipOrb(item.m_id, item.m_entry, blade, slot)) {
+        case 1:
+        case 3:
+        case 4:
+        case 5:
+            GfMenuObjUtil::setColMulandAdd(text.m_handle, "txt_disable");
+            break;
+        default:
+            text.loadDefColor();
+            break;
+        }
+    }
+}
+
 void GfMenuObjBlEquip::ItemSelectListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
     ui::UIObjectAcc owner(m_owner->m_handle);
     ui::UIObjectAcc acc(handle);
@@ -549,6 +589,102 @@ void GfMenuObjBlEquip::ItemSelectListener::reciveEvent(ui::EventData const& even
     default:
         ui::UIObjectListener::reciveEvent(event, handle);
         break;
+    }
+}
+
+void GfMenuObjBlEquip::setupItemList(ui::UIObjectAcc& acc, GfMenuItemList* items, ui::UISelectObjList* select) {
+    select->pickupObject(acc.m_handle, "LAY_stcklist@%02d", 1);
+    unsigned int count = select->getSize();
+    if (items == nullptr || count == 0) {
+        return;
+    }
+    GfMenuItemList::ItemBoxSetup setup;
+    setup.m_type = 3;
+    setup.pad_28 = 0;
+    setup.m_setup.m_pageRowSize = select->getSize();
+    setup.m_setup.m_pageScroll = true;
+    items->setupFromBox(setup);
+    if (items->getSize() == 0) {
+        ui::UIListInfoBase::SetupParam param = setup.m_setup;
+        items->setup(getAllocator(ALLOCATOR(0)), param);
+    }
+    mm::mtl::FixedVector<GfItem, 1024> orbs;
+    GfItemUtil::getInfo(orbs, static_cast<ItemType::Type>(9), false);
+    for (GfItem* it = orbs.begin(); it != orbs.end(); ++it) {
+        MenuItemInfo info;
+        info.m_type = 9;
+        info.m_id = it->m_item;
+        info.m_entry = it->m_handle;
+        info.m_count = it->m_count;
+        items->addContents(info);
+    }
+    GfMenuAdapterManager::beginAddAfter();
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < select->getSize(); i++) {
+        name.format("IMG_aslist_icon@%02d", i + 1);
+        GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 2, items, i, false);
+        name.format("TXT_aslist_name@%02d", i + 1);
+        GfMenuItemAdapter* adapter = GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 0, items, i, false);
+        if (adapter != nullptr) {
+            name.format("LAY_stcklist@%02d", i + 1);
+            adapter->m_rowHandle = acc.searchChild(name.m_str);
+        }
+        name.format("IMG_list_rea@%02d", i + 1);
+        GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 7, items, i, false);
+        name.format("TXT_list_num@%02d", i + 1);
+        GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 3, items, i, false);
+        name.format("TXT_list_max@%02d", i + 1);
+        GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 4, items, i, false);
+    }
+    GfMenuAdapterManager::endAddAfter();
+    GfMenuItemAdapter::createFromList(acc.searchChild("TXT_stockasc_info"), 9, items, -1, false);
+    GfMenuItemAdapter::createFromList(acc.searchChild("TXT_stac_prisenum"), 5, items, -1, false);
+    ui::UIObjectAcc icon(acc.searchChild("IMG_stock_icon"));
+    icon.setImageIndex(1);
+}
+
+// rebuilds the list as its type 3 items, then its type 9 items, each part sorted by the order (setupItemList lists
+// the box's type 3 items, then adds the type 9 ones)
+void GfMenuObjBlEquip::sortOrb(GfMenuItemList* items, unsigned short order) {
+    GfMenuItemList* type3List = GfMenuItemList::create();
+    GfMenuItemList* type9List = GfMenuItemList::create();
+    ui::UIListInfoBase::SetupParam param;
+    type3List->setup(getAllocator(ALLOCATOR(0)), param);
+    type9List->setup(getAllocator(ALLOCATOR(0)), param);
+    for (unsigned int i = 0; i < items->getSize(); i++) {
+        MenuItemInfo& info = items->getContents(i);
+        if (info.m_type == 3) {
+            type3List->addContents(info);
+        }
+    }
+    type3List->sort(order, false);
+    for (unsigned int i = 0; i < items->getSize(); i++) {
+        MenuItemInfo& info = items->getContents(i);
+        if (info.m_type == 9) {
+            type9List->addContents(info);
+        }
+    }
+    type9List->sort(order, false);
+    unsigned int count = 0;
+    while (count < type3List->getSize()) {
+        MenuItemInfo& info = type3List->getContents(count);
+        unsigned int index = count++;
+        if (index < items->m_list.size()) {
+            items->m_list[index] = info;
+        }
+    }
+    for (unsigned int i = 0; i < type9List->getSize(); i++) {
+        unsigned int index = count + i;
+        MenuItemInfo& info = type9List->getContents(i);
+        if (index < items->m_list.size()) {
+            items->m_list[index] = info;
+        }
+    }
+    if (type3List != nullptr) {
+        type3List->release();
+    }
+    if (type9List != nullptr) {
+        type9List->release();
     }
 }
 
