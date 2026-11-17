@@ -1930,6 +1930,29 @@ void SCOM_ACHIEV_INC::createFightCombo(GF_OBJ_HANDLE* handle) {
     fn_71005645F0(handle, 0x79);
 }
 
+void SCOM_ACHIEV_INC::fn_71005645F0(GF_OBJ_HANDLE* handle, unsigned int type) {
+    addTotalCount(type - 1, 1);
+    create(type - 1, 1, 0);
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    int party = GfObjUtil::getPartyID(handle);
+    if (GfDataUtil::isIra()) {
+        for (unsigned int driver = 0x11; driver != 0x1A; driver++) {
+            if (!GfDataDriver::isIraFront(driver) && GfDataDriver::getPartyPos(driver) != 2 &&
+                GfDataDriver::isActivateParty(driver)) {
+                unsigned int blade = GfDataDriver::getIraBlade(driver, -1);
+                if (!GfDataBlade::isUnselect(blade) && GfDataParty::getDriverPartyID(driver) == party) {
+                    blades.push_back(blade);
+                }
+            }
+        }
+    } else {
+        GfDataBlade::getListParty(blades);
+    }
+    for (unsigned short blade : blades) {
+        create(type, 1, blade);
+    }
+}
+
 void SCOM_ACHIEV_INC::createFightComboFinish(GF_OBJ_HANDLE* handle) {
     fn_71005645F0(handle, 0x7B);
 }
@@ -3572,10 +3595,45 @@ void SCOM_PARTY_ADD::removeBlade(unsigned int driver, int slot, bool flag) {
     }
 }
 
+void SCOM_PARTY_ADD::removeBladeForMenu(unsigned int driver, int slot, bool flag) {
+    DataParamAcc acc(3, driver, GimmickType(0));
+    if (!acc.isValid()) {
+        return;
+    }
+    removeBlade(acc.getBlade(slot, false), flag, false);
+    if (GfGameManager::isClearGame()) {
+        unsigned int blade = acc.getBlade(slot, false);
+        if (blade == 1001) {
+            removeBlade(1002, flag, false);
+            removeBlade(1003, flag, false);
+        } else if (blade == 1002) {
+            removeBlade(1001, flag, false);
+            removeBlade(1003, flag, false);
+        }
+    }
+}
+
 void SCOM_PARTY_ADD::removeDriver(unsigned int driver, bool flag) {
     Info info = {0, driver, -1, flag, false, false, true, 4};
     s_info.push_back(info);
     create();
+}
+
+void SCOM_PARTY_ADD::setCurrentBlade(unsigned int blade) {
+    mm::mtl::FixedQueue<Info, 16>::iterator it = s_info.begin(), end = s_info.end();
+    for (; it != end; ++it) {
+        if ((*it).m_kind == 1 && (*it).m_blade == blade) {
+            (*it).m_isCurrent = true;
+            return;
+        }
+    }
+    // the walk moved: changes are queued, so this one waits for them
+    if (it != s_info.begin()) {
+        Info info = {blade, 0, -1, true, false, false, true, 5};
+        s_info.push_back(info);
+    } else {
+        SCOM_EXEC_CURRENT_BLADE::create(blade);
+    }
 }
 
 void SCOM_PARTY_ADD::removeBlade(unsigned int blade, bool flag, bool checkClear) {
