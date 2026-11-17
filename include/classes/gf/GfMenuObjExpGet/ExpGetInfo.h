@@ -8,7 +8,9 @@ namespace gf {
 // table 0x7100B62280: an open screen in GfMenuManyObjects' queue 4 or 5, with what opened it
 class GfMenuObjExpGet::ExpGetInfo : public ::gf::GfMenuManyObjects::InfoType {
 public:
-    ExpGetInfo(unsigned int handle, const OpenParam& param) : InfoType(handle), m_param(param) {}
+    ExpGetInfo() {}  // GfMenuManyObjects::add's dropped info
+    // the param is assigned (its data, 0x1C), not copy-constructed (myOpen copies no tail)
+    ExpGetInfo(unsigned int handle, const OpenParam& param) : InfoType(handle) { m_param = param; }
     OpenParam m_param;  // open's (the name is not the original's)
 };
 }  // namespace gf
