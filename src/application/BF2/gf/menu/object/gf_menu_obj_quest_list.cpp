@@ -35,6 +35,11 @@
 
 #include "classes/gf/GfMenuReferenceQuest.h"
 #include "classes/gf/GfMenuObjQuestReward.h"
+#include "classes/gf/GfMenuAdapterManager.h"
+#include "classes/gf/GfMenuQuestAdapter.h"
+#include "classes/gf/GfMenuItemAdapter.h"
+#include "classes/gf/GfMenuReferenceAdapter.h"
+#include "classes/gf/GfMenuReferenceNumber.h"
 namespace gf {
 
 GfMenuObjQuestList::GfMenuObjQuestList(unsigned int handle)
@@ -47,8 +52,8 @@ GfMenuObjQuestList::GfMenuObjQuestList(unsigned int handle)
 GfMenuObjQuestList::~GfMenuObjQuestList() {
     m_numbers[0] = nullptr;
     m_numbers[1] = nullptr;
-    m_references[0] = nullptr;
-    m_references[1] = nullptr;
+    m_detailQuest = nullptr;
+    m_detailNumber = nullptr;
     if (m_questLists[0] != nullptr) {
         m_questLists[0]->release();
         m_questLists[0] = nullptr;
@@ -146,6 +151,279 @@ void GfMenuObjQuestList::initialize() {
         GfMenuObject::disableInput(main.searchChild("LAY_detail_task"));
         GfMenuObject::initialize();
     }
+}
+
+void GfMenuObjQuestList::initializeSub(ui::UIObjectAcc& main) {
+    mm::mtl::FixStr<32> name;
+    GfMenuAdapterManager::beginAddAfter();
+    {
+        ui::UIObjectAcc list(main.m_handle, "LAY_list");
+        {
+            mm::mtl::IAllocator* allocator = getAllocator(ALLOCATOR(0));
+            ui::UISelectObjList::CreateParam create;
+            create.m_allocator = allocator;
+            m_selectLists[0] = ui::UISelectObjList::create(create);
+        }
+        m_selectLists[0]->pickupObject(list.m_handle, "LAY_list_item@%02d", 1);
+        for (unsigned int i = 0; i < (unsigned int)m_selectLists[0]->getSize(); i++) {
+            name.format("TXT_list_item_title@%02d", i + 1);
+            GfMenuQuestAdapter* title =
+                GfMenuQuestAdapter::createFromList(list.searchChild(name.m_str), m_questLists[0], i, 0, false);
+            if (title != nullptr) {
+                title->m_rowHandle = m_selectLists[0]->getObject(i);
+            }
+            name.format("IMG_list_item_clear@%02d", i + 1);
+            GfMenuQuestAdapter::createFromList(list.searchChild(name.m_str), m_questLists[0], i, 0x37, false);
+            name.format("IMG_list_item_active@%02d", i + 1);
+            GfMenuQuestAdapter::createFromList(list.searchChild(name.m_str), m_questLists[0], i, 0x38, true);
+            name.format("LAY_list_base@%02d", i + 1);
+            GfMenuObjUtil::createFollowDispPlugin(list.searchChild(name.m_str), m_selectLists[0]->getObject(i));
+        }
+        {
+            ui::UICtrlCursorSelect::CursorSetting setting;
+            setting.setType(0);
+            setting.m_dockType = 0;
+            m_cursors[0] = ui::UICtrlCursorSelect::create(list.searchChild("IMG_list_cursor"), setting, m_selectLists[0]);
+        }
+        GfMenuObjUtil::createVScrollBarPlugin(list.searchChild("IMG_list_scroll_bar"), m_questLists[0],
+                                              "IMG_list_scroll_base", true);
+#line 247
+        ListListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ListListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(list.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+        if (m_view == 1) {
+            sendMenuEvent(list.m_handle, 0x104);
+            GfMenuObject::sendOpenEvent(list.m_handle, 0, 0.0f);
+            if (!m_hasOpenQuest) {
+                sendMenuEvent(list.m_handle, 0x102);
+            }
+        }
+    }
+    {
+        ui::UIObjectAcc thumb(main.m_handle, "LAY_thumb");
+        {
+            mm::mtl::IAllocator* allocator = getAllocator(ALLOCATOR(0));
+            ui::UISelectObjList::CreateParam create;
+            create.m_allocator = allocator;
+            m_selectLists[1] = ui::UISelectObjList::create(create);
+        }
+        m_selectLists[1]->pickupObject(thumb.m_handle, "LAY_thumb@%02d", 1);
+        for (unsigned int i = 0; i < (unsigned int)m_selectLists[1]->getSize(); i++) {
+            name.format("TXT_thumb_title@%02d", i + 1);
+            GfMenuQuestAdapter* title =
+                GfMenuQuestAdapter::createFromList(thumb.searchChild(name.m_str), m_questLists[1], i, 0, false);
+            if (title != nullptr) {
+                title->m_rowHandle = m_selectLists[1]->getObject(i);
+            }
+            name.format("IMG_thumb@%02d", i + 1);
+            GfMenuQuestAdapter::createFromList(thumb.searchChild(name.m_str), m_questLists[1], i, 0x39, false);
+            name.format("IMG_thumb_clear@%02d", i + 1);
+            GfMenuQuestAdapter::createFromList(thumb.searchChild(name.m_str), m_questLists[1], i, 0x37, false);
+            name.format("IMG_thumb_active@%02d", i + 1);
+            GfMenuQuestAdapter::createFromList(thumb.searchChild(name.m_str), m_questLists[1], i, 0x38, true);
+            name.format("LAY_thumb_base@%02d", i + 1);
+            GfMenuObjUtil::createFollowDispPlugin(thumb.searchChild(name.m_str), m_selectLists[1]->getObject(i));
+            name.format("LAY_thumb_ac@%02d", i + 1);
+            GfMenuObjUtil::createFollowDispPlugin(thumb.searchChild(name.m_str), m_selectLists[1]->getObject(i));
+        }
+        {
+            GfMenuQuestList::SetupParam param;
+            param.m_pageRowSize = m_selectLists[0]->getSize();
+            param.m_categoryMask = 0;
+            param.m_stateMask = 0;
+            m_questLists[1]->setup(param);
+        }
+        {
+            ui::UICtrlCursorSelect::CursorSetting setting;
+            setting.setType(0);
+            setting.m_dockType = 0;
+            m_cursors[1] = ui::UICtrlCursorSelect::create(thumb.searchChild("IMG_thumb_cursor"), setting, m_selectLists[1]);
+        }
+        m_numbers[0] = GfMenuReferenceNumber::create();
+        m_numbers[1] = GfMenuReferenceNumber::create();
+        GfMenuReferenceAdapter* page =
+            GfMenuReferenceAdapter::create(thumb.searchChild("TXT_thumb_page_num"), m_numbers[0], true);
+        if (page != nullptr) {
+            page->m_offset = 1;
+        }
+        GfMenuReferenceAdapter::create(thumb.searchChild("TXT_thumb_page_max"), m_numbers[1], true);
+#line 340
+        ThumbListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ThumbListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(thumb.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+        if (m_view == 0) {
+            sendMenuEvent(thumb.m_handle, 0x104);
+            GfMenuObject::sendOpenEvent(thumb.m_handle, 0, 0.0f);
+            if (!m_hasOpenQuest) {
+                sendMenuEvent(thumb.m_handle, 0x102);
+            }
+        }
+    }
+    GfMenuAdapterManager::endAddAfter();
+    {
+        ui::UIObjectAcc tab(main.m_handle, "LAY_tab");
+        {
+            mm::mtl::IAllocator* allocator = getAllocator(ALLOCATOR(0));
+            ui::UISelectObjList::CreateParam create;
+            create.m_allocator = allocator;
+            m_selectLists[2] = ui::UISelectObjList::create(create);
+        }
+        m_selectLists[2]->pickupObject(tab.m_handle, "TXT_tab_title@%02d", 1);
+        {
+            mm::mtl::IAllocator* allocator = getAllocator(ALLOCATOR(0));
+            ui::UISelectObjList::CreateParam create;
+            create.m_allocator = allocator;
+            m_selectLists[3] = ui::UISelectObjList::create(create);
+        }
+        m_selectLists[3]->pickupObject(tab.m_handle, "LAY_tab_select_item@%02d", 1);
+        {
+            ui::UICtrlCursorSelect::CursorSetting setting;
+            setting.setType(0);
+            setting.m_dockType = 0;
+            m_cursors[2] =
+                ui::UICtrlCursorSelect::create(tab.searchChild("IMG_tab_select_cursor"), setting, m_selectLists[3]);
+        }
+        {
+#line 381
+            TabListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TabListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(tab.m_handle, listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        {
+#line 382
+            TabSelectListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TabSelectListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(tab.searchChild("LAY_tab_select"), listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        tab.setDisp(false);
+        tab.setDispChild(false, "LAY_tab_select");
+    }
+    {
+        ui::UIObjectAcc open(main.m_handle, "LAY_tab_open");
+        GfMenuObjUtil::setDockPos(open.searchChild("IMG_tab_open_btn"), open.searchChild("TXT_tab_open"), 1, true);
+        GfMenuObjUtil::addPos(open.searchChild("IMG_tab_open_btn"), -4, 0);
+#line 401
+        TabOpenListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TabOpenListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(open.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+        open.setDisp(false);
+    }
+    {
+        ui::UIObjectAcc detail(main.m_handle, "LAY_detail");
+        mm::mtl::FixStr<32> detailName;
+        m_detailQuest = GfMenuReferenceQuest::create();
+        m_detailNumber = GfMenuReferenceNumber::create();
+        m_itemList = GfMenuItemList::create();
+        m_itemList->setup(getAllocator(ALLOCATOR(0)), ui::UIListInfoBase::SetupParam());
+        GfMenuQuestAdapter::createFromReference(detail.searchChild("TXT_detail_win_title"), m_detailQuest, 0, false);
+        GfMenuQuestAdapter::createFromReference(detail.searchChild("IMG_detail_thumb"), m_detailQuest, 0x39, false);
+        GfMenuQuestAdapter::createFromReference(detail.searchChild("TXT_detail_win_info"), m_detailQuest, 1, false);
+        GfMenuQuestAdapter::createFromReference(detail.searchChild("TXT_detail_win_result"), m_detailQuest, 2, false);
+        GfMenuQuestAdapter::createFromReference(detail.searchChild("TXT_detail_task_list_step"), m_detailQuest, 0x3A,
+                                                false);
+        for (int i = 0; i < 12; i++) {
+            detailName.format("IMG_detail_task_cond_pt_face@%02d", i + 1);
+            GfMenuQuestAdapter* face =
+                GfMenuQuestAdapter::createFromReference(detail.searchChild(detailName.m_str), m_detailQuest, i + 3, false);
+            if (face != nullptr) {
+                face->m_task = 0;
+            }
+        }
+        for (int i = 0; i < 4; i++) {
+            detailName.format("TXT_detail_task_info@%02d", i + 1);
+            GfMenuQuestAdapter* info =
+                GfMenuQuestAdapter::createFromReference(detail.searchChild(detailName.m_str), m_detailQuest, 0x2E, false);
+            if (info != nullptr) {
+                info->m_task = i;
+            }
+            detailName.format("TXT_detail_task_item_name@%02d", i + 1);
+            GfMenuItemAdapter::createFromList(detail.searchChild(detailName.m_str), 0, m_itemList, i, false);
+            detailName.format("TXT_detail_task_item_num@%02d", i + 1);
+            GfMenuQuestAdapter* itemNum =
+                GfMenuQuestAdapter::createFromReference(detail.searchChild(detailName.m_str), m_detailQuest, 0x2F, false);
+            if (itemNum != nullptr) {
+                itemNum->m_task = i;
+            }
+            detailName.format("TXT_detail_task_item_max@%02d", i + 1);
+            GfMenuQuestAdapter* itemMax =
+                GfMenuQuestAdapter::createFromReference(detail.searchChild(detailName.m_str), m_detailQuest, 0x30, false);
+            if (itemMax != nullptr) {
+                itemMax->m_task = i;
+            }
+            detailName.format("IMG_detail_task_cond_tzone@%02d", i + 1);
+            GfMenuQuestAdapter* tzone =
+                GfMenuQuestAdapter::createFromReference(detail.searchChild(detailName.m_str), m_detailQuest, 0x32, false);
+            if (tzone != nullptr) {
+                tzone->m_task = i;
+            }
+            detailName.format("IMG_detail_task_cond_tzone2@%02d", i + 1);
+            GfMenuQuestAdapter* tzone2 =
+                GfMenuQuestAdapter::createFromReference(detail.searchChild(detailName.m_str), m_detailQuest, 0x33, false);
+            if (tzone2 != nullptr) {
+                tzone2->m_task = i;
+            }
+            detailName.format("IMG_detail_task_cond_tzone3@%02d", i + 1);
+            GfMenuQuestAdapter* tzone3 =
+                GfMenuQuestAdapter::createFromReference(detail.searchChild(detailName.m_str), m_detailQuest, 0x34, false);
+            if (tzone3 != nullptr) {
+                tzone3->m_task = i;
+            }
+            detailName.format("IMG_detail_task_cond_weather@%02d", i + 1);
+            GfMenuQuestAdapter* weather =
+                GfMenuQuestAdapter::createFromReference(detail.searchChild(detailName.m_str), m_detailQuest, 0x31, false);
+            if (weather != nullptr) {
+                weather->m_task = i;
+            }
+        }
+        {
+            GfMenuObjQuestReward::OpenParam param;
+            param.m_quest = m_detailQuest;
+            param.m_handle = detail.searchChild("LAY_detail_reward");
+            GfMenuObjQuestReward::create(m_subContext, param, true);
+        }
+        {
+#line 497
+            DetailListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) DetailListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(detail.m_handle, listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        GfMenuObject::disableInput(detail.m_handle);
+        {
+#line 500
+            TaskListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TaskListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(detail.searchChild("LAY_detail_task"), listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        if (m_hasOpenQuest) {
+            GfMenuObject::sendCloseEvent(main.searchSibiling("LAY_tab_open"), 0, 0.0f);
+            GfMenuObject::sendOpenEvent(detail.m_handle, 0, 0.0f);
+            m_quest = m_openQuest;
+        } else {
+            GfMenuObject::sendOpenEvent(main.searchSibiling("LAY_tab_open"), 0, 0.0f);
+        }
+    }
+    setupList(m_openQuest);
 }
 
 void GfMenuObjQuestList::finalize() {
@@ -568,7 +846,7 @@ void GfMenuObjQuestList::DetailListener::reciveEvent(const ui::EventData& event,
             GfMenuObject::enableInput(acc.m_handle);
             GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
             QuestID id;
-            m_owner->m_references[0]->getQuest(id);
+            m_owner->m_detailQuest->getQuest(id);
             GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 9, finished != 1);
             GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 10, finished != 1);
             if (finished != 1) {
@@ -590,7 +868,7 @@ void GfMenuObjQuestList::DetailListener::reciveEvent(const ui::EventData& event,
             GfMenuObjUtil::playSECommonCancel();
         } else if (event.m_param1 == 9) {
             QuestID id;
-            m_owner->m_references[0]->getQuest(id);
+            m_owner->m_detailQuest->getQuest(id);
             if (!GfQuestInfo::isQuestFin(id)) {
                 m_owner->sendMenuEvent(acc.m_handle, 0x101);
                 GfMenuObject::sendOpenEvent(acc.searchChild("LAY_detail_task"), 0, 0.0f);
@@ -598,7 +876,7 @@ void GfMenuObjQuestList::DetailListener::reciveEvent(const ui::EventData& event,
             }
         } else if (event.m_param1 == 10) {
             QuestID id;
-            m_owner->m_references[0]->getQuest(id);
+            m_owner->m_detailQuest->getQuest(id);
             if (!GfQuestInfo::isQuestFin(id)) {
                 m_owner->m_closeHandle = acc.m_handle;
                 m_owner->m_quest = id.m_id;
@@ -609,7 +887,7 @@ void GfMenuObjQuestList::DetailListener::reciveEvent(const ui::EventData& event,
         break;
     case 0x21: {
         QuestID id(m_owner->m_quest);
-        m_owner->m_references[0]->m_quest = id;
+        m_owner->m_detailQuest->m_quest = id;
         bool finished = GfQuestInfo::isQuestFin(id);
         acc.setDispChild(!finished, "LAY_detail_summary");
         acc.setDispChild(finished, "LAY_detail_result");
@@ -742,7 +1020,7 @@ void GfMenuObjQuestList::TaskListener::reciveEvent(const ui::EventData& event, u
         GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
         QuestID id;
         QuestID progress;
-        m_owner->m_references[0]->getQuest(id);
+        m_owner->m_detailQuest->getQuest(id);
         progress = GfQuestInfo::getProgressQuest(id);
         if (!progress.empty()) {
             id = progress;
