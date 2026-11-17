@@ -10,11 +10,13 @@
 #include "classes/ui/UICtrlCursorSelect.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UISelectObjList.h"
+#include "classes/ui/UITagParser.h"
 #include "gf/GfDataHana.h"
 #include "gf/GfDataItem.h"
 #include "gf/GfItemUtil.h"
 #include "gf/GfMenuItemUtil.h"
 #include "gf/GfReqCommand.h"
+#include "mm/Col3.h"
 #include "mm/mtl/FixStr.h"
 #include "plugin/Bdat.h"
 #include "ui/EventData.h"
@@ -48,6 +50,53 @@ void GfMenuObjBalloon::finalize() {
 void GfMenuObjBalloon::update() {
     m_seq.update();
     GfMenuObject::update();
+}
+
+int GfMenuObjBalloon::setupEvTalk(unsigned int handle, int msgId, int nameId) {
+    ui::UIObjectAcc acc(handle);
+    int kind = 0;
+    {
+        ui::UIObjectAcc msg(acc.m_handle, "TXT_ev_talk_msg");
+        if (msg.m_object != nullptr) {
+            ui::UIStr text(GfMenuObject::getString(msgId));
+            const char* feeling = ui::UITagParser::sys()->parseTagParam(text.c_str(), "ML:Feeling", "kind");
+            if (feeling != nullptr) {
+                if (strcmp(feeling, "Normal") == 0) {
+                    kind = 0;
+                } else if (strcmp(feeling, "Anger") == 0) {
+                    kind = 1;
+                } else if (strcmp(feeling, "Think") == 0) {
+                    kind = 2;
+                }
+            }
+            msg.setText(text);
+            GfMenuObject::releaseString(msgId);
+        }
+    }
+    {
+        ui::UIObjectAcc layout(acc.m_handle, "LAY_ev_talk_msg");
+        layout.updateLayoutSize();
+    }
+    if (nameId != -1) {
+        ui::UIObjectAcc name(acc.m_handle, "TXT_ev_talk_name");
+        if (name.m_object != nullptr) {
+            GfMenuObject::setText(name.m_handle, nameId);
+        }
+    }
+    {
+        mm::mtl::FixStr<32> child;
+        for (int i = 0; i < 3; i++) {
+            child.format("IMG_ev_talk_win@%02d", i + 1);
+            acc.setDispChild(kind == i, child.m_str);
+            child.format("IMG_ev_talk_arrow@%02d", i + 1);
+            acc.setDispChild(kind == i, child.m_str);
+            child.format("IMG_ev_talk_arrow_sh@%02d", i + 1);
+            acc.setDispChild(kind == i, child.m_str);
+        }
+    }
+    ui::UIObjectAcc(acc.m_handle, "IMG_ev_talk_cursor").setMulColor(mm::Col3(144.0f / 255.0f, 150.0f / 255.0f, 178.0f / 255.0f));
+    acc.updateLayoutSize();
+    return kind;
 }
 
 bool GfMenuObjBalloon::seqSave() {

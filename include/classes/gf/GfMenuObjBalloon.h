@@ -36,16 +36,30 @@ public:
     struct OpenParam {
         // GfAutoTalk::createMenuObj builds one so (stores 0x10, 0x18, 0x20, 0x30, 0x38, 0x40 in that order), then
         // sets the text and the object
-        OpenParam() : pad_10(0.0f, 0.0f, 0.0f), m_object(reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        OpenParam() : m_nameBdat(nullptr), m_nameId(0), m_object(reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
             m_offset.m_offset = mm::Vec3(0.0f, 0.0f, 0.0f);
             m_offset.m_bone = nullptr;
         }
         unsigned char* m_bdat;
         unsigned int m_msgId;
-        mm::Vec3 pad_10;  // 0x10: 12 bytes the constructor zeroes (a mm::Vec3 by its size and alignment)
+        unsigned char* m_nameBdat;  // 0x10: the speaker's name (openEvent's; none without it or its id)
+        unsigned int m_nameId;      // 0x18
         GF_OBJ_HANDLE* m_object;  // 0x20
         unsigned char pad_28[8];
         MenuOffset m_offset;  // 0x30
+    };
+    // openEventSelect's: a question, the speaker's name and the answers to choose from; event::SelectWindow::open
+    // builds it (the field names are not the original's)
+    struct OpenSelectParam {
+        unsigned char* m_bdat;
+        unsigned int m_msgId;
+        unsigned char* m_nameBdat;  // 0x10: none without it or its id
+        unsigned int m_nameId;      // 0x18
+        GF_OBJ_HANDLE* m_object;    // 0x20
+        unsigned char pad_28[8];
+        MenuOffset m_offset;           // 0x30
+        unsigned char* m_answerBdat;   // 0x50: the answers' texts
+        mm::mtl::FixedVector<unsigned int, 2> m_answers;  // 0x58: their ids
     };
     // openEventSelectBox's: a question and the answers to choose from (the field names are not the original's)
     struct OpenSelectBoxParam {
@@ -88,15 +102,18 @@ public:
     // ends the balloon a call context shows (GfAutoTalk's disposeMenuObj passes its context and true)
     static void close(GfMenuCallContext* context, bool);
     static void nextEvent(GfMenuCallContext* context, const NextParam& param);
+    static void openEvent(GfMenuCallContext* context, const OpenParam& param);
     static void openAutoTalk(GfMenuCallContext* context, const OpenParam& param);
+    static void openEventSelect(GfMenuCallContext* context, const OpenSelectParam& param);
     static void openEventSelectBox(GfMenuCallContext* context, const OpenSelectBoxParam& param);
     static void openEventSelectMoney(GfMenuCallContext* context, const OpenSelectMoneyParam& param);
     static void openEventSelectExp(GfMenuCallContext* context, const OpenSelectExpParam& param);
     // false when the row has no item to show (its context aborted when every item was skipped)
     static bool openGetItem(GfMenuCallContext* context, const OpenGetItemParam& param);
-    // 1.0.0's name: shows a talk balloon's text (TXT_ev_talk_msg, the message's ML:Feeling tag); EvTalkListener
-    // calls it on open (0x100, the event's text and kind) and on 0x104 (kind -1)
-    static void setupEvTalk(unsigned int handle, int msgId, int);
+    // 1.0.0's name: shows a talk balloon's text (TXT_ev_talk_msg) and name (TXT_ev_talk_name, none for -1);
+    // EvTalkListener calls it on open (0x100) and on the next text (0x104, no name). It returns the text's
+    // feeling (its ML:Feeling tag's kind: 0 Normal or none, 1 Anger, 2 Think), whose window and arrows it shows
+    static int setupEvTalk(unsigned int handle, int msgId, int nameId);
     // 1.0.0's name: fills an event selection (EvSelectListener's): the title (TXT_ev_select_msg_title), the name
     // (TXT_ev_select_name, none for -1) and the two answers from GfMenuCallManager's select strings
     static void setupEvSelect(unsigned int handle, int msgId, int nameId);
