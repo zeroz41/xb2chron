@@ -16,6 +16,8 @@
 #include "classes/gf/GfMenuIDList.h"
 #include "classes/gf/GfMenuItemList.h"
 #include "classes/gf/GfMenuReference.h"
+#include "classes/gf/GfMenuReferenceAdapter.h"
+#include "classes/ui/UIManager.h"
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfMenuAdapterManager.h"
@@ -26,6 +28,16 @@
 #include "classes/ui/UIListInfoBase.h"
 #include "classes/ui/UISelectObjList.h"
 #include "classes/gf/GfMenuBladeList.h"
+#include "classes/gf/GfMenuCharDataAdapter.h"
+#include "classes/gf/GfGameMercenaries.h"
+#include "classes/gf/GfMenuMercenariesAdapter.h"
+#include "classes/gf/GfMenuMissionAdapter.h"
+#include "classes/gf/GfMenuZoneAdapter.h"
+#include "gf/GfDataMercenaries.h"
+#include "classes/gf/GfBdatCond.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfDataDriver.h"
+#include "mm/mtl/FixStr.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UIObjectSyncPlugin.h"
 #include "gf/GfDataItem.h"
@@ -471,6 +483,157 @@ void GfMenuObjCommonText::ErrorListener::reciveEvent(const ui::EventData& event,
     UIObjectListener::reciveEvent(event, handle);
 }
 
+void GfMenuObjCommonText::MerListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        GfMenuAdapterManager::beginCategory(3);
+        GfMenuZoneAdapter::createFromReference(acc.searchChild("IMG_dialog_mer_info_flag"), 2, m_owner->m_merNumber2, false);
+        GfMenuCharDataAdapter::createFromReferenceBlade(acc.searchChild("IMG_dialog_mer_info_bl_face"), 3, 4, false);
+        GfMenuMercenariesAdapter::createFromReferenceBlade(acc.searchChild("TXT_dialog_mer_info_unit_name"), 0, 4, false);
+        GfMenuMissionAdapter::createFromReference(acc.searchChild("TXT_dialog_mer_info_mis_name"), 0, m_owner->m_merNumber1, false);
+        GfMenuMissionAdapter::createFromReference(acc.searchChild("TXT_dialog_mer_info_time"), 5, m_owner->m_merNumber1, true);
+        GfMenuObjUtil::createSyncPlugin(acc.searchChild("TXT_dialog_mer_info_time_inf"), acc.searchChild("TXT_dialog_mer_info_time"), 0x40);
+        GfMenuAdapterManager::endCategory();
+        {
+            GfMenuObjUtil::FitOption option;
+            option.m_addHalfSize = true;
+            option.m_keepScaleX = true;
+            GfMenuObjUtil::createFitPlugin(acc.searchChild("IMG_dialog_mer_win"), acc.searchChild("LAY_dialog_mer_main"), 0, 0, option);
+        }
+        {
+            ui::UISelectObjList::CreateParam param;
+            param.m_allocator = getAllocator(ALLOCATOR(0));
+            m_owner->m_merSelect = ui::UISelectObjList::create(param);
+        }
+        {
+            ui::UICtrlCursorSelect::CursorSetting setting;
+            setting.setType(0);
+            setting.m_dockType = 0;
+            setting.m_outer = false;
+            m_owner->m_merCursor = ui::UICtrlCursorSelect::create(acc.searchChild("LAY_dialog_mer_cursor"), setting, m_owner->m_merSelect);
+        }
+        GfMenuObjUtil::createSyncPlugin(acc.searchChild("LAY_dialog_mer_cursor_base"), acc.searchChild("LAY_dialog_mer_cursor"), 2);
+        acc.setDisp(false);
+        acc.setSuspend(true);
+        m_shown = 0;
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 0) {
+            break;
+        }
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+        } else if (m_shown == 0) {
+            GfGameMercenaries::stopMissionTime(false);
+            acc.setSuspend(true);
+        }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 6: {
+        int index = event.m_param0;
+        if (index != -1) {
+            int prev = event.m_param1;
+            m_owner->m_merSelect->setIndex(index);
+            if (prev != -1 && index != prev) {
+                GfMenuObjUtil::playSECommonCursor();
+            }
+        }
+        break;
+    }
+    case 8: {
+        int input = event.m_param1;
+        if (input == 1) {
+            int selected = event.m_param0;
+            GfMenuObject::addResultCallContext(acc.getParentHandle(), selected != 0, 0);
+            GfMenuObjCommonText::close();
+        } else if (input == 2) {
+            GfMenuObject::addResultCallContext(acc.getParentHandle(), 1, 0);
+            GfMenuObjCommonText::close();
+        }
+        GfMenuObjUtil::playSECommonFromInput(input);
+        break;
+    }
+    case 0x22:
+        GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 2, 0);
+        m_owner->m_merCursor->setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+        m_shown = 0;
+        break;
+    case 0x21: {
+        unsigned int blade = event.m_param0;
+        unsigned short text = event.m_paramShort[2];
+        unsigned short kind = event.m_paramShort[3];
+        short index = event.m_paramShort[4];
+        GfMenuObject::setText(acc.searchChild("TXT_dialog_mer_main_text"), text);
+        GfGameMercenaries::stopMissionTime(true);
+        if (blade == 0) {
+            GfMenuObject::termCallContext(acc.getParentHandle());
+        } else {
+            unsigned int team = GfDataMercenaries::getTeamID(blade);
+            unsigned int leader = GfDataMercenaries::getTeamLeader(team);
+            unsigned int mission = GfDataMercenaries::getTeamMission(team);
+            unsigned int zone = GfDataMercenaries::getMissionZoneID(mission);
+            if (team == 0 || mission == 0 || zone == 0) {
+                GfMenuObject::termCallContext(acc.getParentHandle());
+            } else {
+                m_owner->m_merNumber1->setValue(mission);
+                m_owner->m_merNumber2->setValue(zone);
+                GfMenuReference::setReferenceBladeID(4, leader);
+                bool reward = GfDataMercenaries::isTeamStateReward(team);
+                m_owner->m_merSelect->clear();
+                if (kind == 0) {
+                    acc.setDispChild(true, "LAY_dialog_mer_ok_only");
+                    acc.setDispChild(false, "LAY_dialog_mer_select");
+                    m_owner->m_merSelect->addObject(acc.searchChild("TXT_dialog_mer_ok_only"));
+                    m_owner->m_merSelect->setIndex(0);
+                } else {
+                    acc.setDispChild(false, "LAY_dialog_mer_ok_only");
+                    acc.setDispChild(true, "LAY_dialog_mer_select");
+                    m_owner->m_merSelect->addObject(acc.searchChild("TXT_dialog_mer_ok"));
+                    m_owner->m_merSelect->addObject(acc.searchChild("TXT_dialog_mer_cancel"));
+                    m_owner->m_merSelect->setIndex(index);
+                }
+                if (reward) {
+                    GfMenuObjUtil::setColMulandAdd(acc.searchChild("TXT_dialog_mer_info_unit_name"), "txt_disable");
+                    ui::UIObjectAcc(acc.searchChild("TXT_dialog_mer_info_unit_name")).setAlpha(0.5f);
+                    GfMenuObjUtil::setColMulandAdd(acc.searchChild("TXT_dialog_mer_info_mis_name"), "txt_disable");
+                    ui::UIObjectAcc(acc.searchChild("TXT_dialog_mer_info_mis_name")).setAlpha(0.5f);
+                    GfMenuObjUtil::setColMulandAdd(acc.searchChild("TXT_dialog_mer_info_time"), "txt_disable");
+                    GfMenuObjUtil::setChildAddColor(acc.m_handle, "IMG_dialog_mer_info_base", "black");
+                    ui::UIObjectAcc timeInf(acc.m_handle, "TXT_dialog_mer_info_time_inf");
+                    timeInf.setAlpha(0.0f);
+                } else {
+                    GfMenuObjUtil::setColDefault(acc.searchChild("TXT_dialog_mer_info_unit_name"));
+                    ui::UIObjectAcc(acc.searchChild("TXT_dialog_mer_info_unit_name")).setAlpha(1.0f);
+                    GfMenuObjUtil::setColDefault(acc.searchChild("TXT_dialog_mer_info_mis_name"));
+                    ui::UIObjectAcc(acc.searchChild("TXT_dialog_mer_info_mis_name")).setAlpha(1.0f);
+                    GfMenuObjUtil::setColDefault(acc.searchChild("TXT_dialog_mer_info_time"));
+                    GfMenuObjUtil::setColDefault(acc.searchChild("IMG_dialog_mer_info_base"));
+                    ui::UIObjectAcc timeInf(acc.m_handle, "TXT_dialog_mer_info_time_inf");
+                    timeInf.setAlpha(1.0f);
+                }
+                acc.setDispChild(reward, "TXT_dialog_mer_come_back");
+                m_owner->m_merCursor->setDisp(true);
+                GfMenuObject::resetInputSelection(acc.m_handle);
+                GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_merSelect);
+            }
+        }
+        sendEvent(acc.m_handle, 0x101, 0, 1);
+        m_shown = 1;
+        break;
+    }
+    case 0x101: {
+        mm::Rect<short> rect;
+        acc.getLayoutRect("dialog_top", rect);
+        acc.setPosCenter(mm::Pnt<short>(rect.x + rect.w / 2, rect.y + rect.h / 2));
+        GfMenuObjUtil::setCommonFadeIn(acc.m_handle, 1, 0);
+        break;
+    }
+    }
+}
 void GfMenuObjCommonText::OwnerChangeListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
@@ -535,6 +698,233 @@ void GfMenuObjCommonText::OwnerChangeListener::reciveEvent(const ui::EventData& 
         break;
     }
     }
+}
+
+void GfMenuObjCommonText::NumSelectListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc main(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuAdapterManager::beginCategory(3);
+        GfMenuReferenceAdapter::create(acc.searchChild("TXT_num_select_value"), m_owner->m_numSelectNumber1, true);
+        GfMenuReferenceAdapter::create(acc.searchChild("TXT_num_select_total_price"), m_owner->m_numSelectNumber2, true);
+        GfMenuAdapterManager::endCategory();
+        GfMenuObject::disableInput(acc.m_handle);
+        acc.setDisp(false);
+        acc.setSuspend(true);
+        m_shown = 0;
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+        } else if (event.m_param0 == 2) {
+            if (m_shown == 0) {
+                acc.setSuspend(true);
+            }
+        }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 6: {
+        int value = event.m_param0;
+        int prev = event.m_param1;
+        m_owner->m_numSelectNumber1->setValue(value);
+        m_owner->m_numSelectNumber2->setValue(m_owner->m_numSelectStep * value);
+        if (prev != -1 && value != prev) {
+            GfMenuObjUtil::playSE(0x19);
+        }
+        break;
+    }
+    case 8:
+        if (event.m_param1 == 1) {
+            if (m_owner->m_numSelectNumber1->m_value == 0) {
+                break;
+            }
+            GfMenuObject::addResultCallContext(main.searchChild("LAY_main"), 0, m_owner->m_numSelectNumber1->m_value);
+            sendEvent(main.searchChild("LAY_main"), 0x22, 0, 0);
+        } else if (event.m_param1 == 2) {
+            GfMenuObject::addResultCallContext(main.searchChild("LAY_main"), 1, 0);
+            sendEvent(main.searchChild("LAY_main"), 0x22, 0, 0);
+        }
+        GfMenuObjUtil::playSECommonFromInput(event.m_param1);
+        break;
+    case 0x21: {
+        unsigned short kind = event.m_paramShort[0];
+        ui::UIObjectAcc first(acc.searchChild("TXT_num_select_index@01"));
+        first.setDisp(kind == 0);
+        ui::UIObjectAcc second(acc.searchChild("TXT_num_select_index@02"));
+        second.setDisp(kind != 0);
+        m_owner->m_numSelectNumber1->setValue(0);
+        m_owner->m_numSelectNumber1->setMin(event.m_paramShort[1]);
+        m_owner->m_numSelectNumber1->setMax(event.m_paramShort[2]);
+        m_owner->m_numSelectNumber2->setValue(0);
+        m_owner->m_numSelectNumber2->setMin(0);
+        m_owner->m_numSelectNumber2->setMax(999999999);
+        m_owner->m_numSelectStep = event.m_param2;
+        GfMenuObject::resetInputSelection(handle);
+        GfMenuObject::setupInputSelection(handle, 0, event.m_paramShort[2] + 1);
+        GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::setCommonFadeIn(handle, 1, 0));
+        m_shown = 1;
+        break;
+    }
+    case 0x22:
+        GfMenuObject::disableInput(acc.m_handle);
+        GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::setCommonFadeOut(handle, 2, 0));
+        m_shown = 0;
+        break;
+    }
+}
+
+void GfMenuObjCommonText::KizunaListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc main(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        GfMenuAdapterManager::beginCategory(3);
+        {
+            mm::mtl::FixStr<32> name;
+            unsigned int count = acc.countChild("LAY_dialog_kizuna_bl@%02d", 1);
+            {
+                ui::UIListInfoBase::SetupParam param;
+                param.m_pageRowSize = count;
+                m_owner->m_bladeList->setup(getAllocator(ALLOCATOR(0)), param);
+            }
+            for (unsigned int i = 0; i < count; i++) {
+                name.format("IMG_dialog_kizuna_bl_face@%02d", i + 1);
+                GfMenuCharDataAdapter::createFromBladeList(acc.searchChild(name.m_str), 3, m_owner->m_bladeList, i, false);
+            }
+            count = acc.countChild("LAY_dialog_kizuna_dr@%02d", 1);
+            {
+                ui::UIListInfoBase::SetupParam param;
+                param.m_pageRowSize = count;
+                m_owner->m_driverList->setup(getAllocator(ALLOCATOR(0)), param);
+            }
+            for (unsigned int i = 0; i < count; i++) {
+                name.format("IMG_dialog_kizuna_dr_face@%02d", i + 1);
+                GfMenuCharDataAdapter::createFromDriverList(acc.searchChild(name.m_str), 3, m_owner->m_driverList, i, false);
+            }
+        }
+        GfMenuAdapterManager::endCategory();
+        {
+            ui::UISelectObjList::CreateParam param;
+            param.m_allocator = getAllocator(ALLOCATOR(0));
+            m_owner->m_kizunaSelect = ui::UISelectObjList::create(param);
+        }
+        GfMenuObjUtil::FitOption option;
+        option.m_addHalfSize = true;
+        option.m_keepScaleX = true;
+        GfMenuObjUtil::createFitPlugin(acc.searchChild("IMG_kizuna_kizuna_win"), acc.searchChild("LAY_dialog_kizuna_main"), 0, 0,
+                                       option);
+        acc.setSuspend(true);
+        m_shown = 0;
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 0) {
+            return;
+        }
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+        } else if (m_shown == 0) {
+            acc.setSuspend(true);
+        }
+        break;
+    case 8: {
+        int input = event.m_param1;
+        GfMenuObject::addResultCallContext(main.searchChild("LAY_main"), 0, 0);
+        GfMenuObject::disableInput(handle);
+        GfMenuObjCommonText::close();
+        GfMenuObjUtil::playSECommonFromInput(input);
+        break;
+    }
+    case 0x21: {
+        unsigned int condition = event.m_param0;
+        unsigned short title = event.m_param1;
+        mm::mtl::FixStr<32> name;
+        GfMenuObject::setText(acc.searchChild("TXT_dialog_kizuna_title"), title);
+        m_owner->m_driverList->clear();
+        m_owner->m_bladeList->clear();
+        m_owner->m_kizunaSelect->clear();
+        GfBdatCond* cond = mm::mtl::PtrSingleton<GfBdatCond>::get();
+        for (unsigned int i = 0; i < 8; i++) {
+            if (cond->getConditionListConditionType(condition, i) != 6) {
+                continue;
+            }
+            unsigned int party = cond->getConditionListCondition(condition, i);
+            if (party == 0) {
+                continue;
+            }
+            if (cond->getConditionPTCategory(party) == 0) {
+                for (unsigned int slot = 0; slot < 3; slot++) {
+                    unsigned int pc = cond->getConditionPTPCID(party, slot);
+                    if (pc == 0) {
+                        continue;
+                    }
+                    if (GfDataDriver::isDriver(pc)) {
+                        MenuDriverInfo info;
+                        info.m_driver = pc;
+                        m_owner->m_driverList->addContents(info);
+                        name.format("LAY_dialog_kizuna_dr@%02d", m_owner->m_driverList->getSize());
+                    } else if (GfDataBlade::isBladeID(pc)) {
+                        MenuBladeInfo info;
+                        info.m_blade = pc;
+                        m_owner->m_bladeList->addContents(info);
+                        name.format("LAY_dialog_kizuna_bl@%02d", m_owner->m_bladeList->getSize());
+                    } else {
+                        continue;
+                    }
+                    m_owner->m_kizunaSelect->addObject(acc.searchChild(name.m_str));
+                    acc.setDispChild(true, name.m_str);
+                }
+            } else if (cond->getConditionPTCategory(party) == 6) {
+                unsigned int blade = cond->getConditionPTPCID(party, 0);
+                if (blade != 0) {
+                    MenuDriverInfo info;
+                    info.m_driver = GfDataBlade::getCreator(blade);
+                    if (info.m_driver != 0) {
+                        m_owner->m_driverList->addContents(info);
+                        name.format("LAY_dialog_kizuna_dr@%02d", m_owner->m_driverList->getSize());
+                        m_owner->m_kizunaSelect->addObject(acc.searchChild(name.m_str));
+                        acc.setDispChild(true, name.m_str);
+                    }
+                }
+            }
+        }
+        for (unsigned int n = m_owner->m_driverList->getSize(); n < m_owner->m_driverList->getPageRowSize();) {
+            n++;
+            name.format("LAY_dialog_kizuna_dr@%02d", n);
+            acc.setDispChild(false, name.m_str);
+        }
+        for (unsigned int n = m_owner->m_bladeList->getSize(); n < m_owner->m_bladeList->getPageRowSize();) {
+            n++;
+            name.format("LAY_dialog_kizuna_bl@%02d", n);
+            acc.setDispChild(false, name.m_str);
+        }
+        {
+            mm::Rect<short> rect;
+            mm::Rect<short> next;
+            acc.getLayoutRect("kizuna_blade", rect);
+            acc.getLayoutRect("kizuna_blade_next", next);
+            GfMenuObjUtil::placeObjectH(m_owner->m_kizunaSelect, mm::Pnt<short>(rect.x + rect.w / 2, rect.y + rect.h / 2),
+                                        next.x - rect.x);
+        }
+        {
+            mm::Pnt<short> pos;
+            ui::UIObjectAcc ok(acc.m_handle, "LAY_dialog_kizuna_ok_only");
+            ok.getPosCenter(pos);
+            ui::UIObjectAcc cursor(acc.m_handle, "LAY_dialog_kizuna_cursor");
+            cursor.setPosCenter(pos);
+        }
+        GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::setCommonFadeIn(handle, 1, 0));
+        m_shown = 1;
+        break;
+    }
+    case 0x22:
+        GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::setCommonFadeOut(handle, 2, 0));
+        m_shown = 0;
+        break;
+    }
+    UIObjectListener::reciveEvent(event, handle);
 }
 
 void GfMenuObjCommonText::GetItemListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
@@ -708,6 +1098,194 @@ void GfMenuObjCommonText::MainListener::reciveEvent(const ui::EventData& event, 
             GfMenuObjNamedDialog::close();
             GfMenuObjCommonText::s_OpenNamedDialog = false;
         }
+    }
+    UIObjectListener::reciveEvent(event, handle);
+}
+
+// the cursor targets of the dialog's three kinds (DialogListener's m_state). Proposed names, not the original's:
+// the symbols leave them unnamed (lbl_7100B61650, lbl_7100B61658, lbl_7100B61668)
+static const char* s_dialogOkOnlyTargets[] = {"LAY_dialog_ok_only_text"};
+static const char* s_dialogSelectTargets[] = {"LAY_dialog_ok_text", "LAY_dialog_cancel_text"};
+static const char* s_dialogSelectLongTargets[] = {"LAY_dialog_ok_text_long@01", "LAY_dialog_ok_text_long@02",
+                                                  "LAY_dialog_cancel_text_long"};
+
+void GfMenuObjCommonText::DialogListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc main(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        m_state = 0;
+        GfMenuObjCommonText::setupDialog(handle);
+        GfMenuObjUtil::CursorParam param;
+        param.m_parent = acc.getParentHandle();
+        param.m_cursor = acc.searchChild("LAY_dialog_cursor");
+        param.m_type = 0;
+        param.m_setting.m_dockType = 0;
+        param.m_setting.m_outer = false;
+        param.m_names = s_dialogSelectTargets;
+        param.m_nameCount = 2;
+        m_owner->m_dialogCursor = GfMenuObjUtil::createCursor(param);
+        acc.setDisp(false);
+        GfMenuObject::disableInput(handle);
+        acc.setSuspend(true);
+        m_shown = 0;
+        return;
+    }
+    case 3:
+        if (event.m_param0 == 0) {
+            return;
+        }
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(handle);
+        } else if (event.m_param0 == 2) {
+            if (m_shown == 0) {
+                acc.setSuspend(true);
+            }
+        }
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        m_owner->m_dialogCursor->inputChange(index);
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        return;
+    }
+    case 8:
+        if (event.m_param1 == 1) {
+            unsigned int index = event.m_param0;
+            if (m_state == 2) {
+                bool cancel = !(index == 0 || index == 1);
+                GfMenuObject::addResultCallContext(main.searchChild("LAY_main"), cancel, 0);
+                if (!cancel) {
+                    bool second = index != 0;
+                    GfMenuObject::addResultCallContext(main.searchChild("LAY_main"), second, 1);
+                }
+            } else {
+                bool yes = index != 0;
+                GfMenuObject::addResultCallContext(main.searchChild("LAY_main"), yes, 0);
+            }
+            GfMenuObjCommonText::close();
+        } else if (event.m_param1 == 2) {
+            if (m_state == 1 || m_state == 2) {
+                GfMenuObject::addResultCallContext(main.searchChild("LAY_main"), 1, 0);
+                m_owner->m_dialogCursor->open(1);
+                GfMenuObjCommonText::close();
+            }
+        }
+        GfMenuObjUtil::playSECommonFromInput(event.m_param1);
+        return;
+    case 0x101: {
+        int bottom = event.m_param0;
+        GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::setCommonFadeIn(handle, 1, 0));
+        acc.setDisp(true);
+        mm::Rect<short> rect;
+        acc.getLayoutRect(bottom == 0 ? "dialog_top" : "dialog_bottom", rect);
+        acc.setPosCenter(mm::Pnt<short>(rect.x + rect.w / 2, rect.y + rect.h / 2));
+        ui::UIObjectAcc titleAcc(acc.m_handle, "TXT_dialog_title");
+        mm::Pnt<short> pos;
+        titleAcc.getPosCenter(pos);
+        pos.x = rect.w / 2;
+        titleAcc.setPosCenter(pos);
+        break;
+    }
+    case 0x21: {
+        unsigned short title = event.m_paramShort[0];
+        unsigned short text = event.m_paramShort[1];
+        unsigned short ok = event.m_paramShort[2];
+        unsigned short cancel = event.m_paramShort[3];
+        unsigned short kind = event.m_paramShort[4];
+        unsigned short selected = event.m_paramShort[5];
+        unsigned short bottom = event.m_paramShort[6];
+        m_state = kind;
+        GfMenuObjUtil::setChildDisp(handle, "LAY_dialog_ok_only", kind == 0);
+        GfMenuObjUtil::setChildDisp(handle, "LAY_dialog_select", kind == 1);
+        GfMenuObjUtil::setChildDisp(handle, "LAY_dialog_select_long", kind == 2);
+        GfMenuObjUtil::setChildDisp(handle, "IMG_dialog_cursor_r", kind != 2);
+        GfMenuObjUtil::setChildDisp(handle, "IMG_dialog_cursor_r_long", kind == 2);
+        {
+            ui::UIObjectAcc cursor(handle, "LAY_dialog_cursor");
+            cursor.updateLayoutSize();
+        }
+        int count = 0;
+        switch (kind) {
+        case 0:
+            GfMenuObjUtil::changeCursorTarget(m_owner->m_dialogCursor, main.m_handle, s_dialogOkOnlyTargets, 1);
+            count = 1;
+            break;
+        case 1:
+            GfMenuObjUtil::changeCursorTarget(m_owner->m_dialogCursor, main.m_handle, s_dialogSelectTargets, 2);
+            count = 2;
+            break;
+        case 2:
+            GfMenuObjUtil::changeCursorTarget(m_owner->m_dialogCursor, main.m_handle, s_dialogSelectLongTargets, 3);
+            count = 3;
+            break;
+        }
+        unsigned int index = kind == 0 ? 2 : selected;
+        m_owner->m_dialogCursor->open(index);
+        if (m_state == 2) {
+            GfMenuObjUtil::setChildDisp(handle, "LAY_dialog_title", false);
+            if (title != 0xFFFF) {
+                GfMenuObjUtil::setChildText(handle, "TXT_dialog_ok_long@02", title);
+            }
+        } else {
+            GfMenuObjUtil::setChildDisp(handle, "LAY_dialog_title", title != 0xFFFF);
+            if (title != 0xFFFF) {
+                GfMenuObjUtil::setChildText(handle, "TXT_dialog_title", title);
+            }
+        }
+        if (text != 0xFFFF) {
+            GfMenuObjUtil::setChildText(handle, "TXT_dialog_text", text);
+        }
+        switch (kind) {
+        case 0:
+            if (ok != 0xFFFF) {
+                GfMenuObjUtil::setChildText(handle, "TXT_dialog_ok_only", ok);
+            }
+            break;
+        case 1:
+            if (ok != 0xFFFF) {
+                GfMenuObjUtil::setChildText(handle, "TXT_dialog_ok", ok);
+            }
+            if (cancel != 0xFFFF) {
+                GfMenuObjUtil::setChildText(handle, "TXT_dialog_select_cancel", cancel);
+            }
+            break;
+        case 2:
+            if (ok != 0xFFFF) {
+                GfMenuObjUtil::setChildText(handle, "TXT_dialog_ok_long@01", ok);
+            }
+            if (cancel != 0xFFFF) {
+                GfMenuObjUtil::setChildText(handle, "TXT_dialog_select_cancel_long", cancel);
+            }
+            break;
+        }
+        GfMenuObjUtil::setChildDisp(handle, "LAY_dialog", true);
+        GfMenuObjUtil::setChildDisp(handle, "IMG_dialog_win@01", true);
+        GfMenuObjUtil::setChildDisp(handle, "IMG_dialog_win@02", false);
+        GfMenuObject::resetInputSelection(handle);
+        GfMenuObject::setupInputSelection(handle, index, count);
+        GfMenuObject::disableInput(handle);
+        mm::Rect<short> rect;
+        acc.getLayoutRect(bottom == 0 ? "dialog_top" : "dialog_bottom", rect);
+        acc.setPosCenter(mm::Pnt<short>(rect.x + rect.w / 2, rect.y + rect.h / 2));
+        acc.setDisp(false);
+        ui::UIObjectAcc titleAcc(acc.m_handle, "TXT_dialog_title");
+        mm::Pnt<short> pos;
+        titleAcc.getPosCenter(pos);
+        pos.x = rect.w / 2;
+        titleAcc.setPosCenter(pos);
+        sendEvent(handle, 0x101, bottom, 1);
+        m_shown = 1;
+        break;
+    }
+    case 0x22:
+        GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::setCommonFadeOut(handle, 2, 0));
+        GfMenuObject::disableInput(handle);
+        m_shown = 0;
+        break;
     }
     UIObjectListener::reciveEvent(event, handle);
 }
