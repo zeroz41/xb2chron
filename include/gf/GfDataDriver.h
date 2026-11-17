@@ -220,8 +220,9 @@ public:
     static bool isEnableEquipBlade(unsigned int driver, unsigned int blade);
     static SDataIdea* getSDataIdea(unsigned int driver);
     static unsigned int getExpUsed(unsigned int driver);  // (appended by chardata)
-    // takes the blade off the driver it is set to (GfGameUtil::execActivateReserverForBlade)
-    static void unsetBlade(unsigned int blade);
+    // takes the blade off the driver it is set to (GfGameUtil::execActivateReserverForBlade); whether it did
+    // (GfDataBlade::setActivateReserver tests the result)
+    static bool unsetBlade(unsigned int blade);
     // 2.0.0's symbols name it. What it does here: GfGameMercenaries::fn_71003014CC passes (4, hana form, -1)
     static void setBlade(unsigned int driver, unsigned int blade, int);
     // 2.0.0's symbols name it. What it does: a blade id for drivers 1, 7, 9 and 12 (0x3F4, 0x3F5, 0x431, 0x456), else

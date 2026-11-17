@@ -102,6 +102,10 @@ public:
     // 3.0.1's calls this function with the same arguments; 2.0.0's symbols name it) activates the
     // blade for the driver; 3.0.1's code returns a bool
     static bool setActivateDriver(unsigned int blade, int slot, unsigned int driver, unsigned int type);
+    // no symbol in any build: setActivateDriver and setActivateReserver end with it (a blade's data is set to type 1,
+    // the blade is placed in the game's blade list). A member because it lives in GfDataBlade's unit among its
+    // functions and only GfDataBlade's activate functions call it.
+    static bool fn_710023AEA4(unsigned int blade);
     // 2.0.0's symbols name it. A member because it lives in GfDataBlade's unit among its functions (before
     // GfDataParty::isExistBlade) and takes a blade. What it does: false unless blades 1001 and 1002 are both or neither
     // in the party (GfDataParty::isExistBlade); then for 1001 whether isHikariCurrent, for 1002 whether not, false for

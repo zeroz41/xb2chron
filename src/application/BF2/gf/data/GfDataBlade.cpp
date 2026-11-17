@@ -2026,6 +2026,50 @@ void GfDataBlade::resetAttachedParty(unsigned int blade) {
     GfEvent::callBladeActivate(blade, ActivateType(0), ActivateType(0));
 }
 
+bool GfDataBlade::setActivateReserver(unsigned int blade) {
+    if (isIra(blade)) {
+        return [&]() -> bool {
+            if (isActivateReserver(blade)) {
+                return false;
+            }
+            unsigned int index = getBladeIndex(blade);
+            SDataGame* game = GfDataManager::getDataGame();
+            SDataBlade& data = game->m_blades[index];
+            ActivateType from = getBladeActivateType(data);
+            if (data.m_dataType != 1) {
+                data.m_dataType = 1;
+            }
+            data.m_attachedParty = 1;
+            data.m_unselect = 0;
+            ActivateType to = getBladeActivateType(data);
+            if (from == 0) {
+                GfEvent::callBladeEnable(blade);
+                GfEvent::callBladeActivate(blade, ActivateType(0), to);
+            }
+            return from != to;
+        }();
+    }
+    if (isActivateReserver(blade) && !GfDataParty::isExistBlade(blade)) {
+        return false;
+    }
+    unsigned int driver = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_setDriver;
+    int slot = getDriverSetID(blade);
+    if (GfDataDriver::unsetBlade(blade)) {
+        if (GfDataDriver::getDummyBlade(driver) != 0) {
+            DataParamAcc acc(3, driver, GimmickType(0));
+            if (acc.getBladeSet(false) < 0) {
+                GfDataDriver::setBlade(driver, GfDataDriver::getDummyBlade(driver), -1);
+            }
+        }
+        if (blade == 1001 && getDriverSetID(1002) == 3) {
+            SDataDriver& data = GfDataDriver::getSDataDriver(driver);
+            data.m_blades[slot] = 1002;
+            data.m_altBlades[0] = 0;
+        }
+    }
+    return fn_710023AEA4(blade);
+}
+
 bool GfDataBlade::isActivateReserver(unsigned int blade) {
     if (GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_dataType != 1) {
         return false;
