@@ -12,6 +12,7 @@ namespace gf { class GfGameObj; }
 namespace gf { class GfGameObjEnemy; }
 namespace gf { class GfObj; }
 namespace gf { class GfObjAcc; }
+namespace gf { class MsgObjectNotifyDead; }
 namespace gf { class GfSetupParam; }
 #include "classes/gf/IGfObjListener.h"
 
@@ -57,6 +58,8 @@ public:
     void calcCameraFade(const ObjList& list, const mm::Vec3& camPos);
     // SCOM_DESTROY_GAME_OBJ passes its request's object, time and attribute
     static void destroyGameObjWithAttribute(gf::GF_OBJ_HANDLE* handle, float fadeTime, unsigned int);
+    // SCOM_CHAR_DEAD::create passes the dead object and its message (0x71002B4814, not yet written)
+    static void addCharDeadMessage(GF_OBJ_HANDLE* handle, const MsgObjectNotifyDead& msg);
     int getObjNumberByEnArrangeId(unsigned int arrangeId);  // the live objects of an enemy arrange id
     static void postUpdate(const fw::UpdateInfo& info);
     void updateObjectProperty();

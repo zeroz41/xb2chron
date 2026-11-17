@@ -2,6 +2,7 @@
 #define CLASSES_GF_SCOM_PARTY_ADD_H
 
 #include "classes/gf/SCOM.h"
+#include "gf/GfReqParam.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/Vec3.h"
 #include "mm/mtl/FixedQueue.h"
@@ -10,19 +11,6 @@ namespace fw { class UpdateInfo; }
 namespace gf { class GF_SCOM_HANDLE; }
 
 namespace gf {
-// what GfGameParty::getPartyPosition fills: one record per party slot (0x20 bytes each; the member names are
-// not the original's: the constructor sets the position to mm::Vec3::zero and the rest to zero)
-struct GfPartyPosInfo {
-    struct Pos {
-        Pos() : m_pos(mm::Vec3::zero), m_rotY(0), m_isValid(false) {}
-        mm::Vec3 m_pos;
-        // the y rotation setupPartyPositionByPartyPosition gives the slot's object setup (GfObjSetup::pad_30.y)
-        float m_rotY;
-        bool m_isValid;
-    };
-    Pos m_pos[9];
-};
-
 // table 0x7100B6AA10 (unnamed in the symbols; the PtrSingleton<SCOM_PARTY_ADD> part at +0x20): one request runs
 // the queued party changes (s_info); the add/remove functions queue a change, then create() starts the request
 // unless one is running

@@ -12,6 +12,8 @@ class SCOM_CHAR_DEAD : public ::gf::SCOM {
 public:
     // queues the death of an object (GfPlayComPlayerDead's start and replaceDeadType: the controlled mover); like the
     // other SCOMs' create it returns the command's handle
+    // create's request: the message starts as one of dead type 1 (its stores), then create copies the given one over it
+    explicit SCOM_CHAR_DEAD(SCOM_TYPE type) : SCOM(type), m_msg(1) {}
     static unsigned long create(GF_OBJ_HANDLE* handle, const MsgObjectNotifyDead& msg);
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
 

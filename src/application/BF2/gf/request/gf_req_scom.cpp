@@ -150,6 +150,9 @@
 #include "classes/gf/IGfEvent.h"
 #include "classes/gf/GfEvent.h"
 #include "classes/gf/SCOM_RELOAD_TEXT.h"
+#include "gf/MsgUnk_100003A.h"
+#include "gf/MsgObjectDamage.h"
+#include "classes/gf/GfPlayComWaitEvent.h"
 namespace gf {
 bool SCOM_ADD_MONEY::exec(fw::UpdateInfo const&) {
     GfGameUtil::addMoney(m_money);
@@ -313,6 +316,13 @@ bool SCOM_DESTROY_PARTY_OBJ::exec(fw::UpdateInfo const&) {
     }
     GfEvent::callPartyChange();
     return true;
+}
+
+unsigned long SCOM_DESTROY_PARTY_OBJ::create(const RQ_SETUP_PARTY& party) {
+#line 1022
+    SCOM_DESTROY_PARTY_OBJ* request =
+        new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_DESTROY_PARTY_OBJ(SCOM_TYPE(23), party);
+    return GfReqSmallCom::addRequest(request);
 }
 
 bool SCOM_LOADING::exec(fw::UpdateInfo const&) {
@@ -3067,6 +3077,41 @@ bool SCOM_CHAR_DEAD::exec(fw::UpdateInfo const&) {
         }
     }
     return true;
+}
+
+unsigned long SCOM_CHAR_DEAD::create(GF_OBJ_HANDLE* handle, const MsgObjectNotifyDead& msg) {
+    GfObjAcc acc(handle);
+    if (acc.getType() == 5) {
+        if (msg.m_deadType == 4) {
+            DataParamAcc param(handle);
+            if (param.getHp() == 0) {
+                return -1;
+            }
+            SCOM_DESTROY_GAME_OBJ::create(handle, 0.5f, 0);
+        }
+        SCOM_ACHIEV_INC::createKillEnemy(msg.m_killer);
+        QuestID quest = GfQuestUtil::getCurrentEnemyWithEvent(acc.getEnArrangeId());
+        if (!quest.empty()) {
+            if (GfPlayComWaitEvent::s_activate == 0) {
+                GfPlayFactory::createEventWait(3.0f, handle);
+            }
+            if (GfGameScene::sys() != nullptr) {
+                GfGameScene::sys()->setEraseQuestEnemyForEventStart(quest);
+            }
+        }
+    }
+    if (GfGameScene::sys() != nullptr && msg.m_cause != nullptr) {
+        MsgObjectNotifyDamage damage(static_cast<const MsgObjectDamage*>(msg.m_cause));
+        damage.m_handle = msg.m_killer;
+        GfGameScene::sys()->addDamage(handle, damage);
+    }
+    GfGameObj::addCharDeadMessage(handle, msg);
+#line 2441
+    SCOM_CHAR_DEAD* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_CHAR_DEAD(SCOM_TYPE(50));
+    request->m_handle = handle;
+    request->m_msg = msg;
+    request->m_msg.m_cause = nullptr;
+    return GfReqSmallCom::addRequest(request);
 }
 
 void SCOM_ACHIEV_INC::createKillEnemy(GF_OBJ_HANDLE* handle) {

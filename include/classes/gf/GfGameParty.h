@@ -213,8 +213,9 @@ public:
     unsigned char pad_101[0x3];
     GfSelectBlade m_selectBlade;
     unsigned char pad_124[0xC];
-    GfSelectIra m_selectIra;  // the name is not the original's
-    unsigned char pad_374[0xC];
+    // the name is not the original's. 16-aligned (RQ_SETUP_PARTY's GfPartyPosInfo holds Vec3s), so 0x250 bytes: its
+    // tail padding covers 0x374..0x380
+    GfSelectIra m_selectIra;
     // frames since the party's objects got ready, counted to 100 (update announces callPartyMemberOK(true) at 2),
     // and the request to start over (update then announces callPartyMemberOK(false)); the names are not the
     // original's

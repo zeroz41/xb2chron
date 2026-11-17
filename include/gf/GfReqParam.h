@@ -29,6 +29,19 @@ public:
     unsigned int m_leader;
 };
 
+// what GfGameParty::getPartyPosition fills: one record per party slot (0x20 bytes each; the member names are
+// not the original's: the constructor sets the position to mm::Vec3::zero and the rest to zero)
+struct GfPartyPosInfo {
+    struct Pos {
+        Pos() : m_pos(mm::Vec3::zero), m_rotY(0), m_isValid(false) {}
+        mm::Vec3 m_pos;
+        // the y rotation setupPartyPositionByPartyPosition gives the slot's object setup (GfObjSetup::pad_30.y)
+        float m_rotY;
+        bool m_isValid;
+    };
+    Pos m_pos[9];
+};
+
 // the party to set up: ten drivers, each with the blades it engages. The names are not the original's.
 class RQ_SETUP_PARTY {
 public:
@@ -56,9 +69,12 @@ public:
     // in place of m_drivers: each member's driver in the parties 0-2 (by PTPOS); the name is not the original's
     unsigned short m_iraDrivers[10][3];
     Extra m_extras[2];
-    // 0x240 bytes in all: GfSelectIra's copy (GfGameParty's at 0x130) ends where its m_currentPartyValid (0x240)
-    // starts
-    unsigned char pad_114[0x12C];
+    // copied with the members above (SCOM_DESTROY_PARTY_OBJ::create's copy: one memcpy of 0x115 bytes)
+    unsigned char pad_114;
+    // the party's positions (0x120: the constructor sets them up as GfPartyPosInfo's; the copy copies each one's
+    // Vec3, float and bool). 0x240 bytes in all: GfSelectIra's copy (GfGameParty's at 0x130) ends where its
+    // m_currentPartyValid (0x240) starts. The name is not the original's
+    GfPartyPosInfo m_posInfo;
 };
 
 // where a map jump goes. The names are not the original's.
