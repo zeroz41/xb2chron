@@ -81,6 +81,14 @@ public:
     // (SirenBattleManager m_params[].m_arrangeID), and has a squad member's others ask for battle
     // (reqChangeBattleToOtherMember).
     void setStateId(gf::enemy::STATE_ID state);
+    // takes its object out of targeting (GfObj flag bit 2, m_field.pad_52a8) and makes it invincible while its data
+    // says it is no target, in states 6, 7 and 13, or while its squad gimmick's invincible condition holds (a battle
+    // lock's member that is not pad_550c is a target and invincible)
+    void updateInvincible();
+    // whether the enemy may go into battle now: a valid object, battles allowed (GfGameManager, btl::Utility), not a
+    // siren battle setup's pad_b1 enemy; after reqChangeBattleAfterIdle (pad_54e2) only in the S_idle / S_move
+    // animation state; else on reqChangeBattle, on its sensor's find, or while btl::Utility::AI_IsAngry holds
+    bool canChangeBattleWithoutDelay() const;
     // has every other member of its squad gimmick (T: GmkEnemy, GmkRoutedEnemy) that is not in battle, nor in state
     // 0 or 13 (home), ask for battle (reqChangeBattle)
     template <typename T>
@@ -123,6 +131,9 @@ public:
     // turns the enemy toward its move direction (GfBehaviorEnemyField::getMoveDir) in the xz plane
     void execTurnCmdToGoal();
     void extractLoco();
+    // gives each weapon object (right, left) that pad_5500 still marks the alpha pad_5501 asks for
+    // (GfObjAcc::setAlphaNormal, 1 or 0); a weapon object given 1 is unmarked; pad_5501 is cleared
+    void updateWeapon();
     // (re)makes its state machine: the enemy's 16 states (battle, field idle/spawn/walk/home/squad/blade)
     void createFsm();
     // disposes the field movement, the state machine and the menu object, cleans the plugins up and lets the
@@ -164,8 +175,9 @@ public:
     void* pad_54e8;  // its Listener clears it on a standby logout
     // the constructor's listener (the name is not the original's)
     Listener m_listener;
-    bool pad_5500;  // updateWeapon
-    bool pad_5501;  // updateWeapon
+    // bit 0: the right, bit 1: the left weapon object whose alpha updateWeapon still has to set
+    unsigned char pad_5500;
+    unsigned char pad_5501;  // bit 0 / 1: the alpha updateWeapon gives that weapon object is 1 (else 0)
     unsigned char pad_5502[0x6];
     int pad_5508;  // setStateId clears it on entering battle
     bool pad_550c;  // zeroed by the constructor

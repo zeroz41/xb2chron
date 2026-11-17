@@ -29,13 +29,13 @@ public:
         float pad_18;  // GfComBehaviorNpc::execTurnCmd stores its float fourth argument in it
     };
 
-    TFieldExecCmdTurn() : pad_58(0.0f), pad_5c(1.0f), pad_60(false), pad_64(0), pad_68(0), pad_6c(false) {}
+    TFieldExecCmdTurn() : pad_58(0.0f), pad_5c(1.0f), pad_60(false), pad_64(0.0f), pad_68(0), pad_6c(false) {}
     ~TFieldExecCmdTurn() { clear(); }
     // forgets the turn (inline: the destructor inlines it)
     void clear() {
         pad_6c = false;
         pad_60 = false;
-        pad_64 = 0;
+        pad_64 = 0.0f;
         m_cmd.m_executed = false;
         m_cmd.clear();
         m_info = CreateInfo();
@@ -49,7 +49,7 @@ public:
     float pad_58;
     float pad_5c;
     bool pad_60;
-    int pad_64;
+    float pad_64;  // applyDeltaRotY divides pad_58 by it
     int pad_68;
     bool pad_6c;
 };
