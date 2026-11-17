@@ -5,6 +5,7 @@ enum EVT_attachtype : int;
 #include "mm/Mat44.h"
 #include "classes/event/IAttachActor.h"
 namespace mm { class Vec3; }
+namespace gf { class GF_OBJ_HANDLE; }
 
 namespace event {
 // table 0x7100B3C220
@@ -36,9 +37,15 @@ public:
         return hasMtp(name) || hasEfp(name) || hasBone(name);
     }  // slot 17
 
+    // debug display: an axis and the name of each of the actor's bones that is on screen
+    void render();
+
     // the actor's name (getName returns it); the name is not the original's
     char m_name[0x50 - 0x8];  // 0x8
-    unsigned char pad_50[0x60 - 0x50];
+    // the object render draws the bones of (AttachActorCS::setActor stores its handle here too); the name is not
+    // the original's
+    gf::GF_OBJ_HANDLE* m_actor;  // 0x50
+    unsigned char pad_58[0x60 - 0x58];
     // the actor's matrix getMat copies; the name is not the original's
     mm::Mat44 m_mat;  // 0x60
 };

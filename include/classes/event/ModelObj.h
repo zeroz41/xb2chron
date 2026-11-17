@@ -14,7 +14,9 @@ namespace event {
 enum MODEL_TYPE {};
 
 // table 0x7100B3C1B0
-class ModelObj {
+// an IResEvent: the constructor passes this to ResManager::load (an IResEvent* parameter), and slot 0 is
+// OnResEvent(IResEvent::PARAM const&), as in MdlstmObj's table
+class ModelObj : public IResEvent {
 public:
     virtual void OnResEvent(event::IResEvent::PARAM const&);  // slot 0
     virtual ~ModelObj();  // slot 1
@@ -23,11 +25,17 @@ public:
     // (setRefResource indices 0 and 1; the names are not the original's)
     struct DESC {
         struct FILE {
+            // the constructors store null and 0 in data and size one by one (no memset of the struct)
+            FILE() : data(nullptr), size(0) {}
             mm::mtl::FixStr<64> name;
             void* data;
             unsigned long size;
         };
-        FILE files[2];
+        // two members, not an array: the constructors build the second FILE straight after the first (an array's
+        // construction loop orders the second one's stores differently). The mdo file is setRefResource index 0,
+        // the arc file (optional) index 1, as OnResEvent fills them; the names are not the original's
+        FILE mdo;  // 0x0
+        FILE arc;  // 0x58
     };
 
     // setupModel's choices (the names are not the original's)
@@ -43,6 +51,13 @@ public:
         bool bladeFlag;
     };
 
+    // 1.0.0's ModelObj::ModelObj() (0x710009B13C, kind 3 with bit 1 of pad_8); 3.0.1 inlines it into
+    // ModelManager::createModel(int)
+    ModelObj()
+        : m_kind(3), m_type(), m_id(0), pad_5c(0), m_stmReader(nullptr),
+          m_handle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_model(nullptr), m_busyWait(-1), m_reserve(0) {
+        pad_8 = 2;
+    }
     ModelObj(const char* name, bool flag, unsigned int arg);
     ModelObj(const char* name, const DESC& desc, bool flag, unsigned int arg);
     // 1.0.0's ModelObj::setReserve, isReserve and isSame overloads (0x710009C838-0x710009CA70); 3.0.1 inlines them
@@ -78,16 +93,16 @@ public:
         if (strcmp(m_name.m_str, name) != 0) {
             return false;
         }
-        if (strcmp(m_desc.files[0].name.m_str, desc.files[0].name.m_str) != 0) {
+        if (strcmp(m_desc.mdo.name.m_str, desc.mdo.name.m_str) != 0) {
             return false;
         }
-        if (m_desc.files[0].data != desc.files[0].data || m_desc.files[0].size != desc.files[0].size) {
+        if (m_desc.mdo.data != desc.mdo.data || m_desc.mdo.size != desc.mdo.size) {
             return false;
         }
-        if (strcmp(m_desc.files[1].name.m_str, desc.files[1].name.m_str) != 0) {
+        if (strcmp(m_desc.arc.name.m_str, desc.arc.name.m_str) != 0) {
             return false;
         }
-        if (m_desc.files[1].data != desc.files[1].data || m_desc.files[1].size != desc.files[1].size) {
+        if (m_desc.arc.data != desc.arc.data || m_desc.arc.size != desc.arc.size) {
             return false;
         }
         if ((pad_8 & 1) != flag) {

@@ -46,7 +46,7 @@ private:
     int m_messageTime;  // 0x118
     mm::mtl::FixStr<256> pad_11c;
     int m_warningTime;  // 0x220
-    unsigned int pad_224;
+    int pad_224;  // signed: render compares it with cmp #1, b.lt
 public:
     // (public: ModelObj::setupModel reads it)
     // a blade id per driver id 1..15: ModelObj::setupModel gives an event's driver this blade when its OPTION

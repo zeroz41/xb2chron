@@ -114,6 +114,8 @@
 #include "classes/gf/GfComModel.h"
 #include "classes/fw/ModelObject.h"
 #include "ml/ScnObjAccResMdlInfo.h"
+#include "ml/ScnObjAccStmReadObj.h"
+#include "ml/DrStmReadObj.h"
 #include "classes/gf/GfComProperty.h"
 #include "classes/gf/GfComEffectCaster.h"
 #include "ml/ScnObjAccVolumeFade.h"
@@ -250,6 +252,82 @@ AttachActorCS::~AttachActorCS() {
     }
 }
 
+void AttachActorCS::setActor(gf::GF_OBJ_HANDLE* handle) {
+    for (unsigned long i = 0; i < m_casters.size(); ++i) {
+        unsigned int effect = *m_casters[i];
+        if (m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setParam(effect, nullptr, 1.0f);
+        }
+    }
+    for (unsigned long i = 0; i < m_mounts.size(); ++i) {
+        AttachUtil::setMount(false, m_handle, m_mounts[i]->m_handle, m_mounts[i]->m_name.m_str, m_mounts[i]->m_pos,
+                             m_mounts[i]->m_flag, m_mounts[i]->m_type);
+    }
+    m_actor = handle;
+    m_handle = handle;
+    for (unsigned long i = 0; i < m_casters.size(); ++i) {
+        unsigned int effect = *m_casters[i];
+        if (m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            gf::EffectCaster* caster =
+                gf::GfObjUtil::getObj(m_handle)->findComponent<gf::GfComEffectCaster>(7)->m_caster;
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setParam(effect, caster, 1.0f);
+        }
+    }
+    for (unsigned long i = 0; i < m_mounts.size(); ++i) {
+        AttachUtil::setMount(true, m_handle, m_mounts[i]->m_handle, m_mounts[i]->m_name.m_str, m_mounts[i]->m_pos,
+                             m_mounts[i]->m_flag, m_mounts[i]->m_type);
+    }
+}
+
+void AttachActorCS::setEffectCaster(bool on, unsigned int effect) {
+    if (on) {
+        if (m_casters.size() < m_casters.capacity()) {
+            unsigned int* entry =
+                new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) unsigned int(effect);
+            if (m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+                gf::EffectCaster* caster =
+                    gf::GfObjUtil::getObj(m_handle)->findComponent<gf::GfComEffectCaster>(7)->m_caster;
+                mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setParam(effect, caster, 1.0f);
+            }
+            m_casters.push_back(entry);
+        }
+    } else {
+        for (mm::mtl::FixedVector<unsigned int*, 128>::iterator it = m_casters.begin(); it != m_casters.end(); ++it) {
+            unsigned int* entry = *it;
+            if (*entry == effect) {
+                m_casters.erase(it);
+                if (m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+                    mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setParam(effect, nullptr, 1.0f);
+                }
+                delete entry;
+                return;
+            }
+        }
+    }
+}
+
+void AttachActorCS::setEffectMount(bool on, unsigned int id, const char* name, const mm::Vec3& pos, bool flag,
+                                   EVT_attachtype type) {
+    if (on) {
+        if (m_mounts.size() < m_mounts.capacity()) {
+            Mount* mount = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+                Mount(id, name, pos, flag, type);
+            AttachUtil::setMount(true, m_handle, id, name, pos, flag, type);
+            m_mounts.push_back(mount);
+        }
+    } else {
+        for (mm::mtl::FixedVector<Mount*, 128>::iterator it = m_mounts.begin(); it != m_mounts.end(); ++it) {
+            Mount* mount = *it;
+            if (mount->m_handle == id) {
+                m_mounts.erase(it);
+                AttachUtil::setMount(false, m_handle, id, name, pos, flag, type);
+                delete mount;
+                return;
+            }
+        }
+    }
+}
+
 bool AttachActorCS::getMtpMat(mm::Mat44& mat, const char*) const {
     mat = mm::Mat44::identity;
     return false;
@@ -288,6 +366,80 @@ void AttachActorGf::setEffectMount(bool on, unsigned int id, const char* name, c
 bool AttachActorGf::getMtpMat(mm::Mat44& mat, const char*) const {
     mat = mm::Mat44::identity;
     return false;
+}
+
+}  // namespace event
+
+#include "classes/anm/Pose.h"
+#include "classes/anm/Skeleton.h"
+#include "fw/FwDebug.h"
+#include "fw/TransformUtil.h"
+
+namespace event {
+
+void AttachActorBase::render() {
+    const ml::ScnObjCam* cam = Manager::get()->m_scn->getCam(-1);
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_actor);
+    if (obj == nullptr) {
+        return;
+    }
+    gf::GfComTransform* transform = obj->getComponent<gf::GfComTransform>(0);
+    gf::GfComModel* model = obj->getComponent<gf::GfComModel>(1);
+    if (transform == nullptr && model == nullptr) {
+        return;
+    }
+    const anm::Skeleton* skeleton = model->m_skeleton;
+    anm::Pose* pose = model->m_pose;
+    if (skeleton == nullptr && pose == nullptr) {
+        return;
+    }
+    unsigned int count = skeleton->m_bones.size();
+    for (unsigned int i = 0; i < count; i++) {
+        mm::Mat44 mat;
+        const char* name = skeleton->getBone(i).m_name;
+        fw::Transform world;
+        fw::TransformUtil::mul(transform->m_frame->getSyncedWorldTransform(), pose->getBoneModelSpace(i), 1.0f,
+                               &world);
+        const mm::Quat& q = world.rotation;
+        const float x2 = q.x + q.x;
+        const float y2 = q.y + q.y;
+        const float z2 = q.z + q.z;
+        const float xx = q.x * x2;
+        const float xy = q.x * y2;
+        const float xz = q.x * z2;
+        const float yy = q.y * y2;
+        const float yz = q.y * z2;
+        const float zz = q.z * z2;
+        const float wx = q.w * x2;
+        const float wy = q.w * y2;
+        const float wz = q.w * z2;
+        mat.m[0][0] = 1.0f - (yy + zz);
+        mat.m[0][1] = xy + wz;
+        mat.m[0][2] = xz - wy;
+        mat.m[1][0] = xy - wz;
+        mat.m[1][1] = 1.0f - (xx + zz);
+        mat.m[1][2] = yz + wx;
+        mat.m[2][0] = xz + wy;
+        mat.m[2][1] = yz - wx;
+        mat.m[2][2] = 1.0f - (xx + yy);
+        mat.m[0][3] = 0.0f;
+        mat.m[1][3] = 0.0f;
+        mat.m[2][3] = 0.0f;
+        mat.m[3][0] = 0.0f;
+        mat.m[3][1] = 0.0f;
+        mat.m[3][2] = 0.0f;
+        mat.m[3][3] = 1.0f;
+        const mm::Vec3 pos = world.position;
+        mat.m[3][0] = pos.x;
+        mat.m[3][1] = pos.y;
+        mat.m[3][2] = pos.z;
+        mm::Vec3 screen;
+        if (ml::ScnCamUtil::getScreenPos(screen, cam, mat.getTrans())) {
+            fw::debug::drawAxis(mat, 0.1f);
+            fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+            fw::debug::drawFont(screen.x, screen.y, name);
+        }
+    }
 }
 
 const char* AttachActorBase::getName() const {
@@ -2499,6 +2651,71 @@ float FrameManager::getMaxFrame() const {
 
 bool SkipManager::isSkip() const {
     return m_flags & 1;
+}
+
+// the debug display: the message (bit 1) and the warning (bit 2) in boxes at the bottom right, then pad_224's guide
+// lines (1: halves, 2: thirds), each a white line with a black one a pixel below and right of it
+void DebugManager::render() {
+    if (!(m_flags & 1)) {
+        return;
+    }
+    if (m_flags & 2) {
+        int x = ml::DevGraph::getRootWidth() - 320;
+        int y = ml::DevGraph::getRootHeight() - 150;
+        fw::debug::drawSquare2D(mm::Rect<int>(x, y, 300, 25), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+        fw::debug::drawLineSquare2D(mm::Rect<int>(x, y, 300, 25), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFontColor(mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+        fw::debug::drawFont(x + 5, y + 5, m_message.m_str);
+    }
+    if (m_flags & 4) {
+        int x = ml::DevGraph::getRootWidth() - 520;
+        int y = ml::DevGraph::getRootHeight() - 90;
+        fw::debug::drawSquare2D(mm::Rect<int>(x, y, 500, 25), mm::Col4(0.0f, 0.0f, 0.0f, 0.25f));
+        fw::debug::drawLineSquare2D(mm::Rect<int>(x, y, 500, 25), mm::Col4(0.8f, 1.0f, 0.8f, 1.0f));
+        fw::debug::drawFontColor(mm::Col4(0.8f, 1.0f, 0.8f, 1.0f));
+        fw::debug::drawFont(x + 5, y + 5, pad_11c.m_str);
+    }
+    if (pad_224 > 0) {
+        if (pad_224 == 1) {
+            int y0 = ml::DevGraph::getRootHeight() >> 1;
+            int x1 = ml::DevGraph::getRootWidth() - 30;
+            int y1 = ml::DevGraph::getRootHeight() >> 1;
+            fw::debug::drawLine2D(mm::Pnt<int>(30, y0), mm::Pnt<int>(x1, y1), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+            fw::debug::drawLine2D(mm::Pnt<int>(31, y0 + 1), mm::Pnt<int>(x1 + 1, y1 + 1),
+                                  mm::Col4(0.0f, 0.0f, 0.0f, 1.0f));
+            int x2 = ml::DevGraph::getRootWidth() >> 1;
+            int x3 = ml::DevGraph::getRootWidth() >> 1;
+            int y3 = ml::DevGraph::getRootHeight() - 30;
+            fw::debug::drawLine2D(mm::Pnt<int>(x2, 30), mm::Pnt<int>(x3, y3), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+            fw::debug::drawLine2D(mm::Pnt<int>(x2 + 1, 31), mm::Pnt<int>(x3 + 1, y3 + 1),
+                                  mm::Col4(0.0f, 0.0f, 0.0f, 1.0f));
+        } else if (pad_224 == 2) {
+            int y0 = ml::DevGraph::getRootHeight() / 3;
+            int x1 = ml::DevGraph::getRootWidth() - 30;
+            int y1 = ml::DevGraph::getRootHeight() / 3;
+            fw::debug::drawLine2D(mm::Pnt<int>(30, y0), mm::Pnt<int>(x1, y1), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+            fw::debug::drawLine2D(mm::Pnt<int>(31, y0 + 1), mm::Pnt<int>(x1 + 1, y1 + 1),
+                                  mm::Col4(0.0f, 0.0f, 0.0f, 1.0f));
+            y0 = ml::DevGraph::getRootHeight() * 2 / 3;
+            x1 = ml::DevGraph::getRootWidth() - 30;
+            y1 = ml::DevGraph::getRootHeight() * 2 / 3;
+            fw::debug::drawLine2D(mm::Pnt<int>(30, y0), mm::Pnt<int>(x1, y1), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+            fw::debug::drawLine2D(mm::Pnt<int>(31, y0 + 1), mm::Pnt<int>(x1 + 1, y1 + 1),
+                                  mm::Col4(0.0f, 0.0f, 0.0f, 1.0f));
+            int x2 = ml::DevGraph::getRootWidth() / 3;
+            int x3 = ml::DevGraph::getRootWidth() / 3;
+            int y3 = ml::DevGraph::getRootHeight() - 30;
+            fw::debug::drawLine2D(mm::Pnt<int>(x2, 30), mm::Pnt<int>(x3, y3), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+            fw::debug::drawLine2D(mm::Pnt<int>(x2 + 1, 31), mm::Pnt<int>(x3 + 1, y3 + 1),
+                                  mm::Col4(0.0f, 0.0f, 0.0f, 1.0f));
+            x2 = ml::DevGraph::getRootWidth() * 2 / 3;
+            x3 = ml::DevGraph::getRootWidth() * 2 / 3;
+            y3 = ml::DevGraph::getRootHeight() - 30;
+            fw::debug::drawLine2D(mm::Pnt<int>(x2, 30), mm::Pnt<int>(x3, y3), mm::Col4(1.0f, 1.0f, 1.0f, 1.0f));
+            fw::debug::drawLine2D(mm::Pnt<int>(x2 + 1, 31), mm::Pnt<int>(x3 + 1, y3 + 1),
+                                  mm::Col4(0.0f, 0.0f, 0.0f, 1.0f));
+        }
+    }
 }
 
 void DebugManager::playMessage(const char* format, ...) {
@@ -8263,11 +8480,48 @@ void UIManager::OnEventProc(event::MSG_TYPE msg) {
     }
 }
 
+// a model made from a name: loads its mdo (pad_8 bit 2) and arc (bit 3) files, which OnResEvent receives, and
+// opens its stream
+ModelObj::ModelObj(const char* name, bool flag, unsigned int arg)
+    : pad_8(0), m_kind(0), m_type(static_cast<MODEL_TYPE>(0)), m_id(0), m_name(name), pad_5c(arg),
+      m_stmReader(nullptr), m_handle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_model(nullptr), m_busyWait(-1),
+      m_reserve(0) {
+    if (flag) {
+        pad_8 |= 1;
+    } else {
+        pad_8 &= ~1;
+    }
+    mm::mtl::Singleton<ResManager>::getPtr()->load(mm::mtl::Singleton<Extend>::getPtr()->mdo(name), this, false);
+    pad_8 |= 4;
+    mm::mtl::Singleton<ResManager>::getPtr()->load(mm::mtl::Singleton<Extend>::getPtr()->arc(name), this, false);
+    pad_8 |= 8;
+    m_stmReader = ml::ScnObjAccStmReadObj::create(name);
+    // the same object: DrStmReadObj::m_readType (0x18) is DrStmReadCheck::m_mode, and the original's constructor
+    // takes a DrStmReadObj*. The tree does not model DrStmReadCheck's DrStmReadObj base yet.
+    ml::ScnObjAccStmReadObj reader(reinterpret_cast<ml::DrStmReadObj*>(m_stmReader));
+    reader.readType(ml::ScnObjAccStmReadObj::READ_TYPE_0);
+    reader.readType(ml::ScnObjAccStmReadObj::READ_TYPE_1);
+}
+
+// a model made from two files already in memory
+ModelObj::ModelObj(const char* name, const DESC& desc, bool flag, unsigned int arg)
+    : pad_8(0), m_kind(1), m_type(static_cast<MODEL_TYPE>(0)), m_id(0), m_name(name), pad_5c(arg),
+      m_stmReader(nullptr), m_handle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_model(nullptr), m_busyWait(-1),
+      m_reserve(0) {
+    m_desc = desc;
+    if (flag) {
+        pad_8 |= 1;
+    } else {
+        pad_8 &= ~1;
+    }
+    setupModel(m_desc);
+}
+
 void ModelObj::setupModel(const DESC& desc) {
     gf::GfAssetSetupEventObj setup;
-    setup.setRefResource(0, desc.files[0].name.m_str, desc.files[0].data, desc.files[0].size);
-    if (desc.files[1].data != nullptr) {
-        setup.setRefResource(1, desc.files[1].name.m_str, desc.files[1].data, desc.files[1].size);
+    setup.setRefResource(0, desc.mdo.name.m_str, desc.mdo.data, desc.mdo.size);
+    if (desc.arc.data != nullptr) {
+        setup.setRefResource(1, desc.arc.name.m_str, desc.arc.data, desc.arc.size);
     }
     gf::GfInitParamEventObj param;
     param.m_createType = 11;
@@ -8287,6 +8541,27 @@ ModelObj::~ModelObj() {
     if (m_stmReader) {
         m_stmReader->release();
         m_stmReader = nullptr;
+    }
+}
+
+// the constructor loads the model's mdo (pad_8 bit 2) and arc (bit 3) files; each report keeps the loaded file as
+// m_desc's first or second file, and once neither load is pending the model is set up from them
+void ModelObj::OnResEvent(const IResEvent::PARAM& param) {
+    if (strcmp(param.m_name, mm::mtl::Singleton<Extend>::getPtr()->mdo(m_name.m_str)) == 0) {
+        if (param.m_type == 3) {
+            m_desc.mdo.name = mm::mtl::Singleton<Extend>::getPtr()->mdo(m_name.m_str);
+            m_desc.mdo.data = param.m_data;
+            m_desc.mdo.size = param.m_size;
+        }
+        pad_8 &= ~4;
+    } else if (strcmp(param.m_name, mm::mtl::Singleton<Extend>::getPtr()->arc(m_name.m_str)) == 0) {
+        m_desc.arc.name = mm::mtl::Singleton<Extend>::getPtr()->arc(m_name.m_str);
+        m_desc.arc.data = param.m_data;
+        m_desc.arc.size = param.m_size;
+        pad_8 &= ~8;
+    }
+    if (!(pad_8 & 0xc) && m_desc.mdo.data != nullptr) {
+        setupModel(m_desc);
     }
 }
 
@@ -8355,6 +8630,32 @@ ModelObj* ModelManager::searchModel(unsigned int user, MODEL_TYPE type, unsigned
     }
     return nullptr;
 }
+
+// 1.0.0's ModelManager::searchModel(unsigned int) (0x710009DE00); 3.0.1 inlines it into createModel(int)
+inline ModelObj* ModelManager::searchModel(unsigned int user) {
+    for (unsigned long i = 0; i < m_objs.size(); i++) {
+        if (!m_objs[i]->isReserve(user)) {
+            ModelObj* obj = m_objs[i];
+            if (obj->isSame()) {
+                return m_objs[i];
+            }
+        }
+    }
+    return nullptr;
+}
+
+ModelObj* ModelManager::createModel(int user) {
+    ModelObj* obj;
+    if ((mm::mtl::Singleton<MdlstmManager>::getPtr()->pad_14 & 1) && (obj = searchModel(user)) != nullptr) {
+        obj->setReserve(user, true);
+        return obj;
+    }
+    obj = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) ModelObj();
+    obj->setReserve(user, true);
+    m_objs.push_back(obj);
+    return obj;
+}
+
 
 void ModelManager::destroyModel(ModelObj* obj, int user) {
     if (obj == nullptr) {
