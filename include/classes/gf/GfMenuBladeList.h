@@ -39,6 +39,10 @@ public:
     struct ReleasbleSetup : public ::ui::UIListInfoBase::SetupParam {};
     // the blades that can be released (GfMenuObjBladeRelease::initialize)
     void setupFromReleasble(const ReleasbleSetup& setup);
+    // setupFromBook's parameter (the symbol names the type): GfMenuObjBladeBook::initialize fills only the SetupParam
+    struct BladeBookSetup : public ::ui::UIListInfoBase::SetupParam {};
+    // the blades of the blade book (GfMenuObjBladeBook::initialize)
+    void setupFromBook(const BladeBookSetup& setup);
     // setupFromTeam's parameter (1.0.0's symbol names the type; its field names are not the original's)
     class TeamSetup {
     public:
