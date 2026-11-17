@@ -41,6 +41,9 @@ public:
     // and queues execChangeParty. What it does: queues a party change built from GfGameParty::getCurrentPartyInfo,
     // passed through fn_710055509C first.
     static unsigned int fn_710055570C();
+    // Placeholder name: a member because it sits between reqChangeParty and execChangeParty, which hand it their
+    // party. What it does: moves the party's drivers (an Ira game: each party's members) forward over empty slots.
+    static void fn_710055509C(RQ_SETUP_PARTY& party);
 
     // Placeholder name: 1.0.0 has the same function after execMapjump, unnamed too (fn_71005BE790). A member
     // because execChangeBladeWithSetId tail-calls it with its request's slot and set id. What it does: changes the

@@ -21,6 +21,17 @@
 #include "classes/gf/GfWeapon.h"
 #include "classes/gf/GfGameObj.h"
 #include "gf/GfObjUtil.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfPlayComMenuChapterSave.h"
+#include "gf/GfSelectBlade.h"
+#include "gf/GfGameUtil.h"
+#include "classes/gf/SCOM_DESTROY_PARTY_OBJ.h"
+#include "classes/gf/GfPlayComScriptTutorialSeq.h"
+#include "classes/gf/GfMenuObjFade.h"
+#include "gf/GfDataUtil.h"
+#include "classes/gf/GfObjManager.h"
+#include "classes/gf/SCOM_FADE.h"
+#include "mm/Col4.h"
 
 namespace gf {
 
@@ -54,6 +65,11 @@ struct ReqChangeBladeWithSetIdParam : public GfReqParam {
 // reqPartySwitchForIra's: it takes no arguments
 struct ReqEmptyParam : public GfReqParam {};
 
+// reqChangeParty's: the party to set up
+struct ReqChangePartyParam : public GfReqParam {
+    RQ_SETUP_PARTY m_party;
+};
+
 // a map execMapjump has jumped to and the controlled mover's position when it left it; the names are not the
 // original's
 struct MapjumpPos {
@@ -86,6 +102,38 @@ unsigned int GfReqCommand::reqSave(SAVESLOT slot) {
     ReqSaveParam* param = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ReqSaveParam;
     param->m_slot = slot;
     return GfReqManager::addCommand(param, execSave);
+}
+
+void GfReqCommand::execSave(const GfReqParam* param) {
+    const ReqSaveParam* save = static_cast<const ReqSaveParam*>(param);
+    if (GfPlayComMenuChapterSave::isDisp()) {
+        // engage the blades chosen for the battle start, then rebuild the party's objects
+        for (unsigned int i = 0; i < 3; i++) {
+            int setId = GfSelectBlade::getStartBattleSetId(i);
+            if (setId >= 0) {
+                GfGameUtil::setBladeSelect(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0)), setId);
+                GfSelectBlade::resetStartBattleSetId(i);
+            }
+        }
+        RQ_SETUP_PARTY party;
+        SCOM_DESTROY_PARTY_OBJ::create(party);
+        while (GfGameParty::isExistObj()) {
+            GfSleep(1);
+        }
+    }
+    while (GfPlayComScriptTutorialSeq::s_refCount != 0) {
+        GfSleep(1);
+    }
+    if (save->m_autoSave) {
+        GfMenuObjFade::dispSaving(true, 0);
+    }
+    bool scenario = GfDataUtil::getScenarioFlag() == 0x2B76;
+    GfGameSave gameSave(static_cast<SAVESLOT>(save->m_slot), save->m_autoSave, save->m_flag, scenario);
+    gameSave.execGameSaveWithMicroThread();
+    gameSave.execOptionSaveWithMicroThread();
+    if (save->m_autoSave) {
+        GfMenuObjFade::dispSaving(false, 0);
+    }
 }
 
 unsigned int GfReqCommand::reqSaveForLastGame(SAVESLOT slot) {
@@ -191,6 +239,22 @@ void GfReqCommand::execWaitEvent(const GfReqParam* param) {
     GfFobjManager::get()->m_waitEvent = false;
 }
 
+unsigned int GfReqCommand::reqChangeParty(const RQ_SETUP_PARTY& party) {
+#line 383
+    ReqChangePartyParam* param = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ReqChangePartyParam;
+    param->m_party = party;
+    fn_710055509C(param->m_party);
+    return GfReqManager::addCommand(param, execChangeParty);
+}
+
+unsigned int GfReqCommand::fn_710055570C() {
+#line 394
+    ReqChangePartyParam* param = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ReqChangePartyParam;
+    GfGameParty::getCurrentPartyInfo(param->m_party);
+    fn_710055509C(param->m_party);
+    return GfReqManager::addCommand(param, execChangeParty);
+}
+
 unsigned int GfReqCommand::reqChangeBladeWithSetId(unsigned int slot, int setId, bool flag) {
     ReqChangeBladeWithSetIdParam* param =
 #line 406
@@ -229,6 +293,31 @@ unsigned int GfReqCommand::reqDestroyGf() {
     unsigned int handle = GfReqManager::addCommand(param, execDestroyGf);
     GfReqManager::terminateCommand();
     return handle;
+}
+
+void GfReqCommand::execDestroyGf(const GfReqParam*) {
+    // fade out, destroy the party, then every layer's objects from the top and the rest
+    SCOM_FADE::create(1, 30, mm::Col4::black);
+    GfSleep(30);
+    RQ_SETUP_PARTY party;
+    SCOM_DESTROY_PARTY_OBJ::create(party);
+    while (GfGameParty::isExistObj()) {
+        GfSleep(1);
+    }
+    if (GfObjManager* manager = GfObjManager::get()) {
+        for (int layer = 12; layer >= 0; layer--) {
+            manager->destroyLayerObj(layer);
+            while (manager->isExistLayerObj(layer)) {
+                GfSleep(1);
+            }
+        }
+    }
+    if (GfObjManager* manager = GfObjManager::get()) {
+        manager->destroyAllObj(false);
+        while (manager->isExistGfObj(false)) {
+            GfSleep(1);
+        }
+    }
 }
 
 unsigned int GfReqCommand::reqStartScript(unsigned int id, const char* name, bool start) {
