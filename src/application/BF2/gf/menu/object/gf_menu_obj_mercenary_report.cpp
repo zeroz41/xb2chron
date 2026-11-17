@@ -78,7 +78,7 @@ void GfMenuObjMercenaryReport::initialize() {
     {
         ui::UIObjectAcc reward(acc.m_handle, "LAY_reward");
         GfMenuObjQuestReward::OpenParam param;
-        param.pad_10 = m_number;
+        param.m_number = m_number;
         param.m_handle = reward.searchChild("LAY_reward_info");
         param.pad_C = 1;
         GfMenuObjQuestReward::create(m_rewardContext, param, false);

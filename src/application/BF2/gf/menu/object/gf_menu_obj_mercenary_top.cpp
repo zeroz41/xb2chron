@@ -286,7 +286,7 @@ void GfMenuObjMercenaryTop::initialize() {
         }
         {
             GfMenuObjQuestReward::OpenParam reward;
-            reward.pad_10 = m_rewardNumber;
+            reward.m_number = m_rewardNumber;
             reward.m_handle = mis.searchChild("LAY_mis_sel_detail_reward");
             reward.pad_C = 1;
             GfMenuObjQuestReward::create(m_callContext, reward, true);

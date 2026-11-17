@@ -5,6 +5,7 @@
 #include "classes/mm/mtl/ReferenceObject.h"
 #include "mm/mtl/IntrusivePtr.h"
 #include "classes/ui/UIObjectListener.h"
+#include "classes/gf/GfMenuReferenceNumber.h"
 
 namespace gf { class GfMenuItemList; }
 namespace ui { struct EventData; }
@@ -21,7 +22,8 @@ public:
         mm::mtl::IntrusivePtr<mm::mtl::ReferenceObject> m_quest;  // GfMenuObjQuestLog passes its quest reference
         unsigned int m_handle;  // the UI object the window duplicates its LAY_reward under (create's duplicate)
         unsigned int pad_C;     // copied with m_handle as one 8-byte word
-        mm::mtl::IntrusivePtr<mm::mtl::ReferenceObject> pad_10;
+        // GfMenuObjMercenaryReport's number reference, for the mission reward (the name is not the original's)
+        mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_number;
     };
     // creates the window for the context (once GfMenuObjUtil::checkCCStart allows it) and, with the flag, opens it
     static void create(GfMenuCallContext* context, const OpenParam& param, bool);
@@ -39,7 +41,7 @@ public:
 class GfMenuObjQuestReward::RewardListener : public ::ui::UIObjectListener {
 public:
     // create's inline construction zeroes 0xC-0x1B, 0x20 and both references
-    RewardListener() : pad_0C(), pad_20(), m_quest(), pad_38() {}
+    RewardListener() : pad_0C(), pad_20(), m_quest(), m_number() {}
     virtual ~RewardListener();  // slot 0
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
     unsigned char pad_0C[0x10];
@@ -47,8 +49,14 @@ public:
     unsigned char pad_20[8];
     GfMenuItemList* m_items;  // reciveEvent creates it (GfMenuItemList::create) and releases it (the name is not the original's)
     mm::mtl::IntrusivePtr<mm::mtl::ReferenceObject> m_quest;  // OpenParam::m_quest, from the open event (0x101)
-    mm::mtl::IntrusivePtr<mm::mtl::ReferenceObject> pad_38;   // OpenParam::pad_10, from the same event
-    unsigned char pad_40[8];
+    mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_number;   // OpenParam::m_number, from the same event
+    // OpenParam::pad_C, from the open event: 1 lists the number reference's mission reward, 0 the quest's reward
+    // (the name is not the original's)
+    unsigned int m_kind;
+    // the open event's (0x21) first parameter == 1: the window fades in (and out on 0x22) with a control instead of
+    // showing at once (the name is not the original's)
+    bool m_fade;
+    unsigned char pad_45[3];
 };
 }  // namespace gf
 
