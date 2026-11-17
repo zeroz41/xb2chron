@@ -11,6 +11,8 @@
 #include "ui/UIStr.h"
 #include "mm/mtl/Delegate.h"
 #include "gf/GfMenuSequence.h"
+#include "mm/mtl/FixStr.h"
+#include "mm/Pnt.h"
 
 namespace gf {
 
@@ -154,6 +156,168 @@ void GfMenuObjTutorial::finalize() {
 void GfMenuObjTutorial::update() {
     m_seq.update();
     GfMenuObject::update();
+}
+
+void GfMenuObjTutorial::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 0x101: {
+        // a text: its index, whether it opens, the string
+        unsigned short index = event.m_paramShort[0];
+        unsigned short open = event.m_paramShort[1];
+        mm::mtl::FixStr<32> name;
+        name.format("LAY_info@%02d", index + 1);
+        ui::UIObjectAcc lay(acc.m_handle, name.m_str);
+        if (lay.m_object != nullptr) {
+            if (open == 1) {
+                lay.setDisp(true);
+                name.format("TXT_info@%02d", index + 1);
+                {
+                    unsigned int parent = lay.m_handle;
+                    unsigned short text = event.m_paramShort[2];
+                    ui::UIObjectAcc txt(parent, name.m_str);
+                    if (txt.m_object != nullptr) {
+                        GfMenuObject::setText(txt.m_handle, text);
+                    }
+                }
+                GfMenuObject::enableInput(acc.m_handle);
+                GfMenuObject::registTimer(acc.m_handle, 0, 0.5f, true);
+                acc.setDispChild(true, "IMG_info_arrow@01");
+                acc.setDispChild(true, "IMG_info_arrow@02");
+            } else {
+                lay.setDisp(false);
+                GfMenuObject::disableInput(acc.m_handle);
+                GfMenuObject::releaseTimer(acc.m_handle);
+                acc.setDispChild(false, "IMG_info_arrow@01");
+                acc.setDispChild(false, "IMG_info_arrow@02");
+            }
+        }
+        break;
+    }
+    case 0x102: {
+        // a focus: its index, whether it opens, the side it points from, the point
+        unsigned short index = event.m_paramShort[0];
+        unsigned short open = event.m_paramShort[1];
+        mm::mtl::FixStr<32> name;
+        name.format("LAY_focus@%02d", index + 1);
+        ui::UIObjectAcc lay(acc.m_handle, name.m_str);
+        if (lay.m_object != nullptr) {
+            if (open == 1) {
+                unsigned short side = event.m_paramShort[2];
+                lay.setDisp(true);
+                short width;
+                short height;
+                lay.getSize(true, width, height);
+                mm::Pnt<short> pos;
+                pos.x = event.m_paramShort[3];
+                pos.y = event.m_paramShort[4];
+                float rot = 0.0f;
+                switch (side) {
+                case 0:
+                    pos.y += height / 2;
+                    break;
+                case 1:
+                    pos.y -= height / 2;
+                    rot = 3.14159274f;
+                    break;
+                case 2:
+                    pos.x += width / 2;
+                    rot = 1.57079637f;
+                    break;
+                case 3:
+                    pos.x -= width / 2;
+                    rot = 4.71238899f;
+                    break;
+                }
+                lay.setRot(rot);
+                lay.setPosCenter(pos);
+                name.format("IMG_focus_icon@%02d", index + 1);
+                ui::UIObjectAcc(acc.m_handle, name.m_str).startAnimation("loop", false);
+            } else {
+                lay.setDisp(false);
+                name.format("IMG_focus_icon@%02d", index + 1);
+                ui::UIObjectAcc(acc.m_handle, name.m_str).stopAnimation();
+            }
+        }
+        break;
+    }
+    case 0x103: {
+        // an icon: its index, whether it opens, the point
+        unsigned short index = event.m_paramShort[0];
+        unsigned short open = event.m_paramShort[1];
+        mm::mtl::FixStr<32> name;
+        name.format("LAY_icon@%02d", index + 1);
+        ui::UIObjectAcc lay(acc.m_handle, name.m_str);
+        if (lay.m_object != nullptr) {
+            if (open == 1) {
+                lay.setDisp(true);
+                mm::Pnt<short> pos;
+                pos.x = event.m_paramShort[3];
+                pos.y = event.m_paramShort[4];
+                lay.setPosCenter(pos);
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x80000;
+                param.m_curve = 1;
+                param.m_scale = 1.2f;
+                param.m_reserve = true;
+                param.m_setDefault = true;
+                param.m_time = 0.5f;
+                GfMenuObjUtil::startCtrl(lay.m_handle, param, nullptr);
+            } else {
+                int slot = GfMenuObjUtil::getCtrlID(lay.m_handle);
+                if (slot != -1) {
+                    GfMenuObjUtil::stopCtrl(slot);
+                }
+                lay.setDisp(false);
+            }
+        }
+        break;
+    }
+    case 0x104:
+        m_owner->m_telopStarted = false;
+        m_owner->m_seq.clear();
+        m_owner->m_seq.addJob(&GfMenuObjTutorial::seqTelopStart);
+        m_owner->m_seq.addWait(30);
+        m_owner->m_seq.addJob(&GfMenuObjTutorial::seqTelopEnd);
+        m_owner->m_seq.addJob(&GfMenuObjTutorial::seqEnd);
+        break;
+    case 0x105:
+        break;
+    case 1:
+        GfMenuObject::disableInput(acc.m_handle);
+        acc.setDisp(true);
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            GfMenuObject::termCallContext(acc.m_handle);
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObject::releaseTimer(acc.m_handle);
+            acc.setDispChild(false, "IMG_info_arrow@01");
+            acc.setDispChild(false, "IMG_info_arrow@02");
+        }
+        break;
+    case 0xB: {
+        bool disp = (event.m_param1 & 1) == 0;
+        acc.setDispChild(disp, "IMG_info_arrow@01");
+        acc.setDispChild(disp, "IMG_info_arrow@02");
+        break;
+    }
+    case 0x22:
+        closeText(0);
+        closeText(1);
+        closeFocus(0);
+        closeFocus(1);
+        closeFocus(2);
+        closeFocus(3);
+        closeIcon(0);
+        closeIcon(1);
+        closeIcon(2);
+        closeIcon(3);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 bool GfMenuObjTutorial::seqTelopStart() {
