@@ -1,3 +1,7 @@
+// Altered from zlib 1.2.8's crc32.c, Copyright (C) 1995-2006, 2010, 2011, 2012 Mark Adler,
+// and inffast.c, Copyright (C) 1995-2008, 2010, 2013 Mark Adler.
+// For conditions of distribution and use, see third_party/LICENSES/zlib.txt.
+
 // zlib 1.2.8 (NintendoSDK's libz 3.5.0, version "1.2.8.f-NINTENDO-SDK-v1") as the split places it: crc32.c (BYFOUR,
 // static tables) and inffast.c.
 #include "zlib/zutil.h"

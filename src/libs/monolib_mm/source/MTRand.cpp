@@ -1,3 +1,6 @@
+// Based on MT19937 (mt19937ar-cok.c), Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
+// All rights reserved. BSD 3-clause license: see third_party/LICENSES/mt19937.txt.
+
 #include "nn/os.h"
 #include "mm/mtl/MTRand.h"
 #include "ml/MTRand.h"

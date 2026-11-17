@@ -1,3 +1,7 @@
+// Altered from zlib 1.2.8's inflate.c, Copyright (C) 1995-2012 Mark Adler,
+// and inftrees.c, Copyright (C) 1995-2013 Mark Adler.
+// For conditions of distribution and use, see third_party/LICENSES/zlib.txt.
+
 // zlib 1.2.8 (NintendoSDK's libz 3.5.0, version "1.2.8.f-NINTENDO-SDK-v1") as the split places it: inflate.c and
 // inftrees.c. GUNZIP on, BUILDFIXED off (fixed tables from inffixed.h), no INFLATE_STRICT.
 #include "zlib/zutil.h"

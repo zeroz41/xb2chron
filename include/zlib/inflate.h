@@ -1,3 +1,6 @@
+// Altered from zlib 1.2.8's inflate.h, Copyright (C) 1995-2009 Mark Adler.
+// For conditions of distribution and use, see third_party/LICENSES/zlib.txt.
+
 #ifndef ZLIB_INFLATE_H
 #define ZLIB_INFLATE_H
 

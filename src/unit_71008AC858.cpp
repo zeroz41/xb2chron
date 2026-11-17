@@ -1,3 +1,7 @@
+// Altered from zlib 1.2.8's zutil.c, Copyright (C) 1995-2005, 2010, 2011, 2012 Jean-loup Gailly,
+// and adler32.c, Copyright (C) 1995-2011 Mark Adler.
+// For conditions of distribution and use, see third_party/LICENSES/zlib.txt.
+
 // zlib (NintendoSDK's libz 3.5.0) as the split places it: zutil.c's allocator, the SDK's middleware marker and
 // adler32.c (zlib 1.2.x, len an uInt: before 1.2.9's adler32_z).
 #include <stdlib.h>

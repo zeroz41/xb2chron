@@ -1,3 +1,6 @@
+// Altered from zlib 1.2.8's zutil.h, Copyright (C) 1995-2013 Jean-loup Gailly.
+// For conditions of distribution and use, see third_party/LICENSES/zlib.txt.
+
 #ifndef ZLIB_ZUTIL_H
 #define ZLIB_ZUTIL_H
 
