@@ -2,6 +2,7 @@
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfGameFlag.h"
+#include "classes/gf/GfMenuObjMainMenu2.h"
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/ui/UIEventManager.h"
@@ -227,7 +228,92 @@ void GfMenuObjTips::refreshList(bool) {
     }
 }
 
-// ListListener::reciveEvent (0x710048845C) and TutorialListener::reciveEvent (0x7100488958) are not here yet
+void GfMenuObjTips::ListListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        unsigned char* fp = GfDataBdat::getFP(0x102);
+        if (fp != nullptr && GfDataBdat::getFP(299) != nullptr) {
+            int top = Bdat::getIdTop(fp);
+            m_owner->m_idList->clear();
+            for (int i = 0; i < Bdat::getIdCount(fp); i++) {
+                int id = top + i;
+                if (m_owner->isUnlockTipsID(id) && (unsigned short)Bdat::getVal(fp, "condition", id) == 0) {
+                    MenuID entry;
+                    entry.m_id = id;
+                    entry.m_subId = 0;
+                    entry.m_subId = (unsigned short)Bdat::getVal(fp, "page", id);
+                    m_owner->m_idList->addContents(entry);
+                }
+            }
+            m_owner->m_idList->sortFromWork(false);
+            m_owner->m_idList->setIndex(0);
+            acc.setDisp(false);
+            GfMenuObjOperationInfo::setGuideText(0x4C, 0);
+            GfMenuObjMainMenu2::setSubIndexText(0x21);
+        }
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        if (index != -1) {
+            m_owner->m_idList->setIndex(index);
+            m_owner->refreshList(false);
+        }
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+            GfMenuObject::resetInputSelection(acc.m_handle);
+            GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_idList);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        } else if (event.m_param0 == 3) {
+            m_owner->returnFSSubLayer(m_owner);
+        }
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            if (event.m_param0 == -1 || m_owner->m_idList->getSize() == 0) {
+                break;
+            }
+            unsigned int id = m_owner->m_idList->getContents(m_owner->m_idList->getIndex(false)).m_id;
+            GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_tutorial"), id, 0.0f);
+            GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 2, 0);
+            GfMenuObjUtil::playSECommonDecide();
+        } else if (event.m_param1 == 2) {
+            GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 3, 0);
+            GfMenuObjUtil::playSECommonCancel();
+        } else {
+            break;
+        }
+        GfMenuObject::disableInput(acc.m_handle);
+        GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+        GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+        break;
+    case 0x21: {
+        unsigned int id = event.m_param0;
+        if (id != 0) {
+            for (unsigned int i = 0; i < m_owner->m_idList->getSize(); i++) {
+                if (m_owner->m_idList->getContents(i).m_id == id) {
+                    m_owner->m_idList->setIndex(i);
+                    break;
+                }
+            }
+        }
+        m_owner->refreshList(false);
+        GfMenuObjUtil::setCommonFadeIn(acc.m_handle, 1, 0);
+        break;
+    }
+    }
+}
 
 bool GfMenuObjTips::isUnlockTipsID(unsigned int id) {
     unsigned char* fp = GfDataBdat::getFP(0x102);
@@ -243,6 +329,8 @@ bool GfMenuObjTips::isUnlockTipsID(unsigned int id) {
     }
     return GfGameFlag::getLocal(2, id - Bdat::getIdTop(fp) + 0xEF05) & 1;
 }
+
+// TutorialListener::reciveEvent (0x7100488958) is not here yet
 
 void GfMenuObjTips::setViewTipsID(unsigned int id) {
     unsigned char* fp = GfDataBdat::getFP(0x102);
