@@ -45,6 +45,14 @@ public:
     bool seqDepartureStart();
     bool seqApperBlade();
     bool seqDepartureEnd();
+    // 2.0.0's (names from its symbols, where they follow seqDepartureEnd); 3.0.1's linker dropped them as unused,
+    // leaving their strings in gf_menu_obj_mercenary_form's .rodata. Each queues the next: seqStartActiveFS shows
+    // LAY_start_fs, seqOpenActiveFS plays IMG_start_fs_base's result, seqDispActiveFS its fade_in_info and a wait,
+    // seqEndActiveFS hides LAY_start_fs and queues seqLeaveBlade
+    bool seqStartActiveFS();
+    bool seqOpenActiveFS();
+    bool seqDispActiveFS();
+    bool seqEndActiveFS();
     bool seqPresetEnd();
     bool seqRevertBladeSet();
     // 2.0.0's symbols name them. Their code reads the form's lists and sequence state and sits among the class's
