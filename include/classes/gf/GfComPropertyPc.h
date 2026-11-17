@@ -26,7 +26,10 @@ namespace gf { namespace pc {
 // GfComPropertyPc's m_paramList entry 4 (gf::pc::SlideParam by setMoveSlidePacket's symbol; the field names are
 // not the original's)
 struct SlideParam {
-    unsigned char pad_0[0x14];
+    // StateUtilField::isSlideGroundLanding and isSlideSlope: slide ground steeper than this (degrees) slides (the name
+    // is not the original's)
+    float m_slopeAngle;
+    unsigned char pad_4[0x10];
     float m_stopSpeed;  // StateUtilField::isSlideStop: the slide stops once m_moveSpeed is no more than it
     // StateUtilField::isStartSlidePosuture: on slide ground the PC starts sliding while pad_f0 is at least
     // m_startSlideValue or its speed along pad_d0 at least m_startSlideSpeed (the names are not the original's)
@@ -36,6 +39,9 @@ struct SlideParam {
     float m_landSpeed;  // StateUtilField::onLandSliding: the most speed a landing keeps
     // StateUtilField::isFallFromSlideState: the PC falls once this far above the ground under it
     float m_fallHeight;
+    // StateUtilField::isSlideSlope: steep slide ground counts as a slide slope while the PC is at most this far above
+    // it (the name is not the original's)
+    float m_slopeHeight;
 };
 }}  // namespace gf::pc
 
