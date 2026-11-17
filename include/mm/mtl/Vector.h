@@ -101,17 +101,20 @@ public:
     // Vector<ui::UIObjBuildData::Parameter>'s out of line)
     void assign(const Vector& other);
     // room for capacity elements, allocated at the given alignment (the name is not the original's: wnd::WindProbe's
-    // constructor and ui::UIListInfo::setup inline it)
+    // constructor and ui::UIListInfo::setup inline it). The non-null buffer case comes first: with the allocation
+    // first, gf::GfMenuObjGiftBox::initialize places the copy of the new capacity after the stores instead of before
     void reserve(size_t capacity, size_t alignment = defaultAlignment()) {
 #line 483 MM_MTL_VECTOR_PATH
         MM_ASSERT(m_allocator && "yet setAllocator");
         if (capacity > m_capacity) {
             m_alignment = alignment;
-            if (m_buffer == nullptr) {
+            if (m_buffer != nullptr) {
+                if (static_cast<long>(capacity - m_capacity) > 0) {
+                    expand(capacity, m_alignment);
+                }
+            } else {
                 m_buffer = static_cast<T*>(m_allocator->allocate(capacity * sizeof(T), m_alignment));
                 m_capacity = capacity;
-            } else if (static_cast<long>(capacity - m_capacity) > 0) {
-                expand(capacity, m_alignment);
             }
         }
     }

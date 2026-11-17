@@ -7,14 +7,18 @@
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/gf/GfMenuFullScreen.h"
+#include "classes/gf/GfMenuAdapterManager.h"
 #include "classes/gf/GfMenuIDList.h"
+#include "classes/gf/GfMenuItemAdapter.h"
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfGameCond.h"
 #include "classes/gf/GfGameFlag.h"
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfMenuMsgList.h"
 #include "classes/gf/GfMenuReferenceItem.h"
+#include "classes/gf/GfMenuReferenceAdapter.h"
 #include "classes/gf/GfMenuReferenceNumber.h"
+#include "classes/ui/UIEventManager.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/gf/SCOM_ADD_ETHER.h"
 #include "classes/gf/SCOM_ADD_ITEM.h"
@@ -28,6 +32,7 @@
 #include "gf/GfMenuTypes.h"
 #include "gf/gf_data_aoc.h"
 #include "mm/Math.h"
+#include <algorithm>
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/Delegate.h"
 #include "plugin/Bdat.h"
@@ -236,6 +241,162 @@ bool GfMenuObjGiftBox::hasGetableGiftFromFilter(bool flag) {
     }
     return false;
 }
+
+void GfMenuObjGiftBox::initialize() {
+    ui::UIObjectAcc main(m_handle, "LAY_main");
+    {
+#line 430
+        MainListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) MainListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(main.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    m_menuId = 0;
+    {
+        GfMenuTypes::Param param;
+        if (GfMenuObject::getFSLayerParam(m_fsLayer, param)) {
+            m_menuId = param.m_menuId;
+            m_hasMenuId = true;
+            GfMenuObject::removeFSLayerParam(m_fsLayer);
+        }
+    }
+    if (m_hasMenuId) {
+        main.setDispChild(false, "IMG_list_bg");
+        main.setDispChild(true, "IMG_list_bg2");
+        ui::UIObjectAcc(main.m_handle, "IMG_list_bg2").setAddColor(mm::Col3(0.8823f, 0.9215f, 0.9803f));
+        ui::UIObjectAcc(main.m_handle, "IMG_filter_index_base").setAddColor(mm::Col3(0.7843f, 0.9803f, 0.9803f));
+        ui::UIObjectAcc(main.m_handle, "TXT_filter_index").setMulColor("win_sub_other_line");
+        m_noMenuId = false;
+    } else {
+        m_noMenuId = true;
+    }
+    ui::UIObjectAcc top(main.m_handle, "LAY_top_list");
+    {
+        ui::UIListInfoBase::SetupParam param;
+        param.m_pageRowSize = top.countChild("LAY_top_list_item@%02d", 1);
+        param.m_pageScroll = true;
+        m_topList->setup(getAllocator(ALLOCATOR(0)), param);
+    }
+    m_topList->setBdat(0, 0x139);
+    GfMenuObjUtil::createVScrollBarPlugin(top.searchChild("IMG_top_list_scroll_bar"), m_topList,
+                                          "IMG_top_list_scroll_base", true);
+    {
+#line 482
+        TopListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TopListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(top.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    GfMenuObject::setFSInputObject(0, top.m_handle);
+    ui::UIObjectAcc sub(main.m_handle, "LAY_sub_list");
+    {
+        mm::mtl::FixStr<32> name;
+        {
+            ui::UIListInfoBase::SetupParam param;
+            param.m_pageRowSize = sub.countChild("LAY_sub_list_item@%02d", 1);
+            param.m_pageScroll = true;
+            m_subList->setup(getAllocator(ALLOCATOR(0)), param);
+        }
+        for (unsigned int i = 0; i < m_subList->getPageRowSize(); i++) {
+            name.format("TXT_sub_list_item_num@%02d", i + 1);
+            GfMenuReferenceAdapter::create(sub.searchChild(name.m_str), m_numbers[i], true);
+            name.format("TXT_sub_list_item_gold@%02d", i + 1);
+            GfMenuReferenceAdapter::create(sub.searchChild(name.m_str), m_numbers[i], true);
+        }
+        GfMenuAdapterManager::beginAddAfter();
+        GfMenuItemAdapter* adapter = GfMenuItemAdapter::createFromReference(sub.searchChild("TXT_infotxt"), 9, m_refItem, false);
+        if (adapter != nullptr) {
+            adapter->m_rowHandle = sub.searchChild("LAY_info_text");
+        }
+        for (unsigned int i = 0; i < 2; i++) {
+            name.format("TXT_getarea@%02d", i + 1);
+            adapter = GfMenuItemAdapter::createFromReference(sub.searchChild(name.m_str), 0xB, m_refItem, false);
+            if (i == 0 && adapter != nullptr) {
+                adapter->m_rowHandle = sub.searchChild("LAY_getinfo");
+            }
+            adapter->m_subIndex = i;
+        }
+        for (unsigned int i = 0; i < 3; i++) {
+            name.format("TXT_iteminfo_pouch_eff@%02d", i + 1);
+            adapter = GfMenuItemAdapter::createFromReference(sub.searchChild(name.m_str), 0xE, m_refItem, false);
+            if (adapter != nullptr) {
+                adapter->m_subIndex = i;
+            }
+        }
+        GfMenuItemAdapter::createFromReference(sub.searchChild("TXT_iteminfo_pouch_time"), 0xD, m_refItem, true);
+        GfMenuAdapterManager::endAddAfter();
+    }
+    GfMenuObjUtil::createVScrollBarPlugin(sub.searchChild("IMG_sub_list_scroll_bar"), m_subList,
+                                          "IMG_sub_list_scroll_base", true);
+    {
+#line 561
+        SubListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SubListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(sub.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    GfMenuObject::setFSInputObject(1, sub.m_handle);
+    ui::UIObjectAcc filter(main.m_handle, "LAY_filter");
+    m_filterIndex = 0;
+    m_filterCursor = 0;
+    {
+        unsigned char* fp = GfDataBdat::getFP(0x10A);
+        m_counts.setAllocator(getAllocator(ALLOCATOR(0)));
+        m_counts.reserve(Bdat::getIdCount(fp) + 1);
+        m_counts.push_back(0);
+        for (int i = 0; i < Bdat::getIdCount(fp); i++) {
+            int count = static_cast<signed char>(Bdat::getVal(fp, "releasecount", Bdat::getIdTop(fp) + i));
+            if (count <= GfMenuManager::getGiftNumber()) {
+                if (!(m_hasMenuId ? count >= 0 : count < 0)) {
+                    if (std::find(m_counts.begin(), m_counts.end(), count) == m_counts.end()) {
+                        m_counts.push_back(count);
+                    }
+                }
+            }
+        }
+        if (m_counts.size() > 2) {
+            m_filterCount = m_counts.size();
+        } else {
+            if (m_counts.size() == 2) {
+                int value = m_counts.at(1);
+                m_counts.clear();
+                m_counts.push_back(value);
+            }
+            m_filterCount = 0;
+        }
+    }
+    {
+        unsigned int count = filter.countChild("LAY_icon@%02d", 1);
+        mm::mtl::FixStr<32> name;
+        for (unsigned int i = 0; i < count; i++) {
+            name.format("TXT_filter_no@%02d", i + 1);
+            GfMenuReferenceAdapter::create(filter.searchChild(name.m_str), m_numbers[i + 9], true);
+        }
+    }
+    refreshFilter();
+    if (m_filterCount == 0 && !m_hasMenuId) {
+        ui::UIObjectAcc(m_handle, "LAY_filter_index").setDisp(false);
+    }
+    {
+#line 668
+        FilterListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) FilterListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(filter.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    updateTopList();
+    refreshTopList(false);
+    GfMenuObject::initialize();
+}
+
 
 void GfMenuObjGiftBox::refreshFilter() {
     ui::UIObjectAcc acc(m_handle, "LAY_filter");
@@ -1089,7 +1250,3 @@ void GfMenuObjGiftBox::FilterListener::reciveEvent(const ui::EventData& event, u
 }
 
 }  // namespace gf
-
-// the item and count vectors' growth (their user initialize is not written yet)
-template void mm::mtl::Vector<int>::expand(size_t, size_t);
-template void mm::mtl::Vector<gf::GfMenuObjGiftBox::AddedItem>::expand(size_t, size_t);
