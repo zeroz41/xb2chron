@@ -1314,7 +1314,7 @@ static int fn_710066A954(VMThread* pThread) {
 // ui.openPopup
 static int fn_710066A96C(VMThread* pThread) {
     int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
-    gf::GfMenuObjPopup::OpenParam param = {10, {static_cast<unsigned int>(id), 0, 0}};
+    gf::GfMenuObjPopup::OpenParam param = {10, static_cast<unsigned int>(id), 0, 0};
     gf::GfMenuObjPopup::open(param);
     return 0;
 }

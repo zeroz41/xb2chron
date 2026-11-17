@@ -14,12 +14,16 @@ public:
     // what SCOM_POPUP's requests carry (the names are not the original's): a popup kind (SCOM_POPUP::exec holds
     // kind 7 back while a blade-create event is busy) and up to three values the create functions pass
     struct OpenParam {
+        // the three values are separate members, not an array: seqExecContinue's open event reads the first two as
+        // one 8-byte load, which the compiler only merges for neighbours at the same depth
         unsigned int m_type;
-        unsigned int m_value[3];
+        unsigned int m_value0;
+        unsigned int m_value1;
+        unsigned int m_value2;
         // the same request (remove looks a queued popup up so)
         friend bool operator==(const OpenParam& a, const OpenParam& b) {
-            return a.m_type == b.m_type && a.m_value[0] == b.m_value[0] && a.m_value[1] == b.m_value[1] &&
-                   a.m_value[2] == b.m_value[2];
+            return a.m_type == b.m_type && a.m_value0 == b.m_value0 && a.m_value1 == b.m_value1 &&
+                   a.m_value2 == b.m_value2;
         }
     };
     GfMenuObjPopup(unsigned int handle);

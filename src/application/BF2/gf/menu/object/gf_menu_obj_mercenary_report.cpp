@@ -208,9 +208,9 @@ bool GfMenuObjMercenaryReport::seqStart() {
     GfMenuObjQuestReward::open(m_rewardContext, false);
     GfMenuObjPopup::OpenParam param;
     param.m_type = 8;
-    param.m_value[0] = GfDataMercenaries::getMissionMapID(mission);
-    param.m_value[1] = m_teamId;
-    param.m_value[2] = GfDataMercenaries::getTeamLeader(m_teamId);
+    param.m_value0 = GfDataMercenaries::getMissionMapID(mission);
+    param.m_value1 = m_teamId;
+    param.m_value2 = GfDataMercenaries::getTeamLeader(m_teamId);
     GfMenuObjPopup::remove(param);
     return true;
 }
