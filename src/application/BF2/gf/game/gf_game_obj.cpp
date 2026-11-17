@@ -438,6 +438,39 @@ void GfGameObj::setupLeaveGameObjMount(GF_OBJ_HANDLE* handle, GFATTACH attach, f
     }
 }
 
+void GfGameObjEnemy::enterEnemyObj(GF_OBJ_HANDLE* handle) {
+    DataParamAcc param(handle);
+    if (param.getObjType() == 5 && param.isLinkGenus()) {
+        GfObjAcc acc(handle);
+        if (!acc.isEnemyBlade()) {
+            if (pad_670.find(handle) == pad_670.end()) {
+                pad_670.push_back(handle);
+                unsigned int genus = param.getGenus();
+                mm::mtl::FixedList<GINFO, 64>::iterator info =
+                    pad_8.find_if([genus](const GINFO& entry) { return entry.pad_0 == genus; });
+                if (info == pad_8.end()) {
+                    mm::mtl::FixedList<GF_OBJ_HANDLE*, 64>* list =
+#line 1761
+                        new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) mm::mtl::FixedList<GF_OBJ_HANDLE*, 64>();
+                    list->push_back(handle);
+                    GINFO entry = {genus, list};
+                    pad_8.push_back(entry);
+                } else {
+                    mm::mtl::FixedList<GF_OBJ_HANDLE*, 64>* list = info->pad_8;
+                    for (mm::mtl::FixedList<GF_OBJ_HANDLE*, 64>::iterator it = list->begin(); it != list->end(); ++it) {
+                        GF_OBJ_HANDLE* other = *it;
+                        if (pad_2ab0.full()) {
+                            break;
+                        }
+                        pad_2ab0.push_back(Pair(handle, other));
+                    }
+                    info->pad_8->push_back(handle);
+                }
+            }
+        }
+    }
+}
+
 void GfGameObj::enterStayObject(GF_OBJ_HANDLE* handle) {
     GfObjManager::enterStayObject(handle);
 }
