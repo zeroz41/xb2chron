@@ -37,11 +37,16 @@
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/SCOM_FIELD_VOICE.h"
 #include "ui/EventData.h"
+#include "ui/UIUtil.h"
+#include "fw/PadData.h"
+#include "gf/GfPlayFactory.h"
+#include "classes/gf/GfMenuObjMainMenu2.h"
+#include "classes/gf/GfMenuObjQuestList.h"
 
 namespace gf {
 
 GfMenuObjQuestLog::GfMenuObjQuestLog(unsigned int handle)
-    : GfMenuObject(handle), m_refs(), pad_58(), m_logOpened(), pad_5A(), m_listVisible(), m_titleSeq(this), m_logSeq(this), m_orderSeq(this), pad_940(false),
+    : GfMenuObject(handle), m_refs(), m_logShown(), m_logOpened(), pad_5A(), m_listVisible(), m_titleSeq(this), m_logSeq(this), m_orderSeq(this), pad_940(false),
       pad_948(false), m_rewardContext(nullptr), m_taskCount(0), pad_95C() {}
 
 GfMenuObjQuestLog::~GfMenuObjQuestLog() {
@@ -460,6 +465,132 @@ bool GfMenuObjQuestLog::seqTitleStart() {
     }
     acc.setDisp(true);
     return true;
+}
+
+void GfMenuObjQuestLog::LogListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObject::disableInput(acc.m_handle);
+        GfMenuObject::setInputActionEnable(acc.m_handle, 10, false);
+        GfMenuManager::setEnableQuestOpen(false);
+        acc.setDisp(false);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 8:
+        if (event.m_param1 == 9) {
+            if (GfMenuFlag::get1(0x20) == 0 && GfMenuManager::isFieldHudInputEnable()) {
+                GfMenuObject::disableInput(acc.m_handle);
+                if (!m_owner->m_logOpened) {
+                    GfMenuObjUtil::playSE(0x1E);
+                    m_owner->m_logSeq.addJob(&GfMenuObjQuestLog::seqLogOpen);
+                    GfMenuObject::setInputActionEnable(acc.m_handle, 10, true);
+                    GfMenuManager::setEnableQuestOpen(m_owner->m_listVisible);
+                } else {
+                    GfMenuObjQuestLog* owner = m_owner;
+                    unsigned int current = owner->getRef<GfMenuReferenceNumber>(3)->m_value;
+                    QuestID id;
+                    owner->getRef<GfMenuReferenceQuest>(1)->getQuest(id);
+                    unsigned int next = current;
+                    for (unsigned int i = current + 1; i < owner->m_taskCount; ++i) {
+                        QuestTaskParam param(id, i, TASK_STATE(0));
+                        if (!GfQuestInfo::getTaskHide(param)) {
+                            next = i;
+                            break;
+                        }
+                    }
+                    if (next == m_owner->getRef<GfMenuReferenceNumber>(3)->m_value) {
+                        GfMenuObjUtil::playSE(0x1E);
+                        m_owner->m_logSeq.addJob(&GfMenuObjQuestLog::seqLogClose);
+                        GfMenuObject::setInputActionEnable(acc.m_handle, 10, false);
+                        GfMenuManager::setEnableQuestOpen(false);
+                        next = 0;
+                    } else {
+                        GfMenuObjUtil::playSE(0x1F);
+                        m_owner->m_logSeq.addJob(&GfMenuObjQuestLog::seqLogNext);
+                    }
+                    m_owner->getRef<GfMenuReferenceNumber>(3)->m_value = next;
+                }
+            }
+        } else if (m_owner->m_listVisible) {
+            if (m_owner->m_logOpened && event.m_param1 == 10 && (ui::UIUtil::getPadData()->m_btn & 0x20) == 0) {
+            if (GfGameManager::isEnableOpenMainMenu()) {
+                {
+                    GfMenuObjMainMenu2::OpenParam menu;
+                    menu.m_page = 2;
+                    GfMenuObjMainMenu2::registOpenParam(menu);
+                }
+                {
+                    GfMenuObjQuestList::OpenParam list;
+                    list.m_questId = 0;
+                    QuestID id;
+                    m_owner->getRef<GfMenuReferenceQuest>(1)->getQuest(id);
+                    list.m_questId = id.m_id;
+                    GfMenuObjQuestList::registOpenParam(list);
+                }
+                GfMenuObjUtil::playSE(3);
+                GfPlayFactory::createOpenMenu2(1, MAINMENU(0), nullptr);
+            } else {
+                GfMenuObjUtil::playSECommon(2);
+            }
+            }
+        }
+        break;
+    case 0xD:
+        if (event.m_param0 == 4) {
+            bool taskShown = event.m_param1 == 1 && event.m_param3 > 0;
+            if (taskShown) {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x40000;
+                param.m_scale = 0.5f;
+                param.m_time = 0.2f;
+                param.m_curve = 4;
+                param.m_setDefault = true;
+                GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_log_info_task_item");
+            }
+        }
+        break;
+    case 0x21:
+        if (m_owner->m_logSeq.m_jobs.size() != m_owner->m_logSeq.m_jobs.capacity() && !m_owner->m_logShown) {
+            acc.setDisp(true);
+            m_owner->m_logSeq.addJob(&GfMenuObjQuestLog::seqLogIn);
+            m_owner->m_logShown = true;
+        }
+        break;
+    case 0x22:
+        if (m_owner->m_logSeq.m_jobs.size() != m_owner->m_logSeq.m_jobs.capacity() && m_owner->m_logShown) {
+            GfMenuObject::disableInput(acc.m_handle);
+            m_owner->m_logSeq.addJob(&GfMenuObjQuestLog::seqLogOut);
+            m_owner->m_logShown = false;
+        }
+        break;
+    case 0x101:
+        m_owner->setupLog();
+        m_owner->setupLogItem();
+        m_owner->setupLogClear();
+        break;
+    case 0x102:
+        if (m_owner->m_logOpened) {
+            QuestID quest(event.m_param0);
+            QuestID id;
+            m_owner->getRef<GfMenuReferenceQuest>(1)->getQuest(id);
+            if (id == quest) {
+                int task = event.m_param1;
+                if (m_owner->getRef<GfMenuReferenceNumber>(3)->m_value == task) {
+                    m_owner->m_logSeq.addJob(&GfMenuObjQuestLog::seqLogTaskComplete);
+                }
+                m_owner->setupLogItem();
+                m_owner->setupLogClear();
+            }
+        }
+        break;
+    case 0x104:
+        m_owner->setupLogItem();
+        m_owner->setupLogClear();
+        break;
+    }
 }
 
 bool GfMenuObjQuestLog::seqLogOpen() {

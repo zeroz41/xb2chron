@@ -74,7 +74,9 @@ public:
     R* getRef(int index) const {
         return static_cast<R*>(m_refs[index].operator->());
     }
-    unsigned char pad_58;  // cleared by the constructor
+    // the log is shown: LogListener sets it when it queues seqLogIn (event 0x21) and clears it when it queues seqLogOut
+    // (0x22); the name is not the original's
+    bool m_logShown;
     // the log is open: set by seqLogOpen once its animation ends, cleared by seqLogCloseEnd (setupLog then updates
     // LAY_log_to_detail; the name is not the original's)
     bool m_logOpened;

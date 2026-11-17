@@ -101,6 +101,106 @@ void GfMenuObjItemList2::MainListener::reciveEvent(ui::EventData const& event, u
     }
 }
 
+void GfMenuObjItemList2::ItemListListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc main(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        m_owner->m_filterIndex = 0;
+        m_owner->m_itemSelect->clear();
+        m_owner->m_itemSelect->pickupObject(acc.m_handle, "LAY_listtag@%02d", 1);
+        setupItemList(acc, m_owner->m_itemList, m_owner->m_itemSelect);
+        GfMenuObjUtil::createVScrollBarPlugin(acc.searchChild("IMG_scroll_point"), m_owner->m_itemList,
+                                              "IMG_scroll_line", true);
+        updateItemList(m_owner->m_itemList, m_owner->m_itemSelect, m_owner->m_filterIndex, 0);
+        refreshItemList(acc, m_owner->m_itemList, m_owner->m_itemSelect, m_owner->m_filterIndex);
+        setupFilter(acc, 0);
+        GfMenuObjSort::setSortLabelText(GfMenuObjSort::getSortID(0xB, 0), acc.searchChild("TXT_sort_label"));
+        sendEvent(handle, 0x101, 0, 0);
+        m_sort = 0;
+        return;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        if (index != -1) {
+            m_owner->m_itemList->setIndex(index);
+            unsigned int type = GfDataItem::getItemType(m_owner->m_itemList->getContents(index).m_id);
+            acc.setDispChild(type != 10, "LAY_iteminfo_normal");
+            acc.setDispChild(type == 10, "LAY_iteminfo_pouch");
+            refreshItemList(acc, m_owner->m_itemList, m_owner->m_itemSelect, m_owner->m_filterIndex);
+        }
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        return;
+    }
+    case 8:
+        if (event.m_param1 == 2) {
+            sendEvent(handle, 0x102, 0, 0);
+            sendEvent(main.searchChild("LAY_main"), 0x22, 0, 0);
+        } else if (event.m_param1 == 9) {
+            unsigned int filter = m_owner->m_filters[m_owner->m_filterIndex];
+            GfMenuObjSort::open(acc.m_handle, acc.searchChild("TXT_sort_label"), s_filterSortMenus[filter], m_sort);
+            GfMenuObject::disableInput(handle);
+            GfMenuObjOperationInfo::remove(main.searchChild("LAY_mainwindow"), 0, 0, 0);
+            sendEvent(main.searchChild("LAY_filter"), 0x102, 0, 0);
+        }
+        return;
+    case 0x101:
+        GfMenuObject::setupInputSelectionFromList(handle, *m_owner->m_itemList);
+        GfMenuObject::enableInput(handle);
+        return;
+    case 0x102:
+        GfMenuObject::disableInput(handle);
+        return;
+    case 0x103: {
+        unsigned int filter = m_owner->m_filters[m_owner->m_filterIndex];
+        bool pouch = filter == 4;
+        {
+            ui::UIStr text;
+            getFilterText(filter, text);
+            ui::UIObjectAcc label(acc.searchChild("TXT_filterlabel"));
+            label.setText(text);
+        }
+        GfMenuObjSort::setSortLabelText(GfMenuObjSort::getSortID(s_filterSortMenus[filter], 0),
+                                        acc.searchChild("TXT_sort_label"));
+        m_sort = 0;
+        updateItemList(m_owner->m_itemList, m_owner->m_itemSelect, filter, 0);
+        m_owner->m_itemList->setIndex(0);
+        m_owner->m_itemList->getSize();
+        acc.setDispChild(!pouch, "LAY_iteminfo_normal");
+        acc.setDispChild(pouch, "LAY_iteminfo_pouch");
+        refreshItemList(acc, m_owner->m_itemList, m_owner->m_itemSelect, m_owner->m_filterIndex);
+        return;
+    }
+    case 0x104:
+        GfMenuObject::resetInputSelection(handle);
+        GfMenuObject::setupInputSelectionFromList(handle, *m_owner->m_itemList);
+        return;
+    case 0x148: {
+        GfMenuObject::enableInput(handle);
+        GfMenuObjOperationInfo::add(main.searchChild("LAY_mainwindow"), 0, 0, 0);
+        sendEvent(main.searchChild("LAY_filter"), 0x101, 0, 0);
+        if (m_sort == event.m_param0) {
+            return;
+        }
+        unsigned int filter = m_owner->m_filters[m_owner->m_filterIndex];
+        unsigned short sortId = GfMenuObjSort::getSortID(s_filterSortMenus[filter], event.m_param0);
+        m_owner->m_itemList->sort(sortId, false);
+        m_sort = event.m_param0;
+        GfMenuItemList* list = m_owner->m_itemList;
+        bool pouch = GfDataItem::getItemType(list->getContents(list->getIndex(false)).m_id) == 10;
+        acc.setDispChild(!pouch, "LAY_iteminfo_normal");
+        acc.setDispChild(pouch, "LAY_iteminfo_pouch");
+        refreshItemList(acc, m_owner->m_itemList, m_owner->m_itemSelect, m_owner->m_filterIndex);
+        return;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        return;
+    }
+}
+
 void GfMenuObjItemList2::setupItemList(ui::UIObjectAcc& acc, GfMenuItemList* list, ui::UISelectObjList* select) {
     mm::mtl::FixStr<32> name;
     for (unsigned int i = 0; i < static_cast<unsigned int>(select->getSize()); i++) {
