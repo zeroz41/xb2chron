@@ -28,6 +28,8 @@
 #include "classes/ui/UIManager.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UISelectObjList.h"
+#include "gf/GfGameUtilHana.h"
+#include "gf/GfItemUtil.h"
 #include "gf/GfMenuObjUtil.h"
 #include "mm/mtl/FixStr.h"
 #include "ui/EventData.h"
@@ -229,6 +231,151 @@ void GfMenuObjHanaPartsCrystal::PartsListListener::reciveEvent(ui::EventData con
         GfMenuObject::enableInput(handle);
         break;
     case 0x102:
+        GfMenuObject::disableInput(handle);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjHanaPartsCrystal::ItemListListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc ownerAcc(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    GfMenuReference::getReferenceBladeID(0);
+    switch (event.m_type) {
+    case 1: {
+        m_owner->m_itemSelect->clear();
+        m_owner->m_itemSelect->pickupObject(acc.m_handle, "LAY_reclist_tag@%02d", 1);
+        setupItemList(acc, m_owner->m_itemList, m_owner->m_itemSelect);
+        ui::UICtrlCursorColor::CursorSetting setting;
+        setting.m_normalColor = "txt_normal2";
+        setting.m_selectColor = "txt_normal2";
+        setting.m_dispName = "IMG_reclist_sltag@%02d";
+        setting.m_colorName = "TXT_recpartsname@%02d";
+        m_owner->m_itemCursor = ui::UICtrlCursorColor::create(handle, setting, m_owner->m_itemSelect);
+        m_owner->m_itemCursor->setDisp(false);
+        GfMenuObjUtil::createVScrollBarPlugin(acc.searchChild("IMG_melist_scr_point"), m_owner->m_itemList,
+                                              "IMG_melist_scr_line", false);
+        makeCategoryItemList(m_owner->m_partsList, m_owner->m_itemList);
+        GfMenuIDList* list = m_owner->m_partsList;
+        unsigned int category = list->getContents(list->getIndex(false)).m_id;
+        GfMenuObjHanaCustom::refreshItemInfo(acc, m_owner->m_itemList, category, 1);
+        GfMenuObject::disableInput(handle);
+        break;
+    }
+    case 6: {
+        unsigned int index = event.m_param0;
+        m_owner->m_itemList->setIndex(index);
+        unsigned int selected = m_owner->m_itemList->getIndex(true);
+        if (m_owner->m_itemCursor->inputChange(selected)) {
+            GfMenuIDList* list = m_owner->m_partsList;
+            unsigned int category = list->getContents(list->getIndex(false)).m_id;
+            GfMenuObjHanaCustom::refreshItemInfo(acc, m_owner->m_itemList, category, 1);
+        }
+        break;
+    }
+    case 8:
+        switch (event.m_param1) {
+        case 1:
+            {
+                ui::EventData close;
+                close.m_type = 0x102;
+                ui::UIManager::get()->requestObjectEvent(handle, close, 0.0f);
+            }
+            sendEvent(ownerAcc.searchChild("LAY_recrys_diarog"), 0x101, 0);
+            break;
+        case 2:
+            {
+                ui::EventData close;
+                close.m_type = 0x102;
+                ui::UIManager::get()->requestObjectEvent(handle, close, 0.0f);
+            }
+            sendEvent(ownerAcc.searchChild("LAY_partsmake_window"), 0x101, 0);
+            break;
+        }
+        break;
+    case 0x101: {
+        makeCategoryItemList(m_owner->m_partsList, m_owner->m_itemList);
+        GfMenuIDList* list = m_owner->m_partsList;
+        unsigned int category = list->getContents(list->getIndex(false)).m_id;
+        GfMenuObjHanaCustom::refreshItemInfo(acc, m_owner->m_itemList, category, 1);
+        GfMenuObject::setupInputSelection(handle, m_owner->m_itemList->getIndex(false), m_owner->m_itemList->getSize());
+        GfMenuObject::enableInput(handle);
+        break;
+    }
+    case 0x102: {
+        m_owner->m_itemCursor->setDisp(false);
+        GfMenuIDList* list = m_owner->m_partsList;
+        refreshItemList(m_owner->m_itemList, m_owner->m_itemSelect, list->getContents(list->getIndex(false)).m_id);
+        GfMenuObject::disableInput(handle);
+        break;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjHanaPartsCrystal::NumSelectListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc ownerAcc(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    GfMenuReference::getReferenceBladeID(0);
+    switch (event.m_type) {
+    case 1:
+        setupNumSelect(acc, m_owner->m_count, m_owner->m_price);
+        acc.setDisp(false);
+        break;
+    case 6: {
+        int count = event.m_param0;
+        m_owner->m_count->m_value = count;
+        GfMenuItemList* items = m_owner->m_itemList;
+        unsigned int item = items->getContents(items->getIndex(false)).m_id;
+        ItemProperty property;
+        GfItemUtil::getProperty(property, item, 0);
+        m_owner->m_price->m_value = property.m_dustEther * count;
+        break;
+    }
+    case 8:
+        switch (event.m_param1) {
+        case 1: {
+            GfMenuIDList* parts = m_owner->m_partsList;
+            unsigned int category = parts->getContents(parts->getIndex(false)).m_id;
+            GfMenuItemList* items = m_owner->m_itemList;
+            unsigned int item = items->getContents(items->getIndex(false)).m_id;
+            unsigned int count = m_owner->m_count->m_value;
+            for (unsigned int i = 0; i < count; i++) {
+                switch (category) {
+                case 1:
+                case 2:
+                case 3:
+                case 9:
+                case 6:
+                    GfGameUtilHana::execConvertToEther(item);
+                    break;
+                }
+            }
+        }
+        case 2:
+            {
+                ui::EventData close;
+                close.m_type = 0x102;
+                ui::UIManager::get()->requestObjectEvent(handle, close, 0.0f);
+            }
+            sendEvent(ownerAcc.searchChild("LAY_recry_window"), 0x101, 0);
+            break;
+        }
+        break;
+    case 0x101: {
+        GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::setCommonFadeIn(handle, 1, 0));
+        GfMenuItemList* items = m_owner->m_itemList;
+        unsigned int item = items->getContents(items->getIndex(false)).m_id;
+        GfMenuObject::setupInputSelection(handle, 0, GfItemUtil::getItemBoxCount(item) + 1);
+        GfMenuObject::enableInput(handle);
+        break;
+    }
+    case 0x102:
+        GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::setCommonFadeOut(handle, 2, 0));
         GfMenuObject::disableInput(handle);
         break;
     default:

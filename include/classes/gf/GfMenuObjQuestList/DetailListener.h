@@ -12,10 +12,13 @@ class GfMenuObjQuestList::DetailListener : public ::ui::UIObjectListener {
 public:
     // its table's D1 slot is the base's destructor and its D0 frees it: an inline destructor (as other menus'
     // listeners); initialize/initializeSub new it as 0x28 bytes, clearing 0x0C-0x1C and storing the owner at 0x20
-    DetailListener(GfMenuObjQuestList* owner) : pad_0C(), m_owner(owner) {}
+    DetailListener(GfMenuObjQuestList* owner) : m_questFinished(), pad_10(), m_owner(owner) {}
     virtual ~DetailListener() {}  // slot 0
     virtual void reciveEvent(const ui::EventData& event, unsigned int handle);  // slot 2
-    unsigned char pad_0C[0x10];
+    // whether the shown quest is finished: reciveEvent stores GfQuestInfo::isQuestFin on 0x21 and clears it on 1;
+    // on 3 the actions 9 and 10 are enabled unless it is 1 (the name is not the original's)
+    unsigned int m_questFinished;
+    unsigned char pad_10[0xC];
     GfMenuObjQuestList* m_owner;
 };
 }  // namespace gf
