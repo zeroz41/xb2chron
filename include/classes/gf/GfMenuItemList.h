@@ -82,8 +82,11 @@ public:
     };
     // what setupFromHanaParts lists (the field names are not the original's)
     struct HanaPartsSetup {
+        // inline: GfMenuObjHanaPartsMake::updateItemList's stores zero 0x18-0x27
+        HanaPartsSetup() : m_type(0), pad_18() {}
         ui::UIListInfoBase::SetupParam m_setup;  // the list's
         unsigned int m_type;  // the parts' ItemType::Type (16-20; their BDAT file is GfDataBdat's type + 0x40)
+        unsigned char pad_18[0x10];
     };
     GfMenuItemList();
     virtual ~GfMenuItemList();  // slot 0

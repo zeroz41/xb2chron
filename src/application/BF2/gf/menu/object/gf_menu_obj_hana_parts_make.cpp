@@ -361,6 +361,57 @@ void GfMenuObjHanaPartsMake::makeCategoryItemList(GfMenuIDList* parts, GfMenuIte
     }
 }
 
+void GfMenuObjHanaPartsMake::refreshItemList(ui::UIObjectAcc& acc, GfMenuItemList* list, ui::UISelectObjList* select,
+                                             unsigned int parts, unsigned int mode) {
+    // the blade id is read but not used; mode 0 lists the parts to make, the others the crystal parts
+    unsigned int hana = GfMenuReference::getReferenceBladeID(0);
+    {
+        ui::UIObjectAcc baseMake(acc.searchChild("IMG_melist_base_make"));
+        ui::UIObjectAcc baseCrystal(acc.searchChild("IMG_melist_base_crystal"));
+        ui::UIObjectAcc titleMake(acc.searchChild("TXT_melist_title_make"));
+        ui::UIObjectAcc titleCrystal(acc.searchChild("TXT_melist_title_crystal"));
+        ui::UIObjectAcc colMake(acc.searchChild("TXT_melist_col_make"));
+        ui::UIObjectAcc colCrystal(acc.searchChild("TXT_melist_col_crystal"));
+        bool make = mode == 0;
+        baseMake.setDisp(make);
+        baseCrystal.setDisp(!make);
+        titleMake.setDisp(make);
+        titleCrystal.setDisp(!make);
+        colMake.setDisp(make);
+        colCrystal.setDisp(!make);
+        for (int i = 1; i < 10; i++) {
+            mm::mtl::FixStr<32> name;
+            name.format("LAY_sbparts_make@%02d", i);
+            ui::UIObjectAcc partsMake(acc.searchChild(name.m_str));
+            partsMake.setDisp(make);
+            name.format("LAY_sbparts_crystal@%02d", i);
+            ui::UIObjectAcc partsCrystal(acc.searchChild(name.m_str));
+            partsCrystal.setDisp(!make);
+        }
+    }
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < static_cast<unsigned int>(select->getSize());) {
+        MenuItemInfo item = list->getContents(list->getPageIndex(i));
+        ui::UIObjectAcc obj(select->getObject(i));
+        i++;
+        name.format("TXT_sbpartsname@%02d", i);
+        ui::UIObjectAcc text(obj.searchChild(name.m_str));
+        RESULT_HANA result;
+        bool enable;
+        if (mode == 0) {
+            enable = GfMenuHanaAdapter::isMakeParts(parts, item.m_id, result);
+        } else {
+            enable = GfMenuHanaAdapter::isCrystalParts(parts, item.m_id, result);
+        }
+        const char* color = enable ? "txt_normal2" : "txt_disable";
+        GfMenuObjUtil::setColMulandAdd(text.m_handle, color);
+    }
+    unsigned int type = GfMenuReference::getReferenceItemType();
+    bool stock = (type >= 0x11 && type <= 0x14) || type == 0x10;
+    ui::UIObjectAcc parent(acc.getParentHandle());
+    parent.setDispChild(stock, "LAY_stock");
+}
+
 void GfMenuObjHanaPartsMake::ItemListListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
     ui::UIObjectAcc ownerAcc(m_owner->m_handle);
     ui::UIObjectAcc acc(handle);
@@ -701,6 +752,79 @@ void GfMenuObjHanaPartsMake::setupNumSelect(ui::UIObjectAcc& acc, mm::mtl::Intru
                                             mm::mtl::IntrusivePtr<GfMenuReferenceNumber> price) {
     GfMenuReferenceAdapter::create(acc.searchChild("TXT_num_select_value"), count, true);
     GfMenuReferenceAdapter::create(acc.searchChild("TXT_num_select_total_price"), price, true);
+}
+
+void GfMenuObjHanaPartsMake::updateItemList(GfMenuItemList* list, ItemType::Type type, unsigned int mode) {
+    list->clear();
+    if (mode != 0) {
+        GfMenuItemList::ItemBoxSetup setup;
+        setup.m_setup.m_pageRowSize = 9;
+        setup.m_setup.m_pageScroll = true;
+        setup.m_type = type;
+        setup.pad_28 = 0;
+        setup.pad_29 = 0;
+        list->setupFromBox(setup);
+        if (list->getSize() != 0) {
+            // the parts a blade has equipped are not listed
+            for (unsigned int i = 0; i < static_cast<unsigned int>(list->getSize());) {
+                MenuItemInfo item = list->getContents(i);
+                unsigned int category = 0;
+                switch (item.m_type) {
+                case 0x10:
+                    category = 1;
+                    break;
+                case 0x11:
+                    category = 2;
+                    break;
+                case 0x12:
+                    category = 9;
+                    break;
+                case 0x13:
+                    category = 3;
+                    break;
+                case 0x14:
+                    category = 6;
+                    break;
+                default:
+                    break;
+                }
+                // not a part: i stays (as in the original)
+                if (category == 0) {
+                    continue;
+                }
+                if (GfMenuItemUtil::searchEquipHanaParts(category, item.m_id, item.m_entry) != 0) {
+                    list->m_list.erase(list->m_list.begin() + i);
+                    list->subSize(1);
+                    list->m_changed = true;
+                } else {
+                    i++;
+                }
+            }
+            // the same part twice: one entry with the counts added up
+            if (list->getSize() != 0) {
+                for (unsigned int i = 0; i < static_cast<unsigned int>(list->getSize()) - 1; i++) {
+                    MenuItemInfo item = list->getContents(i);
+                    for (unsigned int j = i + 1; j < static_cast<unsigned int>(list->getSize());) {
+                        MenuItemInfo& other = list->getContents(j);
+                        if (item.m_type == other.m_type && item.m_id == other.m_id) {
+                            list->getContents(i).m_count++;
+                            list->m_list.erase(list->m_list.begin() + j);
+                            list->subSize(1);
+                            list->m_changed = true;
+                        } else {
+                            j++;
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        GfMenuItemList::HanaPartsSetup setup;
+        setup.m_setup.m_pageRowSize = 9;
+        setup.m_setup.m_pageScroll = true;
+        setup.m_type = type;
+        list->setupFromHanaParts(setup);
+    }
 }
 
 }  // namespace gf
