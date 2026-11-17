@@ -11,6 +11,7 @@
 #include "classes/mm/mtl/ReferenceObject.h"
 #include "mm/mtl/Array.h"
 #include "gf/QuestTaskParam.h"
+#include "gf/GfItemInfo.h"
 
 namespace ui {
 class UICtrlCursorSelect;
@@ -117,7 +118,12 @@ public:
     bool seqWaitFSClose();
     bool seqStartLevelUp();
     bool seqStartSleepFade();
+    // the orb's common window answered: on yes the orb list's selected item is made into its orb
+    // (GfRecipeOrbUtil::execOrbRecipe with the recipe's items) and taken from the list
+    bool seqWaitOrbCreate();
     bool seqItemGet();
+    // the orb recipe list's operations ("LAY_orb_rcp"): what the selected row allows, and the page arrows
+    void refreshOrbRecipeOperation();
 
     // the shop (GfBdatShop's shop list row): InnActListener pays the inn with it (GfGameUtilShop::execPayInn); the
     // name is not the original's
@@ -212,7 +218,9 @@ public:
     GfMenuCallContext* m_callContext;  // 0x578
     // refreshStock adds it to "LAY_stock_num"'s y position (the name is not the original's)
     int m_stockNumOffsetY;  // 0x580
-    int pad_584;  // the constructor clears it
+    // the item handle NumSelectListener sells by (GfShopUtil::execSell, GfMenuItemList::decItemH) when the item
+    // does not count by stack; the constructor clears it (the name is not the original's)
+    GfItemHandle m_sellHandle;  // 0x584
     // the constructor clears them; seqWaitExchange's craft step reads pad_588 and sets pad_589 from the task's
     // "forcequit"
     bool pad_588;

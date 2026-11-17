@@ -39,6 +39,11 @@
 #include "gf/GfQuestUtil.h"
 #include "gf/GfQuestReward.h"
 #include "gf/GfQuestTask.h"
+#include "gf/GfRecipeOrbUtil.h"
+#include "classes/gf/GfMenuObjShop/NumSelectListener.h"
+#include "gf/GfShopUtil.h"
+#include "gf/GfMenuItemUtil.h"
+#include "gf/GfDataItem.h"
 
 namespace gf {
 
@@ -52,7 +57,7 @@ GfMenuObjShop::GfMenuObjShop(unsigned int handle)
       m_filterIndex(0), m_cursor(nullptr), pad_D0(0), pad_D8(nullptr), pad_E0(nullptr), pad_E8(nullptr),
       m_getItemId(0), pad_14C(0), m_seq(this), m_seqStarted(false), pad_4F0(nullptr), pad_504(-1),
       pad_548(QuestID(), 0, 0, TASK_STATE(0)), pad_568(0), m_blWeaponContext(nullptr), m_callContext(nullptr),
-      pad_584(0), pad_588(false), pad_589(false) {
+      m_sellHandle(), pad_588(false), pad_589(false) {
     pad_130.setAllocator(getAllocator(ALLOCATOR(0)));
     for (int i = 0; i < 8; ++i) {
         pad_508[i] = nullptr;
@@ -628,6 +633,157 @@ void GfMenuObjShop::InnActListener::reciveEvent(const ui::EventData& event, unsi
     UIObjectListener::reciveEvent(event, handle);
 }
 
+void GfMenuObjShop::NumSelectListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+            acc.setDispChild(true, "IMG_num_select_cursor");
+        } else if (event.m_param0 == 2) {
+            if (m_mode == 0 && m_owner->pad_34 == 1 && m_count > 0) {
+                ui::UIObjectAcc main(m_owner->m_handle, "LAY_main");
+                GfMenuObject::sendCloseEvent(main.m_handle, 0, 0.0f);
+            } else if (m_owner->pad_D0 != 0) {
+                ui::EventData data;
+                data.m_type = 0x42;
+                GfMenuObject::sendEvent(m_owner->pad_D0, data, 0.0f);
+            }
+        }
+        break;
+    case 6: {
+        int count = event.m_param0;
+        ItemPrice price;
+        GfItemUtil::getPrice(price, m_item, m_owner->m_shopId);
+        m_owner->m_numbers[2]->m_value = count;
+        bool buy = m_mode == 0;
+        m_owner->m_numbers[3]->setValue((!buy ? price.m_sellPrice : price.m_price) * count);
+        GfMenuObjUtil::playSE(0x19);
+        m_count = count;
+        break;
+    }
+    case 8: {
+        if (event.m_param1 == 1) {
+            if (m_count < 1) {
+                break;
+            }
+            if (m_mode == 0) {
+                m_owner->m_result = 1;
+                m_owner->m_resultParam = 0;
+                GfMenuObjUtil::playSE(0x18);
+                GfShopUtil::execBuy(m_item, m_count, m_owner->m_shopId);
+                MenuItemInfo item;
+                item.m_id = m_item;
+                item.m_type = GfItemUtil::getType(item.m_id);
+                item.m_count = m_count;
+                m_owner->m_sellItemList->addItem(item, false);
+            } else {
+                GfItemHandle sell =
+                    GfMenuItemUtil::canCountStack(GfItemUtil::getType(m_item)) ? GfItemHandle() : m_owner->m_sellHandle;
+                GfShopUtil::execSell(m_item, m_count, m_owner->m_shopId, sell);
+                MenuItemInfo item;
+                item.m_id = m_item;
+                item.m_type = GfItemUtil::getType(item.m_id);
+                item.m_count = m_count;
+                if (GfMenuItemUtil::canCountStack(GfItemUtil::getType(m_item))) {
+                    m_owner->m_sellItemList->decItem(item, false);
+                } else {
+                    item.m_entry = sell;
+                    m_owner->m_sellItemList->decItemH(item, false);
+                }
+                GfMenuObjUtil::playSE(0x18);
+            }
+            GfMenuObjShop* owner = m_owner;
+            owner->m_refreshItemList = true;
+            owner->m_stockNumDirty = true;
+        } else if (event.m_param1 == 2) {
+            m_count = 0;
+            GfMenuObjUtil::playSECommonCancel();
+        } else {
+            break;
+        }
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 1;
+        param.m_eventId = 2;
+        int ctrl = GfMenuObjUtil::startPresetCtrl(acc.searchChild("LAY_num_select_main"), param);
+        GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        GfMenuObject::disableInput(acc.m_handle);
+        GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+        acc.setDispChild(false, "IMG_num_select_cursor");
+        break;
+    }
+    case 0x21: {
+        unsigned int id = event.m_param0;
+        m_item = id;
+        m_count = 0;
+        m_mode = event.m_param3;
+        acc.setDisp(true);
+        {
+            ui::UIObjectAcc main(acc.searchChild("LAY_num_select_main"));
+            GfMenuObjUtil::PresetCtrlParam param;
+            param.m_preset = 6;
+            param.m_out = 0;
+            param.m_eventId = 1;
+            int ctrl = GfMenuObjUtil::startPresetCtrl(main.m_handle, param);
+            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        }
+        {
+            mm::mtl::FixStr<32> name;
+            name.format("TXT_num_select_index@%02d", 1);
+            acc.setDispChild(m_mode == 0, name.m_str);
+            name.format("TXT_num_select_index@%02d", 2);
+            acc.setDispChild(m_mode == 1, name.m_str);
+        }
+        ItemPrice price;
+        GfItemUtil::getPrice(price, id, m_owner->m_shopId);
+        unsigned int max;
+        if (m_mode == 0) {
+            if (m_owner->pad_34 == 1) {
+                max = 1;
+            } else {
+                int stock = GfItemUtil::getEnableStock(id);
+                int have = GfItemUtil::getItemBoxCount(id);
+                if (GfDataItem::getItemType(id) == 2) {
+                    max = GfItemUtil::getEnableStock(id) - GfItemUtil::getCountByType(ItemType::Type(2));
+                } else {
+                    max = stock - have;
+                }
+                if (GfDataUtil::getMoney() < price.m_price * max) {
+                    max = GfDataUtil::getMoney() / price.m_price;
+                }
+            }
+        } else if (!GfMenuItemUtil::canCountStack(GfItemUtil::getType(id))) {
+            max = 1;
+        } else {
+            max = GfItemUtil::getItemBoxCount(id);
+            if (GfDataUtil::getMoney() + price.m_sellPrice * max > 999999999) {
+                unsigned int room = 999999999 - GfDataUtil::getMoney();
+                max = room / price.m_sellPrice;
+                if (room % price.m_sellPrice != 0) {
+                    max++;
+                }
+            }
+        }
+        m_max = max;
+        GfMenuObject::resetInputSelection(handle);
+        GfMenuObject::setupInputSelection(handle, 0, max + 1);
+        m_owner->m_numbers[2]->m_value = 0;
+        m_owner->m_numbers[3]->m_value = 0;
+        m_owner->m_numbers[3]->m_max = 999999999;
+        m_owner->pad_D8->setIndex(0);
+        m_owner->setGuideText(0x3E);
+        break;
+    }
+    }
+    UIObjectListener::reciveEvent(event, handle);
+}
+
 bool GfMenuObjShop::seqStartLevelUp() {
     if (m_switchInnCloudSea) {
         GfGameUtilCloudSea::setInnCloudSea(static_cast<CLOUD_SEA>(GfGameUtilCloudSea::getCloudSea() == 0));
@@ -667,6 +823,59 @@ bool GfMenuObjShop::seqStartSleepFade() {
     m_seq.addJob(&GfMenuObjShop::seqIntervalSleep);
     m_seq.addJob(&GfMenuObjShop::seqStartLevelUp);
     m_sleepInterval = 0;
+    m_seqStarted = false;
+    return true;
+}
+
+bool GfMenuObjShop::seqWaitOrbCreate() {
+    if (GfMenuManager::isOpenCommonWindow()) {
+        return false;
+    }
+    if (static_cast<unsigned short>(GfMenuManager::getCommonWindowResult()) != 0) {
+        m_itemGetState = 2;
+    } else {
+        unsigned int item = pad_E8->getContents(pad_E8->getIndex(false)).m_id;
+        mm::mtl::FixedVector<OrbRecipe, 128> items;
+        bool enable;
+        if (m_recipeInfo.m_recipeType == 2) {
+            enable = GfRecipeOrbUtil::isEnableRecipe(m_recipeInfo.m_recipe);
+            if (enable) {
+                const mm::mtl::FixedVector<RecipeInfo::Item, 8>& results = m_recipeInfo.getResultItems();
+                for (unsigned int i = 0; i < results.size(); i++) {
+                    OrbRecipe recipe;
+                    recipe.m_item = results[i].m_item;
+                    recipe.m_number = results[i].m_number;
+                    items.push_back(recipe);
+                }
+            }
+        } else {
+            for (unsigned int i = 0; i < pad_F0->getSize(); i++) {
+                if (pad_130[i] != 0) {
+                    OrbRecipe recipe;
+                    recipe.m_item = pad_F0->getContents(i).m_id;
+                    recipe.m_number = pad_130[i];
+                    items.push_back(recipe);
+                }
+            }
+            enable = GfRecipeOrbUtil::isEnabaleOrbRecipe(m_recipeInfo.m_recipe, items);
+        }
+        if (enable) {
+            GfRecipeOrbUtil::execOrbRecipe(item, &items);
+            MenuItemInfo info = pad_E8->getContents(pad_E8->getIndex(false));
+            info.m_count = 1;
+            m_getItemId = GfRecipeOrbUtil::getEquipOrb(info.m_id);
+            pad_E8->decItem(info, false);
+            {
+                ui::UIObjectAcc list(m_handle, "LAY_orb_item_list");
+                resetInputSelection(list.m_handle);
+                setupInputSelectionFromList(list.m_handle, *pad_E8);
+            }
+            m_result = 1;
+            m_resultParam = 0;
+            GfMenuObjUtil::playSE(0x1a);
+        }
+        m_itemGetState = 1;
+    }
     m_seqStarted = false;
     return true;
 }
@@ -712,6 +921,44 @@ bool GfMenuObjShop::seqItemGet() {
         m_stockNumDirty = false;
     }
     return true;
+}
+
+void GfMenuObjShop::refreshOrbRecipeOperation() {
+    ui::UIObjectAcc acc(m_handle, "LAY_orb_rcp");
+    if (acc.m_object == nullptr) {
+        return;
+    }
+    pad_F0->getIndex(false);
+    if (pad_130.size() == 0) {
+        return;
+    }
+    unsigned int max = m_numbers[7]->m_value;
+    unsigned int total = m_numbers[6]->m_value;
+    short number = pad_130[pad_F0->getIndex(false)];
+    GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 1, total == max);
+    bool add = total < max && number < pad_F0->getContents(pad_F0->getIndex(false)).m_count;
+    GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 9, add);
+    GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 10, number > 0);
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < 8; i++) {
+        if (i >= pad_F0->getSize()) {
+            break;
+        }
+        short set = pad_130[pad_F0->getPageIndex(i)];
+        short count = pad_F0->getContents(pad_F0->getPageIndex(i)).m_count;
+        bool more = total < max && set < count;
+        name.format("IMG_orb_rcp_item_set_r@%02d", i + 1);
+        {
+            ui::UIObjectAcc right(acc.m_handle, name.m_str);
+            right.setAlpha(more ? 1.0f : 0.5f);
+        }
+        bool less = set > 0;
+        name.format("IMG_orb_rcp_item_set_l@%02d", i + 1);
+        {
+            ui::UIObjectAcc left(acc.m_handle, name.m_str);
+            left.setAlpha(less ? 1.0f : 0.5f);
+        }
+    }
 }
 
 bool GfMenuObjShop::getExcTaskRewardItem(unsigned int task, mm::mtl::FixedVector<unsigned short, 4>& items) {
