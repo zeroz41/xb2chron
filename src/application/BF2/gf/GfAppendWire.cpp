@@ -37,6 +37,11 @@
 #include "gf/GfKizunaringBlade.h"
 #include "gf/GfPlayFactory.h"
 #include "gf/MapJumpForBattleStart.h"
+#include "classes/gf/SCOM_FADE.h"
+#include "classes/gf/GfBdatChrDr.h"
+#include "classes/gf/GfReqManager.h"
+#include "gf/GfReqCommand.h"
+#include "gf/SDataBlade.h"
 
 namespace gf {
 
@@ -404,6 +409,38 @@ void GfArenaParty::removeFieldBlade() {
     GfGameUtil::execPartyBladeFollow(false, true);
 }
 
+bool GfArenaParty::changePartyForStartBattle(const ArenaBattleStart& key) {
+    GfBdatBtl* bdat = GfBdatBtl::get();
+    SCOM_FADE::create(0, 0xf, mm::Col4::black);
+    while (!GfGameManager::isFadeout()) {
+        m_owner->sleep(0);
+    }
+    GfGameParty::getCurrentPartyInfo(m_party);
+    if (bdat->getBTL_ChBtlDriver(key.m_id, 0) == 12 || bdat->getBTL_ChBtlDriver(key.m_id, 1) == 12 ||
+        bdat->getBTL_ChBtlDriver(key.m_id, 2) == 12) {
+        RQ_SETUP_PARTY party;
+        party.m_drivers[0].m_driver = 12;
+        party.m_drivers[0].m_blades[0] = GfBdatChrDr::get()->getChrDrDefBlade1(12);
+        party.m_drivers[0].m_activeIndex = 0;
+        SDataBlade* blade = GfDataBlade::getSDataBlade(0x456);
+        blade->m_equipWeapon = GfBdatChrBl::get()->getChrBlDefWeapon(0x456);
+        unsigned int level = GfBdatBtl::get()->getBTL_ChBtlMaxLevel(key.m_id);
+        if (level != 0) {
+            GfDataDriver::setLevel(12, level);
+        }
+        GfReqCommand::reqChangeParty(party);
+        while (GfReqManager::isExistCommand(nullptr)) {
+            m_owner->sleep(0);
+        }
+        mm::mtl::FixedVector<unsigned int, 32> blades;
+        m_party.getAllBlade(blades);
+        for (unsigned int id : blades) {
+            GfDataBlade::setUnselect(id, true);
+        }
+    }
+    return true;
+}
+
 void GfArenaParty::setupLevelForBattleStart(const ArenaBattleStart& key) {
     GfArenaUtil::setupLevelForBattleStart(m_lists, key);
     for (const ArenaChanged::Entry38& entry : m_lists.m_list38) {
@@ -446,6 +483,36 @@ bool GfArenaParty::checkDriver(const ArenaBattleStart& key) {
             return false;
         }
     }
+    return true;
+}
+
+bool GfArenaParty::setupParty(const ArenaBattleStart& key) {
+    if (key.m_id == 0) {
+        return false;
+    }
+    if (!key.m_flag8) {
+        unsigned int cond = GfBdatBtl::get()->getBTL_ChBtlCondition(key.m_id);
+        if (cond != 0 && !GfGameCond::isGameCond(cond)) {
+            return false;
+        }
+    }
+    // the code tests the id again after the condition (it reloads it)
+    if (key.m_id == 0) {
+        return false;
+    }
+    GfBdatBtl* bdat = GfBdatBtl::get();
+    if (bdat->getBTL_ChBtlType(key.m_id) != 3) {
+        unsigned int num = bdat->getBTL_ChBtlJoinNumber(key.m_id);
+        if (num != 0 && GfGameParty::getDriverNum() > num) {
+            return false;
+        }
+    }
+    if (!checkDriver(key)) {
+        return false;
+    }
+    changePartyForStartBattle(key);
+    setupLevelForBattleStart(key);
+    setupWeaponParamForBattleStart(key);
     return true;
 }
 

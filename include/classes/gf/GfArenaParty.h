@@ -43,9 +43,11 @@ public:
     // level to the challenge's and copies the list to the arena's record; setupWeaponParamForBattleStart the same for
     // m_listE0 (GfArenaUtil::setupRankForBattleStart, no levels).
     bool checkDriver(const ArenaBattleStart& start);
-    // changePartyForStartBattle: fades out, keeps the party (GfGameParty::getCurrentPartyInfo into m_party) and changes it to
-    // the challenge's drivers and blades (GfReqCommand::reqChangeParty).
-    void changePartyForStartBattle(const ArenaBattleStart& start);
+    // changePartyForStartBattle: fades out, keeps the party (GfGameParty::getCurrentPartyInfo into m_party) and, when
+    // one of the challenge's drivers 0..2 is driver 12, changes the party to driver 12 alone with its default blade
+    // (GfReqCommand::reqChangeParty) and unselects the kept party's blades. It answers true (the code ends with
+    // mov w0, #1 on both paths).
+    bool changePartyForStartBattle(const ArenaBattleStart& start);
     void setupLevelForBattleStart(const ArenaBattleStart& start);
     void setupWeaponParamForBattleStart(const ArenaBattleStart& start);
     GfGameArena* m_owner;  // (the name is not the original's)
