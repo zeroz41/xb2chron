@@ -23,6 +23,7 @@
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfMenuObjDamageBuff.h"
 #include "classes/gf/GfDataBdat.h"
+#include "classes/gf/DataParamAcc.h"
 #include "plugin/Bdat.h"
 #include "gf/MsgFxComboBuff.h"
 #include "gf/MsgUnk_1000050.h"
@@ -87,6 +88,42 @@ CharacterParameter* BattleCharacter::GetCharacterParameterConst(bool) const {
 
 gf::GfObj* BattleCharacter::GetObject() const {
     return gf::GfObjUtil::getObj(m_handle);
+}
+
+void BattleCharacter::SetupCustomVoiceData() {
+    pad_ECC = 0;
+    pad_ED0 = 0;
+    for (int i = 0; i < 3; i++) {
+        pad_ED4[i].m_id = 0;
+        pad_ED4[i].m_value = 0;
+    }
+    int personality;
+    if (BattleGlobal::sys()->m_challengeAnySuccess) {
+        unsigned int id = Utility::GetIraDummyBladeID(m_bdatID);
+        if (id == 0) {
+            return;
+        }
+        gf::DataParamAcc acc(4, id, gf::GimmickType(0));
+        personality = acc.getPersonality();
+    } else {
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        if (param == nullptr || !param->IsBlade(true)) {
+            return;
+        }
+        gf::DataParamAcc acc(m_handle);
+        personality = acc.getPersonality();
+    }
+    if (personality <= 0) {
+        return;
+    }
+    unsigned char* fp = gf::GfDataBdat::getFP(0xE);
+    mm::mtl::FixStr<32> column;
+    for (int i = 0; i < 3; i++) {
+        int id = Bdat::getValCheckU8(fp, column.format("Custom%02d", i + 1).m_str, personality);
+        pad_ED4[i].m_id = id;
+        pad_ED4[i].m_value = Bdat::getValCheckU8(fp, column.format("CustomParam%02d", i + 1).m_str, personality);
+        pad_ECC |= 1 << id;
+    }
 }
 
 CharacterParameter* BattleCharacter::GetCharacterParameter(bool) {

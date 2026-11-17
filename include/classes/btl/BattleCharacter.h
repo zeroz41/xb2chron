@@ -167,6 +167,9 @@ public:
     int IsActBladeArts(int, bool) const;
     // CharacterManager::Register gives the character its handle and its slot index
     void Initialize(gf::GF_OBJ_HANDLE* handle, int index);
+    // the original's symbol names it. What it does: clears the custom voice words and entries (pad_ECC, pad_ED0,
+    // pad_ED4), then reads the blade's personality row of BDAT table 0xE (Custom01-03 / CustomParam01-03)
+    void SetupCustomVoiceData();
     // 2.0.0's symbols name it. What it does: while BattleGlobal's flags allow and the character lives, looks m_bdatID
     // up in BDAT table 0x100 (GfDataBdat::getFP) and updates the character from it.
     void CheckTutorialEnemy();
