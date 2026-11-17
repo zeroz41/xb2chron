@@ -22,7 +22,10 @@ public:
     unsigned short m_line;      // the blade's skill line (isCompleteLevel(AchievQuest&) passes the three on)
     unsigned short m_level;     // the line's level (getSkillLevel counts one done at 1 even without its quest)
     unsigned short m_blade;
-    unsigned char pad_18[0x4];
+    // the quest's achievement (GfDataBlade::setupAchievInfo stores the FLD_AchievementSet row's id for the level;
+    // getKizunaringMax counts the quests that have one). The name is not the original's.
+    unsigned short m_achievementId;
+    unsigned char pad_1a[0x2];
 
     // whether the count changed (GfQuestInfo::incCollectUseCount and decCollectUseCount answer it)
     bool incleseCount(unsigned int count);

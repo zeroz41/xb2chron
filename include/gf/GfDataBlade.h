@@ -181,6 +181,11 @@ public:
     static SDataBlade* getSDataBlade(unsigned int blade);
     // (symbols) the enhances of a blade's data; true when any (DataObjBlade's armor/rate getters sum them)
     static bool getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, SDataBlade& data, bool flag);
+    // no symbol in any build (it follows getValidEnhance(enhances, data, flag)): removes the enhances whose
+    // GfBdatBtl enhance effect has the condition flag (isBTL_EnhanceEffFlagCondition) unless keep is set.
+    // GfDataEnemy::getValidEnhance carries it inline with keep set; GfDataDriver::getValidEnhance and the weapon
+    // and skill enhance helpers call it.
+    static void fn_710024121C(mm::mtl::FixedVector<unsigned short, 64>& enhances, bool keep);
     // the blade's physical and ether defense bonus (Hana's from her role part); 0 for no blade
     static unsigned int getParmor(unsigned int blade);
     static unsigned int getEarmor(unsigned int blade);

@@ -375,6 +375,17 @@ const char* GfDataField::getFieldSkillVoice(unsigned int driver, unsigned int ca
     return voice;
 }
 
+void GfDataBlade::fn_710024121C(mm::mtl::FixedVector<unsigned short, 64>& enhances, bool keep) {
+    GfBdatBtl* btl = GfBdatBtl::get();
+    for (unsigned short* it = enhances.begin(); it != enhances.end();) {
+        if (btl->isBTL_EnhanceEffFlagCondition(btl->getBTL_EnhanceEnhanceEffect(*it)) && !keep) {
+            it = enhances.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 bool GfDataDriver::getListDriver(mm::mtl::FixedVector<unsigned short, 32>& drivers) {
     for (unsigned int driver = 1; driver <= 9; driver++) {
         drivers.push_back(driver);
@@ -1379,6 +1390,21 @@ unsigned int GfDataBlade::getCrownPoint(unsigned int blade) {
         }
     }
     return 1;
+}
+
+unsigned int GfDataBlade::getKizunaringMax(unsigned int blade) {
+    unsigned int num = 0;
+    for (unsigned int line = 0; line < 10; line++) {
+        AchievInfo* info = getAchievInfo(blade, line);
+        if (info->m_achievementId != 0) {
+            for (int i = 0; i < 5; i++) {
+                if (info->m_quests[i].m_achievementId != 0) {
+                    num++;
+                }
+            }
+        }
+    }
+    return num;
 }
 
 bool GfDataBlade::isRegularBlade(unsigned int blade) {
@@ -3636,6 +3662,45 @@ void GfDataBlade::setupAchievQuest(AchievQuest& quest) {
         return;
     }
     quest.m_countMax = count;
+}
+
+unsigned int GfDataBlade::getKizunaringCompleteNum(unsigned int blade) {
+    unsigned int num = 0;
+    for (unsigned int line = 0; line < 10; line++) {
+        AchievInfo* info = getAchievInfo(blade, line);
+        if (info->m_achievementId != 0) {
+            for (int i = 0; i < 5; i++) {
+                if (info->m_quests[i].m_achievementId != 0) {
+                    num += info->m_quests[i].m_flags & 1;
+                }
+            }
+        }
+    }
+    return num;
+}
+
+AchievInfo* GfDataBlade::getAchievInfo(unsigned int blade, unsigned int line) {
+    unsigned int bladeIndex = getBladeIndex(blade);
+    SDataGame* game = GfDataManager::getDataGame();
+    SDataBlade& data = game->m_blades[bladeIndex];
+    ACHIEVEMENT_TYPE type;
+    unsigned int index;
+    if (!GfDataAchievement::getAchievementType(type, index, line)) {
+        return data.m_artsAchievement;
+    }
+    AchievInfo* info = &data.m_keyAchievement;
+    switch (type) {
+    case 0:
+        info = &data.m_artsAchievement[index];
+        break;
+    case 1:
+        info = &data.m_skillAchievement[index];
+        break;
+    case 2:
+        info = &data.m_fieldSkillAchievement[index];
+        break;
+    }
+    return info;
 }
 
 const char* GfDataQuest::getTaskLog(QuestID id, unsigned int msg) {
