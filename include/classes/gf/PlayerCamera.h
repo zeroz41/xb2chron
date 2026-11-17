@@ -97,6 +97,7 @@ public:
     void resetClimb();
     float getRotateRevise();
     void updateCollisionUp(const mm::Vec3& target, mm::Vec3& look, mm::Vec3& eye);
+    void updateTracking(bool, bool);
     void reset();
     void resetLoad();
     void resetClimb(ResetCameraWallTiming timing);
@@ -148,7 +149,11 @@ public:
     bool m_sloping;
     unsigned char pad_123[0x1];
     bool m_resetClimb;  // resetClimb sets it (the name is not the original's)
-    unsigned char pad_125[0x3];
+    // updateTracking's: the height follow was in its state-1 mode last time (it then starts from the tracked height)
+    // and the target was riding last time (the names are not the original's)
+    bool m_trackingState1;
+    bool m_trackingRiding;
+    unsigned char pad_127[0x1];
     unsigned char pad_128[0x4];
     // the collision tests' settings (the names are not the original's)
     fw::ColiCheckConfig m_coliConfig;

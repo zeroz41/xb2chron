@@ -64,10 +64,143 @@ void PlayerCamera::resetClimb() {
     }
 }
 
+// follows the target's position into m_warpPos: x and z at a rate that depends on whether the target rides and
+// moves, y toward a height chosen from the target's state (the parameter names are not the original's)
+void PlayerCamera::updateTracking(bool followHeight, bool snapHeight) {
+    PlayerCameraTarget* target = PlayerCameraTarget::get();
+    mm::Vec3 pos = m_targetPos;
+    float rate;
+    if (m_targetHandle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) && target->m_isRiding) {
+        m_trackingRiding = true;
+        float dx = pos.x - m_warpPos.x;
+        float dz = pos.z - m_warpPos.z;
+        float dist = ::sqrtf(dx * dx + dz * dz);
+        if (m_targetChanged) {
+            rate = 0.1f;
+            if (dist < 0.05f) {
+                m_targetChanged = false;
+            }
+        } else {
+            rate = 0.0f;
+            if (dist > 1.5f) {
+                m_targetChanged = true;
+            }
+        }
+    } else {
+        if (m_trackingRiding) {
+            m_targetChanged = true;
+            m_trackingRiding = false;
+        } else if (!m_targetChanged) {
+            m_warpPos.x = pos.x;
+            m_warpPos.z = pos.z;
+            rate = 0.2f;
+            goto height;
+        }
+        {
+            float dx = pos.x - m_warpPos.x;
+            float dz = pos.z - m_warpPos.z;
+            float dist = ::sqrtf(dx * dx + dz * dz);
+            rate = 0.3f;
+            if (dist < 0.05f) {
+                m_targetChanged = false;
+            }
+        }
+    }
+height:
+    [&] {
+        if (followHeight) {
+            m_trackingHeight = pos.y;
+        } else if (snapHeight) {
+            m_warpPos.y = pos.y;
+            m_trackingHeight = pos.y;
+        } else if (target->m_isState1) {
+            if (!m_trackingState1) {
+                m_trackingState1 = true;
+                m_trackingHeight = m_warpPos.y;
+            }
+            pos.y = m_trackingHeight;
+            if (pos.y < target->m_groundHeight) {
+                pos.y = target->m_groundHeight;
+            }
+            if (m_targetPos.y < m_trackingHeight) {
+                pos.y = target->m_inWater && m_targetPos.y < target->m_groundHeight ? target->m_groundHeight
+                                                                                      : m_targetPos.y;
+                m_warpPos.y = pos.y;
+            }
+            if (target->m_hasLink) {
+                m_warpPos.y = pos.y;
+            }
+        } else {
+            if (m_trackingState1) {
+                m_trackingState1 = false;
+                m_trackingHeight = target->m_groundHeight;
+            }
+            if (m_trackingHeight - target->m_groundHeight < 1.0f) {
+                m_trackingHeight = target->m_groundHeight;
+            }
+            if (pos.y < m_warpPos.y) {
+                m_warpPos.y = pos.y;
+            }
+            if (target->m_hasLink) {
+                m_warpPos.y = pos.y;
+            }
+            if (!target->m_hasGround) {
+                pos.y = m_targetPos.y;
+                m_warpPos.y = pos.y;
+                m_trackingHeight = pos.y;
+            }
+        }
+    }();
+    m_warpPos.x += rate * (pos.x - m_warpPos.x);
+    m_warpPos.y += (pos.y - m_warpPos.y) * 0.2f;
+    m_warpPos.z += rate * (pos.z - m_warpPos.z);
+}
+
 void PlayerCamera::resetClimb(ResetCameraWallTiming timing) {
     m_resetClimb = true;
     m_wallTiming = timing;
     m_rotateRevise = timing == 0 ? 0.666666687f : 0.233333349f;
+}
+
+void PlayerCamera::reset() {
+    if (PlayerCameraTarget* target = PlayerCameraTarget::get()) {
+        {
+            mm::Vec3 dir;
+            mm::Vec3 front = mm::Vec3::unitZ;
+            const mm::Quat q = target->m_rotation;
+            q.rotate(dir, front * -1.0f);
+            float yaw = getYaw(dir, front);
+            m_yaw = yaw;
+            m_curYaw = yaw;
+        }
+        const Param* param = static_cast<const Param*>(m_param.m_entry->m_data);
+        mm::Vec3 eye(0.0f, param->m_cameraHeight, -param->m_distanceDefault);
+        mm::Vec3 look(0.0f, param->m_lookHeight, 0.0f);
+        mm::Vec3 dir = look - eye;
+        mm::Vec3 front = mm::Vec3::unitZ;
+        m_defaultPitch = getPitch(dir, front);
+        m_curDistance = m_distance;
+        m_curPitch = 0.0f;
+        m_pitch = 0.0f;
+        m_curHeight = m_height;
+        m_lookPos = target->m_position;
+        m_targetPos = m_lookPos;
+        m_targetChanged = false;
+        m_warpPos = m_lookPos;
+        m_manual = false;
+        m_resetting = false;
+        m_sloping = false;
+        mm::Vec3 rot(0.0f, m_curYaw, 0.0f);
+        mm::Vec3 half = rot * 0.5f;
+        float sx = ::sinf(half.x), cx = ::cosf(half.x), sy = ::sinf(half.y), cy = ::cosf(half.y),
+              sz = ::sinf(half.z), cz = ::cosf(half.z);
+        mm::Quat q(sx * cy * cz - cx * sy * sz, cx * sy * cz + sx * cy * sz, cx * cy * sz - sx * sy * cz,
+                   cx * cy * cz + sx * sy * sz);
+        q.rotate(m_offset, m_curDistance * mm::Vec3::unitZ);
+        m_offset += m_targetPos;
+        GfDataUtil::setCameraYaw(m_yaw);
+        GfDataUtil::setCameraPitch(m_pitch);
+    }
 }
 
 void PlayerCamera::resetLoad() {
