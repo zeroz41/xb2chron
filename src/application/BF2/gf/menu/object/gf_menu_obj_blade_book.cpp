@@ -269,6 +269,134 @@ bool isUnuseBlade(unsigned int blade) {
     return GfDataBlade::isActivateUnuse(blade);
 }
 
+void GfMenuObjBladeBook::PreviewListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableFSInput(1);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 9, true);
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 10, false);
+        }
+        break;
+    case 8: {
+        int action = event.m_param1;
+        switch (action) {
+        case 2: {
+            GfMenuObjBladeBook* owner = m_owner;
+            if (owner->m_voice != nullptr) {
+                GfGameVoice::playStop(owner->m_voice);
+                owner->m_voice = nullptr;
+            }
+            GfMenuObject::disableFSInput();
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            {
+                ui::UIObjectAcc main(m_owner->m_handle, "LAY_main");
+                ui::EventData close;
+                close.m_type = 0x101;
+                GfMenuObject::sendEvent(main.m_handle, close, 0.0f);
+            }
+            GfMenuObjUtil::playSECommonCancel();
+            break;
+        }
+        case 9: {
+            int step = m_owner->m_zoomStep + 1;
+            if (step >= 5u) {
+                GfMenuObjUtil::playSECommon(2);
+                step = 4;
+            } else {
+                GfMenuObjUtil::playSE(0x37);
+            }
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 9, step + 1 < 5u);
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 10, step > 0);
+            if (m_owner->m_zoomStep != step) {
+                m_owner->setPreviewScale(step);
+                m_owner->m_zoomStep = step;
+            }
+            break;
+        }
+        case 10: {
+            int step;
+            if (m_owner->m_zoomStep <= 0) {
+                GfMenuObjUtil::playSECommon(2);
+                step = 0;
+            } else {
+                step = m_owner->m_zoomStep - 1;
+                GfMenuObjUtil::playSE(0x38);
+            }
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 9, step + 1 < 5u);
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 10, step > 0);
+            if (m_owner->m_zoomStep != step) {
+                m_owner->setPreviewScale(step);
+                m_owner->m_zoomStep = step;
+            }
+            break;
+        }
+        case 0xB:
+        case 0xC:
+        case 0xD: {
+            unsigned int index = action - 0xB;
+            const char* voice = GfDataBlade::getMenuVoiceName(GfMenuReference::getReferenceBladeID(0), index);
+            if (voice != nullptr && *voice != '\0') {
+                GfMenuObjBladeBook* owner = m_owner;
+                if (owner->m_voice != nullptr) {
+                    GfGameVoice::playStop(owner->m_voice);
+                    owner->m_voice = nullptr;
+                }
+                owner->m_voice = GfGameVoice::playVoice(voice);
+            }
+            break;
+        }
+        }
+        break;
+    }
+    case 10: {
+        float scale = m_owner->m_previewScale;
+        ui::UIObjectAcc image(acc.m_handle, "IMG_prev_bl_img");
+        short y = event.m_paramShort[1];
+        short x = event.m_paramShort[0];
+        m_owner->m_pointerPos.x = m_owner->m_scrollOrigin.x + m_owner->m_overSize.x / 2 - x;
+        m_owner->m_pointerPos.y = m_owner->m_scrollOrigin.y + m_owner->m_overSize.y / 2 - y;
+        image.setPosCenter(mm::Pnt<short>(m_owner->m_previewCenter.x - m_owner->m_pointerPos.x,
+                                          m_owner->m_previewCenter.y - m_owner->m_pointerPos.y));
+        image.setScale(mm::Vec2(scale, scale));
+        break;
+    }
+    case 0x21: {
+        m_owner->m_pointerPos = mm::Pnt<short>(0, 0);
+        m_owner->m_zoomStep = 0;
+        {
+            ui::UIObjectAcc image(acc.searchChild("IMG_prev_bl_img"));
+            image.setScale(m_owner->m_baseScale);
+            image.setPosCenter(m_owner->m_previewCenter);
+            m_owner->m_previewScale = m_owner->m_baseScale.x;
+            GfMenuObjBladeBook* owner = m_owner;
+            owner->getScreenOverSize(image.m_handle, owner->m_baseScale.y, owner->m_overSize.x, owner->m_overSize.y);
+            m_owner->m_scrollOrigin.x = m_owner->m_previewCenter.x - m_owner->m_overSize.x / 2;
+            m_owner->m_scrollOrigin.y = m_owner->m_previewCenter.y - m_owner->m_overSize.y / 2;
+        }
+        {
+            ui::UIObjectAcc image(acc.m_handle, "IMG_prev_bl_img");
+            m_owner->setPreviewScale(0);
+            image.setPosCenter(mm::Pnt<short>(m_owner->m_previewCenter.x - m_owner->m_pointerPos.x,
+                                              m_owner->m_previewCenter.y - m_owner->m_pointerPos.y));
+        }
+        GfMenuObjUtil::setCommonFadeIn(acc.m_handle, 1, 0);
+        break;
+    }
+    case 0x22:
+        GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 2, 0);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjBladeBook::getScreenOverSize(unsigned int handle, float scale, short& width, short& height) {
     ui::UIObjectAcc acc(handle);
     mm::Rect<short> rect;
