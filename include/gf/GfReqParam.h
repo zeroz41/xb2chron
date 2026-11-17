@@ -45,12 +45,28 @@ struct GfPartyPosInfo {
 // the party to set up: ten drivers, each with the blades it engages. The names are not the original's.
 class RQ_SETUP_PARTY {
 public:
-    RQ_SETUP_PARTY();  // GfAppendWire's unit holds its C2 (0x710028D7E8)
+    // inline (SCOM_EXEC_CURRENT_BLADE::exec and the menus build one on the stack with these stores inlined; the C2
+    // at 0x710028D7E8 is the weak copy GfAppendWire's unit keeps): the body resets the drivers and the Ira members
+    // again
+    RQ_SETUP_PARTY() : m_iraDrivers(), m_extras(), pad_114() {
+        m_posInfo = GfPartyPosInfo();
+        for (int i = 0; i < 10; i++) {
+            m_drivers[i] = Driver();
+        }
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 3; j++) {
+                m_iraDrivers[i][j] = 0;
+            }
+        }
+    }
+    // the RQ_SETUP_PARTY constructor stores these values for each driver before its own body. Not a POD, so its
+    // assignment copies 0x13 bytes
     struct Driver {
+        Driver() : m_driver(0), m_activeIndex(-1), m_blades(), pad_12(0) {}
         unsigned int m_driver;  // getAllBlade asks GfDataDriver::getMaxSetBladeNum with it
         unsigned int m_activeIndex;  // the engaged blade's index (replaceActBlade engages the first with the default)
         unsigned short m_blades[5];  // 0: none
-        unsigned short pad_12;
+        unsigned char pad_12;  // the constructor stores a byte here
     };
     // every blade the drivers engage (3.0.1's vector holds 32: its push_back asserts the size below 32)
     void getAllBlade(mm::mtl::FixedVector<unsigned int, 32>& blades) const;

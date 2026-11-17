@@ -115,6 +115,7 @@
 #include "classes/gf/SCOM_PARTY_ADD.h"
 #include "classes/gf/SCOM_PARTY_LEADER.h"
 #include "classes/gf/DataParamAcc.h"
+#include "gf/GfReqCommand.h"
 #include "gf/MsgObjectHealHp.h"
 #include "gf/MsgObjectMaxHp.h"
 #include "classes/gf/GfGameEvent.h"
@@ -3480,6 +3481,26 @@ GAME_VOICE_HANDLE* SCOM_BATTLE_ARENA::createReturnVoice(GF_OBJ_HANDLE** handles,
         }
     }
     return nullptr;
+}
+
+bool SCOM_EXEC_CURRENT_BLADE::exec(fw::UpdateInfo const&) {
+    unsigned int driver = GfDataBlade::getSetDriver(m_value);
+    if (driver != 0) {
+        int setId = GfDataDriver::getSetIdByBlade(driver, m_value);
+        if (setId >= 0) {
+            GF_OBJ_HANDLE* handle = GfGameParty::getHandleDriverByBdatID(driver);
+            if (GfObjUtil::isValid(handle)) {
+                GfGameUtil::setBladeSelect(handle, setId);
+                RQ_SETUP_PARTY party;
+                GfGameParty::getCurrentPartyInfo(party);
+                GfReqCommand::reqChangeParty(party);
+            } else {
+                DataParamAcc acc(3, 1, GimmickType(0));
+                acc.setBladeSet(setId);
+            }
+        }
+    }
+    return true;
 }
 
 SCOM_FADE::Fade SCOM_FADE::s_fades[3];

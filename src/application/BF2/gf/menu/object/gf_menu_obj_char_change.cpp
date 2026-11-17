@@ -10,6 +10,13 @@
 #include "classes/gf/GfMenuReference.h"
 #include "gf/GfDataDriver.h"
 #include "ui/EventData.h"
+#include "classes/gf/GfGameParty.h"
+#include "classes/gf/GfMenuManager.h"
+#include "gf/GfObjAcc.h"
+#include "gf/GfPlayFactory.h"
+#include "gf/GfReqParam.h"
+#include "ui/UIUtil.h"
+#include "fw/PadData.h"
 
 namespace gf {
 
@@ -388,6 +395,80 @@ void GfMenuObjCharChange::CommandListener::reciveEvent(const ui::EventData& even
                     GfMenuObjUtil::playSE(0x2D);
                 }
             }
+        }
+        break;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjCharChange::CharListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        break;
+    case 8: {
+        if (m_owner->pad_1B8 != -1) {
+            break;
+        }
+        int button = event.m_param1;
+        if ((ui::UIUtil::getPadData()->m_btn & 0x10) != 0) {
+            break;
+        }
+        switch (button) {
+        case 9:
+            if (m_owner->pad_1BF) {
+                return;
+            }
+            if (m_owner->pad_1B4) {
+                GfMenuObjUtil::playSE(0x2E);
+                GfPlayFactory::createBladeSwitch();
+                return;
+            }
+            break;
+        case 10:
+            if (m_owner->pad_1BF) {
+                return;
+            }
+            if (m_owner->pad_1B5) {
+                RQ_SETUP_PARTY party;
+                GfGameParty::getCurrentPartyInfo(party);
+                if (GfDataDriver::isIraFront(party.m_iraDrivers[0][0])) {
+                    GfPlayFactory::createBladeSwitchBR();
+                } else {
+                    GfPlayFactory::createBladeSwitchFR();
+                }
+                GfMenuObjUtil::playSE(0x2E);
+                return;
+            }
+            break;
+        case 11: {
+            if (m_owner->pad_1BF) {
+                return;
+            }
+            GfObjAcc target(GfMenuManager::getTargetObjHandle());
+            if (target.m_obj != nullptr && target.getType() == 5) {
+                return;
+            }
+            if (m_owner->pad_1B4) {
+                GfMenuObjUtil::playSE(0x2E);
+                GfPlayFactory::createBladeSwitch();
+                return;
+            }
+            break;
+        }
+        case 12:
+            if (!m_owner->pad_1BC || !GfMenuReference::isIraFlag(2)) {
+                return;
+            }
+            break;
+        default:
+            return;
+        }
+        if (!GfMenuManager::isBattleState(0)) {
+            GfMenuObjUtil::playSECommon(2);
         }
         break;
     }

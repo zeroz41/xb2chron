@@ -61,6 +61,9 @@ public:
     // for the blade's driver (getIraDriver, GfDataDriver::getIraFromPos): refills the list when m_driver changes,
     // then selects the blade's row in m_driverList
     void changeBlade(unsigned int blade);
+    // the form's drivers (up to three, the rest 0) replace the current party's Ira row that holds m_driver; sends it
+    // as a party change (m_req) and queues seqWaitRequest, a frame, seqChangeDriverList, seqOpenCharSelectByFormChange
+    void applyDriverForm(const mm::mtl::FixedVector<unsigned short, 32>& form);
     // stops the control on each m_selectList object and updates its layout size, then the size of each
     // LAY_char@%02d row of pad_578's count; caller CharListener::reciveEvent
     void resetObjControl();

@@ -24,6 +24,9 @@
 #include "ui/EventData.h"
 #include "classes/gf/GfMenuObjCmnStatus.h"
 #include "classes/gf/GfMenuCharDataAdapter.h"
+#include "classes/gf/GfGameParty.h"
+#include "gf/GfReqCommand.h"
+#include "gf/GfReqParam.h"
 
 namespace gf {
 
@@ -339,6 +342,33 @@ void GfMenuObjCharSelectIra::changeBlade(unsigned int blade) {
             m_driverList->setIndex(i);
         }
     }
+}
+
+void GfMenuObjCharSelectIra::applyDriverForm(const mm::mtl::FixedVector<unsigned short, 32>& form) {
+    RQ_SETUP_PARTY party;
+    GfGameParty::getCurrentPartyInfo(party);
+    int row = -1;
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (party.m_iraDrivers[i][j] == m_driver) {
+                row = i;
+                break;
+            }
+        }
+    }
+    for (int j = 0; j < 3; j++) {
+        if (j < form.size()) {
+            party.m_iraDrivers[row][j] = form[j];
+        } else {
+            party.m_iraDrivers[row][j] = 0;
+        }
+    }
+    m_req = GfReqCommand::reqChangeParty(party);
+    m_seq.clear();
+    m_seq.addJob(&GfMenuObjCharSelectIra::seqWaitRequest);
+    m_seq.addWait(1);
+    m_seq.addJob(&GfMenuObjCharSelectIra::seqChangeDriverList);
+    m_seq.addJob(&GfMenuObjCharSelectIra::seqOpenCharSelectByFormChange);
 }
 
 bool GfMenuObjCharSelectIra::seqWaitRequest() {
