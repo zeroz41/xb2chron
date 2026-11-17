@@ -34,6 +34,9 @@
 #include "classes/gf/GfMenuReferenceNumber.h"
 #include "classes/ui/UICtrlCursorSelect.h"
 #include "classes/ui/UICtrlRoll.h"
+#include "classes/gf/GfBdatMsg.h"
+#include "gf/GfQuestUtil.h"
+#include "classes/ui/UIShapeRing.h"
 
 namespace gf {
 
@@ -232,6 +235,74 @@ unsigned int GfMenuObjHitonowa::createNpcObj(unsigned int id, unsigned int kind)
     return handle;
 }
 
+void GfMenuObjHitonowa::refreshComplete() {
+    ui::UIObjectAcc main(m_handle, "LAY_main");
+    m_roll->reset();
+    float angle = 0.0f;
+    float step = 45.0f;
+    unsigned int count = 0;
+    unsigned int i = 0;
+    unsigned int ring = 0;
+    unsigned int radius = 90;
+    unsigned int perRing = 8;
+    for (; i < m_selectLists[0]->getSize(); i++) {
+        ui::UICtrlRoll::RollSetting setting;
+        m_idLists[0]->getContents(i);
+        setting.m_startAngle = angle;
+        setting.m_speed = 0.0f;
+        setting.m_radius = radius;
+        m_roll->addObject(m_selectLists[0]->getObject(i), setting);
+        if (++count < perRing) {
+            angle = step + angle;
+        } else {
+            ring++;
+            unsigned int level = ring / 5 + 1;
+            perRing = level * 8;
+            float ratio = 1.0f / level;
+            switch (ring) {
+            case 1:
+                radius += 28;
+                break;
+            case 4:
+                radius += 24;
+                break;
+            case 6:
+                radius += 23;
+                break;
+            default:
+                radius += 26;
+                break;
+            }
+            count = 0;
+            angle = (ring & 1) ? ratio * 22.5f : 0.0f;
+            if (ring == 8) {
+                radius -= 5;
+                angle = 90.0f;
+            }
+            step = 360.0f / perRing;
+        }
+    }
+    unsigned int rings = main.countChild("POL_ring@%02d", 1);
+    mm::mtl::FixStr<32> name;
+    unsigned int last = count == 0 ? ring - 1 : ring;
+    unsigned int size = 208;
+    for (unsigned int j = 0; j < rings; j++) {
+        name.format("POL_ring@%02d", j + 1);
+        ui::UIObjectAcc obj(m_handle, name.m_str);
+        if (j < last + 1) {
+            ui::UIShape* shape = obj.getShape();
+            if (shape != nullptr && shape->getRTTI()->isKindOf(&ui::UIShapeRing::m_rtti)) {
+                static_cast<ui::UIShapeRing*>(shape)->setScale(size / 128.0f);
+            }
+            obj.setAddColor("white");
+            obj.setAlpha(0.8f);
+            size += 60;
+        } else {
+            obj.setDisp(false);
+        }
+    }
+}
+
 void GfMenuObjHitonowa::finalize() {
     GfMenuObject::finalize();
 }
@@ -253,6 +324,74 @@ void GfMenuObjHitonowa::update() {
     m_seq.update();
     m_seq2.update();
     GfMenuObject::update();
+}
+
+void GfMenuObjHitonowa::dispStatus(unsigned int handle, unsigned int id, unsigned int group) {
+    unsigned char* bdat;
+    ui::UIObjectAcc status(m_handle, "LAY_status");
+    if (pad_ED2) {
+        int ctrl = GfMenuObjUtil::getCtrlID(status.m_handle);
+        if (ctrl != -1) {
+            GfMenuObjUtil::stopCtrl(ctrl);
+        }
+        unsigned int msg;
+        {
+            ui::UIObjectAcc text(status.m_handle, "TXT_status_name");
+            bool has = GfDataNpc::getName(bdat, msg, id);
+            text.setDisp(has);
+            if (has) {
+                text.setText(ui::UIStr(bdat, msg));
+            }
+        }
+        {
+            ui::UIObjectAcc text(status.m_handle, "TXT_status_job");
+            bool has = GfDataNpc::getJobMsg(bdat, msg, id);
+            text.setDisp(has);
+            if (has) {
+                text.setText(ui::UIStr(bdat, msg));
+            }
+        }
+        {
+            ui::UIObjectAcc text(status.m_handle, "TXT_status_place");
+            bool has = GfDataNpc::getPlaceMsg(bdat, msg, id);
+            text.setDisp(has);
+            if (has) {
+                text.setText(ui::UIStr(bdat, msg));
+            }
+        }
+        {
+            ui::UIObjectAcc quest(status.m_handle, "LAY_status_quest");
+            QuestID questId;
+            bool has = hasQuest(id, &questId);
+            quest.setDisp(has);
+            if (has && !questId.empty()) {
+                ui::UIObjectAcc name(status.m_handle, "TXT_status_quest_name");
+                unsigned short title = GfQuestUtil::getMsgQuestTitle(questId);
+                name.setText(ui::UIStr(GfBdatMsg::getFpQuest(questId), title));
+            }
+        }
+        status.updateLayoutSize();
+        if (group == 1 || group == 2) {
+            GfMenuObjUtil::setDockPosNoScale(status.m_handle, handle, 2, true);
+            GfMenuObjUtil::addPos(status.m_handle, 16, 0);
+        } else {
+            GfMenuObjUtil::setDockPosNoScale(status.m_handle, handle, 1, true);
+            GfMenuObjUtil::addPos(status.m_handle, -32, 0);
+        }
+        if (!status.isDisp()) {
+            status.setDisp(true);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_in_l";
+            param.m_setDefault = true;
+            param.m_startFlags = 8;
+            param.m_eventId = 1;
+            GfMenuObjUtil::startCtrl(status.m_handle, param, nullptr);
+            GfMenuObjUtil::playSE(0xc);
+        }
+        m_statusFadeOut = true;
+    }
 }
 
 void GfMenuObjHitonowa::dispLevel() {
@@ -540,6 +679,39 @@ void GfMenuObjHitonowa::unselectComplete(unsigned int handle) {
         scale.m_time = 0.3f;
         GfMenuObjUtil::startCtrl(face.m_handle, scale, nullptr);
     }
+}
+
+bool GfMenuObjHitonowa::seqWaitStreamingEvent() {
+    for (unsigned int i = 0; i < m_list->getSize(); i++) {
+        ui::UIObjectAcc face(m_list->getObject(i), "IMG_icon_face");
+        if (face.isStreamImage() && face.isStreaming()) {
+            return false;
+        }
+    }
+    switch (pad_94) {
+    case 1:
+        for (int kind = 1; kind < 4; kind++) {
+            for (unsigned int i = 0; i < m_selectLists[kind]->getSize(); i++) {
+                ui::UIObjectAcc face(m_selectLists[kind]->getObject(i), "IMG_icon_face");
+                if (face.isStreamImage() && face.isStreaming()) {
+                    return false;
+                }
+            }
+        }
+        break;
+    case 0:
+    case 2:
+        for (unsigned int i = 0; i < m_selectLists[0]->getSize(); i++) {
+            ui::UIObjectAcc face(m_selectLists[0]->getObject(i), "IMG_icon_face");
+            if (face.isStreamImage() && face.isStreaming()) {
+                return false;
+            }
+        }
+        break;
+    }
+    ui::UIObjectAcc main(m_handle, "LAY_main");
+    GfMenuObjUtil::setCommonFadeIn(main.m_handle, 1, 0);
+    return true;
 }
 
 bool GfMenuObjHitonowa::seqWaitStreaming() {

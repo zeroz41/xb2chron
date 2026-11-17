@@ -9,7 +9,7 @@
 #include "mm/mtl/IntrusivePtr.h"
 #include "classes/mm/mtl/ReferenceObject.h"
 
-namespace gf { class GAME_VOICE_HANDLE; class GfMenuIDList; class GfMenuQuestList; class GfMenuReferenceNumber; }
+namespace gf { class GAME_VOICE_HANDLE; class GfMenuIDList; class GfMenuQuestList; class GfMenuReferenceNumber; class QuestID; }
 namespace mm { template <typename T> class Pnt; }
 namespace ui { class UICtrlCursorSelect; class UICtrlRoll; class UIObjectAcc; struct EventData; class UISelectObjList; }
 
@@ -72,9 +72,9 @@ public:
     // 2.0.0's symbols name it. What it does: shows LAY_level and fades it in (preset 3), then shows TXT_level_num and
     // TXT_level_max, only the latter opaque when s_CurLevel is 6.
     void dispLevel();
-    // 2.0.0's symbols name them. Their code is in this unit and seqNextLost passes this. What they do (not written
-    // yet): delNpc sets the list up for an id (its first argument 0 there); refreshComplete refreshes the menu after
-    // it.
+    // 2.0.0's symbols name them. Their code is in this unit and seqNextLost passes this. What they do: delNpc (not
+    // written yet) sets the list up for an id (its first argument 0 there); refreshComplete then lays m_selectLists[0]'s
+    // objects out on m_roll in rings and scales the LAY_main POL_ring@NN shapes in use, hiding the rest.
     void delNpc(unsigned char kind, unsigned int id);
     void refreshComplete();
     // 2.0.0's symbols name it. Its code is in this unit and its callers (seqDispResult, the LAY_list listener's
@@ -82,8 +82,13 @@ public:
     // NPC's or blade's name text, dock position, a control). Its return value is unused by seqDispResult.
     void dispResult(unsigned int handle, unsigned int id);
     // 2.0.0's symbols name it. Its code is in this unit and seqInEntry passes this (the list object at m_cursor, the
-    // id there and its getNpcGroup). Not written yet.
+    // id there and its getNpcGroup). What it does: fills LAY_status (name, job, place, quest title from hasQuest),
+    // docks it beside handle by group and fades it in when hidden.
     void dispStatus(unsigned int handle, unsigned int id, unsigned int group);
+    // 2.0.0's symbols name it. A member: its code is in this unit (after dispStatus, its caller) and it reads
+    // m_questList. What it does: true when one of m_questList's quests has id among GfQuestTarget::getNpcList's NPCs
+    // of its progress quest, or as its GfDataQuest::getListTalker; then writes that quest through quest unless null.
+    bool hasQuest(unsigned int id, QuestID* quest);
     // 2.0.0's symbols name it. Its code is in this unit and MainListener::reciveEvent calls it. What it does: builds
     // m_list from the select lists' objects whose ids m_ids holds (kinds 1, 2, 3 then 0, by pad_94's mode 0-2),
     // setting their alpha and TXT_icon_new, hides LAY_main's LAY_location_num@NN and resets m_cursor.
