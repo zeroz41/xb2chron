@@ -442,8 +442,8 @@ void GfMenuObjEnemyStatus::fn_71003F98A4(unsigned int layout, unsigned int handl
             param.m_time = 0.25f;
             param.m_methods = 0x80;
             param.m_curve = 1;
-            param.m_pos[0] = rect.x;
-            param.m_pos[1] = rect.y;
+            param.m_pos.x = rect.x;
+            param.m_pos.y = rect.y;
             GfMenuObjUtil::startCtrl(obj.m_handle, param, nullptr);
         }
     }

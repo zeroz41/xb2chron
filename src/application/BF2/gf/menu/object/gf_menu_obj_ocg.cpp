@@ -17,7 +17,7 @@ namespace gf {
 
 GfMenuObjOCG::GfMenuObjOCG(unsigned int handle)
     : GfMenuObject(handle), m_count(0), m_seq(this), m_ctrl(-1), m_animHandle(0), m_numbers(),
-      m_result(0) {
+      m_se(0) {
     m_numbers[0] = GfMenuReferenceNumber::create();
     m_numbers[1] = GfMenuReferenceNumber::create();
 }
@@ -142,7 +142,85 @@ void GfMenuObjOCG::update() {
     GfMenuObject::update();
 }
 
-// MainListener::reciveEvent (0x71004495A0) and refreshGearCount are not here yet
+void GfMenuObjOCG::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        acc.setSuspend(true);
+        // falls through: the base listener handles the close too
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 3:
+        if (event.m_param0 == 2) {
+            acc.setDisp(false);
+            acc.setSuspend(true);
+        }
+        break;
+    case 0xD:
+        if (event.m_param1 == 1) {
+            unsigned int count = event.m_param3;
+            m_owner->refreshGearCount(count);
+        }
+        break;
+    case 0x21:
+        acc.setDisp(true);
+        acc.setSuspend(false);
+        {
+            ui::UIObjectAcc eff(acc.m_handle, "IMG_special_start_eff");
+            eff.startAnimation("start", false);
+            eff.setDisp(true);
+        }
+        {
+            ui::UIObjectAcc base(acc.m_handle, "IMG_special_base");
+            base.startAnimation("loop", false);
+        }
+        {
+            int ctrl = GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_special_main"), 1, 0);
+            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        }
+        m_owner->refreshGearCount(0);
+        if (m_owner->m_se != 0) {
+            GfMenuObjUtil::stopSE(m_owner->m_se, 0.0f);
+            m_owner->m_se = 0;
+        }
+        m_owner->m_se = GfMenuObjUtil::playSE("dlc_se_btl_bl40040117");
+        break;
+    case 0x22:
+        {
+            ui::UIObjectAcc eff(acc.m_handle, "IMG_special_start_eff");
+            eff.stopAnimation();
+            eff.setDisp(false);
+        }
+        {
+            int ctrl = GfMenuObjUtil::setCommonFadeOut(acc.searchChild("LAY_special_main"), 2, 0);
+            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        }
+        if (m_owner->m_se != 0) {
+            GfMenuObjUtil::stopSE(m_owner->m_se, 0.0f);
+            m_owner->m_se = 0;
+        }
+        break;
+    case 0x102: {
+        ui::UIObjectAcc time(acc.m_handle, "IMG_special_time");
+        time.setAddColor(mm::Col3::white);
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x4000000;
+        param.m_color = mm::Col3::black;
+        param.m_time = 0.5f;
+        param.m_curve = 1;
+        GfMenuObjUtil::startCtrl(time.m_handle, param, nullptr);
+        GfMenuObjUtil::playSE(0x28);
+        ui::UIObjectAcc eff(acc.m_handle, "IMG_special_start_eff");
+        eff.startAnimation("start", false);
+        eff.setDisp(true);
+        break;
+    }
+    }
+}
+
+// refreshGearCount (0x71004498C4) is not here yet (the closest candidate keeps different values live)
 
 void GfMenuObjOCG::ResultListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
@@ -170,7 +248,90 @@ void GfMenuObjOCG::ResultListener::reciveEvent(const ui::EventData& event, unsig
     }
 }
 
-// seqStartResult (0x7100449E78) is not here yet (the closest candidate differs in scheduling)
+bool GfMenuObjOCG::seqStartResult() {
+    mm::Pnt<short> pos;
+    ui::UIObjectAcc result(m_handle, "LAY_result");
+    result.setDisp(true);
+    {
+        ui::UIObjectAcc base(result.m_handle, "IMG_result_base");
+        base.startAnimation("start", false);
+        m_animHandle = base.m_handle;
+    }
+    {
+        mm::Rect<short> rect;
+        result.getLayoutRect("dlc240_result", rect);
+        {
+            ui::UIObjectAcc total(result.m_handle, "LAY_result_total@01");
+            pos.x = rect.x;
+            pos.y = rect.y + 5;
+            total.setPos(pos);
+            pos.x -= 30;
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x80;
+            param.m_startFlags = 8;
+            param.m_pos = pos;
+            param.m_time = 8.0f / 3.0f;
+            param.m_curve = 1;
+            GfMenuObjUtil::startCtrl(total.m_handle, param, nullptr);
+        }
+        {
+            ui::UIObjectAcc total(result.m_handle, "LAY_result_total@02");
+            pos.x = rect.x;
+            pos.y = rect.y - 5;
+            total.setPos(pos);
+            pos.x += 30;
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x80;
+            param.m_pos = pos;
+            param.m_startFlags = 8;
+            param.m_time = 8.0f / 3.0f;
+            param.m_curve = 1;
+            GfMenuObjUtil::startCtrl(total.m_handle, param, nullptr);
+        }
+    }
+    {
+        ui::UIObjectAcc index(result.m_handle, "TXT_result_total_index@01");
+        index.setDisp(true);
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_r_early";
+        param.m_setDefault = true;
+        param.m_startFlags = 8;
+        GfMenuObjUtil::startCtrl(index.m_handle, param, nullptr);
+    }
+    {
+        ui::UIObjectAcc index(result.m_handle, "TXT_result_total_index@02");
+        index.setDisp(true);
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_l_early";
+        param.m_setDefault = true;
+        param.m_startFlags = 8;
+        GfMenuObjUtil::startCtrl(index.m_handle, param, nullptr);
+    }
+    {
+        ui::UIObjectAcc num0(result.m_handle, "TXT_result_total_num@01");
+        ui::UIObjectAcc num1(result.m_handle, "TXT_result_total_num@02");
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "sample";
+        param.m_motion = "fadein";
+        param.m_setDefault = true;
+        param.m_startFlags = 8;
+        GfMenuObjUtil::startCtrl(num0.m_handle, param, nullptr);
+        int ctrl = GfMenuObjUtil::startCtrl(num1.m_handle, param, nullptr);
+        num0.setAlpha(0.0f);
+        num1.setAlpha(0.0f);
+        m_ctrl = ctrl;
+    }
+    m_seq.addJob(&GfMenuObjOCG::seqCtrlWait);
+    m_seq.addJob(&GfMenuObjOCG::seqAnimWait);
+    m_seq.addJob(&GfMenuObjOCG::seqCloseResult);
+    GfMenuObjUtil::playJingle(0xe);
+    return true;
+}
 
 bool GfMenuObjOCG::seqCtrlWait() {
     if (m_ctrl != -1) {

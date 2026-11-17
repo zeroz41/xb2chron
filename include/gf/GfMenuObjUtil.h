@@ -63,7 +63,7 @@ public:
         float m_delay;         // UICtrlManager::setDelayTime
         int m_distance;        // how far the position methods move
         unsigned char pad_24[2];
-        short m_pos[2];        // where bit 7's position method moves to
+        ::mm::Pnt<short> m_pos;  // where bit 7's position method moves to (one 4-byte copy: GfMenuObjOCG::seqStartResult)
         float m_scale;         // added to the scale (bit 20's method: to its x only)
         // bit 20's method adds it to the scale's y (the name is not the original's; startCtrl's addScaleMethod)
         float m_scaleY;

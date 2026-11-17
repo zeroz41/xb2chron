@@ -18,6 +18,7 @@ public:
     }
 
     // the named colours (mm_lib's; their symbols name them)
+    static const Col3 white;
     static const Col3 yellow;
     static const Col3 salmon;
     static const Col3 cyan;

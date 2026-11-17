@@ -50,7 +50,9 @@ public:
     unsigned int m_animHandle;  // the object whose animation seqAnimWait waits for (the name is not the original's)
     // the reference adapters' numbers (the names are not the original's)
     mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_numbers[2];
-    unsigned int m_result;  // cleared by the constructor (the name is not the original's)
+    // the sound MainListener plays when LAY_special opens (playSE's handle; stopped on its close), 0 for none (the
+    // name is not the original's)
+    unsigned int m_se;
 };
 }  // namespace gf
 
