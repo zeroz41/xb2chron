@@ -338,7 +338,6 @@ public:
     static unsigned int getBladeRarity(unsigned int blade);
     static unsigned int getBladeCorrectiveType(unsigned int blade);  // 0 for none
     static unsigned int getBladeCorrectiveRatio(unsigned int blade);
-    // (appended by menuobjutil, session 19)
     // the set (slot) of a driver's blade, -1 for none
     static int getSetBladeID(unsigned int driver, int slot, bool);
     // 2.0.0's symbols name it (their isBladeEnableOffset beside it takes a driver and an offset and calls

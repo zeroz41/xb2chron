@@ -64,7 +64,7 @@ void GfMenuObjDamageValue::update() {
     GfMenuObject::update();
 }
 
-// 0x71003E634C myOpen(const OpenParam&) (GfMenuObjDamageValue::myOpen): not identical yet, candidate in wip/
+// 0x71003E634C myOpen(const OpenParam&) (GfMenuObjDamageValue::myOpen): not identical yet
 
 inline void GfMenuObjDamageValue::removeObject(ui::UIObjectAcc screen) {
     GfMenuManyObjects::remove<DamageInfo>(0, screen.m_handle);
@@ -72,9 +72,9 @@ inline void GfMenuObjDamageValue::removeObject(ui::UIObjectAcc screen) {
     screen.setTerm();
 }
 
-// 0x71003E67C4 ListListener::reciveEvent: not identical yet, candidate in wip/
+// 0x71003E67C4 ListListener::reciveEvent: not identical yet
 
-// 0x71003E6CF4 setupScreen: not identical yet, candidate in wip/
+// 0x71003E6CF4 setupScreen: not identical yet
 
 unsigned int GfMenuObjDamageValue::open(const OpenParam& param) {
     if (s_queue.full()) {

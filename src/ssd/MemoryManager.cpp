@@ -187,7 +187,7 @@ Allocator::Block* MemoryManager::GetAllocatorBlock(void* address) {
 
 // not identical yet (11 words, register choice and schedule of the tail): the original multiplies count*size in
 // 32 bits and adds (size + alignment) - 1; reading the product back from the block and a 32-bit alignment
-// helper give that arithmetic (wip/acq_lam2.cpp in session43/a46sm), but the arguments land in other registers
+// helper give that arithmetic, but the arguments land in other registers. The plain version, for reference:
 /*
 Allocator::Block* MemoryManager::AcquireBlock(Allocator* allocator, unsigned long size, unsigned long count,
                                               unsigned long alignment) {

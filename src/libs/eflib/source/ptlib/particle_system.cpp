@@ -717,7 +717,7 @@ void TurbulenceN::updateTime(float time) {
     s_fTotalTime += time;
 }
 
-// turb3d (0x7100859DFC) is not identical yet: session31/pforce/wip
+// turb3d (0x7100859DFC) is not identical yet
 
 static inline float fade(float t) {
     return t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);

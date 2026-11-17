@@ -83,7 +83,7 @@ void GfMenuFullScreen::postUpdate(const fw::UpdateInfo& info) {
     }
 }
 
-// reciveUIEvent is not here yet (a candidate a few words off is in the worker notes)
+// reciveUIEvent is not here yet (the closest candidate is a few words off)
 
 void GfMenuFullScreen::close(bool fadeOut, bool fadeIn) {
     GfMenuFullScreen* screen = get();
@@ -118,11 +118,11 @@ void GfMenuFullScreen::switchLayerStart() {
     m_switchSeq.set(this, &GfMenuFullScreen::switchLayerWaitFadeOut);
 }
 
-// subLayerStart is not here yet (a candidate a few words off is in the worker notes)
+// subLayerStart is not here yet (the closest candidate is a few words off)
 
-// open is not here yet (a candidate a few words off is in the worker notes)
+// open is not here yet (the closest candidate is a few words off)
 
-// isOpen is not here yet (a candidate a few words off is in the worker notes)
+// isOpen is not here yet (the closest candidate is a few words off)
 
 bool GfMenuFullScreen::isSwitching() {
     GfMenuFullScreen* screen = get();
@@ -188,9 +188,9 @@ void GfMenuFullScreen::registLayerParam(unsigned int layer, const GfMenuTypes::P
     }
 }
 
-// getLayerParam is not here yet (a candidate a few words off is in the worker notes)
+// getLayerParam is not here yet (the closest candidate is a few words off)
 
-// removeLayerParam is not here yet (a candidate a few words off is in the worker notes)
+// removeLayerParam is not here yet (the closest candidate is a few words off)
 
 void GfMenuFullScreen::removeLayerParam(unsigned int layer) {
     if (layer != 0) {
@@ -234,7 +234,7 @@ void GfMenuFullScreen::setShadowLayer(unsigned int layer, bool shadow) {
     }
 }
 
-// getLayerGroup is not here yet (a candidate a few words off is in the worker notes)
+// getLayerGroup is not here yet (the closest candidate is a few words off)
 
 void GfMenuFullScreen::switchLayerWaitFadeOut() {
     if (GfMenuManager::isFading()) {
@@ -349,7 +349,7 @@ void GfMenuFullScreen::subLayerWaitRelease() {
     m_subSeq.set(this, &GfMenuFullScreen::subLayerCreate);
 }
 
-// subLayerCreate is not here yet (a candidate a few words off is in the worker notes)
+// subLayerCreate is not here yet (the closest candidate is a few words off)
 
 void GfMenuFullScreen::subLayerWaitOpen() {
     if (ui::UIManager::get()->isLoading()) {

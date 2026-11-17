@@ -17,7 +17,7 @@ public:
     };
 
     GfAppend();
-    // inline: 3.0.1 keeps no copy (session 19 notes put an out-of-line one in 1.0.0); setupExtraModel,
+    // inline: 3.0.1 keeps no copy (1.0.0 has an out-of-line one); setupExtraModel,
     // setupBelongingForDriver and fn_71004A2030 inline it
     GfAppend(const char* modelName, const char* motionName, unsigned short mountIndex, unsigned short rscID, float scale,
              bool secondList)
@@ -25,7 +25,7 @@ public:
           m_secondList(secondList) {}
     // the name of the bone the mount is on, "" when none is
     const char* getBone(OPTMNT mount) const;
-    // inline: 3.0.1 keeps no copy (session 19 notes put an out-of-line one in 1.0.0)
+    // inline: 3.0.1 keeps no copy (1.0.0 has an out-of-line one)
     void addMount(MOUNT_INFO& info) { m_mounts.push_back(info); }
     const char* getModelName() const;
     const char* getMotionName() const;

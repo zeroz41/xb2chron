@@ -63,7 +63,7 @@ void Hfsm::setState(unsigned int stateID) {
 }
 
 // setStateImpl (0x7100865950) is not matched yet: leaves the old chain below the states both chains share, makes and
-// enters the new one (see the worker's near-miss copy)
+// enters the new one
 
 void Hfsm::update(const void* arg) {
     m_inside = true;

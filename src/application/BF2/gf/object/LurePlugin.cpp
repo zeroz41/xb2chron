@@ -61,7 +61,7 @@ bool isActiveRangeLure(gf::GfComPropertyPc& property, const gf::AccessParam& par
 }
 
 // drawDebug (0x710051BF40) is not matched yet: with [2][2] and [2][3] set last it is identical but for the order of
-// two stores (the original stores the merged [2][2]/[2][3] word before [3][3]); candidate in the worker's notes
+// two stores (the original stores the merged [2][2]/[2][3] word before [3][3])
 
 void LurePlugin::onActivate() {}
 

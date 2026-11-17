@@ -24,7 +24,7 @@ void GfMenuObjQuestReward::open(GfMenuCallContext* context, bool flag) {
     }
 }
 
-// create (0x710046E440): wip only, its listener construction stores 0x30/0x38 before 0xC-0x23 in the original
+// create (0x710046E440) is not here yet: the original's listener construction stores 0x30/0x38 before 0xC-0x23
 
 void GfMenuObjQuestReward::initialize() {
     ui::UIObjectAcc acc(m_handle, "LAY_main");

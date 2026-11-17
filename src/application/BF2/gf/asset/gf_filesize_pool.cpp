@@ -90,7 +90,7 @@ void GfFileSizePool::destroyThread() {
     }
 }
 
-// requestFileSize (0x71001C508C) is not here yet: its candidate (wip/gf_filesize_pool_full.cpp) differs only in
+// requestFileSize (0x71001C508C) is not here yet: the closest candidate differs only in
 // where the full pool's search wraps its index (the original wraps it on both edges after the name test).
 
 void GfFileSizePool::recalcFileSizeCache(unsigned long handle, const char* path) {
@@ -136,7 +136,7 @@ void GfFileSizePool::update() {
     }
 }
 
-// copyPoolFromRequest (0x71001C566C) is not here yet: its candidate (wip/gf_filesize_pool_full.cpp) differs only
+// copyPoolFromRequest (0x71001C566C) is not here yet: the closest candidate differs only
 // in registers: the original addresses the job queue's slots from two separate bases (the iterator's and erase's).
 
 void GfFileSizePool::execFileSizeJob(unsigned int count) {

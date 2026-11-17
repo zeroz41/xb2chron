@@ -13,7 +13,7 @@
 
 namespace ssd {
 
-// the constructor (not matched yet, wip/StreamController_full.cpp) takes the next number
+// the constructor (not matched yet) takes the next number
 unsigned int StreamController::idCounter_;
 
 StreamController::~StreamController() {}

@@ -231,7 +231,7 @@ int UIInputPad::moveSelect(const fw::PadData& pad, unsigned int step, int select
     return select;
 }
 
-// fixSelectNo (0x710067A41C): not identical yet (wip/fixSelectNo_ui_input_pad.cpp: one return copied through the
+// fixSelectNo (0x710067A41C): not identical yet (in the closest candidate, one return copied through the
 // return register and a few instructions scheduled apart from the original)
 
 EventData* UIInputPad::getInputEventExt() {

@@ -104,6 +104,6 @@ void DynamicsSolver::resetNodes(const Packet& packet) {
 
 DynamicsSolver::~DynamicsSolver() {}
 
-// addApplyDetectJobs (0x710088C17C) is not identical yet: see the report
+// addApplyDetectJobs (0x710088C17C) is not identical yet
 
 }  // namespace skd

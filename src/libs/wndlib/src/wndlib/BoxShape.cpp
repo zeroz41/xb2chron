@@ -7,6 +7,6 @@ BoxShape::BoxShape(const mm::Vec3& halfExtents) : Shape(SHAPE_TYPE_BOX), m_halfE
 
 // calcAABB (0x7100892E70) is not matched yet: each unit axis turned by the rotation (mm::Quat::rotate), the extent
 // along each world axis the sum of its components' sizes times the half extents, the box the position less and
-// plus it. The closest candidate (122 differing instruction lines, scheduling) is in the worker notes.
+// plus it. The closest candidate differs in 122 instruction lines (scheduling).
 
 }  // namespace wnd

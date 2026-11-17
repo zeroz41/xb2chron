@@ -6522,7 +6522,7 @@ CaptureManager::~CaptureManager() {}
 
 }  // namespace event
 
-// ---- script commands (session 19) ----
+// ---- script commands ----
 #include "classes/event/ObjectManager.h"
 
 event::ObjectManager::ObjectManager() : m_flags(0), m_dispFlags(0), m_sceneName("default") {}

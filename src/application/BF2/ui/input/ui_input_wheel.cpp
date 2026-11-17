@@ -44,7 +44,7 @@ void UIInputSwitcher::clearInputObject() {
     }
 }
 
-// setInputObject (0x710067B43C): not identical yet (wip/ui_input_wheel.cpp: the build tests the handle before
+// setInputObject (0x710067B43C): not identical yet (the closest candidate tests the handle before
 // the index)
 
 unsigned int UIInputSwitcher::getInputObject(unsigned int index) {
@@ -103,7 +103,7 @@ UIInputWheel* UIInputWheel::create(unsigned int id, unsigned int handle, const W
     return new (allocator, 16, __FILE__, __LINE__) UIInputWheel(id, handle, setup);
 }
 
-// updateImpl (0x710067B890): not identical yet (wip/ui_input_wheel.cpp: float registers)
+// updateImpl (0x710067B890): not identical yet (float registers)
 
 EventData* UIInputWheel::getInputEventExt() {
     return &m_event;

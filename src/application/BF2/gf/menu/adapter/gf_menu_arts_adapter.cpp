@@ -423,7 +423,7 @@ bool GfMenuArtsAdapter::update_ArtsEnhanceDescriptionNextLv() {
 }
 
 // update_ArtsDispLvMax: not written yet (2 words apart: the original's artsId == 0 test branches to the shared
-// "return false" block, ours past it); see wip
+// "return false" block, ours past it)
 
 bool GfMenuArtsAdapter::update_ArtsTextIndex() {
     if (m_driverId == 0 || m_artsId == 0 || m_level == 0) {

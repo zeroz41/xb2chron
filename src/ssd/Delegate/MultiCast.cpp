@@ -6,8 +6,8 @@
 #include "mm/mtl/FixStr.h"
 #include "mtl/MemManager.h"
 
-// csvb_utility.cpp's functions sit at the start of this unit's range (see SPLITS.md).
-// Not written yet (candidates in the worker's wip): GetCsvbInfo, both CreateCsvbData, and ssd::Delegate::MultiCast's
+// csvb_utility.cpp's functions sit at the start of this unit's range.
+// Not written yet: GetCsvbInfo, both CreateCsvbData, and ssd::Delegate::MultiCast's
 // Clear, AddDelegate, RemoveDelegate, FindDelegate, ExecuteDelegateImpl and Array<Handle*>::SetArraySize.
 namespace csvb {
 

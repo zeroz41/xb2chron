@@ -98,6 +98,6 @@ void GfMenuHUD::systemSwitchExpLayer() {
     m_system.set(this, &GfMenuHUD::systemUpdate);
 }
 
-// switchExpansionLayer is not here yet: see the report
+// switchExpansionLayer is not here yet
 
 }  // namespace gf

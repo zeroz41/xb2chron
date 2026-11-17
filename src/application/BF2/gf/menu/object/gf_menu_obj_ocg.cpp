@@ -142,7 +142,7 @@ void GfMenuObjOCG::update() {
     GfMenuObject::update();
 }
 
-// MainListener::reciveEvent (0x71004495A0) and refreshGearCount are not here yet: see the report
+// MainListener::reciveEvent (0x71004495A0) and refreshGearCount are not here yet
 
 void GfMenuObjOCG::ResultListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
@@ -170,7 +170,7 @@ void GfMenuObjOCG::ResultListener::reciveEvent(const ui::EventData& event, unsig
     }
 }
 
-// seqStartResult (0x7100449E78) is not here yet: see the report (candidate in wip, scheduling near-miss)
+// seqStartResult (0x7100449E78) is not here yet (the closest candidate differs in scheduling)
 
 bool GfMenuObjOCG::seqCtrlWait() {
     if (m_ctrl != -1) {

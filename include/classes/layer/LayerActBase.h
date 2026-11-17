@@ -15,7 +15,7 @@ public:
     unsigned short m_nextIdx;  // 0x4: the action that follows (FLAG_LOOP)
     unsigned short m_endType;  // 0x6: the s_pCallActEnd index
     unsigned int m_id;  // 0x8: LayerAccAction::actionID looks for it
-    // 0xC: the action's commands, from the action data's start (updatePartsAction); earlier notes read it as the
+    // 0xC: the action's commands, from the action data's start (updatePartsAction); an earlier reading took it as the
     // base of the action's name offset in LayerAccAction::actionName, with m_nameOfs
     unsigned int m_cmdOfs;
     short m_cmdNum;  // 0x10: how many commands updatePartsAction runs

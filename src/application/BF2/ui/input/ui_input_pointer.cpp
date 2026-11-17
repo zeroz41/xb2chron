@@ -124,7 +124,7 @@ bool UIInputPointer::updateImpl() {
     return result;
 }
 
-// setPointerPos (0x710067AC88): not identical yet (session12 w4 wip: register allocation in the nearest search)
+// setPointerPos (0x710067AC88): not identical yet (register allocation in the nearest search)
 
 EventData* UIInputPointer::getInputEventExt() {
     return &m_eventExt;

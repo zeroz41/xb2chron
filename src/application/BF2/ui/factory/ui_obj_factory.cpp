@@ -92,7 +92,7 @@ void UIObjFactory::update(const fw::UpdateInfo&) {
     }
 }
 
-// createRootObject (0x710067545C) is in the worker's wip: it matches only once setupChildObject and
+// createRootObject (0x710067545C) is not here yet: it matches only once setupChildObject and
 // setupObjectInput are defined in this file (their unused `this` is then passed undefined).
 
 void UIObjFactory::registPreloadResource(unsigned int type, const char* name) {

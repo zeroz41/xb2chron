@@ -18,7 +18,7 @@ void UIListInfoBase::setup(const SetupParam& param) {
     setIndex(param.m_index);
 }
 
-// setIndex (0x710067BF90) is not written yet: the candidate is not identical (see the worker report)
+// setIndex (0x710067BF90) is not written yet: the closest candidate is not identical
 
 void UIListInfoBase::clear() {
     m_changed = false;

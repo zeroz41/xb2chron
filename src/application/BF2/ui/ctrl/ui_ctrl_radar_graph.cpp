@@ -11,10 +11,9 @@
 
 namespace ui {
 
-// the destructor (0x7100670DB4, 0x7100670E0C) is not written yet: the candidate is not identical (see the worker
-// report)
+// the destructor (0x7100670DB4, 0x7100670E0C) is not written yet: the closest candidate is not identical
 
-// create (0x7100670E6C) is not written yet: the candidate is not identical (see the worker report)
+// create (0x7100670E6C) is not written yet: the closest candidate is not identical
 
 void UICtrlRadarGraph::setNumberPlugin(unsigned int index, unsigned int handle) {
     if (index >= m_values.size()) {

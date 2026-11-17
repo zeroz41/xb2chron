@@ -192,7 +192,7 @@ void ocBdatRegist() {
     vmOCRegist(&s_bdat);
 }
 
-// ocMenu (from 0x7100656EC8): the split keeps it in this unit (session 19 vmplug2/SPLITS.md has the finer cuts)
+// ocMenu (from 0x7100656EC8): the split keeps it in this unit
 // The ocMenu script class (a monolib VM OC plugin on gf::GfMenuScriptManager's menus): its methods, constructor
 // function, class table and Regist function. The methods are static and nothing names them: they keep placeholder
 // fn_ names.

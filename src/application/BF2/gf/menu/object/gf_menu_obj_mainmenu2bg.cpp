@@ -21,7 +21,7 @@ GfMenuObjMainMenu2BG::~GfMenuObjMainMenu2BG() {
     }
 }
 
-// initialize (0x7100433D04) is not here yet: see the report
+// initialize (0x7100433D04) is not here yet
 
 void GfMenuObjMainMenu2BG::finalize() {
     GfMenuObject::finalize();
@@ -41,7 +41,7 @@ void GfMenuObjMainMenu2BG::update() {
     GfMenuObject::update();
 }
 
-// MainListener::reciveEvent (0x7100434374) is not here yet: see the report
+// MainListener::reciveEvent (0x7100434374) is not here yet
 
 void GfMenuObjMainMenu2BG::move(GfMenuCallContext* context, unsigned int handle, const OpenMainMenuBg& param) {
     unsigned int bg = GfMenuObject::getAttachedObject(0x60);

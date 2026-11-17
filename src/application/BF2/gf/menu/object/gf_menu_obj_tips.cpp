@@ -227,7 +227,7 @@ void GfMenuObjTips::refreshList(bool) {
     }
 }
 
-// ListListener::reciveEvent (0x710048845C) and TutorialListener::reciveEvent (0x7100488958) are not here yet (see the notes)
+// ListListener::reciveEvent (0x710048845C) and TutorialListener::reciveEvent (0x7100488958) are not here yet
 
 bool GfMenuObjTips::isUnlockTipsID(unsigned int id) {
     unsigned char* fp = GfDataBdat::getFP(0x102);

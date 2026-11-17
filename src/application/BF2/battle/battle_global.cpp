@@ -656,8 +656,6 @@ float BattleGlobal::GetDamageRate(unsigned int id, bool* changed) const {
     return 1.0f;
 }
 
-// ---- session 19 ----
-
 const BattleGlobal::ELEMENTAL_COMBO_FLOW_DATA& BattleGlobal::GetElementalComboFlowData(int id) const {
     return m_elementalComboFlow[static_cast<unsigned int>(id) < 66 ? id : 0];
 }

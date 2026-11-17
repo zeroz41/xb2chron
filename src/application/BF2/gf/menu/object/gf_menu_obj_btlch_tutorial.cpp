@@ -155,7 +155,7 @@ void GfMenuObjBtlchTutorial::refreshList() {
     }
 }
 
-// ListListener::reciveEvent (0x71003B31C8) is not here yet: block placement differs (see the notes)
+// ListListener::reciveEvent (0x71003B31C8) is not here yet: block placement differs
 
 bool GfMenuObjBtlchTutorial::seqStartTelop() {
     m_context->reset();

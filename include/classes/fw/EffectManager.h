@@ -274,7 +274,7 @@ public:
     // one of the common effect packs commonLoaded requests: its resource and, once loaded, its pack (the names are not
     // the original's). The destructor releases both by hand and its FixedVector clears destroy nothing, so the
     // original's element is trivially destructible (a raw pointer here loses search/createHateRing* by 2 words of
-    // latch order; see the worker notes)
+    // latch order)
     struct CommonPack {
         RenderResource* m_resource;
         mm::mtl::IntrusivePtr<EffectPack> m_pack;

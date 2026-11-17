@@ -66,7 +66,7 @@ GfMenuObjNamedList::~GfMenuObjNamedList() {
     }
 }
 
-// initialize, updateNamedIDList and convZoneToFilter are not identical yet: $W/wip/full_draft.cpp (session 27 namedlist)
+// initialize, updateNamedIDList and convZoneToFilter are not identical yet
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B63990). The animation of each
 // difficulty, as gf_menu_obj_btlch_order's s_difficultyAnims.
@@ -107,7 +107,7 @@ void GfMenuObjNamedList::update() {
     GfMenuObject::update();
 }
 
-// ListListener::reciveEvent is not identical yet (its table and destructor come with it): $W/wip/full_draft.cpp (session 27 namedlist)
+// ListListener::reciveEvent is not identical yet (its table and destructor come with it)
 
 void GfMenuObjNamedList::FilterListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);

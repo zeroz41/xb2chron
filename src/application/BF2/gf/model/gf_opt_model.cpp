@@ -62,7 +62,7 @@ static unsigned int fn_71004A1648(unsigned int driverId, unsigned int bladeId, b
 
 // Placeholder name (1.0.0 leaves it unnamed too, fn_71004F5C90). What it does: a new append of RSC_NpcWpn row id
 // (its model and motion, mounted on {"", "EX_wp_L", "EX_wp_R", "EX_back"}[bone] (.data 0x7100B654A8) with OPTMNT 2),
-// added to info's current list. Not written yet: candidate in the worker's wip/fn_71004A2C78.cpp.
+// added to info's current list. Not written yet.
 void fn_71004A2C78(GfAppendInfo& info, unsigned int bone, unsigned int id);
 
 // Placeholder name (1.0.0 leaves it unnamed too, fn_71004F463C). What it does: adds weaponId's models to info.

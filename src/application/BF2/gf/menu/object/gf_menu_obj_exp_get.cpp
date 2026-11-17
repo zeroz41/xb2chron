@@ -96,7 +96,7 @@ void GfMenuObjExpGet::update() {
     GfMenuObject::update();
 }
 
-// myOpen (GfMenuObjExpGet::myOpen) is in wip/ (not identical yet): see NOTES.md
+// myOpen (GfMenuObjExpGet::myOpen) is not identical yet
 
 
 inline void GfMenuObjExpGet::removeObject2(ui::UIObjectAcc screen) {
@@ -121,10 +121,10 @@ inline void GfMenuObjExpGet::sendOpen(unsigned int root, const ExpGetInfo& info)
     GfMenuObject::sendEvent(root, event, 0.0f);
 }
 
-// ListListener::reciveEvent is in wip/ (not identical yet)
+// ListListener::reciveEvent is not identical yet
 
 
-// removeExpGet is in wip/ (not identical yet)
+// removeExpGet is not identical yet
 
 
 void GfMenuObjExpGet::close2(unsigned int handle) {

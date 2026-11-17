@@ -203,7 +203,9 @@
           "-fasynchronous-unwind-tables",
           "-std=gnu++14",
           "-nostdlibinc",
-          "-g"
+          "-g",
+          "-Wno-switch",
+          "-Wno-tautological-constant-out-of-range-compare"
         ],
         "clang_plugins": [
           "bare-return-atexit"

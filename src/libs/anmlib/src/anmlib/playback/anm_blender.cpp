@@ -83,7 +83,7 @@ void Blender::update(float dt) {
     }
 }
 
-// sampleTrucks and sampleTrucksMS (0x71008731DC, 0x71008737F8): not identical yet, see wip/sampleTrucks_and_MS.cpp
+// sampleTrucks and sampleTrucksMS (0x71008731DC, 0x71008737F8): not identical yet
 
 void Blender::sampleExtraTrucks(unsigned short slot, unsigned int count, float* pOut) {
     Work* pWork = m_pWork;

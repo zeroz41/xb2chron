@@ -850,7 +850,7 @@ static int fn_7100669984(VMThread* pThread) {
     return 0;
 }
 
-// pt.setDriverEnable: not identical yet (wip/pt_full.cpp; the original hoists `mov w0, w19` above `cbz w20`)
+// pt.setDriverEnable: not identical yet (the original hoists `mov w0, w19` above `cbz w20`)
 static int fn_7100669A08(VMThread* pThread);
 
 // pt.setDriverDisable

@@ -118,7 +118,7 @@ int AudioFileBase::WriteBySamples(const short* data, int count) {
 
 }  // namespace ssd
 
-// AudioFileSadf (0x71008A3CBC..0x71008A3EF0): its own translation unit in the original (session 19 audiofile/SPLITS.md);
+// AudioFileSadf (0x71008A3CBC..0x71008A3EF0): its own translation unit in the original;
 // it shares this file until the split is fixed.
 namespace ssd {
 

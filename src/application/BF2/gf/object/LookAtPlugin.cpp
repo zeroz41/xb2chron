@@ -25,7 +25,7 @@ LookAtPlugin::LookAtPlugin()
 
 LookAtPlugin::~LookAtPlugin() {}
 
-// setup (0x7100519A0C) is not matched yet: its candidate is in the worker's wip (40 words differ)
+// setup (0x7100519A0C) is not matched yet (the closest candidate differs in 40 words)
 
 void LookAtPlugin::cleanup(gf::GfComBehaviorPc&) {
     if (m_searchObj != reinterpret_cast<gf::GF_SEARCH_OBJ*>(-1)) {

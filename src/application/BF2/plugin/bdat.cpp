@@ -582,7 +582,7 @@ const char* getMSLabel(unsigned char* fp, int id) {
 }
 
 // getValCheck x3 / getArrayValCheck x2 with the unsigned long getters: each differs only by convertType being
-// inlined (the original calls it); see NOTES.md
+// inlined (the original calls it)
 
 unsigned long getValCheck(unsigned char* fp, const char* column, int id, int type) {
     unsigned char* member = getMember(fp, column);

@@ -191,7 +191,7 @@ void GfMenuObjDropItem::setupPlugin(unsigned int handle, unsigned int type) {
     }
 }
 
-// open (0x71003E8654) is not here yet: see the report
+// open (0x71003E8654) is not here yet
 
 void GfMenuObjDropItem::close(unsigned int handle) {
     ui::UIObjectAcc root(GfMenuObject::getAttachedObject(0x2b));

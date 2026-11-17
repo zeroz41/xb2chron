@@ -23,7 +23,7 @@ void GfKizunaringBlade::refreshOrderQuestList() {
     }
 }
 
-// fn_71002FF034 (0x71002FF034): not identical yet (wip/fn_71002FF034_GfKizunaringBlade.cpp: the QuestID
+// fn_71002FF034 (0x71002FF034): not identical yet (in the closest candidate, the QuestID
 // temporaries get other registers, and the key line's flag store folds to the second quest's address where the
 // original stores through the loop's pointer)
 

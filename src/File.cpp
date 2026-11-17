@@ -52,7 +52,7 @@ bool File::is_eof() {
     return m_pos >= m_size;
 }
 
-// ---- grlib/CGLibManager.cpp (split into this unit; see SPLITS.md) ----
+// ---- grlib/CGLibManager.cpp (the split puts it in this unit) ----
 
 namespace grlib {
 

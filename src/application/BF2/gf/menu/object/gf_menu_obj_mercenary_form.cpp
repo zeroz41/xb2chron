@@ -579,7 +579,7 @@ void GfMenuObjMercenaryForm::BlImgListener::reciveEvent(const ui::EventData& eve
     }
 }
 
-// seqConfirmStart (wip/seqConfirmStart.cpp, 4 words off) is not here yet
+// seqConfirmStart is not here yet (the closest candidate is 4 words off)
 
 bool GfMenuObjMercenaryForm::seqOpenImage() {
     ui::UIObjectAcc image(m_handle, "IMG_leader_bl_img");
