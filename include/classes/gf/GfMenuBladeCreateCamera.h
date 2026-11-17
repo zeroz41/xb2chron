@@ -20,6 +20,26 @@ public:
     virtual void update(fw::UpdateInfo const&);  // slot 8
     static mm::mtl::RTTI m_rtti;
 
+    // 1.0.0 has it out of line; 3.0.1 inlines it (DriverSelectListener::reciveEvent): turns to y over time, wrapped
+    // by 2 pi toward the direction (0 or 1)
+    void setRotY(float y, unsigned int dir, float time) {
+        float rotY = m_rotY;
+        if (dir == 0 && y - rotY > 0.0f) {
+            y -= 6.2831855f;
+        } else if (dir == 1 && y - rotY < 0.0f) {
+            if (rotY + y < 6.2831855f) {
+                y = 6.2831855f - y;
+            } else {
+                y += 6.2831855f;
+            }
+        }
+        m_rotYEnd = y;
+        m_rotDir = dir;
+        m_rotTime = time;
+        m_rotTimer = 0.0f;
+        m_rotYStart = rotY;
+    }
+
     // field names are not the original's: 1.0.0's setDefault/getDefault (0xB0, 0xC0), getCurrent (0xD0, 0xE0),
     // setRotOffsetY (0xF8) and setRotY(float y, unsigned int dir, float time) (0xF0..0x108) use them
     mm::Vec3 m_defaultEye;
