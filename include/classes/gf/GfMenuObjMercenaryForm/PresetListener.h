@@ -11,10 +11,13 @@ namespace gf {
 class GfMenuObjMercenaryForm::PresetListener : public ::ui::UIObjectListener {
 public:
     // initialize news it (0x28 bytes): its code zeroes 0xC-0x1B after storing its table, then stores the owner
-    PresetListener(GfMenuObjMercenaryForm* owner) : pad_0C(), m_owner(owner) {}
+    PresetListener(GfMenuObjMercenaryForm* owner) : m_load(), pad_10(), m_owner(owner) {}
     virtual ~PresetListener() {}  // slot 0: weak in the original (its D0 is in the unit's tail)
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
-    unsigned char pad_0C[0x10];
+    // the open event's (0x21) first parameter: 0 saves the team into the chosen preset (seqPresetSave), others load
+    // it (seqPresetLoad) when event 8 comes with m_param1 1. The name is not the original's
+    int m_load;
+    unsigned char pad_10[0xC];
     GfMenuObjMercenaryForm* m_owner;  // what initialize makes it for
 };
 }  // namespace gf

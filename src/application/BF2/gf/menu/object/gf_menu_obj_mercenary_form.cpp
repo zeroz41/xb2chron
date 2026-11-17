@@ -11,6 +11,10 @@
 #include "classes/gf/GfMenuObjMercenaryForm/ApplyListener.h"
 #include "classes/gf/GfMenuObjMercenaryForm/BlImgListener.h"
 #include "classes/gf/GfMenuObjMercenaryForm/FormListener.h"
+#include "classes/gf/GfMenuObjMercenaryForm/PresetListener.h"
+#include "classes/gf/GfMenuObjMercenaryForm/UnitListener.h"
+#include "classes/gf/GfMenuObjMercenaryForm/StartListener.h"
+#include "classes/gf/GfMenuObjMercenaryTop.h"
 #include "classes/gf/GfMenuObjCmnStatus.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "gf/GfDataBlade.h"
@@ -273,6 +277,130 @@ void GfMenuObjMercenaryForm::FormListener::reciveEvent(const ui::EventData& even
     }
 }
 
+void GfMenuObjMercenaryForm::UnitListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObject::resetInputSelection(acc.m_handle);
+        GfMenuObject::setupInputSelection(acc.m_handle, 0, 6);
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        if (index != -1) {
+            m_owner->m_unitBlades->setIndex(index);
+            m_owner->m_unitSelect->setIndex(index);
+            if (index < m_owner->m_unitBlades->getSize()) {
+                GfMenuReference::setReferenceBladeID(0, m_owner->m_unitBlades->getContents(m_owner->m_unitBlades->getIndex(false)).m_blade);
+            } else {
+                GfMenuReference::setReferenceBladeID(0, 0);
+            }
+            m_owner->setDetailBladePos(m_owner->m_unitSelect->getSelectObject());
+            m_owner->updateBladeCount(false, false);
+            unsigned int blade = m_owner->m_unitBlades->getContents(index).m_blade;
+            if (blade == 0) {
+                GfMenuObjOperationInfo::setActionEnable(handle, 0xC, false);
+            } else {
+                bool valid = GfMenuObjUtil::isValidBlade(blade);
+                GfMenuObjOperationInfo::setActionEnable(handle, 0xC, valid);
+                if (valid) {
+                    GfMenuObjOperationInfo::changeText(handle, 0xC, GfDataBlade::isBladeLock(blade));
+                }
+            }
+            if (prev != -1 && index != prev) {
+                GfMenuObjUtil::playSECommonCursor();
+            }
+        }
+        break;
+    }
+    case 8: {
+        int index = event.m_param0;
+        if (event.m_param1 == 10) {
+            if (index < m_owner->m_unitBlades->getSize()) {
+                {
+                    GfMenuBladeList* list = m_owner->m_unitBlades;
+                    list->m_list.erase(list->m_list.begin() + (unsigned int)index);
+                    list->subSize(1);
+                    list->m_changed = true;
+                }
+                if (index < m_owner->m_unitBlades->getSize()) {
+                    GfMenuReference::setReferenceBladeID(0, m_owner->m_unitBlades->getContents(m_owner->m_unitBlades->getIndex(false)).m_blade);
+                } else {
+                    GfMenuReference::setReferenceBladeID(0, 0);
+                }
+                m_owner->updateBladeCount(false, false);
+                m_owner->refreshBladeList();
+                if (m_owner->m_unitBlades->getSize() == 0) {
+                    GfMenuObject::disableFSInput();
+                    GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+                    m_owner->m_unitCursor->setDisp(false);
+                    m_owner->sendOpenOrFormMain(acc.searchSibiling("LAY_form_list_bl"), 0);
+                }
+                unsigned int blade = GfMenuReference::getReferenceBladeID(0);
+                if (blade == 0) {
+                    GfMenuObjOperationInfo::setActionEnable(handle, 0xC, false);
+                } else {
+                    bool valid = GfMenuObjUtil::isValidBlade(blade);
+                    GfMenuObjOperationInfo::setActionEnable(handle, 0xC, valid);
+                    if (valid) {
+                        GfMenuObjOperationInfo::changeText(handle, 0xC, GfDataBlade::isBladeLock(blade));
+                    }
+                }
+                GfMenuObjUtil::playSECommonCancel();
+            }
+        } else if (event.m_param1 == 12) {
+            unsigned int blade = GfMenuReference::getReferenceBladeID(0);
+            if (blade != 0 && GfMenuObjUtil::isValidBlade(blade)) {
+                if (!GfDataBlade::isBladeLock(blade)) {
+                    GfMenuObjUtil::setBladeFavorite(blade, true);
+                    GfMenuObjUtil::playSECommonDecide();
+                } else {
+                    GfMenuObjUtil::setBladeFavorite(blade, false);
+                    GfMenuObjUtil::playSECommonCancel();
+                }
+                bool valid = GfMenuObjUtil::isValidBlade(blade);
+                GfMenuObjOperationInfo::setActionEnable(handle, 0xC, valid);
+                if (valid) {
+                    GfMenuObjOperationInfo::changeText(handle, 0xC, GfDataBlade::isBladeLock(blade));
+                }
+            }
+        }
+        break;
+    }
+    case 9:
+        if (event.m_param0 == 2) {
+            GfMenuObject::disableFSInput();
+            GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+            m_owner->m_unitCursor->setDisp(false);
+            m_owner->updateBladeCount(false, true);
+            m_owner->sendOpenOrFormMain(acc.searchSibiling("LAY_form_list_bl"), 0);
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    case 0x21: {
+        GfMenuObject::enableFSInput(1);
+        GfMenuObjOperationInfo::add(handle, 0, 0, 0);
+        m_owner->m_unitCursor->setDisp(true);
+        GfMenuReference::setReferenceBladeID(0, m_owner->m_unitBlades->getContents(m_owner->m_unitBlades->getIndex(false)).m_blade);
+        unsigned int blade = m_owner->m_unitBlades->getContents(m_owner->m_unitBlades->getIndex(false)).m_blade;
+        if (blade == 0) {
+            GfMenuObjOperationInfo::setActionEnable(handle, 0xC, false);
+        } else {
+            bool valid = GfMenuObjUtil::isValidBlade(blade);
+            GfMenuObjOperationInfo::setActionEnable(handle, 0xC, valid);
+            if (valid) {
+                GfMenuObjOperationInfo::changeText(handle, 0xC, GfDataBlade::isBladeLock(blade));
+            }
+        }
+        GfMenuObject::sendCloseEvent(acc.searchSibiling("LAY_form_apply"), 0, 0.0f);
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjMercenaryForm::refreshBladeList() {
     ui::UIObjectAcc acc(m_handle, "LAY_form_list_bl");
     mm::mtl::FixStr<32> name;
@@ -413,7 +541,72 @@ bool GfMenuObjMercenaryForm::seqReturnMissionSelect() {
     return done;
 }
 
-// the Preset listener is not here yet
+void GfMenuObjMercenaryForm::PresetListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        break;
+    case 6:
+        if (event.m_param0 != -1) {
+            m_owner->m_idList->setIndex(event.m_param0);
+            m_owner->m_presetSelect->setIndex(m_owner->m_idList->getIndex(true));
+            int row = m_owner->m_idList->getRowOffset();
+            for (int i = 0; i < 3; i++) {
+                GfDataMercenaries::Preset* preset = GfDataMercenaries::getPreset(row + i);
+                GfMenuBladeList* list = m_owner->m_presetLists[i];
+                MenuBladeInfo info;
+                list->clear();
+                for (int j = 0; j < 6; j++) {
+                    info.m_blade = preset->m_blades[j];
+                    info.m_creator = info.m_blade != 0 ? GfDataBlade::getCreator(info.m_blade) : 0;
+                    list->addContents(info);
+                }
+                m_owner->m_numbers[i + 4]->m_value = row + i + 1;
+            }
+        }
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            GfMenuObject::disableFSInput();
+            GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+            m_owner->m_seq.clear();
+            if (m_load == 0) {
+                m_owner->m_seq.addJob(&GfMenuObjMercenaryForm::seqPresetSave);
+            } else {
+                m_owner->m_seq.addJob(&GfMenuObjMercenaryForm::seqPresetLoad);
+            }
+        } else if (event.m_param1 == 2) {
+            GfMenuObject::disableFSInput();
+            GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+            m_owner->sendCloseOrFormMain(acc.m_handle);
+            m_owner->sendOpenOrFormMain(acc.searchSibiling("LAY_form_menu"), 0);
+        }
+        break;
+    case 0x21: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 0;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        GfMenuObject::enableFSInput(3);
+        GfMenuObjOperationInfo::add(handle, 0, 0, 0);
+        m_load = event.m_param0;
+        m_owner->m_idList->setIndex(0);
+        GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_idList);
+        break;
+    }
+    case 0x22: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 1;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
 
 void GfMenuObjMercenaryForm::ApplyListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
@@ -613,6 +806,59 @@ bool GfMenuObjMercenaryForm::seqOpenImage() {
         done = false;
     }
     return done;
+}
+
+void GfMenuObjMercenaryForm::StartListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        break;
+    case 0x21: {
+        // the selected team blade moves to the top (its copy's slot is reused by the names below)
+        {
+            MenuBladeInfo info = m_owner->m_unitBlades->getContents(m_owner->m_unitBlades->getIndex(false));
+            {
+                GfMenuBladeList* list = m_owner->m_unitBlades;
+                unsigned int index = list->getIndex(false);
+                list->m_list.erase(list->m_list.begin() + index);
+                list->subSize(1);
+                list->m_changed = true;
+            }
+            GfMenuBladeList* list = m_owner->m_unitBlades;
+            if (list->getSize() == 0) {
+                list->addContents(info);
+            } else {
+                list->m_list.insert(list->m_list.begin(), info);
+                list->addSize(1);
+                list->m_changed = true;
+            }
+        }
+        mm::mtl::FixStr<32> name;
+        m_owner->m_unitSelect->clear();
+        for (unsigned int i = 0; i < 5; i++) {
+            if (i < m_owner->m_unitBlades->getSize() - 1) {
+                name.format("LAY_mis_start_bl@%02d", i + 1);
+                m_owner->m_unitSelect->addObject(acc.searchChild(name.m_str));
+            }
+            acc.setDispChild(false, name.m_str);
+        }
+        acc.setDisp(true);
+        m_owner->m_seq.clear();
+        m_owner->m_seq.addJob(&GfMenuObjMercenaryForm::seqDepartureStart);
+        break;
+    }
+    case 0x22: {
+        GfMenuObjMercenaryTop::OpenParam param;
+        param.m_value = 0;
+        GfMenuObjMercenaryTop::registOpenParam(param);
+        GfMenuObject::returnFSSubLayer(acc.m_handle, 2);
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 bool GfMenuObjMercenaryForm::seqDepartureStart() {
