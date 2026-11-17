@@ -649,11 +649,10 @@ void GfMenuObjHitonowa::setupEvent() {
 
 void GfMenuObjHitonowa::refreshNew() {
     for (int i = 0; i < 3; i++) {
-        unsigned int kind = s_newIconKinds[i];
-        GfMenuIDList* ids = m_idLists[kind];
+        GfMenuIDList* ids = m_idLists[s_newIconKinds[i]];
         for (unsigned int j = 0; j < ids->getSize(); j++) {
             unsigned int id = ids->getContents(j).m_id;
-            ui::UIObjectAcc icon(m_selectLists[kind]->getObject(j), "TXT_icon_new");
+            ui::UIObjectAcc icon(m_selectLists[s_newIconKinds[i]]->getObject(j), "TXT_icon_new");
             icon.setAlpha(GfDataNpc::isHitonowaNewFlag(id) ? 0.0f : 1.0f);
         }
     }

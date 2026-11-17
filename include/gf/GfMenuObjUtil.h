@@ -113,6 +113,9 @@ public:
     // (GfMenuObjSaveLoad2::refreshSave shows the save's party with it)
     static unsigned int getFaceIconID(const SDataGame& game, unsigned int type, unsigned int id);
     static bool getMenuCondition(unsigned int condition);  // whether a menu's condition is met
+    // false for an empty list. 1.0.0's symbol spells FixedVector<unsigned short, 16>, but its body (the count at
+    // 0x40) and GfMenuObjPartyForm3::MainListener's list (asserted against 32) hold 32
+    static bool setupPartyDriver(const mm::mtl::FixedVector<unsigned short, 32>& drivers);
     static bool checkCCStart(GfMenuCallContext* context);  // a context that is not running yet
     static bool checkCCNext(GfMenuCallContext* context, unsigned int id);  // a context running on that id
     static void setDockPos(unsigned int handle, unsigned int target, unsigned char pos, bool);
