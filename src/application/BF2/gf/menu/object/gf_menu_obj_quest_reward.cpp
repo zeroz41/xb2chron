@@ -4,6 +4,8 @@
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
 #include "ui/EventData.h"
+#include "classes/gf/GfAllocator.h"
+#include "classes/ui/UIEventManager.h"
 #include "classes/gf/GfMenuItemList.h"
 #include "classes/gf/GfMenuItemAdapter.h"
 #include "classes/gf/GfMenuMissionAdapter.h"
@@ -14,6 +16,7 @@
 #include "gf/GfQuestInfo.h"
 #include "gf/QuestID.h"
 #include "mm/mtl/FixStr.h"
+#include <string.h>
 
 namespace gf {
 
@@ -34,7 +37,37 @@ void GfMenuObjQuestReward::open(GfMenuCallContext* context, bool flag) {
     }
 }
 
-// create (0x710046E440) is not here yet: the original's listener construction stores 0x30/0x38 before 0xC-0x23
+void GfMenuObjQuestReward::create(GfMenuCallContext* context, const OpenParam& param, bool flag) {
+    if (!GfMenuObjUtil::checkCCStart(context)) {
+        return;
+    }
+    ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x21));
+    if (acc.m_object == nullptr) {
+        return;
+    }
+    ui::UIObjectAcc reward(acc.searchChild("LAY_reward"));
+    ui::UIObjectAcc window(reward.duplicate(param.m_handle));
+#line 63
+    RewardListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) RewardListener();
+    memset(listener->pad_0C, 0, sizeof(listener->pad_0C));
+    memset(listener->pad_20, 0, sizeof(listener->pad_20));
+    listener->m_RefCount = 1;
+    ui::UIEventManager::get()->registObjectListener(window.m_handle, listener);
+    if (listener != nullptr) {
+        listener->release();
+    }
+    ui::EventData event(0);
+#line 68
+    OpenParam* open = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) OpenParam();
+    *open = param;
+    event.m_type = 0x101;
+    event.m_paramPtr = open;
+    GfMenuObject::sendEvent(window.m_handle, event, 0.0f);
+    GfMenuObject::startCallContext(context, 0x21, window.m_handle);
+    if (flag) {
+        GfMenuObjQuestReward::open(context, false);
+    }
+}
 
 void GfMenuObjQuestReward::RewardListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);

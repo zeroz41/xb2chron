@@ -40,8 +40,10 @@ public:
 // one per window and sends it the OpenParam (event 0x101)
 class GfMenuObjQuestReward::RewardListener : public ::ui::UIObjectListener {
 public:
-    // create's inline construction zeroes 0xC-0x1B, 0x20 and both references
-    RewardListener() : pad_0C(), pad_20(), m_quest(), m_number() {}
+    // the constructor only makes both references empty; create clears 0xC-0x1B and 0x20 itself after it (the
+    // original's references are merged into one 16-byte clear before those stores, which only happens when the
+    // other clears are not in the constructor)
+    RewardListener() : m_quest(), m_number() {}
     virtual ~RewardListener();  // slot 0
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
     unsigned char pad_0C[0x10];
