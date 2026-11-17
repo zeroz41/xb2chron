@@ -104,6 +104,17 @@ public:
     void sendExitEvent(unsigned int handle);
     // event 0x22 to that object, or to the main layer when it is 0
     void sendCloseEvent(unsigned int handle);
+    // event 0x21 with parameter 0 to that object, or to the main layer when it is 0
+    void sendOpenEvent(unsigned int handle, int param);
+    // event 0x42 with parameter 0 to that object when it is set
+    void sendReturnEvent(unsigned int handle, int param);
+    // update redraws the item lists (refreshItemList) and "LAY_stock_num" (1.0.0's sets the first flag only)
+    void reqRefreshItemList();
+    // GfMenuItemUtil::canCreateOrb's error as its common window: 0xB0 for 2, 0xAF for 1
+    void openOrbError(unsigned int error);
+    // the mode's action layer under that object: LAY_store_action, LAY_exc_task_list, LAY_inn_action, LAY_orb_item_list
+    // (0 for another mode; 1.0.0's symbols name it)
+    unsigned int getShopSubActLayer(unsigned int handle);
 
     // sequence jobs (m_seq): each returns true when done
     // "TXT_store_sell_index" shows the current filter's name (BDAT 0x11D, list 0x14B's entry filter + 1)
