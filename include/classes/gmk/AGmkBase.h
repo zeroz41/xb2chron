@@ -75,6 +75,12 @@ public:
 };
 // the gimmick bound to an object, null for none
 AGmkBase* getBindedGmkInst(gf::GF_OBJ_HANDLE* handle);
+// whether a gimmick's game object is in view (GmkSet::isGmkInstValidView's test for the kinds with one object)
+bool isValidView(gf::GF_OBJ_HANDLE* handle);
+// whether a gimmick of kind T with game objects not bound to it is in view (symbols:
+// isGmkValidViewUnbound<GmkEnemy>, <GmkRoutedEnemy>, <GmkMob>, <GmkRoutedMob>; GmkSet::isGmkInstValidView calls them)
+template <class T>
+bool isGmkValidViewUnbound(const AGmkBase& gmk);
 class GmkEnemy;
 // whether the player's object exists (defined in GmkElevator.cpp's unit; StateFieldHome::isCondMatch is its tail
 // call)

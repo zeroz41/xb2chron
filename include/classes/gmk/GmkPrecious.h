@@ -46,6 +46,9 @@ public:
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     bool isObtained() const;
+    // the local game flag set once the precious item bdatId is obtained (GfGameUtil::setupPoweredNewGameParam asks;
+    // the parameter name is not the original's)
+    static unsigned int getGameFlagId(unsigned int bdatId);
     void disposeGobInst(bool);  // out of line (0x71005A45E4): onGobEvent calls it with false on event 3
     // 2.0.0's symbols name it. What it does: false when obtained (GfGameFlag local bdatId + 47087) or when the
     // BdatInfo's isPopCondMatched fails; then tests GmkManager's state (0x198), isGameTypeIra and the pop distance

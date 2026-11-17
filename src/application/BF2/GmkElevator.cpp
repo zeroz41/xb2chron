@@ -1266,6 +1266,97 @@ bool GmkSet::updateImmediate() {
     return true;
 }
 
+// whether an enemy gimmick pops no more objects: its kind's objects are at capacity, its pop conditions or range do
+// not hold, or its pop has finished (inline; the name is not the original's)
+static inline bool isPopDone(const GmkEnemyInsts& insts) {
+    int capacity = gf::GfObjManager::getGfObjCapacity(5);
+    if ((capacity > 0 && capacity <= gf::GfObjManager::getObjectNum(5)) || (insts.m_flags & 3) != 3) {
+        return true;
+    }
+    return insts.m_popInfo.isPopFinished();
+}
+
+// the same for a mob gimmick: its pop has finished once it holds as many objects as it pops (inline; the name is not
+// the original's)
+static inline bool isPopDone(const GmkMobInsts& insts) {
+    int capacity = gf::GfObjManager::getGfObjCapacity(7);
+    if ((capacity > 0 && capacity <= gf::GfObjManager::getObjectNum(7)) || (insts.m_flags & 3) != 3) {
+        return true;
+    }
+    unsigned int num = insts.getGobInstNum();
+    return insts.m_popInfo.m_popNum == static_cast<int>(num);
+}
+
+// a gimmick whose game object is gone or has no resource to search does not hold the view back (inline; the name is
+// not the original's)
+static inline bool isGobValidView(gf::GF_OBJ_HANDLE* handle) {
+    if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) || gf::GfObjUtil::isSearchEmptyResource(handle)) {
+        return true;
+    }
+    return isValidView(handle);
+}
+
+// the same for an NPC gimmick, whose object is its NPC id's while the object is bound to it (inline; the name is not
+// the original's)
+static inline bool isNpcGobValidView(const AGmkBase& gmk, const GmkNpcIdInfo* info) {
+    if (info == nullptr) {
+        return true;
+    }
+    gf::GF_OBJ_HANDLE* handle = info->m_handle;
+    return isGobValidView(getBindedGmkInst(handle) == &gmk ? handle : reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1));
+}
+
+template <class T>
+bool isGmkValidViewUnbound(const AGmkBase& gmk) {
+    if (!isPopDone(static_cast<const T&>(gmk).m_insts)) {
+        return false;
+    }
+    unsigned int num = static_cast<const T&>(gmk).getGobInstNum();
+    for (unsigned int i = 0; i < num; ++i) {
+        gf::GF_OBJ_HANDLE* handle = static_cast<const T&>(gmk).getGobInst(i);
+        if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) || gf::GfObjUtil::isSearchEmptyResource(handle)) {
+            continue;
+        }
+        if (!isValidView(handle)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool GmkSet::isGmkInstValidView(const AGmkBase& gmk) {
+    switch (gmk.getGmkType()) {
+    case GmkMapObj::TYPE:
+        return isGobValidView(static_cast<const GmkMapObj&>(gmk).m_gobInst);
+    case GmkTbox::TYPE:
+        return isGobValidView(static_cast<const GmkTbox&>(gmk).m_gob);
+    case GmkBlade::TYPE:
+        return isGobValidView(static_cast<const GmkBlade&>(gmk).m_gob);
+    case GmkRoutedMapObj::TYPE:
+        return isGobValidView(static_cast<const GmkRoutedMapObj&>(gmk).m_gobInst);
+    case GmkGrave::TYPE:
+        return isGobValidView(static_cast<const GmkGrave&>(gmk).m_gob);
+    case GmkEnemy::TYPE:
+        return gmk::isGmkValidViewUnbound<GmkEnemy>(gmk);
+    case GmkRoutedEnemy::TYPE:
+        return gmk::isGmkValidViewUnbound<GmkRoutedEnemy>(gmk);
+    case GmkNpc::TYPE:
+        return isNpcGobValidView(gmk, static_cast<const GmkNpc&>(gmk).m_npcIdInfo);
+    case GmkRoutedNpc::TYPE:
+        return isNpcGobValidView(gmk, static_cast<const GmkRoutedNpc&>(gmk).m_npcIdInfo);
+    case GmkMob::TYPE:
+        // mobs hold the view back only in an event
+        if (!gf::GfGameManager::isEvent(false)) {
+            return true;
+        }
+        return gmk::isGmkValidViewUnbound<GmkMob>(gmk);
+    case GmkRoutedMob::TYPE:
+        return gmk::isGmkValidViewUnbound<GmkRoutedMob>(gmk);
+    default:
+        return true;
+    }
+}
+
 int getCurrentMapBdatId() { return gf::GfGameManager::getMapID(); }
 
 const IGmkList* GmkSet::getGmkList(GmkType type) const { return m_gmkLists[static_cast<unsigned int>(type)]; }
@@ -10616,5 +10707,7 @@ void GmkPrecious::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* 
 }
 
 bool GmkPrecious::isObtained() const { return gf::GfGameFlag::getLocal(1, m_createInfo.m_bdatId + 47087) != 0; }
+
+unsigned int GmkPrecious::getGameFlagId(unsigned int bdatId) { return bdatId + 47087; }
 
 }  // namespace gmk
