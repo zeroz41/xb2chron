@@ -16,6 +16,9 @@ class GfDataDriver {
 public:
     static int getMaxSetBladeNum(unsigned int driver);  // how many blades the driver can engage
     static bool isActivateUnuse(unsigned int driver);
+    // (symbols; both return a value: GfGameParty::setupRequestDataIra ignores it)
+    static bool setActivateParty(unsigned int driver, unsigned int index, PTPOS party);
+    static bool setActivateUnuse(unsigned int driver);
     // the slot of the driver's engaged blade
     static int getBladeSet(unsigned int driver);
     // the blade in the driver's slot (GfMenuObjBladeSwitch::update asks GfMenuObjUtil::isValidBlade about it)

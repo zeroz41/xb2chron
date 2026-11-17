@@ -94,6 +94,8 @@ public:
     static void getCurrentPartyInfo(RQ_SETUP_PARTY_DRIVER& info);
     // 3.0.1's symbol name: GfArenaParty::setupLevelForBattleEnd passes its RQ_SETUP_PARTY
     static void setupRequestData(const RQ_SETUP_PARTY& info);
+    // (symbols) the Ira game's: sets each member's driver from info.m_iraDrivers in every party of m_hierarchy
+    static void setupRequestDataIra(const RQ_SETUP_PARTY& info);
     // the hierarchy of a party member's driver or blade (0 for none; the return type is not proven)
     static unsigned int getHierarchyByHandle(gf::GF_OBJ_HANDLE* handle);
     static bool isBtlLeaderDirver();
