@@ -358,6 +358,32 @@ bool BattleGlobal::IsValidAutoMode() const {
     return pad_bit49;
 }
 
+unsigned int BattleGlobal::CreateAttackData(gf::GF_OBJ_HANDLE* handle) {
+    unsigned int id = m_nextAttackId;
+    m_nextAttackId++;
+    for (;;) {
+        if (m_nextAttackId == 0xFFFFFFFF) {
+            m_nextAttackId++;
+        } else if (m_nextAttackId == 0) {
+            m_nextAttackId++;
+        } else {
+            break;
+        }
+    }
+    AddAttackDamage(handle, id, 0, true);
+    AttackDamageData* data = findAttackData(id);
+    if (data != nullptr) {
+        int index = CharacterManager::sys()->SearchCharacter(handle);
+        if (index >= 0) {
+            data->charaIndex = index;
+        }
+        bool chain = ChainAttackManager::sys()->IsProc(true);
+        data->resistantBreakDamageEnd = !chain;
+        data->chainAttack = chain;
+    }
+    return id;
+}
+
 void BattleGlobal::UpdateAttackData(unsigned int id) {
     findAttackData(id);
 }
@@ -851,15 +877,35 @@ void BattleGlobal::GetFutureViewArtsData(ARTS_DATA& data) const {
     DataManager::sys()->GetArtsData(static_cast<ARTS_DATA::DATA_TYPE>(pad_5d68 & 7), pad_5d68 >> 3, data);
 }
 
+const BattleGlobal::MapRev* BattleGlobal::GetMapDriverRevData(const BattleCharacter* chara, const BattleCharacter* driver) const {
+    if (m_challengeAnySuccess || chara == nullptr) {
+        return nullptr;
+    }
+    if (!chara->m_isPlayer) {
+        return nullptr;
+    }
+    bool apply = true;
+    if (driver != nullptr) {
+        const CharacterParameter* param = driver->GetCharacterParameterConst(true);
+        if (param != nullptr) {
+            apply = param->IsApplyMapRev();
+        }
+    }
+    if (!chara->IsDriver(true)) {
+        return nullptr;
+    }
+    return GetMapDriverRevDataByBdatID(chara->m_bdatID, apply);
+}
+
 const BattleGlobal::MapRev* BattleGlobal::GetMapDriverRevDataByBdatID(int chara, bool apply) const {
     static const MapRev s_default;  // the name is not the original's
     if (!apply) {
         return &s_default;
     }
-    if (chara < 1 || chara > 12) {
-        return nullptr;
+    if (chara >= 1 && chara <= 12) {
+        return &m_mapRev[chara - 1];
     }
-    return &m_mapRev[chara - 1];
+    return nullptr;
 }
 
 bool BattleGlobal::IsKakuseiFinished() const {
@@ -1451,6 +1497,33 @@ void BattleGlobal::RegisterFutureView(gf::GF_OBJ_HANDLE* handle, float time, uns
     pad_5d68 = (type & 7) | (arts << 3);
     pad_5d6a = value;
     SetPause(5, true);
+}
+
+bool BattleGlobal::InputLeverGachaStick(float angle) {
+    // counts when there is no angle yet, or the stick moved far enough (a sixth of a turn from the latest angle, a
+    // third from the one that counted; both across the wrap at +-pi)
+    bool count = true;
+    if (m_leverGachaStickAngle != 0xFFFF) {
+        bool near = true;
+        if (m_leverGachaStickLastAngle != 0xFFFF) {
+            float last = m_leverGachaStickLastAngle * 0.0001f;
+            near = !(::fabsf(angle - last) >= 1.0471976f &&
+                     ::fabsf(angle - (last + (last < angle ? 6.2831855f : -6.2831855f))) >= 1.0471976f);
+        }
+        if (near) {
+            float prev = m_leverGachaStickAngle * 0.0001f;
+            count = ::fabsf(angle - prev) >= 2.0943952f &&
+                    ::fabsf(angle - (prev + (prev < angle ? 6.2831855f : -6.2831855f))) >= 2.0943952f;
+        }
+    }
+    m_leverGachaStickLastAngle = angle * 10000.0f;
+    if (!count) {
+        return false;
+    }
+    m_leverGachaStickAngle = m_leverGachaStickLastAngle;
+    m_leverGachaCount++;
+    m_leverGachaInput = true;
+    return true;
 }
 
 bool BattleGlobal::InputLeverGachaButton(LEVER_GACHA_DATA::BUTTON button) {
