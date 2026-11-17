@@ -17,6 +17,8 @@
 #include "classes/gf/GfMenuDiffAdapter.h"
 #include "classes/gf/GfMenuItemList.h"
 #include "classes/gf/GfMenuObjCommonText.h"
+#include "classes/gf/GfMenuObjCharSelect.h"
+#include "classes/gf/GfMenuObjCharSelectIra.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/gf/GfMenuReference.h"
@@ -31,6 +33,8 @@
 #include "gf/GfDataBlade.h"
 #include "gf/GfDataDriver.h"
 #include "gf/GfDataDriverArts.h"
+#include "gf/GfEquipUtil.h"
+#include "btl/Utility.h"
 #include "gf/GfItemUtil.h"
 #include "gf/GfMenuObjUtil.h"
 #include "mm/mtl/FixStr.h"
@@ -200,6 +204,96 @@ void GfMenuObjDrArtsSet2::finalize() {
 void GfMenuObjDrArtsSet2::update() {
     m_seq.update();
     GfMenuObject::update();
+}
+
+namespace {
+// Inferred name, not the original's: the original inlines it (its control parameters sit above the listener's UI
+// accessor in the frame, where an inlined callee's local goes): the common fade out to the left, ending with event 2.
+inline void startFadeOut(unsigned int handle) {
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x10000000;
+    param.m_motionLib = "cmn_fade_motion_lr";
+    param.m_motion = "fade_out_l_early";
+    param.m_eventId = 2;
+    param.m_setDefault = true;
+    param.m_startFlags = 10;
+    GfMenuObjUtil::startCtrl(handle, param, nullptr);
+}
+}  // namespace
+
+void GfMenuObjDrArtsSet2::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObjMainMenu2::setSubIndexText(6);
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            s_RefDriverIndex = GfMenuObjCharSelectIra::getSubMenuMode() == 2;
+            unsigned int driver = GfMenuReference::getReferenceDriverID(s_RefDriverIndex);
+            m_owner->m_wpnTypes.clear();
+            GfDataDriver::getEquipWpnType(m_owner->m_wpnTypes, driver);
+            m_owner->m_number->setValue(m_owner->m_wpnTypes[0]);
+            GfMenuObject::sendOpenEvent(acc.searchChild("LAY_arts"), 1, 0.0f);
+            m_owner->pad_2B8 = !GfDataDriver::isIraFront(driver);
+            m_owner->pad_2B9 = btl::Utility::IsSatisfyCondition(0x10);
+            ui::UIObjectAcc line(acc.m_handle, "IMG_arts_list_line@01");
+            if (m_owner->pad_2B8) {
+                line.startAnimation("blade", false);
+            } else {
+                line.startAnimation("driver", false);
+            }
+            acc.setDispChild(!m_owner->pad_2B8, "IMG_arts_bg");
+            acc.setDispChild(!m_owner->pad_2B8, "IMG_arts_detail_a_base");
+            acc.setDispChild(!m_owner->pad_2B8, "IMG_arts_detail_b_base");
+            acc.setDispChild(m_owner->pad_2B8, "IMG_arts_bg_bl");
+            acc.setDispChild(m_owner->pad_2B8, "IMG_arts_detail_a_base_bl");
+            acc.setDispChild(m_owner->pad_2B8, "IMG_arts_detail_b_base_bl");
+            if (m_owner->pad_2B8) {
+                {
+                    ui::UIObjectAcc index(acc.m_handle, "TXT_param_a_txt_index@01");
+                    index.setMulColor("tgt_cursor_lv03");
+                    index.setAddColor("bl_thema01_dark");
+                }
+                {
+                    ui::UIObjectAcc line1(acc.m_handle, "IMG_param_a_txt_line@01");
+                    ui::UIObjectAcc line2(acc.m_handle, "IMG_arts_detail_a_tal_line@01");
+                    ui::UIObjectAcc line3(acc.m_handle, "IMG_arts_detail_a_tal_line@02");
+                    line1.setAddColor("bl_thema01_dark");
+                    line2.setAddColor("bl_thema01_dark");
+                    line3.setAddColor("bl_thema01_dark");
+                }
+                {
+                    ui::UIObjectAcc base(acc.m_handle, "IMG_arts_detail_a_base_line");
+                    base.setAddColor("bl_thema01_light");
+                }
+                ui::UIObjectAcc index1(acc.m_handle, "TXT_arts_detail_a_tal_index@01");
+                ui::UIObjectAcc index2(acc.m_handle, "TXT_arts_detail_a_tal_index@02");
+                index1.setMulColor("tgt_cursor_lv03");
+                index1.setAddColor("bl_thema01_dark");
+                index2.setMulColor("tgt_cursor_lv03");
+                index2.setAddColor("bl_thema01_dark");
+            }
+        } else {
+            GfMenuObject::sendOpenEvent(acc.searchChild("LAY_wpn"), 1, 0.0f);
+        }
+        // falls through: the open shows the layout too
+    case 0x21:
+        acc.setDisp(true);
+        break;
+    case 3:
+        if (event.m_param0 == 2) {
+            acc.setDisp(false);
+            acc.setTerm();
+            GfMenuObjCharSelect::returnSubMenu();
+            GfMenuObject::returnFSSubLayer(m_owner);
+        }
+        break;
+    case 0x22:
+        startFadeOut(acc.m_handle);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 void GfMenuObjDrArtsSet2::setupWpnType(ui::UIObjectAcc& acc, mm::mtl::IntrusivePtr<GfMenuReferenceNumber> number,
@@ -869,6 +963,44 @@ void GfMenuObjDrArtsSet2::setupWpnTypeIcon2(ui::UIObjectAcc& acc, mm::mtl::Fixed
             lvup.setDisp(icon.isDisp());
         }
     }
+}
+
+bool GfMenuObjDrArtsSet2::seqConfirmItem() {
+    if (!m_seqStep) {
+        unsigned int item = m_items->getContents(m_items->getIndex(false)).m_id;
+        if (item - 0x633D < 3) {
+            unsigned int text = item - 0x6267;
+            m_context->reset();
+            GfMenuObjCommonText::open(m_context, text, 0);
+        }
+        m_seqStep = true;
+    }
+    if (!m_context->isTerm()) {
+        return false;
+    }
+    if (!m_context->m_results.empty()) {
+        bool yes;
+        {
+            GfMenuCallContext::GfMenuResult result;
+            m_context->popResult(result);
+            yes = result.m_value == 0 && result.m_id == 0;
+        }
+        if (yes) {
+            unsigned int driver = GfMenuReference::getReferenceDriverID(s_RefDriverIndex);
+            unsigned int wpnType = m_number->m_value;
+            GfEquipUtil::execWpUpItem(driver, m_items->getContents(m_items->getIndex(false)).m_id, wpnType);
+            MenuItemInfo info = m_items->getContents(m_items->getIndex(false));
+            info.m_count = 1;
+            m_items->decItem(info, false);
+        }
+    }
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
+        m_seq.addJob(&GfMenuObjDrArtsSet2::seqReturnWeaponSelect);
+    } else {
+        m_seq.addJob(&GfMenuObjDrArtsSet2::seqReturnArtsSelect);
+    }
+    m_seqStep = false;
+    return true;
 }
 
 bool GfMenuObjDrArtsSet2::seqReturnArtsSelect() {
