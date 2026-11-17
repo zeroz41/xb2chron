@@ -31,6 +31,9 @@ public:
     float calcBezier(float t, float from, float to);
     void fadeIn(float time);
     void fadeOut(float time);
+    // the fade solve is in (inline: the name is not the original's; gf::GfFieldLookIk::updateIkSolver fades
+    // only when it is FADE_NONE)
+    FadeType getFadeType() const { return m_fadeType; }
 
     float m_weight;         // solve fades it to 1 or to 0; isEnable while above 0; calcIK scales its effect by it
     FadeType m_fadeType;    // the names of the fields below are not the original's
