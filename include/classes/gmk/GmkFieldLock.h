@@ -33,6 +33,8 @@ public:
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7
+    // its collision from its shape (out of line; its update calls it)
+    void createGmkCollision();
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(12);
     // its collision (1.0.0's GmkFieldLock::createGmkCollision creates it; the name is not the original's); at 0x50,

@@ -71,7 +71,7 @@ void GfComCollider::createColi(const Create& create, unsigned int index, const I
     coli->m_eventMask = mask;
     coli->m_listener = listener;
     m_coliObjects[index]->setUserData(&m_userData);
-    if (info.m_shape != nullptr && *info.m_shape == 5) {
+    if (info.m_shape != nullptr && info.m_shape->m_kind == 5) {
         if (GfComModel* model = m_owner->getComponent<GfComModel>(1)) {
             m_poseModifier.bind(model->m_model, m_coliObjects[index], getAllocator(ALLOCATOR(0)));
             if (fw::AnimationManager* manager = mm::mtl::PtrSingleton<fw::AnimationManager>::get()) {

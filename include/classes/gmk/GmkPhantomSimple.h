@@ -21,7 +21,8 @@ public:
                 m_size[i] = 0.0f;
             }
         }
-        bool validateByAGmkBase(const AGmkBase& gmk);
+        // returns nothing: its code sets no result (create(gmk, listener, bool) has the same body)
+        void validateByAGmkBase(const AGmkBase& gmk);
         unsigned int m_type;  // 1, 2 or 3: the phantom's shape
         mm::Vec3 m_pos;       // 0x10
         mm::Vec3 m_rot;       // 0x20: create's rotation angles (sin/cos of each)

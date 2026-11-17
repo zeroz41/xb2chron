@@ -41,6 +41,42 @@ class ColiShapeGrand : public ColiShape {
 public:
     const void* m_resource;
 };
+// kind 0's: setupColiPhantom hands its radius to IDColiParmsPhantom/IDColiParmsCharacter::createSphere (the gimmick
+// collisions' create build one on their stack; the names are not the original's)
+class ColiShapeSphere : public ColiShape {
+public:
+    ColiShapeSphere(float radius) {
+        m_kind = 0;
+        m_radius = radius;
+    }
+    float m_radius;
+};
+// kind 1's: setupColiPhantom hands both sizes to createCapsule, the flag to IDColiParmsCharacter::createCapsule's
+// bool (the names are not the original's)
+class ColiShapeCapsule : public ColiShape {
+public:
+    ColiShapeCapsule(float radius, float height) {
+        m_kind = 1;
+        m_radius = radius;
+        m_height = height;
+        m_flag = false;
+    }
+    float m_radius;
+    float m_height;
+    bool m_flag;
+};
+// kind 2's: setupColiPhantom hands the size to createBox, the flag to IDColiParmsCharacter::createBox's bool (the
+// names are not the original's)
+class ColiShapeBox : public ColiShape {
+public:
+    ColiShapeBox(const mm::Vec3& size) {
+        m_kind = 2;
+        m_size = size;
+        m_flag = false;
+    }
+    mm::Vec3 m_size;  // 0x10
+    bool m_flag;      // 0x20
+};
 // how a collision object follows its frame (setColiType); no value has a name yet
 enum ColiType {};
 }  // namespace fw

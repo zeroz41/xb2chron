@@ -26,6 +26,8 @@ public:
     // 2.0.0's symbols name them (update calls createEffect, which tail-calls applyEffectParam)
     void createEffect();
     void applyEffectParam() const;
+    // its collision from its shape (out of line; its update calls it)
+    void createGmkCollision();
     // its kind (getGmkType's; GfGameInsideBattleLock walks the battle locks by it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(11);
 

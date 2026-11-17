@@ -197,6 +197,8 @@
 #include "classes/gmk/DistCond.h"
 #include "effect/SendParam.h"
 #include "classes/gmk/GmkSquadNavi.h"
+#include "fw/ColiCharacterInfo.h"
+#include "fw/ColiPhantomInfo.h"
 #include "fw/FwDebug.h"
 #include "mm/mtl/Vector.h"
 #include "gf/GfDataUtil.h"
@@ -2094,6 +2096,24 @@ void GmkCamera::seqWaitToPlay(float) {
     m_seq = &GmkCamera::seqWaitToEnd;
 }
 
+// shows or hides the three members' drivers and blades; with the second argument set, not the object the player
+// controls
+void GmkCamera::setDispOfParty(bool disp, bool exceptMover) {
+    gf::GF_OBJ_HANDLE* mover = gf::GfGameManager::getControlMover();
+    for (unsigned int i = 0; i < 3; i++) {
+        gf::GF_OBJ_HANDLE* driver = gf::GfGameParty::getHandleDriver(i, gf::PTPOS(0));
+        if (!exceptMover || mover != driver) {
+            gf::GfObjAcc acc(driver);
+            acc.setDisp(gf::OBJDISP(0x10), disp);
+        }
+        gf::GF_OBJ_HANDLE* blade = gf::GfGameParty::getHandleBlade(i, -1);
+        if (!exceptMover || mover != blade) {
+            gf::GfObjAcc acc(blade);
+            acc.setDisp(gf::OBJDISP(0x10), disp);
+        }
+    }
+}
+
 // once the camera has played: shows the party again (by m_attr), pops and releases the camera
 void GmkCamera::seqWaitToEnd(float) {
     if (!static_cast<gf::GimmickCamera*>(m_camera.get())->isPlayEnd()) {
@@ -2241,6 +2261,168 @@ GmkDmgPhantom::~GmkDmgPhantom() { dispose(); }
 bool GmkDmgPhantom::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
 
 GmkPhantomSimple::~GmkPhantomSimple() { dispose(); }
+
+// a gimmick shape's phantom shape (LvlbInfo::m_shape 2: sphere, 3: box, 4: capsule; 1 has none): lbl_71009C652C,
+// read by the phantoms' and the locks' collision setups (the name is not the original's)
+static const unsigned int sPhantomTypeByShape[] = {0, 0, 1, 3, 2};
+
+// takes the gimmick's position, rotation and its scale halved as the sizes
+void GmkPhantomSimple::CreateInfo::validateByAGmkBase(const AGmkBase& gmk) {
+    unsigned int shape = gmk.m_info->m_shape;
+    if (shape == 1) {
+        // the result is not used
+        gmk.m_list->getCreateInfo();
+        return;
+    }
+    m_type = sPhantomTypeByShape[shape];
+    m_pos = gmk.m_pos[0];
+    m_rot = gmk.m_pos[1];
+    switch (m_type) {
+    case 1:
+        m_size[0] = gmk.m_pos[2].x * 0.5f;
+        if (m_size[0] < 0.0f) {
+            m_size[0] = -m_size[0];
+        }
+        break;
+    case 2:
+        m_size[0] = gmk.m_pos[2].y;
+        m_size[1] = gmk.m_pos[2].x * 0.5f;
+        if (m_size[0] < 0.0f) {
+            m_size[0] = -m_size[0];
+        }
+        if (m_size[1] < 0.0f) {
+            m_size[1] = -m_size[1];
+        }
+        break;
+    case 3:
+        m_size[0] = gmk.m_pos[2].x * 0.5f;
+        m_size[1] = gmk.m_pos[2].y * 0.5f;
+        m_size[2] = gmk.m_pos[2].z * 0.5f;
+        if (m_size[0] < 0.0f) {
+            m_size[0] = -m_size[0];
+        }
+        if (m_size[1] < 0.0f) {
+            m_size[1] = -m_size[1];
+        }
+        if (m_size[2] < 0.0f) {
+            m_size[2] = -m_size[2];
+        }
+        break;
+    }
+}
+
+void GmkPhantomSimple::create(const CreateInfo& info) {
+    dispose();
+    m_info = info;
+    fw::ColiPhantomInfo coliInfo;
+    coliInfo.m_followType = fw::ColiType(0);
+    coliInfo.pad_14 = 0x100000;
+    switch (info.m_type) {
+    case 1: {
+        fw::ColiShapeSphere shape(info.m_size[0]);
+        coliInfo.m_shape = &shape;
+        m_coliObject = fw::ColiObject::createColiPhantom(coliInfo, mm::mtl::IntrusivePtr<fw::ReferenceFrame>());
+        break;
+    }
+    case 2: {
+        fw::ColiShapeCapsule shape(info.m_size[0], info.m_size[1]);
+        coliInfo.m_shape = &shape;
+        m_coliObject = fw::ColiObject::createColiPhantom(coliInfo, mm::mtl::IntrusivePtr<fw::ReferenceFrame>());
+        break;
+    }
+    case 3: {
+        fw::ColiShapeBox shape(mm::Vec3(info.m_size[0], info.m_size[1], info.m_size[2]));
+        coliInfo.m_shape = &shape;
+        m_coliObject = fw::ColiObject::createColiPhantom(coliInfo, mm::mtl::IntrusivePtr<fw::ReferenceFrame>());
+        break;
+    }
+    }
+    mm::Mat44 mat;
+    mat.setRotXYZ(info.m_rot);
+    mat.addTrans(info.m_pos);
+    m_coliObject->setMatrix(mat);
+}
+
+void GmkPhantom::create(const CreateInfo& info) {
+    dispose();
+    m_info = info;
+    fw::ColiPhantomInfo coliInfo;
+    coliInfo.m_followType = fw::ColiType(0);
+    coliInfo.m_userData = this;
+    coliInfo.pad_14 = 0x100000;
+    switch (info.m_type) {
+    case 1: {
+        fw::ColiShapeSphere shape(info.m_size[0]);
+        coliInfo.m_shape = &shape;
+        m_coliObject = fw::ColiObject::createColiPhantom(coliInfo, mm::mtl::IntrusivePtr<fw::ReferenceFrame>());
+        break;
+    }
+    case 2: {
+        fw::ColiShapeCapsule shape(info.m_size[0], info.m_size[1]);
+        coliInfo.m_shape = &shape;
+        m_coliObject = fw::ColiObject::createColiPhantom(coliInfo, mm::mtl::IntrusivePtr<fw::ReferenceFrame>());
+        break;
+    }
+    case 3: {
+        fw::ColiShapeBox shape(mm::Vec3(info.m_size[0], info.m_size[1], info.m_size[2]));
+        coliInfo.m_shape = &shape;
+        m_coliObject = fw::ColiObject::createColiPhantom(coliInfo, mm::mtl::IntrusivePtr<fw::ReferenceFrame>());
+        break;
+    }
+    }
+    mm::Mat44 mat;
+    mat.setRotXYZ(info.m_rot);
+    mat.addTrans(info.m_pos);
+    m_coliObject->setMatrix(mat);
+}
+void GmkPhantom::create(const AGmkBase& gmk, IGmkPhantomEventListener* listener, bool flag) {
+    CreateInfo info;
+    unsigned int shape = gmk.m_info->m_shape;
+    if (shape == 1) {
+        // the result is not used
+        gmk.m_list->getCreateInfo();
+        return;
+    }
+    info.m_type = sPhantomTypeByShape[shape];
+    info.m_pos = gmk.m_pos[0];
+    info.m_rot = gmk.m_pos[1];
+    switch (info.m_type) {
+    case 1:
+        info.m_size[0] = gmk.m_pos[2].x * 0.5f;
+        if (info.m_size[0] < 0.0f) {
+            info.m_size[0] = -info.m_size[0];
+        }
+        break;
+    case 2:
+        info.m_size[0] = gmk.m_pos[2].y;
+        info.m_size[1] = gmk.m_pos[2].x * 0.5f;
+        if (info.m_size[0] < 0.0f) {
+            info.m_size[0] = -info.m_size[0];
+        }
+        if (info.m_size[1] < 0.0f) {
+            info.m_size[1] = -info.m_size[1];
+        }
+        break;
+    case 3:
+        info.m_size[0] = gmk.m_pos[2].x * 0.5f;
+        info.m_size[1] = gmk.m_pos[2].y * 0.5f;
+        info.m_size[2] = gmk.m_pos[2].z * 0.5f;
+        if (info.m_size[0] < 0.0f) {
+            info.m_size[0] = -info.m_size[0];
+        }
+        if (info.m_size[1] < 0.0f) {
+            info.m_size[1] = -info.m_size[1];
+        }
+        if (info.m_size[2] < 0.0f) {
+            info.m_size[2] = -info.m_size[2];
+        }
+        break;
+    }
+    info.m_listener = listener;
+    info.m_flag = flag;
+    create(info);
+    m_name = gmk.m_info->m_name;
+}
 bool GmkDmgEffect::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
 bool GmkDmgSe::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
 bool GmkRoutedFootPrintPoint::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
@@ -6291,6 +6473,49 @@ void GmkMapObj::createGobInst() {
 GmkMapObj::~GmkMapObj() { dispose(); }
 
 GmkCollision::~GmkCollision() { dispose(); }
+
+void GmkCollision::create(const CreateInfo& info) {
+    dispose();
+    m_info = info;
+    if (m_info.pad_30 && m_info.m_type != 2 && m_info.m_type != 3) {
+        m_info.m_type = 2;
+        m_info.m_size[1] = m_info.m_size[0];
+    }
+    fw::ColiCharacterInfo coliInfo;
+    coliInfo.m_followType = fw::ColiType(0);
+    coliInfo.m_priority = 799;
+    coliInfo.pad_14 = 0x200000;
+    coliInfo.m_stateFlags = 2;
+    coliInfo.m_listener = this;
+    coliInfo.m_userData = this;
+    coliInfo.m_eventMask = 5;
+    switch (info.m_type) {
+    case 1: {
+        fw::ColiShapeSphere shape(info.m_size[0]);
+        coliInfo.m_shape = &shape;
+        m_coliObject = fw::ColiObject::createColiCharacter(coliInfo, mm::mtl::IntrusivePtr<fw::ReferenceFrame>());
+        break;
+    }
+    case 2: {
+        fw::ColiShapeCapsule shape(info.m_size[0], info.m_size[1]);
+        shape.m_flag = info.pad_30;
+        coliInfo.m_shape = &shape;
+        m_coliObject = fw::ColiObject::createColiCharacter(coliInfo, mm::mtl::IntrusivePtr<fw::ReferenceFrame>());
+        break;
+    }
+    case 3: {
+        fw::ColiShapeBox shape(mm::Vec3(info.m_size[0], info.m_size[1], info.m_size[2]));
+        shape.m_flag = info.pad_30;
+        coliInfo.m_shape = &shape;
+        m_coliObject = fw::ColiObject::createColiCharacter(coliInfo, mm::mtl::IntrusivePtr<fw::ReferenceFrame>());
+        break;
+    }
+    }
+    mm::Mat44 mat;
+    mat.setRotXYZ(info.m_rot);
+    mat.addTrans(info.m_pos);
+    m_coliObject->setMatrix(mat);
+}
 
 void GmkBattleLock::dispose() {
     if (m_effectHandle != 0) {
