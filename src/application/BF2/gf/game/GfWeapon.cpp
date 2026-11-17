@@ -2912,6 +2912,41 @@ RESULT_HANA GfGameUtilHana::execEquipCondenserParts(unsigned int hana, unsigned 
     return static_cast<RESULT_HANA>(0);
 }
 
+RESULT_HANA GfGameUtilHana::execEquipExtendCondenserParts(unsigned int hana, unsigned int item, GfItemHandle handle,
+                                                        unsigned int slot) {
+    if (!GfDataHana::isValid(hana)) return static_cast<RESULT_HANA>(4);
+    EquipHana equip = *GfDataHana::getEquipParts(hana);
+    unsigned int oldItem = equip.m_extendCondenserParts[slot];
+    unsigned int oldHandle = equip.m_extendCondenserHandles[slot];
+    if (item != 0) {
+        if (GfItemUtil::getItemBoxCount(item) == 0) return static_cast<RESULT_HANA>(8);
+        if (handle.m_handle == 0) {
+            handle = GfItemUtil::getNoEquipItemHandle(item);
+            if (handle.m_handle == 0) return static_cast<RESULT_HANA>(9);
+        }
+    }
+    equip.setExtendCondenserParts(item, handle.m_handle, slot);
+    if (GfDataHana::isValid(hana)) {
+        unsigned int power = GfDataHana::getEquipPower(equip);
+        if (static_cast<unsigned int>(GfDataHana::getPowerCapacity(hana)) < power) return static_cast<RESULT_HANA>(5);
+    }
+    if (item != 0) {
+        GfItemUtil::setEquipFlag(item, handle, true);
+    }
+    if (oldItem != 0) {
+        if (oldHandle != 0) {
+            GfItemHandle old;
+            old.m_handle = oldHandle;
+            GfItemUtil::setEquipFlag(oldItem, old, false);
+        } else {
+            GfItemUtil::addItemBox(oldItem, 1);
+        }
+    }
+    GfDataHana::setEquipParts(hana, equip);
+    GfEvent::callHanaCondenser(hana, true, slot);
+    return static_cast<RESULT_HANA>(0);
+}
+
 void GfGameUtilHana::setupDefaultParts(unsigned int blade) {
     if (!GfDataHana::isValid(blade)) return;
     if (GfDataBlade::getSDataBlade(blade)->m_equipHana.m_roleParts != 0) return;

@@ -2261,9 +2261,9 @@ bool GfDataBlade::getEquipOrbEnance(mm::mtl::FixedVector<unsigned short, 64>& en
         }
         num = GfBdatBtl::get()->getBTL_HanaBaseECondNum(data.m_bladeId - 1004);
         for (unsigned int i = 0; i < num; i++) {
-            if (((1 << (i + 3)) & data.m_openCircuit) && (&data.m_equipHana.m_condenserParts[3])[i] != 0) {
+            if (((1 << (i + 3)) & data.m_openCircuit) && data.m_equipHana.m_extendCondenserParts[i] != 0) {
                 unsigned short enhance =
-                    GfBdatItem::get()->getITM_HanaAssistEnhance((&data.m_equipHana.m_condenserParts[3])[i]);
+                    GfBdatItem::get()->getITM_HanaAssistEnhance(data.m_equipHana.m_extendCondenserParts[i]);
                 if (enhance != 0) {
                     enhances.push_back(enhance);
                 }
@@ -6971,9 +6971,14 @@ int GfDataHana::getEquipPower(const EquipHana& equip) {
             power += bdat->getITM_HanaNArtsSetNeedPow(equip.m_nArtsParts[i].m_item);
         }
     }
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 3; i++) {
         if (equip.m_condenserParts[i] != 0) {
             power += bdat->getITM_HanaAssistNeedPow(equip.m_condenserParts[i]);
+        }
+    }
+    for (int i = 0; i < 3; i++) {
+        if (equip.m_extendCondenserParts[i] != 0) {
+            power += bdat->getITM_HanaAssistNeedPow(equip.m_extendCondenserParts[i]);
         }
     }
     return power;

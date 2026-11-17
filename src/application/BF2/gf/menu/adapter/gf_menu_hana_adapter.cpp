@@ -243,7 +243,7 @@ unsigned int GfMenuHanaAdapter::getEquipParts(unsigned int hana, unsigned int pa
     case 12:
     case 13:
     case 14:
-        return (&equip.m_condenserParts[3])[partsId - 12];
+        return equip.m_extendCondenserParts[partsId - 12];
     }
     return 0;
 }

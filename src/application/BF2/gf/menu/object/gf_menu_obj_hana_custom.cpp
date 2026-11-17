@@ -311,8 +311,8 @@ void GfMenuObjHanaCustom::refreshPartsList(ui::UIObjectAcc& acc, mm::mtl::FixedA
                        (equip->m_artsParts[2].m_item != 0);
             break;
         case 12: {
-            const unsigned short* condenser = equip->m_condenserParts;
-            equipped = (condenser[3] != 0) + (condenser[4] != 0) + (condenser[5] != 0);
+            const unsigned short* condenser = equip->m_extendCondenserParts;
+            equipped = (condenser[0] != 0) + (condenser[1] != 0) + (condenser[2] != 0);
             break;
         }
         }
@@ -359,7 +359,7 @@ void GfMenuObjHanaCustom::getEquipItem(unsigned int hana, unsigned int slot, Men
     case 13:
     case 14:
         item.m_type = 0x14;
-        item.m_id = (&equip.m_condenserParts[3])[slot - 12];
+        item.m_id = equip.m_extendCondenserParts[slot - 12];
         break;
     default:
         item.m_type = 0;
@@ -566,13 +566,13 @@ void GfMenuObjHanaCustom::refreshEquipList(ui::UIObjectAcc& acc, unsigned int ha
     if (refreshEquipListSub(acc, 11, equip->m_artsParts[2].m_item, row)) {
         row++;
     }
-    if (refreshEquipListSub(acc, 12, equip->m_condenserParts[3], row)) {
+    if (refreshEquipListSub(acc, 12, equip->m_extendCondenserParts[0], row)) {
         row++;
     }
-    if (refreshEquipListSub(acc, 13, equip->m_condenserParts[4], row)) {
+    if (refreshEquipListSub(acc, 13, equip->m_extendCondenserParts[1], row)) {
         row++;
     }
-    refreshEquipListSub(acc, 14, equip->m_condenserParts[5], row);
+    refreshEquipListSub(acc, 14, equip->m_extendCondenserParts[2], row);
 }
 
 void GfMenuObjHanaCustom::equipParts(unsigned int hana, unsigned int slot, unsigned int item, GfItemHandle handle) {
