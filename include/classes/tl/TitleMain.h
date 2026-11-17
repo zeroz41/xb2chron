@@ -95,11 +95,19 @@ public:
         // two zeroed halfwords as made (the constructor's zero stores merge with the previous member's; one zeroed
         // 4-byte block does not): what they hold is not known
         unsigned short pad_2;
-        unsigned short pad_4;
-        unsigned char pad_6 = 0x15;  // 0x15 as made; what it holds is not known
-        unsigned char pad_7[0x9];
+        // GfMenuObjEvTheater::MainListener fills the bytes below from the event theater's settings when an event is
+        // decided (what each holds is inferred from its source, not named by the original)
+        unsigned char pad_4;  // an hour: 0xC or 5 by event, the timezone's (0xC, 0x12, 0x16) or the timezone set
+        unsigned char pad_5;  // the third setting's value (title 1, 2)
+        unsigned char pad_6 = 0x15;  // 0x15 as made; the second setting's weather (title 1, 2)
+        unsigned char pad_7;  // the first setting's element (1-6, 8) (title 3)
+        unsigned char pad_8;  // the second setting's value (title 3)
+        unsigned char pad_9;  // the third setting's value (title 3)
+        unsigned short pad_A[2];  // up to two of 5, 6, 3 by the owner's flag bits 0-2 (title 1, 2)
+        unsigned char pad_E;  // the owner's flag at 0x194 (title 1, 2)
+        unsigned char pad_F;
         mm::mtl::FixStr<64> m_text;  // a 64-character string, empty as made; what it holds is not known
-        EventRequest() : m_event(0), pad_2(0), pad_4(0), pad_7() {}
+        EventRequest() : m_event(0), pad_2(0), pad_4(0), pad_5(0), pad_7(0), pad_8(0), pad_9(0), pad_A(), pad_E(0), pad_F(0) {}
     };
 
     ai::Fsm m_fsm;

@@ -26,6 +26,9 @@ public:
     class TopListener;
     class SubListener;
     class PreviewListener;  // the listener of table 0x7100B621A0 (unnamed)
+    class MainListener;
+    class SelectListener;
+    class ItemListListener;
     // TitleMenu::setupEventTheater / openEventTheater / fadeoutEventTheater pass their call context
     static bool attach(GfMenuCallContext* context);
     static void fadein(GfMenuCallContext* context);
@@ -44,9 +47,8 @@ public:
     // Level). Members: getDefaultLevel and convOptionDataToLevelList work on this object's m_levels / m_volumeLevel,
     // ItemListListener::reciveEvent (0x7100403DE4, this object's listener) calls convLevelListToOptionData and
     // convOptionDataToLevelList; the unsigned int each takes (a category, as in GfMenuObjOption's) is passed on, never
-    // read. convLevelListToOptionData (no body here yet): stores levels into option: row 1 - top (Bdat::getIdTop of
-    // bdat 0x104) == 1 into the event
-    // subtitle flag, row 2 - top's level / max (at most 1) * 255 into m_volume[1], and with
+    // read. convLevelListToOptionData: stores levels into option: row 1 - top (Bdat::getIdTop of bdat 0x104) == 1
+    // into the event subtitle flag, row 2 - top's level / max (at most 1) * 255 into m_volume[1], and with
     // GfMenuManager::isEnableVoiceChange row 3 - top == 2 into m_byte1E.
     static void convLevelListToOptionData(unsigned int category, const mm::mtl::FixedVector<Level, 32>& levels, SDataOption& option);
     // getDefaultLevel: clears levels and pushes bdat 0x104's "default_level" / "max_level" of rows s_capRows (the third
