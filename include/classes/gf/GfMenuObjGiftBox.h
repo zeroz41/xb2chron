@@ -59,7 +59,7 @@ public:
     bool seqGetItemAll();
     // 2.0.0's symbols name them. canGetItem: the row's local flag (type 1) is clear, its game condition holds and
     // isGetItemFull(row, arg) is false. hasFreeGift: add-on 5 is present (gf::GfDataAoc::getContentVersion(5) >= 0) and some row's
-    // "releasecount" has bit 7 set. isGetItemFull (not written yet) is called with the row and the caller's second
+    // "releasecount" has bit 7 set. isGetItemFull is called with the row and the caller's second
     // argument.
     static bool canGetItem(unsigned int row, unsigned int arg);
     static bool hasFreeGift();
@@ -68,7 +68,9 @@ public:
     static void execGetItem(unsigned int id);
     void refreshTopList(bool);
     void refreshSubList();
-    // 2.0.0's symbols name it (not written yet): fills m_topList from table 0x10A (initialize, TopListener)
+    // the symbols name it (not written yet): FilterListener calls it after the selected filter changes
+    void refreshFilter();
+    // 2.0.0's symbols name it: fills m_topList from table 0x10A (initialize, TopListener)
     void updateTopList();
     // 2.0.0's symbols name them.
     void updateSubList();
@@ -81,11 +83,15 @@ public:
     GfMenuSequence<GfMenuObjGiftBox, 8> m_seq;  // 0xE8: update runs it
     unsigned char pad_378;
     // 0x379-0x37B: the top list's filter (FilterListener sets them; hasGetableGiftFromFilter / updateTopList test
-    // m_counts[m_filterIndex] against the rows' "releasecount" when m_filterIndex and m_filterOn are set). The names
+    // m_counts[m_filterIndex] against the rows' "releasecount" when m_filterIndex and m_filterCount are set). The names
     // are not the original's.
-    bool m_filterOn;               // 0x379
-    unsigned char m_filterIndex;   // 0x37A
-    unsigned char m_filterCursor;  // 0x37B: refreshFilter / FilterListener
+    // 0x379: a byte FilterListener shows the filter by (setDisp(count != 0), so not a bool) and hands
+    // setupInputSelection as the selection count
+    unsigned char m_filterCount;
+    unsigned char m_filterIndex;   // 0x37A: the selected filter (FilterListener's event 6 sets it)
+    // 0x37B: the first filter icon shown: FilterListener scrolls it by one when the selection leaves the icons
+    // (m_iconCount of them) at either end and sets m_counts.size() - m_iconCount when the selection wraps to the end
+    unsigned char m_filterCursor;
     mm::mtl::IntrusivePtr<GfMenuReferenceItem> m_refItem;  // 0x380
     mm::mtl::Vector<AddedItem> m_ids;  // 0x388: compared with the BDAT rows' ids (seqGetItemAll grows it through
                                        // Vector<AddedItem>::expand)

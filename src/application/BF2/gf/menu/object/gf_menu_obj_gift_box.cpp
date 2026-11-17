@@ -1,5 +1,11 @@
 #include "classes/gf/GfMenuObjGiftBox.h"
 #include "classes/gf/GfMenuObjGiftBox/MainListener.h"
+#include "classes/gf/GfMenuObjGiftBox/TopListener.h"
+#include "classes/gf/GfMenuObjGiftBox/SubListener.h"
+#include "classes/gf/GfMenuObjGiftBox/FilterListener.h"
+#include "classes/gf/GfMenuObjAnnounce.h"
+#include "classes/gf/GfMenuObjMainMenu2.h"
+#include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/gf/GfMenuFullScreen.h"
 #include "classes/gf/GfMenuIDList.h"
 #include "classes/gf/GfDataBdat.h"
@@ -21,6 +27,7 @@
 #include "gf/GfMenuObjUtil.h"
 #include "gf/GfMenuTypes.h"
 #include "gf/gf_data_aoc.h"
+#include "mm/Math.h"
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/Delegate.h"
 #include "plugin/Bdat.h"
@@ -31,7 +38,7 @@ namespace gf {
 
 GfMenuObjGiftBox::GfMenuObjGiftBox(unsigned int handle)
     : GfMenuObject(handle), m_topList(nullptr), m_subList(nullptr), m_numbers(), m_seq(this), pad_378(0),
-      m_filterOn(false), m_filterIndex(0), m_filterCursor(0), m_refItem(), m_ids(), m_counts(), m_menuId(0), m_hasMenuId(false), m_noMenuId(false) {
+      m_filterCount(0), m_filterIndex(0), m_filterCursor(0), m_refItem(), m_ids(), m_counts(), m_menuId(0), m_hasMenuId(false), m_noMenuId(false) {
     m_topList = GfMenuMsgList::create();
     m_subList = GfMenuIDList::create();
     m_refItem = GfMenuReferenceItem::create();
@@ -248,7 +255,7 @@ void GfMenuObjGiftBox::updateTopList() {
             } else if (count < 0) {
                 continue;
             }
-            if (m_filterIndex != 0 && m_filterOn && m_counts[m_filterIndex] != count) {
+            if (m_filterIndex != 0 && m_filterCount && m_counts[m_filterIndex] != count) {
                 continue;
             }
             unsigned int title = static_cast<unsigned short>(Bdat::getVal(fp, "title", row));
@@ -333,6 +340,43 @@ void GfMenuObjGiftBox::updateSubList() {
     }
 }
 
+bool GfMenuObjGiftBox::isGetItemFull(unsigned int row, unsigned int arg) {
+    unsigned char* fp = GfDataBdat::getFP(0x10A);
+    unsigned char category = Bdat::getVal(fp, "category", row);
+    unsigned short value = Bdat::getVal(fp, "value", row);
+    unsigned short count = value + arg;
+    if (category == 0) {
+        return false;
+    }
+    switch (category) {
+    case 1: {
+        unsigned short item = Bdat::getVal(fp, "item_id", row);
+        unsigned int type = GfDataItem::getItemType(item);
+        if (GfMenuItemUtil::canCountStack(type)) {
+            if (static_cast<unsigned int>(GfItemUtil::getItemBoxCount(item) + count) > static_cast<unsigned int>(GfItemUtil::getEnableStock(item))) {
+                return true;
+            }
+        } else {
+            if (static_cast<unsigned int>(GfItemUtil::getCountByType(static_cast<ItemType::Type>(type)) + count) > static_cast<unsigned int>(GfItemUtil::getEnableStock(item))) {
+                return true;
+            }
+        }
+        break;
+    }
+    case 2:
+        if (GfDataUtil::getMoney() + count > 999999999) {
+            return true;
+        }
+        break;
+    case 3:
+        if (static_cast<unsigned int>(GfDataHana::getEther() + count) > 999999999) {
+            return true;
+        }
+        break;
+    }
+    return false;
+}
+
 void GfMenuObjGiftBox::execGetItem(unsigned int row) {
     unsigned char* fp = GfDataBdat::getFP(0x10A);
     unsigned char category = Bdat::getVal(fp, "category", row);
@@ -349,6 +393,107 @@ void GfMenuObjGiftBox::execGetItem(unsigned int row) {
         break;
     }
     GfGameFlag::setLocal(1, static_cast<unsigned short>(Bdat::getVal(fp, "getflag", row)), 1);
+}
+
+int GfMenuObjGiftBox::ctrlTopItem(bool out) {
+    ui::UIObjectAcc main(m_handle, "LAY_main");
+    mm::mtl::FixStr<32> name;
+    unsigned int count = m_topList->getSize() - m_topList->getRowOffset();
+    if (count >= m_topList->getPageRowSize()) {
+        count = m_topList->getPageRowSize();
+    }
+    int ctrl = -1;
+    if (out) {
+        mm::Pnt<short> firstPos;
+        mm::Pnt<short> pos;
+        name.format("LAY_top_list_item@%02d", 1);
+        ui::UIObjectAcc first(main.searchChild(name.m_str));
+        first.getPos(firstPos);
+        for (unsigned int i = 0; i != count; i++) {
+            name.format("LAY_top_list_item@%02d", i + 1);
+            ui::UIObjectAcc item(main.m_handle, name.m_str);
+            if (i == m_topList->getIndex(true)) {
+                if (i != 0) {
+                    item.getPos(pos);
+                    GfMenuObjUtil::CtrlParam param;
+                    param.m_methods = 0x20;
+                    param.m_distance = pos.y - firstPos.y;
+                    param.m_time = 0.3f;
+                    param.m_eventId = 8;
+                    param.m_startFlags = 4;
+                    param.m_curve = 1;
+                    ctrl = GfMenuObjUtil::startCtrl(item.m_handle, param, nullptr);
+                    item.setDispPriority(9);
+                }
+            } else {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_eventId = 8;
+                param.m_motionLib = "cmn_fade_motion_lr";
+                param.m_motion = "fade_out_l";
+                param.m_time = 0.3f;
+                param.m_startFlags = 10;
+                ctrl = GfMenuObjUtil::startCtrl(item.m_handle, param, nullptr);
+                item.setDispPriority(8);
+            }
+        }
+        GfMenuObjUtil::setCommonFadeOut(main.searchChild("LAY_top_list_scroll_bar"), 0, 0);
+    } else {
+        for (unsigned int i = 0; i != count; i++) {
+            name.format("LAY_top_list_item@%02d", i + 1);
+            ui::UIObjectAcc item(main.m_handle, name.m_str);
+            if (i == m_topList->getIndex(true)) {
+                if (i != 0) {
+                    GfMenuObjUtil::CtrlParam param;
+                    param.m_methods = 0x80000000;
+                    param.m_time = 0.3f;
+                    param.m_eventId = 9;
+                    param.m_slot = GfMenuObjUtil::getCtrlID(item.m_handle);
+                    param.m_curve = 1;
+                    ctrl = GfMenuObjUtil::startCtrl(item.m_handle, param, nullptr);
+                }
+            } else {
+                item.setDisp(true);
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_eventId = 9;
+                param.m_motionLib = "cmn_fade_motion_lr";
+                param.m_motion = "fade_in_l";
+                param.m_time = 0.3f;
+                param.m_startFlags = 8;
+                ctrl = GfMenuObjUtil::startCtrl(item.m_handle, param, nullptr);
+            }
+            item.setDispPriority(8);
+        }
+        GfMenuObjUtil::setCommonFadeIn(main.searchChild("LAY_top_list_scroll_bar"), 0, 0);
+    }
+    return ctrl;
+}
+
+int GfMenuObjGiftBox::ctrlSubItem(bool out) {
+    ui::UIObjectAcc main(m_handle, "LAY_main");
+    main.setDispChild(true, "LAY_sub_list");
+    main.setDispChild(true, "LAY_sub_list_item");
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x10000000;
+    param.m_motionLib = "cmn_fade_motion_lr";
+    param.m_motion = out ? "fade_out_l" : "fade_in_l";
+    param.m_time = 0.3f;
+    param.m_eventId = out ? 11 : 10;
+    param.m_startFlags = 8;
+    param.m_setDefault = true;
+    if (out) {
+        param.m_startFlags = 10;
+    }
+    int ctrl = GfMenuObjUtil::startCtrl(main.searchChild("LAY_sub_list_item"), param, nullptr);
+    if (out) {
+        GfMenuObjUtil::setCommonFadeOut(main.searchChild("LAY_sub_list_scroll_bar"), 0, 0);
+        GfMenuObjUtil::setCommonFadeOut(main.searchChild("LAY_iteminfo"), 0, 0);
+    } else {
+        GfMenuObjUtil::setCommonFadeIn(main.searchChild("LAY_sub_list_scroll_bar"), 0, 0);
+        GfMenuObjUtil::setCommonFadeIn(main.searchChild("LAY_iteminfo"), 0, 0);
+    }
+    return ctrl;
 }
 
 void GfMenuObjGiftBox::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
@@ -368,6 +513,141 @@ void GfMenuObjGiftBox::MainListener::reciveEvent(const ui::EventData& event, uns
     }
 }
 
+// tells the filter ("LAY_filter", FilterListener) to take (1) or leave (0) the input when the gift box has filters
+// (the name is not the original's)
+static inline void setFilterInput(GfMenuObjGiftBox* owner, int active) {
+    if (owner->m_filterCount != 0) {
+        ui::UIObjectAcc filter(owner->m_handle, "LAY_filter");
+        ui::EventData event;
+        event.m_type = 0x101;
+        event.m_param0 = active;
+        GfMenuObject::sendEvent(filter.m_handle, event, 0.0f);
+    }
+}
+
+void GfMenuObjGiftBox::TopListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        break;
+    case 3:
+        if (event.m_param0 == 8) {
+            GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_sub_list"), 0, 0.0f);
+        } else if (event.m_param0 == 9) {
+            GfMenuObject::sendOpenEvent(acc.m_handle, 0, 0.0f);
+        }
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        if (index != -1) {
+            m_owner->m_topList->setIndex(index);
+            m_owner->refreshTopList(false);
+        }
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 8:
+        switch (event.m_param1) {
+        case 1:
+            if (m_owner->m_topList->getSize() != 0) {
+                int ctrl = m_owner->ctrlTopItem(true);
+                if (ctrl != -1) {
+                    GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+                } else {
+                    GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_sub_list"), 0, 0.0f);
+                }
+                GfMenuObject::disableFSInput();
+                GfMenuObjMainMenu2::setSystemKeyEnable(false);
+                GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+                setFilterInput(m_owner, 0);
+                GfMenuObjUtil::playSECommonDecide();
+            }
+            break;
+        case 2:
+            if (m_owner->m_menuId != 0) {
+                if (m_owner->m_menuId == 2) {
+                    GfMenuObjAnnounce::setCloseToDlcGift();
+                }
+                GfMenuObject::changeFSSubLayer(m_owner->m_handle, GfMenuFullScreen::getLayerGroup(m_owner->m_fsLayer), 0x47, false);
+                GfMenuObject::disableFSInput();
+                GfMenuObjMainMenu2::setSystemKeyEnable(false);
+                GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            }
+            break;
+        case 9:
+            if (m_owner->m_topList->getSize() != 0) {
+                if (m_owner->hasGetableGiftFromFilter(false)) {
+                    m_owner->m_seq.clear();
+                    m_owner->m_seq.addJob(&GfMenuObjGiftBox::seqGetItemAll);
+                    m_owner->m_seq.addJob(&GfMenuObjGiftBox::seqWaitCommonDialog);
+                    m_owner->m_seq.addJob(&GfMenuObjGiftBox::seqReturnTop);
+                    GfMenuObject::disableFSInput();
+                    GfMenuObjMainMenu2::setSystemKeyEnable(false);
+                    GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+                    setFilterInput(m_owner, 0);
+                } else {
+                    GfMenuObjUtil::playSECommon(2);
+                }
+            }
+            break;
+        case 10:
+            GfMenuObjAnnounce::setCloseToDlcGift();
+            GfMenuObject::changeFSSubLayer(m_owner->m_handle, GfMenuFullScreen::getLayerGroup(m_owner->m_fsLayer), 0x47, false);
+            GfMenuObjMainMenu2::setSystemKeyEnable(false);
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            break;
+        }
+        break;
+    case 0x21:
+        m_owner->refreshTopList(false);
+        GfMenuObject::enableFSInput(0);
+        GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_topList);
+        if (m_owner->m_menuId == 0) {
+            GfMenuObjMainMenu2::setSystemKeyEnable(true);
+        }
+        GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 2, m_owner->m_menuId != 0);
+        GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 9, m_owner->hasGetableGiftFromFilter(false));
+        GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 10, m_owner->m_noMenuId);
+        GfMenuObjOperationInfo::setGuideText(0x46, 0);
+        setFilterInput(m_owner, 1);
+        break;
+    case 0x100:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableFSInput(0);
+            if (m_owner->m_menuId == 0) {
+                GfMenuObjMainMenu2::setSystemKeyEnable(true);
+            }
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 2, m_owner->m_menuId != 0);
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 9, m_owner->hasGetableGiftFromFilter(false));
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 10, m_owner->m_noMenuId);
+            setFilterInput(m_owner, 1);
+        } else {
+            int ctrl = m_owner->ctrlTopItem(false);
+            if (ctrl != -1) {
+                GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+            } else {
+                GfMenuObject::sendOpenEvent(acc.m_handle, 0, 0.0f);
+            }
+        }
+        break;
+    case 0x102:
+        m_owner->updateTopList();
+        m_owner->refreshTopList(false);
+        GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_topList);
+        GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 9, m_owner->hasGetableGiftFromFilter(false));
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 bool GfMenuObjGiftBox::seqWaitCommonDialog() {
     return !GfMenuManager::isOpenCommonWindow();
 }
@@ -379,6 +659,114 @@ bool GfMenuObjGiftBox::seqReturnTop() {
     event.m_param0 = 1;
     GfMenuObject::sendEvent(acc.searchSibiling("LAY_top_list"), event, 0.0f);
     return true;
+}
+
+void GfMenuObjGiftBox::SubListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        break;
+    case 3:
+        if (event.m_param0 == 10) {
+            GfMenuObject::enableFSInput(1);
+            GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_subList);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 9, false);
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 10, m_owner->m_noMenuId);
+        } else if (event.m_param0 == 11) {
+            ui::EventData open;
+            open.m_type = 0x100;
+            GfMenuObject::sendEvent(acc.searchSibiling("LAY_top_list"), open, 0.0f);
+            acc.setDisp(false);
+        }
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        if (index != -1) {
+            m_owner->m_subList->setIndex(index);
+            m_owner->refreshSubList();
+        }
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 8:
+        if (event.m_param1 == 1) {
+            unsigned int row = m_owner->m_subList->getContents(m_owner->m_subList->getIndex(false)).m_id;
+            if (GfGameFlag::getLocal(1, static_cast<unsigned short>(Bdat::getVal(GfDataBdat::getFP(0x10A), "getflag", row))) != 0) {
+                GfMenuObjUtil::playSECommon(2);
+                break;
+            }
+            m_owner->m_seq.clear();
+            if (canGetItem(row, 0)) {
+                m_owner->m_seq.addJob(&GfMenuObjGiftBox::seqGetItem);
+                m_owner->m_seq.addJob(&GfMenuObjGiftBox::seqWaitCommonDialog);
+                m_owner->m_seq.addJob(&GfMenuObjGiftBox::seqReturnSub);
+                GfMenuObject::disableFSInput();
+                GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+                GfMenuObjUtil::playSECommonDecide();
+                break;
+            }
+            if (!GfGameCond::isGameCond(static_cast<unsigned short>(Bdat::getVal(GfDataBdat::getFP(0x10A), "condition", row)))) {
+                GfMenuManager::openCommonWindow(0xE7);
+                m_owner->m_seq.addJob(&GfMenuObjGiftBox::seqWaitCommonDialog);
+            } else if (isGetItemFull(row, 0)) {
+                switch (static_cast<unsigned char>(Bdat::getVal(GfDataBdat::getFP(0x10A), "category", row))) {
+                case 1:
+                    GfMenuManager::openCommonWindow(0xE5);
+                    break;
+                case 3:
+                    GfMenuManager::openCommonWindow(0xE6);
+                    break;
+                case 2:
+                    GfMenuManager::openCommonWindow(0xE4);
+                    break;
+                }
+                m_owner->m_seq.addJob(&GfMenuObjGiftBox::seqWaitCommonDialog);
+            } else {
+                GfMenuObjUtil::playSECommon(2);
+            }
+            m_owner->m_seq.addJob(&GfMenuObjGiftBox::seqReturnSub);
+            GfMenuObject::disableFSInput();
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+        } else if (event.m_param1 == 10) {
+            GfMenuObjAnnounce::setCloseToDlcGift();
+            GfMenuObject::changeFSSubLayer(m_owner->m_handle, GfMenuFullScreen::getLayerGroup(m_owner->m_fsLayer), 0x47, false);
+            GfMenuObjMainMenu2::setSystemKeyEnable(false);
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+        } else if (event.m_param1 == 2) {
+            int ctrl = m_owner->ctrlSubItem(true);
+            if (ctrl != -1) {
+                GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+            }
+            GfMenuObject::disableFSInput();
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            GfMenuObjUtil::playSECommonCancel();
+        }
+        break;
+    case 0x21: {
+        m_owner->updateSubList();
+        m_owner->refreshSubList();
+        int ctrl = m_owner->ctrlSubItem(false);
+        if (ctrl != -1) {
+            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        }
+        break;
+    }
+    case 0x100:
+        GfMenuObject::enableFSInput(1);
+        GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 9, false);
+        GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 10, m_owner->m_noMenuId);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 bool GfMenuObjGiftBox::seqGetItem() {
@@ -427,10 +815,84 @@ bool GfMenuObjGiftBox::seqReturnSub() {
     return true;
 }
 
+void GfMenuObjGiftBox::FilterListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(m_owner->m_filterCount != 0);
+        GfMenuObject::disableInput(acc.m_handle);
+        m_iconCount = acc.countChild("LAY_icon@%02d", 1);
+        break;
+    case 3:
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        if (index != -1 && index != m_owner->m_filterIndex) {
+            m_owner->m_filterIndex = index;
+            if (prev != -1) {
+                int count = m_iconCount;
+                int step = index - prev;
+                if (index < count) {
+                    if (step == -1) {
+                        if (index < m_owner->m_filterCursor) {
+                            m_owner->m_filterCursor--;
+                        }
+                    } else if (mm::abs(step) > 1) {
+                        m_owner->m_filterCursor = 0;
+                    }
+                } else if (step == 1 && index == m_owner->m_filterCursor + count) {
+                    m_owner->m_filterCursor++;
+                } else if (prev == 0) {
+                    m_owner->m_filterCursor = m_owner->m_counts.size() - count;
+                }
+            }
+            m_owner->refreshFilter();
+            ui::UIObjectAcc top(m_owner->m_handle, "LAY_top_list");
+            ui::EventData refresh;
+            refresh.m_type = 0x102;
+            GfMenuObject::sendEvent(top.m_handle, refresh, 0.0f);
+        }
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonTab();
+        }
+        break;
+    }
+    case 0x21: {
+        int ctrl = GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_filter_list"), 1, 0);
+        if (ctrl != -1) {
+            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        }
+        break;
+    }
+    case 0x22: {
+        int ctrl = GfMenuObjUtil::setCommonFadeOut(acc.searchChild("LAY_filter_list"), 2, 0);
+        if (ctrl != -1) {
+            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        }
+        break;
+    }
+    case 0x101: {
+        int active = event.m_param0;
+        if (active == 1) {
+            int index = m_owner->m_filterIndex;
+            GfMenuObject::setupInputSelection(acc.m_handle, index, m_owner->m_filterCount);
+            GfMenuObject::enableInput(acc.m_handle);
+        } else {
+            GfMenuObject::disableInput(acc.m_handle);
+        }
+        ui::UIObjectAcc input(acc.m_handle, "LAY_filter_input");
+        input.setAlpha(active == 1 ? 1.0f : 0.5f);
+        break;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 }  // namespace gf
 
-// the item and count vectors' growth (their users, initialize and seqGetItemAll, are not written yet)
+// the item and count vectors' growth (their user initialize is not written yet)
 template void mm::mtl::Vector<int>::expand(size_t, size_t);
 template void mm::mtl::Vector<gf::GfMenuObjGiftBox::AddedItem>::expand(size_t, size_t);
-// the sequence jobs the listeners queue (their reciveEvent bodies are not written yet)
-template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuObjGiftBox>(const mm::mtl::Delegate<bool()>*);
