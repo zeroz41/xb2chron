@@ -386,6 +386,81 @@ void GfMenuObjBlWeapon2::setupWeapon(ui::UIObjectAcc& acc, GfMenuItemList* items
     GfMenuObjUtil::createSyncPlugin(acc.searchChild("TXT_wp_text_no_eff@02"), acc.searchChild("TXT_wp_text_@02"), 0x40);
 }
 
+void GfMenuObjBlWeapon2::ChrChangeListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObjMainMenu2::initChrChangeBl(owner, m_owner->m_blades);
+        acc.setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+        m_chr.m_state = 0;
+        m_chr.m_listKind = -1;
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            if (m_chr.m_listKind - 1U < 2) {
+                GfMenuObject::resetInputSelection(acc.m_handle);
+                GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_blades);
+            }
+            GfMenuObject::enableInput(acc.m_handle);
+        } else if (event.m_param0 == 2) {
+            acc.setDisp(false);
+        }
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        GfMenuObjMainMenu2::ChrChangeParam param;
+        param.m_listKind = m_chr.m_listKind;
+        param.m_target = owner.searchChild("LAY_chips");
+        param.m_bladeList = m_owner->m_blades;
+        GfMenuObjMainMenu2::inputChrChangeSub(acc, param, index);
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonTab();
+        }
+        break;
+    }
+    case 0x21: {
+        GfMenuObjMainMenu2::ChrChangeParam param;
+        param.pad_04 = false;  // MainMenu2's open sets it from the event
+        param.m_listKind = 1;
+        param.m_prevKind = m_chr.m_listKind;
+        param.m_isOpen = m_chr.m_state == 1;
+        param.m_target = handle;
+        param.m_bladeList = m_owner->m_blades;
+        param.m_subHandle = m_chr.m_subHandle;
+        unsigned int sub = 0;
+        if (GfMenuObjMainMenu2::openChrChangeSub(acc, param, sub)) {
+            m_chr.m_state = 1;
+            m_chr.m_listKind = 1;
+            m_chr.m_subHandle = sub;
+        }
+        break;
+    }
+    case 0x22: {
+        GfMenuObjMainMenu2::ChrChangeParam param;
+        param.m_listKind = m_chr.m_listKind;
+        GfMenuObjMainMenu2::closeChrChangeSub(acc, param);
+        m_chr.m_state = 0;
+        break;
+    }
+    case 0x101: {
+        GfMenuObjMainMenu2::ChrChangeParam param;
+        param.m_listKind = m_chr.m_listKind;
+        param.m_bladeList = m_owner->m_blades;
+        GfMenuObjMainMenu2::openChrChange2Sub(acc, param);
+        break;
+    }
+    case 0x102:
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 bool GfMenuObjBlWeapon2::seqEnd() {
     GfMenuObjOperationInfo::setDisp(true);
     GfMenuObjMainMenu2::setCloseKeyEnable(true);

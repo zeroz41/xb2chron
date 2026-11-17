@@ -5,6 +5,8 @@
 #include "classes/gf/GfMenuStrLinker.h"
 #include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfMenuObjFade.h"
+#include "classes/gf/GfMenuObjOperationInfo.h"
+#include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfMenuPosAdapter.h"
 #include "classes/gf/GfReqManager.h"
 #include "classes/ui/UICtrlCursorSelect.h"
@@ -177,6 +179,123 @@ void GfMenuObjBalloon::AutoTalkListener::reciveEvent(const ui::EventData& event,
             param.m_startFlags = 1;
             GfMenuObjUtil::startCtrl(talk.m_handle, param, nullptr);
             GfMenuObject::termCallContext(talk.m_handle);
+        }
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjBalloon::EvSelectListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        m_select = 0;
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            ui::UIObjectAcc select(m_select);
+            if (select.m_object != nullptr) {
+                GfMenuObject::enableInput(acc.m_handle);
+                GfMenuObjOperationInfo::open(acc.m_handle, 0, 0, 0);
+                GfMenuObjOperationInfo::setGuideDisp(false);
+                GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 1, false);
+            }
+        }
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        ui::UIObjectAcc select(m_select);
+        if (index == -1) {
+            select.setDispChild(false, "LAY_ev_select_cursor");
+        } else {
+            mm::mtl::FixStr<32> name;
+            m_owner->m_selectList->setIndex(index);
+            if (prev != -1) {
+                name.format("TXT_ev_select_msg@%02d", prev + 1);
+                ui::UIObjectAcc text(select.m_handle, name.m_str);
+                text.loadDefColor();
+            }
+            name.format("TXT_ev_select_msg@%02d", index + 1);
+            ui::UIObjectAcc text(select.m_handle, name.m_str);
+            GfMenuObjUtil::setColMulandAdd(text.m_handle, "txt_normal");
+            select.setDispChild(true, "LAY_ev_select_cursor");
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 1, true);
+        }
+        break;
+    }
+    case 8:
+        if (event.m_param1 == 1) {
+            int index = event.m_param0;
+            ui::UIObjectAcc select(m_select);
+            if (index != -1 && select.m_object != nullptr) {
+                GfMenuObject::addResultCallContext(select.m_handle, 2, event.m_param0);
+                GfMenuObject::disableInput(acc.m_handle);
+                GfMenuObjOperationInfo::close();
+                GfMenuObjUtil::playSECommonDecide();
+            }
+        }
+        break;
+    case 0x100: {
+        int text = event.m_param0;
+        int nameId = event.m_param2;
+        ui::UIObjectAcc select(acc.searchDuplicatedChild("LAY_ev_select", event.m_param3));
+        if (select.m_object != nullptr) {
+            GfMenuObjBalloon::setupEvSelect(select.m_handle, text, nameId);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_emotion";
+            param.m_motion = "fade_in";
+            param.m_eventId = 1;
+            int ctrl = GfMenuObjUtil::startCtrl(select.m_handle, param, nullptr);
+            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+            GfMenuObject::disableInput(acc.m_handle);
+            if (m_owner->m_selectCursor != nullptr) {
+                m_owner->m_selectCursor->release();
+                m_owner->m_selectCursor = nullptr;
+            }
+            if (m_owner->m_selectList != nullptr) {
+                m_owner->m_selectList->release();
+                m_owner->m_selectList = nullptr;
+            }
+            {
+                ui::UISelectObjList::CreateParam create;
+                create.m_allocator = getAllocator(ALLOCATOR(0));
+                m_owner->m_selectList = ui::UISelectObjList::create(create);
+            }
+            m_owner->m_selectList->pickupObject(select.m_handle, "LAY_ev_select_msg@%02d", 1);
+            {
+                ui::UICtrlCursorSelect::CursorSetting setting;
+                setting.setType(0);
+                setting.m_dockType = 0;
+                setting.m_outer = false;
+                m_owner->m_selectCursor = ui::UICtrlCursorSelect::create(select.searchChild("LAY_ev_select_cursor"),
+                                                                         setting, m_owner->m_selectList);
+            }
+            GfMenuObject::setupInputSelection(acc.m_handle, -1, m_owner->m_selectList->getSize());
+            m_select = select.m_handle;
+        }
+        break;
+    }
+    case 0x103: {
+        ui::UIObjectAcc select(acc.searchDuplicatedChild("LAY_ev_select", event.m_param3));
+        if (select.m_object != nullptr) {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_emotion";
+            param.m_motion = "fade_out";
+            param.m_eventId = 1;
+            param.m_startFlags = 1;
+            GfMenuObjUtil::startCtrl(select.m_handle, param, nullptr);
+            if (select.m_handle == m_select) {
+                GfMenuObject::disableInput(acc.m_handle);
+                m_select = 0;
+            }
+            GfMenuObject::termCallContext(select.m_handle);
         }
         break;
     }

@@ -193,10 +193,13 @@ public:
 // table 0x7100B5FCC0: initialize registers it on "LAY_ev_select_root" (0x28 bytes; initialize zeroes 0xC-0x1B)
 class GfMenuObjBalloon::EvSelectListener : public ::ui::UIObjectListener {
 public:
-    EvSelectListener(GfMenuObjBalloon* owner) : pad_0C(), m_owner(owner) {}
+    EvSelectListener(GfMenuObjBalloon* owner) : m_select(0), pad_10(), m_owner(owner) {}
     virtual ~EvSelectListener() {}  // slot 0: its D1 slot is the base's destructor
     virtual void reciveEvent(const ::ui::EventData& event, unsigned int handle);  // slot 2
-    unsigned char pad_0C[0x14];
+    // the open selection (LAY_ev_select's duplicate the open event 0x100 set up), 0 without one (the name is not
+    // the original's)
+    unsigned int m_select;  // 0xC
+    unsigned char pad_10[0x10];
     GfMenuObjBalloon* m_owner;  // 0x20
 };
 }  // namespace gf
