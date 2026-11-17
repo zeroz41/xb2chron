@@ -216,14 +216,16 @@ public:
             }
         }
     }
-    // inserts value before it (gf::GfMobSlotManager::addFailedPopDistSq inlines it)
+    // inserts value before it (gf::GfMobSlotManager::addFailedPopDistSq inlines it). The index is taken before the
+    // size assert: computed after it, LLVM sinks it into the move block and folds the shift into the count's sub,
+    // where the original keeps `sub; asr #2; sub`
     iterator insert(iterator it, const T& value) {
 #line 307 MM_MTL_FIXED_VECTOR_PATH
         MM_ASSERT(validate_iterator(it));
+        size_type index = it - begin();
         size_type prevSize = m_size;
 #line 311 MM_MTL_FIXED_VECTOR_PATH
         MM_ASSERT(prevSize < N);
-        size_type index = it - begin();
         if (it != end()) {
             move_n(it, prevSize - index, it + 1);
         }

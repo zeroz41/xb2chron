@@ -26,6 +26,9 @@
 #include "classes/gf/GfGmkLocatorAtlas.h"
 #include "gf/GfDataBlade.h"
 #include "ml/MTRand.h"
+#include "classes/gmk/GmkEffect.h"
+#include "classes/gmk/GmkEvent.h"
+#include "classes/gmk/TGmkList.h"
 
 namespace gmk {
 
@@ -36,6 +39,21 @@ GmkAntiBladeAreaManager::~GmkAntiBladeAreaManager() {
 }  // namespace gmk
 
 namespace gf {
+
+bool GfMobSlotManager::addFailedPopDistSq(float distSq) {
+    if (m_failedPopDistSqs.size() == m_failedPopDistSqs.capacity()) {
+        return false;
+    }
+    for (float* it = m_failedPopDistSqs.begin(); it != m_failedPopDistSqs.end(); ++it) {
+        if (*it < distSq) {
+            continue;
+        }
+        m_failedPopDistSqs.insert(it, distSq);
+        return true;
+    }
+    m_failedPopDistSqs.push_back(distSq);
+    return true;
+}
 
 inline void GfFieldGimmick::initialize(const GfSetupParam& param) {
     gmk::GmkManager::CreateInfo info;
@@ -62,7 +80,73 @@ GfFieldGimmick::~GfFieldGimmick() {
     GfObjManager::removeListener(this);
 }
 
+GfGmkLocatorAtlas::~GfGmkLocatorAtlas() {
+    dispose();
+}
+
 void GfFieldGimmick::listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int) {}
+
+void GfFieldGimmick::gevMapjump(GEV gev, const MapjumpCallbackInfo& info) {
+    switch (static_cast<int>(gev)) {
+    case 1:
+        if (info.m_withSaveData) {
+            m_unknownFlag1 = true;
+        }
+        break;
+    case 2:
+        // the effects are created again from what they were created with
+        for (gmk::GmkSet** it = m_gmkMgr.m_gmkSets.begin(); it != m_gmkMgr.m_gmkSets.end(); ++it) {
+            gmk::TGmkList<gmk::GmkEffect, gmk::GmkEffect::BdatInfo, 1413695045u, 8u, gmk::GmkEffectGobCustom>* list =
+                static_cast<gmk::TGmkList<gmk::GmkEffect, gmk::GmkEffect::BdatInfo, 1413695045u, 8u, gmk::GmkEffectGobCustom>*>(
+                    (*it)->getGmkList(gmk::GmkEffect::TYPE));
+            if (list != nullptr && list->isValid()) {
+                unsigned int num = list->getInstNum();
+                for (unsigned int i = 0; i < num; ++i) {
+                    gmk::GmkEffect& effect = list->m_gmks[i];
+                    gmk::AGmkBase::CreateInfo createInfo = effect.m_createInfo;
+                    if (createInfo.m_data != nullptr) {
+                        effect.create(createInfo);
+                    }
+                }
+            }
+        }
+        for (gmk::GmkSet** it = m_gmkMgr.m_gmkSets.begin(); it != m_gmkMgr.m_gmkSets.end(); ++it) {
+            gmk::IGmkList* list = (*it)->getGmkList(gmk::GmkEvent::TYPE);
+            if (list != nullptr) {
+                unsigned int num = list->getInstNum();
+                for (unsigned int i = 0; i < num; ++i) {
+                    static_cast<gmk::GmkEvent*>(list->getInst(i))->pad_f2 = false;
+                }
+            }
+        }
+        break;
+    case 6: {
+        // activates every blade not popped yet, in a random order (a rare one first three times in four)
+        GfUnpopBladeIds ids;
+        if (ids.m_ids.empty()) {
+            break;
+        }
+        // a do-while: a while loop here has its latch duplicated into erase's paths, which the original does not
+        do {
+            unsigned short* it = &ids.m_ids[ml::mtRand(ids.m_ids.size())];
+            if (!GfDataBlade::isRareBlade(*it) && ml::mtRandf1() < 0.75f) {
+                for (unsigned short* rare = ids.m_ids.begin(); rare != ids.m_ids.end(); ++rare) {
+                    if (GfDataBlade::isRareBlade(*rare)) {
+                        it = rare;
+                        break;
+                    }
+                }
+            }
+            gevBladeActivate(*it, ActivateType(0), ActivateType(1));
+            ids.m_ids.erase(it);
+        } while (!ids.m_ids.empty());
+        break;
+    }
+    case 7:
+        m_unknownFlag1 = false;
+        break;
+    }
+}
 
 inline void GfFieldGimmick::finalize() {
     m_gmkMgr.dispose();
@@ -109,6 +193,30 @@ void GfFieldGimmick::update(const fw::UpdateInfo& info) {
         gimmick->m_enableOpenMainMenu = GfGameUtil::isPointSavable(gmk::getPlayerPos());
     }
 }
+
+}  // namespace gf
+
+namespace gmk {
+
+// inline: the original's caller (GfFieldGimmick::update) still passes `this`, which it ignores (it works on the
+// singleton); a strong definition lets the optimizer drop that argument at the call
+inline void GmkCtrlVolSeManager::update(float dt) {
+    get()->m_updating = true;
+    for (GmkCtrlVolSe& se : get()->m_list) {
+        se.update(dt);
+    }
+    get()->m_updating = false;
+    for (mm::mtl::IntrusiveList<GmkCtrlVolSe>::iterator it = get()->m_list.begin(); it != get()->m_list.end(); ++it) {
+        if (it->isPlayEnd()) {
+            it = get()->m_list.erase(it);
+            --it;
+        }
+    }
+}
+
+}  // namespace gmk
+
+namespace gf {
 
 void GfFieldGimmick::postUpdate(const fw::UpdateInfo& info) {}
 
@@ -286,3 +394,8 @@ GmkCtrlVolSeManager::~GmkCtrlVolSeManager() {}
 
 // GfMobSlotManager::update (not written yet) adds slots
 template mm::mtl::Map<gf::GF_SLOT_HANDLE*, float>::node* mm::mtl::Map<gf::GF_SLOT_HANDLE*, float>::tree_type::insert(const mm::mtl::Map<gf::GF_SLOT_HANDLE*, float>::tree_type::value_type&);
+// Explicit instantiation: as a linkonce_odr copy the inliner defers ~GfGmkLocators (cost 265) out of destruct_n,
+// because destruct_n (cost 55) is still inlinable into Vector::clear, and inlines destruct_n into
+// ~GfGmkLocatorAtlas; the original keeps this out-of-line copy with ~GfGmkLocators inlined into it, which a
+// non-linkonce definition gives (the destructor above calls it)
+template void mm::mtl::destruct_n<gf::GfGmkLocators>(gf::GfGmkLocators*, size_t);
