@@ -83,6 +83,9 @@
 #include "anm/Factory.h"
 #include "classes/fw/AnimResAsmResolver.h"
 #include "classes/gf/GfComModel.h"
+#include "classes/fw/EffectResData.h"
+#include "mm/mtl/Hash.h"
+#include <algorithm>
 #include <math.h>
 #include <string.h>
 
@@ -231,6 +234,51 @@ void fn_71005260B8(GfInitParamDriver& param, GF_OBJ_HANDLE* handle) {
             }
         }
     }
+}
+
+void fn_710052691C(GF_OBJ_HANDLE* handle, unsigned int weapon) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    GfObjSetupDriver* setup = nullptr;
+    if (info != nullptr && info->m_setup != nullptr && info->m_setup->m_type == info->m_obj->m_type &&
+        info->m_obj->m_type == 3) {
+        setup = mm::mtl::rttiCast<GfObjSetupDriver>(info->m_setup);
+    }
+    unsigned int type = mm::mtl::PtrSingleton<GfBdatItem>::sys()->getPcWpnWpnType(weapon);
+    unsigned int blade = 0;
+    if (weapon != 0) {
+        GfBdatItem* item = mm::mtl::PtrSingleton<GfBdatItem>::sys();
+        GfBdatChrBl* bl = mm::mtl::PtrSingleton<GfBdatChrBl>::sys();
+        unsigned int wpnType = item->getPcWpnWpnType(weapon);
+        for (unsigned int i = bl->getChrBlStart(); i < bl->getChrBlEnd(); i++) {
+            if (bl->getChrBlWeaponType(i) == wpnType) {
+                blade = i;
+                break;
+            }
+        }
+    }
+    for (unsigned int i = 0; i < setup->m_param.pad_98.size(); i++) {
+        if (setup->m_param.pad_98[i].m_weaponId == type) {
+            blade = setup->m_param.pad_98[i].m_bladeId;
+        }
+    }
+    if (GfDataDriver::isIra(setup->m_bdatId)) {
+        blade = GfDataDriver::getIraBlade(setup->m_bdatId, -1);
+        type = GfDataBlade::getBladeWpnType(blade);
+        weapon = GfDataBlade::getBladeWeapon(blade);
+    }
+    if (blade != 0 && setup->m_isAllWeapon) {
+        setup->pad_58 = blade;
+    }
+    if (GfObjUtil::getMountHandle(handle, GFATTACH(0)) == reinterpret_cast<GF_MOUNT_HANDLE*>(-1)) {
+        GfMountManager::addMountHandle(GfMountManager::createMount(handle, handle, GFATTACH(0), OPTMNT(2)), handle);
+    }
+    GfInitParamWeapon param;
+    param.m_createType = 10;
+    param.m_objId = weapon;
+    param.pad_90 = false;
+    param.pad_30 = handle;
+    param.pad_38 = handle;
+    GfObjFactory::createDriverWeapon(param);
 }
 
 void fn_7100526BD8(GF_OBJ_HANDLE* handle) {
@@ -1164,6 +1212,52 @@ GfExtendPacking* fn_7100540CC4(GF_ASSET_HANDLE* asset, const char* name, GfFileI
         }
     }
     return nullptr;
+}
+
+void fn_7100540E78(GF_OBJ_HANDLE* handle, GfExtendPacking* packing) {
+    if (packing == nullptr) {
+        return;
+    }
+    GfAssetResource* eab = GfObjUtil::getResourceEab(handle);
+    fw::EffectResData::SetupInfo info;
+    info.m_allocator = getAllocator(ALLOCATOR(0));
+    if (eab != nullptr && eab->getAssetData() != nullptr && eab->getAssetSize() != 0) {
+        fw::EffectResData::SetupInfo::Table table = {static_cast<fw::EffectAnnotationTbl*>(eab->getAssetData()),
+                                                     eab->getAssetSize()};
+        info.m_tables.push_back(table);
+    }
+    mm::mtl::FixedVector<unsigned int, 256> hashes;
+    mm::mtl::FixedVector<const char*, 128> files;
+    GF_ASSET_HANDLE* asset = GfObjUtil::getAssetHandle(handle);
+    GfAssetManager::getFileNameByExt(files, asset, ".wieab");
+    for (const char* name : files) {
+        GfAssetResource* res = GfAssetManager::getResource(asset, name);
+        if (res == nullptr) {
+            continue;
+        }
+        unsigned int hash = mm::mtl::hashStrCrc(res->getAssetName());
+        if (std::find(hashes.begin(), hashes.end(), hash) != hashes.end()) {
+            continue;
+        }
+        hashes.push_back(hash);
+        if (eab != nullptr && res != nullptr && strcmp(eab->getAssetName(), res->getAssetName()) == 0) {
+            res = nullptr;
+        }
+        if (eab != nullptr && res != nullptr) {
+            if (eab->getAssetName()[0xb] != res->getAssetName()[0xb] ||
+                eab->getAssetName()[0xc] != res->getAssetName()[0xc]) {
+                res = nullptr;
+            }
+        }
+        if (res != nullptr && res->getAssetData() != nullptr && res->getAssetSize() != 0) {
+            fw::EffectResData::SetupInfo::Table table = {static_cast<fw::EffectAnnotationTbl*>(res->getAssetData()),
+                                                         res->getAssetSize()};
+            info.m_tables.push_back(table);
+        }
+    }
+    if (info.m_tables.size() != 0) {
+        packing->m_pEffectResData = fw::EffectResData::createEffectResData(info);
+    }
 }
 
 anm::Skeleton* fn_710054113C(GF_ASSET_HANDLE* asset, GfFileIdx file, const char* name) {

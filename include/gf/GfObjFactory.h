@@ -95,6 +95,12 @@ bool getSlopeIKLimit(GfObj* obj, float* pitch, float* roll);
 // creation types 1 and 7, the act viewer's (setupActViewer, the weapon found from the blade's weapon type) for an
 // all-weapon param, then the extra model for types 1, 2, 3, 7 and 11 unless pad_1a2 is set.
 void fn_71005260B8(GfInitParamDriver& param, GF_OBJ_HANDLE* handle);
+// Placeholder name (no symbol names it). Called by GfObjFactory::createDriver (this unit) with the driver's handle and
+// a weapon: the blade of the weapon's type (GfBdatChrBl's first blade of the weapon's GfBdatItem type, else the
+// driver setup's param entry of that type; the Ira driver's own blade and its weapon in the Ira game) goes into an
+// all-weapon setup's pad_58; mounts the driver (attach 0, option 2) if it has no mount and makes the weapon
+// (creation type 10) through createDriverWeapon.
+void fn_710052691C(GF_OBJ_HANDLE* handle, unsigned int weapon);
 // Placeholder name (no symbol names it). Called by GfObjFactory::createDriver (this unit): when the driver's data
 // has a blade, mounts it (attach 0, option 1) if it has no mount and makes its equipped weapon (creation type 7,
 // pad_40 12) through createDriverWeapon.
@@ -152,6 +158,11 @@ void fn_710054473C(GfObj* obj);
 GfExtendPacking* fn_7100540CC4(GF_ASSET_HANDLE* asset, const char* name, GfFileIdx skeletonFile,
                                const char* skeletonName, unsigned int count, const GfFileIdx* files,
                                const anm::Skeleton* srcSkeleton);
+// Placeholder name (no symbol names it). Called by GfObjFactory::loadedAsset (this unit): gives the packing an effect
+// data (fw::EffectResData) made from the annotation tables of the object's .eab resource and of its asset's ".wieab"
+// files (each resource once by its name's hash; one named as the .eab or differing from it in the name's characters
+// 11 and 12 is left out); none when there is no table.
+void fn_7100540E78(GF_OBJ_HANDLE* handle, GfExtendPacking* packing);
 // Placeholder name (no symbol names it). Called by GfObjFactory::createComponent and fn_710053B178 (this unit): sets
 // up the object's model component (slot 1) from the asset's file, with the skeleton of skeletonFile (fn_710054113C)
 // when it is not negative, the object's asset and view, flag (SetupInfo::pad_20) and scale; then the camera fade
