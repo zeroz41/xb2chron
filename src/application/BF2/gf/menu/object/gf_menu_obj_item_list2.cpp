@@ -58,6 +58,89 @@ void GfMenuObjItemList2::update() {
     GfMenuObject::update();
 }
 
+void GfMenuObjItemList2::initialize() {
+    ui::UIObjectAcc acc(m_handle);
+    unsigned int handle = acc.searchChild("LAY_main");
+    {
+#line 164
+        MainListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) MainListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    GfMenuObject::attachExternalCall(0x6F, handle);
+    handle = acc.searchChild("LAY_mainwindow");
+    {
+#line 170
+        ItemListListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ItemListListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    handle = acc.searchChild("LAY_filter");
+    {
+#line 174
+        FilterListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) FilterListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    m_itemList = GfMenuItemList::create();
+    ui::UISelectObjList::CreateParam create;
+    create.m_allocator = getAllocator(ALLOCATOR(0));
+    m_itemSelect = ui::UISelectObjList::create(create);
+    {
+        ui::UIObjectAcc filter(acc.m_handle, "LAY_filter");
+        mm::mtl::FixStr<32> name;
+        m_filters.clear();
+        for (unsigned long i = 0; i < 13; i++) {
+            unsigned int type = s_filterItemTypes[i];
+            if (i == 0 || GfMenuFlag::get1(type + 0x3A) == 1) {
+                unsigned int icon = 0;
+                name.format("IMG_ficon@%02d", m_filters.size() + 1);
+                ui::UIObjectAcc image(filter.m_handle, name.m_str);
+                m_filters.push_back(i);
+                if (i == 0) {
+                    icon = 0xE;
+                } else {
+                    GfMenuItemUtil::getIconNumber(static_cast<ItemType::Type>(type), 0, icon, true);
+                }
+                image.setImageIndex(icon);
+                image.setDisp(true);
+            }
+        }
+        unsigned int count = filter.countChild("LAY_icon@%02d", 1);
+        for (unsigned int i = m_filters.size(); i < count;) {
+            i++;
+            name.format("IMG_ficon@%02d", i);
+            ui::UIObjectAcc image(filter.m_handle, name.m_str);
+            image.setDisp(false);
+        }
+        mm::Rect<short> all;
+        mm::Rect<short> range;
+        filter.getLayoutRect("all_item", all);
+        filter.getLayoutRect("all_item_range", range);
+        GfMenuObjUtil::placeObjectH(filter.m_handle, "LAY_icon@%02d", m_filters.size(),
+                                    mm::Pnt<short>(all.x + all.w / 2, all.y + all.h / 2), range.x - all.x);
+    }
+    GfMenuAdapterManager::beginAddAfter();
+    {
+        ui::UIObjectAcc stock(acc.m_handle, "LAY_stock");
+        GfMenuGameAdapter::create(stock.searchChild("IMG_stock_icon"), 0x12, true);
+        GfMenuGameAdapter::create(stock.searchChild("TXT_stock_num"), 0x13, true);
+        GfMenuGameAdapter::create(stock.searchChild("TXT_stock_max"), 0x14, true);
+        GfMenuReference::setReferenceItemType(static_cast<ItemType::Type>(0));
+    }
+    GfMenuAdapterManager::endAddAfter();
+    GfMenuObject::initialize();
+}
+
 void GfMenuObjItemList2::MainListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
