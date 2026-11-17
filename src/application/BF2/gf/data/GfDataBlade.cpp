@@ -650,6 +650,26 @@ bool GfDataBladeArts::getEnhanceCaption(unsigned char*& bdat, unsigned int& id, 
     return id != 0;
 }
 
+bool GfDataDriverSkill::getSkillEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver) {
+    GfBdatBtl* btl = GfBdatBtl::get();
+    for (long line = 0; line < 5; line++) {
+        for (unsigned int level = 0; level < 3; level++) {
+            for (int round = 0; round < 2; round++) {
+                unsigned int skill = getSkill(driver, line, level + 1, round != 0);
+                if (skill == 0) {
+                    continue;
+                }
+                unsigned int enhance = btl->getBTL_Skill_DrEnhance(skill);
+                if (enhance == 0) {
+                    continue;
+                }
+                enhances.push_back(enhance);
+            }
+        }
+    }
+    return !enhances.empty();
+}
+
 unsigned int GfDataBladeSkill::getEnhance(unsigned int skill, unsigned int index) {
     return GfBdatBtl::get()->getBTL_Skill_BlEnhance(skill, index - 1);
 }
@@ -1892,6 +1912,34 @@ bool GfDataAchievement::isWaitControllFreeStats(unsigned int stats) {
         return true;
     }
     return false;
+}
+
+void GfDataAchievement::setupTotalCount(AchievQuest& quest) {
+    if ((unsigned int)(quest.m_stats - 184) < 30) {
+        unsigned int count = GfGameFlag::getLocal(8, quest.m_stats + 3834);
+        if (count == 0) {
+            return;
+        }
+        if ((quest.m_count & 0x3FFFFFFF) != 0) {
+            return;
+        }
+        quest.setCount(count);
+        return;
+    }
+    if (getAchievementTotalFlgIndex32(quest.m_stats) < 0) {
+        return;
+    }
+    int index = getAchievementTotalFlgIndex32(quest.m_stats);
+    if (index < 0) {
+        return;
+    }
+    if (GfGameFlag::getLocal(32, index) == 0) {
+        return;
+    }
+    if ((quest.m_count & 0x3FFFFFFF) != 0) {
+        return;
+    }
+    quest.setCount(getTotalCount(quest.m_stats));
 }
 
 void GfDataAchievement::clearTotalCount(unsigned int type) {

@@ -1,6 +1,8 @@
 #ifndef GF_GFDATADRIVERSKILL_H
 #define GF_GFDATADRIVERSKILL_H
 
+namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
+
 namespace gf {
 
 // a driver's skill tree (functions, by their symbols; getSkill and getValidSkillNum by 1.0.0's): a skill is found by
@@ -30,6 +32,10 @@ public:
     // above 0, refreshes the line's skill ids from the "SkillID" columns. Caller: GfGameUtil::execDriverSkillLevelUp
     // after paying the skill points.
     static void setSkillLevel(unsigned int driver, unsigned int line, unsigned int level, bool round);
+    // The symbols name it. What it does: appends the GfBdatBtl::getBTL_Skill_DrEnhance of every learned skill
+    // (getSkill, lines 0-4, levels 1-3, normal then new game plus round) that has one; whether the list is non-empty.
+    // Caller: GfDataDriver::getValidEnhance.
+    static bool getSkillEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver);
 };
 
 }  // namespace gf
