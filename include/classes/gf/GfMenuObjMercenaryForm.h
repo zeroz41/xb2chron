@@ -51,6 +51,11 @@ public:
     // functions. whether the blade is already in the team list (m_unitBlades), or both it and a member are one of
     // GfMenuObjUtil::isBladeHana's blades; caller seqConfirmHana
     bool chkUnitBladeList(unsigned int blade);
+    // inline in 3.0.1 (2.0.0 names both and keeps them out of line); ListListener calls them. updateReserveBlade:
+    // makes the blade list's blade at that index the reference blade, recounts the conditions with it added and
+    // redraws the list. chkTempUnlink: whether the blade is in m_bladeIds
+    void updateReserveBlade(unsigned int index);
+    bool chkTempUnlink(unsigned int blade);
     // m_seq job (ListListener adds it): asks common window 0x10F and, on yes, adds the blade list's selected blade
     // to the team list (with its creator) unless chkUnitBladeList holds, then reopens LAY_form_list_bl
     bool seqConfirmHana();
@@ -60,13 +65,13 @@ public:
     void setDetailBladePos(unsigned int index);
     void updateBladeCount(bool, bool);
     void refreshBladeList();
-    // inline (no copy in the original): sends an open event (0x21) with that first parameter to the handle's object,
-    // or to LAY_form_main when the handle is 0 (the Form listener's events 3 and 0x103). The name is not the
-    // original's
-    void sendOpenOrFormMain(unsigned int handle, int param);
-    // inline (no copy in the original): the same with a close event (0x22) (seqDepartureEnd's LAY_start,
-    // seqPresetEnd's LAY_preset). The name is not the original's
-    void sendCloseOrFormMain(unsigned int handle);
+    // inline in 3.0.1 (2.0.0 names both and keeps them out of line): sends an open event (0x21) with that first
+    // parameter to the handle's object, or to LAY_form_main when the handle is 0 (the Form listener's events 3 and
+    // 0x103)
+    void sendOpenEvent(unsigned int handle, int param, float delay);
+    // the same with a close event (0x22) (seqDepartureEnd's LAY_start, seqPresetEnd's LAY_preset); 2.0.0's copy
+    // stores the parameter as the open one does
+    void sendCloseEvent(unsigned int handle, int param, float delay);
 
     unsigned int m_teamId;                    // 0x24: GfMenuReference::getReferenceTeamID's
     GfMenuBladeList* m_unitBlades;            // 0x28: the team's blades (initialize)
