@@ -29,6 +29,15 @@
 #include "classes/gmk/GmkEffect.h"
 #include "classes/gmk/GmkEvent.h"
 #include "classes/gmk/TGmkList.h"
+#include "classes/gf/GfGameManager.h"
+#include "gf/GfObjUtil.h"
+#include "gf/GfObjAcc.h"
+#include "gf/GfObjInfo.h"
+#include "classes/gf/GfObj.h"
+#include "classes/gf/GfObjSetupMob.h"
+#include "classes/gmk/GmkMob.h"
+#include "classes/gmk/GmkRoutedMob.h"
+#include "mm/mtl/FixedList.h"
 
 namespace gmk {
 
@@ -39,6 +48,21 @@ GmkAntiBladeAreaManager::~GmkAntiBladeAreaManager() {
 }  // namespace gmk
 
 namespace gf {
+
+namespace {
+// disposes a mob's game object after the objects bound to it (update and createMobInfos inline it; the name is not
+// the original's)
+inline void disposeMob(const GfMobSlotManager::MobInfo& info) {
+    if (GfObjManager* manager = GfObjManager::get()) {
+        if (const mm::mtl::FixedList<GF_OBJ_HANDLE*, 32>* list = manager->getMultiBindList(info.m_handle)) {
+            for (mm::mtl::FixedList<GF_OBJ_HANDLE*, 32>::const_iterator it = list->begin(); it != list->end(); ++it) {
+                gmk::disposeGobInst(*it, 1.0f);
+            }
+        }
+    }
+    gmk::disposeGobInst(info.m_handle, 1.0f);
+}
+}  // namespace
 
 bool GfMobSlotManager::addFailedPopDistSq(float distSq) {
     if (m_failedPopDistSqs.size() == m_failedPopDistSqs.capacity()) {
@@ -53,6 +77,156 @@ bool GfMobSlotManager::addFailedPopDistSq(float distSq) {
     }
     m_failedPopDistSqs.push_back(distSq);
     return true;
+}
+
+void GfMobSlotManager::update() {
+    if (GfGameManager::isMapjump()) {
+        return;
+    }
+    if (mm::mtl::PtrSingleton<GfFieldGimmick>::get()->m_eventFade.m_active) {
+        return;
+    }
+    m_slotDistSqs.clear();
+    if (!gmk::isInterestPosExist()) {
+        return;
+    }
+    createMobInfos();
+    float minEmptyDistSq = 1.0e12f;
+    bool hasEmpty = false;
+    for (MobInfo& info : m_mobInfos) {
+        GF_OBJ_HANDLE* handle = info.m_handle;
+        if (GfObjUtil::isSearchEmptyResource(handle)) {
+            minEmptyDistSq = info.m_distSq < minEmptyDistSq ? info.m_distSq : minEmptyDistSq;
+            hasEmpty = true;
+            continue;
+        }
+        mm::mtl::FixedVector<GF_SLOT_HANDLE*, 88> slots;
+        GfObjUtil::getMobSlotHandle(slots, handle);
+        GF_SLOT_HANDLE* slot = reinterpret_cast<GF_SLOT_HANDLE*>(-1);
+        if (!slots.empty()) {
+            slot = slots[0];
+        }
+        if (slot != reinterpret_cast<GF_SLOT_HANDLE*>(-1)) {
+            if (m_slotDistSqs.lookup(slot).m_node == nullptr || info.m_distSq < m_slotDistSqs[slot]) {
+                m_slotDistSqs[slot] = info.m_distSq;
+            }
+        }
+    }
+    if (!hasEmpty || m_slotDistSqs.m_tree.m_size == 0) {
+        return;
+    }
+    float maxDistSq = 0.0f;
+    GF_SLOT_HANDLE* maxSlot = reinterpret_cast<GF_SLOT_HANDLE*>(-1);
+    typedef mm::mtl::Map<GF_SLOT_HANDLE*, float>::node SlotNode;
+    for (SlotNode* n = m_slotDistSqs.m_tree.first(); n != nullptr; n = m_slotDistSqs.m_tree.next(n)) {
+        if (maxDistSq < n->value.second) {
+            maxSlot = n->value.first;
+            maxDistSq = n->value.second;
+        }
+    }
+    if (!(minEmptyDistSq < maxDistSq)) {
+        return;
+    }
+    for (MobInfo& info : m_mobInfos) {
+        mm::mtl::FixedVector<GF_SLOT_HANDLE*, 88> slots;
+        GfObjUtil::getMobSlotHandle(slots, info.m_handle);
+        GF_SLOT_HANDLE* slot = slots.size() != 0 ? *slots.begin() : reinterpret_cast<GF_SLOT_HANDLE*>(-1);
+        if (maxSlot == slot) {
+            disposeMob(info);
+        }
+    }
+}
+
+void GfMobSlotManager::createMobInfos() {
+    disposeMobInfos();
+    if (!gmk::isInterestPosExist()) {
+        return;
+    }
+    const mm::Vec3& pos = gmk::getInterestPos();
+    // each kind's mobs, with their squared distance from the interest position (a lambda: the name is not the original's)
+    auto addGmkMob = [this, pos](const gmk::AGmkBase& base) {
+        const gmk::GmkMob& gmk = static_cast<const gmk::GmkMob&>(base);
+        if (!gmk.isValid()) {
+            return;
+        }
+        unsigned int num = gmk.getGobInstNum();
+        for (unsigned int i = 0; i < num; ++i) {
+            GF_OBJ_HANDLE* handle = gmk.getGobInst(i);
+            // the distance in each branch: x and y of the captured position stay integer copies (`ldp w; fmov`)
+            float distSq;
+            GfObjAcc acc(handle);
+            if (acc.isValidTransform()) {
+                mm::Vec3 d = pos - acc.getWorldTransform().position;
+                distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+            } else {
+                mm::Vec3 d = pos - mm::mtl::rttiCast<GfObjSetupMob>(GfObjManager::getObjInfo(handle)->m_setup)->m_initialPos;
+                distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+            }
+            MobInfo info = {handle, distSq};
+            m_mobInfos.push_back(info);
+        }
+    };
+    gmk::GmkManager::get()->traverseGmkInst(gmk::GmkMob::TYPE, addGmkMob);
+    if (!m_failedPopDistSqs.empty()) {
+        m_popDistSqLimit = m_failedPopDistSqs.back();
+    } else if (GfObjManager::getGfObjCapacity(7) < static_cast<int>(m_mobInfos.size())) {
+        m_popDistSqLimit = 0.0f;
+    }
+    MobInfo* farthest = nullptr;
+    float limit = m_popDistSqLimit;
+    for (MobInfo& info : m_mobInfos) {
+        if (limit < info.m_distSq) {
+            limit = info.m_distSq;
+            farthest = &info;
+        }
+    }
+    if (farthest != nullptr) {
+        // the farthest mob's position is looked up and left unused (the original keeps the calls)
+        {
+            GfObjAcc acc(farthest->m_handle);
+            mm::Vec3 farthestPos;
+            if (acc.isValidTransform()) {
+                farthestPos = acc.getWorldTransform().position;
+            } else {
+                GFOBJ_INFO* info = GfObjManager::getObjInfo(farthest->m_handle);
+                if (info != nullptr && info->m_setup != nullptr && info->m_setup->m_type == info->m_obj->m_type &&
+                    info->m_obj->m_type == 7) {
+                    if (GfObjSetupMob* setup = mm::mtl::rttiCast<GfObjSetupMob>(info->m_setup)) {
+                        farthestPos = setup->m_initialPos;
+                    }
+                }
+            }
+        }
+        disposeMob(*farthest);
+        m_mobInfos.erase(farthest);
+        if (!m_failedPopDistSqs.empty()) {
+            m_failedPopDistSqs.pop_back();
+        }
+    }
+    // each kind's mobs, with their squared distance from the interest position (a lambda: the name is not the original's)
+    auto addGmkRoutedMob = [this, pos](const gmk::AGmkBase& base) {
+        const gmk::GmkRoutedMob& gmk = static_cast<const gmk::GmkRoutedMob&>(base);
+        if (!gmk.isValid()) {
+            return;
+        }
+        unsigned int num = gmk.getGobInstNum();
+        for (unsigned int i = 0; i < num; ++i) {
+            GF_OBJ_HANDLE* handle = gmk.getGobInst(i);
+            // the distance in each branch: x and y of the captured position stay integer copies (`ldp w; fmov`)
+            float distSq;
+            GfObjAcc acc(handle);
+            if (acc.isValidTransform()) {
+                mm::Vec3 d = pos - acc.getWorldTransform().position;
+                distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+            } else {
+                mm::Vec3 d = pos - mm::mtl::rttiCast<GfObjSetupMob>(GfObjManager::getObjInfo(handle)->m_setup)->m_initialPos;
+                distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+            }
+            MobInfo info = {handle, distSq};
+            m_mobInfos.push_back(info);
+        }
+    };
+    gmk::GmkManager::get()->traverseGmkInst(gmk::GmkRoutedMob::TYPE, addGmkRoutedMob);
 }
 
 inline void GfFieldGimmick::initialize(const GfSetupParam& param) {
@@ -392,8 +566,6 @@ GmkCtrlVolSeManager::~GmkCtrlVolSeManager() {}
 
 }  // namespace gmk
 
-// GfMobSlotManager::update (not written yet) adds slots
-template mm::mtl::Map<gf::GF_SLOT_HANDLE*, float>::node* mm::mtl::Map<gf::GF_SLOT_HANDLE*, float>::tree_type::insert(const mm::mtl::Map<gf::GF_SLOT_HANDLE*, float>::tree_type::value_type&);
 // Explicit instantiation: as a linkonce_odr copy the inliner defers ~GfGmkLocators (cost 265) out of destruct_n,
 // because destruct_n (cost 55) is still inlinable into Vector::clear, and inlines destruct_n into
 // ~GfGmkLocatorAtlas; the original keeps this out-of-line copy with ~GfGmkLocators inlined into it, which a
