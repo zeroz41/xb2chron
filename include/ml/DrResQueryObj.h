@@ -28,7 +28,8 @@ public:
     // 0x28: the holder that took it (DrResUseQueryObj::begin, DrPixlOccQuery::occRenderAABB); the obj clears the
     // holder's m_query when it frees itself
     DrResQueryAcc* m_user;
-    void* m_userWork;                   // 0x30: cleared with m_user
+    // 0x30: cleared with m_user; DrPixlOccQuery::occRenderPosAABB chains its second-pass query here
+    DrResQueryObj* m_userWork;
     unsigned int m_flags;               // 0x38
 };
 

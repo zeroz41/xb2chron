@@ -1066,6 +1066,65 @@ void DrPixlOccQuery::occRenderAABB(DrResQueryAcc* acc, const mm::Vec3& center, c
     obj->end();
 }
 
+void DrPixlOccQuery::occRenderPosAABB(DrResQueryAcc* acc, const mm::Mat44* mtx, const unsigned int* bits, int num) {
+    if (m_renderCount != 2) {
+        m_shader->setDeclarationIdx(m_occTypeOfs, 2);
+        m_shader->setupShader(0u);
+        m_renderCount = 2;
+    }
+    DrResQueryObj* obj = nullptr;
+    for (int i = 0; i < num; i++) {
+        if ((bits[i >> 5] & (1 << (i & 0x1f))) == 0) {
+            continue;
+        }
+        if (obj == nullptr) {
+            obj = acc->m_query;
+            if (obj == nullptr) {
+                obj = createObj();
+                if (obj == nullptr) {
+                    return;
+                }
+                acc->m_query = obj;
+                obj->m_user = acc;
+            }
+        } else {
+            DrResQueryObj* next = obj->m_userWork;
+            if (next == nullptr) {
+                next = createObj();
+                if (next == nullptr) {
+                    return;
+                }
+                obj->m_userWork = next;
+            }
+            obj = next;
+        }
+        obj->m_flags |= 1;
+        grlib::CGLibUniformEtcUtility uniform(m_shader);
+        uniform.setUseUniformBlock(m_uniformOfs);
+        grlib::ShdMat44SetMat44(reinterpret_cast<float*>(uniform.getBuff()), mtx[i]);
+        uniform.updateData();
+        uniform.setUniformBlock();
+        DrAPGxType::setupDepthContl(0, 0, 7);
+        obj->begin();
+        m_shdList->renderBox();
+        obj->end();
+        DrResQueryObj* next = obj->m_userWork;
+        if (next == nullptr) {
+            next = createObj();
+            if (next == nullptr) {
+                return;
+            }
+            obj->m_userWork = next;
+        }
+        obj = next;
+        obj->m_flags |= 1;
+        DrAPGxType::setupDepthContl(1, 0, 3);
+        obj->begin();
+        m_shdList->renderBox();
+        obj->end();
+    }
+}
+
 inline DrPixlPostMan::VolumeWork::VolumeWork(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
     : m_drMan(drMan), m_pixlMan(pixlMan), m_postMan(postMan), m_flag(false) {
     m_volume[0] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) RenderVolume(m_drMan);
