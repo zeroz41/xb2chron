@@ -113,6 +113,7 @@
 #include "classes/gf/SCOM_OBJ_ALPHA.h"
 #include "classes/gf/SCOM_OBJ_VFADE.h"
 #include "classes/gf/SCOM_OBJ_WARP_POS.h"
+#include "classes/gf/SCOM_BC_PARTICLE.h"
 #include "gf/AchievQuest.h"
 #include "gf/GfDataQuest.h"
 #include "gf/GfQuestInfo.h"
@@ -568,8 +569,7 @@ const mm::Vec3& GfGameScene::getEnableSavePos() const {
             return GfGameManager::getControlMoverPosition();
         }
     }
-    i--;
-    return reinterpret_cast<const mm::Vec3&>(m_savePos[i].m_pos);
+    return m_savePos[i].m_pos;
 }
 
 bool GfGameScene::isDisableJumpForRide() const {
@@ -692,12 +692,10 @@ void GfGameScene::applyMapjumpForStart(const MapjumpCallbackInfo&) {
             }
         }
     }
-    reinterpret_cast<mm::Vec3&>(m_pos2C0) = mm::Vec3::zero;
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 8; i++) {
+        m_savePos[i].m_pos = mm::Vec3::zero;
         m_savePos[i].m_enable = false;
-        reinterpret_cast<mm::Vec3&>(m_savePos[i].m_pos) = mm::Vec3::zero;
     }
-    m_flag3B0 = false;
 }
 
 void GfGameScene::applyMapjumpForEnd(const MapjumpCallbackInfo& info) {
@@ -726,6 +724,14 @@ void GfGameScene::gevChangeParty() {
     GfSelectBlade::resetStartBattleSetId(0);
     GfSelectBlade::resetStartBattleSetId(1);
     GfSelectBlade::resetStartBattleSetId(2);
+}
+
+void GfGameScene::gevHanaCondenser(unsigned int value, bool, unsigned int) {
+    fn_71002C5208(value);
+}
+
+void GfGameScene::gevOrbParam(unsigned int value, unsigned int) {
+    fn_71002C5208(value);
 }
 
 void GfGameScene::gevChangeGameDifficult() {
@@ -1440,6 +1446,24 @@ void GfGameScene::updateMaxHp(const fw::UpdateInfo&) {
     }
 }
 
+void GfGameScene::updateListeningPoint(const fw::UpdateInfo&) {
+    mm::Mat44 mtx;
+    if (m_setListener) {
+        mtx.setTrans(m_setListenerPos);
+        m_setListener = false;
+    } else {
+        fw::CameraManager::get()->m_layers[0].getMtx(mtx);
+        GfObjAcc acc(GfGameManager::getControlMover());
+        if (acc.isValidTransform()) {
+            const mm::Vec3& pos = acc.getWorldTransform().position;
+            mtx.setTransRow(mm::Vec3(pos.x, pos.y + 1.5f, pos.z));
+        }
+    }
+    fw::SoundManager::get()->setListeningPoint(mtx);
+    mm::Vec3 pos = reinterpret_cast<const mm::Vec3&>(mtx.m[3]);
+    m_listenerPos = pos;
+}
+
 void GfGameScene::updateQuestTaskLog(const fw::UpdateInfo&) {
     QuestID id = GfQuestManager::getProgressCurrentQuest(QTYPE(0));
     if (m_questIdForTaskLog.empty()) {
@@ -1456,6 +1480,37 @@ void GfGameScene::updateQuestTaskLog(const fw::UpdateInfo&) {
         GfGameManager::isFullScreenMenu()) {
         m_questIdForTaskLog = id;
     }
+}
+
+void GfGameScene::updateMoveAchievement(const fw::UpdateInfo&) {
+    GfObjAcc acc(GfGameManager::getControlMover());
+    if (!acc.isValidTransform()) {
+        return;
+    }
+    if (!GfPause::isPause(1) && GfGameManager::isControlFree()) {
+        float dist = (acc.getWorldTransform().position - m_moverPos).length();
+        if (dist < 0.01f) {
+            m_moverPos = acc.getWorldTransform().position;
+            return;
+        }
+        for (PlayerStateCheck& check : m_playerStateChecks) {
+            if (check.m_test()) {
+                float total = GfDataUtil::getMoveDistance(static_cast<AMOVE>(check.m_value));
+                if (dist < 5.0f) {
+                    total += dist;
+                }
+                unsigned int count = total;
+                if (count != 0) {
+                    total -= count;
+                    SCOM_ACHIEV_INC::addTotalCount(check.m_state, 1);
+                    SCOM_ACHIEV_INC::create(check.m_state, 1, 0);
+                    SCOM_ACHIEV_INC::createCurrentBlade(GfGameManager::getPartyLeaderDriver(), check.m_state + 1, 1);
+                }
+                GfDataUtil::setMoveDistance(static_cast<AMOVE>(check.m_value), total);
+            }
+        }
+    }
+    m_moverPos = acc.getWorldTransform().position;
 }
 
 void GfGameScene::updateCrystalPopup(const fw::UpdateInfo&) {
@@ -1488,6 +1543,22 @@ void GfGameScene::updateCrystalPopup(const fw::UpdateInfo&) {
             GfGameFlag::setLocal(1, 54668, 1);
         }
     }
+}
+
+void GfGameScene::updateEnableSavePos(const fw::UpdateInfo&) {
+    for (int i = 7; i > 0; i--) {
+        m_savePos[i] = m_savePos[i - 1];
+    }
+    bool enable;
+    if (!GfGameManager::isEnableOpenMainMenu() || GfPause::isPause(1)) {
+        enable = false;
+    } else if (GfSequentialPlay::isPlay()) {
+        enable = false;
+    } else {
+        enable = !_gfgsc::isPartyMemberGetFieldDamage(0);
+    }
+    m_savePos[0].m_pos = GfGameManager::getControlMoverPosition();
+    m_savePos[0].m_enable = enable;
 }
 
 void GfGameScene::updateRideRequest(const fw::UpdateInfo&) {
@@ -1606,6 +1677,40 @@ void GfGameScene::updateReserverFollowForIra(const fw::UpdateInfo&) {
     }
 }
 
+void GfGameScene::updatePortalFade(const fw::UpdateInfo&) {
+    if (!m_flag6A1 || !GfGameManager::isControlFree() || m_frameCount690 <= 5) {
+        return;
+    }
+    m_flag6A1 = false;
+    for (unsigned int i = 0; i < 3; i++) {
+        GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0));
+        SCOM_OBJ_ALPHA::create(driver, 0.0f, 0.2f);
+        SCOM_OBJ_ALPHA::create(driver, 2.0f, 1.0f);
+        SCOM_BC_PARTICLE::createPortal(driver, 2.0f);
+        GF_OBJ_HANDLE* blade = GfGameParty::getHandleBlade(i, -1);
+        SCOM_OBJ_ALPHA::create(blade, 0.0f, 0.2f);
+        SCOM_OBJ_ALPHA::create(blade, 2.0f, 1.0f);
+        SCOM_BC_PARTICLE::createPortal(blade, 2.0f);
+    }
+    mm::mtl::FixStr<64> se;
+    switch (GfGameManager::getMapID()) {
+    case 3:
+        se = "se_fld_ma07a_17";
+        break;
+    case 9:
+        se = "se_fld_ma07a_17";
+        break;
+    case 58:
+        se = "se_fld_ma49c_03";
+        break;
+    default:
+        return;
+    }
+    if (GfSound* sound = GfSound::get()) {
+        sound->playSe(se.m_str, static_cast<fw::SoundCategory>(5));
+    }
+}
+
 namespace _gfgsc {
 // updateCollectKizunaRingWithContition's blades and the affinity chart quest each one waits for (the names are not
 // the original's)
@@ -1655,6 +1760,10 @@ void GfGameScene::updateCollectKizunaRingWithContition(const fw::UpdateInfo&) {
             break;
         }
     }
+}
+
+void GfGameScene::updateAfterLayer(const fw::UpdateInfo& info) {
+    updaterAfterLayerIraWeaponAttach(info);
 }
 
 void GfGameScene::fn_71002CC890(unsigned int driver, const fw::UpdateInfo& info) {

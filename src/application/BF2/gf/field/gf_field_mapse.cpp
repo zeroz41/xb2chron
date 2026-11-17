@@ -111,9 +111,9 @@ void GfFieldMapSe::updateSeObjDataForFindActivate(fw::UpdateInfo info, SEDATA& d
             if (obj.isDisp(matrix) && scene != nullptr) {
                 const mm::Mat44& mtx = obj.getMatrix(matrix);
                 mm::Vec3 t = mtx.getTrans();
-                float dx = scene->m_listenerPos[0] - t.x;
-                float dy = scene->m_listenerPos[1] - t.y;
-                float dz = scene->m_listenerPos[2] - t.z;
+                float dx = scene->m_listenerPos.x - t.x;
+                float dy = scene->m_listenerPos.y - t.y;
+                float dz = scene->m_listenerPos.z - t.z;
                 second.m_dist = dx * dx + dy * dy + dz * dz;
             }
             if (second.m_dist < minDist * minDist) {

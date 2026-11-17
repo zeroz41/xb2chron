@@ -4,7 +4,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "gf/QuestID.h"
 #include "gf/OwnerBonus.h"
-namespace mm { class Vec3; }
+#include "mm/Vec3.h"
 #include "mm/mtl/Bitflag.h"
 #include "mm/mtl/FixedQueue.h"
 #include "mm/mtl/FixedList.h"
@@ -31,6 +31,10 @@ namespace _gfgsc {
 // set, or the field gimmicks' damage phantoms hold it (GfGameScene::isMoverGetFieldDamage asks member 0)
 bool isPartyMemberGetFieldDamage(unsigned int index);
 }  // namespace _gfgsc
+
+// Placeholder name: the file function gevHanaCondenser and gevOrbParam pass their value to (x0 holds the value, so
+// not a member; see GfGameScene::gevHanaCondenser)
+void fn_71002C5208(unsigned int value);
 
 // table 0x7100B55EF0
 class GfGameScene : public ::mm::mtl::PtrSingleton< ::gf::GfGameScene> {
@@ -185,6 +189,8 @@ public:
     // calls it with a driver index (no scene in x0, so static); unless an event, a talk, a map jump or the game start
     // runs, it updates the driver's three pouches (GfPouchUtil::updatePouch on each GfPouchUtil::getPouch)
     static void fn_71002CC890(unsigned int driver, const ::fw::UpdateInfo& info);
+    // 1.0.0 symbol; updateAfterLayer runs it
+    void updaterAfterLayerIraWeaponAttach(const ::fw::UpdateInfo& info);
     void refreshGimmickFlag();
     bool isRide(unsigned int id) const;
     // GfGameParty::gevPartyIDMemberOK passes the party id it is told about (1.0.0's symbol)
@@ -277,7 +283,10 @@ public:
     unsigned int m_battle : 1;  // isBattle's
     unsigned int m_playerCameraPause : 1;  // setPlayerCameraPause's
     unsigned int : 29;
-    unsigned char pad_14C[0x24];
+    unsigned char pad_14C[0x14];
+    // the control mover's position at the last updateMoveAchievement, which measures the distance moved since (the
+    // name is not the original's)
+    mm::Vec3 m_moverPos;  // 0x160
     // a player state check the constructor pushes (a value, a state id, the static test it calls); the names are
     // not the original's
     struct PlayerStateCheck {
@@ -327,33 +336,25 @@ public:
     };
     PartyState m_partyStates[3];  // 0x250
     bool m_validCollisionVelocity;
-    // 0x2D0: seven positions getEnableSavePos returns the first enabled of (an enable flag, then the position at
-    // 0x10, 0x20 bytes each); not laid out yet, as an mm::Vec3 there would make the class 16-aligned and build
-    // allocates it 8-aligned
     unsigned char pad_281[0xF];
-    // the point GfFieldMapSe measures its map sounds' distances from (x, y, z; floats, not an mm::Vec3, see above;
-    // the name is not the original's)
-    float m_listenerPos[3];
-    unsigned char pad_29C[0x4];
+    // the point GfFieldMapSe measures its map sounds' distances from: updateListeningPoint's listening matrix
+    // translation (the name is not the original's). mm::Vec3s: the 64-bit x/y loads of their copies
+    // (updateListeningPoint, updateEnableSavePos) need the 16-byte alignment
+    mm::Vec3 m_listenerPos;  // 0x290
     // a listening point updateListeningPoint uses once, instead of the camera's, while m_setListener is set (it
-    // clears the flag); floats, see above; the names are not the original's
-    float m_setListenerPos[3];
-    unsigned char pad_2AC[0x4];
+    // clears the flag); the names are not the original's
+    mm::Vec3 m_setListenerPos;  // 0x2A0
     bool m_setListener;
     unsigned char pad_2B1[0xF];
-    // cleared with the save positions by applyMapjumpForStart (floats, see above; the name is not the original's)
-    float m_pos2C0[3];
-    unsigned char pad_2CC[0x4];
-    // a position getEnableSavePos may return (the names are not the original's)
+    // a position updateEnableSavePos records each frame, newest first, with whether the game allowed a save
+    // there (the names are not the original's)
     struct SavePos {
+        mm::Vec3 m_pos;
         bool m_enable;
-        unsigned char pad_1[0xF];
-        float m_pos[3];  // floats, not an mm::Vec3 (see above)
-        unsigned char pad_1C[0x4];
     };
-    SavePos m_savePos[7];  // getEnableSavePos returns the first enabled one's position
-    bool m_flag3B0;  // cleared by applyMapjumpForStart (the name is not the original's)
-    unsigned char pad_3B1[0xF];
+    // updateEnableSavePos shifts them down; getEnableSavePos returns the position after the first enabled
+    // one; applyMapjumpForStart clears them
+    SavePos m_savePos[8];  // 0x2C0
     // enterExtraControlForHanaJS pushes the object (bdat id 1005) here (the name is not the original's)
     mm::mtl::FixedVector<GF_OBJ_HANDLE*, 8> m_hanaJSObjs;  // 0x3C0
     // updatePartyMover's: the party's movers (GfGameParty::getHandleMover 0 to 2) of the last update, to tell
