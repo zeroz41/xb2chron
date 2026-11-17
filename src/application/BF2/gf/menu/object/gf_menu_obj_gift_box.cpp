@@ -419,6 +419,124 @@ void GfMenuObjGiftBox::updateSubList() {
     }
 }
 
+void GfMenuObjGiftBox::refreshSubList() {
+    if (m_subList != nullptr) {
+        unsigned char* fp = GfDataBdat::getFP(0x10A);
+        ui::UIObjectAcc main(m_handle, "LAY_main");
+        mm::mtl::FixStr<32> name;
+        ui::UIStr str;
+        for (unsigned int i = 0; i < m_subList->getPageRowSize(); i++) {
+            bool disp = false;
+            if (i < m_subList->getSize() - m_subList->getRowOffset()) {
+                unsigned int row = m_subList->getContents(m_subList->getPageIndex(i)).m_id;
+                unsigned char category = Bdat::getVal(fp, "category", row);
+                if (category != 0) {
+                    unsigned short item = Bdat::getVal(fp, "item_id", row);
+                    switch (category) {
+                    case 1:
+                        if (!item) {
+                            disp = false;
+                            break;
+                        }
+                        GfMenuItemUtil::getItemName(GfItemUtil::getType(item), item, str);
+                        disp = true;
+                        break;
+                    case 2:
+                    case 3: {
+                        unsigned short msg = GfMenuObjUtil::getMsgIDFromList(0x167, category - 1);
+                        str.setupMstxt(GfDataBdat::getFP(0xF5), msg);
+                        disp = true;
+                        break;
+                    }
+                    default:
+                        disp = true;
+                        break;
+                    }
+                    if (str.isValid()) {
+                        name.format("TXT_sub_list_item_name@%02d", i + 1);
+                        ui::UIObjectAcc(main.m_handle, name.m_str).setText(str);
+                    } else {
+                        disp = false;
+                    }
+                    if (category == 1 && item != 0) {
+                        unsigned char type = GfItemUtil::getType(item);
+                        unsigned int key = 0;
+                        if (type == 10) {
+                            ItemProperty property;
+                            GfItemUtil::getProperty(property, item, 0);
+                            key = property.m_favoriteKey;
+                        } else if (type == 2) {
+                            ItemProperty property;
+                            GfItemUtil::getProperty(property, item, 0);
+                            key = property.m_iconIndex + 1;
+                        } else if (type == 7) {
+                            ItemProperty property;
+                            GfItemUtil::getProperty(property, item, 0);
+                            key = property.m_collectionKey;
+                        }
+                        unsigned int icon;
+                        if (GfMenuItemUtil::getIconNumber(static_cast<ItemType::Type>(type), key, icon, false)) {
+                            name.format("IMG_sub_list_item_icon_item@%02d", i + 1);
+                            ui::UIObjectAcc(main.m_handle, name.m_str).setImageIndex(icon);
+                        }
+                    }
+                    name.format("IMG_sub_list_item_icon_item@%02d", i + 1);
+                    main.setDispChild(category == 1, name.m_str);
+                    name.format("IMG_sub_list_item_icon_gold@%02d", i + 1);
+                    main.setDispChild(category == 2, name.m_str);
+                    name.format("IMG_sub_list_item_icon_ether@%02d", i + 1);
+                    main.setDispChild(category == 3, name.m_str);
+                    unsigned int value = static_cast<unsigned short>(Bdat::getVal(fp, "value", row));
+                    m_numbers[i]->m_max = 999999999;
+                    m_numbers[i]->m_value = value;
+                    name.format("LAY_sub_list_item_num@%02d", i + 1);
+                    main.setDispChild(category == 1 || category == 3, name.m_str);
+                    name.format("LAY_sub_list_item_gold@%02d", i + 1);
+                    main.setDispChild(category == 2, name.m_str);
+                    unsigned int status = 0;
+                    if (!canGetItem(row, 0)) {
+                        status = GfGameFlag::getLocal(1, static_cast<unsigned short>(Bdat::getVal(
+                                                             GfDataBdat::getFP(0x10A), "getflag", row))) != 0
+                                     ? 2
+                                     : 1;
+                    }
+                    name.format("IMG_sub_list_item_status@%02d", i + 1);
+                    ui::UIObjectAcc(main.m_handle, name.m_str).setImageIndex(status);
+                    name.format("TXT_sub_list_item_name@%02d", i + 1);
+                    {
+                        ui::UIObjectAcc text(main.m_handle, name.m_str);
+                        if (status != 0) {
+                            GfMenuObjUtil::setColMulandAdd(text.m_handle, "txt_disable");
+                        } else {
+                            GfMenuObjUtil::setColDefault(text.m_handle);
+                        }
+                    }
+                    bool select = m_subList->getPageIndex(i) == m_subList->getIndex(false);
+                    name.format("IMG_sub_list_item_select@%02d", i + 1);
+                    main.setDispChild(select, name.m_str);
+                    if (select) {
+                        MenuItemInfo info;
+                        if (Bdat::getMember(fp, "disp_item_info") != nullptr) {
+                            unsigned char flag = Bdat::getVal(fp, "disp_item_info", row);
+                            if (item != 0 && flag == 1) {
+                                info.m_type = GfDataItem::getItemType(item);
+                                info.m_count = Bdat::getVal(fp, "value", row);
+                                info.m_id = item;
+                            }
+                        }
+                        m_refItem->m_item = info;
+                        bool pouch = info.m_type == 10;
+                        main.setDispChild(!pouch, "LAY_iteminfo_normal");
+                        main.setDispChild(pouch, "LAY_iteminfo_pouch");
+                    }
+                }
+            }
+            name.format("LAY_sub_list_item@%02d", i + 1);
+            main.setDispChild(disp, name.m_str);
+        }
+    }
+}
+
 bool GfMenuObjGiftBox::isGetItemFull(unsigned int row, unsigned int arg) {
     unsigned char* fp = GfDataBdat::getFP(0x10A);
     unsigned char category = Bdat::getVal(fp, "category", row);
