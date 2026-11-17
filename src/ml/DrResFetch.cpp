@@ -84,6 +84,7 @@
 #include "ml/DrResMdoSeamWrkPosMpf.h"
 #include "ml/DrResMdoMeshObj.h"
 #include "ml/DrResMdoShdObj.h"
+#include "ml/DrShdMdoDecExtTbl.h"
 #include "ml/DrResMdoMorpObj.h"
 #include "classes/ml/DrMan.h"
 #include "classes/ml/DrResMdoInstPartsObj.h"
@@ -367,6 +368,44 @@ void DrResMdoMeshObj::release(DrResMdoMeshObj*& obj) {
     if (obj != nullptr) {
         obj = nullptr;
     }
+}
+
+void DrResMdoShdObj::bindShader(DrShdMdoExtTblObj* tbl) {
+    const ShdHeader* header = m_header;
+    const ShdData* data =
+        reinterpret_cast<const ShdData*>(reinterpret_cast<const unsigned char*>(header) + header->m_dataOfs);
+    for (int i = 0; i < header->m_num; i++, data++) {
+        const unsigned char* base = reinterpret_cast<const unsigned char*>(m_header);
+        const char* name = reinterpret_cast<const char*>(base) + data->m_nameOfs;
+        unsigned char* work = m_entries[i].m_work;
+        unsigned int extIdxOfs = data->m_extIdxOfs;
+        for (int j = 0; j < data->m_workNum; j++) {
+            const unsigned short* extIdx = reinterpret_cast<const unsigned short*>(base + extIdxOfs);
+            work[j] = (tbl->m_pExtTbl + extIdx[j])->m_pDecShader->getDeclarationOfs(name);
+        }
+    }
+}
+
+bool DrResMdoShdObj::update(DrShdMdoExtTblObj* tbl) {
+    bool changed = false;
+    const ShdData* data =
+        reinterpret_cast<const ShdData*>(reinterpret_cast<const unsigned char*>(m_header) + m_header->m_dataOfs);
+    for (unsigned int i = 0; i < m_num; i++, data++) {
+        Entry& entry = m_entries[i];
+        unsigned int parm = entry.m_decShdParm;
+        if (parm != entry.m_curDecShdParm) {
+            entry.m_curDecShdParm = parm;
+            const unsigned char* base = reinterpret_cast<const unsigned char*>(m_header);
+            unsigned char* work = m_entries[i].m_work;
+            unsigned int extIdxOfs = data->m_extIdxOfs;
+            for (int j = 0; j < data->m_workNum; j++) {
+                const unsigned short* extIdx = reinterpret_cast<const unsigned short*>(base + extIdxOfs);
+                (tbl->m_pExtTbl + extIdx[j])->setDeclarationIdx(work[j], parm);
+            }
+            changed = true;
+        }
+    }
+    return changed;
 }
 
 int DrResMdoShdObj::getDecShdIdx(const char* name) const {
@@ -1646,6 +1685,14 @@ void DrResShdStreamOut::setDecNum(unsigned int idx) {
 void DrResShdStreamOut::stmShdset_Weight() {
     m_shaderSel[0] = 1;
     m_shaderSel[1] = 0;
+}
+
+void DrResShdStreamOut::stmShdset_WetVtx() {
+    m_shaderSel[0] = 1;
+    m_shaderSel[1] = 0;
+    DrShdDataObj* data = m_data;
+    m_shaderSel[2] = 2;
+    m_wetNumOfs = data->getDeclarationOfs("WET_NUM");
 }
 
 void DrResShdStreamOut::stmShdset_MofSet() {
@@ -5121,6 +5168,17 @@ void DrResMdoInstAnmObj::update() {
     }
 }
 
+unsigned int DrResMdoInstAnmObj::getWorkSize(const unsigned char* data) {
+    const Header* header = reinterpret_cast<const Header*>(data);
+    unsigned int size = header->partsMax * sizeof(DrResMdoInstPartsObj*);
+    size += header->linkTopB * sizeof(DrResMdoInstPartsAnm);
+    size += (header->linkNumB + header->num34) * 0x30;
+    size += header->linkTopA * 0x28;
+    size += (0x10 - size % 0x10) % 0x10;
+    size += header->linkTopA * 0x160;
+    return size;
+}
+
 void DrResMdoInstAnmObj::setupLink(DrResMdoPos* pos) const {
     if (m_header) {
         for (int i = 0, idx = m_header->linkTopA; i < m_header->linkNumA; i++, idx++) {
@@ -6073,6 +6131,20 @@ void DrResMdoSeamWrkLight::setupWork(const MdsSeamLgtMapData* data) {
     pad_38 = 0;
     pad_3A = 0;
     m_id = data->id;
+}
+
+DrResMdoSeamWrkLow::DrResMdoSeamWrkLow() {
+    m_instans = nullptr;
+    m_buf2 = nullptr;
+    m_matRes = nullptr;
+    m_memObj = nullptr;
+    pad_B4 = 0;
+    pad_AC = 0;
+    m_readSize = 0;
+    m_renderCnt = 0;
+    pad_A8 = 0;
+    m_cacheFlags = 0;
+    m_dataIdx = 0;
 }
 
 DrResMdoSeamWrkLow::~DrResMdoSeamWrkLow() { release(); }
