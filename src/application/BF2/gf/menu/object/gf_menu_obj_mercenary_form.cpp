@@ -14,10 +14,13 @@
 #include "classes/gf/GfMenuObjMercenaryForm/PresetListener.h"
 #include "classes/gf/GfMenuObjMercenaryForm/UnitListener.h"
 #include "classes/gf/GfMenuObjMercenaryForm/StartListener.h"
+#include "classes/gf/GfMenuObjMercenaryForm/LeaderListener.h"
+#include "classes/gf/SCOM_PARTY_ADD.h"
 #include "classes/gf/GfMenuObjMercenaryTop.h"
 #include "classes/gf/GfMenuObjCmnStatus.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "gf/GfDataBlade.h"
+#include "gf/GfDataMercenaries.h"
 #include "mm/mtl/FixStr.h"
 #include <algorithm>
 #include "classes/gf/GfMenuObjOperationInfo.h"
@@ -716,7 +719,151 @@ bool GfMenuObjMercenaryForm::seqPresetLoad() {
     return true;
 }
 
-// LeaderListener is not here yet
+void GfMenuObjMercenaryForm::LeaderListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableFSInput(4);
+            GfMenuObjOperationInfo::add(handle, 0, 0, 0);
+        } else if (event.m_param0 == 2) {
+            m_owner->m_unitBlades->getContents(m_owner->m_unitBlades->getIndex(false));
+            for (unsigned int i = 0; i < m_owner->m_unitBlades->getSize(); i++) {
+                const MenuBladeInfo& info = m_owner->m_unitBlades->getContents(i);
+                if (GfDataBlade::isActivateDriver(info.m_blade)) {
+                    unsigned int driver = GfDataBlade::getSetDriver(info.m_blade);
+                    int slot = GfDataBlade::getDriverSetID(info.m_blade);
+                    if (slot != -1) {
+                        GfDataBlade::setEnableEngageRex(info.m_blade, false);
+                        SCOM_PARTY_ADD::removeBladeForMenu(driver, slot, true);
+                    }
+                }
+            }
+            m_owner->sendOpenOrFormMain(acc.searchSibiling("LAY_start"), 0);
+        } else if (event.m_param0 == 3) {
+            ui::EventData form;
+            form.m_type = 0x103;
+            GfMenuObject::sendEvent(acc.searchSibiling("LAY_form"), form, 0.0f);
+        }
+        break;
+    case 6: {
+        int index = event.m_param0;
+        if (index != -1) {
+            int prev = event.m_param1;
+            m_owner->m_unitBlades->setIndex(index);
+            m_owner->m_formSelect->setIndex(index);
+            unsigned int blade = m_owner->m_unitBlades->getContents(m_owner->m_unitBlades->getIndex(false)).m_blade;
+            bool different = GfMenuObjUtil::isBladeDifferentImage(blade, GfMenuReference::getReferenceBladeID(0));
+            GfMenuReference::setReferenceBladeID(
+                0, m_owner->m_unitBlades->getContents(m_owner->m_unitBlades->getIndex(false)).m_blade);
+            if (prev == -1 || different) {
+                ui::UIObjectAcc main(m_owner->m_handle, "LAY_main");
+                ui::UIObjectAcc image(main.m_handle, "IMG_leader_bl_img");
+                int ctrl = GfMenuObjUtil::getCtrlID(image.m_handle);
+                if (ctrl != -1) {
+                    GfMenuObjUtil::stopCtrl(ctrl);
+                }
+                image.setAlpha(0.0f);
+                GfMenuObject::sendOpenEvent(main.searchSibiling("LAY_bl_img"), 0, 0.0f);
+            }
+            if (prev != -1 && index != prev) {
+                GfMenuObjUtil::playSECommonCursor();
+            }
+        }
+        break;
+    }
+    case 8:
+        if (event.m_param1 == 1) {
+            unsigned int leader = GfDataMercenaries::getBladeWithLeader(GfMenuReference::getReferenceMissionID());
+            if (leader != 0 &&
+                leader != m_owner->m_unitBlades->getContents(m_owner->m_unitBlades->getIndex(false)).m_blade) {
+                GfMenuObjUtil::playSECommon(2);
+                break;
+            }
+            m_owner->m_seq.clear();
+            m_owner->m_seq.addJob(&GfMenuObjMercenaryForm::seqConfirmStart);
+        } else if (event.m_param1 == 2) {
+            GfMenuObjUtil::PresetCtrlParam param;
+            param.m_preset = 6;
+            param.m_out = 1;
+            param.m_eventId = 3;
+            GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+            GfMenuObject::sendCloseEvent(acc.searchSibiling("LAY_bl_img"), 0, 0.0f);
+            GfGameMercenaries::clearTeamMember(GfMenuReference::getReferenceTeamID());
+            GfMenuObjUtil::playSECommonCancel();
+        } else {
+            break;
+        }
+        GfMenuObject::disableFSInput();
+        GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+        break;
+    case 0x21: {
+        GfMenuObjOperationInfo::setGuideText(0x26, 0);
+        {
+        mm::mtl::FixStr<32> name;
+        unsigned int leader = GfDataMercenaries::getBladeWithLeader(GfMenuReference::getReferenceMissionID());
+        m_owner->m_formSelect->clear();
+        for (unsigned int i = 0; i < 6; i++) {
+            name.format("LAY_leader_sel_list_bl@%02d", i + 1);
+            ui::UIObjectAcc obj(acc.m_handle, name.m_str);
+            if (i < m_owner->m_unitBlades->getSize()) {
+                m_owner->m_formSelect->addObject(obj.m_handle);
+                obj.setDisp(true);
+                if (leader != 0) {
+                    const char* color = "white";
+                    if (leader != m_owner->m_unitBlades->getContents(i).m_blade) {
+                        color = "gray";
+                    }
+                    obj.setMulColor(color);
+                }
+            } else {
+                obj.setDisp(false);
+            }
+        }
+        }
+        {
+            mm::Rect<short> first;
+            acc.getLayoutRect("blade_l_1", first);
+            mm::Rect<short> second;
+            acc.getLayoutRect("blade_l_2", second);
+            GfMenuObjUtil::placeObjectH(m_owner->m_formSelect,
+                                        mm::Pnt<short>(first.x + first.w / 2, first.y + first.h / 2),
+                                        second.x - first.x);
+        }
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 0;
+        param.m_eventId = 1;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        GfMenuObjUtil::playSE(0x10);
+        m_owner->m_unitBlades->setIndex(0);
+        GfMenuObject::resetInputSelection(acc.m_handle);
+        GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_unitBlades);
+        m_owner->m_formCursor->setDisp(true);
+        break;
+    }
+    case 0x104:
+        if (event.m_param0 == 1) {
+            GfMenuObjUtil::PresetCtrlParam param;
+            param.m_preset = 6;
+            param.m_out = 1;
+            param.m_eventId = 2;
+            GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+            GfMenuObjUtil::playJingle(6);
+            GfMenuObjMainMenu2::setCloseKeyEnable(false);
+        } else {
+            GfMenuObject::enableFSInput(4);
+            GfMenuObjOperationInfo::add(handle, 0, 0, 0);
+        }
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
 
 void GfMenuObjMercenaryForm::BlImgListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
