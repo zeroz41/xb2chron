@@ -13,6 +13,8 @@ class Object : public Handle {
 public:
     typedef Result (T0::*Method)(Handle*, T1, T2);
 
+    // what Allocator::NewInstance builds (fw::SoundSsdDriver::playSeLocal sets the object and method after it)
+    Object() {}
     Object(T0* object, Method method) : object_(object), method_(method) {}
 
     virtual Result ExecuteDelegate(unsigned long long first, unsigned long long second) {  // slot 2

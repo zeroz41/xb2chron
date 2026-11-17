@@ -14,11 +14,17 @@ namespace fw { enum SoundVolumeType : int; }
 namespace ssd { class SoundListener; }
 
 namespace fw { enum SoundType : int; }
+namespace mm { namespace mtl { class IAllocator; }}
 namespace fw {
 // what fw::SoundSsdDriver's play functions hand the player's constructor, which keeps a copy at 0x78 (the type's
 // name is from the constructor's symbol; the member names are not the original's)
 struct SoundPlayerSetupParam {
-    SoundPack* pack;
+    // playSeLocal's and playStream's setup before they fill it: category 3, volume and pitch rate 1, the rest 0
+    SoundPlayerSetupParam()
+        : allocator(nullptr), handle(nullptr), listener(nullptr), category(static_cast<SoundCategory>(3)), volume(1.0f),
+          pitch(0.0f), pitchRate(1.0f), pan(0.0f), bankId(0), type(static_cast<SoundType>(0)) {}
+    // FrameworkMemory::getAllocator(5) in playSeLocal and playStream
+    mm::mtl::IAllocator* allocator;
     mm::mtl::IntrusivePtr<SoundSsdSource> source;  // 0x08 (the copy adds a reference)
     ssd::SoundHandle* handle;  // 0x10
     const ssd::SoundListener* listener;  // 0x18 (setListener)
@@ -27,7 +33,7 @@ struct SoundPlayerSetupParam {
     float pitch;  // 0x28
     float pitchRate;  // 0x2C (setPitch)
     float pan;  // 0x30 (setPan)
-    unsigned char pad_34[0x4];
+    int bankId;  // 0x34: the source's m_bankId (playSeLocal)
     fw::SoundType type;  // 0x38 (fw::SoundSsdDriver::findSe looks for 3)
 };
 
