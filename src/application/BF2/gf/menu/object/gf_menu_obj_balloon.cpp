@@ -16,6 +16,7 @@
 #include "gf/GfDataHana.h"
 #include "gf/GfDataItem.h"
 #include "gf/GfItemUtil.h"
+#include "classes/gf/SCOM_ADD_ITEM.h"
 #include "gf/GfMenuItemUtil.h"
 #include "gf/GfReqCommand.h"
 #include "mm/Col3.h"
@@ -146,6 +147,109 @@ bool GfMenuObjBalloon::canGetExpReward() {
         return false;
     }
     return true;
+}
+
+void GfMenuObjBalloon::GetItemListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObject::disableInput(acc.m_handle);
+        acc.setDisp(false);
+        acc.setSuspend(true);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+        } else if (event.m_param0 == 2) {
+            GfMenuObject::termCallContext(acc.m_handle);
+            acc.setSuspend(true);
+        }
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            for (int i = 0; i < 3; i++) {
+                MenuItemInfo item;
+                m_owner->m_getItems[i]->getItem(item);
+                if (item.m_id != 0) {
+                    SCOM_ADD_ITEM::create(item.m_id, item.m_count);
+                }
+            }
+            {
+                ui::UIObjectAcc root(acc.m_handle);
+                root.setDisp(true);
+                GfMenuObjUtil::CtrlParam param;
+                param.m_time = 0.25f;
+                param.m_eventId = 2;
+                param.m_methods = 2;
+                GfMenuObjUtil::startCtrl(root.m_handle, param, nullptr);
+            }
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObject::releaseTimer(acc.m_handle);
+            GfMenuObjUtil::playSECommonDecide();
+        }
+        break;
+    case 0x21: {
+        int row = event.m_param0;
+        unsigned char* bdat = GfDataBdat::getFP(0xDD);
+        mm::mtl::FixStr<32> name;
+        if (bdat == nullptr) {
+            break;
+        }
+        int i = 0;
+        for (; i < 3; i++) {
+            name.format("ItemID%d", i + 1);
+            unsigned int id = static_cast<unsigned short>(Bdat::getVal(bdat, name.m_str, row));
+            name.format("ItemNumber%d", i + 1);
+            short num = static_cast<signed char>(Bdat::getVal(bdat, name.m_str, row));
+            name.format("LAY_get_item@%02d", i + 1);
+            if (id == 0 || num == 0) {
+                break;
+            }
+            MenuItemInfo item;
+            item.m_type = GfItemUtil::getType(id);
+            item.m_id = id;
+            item.m_count = num;
+            m_owner->m_getItems[i]->m_item = item;
+            acc.setDispChild(true, name.m_str);
+        }
+        for (; i < 3; i++) {
+            m_owner->m_getItems[i]->m_item = MenuItemInfo();
+            name.format("LAY_get_item@%02d", i + 1);
+            acc.setDispChild(false, name.m_str);
+        }
+        [&acc]() {
+            ui::UIObjectAcc root(acc.m_handle);
+            root.setDisp(true);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_time = 0.25f;
+            param.m_methods = 1;
+            root.setAlpha(0.5f);
+            param.m_alpha = 1.0f;
+            param.m_eventId = 1;
+            GfMenuObjUtil::startCtrl(root.m_handle, param, nullptr);
+        }();
+        ui::UIObjectAcc ok(acc.m_handle, "TXT_get_item_btn_ok");
+        GfMenuObjUtil::setDockPos(acc.searchChild("IMG_get_item_cursor_l"), ok.m_handle, 1, true);
+        GfMenuObjUtil::addPos(acc.searchChild("IMG_get_item_cursor_l"), -10, 0);
+        GfMenuObjUtil::setDockPos(acc.searchChild("IMG_get_item_cursor_r"), ok.m_handle, 2, true);
+        GfMenuObjUtil::addPos(acc.searchChild("IMG_get_item_cursor_r"), 10, 0);
+        break;
+    }
+    case 0x103: {
+        ui::UIObjectAcc root(acc.m_handle);
+        root.setDisp(true);
+        GfMenuObjUtil::CtrlParam param;
+        param.m_time = 0.25f;
+        param.m_eventId = 2;
+        param.m_methods = 2;
+        GfMenuObjUtil::startCtrl(root.m_handle, param, nullptr);
+    }
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 void GfMenuObjBalloon::AutoTalkListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
