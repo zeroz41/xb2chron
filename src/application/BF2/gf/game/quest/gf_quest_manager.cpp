@@ -30,6 +30,7 @@
 #include "classes/gf/GfGameCond.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/SCOM_ACHIEV_INC.h"
+#include <algorithm>
 
 namespace gf {
 
@@ -133,6 +134,14 @@ void GfQuestManager::setupAchievementTaskCheck() {
     }
 }
 
+void GfQuestManager::refreshQuestTaskState() {
+    QuestID id = getProgressCurrentQuest(QTYPE(0));
+    if (!id.empty()) {
+        ::std::for_each(s_pThis->m_events.begin(), s_pThis->m_events.end(),
+                        [id](IQuestEvent* event) { event->qevLoadTaskState(id.m_id); });
+    }
+}
+
 void GfQuestManager::cancelCondition(QuestID id) {
     unsigned int condition = QuestListAcc::get()->getListCancelCondition(id);
     if (condition == 0 || GfGameCond::isGameCond(condition)) {
@@ -196,6 +205,31 @@ void GfQuestManager::setCompleteQuest(QuestID id, QuestID next, QSTATE state) {
     }(next);
 }
 
+QuestID GfQuestManager::getCurrentQuest(QTYPE type) {
+    if (type == 1) {
+        return GfDataQuest::getScenario();
+    } else if (type == 0) {
+        QuestID select = GfDataQuest::getSelect();
+        return select.empty() ? GfDataQuest::getScenario() : select;
+    } else {
+        QuestID select = GfDataQuest::getSelect();
+        if (GfDataQuest::getListQuestCategory(select) == static_cast<unsigned int>(type)) {
+            return select;
+        }
+    }
+    return QuestID();
+}
+
+void GfQuestManager::setCurrentQuestScenario(QuestID id) {
+    QuestID before = getCurrentQuest(QTYPE(0));
+    GfDataQuest::setScenario(id);
+    GfDataQuest::setSelect(QuestID());
+    if (!id.empty()) {
+        GfQuestUtil::addOrderParentQuest(id);
+    }
+    eventChangeCurrentQuest(before, id);
+}
+
 void GfQuestManager::setCompleteState(QuestID id, QuestID next, QSTATE state) {
     QuestID parent = GfDataQuest::getListPRTQuestID(next);
     if (!parent.empty()) {
@@ -234,11 +268,37 @@ bool GfQuestManager::getRewardItem(GfQuestReward& reward, QuestID id, bool flag)
     return GfQuestUtil::getReward(reward, set, flag);
 }
 
+QuestID GfQuestManager::getProgressCurrentQuest(QTYPE type) {
+    QuestID id = GfQuestInfo::getProgressQuest(getCurrentQuest(type));
+    if (id.empty()) {
+        return QuestID();
+    }
+    return id;
+}
+
 QuestID GfQuestManager::getPrevCompleteQuest() {
     if (!s_pThis->m_completeQuest.empty()) {
         return s_pThis->m_completeQuest.back();
     }
     return QuestID();
+}
+
+void GfQuestManager::setCurrentQuestSelect(QuestID id) {
+    QuestListAcc* acc = s_bdat->m_questListAcc;
+    QuestID before = getCurrentQuest(QTYPE(0));
+    GfDataQuest::setSelect(id);
+    if (!id.empty()) {
+        if (acc->getListVisible(id)) {
+            GfQuestUtil::addOrderParentQuest(id);
+        }
+    } else {
+        QuestID parent = GfQuestUtil::getLastOrderParentQuest();
+        if (!parent.empty() && GfDataQuest::getListQuestCategory(parent) != 1 && !(parent == before)) {
+            id = parent;
+            GfDataQuest::setSelect(id);
+        }
+    }
+    eventChangeCurrentQuest(before, id);
 }
 
 void GfQuestManager::resetBattleTaskForPlayerDead() {
@@ -374,6 +434,15 @@ void GfQuestManager::entryOrderAchievQuest(QuestID id) {
         return;
     }
     s_pThis->addEntryQuest(id);
+}
+
+void GfQuestManager::setupParallelTaskCheck() {
+    for (QuestData& data : m_orderQuest) {
+        const QuestID& id = data.m_id;
+        if (::mm::mtl::find(pad_3E418.begin(), pad_3E418.end(), id) == pad_3E418.end()) {
+            pad_3E418.push_back(id);
+        }
+    }
 }
 
 unsigned int GfQuestManager::getOrderQuestMaxWithAchievement() {
@@ -571,6 +640,23 @@ void GfQuestManager::gevMapjump(GEV gev, const MapjumpCallbackInfo& info) {
     }
     if (GfQuestTarget::get() != nullptr) {
         GfQuestTarget::get()->gevMapjump(gev, info);
+    }
+}
+
+void GfQuestManager::setCurrentQuest(QuestID id) {
+    if (!id.empty()) {
+        QuestID parent = GfDataQuest::getListPRTQuestID(id);
+        if (!parent.empty()) {
+            id = parent;
+        }
+        if (GfQuestInfo::getState(id) != 1) {
+            return;
+        }
+    }
+    if (GfDataQuest::getListQuestCategory(id) == 1) {
+        s_pThis->setCurrentQuestScenario(id);
+    } else {
+        s_pThis->setCurrentQuestSelect(id);
     }
 }
 
