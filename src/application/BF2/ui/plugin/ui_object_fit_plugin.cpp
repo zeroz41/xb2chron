@@ -39,7 +39,7 @@ void UIObjectFitPlugin::execute(UIObjectAcc& acc) {
     target.getRect(rect, 2);
     unsigned short marginWidth = m_marginWidth;
     unsigned short marginHeight = m_marginHeight;
-    if (m_flags.addHalfSize) {
+    if (isFlag(FLAG_ADD_HALF_SIZE)) {
         marginWidth += width / 2;
         marginHeight += height / 2;
     }
@@ -58,8 +58,8 @@ void UIObjectFitPlugin::execute(UIObjectAcc& acc) {
     {
         mm::Vec2 scale;
         acc.getScale(scale);
-        float x = m_flags.keepScaleX ? scale.x : (float)(rect.w + m_offsetWidth) / (float)width;
-        float y = m_flags.keepScaleY ? scale.y : (float)(rect.h + m_offsetHeight) / (float)height;
+        float x = isFlag(FLAG_KEEP_SCALE_X) ? scale.x : (float)(rect.w + m_offsetWidth) / (float)width;
+        float y = isFlag(FLAG_KEEP_SCALE_Y) ? scale.y : (float)(rect.h + m_offsetHeight) / (float)height;
         scale = mm::Vec2(x, y);
         acc.setScale(scale);
     }

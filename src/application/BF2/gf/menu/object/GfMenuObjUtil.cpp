@@ -13,6 +13,7 @@
 #include "classes/ui/UIObjectDockPlugin.h"
 #include "classes/ui/UIObjectScrollBarPlugin.h"
 #include "classes/ui/UIObjectSyncPlugin.h"
+#include "classes/ui/UIObjectFitPlugin.h"
 #include "classes/ui/UIObjectNumberPlugin.h"
 #include "fw/PadData.h"
 #include "classes/gf/DataParamAcc.h"
@@ -35,6 +36,10 @@
 #include "classes/gf/GfMenuSoundManager.h"
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfGameParty.h"
+#include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfMenuReference.h"
+#include "gf/GfReqCommand.h"
+#include "gf/GfReqParam.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/fw/SoundManager.h"
 #include "classes/fw/PadManager.h"
@@ -79,6 +84,7 @@
 #include "fw/LangUtil.h"
 #include "mtl/MemManager.h"
 #include <string.h>
+#include <algorithm>
 
 namespace gf {
 namespace {
@@ -283,6 +289,40 @@ bool GfMenuObjUtil::isMenuObjectFull() {
     return GfMenuAdapterManager::isAdapterFull();
 }
 
+int GfMenuObjUtil::setCommonFadeIn(unsigned int handle, unsigned int eventId, unsigned char type) {
+    if (handle == 0) {
+        return -1;
+    }
+    switch (type) {
+    case 0: {
+        CtrlParam param;
+        param.m_methods = 1;
+        param.m_time = getPresetCtrlTime(6);
+        param.m_eventId = eventId;
+        return startCtrl(handle, param, nullptr);
+    }
+    case 1: {
+        CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_l_early";
+        param.m_eventId = eventId;
+        param.m_setDefault = true;
+        return startCtrl(handle, param, nullptr);
+    }
+    case 2: {
+        CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_r_early";
+        param.m_eventId = eventId;
+        param.m_setDefault = true;
+        return startCtrl(handle, param, nullptr);
+    }
+    }
+    return -1;
+}
+
 float GfMenuObjUtil::getPresetCtrlTime(unsigned int preset) {
     float time = 0.5f;
     if (const ParamMenu* param = getParamMenu()) {
@@ -301,6 +341,42 @@ float GfMenuObjUtil::getPresetCtrlTime(unsigned int preset) {
         }
     }
     return time;
+}
+
+int GfMenuObjUtil::setCommonFadeOut(unsigned int handle, unsigned int eventId, unsigned char type) {
+    if (handle == 0) {
+        return -1;
+    }
+    switch (type) {
+    case 0: {
+        CtrlParam param;
+        param.m_methods = 2;
+        param.m_time = getPresetCtrlTime(6);
+        param.m_eventId = eventId;
+        return startCtrl(handle, param, nullptr);
+    }
+    case 1: {
+        CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_out_l_early";
+        param.m_startFlags = 10;
+        param.m_eventId = eventId;
+        param.m_setDefault = true;
+        return startCtrl(handle, param, nullptr);
+    }
+    case 2: {
+        CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_out_r_early";
+        param.m_startFlags = 10;
+        param.m_eventId = eventId;
+        param.m_setDefault = true;
+        return startCtrl(handle, param, nullptr);
+    }
+    }
+    return -1;
 }
 
 const mm::Col3& GfMenuObjUtil::getPresetColor(const char* name) {
@@ -352,6 +428,21 @@ void GfMenuObjUtil::createDockPluginEx(unsigned int handle, unsigned int target,
         plugin->m_side = side;
         plugin->m_align = option.m_align;
         plugin->m_area = option.m_area;
+        plugin->release();
+    }
+}
+
+void GfMenuObjUtil::createFitPlugin(unsigned int handle, unsigned int target, int marginWidth, int marginHeight,
+                                    const FitOption& option) {
+    ui::UIObjectFitPlugin* plugin = ui::UIObjectFitPlugin::create(handle, target, marginWidth, marginHeight);
+    if (plugin != nullptr) {
+        plugin->setFlag(ui::UIObjectFitPlugin::FLAG_ADD_HALF_SIZE, option.m_addHalfSize);
+        plugin->setFlag(ui::UIObjectFitPlugin::FLAG_KEEP_SCALE_X, option.m_keepScaleX);
+        plugin->setFlag(ui::UIObjectFitPlugin::FLAG_KEEP_SCALE_Y, option.m_keepScaleY);
+        plugin->m_offsetWidth = option.m_offsetWidth;
+        plugin->m_offsetHeight = option.m_offsetHeight;
+        plugin->m_minWidth = option.m_minWidth;
+        plugin->m_minHeight = option.m_minHeight;
         plugin->release();
     }
 }
@@ -444,6 +535,89 @@ int GfMenuObjUtil::getPresetCtrlCurve(unsigned int preset) {
     return 1;
 }
 
+void GfMenuObjUtil::setPresetCtrl_Fadein(unsigned int preset, CtrlParam& param, int slot) {
+    param.m_time = getPresetCtrlTime(preset);
+    param.m_methods |= 1;
+    switch (preset) {
+    case 0:
+        param.m_methods |= 0x100;
+        break;
+    case 1:
+        param.m_methods |= 0x200;
+        break;
+    case 2:
+        param.m_methods |= 0x400;
+        break;
+    case 3:
+        param.m_methods |= 0x800;
+        break;
+    case 4:
+        break;
+    case 5:
+        param.m_methods = 0x200000 | 1;
+    case 6:
+        param.m_methods |= 1;
+        break;
+    }
+    param.m_curve = getPresetCtrlCurve(preset);
+    param.m_setDefault = true;
+    param.m_slot = slot;
+}
+
+void GfMenuObjUtil::setPresetCtrl_Fadeout(unsigned int preset, CtrlParam& param, int slot) {
+    param.m_time = getPresetCtrlTime(preset);
+    param.m_methods |= 2;
+    switch (preset) {
+    case 0:
+        param.m_methods |= 0x1000;
+        break;
+    case 1:
+        param.m_methods |= 0x2000;
+        break;
+    case 2:
+        param.m_methods |= 0x4000;
+        break;
+    case 3:
+        param.m_methods |= 0x8000;
+        break;
+    case 4:
+        break;
+    case 5:
+        param.m_methods = 0x400000 | 2;
+        break;
+    case 6:
+        param.m_methods |= 2;
+        break;
+    }
+    param.m_curve = getPresetCtrlCurve(preset);
+    param.m_startFlags |= 2;
+    param.m_slot = slot;
+}
+
+int GfMenuObjUtil::startPresetCtrl(unsigned int handle, const PresetCtrlParam& preset) {
+    CtrlParam param;
+    switch (preset.m_out) {
+    case 0:
+        setPresetCtrl_Fadein(preset.m_preset, param, preset.m_slot);
+        break;
+    case 1:
+        setPresetCtrl_Fadeout(preset.m_preset, param, preset.m_slot);
+        break;
+    default:
+        return -1;
+    }
+    if (preset.m_startFlag4) {
+        param.m_startFlags |= 4;
+    }
+    if (preset.m_startFlag1) {
+        param.m_startFlags &= ~4;
+        param.m_startFlags |= 1;
+    }
+    param.m_eventId = preset.m_eventId;
+    param.m_delay = preset.m_delay;
+    return startCtrl(handle, param, preset.m_child);
+}
+
 void GfMenuObjUtil::changeCursorTarget(ui::UICtrlCursorSelect* cursor, unsigned int handle, const char* format) {
     if (cursor == nullptr) {
         return;
@@ -531,6 +705,22 @@ bool GfMenuObjUtil::isExitDriver(unsigned int index) {
         index %= 3;
     }
     return GfGameParty::getHandleDriver(index, static_cast<PTPOS>(0)) != reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+}
+
+unsigned int GfMenuObjUtil::setupPartyDriver(const mm::mtl::FixedVector<unsigned short, 32>& drivers) {
+    RQ_SETUP_PARTY_DRIVER info = {};
+    if (drivers.empty()) {
+        return 0;
+    }
+    GfGameParty::getCurrentPartyInfo(info);
+    for (int i = 0; i < 10; i++) {
+        info.m_drivers[i] = 0;
+    }
+    for (unsigned int i = 0; i < drivers.size(); i++) {
+        info.m_drivers[i] = drivers[i];
+    }
+    info.m_leader = info.m_drivers[0];
+    return GfReqCommand::reqChangeParty(info);
 }
 
 bool GfMenuObjUtil::isIraSinMaskOff() {
@@ -638,6 +828,47 @@ unsigned int GfMenuObjUtil::getDriverPartyID(unsigned int driver) {
     return -1;
 }
 
+// Whether Tora's (driver 4) artificial blades may be used: not while he is set aside, always before the game is
+// cleared; after that only when none of his equipped ones (1005-1007, inferred: the Poppi forms) is out on a
+// mercenary team
+bool GfMenuObjUtil::isAvailableTora() {
+    if (GfDataDriver::isActivateUnuse(4)) {
+        return false;
+    }
+    if (!GfGameManager::isClearGame()) {
+        return true;
+    }
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    GfDataBlade::getListParty(blades);
+    GfDataBlade::getListReserver(blades);
+    for (unsigned int team = 0; team < GfDataMercenaries::getTeamNum(); team++) {
+        const unsigned short* members = GfDataMercenaries::getTeamMember(team + 1);
+        if (members == nullptr) {
+            continue;
+        }
+        for (int i = 0; i < 6; i++) {
+            unsigned int blade = members[i];
+            if (blade != 0 && std::find(blades.begin(), blades.end(), static_cast<unsigned short>(blade)) == blades.end()) {
+                blades.push_back(blade);
+            }
+        }
+    }
+    for (mm::mtl::FixedVector<unsigned short, 422>::iterator it = blades.begin(); it != blades.end();) {
+        if (*it != 0 && !GfDataBlade::isDummyBlade(*it) && *it >= 1005 && *it <= 1007 &&
+            GfGameUtil::isDriverEquipBlade(4, *it)) {
+            ++it;
+        } else {
+            it = blades.erase(it);
+        }
+    }
+    for (mm::mtl::FixedVector<unsigned short, 422>::iterator it = blades.begin(); it != blades.end(); ++it) {
+        if (GfDataBlade::isActivateMercenaryTeam(*it)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool GfMenuObjUtil::isValidBlade(unsigned int blade) {
     return blade != 0 && !GfDataBlade::isDummyBlade(blade);
 }
@@ -691,6 +922,52 @@ bool GfMenuObjUtil::isLeaderBladeEnable() {
     }
     unsigned int blade = GfDataDriver::getBlade(GfDataParty::getDriver(0, static_cast<PTPOS>(0)), -1);
     return blade != 0 && !GfDataBlade::isDummyBlade(blade);
+}
+
+int GfMenuObjUtil::getSetBladeID(unsigned int driver, int slot, bool battle) {
+    DataParamAcc acc(3, GfDataParty::getDriver(driver, static_cast<PTPOS>(0)), static_cast<GimmickType>(0));
+    int result = 0;
+    if (acc.isValid()) {
+        if (slot == -1) {
+            result = acc.getBladeSet(false);
+        } else if (slot < getBladeSlotMax()) {
+            int set = acc.getBladeSet(false);
+            if (battle && (GfMenuManager::isBattleState(0) || GfMenuManager::isBattleState(1))) {
+                set = GfSelectBlade::getStartBattleSetId(driver);
+            }
+            int top = set;
+            if (acc.isValid() && acc.getObjType() == 3) {
+                unsigned int id = acc.getBdatId();
+                if ((set == 3 || set == 4) && id == 1) {
+                    for (int i = 0; i < 3; i++) {
+                        if (acc.getBlade(i, false) == 1001) {
+                            top = i;
+                            break;
+                        }
+                    }
+                }
+            }
+            int index = top + slot;
+            if (index >= getBladeSlotMax()) {
+                index -= getBladeSlotMax();
+            }
+            result = index;
+            if (acc.isValid() && acc.getObjType() == 3 && acc.getBdatId() == 1 && acc.getBlade(index, false) == 1001) {
+                if (acc.getBladeSet(false) == 4) {
+                    result = 4;
+                } else if (battle) {
+                    if (GfMenuReference::getHomuraModeInBattle() == 1) {
+                        result = 3;
+                    }
+                } else if (GfDataBlade::isHikariCurrent()) {
+                    result = 3;
+                }
+            }
+        } else {
+            result = -1;
+        }
+    }
+    return result;
 }
 
 gf::GF_OBJ_HANDLE* GfMenuObjUtil::getLeaderBladeHandle(bool flag) {
@@ -767,8 +1044,8 @@ unsigned int GfMenuObjUtil::getBladeIDFromDriverSlot(unsigned int driver, int sl
     return 0;
 }
 
-unsigned int GfMenuObjUtil::getBladeSlotMax() {
-    unsigned int max = 1;
+int GfMenuObjUtil::getBladeSlotMax() {
+    int max = 1;
     if (GfGameFlag::getLocal(1, 0x89FF) == 1) {
         max = 2;
     }
