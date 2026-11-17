@@ -359,6 +359,33 @@ void GfMenuObjTitle::InfoListener::reciveEvent(const ui::EventData& event, unsig
     }
 }
 
+void GfMenuObjTitle::updateInfoPage(unsigned int page) {
+    unsigned char* fp = GfDataBdat::getFP(GfMenuObjUtil::isValidExpansion(3) ? 0x16B : 0x16A);
+    if (fp == nullptr) {
+        return;
+    }
+    int rowSize = m_msgList->getPageRowSize();
+    int top = Bdat::getIdTop(fp);
+    m_msgList->clear();
+    for (unsigned int i = 0; i < m_msgList->getPageRowSize() + 1; i++) {
+        unsigned int list = GfMenuObjUtil::isValidExpansion(3) ? 0x16B : 0x16A;
+        unsigned int id = top + page * rowSize + page + i;
+        unsigned short msg = GfMenuObjUtil::getMsgIDFromList(list, id);
+        if (msg == 0) {
+            continue;
+        }
+        if (i == 0) {
+            ui::UIStr str(GfDataBdat::getFP(0x13A), msg);
+            m_str.copy(str);
+        } else {
+            MsgID content;
+            content.m_id = id;
+            content.m_sortKey = 0;
+            m_msgList->addContents(MsgID(content));
+        }
+    }
+}
+
 void GfMenuObjTitle::refreshInfo(unsigned int) {
     ui::UIStr str;
     mm::mtl::FixStr<32> name;
@@ -406,6 +433,44 @@ bool GfMenuObjTitle::seqConfirmAdvancedNewGame() {
     }
     m_confirmOpen = false;
     return true;
+}
+
+bool GfMenuObjTitle::seqInfoFadeOut() {
+    ui::UIObjectAcc list(m_handle, "LAY_ang_info_list");
+    bool done = false;
+    if (!m_confirmOpen) {
+        if (m_infoDir == 0) {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_time = 0.3f;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_r";
+            param.m_setDefault = true;
+            GfMenuObjUtil::startCtrl(list.m_handle, param, nullptr);
+        } else {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_time = 0.3f;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_l";
+            param.m_setDefault = true;
+            GfMenuObjUtil::startCtrl(list.m_handle, param, nullptr);
+        }
+        {
+            ui::UIObjectAcc title(m_handle, "TXT_ang_info_title");
+            GfMenuObjUtil::CtrlParam param;
+            param.m_time = 0.3f;
+            param.m_methods = 2;
+            GfMenuObjUtil::startCtrl(title.m_handle, param, nullptr);
+        }
+        m_confirmOpen = true;
+    } else if (!GfMenuObjUtil::isBusyCtrl(GfMenuObjUtil::getCtrlID(list.m_handle))) {
+        updateInfoPage(m_infoPage);
+        refreshInfo(m_infoPage);
+        m_confirmOpen = false;
+        done = true;
+    }
+    return done;
 }
 
 bool GfMenuObjTitle::seqInfoFadeIn() {
