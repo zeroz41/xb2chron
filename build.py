@@ -4,7 +4,8 @@
     python build.py                   build (the first run sets everything up)
     python build.py --rom FOLDER      take the game from FOLDER instead of rom/
     python build.py --keys FILE       use this prod.keys
-    python build.py zkit ARGS...      run the build's zkit, e.g. `python build.py zkit progress`
+    python build.py --ghidra          also install what `zkit decompile` needs (Ghidra itself is separate)
+    python build.py zkit ARGS...      run the build's zkit, e.g. `python build.py zkit progress` (no game needed)
 
 Everything it sets up stays in build/: a Python environment with zkit and Ninja (build/env), then the compilers
 and tools zkit downloads. Delete build/ to start over.
@@ -25,7 +26,7 @@ ROMS = ROOT / "rom"
 GAME_FILES = (".nsp", ".xci", ".nsz", ".xcz")
 
 # The build tooling, pinned: zkit at a commit, Ninja at a release.
-ZKIT = "zkit @ https://github.com/zeroz41/zkit-gcnx/archive/3e624e14d6266cf36ed65c45637fca9bd5a8e865.zip"
+ZKIT = "zkit @ https://github.com/zeroz41/zkit-gcnx/archive/bb04aaf2e8d0fa2cfe13b29839b16719eee72397.zip"
 NINJA = "ninja==1.13.0"
 
 
@@ -41,13 +42,26 @@ def env_python():
     return scripts() / ("python.exe" if os.name == "nt" else "python")
 
 
-def setup(spec):
-    """Make build/env with zkit and Ninja, once (again when the pins change)."""
-    wanted = f"{spec}\n{NINJA}\n"
+def with_extra(spec, extra):
+    """The pip requirement for zkit from spec with its optional dependencies `extra`."""
+    name, at, url = spec.partition(" @ ")
+    if at:
+        return f"{name.strip()}[{extra}] @ {url.strip()}"
+    if "://" in spec:
+        return f"zkit[{extra}] @ {spec}"
+    return f"{spec}[{extra}]"  # a local checkout
+
+
+def setup(spec, ghidra=False):
+    """Make build/env with zkit and Ninja, once (again when the pins change). With ghidra, and on every run after
+    that, also zkit's `decompile` dependencies."""
     stamp = ENV / "installed.txt"
-    if env_python().is_file() and stamp.is_file() and stamp.read_text(encoding="utf-8") == wanted:
+    before = stamp.read_text(encoding="utf-8") if stamp.is_file() else ""
+    ghidra = ghidra or "ghidra" in before.splitlines()
+    wanted = "\n".join([spec, NINJA, *(["ghidra"] if ghidra else [])]) + "\n"
+    if env_python().is_file() and before == wanted:
         return
-    print("Setting up build/env (zkit and Ninja)...", flush=True)
+    print(f"Setting up build/env (zkit{', pyghidra' if ghidra else ''} and Ninja)...", flush=True)
     if not env_python().is_file():
         made = subprocess.run([sys.executable, "-m", "venv", str(ENV)])
         if made.returncode != 0 or not env_python().is_file():
@@ -55,7 +69,7 @@ def setup(spec):
             fail("Could not make a Python environment. On Debian or Ubuntu, install python3-venv "
                  "(sudo apt install python3-venv) and run this again.")
     installed = subprocess.run([str(env_python()), "-m", "pip", "install", "--quiet", "--disable-pip-version-check",
-                                "--upgrade", spec, NINJA])
+                                "--upgrade", with_extra(spec, "ghidra") if ghidra else spec, NINJA])
     if installed.returncode != 0:
         fail("Installing zkit and Ninja failed (see above). Check the internet connection and run this again.")
     stamp.write_text(wanted, encoding="utf-8")
@@ -95,7 +109,7 @@ def main():
              "https://www.python.org/downloads/ (on Windows, run it as `py build.py`).")
     if sys.argv[1:2] == ["zkit"]:
         if not env_python().is_file():
-            fail("Run `python build.py` once first: it sets up zkit.")
+            setup(ZKIT)  # only when missing: never replaces a zkit installed with --zkit
         return zkit(*sys.argv[2:])
     parser = argparse.ArgumentParser(description="Build the Xenoblade Chronicles 2 decompilation.",
                                      epilog="`python build.py zkit ARGS...` runs the build's zkit.")
@@ -104,6 +118,8 @@ def main():
     parser.add_argument("--keys", type=Path, metavar="FILE", help="prod.keys, if no emulator here has it")
     parser.add_argument("--zkit", default=ZKIT, metavar="SPEC",
                         help="install this zkit instead of the pinned one (a pip requirement or a local checkout)")
+    parser.add_argument("--ghidra", action="store_true",
+                        help="also install pyghidra for `zkit decompile`, from now on (Ghidra 11.3+ is separate)")
     args = parser.parse_args()
 
     if not (args.rom or args.keys or has_game()):
@@ -112,7 +128,7 @@ def main():
              "Or point the build at the folder they are in:\n"
              "  python build.py --rom <folder>")
     check_host()
-    setup(args.zkit)
+    setup(args.zkit, args.ghidra)
     if args.rom or args.keys:
         found = zkit("extract", *[str(folder.expanduser().resolve()) for folder in args.rom or []],
                      *(["--keys", str(args.keys.expanduser().resolve())] if args.keys else []))
