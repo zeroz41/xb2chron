@@ -81,33 +81,25 @@ public:
 class GfMapjumpInfo {
 public:
     // inline (no symbol; SeqManager::start_areajump/end_areajump build one on the stack). The original's stores fix
-    // the body's order: the points in a loop, m_kind, then m_flags reset as one (a 7-byte memset) and m_startChapter
+    // the body's order: the positions, m_kind, then m_flags reset as one (a 7-byte memset) and m_startChapter
     // and pad_162 set true afterwards
-    explicit GfMapjumpInfo(unsigned int map)
-        : m_map(map), pad_4(0), pad_8(-1), pad_C(1.0f), m_pos(mm::Vec3::zero), m_rotY(0.0f), m_setRotY(false) {
-        for (int i = 0; i < 8; i++) {
-            m_points[i].m_pos = mm::Vec3::zero;
-            m_points[i].m_rotY = 0.0f;
-            m_points[i].m_setRotY = false;
-        }
+    explicit GfMapjumpInfo(unsigned int map) : m_map(map), pad_4(0), pad_8(-1), pad_C(1.0f) {
         m_kind = 0;
         m_flags = Flags();
         m_flags.m_startChapter = true;
         m_flags.pad_162 = true;
     }
+    // inline (SCOM_CREATE_PARTY_OBJ's creators build one in place): as above with no map and no flag set. The
+    // positions are reset from a temporary: the original loads Vec3::zero's three floats before the first store
+    GfMapjumpInfo() : m_map(0), pad_4(0), pad_8(-1), pad_C(1.0f) {
+        m_posInfo = GfPartyPosInfo();
+        m_kind = 0;
+        m_flags = Flags();
+    }
 
     // for a game loaded from save data (GfManager::startGame: the saved map, position and rotation in radians,
     // and GfDataUtil::isStartChapterSave)
     void setupForSaveData(unsigned int map, const mm::Vec3& pos, const mm::Vec3& rot, bool startChapter);
-
-    // a position and turn after the jump; GfMapjumpInfo holds nine (its copy, out of line in gf_play_command, copies
-    // each one's Vec3, then the float and the bool only). The name is not the original's
-    class Point {
-    public:
-        mm::Vec3 m_pos;
-        float m_rotY;
-        bool m_setRotY;
-    };
 
     unsigned int m_map;
     unsigned int pad_4;
@@ -115,11 +107,10 @@ public:
     float pad_C;
     // a text of up to 31 characters (the copy runs FixStr's strlen, assert and strcpy on it)
     mm::mtl::FixStr<32> pad_10;
-    mm::Vec3 m_pos;
-    float m_rotY;
-    bool m_setRotY;
-    // eight more positions after m_pos's; the name is not the original's
-    Point m_points[8];
+    // where the party stands after the jump (0x40: SCOM_CREATE_PARTY_OBJ::exec passes its copy's to
+    // GfGameParty::setupPartyPositionByPartyPosition and createPos assigns one; GfMapjumpInfo's copy copies each
+    // position's Vec3, then the float and the bool). The name is not the original's
+    GfPartyPosInfo m_posInfo;
     // seven bytes the constructor value-initializes as one (a 7-byte memset); the names are not the original's
     struct Flags {
         bool m_fromSaveData;

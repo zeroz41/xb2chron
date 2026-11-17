@@ -351,9 +351,9 @@ void GfManager::startGame(bool saveDataCreated, bool clearGameCheck) {
             float rotY = rot->y * 0.017453292f;
             info.m_map = 0;
             info.pad_4 = word;
-            info.m_pos = *pos;
-            info.m_rotY = rotY;
-            info.m_setRotY = true;
+            info.m_posInfo.m_pos[0].m_pos = *pos;
+            info.m_posInfo.m_pos[0].m_rotY = rotY;
+            info.m_posInfo.m_pos[0].m_isValid = true;
         }
         GfPlayFactory::createMapjump(info);
         if (GfDataUtil::isStartChapterSave()) {

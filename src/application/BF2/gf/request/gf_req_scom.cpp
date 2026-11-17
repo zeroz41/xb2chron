@@ -125,6 +125,13 @@
 #include "classes/gf/SCOM_ADD_SCORE.h"
 #include "classes/gf/SCOM_CLEAR_TIME.h"
 #include "classes/gf/SCOM_DESTROY_PARTY_OBJ.h"
+#include "classes/gf/SCOM_CREATE_PARTY_OBJ.h"
+#include "classes/gf/GfObjManager.h"
+#include "gf/GfObjInfo.h"
+#include "classes/gf/GfObjSetupDriver.h"
+#include "classes/gf/GfObjSetupBlade.h"
+#include "classes/gmk/GmkForm.h"
+#include "classes/gmk/GmkManager.h"
 #include "gf/GfGameUnit.h"
 #include "classes/gf/GfGameArena.h"
 #include "gf/MsgGameBtlArena.h"
@@ -302,6 +309,132 @@ void SCOM_DESTROY_GAME_OBJ::create(GF_OBJ_HANDLE* handle, float time, unsigned i
     request->m_value2 = time;
     request->m_value3 = attribute;
     GfReqSmallCom::addRequestParallel(request);
+}
+
+bool SCOM_CREATE_PARTY_OBJ::exec(fw::UpdateInfo const&) {
+    GfGameParty::recalcHierarchy();
+    PartyLeaderInfo leader;
+    leader.pad_4 = false;
+    leader.pad_0 = m_info.pad_C;
+    GfGameUnit::createParty(leader);
+    GfGameParty::getHandleByHierarchy(1);
+    if (m_info.m_flags.m_fromSaveData) {
+        // each member's driver and blade at its saved position and rotation (degrees)
+        for (int i = 0; i < 3; i++) {
+            if (GF_OBJ_HANDLE* handle = GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0));
+                handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                GfObjSetupDriver* setup = nullptr;
+                if (GFOBJ_INFO* info = GfObjManager::getObjInfo(handle)) {
+                    if (GfObjSetup* objSetup = info->m_setup) {
+                        if (objSetup->m_type == info->m_obj->m_type && info->m_obj->m_type == 3 &&
+                            objSetup->getRTTI()->isKindOf(&GfObjSetupDriver::m_rtti)) {
+                            setup = static_cast<GfObjSetupDriver*>(objSetup);
+                        }
+                    }
+                }
+                const mm::Vec3* pos = GfDataParty::getSavePos(i, true);
+                const mm::Vec3* rot = GfDataParty::getSaveRot(i, true);
+                mm::Vec3 rad(rot->x * 0.017453292f, rot->y * 0.017453292f, rot->z * 0.017453292f);
+                setup->m_initialPos = *pos;
+                setup->pad_30 = rad;
+            }
+            if (GF_OBJ_HANDLE* handle = GfGameParty::getHandleBlade(i, -1);
+                handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                GfObjSetupBlade* setup = nullptr;
+                if (GFOBJ_INFO* info = GfObjManager::getObjInfo(handle)) {
+                    if (GfObjSetup* objSetup = info->m_setup) {
+                        if (objSetup->m_type == info->m_obj->m_type && info->m_obj->m_type == 4 &&
+                            objSetup->getRTTI()->isKindOf(&GfObjSetupBlade::m_rtti)) {
+                            setup = static_cast<GfObjSetupBlade*>(objSetup);
+                        }
+                    }
+                }
+                const mm::Vec3* pos = GfDataParty::getSavePos(i, false);
+                const mm::Vec3* rot = GfDataParty::getSaveRot(i, false);
+                mm::Vec3 rad(rot->x * 0.017453292f, rot->y * 0.017453292f, rot->z * 0.017453292f);
+                setup->m_initialPos = *pos;
+                setup->pad_30 = rad;
+            }
+        }
+    } else if (m_info.m_posInfo.m_pos[0].m_isValid) {
+        GfGameParty::setupPartyPositionByPartyPosition(m_info.m_posInfo);
+    } else {
+        // (a lambda: the original's locals for it lie above the leader's)
+        auto applyForm = [&]() {
+            int id = m_info.m_map;
+            if (id > 0) {
+                // the map jump's formation gimmick (FLD_maplist's gimmick set; the main or the DLC map jump table)
+                gmk::GmkForm form(nullptr);
+                gmk::GmkForm::CreateInfo formInfo;
+                formInfo.m_set = nullptr;
+                formInfo.m_index = -1;
+                formInfo.pad_c = false;
+                unsigned char* jump = GfDataBdat::getFP(182);
+                unsigned char* jumpDlc = GfDataBdat::getFP(183);
+                unsigned char* bdat;
+                if (Bdat::getIdTop(jump) <= id && id < Bdat::getIdTop(jump) + Bdat::getIdCount(jump)) {
+                    formInfo.pad_c = false;
+                    bdat = jump;
+                } else if (Bdat::getIdTop(jumpDlc) <= id &&
+                           id < Bdat::getIdTop(jumpDlc) + Bdat::getIdCount(jumpDlc)) {
+                    formInfo.pad_c = true;
+                    bdat = jumpDlc;
+                } else {
+                    bdat = nullptr;
+                }
+                int setId = GfFieldGimmick::getBdatIdFrom_FLD_maplist_To_RSC_GmkSetList(
+                    static_cast<unsigned char>(Bdat::getValCheck(bdat, "MapList", id, 1)));
+                if (setId > 0) {
+                    formInfo.m_set = gmk::GmkManager::get()->findGmkSet(setId);
+                }
+                unsigned short formation = Bdat::getValCheck(bdat, "FormationId", id, 2);
+                formInfo.m_index = formation - 1;
+                if (formInfo.m_set != nullptr && formation != 0) {
+                    form.create(formInfo);
+                } else if (m_info.m_flags.pad_163) {
+                    form.create(GfFieldManager::getLandmarkPos(), GfFieldManager::getLandmarkRotY());
+                } else {
+                    form.create(m_info.m_posInfo.m_pos[0].m_pos, m_info.m_posInfo.m_pos[0].m_rotY);
+                }
+                if (form.pad_0 != 0) {
+                    form.apply(4.0f);
+                }
+                form.dispose();
+            }
+        };
+        applyForm();
+    }
+    GfEvent::callPartyChange();
+    return true;
+}
+
+unsigned long SCOM_CREATE_PARTY_OBJ::create(float value) {
+#line 965
+    SCOM_CREATE_PARTY_OBJ* request =
+        new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_CREATE_PARTY_OBJ(SCOM_TYPE(22));
+    request->m_info.m_map = GfGameManager::getMapJumpID();
+    request->m_info.pad_C = value;
+    return GfReqSmallCom::addRequest(request);
+}
+
+unsigned long SCOM_CREATE_PARTY_OBJ::createSavePos(float value) {
+#line 974
+    SCOM_CREATE_PARTY_OBJ* request =
+        new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_CREATE_PARTY_OBJ(SCOM_TYPE(22));
+    request->m_info.m_map = GfGameManager::getMapJumpID();
+    request->m_info.m_flags.m_fromSaveData = true;
+    request->m_info.pad_C = value;
+    return GfReqSmallCom::addRequest(request);
+}
+
+unsigned long SCOM_CREATE_PARTY_OBJ::createPos(const GfPartyPosInfo& posInfo, float value) {
+#line 983
+    SCOM_CREATE_PARTY_OBJ* request =
+        new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_CREATE_PARTY_OBJ(SCOM_TYPE(22));
+    request->m_info.m_posInfo = posInfo;
+    request->m_info.m_map = GfGameManager::getMapJumpID();
+    request->m_info.pad_C = value;
+    return GfReqSmallCom::addRequest(request);
 }
 
 bool SCOM_DESTROY_PARTY_OBJ::exec(fw::UpdateInfo const&) {

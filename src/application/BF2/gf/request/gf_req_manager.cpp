@@ -161,9 +161,9 @@ void GfMapjumpInfo::setupForSaveData(unsigned int map, const mm::Vec3& pos, cons
     m_map = map;
     m_flags.m_fromSaveData = true;
     float rotY = rot.y;
-    m_pos = pos;
-    m_rotY = rotY;
-    m_setRotY = true;
+    m_posInfo.m_pos[0].m_pos = pos;
+    m_posInfo.m_pos[0].m_rotY = rotY;
+    m_posInfo.m_pos[0].m_isValid = true;
     m_flags.m_startChapter = startChapter;
     m_kind = 1;
 }
