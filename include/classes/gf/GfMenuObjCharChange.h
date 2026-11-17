@@ -3,6 +3,8 @@
 
 #include "classes/gf/GfMenuObject.h"
 #include "classes/gf/GfMenuReference.h"
+#include "classes/ui/UIObjectListener.h"
+#include "mm/mtl/Bitflag.h"
 #include "gf/GfMenuSequence.h"
 
 namespace gf { class GfMenuArtsList; }
@@ -13,6 +15,10 @@ namespace gf {
 // GfMenuObjBladeChange's static functions drive too) and work only while GfMenuObjUtil::isValidExpansion(3) holds
 class GfMenuObjCharChange : public ::gf::GfMenuObject {
 public:
+    class MainListener;
+    class CharListener;
+    class CommandListener;
+    class ChainListener;
     GfMenuObjCharChange(unsigned int handle);
     virtual ~GfMenuObjCharChange();  // slot 0
     virtual void initialize();  // slot 2
@@ -68,7 +74,9 @@ public:
     // the chain's members' flags: updateChainRecast shows member N's recast lit with bit 2 (value-initialized with
     // m_charFlags: the constructor zeroes 0x190-0x1AF; the name is not the original's)
     unsigned int m_chainFlags[3];
-    unsigned int pad_1A8;
+    // the commands' "select_keep" state (CommandListener's event 0x107 tests and sets bit N for LAY_cmd@NN; the name
+    // is not the original's)
+    ::mm::mtl::Bitflag<8> m_cmdFlags;
     unsigned int pad_1AC;
     unsigned int pad_1B0;  // startBladeChange moves the active/reserve rows only while it is not 0
     // what update last gave GfMenuReference::setIraFlag for bits 0 and 1 (the party's second and third
@@ -83,6 +91,50 @@ public:
     bool pad_1BF;
     bool pad_1C0;
     GfMenuArtsList* m_artsList;  // 0x1C8: made by the constructor (two rows, one column), released by the destructor
+};
+// The four listeners initialize makes (2.0.0's symbols name their tables 0x7100B60E80, 0x7100B60ED0, 0x7100B60EA8,
+// 0x7100B60EF8). initialize zeroes 0xC-0x1B of each after storing its table and sets the owner at 0x20.
+class GfMenuObjCharChange::MainListener : public ::ui::UIObjectListener {
+public:
+    MainListener(GfMenuObjCharChange* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~MainListener() {}  // slot 0: its D1 slot is the base's destructor
+    virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
+    unsigned char pad_0C[0x10];
+    GfMenuObjCharChange* m_owner;  // what initialize makes it for (the name is not the original's)
+};
+
+class GfMenuObjCharChange::CharListener : public ::ui::UIObjectListener {
+public:
+    CharListener(GfMenuObjCharChange* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~CharListener() {}  // slot 0: its D1 slot is the base's destructor
+    virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
+    unsigned char pad_0C[0x10];
+    GfMenuObjCharChange* m_owner;  // what initialize makes it for (the name is not the original's)
+};
+
+// LAY_cmd's listener: counts LAY_cmd@NN (event 1), scales them in (0x21) and out (0x22), and redraws command N from
+// GfMenuReference's flags (0x107, updateOperation's event)
+class GfMenuObjCharChange::CommandListener : public ::ui::UIObjectListener {
+public:
+    CommandListener(GfMenuObjCharChange* owner) : m_count(), pad_10(), m_owner(owner) {}
+    virtual ~CommandListener() {}  // slot 0: its D1 slot is the base's destructor
+    virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
+    int m_count;  // how many LAY_cmd@NN the object has (event 1); the name is not the original's
+    unsigned char pad_10[0xC];
+    GfMenuObjCharChange* m_owner;  // what initialize makes it for (the name is not the original's)
+};
+
+// LAY_chain's listener: opens (0x21) and closes (0x22) it with preset fades, fades its three LAY_chain@NN in one
+// after another, and redraws the chain members (updateChainRecast) as event 0xD's flags change
+class GfMenuObjCharChange::ChainListener : public ::ui::UIObjectListener {
+public:
+    ChainListener(GfMenuObjCharChange* owner) : pad_0C(), m_ctrl(), pad_14(), m_owner(owner) {}
+    virtual ~ChainListener() {}  // slot 0: its D1 slot is the base's destructor
+    virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
+    unsigned char pad_0C[4];
+    int m_ctrl;  // the fade's control slot: startPresetCtrl's, -1 once closed (event 1); the name is not the original's
+    unsigned char pad_14[8];
+    GfMenuObjCharChange* m_owner;  // what initialize makes it for (the name is not the original's)
 };
 }  // namespace gf
 

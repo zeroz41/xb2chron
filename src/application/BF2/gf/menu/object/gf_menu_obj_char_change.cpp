@@ -15,7 +15,7 @@ namespace gf {
 
 GfMenuObjCharChange::GfMenuObjCharChange(unsigned int handle)
     : GfMenuObject(handle), pad_24(-1), pad_28(false), pad_29(false), pad_2A(true), m_seq(this), m_charFlags(),
-      m_chainFlags(), pad_1A8(), pad_1AC(), pad_1B0(), pad_1B8(-1), m_artsList(nullptr) {
+      m_chainFlags(), m_cmdFlags(), pad_1AC(), pad_1B0(), pad_1B8(-1), m_artsList(nullptr) {
     pad_1C0 = false;
     pad_1BC = false;
     pad_1BD = false;
@@ -282,6 +282,203 @@ void GfMenuObjCharChange::dispInfoLocal(bool disp) {
 
 void GfMenuObjCharChange::finalize() {
     GfMenuObject::finalize();
+}
+
+void GfMenuObjCharChange::CommandListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        m_count = acc.countChild("LAY_cmd@%02d", 1);
+        break;
+    case 3:
+        if (event.m_param0 == 2) {
+            acc.setDisp(false);
+        }
+        break;
+    case 0x21: {
+        mm::mtl::FixStr<32> name;
+        acc.setDisp(true);
+        int ctrl = -1;
+        for (int i = 0; i < m_count; i++) {
+            name.format("LAY_cmd@%02d", i + 1);
+            ui::UIObjectAcc cmd(acc.m_handle, name.m_str);
+            if (GfMenuReference::isIraOperationBtnState(
+                    static_cast<GfMenuReference::IRA_OPERATION_BTN>(i), static_cast<GfMenuReference::BTN_STATUS>(0))) {
+                cmd.setScale(mm::Vec2(0.0f, 1.0f));
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x100000;
+                param.m_scaleY = 1.0f;
+                param.m_scale = 1.0f;
+                param.m_setDefault = true;
+                param.m_time = 0.1f;
+                param.m_eventId = 1;
+                ctrl = GfMenuObjUtil::startCtrl(cmd.m_handle, param, nullptr);
+            } else {
+                cmd.setDisp(false);
+            }
+        }
+        if (ctrl != -1) {
+            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        }
+        break;
+    }
+    case 0x22: {
+        mm::mtl::FixStr<32> name;
+        int ctrl = -1;
+        for (int i = 0; i < m_count; i++) {
+            name.format("LAY_cmd@%02d", i + 1);
+            ui::UIObjectAcc cmd(acc.m_handle, name.m_str);
+            if (cmd.isDisp()) {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x100000;
+                param.m_scaleY = 1.0f;
+                param.m_scale = 0.0f;
+                param.m_time = 0.1f;
+                param.m_eventId = 2;
+                ctrl = GfMenuObjUtil::startCtrl(cmd.m_handle, param, nullptr);
+            }
+        }
+        if (ctrl != -1) {
+            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        }
+        break;
+    }
+    case 0x107: {
+        unsigned int index = event.m_param0;
+        mm::mtl::FixStr<32> name;
+        name.format("LAY_cmd@%02d", index + 1);
+        ui::UIObjectAcc cmd(acc.m_handle, name.m_str);
+        name.format("IMG_cmd_icon@%02d", index + 1);
+        ui::UIObjectAcc icon(acc.m_handle, name.m_str);
+        if (GfMenuReference::isIraOperationBtnState(
+                static_cast<GfMenuReference::IRA_OPERATION_BTN>(index), static_cast<GfMenuReference::BTN_STATUS>(0))) {
+            bool enabled = GfMenuReference::isIraOperationBtnState(
+                    static_cast<GfMenuReference::IRA_OPERATION_BTN>(index), static_cast<GfMenuReference::BTN_STATUS>(1));
+            bool selected = GfMenuReference::isIraOperationBtnState(
+                    static_cast<GfMenuReference::IRA_OPERATION_BTN>(index), static_cast<GfMenuReference::BTN_STATUS>(3));
+            cmd.setMulColor(enabled ? "white" : "gray");
+            icon.setImageIndex(selected | GfMenuReference::getIraOperationBtnCommand(index) << 1);
+            name.format("IMG_cmd_base@%02d", index + 1);
+            {
+                ui::UIObjectAcc base(acc.m_handle, name.m_str);
+                bool shown = m_owner->m_cmdFlags.test(index);
+                if (selected) {
+                    if (!shown) {
+                        base.startAnimation("select_keep", false);
+                        if (m_owner->pad_1BF) {
+                            GfMenuObjUtil::playSE(0x2D);
+                        }
+                    }
+                } else {
+                    if (shown && m_owner->pad_1BF) {
+                        GfMenuObjUtil::playSE(0x2D);
+                    }
+                    base.startAnimation("wait", false);
+                }
+            }
+            m_owner->m_cmdFlags.set(index, selected);
+            if (!selected && enabled && GfMenuReference::isIraOperationBtnState(
+                    static_cast<GfMenuReference::IRA_OPERATION_BTN>(index), static_cast<GfMenuReference::BTN_STATUS>(2))) {
+                name.format("IMG_cmd_base@%02d", index + 1);
+                ui::UIObjectAcc base(acc.m_handle, name.m_str);
+                base.startAnimation("select", false);
+                GfMenuObject::hookAnimationEvent(acc.m_handle, base.m_handle, 0);
+                if (m_owner->pad_1BF) {
+                    GfMenuObjUtil::playSE(0x2D);
+                }
+            }
+        }
+        break;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjCharChange::ChainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        m_ctrl = -1;
+        break;
+    case 3:
+        if (event.m_param0 - 1U <= 2) {
+            GfMenuObject::termCallContext(acc.searchSibiling("LAY_main"));
+            m_owner->updateChainRecast(0, false);
+            m_owner->updateChainRecast(1, false);
+            m_owner->updateChainRecast(2, false);
+        }
+        break;
+    case 0xD: {
+        unsigned int index = event.m_param2;
+        if (event.m_param1 == 0) {
+            if (event.m_param0 == 1) {
+                if (m_owner->pad_28 && GfGameManager::isBattle()) {
+                    GfMenuObjUtil::playSE(0x2C);
+                }
+                *(m_owner->m_chainFlags + index) |= 2;
+            } else {
+                *(m_owner->m_chainFlags + index) &= ~2u;
+            }
+            m_owner->updateChainRecast(index, false);
+        }
+        break;
+    }
+    case 0x21:
+        if (event.m_param0 == 0) {
+            mm::mtl::FixStr<32> name;
+            float wait = GfMenuObjUtil::getParamMenu()->m_chainAttackWait;
+            if (m_ctrl != -1) {
+                GfMenuObjUtil::setCtrlDefault(m_ctrl);
+            }
+            for (unsigned int i = 0; i < 3; i++) {
+                name.format("LAY_chain@%02d", i + 1);
+                ui::UIObjectAcc chain(acc.m_handle, name.m_str);
+                GfMenuObjUtil::CtrlParam param;
+                param.m_eventId = i + 1;
+                param.m_methods = 0x10000000;
+                param.m_motionLib = "sample";
+                param.m_motion = "fadein";
+                param.m_time = wait;
+                param.m_delay = wait * i;
+                int ctrl = GfMenuObjUtil::startCtrl(chain.m_handle, param, nullptr);
+                chain.setAlpha(0.0f);
+                GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+                m_owner->updateChainRecast(i, false);
+                name.format("IMG_chain_recast@%02d", i + 1);
+                ui::UIObjectAcc recast(acc.m_handle, name.m_str);
+                recast.setAlpha(0.0f);
+            }
+            GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_chain_info_main"), 0, 0);
+        } else {
+            GfMenuObjUtil::PresetCtrlParam param;
+            param.m_preset = 0;
+            param.m_out = 0;
+            param.m_eventId = 0;
+            param.m_startFlag4 = true;
+            param.m_slot = m_ctrl;
+            m_ctrl = GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        }
+        acc.setDisp(true);
+        break;
+    case 0x22:
+        if (event.m_param0 == 0) {
+            acc.setDisp(false);
+        } else {
+            GfMenuObjUtil::PresetCtrlParam param;
+            param.m_out = 1;
+            param.m_startFlag4 = true;
+            param.m_slot = m_ctrl;
+            m_ctrl = GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        }
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 }  // namespace gf
