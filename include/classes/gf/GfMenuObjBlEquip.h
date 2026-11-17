@@ -12,6 +12,7 @@
 namespace ui {
 class UIObjectAcc;
 class UISelectObjList;
+class UICtrlCursorSelect;
 }  // namespace ui
 
 namespace mm { namespace mtl { class ReferenceObject; } }
@@ -63,6 +64,21 @@ public:
             items->addContents(info);
         }
     }
+    // 1.0.0's out-of-line removeItem (0x7100413F84, no callers left); 3.0.1 inlines it: takes the orb out of the
+    // reference blade's slot, empties the slot's entry and refreshes the item list (the context goes unused)
+    static bool removeItem(ui::UIObjectAcc& acc, GfMenuItemList* items, GfMenuItemList* items2,
+                           ui::UISelectObjList* select, unsigned int blade, unsigned int slot, GfMenuCallContext*) {
+        GfEquipUtil::equipBladeOrb(blade, 0, slot, GfItemHandle());
+        if (items != nullptr && slot < items->m_list.size()) {
+            MenuItemInfo& info = items->m_list[slot];
+            info.m_type = 3;
+            info.m_id = 0;
+            info.m_count = 0;
+            info.m_entry = GfItemHandle();
+        }
+        refreshItemList(acc, items2, select, slot);
+        return true;
+    }
     static void setupSlot(ui::UIObjectAcc& acc, GfMenuItemList* items);
     static void refreshSlot(ui::UIObjectAcc& acc);
     static void refreshItemList(ui::UIObjectAcc& acc, GfMenuItemList* items, ui::UISelectObjList* select,
@@ -71,7 +87,7 @@ public:
     static void sortOrb(GfMenuItemList* items, unsigned short type);
 
     GfMenuItemList* m_items;  // 0x28: initialize creates it and sets it up for pages of 3 rows
-    mm::mtl::ReferenceObject* m_object;  // 0x30: the destructor releases it (its type is not read yet)
+    ui::UICtrlCursorSelect* m_cursor;  // 0x30: the slots' cursor (SlotListener's event 1 creates it); the destructor releases it
     GfMenuItemList* m_items2;  // 0x38: initialize creates it
     ui::UISelectObjList* m_selectList;  // 0x40: initialize creates it
     GfMenuCallContext* m_context2;  // 0x48: initialize creates it

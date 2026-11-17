@@ -20,14 +20,18 @@ public:
     // the item's name (an empty text when it has none)
     static void getItemName(unsigned char type, unsigned int id, ui::UIStr& name);
     static int canEquipAcc(unsigned int item, unsigned int, unsigned int);  // 0 when the accessory can be equipped
+    // 0 when the blade can equip the orb (item and handle) in that slot; GfMenuObjBlEquip::ItemSelectListener opens
+    // common texts 0x124 for 5 and 0xAB for 2 and passes the rest to getEquipErrorCmnWindowID
+    static int canEquipOrb(unsigned int item, GfItemHandle handle, unsigned int blade, unsigned int slot);
     static int getItemNum(unsigned char type, unsigned int id);  // GfItemUtil::getItemBoxCount(id)
     // the party driver that has the accessory (item and handle) equipped, 0 for none; slot gets its slot (one more
     // when GfMenuObjUtil::isValidExpansion(3) holds; 0 for a DLC driver's own accessory). The name is 1.0.0's: its
     // searchEquipAcc has the same callers (canEquipAcc, GfMenuObjDrEquip2); 2.0.0's symbols name it too
     static unsigned short searchEquipAcc(unsigned int item, GfItemHandle handle, unsigned int* slot);
     // the blade (regular, rare, DLC rare and common ones; the Ira blades with GfMenuObjUtil::isValidExpansion(3))
-    // that has the orb (item and handle) equipped, 0 for none; slot gets its slot
-    static unsigned short searchEquipOrb(unsigned int item, GfItemHandle handle, unsigned int* slot);
+    // that has the orb (item and handle) equipped, 0 for none; slot gets its slot. It returns 32 bits:
+    // GfMenuObjBlEquip::ItemSelectListener::reciveEvent tests and passes the result on without zero-extending it
+    static unsigned int searchEquipOrb(unsigned int item, GfItemHandle handle, unsigned int* slot);
     // the blade that has the Hana part (item and handle) of that parts slot equipped, 0 for none (its callers:
     // GfMenuObjHanaCustom::refreshItemList shows that blade's name; parameter names inferred)
     static unsigned int searchEquipHanaParts(unsigned int partsId, unsigned int item, GfItemHandle handle);

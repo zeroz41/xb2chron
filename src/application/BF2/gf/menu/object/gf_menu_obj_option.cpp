@@ -175,6 +175,173 @@ bool GfMenuObjOption::seqSaveWait() {
     return true;
 }
 
+void GfMenuObjOption::SubMenuListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+        m_termOnClose = 0;
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 3:
+        if (event.m_param0 != 0) {
+            if (event.m_param0 == 1) {
+                GfMenuObject::enableInput(acc.m_handle);
+            } else {
+                acc.setDisp(false);
+                if (m_termOnClose == 1) {
+                    acc.setTerm();
+                }
+            }
+        }
+        break;
+    case 6: {
+        int index = event.m_param0;
+        if (index == -1) {
+            break;
+        }
+        int prev = event.m_param1;
+        bool hasPrev = prev != -1;
+        mm::mtl::FixStr<32> name;
+        if (hasPrev) {
+            name.format("IMG_submenu_item_sel@%02d", prev + 1);
+            acc.setDispChild(false, name.m_str);
+        }
+        name.format("IMG_submenu_item_sel@%02d", index + 1);
+        acc.setDispChild(true, name.m_str);
+        m_owner->m_mainList->setIndex(index);
+        {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_emotion";
+            param.m_setDefault = true;
+            param.m_motion = "fade_in_select";
+            GfMenuObjUtil::startCtrl(m_owner->m_mainList->getSelectObject(), param, nullptr);
+        }
+        {
+            ui::UIObjectAcc owner(m_owner->m_handle);
+            ui::UIObjectAcc indexText(acc.m_handle, "TXT_submenu_index");
+            ui::UIObjectAcc infoText(acc.m_handle, "TXT_submenu_info");
+            unsigned int child;
+            unsigned short msg = 0;
+            switch (index) {
+            case 0:
+                child = owner.searchChild("TXT_cam_index");
+                msg = 0x12;
+                break;
+            case 1:
+                child = owner.searchChild("TXT_snd_index");
+                msg = 0x13;
+                break;
+            case 2:
+                child = owner.searchChild("TXT_dis_index");
+                msg = 0x14;
+                break;
+            case 3:
+                child = owner.searchChild("TXT_gam_index");
+                msg = 0x15;
+                break;
+            case 4:
+                child = owner.searchChild("TXT_gam_dlc_index");
+                msg = 0x15;
+                break;
+            case 5:
+                child = owner.searchChild("TXT_dif_index");
+                msg = 0x15;
+                break;
+            }
+            if (child != 0) {
+                ui::UIObjectAcc text(child);
+                ui::UIStr str;
+                text.getText(str);
+                indexText.setText(str);
+            }
+            if (msg != 0) {
+                unsigned short id = GfMenuObjUtil::getMsgIDFromList(0x164, msg);
+                infoText.setText(ui::UIStr(GfDataBdat::getFP(0x119), id));
+            }
+        }
+        if (index != prev && hasPrev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 8:
+        if (event.m_param1 == 1) {
+            int index = event.m_param0;
+            if (index >= 0 && index < m_owner->m_mainList->getSize()) {
+                if (index == 3 && m_owner->m_flag3FB) {
+                    index = 4;
+                }
+                unsigned int layer;
+                switch (index) {
+                case 0:
+                    layer = acc.searchSibiling("LAY_cam");
+                    break;
+                case 1:
+                    layer = acc.searchSibiling("LAY_snd");
+                    break;
+                case 2:
+                    layer = acc.searchSibiling("LAY_dis");
+                    break;
+                case 3:
+                    layer = acc.searchSibiling("LAY_gam");
+                    break;
+                case 4:
+                    layer = acc.searchSibiling("LAY_gam_dlc");
+                    break;
+                case 5:
+                    layer = acc.searchSibiling("LAY_dif");
+                    break;
+                default:
+                    return;
+                }
+                if (layer != 0) {
+                    GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+                    GfMenuObject::sendOpenEvent(layer, 0, 0.0f);
+                    GfMenuObject::disableInput(acc.m_handle);
+                    GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+                    GfMenuObjUtil::playSECommonDecide();
+                }
+            }
+        } else if (event.m_param1 == 2) {
+            if (m_owner->m_byte3F8) {
+                GfMenuObjOperationInfo::close();
+                GfMenuObject::closeFSLayer(acc.m_handle, false, false);
+            } else {
+                GfMenuObject::returnFSSubLayer(m_owner);
+            }
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            GfMenuObjUtil::playSECommonCancel();
+        }
+        break;
+    case 0x21:
+        GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_submenu_base"), 0, 0);
+        {
+            int ctrl = GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_submenu_main"), 1, 2);
+            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        }
+        GfMenuObject::resetInputSelection(acc.m_handle);
+        GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_mainList);
+        GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        GfMenuObjOperationInfo::setGuideText(0x2B, m_owner->m_guideFlag);
+        acc.setDisp(true);
+        break;
+    case 0x22:
+        GfMenuObjUtil::setCommonFadeOut(acc.searchChild("LAY_submenu_base"), 0, 0);
+        {
+            int ctrl = GfMenuObjUtil::setCommonFadeOut(acc.searchChild("LAY_submenu_main"), 2, 2);
+            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        }
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    }
+}
+
 void GfMenuObjOption::ItemSettingListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     if (event.m_type == 1) {
