@@ -174,6 +174,17 @@ void GfComBehaviorEvent::execTurnCmd(float rotY, float speed, float threshold, f
     m_turnCmd.create(info);
 }
 
+bool GfComBehaviorEvent::recieveMessage(fw::MessageObject*, fw::Message& msg) {
+    if (msg.m_id == 0x1000049) {
+        if (GfComPropertyEvent* property = m_owner->getComponent<GfComPropertyEvent>(5)) {
+            GfObj* owner = static_cast<GfObj*>(m_owner);
+            property->recieveMessage(owner, msg);
+        }
+        return true;
+    }
+    return false;
+}
+
 GfComBehaviorEvent::~GfComBehaviorEvent() {}
 
 template <typename T>
