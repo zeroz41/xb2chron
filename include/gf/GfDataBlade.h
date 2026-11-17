@@ -192,6 +192,13 @@ public:
     // GfDataEnemy::getValidEnhance carries it inline with keep set; GfDataDriver::getValidEnhance and the weapon
     // and skill enhance helpers call it.
     static void fn_710024121C(mm::mtl::FixedVector<unsigned short, 64>& enhances, bool keep);
+    // no symbol in any build (between GfDataEnemy::getValidEnhance and setupSDataBladeAchievement): appends the
+    // GfBdatItem enhance of the blade's equipped weapon (weapon 0 for blade 0), filtered by fn_710024121C(keep).
+    // Callers: GfDataEnemy::getValidEnhance, GfDataDriver::getValidEnhance.
+    static void fn_7100234FF8(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int blade, bool keep);
+    // no symbol in any build (follows fn_7100234FF8): appends the BTL skill enhances of the blade's three skills at
+    // their levels, filtered by fn_710024121C(keep). Callers: the three getValidEnhance functions.
+    static void fn_710023510C(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int blade, bool keep);
     // the blade's physical and ether defense bonus (Hana's from her role part); 0 for no blade
     static unsigned int getParmor(unsigned int blade);
     static unsigned int getEarmor(unsigned int blade);
