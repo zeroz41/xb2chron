@@ -25,15 +25,22 @@ public:
     };
     // create's: the children of the control's object it looks up by name (none when null), and the times
     struct Setting {
+        // every field cleared (GfMenuObjWorldMap::seqNext keeps the cleared curves: the zero stores of 0x28-0x33
+        // that its own stores partly overwrite, not 0x34-0x37, which is padding)
+        Setting()
+            : m_viewName(nullptr), m_contentName(nullptr), m_centerName(nullptr), m_offsName(nullptr), m_distance(-1),
+              m_moveTime(0.0f), m_moveCurve(CURVE_LINEAR), m_scaleTime(0.0f), m_scaleCurve(CURVE_LINEAR),
+              m_list(nullptr) {}
         const char* m_viewName;     // the frame: its rectangle becomes the control object's layout viewport
         const char* m_contentName;  // the object scaled and moved
         const char* m_centerName;   // an object update centers on the clamped point
         const char* m_offsName;     // an object kept at its place over the content
         int m_distance;             // movePoint: a move farther than this animates (-1: only when asked)
         float m_moveTime;
-        unsigned char pad_0x28[4];
+        // the move's and the scale's curves: create does not read them (the names are not the original's)
+        CURVE_TYPE m_moveCurve;
         float m_scaleTime;
-        unsigned char pad_0x30[8];
+        CURVE_TYPE m_scaleCurve;
         UISelectObjList* m_list;  // objects placed in the content (a reference held until the destructor)
     };
     // inline: 3.0.1 has no out-of-line copy (1.0.0's is at 0x71006CC728, create holds its stores)

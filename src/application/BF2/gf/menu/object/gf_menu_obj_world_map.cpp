@@ -9,6 +9,7 @@
 #include "classes/gf/GfFieldGimmick.h"
 #include "classes/gf/GfGameCond.h"
 #include "classes/gf/GfGameFlag.h"
+#include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuFieldSkillList.h"
 #include "classes/gf/GfMenuIDList.h"
@@ -22,6 +23,7 @@
 #include "classes/gf/GfMenuWorldMapAdapter.h"
 #include "classes/gmk/AGmkBase.h"
 #include "classes/ui/UICtrlCursorSelect.h"
+#include "classes/ui/UICtrlFrame.h"
 #include "classes/ui/UIListInfoBase.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UISelectObjList.h"
@@ -66,7 +68,7 @@ SelectMaps sSelectMaps = {{52, 53}, {3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 15, 16, 
 
 GfMenuObjWorldMap::GfMenuObjWorldMap(unsigned int handle)
     : GfMenuObject(handle), m_mapList(nullptr), m_mapSelectList(nullptr), pad_38(true), m_zoneList(nullptr),
-      m_zoneSelectList(nullptr), m_seq(this), m_list2E0(nullptr), m_mapScale(1.0f), m_pointList(nullptr),
+      m_zoneSelectList(nullptr), m_seq(this), m_frame(nullptr), m_mapScale(1.0f), m_pointList(nullptr),
       m_pointSelectList(nullptr), pad_318(0), m_zoneMapList1(nullptr), m_zoneMapList2(nullptr), m_fieldSkillList(nullptr), m_floorLoaded(false),
       m_floorImage(), m_iconSelectList(nullptr), m_iconTables(), pad_2F18(0), pad_2F60(false),
       pad_2F61(false), m_context(nullptr), pad_2F70(false), m_gmkBdat(nullptr), m_floor(0), m_iconFilter(0),
@@ -83,9 +85,9 @@ GfMenuObjWorldMap::~GfMenuObjWorldMap() {
         m_mapSelectList->release();
         m_mapSelectList = nullptr;
     }
-    if (m_list2E0 != nullptr) {
-        m_list2E0->release();
-        m_list2E0 = nullptr;
+    if (m_frame != nullptr) {
+        m_frame->release();
+        m_frame = nullptr;
     }
     if (m_zoneList != nullptr) {
         m_zoneList->release();
@@ -95,9 +97,9 @@ GfMenuObjWorldMap::~GfMenuObjWorldMap() {
         m_zoneSelectList->release();
         m_zoneSelectList = nullptr;
     }
-    if (m_list2E0 != nullptr) {
-        m_list2E0->release();
-        m_list2E0 = nullptr;
+    if (m_frame != nullptr) {
+        m_frame->release();
+        m_frame = nullptr;
     }
     if (m_pointList != nullptr) {
         m_pointList->release();
@@ -208,9 +210,9 @@ bool GfMenuObjWorldMap::seqTexDelete() {
             }
             m_jumpInfos.fill(MapJumpInfo());
             mm::mtl::PtrSingleton<GfFieldGimmick>::sys()->m_locatorAtlas.dispose();
-            if (m_list2E0 != nullptr) {
-                m_list2E0->release();
-                m_list2E0 = nullptr;
+            if (m_frame != nullptr) {
+                m_frame->release();
+                m_frame = nullptr;
             }
             if (m_floorLoaded && m_floorImage.m_nLen != 0) {
                 ui::UIObjectAcc acc(m_handle);
@@ -670,6 +672,123 @@ bool GfMenuObjWorldMap::seqTexLoad() {
     m_floorLoaded = true;
     m_floorImage = image;
     main.setDispChild(false, "LAY_frame_cursor");
+    return true;
+}
+
+bool GfMenuObjWorldMap::seqGimik() {
+    ui::UIObjectAcc main(ui::UIObjectAcc(m_handle).searchChild("LAY_main"));
+    GfGmkLocatorAtlas& atlas = mm::mtl::PtrSingleton<GfFieldGimmick>::sys()->m_locatorAtlas;
+    if (atlas.m_info.m_mapId < 1 || atlas.m_seq) {
+        return false;
+    }
+    if (pad_2F60) {
+        const mm::Vec3& pos = GfGameManager::getControlMoverPosition();
+        GfFieldGimmick* gimmick = mm::mtl::PtrSingleton<GfFieldGimmick>::sys();
+        pad_2F60 = gimmick != nullptr && gimmick->m_locatorAtlas.isBelongToCurMap(pos);
+    }
+    setupIconTable(main, m_iconTables, m_pointList, m_iconOffset, m_iconScale, m_iconCenter, pad_2F60);
+    for (unsigned long i = 0; i < 10; i++) {
+        for (unsigned int j = 0; j < m_iconTables[i].size(); j++) {
+            m_iconSelectList->addObject(*m_iconTables[i].at(j));
+        }
+    }
+    if (GfMenuObjUtil::isValidExpansion(3)) {
+        ui::UIObjectAcc npc(main.m_handle, "LAY_icon_npc");
+        if (npc.isDisp()) {
+            m_iconSelectList->addObject(main.searchChild("IMG_icon_npc"));
+        }
+    }
+    if (m_pointList->m_groupMode) {
+        for (unsigned int i = 0; i < m_pointList->getSize(); i++) {
+            m_pointList->getContents(i).m_iconIndex = -1;
+            for (unsigned int j = 0; j < m_iconSelectList->getSize(); j++) {
+                if (m_jumpInfos[i].pad_0 == m_iconSelectList->getObject(j)) {
+                    m_pointList->getContents(i).m_iconIndex = j;
+                    break;
+                }
+            }
+        }
+    }
+    updateDispIconNode(true);
+    return true;
+}
+
+bool GfMenuObjWorldMap::seqNext() {
+    ui::UIObjectAcc main(ui::UIObjectAcc(m_handle).searchChild("LAY_main"));
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 1;
+    param.m_time = 0.1f;
+    param.m_eventId = 1;
+    GfMenuObjUtil::startCtrl(main.searchChild("LAY_floor"), param, nullptr);
+    mm::Rect<short> rect;
+    ui::UIObjectAcc(main.searchChild("IMG_frame")).getRect(rect, 2);
+    {
+        ui::UIInputPointer::SelectionSetup setup;
+        setup.m_list = m_iconSelectList;
+        setup.m_sizeW = 0x10;
+        setup.m_sizeH = 0x10;
+        setup.m_rect = rect;
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            setup.m_nearest = true;
+            GfMenuObject::resetInputSelection(main.searchChild("LAY_zonemap"));
+            pad_2FD4 = true;
+        }
+        GfMenuObject::setupPointerSelection(main.searchChild("LAY_zonemap"), setup);
+    }
+    {
+        ui::UICtrlFrame::Setting setting;
+        setting.m_contentName = m_floorImage.m_str;
+        setting.m_viewName = "IMG_frame";
+        setting.m_centerName = "LAY_frame_cursor";
+        setting.m_scaleTime = 0.2f;
+        setting.m_distance = 0x20;
+        setting.m_moveTime = 0.2f;
+        setting.m_list = m_iconSelectList;
+        setting.m_offsName = "LAY_icon";
+        m_frame = ui::UICtrlFrame::create(main.searchChild("LAY_frame"), setting);
+        if (m_frame != nullptr) {
+            m_frame->setupEventHanding(main.searchChild("LAY_zonemap"), 3);
+            main.setDispChild(true, "LAY_frame_cursor");
+            {
+                ui::UIObjectAcc skill(main.m_handle, "LAY_field_skill");
+                skill.setAlpha(0.0f);
+            }
+            {
+                ui::UIObjectAcc pointer(main.m_handle, "IMG_frame_cursor_pointer");
+                pointer.startAnimation("loop", false);
+            }
+            m_mapScale = 1.0f;
+        }
+    }
+    {
+        unsigned int zonemap = main.searchChild("LAY_zonemap");
+        ui::EventData event;
+        event.m_type = 0x101;
+        ui::UIManager::get()->requestObjectEvent(zonemap, event, 0.0f);
+    }
+    if (!m_pointList->m_groupMode) {
+        if (m_pointList->getSize() != 0) {
+            unsigned int point = main.searchChild("LAY_point_sellect");
+            ui::EventData event;
+            event.m_type = 0x103;
+            event.m_param0 = 0;
+            ui::UIManager::get()->requestObjectEvent(point, event, 0.0f);
+        } else {
+            ui::UIObjectAcc point(main.m_handle, "LAY_point_sellect");
+            point.setDisp(true);
+            GfMenuObject::setupInputSelection(point.m_handle, -1, 0);
+            GfMenuObject::enableFSInput(2);
+            GfMenuObjOperationInfo::add(point.m_handle, 0, 0, 0);
+            // the scroll bar's fade-in: an inlined helper's (the handle first, its CtrlParam in a slot of its own scope)
+            [](unsigned int bar) {
+                GfMenuObjUtil::CtrlParam scroll;
+                scroll.m_methods = 1;
+                scroll.m_curve = 1;
+                scroll.m_time = 0.3f;
+                GfMenuObjUtil::startCtrl(bar, scroll, nullptr);
+            }(point.searchChild("LAY_zone_scroll_bar"));
+        }
+    }
     return true;
 }
 

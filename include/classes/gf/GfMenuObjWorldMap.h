@@ -14,7 +14,7 @@
 #include "mm/mtl/FixedVector.h"
 
 namespace gmk { class AGmkBase; }
-namespace ui { class UIObjectAcc; class UIListInfoBase; class UISelectObjList; class UICtrlCursorSelect; }
+namespace ui { class UIObjectAcc; class UIListInfoBase; class UISelectObjList; class UICtrlCursorSelect; class UICtrlFrame; }
 
 namespace gf {
 class GfMenuIDList;
@@ -101,6 +101,10 @@ public:
     // "LAY_zonemap" when its m_iconFilter bit is set; with fadeFirst the first (LAY_icon_mapjump) stays shown and gets
     // alpha 1 or 0 instead. ZoneMapListener::reciveEvent, IconFilterListener::reciveEvent and seqGimik call it.
     void updateDispIconNode(bool fadeFirst);
+    // fills tables with the icons of list's points (seqGimik passes m_iconTables and m_pointList)
+    void setupIconTable(ui::UIObjectAcc& acc, mm::mtl::FixedArray<mm::mtl::FixedVector<unsigned int, 256>, 10>& tables,
+                        GfMenuZoneMapList* list, mm::Pnt<short> offset, mm::Vec2 scale, mm::Pnt<short> center,
+                        bool curMap);
     // the floor shown: the zone list's selected map, or in group mode the selected point's "menuMapImage" (u16)
     unsigned int getFloor();
     // a copy of LAY_icon's IMG_zoneicon under the icon type's layout (nd_lay_icon_node_tbl), shown at pos with the
@@ -135,7 +139,8 @@ public:
     GfMenuZoneMapList* m_zoneList;              // 0x40
     ui::UISelectObjList* m_zoneSelectList;      // 0x48
     GfMenuSequence<GfMenuObjWorldMap, 8> m_seq;  // 0x50
-    ui::UIListInfoBase* m_list2E0;              // the destructor releases it twice
+    // seqNext's frame control over LAY_frame (the destructor releases it twice; the name is not the original's)
+    ui::UICtrlFrame* m_frame;                   // 0x2E0
     float m_mapScale;                           // 0x2E8, the constructor's 1.0f
     GfMenuZoneMapList* m_pointList;             // 0x2F0
     ui::UISelectObjList* m_pointSelectList;     // 0x2F8
@@ -154,7 +159,12 @@ public:
     ui::UISelectObjList* m_iconSelectList;      // 0x6C0
     mm::mtl::FixedArray<mm::mtl::FixedVector<unsigned int, 256>, 10> m_iconTables;  // 0x6C8
     unsigned int pad_2F18;
-    unsigned char pad_2F1C[0x44];
+    // setupIconTable's offset, scale and center: an icon's position is offset + scale * 2 * (world - center)
+    // (seqGimik passes them; the names are not the original's)
+    mm::Pnt<short> m_iconOffset;                // 0x2F1C
+    mm::Vec2 m_iconScale;                       // 0x2F20 (16 bytes)
+    mm::Pnt<short> m_iconCenter;                // 0x2F30
+    unsigned char pad_2F34[0x2C];
     bool pad_2F60;
     bool pad_2F61;
     GfMenuCallContext* m_context;               // 0x2F68
