@@ -14,7 +14,8 @@ public:
     virtual ~SelectListener() {}  // slot 0: weak in the original, and its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const& event, unsigned int handle);  // slot 2
     int m_state;  // the name is not the original's
-    unsigned char pad_10[0x10];
+    unsigned char pad_10[0xC];
+    unsigned char pad_1C[0x4];  // the constructor leaves it as it is (initialize zeroes 0xC..0x1B only)
     GfMenuObjCommonText* m_owner;  // what initialize makes it for (the name is not the original's)
 };
 }  // namespace gf

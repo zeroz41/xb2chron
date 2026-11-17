@@ -15,6 +15,8 @@
 #include "classes/gf/GfMenuDriverList.h"
 #include "classes/gf/GfMenuIDList.h"
 #include "classes/gf/GfMenuItemList.h"
+#include "classes/gf/GfMenuItemAdapter.h"
+#include "classes/ui/UIEventManager.h"
 #include "classes/gf/GfMenuReference.h"
 #include "classes/gf/GfMenuReferenceAdapter.h"
 #include "classes/ui/UIManager.h"
@@ -122,6 +124,188 @@ GfMenuObjCommonText::~GfMenuObjCommonText() {
     }
     m_numSelectNumber1 = nullptr;
     m_numSelectNumber2 = nullptr;
+}
+
+void GfMenuObjCommonText::initialize() {
+    ui::UIObjectAcc acc(m_handle);
+    {
+        unsigned int main = acc.searchChild("LAY_main");
+#line 234
+        MainListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) MainListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(main, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+        GfMenuObject::attachExternalCall(100, main);
+    }
+    {
+        unsigned int handle = acc.searchChild("LAY_dialog");
+#line 240
+        DialogListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) DialogListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    {
+        unsigned int handle = acc.searchChild("LAY_error");
+#line 244
+        ErrorListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ErrorListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    {
+        unsigned int handle = acc.searchChild("LAY_dialog_mer");
+#line 248
+        MerListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) MerListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    {
+        unsigned int handle = acc.searchChild("LAY_dialog_kizuna");
+#line 252
+        KizunaListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) KizunaListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    GfMenuAdapterManager::beginCategory(3);
+    {
+        ui::UIObjectAcc getItem(acc.m_handle, "LAY_get_item");
+        unsigned int count = getItem.countChild("LAY_get_item@%02d", 1);
+        mm::mtl::FixStr<32> name;
+        for (unsigned int i = 0; i < count; i++) {
+            name.format("TXT_get_item_name@%02d", i + 1);
+            GfMenuItemAdapter* item = GfMenuItemAdapter::createFromList(getItem.searchChild(name.m_str), 0, s_pItemList, i, false);
+            if (item != nullptr) {
+                name.format("LAY_get_item@%02d", i + 1);
+                item->m_rowHandle = getItem.searchChild(name.m_str);
+            }
+            name.format("TXT_get_item_num@%02d", i + 1);
+            GfMenuItemAdapter::createFromList(getItem.searchChild(name.m_str), 3, s_pItemList, i, false);
+            name.format("IMG_get_item_icon@%02d", i + 1);
+            GfMenuItemAdapter* icon = GfMenuItemAdapter::createFromList(getItem.searchChild(name.m_str), 2, s_pItemList, i, false);
+            if (icon != nullptr) {
+                icon->setDispAlphaMode(true);
+            }
+        }
+        {
+            ui::UIListInfoBase::SetupParam param;
+            param.m_pageRowSize = count;
+            s_pItemList->setup(getAllocator(ALLOCATOR(0)), param);
+        }
+#line 292
+        GetItemListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GetItemListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(getItem.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    {
+        ui::UIObjectAcc select(acc.m_handle, "LAY_select");
+        {
+            mm::mtl::FixStr<32> name;
+            unsigned int count = select.countChild("LAY_sel_item@%02d", 1);
+            {
+                ui::UIListInfoBase::SetupParam param;
+                param.m_pageRowSize = count;
+                s_pSubMenuIDList->setup(getAllocator(ALLOCATOR(0)), param);
+            }
+            for (unsigned int i = 0; i < count; i++) {
+                name.format("TXT_sel_item_name@%02d", i + 1);
+                GfMenuItemAdapter::createFromList(select.searchChild(name.m_str), 0, s_pItemList, i, false);
+                name.format("TXT_sel_item_num@%02d", i + 1);
+                GfMenuItemAdapter::createFromList(select.searchChild(name.m_str), 3, s_pItemList, i, false);
+            }
+        }
+        {
+            GfMenuObjUtil::FitOption option;
+            option.m_keepScaleX = true;
+            GfMenuObjUtil::createFitPlugin(select.searchChild("IMG_select_item_bg"), select.searchChild("LAY_sel_item"), 0, 0x1C, option);
+        }
+        ui::UIObjectAcc(select.searchChild("IMG_select_item_bg")).setIgnoreSize(true);
+        GfMenuObjUtil::createDockPlugin(select.searchChild("IMG_select_item_line_down"), select.searchChild("IMG_select_item_bg"), 3, mm::Pnt<short>(0, -23), 0);
+        ui::UIObjectAcc(select.searchChild("IMG_select_item_line_down")).setIgnoreSize(true);
+#line 342
+        SelectListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SelectListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(select.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    {
+        ui::UIObjectAcc change(acc.m_handle, "LAY_dr_change");
+        mm::mtl::FixStr<32> name;
+        {
+            mm::mtl::IAllocator* allocator = getAllocator(ALLOCATOR(0));
+            ui::UISelectObjList::CreateParam create;
+            create.m_allocator = allocator;
+            m_drChangeListInfo = ui::UISelectObjList::create(create);
+        }
+        m_drChangeListInfo->pickupObject(change.m_handle, "LAY_dr_change@%02d", 1);
+        {
+            ui::UICtrlCursorSelect::CursorSetting setting;
+            setting.setType(0);
+            setting.m_dockType = 0;
+            m_drChangeCursor = ui::UICtrlCursorSelect::create(change.searchChild("IMG_dr_change_cursor"), setting, m_drChangeListInfo);
+        }
+        {
+            ui::UIListInfoBase::SetupParam param;
+            param.m_pageRowSize = m_drChangeListInfo->getSize();
+            s_pChangeDrList->setup(getAllocator(ALLOCATOR(0)), param);
+        }
+        for (unsigned int i = 0; i < m_drChangeListInfo->getSize(); i++) {
+            name.format("IMG_dr_change_face@%02d", i + 1);
+            GfMenuCharDataAdapter* face = GfMenuCharDataAdapter::createFromDriverList(change.searchChild(name.m_str), 3, s_pChangeDrList, i, false);
+            if (face != nullptr) {
+                name.format("LAY_dr_change@%02d", i + 1);
+                face->m_rowHandle = change.searchChild(name.m_str);
+            }
+        }
+#line 392
+        DrChangeListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) DrChangeListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(change.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    {
+        ui::UIObjectAcc owner(acc.m_handle, "LAY_owner_change");
+        GfMenuCharDataAdapter::createFromReferenceDriver(owner.searchChild("IMG_owner_ch_before_face"), 3, 4, false);
+        GfMenuCharDataAdapter::createFromReferenceDriver(owner.searchChild("IMG_owner_ch_after_face"), 3, 5, false);
+#line 406
+        OwnerChangeListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) OwnerChangeListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(owner.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    GfMenuAdapterManager::endCategory();
+    {
+        unsigned int handle = acc.searchChild("LAY_num_select");
+#line 413
+        NumSelectListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) NumSelectListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    GfMenuObject::initialize();
 }
 
 void GfMenuObjCommonText::finalize() {

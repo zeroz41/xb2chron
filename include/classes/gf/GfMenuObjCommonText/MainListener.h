@@ -19,7 +19,8 @@ public:
     // the open dialog's kind (the open event's m_paramShort[7]: 0 LAY_dialog .. 8 LAY_num_select), 0xFF for none
     // (the name is not the original's)
     unsigned int m_kind;
-    unsigned char pad_14[0xC];
+    unsigned char pad_14[0x8];
+    unsigned char pad_1C[0x4];  // the constructor leaves it as it is
     GfMenuObjCommonText* m_owner;  // what initialize makes it for (the name is not the original's)
 };
 }  // namespace gf
