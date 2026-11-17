@@ -306,6 +306,26 @@ bool GfGameUtil::isUiNameDistMatch(GF_OBJ_HANDLE* handle) {
     return gmk::DistCond::isMatch(dist * dist, pos);
 }
 
+unsigned int GfGameUtil::getFsLevelSum(unsigned int fieldSkill) {
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    GfDataBlade::getListForFieldSkill(blades);
+    unsigned int total = 0;
+    for (unsigned short id : blades) {
+        if (fieldSkill == 0x21 && id == 0x41A) {
+            total += 5;
+            continue;
+        }
+        DataParamAcc acc(4, id, GimmickType(0));
+        for (unsigned int i = 0; i < 3; i++) {
+            if (acc.getFieldSkill(i, false) == fieldSkill) {
+                total += acc.getFieldSkillLevel(i, false);
+                break;
+            }
+        }
+    }
+    return total;
+}
+
 bool GfGameUtil::getNameMsId(unsigned int& out, GF_OBJ_HANDLE* handle) {
     gmk::AGmkBase* gmk = gmk::getBindedGmkInst(handle);
     if (gmk == nullptr) {
