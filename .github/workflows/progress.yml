@@ -1,0 +1,136 @@
+# Publishes master's progress to GitHub Pages: zkit's progress page and treemap, and the JSON the README's
+# shields.io badges read. Nothing is committed back to the repository, so the README never needs updating.
+#
+# It builds as little as it can, because the self-hosted runner is the maintainer's server:
+#   reuse  ci.yml already built the pull request's merge commit, which is master's tree whenever the pull request
+#          merged with master unchanged, and kept that report as the `report-<tree>` artifact. `zkit ci report`
+#          fetches it on a GitHub-hosted runner; the page needs only the report, not the game.
+#   wait   No report matches (master moved after CI ran, or a direct push): wait on a GitHub-hosted runner first,
+#          so a batch of merges cancels down to one build.
+#   build  Then build master once on the self-hosted runner from a clean checkout (never a build/ folder a pull
+#          request's code left behind), and keep its report as `report-<tree>` too, so the next pull request's
+#          baseline (ci.yml) does not build it again.
+# A manual run skips straight to the build.
+#
+# Publishing needs Settings → Pages → Source set to "GitHub Actions".
+
+name: Progress
+
+on:
+  push:
+    branches: [master]
+    paths-ignore: ['**.md']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: progress
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  reuse:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
+    outputs:
+      found: ${{ steps.fetch.outcome == 'success' }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Fetch the pull request's report for this commit
+        id: fetch
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 build.py zkit ci report --sha "$GITHUB_SHA" --out build/XC2_301/report.json
+
+      - name: Progress page and badges
+        if: steps.fetch.outcome == 'success'
+        run: |
+          python3 build.py zkit report --out site --badges site/badges
+          echo "$GITHUB_SHA" > site/commit.txt
+
+      - if: steps.fetch.outcome == 'success'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  wait:
+    needs: reuse
+    if: needs.reuse.outputs.found == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Let a batch of merges settle
+        run: sleep 600
+
+  build:
+    needs: [reuse, wait]
+    if: >-
+      !cancelled() && github.ref == 'refs/heads/master' &&
+      (github.event_name == 'workflow_dispatch' || needs.wait.result == 'success')
+    runs-on: [self-hosted, xc2]
+    timeout-minutes: 120
+    env:
+      EXECUTABLE_SHA1: 55a82580cd6826cfb9ffbbb2da5fe9a4c5a4b4c8
+      ORIG: /opt/xc2-ci/orig
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Game executable (verified, read-only, never uploaded)
+        run: |
+          # A copy, not a link: zkit refuses links that lead out of the repository. orig/ is ignored by git, and
+          # the next run's clean checkout deletes it.
+          test -f "$ORIG/XC2_301/main" || { echo "::error::the game's executable is missing at $ORIG/XC2_301/main"; exit 1; }
+          install -D -m 0444 "$ORIG/XC2_301/main" orig/XC2_301/main
+          echo "$EXECUTABLE_SHA1  orig/XC2_301/main" | sha1sum -c -
+
+      - name: Build
+        run: python3 build.py
+
+      - name: Progress page and badges
+        id: site
+        run: |
+          python3 build.py zkit report --out site --badges site/badges
+          git rev-parse HEAD > site/commit.txt
+          mkdir -p progress-report
+          cp build/XC2_301/report.json progress-report/
+          echo "tree=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+
+      - name: Keep the report for the next pull request's baseline
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-${{ steps.site.outputs.tree }}
+          path: progress-report/
+          retention-days: 90
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    needs: [reuse, build]
+    if: ${{ !cancelled() && (needs.reuse.outputs.found == 'true' || needs.build.result == 'success') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

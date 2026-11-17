@@ -15,14 +15,14 @@
       ],
       "finish": [
         "zkit progress --since session --check",
-        "zkit report --readme",
+        "zkit report",
         "zkit hygiene"
       ],
       "rules": [],
       "quality": {
         "gate": "error"
       },
-      "hygiene": {}
+      "hygiene": {"identity": "any", "progress_table": "forbid"}
     }
   },
   "targets": {

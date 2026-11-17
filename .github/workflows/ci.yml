@@ -1,0 +1,133 @@
+# CI: build every pull request and run zkit's pull request gate (`zkit ci check`): the build, with the rebuilt
+# executable identical to the original; nothing that matched or linked in the base commit lost; no decompiler
+# leftovers in the added lines (`zkit check`); no files that must not be committed (`zkit hygiene`).
+#
+# Runs on the maintainer's self-hosted runner (x86_64 Linux: the game's clang is an x86_64 program), labelled
+# `xc2`. The runner is a container with no Docker of its own: jobs must NOT use `container:`.
+#
+# The game's executable (`main` of the 3.0.1 update) is the only game file on the runner: read-only at
+# /opt/xc2-ci/orig/XC2_301/main, checked against its SHA-1 below, never uploaded anywhere.
+#
+# Security note for maintainers: this runs pull request code on the self-hosted runner, including the zkit that
+# the pull request's build.py pins. Keep Settings → Actions → General → "Approval for running fork pull request
+# workflows from contributors" at "Require approval for all external contributors", and read a pull request
+# (build.py and .github/ above all) before approving its run. The job has no secrets and a read-only token. It
+# uploads the gate's results as the `ci-result` artifact; ci-comment.yml, which runs from master and never runs
+# pull request code, turns them into the pull request comment.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize, reopened]
+    paths-ignore: ['**.md']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read         # zkit ci report: the reports earlier runs kept
+  pull-requests: read   # zkit ci report: which pull request a master commit merged
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  gate:
+    runs-on: [self-hosted, xc2]
+    timeout-minutes: 120
+    env:
+      EXECUTABLE_SHA1: 55a82580cd6826cfb9ffbbb2da5fe9a4c5a4b4c8
+      ORIG: /opt/xc2-ci/orig
+      GITHUB_TOKEN: ${{ github.token }}
+
+    steps:
+      # The pull request's merge commit, from a clean checkout: nothing an earlier run left in build/ is used.
+      - uses: actions/checkout@v7
+        with:
+          # full history: the baseline step may build the base commit
+          fetch-depth: 0
+
+      - name: Game executable (verified, read-only, never uploaded)
+        run: |
+          # A copy, not a link: zkit refuses links that lead out of the repository. orig/ is ignored by git, and
+          # the next run's clean checkout deletes it.
+          test -f "$ORIG/XC2_301/main" || { echo "::error::the game's executable is missing at $ORIG/XC2_301/main"; exit 1; }
+          install -D -m 0444 "$ORIG/XC2_301/main" orig/XC2_301/main
+          echo "$EXECUTABLE_SHA1  orig/XC2_301/main" | sha1sum -c -
+
+      - name: Baseline from the base commit
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          # master's report for the base commit is the baseline: this workflow or progress.yml kept it when that
+          # commit landed. Only build the base commit when there is none.
+          if python3 build.py zkit ci report --sha "$BASE_SHA" --out "$RUNNER_TEMP/baseline.json"; then
+            exit 0
+          fi
+          merge=$(git rev-parse HEAD)
+          git checkout --detach "$BASE_SHA"
+          python3 build.py
+          cp build/XC2_301/report.json "$RUNNER_TEMP/baseline.json"
+          git checkout --detach "$merge"
+
+      - name: Build
+        # The full build.py also installs the zkit this commit pins (the baseline build may have installed the base
+        # commit's). The gate runs the build again, which does nothing when this one passed and otherwise records
+        # the end of its output.
+        continue-on-error: true
+        run: python3 build.py
+
+      - name: Gate (build, executable identical, no regressions, clean additions and files)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != pull_request ]; then
+            # A manual run has no base: compare the build with itself, which still checks the build and the files.
+            cp build/XC2_301/report.json "$RUNNER_TEMP/baseline.json"
+            BASE_SHA=$(git rev-parse HEAD)
+          fi
+          python3 build.py zkit ci check --baseline "$RUNNER_TEMP/baseline.json" --base "$BASE_SHA" \
+            --out ci-result/result.json
+
+      - name: Summary
+        if: always()
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python3 build.py zkit ci comment ci-result/result.json --sha "$HEAD_SHA" --run-url "$RUN_URL" \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # Once the pull request merges with master unchanged, this build is master's build too: keep its report under
+      # the merge's tree hash, so neither progress.yml nor the next pull request's baseline builds it again.
+      - name: Keep the report for master
+        id: report
+        if: success() && github.event_name == 'pull_request'
+        run: |
+          mkdir -p progress-report
+          cp build/XC2_301/report.json progress-report/
+          echo "tree=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the report for master
+        if: steps.report.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-${{ steps.report.outputs.tree }}
+          path: progress-report/
+          retention-days: 90
+
+      - name: Upload results for the pull request comment
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-result
+          path: ci-result/
+          if-no-files-found: ignore
+          retention-days: 7
