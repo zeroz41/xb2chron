@@ -65,10 +65,15 @@ public:
 // table 0x7100B608B8: LAY_tutorial's listener (initialize news it)
 class GfMenuObjBtlchTutorial::TutorialListener : public ::ui::UIObjectListener {
 public:
-    TutorialListener(GfMenuObjBtlchTutorial* owner) : pad_0C(), m_owner(owner) {}
+    TutorialListener(GfMenuObjBtlchTutorial* owner)
+        : m_textCount(0), m_tutorialId(0), m_textIndex(0), m_bgType(0), m_owner(owner) {}
     virtual ~TutorialListener() {}  // slot 0: weak, its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
-    unsigned char pad_0C[0x10];  // cleared by the constructor
+    // the fields' names are not the original's
+    int m_textCount;  // 0x0C: how many "LAY_text@%02d" children the layout has (set by the init event)
+    int m_tutorialId;  // 0x10: the BDAT 0x101 row the open event (0x21) showed, 0 after the close
+    int m_textIndex;  // 0x14: the open event's text with the largest window_y (0-based)
+    unsigned int m_bgType;  // 0x18: the "bg_type" whose "IMG_bg@%02d" is shown
     GfMenuObjBtlchTutorial* m_owner;
 };
 }  // namespace gf
