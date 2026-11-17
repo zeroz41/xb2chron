@@ -111,6 +111,10 @@
 #include "ml/PathUtil.h"
 #include "ml/MlMem.h"
 #include "grlib/CGLibCtl.h"
+#include "grlib/CGLibDecShader.h"
+#include "grlib/CGLibShader.h"
+#include "grlib/CGLibEtcUniformBlock.h"
+#include "grlib/CGLibUniBaseUtility.h"
 #include "ml/WorkRoot.h"
 #include "ml/WorkUtil.h"
 #include "classes/grlib/CGLibManager.h"
@@ -1776,6 +1780,48 @@ void DebDrawCmd::fastSetup() {
         m_ofs = pad_2d8;
         pad_2f0 = true;
     }
+}
+
+void DebDrawCmd::end() {
+    if (m_cache->end()) {
+        return;
+    }
+    if (pad_140 != 0 && pad_170 >= 0) {
+        if (!pad_156) {
+            grlib::CGLibColorCtl::setBlendControl(GrlBlendFunc(5), GrlBlendFunc(6), GrlBlendCombine(1), GrlLogicType(3));
+            pad_156 = true;
+        }
+        unsigned int start = pad_2d8;
+        if (m_ofs != start) {
+            m_vtx->unlock(start, m_ofs - start);
+            pad_2d8 = m_ofs;
+        }
+        unsigned int mode = grlib::CGLibCtlShader::getDecShader()->getDeclarationOfs("DEBUG_MODE");
+        unsigned int flags = m_flags;
+        grlib::CGLibDecShader* dec = grlib::CGLibCtlShader::getDecShader();
+        grlib::GrlUtilVertFetch fetch;
+        if (flags & 2) {
+            dec->setDeclarationIdx(mode, 2);
+            fetch = grlib::GrlUtilVertFetch(0);
+        } else {
+            dec->setDeclarationIdx(mode, 1);
+            fetch = grlib::GrlUtilVertFetch(1);
+        }
+        grlib::CGLibCtlVertex::setVertex(*m_vtx, start);
+        grlib::CGLibCtlShader::setShader(*grlib::CGLibCtlShader::getDecShader(), *grlib::CGLibCtlShader::getVtxFetch(fetch));
+        unsigned int mdl = grlib::CGLibCtlShader::getDecShader()->getCurrentShader().getUniformBlockOfs("U_MDL");
+        grlib::CGLibEtcUniformBlock block;
+        grlib::ShdMat44TransposeMat44(static_cast<float*>(block.getBuff()), m_mdlMtx);
+        block.updateData(0x40);
+        block.setUniformBlock(mdl);
+        if (m_flags & 2) {
+            unsigned int loc = grlib::CGLibCtlShader::getDecShader()->getCurrentShader().getTextureLocation("tex");
+            grlib::CGLibCtlTexture::setTexture(*m_tex, *grlib::CGLibCtlShader::getSampler(grlib::GrlUtilSampler(1)), loc);
+        }
+        grlib::CGLibCtlVertex::renderVertex(GrlPrimitiveType(pad_170), pad_140);
+        pad_140 = 0;
+    }
+    m_flags &= ~0x200;
 }
 
 void DebDrawCmd::add(const mm::Vec3& p0, const mm::Vec3& p1) {
