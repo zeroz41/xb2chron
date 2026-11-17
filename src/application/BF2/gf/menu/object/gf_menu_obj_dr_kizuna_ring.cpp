@@ -31,6 +31,9 @@
 #include "classes/gf/GfMenuObjCharSelect.h"
 #include "gf/GfMenuSequence.h"
 #include "mm/mtl/Delegate.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfMenuObjCommonText.h"
 
 namespace gmo_dr_kizuna_ring {
 float rateTbl[2] = {1.0f, 0.5f};
@@ -212,6 +215,192 @@ void GfMenuObjDrKizunaRing::movePointer(unsigned int handle, int index, ui::UISe
     GfMenuObject::changePointerPos(handle, pos);
 }
 
+void GfMenuObjDrKizunaRing::RingPadListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObjOperationInfo::setActionEnable(handle, 0xD, GfGameManager::isClearGame());
+        GfMenuObject::setupInputSelection(handle, 0, 6);
+        GfMenuObject::disableInput(handle);
+        break;
+    case 6:
+        break;
+    case 8: {
+        int next;
+        int index;
+        switch (event.m_param1) {
+        case 1: {
+            if (m_owner->m_unlockLevel == 0) {
+                if (!m_owner->m_detailOpen) {
+                    return;
+                }
+                unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+                unsigned int line = GfMenuReference::getReferenceNumber(0);
+                unsigned int level = GfMenuReference::getReferenceNumber(1);
+                int round = GfMenuReference::getReferenceNumber(2);
+                unsigned int point = GfDataDriverSkill::getSkillPointFromBdat(driver, line, level, round != 0);
+                bool decided = false;
+                {
+                    DataParamAcc param(3, driver, GimmickType(0));
+                    if (GfDataDriverSkill::getSkill(driver, line, level, round != 0) == 0) {
+                        if (level > getSkillUnlockLevel(driver)) {
+                            GfMenuObjCommonText::openError(m_owner->m_subContext, 7, 0);
+                        } else if (point > param.getSkillPoint()) {
+                            GfMenuObjCommonText::openError(m_owner->m_subContext, 6, 0);
+                        } else if (GfGameUtil::checkDriverSkillLevelUp(driver, line, level, round != 0) != 0) {
+                            GfMenuObjCommonText::openError(m_owner->m_subContext, 8, 0);
+                        } else {
+                            GfMenuObjCommonText::open(m_owner->m_subContext, 0x32, 0);
+                            GfMenuObject::setCallContextEventHandler(m_owner->m_subContext, acc.m_handle);
+                            GfMenuObject::disableInput(handle);
+                            GfMenuObjMainMenu2::setCloseKeyEnable(false);
+                            GfMenuObjMainMenu2::disableCharChange();
+                            sendEvent(owner.searchChild("LAY_skill_info"), 0x101, 0);
+                            decided = true;
+                        }
+                    }
+                }
+                if (decided) {
+                    GfMenuObjUtil::playSECommonDecide();
+                    return;
+                }
+            }
+            GfMenuObjUtil::playSECommon(2);
+            return;
+        }
+        case 2:
+            sendEvent(owner.searchChild("LAY_skill_info"), 0x22, 0);
+            sendEvent(owner.searchChild("LAY_dr_skillinfo"), 0x104, 0);
+            sendEvent(owner.searchChild("LAY_main"), 0x22, 0);
+            GfMenuObject::disableInput(handle);
+            GfMenuObjMainMenu2::disableCharChange();
+            GfMenuObjUtil::playSECommonCancel();
+            return;
+        case 10: {
+            index = m_owner->m_selected;
+            if (index < 0) {
+                return;
+            }
+            unsigned int row = index / 6U;
+            unsigned int column = index % 6U;
+            if (isScreenLR(column)) {
+                if (index < 6U) {
+                    return;
+                }
+                next = (row - 1) * 6 + column;
+            } else {
+                if (row + 1 > 2) {
+                    return;
+                }
+                next = (row + 1) * 6 + column;
+            }
+            break;
+        }
+        case 9: {
+            index = m_owner->m_selected;
+            if (index < 0) {
+                return;
+            }
+            unsigned int row = index / 6U;
+            unsigned int column = index % 6U;
+            if (isScreenLR(column)) {
+                if (row + 1 > 2) {
+                    return;
+                }
+                next = (row + 1) * 6 + column;
+            } else {
+                if (index < 6U) {
+                    return;
+                }
+                next = (row - 1) * 6 + column;
+            }
+            break;
+        }
+        case 0xB: {
+            index = m_owner->m_selected;
+            if (index < 0) {
+                return;
+            }
+            if (index % 6U < 5) {
+                next = index + 1;
+            } else {
+                return;
+            }
+            break;
+        }
+        case 0xC: {
+            index = m_owner->m_selected;
+            if (index < 0 || index % 6U == 0) {
+                return;
+            }
+            next = index - 1;
+            break;
+        }
+        case 0xD: {
+            int round = GfMenuReference::getReferenceNumber(2);
+            m_owner->m_round = (round + 1) & 1;
+            GfMenuReference::setReferenceNumber(2, m_owner->m_round);
+            GfMenuObjOperationInfo::changeText(handle, 0xD, round == 0);
+            ui::UIObjectAcc main(owner.searchChild("LAY_dr_main"));
+            refreshRing(main);
+            int selected = m_owner->m_selected;
+            unsigned int level = GfMenuReference::getReferenceNumber(1);
+            unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+            if (selected < 1 ||
+                (isLockPos(selected) && GfDataDriverSkill::isSkillLevelUnlock(driver, level, m_owner->m_round != 0))) {
+                sendEvent(owner.searchChild("LAY_skill_info"), 0x22, 0);
+            } else {
+                sendEvent(owner.searchChild("LAY_skill_info"), 0x21, 0);
+            }
+            return;
+        }
+        default:
+            return;
+        }
+        GfMenuObject::changePointerPos(owner.searchChild("LAY_dr_main"), mm::Pnt<short>(0, 0));
+        movePointer(owner.searchChild("LAY_dr_main"), next, m_owner->m_ringList);
+        GfMenuObjUtil::playSECommonTab();
+        sendEvent(handle, 0x107, 0);
+        break;
+    }
+    case 0x41:
+        if (m_owner->m_subContext->m_id != event.m_param0) {
+            break;
+        }
+        if (event.m_paramShort[4] == 0) {
+            if (m_owner->m_unlockLevel == 0) {
+                m_owner->m_step = 0;
+                m_owner->m_seq.clear();
+                m_owner->m_seq.addJob(&GfMenuObjDrKizunaRing::seqSkillAnime);
+                GfMenuObject::disableInput(handle);
+                GfMenuObject::disableInput(owner.searchChild("LAY_dr_main"));
+                GfMenuObjMainMenu2::setCloseKeyEnable(false);
+                GfMenuObjMainMenu2::disableCharChange();
+                sendEvent(owner.searchChild("LAY_dr_skillinfo"), 0x104, 0);
+                ui::UIObjectAcc cursor(owner.searchChild("IMG_pointcursor"));
+                cursor.setDisp(false);
+            }
+            sendEvent(owner.searchChild("LAY_skill_info"), 0x22, 0);
+        } else {
+            GfMenuObject::enableInput(handle);
+            GfMenuObjMainMenu2::setCloseKeyEnable(true);
+            ui::UIObjectAcc main(owner.searchChild("LAY_dr_main"));
+            GfMenuObjMainMenu2::openCharChange(main.m_handle, 0, false);
+        }
+        break;
+    case 0x107:
+        m_owner->m_seq.clear();
+        m_owner->m_seq.addWait(1);
+        m_owner->m_seq.addJob(&GfMenuObjDrKizunaRing::seqWait);
+        GfMenuObject::disableInput(handle);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 bool GfMenuObjDrKizunaRing::seqWait() {
     ui::UIObjectAcc acc(m_handle);
     ui::UIObjectAcc scale(acc.searchChild("LAY_scale"));
@@ -381,6 +570,131 @@ void GfMenuObjDrKizunaRing::MainListener::reciveEvent(ui::EventData const& event
     case 0x22:
         setFadeOut(handle);
         break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjDrKizunaRing::RingListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        setupRing(owner);
+        setupRingList(acc, m_owner->m_ringList);
+        refreshRing(acc);
+        {
+            ui::UIInputPointer::SelectionSetup setup;
+            setup.m_list = m_owner->m_ringList;
+            setup.m_sizeW = 0x10;
+            setup.m_sizeH = 0x10;
+            ui::UIObjectAcc(owner.searchChild("IMG_cursor_area")).getRect(setup.m_rect, 2);
+            GfMenuObject::setupPointerSelection(handle, setup);
+        }
+        mm::Pnt<short> pos;
+        ui::UIObjectAcc(m_owner->m_ringList->getContents(0)).getPosCenter(pos);
+        GfMenuObject::changePointerPos(handle, pos);
+        m_firstSelect = 1;
+        {
+            ui::UICtrlFrame::Setting setting;
+            setting.m_contentName = "LAY_bl_icon01";
+            setting.m_viewName = "IMG_maskbg";
+            setting.m_centerName = "IMG_pointcursor";
+            setting.m_distance = 0xC;
+            setting.m_list = m_owner->m_ringList;
+            m_owner->m_ringFrame = ui::UICtrlFrame::create(handle, setting);
+        }
+        if (m_owner->m_ringFrame != nullptr) {
+            m_owner->m_ringFrame->setupEventHanding(handle, 3);
+        }
+        ui::UIObjectAcc cursor(acc.searchChild("IMG_pointcursor"));
+        cursor.setDisp(false);
+        GfMenuObject::setupInputSelection(handle, -1, m_owner->m_ringList->getSize());
+        GfMenuObject::disableInput(handle);
+        GfMenuObjMainMenu2::openCharChange(acc.m_handle, 0, false);
+        break;
+    }
+    case 6: {
+        int index = event.m_param0;
+        unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+        if (index >= 1) {
+            unsigned int column = index % 6U;
+            int level = index / 6U + 1;
+            if (column == 0) {
+                GfMenuReference::setReferenceNumber(0, 5);
+                GfMenuReference::setReferenceNumber(1, level);
+                if (GfDataDriverSkill::isSkillLevelUnlock(driver, level, m_owner->m_round != 0)) {
+                    sendEvent(owner.searchChild("LAY_skill_info"), 0x22, 0);
+                } else {
+                    m_owner->m_unlockLevel = level;
+                    sendEvent(owner.searchChild("LAY_skill_info"), 0x21, 0);
+                }
+            } else {
+                GfMenuReference::setReferenceNumber(0, column - 1);
+                GfMenuReference::setReferenceNumber(1, level);
+                m_owner->m_unlockLevel = 0;
+                sendEvent(owner.searchChild("LAY_skill_info"), 0x21, 0);
+            }
+            unsigned int scale = owner.searchChild("LAY_scale");
+            if (isScreenLR(column)) {
+                GfMenuObjOperationInfo::changeText(scale, 9, false);
+                GfMenuObjOperationInfo::changeText(scale, 10, false);
+            } else {
+                GfMenuObjOperationInfo::changeText(scale, 9, true);
+                GfMenuObjOperationInfo::changeText(scale, 10, true);
+            }
+        } else {
+            sendEvent(owner.searchChild("LAY_skill_info"), 0x22, 0);
+            if (index < 0) {
+                break;
+            }
+        }
+        m_owner->m_selected = index;
+        if (m_firstSelect == 1) {
+            m_firstSelect = 0;
+        } else {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 10: {
+        ui::UIObjectAcc cursor(acc.m_handle, "IMG_pointcursor");
+        short x = event.m_paramShort[0];
+        if (m_owner->m_ringFrame != nullptr) {
+            bool select = event.m_paramShort[2] == 1;
+            m_owner->m_ringFrame->movePoint(mm::Pnt<short>(x, event.m_paramShort[1]), select);
+        } else {
+            mm::Pnt<short> pos(x, event.m_paramShort[1]);
+            cursor.setPosCenter(pos);
+        }
+        break;
+    }
+    case 0x102:
+        GfMenuObject::enableInput(handle);
+        GfMenuObject::enableInput(owner.searchChild("LAY_scale"));
+        sendEvent(owner.searchChild("LAY_dr_skillinfo"), 0x103, 0);
+        refreshRing(acc);
+        break;
+    case 0x140: {
+        unsigned int driver = event.m_param0;
+        GfMenuReference::setReferenceDriverID(0, driver);
+        refreshRing(acc);
+        if (m_owner->m_voice != nullptr) {
+            GfGameVoice::playStop(m_owner->m_voice);
+            m_owner->m_voice = nullptr;
+        }
+        GfMenuReference::getReferenceNumber(0);
+        unsigned int level = GfMenuReference::getReferenceNumber(1);
+        int selected = m_owner->m_selected;
+        if (selected < 1 ||
+            (isLockPos(selected) && GfDataDriverSkill::isSkillLevelUnlock(driver, level, m_owner->m_round != 0))) {
+            sendEvent(owner.searchChild("LAY_skill_info"), 0x22, 0);
+        } else {
+            sendEvent(owner.searchChild("LAY_skill_info"), 0x21, 0);
+        }
+        break;
+    }
     default:
         ui::UIObjectListener::reciveEvent(event, handle);
         break;

@@ -519,6 +519,133 @@ bool GfMenuObjBlKizunaRing::seqAchieve() {
     }
 }
 
+void GfMenuObjBlKizunaRing::RingListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        setupRing(acc);
+        setupRingList(acc, m_owner->m_ringList);
+        refreshRing(acc);
+        {
+            ui::UIInputPointer::SelectionSetup setup;
+            setup.m_list = m_owner->m_ringList;
+            setup.m_sizeW = 0x10;
+            setup.m_sizeH = 0x10;
+            ui::UIObjectAcc(owner.searchChild("IMG_cursorarea")).getRect(setup.m_rect, 2);
+            GfMenuObject::setupPointerSelection(handle, setup);
+        }
+        mm::Pnt<short> pos;
+        ui::UIObjectAcc(m_owner->m_ringList->getContents(0)).getPosCenter(pos);
+        GfMenuObject::changePointerPos(handle, pos);
+        m_firstSelect = 1;
+        {
+            ui::UICtrlFrame::Setting setting;
+            setting.m_contentName = "LAY_kizunabg";
+            setting.m_viewName = "IMG_maskbg";
+            setting.m_centerName = "IMG_kizunacursor";
+            setting.m_distance = 0xC;
+            setting.m_list = m_owner->m_ringList;
+            m_owner->m_ringFrame = ui::UICtrlFrame::create(handle, setting);
+        }
+        if (m_owner->m_ringFrame != nullptr) {
+            m_owner->m_ringFrame->setupEventHanding(handle, 3);
+        }
+        ui::UIObjectAcc cursor(acc.searchChild("IMG_kizunacursor"));
+        cursor.setDisp(false);
+        GfMenuObject::setupInputSelection(handle, -1, m_owner->m_ringList->getSize());
+        GfMenuObject::disableInput(handle);
+        break;
+    }
+    case 6: {
+        int index = event.m_param0;
+        unsigned int blade = GfMenuReference::getReferenceBladeID(0);
+        if (index >= 1) {
+            unsigned int column = index % 10U;
+            int level = index / 10U + 1;
+            if (column == 0) {
+                m_owner->m_referenceNumber = level;
+                GfMenuReference::setReferenceNumber(0, 9);
+                GfMenuReference::setReferenceNumber(1, m_owner->m_referenceNumber);
+            } else {
+                GfMenuReference::setReferenceNumber(0, column - 1);
+                GfMenuReference::setReferenceNumber(1, level);
+                m_owner->m_referenceNumber = 0;
+            }
+            dispDetail(owner, blade);
+            unsigned int base = owner.searchChild("LAY_kizunaring_base");
+            if (column < 5) {
+                GfMenuObjOperationInfo::changeText(base, 9, false);
+                GfMenuObjOperationInfo::changeText(base, 10, false);
+            } else {
+                GfMenuObjOperationInfo::changeText(base, 9, true);
+                GfMenuObjOperationInfo::changeText(base, 10, true);
+            }
+        } else {
+            GfMenuReference::setReferenceNumber(0, 9);
+            GfMenuReference::setReferenceNumber(1, 1);
+            sendEvent(owner.searchChild("LAY_skillinfo"), 0x22, 0);
+            if (index < 0) {
+                break;
+            }
+        }
+        m_owner->m_selected = index;
+        if (m_firstSelect == 1) {
+            m_firstSelect = 0;
+        } else {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 10: {
+        ui::UIObjectAcc cursor(acc.m_handle, "IMG_kizunacursor");
+        short x = event.m_paramShort[0];
+        if (m_owner->m_ringFrame != nullptr) {
+            bool select = event.m_paramShort[2] == 1;
+            m_owner->m_ringFrame->movePoint(mm::Pnt<short>(x, event.m_paramShort[1]), select);
+        } else {
+            mm::Pnt<short> pos(x, event.m_paramShort[1]);
+            cursor.setPosCenter(pos);
+        }
+        break;
+    }
+    case 0x21:
+        GfMenuObject::enableInput(handle);
+        GfMenuObject::enableInput(owner.searchChild("LAY_kizunaring_base"));
+        GfMenuObjOperationInfo::add(acc.searchChild("LAY_kizunaring_base"), handle, 0, 0);
+        if (m_owner->m_mode == 0 && GfMenuObjMainMenu2::isOpenCharMenu()) {
+            GfMenuObjMainMenu2::openCharChange(acc.m_handle, 1, false);
+        }
+        break;
+    case 0x22:
+        GfMenuObject::disableInput(handle);
+        GfMenuObject::disableInput(owner.searchChild("LAY_kizunaring_base"));
+        GfMenuObjOperationInfo::remove(acc.searchChild("LAY_kizunaring_base"), handle, 0, 0);
+        break;
+    case 0x140: {
+        unsigned int blade = event.m_param0;
+        GfMenuReference::setReferenceBladeID(0, blade);
+        refreshRing(acc);
+        if (m_owner->m_voice != nullptr) {
+            GfGameVoice::playStop(m_owner->m_voice);
+            m_owner->m_voice = nullptr;
+        }
+        if (m_owner->m_voiceRequest != -1) {
+            GfGameVoice::playStop(reinterpret_cast<GF_SCOM_HANDLE*>(m_owner->m_voiceRequest));
+            m_owner->m_voiceRequest = -1;
+        }
+        if (procAchieve(owner.searchChild("LAY_main"), m_owner) && m_owner->m_mode == 0) {
+            GfMenuObjOperationInfo::remove(acc.searchChild("LAY_kizunaring_base"), handle, 0, 0);
+        }
+        dispDetail(owner, blade);
+        break;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjBlKizunaRing::setupRing(ui::UIObjectAcc& acc) {
     mm::mtl::FixStr<32> name;
     GfMenuAdapterManager::beginAddAfter();
