@@ -273,6 +273,92 @@ bool GfMenuObjTitle::seqConfirmNewGame() {
     return true;
 }
 
+void GfMenuObjTitle::InfoListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+            GfMenuObjOperationInfo::open(acc.m_handle, 0, 0, 0);
+            GfMenuObjOperationInfo::setGuideDisp(false);
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 1, false);
+        } else if (event.m_param0 == 2) {
+            if (!m_owner->m_onlyIra) {
+                ui::UIObjectAcc main(m_owner->m_handle, "LAY_main");
+                ui::EventData close;
+                close.m_type = 0x101;
+                close.m_param0 = m_result;
+                GfMenuObject::sendEvent(main.m_handle, close, 0.0f);
+            }
+        }
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            m_owner->m_confirmOpen = false;
+            m_owner->m_seq.clear();
+            m_owner->m_seq.addJob(&GfMenuObjTitle::seqConfirmAdvancedNewGame);
+            GfMenuObject::disableInput(acc.m_handle);
+        } else if (event.m_param1 == 2) {
+            if (m_page == 0) {
+                GfMenuObjUtil::playSECommonCancel();
+                GfMenuObject::disableInput(acc.m_handle);
+                if (m_owner->m_onlyIra) {
+                    GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_announce"), 0, 0.0f);
+                } else {
+                    GfMenuObjOperationInfo::close();
+                }
+                GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 2, 0);
+            } else {
+                m_owner->m_infoPage = m_page - 1;
+                m_owner->m_infoDir = 1;
+                m_owner->m_confirmOpen = false;
+                m_owner->m_seq.clear();
+                m_owner->m_seq.addJob(&GfMenuObjTitle::seqInfoFadeOut);
+                m_owner->m_seq.addJob(&GfMenuObjTitle::seqInfoFadeIn);
+                GfMenuObject::disableInput(acc.m_handle);
+                m_page--;
+                m_owner->m_number->setValue(m_page);
+                GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 1, false);
+                GfMenuObjUtil::playSE(0xD);
+            }
+        } else if (event.m_param1 == 9) {
+            if (m_page + 1 < m_owner->m_numberMax->m_value) {
+                int page = m_page + 1;
+                m_owner->m_infoPage = page;
+                m_owner->m_infoDir = 0;
+                m_owner->m_confirmOpen = false;
+                m_owner->m_seq.clear();
+                m_owner->m_seq.addJob(&GfMenuObjTitle::seqInfoFadeOut);
+                m_owner->m_seq.addJob(&GfMenuObjTitle::seqInfoFadeIn);
+                GfMenuObject::disableInput(acc.m_handle);
+                m_page = page;
+                m_owner->m_number->setValue(m_page);
+                GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 1, page + 1 == m_owner->m_numberMax->m_value);
+                GfMenuObjUtil::playSE(0xD);
+            }
+        }
+        break;
+    case 0x21:
+        m_owner->updateInfoPage(0);
+        m_owner->refreshInfo(0);
+        m_page = 0;
+        m_result = 0;
+        GfMenuObjUtil::setCommonFadeIn(acc.m_handle, 1, 0);
+        break;
+    case 0x22:
+        GfMenuObject::disableInput(acc.m_handle);
+        GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 2, 0);
+        GfMenuObjOperationInfo::close();
+        break;
+    }
+}
+
 void GfMenuObjTitle::refreshInfo(unsigned int) {
     ui::UIStr str;
     mm::mtl::FixStr<32> name;

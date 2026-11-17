@@ -131,6 +131,93 @@ void GfMenuObjTargetCursor::update() {
     }
 }
 
+void GfMenuObjTargetCursor::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        m_state.m_open = 0;
+        break;
+    case 0xD: {
+        ui::EventData data = event;
+        if (data.m_param1 == 0 && m_state.m_open == 1) {
+            int kind = data.m_param0;
+            m_owner->m_seq.clear();
+            if (kind == 7) {
+                m_owner->m_seq.addJob(&GfMenuObjTargetCursor::seqEnCursorOutScreen);
+                m_owner->m_stepStarted = false;
+            } else {
+                m_owner->m_seq.addJob(&GfMenuObjTargetCursor::seqEnCursorInScreen);
+                m_owner->m_stepStarted = false;
+            }
+        }
+        break;
+    }
+    case 0x100: {
+        {
+            int band = event.m_param1;
+            mm::mtl::FixStr<32> color;
+            ui::UIObjectAcc arrow(acc.m_handle, "IMG_en_cursor_arrow");
+            ui::UIObjectAcc btlArrow(acc.m_handle, "IMG_en_cursor_btl_arrow");
+            color.format("tgt_cursor_lv%02d", band);
+            arrow.setMulColor(color.m_str);
+            btlArrow.setMulColor(color.m_str);
+        }
+        acc.setDispChild(true, "LAY_en_cursor");
+        acc.setDispChild(true, "IMG_en_cursor");
+        acc.setDispChild(false, "IMG_en_cursor_sub");
+        m_owner->m_seq.clear();
+        m_owner->m_seq.addJob(&GfMenuObjTargetCursor::seqEnCursorOpen);
+        m_owner->m_stepStarted = false;
+        m_owner->m_posAdapter->setPosAdjustSize(0x20, 0x20);
+        if (!GfMenuObjUtil::isValidExpansion(3) || !GfMenuManager::isHideAll()) {
+            GfMenuObjUtil::playSE(0x1C);
+        }
+        acc.setDisp(true);
+        m_state.m_open = 1;
+        break;
+    }
+    case 0x101:
+        if (m_state.m_open == 1) {
+            m_owner->m_seq.clear();
+            m_owner->m_seq.addJob(&GfMenuObjTargetCursor::seqCursorClose);
+            m_owner->m_stepStarted = false;
+            m_state.m_open = 0;
+        }
+        break;
+    case 0x102: {
+        ui::UIObjectAcc sub(acc.m_handle, "IMG_en_cursor_sub");
+        if (m_state.m_open == 1) {
+            if (m_owner->m_cameraType == 1) {
+                m_owner->m_lockSeq.clear();
+                m_owner->m_lockSeq.addJob(&GfMenuObjTargetCursor::seqEnCursorLock);
+                m_owner->m_stepStarted = false;
+            } else {
+                sub.setDisp(false);
+            }
+        }
+        break;
+    }
+    case 0x120:
+        if (m_state.m_open == 1) {
+            int battle = event.m_param0;
+            m_owner->m_seq.clear();
+            if (battle == 0) {
+                m_owner->m_seq.addJob(&GfMenuObjTargetCursor::seqEnCursorInTarget);
+                m_owner->m_stepStarted = false;
+            } else {
+                m_owner->m_seq.addJob(&GfMenuObjTargetCursor::seqEnCursorInBattle);
+                m_owner->m_stepStarted = false;
+            }
+        }
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+
 bool GfMenuObjTargetCursor::seqEnCursorOpen() {
     ui::UIObjectAcc cursor(m_handle, "IMG_en_cursor");
     ui::UIObjectAcc arrow(m_handle, "IMG_en_cursor_arrow");
@@ -282,6 +369,22 @@ void GfMenuObjTargetCursor::refreshDisp(unsigned int type) {
     arrow.setDisp(type == 0);
     btl.setDisp(type == 1);
     btlArrow.setDisp(type == 1);
+}
+
+
+void GfMenuObjTargetCursor::startCursorAnimation(const char* anim) {
+    refreshDisp(m_dispType);
+    if (m_dispType == 0) {
+        ui::UIObjectAcc cursor(m_handle, "IMG_en_cursor");
+        ui::UIObjectAcc arrow(m_handle, "IMG_en_cursor_arrow");
+        cursor.startAnimation(anim, false);
+        arrow.startAnimation(anim, false);
+    } else {
+        ui::UIObjectAcc cursor(m_handle, "IMG_en_cursor_btl");
+        ui::UIObjectAcc arrow(m_handle, "IMG_en_cursor_btl_arrow");
+        cursor.startAnimation(anim, false);
+        arrow.startAnimation(anim, false);
+    }
 }
 
 }  // namespace gf

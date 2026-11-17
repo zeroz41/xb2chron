@@ -523,6 +523,99 @@ void GfMenuObjEnBook::LocationSelListener::reciveEvent(const ui::EventData& even
     }
 }
 
+void GfMenuObjEnBook::EnListListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableFSInput(4);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+            GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_enBookList);
+        }
+        break;
+    case 6:
+        if (event.m_param0 != -1) {
+            m_owner->m_enBookList->setIndex(event.m_param0);
+            m_owner->refreshEnBookList();
+            GfMenuIDList* list = m_owner->m_enBookList;
+            unsigned int id = list->getContents(list->getIndex(false)).m_id;
+            m_owner->m_seq.clear();
+            m_owner->m_seq.addJob(&GfMenuObjEnBook::seqDeleteEnmey);
+            unsigned char* bdat = GfDataBdat::getFP(0x28);
+            if (bdat != nullptr) {
+                unsigned short enemy = Bdat::getVal(bdat, "BaseEnemyID", id);
+                if (GfDataEnBook::isAttackFlag(enemy)) {
+                    m_owner->m_seq.addWait(10);
+                    m_owner->m_seq.addJob(&GfMenuObjEnBook::seqCreateEnmey);
+                }
+            }
+        }
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            GfMenuIDList* list = m_owner->m_enBookList;
+            unsigned int id = list->getContents(list->getIndex(false)).m_id;
+            unsigned char* bdat = GfDataBdat::getFP(0x28);
+            if (bdat == nullptr) {
+                break;
+            }
+            unsigned short enemy = Bdat::getVal(bdat, "BaseEnemyID", id);
+            if (!GfDataEnBook::isAttackFlag(enemy)) {
+                break;
+            }
+            GfMenuObject::sendOpenEvent(GfMenuObject::getFSInputObject(5), 0, 0.0f);
+        } else if (event.m_param1 == 2) {
+            GfMenuObject::sendOpenEvent(GfMenuObject::getFSInputObject(m_state), 4, 0.0f);
+            if (m_state == 2) {
+                GfMenuObject::sendOpenEvent(GfMenuObject::getFSInputObject(1), 4, 0.0f);
+            }
+            m_owner->m_seq.addJob(&GfMenuObjEnBook::seqFadeOutEnmey);
+            m_owner->m_seq.addJob(&GfMenuObjEnBook::seqDeleteEnmey);
+            GfMenuObjOperationInfo::setGuideText(0x3A, 0);
+        } else {
+            break;
+        }
+        GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+        GfMenuObject::disableFSInput();
+        GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+        break;
+    case 0x21: {
+        int from = event.m_param0;  // the name is not the original's
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 0;
+        param.m_eventId = 1;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        m_owner->setupEnBookIDList();
+        m_owner->refreshEnBookList();
+        m_state = from;
+        GfMenuObjOperationInfo::setGuideText(0x3B, 0);
+        break;
+    }
+    case 0x22: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 1;
+        param.m_eventId = 2;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        break;
+    }
+    case 0x100: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 0;
+        param.m_eventId = 1;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 bool GfMenuObjEnBook::seqDeleteEnmey() {
     if (m_enBookList->getSize() != 0) {
         unsigned int id = m_enBookList->getContents(m_enBookList->getIndex(false)).m_id;

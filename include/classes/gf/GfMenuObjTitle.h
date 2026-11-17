@@ -97,10 +97,15 @@ public:
 // table 0x7100B64DF8: initialize registers it on LAY_ang_info
 class GfMenuObjTitle::InfoListener : public ::ui::UIObjectListener {
 public:
-    InfoListener(GfMenuObjTitle* owner) : pad_0C(), m_owner(owner) {}
+    InfoListener(GfMenuObjTitle* owner) : m_page(0), m_result(0), pad_14(), m_owner(owner) {}
     virtual ~InfoListener() {}  // slot 0
     virtual void reciveEvent(const ui::EventData&, unsigned int);  // slot 2
-    unsigned char pad_0C[0x10];
+    // 0xC: the add-on info page shown (event 8 with 9 / 2 steps it on or back; the name is not the original's)
+    int m_page;
+    // 0x10: the 0x101 event's parameter it sends LAY_main on close (event 0x21 zeroes it with m_page; the name is
+    // not the original's)
+    int m_result;
+    unsigned char pad_14[8];
     GfMenuObjTitle* m_owner;  // 0x20
 };
 
