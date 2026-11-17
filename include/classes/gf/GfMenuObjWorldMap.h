@@ -5,6 +5,8 @@
 #include "classes/gf/GfGmkLocatorAtlas.h"
 #include "gf/GfMenuObjUtil.h"
 #include "gf/GfMenuSequence.h"
+#include "classes/ui/UIManager.h"
+#include "ui/EventData.h"
 #include "mm/Aabb.h"
 #include "mm/Col3.h"
 #include "mm/Pnt.h"
@@ -74,6 +76,23 @@ public:
         int ctrl = GfMenuObjUtil::startPresetCtrl(handle, param);
         GfMenuObject::hookCtrlEvent(handle, ctrl);
         return ctrl;
+    }
+    // 2.0.0's sendEvent (0x71005D16F0; out of line there, inlined in 3.0.1): a UI event of the type, with its first
+    // parameter, requested of the object after the frames (at 30 a second)
+    static void sendEvent(unsigned int handle, unsigned int type, unsigned int param, unsigned int frames) {
+        ui::EventData ev;
+        ev.m_type = type;
+        ev.m_param0 = param;
+        ui::UIManager::get()->requestObjectEvent(handle, ev, frames * (1.0f / 30.0f));
+    }
+    // 2.0.0's ctrlScrollBar (0x71005D36C0; out of line there, inlined in 3.0.1): fades the scroll bar in (method 1)
+    // or out (method 2) over 0.3 s
+    static void ctrlScrollBar(unsigned int handle, bool out) {
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = out ? 2 : 1;
+        param.m_time = 0.3f;
+        param.m_curve = 1;
+        GfMenuObjUtil::startCtrl(handle, param, nullptr);
     }
     // 2.0.0's symbols name it. What it does: clears the list, then adds each map of the selectable-map table whose
     // chkMapCond holds: maps 52 and 53 when add-on menu layer 3 is usable (GfMenuObjUtil::isValidExpansion(3)), else

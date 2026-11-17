@@ -32,6 +32,10 @@
 #include "classes/gf/GfMenuObjWorldMap/MainListener.h"
 #include "classes/gf/GfMenuObjWorldMap/WorldListener.h"
 #include "classes/gf/GfMenuObjWorldMap/IconFilterListener.h"
+#include "classes/gf/GfMenuObjWorldMap/MapSelectListener.h"
+#include "classes/gf/GfMenuObjCommonText.h"
+#include "classes/gmk/GmkManager.h"
+#include "classes/gmk/GmkLandmark.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/ui/UIManager.h"
 #include "ui/EventData.h"
@@ -376,6 +380,171 @@ void GfMenuObjWorldMap::WorldListener::reciveEvent(ui::EventData const& event, u
                 ev.m_param0 = 0;
                 ui::UIManager::get()->requestObjectEvent(child, ev, 0.0f);
             }
+            break;
+        }
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjWorldMap::MapSelectListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc ownerAcc(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        setupMapSelect(acc, m_owner->m_mapList);
+        GfMenuObject::setupInputSelectionFromList(handle, *m_owner->m_mapList);
+        if (m_owner->pad_2FD0 != 0) {
+            acc.setDispChild(true, "LAY_area_tag_select");
+            acc.setDispChild(false, "LAY_area_tag");
+            acc.setDispChild(false, "LAY_area_scroll_bar");
+            pad_0C = 1;
+        } else {
+            GfMenuObjMainMenu2::setSystemKeyEnable(true);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+            pad_0C = 0;
+        }
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            refreshMapSelect(acc, m_owner->m_mapList, m_owner->m_mapSelectList, m_owner->m_mapList->getIndex(true));
+            GfMenuObject::enableFSInput(0);
+            GfMenuObjMainMenu2::setSystemKeyEnable(true);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        }
+        break;
+    case 6: {
+        unsigned int index = event.m_param0;
+        int prev = event.m_param1;
+        m_owner->m_mapList->setIndex(index);
+        GfMenuReference::setReferenceWorldMapID(m_owner->m_mapList->getContents(index).m_id);
+        refreshMapSelect(acc, m_owner->m_mapList, m_owner->m_mapSelectList, m_owner->m_mapList->getIndex(true));
+        sendEvent(ownerAcc.searchChild("LAY_worldmap"), 0x101, m_owner->m_mapList->getContents(index).m_id, 0);
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 8:
+        switch (event.m_param1) {
+        case 1:
+            if (isEnterMap(GfMenuReference::getReferenceWorldMapID())) {
+                int mapId = GfMenuReference::getReferenceWorldMapID();
+                if (mapId == 0) {
+                    break;
+                }
+                int setId = gmk::GmkManager::sys()->findFirstBdatId_RSC_GmkSetList(mapId);
+                if (setId == 0) {
+                    break;
+                }
+                const char* sheet = gmk::GmkManager::sys()->getSheetnameByType(setId, gmk::GmkLandmark::TYPE);
+                if (sheet == nullptr) {
+                    break;
+                }
+                m_owner->m_gmkBdat = Bdat::getFP(sheet);
+                m_owner->pad_2F70 = m_owner->setupZoneList(m_owner->m_zoneList);
+                GfMenuZoneMapList* zoneList = m_owner->m_zoneList;
+                zoneList->m_groupMode = m_owner->pad_2F70;
+                if (m_owner->m_zoneList->getSize() != 0) {
+                    GfMenuObjOperationInfo::remove(ownerAcc.searchChild("LAY_map_sellect"),
+                                                   ownerAcc.searchChild("LAY_worldmap"), 0, 0);
+                    GfMenuObjMainMenu2::setSystemKeyEnable(false);
+                    {
+                        GfMenuObjUtil::CtrlParam param;
+                        param.m_methods = 0x10000000;
+                        param.m_motionLib = "cmn_fade_motion_lr";
+                        param.m_motion = "fade_out_l";
+                        param.m_time = 0.3f;
+                        param.m_eventId = 2;
+                        param.m_startFlags = 10;
+                        int ctrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_area_tag");
+                        if (ctrl != -1) {
+                            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+                        }
+                    }
+                    acc.setDispChild(true, "LAY_area_tag_select");
+                    {
+                        GfMenuObjUtil::CtrlParam param;
+                        param.m_methods = 0x10000000;
+                        param.m_motionLib = "cmn_fade_motion_lr";
+                        param.m_motion = "fade_in_l";
+                        param.m_time = 0.3f;
+                        param.m_startFlags = 8;
+                        GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_area_tag_select");
+                    }
+                    sendEvent(ownerAcc.searchChild("LAY_zone_sellect"), 0x103, 0, 0);
+                    ctrlScrollBar(acc.searchChild("LAY_area_scroll_bar"), true);
+                    pad_0C = 1;
+                    GfMenuObject::disableFSInput();
+                    GfMenuObjMainMenu2::setSystemKeyEnable(false);
+                    GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+                    refreshMapSelect(acc, m_owner->m_mapList, m_owner->m_mapSelectList, -1);
+                    if (GfMenuObjUtil::isValidExpansion(3)) {
+                        sendEvent(ownerAcc.searchChild("LAY_worldmap"), 0x104, 0, 0);
+                    }
+                    GfMenuObjUtil::playSECommonDecide();
+                    break;
+                }
+            } else if (GfMenuObjUtil::isValidExpansion(1) && GfMenuObjUtil::isInChallengeBattleMap()) {
+                m_owner->m_context->reset();
+                GfMenuObjCommonText::open(m_owner->m_context, 0x11D, 0);
+                break;
+            }
+            GfMenuObjUtil::playSECommon(2);
+            break;
+        case 2:
+            sendEvent(ownerAcc.searchChild("LAY_main"), 0x22, 0, 0);
+            break;
+        }
+        break;
+    default:
+        if (event.m_type == 0x101) {
+            int id = event.m_param0;
+            int index = -1;
+            for (unsigned int i = 0; i < m_owner->m_mapList->getSize(); i++) {
+                if (m_owner->m_mapList->getContents(i).m_id == id) {
+                    m_owner->m_mapList->setIndex(i);
+                    index = i;
+                    break;
+                }
+            }
+            if (index != -1) {
+                refreshMapSelect(acc, m_owner->m_mapList, m_owner->m_mapSelectList, index);
+            }
+            GfMenuObject::setupInputSelection(handle, index, m_owner->m_mapList->getSize());
+            break;
+        }
+        if (event.m_type == 0x103) {
+            acc.setDisp(true);
+            acc.setDispChild(true, "LAY_area_tag");
+            {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_motionLib = "cmn_fade_motion_lr";
+                param.m_motion = "fade_in_l";
+                param.m_time = 0.3f;
+                param.m_eventId = 1;
+                param.m_startFlags = 8;
+                int ctrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_area_tag");
+                if (ctrl != -1) {
+                    GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+                } else {
+                    GfMenuObject::enableFSInput(0);
+                    GfMenuObjMainMenu2::setSystemKeyEnable(true);
+                    GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+                }
+            }
+            if (pad_0C == 1) {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_motionLib = "cmn_fade_motion_lr";
+                param.m_motion = "fade_out_l";
+                param.m_time = 0.3f;
+                param.m_startFlags = 10;
+                GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_area_tag_select");
+                pad_0C = 0;
+            }
+            ctrlScrollBar(acc.searchChild("LAY_area_scroll_bar"), false);
             break;
         }
         ui::UIObjectListener::reciveEvent(event, handle);
