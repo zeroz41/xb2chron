@@ -299,6 +299,26 @@ bool (LayerActLayout::*LayerActLayout::s_pCallActCmd[14])(const unsigned char*& 
     &LayerActBase::actcmd_wait,     &LayerActLayout::actcmd_notcmd02, &LayerActLayout::actcmd_notcmd01,
     &LayerActBase::actcmd_ctrlspd,
 };
+void LayerActBase::setupAction(unsigned char* work, const unsigned char* data) {
+    const ActionHeader* header = reinterpret_cast<const ActionHeader*>(data);
+    m_actionData = reinterpret_cast<ActionWork*>(work);
+    m_actionData->m_data = data;
+    m_actionData->m_cmdWork = reinterpret_cast<int*>(work + sizeof(ActionWork));
+    m_actionData->m_actionMax = header->m_actionNum;
+    m_actionData->m_actions = reinterpret_cast<const LyrActionData*>(data + header->m_actionOfs);
+    m_actionData->m_runningSec = 0.0f;
+    m_actionData->m_runningIdx = 0;
+    m_actionData->m_flags = 0;
+    if (header->m_cmdWorkNum != 0) {
+        memset(m_actionData->m_cmdWork, 0, header->m_cmdWorkNum * sizeof(int));
+    }
+    if (header->m_flags & ActionHeader::FLAG_AUTO_START) {
+        startAction();
+        m_actionData->m_runningIdx = header->m_startIdx;
+        m_actionData->m_flags |= ActionWork::FLAG_CMD_START;
+        m_actionData->m_runningSec = 0.0f;
+    }
+}
 void LayerActBase::actionIdx(unsigned int index) {
     int stkIdx = LayerManager::s_nStkIdx;
     onFlag(stkIdx, FLAG_ACTION_RUNNING);
