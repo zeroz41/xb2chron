@@ -46,13 +46,21 @@
 #include "gf/GfDataItem.h"
 #include "classes/gf/GfMenuObjShop/OrbListListener.h"
 #include "classes/gf/GfMenuObjSort.h"
+#include "classes/gf/GfMenuObjShop/StoreListListener.h"
+#include "classes/gf/GfMenuObjShop/SellListListener.h"
 #include "classes/gf/GfMenuObjShop/SubListener.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfItemBox.h"
 
 namespace gf {
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009C4748). The item type of each sell
 // filter (m_filters' values index it).
 static const unsigned int s_filterItemType[13] = {0, 12, 7, 11, 10, 14, 9, 3, 2, 1, 6, 5, 8};
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_71009C477C). The GfMenuObjSort menu of each
+// sell filter (m_filters' values index it), for GfMenuObjSort::getSortID and GfMenuObjSort::open.
+static const unsigned int s_filterSortMenu[13] = {11, 3, 4, 5, 6, 7, 8, 9, 2, 10, 11, 12, 13};
 
 GfMenuObjShop::GfMenuObjShop(unsigned int handle)
     : GfMenuObject(handle), m_shopId(0), pad_34(0), m_guideTextId(0), m_selectList(nullptr), m_sellItemList(nullptr),
@@ -337,6 +345,25 @@ unsigned int GfMenuObjShop::getShopSubActLayer(unsigned int handle) {
         return acc.searchChild("LAY_orb_item_list");
     }
     return 0;
+}
+
+bool GfMenuObjShop::isShopWeapon(unsigned int shop) {
+    unsigned char* fp = GfDataBdat::getFP(0xED);
+    return static_cast<unsigned char>(Bdat::getVal(fp, "ShopType", shop)) == 0 &&
+           static_cast<unsigned short>(Bdat::getVal(fp, "ShopIcon", shop)) == 0x1AE;
+}
+
+void GfMenuObjShop::openNumSelect(unsigned int caller, unsigned int item, GfItemHandle entry, bool sell) {
+    ui::UIObjectAcc numSelect(m_handle, "LAY_num_select");
+    pad_D0 = caller;
+    m_sellHandle = entry;
+    ui::EventData event;
+    event.m_type = 0x21;
+    event.m_params[0] = item;
+    event.m_params[1] = 0x280;
+    event.m_params[2] = 0x1E0;
+    event.m_params[3] = sell;
+    GfMenuObject::sendEvent(numSelect.m_handle, event, 0.0f);
 }
 
 bool GfMenuObjShop::seqEnd() {
@@ -704,6 +731,264 @@ void GfMenuObjShop::refreshFilterIcon() {
         } else {
             icon.loadDefColor();
         }
+    }
+}
+
+void GfMenuObjShop::StoreListListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+        pad_0C = -1;
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        }
+        return;
+    case 6: {
+        int index = event.m_param0;
+        if (index != -1) {
+            int prev = event.m_param1;
+            m_owner->m_sellItemList->setIndex(index);
+            unsigned int page = m_owner->m_sellItemList->getIndex(true);
+            m_owner->m_sellObjList->setIndex(page);
+            m_owner->reqRefreshItemList();
+            if (prev != -1 && index != prev) {
+                GfMenuObjUtil::playSECommonCursor();
+            }
+        }
+        return;
+    }
+    case 8:
+        if (event.m_param1 == 1) {
+            unsigned int index = m_owner->m_sellItemList->getIndex(false);
+            if (GfMenuItemUtil::canBuyItem(m_owner->m_sellItemList->getContents(index).m_id, m_owner->m_shopId)) {
+                m_owner->openNumSelect(acc.m_handle, m_owner->m_sellItemList->getContents(index).m_id,
+                                       m_owner->m_sellItemList->getContents(index).m_entry, false);
+                GfMenuObject::disableInput(acc.m_handle);
+                GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+                GfMenuObjUtil::playSECommonDecide();
+            } else {
+                unsigned int item = m_owner->m_sellItemList->getContents(index).m_id;
+                if (m_owner->pad_34 == 1 && GfGameManager::isClearGame() && GfDataUtil::getMoney() >= 999999999) {
+                    unsigned int count = GfItemBox::sys()->countItemCategory(static_cast<ItemType::Type>(2));
+                    if (count >= GfItemBox::sys()->maxItemCategory(static_cast<ItemType::Type>(2))) {
+                        ui::UIObjectAcc main(m_owner->m_handle, "LAY_main");
+                        m_owner->m_result = 1;
+                        m_owner->m_resultParam = 0;
+                        GfMenuObject::sendCloseEvent(main.m_handle, 0, 0.0f);
+                        GfMenuObjUtil::playSECommonDecide();
+                        GfMenuObject::disableInput(acc.m_handle);
+                        return;
+                    }
+                }
+                if (GfDataItem::getItemType(item) == 2) {
+                    unsigned int count = GfItemBox::sys()->countItemCategory(static_cast<ItemType::Type>(2));
+                    if (count >= GfItemBox::sys()->maxItemCategory(static_cast<ItemType::Type>(2))) {
+                        GfMenuManager::openCommonWindow(0x11C);
+                        return;
+                    }
+                }
+                GfMenuObjUtil::playSECommon(2);
+            }
+        } else if (event.m_param1 == 2) {
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_l";
+            param.m_setDefault = true;
+            param.m_startFlags = 10;
+            param.m_eventId = 2;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            if (m_owner->m_cursor != nullptr) {
+                m_owner->m_cursor->release();
+                m_owner->m_cursor = nullptr;
+            }
+            m_owner->sendEnableEvent(acc.searchSibiling("LAY_store_action"));
+            GfMenuObjUtil::playSECommonCancel();
+        }
+        return;
+    case 0x40:
+        m_owner->m_useFilterItemType = false;
+        if (isShopWeapon(m_owner->m_shopId)) {
+            GfMenuObjBlWeapon2::openForShop(m_owner->m_shopId);
+            GfMenuObjBlWeapon2::attach(m_owner->m_blWeaponContext);
+            m_owner->m_seq.clear();
+            m_owner->m_seq.addJob(&GfMenuObjShop::seqWaitLoadBlWeapon);
+        } else {
+            acc.setDisp(true);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_in_l";
+            param.m_setDefault = true;
+            param.m_startFlags = 8;
+            param.m_eventId = 1;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            m_owner->m_sellObjList->clear();
+            m_owner->m_sellObjList->pickupObject(acc.m_handle, "LAY_store_item@%02d", 1);
+            GfMenuItemList::ItemShopSetup setup;
+            setup.m_setup.m_pageRowSize = m_owner->m_sellObjList->getSize();
+            setup.m_setup.m_pageScroll = true;
+            setup.m_shop = m_owner->m_shopId;
+            m_owner->m_sellItemList->setupFromShop(setup);
+            m_owner->m_sellItemList->setIndex(0);
+            GfMenuObject::resetInputSelection(acc.m_handle);
+            GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_sellItemList);
+            m_owner->reqRefreshItemList();
+        }
+        m_owner->setGuideText(0x3C);
+        break;
+    case 0x42:
+        GfMenuObject::enableInput(acc.m_handle);
+        GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        m_owner->setGuideText(0x3C);
+        return;
+    }
+    UIObjectListener::reciveEvent(event, handle);
+}
+
+void GfMenuObjShop::SellListListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+        pad_0C = -1;
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+            GfMenuObject::sendOpenEvent(acc.searchChild("LAY_store_sell_filter"), 0, 0.0f);
+        }
+        break;
+    case 6: {
+        int index = event.m_param0;
+        if (index != -1) {
+            int prev = event.m_param1;
+            m_owner->m_sellItemList->setIndex(index);
+            unsigned int page = m_owner->m_sellItemList->getIndex(true);
+            m_owner->m_sellObjList->setIndex(page);
+            m_owner->reqRefreshItemList();
+            if (prev != -1 && index != prev) {
+                GfMenuObjUtil::playSECommonCursor();
+            }
+        }
+        break;
+    }
+    case 8: {
+        // the decided row: the count selection takes its item, while the check reads the list's own cursor
+        unsigned int select = event.m_param0;
+        if (event.m_param1 == 1) {
+            unsigned int index = m_owner->m_sellItemList->getIndex(false);
+            if (GfMenuItemUtil::canSellItem(m_owner->m_sellItemList->getContents(index).m_id, m_owner->m_shopId)) {
+                m_owner->openNumSelect(acc.m_handle, m_owner->m_sellItemList->getContents(select).m_id,
+                                       m_owner->m_sellItemList->getContents(select).m_entry, true);
+                GfMenuObject::disableInput(acc.m_handle);
+                GfMenuObject::sendCloseEvent(acc.searchChild("LAY_store_sell_filter"), 0, 0.0f);
+                GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+                GfMenuObjUtil::playSECommonDecide();
+            } else {
+                GfMenuObjUtil::playSECommon(2);
+            }
+        } else if (event.m_param1 == 2) {
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            GfMenuObject::sendCloseEvent(acc.searchChild("LAY_store_sell_filter"), 0, 0.0f);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_l";
+            param.m_setDefault = true;
+            param.m_startFlags = 10;
+            param.m_eventId = 2;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            if (m_owner->m_cursor != nullptr) {
+                m_owner->m_cursor->release();
+                m_owner->m_cursor = nullptr;
+            }
+            m_owner->sendEnableEvent(acc.searchSibiling("LAY_store_action"));
+            GfMenuObjUtil::playSECommonCancel();
+        } else if (event.m_param1 == 0x11) {
+            unsigned int filter = m_owner->m_filters[m_owner->m_filterIndex];
+            GfMenuObjSort::open(acc.m_handle, acc.searchChild("TXT_store_sell_sort"), s_filterSortMenu[filter], pad_10);
+            GfMenuObject::disableInput(handle);
+            GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+            GfMenuObject::sendCloseEvent(acc.searchChild("LAY_store_sell_filter"), 0, 0.0f);
+        }
+        break;
+    }
+    case 0x40: {
+        m_owner->m_useFilterItemType = true;
+        acc.setDisp(true);
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_l";
+        param.m_setDefault = true;
+        param.m_startFlags = 8;
+        param.m_eventId = 1;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        m_owner->m_sellObjList->clear();
+        m_owner->m_sellObjList->pickupObject(acc.m_handle, "LAY_store_sell_item@%02d", 1);
+        mm::mtl::FixStr<32> name;
+        for (unsigned int i = 0; i < m_owner->m_sellObjList->getSize(); ++i) {
+            name.format("IMG_store_sell_item_select@%02d", i + 1);
+            acc.setDispChild(false, name.m_str);
+        }
+        m_owner->setupSellItemList();
+        GfMenuObject::resetInputSelection(acc.m_handle);
+        GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_sellItemList);
+        unsigned short sortId = GfMenuObjSort::getSortID(11, 0);
+        GfMenuObjSort::setSortLabelText(sortId, acc.searchChild("TXT_store_sell_sort"));
+        pad_10 = 0;
+        m_owner->m_sellItemList->sort(sortId, false);
+        m_owner->reqRefreshItemList();
+        m_owner->setGuideText(0x3D);
+        break;
+    }
+    case 0x42:
+        GfMenuObject::enableInput(acc.m_handle);
+        GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        m_owner->setGuideText(0x3D);
+        GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_sellItemList);
+        GfMenuObject::sendOpenEvent(acc.searchChild("LAY_store_sell_filter"), 0, 0.0f);
+        break;
+    case 0x45: {
+        m_owner->setupSellItemList();
+        m_owner->m_sellItemList->setIndex(0);
+        GfMenuObject::resetInputSelection(acc.m_handle);
+        GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_sellItemList);
+        m_owner->reqRefreshItemList();
+        unsigned int filter = m_owner->m_filters[m_owner->m_filterIndex];
+        unsigned short sortId = GfMenuObjSort::getSortID(s_filterSortMenu[filter], 0);
+        GfMenuObjSort::setSortLabelText(sortId, acc.searchChild("TXT_store_sell_sort"));
+        m_owner->m_sellItemList->sort(sortId, false);
+        pad_10 = 0;
+        break;
+    }
+    case 0x148:
+        GfMenuObject::enableInput(handle);
+        GfMenuObjOperationInfo::add(handle, 0, 0, 0);
+        GfMenuObject::sendOpenEvent(acc.searchChild("LAY_store_sell_filter"), 0, 0.0f);
+        if (pad_10 != event.m_param0) {
+            unsigned int filter = m_owner->m_filters[m_owner->m_filterIndex];
+            unsigned short sortId = GfMenuObjSort::getSortID(s_filterSortMenu[filter], event.m_param0);
+            m_owner->m_sellItemList->sort(sortId, false);
+            pad_10 = event.m_param0;
+            m_owner->reqRefreshItemList();
+        }
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
     }
 }
 

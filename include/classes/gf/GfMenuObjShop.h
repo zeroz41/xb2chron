@@ -112,9 +112,15 @@ public:
     void reqRefreshItemList();
     // GfMenuItemUtil::canCreateOrb's error as its common window: 0xB0 for 2, 0xAF for 1
     void openOrbError(unsigned int error);
+    // whether the shop sells blade weapons (ShopType 0 with ShopIcon 0x1AE): StoreListListener opens
+    // GfMenuObjBlWeapon2 for it
+    static bool isShopWeapon(unsigned int shop);
     // the mode's action layer under that object: LAY_store_action, LAY_exc_task_list, LAY_inn_action, LAY_orb_item_list
     // (0 for another mode; 1.0.0's symbols name it)
     unsigned int getShopSubActLayer(unsigned int handle);
+    // event 0x21 to "LAY_num_select" for an item (0x280, 0x1E0, sell); caller goes in pad_D0, entry in m_sellHandle
+    // (2.0.0's symbols give the parameter types; their names are not the original's)
+    void openNumSelect(unsigned int caller, unsigned int item, GfItemHandle entry, bool sell);
 
     // sequence jobs (m_seq): each returns true when done
     // "TXT_store_sell_index" shows the current filter's name (BDAT 0x11D, list 0x14B's entry filter + 1)

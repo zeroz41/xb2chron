@@ -64,6 +64,10 @@ struct EventData {
         // ui::UIInputPointer's move (0xA) where the pointer went (0 and 1) and whether onto a selection (2)
         // (the name is not the original's)
         unsigned short m_paramShort[8];
+        // the four parameters as one array: GfMenuObjShop's count selection open (0x21) sets them so (its two
+        // constant middle parameters are stored as one 8-byte word, which the views above do not give). The name is
+        // not the original's
+        int m_params[4];
     };
     // Input dispatch copies all event storage, including the reserved bytes, from the final word back.
     void copyFrom(const EventData& other) {
