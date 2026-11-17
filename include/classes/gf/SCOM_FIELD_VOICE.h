@@ -152,7 +152,7 @@ public:
     static GAME_VOICE_HANDLE* createPouchAutoAdd(unsigned int item, unsigned int blade);
     static GAME_VOICE_HANDLE* createPouchAutoAddFailed(unsigned int item, unsigned int blade);
     static void createArtsSetIra(unsigned int blade);
-    static void createSkillGetIra(unsigned int blade);
+    static GAME_VOICE_HANDLE* createSkillGetIra(unsigned int blade);  // seqSkillAnime keeps the voice
     // 2.0.0's symbols name them. createHitonowaGet (code at 0x7100569228): passes createInPartyForIra a stack list of
     // the two strings "670105" and "670106" (count 2); callers GfMenuObjHitonowa::seqDispResult and GfMenuObjNpcTelop::MainListener::reciveEvent.
     // playStop (code at 0x7100566E60): finds the request whose value at +8 is the handle in GfReqSmallCom's list at +8,

@@ -3037,12 +3037,12 @@ void SCOM_FIELD_VOICE::createArtsSetIra(unsigned int blade) {
     createDriverForIra(blade, names);
 }
 
-void SCOM_FIELD_VOICE::createSkillGetIra(unsigned int blade) {
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createSkillGetIra(unsigned int blade) {
     SCOM_FIELD_VOICE::VoiceList names;
     names.push_back("710101");
     names.push_back("710102");
     names.push_back("710103");
-    createDriverForIra(blade, names);
+    return createDriverForIra(blade, names);
 }
 
 unsigned long SCOM_ADD_ETHER::create(int a0) {

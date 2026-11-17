@@ -11,6 +11,7 @@ namespace gf {
 // the field names below are not the original's (from reciveEvent)
 class GfMenuObjBattleTelop::MainListener : public ::ui::UIObjectListener {
 public:
+    MainListener(GfMenuObjBattleTelop* owner) : m_ctrl(0), m_state(), pad_18(), m_owner(owner) {}
     virtual ~MainListener() {}  // slot 0: weak in the original (its D0 is in the unit's tail)
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
     // inline (no copy in the original), reciveEvent's: the telop fade (PresetCtrlParam preset 1, m_startFlag4, slot
@@ -25,7 +26,7 @@ public:
         int m_shown;   // 1 after the fade-in started, until the fade-out
     };
     State m_state;    // 0x10
-    unsigned char pad_18[8];
+    unsigned char pad_18[4];  // initialize zeroes 0xC-0x1B only (0x1C-0x1F is the owner pointer's alignment)
     GfMenuObjBattleTelop* m_owner;  // 0x20
 };
 }  // namespace gf
