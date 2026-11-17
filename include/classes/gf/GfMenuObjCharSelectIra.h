@@ -152,10 +152,13 @@ public:
 class GfMenuObjCharSelectIra::ParamListener : public ::ui::UIObjectListener {
 public:
     // its code zeroes 0xC-0x1B after storing its table: its own fields, as other menus' listeners use theirs
-    ParamListener(GfMenuObjCharSelectIra* owner) : pad_0C(), m_owner(owner) {}
+    ParamListener(GfMenuObjCharSelectIra* owner) : m_shown(), m_refresh(), pad_14(), m_owner(owner) {}
     virtual ~ParamListener() {}  // slot 0: its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
-    unsigned char pad_0C[0x10];
+    // the names below are not the original's
+    int m_shown;    // 1 while the parameter panel is faded in (events 0x21/0x22)
+    int m_refresh;  // 1 until the next fade-in rebuilds IMG_char_param_exp's adapter (event 1 sets it)
+    unsigned char pad_14[0x8];
     GfMenuObjCharSelectIra* m_owner;  // what initialize makes it for
 };
 
@@ -174,10 +177,11 @@ public:
 class GfMenuObjCharSelectIra::CharMoveListener : public ::ui::UIObjectListener {
 public:
     // its code zeroes 0xC-0x1B after storing its table: its own fields, as other menus' listeners use theirs
-    CharMoveListener(GfMenuObjCharSelectIra* owner) : pad_0C(), m_owner(owner) {}
+    CharMoveListener(GfMenuObjCharSelectIra* owner) : m_shown(), pad_10(), m_owner(owner) {}
     virtual ~CharMoveListener() {}  // slot 0: its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
-    unsigned char pad_0C[0x10];
+    int m_shown;  // 1 while LAY_move is shown (events 0x21/0x22; the name is not the original's)
+    unsigned char pad_10[0xC];
     GfMenuObjCharSelectIra* m_owner;  // what initialize makes it for
 };
 

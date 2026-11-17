@@ -22,6 +22,8 @@
 #include "mm/Pnt.h"
 #include "mm/mtl/FixStr.h"
 #include "ui/EventData.h"
+#include "classes/gf/GfMenuObjCmnStatus.h"
+#include "classes/gf/GfMenuCharDataAdapter.h"
 
 namespace gf {
 
@@ -31,6 +33,15 @@ namespace {
 inline int startHalfFadeIn(unsigned int handle, int eventId) {
     GfMenuObjUtil::CtrlParam param;
     param.m_methods = 1;
+    param.m_time = GfMenuObjUtil::getPresetCtrlTime(6) * 0.5f;
+    param.m_eventId = eventId;
+    return GfMenuObjUtil::startCtrl(handle, param, nullptr);
+}
+// a fade-out control of half preset 6's time on the handle's object (CharMoveListener::reciveEvent's event 0x101;
+// inline, as startHalfFadeIn; the name is not the original's)
+inline int startHalfFadeOut(unsigned int handle, int eventId) {
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 2;
     param.m_time = GfMenuObjUtil::getPresetCtrlTime(6) * 0.5f;
     param.m_eventId = eventId;
     return GfMenuObjUtil::startCtrl(handle, param, nullptr);
@@ -459,6 +470,150 @@ void GfMenuObjCharSelectIra::StatusListener::reciveEvent(const ui::EventData& ev
         break;
     case 0x22:
         GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 0, 0);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjCharSelectIra::ParamListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        m_shown = 0;
+        m_refresh = 1;
+        break;
+    case 2:
+        if (m_shown == 1) {
+            ui::UIObjectAcc base(acc.searchSibiling("IMG_char_param_base"));
+            base.startAnimation("out", false);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_l";
+            param.m_startFlags = 10;
+            param.m_eventId = 1;
+            param.m_setDefault = true;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            m_shown = 0;
+        } else {
+            acc.setTerm();
+        }
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            acc.setTerm();
+        }
+        break;
+    case 0x21:
+        if (m_shown == 0) {
+            ui::UIObjectAcc base(acc.searchSibiling("IMG_char_param_base"));
+            base.startAnimation("in", false);
+            {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_motionLib = "cmn_fade_motion_lr";
+                param.m_eventId = 0;
+                param.m_motion = "fade_in_l";
+                param.m_setDefault = true;
+                GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            }
+            m_shown = 1;
+            if (m_refresh == 1) {
+                ui::UIObjectAcc exp(acc.m_handle, "IMG_char_param_exp");
+                GfMenuCharDataAdapter::createFromReferenceDriver(exp.m_handle, 0x16, 0, true);
+                m_refresh = 0;
+            }
+        }
+        break;
+    case 0x22:
+        if (m_shown == 1) {
+            ui::UIObjectAcc base(acc.searchSibiling("IMG_char_param_base"));
+            base.startAnimation("out", false);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_l";
+            param.m_startFlags = 10;
+            param.m_eventId = 0;
+            param.m_setDefault = true;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            m_shown = 0;
+        }
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjCharSelectIra::CharMoveListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        m_shown = 0;
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            m_owner->updateDispDriver(m_owner->m_shownDriver);
+            m_owner->m_seq2.clear();
+            m_owner->m_seq2.addJob(&GfMenuObjCharSelectIra::seqWaitStreamingDriver);
+            m_owner->m_seq2.addJob(&GfMenuObjCharSelectIra::seqOpenDriver);
+        } else if (event.m_param0 == 2) {
+            m_owner->updateDispDriver(m_owner->m_shownDriver);
+        }
+        break;
+    case 0x21:
+        if (m_shown == 0) {
+            acc.setDisp(true);
+            acc.setAlpha(1.0f);
+            m_owner->updateDispDriver(m_owner->m_shownDriver);
+            {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_motionLib = "cmn_fade_motion_lr";
+                param.m_motion = "fade_in_r";
+                param.m_setDefault = true;
+                param.m_startFlags = 8;
+                GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            }
+            if (GfMenuObjCharSelectIra::s_SubMenuMode == 1) {
+                GfMenuObjCmnStatus::openDrStatus(1, -1);
+            } else if (GfMenuObjCharSelectIra::s_SubMenuMode == 2) {
+                GfMenuObjCmnStatus::openBlStatus(1, -1);
+            }
+            m_shown = 1;
+        }
+        break;
+    case 0x22:
+        if (m_shown == 1) {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "warp_r";
+            param.m_eventId = 2;
+            param.m_setDefault = true;
+            param.m_startFlags = 10;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            if (GfMenuObjCharSelectIra::s_SubMenuMode == 1) {
+                GfMenuObjCmnStatus::closeDrStatus();
+            } else if (GfMenuObjCharSelectIra::s_SubMenuMode == 2) {
+                GfMenuObjCmnStatus::closeBlStatus();
+            }
+            m_owner->m_seq2.clear();
+            m_shown = 0;
+        }
+        break;
+    case 0x101:
+        if (m_shown == 1) {
+            startHalfFadeOut(acc.m_handle, 1);
+            m_owner->m_seq2.clear();
+        } else {
+            m_owner->updateDispDriver(m_owner->m_shownDriver);
+        }
         break;
     default:
         UIObjectListener::reciveEvent(event, handle);
