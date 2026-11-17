@@ -237,6 +237,85 @@ bool GfMenuObjGiftBox::hasGetableGiftFromFilter(bool flag) {
     return false;
 }
 
+void GfMenuObjGiftBox::refreshFilter() {
+    ui::UIObjectAcc acc(m_handle, "LAY_filter");
+    unsigned int count = acc.countChild("LAY_icon@%02d", 1);
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < count; i++) {
+        unsigned int index = m_filterCursor + i;
+        name.format("LAY_icon@%02d", i + 1);
+        ui::UIObjectAcc icon(acc.m_handle, name.m_str);
+        if (icon.m_object != nullptr) {
+            if (i < m_filterCount) {
+                unsigned char* fp = GfDataBdat::getFP(0x168);
+                name.format("IMG_filter_icon@%02d", i + 1);
+                ui::UIObjectAcc image(acc.m_handle, name.m_str);
+                if (image.m_object != nullptr) {
+                    name.format("TXT_filter_no@%02d", i + 1);
+                    ui::UIObjectAcc text(acc.m_handle, name.m_str);
+                    if (text.m_object != nullptr) {
+                        if (index == 0) {
+                            image.setImageIndex(1);
+                            text.setDisp(false);
+                            m_numbers[i + 9]->m_value = -1;
+                        } else {
+                            image.setImageIndex(0);
+                            text.setDisp(true);
+                            if (fp != nullptr && Bdat::getMember(fp, "number") != nullptr) {
+                                unsigned char number = Bdat::getVal(fp, "number", i + 1);
+                                if (number == 0) {
+                                    text.setDisp(false);
+                                    m_numbers[i + 9]->m_value = -1;
+                                } else {
+                                    m_numbers[i + 9]->m_value = number;
+                                }
+                            } else {
+                                m_numbers[i + 9]->m_value = index;
+                            }
+                        }
+                        if (index == m_filterIndex) {
+                            image.setMulColor("sys_select");
+                        } else if (index == 0) {
+                            image.setMulColor("win_sub_other_line");
+                        } else {
+                            image.setMulColor("white");
+                        }
+                        icon.setDisp(true);
+                    }
+                }
+            } else {
+                icon.setDisp(false);
+            }
+        }
+    }
+    {
+        unsigned int shown = m_filterCount > count ? count : m_filterCount;
+        mm::Rect<short> center;
+        mm::Rect<short> range;
+        acc.getLayoutRect("icon_l_center", center);
+        acc.getLayoutRect("icon_l_range", range);
+        GfMenuObjUtil::placeObjectH(acc.m_handle, "LAY_icon@%02d", shown,
+                                    mm::Pnt<short>(center.x + center.w / 2, center.y + center.h / 2), range.x - center.x);
+    }
+    bool next;
+    if (count < m_filterCount) {
+        acc.setDispChild(m_filterCursor != 0, "IMG_filter_prev");
+        next = m_filterCursor + count < m_filterCount;
+    } else {
+        acc.setDispChild(false, "IMG_filter_prev");
+        next = false;
+    }
+    acc.setDispChild(next, "IMG_filter_next");
+    unsigned int filter = m_filterIndex;
+    unsigned short msg =
+        GfMenuObjUtil::getMsgIDFromList(0x168, m_counts[filter] < 0 ? 101 - m_counts[filter] : m_counts[filter] + 1);
+    if (msg != 0) {
+        ui::UIObjectAcc text(m_handle, "TXT_filter_index");
+        text.setText(ui::UIStr(GfDataBdat::getFP(0x139), msg));
+    }
+    acc.setDispChild(msg != 0, "TXT_filter_index");
+}
+
 void GfMenuObjGiftBox::updateTopList() {
     if (m_topList != nullptr) {
         unsigned char* fp = GfDataBdat::getFP(0x10A);
