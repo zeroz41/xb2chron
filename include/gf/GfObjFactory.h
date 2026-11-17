@@ -90,6 +90,11 @@ bool checkSoundTriggerPlayer(GfComSound* sound, const fw::ResSoundTriggerInfo& i
 void addExtendPackingSoundTrigger(GF_ASSET_HANDLE* asset, GfFileIdx file, GfExtendPacking* packing);
 // a driver's or a blade's slope IK limits (pitch, roll) in radians from its character data; false for other objects
 bool getSlopeIKLimit(GfObj* obj, float* pitch, float* roll);
+// Placeholder name (no symbol names it). Called by GfObjFactory::createDriver and createUiWeapon (this unit) with the
+// driver's init param and handle: the party blade's appends (GfAppendUtil::setupPartyBlade) in the Ira game or for
+// creation types 1 and 7, the act viewer's (setupActViewer, the weapon found from the blade's weapon type) for an
+// all-weapon param, then the extra model for types 1, 2, 3, 7 and 11 unless pad_1a2 is set.
+void fn_71005260B8(GfInitParamDriver& param, GF_OBJ_HANDLE* handle);
 // Placeholder name (no symbol names it). Called by GfObjFactory::createDriver (this unit): when the driver's data
 // has a blade, mounts it (attach 0, option 1) if it has no mount and makes its equipped weapon (creation type 7,
 // pad_40 12) through createDriverWeapon.
@@ -140,6 +145,24 @@ void fn_710054461C(GfObj* obj, unsigned int priority, float height, float radius
 // Placeholder name (no symbol names it). Called by GfObjFactory::createComponent: when the object's model component
 // (slot 1) has a model, gives its IK component (slot 3) a blow-rotate solver on the object data's rotate bone.
 void fn_710054473C(GfObj* obj);
+// Placeholder name (no symbol names it). Called by GfObjFactory::loadedAsset (this unit): gives the asset a new
+// GfExtendPacking (extend resource 0) and, when the skeleton of skeletonFile (fn_710054113C) and the first of the
+// count archives of files exist, fills its state machine resource from the name file of that archive (resolved
+// against the archives, bound to the skeleton and srcSkeleton); the packing, none when no state machine was made.
+GfExtendPacking* fn_7100540CC4(GF_ASSET_HANDLE* asset, const char* name, GfFileIdx skeletonFile,
+                               const char* skeletonName, unsigned int count, const GfFileIdx* files,
+                               const anm::Skeleton* srcSkeleton);
+// Placeholder name (no symbol names it). Called by GfObjFactory::createComponent and fn_710053B178 (this unit): sets
+// up the object's model component (slot 1) from the asset's file, with the skeleton of skeletonFile (fn_710054113C)
+// when it is not negative, the object's asset and view, flag (SetupInfo::pad_20) and scale; then the camera fade
+// and the collide model clip of the object's flags 0x16 and 0x17.
+void fn_71005418C4(GF_OBJ_HANDLE* handle, GfFileIdx file, GfFileIdx skeletonFile, const char* name, float scale,
+                   bool flag);
+// Placeholder name (no symbol names it). Called by GfObjFactory::destroyComponent (this unit): unmounts the object
+// from its bone, cleans up its sound, effect caster, asm, model and transform components, then deletes its sound,
+// property, model, transform, asm, effect caster and weapon behavior components (each only when its slot holds that
+// kind).
+void fn_710054056C(GF_OBJ_HANDLE* handle);
 }  // namespace gf
 
 #endif
