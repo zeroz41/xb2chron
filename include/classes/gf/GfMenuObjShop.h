@@ -169,7 +169,7 @@ public:
     bool m_stockNumDirty;  // 0x5A
     unsigned char pad_5B[0x60 - 0x5B];
     // the item filters and the current one (setFilterIndex, refreshStock; the names are not the original's)
-    mm::mtl::FixedVector<unsigned int, 22> m_filters;  // 0x60
+    mm::mtl::FixedVector<unsigned int, 21> m_filters;  // 0x60 capacity 21: StoreActListener::reciveEvent push_back compares size with 21
     unsigned int m_filterIndex;  // 0xC0
     unsigned char pad_C4[0xC8 - 0xC4];
     // the inn action list's cursor ("LAY_inn_action_cursor"): InnActListener creates it on event 0x40 and

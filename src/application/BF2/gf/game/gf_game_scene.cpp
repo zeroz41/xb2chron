@@ -785,9 +785,6 @@ void GfGameScene::gevDriverLevel(unsigned int driver, unsigned int level, unsign
     if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) && !GfGameManager::isStartGame()) {
         GfMenuObjExpGet::OpenParam param;
         param.m_extra = 0;
-        param.m_type = 0;
-        param.m_value = 0;
-        param.m_bonus = false;
         param.m_type = 3;
         param.m_value = level;
         param.m_object = handle;
