@@ -768,6 +768,40 @@ void DrMdoMat::releaseMpfMapSeamMat(MdoWrkMatRes* res) {
     res->m_ppTexture = nullptr;
 }
 
+void DrMdoAnim::updateAnimEnd(float rate, const unsigned int* dispBits, DrResEtcPamObj* pamObj) {
+    const unsigned char* blockData = m_pWrkMatRes->m_pSeamMatBlock;
+    if (blockData == nullptr) {
+        return;
+    }
+    const MdsSeamInstMatBlock* block = reinterpret_cast<const MdsSeamInstMatBlock*>(blockData);
+    const MdsFixAnmRange* ranges = reinterpret_cast<const MdsFixAnmRange*>(blockData + block->m_rangeOfs);
+    const MdsFixAnmCate* cates = reinterpret_cast<const MdsFixAnmCate*>(blockData + block->m_cateOfs);
+    const MdsMatInfoHeader* info = m_pWrkMatRes->m_pMatInfo;
+    for (int i = 0; i < m_pWrkMatRes->m_matNum; i++, info++) {
+        if ((dispBits[i >> 5] & (1 << (i & 0x1F))) && (info->m_shdFlags & 0x50000)) {
+            float* work = m_pWrkMatRes->m_pUniformVal + info->m_uniformOfs;
+            if (info->m_shdFlags & 0x10000) {
+                const MdsFixAnmRange& range = ranges[info->m_fixAnmRange[0]];
+                int num = range.m_cateNum;
+                const MdsFixAnmCate* cate = cates + range.m_cateIdx;
+                for (int j = 0; j < num; j++, cate++) {
+                    float* val = work + cate->m_valOfs;
+                    memcpy(val, m_pWrkMatRes->m_pMatVal + (info->m_uniformOfs + cate->m_valOfs), 0x20);
+                    calcAnim(cate, &m_pWrkMatRes->m_pResMat[i], pamObj, val, rate);
+                }
+            }
+            if (info->m_shdFlags & 0x40000) {
+                const MdsFixAnmRange& range = ranges[info->m_fixAnmRange[2]];
+                int num = range.m_cateNum;
+                const MdsFixAnmCate* cate = cates + range.m_cateIdx;
+                for (int j = 0; j < num; j++, cate++) {
+                    calcAnim(cate, &m_pWrkMatRes->m_pResMat[i], pamObj, work, rate);
+                }
+            }
+        }
+    }
+}
+
 void DrMdoMat::updateMatCallBack(const unsigned int* dispBits) {
     const MdsMatCallBackTbl* tbl = m_pWrkMatRes->m_pCallBackTbl;
     if (tbl == nullptr || tbl->m_matListNum == 0) {
@@ -3257,7 +3291,7 @@ void DrMdoCtlNom::callCldBackAlphaNomRender() {
 
 void DrMdoCtlNom::occRender() {
     if (m_mdlFlags & 0x2) {
-        m_pDrMan->m_pixlMan->m_occQuery->occRenderAABB(m_queryAcc, m_center, pad_140);
+        m_pDrMan->m_pixlMan->m_occQuery->occRenderAABB(m_queryAcc, m_center, m_extent);
     }
     if (m_mdlFlags & 0x4) {
         MdoWrkMatRes::InstOcc* occ = m_pWrkMatRes->m_pInstOcc;

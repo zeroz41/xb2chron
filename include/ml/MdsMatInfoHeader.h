@@ -30,7 +30,10 @@ struct MdsMatInfoHeader {
     unsigned char pad_28[0x2];
     // 0x2A: the DrApCullType DrMdoCtl's parts passes give DrAPCache::setupCulling (name inferred)
     unsigned char m_cullType;
-    unsigned char pad_2B[0x15];
+    unsigned char pad_2B[0x5];
+    // 0x30: by fixed animation kind, the material's MdsFixAnmRange; kind k runs while m_shdFlags bit 16 + k is set
+    // (DrMdoAnim::updateAnimEnd runs kinds 0 and 2, updateAnimFast 3 and 1; name inferred)
+    unsigned int m_fixAnmRange[4];
     unsigned int m_uniformOfs;  // 0x40, this material's first slot in MdoWrkMatRes::m_pUniformVal
     unsigned char pad_44[0x8];
     // 0x4C, from MdoWrkMatRes::m_pMatData: this material's TechEntry (DrMdoSetup::createUniformBlock; name inferred)

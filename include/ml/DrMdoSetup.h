@@ -22,7 +22,7 @@ public:
     explicit DrMdoSetup(int viewNum)
         : DrMdoMat(viewNum), m_scale(1.0f), pad_EC(0), m_gpuRender(false), m_renderPass(0), m_stateFlags(0),
           m_ctlFlags(0), m_ctlFlags2(0), m_aabbMax(0.5f, 0.5f, 0.5f), m_aabbMin(-0.5f, -0.5f, -0.5f),
-          m_center(0.0f, 0.0f, 0.0f), pad_140(1.0f, 1.0f, 1.0f), pad_150(0.0f, 0.0f, 0.0f), m_length(0.0f), pad_164(0),
+          m_center(0.0f, 0.0f, 0.0f), m_extent(1.0f, 1.0f, 1.0f), pad_150(0.0f, 0.0f, 0.0f), m_length(0.0f), pad_164(0),
           m_mdlFlags(0), pad_16A(0), pad_16B(0), m_nodeMax(0), pad_182(0), m_rimBloomFade(0), pad_188(0) {}
 
     void updateMpfMatUniformBlock();
@@ -149,7 +149,9 @@ public:
     mm::Vec3 m_aabbMax;  // 0x110, (0.5, 0.5, 0.5) from the constructor
     mm::Vec3 m_aabbMin;  // 0x120, (-0.5, -0.5, -0.5) from the constructor
     mm::Vec3 m_center;  // 0x130
-    mm::Vec3 pad_140;  // 0x140, (1, 1, 1) from the constructor
+    // 0x140, (1, 1, 1) from the constructor: the bound box's half size around m_center (DrMdoCtlNom::calcScreenShare
+    // projects m_center +- it; the name is not the original's)
+    mm::Vec3 m_extent;
     mm::Vec3 pad_150;  // 0x150, zeroed by the constructor
     float m_length;  // 0x160
     unsigned int pad_164;
