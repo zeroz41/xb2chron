@@ -74,10 +74,14 @@ public:
 // table 0x7100B64D08: LAY_tutorial's listener (initialize news it; the symbols name the table)
 class GfMenuObjTips::TutorialListener : public ::ui::UIObjectListener {
 public:
-    TutorialListener(GfMenuObjTips* owner) : pad_0C(), m_owner(owner) {}
+    TutorialListener(GfMenuObjTips* owner) : m_textCount(0), m_tipsId(0), m_textIndex(0), m_bgType(0), m_owner(owner) {}
     virtual ~TutorialListener() {}  // slot 0: weak, its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
-    unsigned char pad_0C[0x10];  // cleared by the constructor
+    // the field names are not the original's
+    int m_textCount;        // 0xC: reciveEvent's open (1): the "LAY_text@%02d" children
+    unsigned int m_tipsId;  // 0x10: the tips row shown (0x21's id); a close (8) sends it to LAY_list
+    int m_textIndex;        // 0x14: the index of the shown text with the greatest window_y
+    int m_bgType;           // 0x18: the row's "bg_type" whose "LAY_bg@%02d" is faded in (0: none)
     GfMenuObjTips* m_owner;
 };
 }  // namespace gf

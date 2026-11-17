@@ -1,11 +1,15 @@
 #include "classes/gf/GfMenuObjTips.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfGameCond.h"
 #include "classes/gf/GfGameFlag.h"
+#include "classes/gf/GfMenuObjBtlchTelop.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/ui/UIEventManager.h"
+#include "classes/ui/UIManager.h"
+#include "gf/GfMenuBdat.h"
 #include "gf/GfMenuObjUtil.h"
 #include "mm/mtl/FixStr.h"
 #include "plugin/Bdat.h"
@@ -330,7 +334,216 @@ bool GfMenuObjTips::isUnlockTipsID(unsigned int id) {
     return GfGameFlag::getLocal(2, id - Bdat::getIdTop(fp) + 0xEF05) & 1;
 }
 
-// TutorialListener::reciveEvent (0x7100488958) is not here yet
+void GfMenuObjTips::TutorialListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        m_textCount = acc.countChild("LAY_text@%02d", 1);
+        m_textIndex = 0;
+        acc.setDisp(false);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 0x21: {
+        unsigned int id = event.m_param0;
+        unsigned char* fp = GfDataBdat::getFP(0x102);
+        if (fp == nullptr || Bdat::getIdTop(fp) > id) {
+            fp = GfDataBdat::getFP(0x101);
+            if (fp == nullptr) {
+                break;
+            }
+        }
+        unsigned char* message = GfDataBdat::getFP(299);
+        if (message == nullptr) {
+            break;
+        }
+        mm::mtl::FixStr<16> member;
+        if (id == 0 || !GfMenuBdat::isValidBdatID(fp, id)) {
+            break;
+        }
+        {
+            ui::UIObjectAcc bg(acc.searchSibiling("LAY_bg"));
+            bg.countChild("LAY_bg@%02d", 1);
+            int bgType = static_cast<unsigned char>(Bdat::getVal(fp, "bg_type", id));
+            bool show = !m_owner->m_fromLayer;
+            if (!show) {
+                bgType = 0;
+            }
+            mm::mtl::FixStr<32> name;
+            name.format("LAY_bg@%02d", bgType);
+            if (m_tipsId == 0 || m_bgType != bgType) {
+                if (bgType != 0) {
+                    GfMenuObjUtil::setCommonFadeIn(bg.searchChild(name.m_str), 0, 0);
+                }
+                if (m_tipsId != 0 && m_bgType != 0) {
+                    name.format("LAY_bg@%02d", m_bgType);
+                    GfMenuObjUtil::setCommonFadeOut(bg.searchChild(name.m_str), 0, 0);
+                }
+                m_bgType = bgType;
+                bg.setAlpha(1.0f);
+            }
+        }
+        unsigned short title = Bdat::getVal(fp, "title", id);
+        ui::UIObjectAcc(acc.m_handle, "TXT_title").setText(ui::UIStr(message, title));
+        ui::UIObjectAcc(acc.m_handle, "TXT_title_shadow").setText(ui::UIStr(message, title));
+        float alpha = m_bgType > 1 ? 0.0f : 1.0f;
+        ui::UIObjectAcc(acc.m_handle, "TXT_title").setAlpha(alpha);
+        ui::UIObjectAcc(acc.m_handle, "TXT_title_shadow").setAlpha(alpha);
+        int ctrl = GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_title"), 1, 1);
+        GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        mm::mtl::FixStr<32> name;
+        bool cond = false;
+        if (Bdat::getMember(fp, "change_cond") != nullptr) {
+            unsigned short condition = Bdat::getVal(fp, "change_cond", id);
+            cond = condition != 0 && GfGameCond::isGameCond(condition);
+        }
+        int top = 0;
+        int topY = 0;
+        for (int i = 0; i < m_textCount; i++) {
+            if (cond) {
+                member.format("cond_window_y%d", i + 1);
+            } else {
+                member.format("window_y%d", i + 1);
+            }
+            short y = 0;
+            if (Bdat::getMember(fp, member.m_str) != nullptr) {
+                y = Bdat::getVal(fp, member.m_str, id);
+            }
+            if (cond) {
+                member.format("cond_message%d", i + 1);
+            } else {
+                member.format("message%d", i + 1);
+            }
+            unsigned short text = Bdat::getMember(fp, member.m_str) != nullptr ? Bdat::getVal(fp, member.m_str, id) : 0;
+            bool disp = false;
+            if (y != 0 && GfMenuBdat::isValidBdatID(message, text)) {
+                name.format("TXT_text@%02d", i + 1);
+                ui::UIObjectAcc txt(acc.m_handle, name.m_str);
+                ui::UIStr str(message, text);
+                txt.setText(str);
+                disp = true;
+            }
+            name.format("LAY_text@%02d", i + 1);
+            ui::UIObjectAcc lay(acc.m_handle, name.m_str);
+            lay.setDisp(disp);
+            if (disp) {
+                mm::Pnt<short> pos;
+                lay.getPos(pos);
+                pos.y = y;
+                lay.setPos(pos);
+                if (y > topY) {
+                    topY = y;
+                    top = i;
+                }
+            }
+            name.format("IMG_text_arrow@%02d", i + 1);
+            acc.setDispChild(false, name.m_str);
+        }
+        m_textIndex = top;
+        GfMenuObject::releaseTimer(acc.m_handle);
+        GfMenuObject::registTimer(acc.m_handle, 0, 0.5f, true);
+        unsigned char* tips = GfDataBdat::getFP(0x102);
+        if (tips != nullptr && Bdat::getIdTop(tips) <= id) {
+            m_owner->setViewTipsID(id);
+        }
+        acc.setDisp(true);
+        acc.setAlpha(1.0f);
+        m_tipsId = id;
+        break;
+    }
+    case 3:
+        switch (event.m_param0) {
+        case 1:
+            GfMenuObject::enableInput(acc.m_handle);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+            if (!m_owner->m_fromLayer) {
+                unsigned int index = m_owner->m_idList->getIndex(false);
+                unsigned int last = m_owner->m_idList->getSize() - 1;
+                GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 9, index < last && !m_owner->m_fromLayer);
+                GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 10, index != 0 && !m_owner->m_fromLayer);
+                GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 1, false);
+            } else {
+                GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 2, false);
+                GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 9, false);
+                GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 10, false);
+            }
+            break;
+        case 2: {
+            ui::UIObjectAcc bg(acc.searchSibiling("LAY_bg"));
+            int count = bg.countChild("LAY_bg@%02d", 1);
+            mm::mtl::FixStr<32> name;
+            for (unsigned int i = 0; i < count; i++) {
+                name.format("LAY_bg@%02d", i + 1);
+                bg.setDispChild(false, name.m_str);
+            }
+            m_tipsId = 0;
+            if (m_owner->m_fromLayer) {
+                GfMenuObjOperationInfo::close();
+                ui::UIManager::get()->terminateLayer(m_owner->m_fsLayer, true);
+            }
+            break;
+        }
+        case 3: {
+            unsigned int index = m_owner->m_idList->getIndex(false) + 1;
+            m_owner->m_idList->setIndex(index);
+            GfMenuObject::sendOpenEvent(
+                acc.m_handle, m_owner->m_idList->getContents(m_owner->m_idList->getIndex(false)).m_id, 0.0f);
+            break;
+        }
+        case 4: {
+            unsigned int index = m_owner->m_idList->getIndex(false) - 1;
+            m_owner->m_idList->setIndex(index);
+            GfMenuObject::sendOpenEvent(
+                acc.m_handle, m_owner->m_idList->getContents(m_owner->m_idList->getIndex(false)).m_id, 0.0f);
+            break;
+        }
+        }
+        break;
+    case 8: {
+        int type = event.m_param1;
+        switch (type) {
+        case 9:
+            GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 3, 0);
+            GfMenuObjUtil::playSECommonCursor();
+            break;
+        case 10:
+            GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 4, 0);
+            GfMenuObjUtil::playSECommonCursor();
+            break;
+        case 1:
+        case 2:
+            GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 2, 0);
+            if (!m_owner->m_fromLayer) {
+                GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_list"), m_tipsId, 0.0f);
+            }
+            {
+                ui::UIObjectAcc bg(acc.searchSibiling("LAY_bg"));
+                GfMenuObjUtil::setCommonFadeOut(bg.m_handle, 0, 0);
+            }
+            if (type == 1) {
+                GfMenuObjUtil::playSECommonDecide();
+            } else {
+                GfMenuObjUtil::playSECommonCancel();
+            }
+            break;
+        default:
+            return;
+        }
+        if (!m_owner->m_mainSeq.m_jobs.empty()) {
+            GfMenuObjBtlchTelop::forceClose();
+            m_owner->m_mainSeq.clear();
+        }
+        GfMenuObject::disableInput(acc.m_handle);
+        if (type == 1 || type == 2) {
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+        }
+        break;
+    }
+    case 0xB:
+        break;
+    }
+}
 
 void GfMenuObjTips::setViewTipsID(unsigned int id) {
     unsigned char* fp = GfDataBdat::getFP(0x102);
