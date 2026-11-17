@@ -2471,6 +2471,48 @@ void DrMdoCtlMpfAuto::getMemWork(_MPFWorkAutoInf* inf) {
     }
 }
 
+// Scatters each hit's colour by the entry's m_colRand and stocks the hit's height (m_pos[1]) with it; true when a
+// stock filled and went to setHeMemWork.
+bool DrMdoCtlMpfAuto::StockPoint() {
+    m_col.a = m_alpha;
+    bool full = false;
+    for (int i = 0; i < m_hitNum; i++) {
+        int range = m_pCurEntry->m_colRand;
+        if (range != 0) {
+            int width = range * 2;
+            int ofs = range * 4;
+            int r = m_pHit[i].m_col.r + static_cast<int>(mtRand()) % width * 4 - ofs;
+            int g = m_pHit[i].m_col.g + static_cast<int>(mtRand()) % width * 4 - ofs;
+            int b = m_pHit[i].m_col.b + static_cast<int>(mtRand()) % width * 4 - ofs;
+            if (r > 0x1FF) {
+                r = 0x1FF;
+            } else if (r < 0) {
+                r = 0;
+            }
+            if (g > 0x1FF) {
+                g = 0x1FF;
+            } else if (g < 0) {
+                g = 0;
+            }
+            if (b > 0x1FF) {
+                b = 0x1FF;
+            } else if (b < 0) {
+                b = 0;
+            }
+            m_col.r = r >> 1;
+            m_col.g = g >> 1;
+            m_col.b = b >> 1;
+        } else {
+            m_col.r = m_pHit[i].m_col.r >> 1;
+            m_col.g = m_pHit[i].m_col.g >> 1;
+            m_col.b = m_pHit[i].m_col.b >> 1;
+        }
+        m_pos[1] = m_pHit[i].m_y;
+        full |= StockWorkPoint();
+    }
+    return full;
+}
+
 void DrMdoCtlMpfAuto::gridInstColiCalc() {
     m_hitNum = 0;
     for (int i = 0; i < m_buffNum; i++) {
@@ -2519,6 +2561,39 @@ bool DrMdoCtlMpfAuto::gridChkColiRange(float maxX, float minX, float maxZ, float
 }
 
 DrMdoCtlMpfWork::DrMdoCtlMpfWork() {}
+
+// Adds the current point (m_pos .. 0xF0) to the stocked height within m_stockRange of m_pos[1], or stocks a new
+// height (up to five); a stock that grows past 0x600 bytes of work goes to setHeMemWork.
+bool DrMdoCtlMpfAuto::StockWorkPoint() {
+    if (m_stockCnt == 0) {
+        m_stockHeight[0] = m_pos[1];
+        memcpy(m_pStockBuf[0], m_pos, 0x20);
+        m_stockNum[0] = 1;
+        m_stockCnt++;
+        return false;
+    }
+    m_stockCnt++;
+    for (int i = 0; i < m_stockHeightNum; i++) {
+        if (fabsf(m_pos[1] - m_stockHeight[i]) <= m_stockRange) {
+            float rate = 1.0f / (m_stockNum[i] + 1);
+            m_stockHeight[i] = m_pos[1] * rate + m_stockHeight[i] * (1.0f - rate);
+            memcpy(m_pStockBuf[i] + m_stockNum[i] * 0x20, m_pos, 0x20);
+            m_stockNum[i]++;
+            if (m_stockNum[i] * 0x170UL >= 0x600) {
+                return setHeMemWork(i);
+            }
+            return false;
+        }
+    }
+    if (m_stockHeightNum > 4) {
+        return false;
+    }
+    m_stockHeight[m_stockHeightNum] = m_pos[1];
+    memcpy(m_pStockBuf[m_stockHeightNum], m_pos, 0x20);
+    m_stockNum[m_stockHeightNum] = 1;
+    m_stockHeightNum++;
+    return false;
+}
 
 void DrMdoCtlMpfAuto::CreateDisplayList(DrCalcViewWork* view, DrMdoCtlMpfWork* work) {
     float fadeIn = DrMan::getIns()->m_mpfWindPower * (1.0f / 15.0f);
@@ -6670,6 +6745,54 @@ void DrMdoShdSetShadow::shwShd_InstT(int shd, const MdsMatInfoHeader* info, int,
     m_pMdl->m_bindFlags[0] &= ~2;
 }
 
+void DrMdoShdSetShadow::shwShd_Mot(int shd, const MdsMatInfoHeader* info, int, int, DrShdDataList* list) {
+    DrResShdShw* obj = list->getShwObj(s_pShwUseShdader[shd]);
+    DrMdoCtl* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        unsigned char dec = s_pShwTypeDec[shd];
+        obj->setDecAType(dec >> 4);
+        obj->setDecBType(dec & 0xF);
+        obj->setupShader(list->getFetchShader(s_pShwFethcTbl[m_pMdl->m_bindFlags[1]][shd]));
+        m_pMdl->m_pDrMan->m_pixlMan->m_shadowUniform->setUniformBlock(obj->m_shaderSel[2]);
+        list->m_boneStmOut.setStorageBuffer(obj->m_shaderSel[1]);
+    }
+}
+
+void DrMdoShdSetShadow::shwShd_MotT(int shd, const MdsMatInfoHeader* info, int, int, DrShdDataList* list) {
+    DrResShdShw* obj = list->getShwObj(s_pShwUseShdader[shd]);
+    DrMdoCtl* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        unsigned char dec = s_pShwTypeDec[shd];
+        obj->setDecAType(dec >> 4);
+        obj->setDecBType(dec & 0xF);
+        obj->setupShader(list->getFetchShader(s_pShwFethcTbl[m_pMdl->m_bindFlags[1]][shd]));
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[3]);
+        m_pMdl->m_pDrMan->m_pixlMan->m_shadowUniform->setUniformBlock(obj->m_shaderSel[2]);
+        list->m_boneStmOut.setStorageBuffer(obj->m_shaderSel[1]);
+    }
+    setOneTexShaderSet(info->m_texEntryIdx, obj->m_shaderSel[0]);
+}
+
 void DrMdoShdSetShadow::shwShd_InstMot(int shd, const MdsMatInfoHeader*, int, int, DrShdDataList* list) {
     DrResShdShw* obj = list->getShwObj(s_pShwUseShdader[shd]);
     if (m_pMdl->m_curShaderIdx != shd) {
@@ -6682,6 +6805,22 @@ void DrMdoShdSetShadow::shwShd_InstMot(int shd, const MdsMatInfoHeader*, int, in
     }
     m_pMdl->m_pDrMan->m_mdlMan->m_etcUniform->setUniformBlock(m_pMdl->m_pWrkMatRes->m_pEtcRef->m_etcIdx,
                                                               obj->m_shaderSel[1]);
+}
+
+void DrMdoShdSetShadow::shwShd_InstMotT(int shd, const MdsMatInfoHeader* info, int, int, DrShdDataList* list) {
+    DrResShdShw* obj = list->getShwObj(s_pShwUseShdader[shd]);
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        unsigned char dec = s_pShwTypeDec[shd];
+        obj->setDecAType(dec >> 4);
+        obj->setDecBType(dec & 0xF);
+        obj->setupShader(list->getFetchShader(s_pShwFethcDef[shd]));
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[3]);
+        m_pMdl->m_pDrMan->m_pixlMan->m_shadowUniform->setUniformBlock(obj->m_shaderSel[2]);
+    }
+    m_pMdl->m_pDrMan->m_mdlMan->m_etcUniform->setUniformBlock(m_pMdl->m_pWrkMatRes->m_pEtcRef->m_etcIdx,
+                                                              obj->m_shaderSel[1]);
+    setOneTexShaderSet(info->m_texEntryIdx, obj->m_shaderSel[0]);
 }
 
 void DrMdoShdSetShadow::shwShd_Fw(int shd, const MdsMatInfoHeader* info, int triIdx, int matIdx, DrShdDataList* list) {

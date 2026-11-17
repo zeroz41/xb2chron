@@ -136,7 +136,8 @@ public:
     void resetPrePos();
     bool calcColiChk(const MdsMpfAutoPoli* poli);
     void gridTreeColiCalc(const MdsMpfAutoTree* tree);
-    void StockPoint();
+    bool StockPoint();
+    bool StockWorkPoint();
     void getMemWork(_MPFWorkAutoInf* inf);
     bool setHeMemWork(int idx);
     void gridInstColiCalc();
@@ -148,7 +149,10 @@ public:
 
     // One entry of m_pEntry (0xC bytes; the name is not the original's).
     struct Entry {
-        unsigned char pad_0[0x4];
+        unsigned char pad_0[0x2];
+        // 0x2: StockPoint scatters each hit's colour by up to four times this either way (0: none)
+        unsigned char m_colRand;
+        unsigned char pad_3[0x1];
         unsigned char m_objIdx;  // 0x4: the DrMdoCtlMpfWork object CreateDisplayList lists the entry's work under
         unsigned char pad_5[0x7];
     };
@@ -159,7 +163,8 @@ public:
     const unsigned char* m_pPoliData;  // 0x28: setupAutoMpf sets it to data + the head's offset at 0x4C
     const unsigned int* m_pIdxTbl;  // 0x30: the instance trees' index table
     const unsigned char* m_pColTbl;  // 0x38: the buffer's fourth table (4-byte colours)
-    unsigned char pad_40[0x10];
+    unsigned char pad_40[0x8];
+    const Entry* m_pCurEntry;  // 0x48: the m_pEntry entry autoMpfCalc is placing
     _wkMpfAutoBuff* m_pBuff;  // 0x50: the one buffer setupAutoMpf builds at the start of the work
     _wkMpfAutoBuff* m_pCurBuff;  // 0x58: the buffer gridInstColiCalc is testing
     _wkMpfAutoBuff** m_pBuffTbl;  // 0x60
@@ -167,7 +172,7 @@ public:
     unsigned int m_autoFlags;  // 0x6C: DrResMdoSeamWrkMpf::seachMpfPoli clears bit 6
     unsigned int m_lodMask;  // 0x70: autoMpfCalc stores 1 << a data byte
     int m_param74;  // 0x74: setupAutoMpf clears it
-    unsigned char pad_78[0x4];
+    int m_alpha;  // 0x78: autoMpfCalc stores 0xF or 0, StockPoint copies it into m_col.a
     int m_workIdx;  // 0x7C: the m_pWorkTbl chain getMemWork links new work into
     int m_workNum;  // 0x80: autoMpfCalc's loop bound
     int m_workNum2;  // 0x84: cleared with m_workNum by the constructor
@@ -197,7 +202,9 @@ public:
     unsigned char pad_EC[0x4];
     Hit* m_pHit;  // 0xF0: m_hitNum entries
     int m_hitNum;  // 0xF8: gridInstColiCalc clears it, the tree tests count up
-    unsigned char pad_FC[0xC];
+    float m_stockRange;  // 0xFC: StockWorkPoint adds a hit to a stocked height this close
+    int m_stockCnt;  // 0x100: StockWorkPoint calls
+    int m_stockHeightNum;  // 0x104: used entries of m_stockHeight
     unsigned char* m_pStockBuf[5];  // 0x108: 0x20-byte points stocked per height, setHeMemWork copies them out
     float m_stockHeight[5];  // 0x130
     int m_stockNum[5];  // 0x144: points in each m_pStockBuf, setHeMemWork clears it
