@@ -38,6 +38,11 @@ public:
     static bool isEnableOption();
     static bool isEnableEventsTheater();
     static bool isEnableNewGameAdv();
+    // 2.0.0's symbols name them (3.0.1's linker dropped the copies ListListener::reciveEvent inlines). What they do:
+    // mode 0 shows LAY_keywait and gives it the input, mode 1 does so for LAY_list (the modes are
+    // ListListener::m_state's 0 and 1)
+    static void setDispMode(unsigned int handle, int mode);
+    static void setInputMode(unsigned int handle, int mode);
     void moveCursor(unsigned int handle, int index);
     // 2.0.0's symbols name it. What it does: opens common window 0x11B once, then sends event 0x101 to LAY_main
     bool seqAocError();
@@ -87,10 +92,13 @@ public:
 class GfMenuObjTitle::ListListener : public ::ui::UIObjectListener {
 public:
     // its code zeroes 0xC-0x1B after storing its table, as other menus' listeners do
-    ListListener(GfMenuObjTitle* owner) : pad_0C(), m_owner(owner) {}
+    ListListener(GfMenuObjTitle* owner) : m_state(0), pad_10(), m_owner(owner) {}
     virtual ~ListListener() {}  // slot 0
     virtual void reciveEvent(const ui::EventData&, unsigned int);  // slot 2
-    unsigned char pad_0C[0x10];
+    // 0xC: 0 while LAY_keywait shows (event 1, cancel), 1 while LAY_list takes input (0x101, any other key), 2 once
+    // an item is decided (the name is not the original's)
+    int m_state;
+    unsigned char pad_10[0xC];
     GfMenuObjTitle* m_owner;  // 0x20: what initialize makes it for
 };
 
