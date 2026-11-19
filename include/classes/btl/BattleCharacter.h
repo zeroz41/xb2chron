@@ -362,6 +362,10 @@ public:
     // the lever gacha's input while the action is 16 and the fight combo's id is 2 or 3 (left stick, buttons of
     // the control pad's m_down), else its state is reset
     void LeverReduceProc(ACTION_ID id);
+    // while both SetExitBattle flags are set: ends the character's blade change (unless it cannot be cancelled) and
+    // its formation change; a blade of BDAT id 0x3EB starts a blade change back to its driver; answers true (and sets
+    // m_isRunHold) for that blade, for actions in a fixed set and for a driver's action 9
+    bool CheckForceExit(ACTION_ID id);
     // sends the character's effect caster the elemental combo effect (BDAT 0x23 "Effect"; MsgUnk_1000050) and plays
     // its "SE"; answers the effect handle (0: none)
     int CreateElementalComboEffect(int id);
@@ -603,6 +607,9 @@ public:
     int IsEnableArts(int, int slot, int, gf::GF_OBJ_HANDLE* target) const;
     void SetSpAttackRecastByLevel(int level, bool);
     float GetArtsAttackDistance(const ARTS_DATA& arts) const;
+    // while m_state is the action id, moves m_actionID on by one for the step asked (id 12: 2, 0xB or 8; id 10: a
+    // blade's 9 or a driver's 3; id 9: a driver's 8); answers whether it could, and with test set leaves it as is
+    bool ProgressActionState(ACTION_ID id, int step, bool test);
     void TurnDirection(const mm::Vec3& dir, bool, bool);
     void SetAnimation(ANIM_ID id, bool, int, int, bool, bool);
     // 1.0.0's UpdateBuffEffect(int) (0x7100036A18, right before UpdateTargetLockArrow as here): one buff id

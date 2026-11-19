@@ -584,7 +584,11 @@ public:
     unsigned char pad_83c3_0 : 1;
     unsigned char pad_83c3_1 : 1;
     unsigned char pad_83c3_2 : 6;
-    unsigned char pad_83c4[0x4];
+    unsigned char pad_83c4[0x2];
+    // the blade change type BattleCharacter::CheckForceExit hands to BladeChangeManager::StartBladeChange (3 while
+    // pad_bit36 is set; meaning unknown)
+    signed char pad_83c6;
+    unsigned char pad_83c7;
     // the highest level of an enemy that joined through a link, +15 for a named one (NotifyLinkJoinBattle; the name
     // is not the original's)
     unsigned char m_linkJoinLevel;
@@ -647,7 +651,8 @@ public:
     bool m_killChild : 1;
     unsigned char : 1;
     bool pad_bit35 : 1;  // IsButtonChallengeAutoSuccess holds while it is set
-    unsigned char : 2;
+    bool pad_bit36 : 1;  // while set, BattleCharacter::CheckForceExit starts its blade change with type 3 (meaning unknown)
+    unsigned char : 1;
     // EnemyParameter::BattleStart sets it for an enemy whose ChrEnArrange row has the Hikari flag; meaning unknown
     bool pad_bit38 : 1;
     // EnemyParameter::BattleStart sets it for an enemy with m_isInvalidWarp; meaning unknown

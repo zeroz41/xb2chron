@@ -1013,6 +1013,39 @@ void BattleCharacter::LeverReduceProc(ACTION_ID id) {
     global->m_leverGachaInput = false;
 }
 
+bool BattleCharacter::CheckForceExit(ACTION_ID id) {
+    if (!m_exitBattle || !m_exitBattleFlag) {
+        return false;
+    }
+    gf::GF_OBJ_HANDLE* handle = m_handle;
+    if (BladeChangeManager::sys()->IsRegister(handle)) {
+        if (BladeChangeManager::sys()->IsProcDisableCancel(handle)) {
+            return false;
+        }
+        BladeChangeManager::sys()->FinishBladeChange(handle);
+    }
+    FormationChangeManager::sys()->ForceExit(handle);
+    CharacterParameter* param = GetCharacterParameter(false);
+    if (param != nullptr && param->IsBlade(true) && m_bdatID == 0x3EB) {
+        if (!BladeChangeManager::sys()->IsRegister(handle)) {
+            gf::GF_OBJ_HANDLE* driver = GetCharacterParameter(false)->m_driverHandle;
+            BattleGlobal* global = mm::mtl::PtrSingleton<BattleGlobal>::sys();
+            int type = global->pad_bit36 ? 3 : global->pad_83c6;
+            BladeChangeManager::sys()->StartBladeChange(driver, handle, type, 5, false);
+        }
+        return true;
+    }
+    // the actions 1-4, 6, 7, 9, 10, 13-22 and 24
+    if (((1 << id) & 0x17FE6DE) == 0) {
+        CharacterParameter* param = GetCharacterParameter(false);
+        if (param == nullptr || !param->IsDriver(true) || id != ACTION_BLADE_CHANGE) {
+            return false;
+        }
+    }
+    m_isRunHold = true;
+    return true;
+}
+
 void BattleCharacter::BattleEndInitialize() {
     pad_F07_3 = false;
     pad_F07_4 = false;
@@ -1513,6 +1546,78 @@ float BattleCharacter::GetArtsAttackDistance(const ARTS_DATA& arts) const {
         distance *= param->m_distanceScale;
     }
     return distance;
+}
+
+bool BattleCharacter::ProgressActionState(ACTION_ID id, int step, bool test) {
+    if (m_state != id) {
+        return false;
+    }
+    switch (id) {
+    case ACTION_BLADE_CHANGE:
+        if (step == 1 && m_actionID == 8) {
+            CharacterParameter* param = GetCharacterParameter(false);
+            if (param != nullptr && param->IsDriver(false)) {
+                if (!test) {
+                    m_actionID = 9;
+                }
+                return true;
+            }
+        }
+        break;
+    case 10:
+        switch (step) {
+        case 1: {
+            CharacterParameter* param = GetCharacterParameter(false);
+            if (param != nullptr && param->IsDriver(false) && m_actionID == 3) {
+                if (!test) {
+                    m_actionID = 4;
+                }
+                return true;
+            }
+            break;
+        }
+        case 2: {
+            CharacterParameter* param = GetCharacterParameter(false);
+            if (param != nullptr && param->IsBlade(false) && m_actionID == 9) {
+                if (!test) {
+                    m_actionID = 10;
+                }
+                return true;
+            }
+            break;
+        }
+        }
+        break;
+    case 12:
+        switch (step) {
+        case 1:
+            if (m_actionID == 2) {
+                if (!test) {
+                    m_actionID = 3;
+                }
+                return true;
+            }
+            break;
+        case 2:
+            if (m_actionID == 0xB) {
+                if (!test) {
+                    m_actionID = 0xC;
+                }
+                return true;
+            }
+            break;
+        case 3:
+            if (m_actionID == 8) {
+                if (!test) {
+                    m_actionID = 9;
+                }
+                return true;
+            }
+            break;
+        }
+        break;
+    }
+    return false;
 }
 
 void BattleCharacter::ReviveHeal(BattleCharacter* rescuer) {
