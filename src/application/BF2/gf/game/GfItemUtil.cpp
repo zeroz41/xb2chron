@@ -444,6 +444,55 @@ void GfItemUtil::getPrice(ItemPrice& price, unsigned int item, unsigned int shop
     price.m_eightHundredth = result == 0 ? 1 : result;
 }
 
+void GfItemUtil::getInfo(::mm::mtl::FixedVector<GfItem, 1024>& items, ItemType::Type type, bool withoutEquip) {
+    switch (type) {
+    case 2:
+    case 3:
+    case 16:
+    case 17:
+    case 18:
+    case 19:
+    case 20: {
+        GfItemBox::get()->isMulti(type);  // its result is not used
+        item_iterator it = GfItemBox::get()->begin(type);
+        item_iterator last = GfItemBox::get()->end(type);
+        while (it.m_cur != last.m_cur) {
+            GfItemInfo* info = *it.m_cur;
+            if (info->m_id != 0) {
+                // the original does not step past an equipped entry here (it tests the same entry again)
+                if (withoutEquip && info->m_equip) {
+                    continue;
+                }
+                GfItem item;
+                item.m_count = info->m_count;
+                item.m_item = info->getItemID();
+                item.m_handle = (*it.m_cur)->getHandle();
+                item.m_equipChar = (*it.m_cur)->m_equip ? getEquipChar((*it.m_cur)->getHandle()) : 0;
+                items.push_back(item);
+            }
+            ++it;
+        }
+        break;
+    }
+    default: {
+        item_iterator it = GfItemBox::get()->begin(type);
+        item_iterator last = GfItemBox::get()->end(type);
+        for (; it.m_cur != last.m_cur; ++it) {
+            GfItemInfo* info = *it.m_cur;
+            if (info->m_id == 0) {
+                continue;
+            }
+            GfItem item;
+            item.m_item = info->getItemID();
+            item.m_count = info->m_count;
+            item.m_handle = info->getHandle();
+            items.push_back(item);
+        }
+        break;
+    }
+    }
+}
+
 GfItem GfItemUtil::getInfo(unsigned int item) {
     GfItem info;
     info.m_count = GfItemBox::get()->countItem(item);
