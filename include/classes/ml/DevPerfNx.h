@@ -2,6 +2,8 @@
 #define CLASSES_ML_DEVPERFNX_H
 
 #include "classes/ml/DevPerf.h"
+#include "classes/ml/WorkCpu.h"
+#include "nn/oe.h"
 
 namespace ml {
 // the base at 0x8: ml::DevPerfNx's destructor passes it to WorkCpu::removeSystemInfoListener(IWorkInfomation*)
@@ -16,6 +18,19 @@ public:
 // table 0x7100B76808
 class DevPerfNx : public TUnk_B76808, public IWorkInfomation {
 public:
+    // inline: ml::DeviceNx::createDevice builds it (the original has no out-of-line copy)
+    DevPerfNx() {
+        m_operationMode = DevPerfOperationMode(nn::oe::GetOperationMode() != 0);
+        m_performanceMode = DevPerfMode(nn::oe::GetPerformanceMode() == 1 ? 2 : 1);
+        m_perfConfig[0] = DevPerfConfig(0);
+        m_perfConfig[1] = DevPerfConfig(0);
+        m_perfConfig[2] = DevPerfConfig(2);
+        WorkCpu::addSystemInfoListener(this);
+        nn::oe::SetOperationModeChangedNotificationEnabled(true);
+        nn::oe::SetPerformanceModeChangedNotificationEnabled(true);
+        nn::oe::SetResumeNotificationEnabled(true);
+        nn::oe::EnterExitRequestHandlingSection();
+    }
     virtual ~DevPerfNx();  // slot 0
     virtual void update();  // slot 2
     virtual DevPerfOperationMode getOperationMode() const;  // slot 3

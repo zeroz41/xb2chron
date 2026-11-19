@@ -29,6 +29,8 @@ public:
 // table 0x7100B760F8; its singleton at 0x1A8 (the destructor stores PtrSingleton<ml::DevPerf>'s table there)
 class DevPerf : public ::ml::WorkObj, public ::mm::mtl::PtrSingleton<DevPerf> {
 public:
+    // inline: ml::DeviceNx::createDevice builds it (the original has no out-of-line copy)
+    DevPerf(const char* name, WorkObj* parent) : WorkObj(name, parent, 0), m_impl(nullptr) {}
     virtual ~DevPerf();  // slot 0
     virtual void wkUpdate();  // slot 9
     virtual bool wkStandbyLogin();  // slot 14

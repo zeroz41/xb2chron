@@ -3,8 +3,83 @@
 
 #include "nn/result.h"
 #include "nn/os.h"
+#include "nn/util.h"
 
 namespace nn { namespace hid {
+
+// the SDK's controllers (ml::DevPadNx::Impl::updateNpad reads each pad's style set and state): an id, the style
+// bits (the SDK's FullKey 0, Handheld 1, JoyDual 2)
+typedef unsigned int NpadIdType;
+struct NpadStyleTag;
+typedef util::BitFlagSet<32, NpadStyleTag> NpadStyleSet;
+typedef NpadStyleSet::Flag<0> NpadStyleFullKey;
+typedef NpadStyleSet::Flag<1> NpadStyleHandheld;
+typedef NpadStyleSet::Flag<2> NpadStyleJoyDual;
+NpadStyleSet GetNpadStyleSet(const NpadIdType& id);
+
+struct AnalogStickState {
+    int x;
+    int y;
+};
+// the per-style states GetNpadState fills (0x28 bytes, the room updateNpad's buffer leaves; the SDK's fields)
+struct NpadFullKeyState {
+    long samplingNumber;
+    unsigned long buttons;  // an NpadButtonSet
+    AnalogStickState analogStickL;
+    AnalogStickState analogStickR;
+    unsigned int attributes;  // an NpadAttributesSet
+};
+struct NpadHandheldState {
+    long samplingNumber;
+    unsigned long buttons;
+    AnalogStickState analogStickL;
+    AnalogStickState analogStickR;
+    unsigned int attributes;
+};
+struct NpadJoyDualState {
+    long samplingNumber;
+    unsigned long buttons;
+    AnalogStickState analogStickL;
+    AnalogStickState analogStickR;
+    unsigned int attributes;
+};
+void GetNpadState(NpadFullKeyState* pOutValue, const NpadIdType& id);
+void GetNpadState(NpadHandheldState* pOutValue, const NpadIdType& id);
+void GetNpadState(NpadJoyDualState* pOutValue, const NpadIdType& id);
+
+// the SDK's vibration devices (ml::DevPadNx::Impl::initializeVibration sets up a pad's): a handle, its kind and side,
+// and a vibration value (Make gives the SDK's resting value, 160 and 320 Hz)
+struct VibrationDeviceHandle {
+    unsigned int _storage;
+};
+enum VibrationDeviceType {
+    VibrationDeviceType_Unknown,
+    VibrationDeviceType_LinearResonantActuator,
+};
+enum VibrationDevicePosition {
+    VibrationDevicePosition_None,
+    VibrationDevicePosition_Left,
+    VibrationDevicePosition_Right,
+};
+struct VibrationDeviceInfo {
+    VibrationDeviceType deviceType;
+    VibrationDevicePosition position;
+};
+struct VibrationValue {
+    static VibrationValue Make() {
+        VibrationValue value = {0.0f, 160.0f, 0.0f, 320.0f};
+        return value;
+    }
+
+    float amplitudeLow;
+    float frequencyLow;
+    float amplitudeHigh;
+    float frequencyHigh;
+};
+int GetVibrationDeviceHandles(VibrationDeviceHandle* pOutValues, int count, const NpadIdType& id,
+                              NpadStyleSet style);
+void InitializeVibrationDevice(const VibrationDeviceHandle& handle);
+void GetVibrationDeviceInfo(VibrationDeviceInfo* pOutValue, const VibrationDeviceHandle& handle);
 
 // the SDK's touch screen setup (ml::DevTouchNx::createDevice calls it)
 void InitializeTouchScreen();
@@ -33,6 +108,7 @@ public:
 // destructor for both; the size is the room between them, its fields are not known)
 class VibrationTarget {
 public:
+    void SetVibrationDeviceHandle(const VibrationDeviceHandle& handle);
     ~VibrationTarget();
     unsigned char pad_0[0x48];
 };

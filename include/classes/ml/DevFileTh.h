@@ -116,6 +116,8 @@ public:
         unsigned short pad_4;
     };
 
+    // 0x71006BA85C (ml::DeviceNx::createDevice builds it)
+    DevFileTh(const char* name, WorkObj* parent);
     virtual ~DevFileTh();  // slot 0
     virtual void wkUpdate();  // slot 9
     virtual void wkTail();  // slot 12

@@ -2,6 +2,7 @@
 #define CLASSES_ML_DEVTOUCHNX_H
 
 #include "classes/ml/DevTouch.h"
+#include "ml/WorkUtil.h"
 #include "mm/mtl/UniquePtr.h"
 
 namespace ml {
@@ -16,6 +17,9 @@ public:
     };
 
     // inline: the original keeps its copies in the weak tail (updateDevice is the key function)
+    // inline: WorkUtil::createWork<DevTouchNx> builds it (the original has no out-of-line copy)
+    DevTouchNx(const char* name, WorkObj* parent)
+        : DevTouch(name, parent), m_impl(new (WorkUtil::getWorkMem(), nullptr, 0, 8, false) Impl) {}
     virtual ~DevTouchNx() {}  // slot 0
     virtual void updateDevice();  // slot 20
     virtual bool createDevice();  // slot 21

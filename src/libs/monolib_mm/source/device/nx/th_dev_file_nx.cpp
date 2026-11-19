@@ -2437,6 +2437,94 @@ void DevPadNx::Impl::stateFinalize(float) {
     m_state.m_invoker = nullptr;
 }
 
+void DevPadNx::Impl::updateNpad() {
+    m_connectPadCount = 0;
+    m_userSelect = -1;
+    for (int i = 0; i < m_padCount; ++i) {
+        nn::hid::NpadIdType id = m_npadId[i];
+        PadData& pad = m_pads[i];
+        nn::hid::NpadStyleSet style = nn::hid::GetNpadStyleSet(id);
+        if (style.Test<nn::hid::NpadStyleFullKey>()) {
+            if (!pad.m_connect) {
+                initializeVibration<PadFullKeyState>(id, pad);
+            } else if (pad.m_style != 1) {
+                stopVibration(pad);
+                resetPad(pad);
+                initializeVibration<PadHandheldState>(id, pad);
+            }
+            ++m_connectPadCount;
+        } else if (style.Test<nn::hid::NpadStyleJoyDual>()) {
+            if (!pad.m_connect) {
+                initializeVibration<PadJoyDualState>(id, pad);
+            } else if (pad.m_style != 2) {
+                stopVibration(pad);
+                resetPad(pad);
+                initializeVibration<PadHandheldState>(id, pad);
+            }
+            ++m_connectPadCount;
+        } else if (style.Test<nn::hid::NpadStyleHandheld>()) {
+            if (!pad.m_connect) {
+                initializeVibration<PadHandheldState>(id, pad);
+            } else if (pad.m_style != 3) {
+                stopVibration(pad);
+                resetPad(pad);
+                initializeVibration<PadHandheldState>(id, pad);
+            }
+            ++m_connectPadCount;
+        } else if (pad.m_connect) {
+            stopVibration(pad);
+            resetPad(pad);
+        }
+    }
+    for (int i = 0; i < m_padCount; ++i) {
+        nn::hid::NpadIdType id = m_npadId[i];
+        PadData& pad = m_pads[i];
+        nn::hid::NpadStyleSet style = nn::hid::GetNpadStyleSet(id);
+        if (style.Test<nn::hid::NpadStyleFullKey>()) {
+            nn::hid::NpadFullKeyState state;
+            nn::hid::GetNpadState(&state, id);
+            updateTpad(pad, state);
+            pad.m_style = 1;
+        } else if (style.Test<nn::hid::NpadStyleJoyDual>()) {
+            nn::hid::NpadJoyDualState state;
+            nn::hid::GetNpadState(&state, id);
+            updateTpad(pad, state);
+            pad.m_style = 2;
+        } else if (style.Test<nn::hid::NpadStyleHandheld>()) {
+            m_userSelect = i;
+            nn::hid::NpadHandheldState state;
+            nn::hid::GetNpadState(&state, id);
+            updateTpad(pad, state);
+            pad.m_style = 3;
+        }
+    }
+}
+
+template <typename T>
+void DevPadNx::Impl::initializeVibration(unsigned int id, PadData& pad) {
+    if (pad.m_vibInit) {
+        return;
+    }
+    pad.m_vibInit = true;
+    CS lock(pad_detail::getVibrationSection());
+    nn::hid::VibrationDeviceHandle handles[T::VibrationDeviceCount];
+    pad.m_vibDeviceCount =
+        nn::hid::GetVibrationDeviceHandles(handles, T::VibrationDeviceCount, id, T::Style::Mask);
+    for (int i = 0; i < pad.m_vibDeviceCount; ++i) {
+        nn::hid::InitializeVibrationDevice(handles[i]);
+        VibDevice& device = pad.m_vibDevices[i];
+        nn::hid::GetVibrationDeviceInfo(&device.m_info, handles[i]);
+        device.m_handle = handles[i];
+        device.pad_c = 0;
+        device.m_value = nn::hid::VibrationValue::Make();
+        if (device.m_info.position == nn::hid::VibrationDevicePosition_Left) {
+            pad.m_vibTarget0.SetVibrationDeviceHandle(handles[i]);
+        } else if (device.m_info.position == nn::hid::VibrationDevicePosition_Right) {
+            pad.m_vibTarget1.SetVibrationDeviceHandle(handles[i]);
+        }
+    }
+}
+
 DevPadNx::~DevPadNx() {}
 
 bool DevPadNx::isLocalConnect(int pad) const {
@@ -3459,6 +3547,49 @@ DeviceNx::~DeviceNx() {
     }
 }
 
+// DeviceNx::createDevice's inline steps: each takes the handle by value (the original reloads it from the
+// caller's slot once per step). The names are not the original's.
+static inline void createDevPerf(WorkObj* parent, mtl::ALLOC_HANDLE mem) {
+    if (mm::mtl::PtrSingleton<DevPerf>::get() == nullptr) {
+        DevPerf* perf = WorkUtil::createWork<DevPerf>("DevPerfNx", parent, false);
+        perf->m_impl = new (mem, nullptr, 0, 8, false) DevPerfNx();
+    }
+}
+
+static inline void createDevSetting(mtl::ALLOC_HANDLE mem) {
+    if (mm::mtl::PtrSingleton<DevSetting>::get() == nullptr) {
+        DevSetting* setting = new (mem, nullptr, 0, 8, false) DevSetting();
+        setting->m_impl = new (mem, nullptr, 0, 8, false) DevSettingNx();
+    }
+    if (mm::mtl::PtrSingleton<DevSetting>::get() != nullptr) {
+        mm::mtl::PtrSingleton<DevSetting>::get()->m_impl->initialize();
+    }
+}
+
+void DeviceNx::createDevice() {
+    mtl::ALLOC_HANDLE mem = WorkRootState::getWorkMem();
+    createDevPerf(this, mem);
+    createDevSetting(mem);
+    if (mm::mtl::PtrSingleton<DevClock>::get() == nullptr) {
+        WorkUtil::createWork<DevClockNx>("DevClock", this, false);
+    }
+    if (mm::mtl::PtrSingleton<DevFileTh>::get() == nullptr) {
+        WorkUtil::createWork<DevFileTh>("DevFile", this, false);
+    }
+    if (mm::mtl::PtrSingleton<DevGraph>::get() == nullptr && !dg::s_bIgnore) {
+        WorkUtil::createWork<DevGraphNx>("DevGraphNx", this, false);
+    }
+    if (mm::mtl::PtrSingleton<DevFont>::get() == nullptr) {
+        WorkUtil::createWork<DevFontNx>("DevFontNx", this, false);
+    }
+    if (mm::mtl::PtrSingleton<DevPad>::get() == nullptr) {
+        WorkUtil::createWork<DevPadNx>("DevPadNx", this, false);
+    }
+    if (mm::mtl::PtrSingleton<DevTouch>::get() == nullptr) {
+        WorkUtil::createWork<DevTouchNx>("DevTouchNx", this, false);
+    }
+}
+
 void DeviceNx::createDevicePort(const char*) {}
 
 // the flag is unused (the original passes only the handle on)
@@ -3608,6 +3739,50 @@ bool DevFileTh::checkValidFileBlock(const char* path) {
 namespace dvfl_detail {
 mm::mtl::FixedVector<ReserveArchiveParam, 16> g_reserveArchives;
 mm::mtl::FixedVector<LoadMediaParam, 16> g_loadMedia;
+
+void addMediaPath(MEDIA media, const char* pszName, int prio) {
+    mm::mtl::FixStr<128> path(pszName);
+    if (path.m_nLen != 0) {
+        for (int i = 0; i < path.m_nLen; i++) {
+            if (path.m_str[i] == '\\') {
+                path.m_str[i] = '/';
+            }
+        }
+        int last = path.m_nLen - 1;
+        if (path.m_str[last] == '/') {
+            path.m_str[last] = '\0';
+            path.m_nLen = last;
+        }
+    }
+    bool rom = strcmp(path.m_str, "rom:") == 0;
+    if (!(path.m_str[0] == 'a' && path.m_str[1] == 'o' && path.m_str[2] == 'c' && path.m_str[4] == ':' &&
+          path.m_str[3] >= '0' && path.m_str[3] <= '9') &&
+        !rom && !s_romMountMode) {
+        path += "/";
+        path += "nx";
+    }
+    for (LoadMediaParam* it = g_loadMedia.begin(); it != g_loadMedia.end(); ++it) {
+        if (it->m_media == media && strcasecmp(it->m_path.m_str, path.m_str) == 0) {
+            if (it->m_prio == prio) {
+                return;
+            }
+            g_loadMedia.erase(it);
+            break;
+        }
+    }
+    LoadMediaParam* pos = g_loadMedia.begin();
+    for (; pos != g_loadMedia.end(); ++pos) {
+        if (pos->m_prio < prio) {
+            break;
+        }
+    }
+    LoadMediaParam param;
+    param.m_media = media;
+    param.m_prio = prio;
+    param.m_path = path;
+    g_loadMedia.insert(pos, param);
+}
+
 mm::mtl::FixedVector<IDevFileEvent*, 8> g_FileEventListener;
 }  // namespace dvfl_detail
 
