@@ -147,6 +147,9 @@ public:
     // the field skill check of an FSID row for an object of name message nameMsId: whether the party passes it
     // (AFieldSeq::seqCheckFs, GfFieldTbox::seqCheckFs)
     static bool evalSumFs(int fsId, unsigned int nameMsId);
+    // the sum of the field skill levels of fieldSkill over the blades with field skills (GfDataBlade::getListForFieldSkill);
+    // blade 0x41A counts 5 for field skill 0x21 (evalSumFs compares it with the FSID row's levels)
+    static unsigned int getFsLevelSum(unsigned int fieldSkill);
     // the name message id of the object behind handle, into out; whether it has one (GfComBehaviorGmk::createMenuObj
     // tests the answer)
     static bool getNameMsId(unsigned int& out, gf::GF_OBJ_HANDLE* handle);
