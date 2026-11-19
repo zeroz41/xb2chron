@@ -1,3 +1,4 @@
+#define MM_LIB_FROM_EFLIB
 #include "ptlib/renderer/RendererManager.h"
 #include "ptlib/renderer/RendererObj.h"
 #include "ptlib/renderer/ShaderManager.h"
@@ -11,9 +12,12 @@
 #include "grlib/CGLibRenderTarget.h"
 #include "grlib/CGLibTexture.h"
 #include "ptlib/emitter/EmitterObj.h"
+#include "ptlib/emitter/EmitterManager.h"
+#include "mm/mtl/FixedVector.h"
 #include "mm/Col4.h"
 #include "mm/MMStdBase.h"
 #include "classes/effect/IEffectCallBack.h"
+#include <algorithm>
 
 #line 1 "D:/Monolithsoft/BF2/prog/libs/eflib/proj/windows/../../../eflib/source\\ptlib/renderer/particle_renderer_obj.cpp"
 
@@ -395,6 +399,196 @@ bool getFramePos(mm::Vec3& pos0, mm::Vec3& pos1, float frame, effect::IEffectCal
         }
     }
     return false;
+}
+
+void RenderGrObj::prioritySort(emitter::EmitterManager& manager, int view, FxParam&,
+                               mm::mtl::FixedVector<sort::EmitterSort, 4000>& list) {
+    CamParam* pCam = ParticleManager::get()->getCamParam();
+    if (!ParticleManager::get()->m_initFlags[0]) {
+        return;
+    }
+    for (emitter::EmitterObj* p = manager.m_pDrawTop[0]; p != nullptr; p = p->m_pDrawNext) {
+        if (p->isRenderCheck() && p->m_viewNum == view && p->m_disp && p->m_alpha > 0.0f && p->m_pData != nullptr &&
+            p->m_pData->m_shaderType != 5) {
+            const mm::Mat44& viewMtx = pCam->m_viewMtx;
+            sort::EmitterSort s;
+            s.m_sortFirst = p->m_pData->m_sortType == 0;
+            int priority = p->m_drawLayer + p->m_drawLayerOfs;
+            if (priority < 0) {
+                priority = 0;
+            }
+            if (priority > 255) {
+                priority = 255;
+            }
+            s.m_priority = priority;
+            s.m_depth = p->m_mtx.m[3][0] * viewMtx.m[0][2] + p->m_mtx.m[3][1] * viewMtx.m[1][2] +
+                        p->m_mtx.m[3][2] * viewMtx.m[2][2] + viewMtx.m[3][2];
+            s.m_border = false;
+            s.m_pEmitter = p;
+            list.push_back(s);
+        }
+    }
+    std::stable_sort(list.begin(), list.end(), sort::Compare());
+}
+
+void RenderGrObj::draw_common_atr_wpn_tail(WpnTailShdVtxLayout* pVtx, mm::Vec3& pos, emitter::ParticleObj* pParticle,
+                                           emitter::ParticleObj* pParticle2, float, unsigned int type,
+                                           DrawTailWork* pWork) {
+    pVtx->m_pos.x = pos.x;
+    pVtx->m_pos.y = pos.y;
+    pVtx->m_pos.z = pos.z;
+    pVtx->m_drawIndex = pParticle->m_drawIndex;
+    pVtx->m_rot = pParticle->m_rot;
+    pVtx->m_drawParam = pParticle->m_drawParam;
+    memcpy(pVtx->m_drawVec, pParticle->m_drawVec, sizeof(pVtx->m_drawVec));
+    pVtx->m_keyVec = pParticle->m_keyVec;
+    pVtx->m_size2 = 1.0f - (!pWork->m_useSizeZ ? pParticle2->m_size.y : pParticle2->m_size.z);
+    switch (pWork->m_sizeType) {
+    case 0:
+        pVtx->m_size.x = pParticle->m_size.x;
+        pVtx->m_size.y = pParticle->m_size.y;
+        pVtx->m_size.z = pParticle->m_size.z;
+        break;
+    case 1:
+        memset(&pVtx->m_size, 0, sizeof(pVtx->m_size));
+        break;
+    case 2:
+        pVtx->m_size.x = pParticle->m_size.x;
+        pVtx->m_size.y = 0.0f;
+        pVtx->m_size.z = 0.0f;
+        break;
+    }
+    pVtx->m_rgba = pParticle->m_pWork->m_rgba;
+    pVtx->m_rgba2 = pParticle->m_pWork->m_rgba2;
+    switch (type) {
+    case 1:
+    case 3:
+    case 4:
+    case 6: {
+        float width = m_pDrInfo->m_screenWidth;
+        pVtx->m_drawSize[0] = pParticle->m_pWork->m_drawSize / width;
+        pVtx->m_drawSize[1] = -pParticle->m_pWork->m_drawSize / m_pDrInfo->m_screenHeight;
+        break;
+    }
+    case 2:
+    case 5:
+        pVtx->m_drawSize[0] = pParticle->m_pWork->m_drawSize;
+        pVtx->m_drawSize[1] = pParticle->m_pWork->m_drawSize2;
+        break;
+    }
+}
+
+void RenderGrObj::draw_common_atr_normal(float* pOut, emitter::ParticleObj* pParticle, float, unsigned int type, float,
+                                         float) {
+    pOut[0] = pParticle->m_pos.x + pParticle->m_drawOfs.x;
+    pOut[1] = pParticle->m_pos.y + pParticle->m_drawOfs.y;
+    pOut[2] = pParticle->m_pos.z + pParticle->m_drawOfs.z;
+    reinterpret_cast<unsigned int*>(pOut)[3] = pParticle->m_drawIndex;
+    pOut[4] = pParticle->m_rot.x;
+    pOut[5] = pParticle->m_rot.y;
+    pOut[6] = pParticle->m_rot.z + pParticle->m_drawRotOfs;
+    pOut[7] = pParticle->m_drawParam;
+    memcpy(&pOut[8], pParticle->m_drawVec, sizeof(pParticle->m_drawVec));
+    memcpy(&pOut[12], &pParticle->m_keyVec, sizeof(mm::Vec3NA));
+    pOut[15] = pParticle->m_pWork->m_drawAttr[4];
+    memcpy(&pOut[16], &pParticle->m_size, sizeof(mm::Vec3NA));
+    pOut[19] = pParticle->m_pWork->m_drawAttr[13];
+    memcpy(&pOut[20], &pParticle->m_pWork->m_drawAttr[0], sizeof(float) * 2);
+    memcpy(&pOut[22], &pParticle->m_pWork->m_drawAttr[2], sizeof(float) * 2);
+    memcpy(&pOut[24], &pParticle->m_pWork->m_drawAttr[9], sizeof(float) * 2);
+    memcpy(&pOut[26], &pParticle->m_pWork->m_drawAttr[11], sizeof(float) * 2);
+    reinterpret_cast<unsigned int*>(pOut)[28] = pParticle->m_pWork->m_rgba;
+    reinterpret_cast<unsigned int*>(pOut)[29] = pParticle->m_pWork->m_rgba2;
+    switch (type) {
+    case 1:
+    case 9:
+    case 11:
+    case 12:
+        pOut[30] = 0.0f;
+        pOut[31] = 0.0f;
+        break;
+    case 4:
+    case 5:
+    case 7:
+        pOut[30] = pParticle->m_pWork->m_drawSize;
+        pOut[31] = pParticle->m_pWork->m_drawSize2;
+        break;
+    case 6:
+    case 8:
+        pOut[30] = pParticle->m_pWork->m_drawSize;
+        pOut[31] = 1.0f;
+        break;
+    case 10:
+    case 15:
+        pOut[30] = 0.0f;
+        pOut[31] = 0.0f;
+        pOut[32] = pParticle->m_pWork->m_drawAttr2[0];
+        pOut[33] = pParticle->m_pWork->m_drawAttr2[1];
+        pOut[34] = pParticle->m_pWork->m_drawAttr2[2];
+        pOut[35] = pParticle->m_pWork->m_drawAttr2[6];
+        pOut[36] = pParticle->m_pWork->m_drawAttr2[3];
+        pOut[37] = pParticle->m_pWork->m_drawAttr2[4];
+        pOut[38] = pParticle->m_pWork->m_drawSize;
+        pOut[39] = 1.0f;
+        break;
+    default:
+        pOut[30] = pParticle->m_pWork->m_drawSize;
+        pOut[31] = 0.0f;
+        break;
+    case 14:
+        pOut[30] = pParticle->m_pWork->m_drawSize;
+        pOut[31] = 0.0f;
+        pOut[32] = pParticle->m_pWork->m_drawAttr[5];
+        pOut[33] = pParticle->m_pWork->m_drawAttr[6];
+        pOut[34] = pParticle->m_pWork->m_drawAttr[7];
+        pOut[35] = pParticle->m_pWork->m_drawAttr[8];
+        break;
+    }
+}
+
+void RenderGrObj::draw_common_atr_strip(float* pOut, emitter::ParticleObj* pParticle, emitter::ParticleObj* pParticle2,
+                                        float, unsigned int, DrawTailWork* pWork, mm::Vec3 vec0, mm::Vec3 vec1, float,
+                                        float) {
+    memcpy(pOut, &pParticle->m_pos, sizeof(mm::Vec3NA));
+    reinterpret_cast<unsigned int*>(pOut)[3] = pParticle->m_drawIndex;
+    if (pParticle->m_drawParam < -2.5f) {
+        memcpy(&pOut[4], &vec0, sizeof(mm::Vec3NA));
+        pOut[7] = pParticle->m_drawParam;
+        memcpy(&pOut[8], &vec1, sizeof(mm::Vec3NA));
+    } else {
+        memcpy(&pOut[4], &pParticle->m_rot, sizeof(mm::Vec3NA));
+        pOut[7] = pParticle->m_drawParam;
+        memcpy(&pOut[8], pParticle->m_drawVec, sizeof(pParticle->m_drawVec));
+    }
+    memcpy(&pOut[12], &pParticle->m_keyVec, sizeof(mm::Vec3NA));
+    switch (pWork->m_sizeType) {
+    case 0:
+        pOut[16] = pParticle->m_size.x;
+        pOut[17] = pParticle->m_size.y;
+        pOut[18] = pParticle->m_size.z;
+        break;
+    case 1:
+        memset(&pOut[16], 0, sizeof(mm::Vec3NA));
+        break;
+    case 2:
+        pOut[16] = pParticle->m_size.x;
+        pOut[17] = 0.0f;
+        pOut[18] = 0.0f;
+        break;
+    case 3:
+        pOut[16] = pOut[17] = pOut[18] = pParticle->m_pWork->m_pEmParent->m_pData->m_drawDist;
+        break;
+    }
+    if (pWork->m_useSizeZ) {
+        pOut[15] = pParticle2->m_size.z;
+    } else {
+        pOut[15] = pParticle2->m_size.y;
+    }
+    pOut[19] = pWork->m_index * pParticle2->m_sizeRate;
+    reinterpret_cast<unsigned int*>(pOut)[20] = pParticle->m_pWork->m_rgba;
+    reinterpret_cast<unsigned int*>(pOut)[21] = pParticle->m_pWork->m_rgba2;
+    pOut[22] = pParticle->m_pWork->m_drawSize / m_pDrInfo->m_screenWidth;
+    pOut[23] = -pParticle->m_pWork->m_drawSize / m_pDrInfo->m_screenHeight;
 }
 
 void RenderGrObj::draw_common_uconst(float* pOut, emitter::EmitterObj* pEmitter) {

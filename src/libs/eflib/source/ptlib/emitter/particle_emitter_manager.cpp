@@ -590,7 +590,7 @@ ParticleObj* EmitterManager::createCommon(EmitterObj* pEmitter) {
         pParticle->m_rotSign = 0;
         pParticle->m_prevPos = pParticle->m_pos;
         pParticle->pad_40 = mm::Vec3::zero;
-        pParticle->pad_50 = mm::Vec3::zero;
+        pParticle->m_drawOfs = mm::Vec3::zero;
         pParticle->getExtParam().m_pLgt = nullptr;
         pParticle->getExtParam().m_pMdl = nullptr;
         pParticle->getExtParam().pad_118 = nullptr;

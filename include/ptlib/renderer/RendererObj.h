@@ -5,11 +5,13 @@
 #include "grlib/CGLibTexture.h"
 #include "ptlib/renderer/ShaderManager.h"
 #include "mm/Vec3.h"
+#include "mm/Vec3NA.h"
 #include <string.h>
 
 namespace ptlib { class DrDrawWorkInfoEF; class FxParam; class StaticAllocObj; }
-namespace ptlib { namespace emitter { class EmitterManager; class EmitterObj; } }
+namespace ptlib { namespace emitter { class EmitterManager; class EmitterObj; class ParticleObj; } }
 namespace effect { class IEffectCallBack; }
+namespace mm { namespace mtl { template <typename T, unsigned long N> class FixedVector; } }
 
 namespace ptlib { namespace renderer {
 
@@ -76,6 +78,64 @@ public:
     bool m_isReleased;                        // 0x28
 };
 
+// what a tail or strip is drawn with (the field names are not the original's; the size is not known yet)
+class DrawTailWork {
+public:
+    unsigned char pad_0[0x8];
+    int m_index;  // 0x8: draw_common_atr_strip scales the second particle's m_sizeRate by it
+    unsigned char pad_c[0xC];
+    // 0x18: the size the vertex takes: 0 the particle's, 1 none, 2 its x only, 3 (strips) the emitter's m_drawDist
+    int m_sizeType;
+    bool m_useSizeZ;  // 0x1C: the vertex takes the second particle's m_size.z instead of its m_size.y
+};
+
+// one weapon tail vertex (draw_common_atr_wpn_tail fills it; the field names are not the original's: they follow
+// the particle fields copied into them)
+class WpnTailShdVtxLayout {
+public:
+    mm::Vec3NA m_pos;           // 0x0
+    unsigned int m_drawIndex;   // 0xC: the particle's m_drawIndex
+    mm::Vec3NA m_rot;           // 0x10
+    float m_drawParam;          // 0x1C
+    float m_drawVec[4];         // 0x20
+    mm::Vec3NA m_keyVec;        // 0x30
+    float m_size2;              // 0x3C: 1 minus the second particle's size y or z
+    mm::Vec3NA m_size;          // 0x40
+    unsigned char pad_4c[0x4];
+    unsigned int m_rgba;        // 0x50
+    unsigned int m_rgba2;       // 0x54
+    float m_drawSize[2];        // 0x58: by draw type: the size over the screen size, or the two work sizes
+};
+
+namespace sort {
+// one emitter of RenderGrObj::prioritySort's draw list (the names are not the original's)
+struct EmitterSort {
+    bool m_sortFirst;            // the emitter's EmitterArg::m_sortType is 0
+    unsigned char m_priority;    // m_drawLayer plus m_drawLayerOfs, clamped to 0..255
+    float m_depth;               // the emitter's position in view space, z
+    bool m_border;               // 0x8: prioritySort clears it
+    emitter::EmitterObj* m_pEmitter;  // 0x10
+};
+
+// prioritySort's stable_sort order: priority, then the m_sortFirst ones, then depth
+struct Compare {
+    bool operator()(const EmitterSort& a, const EmitterSort& b) const {
+        if (a.m_priority < b.m_priority) {
+            return true;
+        }
+        if (a.m_priority == b.m_priority) {
+            if (a.m_sortFirst > b.m_sortFirst) {
+                return true;
+            }
+            if (a.m_sortFirst == b.m_sortFirst && a.m_depth < b.m_depth) {
+                return true;
+            }
+        }
+        return false;
+    }
+};
+}  // namespace sort
+
 // the renderer's graphics objects (particle_renderer_obj.cpp)
 class RenderGrObj {
 public:
@@ -108,7 +168,14 @@ public:
     void myGX2SetBlendControl(int mode);
     void drawKizunaLine(int view);
     void drawSortAndNormal(emitter::EmitterManager& manager, int view, FxParam& param, int pass);
+    void prioritySort(emitter::EmitterManager& manager, int view, FxParam& param,
+                      mm::mtl::FixedVector<sort::EmitterSort, 4000>& list);
     void draw_capture();
+    void draw_common_atr_wpn_tail(WpnTailShdVtxLayout* pVtx, mm::Vec3& pos, emitter::ParticleObj* pParticle,
+                                  emitter::ParticleObj* pParticle2, float, unsigned int type, DrawTailWork* pWork);
+    void draw_common_atr_normal(float* pOut, emitter::ParticleObj* pParticle, float, unsigned int type, float, float);
+    void draw_common_atr_strip(float* pOut, emitter::ParticleObj* pParticle, emitter::ParticleObj* pParticle2, float,
+                               unsigned int, DrawTailWork* pWork, mm::Vec3 vec0, mm::Vec3 vec1, float, float);
     void draw_common_uconst(float* pOut, emitter::EmitterObj* pEmitter);
     void draw_common_uparam(float* pOut, unsigned int* pFlags, emitter::EmitterObj* pEmitter);
     void setEffectRenderTarget(grlib::CGLibRenderTarget* pTarget, grlib::CGLibDepthBuffer* pDepth,

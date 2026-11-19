@@ -6,7 +6,10 @@
 
 namespace std {
 struct nothrow_t {};
+extern const nothrow_t nothrow;
 }  // namespace std
+
+void* operator new(size_t, const std::nothrow_t&) noexcept;
 
 inline void* operator new(size_t, void* place) noexcept {
     return place;
