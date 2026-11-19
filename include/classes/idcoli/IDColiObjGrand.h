@@ -20,6 +20,8 @@ public:
     // builds the grand collision from its data (IDColiManager::createColiGrand; the parameter names are not the
     // original's)
     void createGrand(mtl::ALLOC_HANDLE handle, const void* data);
+    // points the work's tables into the grand data and builds the moving parts (createGrand's last step)
+    void createMemBinary();
     // its grand mesh work (IDColiParmsGrand and IDColiGrandObj reach the object through it)
     wrkIDCmfWork m_work;  // 0x50
     // 0x100 bytes: IDColiManager::createColiGrand allocates it so

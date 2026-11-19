@@ -55,14 +55,32 @@ public:
         float m_min[3];  // 0xC
     };
     // the head of the grand data IDColiObjGrand::createGrand takes (it sizes the work from the counts at
-    // 0x1C..0x3C and 0x94); only what getGrandAABB reads is declared. The names are not the original's.
+    // 0x1C..0x3C and 0x94); only what createGrand and getGrandAABB read is declared. The names are not the
+    // original's.
     struct Header {
         unsigned char pad_0[8];
         unsigned int m_size;  // 0x8, the box record sits 0x28 bytes before it unless m_flags bit 1 is set
-        unsigned char pad_c[0x7C];
+        unsigned char pad_c[0xC];
+        // the numbers of entries of the work's tables createGrand carves from its block: the normal and index
+        // table pointers (0x18, 0x20; m_vectors gets as many as the normals) and the bases (m_meshBases,
+        // m_instBases, m_cellBases), each after the table's offset in the data
+        unsigned int m_normalOffset;  // 0x18
+        int m_normalNum;  // 0x1C
+        unsigned int m_indexOffset;  // 0x20
+        int m_indexNum;  // 0x24
+        unsigned int m_meshBaseOffset;  // 0x28
+        int m_meshBaseNum;  // 0x2C
+        unsigned int m_instBaseOffset;  // 0x30
+        int m_instBaseNum;  // 0x34
+        unsigned int m_cellBaseOffset;  // 0x38
+        int m_cellBaseNum;  // 0x3C
+        unsigned char pad_40[0x48];
         unsigned char m_flags;  // 0x88, bit 1: m_boxOffset holds the box record's offset
         unsigned char pad_89[3];
         unsigned int m_boxOffset;  // 0x8C
+        unsigned char pad_90[4];
+        // the number of moving parts (createGrand gives the work two trees and as many IDColiGrdMoveObj)
+        int m_moveObjNum;  // 0x94
     };
 
     const Header* m_data;  // 0x0, createGrand's data
@@ -74,7 +92,11 @@ public:
         unsigned char pad_10[4];
     };
     const Tree* m_trees;  // 0x8
-    unsigned char pad_10[0x18];
+    unsigned char pad_10[8];
+    // createGrand points them at its block (as many as Header::m_normalNum and m_indexNum); the names are not
+    // the original's
+    const mm::Vec3* const* m_normals;  // 0x18
+    const unsigned short* const* m_indices;  // 0x20
     // the vector tables (vecotrDef/vecotrInst pick one by IDCmfPoliData's table byte)
     const mm::Vec3NA* const* m_vectors;  // 0x28
     const IDCmfPosData* m_posData;  // 0x30, inst*Hit index it

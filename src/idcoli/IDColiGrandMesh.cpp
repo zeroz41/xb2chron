@@ -119,6 +119,137 @@ void IDColiGrandMesh::stockTbl(IDColiCallArg& arg, const IDCmfPoliData* poli, fl
     if (m_result->m_callback) m_result->m_callback->coli_param_callback(m_result->m_obj, arg);
 }
 
+void IDColiGrandMesh::stockInstNear(IDColiCallArg& arg, const IDCmfPoliData* poli, float length) {
+    float sx = m_instPosData->m_matrix.m[0][0] + m_instPosData->m_matrix.m[0][1] + m_instPosData->m_matrix.m[0][2];
+    float sy = m_instPosData->m_matrix.m[1][0] + m_instPosData->m_matrix.m[1][1] + m_instPosData->m_matrix.m[1][2];
+    float sz = m_instPosData->m_matrix.m[2][0] + m_instPosData->m_matrix.m[2][1] + m_instPosData->m_matrix.m[2][2];
+    float scale = ::sqrtf(sx * sx + sy * sy + sz * sz) * 0.57735056f;
+    length *= scale;
+    if (m_result->m_nearLength > length) {
+        m_result->m_nearLength = length;
+        m_result->m_near.m_pos.x = arg.m_pos.x * m_instPosData->m_matrix.m[0][0] +
+                                   arg.m_pos.y * m_instPosData->m_matrix.m[0][1] +
+                                   arg.m_pos.z * m_instPosData->m_matrix.m[0][2];
+        m_result->m_near.m_pos.y = arg.m_pos.x * m_instPosData->m_matrix.m[1][0] +
+                                   arg.m_pos.y * m_instPosData->m_matrix.m[1][1] +
+                                   arg.m_pos.z * m_instPosData->m_matrix.m[1][2];
+        m_result->m_near.m_pos.z = arg.m_pos.x * m_instPosData->m_matrix.m[2][0] +
+                                   arg.m_pos.y * m_instPosData->m_matrix.m[2][1] +
+                                   arg.m_pos.z * m_instPosData->m_matrix.m[2][2];
+        mm::Vec3 trans(m_instPosData->m_matrix.m[0][3], m_instPosData->m_matrix.m[1][3],
+                       m_instPosData->m_matrix.m[2][3]);
+        m_result->m_near.m_pos += trans;
+        m_result->m_near.m_normal.x = arg.m_normal.x * m_instPosData->m_matrix.m[0][0] +
+                                      arg.m_normal.y * m_instPosData->m_matrix.m[0][1] +
+                                      arg.m_normal.z * m_instPosData->m_matrix.m[0][2];
+        m_result->m_near.m_normal.y = arg.m_normal.x * m_instPosData->m_matrix.m[1][0] +
+                                      arg.m_normal.y * m_instPosData->m_matrix.m[1][1] +
+                                      arg.m_normal.z * m_instPosData->m_matrix.m[1][2];
+        m_result->m_near.m_normal.z = arg.m_normal.x * m_instPosData->m_matrix.m[2][0] +
+                                      arg.m_normal.y * m_instPosData->m_matrix.m[2][1] +
+                                      arg.m_normal.z * m_instPosData->m_matrix.m[2][2];
+        mm::Vec3& normal = m_result->m_near.m_normal;
+        float normalLength = normal.length();
+        if (normalLength <= 1e-6f) {
+            normal = mm::Vec3::zero;
+        } else {
+            float scale = 1.0f / normalLength;
+            normal.x = scale * normal.x;
+            normal.y = scale * normal.y;
+            normal.z = scale * normal.z;
+        }
+        m_result->m_near.m_poli = arg.m_poli;
+        m_result->m_nearHit = true;
+        m_result->m_nearObj = m_result->m_obj;
+        (this->*m_vecotr)(m_result->m_near, poli);
+    }
+}
+
+void IDColiGrandMesh::stockInstSecNear(IDColiCallArg& arg, const IDCmfPoliData* poli, float length) {
+    float sx = m_instPosData->m_matrix.m[0][0] + m_instPosData->m_matrix.m[0][1] + m_instPosData->m_matrix.m[0][2];
+    float sy = m_instPosData->m_matrix.m[1][0] + m_instPosData->m_matrix.m[1][1] + m_instPosData->m_matrix.m[1][2];
+    float sz = m_instPosData->m_matrix.m[2][0] + m_instPosData->m_matrix.m[2][1] + m_instPosData->m_matrix.m[2][2];
+    float scale = ::sqrtf(sx * sx + sy * sy + sz * sz) * 0.57735056f;
+    length *= scale;
+    if (length < 0.0f) {
+        if (m_result->m_secNearLength <= length) {
+            m_result->m_secNearLength = length;
+            m_result->m_secNear.m_pos.x = arg.m_pos.x * m_instPosData->m_matrix.m[0][0] +
+                                          arg.m_pos.y * m_instPosData->m_matrix.m[0][1] +
+                                          arg.m_pos.z * m_instPosData->m_matrix.m[0][2];
+            m_result->m_secNear.m_pos.y = arg.m_pos.x * m_instPosData->m_matrix.m[1][0] +
+                                          arg.m_pos.y * m_instPosData->m_matrix.m[1][1] +
+                                          arg.m_pos.z * m_instPosData->m_matrix.m[1][2];
+            m_result->m_secNear.m_pos.z = arg.m_pos.x * m_instPosData->m_matrix.m[2][0] +
+                                          arg.m_pos.y * m_instPosData->m_matrix.m[2][1] +
+                                          arg.m_pos.z * m_instPosData->m_matrix.m[2][2];
+            mm::Vec3 trans(m_instPosData->m_matrix.m[0][3], m_instPosData->m_matrix.m[1][3],
+                           m_instPosData->m_matrix.m[2][3]);
+            m_result->m_secNear.m_pos += trans;
+            m_result->m_secNear.m_normal.x = arg.m_normal.x * m_instPosData->m_matrix.m[0][0] +
+                                             arg.m_normal.y * m_instPosData->m_matrix.m[0][1] +
+                                             arg.m_normal.z * m_instPosData->m_matrix.m[0][2];
+            m_result->m_secNear.m_normal.y = arg.m_normal.x * m_instPosData->m_matrix.m[1][0] +
+                                             arg.m_normal.y * m_instPosData->m_matrix.m[1][1] +
+                                             arg.m_normal.z * m_instPosData->m_matrix.m[1][2];
+            m_result->m_secNear.m_normal.z = arg.m_normal.x * m_instPosData->m_matrix.m[2][0] +
+                                             arg.m_normal.y * m_instPosData->m_matrix.m[2][1] +
+                                             arg.m_normal.z * m_instPosData->m_matrix.m[2][2];
+            mm::Vec3& normal = m_result->m_secNear.m_normal;
+            float normalLength = normal.length();
+            if (normalLength <= 1e-6f) {
+                normal = mm::Vec3::zero;
+            } else {
+                float scale = 1.0f / normalLength;
+                normal.x = scale * normal.x;
+                normal.y = scale * normal.y;
+                normal.z = scale * normal.z;
+            }
+            m_result->m_secNear.m_poli = arg.m_poli;
+            m_result->m_secNearHit = true;
+            m_result->m_secNearObj = m_result->m_obj;
+            (this->*m_vecotr)(m_result->m_secNear, poli);
+        }
+    } else if (m_result->m_nearLength > length) {
+        m_result->m_nearLength = length;
+        m_result->m_near.m_pos.x = arg.m_pos.x * m_instPosData->m_matrix.m[0][0] +
+                                   arg.m_pos.y * m_instPosData->m_matrix.m[0][1] +
+                                   arg.m_pos.z * m_instPosData->m_matrix.m[0][2];
+        m_result->m_near.m_pos.y = arg.m_pos.x * m_instPosData->m_matrix.m[1][0] +
+                                   arg.m_pos.y * m_instPosData->m_matrix.m[1][1] +
+                                   arg.m_pos.z * m_instPosData->m_matrix.m[1][2];
+        m_result->m_near.m_pos.z = arg.m_pos.x * m_instPosData->m_matrix.m[2][0] +
+                                   arg.m_pos.y * m_instPosData->m_matrix.m[2][1] +
+                                   arg.m_pos.z * m_instPosData->m_matrix.m[2][2];
+        mm::Vec3 trans(m_instPosData->m_matrix.m[0][3], m_instPosData->m_matrix.m[1][3],
+                       m_instPosData->m_matrix.m[2][3]);
+        m_result->m_near.m_pos += trans;
+        m_result->m_near.m_normal.x = arg.m_normal.x * m_instPosData->m_matrix.m[0][0] +
+                                      arg.m_normal.y * m_instPosData->m_matrix.m[0][1] +
+                                      arg.m_normal.z * m_instPosData->m_matrix.m[0][2];
+        m_result->m_near.m_normal.y = arg.m_normal.x * m_instPosData->m_matrix.m[1][0] +
+                                      arg.m_normal.y * m_instPosData->m_matrix.m[1][1] +
+                                      arg.m_normal.z * m_instPosData->m_matrix.m[1][2];
+        m_result->m_near.m_normal.z = arg.m_normal.x * m_instPosData->m_matrix.m[2][0] +
+                                      arg.m_normal.y * m_instPosData->m_matrix.m[2][1] +
+                                      arg.m_normal.z * m_instPosData->m_matrix.m[2][2];
+        mm::Vec3& normal = m_result->m_near.m_normal;
+        float normalLength = normal.length();
+        if (normalLength <= 1e-6f) {
+            normal = mm::Vec3::zero;
+        } else {
+            float scale = 1.0f / normalLength;
+            normal.x = scale * normal.x;
+            normal.y = scale * normal.y;
+            normal.z = scale * normal.z;
+        }
+        m_result->m_near.m_poli = arg.m_poli;
+        m_result->m_nearHit = true;
+        m_result->m_nearObj = m_result->m_obj;
+        (this->*m_vecotr)(m_result->m_near, poli);
+    }
+}
+
 void IDColiGrandMesh::vecotrNon(IDColiCallArg&, const IDCmfPoliData*) {}
 
 void IDColiGrandMesh::vecotrDef(IDColiCallArg& arg, const IDCmfPoliData* poli) {
@@ -572,6 +703,65 @@ IDColiObjGrand::~IDColiObjGrand() {
             m_work.m_memBlock = nullptr;
         }
     }
+}
+
+void IDColiObjGrand::createGrand(mtl::ALLOC_HANDLE handle, const void* data) {
+    if (m_work.m_memBlock) {
+        if (m_work.m_treeTops[0]) m_work.m_treeTops[0]->~IDColiTreeTop();
+        if (m_work.m_treeTops[1]) m_work.m_treeTops[1]->~IDColiTreeTop();
+        if (m_work.m_memBlock) {
+            mtl::MemManager::deallocate(m_work.m_memBlock, 0, false);
+            m_work.m_memBlock = nullptr;
+        }
+    }
+    const wrkIDCmfWork::Header* header = static_cast<const wrkIDCmfWork::Header*>(data);
+    unsigned int size = 0;
+    size += header->m_normalNum * sizeof(mm::Vec3*);
+    size += header->m_indexNum * sizeof(unsigned short*);
+    size += header->m_normalNum * sizeof(mm::Vec3NA*);
+    size += header->m_meshBaseNum * sizeof(unsigned int*);
+    size += header->m_instBaseNum * sizeof(unsigned int*);
+    size += header->m_cellBaseNum * sizeof(unsigned int*);
+    if (header->m_moveObjNum != 0) {
+        size += sizeof(IDColiTreeTop) * 2;
+    }
+    unsigned int pad = -size & 0xF;
+    size += header->m_moveObjNum * sizeof(IDColiGrdMoveObj);
+    size += pad;
+    char* block = static_cast<char*>(mtl::MemManager::allocate(handle, size, 0x10, false, "no name", 0));
+    m_work.m_memBlock = block;
+    m_work.m_data = header;
+    unsigned int offset = 0;
+    m_work.m_normals = reinterpret_cast<const mm::Vec3* const*>(block + offset);
+    offset += header->m_normalNum * 8;
+    m_work.m_indices = reinterpret_cast<const unsigned short* const*>(block + offset);
+    offset += header->m_indexNum * 8;
+    m_work.m_vectors = reinterpret_cast<const mm::Vec3NA* const*>(block + offset);
+    offset += header->m_normalNum * 8;
+    m_work.m_meshBases = reinterpret_cast<const unsigned int*>(block + offset);
+    offset += header->m_meshBaseNum * 4;
+    m_work.m_instBases = reinterpret_cast<const unsigned int*>(block + offset);
+    offset += header->m_instBaseNum * 4;
+    m_work.m_cellBases = reinterpret_cast<const unsigned int*>(block + offset);
+    offset += header->m_cellBaseNum * 4;
+    if (header->m_moveObjNum != 0) {
+        m_work.m_treeTops[0] = reinterpret_cast<IDColiTreeTop*>(block + offset);
+        offset += sizeof(IDColiTreeTop);
+        m_work.m_treeTops[1] = reinterpret_cast<IDColiTreeTop*>(block + offset);
+        offset += sizeof(IDColiTreeTop);
+    } else {
+        m_work.m_treeTops[0] = nullptr;
+        m_work.m_treeTops[1] = nullptr;
+    }
+    m_work.m_bank = 0;
+    if (header->m_moveObjNum != 0) {
+        offset += -offset & 0xF;
+        m_work.m_moveObjs = reinterpret_cast<IDColiGrdMoveObj*>(block + offset);
+        m_work.m_moveObjNum = header->m_moveObjNum;
+    } else {
+        m_work.m_moveObjNum = 0;
+    }
+    createMemBinary();
 }
 
 void IDColiObjGrand::update() {
