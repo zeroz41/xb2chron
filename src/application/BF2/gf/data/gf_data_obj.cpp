@@ -1533,6 +1533,15 @@ unsigned int DataObjPcWpn::getWeaponStability(bool) const {
     return GfBdatItem::sys()->getPcWpnStability(getBdatId());
 }
 
+DataObjEnemy::DataObjEnemy(GF_OBJ_HANDLE* handle) : m_handle(handle), m_sdata(nullptr) {
+    m_sdata = mm::mtl::rttiCast<GfObjSetupEnemy>(GfObjManager::getObjInfo(handle)->m_setup)->m_sdata;
+}
+
+DataObjEnemy::DataObjEnemy(unsigned int id) : m_handle(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), m_sdata(nullptr) {
+    GfDataEnemy::setupSDataEnemy(m_sdataOwn, id, 1);
+    m_sdata = &m_sdataOwn;
+}
+
 DataObjEnemy::~DataObjEnemy() {}
 
 bool DataObjEnemy::isValid() const {
@@ -1947,6 +1956,20 @@ const char* DataObjEnemy::getRotateBone() const {
     return GfBdatRsc::sys()->getRscEnRotateBone(getBdatIdEnRsc());
 }
 
+DataObjEnemyBlade::DataObjEnemyBlade(GF_OBJ_HANDLE* handle) : DataObjEnemy(handle) {
+    GfObjSetupEnemy* setup = nullptr;
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info != nullptr) {
+        if (GfObjSetup* objSetup = info->m_setup) {
+            if (objSetup->m_type == info->m_obj->m_type && info->m_obj->m_type == 5) {
+                setup = mm::mtl::rttiCast<GfObjSetupEnemy>(objSetup);
+            }
+        }
+    }
+    m_setup = setup;
+    m_sdataBlade = m_setup->pad_c0;
+}
+
 DataObjEnemyBlade::~DataObjEnemyBlade() {}
 
 const char* DataObjEnemyBlade::getName() const {
@@ -2120,6 +2143,14 @@ unsigned int DataObjEnemyBlade::getPersonality() const {
 
 unsigned int DataObjEnemyBlade::getCoolTime() const {
     return m_sdataBlade->m_coolTime;
+}
+
+SDataEnemy::SDataEnemy(unsigned int arrange, unsigned int arg)
+    : m_named(false), m_boss(false), m_flags4(0), m_linkGenus(false), m_guardFront(false), m_guardLeft(false),
+      m_guardRight(false), m_guardBack(false), m_fieldDamage(false), m_flags5bit2(false), m_noCameraFade(false),
+      m_weaponDrawDisp(false), m_flags5(0), pad_6(0) {
+    clear();
+    GfDataEnemy::setupSDataEnemy(*this, arrange, arg);
 }
 
 DataObjNpc::DataObjNpc(GF_OBJ_HANDLE* handle) : m_handle(handle), m_bdatId(0) {
