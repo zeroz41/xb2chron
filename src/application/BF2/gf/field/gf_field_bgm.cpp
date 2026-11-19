@@ -24,6 +24,7 @@
 #include "gf/GfDataBlade.h"
 #include "classes/gf/GfPlayComEventFade.h"
 #include "gf/GfDataUtil.h"
+#include "classes/gf/GfAllocator.h"
 
 namespace gf {
 namespace _gffsn {
@@ -186,6 +187,17 @@ float bgmvolFadeEnableEvent1763(ExecFadeParam& param) {
 }
 
 }  // namespace _gffsn
+
+GfFieldBgm::GfFieldBgm()
+    : m_rscBossBattleBgmID(0), m_bossBattleBgmWait(0), m_rscBattleBgmID(0), m_rscGimmickBgmID(0),
+      m_gimmickBgmID(0xFFFFFFFF), m_gimmickBgmClearWait(0), m_disableFieldBgmChange(false), m_deadSequence(false) {
+#line 349
+    m_tracks.push_back(new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) BgmField(this));
+    m_tracks.push_back(new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) BgmBattle(this));
+    m_tracks.push_back(new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) BgmBattleBoss(this));
+    m_tracks.push_back(new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) BgmGimmick(this));
+    m_tracks.push_back(new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) BgmEvent(this));
+}
 
 void GfFieldBgm::destroy() {
     for (BgmTrack* track : m_tracks) {
@@ -519,22 +531,70 @@ void BgmEvent::updatePlaying(const fw::UpdateInfo& info) {
             if (evtBgm->m_setup.pad_62 && evtBgm->m_setup.pad_61) {
                 time = 1.0f;
             } else {
-                time = m_useFadeTime ? m_fadeTime : 0.5f;
+                time = m_setup.pad_62 ? m_setup.pad_4c : 0.5f;
             }
         } else {
-            time = m_useFadeTime ? m_fadeTime : 0.5f;
+            time = m_setup.pad_62 ? m_setup.pad_4c : 0.5f;
         }
         stopBGM(time);
     } else if (!m_playing && evtBgm->isPlayBgm()) {
         evtBgm->setFadeoutVolume();
     }
-    if (m_overTime > 0.0f && !GfGameManager::isEvent(false)) {
-        m_overTime -= info.m_deltaTime;
-        if (m_overTime <= 0.0f) {
-            m_overTime = 0.0f;
+    if (m_setup.m_overTime > 0.0f && !GfGameManager::isEvent(false)) {
+        m_setup.m_overTime -= info.m_deltaTime;
+        if (m_setup.m_overTime <= 0.0f) {
+            m_setup.m_overTime = 0.0f;
             evtBgm->setFadeoutVolume();
         }
     }
+}
+
+void BgmEvent::beginPlay() {
+    GfEvtBgm* evtBgm = GfEvtBgm::sys();
+    m_volumeFades.clear();
+    m_multiplyVolumes.clear();
+    addVolumeFade(_gffsn::bgmvolStop, 1.0f, 20.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeLeaveGame, 1.0f, 99.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeDeadSequence, 2.0f, 99.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeDisableEventBgm, evtBgm->m_setup.pad_62 ? evtBgm->m_setup.pad_4c : 0.5f,
+                  evtBgm->m_setup.pad_63 ? evtBgm->m_setup.m_volumeTime : 0.5f, true);
+    mm::mtl::FixStr<64> name;
+    if (evtBgm->m_setup.m_noBgm) {
+        BgmTrack* current = GfFieldBgm::sys()->getCurrentPlayBgmTrack();
+        if (current != nullptr && current != this) {
+            copyPlayParam(current);
+            m_setup = evtBgm->m_setup;
+            makePlayFileName(name);
+            if (name.length() != 0) {
+                m_bgmCondID = 0;
+                evtBgm->setPlayBgmTakeOver(name.m_str);
+            }
+        }
+    }
+    if (name.length() == 0) {
+        name = evtBgm->m_setup.m_name;
+    }
+    if (evtBgm->m_setup.pad_64) {
+        m_fadeScale = evtBgm->m_setup.m_volume;
+    }
+    m_playTime = evtBgm->m_setup.pad_50;
+    if (name.length() != 0) {
+        if (strcmp(m_playBgmName.m_str, name.m_str) == 0) {
+            return;
+        }
+        if (m_setup.m_overTime < 0.0f) {
+            evtBgm->setFadeoutVolume();
+            return;
+        }
+        m_playBgmName = name.m_str;
+    }
+    if (!GfGameManager::isFullScreenMenu() || GfManager::isExecModeThater()) {
+        m_category = 10;
+    } else {
+        m_category = 3;
+    }
+    m_conds[0].m_bgmFileName = name;
+    m_setup = evtBgm->m_setup;
 }
 
 bool BgmTrack::makePlayFileName(mm::mtl::FixStr<64>& name) const {
@@ -559,6 +619,50 @@ bool BgmTrack::makePlayFileName(mm::mtl::FixStr<64>& name) const {
         }
     }
     return false;
+}
+
+void BgmEvent::checkStopByHandOver() {
+    if (!GfEvtBgm::sys()->m_setup.pad_61) {
+        return;
+    }
+    if (!BgmTrack::isPlaying()) {
+        return;
+    }
+    if (GfManager::isExecModeThater()) {
+        return;
+    }
+    BgmFileInfo info;
+    GfFieldBgm* fieldBgm = GfFieldBgm::sys();
+    if (fieldBgm != nullptr && fieldBgm->getBgmFileInfo(info, m_conds[0].m_bgmFileName.m_str) && info.m_listed) {
+        int mapID = GfGameManager::getMapID();
+        unsigned int condID = mapID != 0 ? GfBdatMaplist::sys()->getMaplistbgm_cndID(mapID) : 0;
+        if (condID == info.m_bgmCondID) {
+            if (BgmField* field = BgmField::sys()) {
+                field->copyPlayParam(this, info);
+                field->setCategoryApply(1);
+                return;
+            }
+        }
+        if (m_fieldBgm->getRscGimmickBgmID() == info.m_bgmCondID) {
+            if (BgmGimmick* gimmick = BgmGimmick::sys()) {
+                gimmick->copyPlayParam(this, info);
+                gimmick->setCategoryApply(1);
+                return;
+            }
+        }
+    }
+    if (BgmBattleBoss* boss = BgmBattleBoss::sys()) {
+        const char* silent = strstr(m_conds[0].m_bgmFileName.m_str, "Silent");
+        boss->copyPlayParam(this);
+        boss->setCategoryApply(1);
+        if (silent != nullptr) {
+            boss->stopBGM(0.0f);
+        }
+        GfGameScene* scene = GfGameScene::sys();
+        if (silent == nullptr && scene != nullptr) {
+            scene->setForceBossBattleBgm(true);
+        }
+    }
 }
 
 bool BgmTrack::isPlaying() const {
@@ -622,16 +726,51 @@ void BgmTrack::setCategoryApply(unsigned char category) {
     }
 }
 
+void BgmEvent::updateEventBgm(const fw::UpdateInfo& info) {
+    GfEvtBgm* evtBgm = GfEvtBgm::sys();
+    if (evtBgm == nullptr) {
+        return;
+    }
+    checkStopByHandOver();
+    if (isPlaying()) {
+        updatePlaying(info);
+        return;
+    }
+    if (m_overTimeStop) {
+        m_overTimeStop = false;
+        if (GfGameScene* scene = GfGameScene::sys()) {
+            switch (scene->pad_8BC) {
+            case 30177:
+            case 30180:
+            case 30184:
+            case 30186:
+            case 30188:
+            case 30190:
+            case 30191:
+            case 30193:
+            case 30248:
+                evtBgm->cancelOverTime();
+                evtBgm->stopBgm(EventBgmSetup());
+                stopBGM(0.0f);
+                break;
+            }
+        }
+    }
+    if (evtBgm->isEnableEventBgm() || evtBgm->m_setup.m_noBgm) {
+        beginPlay();
+    }
+}
+
 bool BgmEvent::isPlaying() const {
     return BgmTrack::isPlaying();
 }
 
 void BgmEvent::cancelOverTime() {
-    m_overTime = 0.0f;
+    m_setup.m_overTime = 0.0f;
 }
 
 void BgmEvent::setBgmClearByStopBgm() {
-    if (GfGameManager::isGameTypeIra() && m_overTime < 0.0f) {
+    if (GfGameManager::isGameTypeIra() && m_setup.m_overTime < 0.0f) {
         m_overTimeStop = true;
     }
 }
