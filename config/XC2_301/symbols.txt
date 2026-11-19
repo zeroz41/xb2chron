@@ -305,7 +305,7 @@ _ZN3btl12BattleGlobal15ShakeCameraAxisERKNS0_23SHAKE_CAMERA_AXIS_PARAME = .text:
 _ZN3btl12BattleGlobal27ApplyBattleCameraAdjustmentERN2mm4Vec3ES3_ = .text:0x0000E0B0; // type:function size:0x10 scope:global
 __cxx_global_var_init = .text:0x0000E0C0; // type:function size:0x64 scope:local
 _ZN2mm3mtl16RedBlackTreeBaseINS0_3MapIPKN2fw10ReflectionENS3_12ParamManager7RefInfoEE9MapTraitsIS6_S8_EEE4nodeD2Ev = .text:0x0000E124; // type:function size:0x6C scope:weak
-__cxx_global_var_init.23 = .text:0x0000E190; // type:function size:0x64 scope:global
+__cxx_global_var_init.23 = .text:0x0000E190; // type:function size:0x64 scope:local
 _ZN2mm3mtl16RedBlackTreeBaseINS0_3MapIPKN2fw9ParamListENS3_12ParamManager9ParamInfoEE9MapTraitsIS6_S8_EEE4nodeD2Ev = .text:0x0000E1F4; // type:function size:0x6C scope:weak
 _ZN2mm3mtl12PtrSingletonIN3btl12BattleGlobalEED2Ev = .text:0x0000E260; // type:function size:0x20 scope:weak
 _ZN2mm3mtl12PtrSingletonIN3btl12BattleGlobalEED0Ev = .text:0x0000E280; // type:function size:0x20 scope:weak
@@ -659,7 +659,7 @@ _ZN3btl18ChainAttackManager11AddDropDataEPN2gf13GF_OBJ_HANDLEEiiPjiiiiRKN2mm4Vec
 _ZN3btl18ChainAttackManager18AddDropHealpotDataEPN2gf13GF_OBJ_HANDLEEiiiiRKN2mm4Vec3Eff = .text:0x00024CE0; // type:function size:0x308 scope:global
 _ZNK3btl18ChainAttackManager21GetIraChainAttackSlotEii = .text:0x00024FE8; // type:function size:0xFC scope:global
 __cxx_global_var_init = .text:0x000250E4; // type:function size:0x30 scope:local
-__cxx_global_var_init.5 = .text:0x00025114; // type:function size:0x30 scope:global
+__cxx_global_var_init.5 = .text:0x00025114; // type:function size:0x30 scope:local
 _ZN2mm3mtl12PtrSingletonIN3btl18ChainAttackManagerEED2Ev = .text:0x00025144; // type:function size:0x20 scope:weak
 _ZN2mm3mtl12PtrSingletonIN3btl18ChainAttackManagerEED0Ev = .text:0x00025164; // type:function size:0x20 scope:weak
 _ZN2mm3mtl6VectorIN2gf14GfDropitemInfoEE6expandEmm = .text:0x00025184; // type:function size:0x120 scope:weak
@@ -34609,7 +34609,7 @@ _ZN3anm12StateMachine16doEaseInAdditiveEPKcffNS_15InterpolateTypeENS_16Interpola
 _ZN3anm12StateMachine17doEaseOutAdditiveEPKcfNS_15InterpolateTypeENS_16InterpolateCurveE = .text:0x0087AEA0; // type:function size:0xC0 scope:global
 _ZN3anm12StateMachine22setAdditiveStateWeightEPKcf = .text:0x0087AF60; // type:function size:0x13C scope:global
 _ZN3anm12StateMachine21setAdditiveStateSpeedEPKcf = .text:0x0087B09C; // type:function size:0xA4 scope:global
-__cxx_global_var_init.6 = .text:0x0087B140; // type:function size:0x5C scope:global
+__cxx_global_var_init.6 = .text:0x0087B140; // type:function size:0x5C scope:local
 _ZN2mm3mtl16RedBlackTreeBaseINS0_3MapIN3anm9StringPtrENS0_12IntrusivePtrINS3_8AsmStateEEEE9MapTraitsIS4_S7_EEE4nodeD2Ev = .text:0x0087B19C; // type:function size:0x8C scope:weak
 _ZN2mm3mtl16RedBlackTreeBaseINS0_3MapIN3anm9StringPtrENS0_12IntrusivePtrINS3_8AsmStateEEEE9MapTraitsIS4_S7_EEE9free_nodeEPNSB_4nodeEb = .text:0x0087B228; // type:function size:0x124 scope:weak
 _ZN2mm3mtl16RedBlackTreeBaseINS0_3MapIN3anm9StringPtrENS3_12AdditiveInfoEE9MapTraitsIS4_S5_EEE9free_nodeEPNS9_4nodeEb = .text:0x0087B34C; // type:function size:0x124 scope:weak
