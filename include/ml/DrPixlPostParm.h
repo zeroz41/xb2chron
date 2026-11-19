@@ -213,7 +213,13 @@ public:
     // 0x2A8: DrIniSys::setupDlcIni sets it from lib_dlc_nx.ini's toonShadowAlphaDLC key, on DrIniSys::m_postParm and
     // DrMan::m_postParm[0] (name inferred from the key)
     float m_toonShadowAlpha;
-    unsigned char pad_2AC[0x18];
+    unsigned char pad_2AC[0x8];
+    // 0x2B4: DrCalcViewWork::unitoon_rim_lgt scales the rim light by it (the name is not the original's)
+    bool m_toonRimOn;
+    unsigned char pad_2B5[0x3];
+    // 0x2B8: the angles in degrees DrCalcViewWork::unitoon_rim_mat rotates by (the name is not the original's)
+    float m_toonRimAngle[2];
+    unsigned char pad_2C0[0x4];
     // 0x2C4-0x2D0: DrMdoMat::matCall_OutLineVal's outline width and fade distances (names inferred)
     float m_outLineScale;
     unsigned char pad_2C8[0x4];
@@ -236,7 +242,9 @@ public:
     bool m_dbgGBuff;  // 0x488, DrPixlMan::fastDeferredRender calls debugGBuffRender while set (name inferred)
     unsigned char pad_489[0x1];
     bool m_ssr;  // 0x48A, getSSROn (name inferred)
-    unsigned char pad_48B[0x45];
+    unsigned char pad_48B[0x35];
+    // 0x4C0: DrCalcViewWork::unitoon_rim_lgt's colour (xyz) and intensity (w) (the name is not the original's)
+    float m_toonRimColor[4];
     bool m_glassBr;  // 0x4D0
     unsigned char pad_4D1[0x7];
     float m_glassBrParm[15];  // 0x4D8, setGlassBrk's values (their meanings are not known)

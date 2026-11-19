@@ -161,6 +161,14 @@ int DrCalcViewWork::unistatic_diff_pre_orijmat(float* pDst, bool) {
     return DrResMdoUniformBlock::s_nVarSizeTbl[120];
 }
 
+int DrCalcViewWork::unitoon_rim_mat(float* pDst) {
+    const DrPixlPostParm* parm = m_pDrMan->m_postParm[m_pDrMan->m_postParmIdx];
+    mm::Mat44 mtx;
+    mtx.setRotXYZ(mm::Vec3(parm->m_toonRimAngle[0] * 0.0174532924f, parm->m_toonRimAngle[1] * 0.0174532924f, 0.0f));
+    grlib::ShdMat44TransposeMat34(pDst, mtx);
+    return DrResMdoUniformBlock::s_nVarSizeTbl[66];
+}
+
 int DrCalcViewWork::unistatic_lightNotUse(float* pDst) {
     pDst[0] = 0.0f;
     pDst[1] = 0.0f;
