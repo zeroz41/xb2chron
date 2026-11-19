@@ -148,9 +148,13 @@ public:
     bool pad_16D;
     unsigned char pad_16E[0x6];
     bool m_ssao;  // 0x174, DrPixlPostObjTSSAO::render_beforeTemporal runs its passes only while set (name inferred)
-    unsigned char pad_175[0x13];
+    unsigned char pad_175[0x7];
+    float pad_17C;  // 0x17C, DrPixlPostObjTSSAO::passUpScaleToMiddle's gParam.x
+    unsigned char pad_180[0x4];
+    float pad_184;  // 0x184, DrPixlPostObjTSSAO::passUpScaleToMiddle's gParam.w
     float m_ssaoBlurAfter;  // 0x188, DrPixlPostObjTSSAO::render_afterTemporal's passBlur_Sub value (name inferred)
-    unsigned char pad_18C[0x8];
+    unsigned char pad_18C[0x4];
+    float pad_190;  // 0x190, DrPixlPostObjTSSAO::passUpScaleToMiddle clamps 1 - it into gParam.z
     bool pad_194;  // 0x194: updateSpec copies it from DrIniSys's parameters (spec 1 clears it)
     unsigned char pad_195[0x35];
     bool m_motBlur;  // 0x1CA
