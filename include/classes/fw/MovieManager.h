@@ -2,6 +2,7 @@
 #define CLASSES_FW_MOVIEMANAGER_H
 
 #include "classes/fw/ManagerObject.h"
+#include "classes/ml/WorkCpu.h"
 #include "classes/ml/IWorkBackground.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 
@@ -17,6 +18,10 @@ class MovieManager : public ::fw::ManagerObject,
                      public ::mm::mtl::PtrSingleton< ::fw::MovieManager>,
                      public ::ml::IWorkBackground {
 public:
+    // inline: Framework::createManager inlines it (the module has no copy); it listens to the background work
+    MovieManager() : m_layer(0), m_layerObj(nullptr), m_movie(nullptr), m_playing(false), m_pixelSize(3), m_frame(0) {
+        ml::WorkCpu::addBackgroundListener(this);
+    }
     virtual ~MovieManager();  // slot 0
     virtual const char* getName() const;  // slot 5
     virtual void bkgHomeMenu(bool);  // slot 8

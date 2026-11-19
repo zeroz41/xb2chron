@@ -4,6 +4,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mtl/AllocHandle.h"
 #include "fw/UpdateInfo.h"
+#include "mm/mtl/FixedArray.h"
 #include "mm/mtl/FixedVector.h"
 #include "classes/fw/MemHandlebaseAllocator.h"
 #include "classes/mm/threading/EventWait.h"
@@ -112,7 +113,9 @@ public:
     bool m_updated;  // update sets it at its end (the name is not the original's)
     float m_updateSpeed;            // setUpdateSpeed stores it (the name is not the original's)
     unsigned char pad_90[0x8];
-    Layer m_layers[32];             // the layer functions index it (the name is not the original's)
+    // the layer functions index it (the name is not the original's); a FixedArray: initialize resets it with assign,
+    // whose pointer loop the original unrolls fully
+    mm::mtl::FixedArray<Layer, 32> m_layers;
     // addPauseCallback adds to it, activate/deactivate call each one's (the name is not the original's)
     mm::mtl::FixedVector<IPauseTrigger*, 32> m_pauseTriggers;
     fw::MemHandlebaseAllocator m_allocator;  // getAllocator returns it (the name is not the original's)

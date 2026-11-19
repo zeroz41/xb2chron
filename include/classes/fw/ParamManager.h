@@ -2,6 +2,7 @@
 #define CLASSES_FW_PARAMMANAGER_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "fw/Allocator.h"
 #include "mm/mtl/IntrusivePtr.h"
 #include "mm/mtl/Map.h"
 #include "mm/mtl/FixStr.h"
@@ -35,7 +36,8 @@ public:
     // inline: createManager builds the manager in place (no constructor symbol), and every unit that includes
     // this header instantiates the maps' sentinels (their static initializers survive in battle_global, the
     // first unit linked)
-    ParamManager() {}
+    // inline (Framework::createManager inlines it): both maps take their nodes from the debug allocator
+    ParamManager() : m_refInfos(Allocator::getDebAllocator()), m_paramInfos(Allocator::getDebAllocator()) {}
     virtual ~ParamManager();  // slot 0
     // 128 more references its destructor releases (their type is not known yet; the name is not the original's)
     mm::mtl::IntrusivePtr<mm::mtl::ReferenceObject> m_references[128];

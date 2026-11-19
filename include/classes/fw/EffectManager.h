@@ -31,6 +31,8 @@ namespace fw { class EffectManager; }
 namespace mm { class Mat44; }
 namespace fw { class UpdateInfo; }
 namespace ml { class IDrDrawWorkInfo; }
+namespace ml { class Scn; }
+namespace mm { namespace mtl { class IAllocator; } }
 namespace ml { struct VolumeFadeParams; }
 namespace ml { struct DrMdlAfterImageParams; }
 namespace ml { class DrMdlBase; }
@@ -53,6 +55,8 @@ public:
     void setDisableCollision(bool flag);
     // the casters' sends of one layer
     class CasterGroup : public ::mm::mtl::IntrusiveList<EffectCasterSend> {};
+    // out of line (Framework::createManager calls it with its config's count and scene)
+    EffectManager(mm::mtl::IAllocator* allocator, unsigned int count, ml::Scn* scn);
     virtual ~EffectManager();  // slot 0
     virtual bool initialize();  // slot 2
     bool isCommonLoaded();

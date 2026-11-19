@@ -19,6 +19,7 @@ namespace fw {
 class PadManager : public ::fw::ManagerObject, public ::mm::mtl::PtrSingleton< ::fw::PadManager>,
                    public ::ml::DevGraphCB {
 public:
+    PadManager();  // out of line (Framework::createManager calls it)
     virtual ~PadManager();  // slot 0
     virtual bool initialize();  // slot 2
     virtual bool finalize();  // slot 3
