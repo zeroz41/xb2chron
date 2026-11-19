@@ -788,7 +788,8 @@ public:
     unsigned int m_isPlayer : 1;
     // IsBattle returns it (the name is not the original's)
     unsigned int m_isBattle : 1;
-    unsigned int pad_F00_1 : 2;
+    unsigned int pad_F00_1 : 1;
+    unsigned int pad_F00_2 : 1;  // BattleEndInitialize sets it (run bit 18; meaning unknown)
     // CharacterManager::IsExistBattlePlayer passes over a player in battle while it is set (run bit 19; meaning
     // unknown)
     unsigned int pad_F00_3 : 1;
@@ -858,8 +859,16 @@ public:
     unsigned int pad_F07_0 : 1;
     // the name is not the original's: IsEnableRescueTarget treats the character as out of battle while it is set
     unsigned int m_isBattleIgnore : 1;
-    unsigned int pad_F07_2 : 6;
-    unsigned int pad_F08 : 2;
+    unsigned int pad_F07_2 : 1;
+    // BattleEndInitialize clears run bits 75-78 (meanings unknown)
+    unsigned int pad_F07_3 : 1;
+    unsigned int pad_F07_4 : 1;
+    // while it is set, NotifySufferDamage sets pad_F07_6 when a damage leaves 1 HP (run bit 77; meaning unknown)
+    unsigned int pad_F07_5 : 1;
+    unsigned int pad_F07_6 : 1;  // NotifySufferDamage sets it (run bit 78; meaning unknown)
+    unsigned int pad_F07_7 : 1;
+    unsigned int pad_F08_0 : 1;
+    unsigned int pad_F08_1 : 1;  // NotifySufferDamage sets it for a damage while m_isBattle is set (run bit 81)
     // whether DispBladeLine eased the blade's "S_skinline" animation in (run bit 74; the name is not the original's)
     unsigned int m_dispBladeLine : 1;
     // whether SetBattleFace eased the battle eye animation in (the name is not the original's)
@@ -962,15 +971,28 @@ public:
     unsigned char pad_10B0;
     // SetAttackTarget keeps CheckAttackPosition's answer for its target here, 0 for none (the name is not the original's)
     unsigned char m_attackPosition;
-    unsigned char pad_10B2[0x3];
+    // BattleEndInitialize clears 0x10B2-0x10B5 and 0x10B6 (meanings unknown)
+    unsigned char pad_10B2;
+    unsigned char pad_10B3;
+    unsigned char pad_10B4;
     // TakeOverChangeIra copies it from the character it takes over from (meaning unknown)
     unsigned char pad_10B5;
-    unsigned char pad_10B6[0x2];
+    unsigned char pad_10B6;
+    unsigned char pad_10B7;
     // a 32-bit bitfield run (CheckWeaponDistance stores bit 22 as a word)
-    unsigned int pad_10B8 : 8;
+    // NotifySufferDamage keeps the damage's battle start type and param (m_battleStartType/m_battleStartParam) here
+    // for one second (pad_1098) when it outranks the kept one; ManagerUpdate_Attack clears both when pad_1098 runs
+    // out (meanings unknown)
+    unsigned int pad_10B8_0 : 4;
+    unsigned int pad_10B8_4 : 4;
     // Utility::AI_GetAutoAttackState answers m_autoAttackStep only while it is set (the name is not the original's)
     unsigned int m_isAutoAttack : 1;
-    unsigned int pad_10B9_1 : 8;
+    unsigned int pad_10B9_1 : 2;
+    unsigned int pad_10B9_3 : 1;  // NotifySufferDamage sets it for a damage with MsgObjectDamage's pad_2e set (meaning unknown)
+    unsigned int pad_10B9_4 : 1;
+    unsigned int pad_10B9_5 : 1;  // BattleEndInitialize clears it (run bit 13; meaning unknown)
+    unsigned int pad_10B9_6 : 1;  // NotifyDead sets it (run bit 14; meaning unknown)
+    unsigned int pad_10B9_7 : 2;
     // ActionCommandArts turns the character only while it is set (run bit 17; meaning unknown)
     unsigned int pad_10BA_1 : 1;
     unsigned int pad_10BA_2 : 4;
