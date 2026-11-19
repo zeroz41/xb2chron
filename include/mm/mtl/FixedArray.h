@@ -4,14 +4,16 @@
 namespace mm { namespace mtl {
 
 // mm_lib's array of a fixed length N. assign stores a value to every element (FixedArray<Vec3, 20>::assign is
-// out of line in ptlib; WindNode's constructor inlines FixedArray<Vec3, 12>'s); the index operator does not
+// out of line in ptlib; WindNode's constructor inlines FixedArray<Vec3, 12>'s). It walks a pointer: the loop
+// unrolls fully for 20 elements, which keeps the 20-element one out of line; an index loop does not unroll and
+// gets inlined into EmitterManager::KizunaWork's constructor. The index operator does not
 // check the index (WindBlender::update inlines it without an assertion).
 template <typename T, unsigned long N>
 class FixedArray {
 public:
     void assign(const T& value) {
-        for (unsigned long i = 0; i < N; ++i) {
-            m_data[i] = value;
+        for (T* it = begin(); it != end(); ++it) {
+            *it = value;
         }
     }
     T& operator[](unsigned long i) { return m_data[i]; }

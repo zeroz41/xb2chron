@@ -9,6 +9,7 @@
 #include "mm/MMStdBase.h"
 #include "mm/Math.h"
 #include "ptlib/Utility.h"
+#include "ptlib/StackAllocater.h"
 #include "ml/ScnObjAccGpuCheck.h"
 #include "ptlib/forcefield/TurbulenceN.h"
 #include "ptlib/material/MaterialManager.h"
@@ -209,6 +210,20 @@ void ParticleObj::emitter_create_local_common_grav_wind(EmitterObj* pEmitter) {
     if (pEmitter->m_pNoise != nullptr) {
         m_pWork->m_noise = mm::Vec3::zero;
     }
+}
+
+void EmitterManager::init() {
+#line 44 "D:/Monolithsoft/BF2/prog/libs/eflib/proj/windows/../../../eflib/source\\ptlib/emitter/particle_emitter_manager.cpp"
+    MM_ASSERT(!getPtr());
+#line 59 "D:/Monolithsoft/BF2/prog/libs/eflib/proj/windows/../../../eflib/source\\ptlib/emitter/particle_emitter_manager.cpp"
+    StaticAllocObj* alloc = StaticAllocObj::create(0xC9CA50, __FILE__, __LINE__);
+    getPtr() = static_cast<EmitterManager*>(alloc->sysAlloc(sizeof(EmitterManager), 16, nullptr, 0));
+    if (getPtr() != nullptr) {
+        new (getPtr()) EmitterManager();
+        getPtr()->init_sub(alloc);
+    }
+    forcefield::FfManager::init();
+    ComputeManager::init();
 }
 
 void ComputeManager::init() {

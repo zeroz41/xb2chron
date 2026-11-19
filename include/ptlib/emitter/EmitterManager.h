@@ -3,8 +3,10 @@
 
 #include "ptlib/IntrusiveList.h"
 #include "classes/effect/SystemManager.h"
+#include "mm/mtl/FixedArray.h"
+#include <string.h>
 
-namespace ptlib { class FxHeader; }
+namespace ptlib { class FxHeader; class StaticAllocObj; }
 namespace ptlib { namespace math { class KeyFrameIP; } }
 
 namespace ptlib { namespace emitter {
@@ -17,10 +19,44 @@ class ParticleObj;
 // the emitters' manager: its per-category speeds (effect::SystemManager::setCategorySpd)
 class EmitterManager {
 public:
+    // one bond (kizuna) line's points as the emitters read them; SystemManager::updateKizunaPos copies a
+    // SystemManager::KizunaWork into it field by field (the field names are not the original's)
+    struct KizunaWork {
+        KizunaWork() : pad_140(0), pad_151(false), pad_152(true) {
+            memset(pad_148, 0xFF, sizeof(pad_148));
+            pad_154 = 1.0f;
+            pad_158 = 1.0f;
+            pad_15c = 1.0f;
+            pad_160 = 1.0f;
+            m_scrollA = 0.0f;
+            m_scrollB = 0.0f;
+            pad_16c = 0.3f;
+            m_points.assign(mm::Vec3::zero);
+        }
+
+        mm::mtl::FixedArray<mm::Vec3, 20> m_points;
+        unsigned long pad_140;
+        // updateKizunaPos fills [0], [2], [4], [6] from the source's pairs' firsts, then [1], [3], [5], [7], then [8]
+        unsigned char pad_148[9];
+        bool pad_151;
+        bool pad_152;
+        float pad_154;
+        float pad_158;
+        float pad_15c;
+        float pad_160;
+        float m_scrollA;
+        float m_scrollB;
+        float pad_16c;
+    };
+
+    // init builds the manager in place and empties its lists
+    EmitterManager() : pad_1788(nullptr) { clear(); }
+
     static EmitterManager* get();
     static EmitterManager*& getPtr();
     static void init();
     static void term();
+    void init_sub(StaticAllocObj* pAlloc);
 
     // ParticleManager's emitter_set_* forward to these (what they return is not known yet)
     // frees every emitter and effect file, releases the free emitters' streams and particles and clears the
@@ -82,7 +118,7 @@ public:
 
     // two sets of the bond lines' points: SystemManager::updateKizunaPos writes set m_flip, tail copies it to the
     // other (the name is not the original's)
-    effect::SystemManager::KizunaWork m_kizunaWorks[2][8];
+    mm::mtl::FixedArray<KizunaWork, 8> m_kizunaWorks[2];
     float m_categorySpeed[1];  // indexed by category; the count is not known yet
     unsigned char pad_1704[0x44];
     unsigned long pad_1748;  // clear zeroes it
