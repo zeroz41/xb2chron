@@ -8,14 +8,8 @@ objdiff's report decides what matches. Use whatever tools you like and send a cl
 
 1. Build the project once: follow [Building](README.md#building) in the README.
 2. The commands in this guide are [zkit](https://github.com/zeroz41/zkit-gcnx)'s, which the build installed. Run
-   them through the build script, from the repository folder:
-
-   | | `zkit lookup 0x710067A41C` is |
-   |---|---|
-   | Windows | `py build.py zkit lookup 0x710067A41C` |
-   | macOS, Linux | `python3 build.py zkit lookup 0x710067A41C` |
-
-   `zkit doctor` checks your setup and says how to fix anything missing.
+   them through the build script: `zkit lookup 0x710067A41C` is `python3 build.py zkit lookup 0x710067A41C`
+   (`py build.py zkit ...` on Windows). `zkit doctor` checks your setup.
 3. Get [objdiff](https://github.com/encounter/objdiff/releases) and open the repository folder in it. It shows
    each function next to the original and rebuilds the file when you save.
 
@@ -77,10 +71,10 @@ Things the original's source did that yours has to do too:
 
 Before you start, build and save the result as your baseline:
 
+    python3 build.py
     zkit progress --save
 
-(after `python3 build.py`, or `py build.py` on Windows). Then make your change and run the same check CI runs on
-every pull request:
+Then make your change and run the same check CI runs on every pull request:
 
     zkit ci check --base master
 
