@@ -1321,8 +1321,8 @@ bool DrCalcStmListObj::texstm_stmchk_topheader() {
                 DrCalcTexStreamMan::get()->m_errReadSize += 0x1000;
             } else {
                 DevFileParamTh param;
-                param.pad_4c = 0;
-                param.pad_50 = 0x40;
+                param.m_offset = 0;
+                param.m_readSize = 0x40;
                 param.m_buffer = m_pMemObj->m_pMem;
                 param.m_size = 0x1000;
                 param.m_listener = this;
@@ -1449,8 +1449,8 @@ bool DrCalcStmListObj::texstm_stmchk_topWait() {
                 readSize = 0x1000;
             }
             DevFileParamTh param;
-            param.pad_4c = pHead[3];
-            param.pad_50 = pHead[2];
+            param.m_offset = pHead[3];
+            param.m_readSize = pHead[2];
             param.m_buffer = pObj->m_pMem;
             param.m_size = readSize;
             param.m_path = m_name.m_str;

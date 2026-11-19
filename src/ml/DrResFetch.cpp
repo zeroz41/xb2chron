@@ -5673,8 +5673,8 @@ bool DrResMdoSeamRead::read(int& idx, unsigned int ofs, unsigned int size, DrRes
     m_readWaitBits |= bit;
     int readSize = (int)size + ((int)size % 0x40 != 0 ? 0x40 - (int)size % 0x40 : 0);
     DevFileParamTh param;
-    param.pad_4c = ofs;
-    param.pad_50 = readSize;
+    param.m_offset = ofs;
+    param.m_readSize = readSize;
     param.m_buffer = obj->m_pData;
     param.m_size = obj->m_size;
     param.m_prio = DrMan::get()->m_seamReadPrio;

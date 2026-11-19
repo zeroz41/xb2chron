@@ -14,7 +14,7 @@ namespace ml {
 class DevFileParamTh {
 public:
     DevFileParamTh()
-        : m_path(nullptr), m_hMem(), pad_10(nullptr), pad_38(nullptr), m_buffer(nullptr), pad_4c(0), pad_50(0), m_align(0),
+        : m_path(nullptr), m_hMem(), pad_10(nullptr), pad_38(nullptr), m_buffer(nullptr), m_offset(0), m_readSize(0), m_align(0),
           pad_58(1), pad_5c(0), m_listener(nullptr), m_prio(FILE_PRIO(10)), pad_6c(true), pad_6d(false), pad_6e(false), pad_6f(false) {}
     // clears the pointer at 0x38 (what it holds is not known)
     ~DevFileParamTh() {
@@ -30,8 +30,10 @@ public:
     void* pad_38;
     void* m_buffer;  // where the file is read to
     unsigned int m_size;  // the buffer's size (the constructor leaves it: cloud::CloudDataMan's never stores it)
-    int pad_4c;
-    int pad_50;
+    // where the read starts in the file and how many bytes it reads (NvmshResMan::createNaviDataRead passes its
+    // _NvMhAllReadObj's m_fileOfs and m_size, DrResFetch its ofs and readSize; the names are not the original's)
+    int m_offset;
+    int m_readSize;
     unsigned int m_align;  // the data's alignment (cloud::CloudDataMan passes 0x1000)
     int pad_58;
     int pad_5c;

@@ -52,8 +52,8 @@ public:
         pad_8 |= 1;
         ml::DevFileParamTh param;
         param.m_buffer = adr;
-        param.pad_4c = ofs;
-        param.pad_50 = size;
+        param.m_offset = ofs;
+        param.m_readSize = size;
         param.m_size = size;
         param.m_prio = ml::FILE_PRIO(1);
         ml::DevFileTh::rfRead(pad_90, param);

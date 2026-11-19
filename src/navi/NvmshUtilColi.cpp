@@ -328,6 +328,34 @@ void NvmshResMan::calcConectInfoUpdate(const _NvMhAllWorldHead* head, const _NvM
     }
 }
 
+NvmshResData* NvmshResMan::createNaviDataRead(const _NvMhAllReadObj* read, int bank, int arg) {
+    if (m_freeNum == 0) {
+        return nullptr;
+    }
+    NvmshResMemObj* obj = m_memMan->allocMemObj(read->m_size);
+    if (obj == nullptr) {
+        return nullptr;
+    }
+    NvmshResData* data = m_freeData[m_freeNum - 1];
+    data->m_memObj = obj;
+    ml::DevFileParamTh param;
+    param.m_buffer = obj->m_data;
+    param.m_size = read->m_size;
+    param.m_path = m_fileName.m_str;
+    param.m_offset = read->m_fileOfs;
+    param.m_readSize = read->m_size;
+    param.m_listener = this;
+    param.m_prio = ml::FILE_PRIO(1);
+    m_fileHandles[bank] = ml::DevFileTh::readFile(param);
+    data->m_flags |= 2;
+    data->m_info = read;
+    data->m_readArg = arg;
+    m_flags |= 0x10000 << bank;
+    m_flags |= 0x100000 << bank;
+    m_freeNum--;
+    return data;
+}
+
 bool NvmshResMan::OnFileEvent(ml::EventFileTh* event) {
     if (event->m_kind == 2) {
         for (int i = 0; i < 4; i++) {
