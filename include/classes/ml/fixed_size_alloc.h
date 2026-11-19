@@ -38,9 +38,9 @@ public:
         unsigned long bytes = count * sizeof(T0) + m_bitWords * 4;
         m_buffer = mtl::MemManager::allocate(mem, bytes, 4, false, "no name", 0);
         memset(m_buffer, 0, bytes);
-        m_used = 0;
-        m_usedBits = reinterpret_cast<unsigned int*>(static_cast<unsigned char*>(m_buffer) + count * sizeof(T0));
         m_blocks = static_cast<T0*>(m_buffer);
+        m_usedBits = reinterpret_cast<unsigned int*>(static_cast<unsigned char*>(m_buffer) + count * sizeof(T0));
+        m_used = 0;
     }
 
     // a free block marked in use, null when every block is (WorkCpu::allocJob inlines it; the name is not the

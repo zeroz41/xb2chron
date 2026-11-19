@@ -132,6 +132,9 @@ public:
     // a job off m_jobAlloc (null when all are in use) and one handed back, under the job lock
     TJOB* allocJob();
     void freeJob(TJOB* job);
+    // a job taken over from another CPU thread into job for thread (WorkCpuThread::threadFunc asks when the thread
+    // holds none; the parameter names are not the original's)
+    static bool getWaitingJob(TJOB*& job, WorkCpuThread* thread);
 
     static bool s_bRenderSubCpu;
 
@@ -161,7 +164,8 @@ public:
     unsigned char pad_1761[0x3];
     int m_bank;                        // 0x1764 getEven (the name is not the original's)
     fixed_size_alloc<TJOB> m_jobAlloc;  // 0x1768 the jobs allocJob hands out (the name is not the original's)
-    unsigned long pad_1798;            // 0x1798 entryJobThread stores a job pointer here
+    // 0x1798 the job entryJobThread entered last (wkStandbyLogin colours thRender's; the name is not the original's)
+    TJOB* m_lastJob;
     // 0x17A0 the job groups beginUpdate wakes (entryAutoExecGrp, removeAutoExecGrp) (the name is not the original's)
     mm::mtl::FixedList<AUTO_EXEC, 32> m_autoExec;
     unsigned int pad_1958;
