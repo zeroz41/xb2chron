@@ -23,6 +23,14 @@
 #include "classes/gf/GfObj.h"
 #include "classes/gf/GfObjSetupEnemy.h"
 #include "mm/mtl/RTTI.h"
+#include "classes/gf/GfComTransform.h"
+#include "classes/gf/GfComBehaviorEnemy.h"
+#include "classes/gmk/GmkManager.h"
+#include "classes/gmk/GmkSet.h"
+#include "classes/gmk/IGmkList.h"
+#include "fw/Transform.h"
+#include "gf/GfGameUtil.h"
+#include <math.h>
 
 #include <algorithm>
 
@@ -114,6 +122,61 @@ void GfRelSmnEnemy::updateDepopEnemy() {
             return;
         }
     }
+}
+
+void GfRelSmnEnemy::validatePopPos() {
+    if (m_enemies.size() != 0) {
+        for (GF_OBJ_HANDLE* enemy : m_enemies) {
+            if (!GfGameObj::isValidGameObj(enemy, true, nullptr)) {
+                return;
+            }
+            if (GfGameUtil::isGameObjWait(enemy)) {
+                return;
+            }
+        }
+    }
+    if (m_waitEnemies.size() == 0) {
+        return;
+    }
+    size_t index = static_cast<size_t>(m_waitEnemies.size() * ml::mtRandf2());
+    std::pair<PopInfo*, GF_OBJ_HANDLE*>& wait = m_waitEnemies.begin()[index];
+    bool zero = wait.first->pos.isZero();
+    GF_OBJ_HANDLE* handle = wait.second;
+    GfObjAcc acc(handle);
+    GfObj* obj = acc.getObj();
+    if (obj == nullptr) {
+        return;
+    }
+    GfComBehaviorEnemy* behavior = obj->getComponent<GfComBehaviorEnemy>(6);
+    if (behavior == nullptr) {
+        return;
+    }
+    GfObjSetupEnemy* setup = getEnemySetup(handle);
+    if (behavior->validatePopPos(setup->m_initialPos, setup->pad_30, false, zero)) {
+        m_waitEnemies.erase(&wait);
+        m_enemies.push_back(handle);
+        behavior->onPopped();
+        GfGameUtil::setGameObjWait(handle, false);
+        return;
+    }
+    mm::Vec3 pos;
+    if (!getPopPos(pos, *wait.first)) {
+        return;
+    }
+    fw::Transform transform;
+    transform.position = pos;
+    mm::Vec3 half = mm::Vec3(setup->pad_30) * 0.5f;
+    float sx = ::sinf(half.x);
+    float cx = ::cosf(half.x);
+    float sy = ::sinf(half.y);
+    float cy = ::cosf(half.y);
+    float sz = ::sinf(half.z);
+    float cz = ::cosf(half.z);
+    transform.rotation.x = sx * cy * cz - cx * sy * sz;
+    transform.rotation.y = cx * sy * cz + sx * cy * sz;
+    transform.rotation.z = cx * cy * sz - sx * sy * cz;
+    transform.rotation.w = cx * cy * cz + sx * sy * sz;
+    setup->setInitialTransform(transform);
 }
 
 void GfRelSmnEnemy::removeEnemy(GF_OBJ_HANDLE* handle) {
@@ -216,6 +279,71 @@ void GfSmnEnemyManager::update(float dt) {
     }
 }
 
+bool GfSmnEnemyManager::execAbsSummon(const AbsSmnInfo& info) {
+    GfObj* obj = GfObjUtil::getObj(info.handle);
+    if (obj == nullptr) {
+        return false;
+    }
+    GfComTransform* transform = obj->getComponent<GfComTransform>(0);
+    if (transform == nullptr) {
+        return false;
+    }
+    const mm::Vec3& pos = transform->getPosition();
+    float radiusSq = info.radius * info.radius;
+    for (GF_OBJ_HANDLE* handle : *GfGameObj::getList(5)) {
+        if (info.group != 0) {
+            DataParamAcc param(handle);
+            if (!param.isValid()) {
+                continue;
+            }
+            const SDataEnemy* data = param.getSDataEnemy();
+            if (data->m_genus != info.group) {
+                continue;
+            }
+        }
+        GfObjAcc acc(handle);
+        GfObj* enemy = acc.getObj();
+        if (enemy == nullptr || GfObjUtil::testInvincible(handle)) {
+            continue;
+        }
+        GfComBehaviorEnemy* behavior = enemy->getComponent<GfComBehaviorEnemy>(6);
+        if (behavior == nullptr) {
+            continue;
+        }
+        const mm::Vec3& enemyPos = acc.getWorldTransformNoSync().position;
+        float dx = pos.x - enemyPos.x;
+        float dy = pos.y - enemyPos.y;
+        float dz = pos.z - enemyPos.z;
+        if (radiusSq < dx * dx + dy * dy + dz * dz) {
+            continue;
+        }
+        behavior->reqChangeBattle();
+    }
+    auto forcePop = [&, info](const gmk::AGmkBase& base) {
+        const gmk::GmkEnemy& gmk = static_cast<const gmk::GmkEnemy&>(base);
+        if (!gmk.isValid()) {
+            return;
+        }
+        if ((gmk.m_insts.m_bdatInfo.m_smnGroups & (1 << info.flagBit)) == 0) {
+            return;
+        }
+        const mm::Vec3& gmkPos = *gmk.m_pos;
+        float dx = pos.x - gmkPos.x;
+        float dy = pos.y - gmkPos.y;
+        float dz = pos.z - gmkPos.z;
+        if (radiusSq < dx * dx + dy * dy + dz * dz) {
+            return;
+        }
+        if (!gmk.m_insts.m_bdatInfo.isPopCondMatchedOfSmn()) {
+            return;
+        }
+        gmk::ForcePopEnemyInfo popInfo;
+        popInfo.pad_0 = info.group;
+        gmk.m_insts.reqForcePopGobInst(popInfo);
+    };
+    return gmk::GmkManager::sys()->traverseGmkInst(gmk::GmkEnemy::TYPE, forcePop);
+}
+
 bool GfSmnEnemyManager::execRelSummon(const RelSmnInfo& info) {
     if (get()->m_relSmnEnemies.capacity() > get()->m_relSmnEnemies.size()) {
         GfRelSmnEnemy::CreateInfo createInfo;
@@ -235,3 +363,4 @@ bool GfSmnEnemyManager::execRelSummon(const RelSmnInfo& info) {
 // the pop vectors' growth (their users are not written yet)
 template void mm::mtl::Vector<std::pair<gf::GfRelSmnEnemy::PopInfo*, gf::GF_OBJ_HANDLE*> >::expand(size_t, size_t);
 template void mm::mtl::Vector<gf::GF_OBJ_HANDLE*>::expand(size_t, size_t);
+template void mm::mtl::Vector<gf::GfRelSmnEnemy::PopInfo>::push_back(const gf::GfRelSmnEnemy::PopInfo&);

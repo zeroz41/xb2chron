@@ -99,6 +99,9 @@ public:
     // makes the field movement (createBehField), then takes its first state: battle (0) for the siren battle's
     // enemies, 15 for an enemy blade, else by its gimmick's pop_act_type; battle when a squad member is in battle
     void onPopped();
+    // whether a waiting enemy may pop at pos with the euler angles rot (GfRelSmnEnemy::validatePopPos passes its
+    // setup's initial position and angles, false, and whether its pop info's offset is zero)
+    bool validatePopPos(const mm::Vec3& pos, const mm::Vec3& rot, bool, bool);
     void createBehField();
     // its handlers of messages 0x100003A (a damage notice) and 0x100003B (its death), from recieveMessage
     void procMsgObjectNotifyDead(fw::MessageObject* sender, gf::MsgObjectNotifyDead& msg);
