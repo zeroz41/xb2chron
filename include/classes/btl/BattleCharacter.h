@@ -708,7 +708,10 @@ public:
     // SirenModifySetting sets them to 3 and 18 degrees in radians (meaning unknown)
     float pad_DA4;
     float pad_DA8;
-    unsigned char pad_DAC[0x2C];
+    unsigned char pad_DAC[0x28];
+    // Utility::AI_CheckState's state 9 is whether it is non-negative (meaning unknown)
+    signed char pad_DD4;
+    unsigned char pad_DD5[0x3];
     // what GetIKData hands out while m_ikType is set (the names are not the original's)
     float m_ikValue0;
     float m_ikValue1;
@@ -788,7 +791,10 @@ public:
     // SpAttackManager::DeleteCamera clears it for its camera characters (the name is not the original's)
     unsigned char m_spAttackCamera : 1;
     unsigned char pad_EF5_3 : 5;
-    unsigned char pad_EF6[0x8];
+    unsigned char pad_EF6[0x2];
+    // Utility::AI_CheckState's state 11 is whether it is above 0x98 (meaning unknown)
+    unsigned char pad_EF8;
+    unsigned char pad_EF9[0x5];
     // one 16-byte bitfield run (StartBackHome loads and stores 0xEFE and 0xF06 as two 8-byte halves)
     unsigned int pad_EFE : 5;
     // SetWeaponType keeps the "VoiceType" of its weapon type's row in BDAT 0x96 here (the name is not the original's)
