@@ -71,6 +71,17 @@
 #include "arc/CArcData.h"
 #include "classes/fw/CommonResource.h"
 #include "classes/gf/GfAllocator.h"
+#include "gf/GfVolumeFade.h"
+#include "classes/fw/ModelObject.h"
+#include "ml/ScnObjAccEtcParams.h"
+#include "gf/GfUtil.h"
+#include "gf/GfDataFobj.h"
+#include "gf/GfDataWeapon.h"
+#include "classes/gf/GfObjSetupGimmick.h"
+#include "fw/Transform.h"
+#include "mm/Math.h"
+#include "classes/gf/GfObjSetupDriver.h"
+#include "classes/gf/GfObjSetupBlade.h"
 
 namespace gf {
 
@@ -110,6 +121,59 @@ void GfObjUpdate::updateComponent(GfObj* obj, const fw::UpdateInfo& info) {
         com->executeCallback();
     } else if (GfComEvtAnim* anim = obj->getComponent<GfComEvtAnim>(2)) {
         anim->m_asm.executeCallback(anim);
+    }
+}
+
+void GfObjUtil::addDebugName(GF_OBJ_HANDLE* handle) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info == nullptr) {
+        return;
+    }
+    GfObjAcc acc(handle);
+    unsigned int id = acc.getBdatId();
+    switch (acc.getType()) {
+    case 1:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 15: {
+        DataParamAcc data(handle);
+        if (data.getModelResourceName() != nullptr) {
+            info->m_modelBaseName = util::getFilePtrFromPath(data.getModelResourceName());
+        }
+        break;
+    }
+    case 8:
+        if (GFOBJ_INFO* objInfo = GfObjManager::getObjInfo(handle)) {
+            if (GfObjSetup* setup = objInfo->m_setup) {
+                if (setup->m_type == objInfo->m_obj->m_type && objInfo->m_obj->m_type == 8 &&
+                    setup->getRTTI()->isKindOf(&GfObjSetupGimmick::m_rtti)) {
+                    if (static_cast<GfObjSetupGimmick*>(setup)->pad_98 != nullptr) {
+                        info->m_modelBaseName = "";
+                    }
+                }
+            }
+        }
+        break;
+    case 9:
+        if (const char* name = GfDataFobj::getFobjModelName(id)) {
+            info->m_modelBaseName = util::getFilePtrFromPath(name);
+        }
+        break;
+    case 10: {
+        GfAppend* append = getAppend(handle, GFATTACH(0));
+        if (append == nullptr) {
+            append = getAppend(handle, GFATTACH(3));
+        }
+        if (append != nullptr) {
+            if (const char* name = GfDataWeapon::getModelName(append->getRscID())) {
+                info->m_modelBaseName = util::getFilePtrFromPath(name);
+            }
+        }
+        break;
+    }
     }
 }
 
@@ -650,6 +714,75 @@ bool GfObjUtil::isEnemyBlade(GF_OBJ_HANDLE* handle) {
     return setup != nullptr && setup->m_createType == 5;
 }
 
+void GfObjUtil::saveRebuildInfo(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    GfObjSetup* setup = getObjSetup(handle);
+    // the world rotation as angles (GfObjSetup::setInitialTransform's reading); only the yaw is kept
+    const mm::Quat& q = acc.getWorldTransform().rotation;
+    float x2 = q.x + q.x;
+    float y2 = q.y + q.y;
+    float z2 = q.z + q.z;
+    float xx = q.x * x2;
+    float xy = q.x * y2;
+    float xz = q.x * z2;
+    float yy = q.y * y2;
+    float yz = q.y * z2;
+    float zz = q.z * z2;
+    float wx = q.w * x2;
+    float wy = q.w * y2;
+    float wz = q.w * z2;
+    float m00 = 1.0f - (yy + zz);
+    float m01 = xy + wz;
+    float m02 = xz - wy;
+    float m11 = 1.0f - (xx + zz);
+    float m20 = xz + wy;
+    float m21 = yz - wx;
+    float m22 = 1.0f - (xx + yy);
+    mm::Vec3 rot;
+    rot.x = mm::asin(-m21);
+    if (rot.x < 1.57079637f) {
+        if (rot.x > -1.57079637f) {
+            rot.z = ::atan2f(m01, m11);
+            rot.y = ::atan2f(m20, m22);
+        } else {
+            rot.z = -::atan2f(m02, m00);
+            rot.y = 0.0f;
+        }
+    } else {
+        rot.z = ::atan2f(m02, m00);
+        rot.y = 0.0f;
+    }
+    setup->m_initialPos = acc.getWorldTransform().position;
+    setup->pad_30 = mm::Vec3(0.0f, rot.y, 0.0f);
+    if (acc.getType() == 3) {
+        GfObjSetupDriver* driver = nullptr;
+        if (GFOBJ_INFO* info = GfObjManager::getObjInfo(handle)) {
+            if (GfObjSetup* objSetup = info->m_setup) {
+                if (objSetup->m_type == info->m_obj->m_type && info->m_obj->m_type == 3 &&
+                    objSetup->getRTTI()->isKindOf(&GfObjSetupDriver::m_rtti)) {
+                    driver = static_cast<GfObjSetupDriver*>(objSetup);
+                }
+            }
+        }
+        if (GfComPropertyPc* property = acc.getObj()->getComponent<GfComPropertyPc>(5)) {
+            driver->pad_70 = property->m_setupKind;
+        }
+    } else if (acc.getType() == 4) {
+        GfObjSetupBlade* blade = nullptr;
+        if (GFOBJ_INFO* info = GfObjManager::getObjInfo(handle)) {
+            if (GfObjSetup* objSetup = info->m_setup) {
+                if (objSetup->m_type == info->m_obj->m_type && info->m_obj->m_type == 4 &&
+                    objSetup->getRTTI()->isKindOf(&GfObjSetupBlade::m_rtti)) {
+                    blade = static_cast<GfObjSetupBlade*>(objSetup);
+                }
+            }
+        }
+        if (GfComPropertyPc* property = acc.getObj()->getComponent<GfComPropertyPc>(5)) {
+            blade->pad_74 = property->m_setupKind;
+        }
+    }
+}
+
 bool GfObjUtil::setFlag(GF_OBJ_HANDLE* handle, unsigned int flag, bool on) {
     return setFlag(GfObjManager::getObjInfo(handle), flag, on);
 }
@@ -718,6 +851,20 @@ void GfObjUtil::setEnableBodyIK(GF_OBJ_HANDLE* handle, bool enable, float time) 
     }
 }
 
+void GfObjUtil::setEnableBlowRotateIK(GF_OBJ_HANDLE* handle, bool enable, float time) {
+    if (GfObj* obj = getObj(handle)) {
+        if (GfComIK* ik = obj->getComponent<GfComIK>(3)) {
+            if (fw::BlowRotateIkSolver* blow = ik->getSolver<fw::BlowRotateIkSolver>(1)) {
+                if (enable) {
+                    blow->fadeIn(time);
+                } else {
+                    blow->fadeOut(time);
+                }
+            }
+        }
+    }
+}
+
 void GfObjUtil::setEnableLookIK(GF_OBJ_HANDLE* handle, bool enable, float time) {
     if (GfObj* obj = getObj(handle)) {
         if (GfComIK* ik = obj->getComponent<GfComIK>(3)) {
@@ -770,6 +917,47 @@ void GfObjUtil::setEnableSPCIK(GF_OBJ_HANDLE* handle, bool enable) {
         if (GfComIK* ik = obj->getComponent<GfComIK>(3)) {
             if (fw::SphericalCoordinatesIkSolver* solver = ik->getSolver<fw::SphericalCoordinatesIkSolver>(8)) {
                 enableSolver(solver, enable);
+            }
+        }
+    }
+}
+
+void GfObjUtil::setEnableEyeIK(GF_OBJ_HANDLE* handle, bool enable, float time) {
+    if (GfObj* obj = getObj(handle)) {
+        if (GfComIK* ik = obj->getComponent<GfComIK>(3)) {
+            int type = getEyeIKType(handle);
+            if (enable) {
+                if (type == 1) {
+                    if (fw::TransLocalIkSolver* left = ik->getSolver<fw::TransLocalIkSolver>(6)) {
+                        left->fadeIn(time);
+                    }
+                    if (fw::TransLocalIkSolver* right = ik->getSolver<fw::TransLocalIkSolver>(7)) {
+                        right->fadeIn(time);
+                    }
+                } else if (type == 2) {
+                    if (fw::RotateLocalIkSolver* left = ik->getSolver<fw::RotateLocalIkSolver>(6)) {
+                        left->fadeIn(time);
+                    }
+                    if (fw::RotateLocalIkSolver* right = ik->getSolver<fw::RotateLocalIkSolver>(7)) {
+                        right->fadeIn(time);
+                    }
+                }
+            } else {
+                if (type == 1) {
+                    if (fw::TransLocalIkSolver* left = ik->getSolver<fw::TransLocalIkSolver>(6)) {
+                        left->fadeOut(time);
+                    }
+                    if (fw::TransLocalIkSolver* right = ik->getSolver<fw::TransLocalIkSolver>(7)) {
+                        right->fadeOut(time);
+                    }
+                } else if (type == 2) {
+                    if (fw::RotateLocalIkSolver* left = ik->getSolver<fw::RotateLocalIkSolver>(6)) {
+                        left->fadeOut(time);
+                    }
+                    if (fw::RotateLocalIkSolver* right = ik->getSolver<fw::RotateLocalIkSolver>(7)) {
+                        right->fadeOut(time);
+                    }
+                }
             }
         }
     }
@@ -844,6 +1032,52 @@ bool GfObjUtil::isBattle(GF_OBJ_HANDLE* handle) {
 
 bool GfObjUtil::isVolumeFadeForUser(GF_OBJ_HANDLE* handle) {
     return testFlag(GfObjManager::getObjInfo(handle), 20);
+}
+
+void GfObjUtil::createVolumeFade(GF_OBJ_HANDLE* handle) {
+    GfObj* obj = GfObjManager::getObjInfo(handle)->m_obj;
+    if (GfComModel* model = obj->getComponent<GfComModel>(1)) {
+        GfObjSetup* setup = getObjSetup(handle);
+        GFOBJ_INFO* info = GfObjManager::getObjInfo(obj->m_handle);
+        info->createVolumeFade(model);
+        if (info->m_volumeFade == nullptr) {
+            return;
+        }
+        if (setup->pad_64 != -1) {
+            setVolumeFadeUserFlag(handle, true);
+            DataParamAcc acc(handle);
+            info->m_volumeFade->setEffectType(VFEFF(acc.getAttribute(-1, false)));
+            info->m_volumeFade->setFadeRatio(VFACC(setup->pad_64), VFPARTS(-1), 0.0f);
+            setup->pad_64 = -1;
+            ml::ScnObjAccEtcParams params(model->m_model->getInterface());
+            if (params.getMax() != 0) {
+                for (unsigned int i = 0; i < 6; i++) {
+                    params.setInitParams(i, 1.0f);
+                }
+            }
+        } else if (isEventCreateType(setup->m_createType)) {
+            DataParamAcc acc(handle);
+            if (acc.getObjType() == 4) {
+                VFEFF type = VFEFF(acc.getAttribute(-1, false));
+                if (type != 0) {
+                    info->m_volumeFade->setEffectType(type);
+                    info->m_volumeFade->applyFadeRatio();
+                }
+            }
+        } else {
+            DataParamAcc acc(handle);
+            if (acc.getObjType() == 4 ||
+                (acc.getObjType() == 3 &&
+                 GfDataDriver::isIra(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0)) ||
+                (acc.getObjType() == 10 && GfDataUtil::isIra())) {
+                VFEFF type = VFEFF(acc.getAttribute(-1, false));
+                if (type != 0) {
+                    info->m_volumeFade->setEffectType(type);
+                    info->m_volumeFade->applyFadeRatio();
+                }
+            }
+        }
+    }
 }
 
 void GfObjUtil::setVolumeFadeUserFlag(GF_OBJ_HANDLE* handle, bool on) {

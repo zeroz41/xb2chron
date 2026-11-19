@@ -138,6 +138,10 @@ public:
     static gf::GfComModel* getComModel(gf::GF_OBJ_HANDLE* handle);  // the object's model component (slot 1)
     static gf::GfVolumeFade* getVolumeFade(gf::GF_OBJ_HANDLE* handle);
     static bool isVolumeFadeForUser(gf::GF_OBJ_HANDLE* handle);  // its info's flag 20
+    // has the object's info make its volume fade for its model component (GFOBJ_INFO::createVolumeFade), then
+    // gives it the data's attribute as its effect type
+    static void createVolumeFade(gf::GF_OBJ_HANDLE* handle);
+    static void saveRebuildInfo(gf::GF_OBJ_HANDLE* handle);
     static void setTalking(gf::GF_OBJ_HANDLE* handle, bool on);  // its info's flag 21
     // a player's object: gives its collider's first collision object the priority of its player index
     // (GfDataUtil::getPlayerColiPriority), kept at its info's 0xB0 (GfGameMoverSwitcher::switchMoverForIra calls it)
