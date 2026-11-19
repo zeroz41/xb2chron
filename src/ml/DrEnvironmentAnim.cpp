@@ -533,9 +533,9 @@ void DrEnvironmentObjLgt::setupPoint(DrEnvironmentLgtList* list, DrLightObjPnt* 
     float b = col.b * data->m_intensity;
     const LgtParamData* param =
         reinterpret_cast<const LgtParamData*>(static_cast<const char*>(m_resource) + data->m_paramOfs);
-    light->m_color[0] = r;
-    light->m_color[1] = g;
-    light->m_color[2] = b;
+    light->m_color.r = r;
+    light->m_color.g = g;
+    light->m_color.b = b;
     light->setMat(pos->m_mat);
     light->m_speIntensity = param->m_speIntensity;
     light->m_size = pos->m_range;
@@ -561,9 +561,9 @@ void DrEnvironmentObjLgt::setupSpot(DrEnvironmentLgtList* list, DrLightObjSpt* l
     float b = col.b * data->m_intensity;
     const LgtParamData* param =
         reinterpret_cast<const LgtParamData*>(static_cast<const char*>(m_resource) + data->m_paramOfs);
-    light->m_color[0] = r;
-    light->m_color[1] = g;
-    light->m_color[2] = b;
+    light->m_color.r = r;
+    light->m_color.g = g;
+    light->m_color.b = b;
     light->setMat(pos->m_mat);
     light->m_size = pos->m_range;
     light->m_angle = param->m_angle;
@@ -1539,11 +1539,11 @@ void DrLightMan::updateAfterPnt() {
         light->update(this);
         light->m_flags &= ~DrLightObj::FLAG_CULL;
         if (light->m_flags & DrLightObj::FLAG_SUBTRACT) {
-            if (light->m_color[0] >= 1.0f && light->m_color[1] >= 1.0f && light->m_color[2] >= 1.0f) {
+            if (light->m_color.r >= 1.0f && light->m_color.g >= 1.0f && light->m_color.b >= 1.0f) {
                 light->m_flags |= DrLightObj::FLAG_CULL;
             }
         } else {
-            if (light->m_color[0] <= 0.0f && light->m_color[1] <= 0.0f && light->m_color[2] <= 0.0f) {
+            if (light->m_color.r <= 0.0f && light->m_color.g <= 0.0f && light->m_color.b <= 0.0f) {
                 light->m_flags |= DrLightObj::FLAG_CULL;
             }
         }
@@ -1591,11 +1591,11 @@ void DrLightMan::updateAfterSpt() {
         light->update(this);
         light->m_flags &= ~DrLightObj::FLAG_CULL;
         if (light->m_flags & DrLightObj::FLAG_SUBTRACT) {
-            if (light->m_color[0] >= 1.0f && light->m_color[1] >= 1.0f && light->m_color[2] >= 1.0f) {
+            if (light->m_color.r >= 1.0f && light->m_color.g >= 1.0f && light->m_color.b >= 1.0f) {
                 light->m_flags |= DrLightObj::FLAG_CULL;
             }
         } else {
-            if (light->m_color[0] <= 0.0f && light->m_color[1] <= 0.0f && light->m_color[2] <= 0.0f) {
+            if (light->m_color.r <= 0.0f && light->m_color.g <= 0.0f && light->m_color.b <= 0.0f) {
                 light->m_flags |= DrLightObj::FLAG_CULL;
             }
         }

@@ -5173,9 +5173,9 @@ void DrResMdoLight::lgtCreate() {
             DrLightObjPnt* pnt = man->createInstantPntLight();
             mm::Vec3 col(lgt->m_color[0], lgt->m_color[1], lgt->m_color[2]);
             col = col * lgt->m_intensity;
-            pnt->m_color[0] = col.x;
-            pnt->m_color[1] = col.y;
-            pnt->m_color[2] = col.z;
+            pnt->m_color.r = col.x;
+            pnt->m_color.g = col.y;
+            pnt->m_color.b = col.z;
             pnt->m_lightParam = lgt->m_param == 0.0f ? 1.0f : lgt->m_param;
             if (lgt->m_flags & 2) {
                 pnt->setSubtractOn(true);
@@ -5191,9 +5191,9 @@ void DrResMdoLight::lgtCreate() {
             DrLightObjSpt* spt = man->createInstantSptLight();
             mm::Vec3 col(lgt->m_color[0], lgt->m_color[1], lgt->m_color[2]);
             col = col * lgt->m_intensity;
-            spt->m_color[0] = col.x;
-            spt->m_color[1] = col.y;
-            spt->m_color[2] = col.z;
+            spt->m_color.r = col.x;
+            spt->m_color.g = col.y;
+            spt->m_color.b = col.z;
             spt->m_lightParam = lgt->m_param == 0.0f ? 1.0f : lgt->m_param;
             if (lgt->m_size != 0.0f) {
                 spt->m_size = lgt->m_size;

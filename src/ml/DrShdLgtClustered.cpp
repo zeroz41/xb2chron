@@ -46,7 +46,7 @@ const DrShdLgtClustered::ClusterSetting DrShdLgtClustered::c_ClusterSettings[4] 
     {5, 3, 4, 5, 16},
 };
 
-DrShdLgtClustered::DrShdLgtClustered(DrMan* drMan, bool flag) : DrShdLgtDynamic(drMan), m_bSmallGrid(flag) {
+DrShdLgtClustered::DrShdLgtClustered(DrMan* drMan, bool flag) : m_pDrMan(drMan), m_bSmallGrid(flag) {
     createWork();
 }
 
@@ -182,9 +182,9 @@ void DrShdLgtClustered::stockPntList(DrLightObjPnt* light) {
         entry->pos[1] = py;
         entry->pos[2] = pz;
         entry->size = light->m_size;
-        entry->color[0] = light->m_color[0];
-        entry->color[1] = light->m_color[1];
-        entry->color[2] = light->m_color[2];
+        entry->color[0] = light->m_color.r;
+        entry->color[1] = light->m_color.g;
+        entry->color[2] = light->m_color.b;
         entry->param2 = light->m_lightParam2;
         float param = getEntryParam(light->m_bLightFlag, light->m_lightParam);
         entry->invSize = 1.0f / light->m_size;

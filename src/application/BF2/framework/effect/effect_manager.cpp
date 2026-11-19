@@ -907,9 +907,9 @@ void EffectManager::setLgtParam(unsigned int type, void* lgt, void* param) {
             pnt->m_lightParam = src->m_lightParam;
         }
         const mm::Col3 color = src->m_color;
-        pnt->m_color[0] = color.r;
-        pnt->m_color[1] = color.g;
-        pnt->m_color[2] = color.b;
+        pnt->m_color.r = color.r;
+        pnt->m_color.g = color.g;
+        pnt->m_color.b = color.b;
         if (src->m_size > -1.0f) {
             pnt->m_size = src->m_size;
         }
@@ -922,9 +922,9 @@ void EffectManager::setLgtParam(unsigned int type, void* lgt, void* param) {
             spt->m_lightParam = src->m_lightParam;
         }
         const mm::Col3 color = src->m_color;
-        spt->m_color[0] = color.r;
-        spt->m_color[1] = color.g;
-        spt->m_color[2] = color.b;
+        spt->m_color.r = color.r;
+        spt->m_color.g = color.g;
+        spt->m_color.b = color.b;
         if (src->m_size > -1.0f) {
             spt->m_size = src->m_size;
         }

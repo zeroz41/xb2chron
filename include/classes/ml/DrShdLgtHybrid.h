@@ -29,6 +29,7 @@ public:
     virtual void debugRender();  // slot 11
 
     // the constructor makes both; every slot forwards to them (the names are not the original's)
+    DrMan* m_pDrMan;  // 0x10, the constructor's renderer (the name is not the original's)
     DrShdLgtClustered* m_pClustered;  // 0x18
     DrShdLgtTileBasedDr* m_pTileBasedDr;  // 0x20
 };

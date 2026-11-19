@@ -2,6 +2,7 @@
 #define CLASSES_ML_DRLIGHTOBJPNT_H
 
 #include "classes/ml/DrLightObj.h"
+#include "mm/Col3.h"
 #include "mm/Mat44.h"
 #include "mm/Vec3.h"
 
@@ -34,7 +35,7 @@ public:
     // as one 64-bit word (ldr x; lsr), which only a 16-aligned x allows
     mm::Vec3 m_pos;
     unsigned char pad_80[0x10];
-    float m_color[3];  // 0x90
+    mm::Col3 m_color;  // 0x90, DrShdLgtMan::renderDebugPnt passes it as renderDebug's mm::Col3
     float m_size;  // 0x9C, set by DrEnvironmentAnim::envlgt_pnt_size (the name is not the original's)
     bool m_bLightFlag;  // 0xA0, packed into bit 31 of the entry's word 10
     unsigned char pad_a1[0x3];

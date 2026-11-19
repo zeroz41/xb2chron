@@ -51,6 +51,7 @@ public:
         unsigned int rate;  // 0x28, m_lightRate * 255 with m_bLightFlag in bit 31
         float param;        // 0x2C, DrLightObjPnt::m_lightParam
     };
+    DrMan* m_pDrMan;  // 0x10, the constructor's renderer (the name is not the original's)
     ViewWork m_viewWork[4];  // 0x18
     // the names below are not the original's (as DrShdLgtClustered's)
     void* m_pWork = nullptr;      // 0x378, the destructor frees it
