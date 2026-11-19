@@ -1925,6 +1925,36 @@ void ProcDesktop::OnPauseTrigger(bool pause, const char*) {
     }
 }
 
+mm::Rect<int> WinView::getClientScissorRect(bool cpu) const {
+    WinViewRoot* root = WinViewRoot::get();
+    const WinView* parent = static_cast<const WinView*>(m_parent);
+    if (root != m_parent && parent != nullptr && parent->isSplit(true)) {
+        const RENDER_INFO* info = cpu ? parent->m_renderInfo.m_cpu : parent->m_renderInfo.m_render;
+        if (WinViewRoot::getView(parent->m_renderInfo.m_cpu->m_splitFrame.m_viewWid[0]) == this) {
+            return info->m_splitFrame.getScissorRect1();
+        }
+        return info->m_splitFrame.getScissorRect2();
+    }
+    const RENDER_INFO* info = cpu ? m_renderInfo.m_cpu : m_renderInfo.m_render;
+    int x;
+    int y;
+    int w;
+    int h;
+    if (!m_fullScreen) {
+        mm::Pnt<int> ofs = info->m_frame.getClientOfs();
+        x = info->m_frame.m_pos.x + ofs.x + info->m_viewOfs[0];
+        y = info->m_frame.m_pos.y + ofs.y + info->m_viewOfs[1];
+        w = info->m_size.x - info->m_viewOfs[0] - info->m_viewOfs[2];
+        h = info->m_size.y - info->m_viewOfs[1] - info->m_viewOfs[3];
+    } else {
+        x = info->m_viewOfs[0];
+        y = info->m_viewOfs[1];
+        w = DevGraph::getRootWidth();
+        h = DevGraph::getRootHeight();
+    }
+    return mm::Rect<int>(x, y, w, h);
+}
+
 mm::Rect<int> WinView::getClientScissorAbsRect(bool cpu) const {
     mm::Rect<int> abs = getClientAbsRect(cpu);
     mm::Rect<int> scissor = getClientScissorRect(cpu);
