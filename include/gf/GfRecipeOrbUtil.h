@@ -20,6 +20,9 @@ public:
     // whether the items meet the recipe: type 0 enough items of its rarity, 1 enough of its collectible category,
     // 2 each of its items in the count it asks (the symbol's spelling)
     static bool isEnabaleOrbRecipe(unsigned int recipe, const ::mm::mtl::FixedVector<OrbRecipe, 128>& items);
+    // (1.0.0's symbols) whether the items hold each of a type 2 recipe's items in the count it asks; 3.0.1 keeps it
+    // only inlined in isEnabaleOrbRecipe
+    static bool isEnabaleOrbRecipeID(unsigned int recipe, const ::mm::mtl::FixedVector<OrbRecipe, 128>& items);
     static bool getRecipeItemsByItemBox(::mm::mtl::FixedVector<OrbRecipe, 128>& items, unsigned int recipe);
     // GfBdatItem::getEmptyOrbRecipe of the item
     static unsigned int getRecipeID(unsigned int item);

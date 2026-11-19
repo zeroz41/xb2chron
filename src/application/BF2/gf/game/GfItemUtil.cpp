@@ -753,6 +753,142 @@ int GfShopUtil::execSell(unsigned int item, unsigned int num, unsigned int shop,
     return 0;
 }
 
+bool GfRecipeOrbUtil::isEnabaleOrbRecipeID(unsigned int recipe, const ::mm::mtl::FixedVector<OrbRecipe, 128>& items) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    for (unsigned int i = 0; i < 8; i++) {
+        unsigned int id = bdat->getOrbRecipeItemID(recipe, i);
+        unsigned int number = bdat->getOrbRecipeItemNumber(recipe, i);
+        OrbRecipe need;
+        need.m_item = id;
+        need.m_number = number;
+        if (id == 0 || number == 0) {
+            continue;
+        }
+        if ([&]() -> const OrbRecipe* {
+                for (const OrbRecipe* p = items.begin(); p != items.end(); ++p) {
+                    if (p->m_item == need.m_item && p->m_number >= need.m_number) {
+                        return p;
+                    }
+                }
+                return items.end();
+            }() == items.end()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool GfRecipeOrbUtil::isEnabaleOrbRecipe(unsigned int recipe, const ::mm::mtl::FixedVector<OrbRecipe, 128>& items) {
+    unsigned int type = GfBdatItem::get()->getOrbRecipeRecipeType(recipe);
+    if (type == 2) {
+        return isEnabaleOrbRecipeID(recipe, items);
+    } else if (type == 1) {
+        GfBdatItem* bdat = GfBdatItem::get();
+        unsigned int category = bdat->getOrbRecipeRscCat(recipe);
+        unsigned int need = bdat->getOrbRecipeAssortNumber(recipe);
+        if (need == 0) {
+            return true;
+        }
+        unsigned int count = 0;
+        for (const OrbRecipe* entry = items.begin(); entry != items.end(); ++entry) {
+            if (bdat->getCollectionListCategory(entry->m_item) == category) {
+                count += entry->m_number;
+                if (count >= need) {
+                    return true;
+                }
+            }
+        }
+    } else if (type == 0) {
+        GfBdatItem* bdat = GfBdatItem::get();
+        unsigned int need = bdat->getOrbRecipeAssortNumber(recipe);
+        unsigned int rarity = bdat->getOrbRecipeRarity(recipe);
+        unsigned int count = 0;
+        for (const OrbRecipe* entry = items.begin(); entry != items.end(); ++entry) {
+            if (bdat->getCollectionListRarity(entry->m_item) == rarity) {
+                count += entry->m_number;
+                if (count >= need) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool GfRecipeOrbUtil::getRecipeItemsByItemBox(::mm::mtl::FixedVector<OrbRecipe, 128>& items, unsigned int recipe) {
+    unsigned int type = GfBdatItem::get()->getOrbRecipeRecipeType(recipe);
+    if (type == 2) {
+        GfBdatItem* bdat = GfBdatItem::get();
+        for (unsigned int i = 0; i < 8; i++) {
+            unsigned int item = bdat->getOrbRecipeItemID(recipe, i);
+            unsigned int number = bdat->getOrbRecipeItemNumber(recipe, i);
+            if (item == 0 || number == 0) {
+                continue;
+            }
+            if (static_cast<unsigned int>(GfItemBox::get()->countItem(item)) < number) {
+                return false;
+            }
+            OrbRecipe entry;
+            entry.m_item = item;
+            entry.m_number = number;
+            items.push_back(entry);
+        }
+        return true;
+    } else if (type == 1) {
+        GfBdatItem* bdat = GfBdatItem::get();
+        bdat->getOrbRecipeRscCat(recipe);
+        int number = bdat->getOrbRecipeAssortNumber(recipe);
+        unsigned int category = bdat->getOrbRecipeRscCat(recipe);
+        for (unsigned int item = bdat->getCollectionListStart(), end = bdat->getCollectionListEnd(); item < end; item++) {
+            if (bdat->getCollectionListCategory(item) == category) {
+                int count = GfItemBox::get()->countItem(item);
+                int take = count > number ? number : count;
+                number -= take;
+                OrbRecipe entry;
+                entry.m_item = item;
+                entry.m_number = take;
+                items.push_back(entry);
+                if (number <= 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    } else if (type == 0) {
+        GfBdatItem* bdat = GfBdatItem::get();
+        int number = bdat->getOrbRecipeAssortNumber(recipe);
+        unsigned int rarity = bdat->getOrbRecipeRarity(recipe);
+        // the original numbers this loop's exits (its cleanup destinations) as a function of its own, inlined
+        // here: a lambda keeps that numbering
+        auto takeItems = [&]() -> bool {
+            for (unsigned int item = bdat->getCollectionListStart(), end = bdat->getCollectionListEnd(); item < end;
+                 item++) {
+                if (bdat->getCollectionListRarity(item) != rarity) {
+                    continue;
+                }
+                int count = GfItemBox::get()->countItem(item);
+                if (count == 0) {
+                    continue;
+                }
+                {  // the taken items' scope ends before the test (the original's cleanup state machine)
+                    int take = count > number ? number : count;
+                    number -= take;
+                    OrbRecipe entry;
+                    entry.m_item = item;
+                    entry.m_number = take;
+                    items.push_back(entry);
+                }
+                if (number <= 0) {
+                    return true;
+                }
+            }
+            return false;
+        };
+        return takeItems();
+    }
+    return true;
+}
+
 void GfRecipeOrbUtil::execOrbRecipe(unsigned int item, const ::mm::mtl::FixedVector<OrbRecipe, 128>* items) {
     GfBdatItem* bdat = GfBdatItem::get();
     unsigned int recipe = bdat->getEmptyOrbRecipe(item);
