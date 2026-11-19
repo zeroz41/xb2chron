@@ -1467,6 +1467,35 @@ bool WinProc::pssDetachView(unsigned int wid) {
     return true;
 }
 
+mm::Rect<int> WinProc::pssMakeClientRect() const {
+    if (m_viewList.size() == 0) {
+        return mm::Rect<int>(0, 0, 0, 0);
+    }
+    const WinView* view = static_cast<const WinView*>(WorkRootState::getWork(*m_viewList.begin()));
+    int children = view->wkGetChild()->size();
+    const WinView::RENDER_INFO* info = view->m_renderInfo.m_render;
+    mm::Pnt<int> ofs = info->m_frame.getClientOfs();
+    mm::Pnt<int> pos = info->m_frame.m_pos;
+    int w;
+    int h;
+    if (view->m_fullScreen) {
+        w = DevGraph::getRootWidth();
+        h = DevGraph::getRootHeight();
+    } else {
+        w = info->m_size.x;
+        h = info->m_size.y;
+    }
+    int shift = children * 20;
+    int dw = ((int)(w * 0.6f) - w) / 2;
+    int dh = ((int)(h * 0.6f) - h) / 2;
+    mm::Rect<int> rect;
+    rect.w = w + dw * 2;
+    rect.h = h + dh * 2;
+    rect.x = pos.x + ofs.x + shift - dw;
+    rect.y = pos.y + ofs.y + shift - dh;
+    return rect;
+}
+
 DesktopIcon* DesktopIcon::create(mtl::ALLOC_HANDLE mem, const char* name, void (*func)()) {
     mm::mtl::FixStr<64> tag("(ICON)");
     tag += name;
