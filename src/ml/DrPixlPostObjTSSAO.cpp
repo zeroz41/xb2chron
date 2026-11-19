@@ -1102,6 +1102,76 @@ void DrPixlShadowRaytrace::render_beforeTemporal() {
     }
 }
 
+void DrPixlShadowRaytrace::temporalFiltering() {
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    DrPixlRenderTarget* dst = m_temporalBuff[DrMan::s_nDblIdx];
+    grlib::CGLibColorCtl::setBlendOffControl(static_cast<GrlLogicType>(3));
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getShadowShdObj(5);
+    // lbl_71015E9C34; the name is not the original's: the first call clears, later ones blend with the history
+    static bool s_hasHistory;
+    unsigned int execClear = s_hasHistory ? 2 : 1;
+    obj->setDeclarationIdx(obj->getDeclarationOfs("EXEC_CLEAR"), execClear);
+    if (!s_hasHistory) {
+        s_hasHistory = true;
+    }
+    list->bindTriangle();
+    obj->setupShader(0u);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    unsigned int fragCoordToUVOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gFragCoordToUV");
+    unsigned int uvToScreenOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gUVToScreen");
+    unsigned int screenToUVOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gScreenToUV");
+    unsigned int screenToViewPosOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gScreenToViewPos");
+    unsigned int invViewOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gInvView");
+    unsigned int prevViewOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gPrevView");
+    unsigned int projOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gProj");
+    unsigned int paramOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gParam");
+    unsigned int shadowLocation = obj->getCurrentShader().getTextureLocation("gTShadow");
+    unsigned int depthLocation = obj->getCurrentShader().getTextureLocation("gTDepth");
+    unsigned int prevShadowLocation = obj->getCurrentShader().getTextureLocation("gTPrevShadow");
+    unsigned int prevDepthLocation = obj->getCurrentShader().getTextureLocation("gTPrevDepth");
+    unsigned int velocityLocation = obj->getCurrentShader().getTextureLocation("gTVelocity");
+    DrCalcViewWork* viewWork = m_drMan->m_calcMan->m_pViewWork;
+    mm::Vec4 fragCoordToUV(1.0f / dst->m_width, 1.0f / dst->m_height, 0.0f, 0.0f);
+    uniform.setF32SetVec4(fragCoordToUVOfs, &fragCoordToUV.x);
+    mm::Vec4 uvToScreen(2.0f, 2.0f, -1.0f, -1.0f);
+    uniform.setF32SetVec4(uvToScreenOfs, &uvToScreen.x);
+    mm::Vec4 screenToUV(0.5f, 0.5f, 0.5f, 0.5f);
+    uniform.setF32SetVec4(screenToUVOfs, &screenToUV.x);
+    mm::Vec4 screenToViewPos;
+    screenToViewPos.y = tanf(viewWork->m_fovY * 0.5f);
+    screenToViewPos.x = screenToViewPos.y * viewWork->pad_4C0;
+    screenToViewPos.z = 0.0f;
+    screenToViewPos.w = 0.0f;
+    uniform.setF32SetVec4(screenToViewPosOfs, &screenToViewPos.x);
+    uniform.setMat44SetMat44(invViewOfs, viewWork->m_invView);
+    uniform.setMat44SetMat44(prevViewOfs, viewWork->m_oldView);
+    uniform.setMat44SetMat44(projOfs, viewWork->m_projNonJitter);
+    mm::Vec4 param;
+    param.x = 0.7388f;
+    param.y = 0.71f;
+    param.z = 1.0f / parm->pad_1010;
+    param.w = 0.0f;
+    uniform.setF32SetVec4(paramOfs, &param.x);
+    DrPixlRenderTarget* src = m_blurOn ? m_buffLast : m_buffFirst;
+    DrPixlPostMan* postMan = m_drMan->m_pixlMan->m_objTbl->m_postMan;
+    DrAPCache* cache = m_drMan->m_apCache;
+    cache->beginTexSampling(3, 0);
+    cache->beginBorderWhite();
+    cache->setTexture(*postMan->getDownDepth()->m_pTexture, depthLocation);
+    cache->setTexture(*postMan->getOldDownDepth()->m_pTexture, prevDepthLocation);
+    cache->beginTexSampling(2, 0);
+    cache->setTexture(*src->m_pTexture, shadowLocation);
+    cache->setTexture(*m_temporalBuff[DrMan::s_nDblStockIdx]->m_pTexture, prevShadowLocation);
+    cache->setTexture(*m_drMan->m_pixlMan->getPixlObj(3)->m_pTexture, velocityLocation);
+    dst->setRenderTarget();
+    uniform.updateData();
+    uniform.setUniformBlock();
+    list->renderQuads();
+    dst->setColorInvalidate();
+}
+
 grlib::CGLibTextureBuffer* DrPixlShadowRaytrace::getScreenSpaceShadow() const {
     return m_temporalBuff[DrMan::s_nDblIdx]->m_pTexture;
 }

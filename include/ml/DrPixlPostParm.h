@@ -284,7 +284,10 @@ public:
     // the original's)
     int m_iblColorMode;
     int pad_FE8;  // 0xFE8: updateSpec clears it
-    unsigned char pad_FEC[0x30];
+    unsigned char pad_FEC[0x24];
+    // 0x1010: DrPixlShadowRaytrace::temporalFiltering passes 1 / it as gParam.z (blurPassSub half of it; unnamed so far)
+    float pad_1010;
+    unsigned char pad_1014[0x8];
     // 0x101C, DrPixlPostObjUnbranchToDepth::renderQuater passes it as gParam.x (the name is not the original's)
     float m_unbranchQuaterParam;
     unsigned char pad_1020[0x4];
