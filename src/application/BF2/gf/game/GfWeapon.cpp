@@ -859,6 +859,35 @@ void GfGameUtil::changeHikariCurrent(bool hikari) {
     GfEvent::callHikariCurrent(hikari);
 }
 
+void GfGameUtil::addTrusuPointByLastKizunaTalk() {
+    mm::mtl::FixedVector<unsigned short, 422> list;
+    fn_71002E2CE4(list, 1);
+    fn_71002E2CE4(list, 2);
+    fn_71002E2CE4(list, 6);
+    fn_71002E2CE4(list, 3);
+    if (std::find(list.begin(), list.end(), 1001) == list.end()) {
+        list.push_back(1001);
+    }
+    if (std::find(list.begin(), list.end(), 1002) == list.end()) {
+        list.push_back(1002);
+    }
+    if (std::find(list.begin(), list.end(), 1011) == list.end()) {
+        list.push_back(1011);
+    }
+    if (std::find(list.begin(), list.end(), 1005) == list.end()) {
+        list.push_back(1005);
+    }
+    if (std::find(list.begin(), list.end(), 1006) == list.end()) {
+        list.push_back(1006);
+    }
+    if (std::find(list.begin(), list.end(), 1007) == list.end()) {
+        list.push_back(1007);
+    }
+    for (unsigned short blade : list) {
+        addTrustPoint(blade, 300);
+    }
+}
+
 void fn_71002E2CE4(mm::mtl::FixedVector<unsigned short, 422>& list, unsigned int driver) {
     for (int slot = 0; slot < 3; slot++) {
         unsigned int blade = GfDataDriver::getBlade(driver, slot);
