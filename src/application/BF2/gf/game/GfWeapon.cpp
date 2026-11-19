@@ -208,8 +208,73 @@
 #include "classes/gf/GfBdatCond.h"
 #include "gf/GfQuestInfo.h"
 #include "gf/GfGameUtilQuestArts.h"
+#include "gf/GfGameUnit.h"
+#include "gf/GfObjFactory.h"
+#include "classes/gf/GfInitParamDriver.h"
+#include "ml/MTRand.h"
 
 namespace gf {
+
+void GfGameUnit::createParty(PartyLeaderInfo& leader) {
+    if (GfGameManager::isGameTypeIra()) {
+        for (unsigned int i = 0; i < 3; i++) {
+            for (unsigned int j = 0; j < 3; j++) {
+                unsigned int id = GfGameParty::getDriverBdatId(i, static_cast<PTPOS>(j));
+                DataParamAcc acc(3, id, GimmickType(0));
+                if (acc.isValid() && !GfDataDriver::isActivateUnuse(id)) {
+                    GfInitParamDriver param;
+                    param.m_createType = 1;
+                    param.pad_20 = i;
+                    param.m_objId = id;
+                    if (i == 0 && j == 0) {
+                        param.pad_1a8 = leader.pad_0;
+                        if (leader.pad_4) {
+                            param.m_hasTransform = true;
+                            param.m_initialPos = leader.pad_10;
+                            param.pad_70 = mm::Vec3(0.0f, leader.pad_20, 0.0f);
+                        }
+                    }
+                    if (j == 2) {
+                        param.pad_81 = false;
+                        param.pad_50 = 0.0f;
+                    }
+                    GfObjFactory::createDriver(param);
+                } else {
+                    GfObjUtil::destroy(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(j)));
+                }
+            }
+        }
+        if (GfGameParty::getDummpMover() == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            GfObjFactory::createDummyMover();
+        }
+    } else {
+        GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys();
+        if (scene != nullptr) {
+            for (unsigned int i = 0; i < 3; i++) {
+                unsigned int id = GfGameParty::getDriverBdatId(i, static_cast<PTPOS>(0));
+                DataParamAcc acc(3, id, GimmickType(0));
+                if (acc.isValid() && !GfDataDriver::isActivateUnuse(id)) {
+                    GfInitParamDriver param;
+                    param.m_createType = 1;
+                    param.pad_20 = i;
+                    param.m_objId = id;
+                    param.pad_1a0 = scene->isRide(i);
+                    if (i == 0) {
+                        param.pad_1a8 = leader.pad_0;
+                        if (leader.pad_4) {
+                            param.m_hasTransform = true;
+                            param.m_initialPos = leader.pad_10;
+                            param.pad_70 = mm::Vec3(0.0f, leader.pad_20, 0.0f);
+                        }
+                    }
+                    GfObjFactory::createDriver(param);
+                } else {
+                    GfObjUtil::destroy(GfGameParty::getHandleDriver(i, static_cast<PTPOS>(0)));
+                }
+            }
+        }
+    }
+}
 
 void GfGameUtil::UiEnemyStatusIconInfo::create(GF_OBJ_HANDLE* handle) {
     *this = UiEnemyStatusIconInfo();
@@ -1962,6 +2027,60 @@ void GfGameUtil::resetFormationParam(GF_OBJ_HANDLE* handle) {
     }
 }
 
+bool GfGameUtil::execBoosterAddForReleaseBlade(mm::mtl::FixedVector<GfItem, 1024>& items, unsigned int blade) {
+    if (blade == 1045) {
+        return false;
+    }
+    // the first booster of a category, the first booster at all when none has it
+    auto findBooster = [](unsigned int category) {
+        GfBdatItem* bdat = GfBdatItem::get();
+        for (unsigned int id = bdat->getBoosterStart(), end = bdat->getBoosterEnd(); id < end; id++) {
+            if (bdat->getBoosterCategory(id) == category) {
+                return id;
+            }
+        }
+        return bdat->getBoosterStart();
+    };
+    GfBdatBlade* bdat = GfBdatBlade::get();
+    unsigned int crown = GfDataBlade::getCrownPoint(blade);
+    unsigned int level = GfDataBlade::getKeyReleaseLevel(blade);
+    unsigned int reward =
+        bdat->getBLD_ReleaceRewardReleace(crown, GfDataBlade::getKizunaringCompleteNum(blade) == 0 ? 0 : level);
+    if (GfDataBlade::isCompleteAchievement(blade)) {
+        reward = bdat->getBLD_ReleaceRewardReleace007(crown);
+    }
+    if (GfItemUtil::getType(reward) == 2) {
+        unsigned int half = reward / 2 + reward % 2;
+        unsigned int rest = reward - half;
+        mm::mtl::FixedVector<unsigned short, 64> boosters;
+        unsigned int booster = findBooster(GfDataBlade::getIdeaTypeByAttribute(blade));
+        for (unsigned int i = 0; i < half; i++) {
+            boosters.push_back(booster);
+        }
+        for (unsigned int i = 0; i < rest; i++) {
+            boosters.push_back(findBooster(ml::mtRand(4)));
+        }
+        int money = 0;
+        for (unsigned short& id : boosters) {
+            if (GfItemUtil::isEnableAddItemBox(id, 1)) {
+                GfItemUtil::addItemBox(id, 1);
+                GfItem item = GfItemUtil::getInfo(id);
+                items.push_back(item);
+            } else {
+                ItemProperty property;
+                GfItemUtil::getProperty(property, id, 0);
+                money += property.m_price.m_sellPrice;
+            }
+        }
+        SCOM_ADD_MONEY::create(money);
+    } else if (GfItemUtil::isEnableAddItemBox(reward, 1)) {
+        GfItemUtil::addItemBox(reward, 1);
+        GfItem item = GfItemUtil::getInfo(reward);
+        items.push_back(item);
+    }
+    return !items.empty();
+}
+
 bool GfGameUtil::execActivateUnuseForBlade(unsigned int blade, bool releaseOrbs) {
     if (GfDataBlade::isCommonBlade(blade)) {
         GfKizunaringBlade::removeAchievement(blade);
@@ -3247,6 +3366,48 @@ const char* GfGameUtil::getFieldBgmNameByMapId(unsigned int mapId) {
         }
     }
     return nullptr;
+}
+
+bool GfGameUtil::execPartyBladeFollow(bool leaderOnly, bool skipDriver4) {
+    mm::mtl::FixedVector<unsigned short, 32> drivers;
+    drivers.push_back(1);
+    if (!leaderOnly) {
+        drivers.push_back(2);
+        drivers.push_back(3);
+        if (!skipDriver4) {
+            drivers.push_back(4);
+        }
+        drivers.push_back(5);
+        drivers.push_back(6);
+    }
+    bool result = false;
+    for (unsigned short& driver : drivers) {
+        if (driver == 0) {
+            continue;
+        }
+        if (GfDataDriver::isActivateUnuse(driver) && !leaderOnly) {
+            continue;
+        }
+        unsigned int id = driver;
+        if ((id == 1 && GfDataUtil::getScenarioFlag() > 0x406 && GfDataBlade::isDummyBlade(GfDataDriver::getBlade(1, -1))) ||
+            GfDataDriver::getBladeSet(id) < 0) {
+            if (GfDataDriver::getSetIdByDummyBlade(driver) >= 0) {
+                GfDataDriver::unsetBlade(GfDataDriver::getDummyBlade(driver));
+            }
+            if (equipDriverBladeForce(driver)) {
+                result = true;
+            }
+        }
+        if (GfDataDriver::getBlade(driver, -1) == 0) {
+            for (int i = 0; i < 3; i++) {
+                if (GfDataDriver::getBlade(driver, i) != 0) {
+                    GfDataDriver::setEquipBlade(driver, true, i);
+                    break;
+                }
+            }
+        }
+    }
+    return result;
 }
 
 unsigned int GfGameUtilDiff::getBtlDifficult() {
