@@ -26,6 +26,14 @@
 #include "fw/Transform.h"
 #include "gf/GfObjAcc.h"
 #include "gf/GfFieldPitchRollController.h"
+#include "classes/gmk/GmkRoutedEnemy.h"
+#include "classes/gf/GfObjSetupEnemy.h"
+#include "classes/gf/GfObjManager.h"
+#include "classes/gf/GfDataBdat.h"
+#include "plugin/Bdat.h"
+#include "anm/QsTransform.h"
+#include "classes/gf/GfComTransform.h"
+#include <math.h>
 #include <string.h>
 
 namespace gf {
@@ -34,6 +42,53 @@ namespace enemy {
 // the command each route point action (StateFieldWalk::pad_90) plays there, none for 0, 1 and 6 (lbl_7100B65D78;
 // the name is not the original's)
 __attribute__((used)) static const char* s_routePointCmdNames[7] = {nullptr, nullptr, "C_uniqueA", "C_uniqueB", "C_specialA_00", "C_specialB_00", nullptr};
+
+void StateFieldWalk::enter(GfComBehaviorEnemy* owner, ai::State*) {
+    unsigned char* fp = GfDataBdat::getFP(0x6e);
+    GfObjSetupEnemy* setup =
+        mm::mtl::rttiCast<GfObjSetupEnemy>(GfObjManager::getObjInfo(static_cast<GfObj*>(owner->m_owner)->m_handle)->m_setup);
+    pad_18 = Bdat::getValCheck(fp, "actMove_Atr", setup->m_actMoveId, 1);
+    bool idle = false;
+    gmk::AGmkBase* gmk = owner->getBindedGmkInst();
+    if (gmk != nullptr && gmk->getGmkType() == 1 && !static_cast<gmk::GmkRoute*>(gmk)->isClosed() &&
+        (static_cast<gmk::GmkRoute*>(gmk)->getData()->m_flags & 8)) {
+        pad_19 = true;
+        if (gmk::GmkRouteNavi* navi = owner->m_field.getGmkRouteNavi()) {
+            idle = static_cast<gmk::GmkRoutedEnemy*>(gmk)->isPopPointRouteEnd(*navi);
+        }
+    }
+    Bdat::uVal interval;
+    interval.ulong = Bdat::getValCheck(GfDataBdat::getFP(0x7b), 0, 0x34, 8);
+    pad_98 = interval.real;
+    int slope = 1;
+    if (pad_18 & 0x20) {
+        float pitch = owner->m_field.m_pitchRoll.pad_28;
+        if (pitch > 0.08726646f) {
+            slope = 3;
+        }
+        if (pitch < -0.17453292f) {
+            slope = 2;
+        }
+    }
+    if (pad_1c != slope) {
+        pad_1c = slope;
+        switch (slope) {
+        case 1: {
+            GfBehaviorEnemyField::MoveSpeed speed =
+                static_cast<GfBehaviorEnemyField::MoveSpeed>((m_stateID & ~1u) == 10 ? 2 : 1);
+            owner->m_field.applyFieldMoveSpeed(speed, *owner);
+            break;
+        }
+        case 2:
+            owner->m_field.applyFieldMoveSpeed(static_cast<STATE_ID>(9), *owner);
+            break;
+        case 3:
+            owner->m_field.applyFieldMoveSpeed(static_cast<STATE_ID>(11), *owner);
+            break;
+        }
+    }
+    m_seq = idle ? &StateFieldWalk::seqIdleInfinit : &StateFieldWalk::seqInitGoalPos;
+}
 
 void StateFieldWalk::seqIdleInfinit(GfComBehaviorEnemy&, const fw::UpdateInfo& info) { m_execCmd.update(info.m_deltaTime); }
 
@@ -58,6 +113,53 @@ void StateFieldWalk::seqInitGoalPos(GfComBehaviorEnemy& owner, const fw::UpdateI
 }
 
 void StateFieldWalk::leave(GfComBehaviorEnemy* owner, ai::State*) { owner->pad_54e1 = false; }
+
+void StateFieldWalk::update(GfComBehaviorEnemy* owner, const fw::UpdateInfo& info) {
+    if (owner->isStateCondMatch(static_cast<STATE_ID>(14))) {
+        requestState(14);
+        return;
+    }
+    if (gmk::GmkRouteNavi* navi = owner->m_field.getGmkRouteNavi()) {
+        pad_84 = navi->pad_a0;
+    }
+    if (m_seq) {
+        (this->*m_seq)(*owner, info);
+    }
+    int slope = 1;
+    if (pad_18 & 0x20) {
+        float pitch = owner->m_field.m_pitchRoll.pad_28;
+        if (pitch > 0.08726646f) {
+            slope = 3;
+        }
+        if (pitch < -0.17453292f) {
+            slope = 2;
+        }
+    }
+    if (pad_1c != slope) {
+        pad_1c = slope;
+        switch (slope) {
+        case 1:
+            owner->m_field.applyFieldMoveSpeed(
+                static_cast<GfBehaviorEnemyField::MoveSpeed>((m_stateID & ~1u) == 10 ? 2 : 1), *owner);
+            break;
+        case 2:
+            owner->m_field.applyFieldMoveSpeed(static_cast<STATE_ID>(9), *owner);
+            break;
+        case 3:
+            owner->m_field.applyFieldMoveSpeed(static_cast<STATE_ID>(11), *owner);
+            break;
+        }
+    }
+    gmk::GmkRouteNavi* navi = owner->m_field.getGmkRouteNavi();
+    if (navi != nullptr && navi->m_acc.m_gmk != nullptr && pad_18 == 0) {
+        pad_9c += info.m_deltaTime;
+        if (pad_98 <= pad_9c) {
+            pad_9c = 0.0f;
+            owner->m_field.applyFieldMoveSpeed(
+                static_cast<GfBehaviorEnemyField::MoveSpeed>((owner->getNextFieldStateId() & ~1u) == 10 ? 2 : 1), *owner);
+        }
+    }
+}
 
 void StateFieldWalk::pollToShiftLandingSeq(GfComBehaviorEnemy& owner, const fw::UpdateInfo&) {
     if (owner.m_owner->getComponent<GfComAsm>(2) == nullptr || !owner.isFly()) {
@@ -162,6 +264,39 @@ void StateFieldWalk::seqLandingIdle(GfComBehaviorEnemy& owner, const fw::UpdateI
     }
     m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, "C_specialA_02"));
     m_seq = &StateFieldWalk::seqWaitTakeOffEnd;
+}
+
+void StateFieldWalk::seqWaitTakeOffEnd(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info) {
+    m_execCmd.update(info.m_deltaTime);
+    if (!m_execCmd.m_done) {
+        return;
+    }
+    fw::UpdatableObject* obj = owner.m_owner;
+    GfComAsm* com = obj->getComponent<GfComAsm>(2);
+    const char* name = com->getStateName(static_cast<AnimLayer>(0));
+    if (name != nullptr && strcmp("S_specialA_02", name) != 0) {
+        gmk::GmkRouteNavi* navi = owner.m_field.getGmkRouteNavi();
+        if (navi != nullptr && navi->m_acc.m_gmk != nullptr) {
+            gmk::GmkRouteNavi::InitResult result;
+            navi->init(result, navi->pad_a0, 0.0f);
+            owner.m_field.m_goalPos = result.m_pos;
+            m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, "C_move"));
+            m_seq = &StateFieldWalk::seqUpdateMove;
+            owner.m_field.m_pitchRoll.pad_30 = false;
+            owner.pad_54e1 = false;
+            owner.m_field.applyFieldMoveSpeed(static_cast<GfBehaviorEnemyField::MoveSpeed>(0),
+                                              static_cast<GfBehaviorEnemyField::MoveSpeed>((m_stateID & ~1u) == 10 ? 2 : 1),
+                                              owner);
+            pad_90 = 0;
+            return;
+        }
+    }
+    // the take-off motion still plays: the enemy moves by its locomotion
+    GfComTransform* transform = obj->getComponent<GfComTransform>(0);
+    const anm::QsTransform* loco = com->getLocomotion();
+    float speed = com->getSpeed(static_cast<AnimLayer>(0));
+    mm::Vec3 move = speed * transform->getRotation().rotate(mm::Vec3(loco->m_translation.x, loco->m_translation.y, loco->m_translation.z));
+    transform->setPosition(transform->getPosition() + move);
 }
 
 bool StateFieldWalk::isCondMatch(const GfComBehaviorEnemy& owner) {

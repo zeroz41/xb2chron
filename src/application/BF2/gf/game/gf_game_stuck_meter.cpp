@@ -161,7 +161,7 @@ void GfFieldUndulator::update(mm::mtl::IntrusivePtr<fw::ReferenceFrame>& frame, 
     }
 }
 
-GfFieldPitchRollController::GfFieldPitchRollController(const CreateInfo* info) : pad_10(nullptr), m_seq(nullptr), pad_28(0), pad_30(false), pad_31(false) {
+GfFieldPitchRollController::GfFieldPitchRollController(const CreateInfo* info) : pad_10(nullptr), m_seq(nullptr), pad_28(0.0f), pad_2c(0.0f), pad_30(false), pad_31(false) {
     if (info) {
         create(*info);
     }

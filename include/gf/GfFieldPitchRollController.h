@@ -31,7 +31,10 @@ public:
     CreateInfo m_info;
     fw::RotateIkSolver* pad_10;  // seqInit: the GfComIK's solver 0, faded in
     Seq m_seq;  // the step update runs; create starts it at seqInit
-    unsigned long pad_28;
+    // the pitch (radians) StateFieldWalk::enter and update pick the walk speed by: above 5 degrees the uphill speed,
+    // below -10 degrees the downhill one
+    float pad_28;
+    float pad_2c;
     // GfComBehaviorEnemy::setStateId sets both on battle start; StateFieldWalk::seqWaitToIdle sets pad_30
     bool pad_30;
     bool pad_31;
