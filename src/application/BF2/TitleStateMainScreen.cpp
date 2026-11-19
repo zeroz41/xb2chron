@@ -58,6 +58,21 @@
 #include "gf/GfGameUtilSaveData.h"
 #include "gf/GfDataUtil.h"
 #include "gf/GfGameUtil.h"
+#include "classes/gf/GfGameEnv.h"
+#include "classes/gf/GfGameSave.h"
+#include "classes/tl/TitleTheaterUtil.h"
+#include "fw/LangUtil.h"
+#include "gf/GfDataBtlDif.h"
+#include "classes/fw/EffectManager.h"
+#include "classes/fw/SoundManager.h"
+#include "classes/fw/SoundSsdDriver.h"
+#include "classes/gf/GfBdatQuest.h"
+#include "classes/gf/GfFieldManager.h"
+#include "classes/gf/GfFieldSound.h"
+#include "gf/GfStaticRes.h"
+#include "classes/gf/SCOM_DESTROY_PARTY_OBJ.h"
+#include "classes/gf/SCOM_OBJ_WARP_POS.h"
+#include "fw/Transform.h"
 
 // the title states with their own tables (MainScreen, PlayGame, PlayEvent) and the other states' updates
 namespace tl {
@@ -66,6 +81,49 @@ void TitleStateMainScreen::gevPlayEvent(gf::GEV gev, unsigned int arg) {
     if (gev == static_cast<gf::GEV>(0xE)) {
         m_playEvent = 1;
     }
+}
+
+bool TitleStateMainScreen::loadSaveDataForTitle(TitleMain* title) {
+    {
+        gf::GfGameLoad load(static_cast<gf::SAVESLOT>(0x16));
+        title->getIraSaveBuffer()->clear();
+        load.execGameLoadWithMicroThread(*title->getIraSaveBuffer());
+        title->getOptionBuffer().clearSettings();
+        load.execOptionLoadWithMicroThread(title->getOptionBuffer());
+    }
+    if (title->getOptionBuffer().m_version != 0x3A15B) {
+        gf::GfGameUtilSaveData::setupOptionSaveData(title->getOptionBuffer());
+        gf::GfMenuManager::initOptionDataForIra(title->getOptionBuffer());
+        gf::GfGameSave save(static_cast<gf::SAVESLOT>(-1), false, false, false);
+        save.execOptionSaveWithMicroThread();
+    } else if (title->getOptionBuffer().m_soundUi.m_langType == 0xFF) {
+        title->getOptionBuffer().m_soundUi.m_langType = fw::LangUtil::getLangType();
+        gf::GfGameSave save(static_cast<gf::SAVESLOT>(-1), false, false, false);
+        save.execOptionSaveWithMicroThread();
+    }
+    title->m_flag21B = TitleTheaterUtil::isCompleteBothGame();
+    if (!gf::GfGameManager::isGameTypeIra() && !gf::GfGameUtil::isAdvancedGameOption()) {
+        title->getOptionBuffer().m_soundUi.m_flagA = 0;
+        title->getOptionBuffer().m_soundUi.m_flagB = 0;
+        title->getOptionBuffer().m_soundUi.m_flagC = 0;
+    }
+    bool clear = gf::GfGameManager::isGameTypeIra() ? gf::GfGameManager::isClearGame()
+                                                     : gf::GfGameUtil::isAdvancedDifficulity();
+    if (!clear) {
+        unsigned char difficulty = title->getOptionBuffer().m_soundUi.m_keyD;
+        if (difficulty >= 2 && difficulty <= 4) {
+            gf::GfDataBtlDif::setOptionGameDifficult(title->getOptionBuffer().m_soundUi, static_cast<gf::GFDIFF>(0));
+        }
+    }
+    gf::GfGameAoc* aoc = gf::GfGameAoc::get();
+    if (aoc != nullptr && !aoc->isExistGameAoc(static_cast<gf::GAMEAOC>(0x30101))) {
+        title->getOptionBuffer().m_soundUi.m_flagF = 0;
+    }
+    TitleTheaterUtil::setEventPlayFlagByOrderedQuest(title->getSaveBuffer()->m_game);
+    gf::GfGameUtilSaveData::flushOptionSaveData();
+    title->setupTitleOptionToGameOption();
+    title->getGameClearFlagFromSaveData();
+    return title->getSaveBuffer()->m_system.m_version != 0x3A15B;
 }
 
 namespace {
@@ -305,6 +363,34 @@ void TitleStateSelectOption::update(TitleMain* title, const fw::UpdateInfo& info
     requestState(2);
 }
 
+void TitleStatePlayEvent::update(TitleMain* title, const fw::UpdateInfo& info) {
+    while (true) {
+        if (m_endArg) {
+            m_endArg = false;
+            gf::GfGameManager::setDisablePlayerCameraPauseForTitle(true);
+            fw::Transform transform;
+            transform.position = mm::Vec3::zero;
+            transform.rotation = mm::Quat::identity;
+            transform.position.y = 20000.0f;
+            gf::SCOM_OBJ_WARP_POS::create(gf::GfGameManager::getControlMover(), transform, true);
+            TitleMain::sleep(2);
+            gf::RQ_SETUP_PARTY party;
+            gf::SCOM_DESTROY_PARTY_OBJ::create(party);
+            gf::GfGameManager::setDisablePlayerCameraPauseForTitle(false);
+        }
+        if (title->m_reqReturnTitle) {
+            break;
+        }
+        if (title->m_reqDestroy) {
+            requestState(9);
+            return;
+        }
+        TitleMain::sleep(1);
+    }
+    title->m_reqReturnTitle = false;
+    requestState(8);
+}
+
 namespace {
 // reverses the animation of the field LOD object the id names, when it has one (the name is not the original's)
 inline void setLodAnimReverse(unsigned short lodId) {
@@ -335,6 +421,70 @@ void TitleStatePlayEvent::gevPlayEvent(gf::GEV gev, unsigned int arg) {
         }
         gf::GfGameManager::setControlMoverPositionForNoPlayer(mm::Vec3::zero);
     }
+}
+
+void TitleStateChangeGameType::update(TitleMain* title, const fw::UpdateInfo& info) {
+    title->stopTitleBGM(1.0f);
+    gf::SCOM_FADE::create(0, 15, mm::Col4::black);
+    gf::SCOM_FADE::create(1, 15, mm::Col4::black);
+    gf::SCOM_FADE::create(2, 15, mm::Col4::black);
+    TitleMain::sleep(15);
+    gf::GfGameEvent::stop();
+    while (gf::GfGameEvent::isPlaying()) {
+        TitleMain::sleep(1);
+    }
+    if (gf::GfGameManager::getMapJumpID() != static_cast<unsigned int>(-1)) {
+        gf::GfMapjumpInfo jump(static_cast<unsigned int>(-1));
+        jump.m_flags.pad_162 = false;
+        gf::GfPlayFactory::createMapjump(jump);
+        TitleMain::sleep(30);
+        while (gf::GfGameManager::isMapjump()) {
+            TitleMain::sleep(1);
+        }
+    }
+    gf::GfManager::setBusyForChangeGame(true);
+    TitleMain::sleep(2);
+    if (gf::GfFieldSound::get() != nullptr) {
+        gf::GfFieldSound::get()->destroyCommonSound();
+    }
+    if (fw::SoundManager::get() != nullptr) {
+        fw::SoundManager::get()->destroyCommonSe();
+    }
+    if (fw::EffectManager* effect = fw::EffectManager::get()) {
+        effect->requestDestroy();
+        while (!effect->isDestryed()) {
+            TitleMain::sleep(1);
+        }
+    }
+    bool ira = !gf::GfGameManager::isGameTypeIra();
+    title->resetGameType(ira);
+    if (gf::GfBdatQuest* quest = gf::GfBdatQuest::get()) {
+        quest->setupGameType(ira);
+    }
+    gf::GfManager::setupReturnTitle();
+    gf::GfStaticRes::setupGameType(ira);
+    if (fw::EffectManager* effect = fw::EffectManager::get()) {
+        effect->requestLoad();
+        while (!effect->isLoaded()) {
+            TitleMain::sleep(1);
+        }
+    }
+    fw::SoundSsdDriver::get()->reloadBgmVolume(ira);
+    if (fw::SoundManager* sound = fw::SoundManager::get()) {
+        sound->loadCommonSe();
+        while (!sound->isCommonLoaded()) {
+            TitleMain::sleep(1);
+        }
+    }
+    if (gf::GfFieldSound* fieldSound = gf::GfFieldSound::get()) {
+        fieldSound->createCommonSound(ira);
+    }
+    if (gf::GfFieldManager* field = gf::GfFieldManager::get()) {
+        field->rebuildForGameType();
+    }
+    gf::GfMenuManager::setupGame();
+    gf::GfManager::setBusyForChangeGame(false);
+    requestState(8);
 }
 
 void TitleStateWarning::enter(TitleMain* title, ai::State* prev) {
