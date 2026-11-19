@@ -74,16 +74,16 @@ bool IDColiMove::moveColi(IDColiObj* obj, const mm::Vec3& move) {
     mm::Vec3 hitPos[32];
     mm::Vec3 hitNormal[32];
     unsigned int hitBits[3];
-    m_hitPos = hitPos;
-    pad_10 = 2;
-    m_hitCapacity = 32;
-    m_hitNormal = hitNormal;
+    m_coliResult.m_tblPos = hitPos;
+    m_coliResult.m_type = 2;
+    m_coliResult.m_tblMax = 32;
+    m_coliResult.m_tblNormal = hitNormal;
     m_baseObj = obj;
-    m_hitBits = hitBits;
-    m_obj = obj;
+    m_coliResult.pad_d8 = hitBits;
+    m_coliResult.m_skipObj = obj;
     setupParms(move);
     IDColiObjData* data = static_cast<IDColiObjData*>(obj);
-    m_offMaterialBit = data->m_offMaterialBit;
+    m_coliResult.m_ignoreMaterial = data->m_offMaterialBit;
     m_adsorption = data->m_adsorption;
     calcCheckParams(m_move);
     pad_1f5 = false;
@@ -96,6 +96,53 @@ bool IDColiMove::moveColi(IDColiObj* obj, const mm::Vec3& move) {
     IDColiPrimitive::s_CallBasePos[data->m_baseType](m_basePos, m_baseOffset, m_baseFlag, m_shapeParms[0],
                                                      m_shapeParms[1], data->m_base);
     return moveDefColi();
+}
+
+bool IDColiMove::calcWallHitChkVec(const mm::Vec3& normal, const mm::Vec3& pos, wrlResTempVec* temp) {
+    if (!(m_move.y <= 0.0f)) return false;
+    float x = pos.x - m_pos.x;
+    float z = pos.z - m_pos.z;
+    float length = ::sqrtf(x * x + z * z);
+    if (!(length >= 0.01f)) {
+        if (pad_1f1) return false;
+        if (m_wallCount != 0) return true;
+        pad_1f0 = true;
+        return false;
+    }
+    if (pad_1f0) return true;
+    float scale = 1.0f / length;
+    x = x * scale;
+    z = z * scale;
+    if (normal.y > 0.01f) pad_1f2 = true;
+    if (pad_1f2 && m_wallCount != 0) {
+        for (int i = 0; i < m_wallCount; i++) {
+            if (x * temp->m_dir[i].x + z * temp->m_dir[i].z < -0.8660254f) return true;
+        }
+        if (m_wallCount >= 2) {
+            float angle = ::atan2f(x, z);
+            float cos0 = ::cosf(2.0943952f - angle);
+            float sin0 = ::sinf(2.0943952f - angle);
+            float cos1 = ::cosf(-2.0943952f - angle);
+            float sin1 = ::sinf(-2.0943952f - angle);
+            unsigned int sides = 0;
+            for (int i = 0; i < m_wallCount; i++) {
+                if (!(sides & 1) && -sin0 * temp->m_dir[i].x + cos0 * temp->m_dir[i].z >= 0.49999997f) {
+                    sides |= 1;
+                    if (sides == 3) return true;
+                }
+                if (!(sides & 2) && -sin1 * temp->m_dir[i].x + cos1 * temp->m_dir[i].z >= 0.49999997f) {
+                    sides |= 2;
+                    if (sides == 3) return true;
+                }
+            }
+        }
+    }
+    if (m_wallCount < 32) {
+        temp->m_dir[m_wallCount].x = x;
+        temp->m_dir[m_wallCount].z = z;
+        m_wallCount++;
+    }
+    return false;
 }
 
 IDColiPhantom::IDColiPhantom() {

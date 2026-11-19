@@ -62,7 +62,8 @@ public:
     mm::Vec3* m_tblNormal;  // 0xC0
     mm::Vec3* m_tblVector;  // 0xC8
     const IDCmfPoliData** m_tblPoli;  // 0xD0
-    void* pad_d8;
+    // 0xD8: IDColiMove::moveColi points it at a bit per hit (three words), its test* functions clear them
+    unsigned int* pad_d8;
     unsigned int m_tblNum;  // 0xE0
     unsigned int m_tblMax;  // 0xE4
     // 0xE8, the materials the query skips: an object whose m_materialBit shares a bit is not tested
