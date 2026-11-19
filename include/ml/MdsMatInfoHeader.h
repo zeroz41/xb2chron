@@ -43,7 +43,10 @@ struct MdsMatInfoHeader {
     unsigned short m_avatarMapIdx;
     unsigned short m_callBackIdx;  // 0x58, first (callback, slot) pair of the material's list
     unsigned short m_callBackNum;  // 0x5A, number of pairs
-    unsigned char pad_5C[0x6];
+    // 0x5C, from MdoWrkMatRes::m_pMatData: the texture list DrMdoSetup::setShader binds instead of m_texEntryOfs's
+    // for materials with m_shdFlags bit 2 or 7 outside render techniques 0, 2 and 7 (name inferred)
+    unsigned int m_altTexEntryOfs;
+    unsigned char pad_60[0x2];
     // 0x62, the texture entry DrMdoShdSet::setOneTexShaderSet binds (name inferred)
     unsigned short m_texEntryIdx;
     unsigned short m_timeSlot;  // 0x64, uniform slot (from m_uniformOfs) of the time the *Time callbacks scale by

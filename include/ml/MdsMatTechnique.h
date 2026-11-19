@@ -12,7 +12,20 @@ struct MdsMatTechnique {
     // writes one per entry
     unsigned int m_varTblOfs;
     int m_varTblNum;  // 0x14
-    unsigned char pad_18[0x2C];
+    // 0x18/0x1C: the static texture ids (unsigned shorts, from MdoWrkMatRes::m_pTechData) DrMdoSetup::setShader
+    // binds through DrMdoSetup::s_pStaticTexture, and their count (names inferred)
+    unsigned int m_staticTexOfs;
+    unsigned int m_staticTexNum;
+    // 0x20/0x24: the uniform block entries (MdsMatValShaderCate, from m_pTechData) setShader binds through
+    // DrMdoSetup::s_pUniBkMat, and their count (names inferred)
+    unsigned int m_uniBkOfs;
+    int m_uniBkNum;
+    unsigned char pad_28[0xC];
+    // 0x34/0x38: the static image ids setShader binds through DrMdoSetup::s_pStaticImage, and their count (names
+    // inferred)
+    unsigned int m_staticImgOfs;
+    unsigned int m_staticImgNum;
+    unsigned char pad_3C[0x8];
 };
 }  // namespace ml
 

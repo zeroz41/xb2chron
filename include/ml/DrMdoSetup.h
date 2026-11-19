@@ -7,6 +7,7 @@
 namespace grlib { class CGLibEtcUniformBlock; }
 
 namespace ml { struct MdsMatInfoHeader; }
+namespace ml { struct MdsMatTechnique; }
 namespace ml { struct MdsMatValShaderCate; }
 namespace ml { struct MdsMatVariableTbl; }
 namespace ml { class DrResMdoMat; }
@@ -29,6 +30,12 @@ public:
     // Writes the material's stock variables (s_pStockMaterial) into its uniform block and sets m_renderPass from
     // its technique type.
     void createUniformBlock(const MdsMatInfoHeader* info, DrResMdoMat* mat);
+    // Binds the technique's uniform blocks (s_pUniBkMat), then, while m_bindFlags[0] bit 0 or 4 is set, the
+    // material's texture list, static textures (s_pStaticTexture) and static images (s_pStaticImage).
+    void setShader(DrResMdoMat* mat, const MdsMatInfoHeader* info, const MdsMatTechnique* tech, unsigned int matIdx,
+                   int mdlIdx, unsigned int texIdx);
+    // setShader calls it first while m_bindFlags[0] bit 4 is set
+    void setupMaterial(const MdsMatInfoHeader* info);
 
     // Static texture callbacks: s_pStaticTexture[id] binds texture id at the shader location.
     void varStTex_ColorTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);

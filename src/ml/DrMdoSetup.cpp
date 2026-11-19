@@ -139,6 +139,51 @@ void DrMdoCtl::setOffsetPos(const mm::Vec3& pos) {
     m_offsetPos = pos;
 }
 
+void DrMdoSetup::setShader(DrResMdoMat*, const MdsMatInfoHeader* info, const MdsMatTechnique* tech,
+                           unsigned int matIdx, int mdlIdx, unsigned int texIdx) {
+    if (m_bindFlags[0] & 0x10) {
+        setupMaterial(info);
+    }
+    const MdsMatValShaderCate* cate =
+        reinterpret_cast<const MdsMatValShaderCate*>(m_pWrkMatRes->m_pTechData + tech->m_uniBkOfs);
+    short pass = m_renderPass;
+    for (int i = 0; i < tech->m_uniBkNum; i++, cate++) {
+        (this->*s_pUniBkMat[cate->m_blockId])(cate, i, mdlIdx, matIdx, pass != 5, texIdx);
+    }
+    if (m_bindFlags[0] & 0x11) {
+        MdoWrkMatRes* res = m_pWrkMatRes;
+        if (res->m_ppTexture != nullptr) {
+            if (!(info->m_shdFlags & 0x84) || m_renderTech == 0 || m_renderTech == 2 || m_renderTech == 7) {
+                m_pDecExtTbl->setTextureList(
+                    reinterpret_cast<const MdsMatTextureInfo*>(res->m_pMatData + info->m_texEntryOfs),
+                    res->m_ppTexture, res->m_pSampler);
+            } else {
+                m_pDecExtTbl->setTextureList(
+                    reinterpret_cast<const MdsMatTextureInfo*>(res->m_pMatData + info->m_altTexEntryOfs),
+                    res->m_ppTexture, res->m_pSampler);
+            }
+        }
+        unsigned int paramIdx = tech->m_uniBkNum;
+        if (tech->m_staticTexNum != 0) {
+            const unsigned short* texIds =
+                reinterpret_cast<const unsigned short*>(m_pWrkMatRes->m_pTechData + tech->m_staticTexOfs);
+            for (int i = 0; i < tech->m_staticTexNum; i++) {
+                unsigned int location = m_pDecExtTbl->getValGlobalParam(paramIdx + i);
+                (this->*s_pStaticTexture[texIds[i]])(info, location, texIdx);
+            }
+        }
+        paramIdx = tech->m_staticTexNum + tech->m_uniBkNum;
+        if (tech->m_staticImgNum != 0) {
+            const unsigned short* imgIds =
+                reinterpret_cast<const unsigned short*>(m_pWrkMatRes->m_pTechData + tech->m_staticImgOfs);
+            for (int i = 0; i < tech->m_staticImgNum; i++) {
+                unsigned int location = m_pDecExtTbl->getValGlobalParam(paramIdx + i);
+                (this->*s_pStaticImage[imgIds[i]])(info, location, 0);
+            }
+        }
+    }
+}
+
 void DrMdoCtl::partsShadowBaseRender(const MdsMdlTopHeader* top) {
     int num = top->m_infoNum;
     if (num <= 0) {
