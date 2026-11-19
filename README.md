@@ -20,17 +20,17 @@ Nothing from the game is included here. You need your own copy of the game to bu
 [Data linked]: https://img.shields.io/endpoint?url=https%3A%2F%2Fzeroz41.github.io%2Fxb2chron%2Fbadges%2Fdata-linked.json
 [Units linked]: https://img.shields.io/endpoint?url=https%3A%2F%2Fzeroz41.github.io%2Fxb2chron%2Fbadges%2Funits-linked.json
 
-Measured on `main` from the 3.0.1 update, in the latest build of `master`. The [progress page] breaks it down by
-unit and function, and the [treemap] shows every function and data section as a tile sized by its bytes. A
-function is matched when it compiles to the original's exact bytes. Code, data and units are linked when the build
-takes them from compiled source instead of the original. Data includes `.bss`.
+Measured on `main` from the latest build of `master`. The [progress page] breaks it down by unit and function, and
+the [treemap] shows every function and data section as a tile sized by its bytes. A function is matched when it
+compiles to the original's exact bytes. Code, data and units are linked when the build takes them from compiled
+source instead of the original. Data includes `.bss`.
 
 ## Target
 
 | | |
 |---|---|
-| Game | Xenoblade Chronicles 2 (`0100E95004038000`), update 3.0.1 (`0100E95004038800`, `v1114112`) |
-| Executable | `main` from the 3.0.1 update, SHA-1 `55a82580cd6826cfb9ffbbb2da5fe9a4c5a4b4c8` |
+| Game | Xenoblade Chronicles 2 version 3.0.1: the base game (`0100E95004038000`) and its 3.0.1 update (`0100E95004038800`, `v1114112`), combined |
+| Executable | `main`, SHA-1 `55a82580cd6826cfb9ffbbb2da5fe9a4c5a4b4c8` |
 | Compiler | clang 3.9.1 (NintendoSDK 3.5.0); clang 4.0.1 for most of `ssd/` |
 
 3.0.1 is the only version built. Versions 1.0.0 and 2.0.0 only supply the original names
@@ -38,10 +38,11 @@ takes them from compiled source instead of the original. Data includes `.bss`.
 
 ## Building
 
-You need Python 3.11 or newer, your own dump of the game and its 3.0.1 update, and your Switch's `prod.keys`. On
-Linux and macOS you also need a C++ compiler (`g++`, or `xcode-select --install` on macOS).
+You need Python 3.11 or newer, your own dumps of both the base game and its 3.0.1 update (version 3.0.1 is the two
+combined), and your Switch's `prod.keys`. On Linux and macOS you also need a C++ compiler (`g++`, or
+`xcode-select --install` on macOS).
 
-1. Put the base game and the 3.0.1 update (NSP or XCI) and `prod.keys` in `rom/`.
+1. Put the base game and the 3.0.1 update (each an NSP or XCI) and `prod.keys` in `rom/`.
 2. Run:
 
        python3 build.py

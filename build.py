@@ -123,8 +123,8 @@ def main():
     args = parser.parse_args()
 
     if not (args.rom or args.keys or has_game()):
-        fail("The game is missing. Put your copy of Xenoblade Chronicles 2 in the rom/ folder: the files of the\n"
-             "game and its 3.0.1 update (.nsp or .xci), and prod.keys unless an emulator on this computer has it.\n"
+        fail("The game is missing. Put your copy of Xenoblade Chronicles 2 in the rom/ folder: the base game and\n"
+             "its 3.0.1 update (.nsp or .xci), and prod.keys unless an emulator on this computer has it.\n"
              "Or point the build at the folder they are in:\n"
              "  python build.py --rom <folder>")
     check_host()

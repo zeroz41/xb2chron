@@ -8,9 +8,10 @@ says how to work on a function; this page explains what you are looking at.
 The project targets one version of the game, 3.0.1, its final update. Older versions are only a source of names
 ([Names](#names)).
 
-The game's code is one executable, `main`, from the 3.0.1 update. It holds the whole game, including the code
-of every DLC (the DLC packs themselves are data only). The update's other code modules (`sdk`,
-`subsdk0`, `rtld`) are Nintendo's SDK and loader, and are not part of this project.
+The game's code is one executable, `main`, of version 3.0.1: the base game and its 3.0.1 update, combined. It
+holds the whole game, including the code of every DLC (the DLC packs themselves are data only). The other code
+modules (`sdk`, `subsdk0`, `rtld`) are Nintendo's SDK and loader, and are not part of this project. The base
+game's own `main` is version 1.0.0, where most names come from ([Names](#names)).
 
 `main` loads at `0x7100000000`. Names, comments and the tools use full addresses, such as `fn_710067A41C` or
 `zkit lookup 0x710067A41C`. `symbols.txt` and `splits.txt` give offsets from the start of `main` instead
