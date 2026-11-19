@@ -44,6 +44,26 @@ public:
         int id = getCharaId();
         return id >= 101 && id < 159;
     }
+    // a name of at least 9 characters whose ninth is a letter (1.0.0's static gf::GfVoiceName::isHanaVoice(char
+    // const*), 0x710035B88C; 3.0.1 inlines it into the constructor)
+    static bool isHanaVoice(const char* name) {
+        if (name == nullptr || strlen(name) < 9) {
+            return false;
+        }
+        return name[8] > 0x60;
+    }
+    // n appended as at least two digits (1.0.0's static gf::GfVoiceName::addNumber2keta(mm::mtl::FixStr<16>&,
+    // unsigned int), 0x710035B9F4; 3.0.1 inlines it into GfSalvageVoice's and GfFieldVoice's playVoice)
+    static void addNumber2keta(mm::mtl::FixStr<16>& str, unsigned int n) {
+        mm::mtl::FixStr<16> number;
+        // two calls (1.0.0's copy branches to them; a select of the format would be a csel)
+        if (n < 10) {
+            number.format("0%d", n);
+        } else {
+            number.format("%d", n);
+        }
+        str += number.m_str;
+    }
 
     mm::mtl::FixStr<16> m_name;
     int m_kind;

@@ -2,7 +2,9 @@
 #define GF_GFFIELDVOICE_H
 
 namespace gf { struct ParamObj; class GAME_VOICE_HANDLE; }
-namespace gf { enum CV_FIELD : int; enum CV_PRIO : int; }  // the field voice's kind and priority
+// CV_FIELD is unsigned: GfFieldVoice::playVoice zero-extends it to index its tables (an enum with no negative
+// value and no fixed type has unsigned int underneath)
+namespace gf { enum CV_FIELD : unsigned int; enum CV_PRIO : int; }  // the field voice's kind and priority
 
 namespace gf {
 // the field voices (gf_game_voice.cpp): SCOM_FIELD_VOICE's create functions and exec call these with a ParamObj

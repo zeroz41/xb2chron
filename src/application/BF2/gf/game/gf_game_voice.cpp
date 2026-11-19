@@ -10,6 +10,15 @@
 #include "mm/mtl/FixStr.h"
 #include "classes/gf/GfReqSmallCom.h"
 #include "classes/gf/SCOM_FIELD_VOICE.h"
+#include "classes/gf/GfBdatBtl.h"
+#include "classes/gf/GfGameCond.h"
+#include "classes/gf/GfGameManager.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfFieldVoice.h"
+#include "gf/GfSalvageVoice.h"
+#include "ml/MTRand.h"
+#include "mm/mtl/FixedArray.h"
 
 namespace gf {
 namespace _gfgvo {
@@ -331,6 +340,76 @@ bool VoiceInfo::PJOB_STOP::exec() {
 
 bool VoiceInfo::PJOB_WAIT_STOP::exec() {
     return !m_info->m_sound.isValid();
+}
+
+namespace _gfgvo {
+// Proposed names, not the original's: the symbols leave them unnamed (lbl_71009BBE9C, lbl_71009BBEA8). A salvage
+// voice's first and last number by CV_SALVAGE (the middle one is always 01). Fixed arrays, not plain ones: playVoice
+// keeps its `n < 10` test on a loaded group (InstCombine folds compares on loads from a plain constant array, and
+// every group is 50 or 60), and each table is addressed from its own base.
+const mm::mtl::FixedArray<unsigned char, 12> s_salvageVoiceGroup = {{60, 60, 60, 60, 60, 50, 60, 60, 60, 60, 60, 60}};
+const mm::mtl::FixedArray<unsigned char, 12> s_salvageVoiceNo = {{1, 2, 3, 4, 5, 1, 6, 7, 8, 9, 10, 11}};
+}  // namespace _gfgvo
+
+GAME_VOICE_HANDLE* GfSalvageVoice::playVoice(GF_OBJ_HANDLE* handle, CV_SALVAGE voice) {
+    DataParamAcc acc(handle);
+    if (acc.getObjType() == 3 && acc.isValid() && acc.getObjType() == 3 && acc.getBdatId() == 1) {
+        unsigned int group = _gfgvo::s_salvageVoiceGroup[voice];
+        unsigned int no = _gfgvo::s_salvageVoiceNo[voice];
+        mm::mtl::FixStr<16> name;
+        name = acc.getVoiceStr();
+        GfVoiceName::addNumber2keta(name, group);
+        GfVoiceName::addNumber2keta(name, 1);
+        GfVoiceName::addNumber2keta(name, no);
+        return GfGameVoice::playVoice(ParamObj(handle), name.m_str, CV_PRIO(1), false);
+    }
+    return nullptr;
+}
+
+GAME_VOICE_HANDLE* GfSalvageVoice::playResultVoice(GF_OBJ_HANDLE* handle, CV_SALVAGE_RESULT voice) {
+    DataParamAcc acc(handle);
+    if (acc.getObjType() == 3 && acc.isValid() && acc.getObjType() == 3 && acc.getBdatId() == 1) {
+        mm::mtl::FixStr<16> name;
+        name = acc.getVoiceStr();
+        GfVoiceName::addNumber2keta(name, 60);
+        GfVoiceName::addNumber2keta(name, 1);
+        GfVoiceName::addNumber2keta(name, voice + 12);
+        return GfGameVoice::playVoice(ParamObj(handle), name.m_str, CV_PRIO(1), false);
+    }
+    return nullptr;
+}
+
+namespace _gfgvo {
+// Proposed names, not the original's: the symbols leave them unnamed (lbl_71009BBF02, lbl_71009BBF50). The first
+// number of a driver's and of a blade's field voice, by CV_FIELD.
+const mm::mtl::FixedArray<unsigned char, 39> s_fieldDriverVoiceGroup = {{50, 51, 52, 53, 54, 55, 57, 59, 1, 62, 64, 65, 66, 66, 66, 68, 70, 72, 73, 77, 78, 80, 82, 2, 2, 84, 85, 87, 88, 88, 95, 96, 96, 98, 98, 98, 65, 94, 95}};
+const mm::mtl::FixedArray<unsigned char, 39> s_fieldBladeVoiceGroup = {{50, 51, 52, 53, 54, 56, 58, 59, 1, 61, 63, 65, 66, 66, 66, 67, 69, 71, 73, 79, 79, 81, 83, 2, 2, 84, 85, 86, 88, 88, 94, 97, 97, 98, 98, 98, 65, 94, 95}};
+}  // namespace _gfgvo
+
+GAME_VOICE_HANDLE* GfFieldVoice::playVoice(const ParamObj& obj, CV_FIELD field, unsigned int no, unsigned int take,
+                                           CV_PRIO prio) {
+    DataParamAcc acc(obj);
+    if (acc.getObjType() != 3 && acc.getObjType() != 4) {
+        return nullptr;
+    }
+    const mm::mtl::FixedArray<unsigned char, 39>& groups =
+        acc.getObjType() == 3 ? _gfgvo::s_fieldDriverVoiceGroup : _gfgvo::s_fieldBladeVoiceGroup;
+    unsigned int group = groups[field];
+    mm::mtl::FixStr<16> name;
+    name = acc.getVoiceStr();
+    GfVoiceName::addNumber2keta(name, group);
+    GfVoiceName::addNumber2keta(name, no + 1);
+    GfVoiceName::addNumber2keta(name, take + 1);
+    if (strcmp(acc.getVoiceStr(), "15") == 0) {
+        name += "a";
+    }
+    unsigned int id;
+    if (acc.getObjType() == 3) {
+        id = acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0;
+    } else {
+        id = acc.isValid() ? acc.getBdatId() : 0;
+    }
+    return GfGameVoice::playVoice(ParamObj(acc.getObjType(), id), name.m_str, prio, false);
 }
 
 }  // namespace gf

@@ -7,7 +7,7 @@
 #include "mm/mtl/FixedVector.h"
 
 namespace fw { class UpdateInfo; }
-namespace gf { enum CV_FIELD : int; enum CV_PRIO : int; }  // the field voice's kind and priority
+namespace gf { enum CV_FIELD : unsigned int; enum CV_PRIO : int; }  // the field voice's kind and priority
 namespace gf { enum FAVORITE : int; enum CV_RESULT : int; class GAME_VOICE_HANDLE; class GF_SCOM_HANDLE; }
 
 namespace gf {
