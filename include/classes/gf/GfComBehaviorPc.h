@@ -73,7 +73,7 @@ public:
     // after a warp onto a wall: the frame synced, the environment and property flushed, the asm to
     // "S_climbidle_base" (then state 0x2E), the movement reset and the PC faded in over the warp parameters' fadeTime
     // after a warp: the frame synced, the environment and property flushed; a field battle start (field status
-    // bit 15 without m_stateFlags bit 11) restarts the battle (state 0x3F), else the asm goes to "S_wateridle"
+    // bit 15 with m_stateFlags bit 11) restarts the battle (state 0x3F), else the asm goes to "S_wateridle"
     // (state 0x14) in deep water or "S_idle" (state 3, a vehicle's riders told); the motion cleared, the fall
     // heights reset, the PC faded in and the auto heal re-enabled (messages 0x1000046 and 0x100004B)
     void onWarpNormal(gf::GfComPropertyPc& property);
