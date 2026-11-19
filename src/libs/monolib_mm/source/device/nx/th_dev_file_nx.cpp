@@ -2830,6 +2830,27 @@ bool DevFileNxTh::rfOpen(FileHandleTh* handle, const char* path) {
     return true;
 }
 
+bool DevFileNxTh::rfIsBusy(FileHandleTh* handle) {
+    DevFileNxTh* dev = get();
+    if (handle == nullptr) {
+        for (unsigned int i = 0; i < dev->m_impl->m_params.size(); i++) {
+            OpenReadParam& param = dev->m_impl->m_params[i];
+            mm::threading::ReadLockGuard lock(param.m_lock);
+            if (!param.pad_10D || !param.m_isOpen) {
+                continue;
+            }
+            return true;
+        }
+    } else {
+        OpenReadParam& param = dev->m_impl->m_params[handle->m_channel];
+        mm::threading::ReadLockGuard lock(param.m_lock);
+        if (param.m_isOpen) {
+            return param.pad_10D;
+        }
+    }
+    return false;
+}
+
 bool DevFileNxTh::rfClose(FileHandleTh* handle) {
     OpenReadParam& param = get()->m_impl->m_params[handle->m_channel];
     mm::threading::WriteLockGuard lock(param.m_lock);
