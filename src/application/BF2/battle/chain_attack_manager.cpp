@@ -15,6 +15,9 @@
 #include "btl/Misc.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfFobjDropitem.h"
+// its Map<unsigned short, float> (GfFobjSeManager's) instantiates that tree's sentinel, whose guarded init this
+// unit emits after Map<GF_OBJ_HANDLE*, bool>'s (fn_7100025114)
+#include "gf/GfFobjSeManager.h"
 #include "mm/mtl/Vector.h"
 #include "mm/Math.h"
 #include <math.h>
