@@ -43,6 +43,8 @@ public:
     unsigned int setup(const unsigned char* mdo, unsigned char* work);
     int getIdx(const char* name) const;
     DrResMdoMeshObj& operator=(const DrResMdoMeshObj& other);
+    // true when a part's display state changed
+    bool updateDisplayCheck(bool);
     DrResMdoMeshParts* m_parts;  // field names are not the original's
     int m_num;
     static void release(DrResMdoMeshObj*& obj);

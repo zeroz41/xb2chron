@@ -2,6 +2,7 @@
 #define ML_DRRESMDOSEAMWRKPOSINST_H
 
 #include "mtl/MemManager.h"
+#include "mm/Vec3NA.h"
 
 namespace mm { class Vec3; }
 
@@ -9,11 +10,22 @@ namespace ml {
 class DrResMdoSeamMemObj;
 class DrResMdoInstAnmObj;
 class DrResMdoSeamParmRead;
+class DrResMdoSeamVertex;
+class DrResMdoSeamTexture;
 // One read tree entry of a seam map's position data (0x30 bytes: seachReadTreeMdl steps them 0x30 apart). The
 // field names are not the original's.
 struct MdsPosReadTreeData {
-    unsigned char pad_0[0x2A];
-    unsigned short m_mask;  // 0x2A: seachReadTreeMdl skips the entry when it shares a bit with its argument
+    mm::Vec3NA m_center;        // 0x0: chankReadTreeMdl reads the entry when the position is within m_extent of it
+    unsigned int m_childOfs;    // 0xC: offset from the position data of m_childNum indices into m_subTbl10
+    mm::Vec3NA m_extent;        // 0x10
+    unsigned int m_vtxOfs;      // 0x1C: offset of m_vtxNum indices into m_subTbl0
+    unsigned int m_texOfs;      // 0x20: offset of m_texNum indices into m_subTbl8
+    unsigned short m_childNum;  // 0x24
+    short m_vtxNum;             // 0x26
+    short m_texNum;             // 0x28
+    // 0x2A: seachReadTreeMdl skips the entry when it shares a bit with its argument; bits 0-1: the entry has
+    // vertices/textures to read, bit 2: chankReadTreeMdl sets the work's m_flags bit 0
+    unsigned short m_mask;
     unsigned char pad_2C[0x4];
 };
 // The instance positions of a seam map (0x80 bytes: DrResMdoSeamWrkInst::setEtcPosCache sets them up 0x80 apart).
@@ -98,6 +110,13 @@ public:
     void seachReadTreeMdl(unsigned int mask);
     void chankReadTreeMdl(const MdsPosReadTreeData* tree, const mm::Vec3& pos);
 
+    // the vertex and texture slots chankReadTreeMdl marks (DrResMdoSeamWrkInst::updateRenderList sets them): a
+    // table entry 0 asks for the id in s_pParmRead's pac data bits, n keeps element n - 1 of s_pSeamVertex /
+    // s_pSeamTexture
+    static unsigned short* s_pVertexTbl;
+    static unsigned short* s_pTextureTbl;
+    static DrResMdoSeamVertex* s_pSeamVertex;
+    static DrResMdoSeamTexture* s_pSeamTexture;
     static DrResMdoSeamParmRead* s_pParmRead;
 
     const unsigned char* m_data;      // 0x0
@@ -105,9 +124,9 @@ public:
     const unsigned char* m_tbl10;     // 0x10
     const unsigned char* m_tbl18;     // 0x18
     const SubTbl* m_sub;              // 0x20
-    const unsigned char* m_subTbl10;  // 0x28: m_data + m_sub->m_ofs10
-    const unsigned char* m_subTbl0;   // 0x30: m_data + m_sub->m_ofs0
-    const unsigned char* m_subTbl8;   // 0x38: m_data + m_sub->m_ofs8
+    const MdsPosReadTreeData* m_subTbl10;  // 0x28: m_data + m_sub->m_ofs10
+    const unsigned short* m_subTbl0;       // 0x30: m_data + m_sub->m_ofs0: vertex ids (s_pVertexTbl indices)
+    const unsigned short* m_subTbl8;       // 0x38: m_data + m_sub->m_ofs8: texture ids (s_pTextureTbl indices)
     HeadBlock* m_head;                // 0x40
     Entry* m_entries;                 // 0x48: m_entryNum entries
     DrResMdoSeamMemObj* m_memObj;     // 0x50: the etc position block (null for the base positions)
