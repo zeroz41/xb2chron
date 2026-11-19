@@ -342,6 +342,8 @@ public:
     void ResetAlphaRate(int id);
     void RegisterAlphaAnimation(ALPHA_PROC_ID id, float rate, float time, bool all);
     void AlphaAnimation(ALPHA_PROC_ID id);
+    // ChainAttackManager::ModifyPositionBackward calls it with true on character 0x451's blade
+    void InitializeHanaBusterAlpha(bool);
     // 2.0.0's symbols name it. Mounts the weapon (gf::GfMountManager::execMount) by pad_EE8_6 and keeps the mount
     // state in pad_F05_4; called from PostManagerUpdate.
     void WeaponMountProc();
@@ -546,6 +548,16 @@ public:
     void ForceDeleteEffect();
     void ResetAllEffect();
     void SetWarpPostureByDir(const mm::Vec3& dir);
+    // what GetBladeMovePos places a blade by (ChainAttackManager::ModifyPositionBackward fills one on the stack; the
+    // field names are inferred, not the original's)
+    struct CALC_BLADE_MOVE_POS_PARAM {
+        BattleCharacter* m_driver;
+        BattleCharacter* m_blade;
+        const mm::Vec3* m_dir;  // the driver's direction to the target
+        bool pad_18;
+    };
+    // the position for the blade by param in pos; false when there is none
+    bool GetBladeMovePos(mm::Vec3& pos, const CALC_BLADE_MOVE_POS_PARAM* param) const;
     // moves the character to the position (with none, to its parameter's driver's object) and turns it the
     // driver's pad_60 way
     void RegisterWarp(const mm::Vec3* pos);
