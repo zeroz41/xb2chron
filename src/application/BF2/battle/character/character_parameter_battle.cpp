@@ -25,6 +25,7 @@
 #include "mm/mtl/FixedVector.h"
 #include "gf/SDataEnemy.h"
 #include "gf/GfDataEnemy.h"
+#include "gf/GfDataDriver.h"
 #include "classes/gf/GfMountManager.h"
 #include "classes/gf/GfBdatChrEnArrange.h"
 #include "classes/gf/GfBdatRsc.h"
@@ -84,6 +85,16 @@ inline void SetupDamageArmor(PlayerParameter& param) {
         }
         param.pad_630 = armor;
     }
+}
+// the entry of that effect in the list, nullptr for none (InitializeEnhance's search; the name is not the original's)
+inline ENHANCE_EFFECT_DATA* FindEnhanceEffect(
+    mm::mtl::FixedVector<ENHANCE_EFFECT_DATA, 64>& list, unsigned short effect) {
+    for (ENHANCE_EFFECT_DATA& data : list) {
+        if (data.m_effect == effect) {
+            return &data;
+        }
+    }
+    return nullptr;
 }
 }  // namespace
 
@@ -181,6 +192,45 @@ void PlayerParameter::InitializeAttackParam() {
     pad_ef_0 = 0;
     pad_ed = 0;
     pad_ee = 0;
+}
+
+bool PlayerParameter::InitializeEnhance() const {
+    unsigned int id;
+    if (BattleGlobal::sys()->m_challengeAnySuccess) {
+        id = Utility::GetIraGroupDriverID(m_enArrangeID);
+    } else if (IsBlade(false)) {
+        gf::GF_OBJ_HANDLE* driver = m_driverHandle;
+        if (driver == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            return false;
+        }
+        gf::DataParamAcc acc(driver);
+        id = acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0;
+    } else {
+        id = m_enArrangeID;
+    }
+    if (id == 0) {
+        return false;
+    }
+    mm::mtl::FixedVector<unsigned short, 64> enhances;
+    if (gf::GfDataDriver::getValidEnhance(enhances, id)) {
+        std::for_each(enhances.begin(), enhances.end(), [this](unsigned short enhance) {
+            ENHANCE_EFFECT_DATA data;
+            if (!DataManager::GetEnhanceData(enhance, data, false)) {
+                return;
+            }
+            ENHANCE_EFFECT_DATA* found = FindEnhanceEffect(m_enhances, data.m_effect);
+            if (found != nullptr) {
+                found->pad_8 += data.pad_8;
+            } else {
+                m_enhances.push_back(data);
+                pad_5ec[data.m_effect >> 3] |= 1 << (data.m_effect & 7);
+            }
+        });
+    }
+    m_flags622_12 = true;
+    ENHANCE_DATA effect;
+    pad_5dc = GetEnhanceEffect(effect, 0x119) ? (int)(effect.m_value + 0.0f) : 0;
+    return true;
 }
 
 int PlayerParameter::GetIraDummyBladeID() const {
@@ -489,16 +539,6 @@ inline float GetSpecialEnhanceRateInline(const CharacterParameter* param, int ty
     }
     return param->m_specialEnhanceRate[type];
 }
-// the entry of that effect in the list, nullptr for none (InitializeEnhance's search; the name is not the original's)
-inline ENHANCE_EFFECT_DATA* FindEnhanceEffect(
-    mm::mtl::FixedVector<ENHANCE_EFFECT_DATA, 64>& list, unsigned short effect) {
-    for (ENHANCE_EFFECT_DATA& data : list) {
-        if (data.m_effect == effect) {
-            return &data;
-        }
-    }
-    return nullptr;
-}
 }  // namespace
 
 EnemyParameter::~EnemyParameter() {
@@ -574,6 +614,42 @@ void EnemyParameter::Initialize(gf::GF_OBJ_HANDLE* handle) {
 const gf::SDataEnemy* EnemyParameter::GetEnemyData() const {
     gf::DataParamAcc acc(m_handle);
     return acc.getSDataEnemy();
+}
+
+void EnemyParameter::InitializeArtsPalette(int index) {
+    CharacterParameter::InitializeArtsPalette(index);
+    bool found = false;
+    if (!IsBlade(false)) {
+        int top;
+        {
+            gf::DataParamAcc acc(m_handle);
+            int id = acc.getBdatIdEnParam();
+            top = Bdat::getValCheckU16(gf::GfDataBdat::getFP(0x8C), "NormalAttackTop", id);
+        }
+        if (top != 0) {
+            const ARTS_PALETTE_DATA* palette = GetArtsPaletteDataConst(index);
+            for (int i = 0; i < 3; i++) {
+                ARTS_SLOT_DATA* slot = const_cast<ARTS_SLOT_DATA*>(palette->GetSlotDataConst(i, true));
+                int id = top + i;
+                if (slot->m_artsID != id) {
+                    *slot = ARTS_SLOT_DATA();
+                    slot->m_artsID = id;
+                    slot->m_dataType = 2;
+                    slot->pad_0_14 = i;
+                }
+                slot->pad_0_18 = 1;
+                slot->m_level = 1;
+                slot->m_charaIndex = m_charaIndex;
+                ARTS_DATA data;
+                slot->GetArtsData(data);
+                for (int level = 0; level < 6; level++) {
+                    slot->m_recastTime[level] = data.m_levels[level].m_recast;
+                }
+            }
+            found = true;
+        }
+    }
+    m_flags622_10 = found;
 }
 
 void EnemyParameter::InitializeAttackParam() {

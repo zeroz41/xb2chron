@@ -105,16 +105,17 @@ struct ARTS_DATA {
         unsigned char pad_4[0x2];
     };
     HIT m_hits[16];
-    unsigned char pad_90[0x4];
-    // an enhance of the arts (CheckHealArts reads entry index - 1; the count is not recovered, the names are not the
-    // original's)
-    struct ENHANCE {
-        unsigned short id;
-        unsigned char pad_2[0x4];
+    // one level's values: DataManager::CacheArtsData reads the BDAT columns "DmgMgn", "Recast" and "Enhance" into
+    // the first and copies it to the other five (the names are not the original's)
+    struct LEVEL {
+        unsigned short m_dmgMgn;
+        // the recast time (the Initialize/InitializeArtsPalette functions copy it to ARTS_SLOT_DATA::m_recastTime)
+        unsigned short m_recast;
+        // an enhance of the arts (CheckHealArts reads level index - 1, GfMenuObjUtil::getArtsIconInfo levels 1-5)
+        unsigned short m_enhance;
     };
-    // (GfMenuObjUtil::getArtsIconInfo reads entries 0-4 by level)
-    ENHANCE m_enhances[5];
-    unsigned char pad_b2[0x36];
+    LEVEL m_levels[6];
+    unsigned char pad_b4[0x34];
 };
 
 // an enemy group: RegisterEnemyGroup fills a free one with its two objects, ReleaseEnemyGroup marks each released

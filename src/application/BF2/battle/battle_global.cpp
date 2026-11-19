@@ -76,7 +76,7 @@ int ARTS_DATA::CheckHealArts(int index) const {
         return 1;
     }
     if (index >= 1) {
-        unsigned short enhance = m_enhances[index - 1].id;
+        unsigned short enhance = m_levels[index - 1].m_enhance;
         if (enhance != 0) {
             ENHANCE_EFFECT_DATA data;
             if (DataManager::GetEnhanceData(enhance, data, false) && data.m_effect == 0x182) {

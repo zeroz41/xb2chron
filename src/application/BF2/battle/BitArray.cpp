@@ -220,7 +220,7 @@ void Utility::GetArtsData(ARTS_DATA::DATA_TYPE type, int id, ARTS_DATA& data) {
 }
 
 unsigned short Utility::GetArtsEnhance(const ARTS_DATA& data, int index) {
-    return data.m_enhances[index - 1].id;
+    return data.m_levels[index - 1].m_enhance;
 }
 
 int Utility::GetSeType(const char* name) {

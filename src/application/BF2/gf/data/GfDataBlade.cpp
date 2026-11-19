@@ -4487,8 +4487,8 @@ void GfDataDriver::addSkillPoint(SDataDriver& data, int point) {
     }
 }
 
-void GfDataDriver::getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver) {
-    getValidEnhance(enhances, getSDataDriver(driver));
+bool GfDataDriver::getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver) {
+    return getValidEnhance(enhances, getSDataDriver(driver));
 }
 
 bool GfDataDriver::getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataIra& data) {

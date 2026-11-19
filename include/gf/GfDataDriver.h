@@ -181,7 +181,7 @@ public:
     // 2.0.0's symbols name it. What it does: fills enhances with the enhance ids that apply to the driver (its row at
     // data+0x22, the DLC drivers 0x11-0x19 through GfBdatChrDr and getIraBack); DataObjDriver's stat getters sum the
     // BTL_Enhance rows of a given EnhanceEffect from it.
-    static void getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriver& data);
+    static bool getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriver& data);  // returns whether enhances holds any (ends cmp size; cset ne)
     // 2.0.0's symbols name it. What it does: pushes onto enhances the equipment enhance
     // (GfBdatItem::getPcEquipEnhance1) of the DLC driver record's item at +0x5A4, when it has one, and returns whether
     // enhances holds any; DataObjDriver's stat getters use it for m_dlc.
@@ -343,7 +343,7 @@ public:
     static bool getEnableLevel(unsigned int& level, unsigned int& value, const SDataDriver& data);
     // 2.0.0's symbols name it. What it does: getValidEnhance on the driver's data (found the getSDataDriver way); its
     // one caller is btl::PlayerParameter::InitializeEnhance.
-    static void getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver);
+    static bool getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver);  // returns the overload's result (InitializeEnhance tests w0)
     // 2.0.0's symbols name it. What it does: stores item into the DLC driver record's 16-bit item id (+0x5A4);
     // DataObjDriver::setVirtualEquipWpnAcce (a DataObjDriver function) passes its record when the item is of type 2.
     static void setEquipWpnAcce(SDataIra& data, unsigned int item);

@@ -23,7 +23,7 @@ namespace btl { namespace Utility {
 int GetSeType(const char* name);
 void GetFluctuateKizunaData(KIZUNA_FLUCTUATE& data, int id, int rank);
 void GetArtsData(ARTS_DATA::DATA_TYPE type, int id, ARTS_DATA& data);
-// the id of the arts' enhance at index (1-based; ARTS_DATA::m_enhances[index - 1])
+// the id of the arts' enhance at index (1-based; ARTS_DATA::m_levels[index - 1].m_enhance)
 unsigned short GetArtsEnhance(const ARTS_DATA& data, int index);
 int GetElementalEffectID();
 int GetUniteComboID(int, int);

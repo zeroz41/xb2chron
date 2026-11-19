@@ -1457,7 +1457,7 @@ bool GfMenuObjUtil::getArtsIconInfo(unsigned int arts, unsigned int level, ArtsI
     info.m_type = 0;
     info.m_enhance = 0;
     if (level - 1 < 5) {
-        unsigned short enhance = data.m_enhances[level - 1].id;
+        unsigned short enhance = data.m_levels[level - 1].m_enhance;
         if (enhance != 0) {
             unsigned short effect = Bdat::getVal(GfDataBdat::getFP(0x2C), "EnhanceEffect", enhance);
             if (effect != 0) {
