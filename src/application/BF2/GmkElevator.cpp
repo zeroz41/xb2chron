@@ -3070,6 +3070,19 @@ bool GmkRoutedNpc::isPopCondMatchedExceptDist() const {
     return isPopCondMatched();
 }
 
+// a navi on its route at a random sideways offset, unless the gimmick set that made its list has m_flag set
+void GmkRoutedNpc::create(const AGmkBase::CreateInfo& info) {
+    GmkRoute::create(info);
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set == nullptr || !set->m_createInfo.m_flag) {
+        GmkRouteNavi::CreateInfo naviInfo(this);
+        naviInfo.m_offset = ml::mtRandf1(-1.0f, 1.0f);
+#line 84 "D:/Monolithsoft/BF2/prog/application/BF2\\gmk/gmk_npc/gmk_routed_npc_impl.h"
+        m_navi = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) GmkRouteNavi(&naviInfo);
+    }
+    pad_78 = 1;
+}
+
 void GmkRoutedNpc::dispose() {
     if (m_navi != nullptr) {
         delete m_navi;
@@ -3406,6 +3419,59 @@ void GmkGrave::update(float dt) {
     }
 }
 
+// a grave object's targetable bits: the low three of its gimmick setup's flags and of the object's (inline in
+// validateTargetable and reqPopEnemy<T>; the name is not the original's)
+static inline void setGobTargetable(gf::GF_OBJ_HANDLE* gob, bool targetable) {
+    gf::GfObjAcc acc(gob);
+    if (acc.m_obj != nullptr) {
+        gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(gob)->m_setup);
+        if (targetable) {
+            setup->pad_6c |= 7;
+        } else {
+            setup->pad_6c &= ~7;
+        }
+    }
+    if (gf::GfObj* obj = acc.getObj()) {
+        if (targetable) {
+            obj->pad_110 |= 7;
+        } else {
+            obj->pad_110 &= ~7;
+        }
+    }
+}
+
+// the gimmick as a T when it is one (its type asked before any null test; inline, the name is not the original's)
+template <class T> static inline const T* asGmkOf(const AGmkBase* gmk) {
+    return gmk->getGmkType() == T::TYPE ? static_cast<const T*>(gmk) : nullptr;
+}
+
+// whether an enemy gimmick is still popping for the grave: a force pop pending or objects out (inline; the name is
+// not the original's)
+template <class T> static inline bool isGravePopPending(const T* gmk) {
+    if (gmk == nullptr) {
+        return false;
+    }
+    if (gmk->m_insts.pad_141) {
+        return true;
+    }
+    return gmk->m_insts.isValid() && gmk->getGobInstNum() != 0;
+}
+
+// the grave's object becomes targetable again once the enemy popped by reqPopEnemy is gone
+void GmkGrave::validateTargetable() {
+    if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) || !pad_98) {
+        return;
+    }
+    if (isGravePopPending(asGmkOf<GmkEnemy>(m_acc.m_gmk))) {
+        return;
+    }
+    if (isGravePopPending(asGmkOf<GmkRoutedEnemy>(m_acc.m_gmk))) {
+        return;
+    }
+    pad_98 = false;
+    setGobTargetable(m_gob, true);
+}
+
 void GmkGrave::debugDraw() const {
     AGmkBase::debugDraw();
     isValid();
@@ -3684,6 +3750,53 @@ void GmkRoutedFootPrint::debugDraw() const {
     AGmkBase::debugDraw();
     if (isValid()) {
         debugDrawRoute(mm::Col4::yellow);
+    }
+}
+
+namespace {
+// the footprint's index-th point, none when the point list has no such element (an inferred helper; the name is not
+// the original's)
+static inline const GmkRoutedFootPrintPoint* getFootPrintPoint(const GmkRoutedFootPrint* footPrint, unsigned int index) {
+    const GmkSet* set = static_cast<const GmkSet*>(footPrint->m_list->getCreateInfo().m_param);
+    GmkRoutedFootPrintPointList* points =
+        static_cast<GmkRoutedFootPrintPointList*>(set->m_gmkLists[GmkRoutedFootPrintPoint::TYPE]);
+    if (points == nullptr) {
+        return nullptr;
+    }
+    unsigned int pointIndex = footPrint->getData()->m_pointBegin + index;
+    if (points->getInstNum() <= pointIndex) {
+        return nullptr;
+    }
+    return &points->m_gmks[pointIndex];
+}
+
+// the index-th point's position when that point is valid (an inferred helper like GmkRoute::getRoutePointPos; the
+// name is not the original's)
+static inline bool getFootPrintPointPos(const GmkRoutedFootPrint* footPrint, mm::Vec3& pos, unsigned int index) {
+    const GmkRoutedFootPrintPoint* point = getFootPrintPoint(footPrint, index);
+    if (point != nullptr && point->isValid()) {
+        const mm::Vec3NA& pointPos = point->getData()->m_pos;
+        pos.x = pointPos.x;
+        pos.y = pointPos.y;
+        pos.z = pointPos.z;
+        return true;
+    }
+    return false;
+}
+}
+
+// a line between each two neighbouring points that are valid
+void GmkRoutedFootPrint::debugDrawRoute(const mm::Col4& color) const {
+    const Data* data = getData();
+    unsigned int num = data->m_pointEnd - data->m_pointBegin;
+    for (unsigned int i = 1; i < num; i++) {
+        mm::Vec3 fromPos;
+        if (getFootPrintPointPos(this, fromPos, i - 1)) {
+            mm::Vec3 toPos;
+            if (getFootPrintPointPos(this, toPos, i)) {
+                fw::debug::drawLine(fromPos, toPos, color);
+            }
+        }
     }
 }
 
@@ -6157,6 +6270,32 @@ void GmkGrave::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* han
 
 GmkGrave::~GmkGrave() { dispose(); }
 
+// the first gimmick of kind T with the row's en_popID: reached through m_acc and asked to pop its objects now (a
+// force pop with 2 at 0x4 and, for gimmick row 0x43, the byte at 0x8 set), then the grave's object's low flag bits
+// cleared
+template <class T> bool GmkGrave::reqPopEnemy() const {
+    const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+    if (!info->isEnable()) {
+        return false;
+    }
+    AGmkBase* gmk = GmkManager::sys()->findFirstGmkInstByBdatId(T::TYPE, info->m_enPopId);
+    if (gmk == nullptr || gmk->getGmkType() != T::TYPE) {
+        return false;
+    }
+    GmkAcc::CreateInfo accInfo;
+    accInfo.validate(*gmk);
+    m_acc.create(accInfo);
+    ForcePopEnemyInfo popInfo;
+    popInfo.pad_4 = 0x40000000;
+    popInfo.pad_8 = m_createInfo.m_bdatId == 0x43;
+    if (!static_cast<T*>(gmk)->m_insts.reqForcePopGobInst(popInfo)) {
+        return false;
+    }
+    pad_98 = true;
+    setGobTargetable(m_gob, false);
+    return true;
+}
+
 bool GmkGrave::reqPopEnemy() const {
     if (reqPopEnemy<GmkEnemy>()) {
         return true;
@@ -6330,6 +6469,118 @@ void GmkSe::dispose() {
     AGmkBase::dispose();
 }
 
+// its phantom follows the row's conditions (made for shapes 2..4); the sound plays while they hold and the player is
+// inside the phantom (or it has none), and stops otherwise
+void GmkSe::update(float) {
+    debugUpdateMmf();
+    if (!isValid()) {
+        return;
+    }
+    bool matched = getBdatInfo()->isPopCondMatched();
+    if (m_popCondMatched != matched) {
+        if (matched) {
+            const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+            if (set == nullptr || !set->m_createInfo.m_flag) {
+                switch (m_info->m_shape) {
+                case 2:
+                case 3:
+                case 4:
+                    m_phantom.create(*this, nullptr, false);
+                    break;
+                default:
+                    break;
+                }
+            }
+        } else {
+            m_phantom.dispose();
+        }
+        m_popCondMatched = matched;
+    }
+    if (m_seHandle == 0) {
+        if (m_popCondMatched && (m_phantom.m_coliObject == nullptr || m_phantom.pad_83)) {
+            createInst();
+            return;
+        }
+        if (m_seHandle == 0) {
+            return;
+        }
+    }
+    if (m_popCondMatched && (m_phantom.m_coliObject == nullptr || m_phantom.pad_83)) {
+        return;
+    }
+    if (m_seHandle != 0) {
+        mm::mtl::PtrSingleton<fw::SoundManager>::sys()->stopSe(m_seHandle, 1.0f);
+        m_seHandle = 0;
+        TGmkActiveList<GmkSe>::removeGmk(this);
+    }
+}
+
+void GmkSe::createInst() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    if (m_seHandle != 0) {
+        mm::mtl::PtrSingleton<fw::SoundManager>::sys()->stopSe(m_seHandle, 1.0f);
+        m_seHandle = 0;
+        TGmkActiveList<GmkSe>::removeGmk(this);
+    }
+    const BdatInfo* info = getBdatInfo();
+    if (info->m_playOnce && pad_f1) {
+        return;
+    }
+    fw::SoundPack* pack = info->m_seType ? mm::mtl::PtrSingleton<gf::GfFieldSound>::sys()->getMapPack()
+                                         : mm::mtl::PtrSingleton<gf::GfFieldSound>::sys()->getCommonPack();
+    m_seHandle = mm::mtl::PtrSingleton<fw::SoundManager>::sys()->playSe(info->m_seName, pack, info->m_volumeMin * 0.01f,
+                                                                         fw::SoundCategory(7));
+    if (m_seHandle == 0) {
+        dispose();
+        return;
+    }
+    mm::mtl::PtrSingleton<fw::SoundManager>::sys()->setVolume(m_seHandle, info->m_volumeMin * 0.01f, 1.0f);
+    pad_f8 = 0;
+    pad_f1 = 1;
+    TGmkActiveList<GmkSe>::addGmk(this);
+}
+
+// a second after it starts, its volume by the player's distance: volumeMIN beyond the data's pad_0, volumeMAX within
+// pad_4, in between from the one to the other (scaled by InRoom_volume in a room)
+void GmkSe::updateInActiveList(float dt) {
+    if (m_seHandle == 0) {
+        return;
+    }
+    pad_f8 += dt;
+    if (pad_f8 < 1.0f || pad_100) {
+        return;
+    }
+    const Data* data = getData();
+    if (data->pad_0 <= 0.0f || !isPlayerExist()) {
+        return;
+    }
+    const mm::Vec3& playerPos = getPlayerPos();
+    float dist = (*m_pos - playerPos).length();
+    pad_fc = dist;
+    const BdatInfo* info = getBdatInfo();
+    float volume;
+    if (data->pad_0 <= dist) {
+        volume = info->m_volumeMin * 0.01f;
+    } else if (dist <= data->pad_4) {
+        volume = info->m_volumeMax * 0.01f;
+    } else {
+        float rate = 0.0f;
+        if (data->pad_4 < data->pad_0) {
+            rate = (data->pad_0 - dist) / (data->pad_0 - data->pad_4);
+        }
+        float range = (info->m_volumeMax - info->m_volumeMin) * 0.01f;
+        mm::clampSelf(range, 0.0f, 1.0f);
+        volume = info->m_volumeMin * 0.01f + rate * range;
+    }
+    if (gf::GfGameManager::isRoom()) {
+        volume *= info->m_inRoomVolume * 0.01f;
+    }
+    mm::mtl::PtrSingleton<fw::SoundManager>::sys()->setVolume(m_seHandle, volume, 0.0f);
+}
+
 GmkSe::~GmkSe() { dispose(); }
 
 void GmkSe::debugDraw() const {
@@ -6376,6 +6627,30 @@ void GmkSeLine::update(float) {
         m_seHandle = 0;
         TGmkActiveList<GmkSeLine>::removeGmk(this);
     }
+}
+
+void GmkSeLine::createInst() {
+    if (m_seHandle != 0) {
+        mm::mtl::PtrSingleton<fw::SoundManager>::sys()->stopSe(m_seHandle, 1.0f);
+        m_seHandle = 0;
+        TGmkActiveList<GmkSeLine>::removeGmk(this);
+    }
+    const GmkSe::BdatInfo* info = getBdatInfo();
+    if (info->m_playOnce && m_played) {
+        return;
+    }
+    fw::SoundPack* pack = info->m_seType ? mm::mtl::PtrSingleton<gf::GfFieldSound>::sys()->getMapPack()
+                                         : mm::mtl::PtrSingleton<gf::GfFieldSound>::sys()->getCommonPack();
+    m_seHandle = mm::mtl::PtrSingleton<fw::SoundManager>::sys()->playSe(info->m_seName, pack, info->m_volumeMin * 0.01f,
+                                                                         fw::SoundCategory(7));
+    if (m_seHandle == 0) {
+        dispose();
+        return;
+    }
+    mm::mtl::PtrSingleton<fw::SoundManager>::sys()->setVolume(m_seHandle, info->m_volumeMin * 0.01f, 1.0f);
+    pad_60 = 0;
+    m_played = true;
+    TGmkActiveList<GmkSeLine>::addGmk(this);
 }
 
 bool GmkSeLine::isPlayerInsideAabb() const {

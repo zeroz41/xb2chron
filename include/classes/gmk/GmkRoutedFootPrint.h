@@ -42,6 +42,14 @@ public:
     void debugDrawRoute(const mm::Col4& color) const;
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(54);
+    // its data (debugDrawRoute reads the range of its points in the footprint point list; the names follow
+    // GmkRoute::Data's and are not the original's)
+    struct Data {
+        unsigned char pad_0[0xc];
+        unsigned int m_pointBegin;  // 0xC: its first point's index in the footprint point list
+        unsigned int m_pointEnd;    // 0x10: one past its last point
+    };
+    const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     void* pad_48 = nullptr;
     void* pad_50 = nullptr;
     void* pad_58 = nullptr;  // fields: size from TGmkList::getInst's stride
