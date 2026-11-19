@@ -144,6 +144,42 @@ void GfFobjGottenEffectManager::dispose() {
     m_info = CreateInfo();
 }
 
+void GfFobjGottenEffectManager::update(float deltaTime) {
+    if (m_info.m_capacity == 0) {
+        return;
+    }
+    for (mm::mtl::Vector<EffectInfo>::iterator it = m_effects.begin(); it != m_effects.end(); ++it) {
+        it->m_time += deltaTime;
+        if (it->m_time > 0.8f) {
+            fw::EffectManager::sys()->dead(it->m_handle);
+            it = m_effects.erase(it);
+            --it;
+            continue;
+        }
+        GfObjAcc acc(it->m_target);
+        if (!acc.isValidTransform()) {
+            fw::EffectManager::sys()->dead(it->m_handle);
+            it = m_effects.erase(it);
+            --it;
+            continue;
+        }
+        mm::Vec3 target = acc.getWorldTransform().position;
+        target.y += 1.0f;
+        float t = it->m_time * 1.25f;
+        mm::Vec3 move = target - it->m_points[3];
+        it->m_points[2] += move;
+        it->m_points[3] += move;
+        mm::Vec3 p01 = it->m_points[0] + (it->m_points[1] - it->m_points[0]) * t;
+        mm::Vec3 p12 = it->m_points[1] + (it->m_points[2] - it->m_points[1]) * t;
+        mm::Vec3 p23 = it->m_points[2] + (it->m_points[3] - it->m_points[2]) * t;
+        mm::Vec3 p012 = p01 + (p12 - p01) * t;
+        mm::Vec3 p123 = p12 + (p23 - p12) * t;
+        mm::Mat44 mtx;
+        mtx.setTrans(p012 + (p123 - p012) * t);
+        fw::EffectManager::sys()->setMatrix(it->m_handle, mtx);
+    }
+}
+
 GfDropitemParams::GfDropitemParams() {
     m_idTop = 0;
     setAllocator(gf::getAllocator(ALLOCATOR(0)));
