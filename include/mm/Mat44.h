@@ -15,6 +15,9 @@
 // monolib_mm's (CacheDraw::setMatrix's command copy cites it so)
 #define MM_MAT44_PATH \
     "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../../MCL/mm_lib/source\\mm_math/mm_mat44.h"
+#elif defined(MM_LIB_FROM_IDCOLI)
+// idcoli's (IDColiPrimitive::calcBaseBoxSetup's matrix copy and inverse cite it so)
+#define MM_MAT44_PATH "D:/Monolithsoft/BF2/prog/libs/idcoli/proj/windows/../../../mcl/mm_lib/source\\mm_math/mm_mat44.h"
 #elif defined(MM_LIB_FROM_XBRD)
 // xbrd's (ScnObjModelDrSysStandard::apply's matrix copy cites it so)
 #define MM_MAT44_PATH "D:/Monolithsoft/BF2/prog/libs/xbrd/proj/windows/../../../mcl/mm_lib/source\\mm_math/mm_mat44.h"
