@@ -453,7 +453,9 @@ public:
     // IsBuff tests bit (buff & 7) of byte buff >> 3 (the name is not the original's); ClearAllBuff clears m_buffs up
     // to the end of these 5 bytes (one memset of 0x146)
     unsigned char m_buffFlags[5];
-    unsigned short pad_5d6;  // Reset sets it to 0xFFFF (meaning unknown)
+    // the id DataManager::RegisterCharacterParameter registers it under (below 18 a party slot, from 1000 an enemy
+    // slot; signed: it is read back with sign extension); Reset sets it to 0xFFFF (the name is not the original's)
+    short m_registeredID;
     unsigned short pad_5d8;  // Utility::AI_GetResistantAttrNum passes it on
     unsigned short pad_5da;  // GetKizunaLinkBdatID answers it
     // InitializeEnhance's effect 0x119 value, 0 without one (mutable: InitializeEnhance is const; meaning unknown)
