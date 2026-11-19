@@ -82,6 +82,9 @@ inline bool isChildStreaming(ui::UIObjectAcc& acc, const char* name) {
 bool s_charBusy;
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAA1D8 + 1); 1.0.0's getSelectBusy reads it
 bool s_selectBusy;
+// the voices seqConfirmItem picks one of at random when driver 4 uses an item
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B60FA8); used: kept out of GlobalMerge
+__attribute__((used)) const char* s_voices[] = {"03200302", "03320102", "03490202", "03540101", "03870101"};
 // the character layouts seqStreamWaitSelect fades in: the driver, then the three blades
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B60FD0)
 const char* s_charLayouts[] = {"LAY_char_dr", "LAY_char_bl@01", "LAY_char_bl@02", "LAY_char_bl@03"};
@@ -175,6 +178,32 @@ void GfMenuObjCharSelect::setPartyData(mm::mtl::FixedArray<DriverData, 5>& drive
             }
         }
     }
+}
+
+bool GfMenuObjCharSelect::seqStreamWait() {
+    mm::mtl::FixStr<32> name;
+    ui::UIObjectAcc acc(m_handle);
+    if (getEquipBladeNum(GfMenuReference::getReferenceDriverID(0), m_drivers) != 0) {
+        if (isChildStreaming(acc, "LAY_char_dr")) {
+            return false;
+        }
+    } else {
+        if (isChildStreaming(acc, "LAY_char_dr_solo")) {
+            return false;
+        }
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+        name.format("IMG_char_bl_img@%02d", i + 1);
+        if (isChildStreaming(acc, name.m_str)) {
+            return false;
+        }
+    }
+    if (pad_768) {
+        return false;
+    }
+    unsigned int main = acc.searchChild("LAY_main");
+    GfMenuObject::hookCtrlEvent(main, startFadeIn(main, 1));
+    return true;
 }
 
 bool GfMenuObjCharSelect::seqStreamWaitStatDr() {
@@ -448,6 +477,54 @@ void GfMenuObjCharSelect::adjustBladeList(mm::mtl::FixedArray<DriverData, 5>& dr
     }
 }
 
+void GfMenuObjCharSelect::setupCharSubMenu(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 5>& drMenus,
+                                           mm::mtl::FixedVector<unsigned int, 3>& blMenus,
+                                           mm::mtl::FixedVector<unsigned int, 4>& spMenus) {
+    unsigned char* bdat = GfDataBdat::getFP(0x181);
+    for (unsigned int i = 0; i < 5; i++) {
+        mm::mtl::FixStr<32> name;
+        name.format("IMG_sub_menu_icon_dr@%02d", i + 1);
+        ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+        if (i < drMenus.size()) {
+            icon.setImageIndex(GfMenuObject::getMenuIconID(static_cast<unsigned short>(Bdat::getVal(bdat, "layer", drMenus[i]))));
+            icon.setDisp(true);
+        } else {
+            icon.setDisp(false);
+        }
+    }
+    // shows a menu's icon (the inlined helper's locals take the top stack slots; the name is not the original's)
+    auto showIcon = [&acc](const char* format, int index, unsigned int layer) {
+        mm::mtl::FixStr<32> str;
+        str.format(format, index);
+        ui::UIObjectAcc icon(acc.searchChild(str.m_str));
+        icon.setImageIndex(GfMenuObject::getMenuIconID(layer));
+        icon.setDisp(true);
+    };
+    mm::mtl::FixStr<32> name;
+    bdat = GfDataBdat::getFP(0x183);
+    for (unsigned int i = 0; i < 3; i++) {
+        if (i < blMenus.size()) {
+            unsigned short layer = Bdat::getVal(bdat, "layer", blMenus[i]);
+            showIcon("IMG_sub_menu_icon_bl@%02d", i + 1, layer);
+        } else {
+            name.format("IMG_sub_menu_icon_bl@%02d", i + 1);
+            ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+            icon.setDisp(false);
+        }
+    }
+    bdat = GfDataBdat::getFP(0x185);
+    for (unsigned int i = 0; i < 4; i++) {
+        if (i < spMenus.size()) {
+            unsigned short layer = Bdat::getVal(bdat, "layer", spMenus[i]);
+            showIcon("IMG_sub_menu_icon_hana@%02d", i + 1, layer);
+        } else {
+            name.format("IMG_sub_menu_icon_hana@%02d", i + 1);
+            ui::UIObjectAcc icon(acc.searchChild(name.m_str));
+            icon.setDisp(false);
+        }
+    }
+}
+
 bool GfMenuObjCharSelect::getCharBusy() {
     return s_charBusy;
 }
@@ -625,6 +702,48 @@ bool GfMenuObjCharSelect::seqSpUpdateParty() {
 bool GfMenuObjCharSelect::seqReturnChange() {
     ui::UIObjectAcc acc(m_handle, "LAY_char");
     requestEvent(acc.m_handle, 0x107, 1);
+    return true;
+}
+
+bool GfMenuObjCharSelect::seqConfirmItem() {
+    if (!pad_6C0) {
+        unsigned int item = m_itemList->getContents(m_itemList->getIndex(false)).m_id;
+        if (item - 0x63C1 <= 3) {
+            unsigned int text = item - 0x6295;
+            m_subContext->reset();
+            GfMenuObjCommonText::open(m_subContext, text, 0);
+        }
+        pad_6C0 = true;
+    }
+    if (!m_subContext->isTerm()) {
+        return false;
+    }
+    bool decided = false;
+    if (!m_subContext->m_results.empty()) {
+        GfMenuCallContext::GfMenuResult result;
+        m_subContext->popResult(result);
+        decided = result.m_value == 0 && result.m_id == 0;
+    }
+    if (decided) {
+        GfMenuReference::getReferenceDriverID(0);
+        unsigned int id = m_itemList->getContents(m_itemList->getIndex(false)).m_id;
+        unsigned short iraType = GfBdatItem::sys()->getPreciousIraType(id);
+        unsigned int type = id == 0x63C2 ? 1 : id == 0x63C3 ? 2 : id == 0x63C4 ? 3 : 0;
+        SCOM_ADD_IDEA::create(GfMenuReference::getReferenceDriverID(0), type, iraType);
+        MenuItemInfo info = m_itemList->getContents(m_itemList->getIndex(false));
+        info.m_count = 1;
+        m_itemList->decItem(info, true);
+        if (GfMenuReference::getReferenceDriverID(0) == 4) {
+            int random = ml::mtRand();
+            unsigned long index = random % (sizeof(s_voices) / sizeof(s_voices[0]));
+            if (m_voice != nullptr) {
+                GfGameVoice::playStop(m_voice);
+            }
+            m_voice = GfGameVoice::playVoice(s_voices[index]);
+        }
+    }
+    m_seq.addJob(&GfMenuObjCharSelect::seqReturn);
+    pad_6C0 = false;
     return true;
 }
 
