@@ -21,8 +21,9 @@ public:
     // createSetupParam stores the object id in the setup's pad_70 when it is set, in its pad_6c otherwise
     bool pad_90;
     unsigned char pad_91[0x98 - 0x91];
-    // createSetupParam sets the setup's pad_74 when it is not null
-    void* pad_98;
+    // createSetupParam sets the setup's pad_74 when it is not null; a file name: GfAssetSetupMapSeamless::setup
+    // keeps it without its extension in its pad_200
+    const char* pad_98;
 };
 }  // namespace gf
 
