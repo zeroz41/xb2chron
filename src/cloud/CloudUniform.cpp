@@ -291,6 +291,47 @@ void CloudObjMdl::updateUniform() {
     m_mdlUniform.updateData();
 }
 
+void CloudObjMdl::renderLastPoli() {
+    CloudObjMan* man = CloudMan::sys()->m_pObjMan;
+    CloudCalcParams* calc = man->m_pCalcParams;
+    if (calc->m_tiledCache[calc->m_tiledIdx][2].m_isEnable) {
+        grlib::CGLibGPUCache::setTiledCacheSize(calc->m_tiledCache[calc->m_tiledIdx][2].m_width,
+                                                calc->m_tiledCache[calc->m_tiledIdx][2].m_height);
+        grlib::CGLibGPUCache::setTiledCacheAction((GrlTiledCacheAction)1);
+    }
+    grlib::CGLibColorCtl::setBlendControl((GrlBlendFunc)2, (GrlBlendFunc)6, (GrlBlendCombine)1, (GrlLogicType)3);
+    calc->m_pTarget->setRenderTarget(*calc->m_pDepth);
+    grlib::CGLibPolygon::setCullingBack();
+    grlib::CGLibDepthCtl::setDepthStencilControl(1, 0, (GrlCompare)3, 1, (GrlCompare)5, 0x20, 0x20, 0x20, (GrlStencil)3,
+                                                 (GrlStencil)1, (GrlStencil)1);
+    CloudShaderMan* shd = CloudMan::sys()->m_pShaderMan;
+    CloudObjReduction* reduction = man->m_pReduction;
+    grlib::CGLibRenderTarget& target = man->m_planeCountSkip ? reduction->m_mdlTarget : reduction->m_upTarget;
+    grlib::CGLibDecShader* shader = shd->setShader((CloudShaderType)10, 1, 2, 1);
+    unsigned int mdl = shader->getCurrentShader().getUniformBlockOfs("U_MDL");
+    unsigned int col = shader->getCurrentShader().getUniformBlockOfs("U_COL");
+    unsigned int count = shader->getCurrentShader().getUniformBlockOfs("U_COUNT");
+    unsigned int base = shader->getCurrentShader().getTextureLocation("base");
+    unsigned int dwnDep = shader->getCurrentShader().getTextureLocation("dwnDep");
+    unsigned int orgDep = shader->getCurrentShader().getTextureLocation("orgDep");
+    shd->setTexture(base, *target.m_pTexture, (CloudSamplerType)2);
+    shd->setTexture(dwnDep, *calc->m_pDepthTarget1->m_pSubTexture, (CloudSamplerType)1);
+    shd->setTexture(orgDep, *calc->m_pDepthTarget0->m_pSubTexture, (CloudSamplerType)1);
+    m_mdlUniform.setUniformBlock(mdl);
+    reduction->m_counter[3].setUniformBlock(count);
+    for (CloudMdlParts* parts = m_partsList.m_pTop; parts != nullptr; parts = parts->m_pNext) {
+        if (parts->isDisp()) {
+            parts->m_uniform.setUniformBlock(col);
+            parts->bindVertex();
+            parts->render();
+        }
+    }
+    if (calc->m_tiledCache[calc->m_tiledIdx][2].m_isEnable) {
+        grlib::CGLibGPUCache::setTiledCacheAction((GrlTiledCacheAction)3);
+        grlib::CGLibGPUCache::setTiledCacheAction((GrlTiledCacheAction)2);
+    }
+}
+
 void CloudObjMdl::alphaRender() {
     CloudObjMan* man = CloudMan::sys()->m_pObjMan;
     if (man->m_mdlOn && !man->m_mdlHide && m_partsList.m_pTop != nullptr) {
@@ -435,6 +476,64 @@ void CloudObjPlane::updateUniform() {
     m_planeUniform2.updateData();
     m_planeUniform3.createBlurUniform(true);
     m_planeUniform3.updateData();
+}
+
+void CloudObjPlane::renderLastPoli(unsigned int idx) {
+    CloudObjMan* man = CloudMan::sys()->m_pObjMan;
+    CloudCalcParams* calc = man->m_pCalcParams;
+    grlib::CGLibColorCtl::setBlendControl((GrlBlendFunc)2, (GrlBlendFunc)6, (GrlBlendCombine)1, (GrlLogicType)3);
+    grlib::CGLibColorCtl::setColorChannelMask(1, 1, 1, 0);
+    CloudShaderMan* shd = CloudMan::sys()->m_pShaderMan;
+    CloudVertexMan* vtx = CloudMan::sys()->m_pVertexMan;
+    grlib::CGLibPolygon::setCullingOff();
+    if (idx == 0 && man->m_planeCountSkip && m_farDist == 0.0f) {
+        grlib::CGLibDepthCtl::setDepthStencilControl(1, 1, (GrlCompare)3, 1, (GrlCompare)5, 0x20, 0x20, 0x20,
+                                                     (GrlStencil)3, (GrlStencil)1, (GrlStencil)1);
+    } else {
+        grlib::CGLibDepthCtl::setDepthStencilControl(1, 1, (GrlCompare)3, 1, (GrlCompare)5, 0x20, 0x20, 0x20,
+                                                     (GrlStencil)3, (GrlStencil)1, (GrlStencil)1);
+    }
+    if (idx == 1) {
+        calc->m_pTarget->setRenderTarget(*calc->m_pDepth, *calc->m_pDeptTarget, *calc->m_pMrtTarget);
+    } else {
+        calc->m_pTarget->setRenderTarget(*calc->m_pDepth, *calc->m_pDeptTarget);
+    }
+    CloudObjReduction* reduction = CloudMan::sys()->m_pObjMan->m_pReduction;
+    grlib::CGLibDecShader* shader = shd->setShader((CloudShaderType)10, idx == 0 ? 2 : 4, 1, 1);
+    unsigned int mdl = shader->getCurrentShader().getUniformBlockOfs("U_MDL");
+    unsigned int col = shader->getCurrentShader().getUniformBlockOfs("U_COL");
+    unsigned int count = shader->getCurrentShader().getUniformBlockOfs("U_COUNT");
+    unsigned int base = shader->getCurrentShader().getTextureLocation("base");
+    unsigned int dept = shader->getCurrentShader().getTextureLocation("dept");
+    unsigned int zmdl = shader->getCurrentShader().getTextureLocation("zmdl");
+    unsigned int maskTex = shader->getCurrentShader().getTextureLocation("maskTex");
+    shd->setTexture(base, *reduction->m_target0.m_pTexture, (CloudSamplerType)2);
+    shd->setTexture(zmdl, *reduction->m_target1.m_pTexture, (CloudSamplerType)2);
+    shd->setTexture(maskTex, *reduction->m_target3.m_pTexture, (CloudSamplerType)2);
+    shd->setTexture(dept, *calc->m_pDeptTarget->m_pTexture, (CloudSamplerType)1);
+    m_planeUniform0[idx].setUniformBlock(mdl);
+    m_planeUniform1[idx].setUniformBlock(col);
+    if (idx == 0) {
+        if (man->m_planeCountSkip) {
+            man->m_pReduction->m_counter[0].setUniformBlock(count);
+            vtx->bindVertexList((CloudVertexType)3);
+            vtx->renderIndexList((CloudVertexType)3);
+        } else {
+            man->m_pReduction->m_counter[1].setUniformBlock(count);
+            vtx->bindVertexList((CloudVertexType)1);
+            vtx->renderIndexList((CloudVertexType)1);
+        }
+    } else if (m_plane1CountSkip) {
+        man->m_pReduction->m_counter[0].setUniformBlock(count);
+        vtx->bindVertexList((CloudVertexType)3);
+        vtx->renderIndexList((CloudVertexType)3);
+    } else {
+        man->m_pReduction->m_counter[2].setUniformBlock(count);
+        vtx->bindVertexList((CloudVertexType)1);
+        vtx->renderIndexList((CloudVertexType)1);
+    }
+    grlib::CGLibColorCtl::setColorChannelMask(1, 1, 1, 1);
+    grlib::CGLibCtlShader::setMemoryBarrierBit(4);
 }
 
 void CloudObjPlane::renderPlaneDef() {
