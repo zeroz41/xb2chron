@@ -20,6 +20,9 @@
 #include "classes/gf/GfComModel.h"
 #include "classes/gf/GfComTransform.h"
 #include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfInitParamBlade.h"
+#include "classes/gf/GfInitParamDriver.h"
+#include "classes/gf/GfInitParamEnemy.h"
 #include "classes/gf/GfInitParamUiObj.h"
 #include "classes/gf/GfMenuModelViewCamera.h"
 #include "classes/gf/GimmickCamera.h"
@@ -56,6 +59,148 @@ void GfMenuModelView::setVanishRatio(GF_OBJ_HANDLE* handle, float ratio) {
             fade.setRatio(ratio, -1);
         }
     }
+}
+
+void GfMenuModelView::addDriverObject(unsigned int id, const fw::Transform& transform) {
+    if (m_objs.size() == 16) {
+        return;
+    }
+    unsigned int view = m_renderIndex + 1;
+    GfInitParamDriver param;
+    param.m_createType = 6;
+    param.m_objId = id;
+    param.pad_24 = view;
+    param.pad_40 = 10;
+    param.pad_81 = false;
+    param.pad_82 = 0;
+    param.m_initialPos = transform.position;
+    const mm::Quat& q = transform.rotation;
+    float x2 = q.x + q.x;
+    float y2 = q.y + q.y;
+    float z2 = q.z + q.z;
+    float s = -(q.x * z2 - y2 * q.w);
+    if (s >= 1.0f) {
+        s = 1.0f;
+    } else if (s <= -1.0f) {
+        s = -1.0f;
+    }
+    param.pad_70.y = mm::asin(s);
+    float xx = q.x * x2;
+    float xy = q.x * y2;
+    float zz = q.z * z2;
+    float wz = q.w * z2;
+    float yz = q.y * z2;
+    float wx = q.w * x2;
+    float yy = q.y * y2;
+    if (param.pad_70.y < 1.57079637f) {
+        if (param.pad_70.y > -1.57079637f) {
+            param.pad_70.x = ::atan2f(wx + yz, 1.0f - (xx + yy));
+            param.pad_70.z = ::atan2f(xy + wz, 1.0f - (zz + yy));
+        } else {
+            param.pad_70.x = -::atan2f(xy - wz, 1.0f - (xx + zz));
+            param.pad_70.z = 0.0f;
+        }
+    } else {
+        param.pad_70.x = ::atan2f(xy - wz, 1.0f - (xx + zz));
+        param.pad_70.z = 0.0f;
+    }
+    param.m_hasTransform = true;
+    GF_OBJ_HANDLE* handle = GfObjFactory::createDriver(param);
+    ObjEntry entry;
+    entry.m_handle = handle;
+    m_objs.push_back(entry);
+}
+
+void GfMenuModelView::addBladeObject(unsigned int id, const fw::Transform& transform) {
+    if (m_objs.size() == 16) {
+        return;
+    }
+    VIEWCAM view = static_cast<VIEWCAM>(m_renderIndex + 1);
+    GfInitParamBlade param;
+    param.setupForUi(id, view);
+    param.m_initialPos = transform.position;
+    const mm::Quat& q = transform.rotation;
+    float x2 = q.x + q.x;
+    float y2 = q.y + q.y;
+    float z2 = q.z + q.z;
+    float s = -(q.x * z2 - y2 * q.w);
+    if (s >= 1.0f) {
+        s = 1.0f;
+    } else if (s <= -1.0f) {
+        s = -1.0f;
+    }
+    param.pad_70.y = mm::asin(s);
+    float xx = q.x * x2;
+    float xy = q.x * y2;
+    float zz = q.z * z2;
+    float wz = q.w * z2;
+    float yz = q.y * z2;
+    float wx = q.w * x2;
+    float yy = q.y * y2;
+    if (param.pad_70.y < 1.57079637f) {
+        if (param.pad_70.y > -1.57079637f) {
+            param.pad_70.x = ::atan2f(wx + yz, 1.0f - (xx + yy));
+            param.pad_70.z = ::atan2f(xy + wz, 1.0f - (zz + yy));
+        } else {
+            param.pad_70.x = -::atan2f(xy - wz, 1.0f - (xx + zz));
+            param.pad_70.z = 0.0f;
+        }
+    } else {
+        param.pad_70.x = ::atan2f(xy - wz, 1.0f - (xx + zz));
+        param.pad_70.z = 0.0f;
+    }
+    param.m_hasTransform = true;
+    param.pad_81 = true;
+    GF_OBJ_HANDLE* handle = GfObjFactory::createBlade(param);
+    ObjEntry entry;
+    entry.m_handle = handle;
+    m_objs.push_back(entry);
+}
+
+void GfMenuModelView::addEnemyObject(unsigned int id, const fw::Transform& transform) {
+    if (m_objs.size() == 16) {
+        return;
+    }
+    VIEWCAM view = static_cast<VIEWCAM>(m_renderIndex + 1);
+    GfInitParamEnemy param;
+    param.setupForUi(id, view);
+    param.m_initialPos = transform.position;
+    const mm::Quat& q = transform.rotation;
+    float x2 = q.x + q.x;
+    float y2 = q.y + q.y;
+    float z2 = q.z + q.z;
+    float s = -(q.x * z2 - y2 * q.w);
+    if (s >= 1.0f) {
+        s = 1.0f;
+    } else if (s <= -1.0f) {
+        s = -1.0f;
+    }
+    param.pad_70.y = mm::asin(s);
+    float xx = q.x * x2;
+    float xy = q.x * y2;
+    float zz = q.z * z2;
+    float wz = q.w * z2;
+    float yz = q.y * z2;
+    float wx = q.w * x2;
+    float yy = q.y * y2;
+    if (param.pad_70.y < 1.57079637f) {
+        if (param.pad_70.y > -1.57079637f) {
+            param.pad_70.x = ::atan2f(wx + yz, 1.0f - (xx + yy));
+            param.pad_70.z = ::atan2f(xy + wz, 1.0f - (zz + yy));
+        } else {
+            param.pad_70.x = -::atan2f(xy - wz, 1.0f - (xx + zz));
+            param.pad_70.z = 0.0f;
+        }
+    } else {
+        param.pad_70.x = ::atan2f(xy - wz, 1.0f - (xx + zz));
+        param.pad_70.z = 0.0f;
+    }
+    param.m_hasTransform = true;
+    param.pad_81 = false;
+    GF_OBJ_HANDLE* handle = GfObjFactory::createEnemy(param);
+    ObjEntry entry;
+    entry.m_handle = handle;
+    m_objs.push_back(entry);
 }
 
 void GfMenuModelView::addMapObjObject(unsigned int index) {
@@ -360,6 +505,17 @@ bool GfMenuModelView::isLoading() const {
         }
     }
     return false;
+}
+
+void GfMenuModelView::delGfObj(unsigned int type, unsigned int bdatId) {
+    for (ObjEntry* it = m_objs.begin(); it != m_objs.end(); ++it) {
+        GfObjAcc acc(it->m_handle);
+        if (acc.getType() == type && acc.getBdatId() == bdatId) {
+            GfObjFactory::destroyObj(it->m_handle);
+            m_objs.erase(it);
+            return;
+        }
+    }
 }
 
 GF_OBJ_HANDLE* GfMenuModelView::findGfObj(unsigned int type, unsigned int bdatId) {

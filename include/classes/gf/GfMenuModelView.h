@@ -54,6 +54,12 @@ public:
     public:
         GF_OBJ_HANDLE* m_handle;
         ui::UICtrlSimple<9> m_ctrl;
+
+        ObjEntry() = default;
+        // user-provided (defaulted after the class): delGfObj's erase moves the later entries down one at a time
+        // (a trivially copied type would be shifted as one block), and push_back copies member by member
+        ObjEntry(const ObjEntry& other);
+        ObjEntry& operator=(const ObjEntry& other) = default;
     };
     // an effect playEffect started (its handle) on an object
     class EffectEntry {
@@ -127,6 +133,8 @@ public:
     unsigned char pad_aa9[0x7];
     mm::mtl::IntrusivePtr<fw::Camera> m_motionCamera;
 };
+
+inline GfMenuModelView::ObjEntry::ObjEntry(const ObjEntry& other) = default;
 }  // namespace gf
 
 #endif
