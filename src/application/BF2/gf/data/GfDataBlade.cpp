@@ -3061,6 +3061,16 @@ bool GfDataDriver::getName(unsigned char*& bdat, unsigned int& id, unsigned int 
     return id != 0;
 }
 
+unsigned int GfDataDriver::getDriverRelativeID(unsigned int driver) {
+    if (driver >= 0x11 && driver <= 0x19) {
+        return driver - 0x11;
+    }
+    if (driver >= 1 && driver <= 0x10) {
+        return driver - 1;
+    }
+    return 1;
+}
+
 bool GfDataDriverArts::getEnableArts(mm::mtl::FixedArray<unsigned int, 4>& list, unsigned int driver,
                                      unsigned int wpnType, PTPOS mode) {
     list.assign(0);
@@ -6449,6 +6459,24 @@ unsigned int GfDataDriver::getBlade(const SDataDriver& data, int slot) {
 
 unsigned int GfDataParty::getFixedHandleForBlade(unsigned int driver, int index) {
     return driver * 5 + 3 + index;
+}
+
+unsigned int GfDataParty::getFixedHandleForWeapon(unsigned int handle, int slot, unsigned int index, unsigned int driver) {
+    if (driver >= 0x11 && driver <= 0x19) {
+        do {
+            unsigned int type = fn_710024BCEC(driver);
+            if (type == 1) {
+                driver = GfDataDriver::getIraFront(driver);
+                slot = 1;
+            } else if (type == 2) {
+                driver = GfDataDriver::getIraFront(driver);
+                slot = 2;
+            } else {
+                break;
+            }
+        } while (driver - 0x11 < 9);
+    }
+    return handle * 40 + index + slot * 8 + 18;
 }
 
 bool GfDataParty::isNiaByakko(unsigned int id) {
