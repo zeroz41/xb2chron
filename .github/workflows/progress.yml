@@ -12,7 +12,8 @@
 #          baseline (ci.yml) does not build it again.
 # A manual run skips straight to the build.
 #
-# Publishing needs Settings → Pages → Source set to "GitHub Actions".
+# Publishing needs Settings → Pages → Source set to "GitHub Actions". Making the repository private turns Pages off,
+# and making it public again does not turn it back on: set the Source again, then re-run the failed deploy job.
 
 name: Progress
 

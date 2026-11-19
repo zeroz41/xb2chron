@@ -124,8 +124,7 @@ proposed name, with a comment giving its `lbl_<address>`. A rename changes every
   is welcome too when all of it is solid, such as many related functions across several units: say in the
   description what it covers.
 - Title it with the result: `Match GfMenuObjOCG`, `Link ui_input_pad.cpp`, `Name the quest task functions`.
-- Give the evidence for any unit boundary or name. The [pull request template](.github/pull_request_template.md)
-  has a place for it.
+- Give the evidence for any unit boundary or name in the description.
 - Base it on the current `master`, and run the checks again after rebasing.
 - Commit messages are one short line in plain words, under your own name. Pull requests are squash-merged.
 
