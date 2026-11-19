@@ -112,7 +112,9 @@ The game was built with clang 3.9.1, the compiler of NintendoSDK 3.5.0, with:
     -fno-strict-aliasing -fno-slp-vectorize -mno-implicit-float -ffunction-sections -fdata-sections
     -fasynchronous-unwind-tables -std=gnu++14 -nostdlibinc -g
 
-`xc2.project.json` holds them, and the build uses them for every file. What they mean for the code you write:
+`xc2.project.json` holds them, and the build uses them for every file. The one exception is the compiler for
+`src/ssd/` (all of it but `Delegate/MultiCast.cpp`): clang 4.0.1, with the same flags. What they mean for the code
+you write:
 
 - **`-g` changes the code.** In clang 3.9.1, debug information affects optimisation: every named local adds a
   debug value that the optimiser works around. When a near miss differs only in the order of floating-point
