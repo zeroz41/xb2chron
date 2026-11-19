@@ -217,7 +217,8 @@ public:
     static bool isDisableUnieqIdle();
     // 2.0.0's symbols name it. What it does: tail-calls gf::GfGameUtilDiff::getBtlDifParam(value) (GfWeapon's unit: the option data's
     // SSoundUiOption at +0x4C gets value through GfDataBtlDif::getBtlDifParam).
-    static void getBtlDifParam(unsigned int value);
+    // returns its value (btl::BattleGlobal::SetupDifficultyData reads w0 after the call)
+    static unsigned int getBtlDifParam(unsigned int value);
     // 2.0.0's symbols name it. What it does: the int at 0x100 of PtrSingleton<GfGameArena>'s instance (its record's
     // m_value28), 0 when there is none.
     static unsigned int getBattleArenaScore();

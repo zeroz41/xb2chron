@@ -1104,8 +1104,8 @@ void GfGameManager::setupGame(GAME_TYPE type) {
     GfGameFlag::setLocal(1, 0xD861, GfDataManager::getDataGame()->m_gameClearCount != 0);
 }
 
-void GfGameManager::getBtlDifParam(unsigned int value) {
-    GfGameUtilDiff::getBtlDifParam(value);
+unsigned int GfGameManager::getBtlDifParam(unsigned int value) {
+    return GfGameUtilDiff::getBtlDifParam(value);
 }
 
 unsigned int GfGameManager::getBtlDifficult() {

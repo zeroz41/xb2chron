@@ -3581,8 +3581,8 @@ void* GfGameUtilDiff::getUseSoundUiOption() {
     return &getActiveOptionData()->m_soundUi;
 }
 
-void GfGameUtilDiff::getBtlDifParam(unsigned int value) {
-    GfDataBtlDif::getBtlDifParam(getActiveOptionData()->m_soundUi, value);
+unsigned int GfGameUtilDiff::getBtlDifParam(unsigned int value) {
+    return GfDataBtlDif::getBtlDifParam(getActiveOptionData()->m_soundUi, value);
 }
 
 void GfGameUtilDiff::setOptionGameDifficult(GFDIFF type) {
