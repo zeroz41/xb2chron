@@ -37,10 +37,18 @@ public:
     // what createWorkBuffer allocates and createChar returns (0x70 bytes, then its buffers; the names are not the
     // original's)
     struct Work {
-        unsigned char pad_0[0x38];
+        unsigned char pad_0[0x8];
+        const LayerFontResObj* m_font;  // 0x8: LayerObjTopFont::finalRender draws the characters with its texture
+        unsigned char pad_10[0x1C];
+        // 0x2C, 0x30: the icon instances (after the characters') LayerObjTopFont::finalRender draws with the icon
+        // texture: the first's offset in the instance buffer and their count
+        unsigned int m_iconOffset;
+        unsigned int m_iconNum;
+        unsigned char pad_34[0x4];
         // 0x38: a LayerObjSortFont constructed in its buffers; LayerObjTopFont::setDrawList sorts it
         LayerObjSortFont* m_sortObj;
-        unsigned char pad_40[0x8];
+        unsigned int m_charNum;  // 0x40: the character instances LayerObjTopFont::finalRender draws
+        unsigned char pad_44[0x4];
         Line* m_lines;  // 0x48: one per line
         unsigned char pad_50[0x10];
         // 0x60, 0x68: constructed in place in its buffers; LayerObjFont destroys them before it frees the work
