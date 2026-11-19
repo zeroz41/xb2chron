@@ -1,3 +1,4 @@
+#define MM_LIB_FROM_XBRD
 #include "classes/ml/DrResMdoInstPartsAnm.h"
 #include "classes/ml/DrResMdoInstPartsGlbID.h"
 #include "classes/ml/DrResMdoSeamColi.h"
@@ -4859,6 +4860,38 @@ DrResFilterData::~DrResFilterData() {
     }
 }
 
+void DrResFilterData::setFilterData(const void* data) {
+    if (m_texNum != 0) {
+        for (int i = 0; i < m_texNum; i++) {
+            m_texture[i].~CGLibTextureBuffer();
+        }
+        if (m_texture != nullptr) {
+            mtl::MemManager::deallocate(m_texture, 0, false);
+            m_texture = nullptr;
+        }
+        m_texNum = 0;
+    }
+    const Data* head = static_cast<const Data*>(data);
+    unsigned int size = head->m_texNum * sizeof(grlib::CGLibTextureBuffer);
+    m_texture = static_cast<grlib::CGLibTextureBuffer*>(
+        mtl::MemManager::allocate(m_drMan->m_allocHandle, size, 0x10, false, "no name", 0));
+    m_texNum = head->m_texNum;
+    const Entry* entry = reinterpret_cast<const Entry*>(static_cast<const unsigned char*>(data) + head->m_texOfs);
+    m_entries = entry;
+    for (int i = 0; i < head->m_texNum; i++) {
+        new (&m_texture[i]) grlib::CGLibTextureBuffer();
+        grlib::CGLibTexture::createTextureImagePtrs(m_texture[i], static_cast<const unsigned char*>(data) + entry->m_imageOfs,
+                                                    entry->m_imageSize, false, nullptr, true);
+        entry++;
+    }
+    for (int i = 0; i < 4; i++) {
+        m_filter[i] = Filter();
+        for (int j = 0; j < 4; j++) {
+            m_filter[i].m_tex[j] = m_texture;
+        }
+    }
+}
+
 grlib::CGLibTextureBuffer* DrResFilterData::findFilterTexture(unsigned int id) const {
     for (int i = 0; i < m_texNum; i++) {
         if (m_entries[i].m_id == id) {
@@ -5337,6 +5370,55 @@ void DrResMdoSeamWrkEnv::setDispState() { m_flags |= 1 << DrMan::s_nDblNowIdx; }
 
 
 
+void DrResMdoInstMdlInfo::update(DrResMdlInstMdlArg& arg) {
+    if ((m_deleteFlags & ((2 << DrMan::s_nDblIdx) | 1)) != 0) {
+        m_deleteFlags |= 1;
+        return;
+    }
+    const Data* data = reinterpret_cast<const Data*>(m_data);
+    arg.m_name = &m_name;
+    arg.m_data = m_data;
+    arg.m_group = reinterpret_cast<const DrResMdoInstMdlGroup*>(m_data + data->m_groupOfs);
+    for (int i = 0; i < data->m_groupNum; i++) {
+        arg.m_groupData4 = m_data + arg.m_group->m_ofs4;
+        arg.m_groupData0 = m_data + arg.m_group->m_ofs0;
+        arg.m_pos = reinterpret_cast<const mm::Vec3NA*>(m_data + data->m_posOfs) + arg.m_group->m_top;
+        arg.m_mtx = reinterpret_cast<const mm::Mat44*>(m_data + data->m_mtxOfs) + arg.m_group->m_top;
+        for (int j = 0; j < arg.m_group->m_num; j++) {
+            m_list[j + arg.m_group->m_top].update(arg);
+            arg.m_mtx++;
+            arg.m_pos++;
+        }
+        arg.m_group++;
+    }
+}
+
+unsigned int DrResMdoInstMdlInfo::setup(unsigned char* work, const unsigned char* data, const char* name) {
+    m_data = data;
+    m_num = reinterpret_cast<const Data*>(data)->m_num;
+    m_name = name;
+    int pos = m_name.findLast('/');
+    if (pos == -1) {
+        pos = m_name.findLast('\\');
+        if (pos != -1 && m_name.m_nLen > pos) {
+            m_name.m_str[pos] = '\0';
+            m_name.m_nLen = pos;
+        }
+    } else if (m_name.m_nLen > pos) {
+        m_name.m_str[pos] = '\0';
+        m_name.m_nLen = pos;
+    }
+    m_name += "/";
+    m_list = reinterpret_cast<DrResMdoInstMdlObj*>(work);
+    unsigned int size = m_num * sizeof(DrResMdoInstMdlObj);
+    for (int i = 0; i < m_num; i++) {
+        DrResMdoInstMdlObj& obj = m_list[i];
+        obj.m_mdl = nullptr;
+        obj.pad_8 = 0;
+    }
+    return size + sizeof(DrResMdoInstMdlInfo);
+}
+
 unsigned int DrResMdoInstMdlInfo::calcWorkSize(const unsigned char* data) {
     return reinterpret_cast<const Data*>(data)->m_num * 0x10 + sizeof(DrResMdoInstMdlInfo);
 }
@@ -5345,8 +5427,7 @@ unsigned int DrResMdoInstMdlInfo::create(unsigned char* work, DrResMdoInstMdlInf
                                          const char* name) {
     DrResMdoInstMdlInfo* info = reinterpret_cast<DrResMdoInstMdlInfo*>(work);
     out = info;
-    info->m_name[0] = '\0';
-    info->pad_110 = 0;
+    info->m_name.clear();
     info->m_deleteFlags = 0;
     info->m_num = 0;
     info->m_list = nullptr;
@@ -5367,7 +5448,7 @@ void DrResMdoInstMdlInfo::releaseCall() {
 void DrResMdoInstMdlInfo::release(DrResMdoInstMdlInfo*& info) {
     DrResMdoInstMdlInfo* obj = info;
     for (int i = 0; i < obj->m_num; i++) {
-        Entry& entry = obj->m_list[i];
+        DrResMdoInstMdlObj& entry = obj->m_list[i];
         if (entry.m_mdl != nullptr) {
             entry.m_mdl->setDeleteCall(DrMan::s_nDblStockIdx);
             entry.m_mdl = nullptr;
