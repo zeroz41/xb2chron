@@ -27,7 +27,10 @@ public:
         // 0x150 the near plane's extents updateFovNearFar works out: -near * tan(fov / 2), its negation, and both
         // times the aspect ratio (the name is not the original's)
         float m_nearExtent[4];
-        unsigned char pad_160[0x40];  // setLookAt builds a matrix here
+        // 0x160 the projection updateViewMatrix builds from the near extents, near and far; ScnCamUtil projects
+        // view positions with it (getScreenPos) and passes it to CamUtil's device conversions (the name is not
+        // the original's)
+        mm::Mat44 m_frustum;
         mm::Mat44 m_proj;  // 0x1A0 the constructor's DevGraph::getPers (the name is not the original's)
         // 0x1E0 the root's width and height from the constructor; ScnCamMan::update compares it with the view's
         // client size through Pnt's != (one 32-bit load per half) (the name is not the original's)

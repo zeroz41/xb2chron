@@ -66,6 +66,8 @@
 #include "ml/MlMem.h"
 #include "ml/PathUtil.h"
 #include "classes/ml/IScnRender.h"
+#include "ml/CamUtil.h"
+#include "classes/mm/Sphere.h"
 
 namespace ml {
 
@@ -757,6 +759,39 @@ void Scn::renderStop() {
 
 bool ScnCamUtil::getScreenPos(mm::Vec3& out, const ScnObjCam* cam, const mm::Vec3& pos) {
     return getScreenPos(out, cam, false, pos);
+}
+
+// the result is false when pos is behind the near plane; out stays unwritten when it is on the camera's plane
+bool ScnCamUtil::getScreenPos(mm::Vec3& out, const ScnObjCam* cam, bool cpu, const mm::Vec3& pos) {
+    bool result = false;
+    if (cam == nullptr) {
+        return false;
+    }
+    ScnObjCam::RENDER_INFO* const& info = cpu ? cam->m_info.m_cpu : cam->m_info.m_render;
+    const mm::Mat44& view = info->m_transform.pad_B0;
+    mm::Vec3 p = pos;
+    float z = p.x * view.m[0][2] + p.y * view.m[1][2] + p.z * view.m[2][2] + view.m[3][2];
+    if (::fabsf(z) < 1e-6f) {
+        return false;
+    }
+    float y = p.x * view.m[0][1] + p.y * view.m[1][1] + p.z * view.m[2][1] + view.m[3][1];
+    float x = p.x * view.m[0][0] + p.y * view.m[1][0] + p.z * view.m[2][0] + view.m[3][0];
+    if (z >= -info->m_near) {
+        result = false;
+    } else {
+        result = true;
+    }
+    const mm::Mat44& proj = info->m_frustum;
+    float px = proj.m[0][0] * x + y * proj.m[1][0] + z * proj.m[2][0] + proj.m[3][0];
+    float py = x * proj.m[0][1] + y * proj.m[1][1] + z * proj.m[2][1] + proj.m[3][1];
+    float pz = x * proj.m[0][2] + y * proj.m[1][2] + z * proj.m[2][2] + proj.m[3][2];
+    float pw = x * proj.m[0][3] + y * proj.m[1][3] + z * proj.m[2][3] + proj.m[3][3];
+    out.x = px / pw / info->m_aspect;
+    out.y = py / pw * info->m_aspect;
+    out.z = pz / pw;
+    out.x = (1.0f - out.x) * (static_cast<float>(info->m_size.x) * 0.5f);
+    out.y = (out.y + 1.0f) * (static_cast<float>(info->m_size.y) * 0.5f);
+    return result;
 }
 
 // whether the screen line from start to end touches the rectangle: an end inside it, else a crossing with its top,
