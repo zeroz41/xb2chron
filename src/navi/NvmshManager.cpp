@@ -9,6 +9,19 @@
 
 namespace navi {
 
+NvmshManager::NvmshManager(ml::Scn* scn, mtl::ALLOC_HANDLE handle)
+    : m_scn(scn), m_pResMan(nullptr), m_hAlloc(), m_posBank(0), m_flags(0), m_worldId(0) {
+    m_hAlloc = mtl::MemManager::create(handle, 0xC20000, "NAVI WORK", false, "no name", 0);
+    m_pResMan = new (m_hAlloc, nullptr, 0, 4, false) NvmshResMan(m_hAlloc, 0x900000, 0x300000);
+    m_pAcMan = new (m_hAlloc, nullptr, 0, 4, false) NvmshAcMan(this, m_pResMan, m_hAlloc);
+    m_jobGroup = ml::WorkCpu::createGroupHandle(1);
+    ml::WorkCpu::entryJobThread(m_jobGroup, jobUpdate, 4, this, nullptr, ml::WorkCpu::getSubWorkCPUID(), true, false);
+    ml::WorkCpu::entryAutoExecGrp(m_jobGroup, ml::WorkCpu::getSubWorkCPUID(), 4);
+    m_pos[0] = mm::Vec3(0.0f, 0.0f, 0.0f);
+    m_pos[1] = mm::Vec3(0.0f, 0.0f, 0.0f);
+    m_target = mm::Vec3(0.0f, 0.0f, 0.0f);
+}
+
 unsigned int NvmshManager::jobUpdate(void* man, void*) {
     NvmshManager* manager = static_cast<NvmshManager*>(man);
     manager->m_flags |= 0x20000;

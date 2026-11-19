@@ -28,7 +28,9 @@ public:
     // fw::NaviManager::update's store, inline (the name is not the original's)
     void setPos(const mm::Vec3& pos) { m_pos[m_posBank] = pos; }
 
-    unsigned char pad_10[0x10];
+    // the constructor's scene (the name is not the original's)
+    ml::Scn* m_scn;  // 0x10
+    unsigned char pad_18[8];
     // two positions, m_posBank's the one written (fw::NaviManager::update gives it the camera's); tail hands the
     // other to NvmshResMan::updateMemMove and flips m_posBank (the names are not the original's)
     mm::Vec3 m_pos[2];
