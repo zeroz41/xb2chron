@@ -18,6 +18,7 @@
 #include "gf/GfDataMap.h"
 #include "gf/SDataGame.h"
 #include "classes/gf/GfMapManager.h"
+#include "classes/gf/GfFieldTime.h"
 #include <string.h>
 
 namespace gf {
@@ -45,6 +46,53 @@ void destroyFadeWeather() {
         }
         s_list.pop_front();
     }
+}
+
+// the time bonus of a weather for its time-of-day bits: 10 when the time of day is in one of them, 30 more in 0x8000
+float getTimeBonus(unsigned int bits) {
+    float bonus = 0.0f;
+    GfFieldTime* time = GfFieldTime::get();
+    if (time == nullptr) {
+        return bonus;
+    }
+    bool inRange = false;
+    switch (bits) {
+    case 0x40:
+        inRange = (time->getTimeRangeBits() & 0x40) != 0;
+        break;
+    case 0x80:
+        inRange = (time->getTimeRangeBits() & 0x80) != 0;
+        break;
+    case 0x100:
+        break;
+    default:
+        if ((bits & 0x1) && (time->getTimeRangeBits() & 0x1)) {
+            bonus = 10.0f;
+        }
+        if ((bits & 0x2) && (time->getTimeRangeBits() & 0x2)) {
+            bonus = 10.0f;
+        }
+        if ((bits & 0x4) && (time->getTimeRangeBits() & 0x4)) {
+            bonus = 10.0f;
+        }
+        if ((bits & 0x8) && (time->getTimeRangeBits() & 0x8)) {
+            bonus = 10.0f;
+        }
+        if ((bits & 0x10) && (time->getTimeRangeBits() & 0x10)) {
+            bonus = 10.0f;
+        }
+        if ((bits & 0x20) && (time->getTimeRangeBits() & 0x20)) {
+            bonus = 10.0f;
+        }
+        if ((bits & 0x8000) && (time->getTimeRangeBits() & 0x8000)) {
+            bonus += 30.0f;
+        }
+        return bonus;
+    }
+    if (inRange) {
+        bonus = 10.0f;
+    }
+    return bonus;
 }
 
 // the cloud sea for updateCloudSea to set, when the weather is built (the name is not the original's)
