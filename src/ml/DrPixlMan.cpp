@@ -301,6 +301,39 @@ DrPixlMan* DrPixlMan::get() { return s_pInstance; }
 
 DrPixlMan::~DrPixlMan() { releaseColorBuffer(); }
 
+void DrPixlMan::resetColorBuff(bool capture) {
+    // calcColorBuffer does not read its last two arguments: every caller leaves them unset
+    float unusedW;
+    float unusedH;
+    calcColorBuffer(m_objTbl, m_drMan->m_curViewInfo->m_width, m_drMan->m_curViewInfo->m_height, unusedW, unusedH);
+    m_objTbl->m_postMan->resetColorBuff();
+    m_objTbl->m_deferred->resetColorBuff();
+    if (m_drMan->m_postParm[m_drMan->m_postParmIdx]->m_iblColorMode == 2) {
+        return;
+    }
+    if (m_objTbl->m_flags & 4) {
+        if (capture) {
+            m_objTbl->m_flags |= 0x10;
+            if (m_objTbl->m_capture == nullptr) {
+                m_objTbl->m_capture = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+            }
+        } else {
+            m_objTbl->m_flags &= ~0x10;
+            if (m_objTbl->m_capture != nullptr) {
+                delete m_objTbl->m_capture;
+                m_objTbl->m_capture = nullptr;
+            }
+        }
+    }
+    m_objTbl->m_flags |= 0x20;
+    if ((m_objTbl->m_flags & 4) && m_objTbl->m_capture != nullptr) {
+        m_objTbl->m_capture->setTextureInfo(m_drMan->m_curViewInfo->m_renderWidth,
+                                            m_drMan->m_curViewInfo->m_renderHeight,
+                                            static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_RGBA_8), true,
+                                            DrPixlMemMan::get()->m_captureOfs);
+    }
+}
+
 void DrPixlMan::setMainViewPort() {
     float width = m_drMan->m_curViewInfo->m_width;
     float height = m_drMan->m_curViewInfo->m_height;
@@ -1453,6 +1486,8 @@ void DrPixlPostObj::calc1PixlOfs(float& width, float& height) {
 
 DrPixlTileParm::~DrPixlTileParm() {}
 
+GrlDepthFormat DrPixlFormat::s_ShadowFormat = static_cast<GrlDepthFormat>(0x32);
+
 float DrPixlPostObjBloom::BLOOMTEX_SCALE = 0.25f;
 
 void DrPixlPostObjBloom::resetColorBuff(bool all) {
@@ -1505,6 +1540,46 @@ void DrPixlPostObjBloom::releaseColorBuff(bool all) {
     }
     m_bloomBuff[2]->releaseTexture();
     m_bloomBuff[3]->releaseTexture();
+}
+
+void DrPixlPostObjHistgram::render() {
+    DrAPCache* cache = m_drMan->m_apCache;
+    grlib::CGLibColorCtl::setColorBufferOff();
+    DrFogMan* fog = m_drMan->m_fogMan;
+    bool fogDepth = fog->isFogOn() ? fog->m_enable : false;
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getPostShdObj(0x27);
+    unsigned int depthCheck = fogDepth ? 2 : 1;
+    obj->setDeclarationIdx(obj->getDeclarationOfs("DEPTH_CHECK"), depthCheck);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    list->bindQuadsTex();
+    obj->setupShader(0u);
+    unsigned int paramOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gParam");
+    mm::Vec4 param = mm::Vec4::zero;
+    float lumMin = m_counter == 0 ? 0.0f : m_lumTbl[m_counter - 1];
+    float lumMax = m_lumTbl[m_counter];
+    param.x = lumMin;
+    param.y = lumMax;
+    param.z = m_drMan->m_lightMan->getSkyLuminance();
+    uniform.setF32SetVec4(paramOfs, &param.x);
+    unsigned int location = obj->getCurrentShader().getTextureLocation("s0");
+    DrPixlRenderTarget* target = m_pixlMan->m_objTbl->m_postMan->m_toneMap->m_sclDown[0];
+    cache->beginTexSampling(2, 1);
+    cache->setTexture(*target->m_pTexture, location);
+    if (!fogDepth) {
+        unsigned int depthLocation = obj->getCurrentShader().getTextureLocation("depth");
+        grlib::CGLibRenderTarget* depth = m_pixlMan->m_objTbl->m_postMan->getDownDepth();
+        cache->beginTexSampling(2, 0);
+        cache->setTexture(*depth->m_pTexture, depthLocation);
+    }
+    target->setRenderTarget();
+    uniform.updateData();
+    uniform.setUniformBlock();
+    m_query->begin(m_pixlMan->m_occQuery);
+    list->renderQuads();
+    m_query->end();
+    grlib::CGLibColorCtl::setColorBufferOn();
 }
 
 void DrPixlPostObjMotionBlur::render() {
@@ -2327,6 +2402,20 @@ void DrPixlShadowCacheMan::delShadowCacheUpdate() {
 
 void DrPixlShadowCacheMan::callSelectShadowCacheUpdate(unsigned long mask) { m_selectUpdate &= ~mask; }
 
+DrPixlShadowCacheMan::~DrPixlShadowCacheMan() {
+    m_uniforms.release();
+    if (m_flags & 2) {
+        for (int i = 0; i < 4; i++) {
+            m_workTbl[i].m_dirDepth.release();
+        }
+    }
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < m_cacheNum; j++) {
+            m_workTbl[i].m_cacheObj[j].m_depth.release();
+        }
+    }
+}
+
 DrPixlShadowCacheMan::SHCACHE_WORK_TBL::~SHCACHE_WORK_TBL() {}
 
 
@@ -2354,6 +2443,127 @@ void DrPixlShadowMan::releaseTexWork() {
             m_texWork[i].release();
         }
     }
+}
+
+DrPixlShadowObj* DrPixlShadowMan::createDirCacheShadow(DrLightObj* light, int sizeType) {
+    float size;
+    switch (sizeType) {
+    case 1:
+        size = 128.0f;
+        break;
+    case 2:
+        size = 256.0f;
+        break;
+    case 3:
+        size = 512.0f;
+        break;
+    case 4:
+        size = 1024.0f;
+        break;
+    case 5:
+        size = 1536.0f;
+        break;
+    case 6:
+        size = 2048.0f;
+        break;
+    default:
+        size = 64.0f;
+        break;
+    }
+    TexWork* work = nullptr;
+    for (int i = 0; i < 16; i++) {
+        if (m_texWork[i].m_useCount == 0) {
+            if (work == nullptr) {
+                work = &m_texWork[i];
+            }
+        } else if (m_texWork[i].m_type == 1 && m_texWork[i].m_size == size) {
+            m_texWork[i].m_useCount++;
+            work = &m_texWork[i];
+            goto found;
+        }
+    }
+    if (work == nullptr) {
+        return nullptr;
+    }
+    DrMan::getIns();
+    work->setTextureInfo(size, size, DrPixlFormat::s_ShadowFormat, false, 0);
+    work->m_size = size;
+    work->m_index = sizeType;
+    work->m_type = 1;
+    work->m_useCount = 1;
+found:
+    DrPixlShadowObjDir* obj = new (m_drMan->m_resHandle, nullptr, 0, 4, false) DrPixlShadowObjDir(m_drMan);
+    obj->m_depthTarget = work;
+    obj->pad_4A = 0;
+    obj->m_lightObj = light;
+    obj->m_uniform.release();
+    if (obj->m_active == 1) {
+        obj->m_uniform.setup(0x50);
+    } else {
+        obj->m_uniform.setup(0x40);
+    }
+    m_objs[m_objNum++] = obj;
+    return obj;
+}
+
+DrPixlShadowObj* DrPixlShadowMan::createSptShadow(DrLightObj* light, int sizeType) {
+    float size;
+    switch (sizeType) {
+    case 1:
+        size = 128.0f;
+        break;
+    case 2:
+        size = 256.0f;
+        break;
+    case 3:
+        size = 512.0f;
+        break;
+    case 4:
+        size = 1024.0f;
+        break;
+    case 5:
+        size = 1536.0f;
+        break;
+    case 6:
+        size = 2048.0f;
+        break;
+    default:
+        size = 64.0f;
+        break;
+    }
+    TexWork* work = nullptr;
+    for (int i = 0; i < 16; i++) {
+        if (m_texWork[i].m_useCount == 0) {
+            if (work == nullptr) {
+                work = &m_texWork[i];
+            }
+        } else if (m_texWork[i].m_type == 2 && m_texWork[i].m_size == size) {
+            m_texWork[i].m_useCount++;
+            work = &m_texWork[i];
+            goto found;
+        }
+    }
+    if (work == nullptr) {
+        return nullptr;
+    }
+    work->setTextureInfo(size, size, DrPixlFormat::s_ShadowFormat, false, 0);
+    work->m_type = 2;
+    work->m_size = size;
+    work->m_index = sizeType;
+    work->m_useCount = 1;
+found:
+    DrPixlShadowObjSpt* obj = new (m_drMan->m_resHandle, nullptr, 0, 4, false) DrPixlShadowObjSpt(m_drMan);
+    obj->m_depthTarget = work;
+    obj->pad_4A = 0;
+    obj->m_lightObj = light;
+    obj->m_uniform.release();
+    if (obj->m_active == 1) {
+        obj->m_uniform.setup(0x50);
+    } else {
+        obj->m_uniform.setup(0x40);
+    }
+    m_objs[m_objNum++] = obj;
+    return obj;
 }
 
 void DrPixlShadowMan::releaseShadow(DrPixlShadowObj* obj) {

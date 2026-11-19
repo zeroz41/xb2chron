@@ -16,6 +16,10 @@ class DrLightObj;
 class DrPixlShadowObj {
 public:
     // every slot is inline: the original emits them all weak after DrPixlMan.cpp's own functions
+    // inline: DrPixlShadowMan::createDirCacheShadow/createSptShadow build the derived objects in place (no symbol)
+    DrPixlShadowObj(DrMan* drMan, unsigned short active)
+        : pad_48(0), pad_4A(0), m_active(active), m_flags(0), m_range(5.0f), pad_174(0.0001f), m_drMan(drMan),
+          m_next(nullptr) {}
     virtual ~DrPixlShadowObj() {}  // slot 0
     virtual void update() {}  // slot 2
     virtual void afterUpdate() {}  // slot 3
@@ -33,14 +37,19 @@ public:
     void renderSetup();
     bool renderEnd();
     void setInstSelMapShadow(bool enable);
+    // writes the view matrix that looks from eye at target with up (DrPixlShadowCacheMan::update, getNormalMatrix and
+    // DrPixlShadowObjSpt::update call it)
+    static void getLightMatrix(mm::Mat44& mtx, mm::Vec3 const& eye, mm::Vec3 const& target, mm::Vec3 const& up);
 
     // 0x8, the destructor destroys it; DrPixlMan::setShadowObj keeps its address (the name is not the original's)
     grlib::CGLibDblUniformBlock m_uniform;
     // 0x40: the shadow depth target from DrPixlShadowMan's pool (create*Shadow set it up); renderEnd invalidates its
     // depth buffer (the name is not the original's)
     DrPixlShadowMan::TexWork* m_depthTarget;
-    unsigned char pad_48[0x4];
-    // 0x4C: DrPixlShadowMan::setSptCalcPos skips an object while it is 0 (the name is not the original's)
+    unsigned short pad_48;  // the constructor clears it
+    unsigned short pad_4A;  // 0x4A, the constructor and DrPixlShadowMan's create*Shadow clear it
+    // 0x4C: DrPixlShadowMan::setSptCalcPos skips an object while it is 0; DrPixlShadowObjDir's constructor passes 0,
+    // DrPixlShadowObjSpt's 1, and the uniform block holds 0x50 bytes when it is 1 (the name is not the original's)
     unsigned short m_active;
     unsigned char pad_4E[0x2];
     // 0x50 flags (the name is not the original's): bit 0 set by renderSetup and tested by renderEnd, bit 1 tested by
@@ -60,7 +69,7 @@ public:
     mm::Mat44 m_viewProjMtx;
     unsigned char pad_160[0x10];
     float m_range;  // 0x170: DrPixlShadowObjSpt::afterUpdate sends 1 / it (the name is not the original's)
-    unsigned char pad_174[0x4];
+    float pad_174;  // 0x174, the constructor sets 0.0001f; DrPixlShadowObjDir::calcLgtMat reads it
     DrMan* m_drMan;  // 0x178: renderEnd ends the shadow pass of its DrCalcMan (the name is not the original's)
     unsigned char pad_180[0x10];
     // 0x190: the next object of a chain (DrPixlShadowMan::shadowRender walks it); the derived destructors delete it

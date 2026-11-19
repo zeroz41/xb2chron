@@ -32,7 +32,8 @@ public:
     float m_lumTbl[11];
     unsigned int m_count[22];  // 0x4C, resetMaxLuminance clears it (the name is not the original's)
     // 0xA4..0xB8: only the constructor's values are known; the names are inferred, not the original's
-    int m_counter;  // 0xA4, resetMaxLuminance reads and writes it
+    // 0xA4, resetMaxLuminance reads and writes it; render indexes m_lumTbl with it unsigned (uxtw)
+    unsigned int m_counter;
     int m_mode;  // 0xA8, resetMaxLuminance switches on 0 and 1; the constructor sets 1
     float m_lumMin;  // 0xAC, 100000 at first
     float m_lumMax;  // 0xB0

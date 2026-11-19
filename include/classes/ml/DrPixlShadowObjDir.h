@@ -12,6 +12,16 @@ namespace ml {
 // table 0x7100B7CE78
 class DrPixlShadowObjDir : public ::ml::DrPixlShadowObj {
 public:
+    // inline (no symbol): DrPixlShadowMan::createDirCacheShadow builds it in place
+    DrPixlShadowObjDir(DrMan* drMan) : DrPixlShadowObj(drMan, 0) {
+        pad_2B0 = 1.0f;
+        m_shadowDir.x = 0.0f;
+        m_shadowDir.y = 0.0f;
+        m_shadowDir.z = 0.0f;
+        m_typeClipRange = 5.0f;
+        pad_33C = 30.0f;
+        pad_340 = 1.0f;
+    }
     virtual ~DrPixlShadowObjDir();  // slot 0
     virtual void update();  // slot 2
     virtual bool dispChk();  // slot 4
@@ -27,7 +37,8 @@ public:
     mm::Plane m_shadowPlane;
     // 0x290: setAddObjPos measures each added sphere's depth along it (the name is not the original's)
     mm::Plane m_depthPlane;
-    unsigned char pad_2B0[0x50];
+    float pad_2B0;  // the constructor sets 1.0f
+    unsigned char pad_2B4[0x4C];
     // 0x300: the shadow direction clipDirShadowChk tests along (the name is not the original's)
     mm::Vec3 m_shadowDir;
     // 0x310/0x320: the box setAddObjPos grows around each added sphere (the names are not the original's)
@@ -37,7 +48,8 @@ public:
     float m_depthNear;
     float m_depthFar;
     float m_typeClipRange;  // 0x338: clipTypeChk tests only spheres smaller than it (the name is not the original's)
-    unsigned char pad_33C[0x8];
+    float pad_33C;  // the constructor sets 30.0f; update reads it
+    float pad_340;  // the constructor sets 1.0f; update and calcLgtMat store it
     // 0x344: setAddObjPos sets one bit per unit of depth from (int)m_depthNear (the name is not the original's)
     unsigned int m_depthBits;
 };
