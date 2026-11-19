@@ -128,7 +128,7 @@ public:
     GfPlayerDead getDeadType();
     void setDeadType(GfPlayerDead type);
     bool isEnableFieldBladeChange() const;
-    void requestFieldBladeChange();
+    bool requestFieldBladeChange();
     void setForceEventBgm(float time);
     // whether the party member with that id rides (GfGameRide asks it for the leader driver's setup's m_partyId)
     bool isRideParty(unsigned int id) const;
