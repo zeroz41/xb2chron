@@ -2094,6 +2094,29 @@ DrPixlPostObjVolume::DrPixlPostObjVolume(DrMan* drMan, DrPixlMan* pixlMan, DrPix
 }
 
 
+void DrPixlPostObjVolume::calcColorBuff() {
+    float width = m_drMan->m_curViewInfo->m_width;
+    float height = m_drMan->m_curViewInfo->m_height;
+    width *= 0.2f;
+    int w = (int)width;
+    height *= 0.2f;
+    int h = (int)height;
+    w += w & 1;
+    h += h & 1;
+    width = w;
+    height = h;
+    if (m_volumeBuff[0] != nullptr) {
+        m_volumeBuff[0]->setTextureInfo(width, height, DrPixlFormat::s_VolumeFormat, true,
+                                        (DrPixlMemMan::get()->m_viewMem + DrMan::getIns()->m_postParmIdx)->m_volumeOfs[0]);
+    }
+    if (m_volumeBuff[1] != nullptr) {
+        m_volumeBuff[1]->setTextureInfo(width, height, DrPixlFormat::s_VolumeFormat, true,
+                                        (DrPixlMemMan::get()->m_viewMem + DrMan::getIns()->m_postParmIdx)->m_volumeOfs[1]);
+    }
+    m_volumeBuff[2]->setTextureInfo(width, height, DrPixlFormat::s_VolumeFormat, true,
+                                    (DrPixlMemMan::get()->m_viewMem + DrMan::getIns()->m_postParmIdx)->m_volumeOfs[2]);
+}
+
 DrPixlPostObjVolume::~DrPixlPostObjVolume() {
     for (int i = 0; i < 3; i++) {
         if (m_volumeBuff[i] != nullptr) {

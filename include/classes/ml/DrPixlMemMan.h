@@ -23,7 +23,10 @@ public:
         unsigned char pad_A8[0x40];
         // 0xE8: DrPixlDeferred's shadow targets: [0] the single one, [1 + i] m_shadowTargetDbl[i]
         unsigned int m_dirShadowOfs[3];
-        unsigned char pad_F4[0x98];
+        unsigned char pad_F4[0x5C];
+        // 0x150: DrPixlPostObjVolume::calcColorBuff's m_volumeBuff[0..2] (name inferred)
+        unsigned int m_volumeOfs[3];
+        unsigned char pad_15C[0x30];
         // 0x18C: DrPixlPostObjSSR::resetColorBuff's targets: [i] m_reflectionBuff[i], [2] m_buffFirst, [3] m_buffLast
         unsigned int m_ssrOfs[4];
         unsigned char pad_19C[0x18];
