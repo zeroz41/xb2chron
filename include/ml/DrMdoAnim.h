@@ -10,6 +10,24 @@ namespace ml { struct MdsFixAnmCate; }
 namespace ml { struct MdsFixAnmInf; }
 
 namespace ml {
+// One animated node value (the type name is the symbols'; the field names are not the original's).
+struct MdsMdlNodeAnmInfo {
+    // one hermite key, 0x10 bytes (the type and field names are not the original's; MdsFixAnmKey's flags are at 0xE)
+    struct Key {
+        float m_outTangent;      // 0x0: weighs t^3 - 2t^2 + t towards the next key
+        float m_inTangent;       // 0x4: weighs t^3 - t^2 from the previous key
+        float m_value;           // 0x8
+        unsigned short m_frame;  // 0xC
+        unsigned char pad_E;
+        unsigned char m_flags;   // 0xF: bit 0 holds m_value up to the next key (no interpolation)
+    };
+    unsigned char pad_0[0x4];
+    int m_startFrame;        // 0x4
+    int m_endFrame;          // 0x8
+    unsigned int m_keyOfs;   // 0xC: from MdoWrkMatRes::m_pEtcRef->m_pData
+    int m_keyNum;            // 0x10
+};
+
 // table none in 3.0.1 (1.0.0: _ZTVN2ml9DrMdoAnimE). It derives from DrMdoNode and DrMdoCtl from it: 1.0.0's
 // DrMdoAnim(int) (0x710082AF38) zeroes DrMdoNode's 0x188/0x180 before storing its own table last, the same shape as
 // DrMdoCtl(int), while DrMdoNode(int) stores its table before those two fields.
@@ -26,6 +44,8 @@ public:
     void updateAnimEnd(float rate, const unsigned int* dispBits, DrResEtcPamObj* pamObj);
     void updateAnimFast(float rate, DrResEtcPamObj* pamObj);
     void calcPlaneMatrix(mm::Mat44* mtx, const float* param);
+    // a node value at frame: the first key's value before m_startFrame, the last key's from m_endFrame on
+    float getNodeAnmHermiteAttr(const MdsMdlNodeAnmInfo* info, float frame);
 
     static void animcall_UV_Scr_U(DrResMdoMat*, float*, float);
     static void animcall_UV_Scr_V(DrResMdoMat*, float*, float);

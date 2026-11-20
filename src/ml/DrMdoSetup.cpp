@@ -1156,6 +1156,37 @@ void (DrMdoMat::*DrMdoMat::s_pCallMatVal[35])(const MdsMatInfoHeader*, int, int)
     &DrMdoMat::matCall_CalcPrjAlpha,
 };
 
+float DrMdoAnim::getNodeAnmHermiteAttr(const MdsMdlNodeAnmInfo* info, float frame) {
+    const MdsMdlNodeAnmInfo::Key* key =
+        reinterpret_cast<const MdsMdlNodeAnmInfo::Key*>(m_pWrkMatRes->m_pEtcRef->m_pData + info->m_keyOfs);
+    if (frame <= (float)info->m_startFrame) {
+        return key[0].m_value;
+    }
+    if (frame >= (float)info->m_endFrame) {
+        return key[info->m_keyNum - 1].m_value;
+    }
+    const MdsMdlNodeAnmInfo::Key* prevKey = key;
+    for (int i = 1; i < info->m_keyNum; i++, prevKey++) {
+        if ((float)prevKey[1].m_frame > frame) {
+            const MdsMdlNodeAnmInfo::Key& prev = prevKey[0];
+            const MdsMdlNodeAnmInfo::Key& next = prevKey[1];
+            if (prev.m_flags & 1) {
+                return prev.m_value;
+            }
+            float len = (float)next.m_frame - (float)prev.m_frame;
+            float t = (frame - (float)prev.m_frame) / len;
+            float t2 = t * t;
+            float t3 = t * t2;
+            float h00 = 2.0f * t3 - 3.0f * t2 + 1.0f;
+            float h10 = t3 - 2.0f * t2 + t;
+            float h01 = 3.0f * t2 - 2.0f * t3;
+            float h11 = t3 - t2;
+            return prev.m_value * h00 + prev.m_outTangent * h10 + next.m_value * h01 + next.m_inTangent * h11;
+        }
+    }
+    return 0.0f;
+}
+
 void DrMdoAnim::animcall_UV_Scr_U(DrResMdoMat* mat, float* work, float value) {
     work[0] = value;
 }
@@ -6242,6 +6273,22 @@ int DrMdoSetup::unimate_NomProjectionMat(float* out, DrResMdoMat* mat, const Mds
         grlib::ShdF32TransposeMat34(&out[i * 12], &src[i * 16]);
     }
     return DrResMdoUniformBlock::s_nVarSizeTbl[50] * var->m_num;
+}
+
+int DrMdoSetup::unimate_DollTexWork(float* out, DrResMdoMat* mat, const MdsMatInfoHeader* info, const MdsMatVariableTbl* var) {
+    const MdsMatTexEntry* entry = reinterpret_cast<const MdsMatTexEntry*>(m_pWrkMatRes->m_pMatData + info->m_texEntryOfs);
+    grlib::CGLibTextureBuffer* tex = m_pWrkMatRes->m_ppTexture[entry[var->m_valIdx].m_texIdx];
+    float width = static_cast<unsigned short>(tex->getWidth());
+    float height = static_cast<unsigned short>(tex->getHeight());
+    out[0] = 1.0f / width;
+    out[1] = 1.0f / height;
+    out[2] = width;
+    out[3] = height;
+    float halfW = out[0] * 0.5f;
+    out[4] = halfW;
+    float halfH = out[1] * 0.5f;
+    out[5] = halfH;
+    return DrResMdoUniformBlock::s_nVarSizeTbl[10];
 }
 
 int DrMdoSetup::unimate_AvatarMapWrk(float* out, DrResMdoMat* mat, const MdsMatInfoHeader* info, const MdsMatVariableTbl* var) {
