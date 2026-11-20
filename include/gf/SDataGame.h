@@ -109,9 +109,13 @@ public:
     // 0x1098C8: the mercenary teams (GfDataMercenaries' team functions search them; getTeamByIndex asserts in
     // fixed_vector.h's operator[]; the capacity is the room before the count at 0x109940; the name is not the original's)
     mm::mtl::FixedVector<GfDataMercenaries::Team, 3> m_teams;
-    // 0x109948: the mercenary team presets (GfDataMercenaries::getPreset; the count is the room up to
-    // m_playerCameraDistance; the name is not the original's)
-    GfDataMercenaries::Preset m_mercenaryPresets[40];
+    // 0x109948: the mercenary team presets (GfDataMercenaries::getPreset; 8 of them: the reserve slots follow; the
+    // name is not the original's)
+    GfDataMercenaries::Preset m_mercenaryPresets[8];
+    // 0x1099A8: the blade reserve slots, 0 for an empty one (GfDataBlade::getEnableCountForCreateBlade counts the empty
+    // ones among the first GfDataMercenaries::getReserverMax(); the count is the room up to m_playerCameraDistance; the
+    // name is not the original's)
+    unsigned short m_reserveBlades[192];
     float m_playerCameraDistance;  // 0x109B28 (named after its accessors; the name is not the original's)
     // 0x109B2C: how many times the game was cleared (GfGameUtil::incGameClearCount counts it up to 9999; the name is
     // not the original's)

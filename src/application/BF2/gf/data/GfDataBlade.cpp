@@ -5690,6 +5690,31 @@ bool GfDataHana::isEquipNArtsParts(unsigned int hana, unsigned int item) {
     return false;
 }
 
+bool GfDataHana::isExistSameEffectNArtsParts(unsigned int hana, unsigned int item, unsigned int slot) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    unsigned int bladeIndex = GfDataBlade::getBladeIndex(hana);
+    SDataGame* game = GfDataManager::getDataGame();
+    SDataBlade& data = game->m_blades[bladeIndex];
+    unsigned int nArts = bdat->getITM_HanaNArtsSetNArts(item);
+    if (nArts == 0) {
+        return false;
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+        unsigned int part = data.m_equipHana.m_nArtsParts[i].m_item;
+        if (i == slot) {
+            continue;
+        }
+        if (part == 0) {
+            continue;
+        }
+        bool same = bdat->getITM_HanaNArtsSetNArts(part) == nArts;
+        if (same) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool GfDataHana::isEquipCondenserParts(unsigned int hana, unsigned int item) {
     GfBdatItem* bdat = GfBdatItem::get();
     if (hana == 1005) {
@@ -5700,6 +5725,42 @@ bool GfDataHana::isEquipCondenserParts(unsigned int hana, unsigned int item) {
     }
     if (hana == 1007) {
         return bdat->isITM_HanaAssistFlagJD(item);
+    }
+    return false;
+}
+
+// Placeholder name: the symbols leave this file-static function unnamed and nothing names it. What it does: whether
+// one of the three condenser parts other than slot (3: none skipped) has the same enhance effect
+// (GfBdatBtl::getBTL_EnhanceEnhanceEffect of GfBdatItem::getITM_HanaAssistEnhance) as item; its one caller,
+// isExistSameEffectCondenserParts, passes a copy of the regular or the extend condenser parts.
+static bool fn_7100253AD4(const unsigned short* parts, unsigned int item, unsigned int slot);
+
+bool GfDataHana::isExistSameEffectCondenserParts(unsigned int hana, unsigned int item, unsigned int slot, bool extend) {
+    unsigned short parts[3];
+    memcpy(parts, getEquipParts(hana)->m_condenserParts, sizeof(parts));
+    if (fn_7100253AD4(parts, item, extend ? 3 : slot)) {
+        return true;
+    }
+    memcpy(parts, getEquipParts(hana)->m_extendCondenserParts, sizeof(parts));
+    return fn_7100253AD4(parts, item, extend ? slot : 3);
+}
+
+static bool fn_7100253AD4(const unsigned short* parts, unsigned int item, unsigned int slot) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    GfBdatBtl* btl = GfBdatBtl::get();
+    unsigned int effect = btl->getBTL_EnhanceEnhanceEffect(bdat->getITM_HanaAssistEnhance(item));
+    for (unsigned int i = 0; i < 3; i++) {
+        unsigned int part = parts[i];
+        if (i == slot) {
+            continue;
+        }
+        if (part == 0) {
+            continue;
+        }
+        bool same = effect == btl->getBTL_EnhanceEnhanceEffect(bdat->getITM_HanaAssistEnhance(part));
+        if (same) {
+            return true;
+        }
     }
     return false;
 }
@@ -6163,6 +6224,33 @@ bool GfDataBlade::getCommonBladeName(const char* path) {
         return false;
     }
     return strncmp(path, "bl/bl2", 6) == 0;
+}
+
+inline unsigned int GfDataBlade::getEnableCountForCreateBlade() {
+    SDataGame* game = GfDataManager::getDataGame();
+    int max = GfDataMercenaries::getReserverMax();
+    unsigned int count = 0;
+    for (int i = 0; i < max; i++) {
+        if (game->m_reserveBlades[i] == 0) {
+            count++;
+        }
+    }
+    return count;
+}
+
+unsigned int GfDataBlade::getEnableCountForCreateBlade(unsigned int crystal) {
+    bool unuse = isActivateUnuse(1197);
+    if (crystal == 45010) {
+        return unuse;
+    }
+    unsigned int count = getEnableCountForCreateBlade();
+    if (count == 0) {
+        return 0;
+    }
+    if (unuse) {
+        return count - 1;
+    }
+    return count;
 }
 
 unsigned int GfDataBlade::addCommonBlade(const SDataBlade& data) {

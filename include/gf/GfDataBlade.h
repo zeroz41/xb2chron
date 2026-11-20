@@ -88,6 +88,9 @@ public:
     static const char* getMenuVoiceName(unsigned int blade, unsigned int slot);
     // how many blades the crystal can still create (CrystalSelectListener refuses one at 0)
     static unsigned int getEnableCountForCreateBlade(unsigned int crystal);
+    // 1.0.0's symbols name it (0x71002A15D8); 3.0.1 inlines it into its one caller above. What it does: the number of
+    // empty blade reserve slots among the first GfDataMercenaries::getReserverMax()
+    static unsigned int getEnableCountForCreateBlade();
     // 2.0.0's symbols name it. What it does: false for blade 0, else whether the short at 0x5A2C of the blade's game
     // data slot (getDataGame + slot * 0x8A4, the slot mapping isBladeLock uses) is 2;
     // GfGameUtil::execActivateMercenaryTeamForBlade does nothing when it holds.
