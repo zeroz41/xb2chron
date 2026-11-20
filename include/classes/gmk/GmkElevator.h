@@ -48,7 +48,9 @@ public:
         unsigned short m_liftStopSe = 0;
         unsigned char m_liftMinVolDist = 0;
         unsigned char m_liftMaxVolDist = 0;
-        bool m_liftReverse = false;  // flag "lift_reverse"
+        // flag "lift_reverse"; a byte, not a bool: seqWaitToValidate_GfFieldLod tests it with cmp #0 (a bool would be
+        // cmp #1)
+        unsigned char m_liftReverse = 0;
         unsigned char pad_1d[0x3];
         float m_callLiftspeed = 2.0f;
         unsigned short m_missMsgId = 0;
@@ -116,9 +118,9 @@ public:
     // the name is not the original's)
     gf::GF_OBJ_HANDLE* m_gobs[4];
     mm::mtl::FixedArray<GmkCtrlVolSe, 4> m_ctrlVolSes;
-    // dispose sets it to -1; seqWaitToValidate_GfFieldLod sets it to the LOD animation object (a GF_OBJ_HANDLE*)
-    // of the lift's LOD, createSe makes the lift loop sound follow it (meaning inferred)
-    long pad_4b0;
+    // the LOD animation object of the lift's LOD (seqWaitToValidate_GfFieldLod finds it; -1: none, dispose resets
+    // it); createSe makes the lift loop sound follow it (meaning inferred; the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_lodAnimGob;
     // the step update runs (symbols name them seqInit, seqUpIdle, ...; the name is not the original's)
     void (GmkElevator::*m_seq)(float dt);
     // set when the player accesses m_gobs[0], [2], [3], [1] (onPlayerAccessed); dispose clears them (the names

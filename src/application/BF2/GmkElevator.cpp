@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <string.h>
 #include "classes/gmk/GmkBdat.h"
 #include "classes/gmk/GmkPhantomManager.h"
 #include "classes/gmk/GmkLandmarkManager.h"
@@ -13,6 +14,8 @@
 #include "classes/gf/GfComCollider.h"
 #include "classes/gf/GfObj.h"
 #include "classes/gf/GfObjSetupGimmick.h"
+#include "classes/gf/GfObjSetupMapLodAnim.h"
+#include "classes/gf/GfGameObj.h"
 #include "classes/fw/EffectManager.h"
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkGrave.h"
@@ -8276,8 +8279,8 @@ void GmkElevator::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& g
 }
 
 GmkElevator::GmkElevator()
-    : pad_4b0(-1), m_seq(nullptr), m_accessed0(false), m_accessed2(false), m_accessed3(false), m_accessed1(false),
-      m_nextWait(0.0f) {
+    : m_lodAnimGob(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_seq(nullptr), m_accessed0(false), m_accessed2(false),
+      m_accessed3(false), m_accessed1(false), m_nextWait(0.0f) {
     for (int i = 0; i < 4; i++) {
         m_gobs[i] = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     }
@@ -8552,12 +8555,52 @@ bool GmkElevator::isLiftSwitch(gf::GF_OBJ_HANDLE* gob) const {
     return index == 1 || index == 3;
 }
 
+void GmkElevator::seqWaitToValidate_GfFieldLod(float) {
+    gf::GfFieldLod* lod = mm::mtl::PtrSingleton<gf::GfFieldLod>::get();
+    if (lod == nullptr || !lod->m_initialized || lod->m_coliAnim.m_info.m_model == nullptr ||
+        lod->m_coliAnim.m_info.m_lod == nullptr) {
+        return;
+    }
+    const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+    if (const gf::GfFieldLod::BdatInfo* lodInfo = lod->findBdatInfo(info->m_liftLod)) {
+        unsigned short lodId = lodInfo->m_lodId;
+        mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 1024>& list = *gf::GfGameObj::getList(2);
+        for (mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 1024>::iterator it = list.begin(); it != list.end(); ++it) {
+            gf::GfObjSetupMapLodAnim* setup =
+                mm::mtl::rttiCast<gf::GfObjSetupMapLodAnim>(gf::GfObjManager::getObjInfo(*it)->m_setup);
+            if (setup->m_lodId == lodId) {
+                m_lodAnimGob = *it;
+            }
+        }
+    }
+    bool reverse;
+    const BdatInfo* bdatInfo = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+    gf::GfFieldGimmick* gimmick = mm::mtl::PtrSingleton<gf::GfFieldGimmick>::get();
+    if (gimmick != nullptr && gimmick->m_unknownFlag1) {
+        reverse = mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->isAnimReverse(bdatInfo->m_liftLod);
+    } else {
+        reverse = !bdatInfo->m_liftReverse;
+    }
+    if (gf::GfDataUtil::getScenarioFlag() == 8030 && m_info->m_name != nullptr) {
+        reverse |= strcmp("ma18a_elv_01", m_info->m_name) == 0;
+    }
+    mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->setAnimReverse(info->m_liftLod, reverse, true);
+    mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->setPlaySpeed(info->m_liftLod, 1.0f);
+    if (info->m_shtALod != 0) {
+        mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->setAnimReverse(info->m_shtALod, !reverse, true);
+    }
+    if (info->m_shtBLod != 0) {
+        mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->setAnimReverse(info->m_shtBLod, reverse, true);
+    }
+    m_seq = &GmkElevator::seqInit;
+}
+
 void GmkElevator::dispose() {
     m_accessed0 = false;
     m_accessed2 = false;
     m_accessed3 = false;
     m_accessed1 = false;
-    pad_4b0 = -1;
+    m_lodAnimGob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     m_seq = nullptr;
     clearGobInsts();
     for (int i = 0; i < 4; i++) {
