@@ -890,6 +890,30 @@ void BattleCharacter::ResetRequestPermit() {
     }
 }
 
+void BattleCharacter::ElementalComboDirectionFinalize() {
+    if (m_comboDirection.m_slowID != 0) {
+        mm::mtl::PtrSingleton<BattleGlobal>::sys()->DeleteSlow(m_comboDirection.m_slowID);
+        m_comboDirection.m_slowID = 0;
+    }
+    mm::mtl::PtrSingleton<BattleGlobal>::sys()->DeleteElementalComboCamera();
+    pad_EF5_1 = false;
+    mm::mtl::PtrSingleton<BattleGlobal>::sys()->pad_bit12 = false;
+    if (m_param == nullptr) {
+        m_param = mm::mtl::PtrSingleton<DataManager>::sys()->GetCharacterParameterConst(m_chrID);
+    }
+    (mm::mtl::PtrSingleton<DataManager>::sys()->m_groups + m_param->m_groupIndex)->pad_bit9 = false;
+    if (m_effects[4] != 0) {
+        if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_removeEffect) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effects[4]);
+        } else {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(m_effects[4]);
+        }
+        m_effects[4] = 0;
+    }
+    mm::mtl::PtrSingleton<UIManager>::sys()->ExitElementalComboDirectionUI(m_comboDirection.m_uiID);
+    m_comboDirection = ComboDirection();
+}
+
 void BattleCharacter::ActionCommandEndRun() {
     if (!m_isRunHold && m_actionStep == 0) {
         SetAction(ACTION_PUT_OUT_WEAPON, false, false, 0, 0.0f);
@@ -1352,6 +1376,30 @@ void BattleCharacter::StartAngryArts(const ARTS_DATA& arts) {
         target->SetBuff(0x23, 1.0f, 1.0f, &pos);
         param->UseAngryArts();
     }
+}
+
+void BattleCharacter::AddBladeArtsRecast(int id, float value) {
+    if (mm::mtl::PtrSingleton<ChainAttackManager>::sys()->IsProc(true)) {
+        return;
+    }
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param->IsDriver(false)) {
+        BattleCharacter* blade = mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(param->m_driverHandle);
+        if (blade != nullptr) {
+            blade->AddBladeArtsRecast(id, value);
+        }
+        return;
+    }
+    if (!param->IsBlade(false)) {
+        return;
+    }
+    const char* column = "Param";
+    if (m_isPlayer &&
+        (mm::mtl::PtrSingleton<BattleGlobal>::sys()->IsPlayerAutoOperate() || !IsControlCharacterGroup())) {
+        column = SatisfyEnhanceCondition(0x15d, 0, 0.0f, nullptr, true) <= 0.0f ? "Param" : "Param2";
+    }
+    float rate = Bdat::getValCheckU8(gf::GfDataBdat::getFP(0x40), column, id);
+    AddSlotRecast(~16, (value + 1.0f) * rate, false, true);
 }
 
 void BattleCharacter::RecoverNextBladeArtsRecast() {

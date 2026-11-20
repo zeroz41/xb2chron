@@ -303,6 +303,7 @@ public:
     void SetBladeSupportCondition(int condition);
     bool IsEnableBattleFace() const;
     void SetBattleFace(bool on, float time);
+    void ElementalComboDirectionFinalize();
     void DispBladeLine(bool disp, float time);
     // false while parameter slot 65 holds for true; a non-player needs slot 64 and driver type 0; then whether
     // m_bladeArtsState is neither 1 nor 2
@@ -929,7 +930,19 @@ public:
     float pad_1000[3];
     // the name is not the original's: SetAction's float argument
     float m_actionValue;
-    unsigned char pad_1010[0x1C];
+    unsigned char pad_1010[0x10];
+    // the elemental combo direction ElementalComboDirectionFinalize ends: the UI direction id it hands to
+    // UIManager::ExitElementalComboDirectionUI, the BattleGlobal slow id it deletes, and a value it clears (the
+    // type's and the field names are not the original's)
+    struct ComboDirection {
+        // empty but user-written: the type is not trivial, so assigning a ComboDirection() clears only its 10 data
+        // bytes, as the original does (a trivial type clears all 12)
+        ~ComboDirection() {}
+        unsigned int m_uiID;
+        unsigned int m_slowID;
+        unsigned short pad_8;
+    };
+    ComboDirection m_comboDirection;
     // StartFullBurst sets them: -1 and 0 first, then 0, its argument and the argument * 8 (meaning unknown)
     unsigned short pad_102C;
     unsigned char pad_102E;
