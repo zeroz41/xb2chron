@@ -3722,6 +3722,67 @@ void DevFileTh::Impl::updateCancel() {
     }
 }
 
+void DevFileTh::Impl::tail() {
+    {
+        CS lock(m_jobCs);
+        updateCancel();
+        while (!m_jobs[2].empty()) {
+            DevFileJobTh* job = m_jobs[2].front();
+            FileHandleTh* handle = job->m_handle;
+            // the failed and done flags are read too, but only a cancel changes the kind
+            int kind;
+            if (__atomic_load_n(&handle->m_canceled, __ATOMIC_SEQ_CST)) {
+                kind = 4;
+            } else if (__atomic_load_n(&handle->m_failed, __ATOMIC_SEQ_CST)) {
+                kind = handle->m_state;
+            } else if (__atomic_load_n(&handle->m_done, __ATOMIC_SEQ_CST)) {
+                kind = handle->m_state;
+            } else {
+                kind = handle->m_state;
+            }
+            if (kind == 4 || kind == 6) {
+                if (handle->m_outData != nullptr) {
+                    *handle->m_outData = nullptr;
+                }
+                if (handle->m_outSize != nullptr) {
+                    *handle->m_outSize = -1;
+                }
+            } else if (kind == 5 || kind == 2) {
+                if (handle->m_outData != nullptr) {
+                    *handle->m_outData = handle->m_data;
+                }
+                if (handle->m_outSize != nullptr) {
+                    *handle->m_outSize = handle->m_size;
+                }
+            }
+            if (IWorkEvent* listener = handle->m_listener) {
+                EventFileTh event;
+                event.m_kind = kind;
+                event.m_handle = handle;
+                event.m_allocHandle = handle->m_allocHandle;
+                event.m_allocator = handle->m_allocator;
+                event.m_path = handle->m_path;
+                event.m_data = handle->m_data;
+                event.m_result = handle->m_size;
+                event.pad_38 = handle->pad_68;
+                listener->OnFileEvent(&event);
+            }
+            m_jobs[2].pop_front();
+            releaseRequest(job);
+        }
+    }
+    for (int i = 0; i < 8; i++) {
+        if (m_accessors[i] != nullptr) {
+            m_accessors[i]->tail();
+        }
+    }
+    for (int i = 0; i < 8; i++) {
+        if (m_archives[i] != nullptr) {
+            m_archives[i]->tail();
+        }
+    }
+}
+
 void DevFileTh::Impl::appendRequest(DevFileJobTh* job) {
     CS lock(m_jobCs);
     bool inserted = false;
@@ -4140,6 +4201,44 @@ void addMediaPath(MEDIA media, const char* pszName, int prio) {
 
 mm::mtl::FixedVector<IDevFileEvent*, 8> g_FileEventListener;
 }  // namespace dvfl_detail
+
+void DevFileTh::initializePath(const char* name, bool useArchive) {
+    s_useArchive = useArchive;
+    mm::mtl::FixStr<128> path(name);
+    if (path.m_nLen != 0) {
+        for (int i = 0; i < path.m_nLen; i++) {
+            if (path.m_str[i] == '\\') {
+                path.m_str[i] = '/';
+            }
+        }
+        int last = path.m_nLen - 1;
+        if (path.m_str[last] == '/') {
+            path.m_str[last] = '\0';
+            path.m_nLen = last;
+        }
+    }
+    if (path.m_nLen == 0) {
+        path = "../romdata";
+    }
+    s_pathD4 = path;
+    s_path1DC = path;
+    s_path1DC += "/";
+    s_path1DC += "pc";
+    s_dvdRoot = path;
+    s_dvdRoot += "/";
+    s_dvdRoot += "nx";
+    s_path158 = path;
+    int pos = s_path158.findLast('/');
+    if (pos != -1 && s_path158.m_nLen > pos + 1) {
+        s_path158.m_str[pos + 1] = '\0';
+        s_path158.m_nLen = pos + 1;
+    }
+    if (s_romMountMode) {
+        addMediaPath(MEDIA(0), "rom:", -1);
+    } else {
+        addMediaPath(MEDIA(0), name, -1);
+    }
+}
 
 void DevFileTh::addMediaPath(MEDIA media, const char* path, int prio) {
     if (path != nullptr && path[0] != '\0') {
@@ -5045,6 +5144,36 @@ void DebDraw::renderArrowAxisY(const mm::Mat44& mtx, int size, const mm::Col4* c
         renderCubeArrow(origin, mulDir(mtx, mm::Vec3(0.0f, scale, 0.0f)) + origin);
     } else {
         renderArrow(origin, mulDir(mtx, mm::Vec3(0.0f, scale, 0.0f)) + origin);
+    }
+    setCol(prev);
+}
+
+void DebDraw::renderArrowAxisZ(const mm::Mat44& mtx, int size, const mm::Col4* col, bool cube) {
+    mm::Vec3 origin = mtx.getTrans();
+    mm::Vec3 screen0;
+    mm::Vec3 screen1;
+    if (!getScreenPos(screen0, origin)) {
+        return;
+    }
+    if (!getScreenPos(screen1, mulDir(pad_080, mm::Vec3::unitX) + origin)) {
+        return;
+    }
+    screen0.z = 0.0f;
+    screen1.z = 0.0f;
+    float scale = size / (screen0 - screen1).length();
+    if (!mm::isFinite(scale)) {
+        return;
+    }
+    mm::Col4 prev = m_col;
+    if (col != nullptr) {
+        setCol(*col);
+    } else {
+        setCol(mm::Col3::blue, 1.0f);
+    }
+    if (cube) {
+        renderCubeArrow(origin, mulDir(mtx, mm::Vec3(0.0f, 0.0f, scale)) + origin);
+    } else {
+        renderArrow(origin, mulDir(mtx, mm::Vec3(0.0f, 0.0f, scale)) + origin);
     }
     setCol(prev);
 }
