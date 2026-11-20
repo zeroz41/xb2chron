@@ -1575,9 +1575,14 @@ void GmkNpcManager::removeGmkNpc(AGmkNpc* npc) {
     m_npcIdInfos[getNpcIdInfoIdxFromNpcId(npcId)].removeGmkNpc(npc);
 }
 
-// the same steps as dispose, written here: the original's dispose keeps its default CreateInfo on the stack, this
-// copy does not (so the destructor does not inline dispose)
-GmkSet::~GmkSet() {
+void GmkSet::create(const CreateInfo& info) {
+    dispose();
+    m_createInfo = info;
+    m_npcManager.m_flag = !info.m_flag;
+    m_seq = &GmkSet::seqWaitToValidate_GfGameManager_m_mapID;
+}
+
+void GmkSet::dispose() {
     m_seq = nullptr;
     for (int i = 0; i < GMK_LIST_NUM; ++i) {
         if (m_gmkLists[i] != nullptr) {
@@ -1586,8 +1591,15 @@ GmkSet::~GmkSet() {
         }
     }
     m_bdat.dispose();
-    m_createInfo = CreateInfo();
+    // copied from a default one with a self-assignment guard: the guard's compare keeps the default on the stack
+    // here (the original's 0x30-byte temporary) and folds away where dispose is inlined
+    const CreateInfo defaultInfo;
+    if (&m_createInfo != &defaultInfo) {
+        m_createInfo = defaultInfo;
+    }
 }
+
+GmkSet::~GmkSet() { dispose(); }
 
 void GmkSet::seqWaitToValidate_GfGameManager_m_mapID(float) {
     if (gf::GfGameManager::getMapID() != 0) {

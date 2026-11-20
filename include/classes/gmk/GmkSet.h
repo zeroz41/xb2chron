@@ -19,7 +19,7 @@ public:
         CreateInfo() : m_bdatId(-1), m_pos(0.0f, 0.0f, 0.0f), m_rotY(0.0f), m_flag(false) {}
         mtl::ALLOC_HANDLE m_allocHandle;  // its lists' memory
         int m_bdatId;                     // its RSC_GmkSetList row
-        unsigned char pad_8[0x8];
+        // (0x8..0xf: alignment before m_pos; create's copy and dispose's reset skip it)
         mm::Vec3 m_pos;  // 0x10
         float m_rotY;    // 0x20
         // 0x24: create stores its negation at 0x1b4 (GfGmkLocatorAtlas::create passes true)
