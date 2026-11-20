@@ -184,6 +184,103 @@ void DrMdoSetup::setShader(DrResMdoMat*, const MdsMatInfoHeader* info, const Mds
     }
 }
 
+void DrMdoCtl::partsShadowRender(const MdsMdlInfoHeader* info, int triIdx, int mot, int shdOfs) {
+    const MdsMatInfoHeader* mat = m_pWrkMatRes->m_pMatInfo + info->m_matIdx;
+    m_pWrkMatRes->m_pVertex->setVertexBind(info->m_vtxBindIdx);
+    if (m_curBindIdx != info->m_matIdx) {
+        DrAPCache* cache = m_pDrMan->m_apCache;
+        m_curBindIdx = info->m_matIdx;
+        cache->setupCulling(static_cast<DrApCullType>(mat->m_cullType));
+    }
+    DrShdDataList* list = m_pDrMan->m_shdMan->m_dataList;
+    unsigned int flags = mat->m_shdFlags;
+    int shdIdx;
+    if (flags & 0x4) {
+        unsigned int alpha = flags & 0x8;
+        if (mot) {
+            triIdx = 0;
+            shdIdx = (alpha ? 8 : 7);
+        } else if (alpha) {
+            shdIdx = (flags & 0x2000) ? 14 : 2;
+        } else {
+            shdIdx = (flags & 0x2000) ? 13 : 1;
+        }
+    } else {
+        if (mot) {
+            triIdx = 0;
+            shdIdx = 6;
+        } else {
+            if (!(flags & 0x2000)) {
+                shdIdx = 0;
+            } else {
+                shdIdx = 12;
+            }
+        }
+    }
+    shdIdx += shdOfs;
+    int matIdx = info->m_matIdx;
+    DrMdoShdSetShadow shd;
+    shd.m_pMdl = this;
+    (shd.*DrMdoShdSetShadow::s_pShwMaterial[shdIdx])(shdIdx, mat, triIdx, matIdx, list);
+    if (info->m_flags & 0x1000000) {
+        m_pWrkMatRes->m_pVertex->setMofBlendVertexBind(m_pWrkMatRes->m_pMofBlendArray, info->m_vtxBindIdx, 2);
+    }
+    DrResMdoVertex* vtx = m_pWrkMatRes->m_pVertex;
+    if (info->m_flags & 0x2000) {
+        vtx->render(info->m_renderIdx[1]);
+    } else {
+        vtx->render(info->m_renderIdx[0]);
+    }
+}
+
+void DrMdoCtl::partsShadowDirRender(const MdsMdlInfoHeader* info, int triIdx, int mot) {
+    const MdsMatInfoHeader* mat = m_pWrkMatRes->m_pMatInfo + info->m_matIdx;
+    m_pWrkMatRes->m_pVertex->setVertexBind(info->m_vtxBindIdx);
+    if (m_curBindIdx != info->m_matIdx) {
+        DrAPCache* cache = m_pDrMan->m_apCache;
+        m_curBindIdx = info->m_matIdx;
+        cache->setupCulling(static_cast<DrApCullType>(mat->m_cullType));
+    }
+    DrShdDataList* list = m_pDrMan->m_shdMan->m_dataList;
+    unsigned int flags = mat->m_shdFlags;
+    unsigned int shdIdx;
+    if (flags & 0x4) {
+        unsigned int alpha = flags & 0x8;
+        if (mot) {
+            triIdx = 0;
+            shdIdx = (alpha ? 8 : 7);
+        } else if (alpha) {
+            shdIdx = (flags & 0x2000) ? 14 : 2;
+        } else {
+            shdIdx = (flags & 0x2000) ? 13 : 1;
+        }
+    } else {
+        if (mot) {
+            triIdx = 0;
+            shdIdx = 6;
+        } else {
+            if (!(flags & 0x2000)) {
+                shdIdx = 0;
+            } else {
+                shdIdx = 12;
+            }
+        }
+    }
+    int matIdx = info->m_matIdx;
+    DrMdoShdSetShadow shd;
+    shd.m_pMdl = this;
+    (shd.*DrMdoShdSetShadow::s_pShwMaterial[shdIdx])(shdIdx, mat, triIdx, matIdx, list);
+    if (info->m_flags & 0x1000000) {
+        m_pWrkMatRes->m_pVertex->setMofBlendVertexBind(m_pWrkMatRes->m_pMofBlendArray, info->m_vtxBindIdx, 2);
+    }
+    DrResMdoVertex* vtx = m_pWrkMatRes->m_pVertex;
+    if (info->m_flags & 0x2000) {
+        vtx->render(info->m_renderIdx[1]);
+    } else {
+        vtx->render(info->m_renderIdx[0]);
+    }
+}
+
 void DrMdoCtl::partsShadowBaseRender(const MdsMdlTopHeader* top) {
     int num = top->m_infoNum;
     if (num <= 0) {
@@ -4349,6 +4446,48 @@ bool DrMdoCtlSeamAll::callDeleteUpdate() {
         m_cldMdlData->setCallDisp(false);
     }
     return false;
+}
+
+void DrMdoCtlSeamRead::updateReadCall() {
+    if (--m_readWaitCnt <= 0) {
+        m_readWaitCnt = 0;
+    }
+    if (--m_heightReadWait <= 0) {
+        m_heightReadWait = 0;
+        if (DrMan::get()->isAllMiddelTexStmChk()) {
+            m_parmRead.resetHeightLvTexture();
+        }
+    } else {
+        m_parmRead.resetHeightLvTexture();
+    }
+    if (m_seamFlags & 0x10001000) {
+        m_readSkip = 0;
+        return;
+    }
+    if (m_seamFlags & 0x80000) {
+        m_readSkip = 0;
+        return;
+    }
+    _wkSeamReadWait waits[8];
+    bool errOn;
+    bool failed;
+    int num = m_parmRead.calcReadParms(waits, errOn, failed, m_pDrMan->m_seamReadErrMode, m_readCall, m_readCallNum);
+    if (errOn) {
+        m_seamFlags |= 0x400;
+    }
+    if (failed) {
+        m_seamFlags |= 0x10000;
+    }
+    if (!(m_seamRead.m_flags & 0x110)) {
+        int max = m_seamRead.getReadMax();
+        if (max >= num) {
+            max = num;
+        }
+        for (int i = 0; i < max; i++) {
+            (this->*s_pSeamReadCall[waits[i].m_type])(&waits[i]);
+            m_readTypeBits |= 1 << waits[i].m_type;
+        }
+    }
 }
 
 void DrMdoCtlSeamAll::dispOffUpdate() {
