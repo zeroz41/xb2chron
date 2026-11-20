@@ -107,6 +107,7 @@
 #include "classes/ml/FileHandleTh.h"
 #include "classes/ml/detail/FileLoader.h"
 #include "nn/fs.h"
+#include "zlib/zlib.h"
 #include "ml/EventFileTh.h"
 #include "ml/PathUtil.h"
 #include "ml/MlMem.h"
@@ -2680,8 +2681,8 @@ MemoryAutoReleaser::~MemoryAutoReleaser() {
 
 DevFileNxTh::DevFileNxTh(mtl::ALLOC_HANDLE handle)
     : m_alloc(handle), pad_18(0), m_impl(new (handle, nullptr, 0, 4, false) Impl()) {
-    __atomic_store_n(&m_impl->pad_17FC, 0, __ATOMIC_SEQ_CST);
-    __atomic_store_n(&m_impl->pad_17F8, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&m_impl->m_threadCount, 0, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&m_impl->m_quit, false, __ATOMIC_SEQ_CST);
 }
 
 DevFileNxTh::~DevFileNxTh() {}
@@ -2704,19 +2705,19 @@ bool DevFileNxTh::initialize() {
 
 unsigned int DevFileNxTh::thFileLoader(void* arg) {
     DevFileNxTh* owner = static_cast<DevFileNxTh*>(static_cast<OpenReadParam*>(arg)->m_owner);
-    __atomic_fetch_add(&owner->m_impl->pad_17FC, 1, __ATOMIC_SEQ_CST);
+    __atomic_fetch_add(&owner->m_impl->m_threadCount, 1, __ATOMIC_SEQ_CST);
     while (!DevFileTh::isInitialized()) {
         nn::os::SleepThread(nn::TimeSpan::FromMilliSeconds(100));
     }
     owner->thUpdate(arg);
-    __atomic_fetch_sub(&owner->m_impl->pad_17FC, 1, __ATOMIC_SEQ_CST);
+    __atomic_fetch_sub(&owner->m_impl->m_threadCount, 1, __ATOMIC_SEQ_CST);
     return 0;
 }
 
 bool DevFileNxTh::finalize() {
     switch (pad_18) {
     case 1:
-        __atomic_store_n(&m_impl->pad_17F8, true, __ATOMIC_SEQ_CST);
+        __atomic_store_n(&m_impl->m_quit, true, __ATOMIC_SEQ_CST);
         for (unsigned long i = 1; i < m_impl->m_params.size(); i++) {
             if (m_impl->m_params[i].m_thread != nullptr) {
                 m_impl->m_params[i].m_thread->setSignalEvent(true);
@@ -2725,7 +2726,7 @@ bool DevFileNxTh::finalize() {
         pad_18 = 2;
         break;
     case 2:
-        if (__atomic_load_n(&m_impl->pad_17FC, __ATOMIC_SEQ_CST) == 0) {
+        if (__atomic_load_n(&m_impl->m_threadCount, __ATOMIC_SEQ_CST) == 0) {
             pad_18 = 3;
         }
         break;
@@ -2834,10 +2835,35 @@ bool DevFileNxTh::rfOpen(FileHandleTh* handle, const char* path) {
             return false;
         }
         param.m_isOpen = true;
-        param.pad_10D = false;
+        param.m_busy = false;
         param.pad_10E = false;
-        param.pad_110 = false;
+        param.m_closePending = false;
     }
+    return true;
+}
+
+bool DevFileNxTh::rfRead(FileHandleTh* handle, const DevFileParamTh& param) {
+    if (handle == nullptr) {
+        return false;
+    }
+    OpenReadParam& channel = get()->m_impl->m_params[handle->m_channel];
+    mm::threading::WriteLockGuard lock(channel.m_lock);
+    if (!channel.m_isOpen) {
+        return false;
+    }
+    handle->m_readSize = 0;
+    handle->setBuffer(param.m_buffer, param.m_readSize);
+    handle->setRange(param.m_offset, param.m_readSize);
+    __atomic_store_n(&handle->m_canceled, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&handle->m_failed, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&handle->m_done, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&handle->pad_200, false, __ATOMIC_SEQ_CST);
+    channel.m_param = param;
+    channel.m_busy = true;
+    channel.m_request = handle;
+    channel.pad_10E = false;
+    channel.m_closePending = false;
+    channel.m_thread->setSignalEvent(true);
     return true;
 }
 
@@ -2847,7 +2873,7 @@ bool DevFileNxTh::rfIsBusy(FileHandleTh* handle) {
         for (unsigned int i = 0; i < dev->m_impl->m_params.size(); i++) {
             OpenReadParam& param = dev->m_impl->m_params[i];
             mm::threading::ReadLockGuard lock(param.m_lock);
-            if (!param.pad_10D || !param.m_isOpen) {
+            if (!param.m_busy || !param.m_isOpen) {
                 continue;
             }
             return true;
@@ -2856,7 +2882,7 @@ bool DevFileNxTh::rfIsBusy(FileHandleTh* handle) {
         OpenReadParam& param = dev->m_impl->m_params[handle->m_channel];
         mm::threading::ReadLockGuard lock(param.m_lock);
         if (param.m_isOpen) {
-            return param.pad_10D;
+            return param.m_busy;
         }
     }
     return false;
@@ -2865,14 +2891,14 @@ bool DevFileNxTh::rfIsBusy(FileHandleTh* handle) {
 bool DevFileNxTh::rfClose(FileHandleTh* handle) {
     OpenReadParam& param = get()->m_impl->m_params[handle->m_channel];
     mm::threading::WriteLockGuard lock(param.m_lock);
-    if (param.pad_10F) {
+    if (param.m_reading) {
         __atomic_store_n(&handle->m_canceled, true, __ATOMIC_SEQ_CST);
         handle->m_listener = nullptr;
-        param.pad_110 = true;
+        param.m_closePending = true;
         return false;
     }
-    if (param.pad_10D) {
-        param.pad_10D = false;
+    if (param.m_busy) {
+        param.m_busy = false;
     }
     nn::fs::CloseFile(param.m_handle);
     param.m_isOpen = false;
@@ -2881,14 +2907,14 @@ bool DevFileNxTh::rfClose(FileHandleTh* handle) {
 
 void DevFileNxTh::tail() {
     for (OpenReadParam* param = m_impl->m_params.begin(); param != m_impl->m_params.end(); param++) {
-        if (!param->pad_10D || param->pad_118 == nullptr) {
+        if (!param->m_busy || param->m_request == nullptr) {
             continue;
         }
         mm::threading::WriteLockGuard lock(param->m_lock);
-        if (!__atomic_load_n(&param->pad_118->m_canceled, __ATOMIC_SEQ_CST)) {
-            FileHandleTh* handle = param->pad_118;
+        if (!__atomic_load_n(&param->m_request->m_canceled, __ATOMIC_SEQ_CST)) {
+            FileHandleTh* handle = param->m_request;
             if (handle->m_readSize != 0 && handle->m_readSize == handle->m_size) {
-                param->pad_10D = false;
+                param->m_busy = false;
                 if (handle->m_outData != nullptr) {
                     *handle->m_outData = handle->m_data;
                 }
@@ -2907,16 +2933,16 @@ void DevFileNxTh::tail() {
                     event.pad_38 = handle->pad_68;
                     listener->OnFileEvent(&event);
                 }
-                param->pad_118 = nullptr;
+                param->m_request = nullptr;
             }
-        } else if (!param->pad_10F) {
-            if (param->pad_110) {
+        } else if (!param->m_reading) {
+            if (param->m_closePending) {
                 nn::fs::CloseFile(param->m_handle);
-                param->pad_110 = false;
+                param->m_closePending = false;
             }
-            FileHandleTh* handle = param->pad_118;
+            FileHandleTh* handle = param->m_request;
             param->m_isOpen = false;
-            param->pad_10D = false;
+            param->m_busy = false;
             if (handle->m_outData != nullptr) {
                 *handle->m_outData = nullptr;
             }
@@ -2935,7 +2961,7 @@ void DevFileNxTh::tail() {
                 event.pad_38 = handle->pad_68;
                 listener->OnFileEvent(&event);
             }
-            param->pad_118 = nullptr;
+            param->m_request = nullptr;
         }
     }
 }
@@ -2944,10 +2970,10 @@ void DevFileNxTh::thUpdate(void* arg) {
     OpenReadParam* param = static_cast<OpenReadParam*>(arg);
     DevFileNxTh* owner = static_cast<DevFileNxTh*>(param->m_owner);
     mm::threading::ReadWriteLock& channelLock = param->m_lock;
-    FileHandleTh*& request = param->pad_118;
-    while (!__atomic_load_n(&owner->m_impl->pad_17F8, __ATOMIC_SEQ_CST)) {
+    FileHandleTh*& request = param->m_request;
+    while (!__atomic_load_n(&owner->m_impl->m_quit, __ATOMIC_SEQ_CST)) {
         param->m_thread->waitSignalEvent();
-        if (__atomic_load_n(&owner->m_impl->pad_17F8, __ATOMIC_SEQ_CST)) {
+        if (__atomic_load_n(&owner->m_impl->m_quit, __ATOMIC_SEQ_CST)) {
             break;
         }
         void* buffer;
@@ -2956,10 +2982,10 @@ void DevFileNxTh::thUpdate(void* arg) {
         bool canceled;
         {
             mm::threading::ReadLockGuard lock(channelLock);
-            offset = param->pad_158.pad_14;
-            buffer = param->pad_158.pad_8;
-            size = param->pad_158.pad_18;
-            if (param->pad_10D) {
+            offset = param->m_param.m_offset;
+            buffer = param->m_param.m_buffer;
+            size = param->m_param.m_readSize;
+            if (param->m_busy) {
                 canceled = __atomic_load_n(&request->m_canceled, __ATOMIC_SEQ_CST);
             } else {
                 canceled = true;
@@ -2969,7 +2995,7 @@ void DevFileNxTh::thUpdate(void* arg) {
             continue;
         }
         FileReadResult result;
-        param->pad_10F = true;
+        param->m_reading = true;
         if (DevFileUtilNx::readFile(request, param->m_handle, size, offset, buffer, size, result)) {
             mm::threading::WriteLockGuard lock(channelLock);
             if (FileHandleTh* handle = request) {
@@ -2982,8 +3008,88 @@ void DevFileNxTh::thUpdate(void* arg) {
                 }
             }
         }
-        param->pad_10F = false;
+        param->m_reading = false;
     }
+}
+
+bool DevFileUtilNx::readFile(FileHandleTh*& handle, nn::fs::FileHandle& file, int length, long offset, void* buffer,
+                             unsigned int size, FileReadResult& result) {
+    result.pad_C = 0;
+    result.pad_10 = 0;
+    long fileSize;
+    {
+        long bytes = 0;
+        fileSize = nn::fs::GetFileSize(&bytes, file).IsSuccess() ? bytes : -1;
+    }
+    if (fileSize < 0 || __atomic_load_n(&handle->m_canceled, __ATOMIC_SEQ_CST)) {
+        return false;
+    }
+    Xbc1Header header;
+    header.m_magic = Xbc1Header::MAGIC;
+    if (fileSize > sizeof(header)) {
+        nn::fs::ReadFile(file, offset, &header, sizeof(header));
+        if (header.m_magic == Xbc1Header::MAGIC) {
+            int remain = header.m_packedSize;
+            offset += sizeof(header);
+            void* packed = mtl::MemManager::allocate(WorkRoot::getMemTMP(), 0x80000, 0x1000, false, "no name", 0);
+            z_stream stream;
+            memset(&stream, 0, sizeof(stream));
+            inflateInit(&stream);
+            stream.next_out = static_cast<Bytef*>(buffer);
+            stream.avail_out = header.m_size;
+            stream.zalloc = zlibAlloc;
+            stream.zfree = zlibFree;
+            bool done = false;
+            while (!__atomic_load_n(&handle->m_canceled, __ATOMIC_SEQ_CST)) {
+                if (stream.avail_in == 0) {
+                    int chunk = remain > 0x80000 ? 0x80000 : remain;
+                    nn::fs::ReadFile(file, offset, packed, chunk);
+                    remain -= chunk;
+                    offset += chunk;
+                    stream.next_in = static_cast<Bytef*>(packed);
+                    stream.avail_in = chunk;
+                }
+                int ret = inflate(&stream, Z_NO_FLUSH);
+                if (ret == Z_STREAM_END) {
+                    done = true;
+                }
+                if (ret == Z_STREAM_END || stream.avail_out == 0) {
+                    break;
+                }
+            }
+            inflateEnd(&stream);
+            if (packed != nullptr) {
+                mtl::MemManager::deallocate(packed, 0, false);
+            }
+            if (!done) {
+                return false;
+            }
+            result.m_size = header.m_size;
+            result.m_whole = true;
+            return true;
+        }
+    }
+    int remain = length;
+    if (remain == 0) {
+        remain = fileSize - offset;
+    }
+    if (remain > static_cast<int>(size)) {
+        return false;
+    }
+    result.m_size = 0;
+    result.m_whole = false;
+    while (remain > 0) {
+        if (__atomic_load_n(&handle->m_canceled, __ATOMIC_SEQ_CST)) {
+            return false;
+        }
+        int chunk = remain > 0x100000 ? 0x100000 : remain;
+        nn::fs::ReadFile(file, offset, buffer, chunk);
+        remain -= chunk;
+        buffer = static_cast<char*>(buffer) + chunk;
+        offset += chunk;
+        result.m_size += chunk;
+    }
+    return true;
 }
 
 bool DevFileNxTh::rfIsUsedChannel(unsigned int channel) {
@@ -3103,8 +3209,8 @@ void DevFileArchiveNx::Param::finalize() {
 
 DevFileArchiveNx::DevFileArchiveNx(mtl::ALLOC_HANDLE handle)
     : m_alloc(handle), pad_18(0), m_impl(new (handle, nullptr, 0, 4, false) Param()) {
-    __atomic_store_n(&m_impl->pad_17FC, 0, __ATOMIC_SEQ_CST);
-    __atomic_store_n(&m_impl->pad_17F8, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&m_impl->m_threadCount, 0, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&m_impl->m_quit, false, __ATOMIC_SEQ_CST);
 }
 
 DevFileArchiveNx::~DevFileArchiveNx() {
@@ -3129,19 +3235,19 @@ bool DevFileArchiveNx::initialize() {
 
 unsigned int DevFileArchiveNx::thFileLoader(void* arg) {
     DevFileArchiveNx* owner = static_cast<DevFileArchiveNx*>(static_cast<OpenReadParam*>(arg)->m_owner);
-    __atomic_fetch_add(&owner->m_impl->pad_17FC, 1, __ATOMIC_SEQ_CST);
+    __atomic_fetch_add(&owner->m_impl->m_threadCount, 1, __ATOMIC_SEQ_CST);
     while (!DevFileTh::isInitialized()) {
         nn::os::SleepThread(nn::TimeSpan::FromMilliSeconds(100));
     }
     owner->thUpdate(arg);
-    __atomic_fetch_sub(&owner->m_impl->pad_17FC, 1, __ATOMIC_SEQ_CST);
+    __atomic_fetch_sub(&owner->m_impl->m_threadCount, 1, __ATOMIC_SEQ_CST);
     return 0;
 }
 
 bool DevFileArchiveNx::finalize() {
     switch (pad_18) {
     case 1:
-        __atomic_store_n(&m_impl->pad_17F8, true, __ATOMIC_SEQ_CST);
+        __atomic_store_n(&m_impl->m_quit, true, __ATOMIC_SEQ_CST);
         for (unsigned long i = 1; i < m_impl->m_params.size(); i++) {
             if (m_impl->m_params[i].m_thread != nullptr) {
                 m_impl->m_params[i].m_thread->setSignalEvent(true);
@@ -3150,7 +3256,7 @@ bool DevFileArchiveNx::finalize() {
         pad_18 = 2;
         break;
     case 2:
-        if (__atomic_load_n(&m_impl->pad_17FC, __ATOMIC_SEQ_CST) == 0) {
+        if (__atomic_load_n(&m_impl->m_threadCount, __ATOMIC_SEQ_CST) == 0) {
             pad_18 = 3;
         }
         break;
@@ -3249,10 +3355,35 @@ bool DevFileArchiveNx::rfOpen(FileHandleTh* handle, const char* path) {
         return false;
     }
     param.m_isOpen = true;
-    param.pad_10D = false;
+    param.m_busy = false;
     param.pad_10E = false;
-    param.pad_110 = false;
-    param.pad_190 = result.m_entry.pad_0;
+    param.m_closePending = false;
+    param.m_archiveOffset = result.m_entry.pad_0;
+    return true;
+}
+
+bool DevFileArchiveNx::rfRead(FileHandleTh* handle, const DevFileParamTh& param) {
+    if (handle == nullptr) {
+        return false;
+    }
+    OpenReadParam& channel = get()->m_impl->m_params[handle->m_channel];
+    mm::threading::WriteLockGuard lock(channel.m_lock);
+    if (!channel.m_isOpen) {
+        return false;
+    }
+    handle->m_readSize = 0;
+    handle->setBuffer(param.m_buffer, param.m_readSize);
+    handle->setRange(param.m_offset, param.m_readSize);
+    __atomic_store_n(&handle->m_canceled, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&handle->m_failed, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&handle->m_done, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&handle->pad_200, false, __ATOMIC_SEQ_CST);
+    channel.m_param = param;
+    channel.m_busy = true;
+    channel.m_request = handle;
+    channel.pad_10E = false;
+    channel.m_closePending = false;
+    channel.m_thread->setSignalEvent(true);
     return true;
 }
 
@@ -3262,7 +3393,7 @@ bool DevFileArchiveNx::rfIsBusy(FileHandleTh* handle) {
         for (unsigned int i = 0; i < dev->m_impl->m_params.size(); i++) {
             OpenReadParam& param = dev->m_impl->m_params[i];
             mm::threading::ReadLockGuard lock(param.m_lock);
-            if (!param.pad_10D || !param.m_isOpen) {
+            if (!param.m_busy || !param.m_isOpen) {
                 continue;
             }
             return true;
@@ -3271,7 +3402,7 @@ bool DevFileArchiveNx::rfIsBusy(FileHandleTh* handle) {
         OpenReadParam& param = dev->m_impl->m_params[handle->m_channel];
         mm::threading::ReadLockGuard lock(param.m_lock);
         if (param.m_isOpen) {
-            return param.pad_10D;
+            return param.m_busy;
         }
     }
     return false;
@@ -3281,13 +3412,13 @@ bool DevFileArchiveNx::rfIsBusy(FileHandleTh* handle) {
 bool DevFileArchiveNx::rfClose(FileHandleTh* handle) {
     OpenReadParam& param = get()->m_impl->m_params[handle->m_channel];
     mm::threading::WriteLockGuard lock(param.m_lock);
-    if (param.pad_10F) {
+    if (param.m_reading) {
         __atomic_store_n(&handle->m_canceled, true, __ATOMIC_SEQ_CST);
         handle->m_listener = nullptr;
-        param.pad_110 = true;
+        param.m_closePending = true;
     } else {
-        if (param.pad_10D) {
-            param.pad_10D = false;
+        if (param.m_busy) {
+            param.m_busy = false;
         }
         nn::fs::CloseFile(param.m_handle);
         param.m_isOpen = false;
@@ -3308,14 +3439,14 @@ bool DevFileArchiveNx::rfIsUsedChannel(unsigned int channel) {
 
 void DevFileArchiveNx::tail() {
     for (OpenReadParam* param = m_impl->m_params.begin(); param != m_impl->m_params.end(); param++) {
-        if (!param->pad_10D || param->pad_118 == nullptr) {
+        if (!param->m_busy || param->m_request == nullptr) {
             continue;
         }
         mm::threading::WriteLockGuard lock(param->m_lock);
-        if (!__atomic_load_n(&param->pad_118->m_canceled, __ATOMIC_SEQ_CST)) {
-            FileHandleTh* handle = param->pad_118;
+        if (!__atomic_load_n(&param->m_request->m_canceled, __ATOMIC_SEQ_CST)) {
+            FileHandleTh* handle = param->m_request;
             if (handle->m_readSize != 0 && handle->m_readSize == handle->m_size) {
-                param->pad_10D = false;
+                param->m_busy = false;
                 if (handle->m_outData != nullptr) {
                     *handle->m_outData = handle->m_data;
                 }
@@ -3334,15 +3465,15 @@ void DevFileArchiveNx::tail() {
                     event.pad_38 = handle->pad_68;
                     listener->OnFileEvent(&event);
                 }
-                param->pad_118 = nullptr;
+                param->m_request = nullptr;
             }
-        } else if (!param->pad_10F) {
-            if (param->pad_110) {
+        } else if (!param->m_reading) {
+            if (param->m_closePending) {
                 nn::fs::CloseFile(param->m_handle);
-                param->pad_110 = false;
+                param->m_closePending = false;
             }
-            FileHandleTh* handle = param->pad_118;
-            param->pad_10D = false;
+            FileHandleTh* handle = param->m_request;
+            param->m_busy = false;
             if (handle->m_outData != nullptr) {
                 *handle->m_outData = nullptr;
             }
@@ -3361,7 +3492,7 @@ void DevFileArchiveNx::tail() {
                 event.pad_38 = handle->pad_68;
                 listener->OnFileEvent(&event);
             }
-            param->pad_118 = nullptr;
+            param->m_request = nullptr;
         }
     }
 }
@@ -3370,10 +3501,10 @@ void DevFileArchiveNx::thUpdate(void* arg) {
     OpenReadParam* param = static_cast<OpenReadParam*>(arg);
     DevFileArchiveNx* owner = static_cast<DevFileArchiveNx*>(param->m_owner);
     mm::threading::ReadWriteLock& channelLock = param->m_lock;
-    FileHandleTh*& request = param->pad_118;
-    while (!__atomic_load_n(&owner->m_impl->pad_17F8, __ATOMIC_SEQ_CST)) {
+    FileHandleTh*& request = param->m_request;
+    while (!__atomic_load_n(&owner->m_impl->m_quit, __ATOMIC_SEQ_CST)) {
         param->m_thread->waitSignalEvent();
-        if (__atomic_load_n(&owner->m_impl->pad_17F8, __ATOMIC_SEQ_CST)) {
+        if (__atomic_load_n(&owner->m_impl->m_quit, __ATOMIC_SEQ_CST)) {
             break;
         }
         void* buffer;
@@ -3383,11 +3514,11 @@ void DevFileArchiveNx::thUpdate(void* arg) {
         bool canceled;
         {
             mm::threading::ReadLockGuard lock(channelLock);
-            offset = param->pad_158.pad_14;
-            buffer = param->pad_158.pad_8;
-            size = param->pad_158.pad_18;
-            base = param->pad_190;
-            if (param->pad_10D) {
+            offset = param->m_param.m_offset;
+            buffer = param->m_param.m_buffer;
+            size = param->m_param.m_readSize;
+            base = param->m_archiveOffset;
+            if (param->m_busy) {
                 canceled = __atomic_load_n(&request->m_canceled, __ATOMIC_SEQ_CST);
             } else {
                 canceled = true;
@@ -3397,7 +3528,7 @@ void DevFileArchiveNx::thUpdate(void* arg) {
             continue;
         }
         FileReadResult result;
-        param->pad_10F = true;
+        param->m_reading = true;
         if (DevFileUtilNx::readFile(request, param->m_handle, size, base + offset, buffer, size, result)) {
             mm::threading::WriteLockGuard lock(channelLock);
             if (FileHandleTh* handle = request) {
@@ -3410,7 +3541,7 @@ void DevFileArchiveNx::thUpdate(void* arg) {
                 }
             }
         }
-        param->pad_10F = false;
+        param->m_reading = false;
     }
 }
 

@@ -33,6 +33,25 @@ public:
             pad_58 = nullptr;
         }
     }
+    // the buffer a channel read fills and its size (DevFileNxTh::rfRead, DevFileArchiveNx::rfRead; the name is not
+    // the original's)
+    void setBuffer(void* data, int size) {
+        m_size = size;
+        m_data = data;
+        pad_10 = size;
+    }
+    // where the read starts in the file and, unless a size is set, how much it reads; either one makes it a partial
+    // read (pad_1f5). DevFileNxTh::rfRead passes its parameter's offset and size; DevFileTh::Impl::writeFile does
+    // the same with its last argument and 0. The name is not the original's.
+    void setRange(int offset, int size) {
+        pad_14 = offset;
+        if (m_size == 0) {
+            m_size = size;
+        }
+        if (pad_14 > 0 || m_size > 0) {
+            __atomic_store_n(&pad_1f5, true, __ATOMIC_SEQ_CST);
+        }
+    }
     // named by the symbols: sets a read request up from a parameter (DevFileTh::Impl::checkValidFile)
     void setup(const DevFileParamTh& param);
     // named by the symbols: sets a write request up (DevFileTh::Impl::writeFile)
@@ -66,7 +85,7 @@ public:
     int m_allocType;
     unsigned char pad_4[0x4];
     void* m_data;  // the read's data (OnFileEvent takes it over and clears it)
-    unsigned char pad_10[0x4];
+    int pad_10;  // DevFileNxTh::rfRead stores the read's byte count
     int pad_14;  // DevFileTh::Impl::writeFile stores its last argument, 0 when negative
     int m_size;  // the data's size
     unsigned char pad_1c[0xC];
@@ -111,8 +130,9 @@ public:
     bool m_canceled;  // 0x1FD (stored atomically when a canceled read ends)
     bool m_failed;    // 0x1FE (stored atomically when no medium could read the file)
     bool m_done;      // 0x1FF (stored atomically when a medium read the file)
+    bool pad_200;  // stored atomically (DevFileNxTh::rfRead clears it with the three before it)
     // 0x210 bytes: FixedObjectAllocator<FileHandleTh, 640>::deallocate divides a slot's offset by 0x210
-    unsigned char pad_200[0x10];
+    unsigned char pad_201[0xF];
 };
 }  // namespace ml
 

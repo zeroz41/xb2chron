@@ -1,6 +1,7 @@
 #ifndef ML_DEVFILEPARAMTH_H
 #define ML_DEVFILEPARAMTH_H
 
+#include "mm/mtl/FixedVector.h"
 #include "mtl/AllocHandle.h"
 
 namespace ml { class IWorkEvent; }
@@ -14,20 +15,16 @@ namespace ml {
 class DevFileParamTh {
 public:
     DevFileParamTh()
-        : m_path(nullptr), m_hMem(), pad_10(nullptr), pad_38(nullptr), m_buffer(nullptr), m_offset(0), m_readSize(0), m_align(0),
+        : m_path(nullptr), m_hMem(), pad_10(nullptr), m_hMemAlts(), m_buffer(nullptr), m_offset(0), m_readSize(0), m_align(0),
           pad_58(1), pad_5c(0), m_listener(nullptr), m_prio(FILE_PRIO(10)), pad_6c(true), pad_6d(false), pad_6e(false), pad_6f(false) {}
-    // clears the pointer at 0x38 (what it holds is not known)
-    ~DevFileParamTh() {
-        if (pad_38 != nullptr) {
-            pad_38 = nullptr;
-        }
-    }
 
     const char* m_path;  // the file (FileHandleTh::setup asserts it)
     mtl::ALLOC_HANDLE m_hMem;  // where the data is allocated (cloud::CloudDataMan passes CloudMan's data handle)
     void* pad_10;
-    unsigned char pad_18[0x20];
-    void* pad_38;
+    // more memory to try when m_hMem has no room (FileHandleTh::setup copies them to the request, whose
+    // setReadBuffer allocates from each in turn while the allocation fails; DevFileNxTh::rfRead's copy of the
+    // parameters assigns them one by one; the name is not the original's)
+    mm::mtl::FixedVector<mtl::ALLOC_HANDLE, 8> m_hMemAlts;
     void* m_buffer;  // where the file is read to
     unsigned int m_size;  // the buffer's size (the constructor leaves it: cloud::CloudDataMan's never stores it)
     // where the read starts in the file and how many bytes it reads (NvmshResMan::createNaviDataRead passes its
