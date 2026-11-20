@@ -10,8 +10,9 @@ public:
     ~DrResMdoTexSimple();
     void createTex();
 
-    unsigned char pad_0[0x8];
-    DrResMdoTexSimple* m_pNext;  // 0x8: DrMdoTexSimpleMan's list link (the name is not the original's)
+    // 0x0/0x8: DrMdoTexSimpleMan's list links (the names are not the original's)
+    DrResMdoTexSimple* m_pPrev;  // 0x0
+    DrResMdoTexSimple* m_pNext;  // 0x8
     // Field and flag names below are not the original's.
     enum {
         FLAG_CREATED = 1 << 0,  // createTex

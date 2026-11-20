@@ -401,6 +401,47 @@ void DrMdoCtl::partsPosNukiShadowRender(const MdsMdlTopHeader* top) {
     }
 }
 
+void DrMdoCtl::partsPosNoamShadowRender(const MdsMdlTopHeader* top, grlib::CGLibVtxInstans* inst, unsigned int count,
+                                        unsigned int first, unsigned int instances) {
+    int num = top->m_infoNum;
+    if (num <= 0) {
+        return;
+    }
+    DrShdDataList* list = m_pDrMan->m_shdMan->m_dataList;
+    DrAPCache* cache = m_pDrMan->m_apCache;
+    const MdsMdlInfoHeader* info = reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs);
+    for (int i = 0; i < num; i++, info++) {
+        if ((info->m_flags & 0x20000) && (info->m_shadowFlags & 0x40)) {
+            const MdsMatInfoHeader* mat = m_pWrkMatRes->m_pMatInfo + info->m_matIdx;
+            m_pWrkMatRes->m_pVertex->setVertexBind(info->m_vtxBindIdx);
+            cache->setupCulling(static_cast<DrApCullType>(mat->m_cullType));
+            if (!(mat->m_shdFlags & 0x4)) {
+                int matIdx = info->m_matIdx;
+                DrMdoShdSetShadow shd;
+                shd.m_pMdl = this;
+                (shd.*DrMdoShdSetShadow::s_pShwMaterial[9])(9, mat, 0, matIdx, list);
+            } else if (!(mat->m_shdFlags & 0x8)) {
+                int matIdx = info->m_matIdx;
+                DrMdoShdSetShadow shd;
+                shd.m_pMdl = this;
+                (shd.*DrMdoShdSetShadow::s_pShwMaterial[10])(10, mat, 0, matIdx, list);
+            } else {
+                int matIdx = info->m_matIdx;
+                DrMdoShdSetShadow shd;
+                shd.m_pMdl = this;
+                (shd.*DrMdoShdSetShadow::s_pShwMaterial[11])(11, mat, 0, matIdx, list);
+            }
+            grlib::CGLibCtlVertex::setInstanceVertex(*inst, first, count, 1, 1);
+            DrResMdoVertex* vtx = m_pWrkMatRes->m_pVertex;
+            if (info->m_flags & 0x2000) {
+                vtx->renderIns(info->m_renderIdx[1], instances);
+            } else {
+                vtx->renderIns(info->m_renderIdx[0], instances);
+            }
+        }
+    }
+}
+
 void DrMdoCtlDammy::resourceInit() {}
 
 void DrMdoCtlDammy::update() {}
@@ -1252,6 +1293,38 @@ void (DrMdoMat::*DrMdoMat::s_pCallMatVal[35])(const MdsMatInfoHeader*, int, int)
     &DrMdoMat::matCall_CalcPrjDefCall,
     &DrMdoMat::matCall_CalcPrjAlpha,
 };
+
+void DrMdoAnim::calcAnim(const MdsFixAnmCate* cate, DrResMdoMat* mat, DrResEtcPamObj* pamObj, float* work, float rate) {
+    const MdsFixAnmInf* inf = m_pWrkMatRes->m_pFixAnmInf + cate->m_infIdx;
+    float* frame = m_pWrkMatRes->m_pFixAnmFrame + cate->m_infIdx;
+    for (int i = 0; i < cate->m_infNum; i++) {
+        float value;
+        if (inf->m_etcParam) {
+            value = pamObj->m_params[inf->m_keyNum].getParams();
+            if (inf->m_invert) {
+                value = 1.0f - value;
+                if (value < 0.0f) {
+                    value = 0.0f;
+                } else if (value > 1.0f) {
+                    value = 1.0f;
+                }
+            }
+        } else {
+            if (inf->m_hourFrame) {
+                *frame = m_pDrMan->m_hour * 240.0f;
+            } else {
+                *frame += rate;
+                if (*frame > static_cast<int>(inf->m_endFrame - 1)) {
+                    *frame = (inf->m_endFrame - *frame) + inf->m_startFrame;
+                }
+            }
+            value = getHermiteAttr(inf, *frame);
+        }
+        s_pCallAnim[inf->m_callIdx](mat, work + inf->m_workOfs, value);
+        inf++;
+        frame++;
+    }
+}
 
 float DrMdoAnim::getNodeAnmHermiteAttr(const MdsMdlNodeAnmInfo* info, float frame) {
     const MdsMdlNodeAnmInfo::Key* key =
@@ -2738,6 +2811,42 @@ void DrMdoCtlMpfAuto::gridInstColiCalc() {
     StockPoint();
 }
 
+bool DrMdoCtlMpfAuto::gridColiInstPosRangeChk(const MdsMpfAutoPosTree* tree) {
+    if ((tree->m_lodMask & m_lodMask) == 0) {
+        return false;
+    }
+    if (tree->m_max[0] < m_rangeMin[0] || tree->m_min[0] > m_rangeMax[0] || tree->m_max[1] < m_rangeMin[1] ||
+        tree->m_min[1] > m_rangeMax[1]) {
+        return false;
+    }
+    int childNum = tree->m_childNum;
+    if (childNum != 0) {
+        const MdsMpfAutoPosTree* trees = m_pCurBuff->m_pPosTree;
+        const unsigned int* idx = m_pCurBuff->m_pIdxTbl + tree->m_childIdx;
+        for (int i = 0; i < tree->m_childNum; i++, idx++) {
+            if (gridColiInstPosRangeChk(&trees[*idx])) {
+                return true;
+            }
+        }
+    }
+    int instNum = tree->m_instNum;
+    if (instNum != 0) {
+        const unsigned int* idx = m_pCurBuff->m_pIdxTbl + tree->m_instIdx;
+        for (int i = 0; i < instNum; i++, idx++) {
+            const _wkMpfAutoBuff::Inst* inst = &m_pCurBuff->m_pInstData[*idx];
+            if ((inst->m_lodMask & m_lodMask) == 0) {
+                break;
+            }
+            if (inst->m_max[0] < m_rangeMin[0] || inst->m_min[0] > m_rangeMax[0] || inst->m_max[1] < m_rangeMin[1] ||
+                inst->m_min[1] > m_rangeMax[1]) {
+                continue;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 bool DrMdoCtlMpfAuto::gridChkColiRange(float maxX, float minX, float maxZ, float minZ) {
     int num = m_buffNum;
     m_rangeMin[0] = minX;
@@ -3735,6 +3844,48 @@ void DrMdoSetup::createUniformBlock(const MdsMatInfoHeader* info, DrResMdoMat* m
         var++;
     }
     block->updateData();
+}
+
+void DrMdoCtlPos::createThicknessRenderDisplayListSub(bool first) {
+    if (m_instListNum == 0) {
+        return;
+    }
+    m_stateFlags = (m_stateFlags & ~0x40000040) | 0x40;
+    m_curTriBlockIdx = -1;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    m_pWrkMatRes->m_pVertex->beginVertexSetup();
+    m_renderTech = 0;
+    m_renderPass = 0;
+    m_pDrMan->m_apCache->setupCulling(static_cast<DrApCullType>(first));
+    MdoInstancePrePassArg arg;
+    arg.m_first = 0x34;
+    arg.m_first2 = first;
+    int listNum = m_instListNum;
+    for (int i = 0; i < listNum; i++) {
+        int num = m_instList[i].m_end - m_instList[i].m_start;
+        if (num == 0) {
+            continue;
+        }
+        const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop + m_instList[i].m_topIdx;
+        arg.m_bill = false;
+        if (m_instList[i].m_flags & 1) {
+            arg.m_bill = true;
+        }
+        arg.m_count = m_instList[i].m_count + m_instList[i].m_start * 0x34;
+        arg.m_instances = num - m_instList[i].m_billNum;
+        arg.m_billNum = m_instList[i].m_billNum;
+        arg.m_billArg = m_instList[i].m_billArg;
+        int partNum = top->m_infoNum;
+        arg.m_info = reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs);
+        for (int j = 0; j < partNum; j++, arg.m_info++) {
+            if ((arg.m_info->m_drawFlags & 0x8000) && (arg.m_info->m_flags & 0x24000) == 0x4000) {
+                partsInstanceThicknessRender(arg);
+            }
+        }
+    }
 }
 
 void DrMdoCtlPos::shadowRender() {
@@ -6566,13 +6717,39 @@ void DrMdoSmlShadowMan::changeViewNum(DrMdoSmlShadowObj* obj, int viewNum) {
 }
 
 DrMdoTexSimpleMan::DrMdoTexSimpleMan(DrMan* drMan)
-    : m_pDrMan(drMan), m_list0(), m_list1(), m_list3(), m_list2() {}
+    : m_pDrMan(drMan), m_list(), m_list3(), m_list2() {}
 
 DrMdoTexSimpleMan::~DrMdoTexSimpleMan() {
-    m_list0.deleteAll();
-    m_list1.deleteAll();
+    m_list[0].deleteAll();
+    m_list[1].deleteAll();
     m_list2.deleteAll();
     m_list3.deleteAll();
+}
+
+void DrMdoTexSimpleMan::update() {
+    m_list2.deleteAll();
+    int idx = DrMan::s_nDblIdx;
+    DrMdoResList<DrResMdoTexSimple>& stock = m_list[idx];
+    DrResMdoTexSimple* tex = stock.m_pHead;
+    while (tex != nullptr) {
+        tex->createTex();
+        DrResMdoTexSimple* next = tex->m_pNext;
+        m_list3.pushBack(tex);
+        tex = next;
+    }
+    stock.m_pHead = nullptr;
+    stock.m_pTail = nullptr;
+    tex = m_list3.m_pHead;
+    while (tex != nullptr) {
+        if (tex->m_flags & (4 << idx)) {
+            DrResMdoTexSimple* next = tex->m_pNext;
+            m_list3.remove(tex);
+            m_list2.pushBack(tex);
+            tex = next;
+        } else {
+            tex = tex->m_pNext;
+        }
+    }
 }
 
 DrMdoTextureMan::DrMdoTextureMan(DrMan* drMan) : m_pDrMan(drMan), m_texList(), m_etcTexList() {}
