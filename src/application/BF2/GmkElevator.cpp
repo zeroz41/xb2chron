@@ -2742,6 +2742,21 @@ const GmkRoutePoint* GmkRoute::getRoutePoint(unsigned int index) const {
     return nullptr;
 }
 
+bool GmkRoutedEnemy::isPopPointRouteEnd(const GmkRouteNavi& navi) const {
+    if (navi.isValid()) {
+        bool reverse = navi.pad_a4;
+        const Data* data = getData();
+        if (data->m_pointBegin == data->m_popPointIndx) {
+            if (reverse && (data->m_flags & 8)) {
+                return true;
+            }
+        } else if (!reverse && data->m_pointEnd - 1 == data->m_popPointIndx && (data->m_flags & 8)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool GmkRoute::getRoutePointPos(mm::Vec3& pos, unsigned int index) const {
     const GmkRoutePoint* point = getRoutePoint(index);
     if (point != nullptr && point->isValid()) {
@@ -3475,6 +3490,14 @@ void GmkGrave::validateTargetable() {
     setGobTargetable(m_gob, true);
 }
 
+bool GmkGrave::canPopGobInst() const {
+    if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) && pad_48 &&
+        static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->m_eneDisp.isMatch(*m_pos)) {
+        return true;
+    }
+    return false;
+}
+
 void GmkGrave::debugDraw() const {
     AGmkBase::debugDraw();
     isValid();
@@ -3526,6 +3549,17 @@ void GmkGrave::createGobInst() {
     // the first byte of the gimmick's data: its scale in tenths
     setup->setInitialScale(m_createInfo.m_data[0] * 0.1f);
 }
+
+bool GmkGrave::canDepopGobInst() const {
+    bool result = false;
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        if (!pad_48 || !static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->m_eneRelease.isMatch(*m_pos)) {
+            result = true;
+        }
+    }
+    return result;
+}
+
 void GmkDmgEffect::update(float dt) { AGmkBase::update(dt); }
 
 int IGmkList::debugGetDocId() const { return 0; }
@@ -3626,6 +3660,25 @@ bool hasEyeBlink(const AGmkBase& gmk) {
         return false;
     }
     return Bdat::getFlagVal(Bdat::getFP("FLD_NpcMobMotionId"), "flag", mot, "notEyeBlink") == 0;
+}
+
+int getBindedFsId(const AGmkBase& gmk) {
+    switch (gmk.getGmkType()) {
+    case GmkTbox::TYPE: {
+        const GmkTbox& tbox = static_cast<const GmkTbox&>(gmk);
+        const char* column = "FSID";
+        if (tbox.getBdatInfo()->m_dig && tbox.getProgress() == 0) {
+            column = "FSID2";
+        }
+        return Bdat::getValCheck(gmk.getBindedBdatFp(), column, gmk.m_createInfo.m_bdatId, 2);
+    }
+    case GmkMapGimmick::TYPE:
+    case GmkJump::TYPE:
+    case GmkWarp::TYPE:
+        return Bdat::getValCheck(gmk.getBindedBdatFp(), "FSID", gmk.m_createInfo.m_bdatId, 2);
+    default:
+        return 0;
+    }
 }
 
 bool canPopSquadMember(gf::GF_OBJ_HANDLE* handle) {
