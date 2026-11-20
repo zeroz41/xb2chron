@@ -55,8 +55,11 @@ public:
         unsigned int keyOffset;   // 0x0: from m_data
         unsigned char pad_4[0x2];
         unsigned short keyNum;    // 0x6
-        unsigned short startFrame;  // 0x8
-        unsigned short endFrame;    // 0xA
+        // 0x8: the key frame range, start frame in the low 16 bits and end frame in the high 16 (update reads one
+        // 32-bit word and converts each half as unsigned)
+        unsigned int frameRange;
+        unsigned int getStartFrame() const { return frameRange & 0xFFFF; }
+        unsigned int getEndFrame() const { return frameRange >> 16; }
     };
     // One switch entry (0x24 bytes; getSwitchIndex reads its byte 2); names are not the original's.
     // updateSwitch reads flags (0x1 = sets the node frame range, 0x2 = sets m_stockFlags bit 2) and the range.

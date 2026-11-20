@@ -1652,6 +1652,49 @@ unsigned char DrResMdoInstPartsAnm::getSwitchIndex(unsigned int idx) const {
     return 0;
 }
 
+void DrResMdoInstPartsAnm::update() {
+    if (m_info->flags & 0x10) {
+        m_posAnm->update();
+    }
+    if (m_info->flags & 0x8) {
+        m_oldNodeFrame = m_nodeFrame;
+        if (m_stockFlags & (1 << DrMan::s_nDblMemIdx)) {
+            m_nodeFrame = m_nodeFrameStock[DrMan::s_nDblMemIdx];
+            m_stockFlags &= ~(1 << DrMan::s_nDblMemIdx);
+            const VisAnm* anm = m_visAnm;
+            if (anm != nullptr) {
+                float frame = getCalcNodeFrame();
+                const VisKey* keys = reinterpret_cast<const VisKey*>(m_data + anm->keyOffset);
+                const VisKey* key;
+                bool found = true;
+                if (anm->getStartFrame() >= frame) {
+                    key = &keys[0];
+                } else if (anm->getEndFrame() <= frame) {
+                    key = &keys[anm->keyNum - 1];
+                } else {
+                    found = false;
+                    for (unsigned int i = 1; i < anm->keyNum; i++) {
+                        if (keys[i].frame > frame) {
+                            key = &keys[i - 1];
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                if (found) {
+                    if (key->value <= 0.001f) {
+                        m_stockFlags &= ~8;
+                    } else {
+                        m_stockFlags |= 8;
+                    }
+                } else {
+                    m_stockFlags &= ~8;
+                }
+            }
+        }
+    }
+}
+
 void DrResMdoInstPartsAnm::getMatrix(mm::Mat44& mtx) const {
     if (m_info->flags & 0x10) {
         DrResMdoPosInstAnm* anm = m_posAnm;
@@ -6245,6 +6288,42 @@ void DrResMdoSeamWrkInst::changeMemCall() {
         head->m_data = posData;
         head->m_body = posData + *reinterpret_cast<const unsigned int*>(posData + headOfs);
     }
+}
+
+bool DrResMdoSeamWrkInst::callReadOffColiTest(const mm::Vec3& pos, const DrResMdoSeamParmRead* parm) {
+    const MdsSeamInstMapHead* head = m_header;
+    if (head->m_offColiOfs == 0) {
+        return false;
+    }
+    const unsigned char* top = reinterpret_cast<const unsigned char*>(head);
+    const OffColiTbl* tbl = reinterpret_cast<const OffColiTbl*>(top + head->m_offColiOfs);
+    int num = tbl->m_num;
+    const OffColiBox* box = reinterpret_cast<const OffColiBox*>(top + tbl->m_boxOfs);
+    const OffColiBox* hit = nullptr;
+    for (int i = 0; i < num; i++, box++) {
+        if (parm->m_mpfBits[box->m_skipBit >> 5] & (1 << (box->m_skipBit & 0x1F))) {
+            continue;
+        }
+        float dx = pos.x - box->m_center[0];
+        float dy = pos.y - box->m_center[1];
+        float dz = pos.z - box->m_center[2];
+        float x = dx * box->m_axis[0][0] + dy * box->m_axis[1][0] + dz * box->m_axis[2][0];
+        if (box->m_extent[0] >= mm::fabs(x)) {
+            float z = dx * box->m_axis[0][2] + dy * box->m_axis[1][2] + dz * box->m_axis[2][2];
+            if (box->m_extent[2] >= mm::fabs(z)) {
+                float y = dx * box->m_axis[0][1] + dy * box->m_axis[1][1] + dz * box->m_axis[2][1];
+                if (box->m_extent[1] >= mm::fabs(y)) {
+                    hit = box;
+                    break;
+                }
+            }
+        }
+    }
+    if (hit == nullptr) {
+        return true;
+    }
+    m_readOff |= 0x80 << hit->m_readBit;
+    return false;
 }
 
 void DrResMdoSeamWrkInst::calcCacheInfo() {
