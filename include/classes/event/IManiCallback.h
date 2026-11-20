@@ -31,6 +31,14 @@ public:
     unsigned char pad_0[0x80];
     mm::Mat44 m_mtx;  // 0x80
 };
+// what the manipulator asks the OnManiStart* slots for: ObjectChara::OnManiStartRot fills a frame (rotation about
+// y by DataManager::getRotOfsY, at the character's position) and the rotation relative to it; the field names are
+// not the original's
+class IManiCallback::StartParam {
+public:
+    mm::Mat44 m_frame;  // 0x0
+    mm::Mat44 m_mtx;    // 0x40
+};
 // what ManiManager::render passes OnManiRender: the colour to draw the target in; the field name is not the
 // original's
 class IManiCallback::RenderParam {

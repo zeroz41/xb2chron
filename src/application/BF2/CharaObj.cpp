@@ -4854,6 +4854,27 @@ void ObjectChara::OnManiSetPos(IManiCallback::SetParam& param) {
     setPosAxis(pos);
 }
 
+// the frame is the rotation about y by the axis' offset at the character's position, the matrix the rotation about
+// y relative to it (the goal rotation while a turn or liner rotation is queued)
+bool ObjectChara::OnManiStartRot(IManiCallback::StartParam& param) {
+    mm::Vec3 pos = m_chara->m_pos;
+    float ofsY = mm::mtl::Singleton<DataManager>::getPtr()->getRotOfsY(m_rot.m_type, pos);
+    mm::Mat44 frame;
+    frame.setRotY(ofsY);
+    frame.setTransRow(m_chara->m_pos);
+    CharaObj* chara = m_chara;
+    const mm::Vec3& rot = chara->m_cmdQueue0.contains(&chara->m_turnRot) ||
+                                  chara->m_cmdQueue1.contains(&chara->m_turnRot) ||
+                                  chara->m_cmdQueue1.contains(&chara->m_linerRot)
+                              ? chara->m_rotGoal
+                              : chara->m_rot;
+    mm::Mat44 mtx;
+    mtx.setRotY(rot.y - ofsY);
+    param.m_frame = frame;
+    param.m_mtx = mtx;
+    return true;
+}
+
 void ObjectChara::OnManiSetRot(IManiCallback::SetParam& param) {
     const mm::Mat44& mtx = param.m_mtx;
     mm::Vec3 r;
