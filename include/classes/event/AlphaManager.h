@@ -17,6 +17,8 @@ public:
     AlphaManager() : m_flags(0), m_debugFlags(0) {}
     // out of line (0x71000BA2B8); CharaFade::update sets a character's alpha with attribute 1
     void setAlpha(gf::GF_OBJ_HANDLE* handle, ALPHA_ATTR attr, float alpha, float time);
+    // deletes every object (1.0.0 symbol; 3.0.1 keeps only OnEventProc's inlined copy)
+    void clear();
     // drops the objects that are gone or opaque again
     void update();
     // the debug list (while m_debugFlags bit 0 is set)

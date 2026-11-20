@@ -6591,6 +6591,26 @@ void AlphaManager::render() {
     }
 }
 
+// 1.0.0 has it out of line (event::AlphaManager::clear); 3.0.1 keeps only OnEventProc's inlined copy
+inline void AlphaManager::clear() {
+    for (unsigned long i = 0; i < m_objs.size(); i++) {
+        delete *m_objs.at(i);
+    }
+    m_objs.clear();
+    m_flags = 0;
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void AlphaManager::OnEventProc(event::MSG_TYPE msg) {
+    if (msg == 14) {
+        update();
+    } else if (msg == 12) {
+        clear();
+    } else if (msg == 16) {
+        render();
+    }
+}
+
 }  // namespace event
 
 #include "classes/event/ShakeManager.h"
@@ -9074,6 +9094,17 @@ SeamlessManager::~SeamlessManager() {}
 SkipManager::SkipManager() : m_flags(0), pad_14(0), m_endFrame(-1.0f) {}
 
 BgmManager::BgmManager() : pad_10(0), pad_14(0), pad_7c(0) {}
+
+void BgmManager::changeVolume(float volume, float time) {
+    if (pad_10 & 2) {
+        mm::clampSelf(volume, 0.0f, 1.0f);
+        m_volume = volume;
+        gf::EventBgmSetup setup;
+        setup.m_volumeTime = time * (1.0f / 30.0f);
+        setup.m_volume = volume;
+        gf::GfGameEvent::changeVolume(setup);
+    }
+}
 
 // 1.0.0 has it out of line (event::BgmManager::clear); 3.0.1 keeps only OnEventProc's inlined copies
 inline void BgmManager::clear() {
