@@ -4,7 +4,7 @@
 #include "mm/Mat44.h"
 #include "mm/Vec3.h"
 
-namespace grlib { class CGLibRenderTarget; }
+namespace grlib { class CGLibRenderTarget; class CGLibTextureBuffer; }
 
 namespace ptlib {
 
@@ -24,7 +24,11 @@ public:
     grlib::CGLibRenderTarget* m_pCapture;  // 0x60: RenderGrObj::draw_capture draws the captured screen to it
     grlib::CGLibRenderTarget* m_pDepthColor;  // "depCol"; its size is the separation's
     grlib::CGLibRenderTarget* m_pDepthBloom;  // "depBlm", none without bloom
-    unsigned char pad_78[0x38];
+    unsigned char pad_78[0x18];
+    // 0x90: the textures ComputeManager::calculateParticle binds to the shader's "shw1", "shw2" and "shw3" (the name
+    // is not the original's)
+    grlib::CGLibTextureBuffer* m_pShadowTex[3];
+    unsigned char pad_a8[0x8];
     // the camera (effect::SystemManager::updateCam reads them; the names are not the original's)
     mm::Vec3 m_eye;
     mm::Vec3 m_target;

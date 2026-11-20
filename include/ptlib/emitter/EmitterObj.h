@@ -462,7 +462,14 @@ public:
     unsigned char m_blendMode;
     unsigned char pad_270[0x4];
     unsigned char m_viewNum;  // emitter_set_viewnum's
-    unsigned char pad_275[0x43];
+    unsigned char pad_275[0x5];
+    // 0x27A..0x27F: what ComputeManager::calculateParticle draws the emitter's particles from: their first index in
+    // the type-0 compute block, their count (none drawn for 0) and the 0x200-byte read block (the names are not the
+    // original's)
+    unsigned short m_computeIndex;
+    unsigned short m_computeCount;
+    unsigned short m_computeBlock;
+    unsigned char pad_280[0x38];
     // 0x2B8, 0x2C0, 0x2C8: EmitterArg::get_kf's last argument for the speed, size and rotation keys (the names are
     // not the original's)
     float* m_pSpdKfTable;

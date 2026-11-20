@@ -6,6 +6,13 @@
 #include "classes/ptlib/emitter/EmitterSetNode.h"
 #include "ptlib/ParticleSystem.h"
 #include "ptlib/renderer/RendererStream.h"
+#include "ptlib/renderer/RendererManager.h"
+#include "ptlib/renderer/RendererObj.h"
+#include "ptlib/renderer/ShaderManager.h"
+#include "ptlib/DrDrawWorkInfoEF.h"
+#include "grlib/CGLibCtl.h"
+#include "grlib/CGLibDecShader.h"
+#include "grlib/CGLibShader.h"
 #include "mm/MMStdBase.h"
 #include "mm/Math.h"
 #include "ptlib/Utility.h"
@@ -1066,6 +1073,46 @@ void ComputeManager::update(unsigned int view) {
     }
     m_type0Uniform.createParticlesUniform();
     calculateParticle();
+}
+
+void ComputeManager::calculateParticle() {
+    grlib::CGLibColorCtl::setBlendOffControl(GrlLogicType(3));
+    grlib::CGLibColorCtl::setColorBufferOn();
+    grlib::CGLibDepthCtl::setDepthControl(0, 0, GrlCompare(7));
+    grlib::CGLibPolygon::setCullingOff();
+    EmitterManager* pManager = EmitterManager::getPtr();
+    renderer::RenderGrObj* pGrObj = renderer::RenderManager::get()->getRenderGrObj();
+    const DrDrawWorkInfoEF* pDrInfo = pGrObj->m_pDrInfo;
+    grlib::CGLibDecShader* shader = pGrObj->m_shaderManager.getShaderByIndex(renderer::EffShdType(13));
+    grlib::CGLibCtlShader::setShader(*shader, renderer::EffStateManager::get()->m_otherFetch[1]);
+    unsigned int shw1 = shader->getCurrentShader().getTextureLocation("shw1");
+    unsigned int shw2 = shader->getCurrentShader().getTextureLocation("shw2");
+    unsigned int shw3 = shader->getCurrentShader().getTextureLocation("shw3");
+    grlib::CGLibCtlTexture::setTexture(*pDrInfo->m_pShadowTex[0], renderer::EffStateManager::get()->m_samplers[27], shw1);
+    grlib::CGLibCtlTexture::setTexture(*pDrInfo->m_pShadowTex[1], renderer::EffStateManager::get()->m_samplers[27], shw2);
+    grlib::CGLibCtlTexture::setTexture(*pDrInfo->m_pShadowTex[2], renderer::EffStateManager::get()->m_samplers[27], shw3);
+    unsigned int commonBuff = shader->getCurrentShader().getUniformBlockOfs("CommonBuff");
+    unsigned int readBlock = shader->getCurrentShader().getUniformBlockOfs("ReadBlock");
+    m_type2Uniform[m_viewIndex].m_uniform.setUniformBlock(commonBuff);
+    unsigned int size = ComputeUniform::s_nUniformBlockSize[0];
+    bool drawn = false;
+    for (IntrusiveList<EmitterObj>::iterator it = pManager->m_emitterActiveList.begin();
+         it != pManager->m_emitterActiveList.end(); ++it) {
+        if (it->isRenderCheck() && it->m_computeCount != 0) {
+            if (!drawn) {
+                grlib::CGLibPolygon::setRasterizer(1);
+            }
+            m_type1Uniform.m_uniform.setUniformBlock(readBlock, it->m_computeBlock << 9, 0x200);
+            grlib::CGLibCtlVertex::setUniformVertex(m_type0Uniform.m_uniform, size, it->m_computeIndex * size, 0, 0);
+            m_type0Uniform.m_uniform.setStorageBuffer(0);
+            grlib::CGLibCtlVertex::renderVertex(GrlPrimitiveType(0), it->m_computeCount);
+            drawn = true;
+        }
+    }
+    if (drawn) {
+        grlib::CGLibPolygon::setRasterizer(0);
+        grlib::CGLibCtlShader::setMemoryBarrierBit(1);
+    }
 }
 
 }}  // namespace ptlib::emitter
