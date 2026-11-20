@@ -30,6 +30,7 @@ float GetVolumeFadeAlphaRate(gf::GF_OBJ_HANDLE* handle);
 // which way GetCrossDirection turns: 0 one side, any other the opposite (the names are not the original's)
 enum CROSS_MODE {
     CROSS_MODE_0 = 0,
+    CROSS_MODE_1 = 1,
 };
 
 // v to length 1: a zero one becomes unitZ, a tiny one is scaled up first, one still too short becomes zero

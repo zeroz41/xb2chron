@@ -94,7 +94,11 @@ public:
     unsigned char pad_f6[0x9];
     // ReviveHeal's base heal, a percentage of the max HP (meaning inferred; the name is not the original's)
     unsigned char m_reviveHealRate;
-    unsigned char pad_100[0xC];
+    unsigned char pad_100[0x2];
+    // BattleCharacter::AddTrust adds no trust (for a non-negative limit) when the parameter's level less this is above
+    // the limit (meaning unknown)
+    unsigned char pad_102;
+    unsigned char pad_103[0x9];
     float pad_10c;  // PlayerParameter's slot 43 starts its 0x634 timer at it; meaning unknown
     // PlayerParameter's slots 45-48 answer them as percentages; meaning unknown
     unsigned short pad_110[4];

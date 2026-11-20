@@ -14,8 +14,10 @@
 #include "classes/btl/BattleGlobal.h"
 #include "classes/btl/ChainAttackManager.h"
 #include "classes/btl/BtlSystemBalanceAccess.h"
+#include "classes/gf/SCOM_ADD_TRUST.h"
 #include "classes/fw/EffectManager.h"
 #include "classes/fw/NaviManager.h"
+#include "classes/fw/CameraManager.h"
 #include "classes/gf/GfComProperty.h"
 #include "classes/gf/GfComPropertyPc.h"
 #include "classes/gf/GfComEffectCaster.h"
@@ -378,6 +380,59 @@ unsigned int BattleCharacter::GetIKData(float& value0, float& value1) const {
     return 0;
 }
 
+// the blow size names (S, M, L, LL). Proposed name, not the original's: the symbols leave it unnamed
+// (lbl_7100B3B260)
+static const char* const s_blowSizeNames[4] = {"S", "M", "L", "LL"};
+
+bool BattleCharacter::GetReactionBlowParam(int reaction, int level, float& horizontal, float& vertical) const {
+    if (m_param == nullptr) {
+        m_param = mm::mtl::PtrSingleton<DataManager>::sys()->GetCharacterParameterConst(m_chrID);
+    }
+    unsigned int size = m_param->pad_5e2_8;
+    if (size > 2) {
+        size = 3;
+    }
+    mm::mtl::FixStr<32> name;
+    name.format("PowLv%d_%s", level, s_blowSizeNames[size]);
+    unsigned short value = Bdat::getValCheckU16(gf::GfDataBdat::getFP(0x3A), name.m_str, reaction);
+    float rate = value != 0 ? value * 0.01f : 1.0f;
+    bool result = false;
+    switch (reaction) {
+    case 1:
+        horizontal = 0.3f;
+        vertical = 0.59999996f;
+        result = true;
+        break;
+    case 2:
+        horizontal = 0.1f;
+        vertical = 4.5f;
+        result = true;
+        break;
+    case 4:
+        horizontal = 0.0f;
+        vertical = 1.05f;
+        result = true;
+        break;
+    case 5:
+        horizontal = 0.0f;
+        vertical = 6.0f;
+        result = true;
+        break;
+    case 6:
+        horizontal = 0.0f;
+        vertical = -9.0f;
+        result = true;
+        break;
+    default:
+        horizontal = 0.0f;
+        vertical = 0.0f;
+        break;
+    }
+    horizontal = rate * horizontal;
+    vertical = rate * vertical;
+    return result;
+}
+
 unsigned long BattleCharacter::GetAnimSpecialProcData(ANIM_SPDATA_TYPE type) const {
     if (type == 0) {
         if (m_animSpType == 2) {
@@ -529,6 +584,44 @@ bool BattleCharacter::IsRescue() const {
         return true;
     }
     return false;
+}
+
+void BattleCharacter::AddTrust(unsigned int point, int value) {
+    if (value >= 0) {
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        if (param == nullptr) {
+            return;
+        }
+        if (param->GetLevel() - BtlSystemBalanceAccess::sys()->pad_102 > value) {
+            return;
+        }
+    }
+    int blade;
+    if (!BattleGlobal::sys()->m_challengeAnySuccess) {
+        const GROUP_DATA* group = GetGroupDataConst();
+        if (group == nullptr || group->pad_bit7) {
+            return;
+        }
+        blade = group->GetBladeDataConst(-1)->m_blade;
+        if (!(blade >= 1001 && blade < 2001)) {
+            return;
+        }
+    } else {
+        if (m_param == nullptr) {
+            m_param = mm::mtl::PtrSingleton<DataManager>::sys()->GetCharacterParameterConst(m_chrID);
+        }
+        const CharacterParameter* param = m_param;
+        if (param->IsBlade(false)) {
+            blade = m_bdatID;
+        } else {
+            const BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(param->m_driverHandle);
+            if (chr == nullptr) {
+                return;
+            }
+            blade = chr->m_bdatID;
+        }
+    }
+    gf::SCOM_ADD_TRUST::create(blade, point);
 }
 
 bool BattleCharacter::MoveStop(bool flag) {
@@ -1537,6 +1630,82 @@ void BattleCharacter::ArtsGravityProc(const ARTS_DATA& arts, int stage) {
                (gravity.m_startStage == stage && frame >= static_cast<unsigned int>(gravity.m_startFrame))) {
         pad_F03_7 = false;
     }
+}
+
+bool BattleCharacter::SetWarp(const mm::Vec3& pos, bool turn, float range) {
+    mm::Vec3 warp = pos;
+    CHECK_VALID_POS_DATA data;
+    data.m_useDir = false;
+    data.pad_5A = false;
+    data.m_pos = pos;
+    data.pad_20 = pos;
+    data.pad_40 = 1.5f;
+    data.pad_44 = 0.5f;
+    data.pad_4C = 0.5f;
+    data.pad_50 = 8;
+    data.pad_54 = 10;
+    data.pad_48 = range;
+    data.pad_58 = false;
+    data.pad_5B = true;
+    if (turn) {
+        mm::Vec3 camera = fw::CameraManager::get()->m_layers[0].getCameraPosition();
+        mm::Vec3 dir;
+        if (Misc::CalcDirectionXZ(warp, camera, dir)) {
+            if (m_isPlayer) {
+                mm::Vec3 cross;
+                Misc::GetCrossDirection(dir, cross, Misc::CROSS_MODE_1);
+                const CharacterParameter* param = GetCharacterParameterConst(false);
+                float angle;  // 25 degrees, to one side or the other
+                if (param != nullptr && param->m_groupIndex == 1) {
+                    angle = 0.43633232f;
+                } else {
+                    angle = -0.43633232f;
+                }
+                Misc::TurnDirectionAngle(dir, cross, angle, true);
+            }
+            data.m_dir = dir;
+            data.m_useDir = true;
+        }
+    }
+    bool flag = pad_F03_3;
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param != nullptr && param->IsBlade(true) && m_bdatID == 1003) {
+        pad_F03_3 = false;
+    }
+    bool valid = CheckValidPosition(data);
+    pad_F03_3 = flag;
+    if (!valid) {
+        return false;
+    }
+    warp = data.m_result;
+    SetWarpDirect(warp);
+    return true;
+}
+
+void BattleCharacter::SetWarpDirect(const mm::Vec3& pos) {
+    SetPosition(pos, true);
+    gf::GF_OBJ_HANDLE* target;
+    if (BattleGlobal::sys()->m_challengeAnySuccess || IsForward()) {
+        target = m_targetHandle;
+    } else {
+        if (m_param == nullptr) {
+            m_param = mm::mtl::PtrSingleton<DataManager>::sys()->GetCharacterParameterConst(m_chrID);
+        }
+        target = m_param->m_driverHandle;
+    }
+    if (const BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(target)) {
+        mm::Vec3 dir;
+        Misc::CalcDirectionXZ(pos, chr->m_pos, dir);
+        SetWarpPostureByDir(dir);
+    }
+    pad_11A0 = 0;
+    pad_11AC = 0;
+    pad_F01_0 = false;
+    pad_11B3_6 = false;
+    pad_11B3_7 = false;
+    pad_1150 = 0;
+    pad_1160 = 0;
+    pad_1158 = 0;
 }
 
 void BattleCharacter::RegisterWarp(const mm::Vec3* pos) {
@@ -2657,6 +2826,29 @@ void BattleCharacter::NotifyElementalAwakeEnd() {
     }
 }
 
+void BattleCharacter::NotifyMindEyeEnd(bool blow) {
+    if (blow && CheckResistReaction(2, nullptr, true) == 0) {
+        float horizontal;
+        float vertical;
+        GetReactionBlowParam(2, 1, horizontal, vertical);
+        mm::Vec3 dir = pad_60;
+        dir.x = -dir.x;
+        dir.z = -dir.z;
+        SetBlow(dir, horizontal, vertical, -1.0f);
+        SetAction(static_cast<ACTION_ID>(0x10), true, false, 0x20001, 0.0f);
+        mm::mtl::PtrSingleton<TalkManager>::sys()->NotifyTrigger(m_voiceIndex, static_cast<TalkManager::TRIGGER>(0x31),
+                                                                  0, 0);
+    }
+    if (m_effects[9] != 0) {
+        if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_removeEffect) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effects[9]);
+        } else {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->fadeOutDead(m_effects[9], 5);
+        }
+        m_effects[9] = 0;
+    }
+}
+
 bool BattleCharacter::IsControlCharacter() const {
     if (m_isControlCharaCached) {
         return m_isControlChara;
@@ -2815,6 +3007,54 @@ void BattleCharacter::UpdateBladeGuardEffect(const mm::Vec3* pos) {
     }
     mm::Vec3 rot(0.0f, rotY, 0.0f);
     effect->setParam(m_effects[3], nodePos, rot, scale);
+}
+
+void BattleCharacter::UpdateBuffEffect() {
+    if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->pad_bit1 && !pad_F09_3) {
+        for (int id = 10; id < 17; id++) {
+            UpdateBuffEffect(id);
+        }
+        return;
+    }
+    if (!m_isPlayer) {
+        return;
+    }
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr) {
+        return;
+    }
+    for (int i = 10; i < 17; i++) {
+        int buff;
+        switch (i) {
+        case 10:
+            buff = 17;
+            break;
+        case 11:
+        case 12:
+        case 15:
+        case 16:
+            buff = i;
+            break;
+        case 13: {
+            const CharacterParameter* self = GetCharacterParameterConst(false);
+            buff = self != nullptr && self->IsBlade(false) ? 14 : 13;
+            break;
+        }
+        case 14:
+            buff = 30;
+            break;
+        default:
+            continue;
+        }
+        if (!param->IsBuff(buff) && m_effects[i] != 0) {
+            if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_removeEffect) {
+                mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effects[i]);
+            } else {
+                mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(m_effects[i]);
+            }
+            m_effects[i] = 0;
+        }
+    }
 }
 
 bool BattleCharacter::CheckAttackAction(ACTION_ID id, bool flag) const {
