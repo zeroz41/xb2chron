@@ -10,6 +10,7 @@ namespace event {
 class CharaSetPos : public ::event::ICmd {
 public:
     // the table's slot 0 holds ICmd's destructor: inline, update is the key function
+    CharaSetPos() : m_handle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {}
     virtual ~CharaSetPos() {}  // slot 0
     virtual int update(event::ICmd::Param const&);  // slot 3
     // the object update moves (-1: none; CharaObj's constructor stores -1); the name is not the original's

@@ -11,6 +11,7 @@ namespace event {
 // table 0x7100B3E798; base event::ICmd (its slots; CharaObj queues it as a command)
 class CharaMount : public ::event::ICmd {
 public:
+    CharaMount() : m_model(nullptr), m_parent(nullptr), pad_18(), m_pos(mm::Vec3::zero), m_rot(mm::Quat::zero) {}
     virtual ~CharaMount() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
     virtual void init();  // slot 2
     virtual int update(event::ICmd::Param const&);  // slot 3

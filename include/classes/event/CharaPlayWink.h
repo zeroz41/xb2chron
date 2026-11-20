@@ -12,6 +12,9 @@ namespace event {
 // table 0x7100B3E680
 class CharaPlayWink : public ::event::ICmd {
 public:
+    CharaPlayWink()
+        : m_flags(0), m_handle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), pad_18(), m_wink(nullptr), m_lens(nullptr),
+          pad_30(0), pad_40(0), pad_44(1.0f), pad_48(0.0f), pad_50(mm::Vec3::zero), m_time(-1.0f) {}
     virtual ~CharaPlayWink() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
     virtual void init();  // slot 2
     virtual int update(event::ICmd::Param const&);  // slot 3
@@ -28,7 +31,13 @@ public:
     unsigned char pad_18[0x8];
     CharaWinkPlayer* m_wink;  // 0x20
     CharaLensPlayer* m_lens;  // 0x28
-    unsigned char pad_30[0x30];
+    unsigned long pad_30;
+    unsigned char pad_38[0x8];
+    int pad_40;
+    float pad_44;
+    float pad_48;
+    unsigned char pad_4c[0x4];
+    mm::Vec3 pad_50;
     float m_time;  // 0x60: idle sets -1
     unsigned char pad_64[0xc];
     mm::Vec2 m_lensXY;  // 0x70: idle sets zero (a Vec2 takes 16 bytes)

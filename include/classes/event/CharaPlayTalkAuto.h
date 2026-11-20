@@ -10,6 +10,8 @@ namespace event {
 // table 0x7100B3CCD8
 class CharaPlayTalkAuto : public ::event::ICmd {
 public:
+    CharaPlayTalkAuto()
+        : m_flags(0), m_handle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_playAction(nullptr), m_time(-1.0f) {}
     virtual ~CharaPlayTalkAuto();  // slot 0
     virtual void init();  // slot 2
     virtual int update(event::ICmd::Param const&);  // slot 3

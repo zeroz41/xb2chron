@@ -10,6 +10,7 @@ namespace event {
 class CharaStopAction : public ::event::ICmd {
 public:
     // the table's slot 0 holds ICmd's destructor: inline, update is the key function
+    CharaStopAction() : m_handle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {}
     virtual ~CharaStopAction() {}  // slot 0
     virtual int update(event::ICmd::Param const&);  // slot 3
     // the object whose event animation update returns to idle; the name is not the original's

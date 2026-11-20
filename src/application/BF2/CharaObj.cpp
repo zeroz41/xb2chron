@@ -1177,6 +1177,13 @@ void CharaDysUpdater::update(float) {
     }
 }
 
+CharaObj::CharaObj(const char* name)
+    : m_moveGoal(0.0f, 0.0f, 0.0f), m_flags(0), m_state(0), m_name(name), pad_cec(0), pad_cf0(0), pad_d38(0),
+      m_gfHandle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_model(nullptr), m_ghost(nullptr), m_attach(nullptr),
+      pad_1730(0.0f), m_pos(0.0f, 0.0f, 0.0f), m_posGoal(0.0f, 0.0f, 0.0f), m_rot(0.0f, 0.0f, 0.0f),
+      m_rotGoal(0.0f, 0.0f, 0.0f), m_frameInfo(), m_weaponScale(1.0f), m_hideWpnMask(),
+      m_modelId(mm::mtl::Singleton<CharaManager>::getPtr()->getReuseFlag()) {}
+
 void CharaWinkPlayer::idle_start() {
     m_count = ml::mtRand(60) + 90;
     m_state = &CharaWinkPlayer::idle_waiting;

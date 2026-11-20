@@ -10,6 +10,7 @@ namespace event {
 class CharaLinerPos : public ::event::ICmd {
 public:
     // inline: D2 is emitted in CharaObj's destructor, D0 sits in CharaObj's tail; update is the key function
+    CharaLinerPos() : m_ik(nullptr), m_dys(nullptr), m_gravity(0) {}
     virtual ~CharaLinerPos() {}  // slot 0
     virtual int update(event::ICmd::Param const&);  // slot 3
     // CharaObj::initModel stores the CharaObj's IK and dynamics updaters (at 0xd60 and 0xde0) and its 0xd3c word;

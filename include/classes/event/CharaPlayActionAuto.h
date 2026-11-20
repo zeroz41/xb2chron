@@ -10,6 +10,7 @@ namespace event {
 // table 0x7100B3CC30
 class CharaPlayActionAuto : public ::event::ICmd {
 public:
+    CharaPlayActionAuto() : m_flags(0), m_handle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), pad_18(), m_time(-1.0f) {}
     virtual ~CharaPlayActionAuto();  // slot 0
     virtual void init();  // slot 2
     virtual int update(event::ICmd::Param const&);  // slot 3

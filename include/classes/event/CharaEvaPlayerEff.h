@@ -9,6 +9,7 @@ namespace event {
 // table 0x7100B3CC10
 class CharaEvaPlayerEff {
 public:
+    CharaEvaPlayerEff() : m_model(nullptr), m_player(nullptr), m_rcha(nullptr), pad_20(0) {}
     virtual ~CharaEvaPlayerEff();  // slot 0
     void play(gf::GfEvtModel*, CharaEffectPlayer*, void*);
     void update(float);

@@ -9,6 +9,7 @@ namespace event {
 // table 0x7100B3CB18
 class CharaWpnAsm {
 public:
+    CharaWpnAsm() : pad_8(0), m_model(nullptr), m_param(nullptr), m_speed(0.0f), pad_50(1) {}
     virtual ~CharaWpnAsm();  // slot 0
     // the weapon command execCmd runs (its values are not known yet)
     enum CMD : int;

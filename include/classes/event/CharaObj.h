@@ -29,6 +29,12 @@
 #include "classes/event/CharaIKUpdater.h"
 #include "classes/event/CharaDysUpdater.h"
 #include "classes/event/CharaPartUpdater.h"
+#include "classes/event/CharaTarPlayer.h"
+#include "classes/event/CharaTarPlayerMot.h"
+#include "classes/event/CharaLensPlayer.h"
+#include "classes/event/CharaWeightPlayer.h"
+#include "classes/event/CharaWinkPlayer.h"
+#include "mm/mtl/FixStr.h"
 #include "classes/event/CharaWalkPos.h"
 #include "classes/event/CharaMount.h"
 #include "event/CvType.h"
@@ -120,7 +126,6 @@ public:
     unsigned char pad_28[0x8];
     // the command walkPos queues; the name is not the original's
     CharaWalkPos m_walkPos;  // 0x30
-    unsigned char pad_60[0xa0];
     // the liner position command linerPos queues (CharaObj's constructor builds it); the name is not the original's
     CharaLinerPos m_linerPos;  // 0x100
     // the turn and liner rotation commands (RandPlayer::Reply::update tests whether either is queued); the names are
@@ -130,7 +135,7 @@ public:
     // the command setTar queues in m_cmdQueue2 (ScriptCharaTgt::doit tests whether it is queued); the name is not
     // the original's
     CharaSetTar m_setTar;  // 0x530
-    unsigned char pad_540[0xa0];
+    unsigned char pad_5c0[0x20];
     // the commands setIdle erases from m_cmdQueue0 (CharaObj's constructor builds them); the names are not the original's
     CharaSetIdle m_setIdle;  // 0x5e0
     CharaPlayActionAuto m_playActionAuto;  // 0x608
@@ -140,14 +145,12 @@ public:
     CharaPlayMotion m_playMotion;  // 0x680
     CharaPlayMotionABC m_playMotionABC;  // 0x6d0
     CharaPlayEva m_playEva;  // 0x750
-    unsigned char pad_790[0x140];
     // where the last walkPos or linerPos heads (the position as passed); the name is not the original's
     mm::Vec3 m_moveGoal;  // 0x8d0
     CharaPlayEvaEff m_playEvaEff;  // 0x8e0
     CharaHideWpn m_hideWpn;  // 0x938
     CharaPlayHead m_playHead;  // 0x950
     CharaStopHead m_stopHead;  // 0x988
-    unsigned char pad_998[0x8];
     CharaPlayFacial m_playFacial;  // 0x9a0
     CharaPlayTalkAuto m_playTalkAuto;  // 0xa10
     CharaPlayTalk m_playTalk;  // 0xa38
@@ -160,11 +163,13 @@ public:
     unsigned int m_flags;  // 0xca0
     // createGhost sets 6 (what the values mean is not known); the name is not the original's
     int m_state;  // 0xca4
-    unsigned char pad_ca8[0x44];
+    // the name the constructor takes; the name is not the original's
+    mm::mtl::FixStr<64> m_name;  // 0xca8
     // ObjectList::createGfObjBladeByPcID tests pad_cec == 1 && pad_cf0 == 2 (a character it must not duplicate)
     int pad_cec;  // 0xcec
     int pad_cf0;  // 0xcf0
-    unsigned char pad_cf4[0x4c];
+    mm::mtl::FixStr<64> pad_cf4;
+    unsigned long pad_d38;
     // the character's gf object (RandPlayer::Wait::update hands it to GfObjUtil::isStanbyTalkingPlayer); the name is
     // not the original's
     gf::GF_OBJ_HANDLE* m_gfHandle;  // 0xd40
@@ -177,10 +182,15 @@ public:
     AttachActorBase* m_attach;  // 0xd58
     // tail updates it; the name is not the original's
     CharaIKUpdater m_ikUpdater;  // 0xd60
-    unsigned char pad_d70[0x70];
     // tail updates it last; resetDynamics forwards to it; the name is not the original's
     CharaDysUpdater m_dysUpdater;  // 0xde0
-    unsigned char pad_e08[0x588];
+    unsigned char pad_e08[0x8];
+    // the players the destructor destroys, in reverse order; the names are not the original's
+    CharaTarPlayer m_tarPlayer;  // 0xe10
+    CharaTarPlayerMot m_tarPlayerMot;  // 0xfe0
+    CharaLensPlayer m_lensPlayer;  // 0x1280
+    CharaWeightPlayer m_weightPlayer;  // 0x12d0
+    CharaWinkPlayer m_winkPlayer;  // 0x1350
     // playVolumeFade/playRimBloom and their stops forward to it; the name is not the original's
     CharaEffectPlayer m_effectPlayer;  // 0x1390
     // setExtDisp/setExtParam forward to it and tail runs its updateRequest; the name is not the original's
