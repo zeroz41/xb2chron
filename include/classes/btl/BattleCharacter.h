@@ -216,7 +216,8 @@ public:
     // character back (strength from BDAT table 0x3A's "PowLv%d_%s" row), sets its action 0x10 and notifies TalkManager
     // trigger 0x31; then fades out (or, with BattleGlobal's flag bit 0, removes) the effect whose id it keeps at 0x15C
     // and clears the id.
-    void NotifyMindEyeEnd(bool);
+    void NotifyMindEyeEnd(bool blow);
+    void SetBlow(const mm::Vec3& dir, float horizontal, float vertical, float);
     void NotifyBuffEnd(int buff, float effect, bool);
     // 2.0.0's symbols name it; 1.0.0's ResultProc calls GetWeaponAttack(bool, bool) const in its place, with one argument
     // fewer. A member: as IsBlade. What it does: gives the attack ButtonChallenge adds to the stat for its
@@ -303,6 +304,11 @@ public:
     void SetBladeSupportCondition(int condition);
     bool IsEnableBattleFace() const;
     void SetBattleFace(bool on, float time);
+    // 2.0.0's symbols name it. What it does: the reaction's blow strengths (BDAT table 0x3A's "PowLv<level>_<size>"
+    // percentage of the reaction row, size S/M/L/LL from the parameter's pad_5e2_8) times the fixed values of
+    // reactions 1, 2, 4, 5 and 6; false (and 0) for the others.
+    bool GetReactionBlowParam(int reaction, int level, float& horizontal, float& vertical) const;
+    void ElementalComboDirectionFinalize();
     void DispBladeLine(bool disp, float time);
     // false while parameter slot 65 holds for true; a non-player needs slot 64 and driver type 0; then whether
     // m_bladeArtsState is neither 1 nor 2
@@ -616,6 +622,10 @@ public:
     // updates the target lock arrow, the others their effect's position and scale (3.0.1's symbols spell
     // UpdateBuffEffect)
     void UpdateBuffEffect(int id);
+    // 3.0.1's symbols name it. What it does: with BattleGlobal's pad_bit1 set (and pad_F09_3 clear), updates buff
+    // effects 10-16 (UpdateBuffEffect(int)); otherwise, for a player, ends the effects 10-16 whose buff the
+    // parameter no longer has
+    void UpdateBuffEffect();
     // 3.0.1's symbols name them
     bool IsEnableBladeChangeAction(ACTION_ID id) const;
     void TakeOverChangeIra(BattleCharacter* other);
@@ -929,7 +939,19 @@ public:
     float pad_1000[3];
     // the name is not the original's: SetAction's float argument
     float m_actionValue;
-    unsigned char pad_1010[0x1C];
+    unsigned char pad_1010[0x10];
+    // the elemental combo direction ElementalComboDirectionFinalize ends: the UI direction id it hands to
+    // UIManager::ExitElementalComboDirectionUI, the BattleGlobal slow id it deletes, and a value it clears (the
+    // type's and the field names are not the original's)
+    struct ComboDirection {
+        // empty but user-written: the type is not trivial, so assigning a ComboDirection() clears only its 10 data
+        // bytes, as the original does (a trivial type clears all 12)
+        ~ComboDirection() {}
+        unsigned int m_uiID;
+        unsigned int m_slowID;
+        unsigned short pad_8;
+    };
+    ComboDirection m_comboDirection;
     // StartFullBurst sets them: -1 and 0 first, then 0, its argument and the argument * 8 (meaning unknown)
     unsigned short pad_102C;
     unsigned char pad_102E;

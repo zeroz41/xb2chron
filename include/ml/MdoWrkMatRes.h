@@ -336,7 +336,10 @@ struct MdoWrkMatRes {
     // 0x148: DrMdoShdSetShadow::shwShd_InstMot binds DrMdlMan::m_etcUniform's block m_etcIdx (the type and the
     // names are not the original's)
     struct EtcUniformRef {
-        unsigned char pad_0[0x20];
+        // 0x0: DrMdoAnim::getNodeAnmHermiteAttr finds an MdsMdlNodeAnmInfo's keys at m_keyOfs from it (the name is
+        // not the original's)
+        const unsigned char* m_pData;
+        unsigned char pad_8[0x18];
         int m_etcIdx;  // 0x20, passed to DrResEtcUniformObj::setUniformBlock as its short index
     }* m_pEtcRef;
     unsigned char pad_150[0x8];

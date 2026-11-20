@@ -234,6 +234,71 @@ const char* GfDataBlade::getDeathBlowWeaponName(unsigned int blade) {
     return s_weaponNameSuffixes[blade == 0 ? 0 : getSDataBlade(blade)->m_weaponType];
 }
 
+unsigned int GfDataBlade::getBladePower(SDataBlade& data) {
+    QuestListAcc* quest = QuestListAcc::get();
+    DataIdeaAcc idea(data.m_idea, false);
+    float power = 0.0f;
+    for (unsigned int i = 0; i < 4; i++) {
+        power += idea.getLevel(i);
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+        if (data.m_arts[i].m_id == 0) {
+            continue;
+        }
+        unsigned int level = data.m_arts[i].m_level;
+        if (level != 0) {
+            unsigned int difficulty = 0;
+            if (data.m_artsAchievement[i].m_achievementId != 0) {
+                unsigned int id = quest->getFLD_AchievementSetAchievementID(data.m_artsAchievement[i].m_achievementId,
+                                                                            level - 1);
+                if (id != 0) {
+                    difficulty = quest->getFLD_AchievementListDifficulty(id);
+                }
+            }
+            power += (level * 2.5f + difficulty) * 0.5f;
+        }
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+        if (data.m_skills[i].m_id == 0) {
+            continue;
+        }
+        unsigned int level = data.m_skills[i].m_level;
+        if (level != 0) {
+            unsigned int difficulty = 0;
+            if (data.m_skillAchievement[i].m_achievementId != 0) {
+                unsigned int id = quest->getFLD_AchievementSetAchievementID(data.m_skillAchievement[i].m_achievementId,
+                                                                            level - 1);
+                if (id != 0) {
+                    difficulty = quest->getFLD_AchievementListDifficulty(id);
+                }
+            }
+            power += (level * 2.5f + difficulty) * 0.5f;
+        }
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+        if (data.m_fieldSkills[i].m_id == 0) {
+            continue;
+        }
+        unsigned int level = data.m_fieldSkills[i].m_level;
+        if (level != 0) {
+            unsigned int difficulty = 0;
+            if (data.m_fieldSkillAchievement[i].m_achievementId != 0) {
+                unsigned int id = quest->getFLD_AchievementSetAchievementID(
+                    data.m_fieldSkillAchievement[i].m_achievementId, level - 1);
+                if (id != 0) {
+                    difficulty = quest->getFLD_AchievementListDifficulty(id);
+                }
+            }
+            power += (level * 2.5f + difficulty) * 0.5f;
+        }
+    }
+    float result = ceilf(power);
+    if (result > 99.0f) {
+        result = 99.0f;
+    }
+    return result;
+}
+
 unsigned int GfDataBlade::getRoleByWpnType(unsigned int wpnType) {
     if (wpnType == 0) {
         return 1;
@@ -2218,6 +2283,30 @@ bool GfDataBlade::isActivateReserver(unsigned int blade) {
     return party > 2 && party != 0xFFFFFFFF;
 }
 
+unsigned int GfDataBlade::addRareBlade(const SDataBlade& data) {
+    if (!isActivateUnuse(data.m_bladeId)) {
+        return 0;
+    }
+    GfDataManager::getDataGame()->m_blades[getBladeIndex(data.m_bladeId)] = data;
+    if (data.m_attachedParty == 0) {
+        setupSDataBladeAchievement(GfDataManager::getDataGame()->m_blades[getBladeIndex(data.m_bladeId)], false);
+    }
+    setActivateReserver(data.m_bladeId);
+    {
+        int driver = getCreator(data.m_bladeId);
+        unsigned int blade = data.m_bladeId;
+        DataParamAcc acc(4, blade, GimmickType(0));
+        GfDataDriver::setActivateWeaponType(driver, acc.getWeaponType(-1, false));
+        GfDataDriver::fn_7100244A44(driver, blade, false);
+    }
+    int rank = getTrustRank(data.m_bladeId);
+    unsigned int level = getKeyReleaseLevel(data.m_bladeId);
+    if (rank > 5 && level < 5) {
+        GfDataManager::getDataGame()->m_blades[getBladeIndex(data.m_bladeId)].m_keyLevel = 5;
+    }
+    return data.m_bladeId;
+}
+
 unsigned int GfDataBlade::getTrustRank(unsigned int blade) {
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
     return data.m_trustRank;
@@ -3312,6 +3401,18 @@ unsigned int GfDataDriverSkill::getEnhanceFromBdat(unsigned int driver, unsigned
         return 0;
     }
     return GfBdatBtl::get()->getBTL_Skill_DrEnhance(skill);
+}
+
+unsigned int GfDataDriverSkill::getValidSkillNum(unsigned int driver, bool round) {
+    unsigned int num = 0;
+    for (unsigned int line = 0; line < 5; line++) {
+        for (unsigned int level = 1; level <= 3; level++) {
+            if (getSkill(driver, line, level, round) != 0) {
+                num++;
+            }
+        }
+    }
+    return num;
 }
 
 unsigned int GfDataDriverSkill::getSkill(unsigned int driver, unsigned int line, unsigned int level, bool round) {
@@ -4636,6 +4737,17 @@ void GfDataDriver::setPouchData(unsigned int driver, unsigned int pouch, const S
     dst->remainTime = data.remainTime;
 }
 
+bool GfDataDriver::isUsedFavorite(unsigned int driver, FAVORITE favorite) {
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(driver)) != 0) {
+            return GfDataBlade::isUsedFavorite(getIraBlade(driver, -1), favorite);
+        }
+    }
+    unsigned int flag = (driver - 0x11 < 9 ? 0xF7C : 0xF8C) + driver;
+    return (GfGameFlag::getLocal(8, flag) & (1 << favorite)) != 0;
+}
+
 bool GfDataDriver::isIra(unsigned int driver) {
     return driver - 0x11 < 9;
 }
@@ -4683,6 +4795,59 @@ unsigned short GfDataUtil::getScenarioFlag() {
 
 void GfDataSound::getFullPath(mm::mtl::FixStr<128>& path, const char* name) {
     path.format("sound/se/%s%s", name, ".xsp");
+}
+
+bool GfDataSound::getFootStepSePackFile(mm::mtl::FixedVector<const char*, 2>& files, unsigned int footStep) {
+    bool ira = GfDataUtil::isIra();
+    switch (footStep) {
+    case 1:
+        if (ira) {
+            files.push_back("dlc_mov_pc_default");
+        } else {
+            files.push_back("se_mov_pc_default");
+        }
+        break;
+    case 2:
+        files.push_back("se_fld_move_nopon");
+        break;
+    case 3:
+        files.push_back("se_fld_move_large");
+        break;
+    case 4:
+        files.push_back("se_fld_move_hana");
+        break;
+    case 6:
+        files.push_back("se_fld_move_beast");
+        break;
+    case 7:
+        files.push_back("se_fld_move_float");
+        break;
+    case 8:
+        if (ira) {
+            files.push_back("dlc_mov_pc_default");
+        } else {
+            files.push_back("se_mov_pc_default");
+        }
+        files.push_back("se_mov_pc_beast");
+        break;
+    case 17:
+        files.push_back("dlc_fld_hanabuster");
+        files.push_back("se_fld_move_large");
+        break;
+    case 18:
+        files.push_back("dlc_mov_pc_default");
+        files.push_back("dlc_fld_move_highheels");
+        break;
+    case 19:
+        files.push_back("dlc_fld_bl400301");
+        break;
+    case 20:
+        files.push_back("dlc_fld_bl400201");
+        break;
+    default:
+        break;
+    }
+    return !files.empty();
 }
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B50E10)
@@ -5690,6 +5855,31 @@ bool GfDataHana::isEquipNArtsParts(unsigned int hana, unsigned int item) {
     return false;
 }
 
+bool GfDataHana::isExistSameEffectNArtsParts(unsigned int hana, unsigned int item, unsigned int slot) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    unsigned int bladeIndex = GfDataBlade::getBladeIndex(hana);
+    SDataGame* game = GfDataManager::getDataGame();
+    SDataBlade& data = game->m_blades[bladeIndex];
+    unsigned int nArts = bdat->getITM_HanaNArtsSetNArts(item);
+    if (nArts == 0) {
+        return false;
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+        unsigned int part = data.m_equipHana.m_nArtsParts[i].m_item;
+        if (i == slot) {
+            continue;
+        }
+        if (part == 0) {
+            continue;
+        }
+        bool same = bdat->getITM_HanaNArtsSetNArts(part) == nArts;
+        if (same) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool GfDataHana::isEquipCondenserParts(unsigned int hana, unsigned int item) {
     GfBdatItem* bdat = GfBdatItem::get();
     if (hana == 1005) {
@@ -5700,6 +5890,42 @@ bool GfDataHana::isEquipCondenserParts(unsigned int hana, unsigned int item) {
     }
     if (hana == 1007) {
         return bdat->isITM_HanaAssistFlagJD(item);
+    }
+    return false;
+}
+
+// Placeholder name: the symbols leave this file-static function unnamed and nothing names it. What it does: whether
+// one of the three condenser parts other than slot (3: none skipped) has the same enhance effect
+// (GfBdatBtl::getBTL_EnhanceEnhanceEffect of GfBdatItem::getITM_HanaAssistEnhance) as item; its one caller,
+// isExistSameEffectCondenserParts, passes a copy of the regular or the extend condenser parts.
+static bool fn_7100253AD4(const unsigned short* parts, unsigned int item, unsigned int slot);
+
+bool GfDataHana::isExistSameEffectCondenserParts(unsigned int hana, unsigned int item, unsigned int slot, bool extend) {
+    unsigned short parts[3];
+    memcpy(parts, getEquipParts(hana)->m_condenserParts, sizeof(parts));
+    if (fn_7100253AD4(parts, item, extend ? 3 : slot)) {
+        return true;
+    }
+    memcpy(parts, getEquipParts(hana)->m_extendCondenserParts, sizeof(parts));
+    return fn_7100253AD4(parts, item, extend ? slot : 3);
+}
+
+static bool fn_7100253AD4(const unsigned short* parts, unsigned int item, unsigned int slot) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    GfBdatBtl* btl = GfBdatBtl::get();
+    unsigned int effect = btl->getBTL_EnhanceEnhanceEffect(bdat->getITM_HanaAssistEnhance(item));
+    for (unsigned int i = 0; i < 3; i++) {
+        unsigned int part = parts[i];
+        if (i == slot) {
+            continue;
+        }
+        if (part == 0) {
+            continue;
+        }
+        bool same = effect == btl->getBTL_EnhanceEnhanceEffect(bdat->getITM_HanaAssistEnhance(part));
+        if (same) {
+            return true;
+        }
     }
     return false;
 }
@@ -6165,6 +6391,33 @@ bool GfDataBlade::getCommonBladeName(const char* path) {
     return strncmp(path, "bl/bl2", 6) == 0;
 }
 
+inline unsigned int GfDataBlade::getEnableCountForCreateBlade() {
+    SDataGame* game = GfDataManager::getDataGame();
+    int max = GfDataMercenaries::getReserverMax();
+    unsigned int count = 0;
+    for (int i = 0; i < max; i++) {
+        if (game->m_reserveBlades[i] == 0) {
+            count++;
+        }
+    }
+    return count;
+}
+
+unsigned int GfDataBlade::getEnableCountForCreateBlade(unsigned int crystal) {
+    bool unuse = isActivateUnuse(1197);
+    if (crystal == 45010) {
+        return unuse;
+    }
+    unsigned int count = getEnableCountForCreateBlade();
+    if (count == 0) {
+        return 0;
+    }
+    if (unuse) {
+        return count - 1;
+    }
+    return count;
+}
+
 unsigned int GfDataBlade::addCommonBlade(const SDataBlade& data) {
     unsigned int start = data.m_bladeId != 0 ? data.m_bladeId : 1198;
     unsigned int end = data.m_bladeId != 0 ? data.m_bladeId + 1 : 1397;
@@ -6531,6 +6784,26 @@ GfDataMercenaries::Preset* GfDataMercenaries::getPreset(unsigned int index) {
     return &GfDataManager::getDataGame()->m_mercenaryPresets[index];
 }
 
+unsigned int GfDataShop::getItemBit(unsigned int shop) {
+    GfBdatShop* bdat = GfBdatShop::get();
+    if (bdat->getShopListShopType(shop) != 0) {
+        return 0;
+    }
+    unsigned int table = bdat->getShopListTableID(shop);
+    unsigned int bit = 0;
+    for (unsigned int i = 0; i < 10; i++) {
+        if (bdat->getShopNormalDefItem(table, i) != 0) {
+            bit |= 1 << i;
+        }
+    }
+    for (unsigned int i = 0; i < 5; i++) {
+        if (bdat->getShopNormalAddItem(table, i) != 0) {
+            bit |= (bdat->getShopNormalPrivilegeCheck(table, i) == 0) << (i + 10);
+        }
+    }
+    return bit;
+}
+
 unsigned int GfDataShop::getPrivilegeItem(unsigned int shop) {
     unsigned int bit = getItemBit(shop);
     if (bit == 0) {
@@ -6543,6 +6816,35 @@ unsigned int GfDataShop::getPrivilegeItem(unsigned int shop) {
         return 0;
     }
     return bdat->getShopNormalPrivilegeItem(table);
+}
+
+void GfDataShop::setBuyItem(unsigned int shop, unsigned int item) {
+    if (shop == 0) {
+        return;
+    }
+    GfBdatShop* bdat = GfBdatShop::get();
+    if (bdat->getShopListShopType(shop) != 0) {
+        return;
+    }
+    unsigned int table = bdat->getShopListTableID(shop);
+    unsigned int flag = GfGameFlag::getLocal(0x20, GfBdatShop::get()->getShopNormalPrivilegeFlag(table));
+    unsigned int bit = 1;
+    for (unsigned int i = 0; i < 10; i++) {
+        if (bdat->getShopNormalDefItem(table, i) == item) {
+            flag |= bit;
+            GfGameFlag::setLocal(0x20, GfBdatShop::get()->getShopNormalPrivilegeFlag(table), flag);
+            return;
+        }
+        bit <<= 1;
+    }
+    for (unsigned int i = 0; i < 5; i++) {
+        if (bdat->getShopNormalAddItem(table, i) == item && bdat->getShopNormalPrivilegeCheck(table, i) == 0) {
+            flag |= bit;
+            GfGameFlag::setLocal(0x20, GfBdatShop::get()->getShopNormalPrivilegeFlag(table), flag);
+            return;
+        }
+        bit <<= 1;
+    }
 }
 
 void GfDataUtil::setChapterSave(unsigned int id, unsigned short value) {
@@ -7307,6 +7609,21 @@ bool GfDataFieldSkill::getName(unsigned char*& bdat, unsigned int& id, unsigned 
     id = QuestListAcc::get()->getFLD_FieldSkillListName(skill);
     bdat = GfBdatMsg::getFpFieldSkill();
     return id != 0;
+}
+
+// the affinity chart achievement of a skill line's level (1 and up), 0 for none
+unsigned int GfDataBlade::getAchievementID(unsigned int blade, unsigned int line, unsigned int level) {
+    SDataBlade* data = getSDataBlade(blade);
+    ACHIEVEMENT_TYPE type;
+    unsigned int index;
+    if (!GfDataAchievement::getAchievementType(type, index, line)) {
+        return 0;
+    }
+    AchievInfo* info = getAchievInfo(blade, line);
+    if (info->m_achievementId == 0) {
+        return 0;
+    }
+    return QuestListAcc::get()->getFLD_AchievementSetAchievementID(info->m_achievementId, level - 1);
 }
 
 const char* GfDataBlade::getBaseEabWeaponName(unsigned int blade) {

@@ -17,7 +17,8 @@ enum WeightLayer {};
 // table 0x7100B3CA78
 class CharaWeightPlayer {
 public:
-    virtual ~CharaWeightPlayer();  // slot 0
+    CharaWeightPlayer() : m_handle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), pad_10(0) {}
+    virtual ~CharaWeightPlayer() {}  // slot 0
     void easeIn(gf::AnimLayer, const char*, float, float, float, CV_TYPE, WeightLayer);  // 0x71000D37EC
     // 0x71000D36C8: eases the named item's curve on layer down to 0 over the time (the AnimLayer is not used)
     void easeOut(gf::AnimLayer, const char*, float, CV_TYPE, WeightLayer);

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <string.h>
 #include "classes/gmk/GmkBdat.h"
 #include "classes/gmk/GmkPhantomManager.h"
 #include "classes/gmk/GmkLandmarkManager.h"
@@ -13,6 +14,8 @@
 #include "classes/gf/GfComCollider.h"
 #include "classes/gf/GfObj.h"
 #include "classes/gf/GfObjSetupGimmick.h"
+#include "classes/gf/GfObjSetupMapLodAnim.h"
+#include "classes/gf/GfGameObj.h"
 #include "classes/fw/EffectManager.h"
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkGrave.h"
@@ -1572,9 +1575,14 @@ void GmkNpcManager::removeGmkNpc(AGmkNpc* npc) {
     m_npcIdInfos[getNpcIdInfoIdxFromNpcId(npcId)].removeGmkNpc(npc);
 }
 
-// the same steps as dispose, written here: the original's dispose keeps its default CreateInfo on the stack, this
-// copy does not (so the destructor does not inline dispose)
-GmkSet::~GmkSet() {
+void GmkSet::create(const CreateInfo& info) {
+    dispose();
+    m_createInfo = info;
+    m_npcManager.m_flag = !info.m_flag;
+    m_seq = &GmkSet::seqWaitToValidate_GfGameManager_m_mapID;
+}
+
+void GmkSet::dispose() {
     m_seq = nullptr;
     for (int i = 0; i < GMK_LIST_NUM; ++i) {
         if (m_gmkLists[i] != nullptr) {
@@ -1583,8 +1591,15 @@ GmkSet::~GmkSet() {
         }
     }
     m_bdat.dispose();
-    m_createInfo = CreateInfo();
+    // copied from a default one with a self-assignment guard: the guard's compare keeps the default on the stack
+    // here (the original's 0x30-byte temporary) and folds away where dispose is inlined
+    const CreateInfo defaultInfo;
+    if (&m_createInfo != &defaultInfo) {
+        m_createInfo = defaultInfo;
+    }
 }
+
+GmkSet::~GmkSet() { dispose(); }
 
 void GmkSet::seqWaitToValidate_GfGameManager_m_mapID(float) {
     if (gf::GfGameManager::getMapID() != 0) {
@@ -2739,6 +2754,21 @@ const GmkRoutePoint* GmkRoute::getRoutePoint(unsigned int index) const {
     return nullptr;
 }
 
+bool GmkRoutedEnemy::isPopPointRouteEnd(const GmkRouteNavi& navi) const {
+    if (navi.isValid()) {
+        bool reverse = navi.pad_a4;
+        const Data* data = getData();
+        if (data->m_pointBegin == data->m_popPointIndx) {
+            if (reverse && (data->m_flags & 8)) {
+                return true;
+            }
+        } else if (!reverse && data->m_pointEnd - 1 == data->m_popPointIndx && (data->m_flags & 8)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool GmkRoute::getRoutePointPos(mm::Vec3& pos, unsigned int index) const {
     const GmkRoutePoint* point = getRoutePoint(index);
     if (point != nullptr && point->isValid()) {
@@ -3472,6 +3502,14 @@ void GmkGrave::validateTargetable() {
     setGobTargetable(m_gob, true);
 }
 
+bool GmkGrave::canPopGobInst() const {
+    if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) && pad_48 &&
+        static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->m_eneDisp.isMatch(*m_pos)) {
+        return true;
+    }
+    return false;
+}
+
 void GmkGrave::debugDraw() const {
     AGmkBase::debugDraw();
     isValid();
@@ -3523,6 +3561,17 @@ void GmkGrave::createGobInst() {
     // the first byte of the gimmick's data: its scale in tenths
     setup->setInitialScale(m_createInfo.m_data[0] * 0.1f);
 }
+
+bool GmkGrave::canDepopGobInst() const {
+    bool result = false;
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        if (!pad_48 || !static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->m_eneRelease.isMatch(*m_pos)) {
+            result = true;
+        }
+    }
+    return result;
+}
+
 void GmkDmgEffect::update(float dt) { AGmkBase::update(dt); }
 
 int IGmkList::debugGetDocId() const { return 0; }
@@ -3623,6 +3672,25 @@ bool hasEyeBlink(const AGmkBase& gmk) {
         return false;
     }
     return Bdat::getFlagVal(Bdat::getFP("FLD_NpcMobMotionId"), "flag", mot, "notEyeBlink") == 0;
+}
+
+int getBindedFsId(const AGmkBase& gmk) {
+    switch (gmk.getGmkType()) {
+    case GmkTbox::TYPE: {
+        const GmkTbox& tbox = static_cast<const GmkTbox&>(gmk);
+        const char* column = "FSID";
+        if (tbox.getBdatInfo()->m_dig && tbox.getProgress() == 0) {
+            column = "FSID2";
+        }
+        return Bdat::getValCheck(gmk.getBindedBdatFp(), column, gmk.m_createInfo.m_bdatId, 2);
+    }
+    case GmkMapGimmick::TYPE:
+    case GmkJump::TYPE:
+    case GmkWarp::TYPE:
+        return Bdat::getValCheck(gmk.getBindedBdatFp(), "FSID", gmk.m_createInfo.m_bdatId, 2);
+    default:
+        return 0;
+    }
 }
 
 bool canPopSquadMember(gf::GF_OBJ_HANDLE* handle) {
@@ -8276,8 +8344,8 @@ void GmkElevator::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& g
 }
 
 GmkElevator::GmkElevator()
-    : pad_4b0(-1), m_seq(nullptr), m_accessed0(false), m_accessed2(false), m_accessed3(false), m_accessed1(false),
-      m_nextWait(0.0f) {
+    : m_lodAnimGob(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_seq(nullptr), m_accessed0(false), m_accessed2(false),
+      m_accessed3(false), m_accessed1(false), m_nextWait(0.0f) {
     for (int i = 0; i < 4; i++) {
         m_gobs[i] = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     }
@@ -8552,12 +8620,52 @@ bool GmkElevator::isLiftSwitch(gf::GF_OBJ_HANDLE* gob) const {
     return index == 1 || index == 3;
 }
 
+void GmkElevator::seqWaitToValidate_GfFieldLod(float) {
+    gf::GfFieldLod* lod = mm::mtl::PtrSingleton<gf::GfFieldLod>::get();
+    if (lod == nullptr || !lod->m_initialized || lod->m_coliAnim.m_info.m_model == nullptr ||
+        lod->m_coliAnim.m_info.m_lod == nullptr) {
+        return;
+    }
+    const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+    if (const gf::GfFieldLod::BdatInfo* lodInfo = lod->findBdatInfo(info->m_liftLod)) {
+        unsigned short lodId = lodInfo->m_lodId;
+        mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 1024>& list = *gf::GfGameObj::getList(2);
+        for (mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 1024>::iterator it = list.begin(); it != list.end(); ++it) {
+            gf::GfObjSetupMapLodAnim* setup =
+                mm::mtl::rttiCast<gf::GfObjSetupMapLodAnim>(gf::GfObjManager::getObjInfo(*it)->m_setup);
+            if (setup->m_lodId == lodId) {
+                m_lodAnimGob = *it;
+            }
+        }
+    }
+    bool reverse;
+    const BdatInfo* bdatInfo = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+    gf::GfFieldGimmick* gimmick = mm::mtl::PtrSingleton<gf::GfFieldGimmick>::get();
+    if (gimmick != nullptr && gimmick->m_unknownFlag1) {
+        reverse = mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->isAnimReverse(bdatInfo->m_liftLod);
+    } else {
+        reverse = !bdatInfo->m_liftReverse;
+    }
+    if (gf::GfDataUtil::getScenarioFlag() == 8030 && m_info->m_name != nullptr) {
+        reverse |= strcmp("ma18a_elv_01", m_info->m_name) == 0;
+    }
+    mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->setAnimReverse(info->m_liftLod, reverse, true);
+    mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->setPlaySpeed(info->m_liftLod, 1.0f);
+    if (info->m_shtALod != 0) {
+        mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->setAnimReverse(info->m_shtALod, !reverse, true);
+    }
+    if (info->m_shtBLod != 0) {
+        mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->setAnimReverse(info->m_shtBLod, reverse, true);
+    }
+    m_seq = &GmkElevator::seqInit;
+}
+
 void GmkElevator::dispose() {
     m_accessed0 = false;
     m_accessed2 = false;
     m_accessed3 = false;
     m_accessed1 = false;
-    pad_4b0 = -1;
+    m_lodAnimGob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     m_seq = nullptr;
     clearGobInsts();
     for (int i = 0; i < 4; i++) {

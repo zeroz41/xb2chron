@@ -12,6 +12,9 @@ class CharaWeightPlayer;
 // table 0x7100B3E5A0
 class CharaPlayHead : public ::event::ICmd {
 public:
+    CharaPlayHead()
+        : m_flags(0), m_handle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_weightPlayer(nullptr), m_id(0),
+          m_time(-1.0f) {}
     virtual ~CharaPlayHead() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
     virtual void init();  // slot 2
     virtual int update(event::ICmd::Param const&);  // slot 3

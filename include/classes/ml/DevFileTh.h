@@ -159,6 +159,9 @@ public:
     // named by the symbols: the medium a path names (DevFileNxTh::getMediaPath puts the media root before the paths
     // of medium 0)
     static MEDIA getMediaType(const char* path);
+    // named by the symbols: the data root ("../romdata" when name is empty) and the paths built from it; adds it as
+    // medium 0's search path ("rom:" in rom mount mode). The parameter names are not the original's
+    static void initializePath(const char* name, bool useArchive);
     // opens the file a parameter names for reading in parts (forwards to its Impl; the parameter name is not the
     // original's)
     static FileHandleTh* rfOpen(const DevFileParamTh& param);

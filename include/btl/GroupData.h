@@ -169,7 +169,10 @@ public:
     unsigned char : 3;
     // BattleCharacter::GetKizunaStage answers 3 while it is set (meaning unknown)
     bool pad_bit7 : 1;
-    unsigned char : 5;
+    unsigned char : 1;
+    // BattleCharacter::ElementalComboDirectionFinalize clears it for the character's group (meaning unknown)
+    bool pad_bit9 : 1;
+    unsigned char : 3;
     // BattleCharacter::GetGroupDataConst answers the group only while it is set (the name is not the original's)
     bool m_isValid : 1;
     unsigned char pad_11B[0x5];

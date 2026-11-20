@@ -18,6 +18,8 @@ public:
     void loadMdlstream(float frame, const char* name, unsigned int id);
     void loadMdlstream(float frame, event::CHARA_TYPE type, unsigned int id, unsigned int);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    // 1.0.0's CharaManager::getReuseFlag (inlined in 3.0.1)
+    int getReuseFlag() const { return m_reuseFlag; }
     // 1.0.0's clear() (0x71000D7094): zeroes m_offscrID, m_reuseFlag, then m_modeFlags
     void clear();
     // 1.0.0 0x71000BC388; 3.0.1 inlines it

@@ -13,6 +13,9 @@ class CharaDysUpdater;
 // table 0x7100B3CCA0
 class CharaPlayMotionABC : public ::event::ICmd {
 public:
+    CharaPlayMotionABC()
+        : m_flags(0), m_handle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_ik(nullptr), m_dys(nullptr), m_phase(0),
+          pad_58(), m_blendIndex(0), m_blendRate(0.0f), m_weights(), m_fromWeights() {}
     virtual ~CharaPlayMotionABC();  // slot 0
     virtual int update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4

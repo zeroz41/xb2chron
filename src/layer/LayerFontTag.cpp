@@ -227,6 +227,57 @@ LayerBase* LayerFontManager::createFontColMapObj(const void* data) {
     return obj;
 }
 
+void LayerFontManager::update() {
+    deleteAll(m_deleteList);
+    for (LayerBase* obj = m_setupList[LayerManager::s_nDebIdx].m_head; obj != nullptr;) {
+        LayerBase* next = obj->m_next;
+        m_setupList[LayerManager::s_nDebIdx].removeList(obj);
+        static_cast<LayerFontResObj*>(obj)->setupResource();
+        m_objList.addListNotNull(obj);
+        obj = next;
+    }
+    LayerLinkList<LayerBase>& setup = m_setupList[LayerManager::s_nDebIdx];
+    setup.m_num = 0;
+    setup.m_head = nullptr;
+    setup.m_tail = nullptr;
+    bool iconReleased = false;
+    bool resReleased = false;
+    for (LayerBase* obj = m_objList.m_head; obj != nullptr;) {
+        unsigned int mask = 1 << LayerManager::s_nDebIdx;
+        bool released = static_cast<LayerFontResObj*>(obj)->m_releaseFlags & mask;
+        LayerBase* next = obj->m_next;
+        if (released) {
+            if (obj->m_objType == 10) {
+                resReleased |= m_defaultResObj == obj;
+            } else if (obj->m_objType == 11) {
+                iconReleased |= m_defaultObj == obj;
+            }
+            m_objList.removeList(obj);
+            m_deleteList.addListNotNull(obj);
+        }
+        obj = next;
+    }
+    if (resReleased) {
+        for (LayerBase* obj = m_objList.m_head; obj != nullptr; obj = obj->m_next) {
+            if (obj->m_objType == 10) {
+                m_defaultResObj = obj;
+                goto resFound;
+            }
+        }
+        m_defaultResObj = nullptr;
+    resFound:;
+    }
+    if (iconReleased) {
+        for (LayerBase* obj = m_objList.m_head; obj != nullptr; obj = obj->m_next) {
+            if (obj->m_objType == 11) {
+                m_defaultObj = obj;
+                return;
+            }
+        }
+        m_defaultObj = nullptr;
+    }
+}
+
 LayerFontIconObj::~LayerFontIconObj() {
     if (m_texture != nullptr) {
         m_texture->release();
@@ -302,6 +353,30 @@ void LayerFontStyleObj::release() {
     releaseIconInfo();
     m_manager->m_styleList.removeList(this);
     delete this;
+}
+
+mm::mtl::Vector<LayerStrInfo>* LayerFontStyleObj::createColorInfo(unsigned int count) {
+    releaseColorInfo();
+    mm::mtl::Vector<LayerStrInfo>* info =
+        new (mm::mtl::PtrSingleton<LayerManager>::get()->m_workHandle, nullptr, 0, 4, false)
+            mm::mtl::Vector<LayerStrInfo>();
+    info->setAllocator(&mm::mtl::PtrSingleton<LayerManager>::get()->m_allocator);
+    info->clear();
+    info->reserve(count, 8);
+    m_colorInfo = info;
+    return info;
+}
+
+mm::mtl::Vector<LayerStrInfo>* LayerFontStyleObj::createIconInfo(unsigned int count) {
+    releaseIconInfo();
+    mm::mtl::Vector<LayerStrInfo>* info =
+        new (mm::mtl::PtrSingleton<LayerManager>::get()->m_workHandle, nullptr, 0, 4, false)
+            mm::mtl::Vector<LayerStrInfo>();
+    info->setAllocator(&mm::mtl::PtrSingleton<LayerManager>::get()->m_allocator);
+    info->clear();
+    info->reserve(count, 8);
+    m_iconInfo = info;
+    return info;
 }
 
 void LayerFontTag::beginParseString() {

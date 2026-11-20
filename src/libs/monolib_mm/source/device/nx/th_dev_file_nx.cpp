@@ -107,6 +107,7 @@
 #include "classes/ml/FileHandleTh.h"
 #include "classes/ml/detail/FileLoader.h"
 #include "nn/fs.h"
+#include "zlib/zlib.h"
 #include "ml/EventFileTh.h"
 #include "ml/PathUtil.h"
 #include "ml/MlMem.h"
@@ -2501,6 +2502,104 @@ void DevPadNx::Impl::updateNpad() {
 }
 
 template <typename T>
+void DevPadNx::Impl::updateTpad(PadData& pad, const T& state) {
+    memset(&pad, 0, offsetof(PadData, m_connect));
+    pad.m_connect = true;
+    if (state.buttons.template Test<nn::hid::NpadButton::A>()) {
+        pad.m_btn |= 0x4;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::B>()) {
+        pad.m_btn |= 0x2;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::X>()) {
+        pad.m_btn |= 0x8;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::Y>()) {
+        pad.m_btn |= 0x1;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::L>()) {
+        pad.m_btn |= 0x10;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::R>()) {
+        pad.m_btn |= 0x20;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::ZL>()) {
+        pad.m_btn |= 0x40;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::ZR>()) {
+        pad.m_btn |= 0x80;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::Right>()) {
+        pad.m_btn |= 0x2000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::Left>()) {
+        pad.m_btn |= 0x8000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::Up>()) {
+        pad.m_btn |= 0x1000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::Down>()) {
+        pad.m_btn |= 0x4000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickL>()) {
+        pad.m_btn |= 0x400;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickR>()) {
+        pad.m_btn |= 0x800;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::Plus>()) {
+        pad.m_btn |= 0x200;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::Minus>()) {
+        pad.m_btn |= 0x100;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::LeftSL>()) {
+        pad.m_btn |= 0x80000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::LeftSR>()) {
+        pad.m_btn |= 0x100000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::RightSL>()) {
+        pad.m_btn |= 0x200000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::RightSR>()) {
+        pad.m_btn |= 0x400000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickLRight>()) {
+        pad.m_btn |= 0x1000000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickLUp>()) {
+        pad.m_btn |= 0x800000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickLLeft>()) {
+        pad.m_btn |= 0x4000000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickLDown>()) {
+        pad.m_btn |= 0x2000000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickRRight>()) {
+        pad.m_btn |= 0x10000000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickRUp>()) {
+        pad.m_btn |= 0x8000000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickRLeft>()) {
+        pad.m_btn |= 0x40000000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickRDown>()) {
+        pad.m_btn |= 0x20000000;
+    }
+    pad.m_alx = state.analogStickL.x * (1.0f / 32767.0f);
+    pad.m_aly = state.analogStickL.y * (1.0f / 32767.0f);
+    pad.m_arx = state.analogStickR.x * (1.0f / 32767.0f);
+    pad.m_ary = state.analogStickR.y * (1.0f / 32767.0f);
+    pad.m_alx = mm::clamp(-1.0f, pad.m_alx, 1.0f);
+    pad.m_aly = mm::clamp(-1.0f, pad.m_aly, 1.0f);
+    pad.m_arx = mm::clamp(-1.0f, pad.m_arx, 1.0f);
+    pad.m_ary = mm::clamp(-1.0f, pad.m_ary, 1.0f);
+}
+
+template <typename T>
 void DevPadNx::Impl::initializeVibration(unsigned int id, PadData& pad) {
     if (pad.m_vibInit) {
         return;
@@ -2680,8 +2779,8 @@ MemoryAutoReleaser::~MemoryAutoReleaser() {
 
 DevFileNxTh::DevFileNxTh(mtl::ALLOC_HANDLE handle)
     : m_alloc(handle), pad_18(0), m_impl(new (handle, nullptr, 0, 4, false) Impl()) {
-    __atomic_store_n(&m_impl->pad_17FC, 0, __ATOMIC_SEQ_CST);
-    __atomic_store_n(&m_impl->pad_17F8, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&m_impl->m_threadCount, 0, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&m_impl->m_quit, false, __ATOMIC_SEQ_CST);
 }
 
 DevFileNxTh::~DevFileNxTh() {}
@@ -2702,10 +2801,21 @@ bool DevFileNxTh::initialize() {
     return true;
 }
 
+unsigned int DevFileNxTh::thFileLoader(void* arg) {
+    DevFileNxTh* owner = static_cast<DevFileNxTh*>(static_cast<OpenReadParam*>(arg)->m_owner);
+    __atomic_fetch_add(&owner->m_impl->m_threadCount, 1, __ATOMIC_SEQ_CST);
+    while (!DevFileTh::isInitialized()) {
+        nn::os::SleepThread(nn::TimeSpan::FromMilliSeconds(100));
+    }
+    owner->thUpdate(arg);
+    __atomic_fetch_sub(&owner->m_impl->m_threadCount, 1, __ATOMIC_SEQ_CST);
+    return 0;
+}
+
 bool DevFileNxTh::finalize() {
     switch (pad_18) {
     case 1:
-        __atomic_store_n(&m_impl->pad_17F8, true, __ATOMIC_SEQ_CST);
+        __atomic_store_n(&m_impl->m_quit, true, __ATOMIC_SEQ_CST);
         for (unsigned long i = 1; i < m_impl->m_params.size(); i++) {
             if (m_impl->m_params[i].m_thread != nullptr) {
                 m_impl->m_params[i].m_thread->setSignalEvent(true);
@@ -2714,7 +2824,7 @@ bool DevFileNxTh::finalize() {
         pad_18 = 2;
         break;
     case 2:
-        if (__atomic_load_n(&m_impl->pad_17FC, __ATOMIC_SEQ_CST) == 0) {
+        if (__atomic_load_n(&m_impl->m_threadCount, __ATOMIC_SEQ_CST) == 0) {
             pad_18 = 3;
         }
         break;
@@ -2823,10 +2933,35 @@ bool DevFileNxTh::rfOpen(FileHandleTh* handle, const char* path) {
             return false;
         }
         param.m_isOpen = true;
-        param.pad_10D = false;
+        param.m_busy = false;
         param.pad_10E = false;
-        param.pad_110 = false;
+        param.m_closePending = false;
     }
+    return true;
+}
+
+bool DevFileNxTh::rfRead(FileHandleTh* handle, const DevFileParamTh& param) {
+    if (handle == nullptr) {
+        return false;
+    }
+    OpenReadParam& channel = get()->m_impl->m_params[handle->m_channel];
+    mm::threading::WriteLockGuard lock(channel.m_lock);
+    if (!channel.m_isOpen) {
+        return false;
+    }
+    handle->m_readSize = 0;
+    handle->setBuffer(param.m_buffer, param.m_readSize);
+    handle->setRange(param.m_offset, param.m_readSize);
+    __atomic_store_n(&handle->m_canceled, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&handle->m_failed, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&handle->m_done, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&handle->pad_200, false, __ATOMIC_SEQ_CST);
+    channel.m_param = param;
+    channel.m_busy = true;
+    channel.m_request = handle;
+    channel.pad_10E = false;
+    channel.m_closePending = false;
+    channel.m_thread->setSignalEvent(true);
     return true;
 }
 
@@ -2836,7 +2971,7 @@ bool DevFileNxTh::rfIsBusy(FileHandleTh* handle) {
         for (unsigned int i = 0; i < dev->m_impl->m_params.size(); i++) {
             OpenReadParam& param = dev->m_impl->m_params[i];
             mm::threading::ReadLockGuard lock(param.m_lock);
-            if (!param.pad_10D || !param.m_isOpen) {
+            if (!param.m_busy || !param.m_isOpen) {
                 continue;
             }
             return true;
@@ -2845,7 +2980,7 @@ bool DevFileNxTh::rfIsBusy(FileHandleTh* handle) {
         OpenReadParam& param = dev->m_impl->m_params[handle->m_channel];
         mm::threading::ReadLockGuard lock(param.m_lock);
         if (param.m_isOpen) {
-            return param.pad_10D;
+            return param.m_busy;
         }
     }
     return false;
@@ -2854,14 +2989,14 @@ bool DevFileNxTh::rfIsBusy(FileHandleTh* handle) {
 bool DevFileNxTh::rfClose(FileHandleTh* handle) {
     OpenReadParam& param = get()->m_impl->m_params[handle->m_channel];
     mm::threading::WriteLockGuard lock(param.m_lock);
-    if (param.pad_10F) {
+    if (param.m_reading) {
         __atomic_store_n(&handle->m_canceled, true, __ATOMIC_SEQ_CST);
         handle->m_listener = nullptr;
-        param.pad_110 = true;
+        param.m_closePending = true;
         return false;
     }
-    if (param.pad_10D) {
-        param.pad_10D = false;
+    if (param.m_busy) {
+        param.m_busy = false;
     }
     nn::fs::CloseFile(param.m_handle);
     param.m_isOpen = false;
@@ -2870,14 +3005,14 @@ bool DevFileNxTh::rfClose(FileHandleTh* handle) {
 
 void DevFileNxTh::tail() {
     for (OpenReadParam* param = m_impl->m_params.begin(); param != m_impl->m_params.end(); param++) {
-        if (!param->pad_10D || param->pad_118 == nullptr) {
+        if (!param->m_busy || param->m_request == nullptr) {
             continue;
         }
         mm::threading::WriteLockGuard lock(param->m_lock);
-        if (!__atomic_load_n(&param->pad_118->m_canceled, __ATOMIC_SEQ_CST)) {
-            FileHandleTh* handle = param->pad_118;
+        if (!__atomic_load_n(&param->m_request->m_canceled, __ATOMIC_SEQ_CST)) {
+            FileHandleTh* handle = param->m_request;
             if (handle->m_readSize != 0 && handle->m_readSize == handle->m_size) {
-                param->pad_10D = false;
+                param->m_busy = false;
                 if (handle->m_outData != nullptr) {
                     *handle->m_outData = handle->m_data;
                 }
@@ -2896,16 +3031,16 @@ void DevFileNxTh::tail() {
                     event.pad_38 = handle->pad_68;
                     listener->OnFileEvent(&event);
                 }
-                param->pad_118 = nullptr;
+                param->m_request = nullptr;
             }
-        } else if (!param->pad_10F) {
-            if (param->pad_110) {
+        } else if (!param->m_reading) {
+            if (param->m_closePending) {
                 nn::fs::CloseFile(param->m_handle);
-                param->pad_110 = false;
+                param->m_closePending = false;
             }
-            FileHandleTh* handle = param->pad_118;
+            FileHandleTh* handle = param->m_request;
             param->m_isOpen = false;
-            param->pad_10D = false;
+            param->m_busy = false;
             if (handle->m_outData != nullptr) {
                 *handle->m_outData = nullptr;
             }
@@ -2924,9 +3059,135 @@ void DevFileNxTh::tail() {
                 event.pad_38 = handle->pad_68;
                 listener->OnFileEvent(&event);
             }
-            param->pad_118 = nullptr;
+            param->m_request = nullptr;
         }
     }
+}
+
+void DevFileNxTh::thUpdate(void* arg) {
+    OpenReadParam* param = static_cast<OpenReadParam*>(arg);
+    DevFileNxTh* owner = static_cast<DevFileNxTh*>(param->m_owner);
+    mm::threading::ReadWriteLock& channelLock = param->m_lock;
+    FileHandleTh*& request = param->m_request;
+    while (!__atomic_load_n(&owner->m_impl->m_quit, __ATOMIC_SEQ_CST)) {
+        param->m_thread->waitSignalEvent();
+        if (__atomic_load_n(&owner->m_impl->m_quit, __ATOMIC_SEQ_CST)) {
+            break;
+        }
+        void* buffer;
+        unsigned int offset;
+        unsigned int size;
+        bool canceled;
+        {
+            mm::threading::ReadLockGuard lock(channelLock);
+            offset = param->m_param.m_offset;
+            buffer = param->m_param.m_buffer;
+            size = param->m_param.m_readSize;
+            if (param->m_busy) {
+                canceled = __atomic_load_n(&request->m_canceled, __ATOMIC_SEQ_CST);
+            } else {
+                canceled = true;
+            }
+        }
+        if (canceled) {
+            continue;
+        }
+        FileReadResult result;
+        param->m_reading = true;
+        if (DevFileUtilNx::readFile(request, param->m_handle, size, offset, buffer, size, result)) {
+            mm::threading::WriteLockGuard lock(channelLock);
+            if (FileHandleTh* handle = request) {
+                int length = result.m_size;
+                if (result.m_whole) {
+                    handle->m_size = length;
+                    handle->m_readSize = length;
+                } else {
+                    handle->m_readSize += length;
+                }
+            }
+        }
+        param->m_reading = false;
+    }
+}
+
+bool DevFileUtilNx::readFile(FileHandleTh*& handle, nn::fs::FileHandle& file, int length, long offset, void* buffer,
+                             unsigned int size, FileReadResult& result) {
+    result.pad_C = 0;
+    result.pad_10 = 0;
+    long fileSize;
+    {
+        long bytes = 0;
+        fileSize = nn::fs::GetFileSize(&bytes, file).IsSuccess() ? bytes : -1;
+    }
+    if (fileSize < 0 || __atomic_load_n(&handle->m_canceled, __ATOMIC_SEQ_CST)) {
+        return false;
+    }
+    Xbc1Header header;
+    header.m_magic = Xbc1Header::MAGIC;
+    if (fileSize > sizeof(header)) {
+        nn::fs::ReadFile(file, offset, &header, sizeof(header));
+        if (header.m_magic == Xbc1Header::MAGIC) {
+            int remain = header.m_packedSize;
+            offset += sizeof(header);
+            void* packed = mtl::MemManager::allocate(WorkRoot::getMemTMP(), 0x80000, 0x1000, false, "no name", 0);
+            z_stream stream;
+            memset(&stream, 0, sizeof(stream));
+            inflateInit(&stream);
+            stream.next_out = static_cast<Bytef*>(buffer);
+            stream.avail_out = header.m_size;
+            stream.zalloc = zlibAlloc;
+            stream.zfree = zlibFree;
+            bool done = false;
+            while (!__atomic_load_n(&handle->m_canceled, __ATOMIC_SEQ_CST)) {
+                if (stream.avail_in == 0) {
+                    int chunk = remain > 0x80000 ? 0x80000 : remain;
+                    nn::fs::ReadFile(file, offset, packed, chunk);
+                    remain -= chunk;
+                    offset += chunk;
+                    stream.next_in = static_cast<Bytef*>(packed);
+                    stream.avail_in = chunk;
+                }
+                int ret = inflate(&stream, Z_NO_FLUSH);
+                if (ret == Z_STREAM_END) {
+                    done = true;
+                }
+                if (ret == Z_STREAM_END || stream.avail_out == 0) {
+                    break;
+                }
+            }
+            inflateEnd(&stream);
+            if (packed != nullptr) {
+                mtl::MemManager::deallocate(packed, 0, false);
+            }
+            if (!done) {
+                return false;
+            }
+            result.m_size = header.m_size;
+            result.m_whole = true;
+            return true;
+        }
+    }
+    int remain = length;
+    if (remain == 0) {
+        remain = fileSize - offset;
+    }
+    if (remain > static_cast<int>(size)) {
+        return false;
+    }
+    result.m_size = 0;
+    result.m_whole = false;
+    while (remain > 0) {
+        if (__atomic_load_n(&handle->m_canceled, __ATOMIC_SEQ_CST)) {
+            return false;
+        }
+        int chunk = remain > 0x100000 ? 0x100000 : remain;
+        nn::fs::ReadFile(file, offset, buffer, chunk);
+        remain -= chunk;
+        buffer = static_cast<char*>(buffer) + chunk;
+        offset += chunk;
+        result.m_size += chunk;
+    }
+    return true;
 }
 
 bool DevFileNxTh::rfIsUsedChannel(unsigned int channel) {
@@ -3046,8 +3307,8 @@ void DevFileArchiveNx::Param::finalize() {
 
 DevFileArchiveNx::DevFileArchiveNx(mtl::ALLOC_HANDLE handle)
     : m_alloc(handle), pad_18(0), m_impl(new (handle, nullptr, 0, 4, false) Param()) {
-    __atomic_store_n(&m_impl->pad_17FC, 0, __ATOMIC_SEQ_CST);
-    __atomic_store_n(&m_impl->pad_17F8, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&m_impl->m_threadCount, 0, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&m_impl->m_quit, false, __ATOMIC_SEQ_CST);
 }
 
 DevFileArchiveNx::~DevFileArchiveNx() {
@@ -3072,19 +3333,19 @@ bool DevFileArchiveNx::initialize() {
 
 unsigned int DevFileArchiveNx::thFileLoader(void* arg) {
     DevFileArchiveNx* owner = static_cast<DevFileArchiveNx*>(static_cast<OpenReadParam*>(arg)->m_owner);
-    __atomic_fetch_add(&owner->m_impl->pad_17FC, 1, __ATOMIC_SEQ_CST);
+    __atomic_fetch_add(&owner->m_impl->m_threadCount, 1, __ATOMIC_SEQ_CST);
     while (!DevFileTh::isInitialized()) {
         nn::os::SleepThread(nn::TimeSpan::FromMilliSeconds(100));
     }
     owner->thUpdate(arg);
-    __atomic_fetch_sub(&owner->m_impl->pad_17FC, 1, __ATOMIC_SEQ_CST);
+    __atomic_fetch_sub(&owner->m_impl->m_threadCount, 1, __ATOMIC_SEQ_CST);
     return 0;
 }
 
 bool DevFileArchiveNx::finalize() {
     switch (pad_18) {
     case 1:
-        __atomic_store_n(&m_impl->pad_17F8, true, __ATOMIC_SEQ_CST);
+        __atomic_store_n(&m_impl->m_quit, true, __ATOMIC_SEQ_CST);
         for (unsigned long i = 1; i < m_impl->m_params.size(); i++) {
             if (m_impl->m_params[i].m_thread != nullptr) {
                 m_impl->m_params[i].m_thread->setSignalEvent(true);
@@ -3093,7 +3354,7 @@ bool DevFileArchiveNx::finalize() {
         pad_18 = 2;
         break;
     case 2:
-        if (__atomic_load_n(&m_impl->pad_17FC, __ATOMIC_SEQ_CST) == 0) {
+        if (__atomic_load_n(&m_impl->m_threadCount, __ATOMIC_SEQ_CST) == 0) {
             pad_18 = 3;
         }
         break;
@@ -3192,10 +3453,35 @@ bool DevFileArchiveNx::rfOpen(FileHandleTh* handle, const char* path) {
         return false;
     }
     param.m_isOpen = true;
-    param.pad_10D = false;
+    param.m_busy = false;
     param.pad_10E = false;
-    param.pad_110 = false;
-    param.pad_190 = result.m_entry.pad_0;
+    param.m_closePending = false;
+    param.m_archiveOffset = result.m_entry.pad_0;
+    return true;
+}
+
+bool DevFileArchiveNx::rfRead(FileHandleTh* handle, const DevFileParamTh& param) {
+    if (handle == nullptr) {
+        return false;
+    }
+    OpenReadParam& channel = get()->m_impl->m_params[handle->m_channel];
+    mm::threading::WriteLockGuard lock(channel.m_lock);
+    if (!channel.m_isOpen) {
+        return false;
+    }
+    handle->m_readSize = 0;
+    handle->setBuffer(param.m_buffer, param.m_readSize);
+    handle->setRange(param.m_offset, param.m_readSize);
+    __atomic_store_n(&handle->m_canceled, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&handle->m_failed, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&handle->m_done, false, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&handle->pad_200, false, __ATOMIC_SEQ_CST);
+    channel.m_param = param;
+    channel.m_busy = true;
+    channel.m_request = handle;
+    channel.pad_10E = false;
+    channel.m_closePending = false;
+    channel.m_thread->setSignalEvent(true);
     return true;
 }
 
@@ -3205,7 +3491,7 @@ bool DevFileArchiveNx::rfIsBusy(FileHandleTh* handle) {
         for (unsigned int i = 0; i < dev->m_impl->m_params.size(); i++) {
             OpenReadParam& param = dev->m_impl->m_params[i];
             mm::threading::ReadLockGuard lock(param.m_lock);
-            if (!param.pad_10D || !param.m_isOpen) {
+            if (!param.m_busy || !param.m_isOpen) {
                 continue;
             }
             return true;
@@ -3214,7 +3500,7 @@ bool DevFileArchiveNx::rfIsBusy(FileHandleTh* handle) {
         OpenReadParam& param = dev->m_impl->m_params[handle->m_channel];
         mm::threading::ReadLockGuard lock(param.m_lock);
         if (param.m_isOpen) {
-            return param.pad_10D;
+            return param.m_busy;
         }
     }
     return false;
@@ -3224,13 +3510,13 @@ bool DevFileArchiveNx::rfIsBusy(FileHandleTh* handle) {
 bool DevFileArchiveNx::rfClose(FileHandleTh* handle) {
     OpenReadParam& param = get()->m_impl->m_params[handle->m_channel];
     mm::threading::WriteLockGuard lock(param.m_lock);
-    if (param.pad_10F) {
+    if (param.m_reading) {
         __atomic_store_n(&handle->m_canceled, true, __ATOMIC_SEQ_CST);
         handle->m_listener = nullptr;
-        param.pad_110 = true;
+        param.m_closePending = true;
     } else {
-        if (param.pad_10D) {
-            param.pad_10D = false;
+        if (param.m_busy) {
+            param.m_busy = false;
         }
         nn::fs::CloseFile(param.m_handle);
         param.m_isOpen = false;
@@ -3251,14 +3537,14 @@ bool DevFileArchiveNx::rfIsUsedChannel(unsigned int channel) {
 
 void DevFileArchiveNx::tail() {
     for (OpenReadParam* param = m_impl->m_params.begin(); param != m_impl->m_params.end(); param++) {
-        if (!param->pad_10D || param->pad_118 == nullptr) {
+        if (!param->m_busy || param->m_request == nullptr) {
             continue;
         }
         mm::threading::WriteLockGuard lock(param->m_lock);
-        if (!__atomic_load_n(&param->pad_118->m_canceled, __ATOMIC_SEQ_CST)) {
-            FileHandleTh* handle = param->pad_118;
+        if (!__atomic_load_n(&param->m_request->m_canceled, __ATOMIC_SEQ_CST)) {
+            FileHandleTh* handle = param->m_request;
             if (handle->m_readSize != 0 && handle->m_readSize == handle->m_size) {
-                param->pad_10D = false;
+                param->m_busy = false;
                 if (handle->m_outData != nullptr) {
                     *handle->m_outData = handle->m_data;
                 }
@@ -3277,15 +3563,15 @@ void DevFileArchiveNx::tail() {
                     event.pad_38 = handle->pad_68;
                     listener->OnFileEvent(&event);
                 }
-                param->pad_118 = nullptr;
+                param->m_request = nullptr;
             }
-        } else if (!param->pad_10F) {
-            if (param->pad_110) {
+        } else if (!param->m_reading) {
+            if (param->m_closePending) {
                 nn::fs::CloseFile(param->m_handle);
-                param->pad_110 = false;
+                param->m_closePending = false;
             }
-            FileHandleTh* handle = param->pad_118;
-            param->pad_10D = false;
+            FileHandleTh* handle = param->m_request;
+            param->m_busy = false;
             if (handle->m_outData != nullptr) {
                 *handle->m_outData = nullptr;
             }
@@ -3304,8 +3590,56 @@ void DevFileArchiveNx::tail() {
                 event.pad_38 = handle->pad_68;
                 listener->OnFileEvent(&event);
             }
-            param->pad_118 = nullptr;
+            param->m_request = nullptr;
         }
+    }
+}
+
+void DevFileArchiveNx::thUpdate(void* arg) {
+    OpenReadParam* param = static_cast<OpenReadParam*>(arg);
+    DevFileArchiveNx* owner = static_cast<DevFileArchiveNx*>(param->m_owner);
+    mm::threading::ReadWriteLock& channelLock = param->m_lock;
+    FileHandleTh*& request = param->m_request;
+    while (!__atomic_load_n(&owner->m_impl->m_quit, __ATOMIC_SEQ_CST)) {
+        param->m_thread->waitSignalEvent();
+        if (__atomic_load_n(&owner->m_impl->m_quit, __ATOMIC_SEQ_CST)) {
+            break;
+        }
+        void* buffer;
+        unsigned int offset;
+        unsigned int size;
+        unsigned long base;
+        bool canceled;
+        {
+            mm::threading::ReadLockGuard lock(channelLock);
+            offset = param->m_param.m_offset;
+            buffer = param->m_param.m_buffer;
+            size = param->m_param.m_readSize;
+            base = param->m_archiveOffset;
+            if (param->m_busy) {
+                canceled = __atomic_load_n(&request->m_canceled, __ATOMIC_SEQ_CST);
+            } else {
+                canceled = true;
+            }
+        }
+        if (canceled) {
+            continue;
+        }
+        FileReadResult result;
+        param->m_reading = true;
+        if (DevFileUtilNx::readFile(request, param->m_handle, size, base + offset, buffer, size, result)) {
+            mm::threading::WriteLockGuard lock(channelLock);
+            if (FileHandleTh* handle = request) {
+                int length = result.m_size;
+                if (result.m_whole) {
+                    handle->m_size = length;
+                    handle->m_readSize = length;
+                } else {
+                    handle->m_readSize += length;
+                }
+            }
+        }
+        param->m_reading = false;
     }
 }
 
@@ -3384,6 +3718,67 @@ void DevFileTh::Impl::updateCancel() {
             releaseRequest(job);
         } else {
             ++it;
+        }
+    }
+}
+
+void DevFileTh::Impl::tail() {
+    {
+        CS lock(m_jobCs);
+        updateCancel();
+        while (!m_jobs[2].empty()) {
+            DevFileJobTh* job = m_jobs[2].front();
+            FileHandleTh* handle = job->m_handle;
+            // the failed and done flags are read too, but only a cancel changes the kind
+            int kind;
+            if (__atomic_load_n(&handle->m_canceled, __ATOMIC_SEQ_CST)) {
+                kind = 4;
+            } else if (__atomic_load_n(&handle->m_failed, __ATOMIC_SEQ_CST)) {
+                kind = handle->m_state;
+            } else if (__atomic_load_n(&handle->m_done, __ATOMIC_SEQ_CST)) {
+                kind = handle->m_state;
+            } else {
+                kind = handle->m_state;
+            }
+            if (kind == 4 || kind == 6) {
+                if (handle->m_outData != nullptr) {
+                    *handle->m_outData = nullptr;
+                }
+                if (handle->m_outSize != nullptr) {
+                    *handle->m_outSize = -1;
+                }
+            } else if (kind == 5 || kind == 2) {
+                if (handle->m_outData != nullptr) {
+                    *handle->m_outData = handle->m_data;
+                }
+                if (handle->m_outSize != nullptr) {
+                    *handle->m_outSize = handle->m_size;
+                }
+            }
+            if (IWorkEvent* listener = handle->m_listener) {
+                EventFileTh event;
+                event.m_kind = kind;
+                event.m_handle = handle;
+                event.m_allocHandle = handle->m_allocHandle;
+                event.m_allocator = handle->m_allocator;
+                event.m_path = handle->m_path;
+                event.m_data = handle->m_data;
+                event.m_result = handle->m_size;
+                event.pad_38 = handle->pad_68;
+                listener->OnFileEvent(&event);
+            }
+            m_jobs[2].pop_front();
+            releaseRequest(job);
+        }
+    }
+    for (int i = 0; i < 8; i++) {
+        if (m_accessors[i] != nullptr) {
+            m_accessors[i]->tail();
+        }
+    }
+    for (int i = 0; i < 8; i++) {
+        if (m_archives[i] != nullptr) {
+            m_archives[i]->tail();
         }
     }
 }
@@ -3806,6 +4201,44 @@ void addMediaPath(MEDIA media, const char* pszName, int prio) {
 
 mm::mtl::FixedVector<IDevFileEvent*, 8> g_FileEventListener;
 }  // namespace dvfl_detail
+
+void DevFileTh::initializePath(const char* name, bool useArchive) {
+    s_useArchive = useArchive;
+    mm::mtl::FixStr<128> path(name);
+    if (path.m_nLen != 0) {
+        for (int i = 0; i < path.m_nLen; i++) {
+            if (path.m_str[i] == '\\') {
+                path.m_str[i] = '/';
+            }
+        }
+        int last = path.m_nLen - 1;
+        if (path.m_str[last] == '/') {
+            path.m_str[last] = '\0';
+            path.m_nLen = last;
+        }
+    }
+    if (path.m_nLen == 0) {
+        path = "../romdata";
+    }
+    s_pathD4 = path;
+    s_path1DC = path;
+    s_path1DC += "/";
+    s_path1DC += "pc";
+    s_dvdRoot = path;
+    s_dvdRoot += "/";
+    s_dvdRoot += "nx";
+    s_path158 = path;
+    int pos = s_path158.findLast('/');
+    if (pos != -1 && s_path158.m_nLen > pos + 1) {
+        s_path158.m_str[pos + 1] = '\0';
+        s_path158.m_nLen = pos + 1;
+    }
+    if (s_romMountMode) {
+        addMediaPath(MEDIA(0), "rom:", -1);
+    } else {
+        addMediaPath(MEDIA(0), name, -1);
+    }
+}
 
 void DevFileTh::addMediaPath(MEDIA media, const char* path, int prio) {
     if (path != nullptr && path[0] != '\0') {
@@ -4507,6 +4940,34 @@ GraphQue* DevGraphQue::createQue(unsigned int size) {
     return que;
 }
 
+bool DevGraph::wkStandbyLogout() {
+    if (m_child.size() == 0 && mm::mtl::PtrSingleton<WinProcRoot>::get() == nullptr &&
+        mm::mtl::PtrSingleton<WinViewRoot>::get() == nullptr && mm::mtl::PtrSingleton<DevPad>::get() == nullptr) {
+        if (!ErrViewer::destroy()) {
+            return false;
+        }
+        reslist<GraphQue*>& ques = m_que->m_ques;
+        GraphQue* que = m_work.m_que;
+        for (reslist<GraphQue*>::iterator it = ques.begin(); it != ques.end(); ++it) {
+            if (*it == que) {
+                delete *it;
+                ques.erase(it);
+                break;
+            }
+        }
+        memset(&m_work, 0, sizeof(m_work));
+        if (m_que != nullptr) {
+            delete m_que;
+            m_que = nullptr;
+        }
+        if (!grlib::CGLibManager::isReleaseOk()) {
+            return true;
+        }
+        return WorkObj::wkStandbyLogout();
+    }
+    return false;
+}
+
 void DevGraph::renderSync() {
     DevGraph* dev = get();
     if (dev != nullptr) {
@@ -4631,6 +5092,90 @@ bool DebDraw::getScreenPos(mm::Vec3& out, const mm::Vec3& pos) {
     out.y = (1.0f - y) * (DevGraph::get()->pad_228.h * 0.5f);
     out.z = z;
     return true;
+}
+
+void DebDraw::renderArrowAxisX(const mm::Mat44& mtx, int size, const mm::Col4* col, bool cube) {
+    mm::Vec3 origin = mtx.getTrans();
+    mm::Vec3 screen0;
+    mm::Vec3 screen1;
+    if (!getScreenPos(screen0, origin)) {
+        return;
+    }
+    if (!getScreenPos(screen1, mulDir(pad_080, mm::Vec3::unitX) + origin)) {
+        return;
+    }
+    screen0.z = 0.0f;
+    screen1.z = 0.0f;
+    float scale = size / (screen0 - screen1).length();
+    mm::Col4 prev = m_col;
+    if (col != nullptr) {
+        setCol(*col);
+    } else {
+        setCol(mm::Col3::red, 1.0f);
+    }
+    if (cube) {
+        renderCubeArrow(origin, mulDir(mtx, mm::Vec3(scale, 0.0f, 0.0f)) + origin);
+    } else {
+        renderArrow(origin, mulDir(mtx, mm::Vec3(scale, 0.0f, 0.0f)) + origin);
+    }
+    setCol(prev);
+}
+
+void DebDraw::renderArrowAxisY(const mm::Mat44& mtx, int size, const mm::Col4* col, bool cube) {
+    mm::Vec3 origin = mtx.getTrans();
+    mm::Vec3 screen0;
+    mm::Vec3 screen1;
+    if (!getScreenPos(screen0, origin)) {
+        return;
+    }
+    if (!getScreenPos(screen1, mulDir(pad_080, mm::Vec3::unitX) + origin)) {
+        return;
+    }
+    screen0.z = 0.0f;
+    screen1.z = 0.0f;
+    float scale = size / (screen0 - screen1).length();
+    mm::Col4 prev = m_col;
+    if (col != nullptr) {
+        setCol(*col);
+    } else {
+        setCol(mm::Col3::green, 1.0f);
+    }
+    if (cube) {
+        renderCubeArrow(origin, mulDir(mtx, mm::Vec3(0.0f, scale, 0.0f)) + origin);
+    } else {
+        renderArrow(origin, mulDir(mtx, mm::Vec3(0.0f, scale, 0.0f)) + origin);
+    }
+    setCol(prev);
+}
+
+void DebDraw::renderArrowAxisZ(const mm::Mat44& mtx, int size, const mm::Col4* col, bool cube) {
+    mm::Vec3 origin = mtx.getTrans();
+    mm::Vec3 screen0;
+    mm::Vec3 screen1;
+    if (!getScreenPos(screen0, origin)) {
+        return;
+    }
+    if (!getScreenPos(screen1, mulDir(pad_080, mm::Vec3::unitX) + origin)) {
+        return;
+    }
+    screen0.z = 0.0f;
+    screen1.z = 0.0f;
+    float scale = size / (screen0 - screen1).length();
+    if (!mm::isFinite(scale)) {
+        return;
+    }
+    mm::Col4 prev = m_col;
+    if (col != nullptr) {
+        setCol(*col);
+    } else {
+        setCol(mm::Col3::blue, 1.0f);
+    }
+    if (cube) {
+        renderCubeArrow(origin, mulDir(mtx, mm::Vec3(0.0f, 0.0f, scale)) + origin);
+    } else {
+        renderArrow(origin, mulDir(mtx, mm::Vec3(0.0f, 0.0f, scale)) + origin);
+    }
+    setCol(prev);
 }
 
 void DebDraw::renderRect(int x, int y, int w, int h) {

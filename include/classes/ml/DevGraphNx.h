@@ -66,6 +66,16 @@ void deallocateFile(void* ptr, unsigned long size);
 // zlib's allocator hooks
 class DevFileUtilNx {
 public:
+    // the 0x30-byte header of a zlib-packed file (readFile tests the magic 'xbc1' and inflates the rest; the type's
+    // and the fields' names are not the original's)
+    struct Xbc1Header {
+        enum { MAGIC = 0x31636278 };  // "xbc1" as the file's first four bytes
+        unsigned int m_magic;
+        int pad_4;
+        unsigned int m_size;      // the unpacked size (readFile's result)
+        int m_packedSize;         // the packed bytes after the header
+        unsigned char pad_10[0x20];
+    };
     // items * size bytes of the temporary memory; clears the first size bytes (the parameter names are not the
     // original's)
     static void* zlibAlloc(void* opaque, unsigned int items, unsigned int size);

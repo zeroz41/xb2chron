@@ -1177,6 +1177,13 @@ void CharaDysUpdater::update(float) {
     }
 }
 
+CharaObj::CharaObj(const char* name)
+    : m_moveGoal(0.0f, 0.0f, 0.0f), m_flags(0), m_state(0), m_name(name), pad_cec(0), pad_cf0(0), pad_d38(0),
+      m_gfHandle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_model(nullptr), m_ghost(nullptr), m_attach(nullptr),
+      pad_1730(0.0f), m_pos(0.0f, 0.0f, 0.0f), m_posGoal(0.0f, 0.0f, 0.0f), m_rot(0.0f, 0.0f, 0.0f),
+      m_rotGoal(0.0f, 0.0f, 0.0f), m_frameInfo(), m_weaponScale(1.0f), m_hideWpnMask(),
+      m_modelId(mm::mtl::Singleton<CharaManager>::getPtr()->getReuseFlag()) {}
+
 void CharaWinkPlayer::idle_start() {
     m_count = ml::mtRand(60) + 90;
     m_state = &CharaWinkPlayer::idle_waiting;
@@ -4847,6 +4854,27 @@ void ObjectChara::OnManiSetPos(IManiCallback::SetParam& param) {
     setPosAxis(pos);
 }
 
+// the frame is the rotation about y by the axis' offset at the character's position, the matrix the rotation about
+// y relative to it (the goal rotation while a turn or liner rotation is queued)
+bool ObjectChara::OnManiStartRot(IManiCallback::StartParam& param) {
+    mm::Vec3 pos = m_chara->m_pos;
+    float ofsY = mm::mtl::Singleton<DataManager>::getPtr()->getRotOfsY(m_rot.m_type, pos);
+    mm::Mat44 frame;
+    frame.setRotY(ofsY);
+    frame.setTransRow(m_chara->m_pos);
+    CharaObj* chara = m_chara;
+    const mm::Vec3& rot = chara->m_cmdQueue0.contains(&chara->m_turnRot) ||
+                                  chara->m_cmdQueue1.contains(&chara->m_turnRot) ||
+                                  chara->m_cmdQueue1.contains(&chara->m_linerRot)
+                              ? chara->m_rotGoal
+                              : chara->m_rot;
+    mm::Mat44 mtx;
+    mtx.setRotY(rot.y - ofsY);
+    param.m_frame = frame;
+    param.m_mtx = mtx;
+    return true;
+}
+
 void ObjectChara::OnManiSetRot(IManiCallback::SetParam& param) {
     const mm::Mat44& mtx = param.m_mtx;
     mm::Vec3 r;
@@ -6581,6 +6609,26 @@ void AlphaManager::render() {
                 return;
             }
         }
+    }
+}
+
+// 1.0.0 has it out of line (event::AlphaManager::clear); 3.0.1 keeps only OnEventProc's inlined copy
+inline void AlphaManager::clear() {
+    for (unsigned long i = 0; i < m_objs.size(); i++) {
+        delete *m_objs.at(i);
+    }
+    m_objs.clear();
+    m_flags = 0;
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void AlphaManager::OnEventProc(event::MSG_TYPE msg) {
+    if (msg == 14) {
+        update();
+    } else if (msg == 12) {
+        clear();
+    } else if (msg == 16) {
+        render();
     }
 }
 
@@ -9067,6 +9115,17 @@ SeamlessManager::~SeamlessManager() {}
 SkipManager::SkipManager() : m_flags(0), pad_14(0), m_endFrame(-1.0f) {}
 
 BgmManager::BgmManager() : pad_10(0), pad_14(0), pad_7c(0) {}
+
+void BgmManager::changeVolume(float volume, float time) {
+    if (pad_10 & 2) {
+        mm::clampSelf(volume, 0.0f, 1.0f);
+        m_volume = volume;
+        gf::EventBgmSetup setup;
+        setup.m_volumeTime = time * (1.0f / 30.0f);
+        setup.m_volume = volume;
+        gf::GfGameEvent::changeVolume(setup);
+    }
+}
 
 // 1.0.0 has it out of line (event::BgmManager::clear); 3.0.1 keeps only OnEventProc's inlined copies
 inline void BgmManager::clear() {

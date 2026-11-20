@@ -8,6 +8,7 @@ namespace event {
 class CharaHideWpn : public ::event::ICmd {
 public:
     // no destructor of its own: slot 0 holds ICmd::~ICmd, so update is the key function
+    CharaHideWpn() : m_flags(0) {}
     virtual int update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4
 

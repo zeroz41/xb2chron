@@ -66,8 +66,10 @@ public:
         void addThreadFilehandle(unsigned long, mm::mtl::FixStr<256> const&);
 
         mm::mtl::FixedArray<OpenReadParam, 13> m_params;  // the read channels
-        bool pad_17F8;  // stored atomically
-        int pad_17FC;  // stored atomically
+        // set by finalize: the read channels' threads leave their loop (stored atomically)
+        bool m_quit;
+        // how many read channel threads run (thFileLoader counts itself in and out; finalize waits for 0)
+        int m_threadCount;
         CriticalSection m_cs;
         mm::mtl::FixedObjectAllocator<ThreadFile, 16> m_threadFiles;  // the names are not the original's
         mm::mtl::FixedQueue<ThreadFile*, 16> m_threadFileQueue;

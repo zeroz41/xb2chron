@@ -13,6 +13,7 @@ namespace event {
 class AnmVec : public AnmBase {
 public:
     // inline: D2/D0 sit in CharaObj's tail; the table is weak
+    AnmVec() { clear(); }
     virtual ~AnmVec() {}  // slot 0
     mm::mtl::FixedVector<mm::Vec3, 16> m_values;  // @0x80, count @0x180 (one value per key, append's Vec3)
     mm::mtl::FixedVector<CV_TYPE, 16> m_types;  // @0x190, count @0x1D0 (one curve type per key)

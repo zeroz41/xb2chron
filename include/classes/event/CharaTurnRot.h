@@ -10,6 +10,7 @@ namespace event {
 // table 0x7100B3E450
 class CharaTurnRot : public ::event::ICmd {
 public:
+    CharaTurnRot() : m_flags(0), m_handle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_dys(nullptr) {}
     virtual ~CharaTurnRot() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
     virtual void init();  // slot 2
     virtual int update(event::ICmd::Param const&);  // slot 3

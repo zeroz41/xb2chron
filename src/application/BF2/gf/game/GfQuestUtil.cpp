@@ -96,6 +96,59 @@ QuestID GfQuestUtil::getCurrentTBoxWithEvent(GF_OBJ_HANDLE* handle) {
     return QuestID();
 }
 
+void GfQuestUtil::finishTalkNpc(unsigned int map, unsigned int npc, QuestID quest) {
+    if (npc == 0) {
+        return;
+    }
+    QuestListAcc* acc = QuestListAcc::get();
+    unsigned int max = GfQuestManager::getOrderQuestMaxWithAchievement();
+    for (unsigned int i = 0; i < max; i++) {
+        QuestID order = GfQuestManager::getOrderQuestWithAchievement(i);
+        if (order == quest) {
+            continue;
+        }
+        for (unsigned int task = 0; task < 4; task++) {
+            QuestTaskParam param(order, task, TASK_STATE(0));
+            if (param.m_taskType == 6 && acc->getTalkMapID(param.m_taskId) == map &&
+                acc->getTalkNpcID(param.m_taskId) == npc) {
+                GfQuestTask::completeTalkTask(param.m_taskId, quest);
+                break;
+            }
+        }
+    }
+    for (unsigned int i = 0; i < max; i++) {
+        QuestID order = GfQuestManager::getOrderQuestWithAchievement(i);
+        if (order == quest) {
+            continue;
+        }
+        for (unsigned int task = 0; task < 4; task++) {
+            QuestTaskParam param(order, task, TASK_STATE(0));
+            if (param.m_taskType != 6 || acc->getTalkMapID(param.m_taskId) != map) {
+                continue;
+            }
+            unsigned int group = acc->getTalkDummyGroup(param.m_taskId);
+            if (group == 0) {
+                continue;
+            }
+            for (unsigned int bit = 0; bit < 8; bit++) {
+                if (acc->getDummyGroupNpcID(group, bit) == npc) {
+                    if (!GfQuestInfo::isDummuTalkGroupFlag(group, bit)) {
+                        GfQuestInfo::setDummuTalkGroupFlag(group, bit);
+                        GfQuestManager::eventChangeTaskState(param);
+                    }
+                    return;
+                }
+            }
+        }
+    }
+    for (unsigned int talk = acc->getTalkStart(), end = acc->getTalkEnd(); talk < end; talk++) {
+        if (acc->getTalkMapID(talk) == map && acc->getTalkNpcID(talk) == npc) {
+            GfQuestTask::completeTalkTask(talk, quest);
+            return;
+        }
+    }
+}
+
 void GfQuestUtil::removeQuestItem(const QuestTaskParam& param) {
     QuestListAcc* acc = QuestListAcc::get();
     if (param.m_taskType == 3 && acc->getCollectDeduct(param.m_taskId) != 0) {

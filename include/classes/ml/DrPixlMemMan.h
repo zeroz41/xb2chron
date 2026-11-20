@@ -23,10 +23,20 @@ public:
         unsigned char pad_A8[0x40];
         // 0xE8: DrPixlDeferred's shadow targets: [0] the single one, [1 + i] m_shadowTargetDbl[i]
         unsigned int m_dirShadowOfs[3];
-        unsigned char pad_F4[0x98];
+        unsigned char pad_F4[0x5C];
+        // 0x150: DrPixlPostObjVolume::calcColorBuff's m_volumeBuff[0..2] (name inferred)
+        unsigned int m_volumeOfs[3];
+        // 0x15C..0x170: DrPixlPostObjDepthofField::resetColorBuff's targets: m_calcBuff[0..2], m_lastBuff,
+        // m_calcSampBuff, m_autoBuff (names inferred)
+        unsigned int m_dofCalcOfs[3];
+        unsigned int m_dofLastOfs;      // 0x168
+        unsigned int m_dofCalcSampOfs;  // 0x16C
+        unsigned int m_dofAutoOfs;      // 0x170
+        unsigned char pad_174[0x18];
         // 0x18C: DrPixlPostObjSSR::resetColorBuff's targets: [i] m_reflectionBuff[i], [2] m_buffFirst, [3] m_buffLast
         unsigned int m_ssrOfs[4];
-        unsigned char pad_19C[0x18];
+        // 0x19C: DrPixlPostObjToneMap's m_sclDown[0..5] (name inferred, not the original's)
+        unsigned int m_toneMapOfs[6];
         // 0x1B4: DrPixlPostObjTSSAO::resetColorBuff's targets: [i] m_ssaoBuff[i], [2 + i] m_historyBuff[i],
         // [4] m_workBuff, [5] m_blurBuffA, [6] m_blurBuffB, [7] m_outBuff
         unsigned int m_ssaoOfs[8];

@@ -9,6 +9,7 @@ namespace event {
 // table 0x7100B3CAD8
 class CharaDysUpdater {
 public:
+    CharaDysUpdater() : m_flags(0), m_handle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_blendWeight(0.0f) {}
     virtual ~CharaDysUpdater() {}  // slot 0
     // CharaObj::tail runs it last
     void update(float);

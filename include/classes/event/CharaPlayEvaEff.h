@@ -11,6 +11,7 @@ namespace event {
 class CharaPlayEvaEff : public ::event::ICmd {
 public:
     // inline: its D2 sits before ~CharaObj (which calls it first), so update is the key function
+    CharaPlayEvaEff() : m_flags(0), m_model(nullptr), m_effectPlayer(nullptr), m_data(nullptr) {}
     virtual ~CharaPlayEvaEff() {}  // slot 0
     virtual int update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4

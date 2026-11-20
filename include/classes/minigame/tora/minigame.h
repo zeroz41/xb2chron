@@ -108,6 +108,15 @@ public:
         unsigned char pad_8[0x8];
         unsigned char m_data[1];   // 0x10: the palette, then the pixels
     };
+    // a treasure box (0x2A bytes; choice_tbox, item_move, item_draw). The names are not the original's.
+    struct TBox {
+        unsigned char m_type;  // 0x0: item_draw's sprite cell; item_move: 2 gives m_items[0].m_id as points
+        unsigned char pad_1;
+        struct {
+            unsigned short m_id;    // what the box may hold (0: nothing)
+            unsigned short m_cond;  // a game condition it needs (0: none; choice_tbox)
+        } m_items[10];  // 0x2
+    };
     // the totals of SaveData (0xA0 bytes)
     struct Record {
         unsigned long long m_score;  // 0x00: enemy_damage adds the points
@@ -157,7 +166,9 @@ public:
     unsigned char m_pal[16][0x30];  // 0x65C: 16 palettes of 16 RGB colours (decode_4bpp_sprt's argument >> 12)
     unsigned char pad_95C[0x904];
     const MapData* m_map;     // 0x1260: none, check_map hits nothing
-    unsigned char pad_1268[0x2178];
+    unsigned char pad_1268[0x420];
+    TBox m_tbox[16];          // 0x1688: a treasure box item task picks one (item_draw)
+    unsigned char pad_1928[0x1AB8];
     unsigned char m_resultSub;    // 0x33E0: getResult reports it (| 0x100) with id 0xFFFE when m_resultFlag is set
     unsigned char pad_33E1[0x28];
     unsigned char m_scoreShow;    // 0x3409: enemy_damage sets 30 (frames)
@@ -186,6 +197,7 @@ public:
 void effect_move(void* task);
 void effect_draw(void* task);
 void enemy_draw(void* task);
+void item_draw(void* task);
 }}  // namespace minigame::tora
 
 #endif

@@ -13,6 +13,10 @@ namespace event {
 // table 0x7100B3CBF0
 class CharaEvaPlayer {
 public:
+    CharaEvaPlayer()
+        : m_flags(0), m_chara(nullptr), m_model(nullptr), m_dys(nullptr), m_anm(nullptr), m_rcha(nullptr), m_time(0.0f),
+          m_pos(0.0f, 0.0f, 0.0f), pad_50(0), pad_60(0), pad_68(0), m_action(0), pad_74(0), pad_78(0), pad_7c(1),
+          m_mountWeapon(1), m_battleWeapon(1) {}
     virtual ~CharaEvaPlayer();  // slot 0
     // 1.0.0's names (setMountWeapon 0x71000CAF48, setBattleWeapon 0x71000CAFE4); the field names are not the original's
     void setMountWeapon(int weapon);
@@ -70,9 +74,15 @@ public:
     float m_time;  // 0x38: play clears it
     unsigned char pad_3c[0x4];
     mm::Vec3 m_pos;  // 0x40: play's pos
-    unsigned char pad_50[0x20];
+    unsigned char pad_50;
+    unsigned char pad_51[0xf];
+    unsigned long pad_60;
+    int pad_68;
+    unsigned char pad_6c[0x4];
     int m_action;  // 0x70: playAction's action, stopAction clears it
-    unsigned char pad_74[0xc];
+    int pad_74;
+    int pad_78;
+    int pad_7c;
     int m_mountWeapon;  // 0x80: setMountWeapon's weapon
     int m_battleWeapon;  // 0x84: setBattleWeapon's weapon
     CharaWpnAsm m_wpnRight;  // 0x88 (execCmd/mount's left = false)

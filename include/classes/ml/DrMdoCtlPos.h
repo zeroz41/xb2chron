@@ -78,6 +78,22 @@ public:
         int m_treeNum;  // 0x2C: shadowRender walks this many nodes of m_pRangeTree
     };
 
+    // an instance list (0x20 bytes) of m_instList: createZBuffRenderDisplayList and
+    // createThicknessRenderDisplayListSub draw m_end - m_start instances of model m_topIdx (the type and field names
+    // are not the original's)
+    struct InstList {
+        unsigned short m_end;      // 0x0
+        unsigned short m_start;    // 0x2
+        unsigned short m_billNum;  // 0x4: MdoInstancePrePassArg::m_billNum
+        unsigned short m_billArg;  // 0x6: MdoInstancePrePassArg::m_billArg
+        unsigned char m_flags;     // 0x8: bit 0 is MdoInstancePrePassArg::m_bill
+        unsigned char pad_9[0x3];
+        unsigned short m_topIdx;   // 0xC: the MdsMdlTopHeader
+        unsigned char pad_E[0x6];
+        unsigned int m_count;      // 0x14: MdoInstancePrePassArg::m_count before m_start's 0x34-byte instances
+        unsigned char pad_18[0x8];
+    };
+
     // the names are not the original's
     unsigned char pad_18C[0x1C];
     const PosHead* m_pPosHead;  // 0x1A8
@@ -99,9 +115,12 @@ public:
     DrResMdoPosAddList* m_pAddList;  // 0x250: releasePos releases and clears it
     // 0x258: setDeleteCall calls its releaseCall (the name is not the original's)
     DrResMdoInstMdlInfo* m_instMdlInfo;
-    unsigned char pad_260[0x8];
+    unsigned short m_instListNum;  // 0x260: the lists in m_instList
+    unsigned char pad_262[0x6];
     DrResMdoSortPos* m_pSortPos;  // 0x268: releasePos destroys it in place
-    unsigned char pad_270[0xD8];
+    unsigned char pad_270[0x40];
+    InstList* m_instList;  // 0x2B0
+    unsigned char pad_2B8[0x90];
     DrCalcViewWork* m_pViewWork;  // 0x348: shadowRender takes the calc manager's view work (the name is not the original's)
     unsigned char pad_350[0x8];
     // 0x358: setDeleteCall releases and clears it (the name is not the original's)

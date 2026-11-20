@@ -11,6 +11,7 @@ namespace event {
 // table 0x7100B3CA98
 class CharaEffectPlayer {
 public:
+    CharaEffectPlayer() : m_flags(0), m_handle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {}
     virtual ~CharaEffectPlayer();  // slot 0
     // the volume fade's kind (the evt_chara script commands pass 1); no enumerator is named. Each kind keeps its
     // own state below (index 0 or 1) and its own flag bits (1/2 playing, 0x10/0x20 animating)

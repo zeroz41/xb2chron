@@ -10,6 +10,7 @@ namespace event {
 // table 0x7100B3E760
 class CharaSetIdle : public ::event::ICmd {
 public:
+    CharaSetIdle() : m_step(0), m_handle(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_dys(nullptr), m_id(0) {}
     virtual ~CharaSetIdle() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
     virtual void init();  // slot 2
     virtual int update(event::ICmd::Param const&);  // slot 3

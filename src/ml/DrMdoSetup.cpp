@@ -184,6 +184,103 @@ void DrMdoSetup::setShader(DrResMdoMat*, const MdsMatInfoHeader* info, const Mds
     }
 }
 
+void DrMdoCtl::partsShadowRender(const MdsMdlInfoHeader* info, int triIdx, int mot, int shdOfs) {
+    const MdsMatInfoHeader* mat = m_pWrkMatRes->m_pMatInfo + info->m_matIdx;
+    m_pWrkMatRes->m_pVertex->setVertexBind(info->m_vtxBindIdx);
+    if (m_curBindIdx != info->m_matIdx) {
+        DrAPCache* cache = m_pDrMan->m_apCache;
+        m_curBindIdx = info->m_matIdx;
+        cache->setupCulling(static_cast<DrApCullType>(mat->m_cullType));
+    }
+    DrShdDataList* list = m_pDrMan->m_shdMan->m_dataList;
+    unsigned int flags = mat->m_shdFlags;
+    int shdIdx;
+    if (flags & 0x4) {
+        unsigned int alpha = flags & 0x8;
+        if (mot) {
+            triIdx = 0;
+            shdIdx = (alpha ? 8 : 7);
+        } else if (alpha) {
+            shdIdx = (flags & 0x2000) ? 14 : 2;
+        } else {
+            shdIdx = (flags & 0x2000) ? 13 : 1;
+        }
+    } else {
+        if (mot) {
+            triIdx = 0;
+            shdIdx = 6;
+        } else {
+            if (!(flags & 0x2000)) {
+                shdIdx = 0;
+            } else {
+                shdIdx = 12;
+            }
+        }
+    }
+    shdIdx += shdOfs;
+    int matIdx = info->m_matIdx;
+    DrMdoShdSetShadow shd;
+    shd.m_pMdl = this;
+    (shd.*DrMdoShdSetShadow::s_pShwMaterial[shdIdx])(shdIdx, mat, triIdx, matIdx, list);
+    if (info->m_flags & 0x1000000) {
+        m_pWrkMatRes->m_pVertex->setMofBlendVertexBind(m_pWrkMatRes->m_pMofBlendArray, info->m_vtxBindIdx, 2);
+    }
+    DrResMdoVertex* vtx = m_pWrkMatRes->m_pVertex;
+    if (info->m_flags & 0x2000) {
+        vtx->render(info->m_renderIdx[1]);
+    } else {
+        vtx->render(info->m_renderIdx[0]);
+    }
+}
+
+void DrMdoCtl::partsShadowDirRender(const MdsMdlInfoHeader* info, int triIdx, int mot) {
+    const MdsMatInfoHeader* mat = m_pWrkMatRes->m_pMatInfo + info->m_matIdx;
+    m_pWrkMatRes->m_pVertex->setVertexBind(info->m_vtxBindIdx);
+    if (m_curBindIdx != info->m_matIdx) {
+        DrAPCache* cache = m_pDrMan->m_apCache;
+        m_curBindIdx = info->m_matIdx;
+        cache->setupCulling(static_cast<DrApCullType>(mat->m_cullType));
+    }
+    DrShdDataList* list = m_pDrMan->m_shdMan->m_dataList;
+    unsigned int flags = mat->m_shdFlags;
+    unsigned int shdIdx;
+    if (flags & 0x4) {
+        unsigned int alpha = flags & 0x8;
+        if (mot) {
+            triIdx = 0;
+            shdIdx = (alpha ? 8 : 7);
+        } else if (alpha) {
+            shdIdx = (flags & 0x2000) ? 14 : 2;
+        } else {
+            shdIdx = (flags & 0x2000) ? 13 : 1;
+        }
+    } else {
+        if (mot) {
+            triIdx = 0;
+            shdIdx = 6;
+        } else {
+            if (!(flags & 0x2000)) {
+                shdIdx = 0;
+            } else {
+                shdIdx = 12;
+            }
+        }
+    }
+    int matIdx = info->m_matIdx;
+    DrMdoShdSetShadow shd;
+    shd.m_pMdl = this;
+    (shd.*DrMdoShdSetShadow::s_pShwMaterial[shdIdx])(shdIdx, mat, triIdx, matIdx, list);
+    if (info->m_flags & 0x1000000) {
+        m_pWrkMatRes->m_pVertex->setMofBlendVertexBind(m_pWrkMatRes->m_pMofBlendArray, info->m_vtxBindIdx, 2);
+    }
+    DrResMdoVertex* vtx = m_pWrkMatRes->m_pVertex;
+    if (info->m_flags & 0x2000) {
+        vtx->render(info->m_renderIdx[1]);
+    } else {
+        vtx->render(info->m_renderIdx[0]);
+    }
+}
+
 void DrMdoCtl::partsShadowBaseRender(const MdsMdlTopHeader* top) {
     int num = top->m_infoNum;
     if (num <= 0) {
@@ -299,6 +396,47 @@ void DrMdoCtl::partsPosNukiShadowRender(const MdsMdlTopHeader* top) {
                 } else {
                     vtx->render(info->m_renderIdx[0]);
                 }
+            }
+        }
+    }
+}
+
+void DrMdoCtl::partsPosNoamShadowRender(const MdsMdlTopHeader* top, grlib::CGLibVtxInstans* inst, unsigned int count,
+                                        unsigned int first, unsigned int instances) {
+    int num = top->m_infoNum;
+    if (num <= 0) {
+        return;
+    }
+    DrShdDataList* list = m_pDrMan->m_shdMan->m_dataList;
+    DrAPCache* cache = m_pDrMan->m_apCache;
+    const MdsMdlInfoHeader* info = reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs);
+    for (int i = 0; i < num; i++, info++) {
+        if ((info->m_flags & 0x20000) && (info->m_shadowFlags & 0x40)) {
+            const MdsMatInfoHeader* mat = m_pWrkMatRes->m_pMatInfo + info->m_matIdx;
+            m_pWrkMatRes->m_pVertex->setVertexBind(info->m_vtxBindIdx);
+            cache->setupCulling(static_cast<DrApCullType>(mat->m_cullType));
+            if (!(mat->m_shdFlags & 0x4)) {
+                int matIdx = info->m_matIdx;
+                DrMdoShdSetShadow shd;
+                shd.m_pMdl = this;
+                (shd.*DrMdoShdSetShadow::s_pShwMaterial[9])(9, mat, 0, matIdx, list);
+            } else if (!(mat->m_shdFlags & 0x8)) {
+                int matIdx = info->m_matIdx;
+                DrMdoShdSetShadow shd;
+                shd.m_pMdl = this;
+                (shd.*DrMdoShdSetShadow::s_pShwMaterial[10])(10, mat, 0, matIdx, list);
+            } else {
+                int matIdx = info->m_matIdx;
+                DrMdoShdSetShadow shd;
+                shd.m_pMdl = this;
+                (shd.*DrMdoShdSetShadow::s_pShwMaterial[11])(11, mat, 0, matIdx, list);
+            }
+            grlib::CGLibCtlVertex::setInstanceVertex(*inst, first, count, 1, 1);
+            DrResMdoVertex* vtx = m_pWrkMatRes->m_pVertex;
+            if (info->m_flags & 0x2000) {
+                vtx->renderIns(info->m_renderIdx[1], instances);
+            } else {
+                vtx->renderIns(info->m_renderIdx[0], instances);
             }
         }
     }
@@ -1155,6 +1293,69 @@ void (DrMdoMat::*DrMdoMat::s_pCallMatVal[35])(const MdsMatInfoHeader*, int, int)
     &DrMdoMat::matCall_CalcPrjDefCall,
     &DrMdoMat::matCall_CalcPrjAlpha,
 };
+
+void DrMdoAnim::calcAnim(const MdsFixAnmCate* cate, DrResMdoMat* mat, DrResEtcPamObj* pamObj, float* work, float rate) {
+    const MdsFixAnmInf* inf = m_pWrkMatRes->m_pFixAnmInf + cate->m_infIdx;
+    float* frame = m_pWrkMatRes->m_pFixAnmFrame + cate->m_infIdx;
+    for (int i = 0; i < cate->m_infNum; i++) {
+        float value;
+        if (inf->m_etcParam) {
+            value = pamObj->m_params[inf->m_keyNum].getParams();
+            if (inf->m_invert) {
+                value = 1.0f - value;
+                if (value < 0.0f) {
+                    value = 0.0f;
+                } else if (value > 1.0f) {
+                    value = 1.0f;
+                }
+            }
+        } else {
+            if (inf->m_hourFrame) {
+                *frame = m_pDrMan->m_hour * 240.0f;
+            } else {
+                *frame += rate;
+                if (*frame > static_cast<int>(inf->m_endFrame - 1)) {
+                    *frame = (inf->m_endFrame - *frame) + inf->m_startFrame;
+                }
+            }
+            value = getHermiteAttr(inf, *frame);
+        }
+        s_pCallAnim[inf->m_callIdx](mat, work + inf->m_workOfs, value);
+        inf++;
+        frame++;
+    }
+}
+
+float DrMdoAnim::getNodeAnmHermiteAttr(const MdsMdlNodeAnmInfo* info, float frame) {
+    const MdsMdlNodeAnmInfo::Key* key =
+        reinterpret_cast<const MdsMdlNodeAnmInfo::Key*>(m_pWrkMatRes->m_pEtcRef->m_pData + info->m_keyOfs);
+    if (frame <= (float)info->m_startFrame) {
+        return key[0].m_value;
+    }
+    if (frame >= (float)info->m_endFrame) {
+        return key[info->m_keyNum - 1].m_value;
+    }
+    const MdsMdlNodeAnmInfo::Key* prevKey = key;
+    for (int i = 1; i < info->m_keyNum; i++, prevKey++) {
+        if ((float)prevKey[1].m_frame > frame) {
+            const MdsMdlNodeAnmInfo::Key& prev = prevKey[0];
+            const MdsMdlNodeAnmInfo::Key& next = prevKey[1];
+            if (prev.m_flags & 1) {
+                return prev.m_value;
+            }
+            float len = (float)next.m_frame - (float)prev.m_frame;
+            float t = (frame - (float)prev.m_frame) / len;
+            float t2 = t * t;
+            float t3 = t * t2;
+            float h00 = 2.0f * t3 - 3.0f * t2 + 1.0f;
+            float h10 = t3 - 2.0f * t2 + t;
+            float h01 = 3.0f * t2 - 2.0f * t3;
+            float h11 = t3 - t2;
+            return prev.m_value * h00 + prev.m_outTangent * h10 + next.m_value * h01 + next.m_inTangent * h11;
+        }
+    }
+    return 0.0f;
+}
 
 void DrMdoAnim::animcall_UV_Scr_U(DrResMdoMat* mat, float* work, float value) {
     work[0] = value;
@@ -2610,6 +2811,42 @@ void DrMdoCtlMpfAuto::gridInstColiCalc() {
     StockPoint();
 }
 
+bool DrMdoCtlMpfAuto::gridColiInstPosRangeChk(const MdsMpfAutoPosTree* tree) {
+    if ((tree->m_lodMask & m_lodMask) == 0) {
+        return false;
+    }
+    if (tree->m_max[0] < m_rangeMin[0] || tree->m_min[0] > m_rangeMax[0] || tree->m_max[1] < m_rangeMin[1] ||
+        tree->m_min[1] > m_rangeMax[1]) {
+        return false;
+    }
+    int childNum = tree->m_childNum;
+    if (childNum != 0) {
+        const MdsMpfAutoPosTree* trees = m_pCurBuff->m_pPosTree;
+        const unsigned int* idx = m_pCurBuff->m_pIdxTbl + tree->m_childIdx;
+        for (int i = 0; i < tree->m_childNum; i++, idx++) {
+            if (gridColiInstPosRangeChk(&trees[*idx])) {
+                return true;
+            }
+        }
+    }
+    int instNum = tree->m_instNum;
+    if (instNum != 0) {
+        const unsigned int* idx = m_pCurBuff->m_pIdxTbl + tree->m_instIdx;
+        for (int i = 0; i < instNum; i++, idx++) {
+            const _wkMpfAutoBuff::Inst* inst = &m_pCurBuff->m_pInstData[*idx];
+            if ((inst->m_lodMask & m_lodMask) == 0) {
+                break;
+            }
+            if (inst->m_max[0] < m_rangeMin[0] || inst->m_min[0] > m_rangeMax[0] || inst->m_max[1] < m_rangeMin[1] ||
+                inst->m_min[1] > m_rangeMax[1]) {
+                continue;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 bool DrMdoCtlMpfAuto::gridChkColiRange(float maxX, float minX, float maxZ, float minZ) {
     int num = m_buffNum;
     m_rangeMin[0] = minX;
@@ -3609,6 +3846,48 @@ void DrMdoSetup::createUniformBlock(const MdsMatInfoHeader* info, DrResMdoMat* m
     block->updateData();
 }
 
+void DrMdoCtlPos::createThicknessRenderDisplayListSub(bool first) {
+    if (m_instListNum == 0) {
+        return;
+    }
+    m_stateFlags = (m_stateFlags & ~0x40000040) | 0x40;
+    m_curTriBlockIdx = -1;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    m_pWrkMatRes->m_pVertex->beginVertexSetup();
+    m_renderTech = 0;
+    m_renderPass = 0;
+    m_pDrMan->m_apCache->setupCulling(static_cast<DrApCullType>(first));
+    MdoInstancePrePassArg arg;
+    arg.m_first = 0x34;
+    arg.m_first2 = first;
+    int listNum = m_instListNum;
+    for (int i = 0; i < listNum; i++) {
+        int num = m_instList[i].m_end - m_instList[i].m_start;
+        if (num == 0) {
+            continue;
+        }
+        const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop + m_instList[i].m_topIdx;
+        arg.m_bill = false;
+        if (m_instList[i].m_flags & 1) {
+            arg.m_bill = true;
+        }
+        arg.m_count = m_instList[i].m_count + m_instList[i].m_start * 0x34;
+        arg.m_instances = num - m_instList[i].m_billNum;
+        arg.m_billNum = m_instList[i].m_billNum;
+        arg.m_billArg = m_instList[i].m_billArg;
+        int partNum = top->m_infoNum;
+        arg.m_info = reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs);
+        for (int j = 0; j < partNum; j++, arg.m_info++) {
+            if ((arg.m_info->m_drawFlags & 0x8000) && (arg.m_info->m_flags & 0x24000) == 0x4000) {
+                partsInstanceThicknessRender(arg);
+            }
+        }
+    }
+}
+
 void DrMdoCtlPos::shadowRender() {
     m_renderTech = 0;
     m_renderPass = 6;
@@ -4318,6 +4597,48 @@ bool DrMdoCtlSeamAll::callDeleteUpdate() {
         m_cldMdlData->setCallDisp(false);
     }
     return false;
+}
+
+void DrMdoCtlSeamRead::updateReadCall() {
+    if (--m_readWaitCnt <= 0) {
+        m_readWaitCnt = 0;
+    }
+    if (--m_heightReadWait <= 0) {
+        m_heightReadWait = 0;
+        if (DrMan::get()->isAllMiddelTexStmChk()) {
+            m_parmRead.resetHeightLvTexture();
+        }
+    } else {
+        m_parmRead.resetHeightLvTexture();
+    }
+    if (m_seamFlags & 0x10001000) {
+        m_readSkip = 0;
+        return;
+    }
+    if (m_seamFlags & 0x80000) {
+        m_readSkip = 0;
+        return;
+    }
+    _wkSeamReadWait waits[8];
+    bool errOn;
+    bool failed;
+    int num = m_parmRead.calcReadParms(waits, errOn, failed, m_pDrMan->m_seamReadErrMode, m_readCall, m_readCallNum);
+    if (errOn) {
+        m_seamFlags |= 0x400;
+    }
+    if (failed) {
+        m_seamFlags |= 0x10000;
+    }
+    if (!(m_seamRead.m_flags & 0x110)) {
+        int max = m_seamRead.getReadMax();
+        if (max >= num) {
+            max = num;
+        }
+        for (int i = 0; i < max; i++) {
+            (this->*s_pSeamReadCall[waits[i].m_type])(&waits[i]);
+            m_readTypeBits |= 1 << waits[i].m_type;
+        }
+    }
 }
 
 void DrMdoCtlSeamAll::dispOffUpdate() {
@@ -6244,6 +6565,22 @@ int DrMdoSetup::unimate_NomProjectionMat(float* out, DrResMdoMat* mat, const Mds
     return DrResMdoUniformBlock::s_nVarSizeTbl[50] * var->m_num;
 }
 
+int DrMdoSetup::unimate_DollTexWork(float* out, DrResMdoMat* mat, const MdsMatInfoHeader* info, const MdsMatVariableTbl* var) {
+    const MdsMatTexEntry* entry = reinterpret_cast<const MdsMatTexEntry*>(m_pWrkMatRes->m_pMatData + info->m_texEntryOfs);
+    grlib::CGLibTextureBuffer* tex = m_pWrkMatRes->m_ppTexture[entry[var->m_valIdx].m_texIdx];
+    float width = static_cast<unsigned short>(tex->getWidth());
+    float height = static_cast<unsigned short>(tex->getHeight());
+    out[0] = 1.0f / width;
+    out[1] = 1.0f / height;
+    out[2] = width;
+    out[3] = height;
+    float halfW = out[0] * 0.5f;
+    out[4] = halfW;
+    float halfH = out[1] * 0.5f;
+    out[5] = halfH;
+    return DrResMdoUniformBlock::s_nVarSizeTbl[10];
+}
+
 int DrMdoSetup::unimate_AvatarMapWrk(float* out, DrResMdoMat* mat, const MdsMatInfoHeader* info, const MdsMatVariableTbl* var) {
     const MdsMatAvatarMap* map = m_pWrkMatRes->m_pAvatarMap + info->m_avatarMapIdx;
     const mm::Col3& color0 = m_pAvatarColor[map->m_colorIdx[0]];
@@ -6380,13 +6717,39 @@ void DrMdoSmlShadowMan::changeViewNum(DrMdoSmlShadowObj* obj, int viewNum) {
 }
 
 DrMdoTexSimpleMan::DrMdoTexSimpleMan(DrMan* drMan)
-    : m_pDrMan(drMan), m_list0(), m_list1(), m_list3(), m_list2() {}
+    : m_pDrMan(drMan), m_list(), m_list3(), m_list2() {}
 
 DrMdoTexSimpleMan::~DrMdoTexSimpleMan() {
-    m_list0.deleteAll();
-    m_list1.deleteAll();
+    m_list[0].deleteAll();
+    m_list[1].deleteAll();
     m_list2.deleteAll();
     m_list3.deleteAll();
+}
+
+void DrMdoTexSimpleMan::update() {
+    m_list2.deleteAll();
+    int idx = DrMan::s_nDblIdx;
+    DrMdoResList<DrResMdoTexSimple>& stock = m_list[idx];
+    DrResMdoTexSimple* tex = stock.m_pHead;
+    while (tex != nullptr) {
+        tex->createTex();
+        DrResMdoTexSimple* next = tex->m_pNext;
+        m_list3.pushBack(tex);
+        tex = next;
+    }
+    stock.m_pHead = nullptr;
+    stock.m_pTail = nullptr;
+    tex = m_list3.m_pHead;
+    while (tex != nullptr) {
+        if (tex->m_flags & (4 << idx)) {
+            DrResMdoTexSimple* next = tex->m_pNext;
+            m_list3.remove(tex);
+            m_list2.pushBack(tex);
+            tex = next;
+        } else {
+            tex = tex->m_pNext;
+        }
+    }
 }
 
 DrMdoTextureMan::DrMdoTextureMan(DrMan* drMan) : m_pDrMan(drMan), m_texList(), m_etcTexList() {}

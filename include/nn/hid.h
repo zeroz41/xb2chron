@@ -17,6 +17,39 @@ typedef NpadStyleSet::Flag<1> NpadStyleHandheld;
 typedef NpadStyleSet::Flag<2> NpadStyleJoyDual;
 NpadStyleSet GetNpadStyleSet(const NpadIdType& id);
 
+// the SDK's npad buttons, the flags of an NpadButtonSet (ml::DevPadNx::Impl::updateTpad maps them to its pad bits)
+struct NpadButton {
+    typedef util::BitFlagSet<64, NpadButton>::Flag<0> A;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<1> B;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<2> X;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<3> Y;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<4> StickL;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<5> StickR;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<6> L;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<7> R;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<8> ZL;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<9> ZR;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<10> Plus;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<11> Minus;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<12> Left;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<13> Up;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<14> Right;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<15> Down;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<16> StickLLeft;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<17> StickLUp;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<18> StickLRight;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<19> StickLDown;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<20> StickRLeft;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<21> StickRUp;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<22> StickRRight;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<23> StickRDown;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<24> LeftSL;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<25> LeftSR;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<26> RightSL;
+    typedef util::BitFlagSet<64, NpadButton>::Flag<27> RightSR;
+};
+typedef util::BitFlagSet<64, NpadButton> NpadButtonSet;
+
 struct AnalogStickState {
     int x;
     int y;
@@ -24,21 +57,21 @@ struct AnalogStickState {
 // the per-style states GetNpadState fills (0x28 bytes, the room updateNpad's buffer leaves; the SDK's fields)
 struct NpadFullKeyState {
     long samplingNumber;
-    unsigned long buttons;  // an NpadButtonSet
+    NpadButtonSet buttons;
     AnalogStickState analogStickL;
     AnalogStickState analogStickR;
     unsigned int attributes;  // an NpadAttributesSet
 };
 struct NpadHandheldState {
     long samplingNumber;
-    unsigned long buttons;
+    NpadButtonSet buttons;
     AnalogStickState analogStickL;
     AnalogStickState analogStickR;
     unsigned int attributes;
 };
 struct NpadJoyDualState {
     long samplingNumber;
-    unsigned long buttons;
+    NpadButtonSet buttons;
     AnalogStickState analogStickL;
     AnalogStickState analogStickR;
     unsigned int attributes;

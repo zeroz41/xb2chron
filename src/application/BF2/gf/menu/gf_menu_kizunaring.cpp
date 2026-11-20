@@ -4,6 +4,7 @@
 #include "classes/gf/GfItemBox.h"
 #include "gf/GfDataBlade.h"
 #include "gf/GfDataDriver.h"
+#include "gf/GfDataHana.h"
 #include "gf/GfDataItem.h"
 #include "gf/GfDataUtil.h"
 #include "gf/GfEquipUtil.h"
@@ -185,6 +186,72 @@ unsigned int GfMenuItemUtil::searchEquipOrb(unsigned int item, GfItemHandle hand
                 }
                 return blade;
             }
+        }
+    }
+    return 0;
+}
+
+unsigned int GfMenuItemUtil::searchEquipHanaParts(unsigned int partsId, unsigned int item, GfItemHandle handle) {
+    if (item == 0) {
+        return 0;
+    }
+    ::mm::mtl::FixedVector<unsigned short, 422> blades;
+    GfDataBlade::getListRegular(blades);
+    GfDataBlade::getListRare(blades);
+    GfGameUtil::getListDlcRare(blades);
+    GfDataBlade::getListCommon(blades);
+    for (unsigned int i = 0; i < blades.size(); i++) {
+        unsigned short blade = *(blades.begin() + i);
+        if (blade == 0 || !GfDataHana::isValid(blade)) {
+            continue;
+        }
+        const EquipHana* equip = GfDataHana::getEquipParts(blade);
+        switch (partsId) {
+        case 1:
+            if (equip->m_roleParts == item && equip->m_roleHandle == handle.m_handle) {
+                return blade;
+            }
+            break;
+        case 2:
+            if (equip->m_attributeParts == item && equip->m_attributeHandle == handle.m_handle) {
+                return blade;
+            }
+            break;
+        case 3:
+        case 4:
+        case 5:
+            for (unsigned int j = 0; j < 3; j++) {
+                if (equip->m_nArtsParts[j].m_item == item && equip->m_nArtsParts[j].m_handle == handle.m_handle) {
+                    return blade;
+                }
+            }
+            break;
+        case 6:
+        case 7:
+        case 8:
+        case 12:
+        case 13:
+        case 14:
+            for (unsigned int j = 0; j < 3; j++) {
+                if (equip->m_condenserParts[j] == item && equip->m_condenserHandles[j] == handle.m_handle) {
+                    return blade;
+                }
+            }
+            for (unsigned int j = 0; j < 3; j++) {
+                if (equip->m_extendCondenserParts[j] == item && equip->m_extendCondenserHandles[j] == handle.m_handle) {
+                    return blade;
+                }
+            }
+            break;
+        case 9:
+        case 10:
+        case 11:
+            for (unsigned int j = 0; j < 3; j++) {
+                if (equip->m_artsParts[j].m_item == item && equip->m_artsParts[j].m_handle == handle.m_handle) {
+                    return blade;
+                }
+            }
+            break;
         }
     }
     return 0;

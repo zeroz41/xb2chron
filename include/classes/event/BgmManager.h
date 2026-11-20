@@ -23,7 +23,9 @@ public:
     unsigned int pad_10;
     unsigned int pad_14;
     mm::mtl::FixStr<64> pad_18;
-    unsigned char pad_5c[0x20];
+    // the volume changeVolume last asked for, clamped to 0..1; the name is not the original's
+    float m_volume;  // 0x5c
+    unsigned char pad_60[0x1c];
     unsigned int pad_7c;
     unsigned char pad_80[0x8];
 };

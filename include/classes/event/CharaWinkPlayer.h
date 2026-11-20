@@ -7,6 +7,7 @@ namespace event {
 // table 0x7100B3CD10
 class CharaWinkPlayer {
 public:
+    CharaWinkPlayer() : m_flags(0), m_weightPlayer(nullptr), m_state(nullptr), m_stateName("") {}
     virtual ~CharaWinkPlayer() {}  // slot 0
     // the blink states (1.0.0 names them; 3.0.1 keeps them out of line)
     void idle_start();

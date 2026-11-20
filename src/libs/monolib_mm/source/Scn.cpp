@@ -713,6 +713,13 @@ void ScnObjCam::setDefault() {
     updateViewMatrix(false);
 }
 
+ScnObjCam::~ScnObjCam() {
+    if (m_controller != nullptr) {
+        delete m_controller;
+        m_controller = nullptr;
+    }
+}
+
 void ScnObjCam::updateFovNearFar() {
     RENDER_INFO* info = m_info.m_cpu;
     info->m_invTan = 1.0f / tanf(info->m_fov * 0.0174532924f * 0.5f);

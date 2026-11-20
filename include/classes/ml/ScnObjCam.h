@@ -70,7 +70,10 @@ public:
     unsigned char pad_5D[0x3];
     // 0x60 a polymorphic object update forwards to (its slot 8) and the destructor deletes; nothing found names its
     // class yet (the names are not the original's)
-    class Controller;
+    class Controller {
+    public:
+        virtual ~Controller();  // slot 0 (the destructor deletes it through slot 1)
+    };
     Controller* m_controller;
     unsigned char pad_68[0x8];
     threadval<RENDER_INFO> m_info;  // apply and setLookAt read its banks (the name is not the original's)

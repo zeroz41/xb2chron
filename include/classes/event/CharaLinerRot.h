@@ -10,6 +10,7 @@ namespace event {
 class CharaLinerRot : public ::event::ICmd {
 public:
     // inline: D2 is emitted in CharaObj's destructor, D0 sits in CharaObj's tail; update is the key function
+    CharaLinerRot() : m_dys(nullptr) {}
     virtual ~CharaLinerRot() {}  // slot 0
     virtual int update(event::ICmd::Param const&);  // slot 3
     // CharaObj::initModel stores the CharaObj's dynamics updater (at 0xde0); the name is not the original's

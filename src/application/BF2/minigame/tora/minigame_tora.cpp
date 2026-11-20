@@ -44,6 +44,23 @@ struct _sEnemy : _sTask {
     unsigned char pad_72[0x6];
     unsigned char m_step;   // 0x78: kind 0x3D's animation step
 };
+
+// an item task's work (item_move/item_draw). The names are not the original's.
+struct _sItem : _sTask {
+    union {
+        struct {
+            unsigned char m_kind;   // 0x40: an enemy's drop: 0/1
+            unsigned char m_state;  // 0x41: 4 an enemy's drop
+            unsigned char m_life;   // 0x42: an enemy's drop: frames left; otherwise a frame counter
+            unsigned char m_step;   // 0x43
+        };
+        struct {
+            unsigned int m_flags : 8;  // m_kind: 0x60 a coin, 0x40 a treasure box's item (bits 0-4 its box)
+            unsigned int : 8;
+            unsigned int m_anim : 8;  // m_life: a coin's animation counter
+        };
+    };
+};
 }  // namespace
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009C6A3C).
@@ -187,6 +204,37 @@ void effect_draw(void* task) {
     _sEffect* t = static_cast<_sEffect*>(task);
     if (t->m_wait != 0) return;
     minigame::get()->draw_obj(0x32, 0, t, 0x80);
+}
+
+void item_draw(void* task) {
+    _sItem* t = static_cast<_sItem*>(task);
+    unsigned char prio;
+    switch (t->m_state) {
+    case 0:
+        prio = 0x50;
+        break;
+    case 4:
+        if (t->m_life < 30 && (t->m_life & 1)) return;
+        minigame::get()->draw_obj(0x31, t->m_kind + 3, t, 0x50);
+        return;
+    default:
+        prio = 0x80;
+        break;
+    }
+    switch (t->m_flags & 0x60) {
+    case 0x40: {
+        minigame* m = minigame::get();
+        m->draw_obj(0x31, m->m_tbox[t->m_flags & 0x1f].m_type, t, prio);
+        break;
+    }
+    case 0x60:
+        if (t->m_anim & 0x30) {
+            minigame::get()->draw_obj(0x30, 0, t, prio);
+        } else {
+            minigame::get()->draw_obj(0x30, (t->m_anim >> 2) & 3, t, prio);
+        }
+        break;
+    }
 }
 
 void enemy_draw(void* task) {
