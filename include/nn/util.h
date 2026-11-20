@@ -26,11 +26,26 @@ bool CompressZlib(unsigned long* pOutSize, void* pOut, unsigned long outCapacity
 bool DecompressZlib(void* pOut, unsigned long outSize, const void* pSrc, unsigned long srcSize, void* pWork,
                     unsigned long workSize);
 
+namespace detail {
+// the SDK's storage word: 32-bit for up to 32 flags, 64-bit beyond (an NpadButtonSet's tests read one 64-bit word)
+template <bool Wide>
+struct BitFlagSetStorage {
+    typedef unsigned int Type;
+};
+template <>
+struct BitFlagSetStorage<true> {
+    typedef unsigned long Type;
+};
+}  // namespace detail
+
 // the SDK's fixed-size flag set (nn::hid::GetVibrationDeviceHandles takes a BitFlagSet<32, NpadStyleTag> by value,
 // its mangled name says so): Flag<i> names bit i and its mask, Test reads one. Only the module's 32-bit masks are
 // built here.
 template <int N, typename Tag>
 struct BitFlagSet {
+    typedef typename detail::BitFlagSetStorage<(N > 32)>::Type StorageType;
+    static const int StorageBitCount = 8 * sizeof(StorageType);
+
     template <int BitIndex>
     struct Flag {
         static const int Index = BitIndex;
@@ -39,10 +54,10 @@ struct BitFlagSet {
 
     template <typename FlagT>
     bool Test() const {
-        return (_storage[FlagT::Index / 32] >> (FlagT::Index % 32)) & 1;
+        return (_storage[FlagT::Index / StorageBitCount] >> (FlagT::Index % StorageBitCount)) & 1;
     }
 
-    unsigned int _storage[(N + 31) / 32];
+    StorageType _storage[(N + StorageBitCount - 1) / StorageBitCount];
 };
 template <int N, typename Tag>
 template <int BitIndex>

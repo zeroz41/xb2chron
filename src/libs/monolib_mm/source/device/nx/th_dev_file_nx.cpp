@@ -2502,6 +2502,104 @@ void DevPadNx::Impl::updateNpad() {
 }
 
 template <typename T>
+void DevPadNx::Impl::updateTpad(PadData& pad, const T& state) {
+    memset(&pad, 0, offsetof(PadData, m_connect));
+    pad.m_connect = true;
+    if (state.buttons.template Test<nn::hid::NpadButton::A>()) {
+        pad.m_btn |= 0x4;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::B>()) {
+        pad.m_btn |= 0x2;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::X>()) {
+        pad.m_btn |= 0x8;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::Y>()) {
+        pad.m_btn |= 0x1;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::L>()) {
+        pad.m_btn |= 0x10;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::R>()) {
+        pad.m_btn |= 0x20;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::ZL>()) {
+        pad.m_btn |= 0x40;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::ZR>()) {
+        pad.m_btn |= 0x80;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::Right>()) {
+        pad.m_btn |= 0x2000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::Left>()) {
+        pad.m_btn |= 0x8000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::Up>()) {
+        pad.m_btn |= 0x1000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::Down>()) {
+        pad.m_btn |= 0x4000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickL>()) {
+        pad.m_btn |= 0x400;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickR>()) {
+        pad.m_btn |= 0x800;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::Plus>()) {
+        pad.m_btn |= 0x200;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::Minus>()) {
+        pad.m_btn |= 0x100;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::LeftSL>()) {
+        pad.m_btn |= 0x80000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::LeftSR>()) {
+        pad.m_btn |= 0x100000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::RightSL>()) {
+        pad.m_btn |= 0x200000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::RightSR>()) {
+        pad.m_btn |= 0x400000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickLRight>()) {
+        pad.m_btn |= 0x1000000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickLUp>()) {
+        pad.m_btn |= 0x800000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickLLeft>()) {
+        pad.m_btn |= 0x4000000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickLDown>()) {
+        pad.m_btn |= 0x2000000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickRRight>()) {
+        pad.m_btn |= 0x10000000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickRUp>()) {
+        pad.m_btn |= 0x8000000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickRLeft>()) {
+        pad.m_btn |= 0x40000000;
+    }
+    if (state.buttons.template Test<nn::hid::NpadButton::StickRDown>()) {
+        pad.m_btn |= 0x20000000;
+    }
+    pad.m_alx = state.analogStickL.x * (1.0f / 32767.0f);
+    pad.m_aly = state.analogStickL.y * (1.0f / 32767.0f);
+    pad.m_arx = state.analogStickR.x * (1.0f / 32767.0f);
+    pad.m_ary = state.analogStickR.y * (1.0f / 32767.0f);
+    pad.m_alx = mm::clamp(-1.0f, pad.m_alx, 1.0f);
+    pad.m_aly = mm::clamp(-1.0f, pad.m_aly, 1.0f);
+    pad.m_arx = mm::clamp(-1.0f, pad.m_arx, 1.0f);
+    pad.m_ary = mm::clamp(-1.0f, pad.m_ary, 1.0f);
+}
+
+template <typename T>
 void DevPadNx::Impl::initializeVibration(unsigned int id, PadData& pad) {
     if (pad.m_vibInit) {
         return;
@@ -4895,6 +4993,60 @@ bool DebDraw::getScreenPos(mm::Vec3& out, const mm::Vec3& pos) {
     out.y = (1.0f - y) * (DevGraph::get()->pad_228.h * 0.5f);
     out.z = z;
     return true;
+}
+
+void DebDraw::renderArrowAxisX(const mm::Mat44& mtx, int size, const mm::Col4* col, bool cube) {
+    mm::Vec3 origin = mtx.getTrans();
+    mm::Vec3 screen0;
+    mm::Vec3 screen1;
+    if (!getScreenPos(screen0, origin)) {
+        return;
+    }
+    if (!getScreenPos(screen1, mulDir(pad_080, mm::Vec3::unitX) + origin)) {
+        return;
+    }
+    screen0.z = 0.0f;
+    screen1.z = 0.0f;
+    float scale = size / (screen0 - screen1).length();
+    mm::Col4 prev = m_col;
+    if (col != nullptr) {
+        setCol(*col);
+    } else {
+        setCol(mm::Col3::red, 1.0f);
+    }
+    if (cube) {
+        renderCubeArrow(origin, mulDir(mtx, mm::Vec3(scale, 0.0f, 0.0f)) + origin);
+    } else {
+        renderArrow(origin, mulDir(mtx, mm::Vec3(scale, 0.0f, 0.0f)) + origin);
+    }
+    setCol(prev);
+}
+
+void DebDraw::renderArrowAxisY(const mm::Mat44& mtx, int size, const mm::Col4* col, bool cube) {
+    mm::Vec3 origin = mtx.getTrans();
+    mm::Vec3 screen0;
+    mm::Vec3 screen1;
+    if (!getScreenPos(screen0, origin)) {
+        return;
+    }
+    if (!getScreenPos(screen1, mulDir(pad_080, mm::Vec3::unitX) + origin)) {
+        return;
+    }
+    screen0.z = 0.0f;
+    screen1.z = 0.0f;
+    float scale = size / (screen0 - screen1).length();
+    mm::Col4 prev = m_col;
+    if (col != nullptr) {
+        setCol(*col);
+    } else {
+        setCol(mm::Col3::green, 1.0f);
+    }
+    if (cube) {
+        renderCubeArrow(origin, mulDir(mtx, mm::Vec3(0.0f, scale, 0.0f)) + origin);
+    } else {
+        renderArrow(origin, mulDir(mtx, mm::Vec3(0.0f, scale, 0.0f)) + origin);
+    }
+    setCol(prev);
 }
 
 void DebDraw::renderRect(int x, int y, int w, int h) {
