@@ -4636,6 +4636,17 @@ void GfDataDriver::setPouchData(unsigned int driver, unsigned int pouch, const S
     dst->remainTime = data.remainTime;
 }
 
+bool GfDataDriver::isUsedFavorite(unsigned int driver, FAVORITE favorite) {
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->getChrIrType(bdat->getChrDrIraParam(driver)) != 0) {
+            return GfDataBlade::isUsedFavorite(getIraBlade(driver, -1), favorite);
+        }
+    }
+    unsigned int flag = (driver - 0x11 < 9 ? 0xF7C : 0xF8C) + driver;
+    return (GfGameFlag::getLocal(8, flag) & (1 << favorite)) != 0;
+}
+
 bool GfDataDriver::isIra(unsigned int driver) {
     return driver - 0x11 < 9;
 }
@@ -7395,6 +7406,21 @@ bool GfDataFieldSkill::getName(unsigned char*& bdat, unsigned int& id, unsigned 
     id = QuestListAcc::get()->getFLD_FieldSkillListName(skill);
     bdat = GfBdatMsg::getFpFieldSkill();
     return id != 0;
+}
+
+// the affinity chart achievement of a skill line's level (1 and up), 0 for none
+unsigned int GfDataBlade::getAchievementID(unsigned int blade, unsigned int line, unsigned int level) {
+    SDataBlade* data = getSDataBlade(blade);
+    ACHIEVEMENT_TYPE type;
+    unsigned int index;
+    if (!GfDataAchievement::getAchievementType(type, index, line)) {
+        return 0;
+    }
+    AchievInfo* info = getAchievInfo(blade, line);
+    if (info->m_achievementId == 0) {
+        return 0;
+    }
+    return QuestListAcc::get()->getFLD_AchievementSetAchievementID(info->m_achievementId, level - 1);
 }
 
 const char* GfDataBlade::getBaseEabWeaponName(unsigned int blade) {
