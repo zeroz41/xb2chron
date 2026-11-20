@@ -1985,6 +1985,93 @@ DrPixlPostObjDepthofField::~DrPixlPostObjDepthofField() {
     }
 }
 
+void DrPixlPostObjDepthofField::renderDepthAllSample() {
+    DrCalcViewWork* viewWork = m_drMan->m_calcMan->m_pViewWork;
+    float rate;
+    if (m_needClear) {
+        m_float2Buff->clearTexture(mm::Col4(0.0f, 0.0f, 0.0f, 0.0f), (GrlClaerMask)0xF);
+        m_needClear = false;
+        rate = 0.0f;
+    } else {
+        rate = viewWork->m_velocityBlurOff ? 0.0f : 0.95f;
+    }
+    m_float2Buff->setRenderTarget();
+    DrAPCache* cache = m_drMan->m_apCache;
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    {
+        DrShdDataObj* obj;
+        if (parm->m_dofFocusNum == 0) {
+            obj = list->getPostShdObj(0x1F);
+        } else {
+            obj = list->getPostShdObj(0x20);
+        }
+        list->bindTriangle();
+        obj->setupShader(0u);
+        grlib::CGLibUniformEtcUtility uniform(obj);
+        uniform.setUseUniformBlock("U_POST");
+        unsigned int depLocation = obj->getCurrentShader().getTextureLocation("dep");
+        unsigned int oldLocation = obj->getCurrentShader().getTextureLocation("old");
+        float val[8];
+        if (parm->m_dofFocusNum == 0) {
+            unsigned int ofs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "pisu[0]");
+            float width = m_autoBuff->m_width;
+            float height = m_autoBuff->m_height;
+            val[0] = 1.0f / width;
+            val[1] = 1.0f / height;
+            val[2] = -1.0f / width;
+            val[3] = -1.0f / height;
+            val[4] = rate;
+            val[5] = 0.0f;
+            val[6] = 0.0f;
+            val[7] = 0.0f;
+            uniform.setF32SetF32Array(ofs, val, 8);
+        } else {
+            unsigned int ofs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "pisu");
+            int idx = parm->m_dofFocusNum - 1;
+            int blk = idx / 4;
+            int sub = idx % 4;
+            int row = idx / 8;
+            int x = blk % 2 * 2 + sub % 2;
+            int y = sub / 2 + row * 2;
+            val[0] = (float)x * 0.25f + 0.125f;
+            val[1] = 1.0f - ((float)y * 0.25f + 0.125f);
+            val[2] = rate;
+            val[3] = 0.0f;
+            uniform.setF32SetVec4(ofs, val);
+        }
+        cache->beginTexSampling(2, 0);
+        cache->setTexture(*m_autoBuff->m_pTexture, depLocation);
+        cache->setTexture(*m_float2Buff->m_pTexture, oldLocation);
+        uniform.updateData();
+        uniform.setUniformBlock();
+        list->renderTriangle();
+    }
+    m_float2Buff->setColorInvalidate();
+    m_calcSampBuff->setRenderTarget();
+    {
+        DrShdDataObj* obj = list->getPostShdObj(0x23);
+        list->bindTriangle();
+        obj->setupShader(0u);
+        grlib::CGLibUniformEtcUtility uniform(obj);
+        uniform.setUseUniformBlock("U_POST");
+        unsigned int ratioOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "ratio");
+        float val[4];
+        val[0] = viewWork->m_depthParm.x;
+        val[1] = viewWork->m_depthParm.y;
+        val[2] = parm->m_dofFocusMin;
+        val[3] = parm->m_dofFocusRange;
+        uniform.setF32SetVec4(ratioOfs, val);
+        unsigned int calcLocation = obj->getCurrentShader().getTextureLocation("calc");
+        cache->beginTexSampling(2, 0);
+        cache->setTexture(*m_float2Buff->m_pTexture, calcLocation);
+        uniform.updateData();
+        uniform.setUniformBlock();
+        list->renderTriangle();
+    }
+    m_calcSampBuff->setColorInvalidate();
+}
+
 void DrPixlPostObjDepthofField::renderDofScaleDown() {
     DrAPGxType::setupScreenQuads(false);
     m_calcBuff[0]->setRenderTarget();
@@ -2141,6 +2228,26 @@ DrPixlPostObjMotionBlur::~DrPixlPostObjMotionBlur() {
     if (m_blurOut != nullptr) {
         delete m_blurOut;
         m_blurOut = nullptr;
+    }
+}
+
+DrPixlPostObjToneMap::DrPixlPostObjToneMap(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
+    : DrPixlPostObj(drMan, pixlMan, postMan), m_lumScale(1.0f), m_flags(0x10), pad_B8(0) {
+    for (int i = 0; i < 6; i++) {
+        m_sclDown[i] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(drMan);
+    }
+    m_uniform[0].setup(16);
+    m_uniform[1].setup(16);
+    m_lumBuff[0] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(drMan);
+    m_lumBuff[1] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(drMan);
+    m_lumCur = m_lumBuff[0];
+    for (int i = 0; i < 2; i++) {
+        m_lumBuff[i]->setTextureInfo(1.0f, 1.0f, static_cast<GrlSurfaceFormat>(DrAPCache::TEXTYPE_HALF_X1), false, 0);
+    }
+    for (int i = 0; i < 6; i++) {
+        float size = 128 >> i;
+        m_sclDown[i]->setTextureInfo(size, size, DrPixlFormat::s_ToneMapFormat, true,
+                                     (DrPixlMemMan::get()->m_viewMem + DrMan::getIns()->m_postParmIdx)->m_toneMapOfs[i]);
     }
 }
 

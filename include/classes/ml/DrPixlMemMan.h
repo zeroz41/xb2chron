@@ -35,7 +35,8 @@ public:
         unsigned char pad_174[0x18];
         // 0x18C: DrPixlPostObjSSR::resetColorBuff's targets: [i] m_reflectionBuff[i], [2] m_buffFirst, [3] m_buffLast
         unsigned int m_ssrOfs[4];
-        unsigned char pad_19C[0x18];
+        // 0x19C: DrPixlPostObjToneMap's m_sclDown[0..5] (name inferred, not the original's)
+        unsigned int m_toneMapOfs[6];
         // 0x1B4: DrPixlPostObjTSSAO::resetColorBuff's targets: [i] m_ssaoBuff[i], [2 + i] m_historyBuff[i],
         // [4] m_workBuff, [5] m_blurBuffA, [6] m_blurBuffB, [7] m_outBuff
         unsigned int m_ssaoOfs[8];

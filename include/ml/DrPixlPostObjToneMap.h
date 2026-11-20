@@ -20,11 +20,13 @@ public:
     // inferred)
     DrPixlRenderTarget* m_sclDown[6];
     grlib::CGLibOneUniformBlock m_uniform[2];  // 0x48, the constructor sets both up with 16 bytes (name inferred)
-    // 0x98: 1x1 TEXTYPE_HALF_X1 targets; the constructor points 0xA8 at [0] (name inferred)
+    // 0x98: 1x1 TEXTYPE_HALF_X1 targets; the constructor points m_lumCur at [0] (name inferred)
     DrPixlRenderTarget* m_lumBuff[2];
-    unsigned char pad_A8[0xC];
-    unsigned char m_flags;  // 0xB4, DrPixlPostMan::update runs updateByCompute while bit 4 is set
-    unsigned char pad_B5[0xB];
+    DrPixlRenderTarget* m_lumCur;  // 0xA8 (name inferred, not the original's)
+    float m_lumScale;              // 0xB0, the constructor sets 1.0f (name inferred, not the original's)
+    unsigned int m_flags;          // 0xB4, DrPixlPostMan::update runs updateByCompute while bit 4 is set
+    unsigned int pad_B8;           // the constructor clears it
+    unsigned char pad_BC[0x4];
 };
 }  // namespace ml
 
