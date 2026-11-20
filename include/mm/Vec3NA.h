@@ -8,6 +8,8 @@ struct Vec3NA {
     float x;
     float y;
     float z;
+
+    static const Vec3NA zero;  // EmitterManager::getFreeParticle's (the symbol is the original's)
 };
 }  // namespace mm
 

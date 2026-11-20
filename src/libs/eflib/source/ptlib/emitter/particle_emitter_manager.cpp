@@ -271,6 +271,48 @@ void EmitterManager::clear() {
     }
 }
 
+EmitterObj* EmitterManager::emitter_free_core(EmitterObj* pEmitter) {
+    if (pEmitter->m_pData == nullptr) {
+        efMsg("free type error");
+    } else if (pEmitter->m_pData->m_type == 4) {
+        for (IntrusiveList<ParticleObj>::iterator it = pEmitter->m_particleList.begin();
+             it != pEmitter->m_particleList.end(); ++it) {
+            it.get()->particle_clear_union();
+        }
+    } else if (pEmitter->m_pData->m_type == 5) {
+        for (IntrusiveList<ParticleObj>::iterator it = pEmitter->m_particleList.begin();
+             it != pEmitter->m_particleList.end(); ++it) {
+            // every particle checked; what used it is not in this build
+            it.get();
+        }
+        for (IntrusiveList<ParticleObj>::iterator it = pEmitter->m_particleList.begin();
+             it != pEmitter->m_particleList.end(); ++it) {
+            it.get()->particle_clear_union();
+        }
+    } else {
+        for (IntrusiveList<ParticleObj>::iterator it = pEmitter->m_particleList.begin();
+             it != pEmitter->m_particleList.end(); ++it) {
+            it.get()->particle_clear_union();
+        }
+    }
+    if (pEmitter->m_pGrp != nullptr) {
+        pEmitter->m_pGrp = nullptr;
+    }
+    EmitterObj* pNext = static_cast<EmitterObj*>(pEmitter->m_next);
+    if (pEmitter->m_pGpuCheck != nullptr) {
+        pEmitter->m_pGpuCheck->release();
+        pEmitter->m_pGpuCheck = nullptr;
+    }
+    pEmitter->m_pData = nullptr;
+    removeEmitterActive(pEmitter);
+    if (pEmitter->m_pStream != nullptr) {
+        pEmitter->m_pStream->release();
+    }
+    pEmitter->releaseParticleAll();
+    m_emitterFreeList.push_back(*pEmitter);
+    return pNext;
+}
+
 EmitterObj* EmitterManager::getEmitterFree() {
     if (m_emitterFreeList.m_size == 0) {
         return nullptr;
@@ -279,6 +321,85 @@ EmitterObj* EmitterManager::getEmitterFree() {
     EmitterObj* pEmitter = it.get();
     m_emitterFreeList.erase(it);
     return pEmitter;
+}
+
+ParticleObj* EmitterManager::particleAlloc(EmitterObj* pEmitter, bool front) {
+    ParticleObj* et = getFreeParticle();
+    if (et != nullptr) {
+        if (front) {
+            pEmitter->m_particleList.push_front(*et);
+        } else {
+            pEmitter->m_particleList.push_back(*et);
+        }
+        bool hasMdl;
+        if (pEmitter->m_pData != nullptr && pEmitter->m_pData->m_type == 4) {
+            hasMdl = true;
+        } else {
+            hasMdl = false;
+        }
+        et->m_hasMdl = hasMdl;
+        bool hasLgt;
+        if (pEmitter->m_pData != nullptr && pEmitter->m_pData->m_type == 5) {
+            hasLgt = true;
+        } else {
+            hasLgt = false;
+        }
+        et->m_hasLgt = hasLgt;
+        et->initUtilObj();
+        et->m_prevPos = et->m_pos;
+        et->getExtParam().m_pEmParent = pEmitter;
+#line 893 "D:/Monolithsoft/BF2/prog/libs/eflib/proj/windows/../../../eflib/source\\ptlib/emitter/particle_emitter_manager.cpp"
+        MM_ASSERT(et->getExtParam().getEmParent());
+    }
+    return et;
+}
+
+ParticleObj* EmitterManager::getFreeParticle() {
+    if (m_particleFreeList.m_size < 1 || m_particleFreeList.begin() == m_particleFreeList.end()) {
+        return nullptr;
+    }
+    ParticleObj* pParticle = &*m_particleFreeList.begin();
+    m_particleFreeList.erase(m_particleFreeList.begin());
+    pParticle->m_pos = mm::Vec3::zero;
+    pParticle->m_prevPos = mm::Vec3::zero;
+    pParticle->m_goal = mm::Vec3::zero;
+    pParticle->pad_40 = mm::Vec3::zero;
+    pParticle->m_drawOfs = mm::Vec3::zero;
+    memcpy(pParticle->m_drawVec, &mm::Quat::identity, sizeof(pParticle->m_drawVec));
+    pParticle->m_baseSize.x = mm::Vec3NA::zero.x;
+    pParticle->m_baseSize.y = mm::Vec3NA::zero.y;
+    pParticle->m_baseSize.z = mm::Vec3NA::zero.z;
+    pParticle->m_size.x = mm::Vec3NA::zero.x;
+    pParticle->m_size.y = mm::Vec3NA::zero.y;
+    pParticle->m_size.z = mm::Vec3NA::zero.z;
+    pParticle->m_sizeScale.x = mm::Vec3NA::zero.x;
+    pParticle->m_sizeScale.y = mm::Vec3NA::zero.y;
+    pParticle->m_sizeScale.z = mm::Vec3NA::zero.z;
+    pParticle->m_rot.x = mm::Vec3NA::zero.x;
+    pParticle->m_rot.y = mm::Vec3NA::zero.y;
+    pParticle->m_rot.z = mm::Vec3NA::zero.z;
+    pParticle->m_keyVec.x = mm::Vec3NA::zero.x;
+    pParticle->m_keyVec.y = mm::Vec3NA::zero.y;
+    pParticle->m_keyVec.z = mm::Vec3NA::zero.z;
+    pParticle->m_speed = 0.0f;
+    pParticle->m_baseSpeed = 0.0f;
+    pParticle->m_speedKey = 0.0f;
+    pParticle->m_frame = 0.0f;
+    pParticle->m_frameSpeed = 0.0f;
+    pParticle->m_life = 0;
+    pParticle->m_rotSign = 0;
+    pParticle->m_delay = 0;
+    pParticle->m_sizeRate = 0.0f;
+    pParticle->m_drawParam = 0.0f;
+    pParticle->m_sizeMul.z = 1.0f;
+    pParticle->m_sizeMul.x = 1.0f;
+    pParticle->m_sizeMul.y = 1.0f;
+    pParticle->m_pSpdKf = nullptr;
+    pParticle->m_pSizeKf = nullptr;
+    pParticle->m_pRotKf = nullptr;
+    pParticle->m_pVecKf = nullptr;
+    memset(pParticle->pad_f8, 0, sizeof(pParticle->pad_f8));
+    return pParticle;
 }
 
 void EmitterManager::emitter_set_link(FxHeader* pHeader) {
@@ -889,6 +1010,38 @@ void ParticleObj::calcExternalColor(mm::Vec3& color, EmitterObj* pEmitter, float
         color2.y = m_pWork->m_color2.y * pEmitter->m_colorG;
         color2.z = m_pWork->m_color2.z * pEmitter->m_colorB;
         m_pWork->m_rgba2 = Utility::conv_rgba(&color2, m_pWork->m_alpha * pEmitter->m_alpha);
+    }
+}
+
+void ParticleObj::move_type1_fit(ParticleObj* pHead, ParticleObj* pParticle, EmitterObj* pEmitter, mm::Vec3NA* pRot) {
+    EmitterArg* pData = pEmitter->m_pData;
+    if (pData != nullptr && pData->m_type == 4) {
+        return;
+    }
+    if (pData->m_fitType != 8 && pData->m_fitType != 9 && pData->m_fitType != 12) {
+        return;
+    }
+    ParticleObj* pPrev = pParticle->m_prev != pParticle ? static_cast<ParticleObj*>(pParticle->m_prev) : nullptr;
+    mm::Vec3 dir;
+    if (pPrev != nullptr && pPrev != pHead) {
+        dir.x = pParticle->m_pos.x - pPrev->m_pos.x;
+        dir.y = pParticle->m_pos.y - pPrev->m_pos.y;
+        dir.z = pParticle->m_pos.z - pPrev->m_pos.z;
+    } else {
+        ParticleObj* pNext = static_cast<ParticleObj*>(pParticle->m_next);
+        if (pNext == pParticle || pNext == nullptr) {
+            dir = mm::Vec3::zero;
+        } else {
+            dir.x = pNext->m_pos.x - pParticle->m_pos.x;
+            dir.y = pNext->m_pos.y - pParticle->m_pos.y;
+            dir.z = pNext->m_pos.z - pParticle->m_pos.z;
+        }
+    }
+    if (dir.x != 0.0f || dir.y != 0.0f || dir.z != 0.0f) {
+        pParticle->m_rot.x = -atan2f(dir.y, sqrtf(dir.x * dir.x + dir.z * dir.z));
+        pParticle->m_rot.y = atan2f(dir.x, dir.z);
+        pRot->x = pParticle->m_rot.x;
+        pRot->y = pParticle->m_rot.y;
     }
 }
 
