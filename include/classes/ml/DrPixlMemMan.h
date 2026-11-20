@@ -26,7 +26,13 @@ public:
         unsigned char pad_F4[0x5C];
         // 0x150: DrPixlPostObjVolume::calcColorBuff's m_volumeBuff[0..2] (name inferred)
         unsigned int m_volumeOfs[3];
-        unsigned char pad_15C[0x30];
+        // 0x15C..0x170: DrPixlPostObjDepthofField::resetColorBuff's targets: m_calcBuff[0..2], m_lastBuff,
+        // m_calcSampBuff, m_autoBuff (names inferred)
+        unsigned int m_dofCalcOfs[3];
+        unsigned int m_dofLastOfs;      // 0x168
+        unsigned int m_dofCalcSampOfs;  // 0x16C
+        unsigned int m_dofAutoOfs;      // 0x170
+        unsigned char pad_174[0x18];
         // 0x18C: DrPixlPostObjSSR::resetColorBuff's targets: [i] m_reflectionBuff[i], [2] m_buffFirst, [3] m_buffLast
         unsigned int m_ssrOfs[4];
         unsigned char pad_19C[0x18];
