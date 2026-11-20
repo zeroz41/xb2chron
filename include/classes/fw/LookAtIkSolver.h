@@ -53,6 +53,8 @@ public:
     }
     // calcIK eases the bone from its current turn into the solved one over `time`
     void startTargetFade(float time);
+    // (inline: the name is not the original's; gf::GfFieldLookIk::updateIkSolver sets the target in place)
+    void setTarget(const mm::Vec3& target) { m_target = target; }
     static mm::mtl::RTTI m_rtti;
 
     // the names of the fields below are not the original's

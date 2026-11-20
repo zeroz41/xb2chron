@@ -40,6 +40,7 @@
 #include "gf/GfGameStuckMeter.h"
 #include "classes/fw/ColiMoveObject.h"
 #include "classes/fw/RotateIkSolver.h"
+#include "classes/gf/SCOM_DESTROY_GAME_OBJ.h"
 
 
 namespace gf {
@@ -160,7 +161,7 @@ void GfFieldUndulator::update(mm::mtl::IntrusivePtr<fw::ReferenceFrame>& frame, 
     }
 }
 
-GfFieldPitchRollController::GfFieldPitchRollController(const CreateInfo* info) : pad_10(nullptr), m_seq(nullptr), pad_28(0), pad_30(false), pad_31(false) {
+GfFieldPitchRollController::GfFieldPitchRollController(const CreateInfo* info) : pad_10(nullptr), m_seq(nullptr), pad_28(0.0f), pad_2c(0.0f), pad_30(false), pad_31(false) {
     if (info) {
         create(*info);
     }
@@ -420,6 +421,63 @@ void GfFieldLookIk::update(float) {
     }
 }
 
+template <typename T>
+void GfFieldLookIk::updateIkSolver(T& solver) {
+    mm::Vec3 target;
+    if (!findTargetPos(target)) {
+        return;
+    }
+    if (solver.getFadeType() == fw::IkFadeSolver::FADE_NONE) {
+        bool matched = isCondMatched(target);
+        bool prev = pad_30;
+        if (matched && !prev) {
+            solver.fadeIn(m_fadeTime);
+        } else if (!matched && prev) {
+            solver.fadeOut(m_fadeTime);
+        }
+        pad_30 = matched;
+    }
+    pad_20 = pad_20 + (target - pad_20) * 0.2f;
+    solver.setTarget(pad_20);
+}
+
+bool GfFieldLookIk::isCondMatched(const mm::Vec3& target) const {
+    mm::Vec3 pos;
+    if (!findPos(pos)) {
+        return false;
+    }
+    mm::Vec3 dir = target - pos;
+    if (dir.isZero()) {
+        return false;
+    }
+    float dist = dir.length();
+    if (pad_c < dist) {
+        return false;
+    }
+    float scale = 1.0f / dist;
+    dir.x = dir.x * scale;
+    dir.y = dir.y * scale;
+    dir.z = dir.z * scale;
+    GfObjAcc acc(m_handle);
+    mm::Quat rotation = acc.getWorldTransformNoSync().rotation;
+    mm::Quat inv = mm::Quat::inverse(rotation);
+    mm::Vec3 local = inv.rotate(dir);
+    float pitch = mm::normalizeRadian(mm::fabs(::atan2f(local.y, ::sqrtf(local.x * local.x + local.z * local.z))));
+    if (pad_14 < pitch) {
+        return false;
+    }
+    mm::Vec3 flat(local.x, 0.0f, local.z);
+    if (flat.isZero()) {
+        return false;
+    }
+    flat.normalize();
+    float yaw = mm::normalizeRadian(mm::fabs(::atan2f(flat.x, flat.z)));
+    if (pad_10 < yaw) {
+        return false;
+    }
+    return true;
+}
+
 bool GfFieldLookIk::findPos(mm::Vec3& pos) const {
     GfObjAcc acc(m_handle);
     GfObj* obj = acc.getObj();
@@ -464,10 +522,52 @@ void GfGameDepopMeter::dispose() {
     pad_18 = true;
 }
 
+void GfGameDepopMeter::update(float) {
+    if (m_handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1) || !pad_20) {
+        return;
+    }
+    GfObjAcc acc(m_handle);
+    if (acc.m_obj == nullptr) {
+        return;
+    }
+    const mm::Vec3& pos = acc.getWorldTransform().position;
+    fw::ColiCheckConfig config;
+    config.m_mode = 2;
+    config.m_flags = 9;
+    config.m_mask = 7;
+    fw::TColiCheckResult<256> result;
+    result.clear();
+    fw::ColiCheck::testLineChara(result, pad_30, pos, config);
+    pad_40 = result.m_hit;
+    if (pad_40 && pad_18) {
+        SCOM_DESTROY_GAME_OBJ::create(m_handle, 1.0f, 0);
+        dispose();
+    }
+    pad_30 = pos;
+}
+
 void GfGameDepopMeterManager::create(unsigned int updateCount) {
     dispose();
 #line 1598
     new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfGameDepopMeterManager(updateCount);
+}
+
+void GfGameDepopMeterManager::update(float deltaTime) {
+    GfGameDepopMeterManager* manager = sys();
+    if (manager == nullptr || manager->m_meters.empty()) {
+        return;
+    }
+    unsigned int count = static_cast<unsigned int>(manager->m_meters.m_size) < manager->m_updateCount
+                             ? manager->m_meters.m_size
+                             : manager->m_updateCount;
+    for (unsigned int i = 0; i < count; ++i) {
+        if (manager->m_meters.end() == manager->m_cursor) {
+            manager->m_cursor = manager->m_meters.begin();
+        }
+        (*manager->m_cursor).update(deltaTime);
+        manager = sys();
+        ++manager->m_cursor;
+    }
 }
 
 void GfGameStuckMeter::CreateInfo::dispose() {

@@ -126,6 +126,7 @@ public:
         unsigned char pad_170[0x20];
     };
 
+    DrMan* m_pDrMan;  // 0x10, the constructor's renderer (the name is not the original's)
     bool m_bSmallGrid;  // 0x18, the constructor's flag (the name is not the original's)
     unsigned char pad_19[0x7];
     ViewWork m_viewWork[4];  // 0x20, one per view (the constructor sets up four)

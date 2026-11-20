@@ -37,6 +37,8 @@
 #include "classes/ssd/Delegate/Object.h"
 #include "ml/PathUtil.h"
 #include "mm/mtl/StrUtil.h"
+#include "classes/fw/SoundPlayInfo.h"
+#include "classes/fw/SoundResult.h"
 
 #define SOUND_SSD_DRV_PATH "D:/Monolithsoft/BF2/prog/application/BF2/framework/sound/sound_ssd_drv.cpp"
 
@@ -195,6 +197,38 @@ void SoundSsdBank::update() {
 }
 
 //the log method SoundCore::Init installs: drops every message
+float SoundSsdDriver::getBgmVolume(const char* name) {
+    if (name == nullptr) {
+        return 1.0f;
+    }
+    const char* base = name;
+    for (const char* p = name; *p != '\0'; ++p) {
+        switch (*p) {
+        case '/':
+        case '\\':
+            base = p + 1;
+            break;
+        }
+    }
+    // the row lives outside the loop (a loop-scoped one gives its exit a cleanup the original does not have)
+    int row = 0;
+    for (; row < m_bgmVolumes->GetRowCount(); ++row) {
+        const char* entry = m_bgmVolumes->GetString(row, 0);
+        const char* p = base;
+        for (;;) {
+            char c = *p++;
+            char e = *entry++;
+            if ((c == '.' || c == '\0') && e == '\0') {
+                return m_bgmVolumes->GetFloat(row, 1);
+            }
+            if (c != e) {
+                break;
+            }
+        }
+    }
+    return 1.0f;
+}
+
 static ssd::Result fn_71001A384C(ssd::LogMessage::Type, const char16_t*) {
     return ssd::Result(0);
 }
@@ -792,6 +826,93 @@ unsigned int SoundSsdDriver::playVoice(const char* name, float volume, bool loop
     ml::CS lock(m_cs);
     return playStream(name, volume, loop, category, static_cast<SoundPriority>(0xFE), findBank("SystemVoiceBank"),
                       static_cast<SoundType>(2));
+}
+
+unsigned int SoundSsdDriver::playSeLocal(mm::mtl::IntrusivePtr<SoundSsdSource> source, SoundPack* pack, float volume,
+                                         SoundCategory category) {
+    if (source && source.get()->m_entry != nullptr) {
+        ssd::SoundHandle* handle = m_handleAllocator.allocate();
+        if (handle != nullptr) {
+            handle->Init();
+            SoundPlayerSetupParam param;
+            param.allocator = FrameworkMemory::getAllocator(5);
+            param.source = source;
+            param.handle = handle;
+            param.volume = volume;
+            param.bankId = source->m_bankId;
+            param.type = static_cast<SoundType>(3);
+            if (category == 0) {
+                category = pack->m_category;
+            }
+            param.category = category;
+#line 2706 SOUND_SSD_DRV_PATH
+            SoundSsdPlayer* player = new (FrameworkMemory::getAllocator(5), 8, __FILE__, __LINE__) SoundSsdPlayer(param);
+            if (player != nullptr) {
+                unsigned int id = m_players.regist(player) | 0x3000000;
+                m_handlePlayers.insert(mm::mtl::MapPair<ssd::SoundHandle*, SoundSsdPlayer*>(handle, player));
+                player->m_soundHandle = id;
+                ssd::Delegate::Object<SoundSsdDriver, ssd::SoundHandle*, ssd::SoundHandle::Notify::Type>* delegate =
+                    ssd::SoundMemory::allocator_->NewInstance<
+                        ssd::Delegate::Object<SoundSsdDriver, ssd::SoundHandle*, ssd::SoundHandle::Notify::Type> >();
+                delegate->method_ = &SoundSsdDriver::SoundHandleDelegate;
+                delegate->object_ = this;
+                handle->AddDelegateInternal(delegate);
+                ssd::Result result = player->m_actor.Play(player->m_setup.handle, player->m_setup.source->m_entry,
+                                                          player->m_setup.volume, 0.0f);
+                if (player->isValid()) {
+                    player->m_setup.handle->SetCategoryId(player->m_setup.category);
+                }
+                if (result >= 0) {
+                    return id;
+                }
+                handle->Stop(0.0f);
+            }
+            releaseHandle(handle);
+        }
+    }
+    return 0;
+}
+
+unsigned int SoundSsdDriver::playSe(const char* name, SoundPack* pack, float volume, SoundCategory category) {
+    if (pack == nullptr) {
+        return 0;
+    }
+    ml::CS lock(m_cs);
+    mm::mtl::IntrusivePtr<SoundSsdSource> source = pack->findSource(name);
+    if (!source) {
+        return 0;
+    }
+    return playSeLocal(source, pack, volume, category);
+}
+
+unsigned int SoundSsdDriver::playSe(unsigned int id, SoundPack* pack, float volume, SoundCategory category) {
+    if (pack == nullptr) {
+        return 0;
+    }
+    ml::CS lock(m_cs);
+    mm::mtl::IntrusivePtr<SoundSsdSource> source = pack->findSourceFromID(id);
+    if (!source) {
+        return 0;
+    }
+    return playSeLocal(source, pack, volume, category);
+}
+
+unsigned int SoundSsdDriver::playSeEx(const SoundPlayInfo& info, SoundResult& result) {
+    result.handle = 0;
+    result.status = 3;
+    if (info.pack == nullptr) {
+        return 0;
+    }
+    ml::CS lock(m_cs);
+    mm::mtl::IntrusivePtr<SoundSsdSource> source = info.pack->findSourceFromID(info.id);
+    if (source) {
+        result.handle = playSeLocal(source, info.pack, info.volume, info.category);
+        result.status = result.handle != 0 ? 0 : 3;
+        if (info.hasPos) {
+            setPos(result.handle, info.pos);
+        }
+    }
+    return result.handle;
 }
 
 bool SoundSsdDriver::findSe(const char* name) const {

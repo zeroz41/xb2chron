@@ -23,6 +23,25 @@ namespace gf {
 // parent outside battle. External: the code reaches it through the GOT
 unsigned int GfMenuObjButtonChallenge2::s_DefRootPrio;
 
+// lbl_71009BEB64 (the name is not the original's): a button type's (1-4; 5, random, is drawn before) image
+// and animation index; setup, pushChallengeButton, pushChallengeButtonV2 and RingListener::reciveEvent index it
+// with a bound check (an array, not a switch: the original adds 1 to the loaded value, not to the table)
+static const int s_btnAnimIndex[6] = {0, 0, 1, 2, 3, 0};
+
+GfMenuObjButtonChallenge2::GfMenuObjButtonChallenge2(unsigned int handle)
+    : GfMenuObject(handle), m_param(), pad_84(0), pad_88(0), pad_8C(0), pad_90(0), pad_94(0), m_score(0),
+      m_speedFactor(1.0f), m_seq(this), pad_330(), pad_348(), pad_358(false), m_resultSent(false), pad_35A(0), m_ctrl0(),
+      m_updater0() {
+    pad_4A0 = false;
+    pad_498 = 0;
+    pad_49C = 0;
+    pad_490 = 0;
+    pad_494 = 0;
+    for (Ring& ring : m_rings) {
+        ring.m_updater.m_ctrl = nullptr;
+    }
+}
+
 GfMenuObjButtonChallenge2::~GfMenuObjButtonChallenge2() {
     if (m_rings[0].m_updater.m_ctrl != nullptr) {
         ui::UICtrlManager::get()->delUpdater(m_rings[0].m_updater);
@@ -325,6 +344,112 @@ bool GfMenuObjButtonChallenge2::seqEnd() {
     return true;
 }
 
+void GfMenuObjButtonChallenge2::pushChallengeButtonV2(unsigned char btnType) {
+    if (m_index >= m_param.m_buttons.size()) {
+        return;
+    }
+    if (pad_490 < 3) {
+        return;
+    }
+    const Button& button = m_param.m_buttons[m_index];
+    int frame = pad_490 - 1;
+    if (frame < button.m_start) {
+        return;
+    }
+    unsigned int point;
+    bool miss = false;
+    if (button.m_inputType == 1) {
+        if (button.m_btnType == btnType && frame >= button.m_hit - 1 - button.m_pushSweetFrame && frame < button.m_end) {
+            point = button.m_point;
+            if (frame <= button.m_hit + button.m_pushSweetFrame + 1) {
+                pad_35E = 1;
+            } else {
+                point = button.m_point >> 1;
+                pad_35E = 0;
+            }
+        } else {
+            point = 0;
+            miss = true;
+        }
+        if (m_param.m_type == 0) {
+            GfMenuObjUtil::playVibration(static_cast<fw::VibrationID>(1), 1.0f);
+        }
+    } else {
+        if (button.m_inputType != 2) {
+            return;
+        }
+        if (button.m_btnType != btnType) {
+            return;
+        }
+        pad_84++;
+        if (pad_84 == button.m_mashingCount) {
+            point = button.m_point;
+            pad_35E = 1;
+            pad_88 = 2;
+        } else {
+            mm::mtl::FixStr<32> name;
+            name.format("IMG_challenge_btn_push_v2@%02d", m_index + 1);
+            {
+                ui::UIObjectAcc push(m_handle, name.m_str);
+                unsigned int type = button.m_btnType;
+                int anim = type < 6 ? s_btnAnimIndex[type] : 0;
+                push.startAnimationFromIndex(anim + 1, false);
+            }
+            name.format("IMG_challenge_btn_push_eff@%02d", m_index + 1);
+            {
+                ui::UIObjectAcc eff(m_handle, name.m_str);
+                GfMenuObjUtil::CtrlParam param;
+                param.m_time = 3.0f * (1.0f / 30.0f);
+                param.m_scale = 1.0f;
+                param.m_methods = 0x40000;
+                param.m_curve = 3;
+                GfMenuObjUtil::startCtrl(eff.m_handle, param, nullptr);
+            }
+            point = 0;
+        }
+        if (m_param.m_type == 0) {
+            GfMenuObjUtil::playVibration(static_cast<fw::VibrationID>(15), 1.0f);
+        }
+    }
+    if (miss) {
+        pad_35A = 2;
+        GfMenuObjUtil::playSE(0x32);
+    } else {
+        if (point == 0) {
+            return;
+        }
+        GfMenuObjUtil::playSE(0x31);
+        pad_35A = 1;
+        m_score += point;
+    }
+    ui::UIObjectAcc main(m_handle, "LAY_challenge_v2");
+    mm::mtl::FixStr<32> name;
+    ui::EventData event(0);
+    if (pad_35A == 1) {
+        name.format("IMG_challenge_hit_eff_v2@%02d", m_index + 1);
+        ui::UIObjectAcc eff(m_handle, name.m_str);
+        eff.setDisp(true);
+        if (pad_35E == 1) {
+            eff.startAnimation("excellent", false);
+        } else if (pad_35E == 0) {
+            eff.startAnimation("good", false);
+        }
+    }
+    if (button.m_inputType == 1) {
+        event.m_type = 0x103;
+        if (!(pad_49C & (1 << m_index))) {
+            name.format("LAY_challenge_v2@%02d", m_index + 1);
+            GfMenuObject::sendEvent(main.searchChild(name.m_str), event, 0.0f);
+            pad_49C |= 1 << m_index;
+        }
+    } else {
+        event.m_type = 0x104;
+        name.format("LAY_challenge_v2@%02d", m_index + 1);
+        GfMenuObject::sendEvent(main.searchChild(name.m_str), event, 0.0f);
+    }
+    m_index++;
+}
+
 void GfMenuObjButtonChallenge2::setRingScaleV2(unsigned int index, float scale) {
     mm::mtl::FixStr<32> name;
     name.format("POL_ring_v2@%02d", index + 1);
@@ -356,6 +481,57 @@ void GfMenuObjButtonChallenge2::nextChallenge() {
         setup(m_param, m_index, false);
         m_seq.addJob(&GfMenuObjButtonChallenge2::seqAppearCursor);
     }
+}
+
+bool GfMenuObjButtonChallenge2::seqCheckSequence() {
+    bool found = false;
+    if (pad_90 != 0) {
+        unsigned char* bdat = GfDataBdat::getFP(0xF9);
+        mm::mtl::FixStr<32> name;
+        pad_94++;
+        name.format("challenge%02d", pad_94 + 1);
+        if (Bdat::getMember(bdat, name.m_str) != nullptr) {
+            unsigned short id = Bdat::getVal(bdat, name.m_str, pad_90);
+            if (id != 0) {
+                importOpenParam(m_param, id);
+                if (m_param.m_buttons.size() != 0 && m_param.m_buttons[0].m_hit != 0 && m_param.m_buttons[0].m_end != 0) {
+                    if (pad_4A0) {
+                        setupV2(m_param);
+                        m_seq.addJob(&GfMenuObjButtonChallenge2::seqRunningV2);
+                        pad_4A0 = false;
+                    } else {
+                        m_seq.addJob(&GfMenuObjButtonChallenge2::seqWaitRestartV2);
+                    }
+                } else {
+                    setup(m_param, 0, false);
+                    m_seq.addJob(&GfMenuObjButtonChallenge2::seqAppearCursor);
+                    m_index = 0;
+                }
+                found = true;
+            }
+        }
+    }
+    if (found) {
+        return true;
+    }
+    pad_94--;
+    if (m_param.m_option.m_flag1) {
+        m_seq.addJob(&GfMenuObjButtonChallenge2::seqResultStart);
+        m_seq.addJob(&GfMenuObjButtonChallenge2::seqResultWait);
+    } else {
+        m_seq.addJob(&GfMenuObjButtonChallenge2::seqClose);
+    }
+    m_seq.addJob(&GfMenuObjButtonChallenge2::seqEnd);
+    if (!m_resultSent) {
+        unsigned int handle = GfMenuObject::getAttachedObject(0x4B);
+        unsigned int score = m_score;
+        if (pad_90 != 0) {
+            score = m_score / (pad_94 + 1);
+        }
+        GfMenuObject::addResultCallContext(handle, 2, score);
+        m_resultSent = true;
+    }
+    return true;
 }
 
 bool GfMenuObjButtonChallenge2::seqAppearCursor() {

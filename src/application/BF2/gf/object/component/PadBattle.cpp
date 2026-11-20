@@ -96,6 +96,39 @@ void StateWalk::update(GfComBehaviorNpc* owner, const fw::UpdateInfo& info) {
 
 void StateWalk::leave(GfComBehaviorNpc* owner, ai::State* next) {}
 
+void StateWalk::seqUpdateMove(GfComBehaviorNpc& owner, const fw::UpdateInfo& info) {
+    m_execCmd.update(info.m_deltaTime);
+    if (!m_execCmd.m_done) {
+        return;
+    }
+    if (m_execCmd.m_executed) {
+        owner.init(true);
+    }
+    owner.execTurnCmdToGoal();
+    if (!owner.m_turnCmd.pad_6c) {
+        m_seq = &StateWalk::seqWaitTurnEnd;
+        return;
+    }
+    if (owner.getGmkRouteNavi() == nullptr) {
+        const mm::Vec3& pos = owner.getPos();
+        float dx = owner.m_goalPos.x - pos.x;
+        float dy = owner.m_goalPos.y - pos.y;
+        float dz = owner.m_goalPos.z - pos.z;
+        // within 0.1 of the goal: the original's literal is the folded float product 0.1f * 0.1f (0x3C23D70B), not
+        // 0.01f (0x3C23D70A)
+        if (dx * dx + dy * dy + dz * dz < 0.1f * 0.1f) {
+            gmk::AGmkBase* gmk = owner.getBindedGmkInst();
+            if (gmk == nullptr || gmk->getGmkType() != 3) {
+                requestState(0);
+                return;
+            }
+            m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, "C_walkend"));
+            m_seq = &StateWalk::seqWaitMoveEnd;
+        }
+    }
+    owner.moveToGoal(info.m_deltaTime);
+}
+
 void StateWalk::seqWaitMoveEnd(GfComBehaviorNpc& owner, const fw::UpdateInfo& info) {
     m_execCmd.update(info.m_deltaTime);
     if (m_execCmd.m_done) {

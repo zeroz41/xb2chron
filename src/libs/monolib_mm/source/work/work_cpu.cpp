@@ -860,7 +860,7 @@ WorkCpuThread::WorkCpuThread(const char* name, WorkObj* parent)
       m_frameClock(0), m_frameClockCopy(0), m_frameCount(0), pad_1e4(0), m_jobLock(nullptr), m_transferJob(nullptr),
       m_color((unsigned int)(mm::Col3::yellow.r * 255.0f) | ((unsigned int)(mm::Col3::yellow.g * 255.0f) << 8) |
               ((unsigned int)(mm::Col3::yellow.b * 255.0f) << 16) | 0xFF000000),
-      pad_660(0), pad_668(0), pad_670(0), pad_672(0) {
+      pad_660(0), pad_668(0), pad_670(0), pad_671(0), pad_672(0) {
     m_jobLock = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) CriticalSection();
     m_jobLock->setCostIgnore(true);
 }
@@ -1023,7 +1023,7 @@ void WorkCpu::resumeThread() {
 
 WorkCpu::WorkCpu(const char* name, WorkObj* parent)
     : WorkObj(name, parent, 16), m_flags(0), m_cpuNum(0), pad_1738(1), pad_173c(1), m_renderGroup(-1), m_swapGroup(-1),
-      m_rendering(false), m_bank(0), pad_1798(0), pad_1958(0), pad_195c(0), m_mainThreadId(0), m_renderTime(0), pad_2034(0),
+      m_rendering(false), m_bank(0), m_lastJob(nullptr), pad_1958(0), pad_195c(0), m_mainThreadId(0), m_renderTime(0), pad_2034(0),
       pad_2038(0), pad_203c(0), pad_2040(false), pad_2088(0), m_frameCount(0), pad_2098(0) {
     m_bankCount[0] = m_bankCount[1] = 0;
     for (int i = 0; i < 3; i++) {
@@ -1150,8 +1150,93 @@ int WorkCpu::createGroupHandle(unsigned int count) {
     return cpu->pad_2088;
 }
 
+bool WorkCpu::wkStandbyLogin() {
+    unsigned int cpuNum = ThreadUtil::getCpuNum();
+    m_cpuNum = cpuNum > 3 ? 3 : cpuNum;
+    m_memWork = mtl::MemManager::create(MlMem::getProductMem(), m_cpuNum * 0x14000, "WorkCpu", false, "no name", 0);
+    mtl::MemManager::log(MlMem::getProductMem(), true, nullptr);
+    m_memStack = mtl::MemManager::create(MlMem::getProductMem(), 0x3C0000, "WorkCpuStack", false, "no name", 0);
+    m_jobAlloc.create(_mlwcpu::getMemWork(), 0x400);
+    for (unsigned int i = 0; i < m_cpuNum; i++) {
+        m_swap[i].create(0x54C, _mlwcpu::getMemWork());
+    }
+    for (unsigned int i = 0; i < m_cpuNum; i++) {
+        WorkCpuThread::create(&m_thread[i], CPUID(i + 1), this);
+    }
+    m_renderGroup = createGroupHandle(1);
+    entryJobThread(m_renderGroup, thRender, 0, this, nullptr, getRenderCPUID(), true, false);
+    if (TJOB* job = get()->m_lastJob) {
+        const mm::Col3& color = mm::Col3::salmon;
+        job->m_color = (unsigned int)(color.r * 255.0f) | ((unsigned int)(color.g * 255.0f) << 8) |
+                       ((unsigned int)(color.b * 255.0f) << 16) | 0xFF000000;
+    }
+    m_swapGroup = createGroupHandle(m_cpuNum);
+    for (unsigned int i = 0; i < m_cpuNum; i++) {
+        entryJobThread(m_swapGroup, thSwap, 0, reinterpret_cast<void*>(static_cast<unsigned long>(i)), nullptr,
+                       CPUID(0), false, false);
+    }
+    m_state = 2;
+    if (mm::mtl::PtrSingleton<DevClock>::get() != nullptr) {
+        DevClock::getClockNow(m_clock);
+    }
+    return true;
+}
+
 WorkCpu* WorkCpu::create(WorkObj* parent) {
     return WorkUtil::createWork<WorkCpu>("WorkCpu", parent, false);
+}
+
+unsigned int WorkCpuThread::threadFunc(void* arg) {
+    WorkCpuThread* thread = static_cast<WorkCpuThread*>(arg);
+    while (thread->m_threadId == 0) {
+        nn::os::SleepThread(nn::TimeSpan::FromMilliSeconds(1));
+    }
+    CPUID cpu = thread->m_cpu;
+    CPUID renderCpu = WorkCpu::getRenderCPUID();
+    TJOB* job = nullptr;
+    for (;;) {
+        if (cpu != 1) {
+            ThreadUtil::setCpuThread(ThreadUtil::getCurrentHandle(), cpu);
+        }
+        if (thread->pad_672) {
+            break;
+        }
+        do {
+            if (!thread->getJobThread(job, false)) {
+                WorkCpu::getWaitingJob(job, thread);
+            }
+            TJOB* current = job;
+            if (current == nullptr) {
+                break;
+            }
+            long clock;
+            DevClock::getClockNow(clock);
+            current->m_result = current->m_func(current->m_data, current->m_extra);
+            float time;
+            DevClock::getTimeNow(time, clock);
+            thread->m_frameCount += time;
+            DevClock::getClockNow(thread->m_frameClockCopy);
+            current->m_cpu = cpu;
+            {
+                CS lock(*thread->m_jobLock);
+                thread->m_transferJob = nullptr;
+            }
+            DevClock::getClockNow(_mlwcpu::s_aHearBeat[cpu - 1]);
+        } while (!thread->pad_671);
+        if (cpu == 1) {
+            break;
+        }
+        if (thread->m_th != nullptr) {
+            thread->m_th->waitSignalEvent();
+        }
+        if (thread->pad_672) {
+            break;
+        }
+        if (cpu == renderCpu && WorkRoot::isErrorLog()) {
+            WorkRootState::renderWork();
+        }
+    }
+    return 0;
 }
 
 void WorkCpu::swapBank() {

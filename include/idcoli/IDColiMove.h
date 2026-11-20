@@ -1,6 +1,7 @@
 #ifndef IDCOLI_IDCOLIMOVE_H
 #define IDCOLI_IDCOLIMOVE_H
 
+#include "idcoli/IDColiResult.h"
 #include "mm/Vec3.h"
 
 namespace idcoli { class IDColiObj; }
@@ -11,7 +12,13 @@ class IDColiMove {
 public:
     // calcWallHitChkVec's scratch (calcColiStateParams keeps one on the stack: 0x100 bytes)
     struct wrlResTempVec {
-        unsigned char pad_0[0x100];
+        // the horizontal directions (x, z; length 1) to the wall hits calcWallHitChkVec has kept, m_wallCount of
+        // them (names inferred)
+        struct Dir {
+            float x;
+            float z;
+        };
+        Dir m_dir[32];
     };
 
     IDColiMove();
@@ -34,40 +41,25 @@ public:
     bool testVecYCheck(mm::Vec3 const& top);
     bool moveDataColi();
     bool moveDefColi();
-    // pad_1f4 |= whether a hit (m_hitBits/m_slopeCos choose which) is a wall for calcWallHitChkVec, on a move down
+    // pushes m_pos out of each hit by m_shapeParms[0] (along the base segment when m_baseFlag); m_hit = whether a
+    // hit facing up is a wall (calcWallHitChkVec)
+    void calcColiShapeParms();
+    // pad_1f4 |= whether a hit (m_coliResult.pad_d8/m_slopeCos choose which) is a wall for calcWallHitChkVec, on a move down
     bool calcColiStateParams();
     bool calcWallHitChkVec(mm::Vec3 const& normal, mm::Vec3 const& pos, wrlResTempVec* temp);
 
-    // GfComBehaviorPc::detectHead sets these three and pad_f8 (0x1000D) before its moveColi (meaning not known)
+    // GfComBehaviorPc::detectHead sets these three and m_coliResult.m_ignoreMaterial (0x1000D) before its moveColi (meaning not known)
     bool pad_0;
     bool pad_1;
     bool pad_2;
     unsigned char pad_3;
-    int pad_4;
+    float pad_4;  // testWallCheck's input.m_instSizeMin (where IDColiDef keeps its m_radiusSq)
     void* pad_8;
-    int pad_10;  // moveColi sets 2
-    unsigned char pad_14[0x8C];
-    float pad_a0;  // the constructor's 100000
-    unsigned char pad_a4[0xC];
-    float pad_b0;  // the constructor's -100000
-    unsigned char pad_b4[0xC];
-    int pad_c0;
-    unsigned char pad_c4[4];
-    // the hits found: a position and a normal each (moveColi points them at two 32-entry stack arrays), and a bit
-    // per hit (names inferred)
-    mm::Vec3* m_hitPos;  // 0xC8
-    mm::Vec3* m_hitNormal;  // 0xD0
-    void* pad_d8;
-    void* pad_e0;
-    unsigned int* m_hitBits;  // 0xE8
-    int m_hitCount;  // 0xF0
-    int m_hitCapacity;  // 0xF4, 32
-    unsigned int m_offMaterialBit;  // 0xF8, the object's IDColiObjBase::m_offMaterialBit
-    unsigned char pad_fc[0xC];
-    void* pad_108;
-    void* pad_110;
-    IDColiObj* m_obj;  // 0x118, the object moved (null for a move without one)
-    float pad_120;
+    // 0x10, the hits of a move: moveColi points m_tblPos/m_tblNormal at two 32-entry stack arrays and pad_d8 at a
+    // bit per hit, m_type 2 (a table); m_skipObj is the object moved (null for a move without one). The test*
+    // functions hand it to the grand, character and grdChar tests. The name is inferred.
+    IDColiResult m_coliResult;
+    int m_wallCount;  // 0x120, the entries of the caller's wrlResTempVec (calcColiShapeParms clears it; name inferred)
     unsigned int pad_124;
     unsigned char pad_128[8];
     mm::Vec3 m_result;  // moveColi's: the move it allowed (the whole move for an object it skips)

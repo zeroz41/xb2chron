@@ -14,6 +14,13 @@ public:
     // not of GfInitParam: the copy assignments copy it with the kind's own fields, apart from the base's
     // (GfInitParamDriver::operator=, GfObjSetupBlade's constructor)
     GfAssetSetup* m_assetSetup;
+
+    // inline: no copy of it exists (fn_7100528684 builds one on the stack; m_assetSetup is cleared before
+    // m_append's constructor runs, m_belongingValues is left as it is)
+    GfInitParamBelonging()
+        : GfInitParam(13, 6), m_assetSetup(nullptr), m_append(), m_isForDriver(false), m_driverParam(nullptr),
+          pad_130(true) {}
+
     // the model: createSetupParam takes its getMountIndex()
     GfAppend m_append;
     // the four values GfObjFactory::createBelonging hands GfAppendUtil::setupBelonging without m_isForDriver (the

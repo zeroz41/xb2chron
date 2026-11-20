@@ -12,8 +12,12 @@
 #include "classes/gf/GfGameParty.h"
 #include "classes/gf/GfGameInsideBattleLock.h"
 #include "btl/Utility.h"
+#include "btl/Misc.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfFobjDropitem.h"
+// its Map<unsigned short, float> (GfFobjSeManager's) instantiates that tree's sentinel, whose guarded init this
+// unit emits after Map<GF_OBJ_HANDLE*, bool>'s (fn_7100025114)
+#include "gf/GfFobjSeManager.h"
 #include "mm/mtl/Vector.h"
 #include "mm/Math.h"
 #include <math.h>
@@ -79,6 +83,63 @@ void ChainAttackManager::ModifyPosition() {
         }
         ModifyPositionBackward(driver, other);
     }
+}
+
+void ChainAttackManager::ModifyPositionBackward(gf::GF_OBJ_HANDLE* driver, gf::GF_OBJ_HANDLE* other) {
+    BattleCharacter* driverChr = CharacterManager::sys()->GetCharacterConst(driver);
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(other);
+    if (chr == nullptr) {
+        return;
+    }
+    chr->ResetAlphaRate(-1);
+    // the original's literal is 0x3B5A740F, a folded float product such as 0.1f * (1.0f / 30.0f) (the battle code's
+    // frames-to-seconds factor); 1.0f / 300.0f folds to 0x3B5A740E. The exact form is inferred.
+    chr->RegisterAlphaAnimation(BattleCharacter::ALPHA_PROC_ID(9), 1.0f, 0.1f * (1.0f / 30.0f), true);
+    if (chr->m_bdatID == 0x451) {
+        chr->InitializeHanaBusterAlpha(true);
+        chr->GetCharacterParameter(true)->ResetHanaBusterRebootTimer();
+    }
+    if (driverChr == nullptr || !driverChr->IsBattle() || !chr->IsBattle()) {
+        return;
+    }
+    mm::Vec3 driverPos;
+    if (!driverChr->pad_F00_5) {
+        driverPos = driverChr->m_pos;
+    } else {
+        driverPos = driverChr->pad_20;
+    }
+    BattleCharacter* target = CharacterManager::sys()->GetCharacterConst(pad_8);
+    if (target == nullptr) {
+        return;
+    }
+    mm::Vec3 targetPos = target->m_pos;
+    mm::Vec3 dir;
+    Misc::CalcDirectionXZ(driverPos, targetPos, dir);
+    mm::Vec3 pos;
+    BattleCharacter::CALC_BLADE_MOVE_POS_PARAM param = {driverChr, chr, &dir, false};
+    bool found = chr->GetBladeMovePos(pos, &param);
+    if (found) {
+        chr->SetPosition(pos, true);
+    }
+    mm::Vec3 face;
+    if (!BattleGlobal::sys()->m_challengeAnySuccess) {
+        face = driverPos;
+    } else {
+        face = targetPos;
+    }
+    mm::Vec3 turn;
+    if (found) {
+        Misc::CalcDirectionXZ(pos, face, turn);
+        chr->SetWarpPostureByDir(turn);
+    } else {
+        Misc::CalcDirectionXZ(chr->m_pos, face, turn);
+        chr->TurnDirection(turn, true, false);
+    }
+    chr->pad_D0[0] = mm::Vec3::zero.x;
+    chr->pad_D0[1] = mm::Vec3::zero.y;
+    chr->pad_D0[2] = mm::Vec3::zero.z;
+    chr->pad_E0[0] = 1.0f;
+    chr->pad_E0[1] = 1.0f;
 }
 
 float ChainAttackManager::GetBonusRate(gf::GF_OBJ_HANDLE* handle) const {

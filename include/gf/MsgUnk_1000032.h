@@ -10,6 +10,9 @@ namespace gf {
 // MsgPcBattleStart(0). The field name is not the original's.
 class MsgUnk_1000032 : public ::fw::Message {
 public:
+    static const unsigned int ID = 0x1000032;
+    // StateUtilField::requestBattleStart posts one with value 1 and no category
+    explicit MsgUnk_1000032(int value) : fw::Message(ID, 0), m_value(value) {}
     int m_value;
 };
 

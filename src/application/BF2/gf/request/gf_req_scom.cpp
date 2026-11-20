@@ -1611,9 +1611,9 @@ unsigned long SCOM_POPUP::createAffinity(unsigned int a0, unsigned int a1, unsig
 #line 5674
     SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
     request->m_param.m_type = 5;
-    request->m_param.m_value[0] = a0;
-    request->m_param.m_value[1] = a1;
-    request->m_param.m_value[2] = a2;
+    request->m_param.m_value0 = a0;
+    request->m_param.m_value1 = a1;
+    request->m_param.m_value2 = a2;
     request->m_wait = 20;
     return GfReqSmallCom::addRequestParallel(request);
 }
@@ -1625,9 +1625,9 @@ unsigned long SCOM_POPUP::createIdea(unsigned int a0, unsigned int a1, unsigned 
 #line 5705
     SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
     request->m_param.m_type = 3;
-    request->m_param.m_value[0] = a0;
-    request->m_param.m_value[1] = a1;
-    request->m_param.m_value[2] = a2;
+    request->m_param.m_value0 = a0;
+    request->m_param.m_value1 = a1;
+    request->m_param.m_value2 = a2;
     request->m_wait = 20;
     return GfReqSmallCom::addRequestParallel(request);
 }
@@ -1639,9 +1639,9 @@ unsigned long SCOM_POPUP::createPouch(unsigned int a0, unsigned int a1, unsigned
 #line 5719
     SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
     request->m_param.m_type = 2;
-    request->m_param.m_value[0] = a0;
-    request->m_param.m_value[1] = a1;
-    request->m_param.m_value[2] = a2;
+    request->m_param.m_value0 = a0;
+    request->m_param.m_value1 = a1;
+    request->m_param.m_value2 = a2;
     request->m_wait = 20;
     return GfReqSmallCom::addRequestParallel(request);
 }
@@ -1653,9 +1653,9 @@ unsigned long SCOM_POPUP::createDevelop(unsigned int a0, unsigned int a1) {
 #line 5661
     SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
     request->m_param.m_type = 6;
-    request->m_param.m_value[0] = a0;
-    request->m_param.m_value[1] = a1;
-    request->m_param.m_value[2] = 0;
+    request->m_param.m_value0 = a0;
+    request->m_param.m_value1 = a1;
+    request->m_param.m_value2 = 0;
     request->m_wait = 20;
     return GfReqSmallCom::addRequestParallel(request);
 }
@@ -1667,9 +1667,9 @@ unsigned long SCOM_POPUP::createCrystalOK(unsigned int a0) {
 #line 5745
     SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
     request->m_param.m_type = 10;
-    request->m_param.m_value[0] = a0;
-    request->m_param.m_value[1] = 0;
-    request->m_param.m_value[2] = 0;
+    request->m_param.m_value0 = a0;
+    request->m_param.m_value1 = 0;
+    request->m_param.m_value2 = 0;
     request->m_wait = 20;
     return GfReqSmallCom::addRequestParallel(request);
 }
@@ -1686,7 +1686,7 @@ unsigned long SCOM_POPUP::createQuest(QuestID id) {
     // a zeroed local copied in: the original stores the two unused values as one 8-byte zero
     GfMenuObjPopup::OpenParam param = {};
     param.m_type = 9;
-    param.m_value[0] = id.m_id;
+    param.m_value0 = id.m_id;
     request->m_param = param;
     request->m_wait = 20;
     return GfReqSmallCom::addRequestParallel(request);
@@ -1699,9 +1699,9 @@ unsigned long SCOM_POPUP::createMercenaryReturn(unsigned int a0, unsigned int a1
 #line 5620
     SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
     request->m_param.m_type = 8;
-    request->m_param.m_value[0] = a0;
-    request->m_param.m_value[1] = a1;
-    request->m_param.m_value[2] = leader;
+    request->m_param.m_value0 = a0;
+    request->m_param.m_value1 = a1;
+    request->m_param.m_value2 = leader;
     request->m_wait = 20;
     return GfReqSmallCom::addRequestParallel(request);
 }
@@ -1709,9 +1709,9 @@ unsigned long SCOM_POPUP::createMercenaryReturn(unsigned int a0, unsigned int a1
 void SCOM_POPUP::cancelMercenaryReturn(unsigned int mapId, unsigned int teamId) {
     GfMenuObjPopup::OpenParam param;
     param.m_type = 8;
-    param.m_value[0] = mapId;
-    param.m_value[1] = teamId;
-    param.m_value[2] = GfDataMercenaries::getTeamLeader(teamId);
+    param.m_value0 = mapId;
+    param.m_value1 = teamId;
+    param.m_value2 = GfDataMercenaries::getTeamLeader(teamId);
     GfMenuObjPopup::remove(param);
 }
 
@@ -1721,7 +1721,7 @@ unsigned long SCOM_POPUP::createMercenaryAdd(unsigned int a0) {
     }
     GfMenuObjPopup::OpenParam param = {};
     param.m_type = 7;
-    param.m_value[0] = GfDataMercenaries::getMissionMapID(a0);
+    param.m_value0 = GfDataMercenaries::getMissionMapID(a0);
 #line 5649
     SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
     request->m_param = param;
@@ -1742,9 +1742,9 @@ unsigned long SCOM_POPUP::createAchievement(unsigned int blade, unsigned int lin
 #line 5692
     SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
     request->m_param.m_type = 4;
-    request->m_param.m_value[0] = blade;
-    request->m_param.m_value[1] = line;
-    request->m_param.m_value[2] = level;
+    request->m_param.m_value0 = blade;
+    request->m_param.m_value1 = line;
+    request->m_param.m_value2 = level;
     request->m_wait = 20;
     return GfReqSmallCom::addRequestParallel(request);
 }
@@ -1757,9 +1757,9 @@ unsigned long SCOM_POPUP::createArts(unsigned int a0, unsigned int a1) {
 #line 5732
     SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
     request->m_param.m_type = 1;
-    request->m_param.m_value[0] = a0;
-    request->m_param.m_value[1] = type;
-    request->m_param.m_value[2] = a1;
+    request->m_param.m_value0 = a0;
+    request->m_param.m_value1 = type;
+    request->m_param.m_value2 = a1;
     request->m_wait = 20;
     return GfReqSmallCom::addRequestParallel(request);
 }
@@ -1772,9 +1772,9 @@ unsigned long SCOM_POPUP::createChBtlNewChallenge(unsigned int) {
 #line 5765
     SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
     request->m_param.m_type = 10;
-    request->m_param.m_value[0] = 47;
-    request->m_param.m_value[1] = 0;
-    request->m_param.m_value[2] = 0;
+    request->m_param.m_value0 = 47;
+    request->m_param.m_value1 = 0;
+    request->m_param.m_value2 = 0;
     request->m_wait = 20;
     return GfReqSmallCom::addRequestParallel(request);
 }
@@ -1786,9 +1786,9 @@ unsigned long SCOM_POPUP::createCraft(unsigned int driver, unsigned int a1, unsi
 #line 5782
     SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
     request->m_param.m_type = 11;
-    request->m_param.m_value[0] = driver;
-    request->m_param.m_value[1] = a1;
-    request->m_param.m_value[2] = a2;
+    request->m_param.m_value0 = driver;
+    request->m_param.m_value1 = a1;
+    request->m_param.m_value2 = a2;
     request->m_wait = 20;
     return GfReqSmallCom::addRequestParallel(request);
 }
@@ -1928,6 +1928,29 @@ void SCOM_ACHIEV_INC::createElementalComboFinish(GF_OBJ_HANDLE* handle) {
 
 void SCOM_ACHIEV_INC::createFightCombo(GF_OBJ_HANDLE* handle) {
     fn_71005645F0(handle, 0x79);
+}
+
+void SCOM_ACHIEV_INC::fn_71005645F0(GF_OBJ_HANDLE* handle, unsigned int type) {
+    addTotalCount(type - 1, 1);
+    create(type - 1, 1, 0);
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    int party = GfObjUtil::getPartyID(handle);
+    if (GfDataUtil::isIra()) {
+        for (unsigned int driver = 0x11; driver != 0x1A; driver++) {
+            if (!GfDataDriver::isIraFront(driver) && GfDataDriver::getPartyPos(driver) != 2 &&
+                GfDataDriver::isActivateParty(driver)) {
+                unsigned int blade = GfDataDriver::getIraBlade(driver, -1);
+                if (!GfDataBlade::isUnselect(blade) && GfDataParty::getDriverPartyID(driver) == party) {
+                    blades.push_back(blade);
+                }
+            }
+        }
+    } else {
+        GfDataBlade::getListParty(blades);
+    }
+    for (unsigned short blade : blades) {
+        create(type, 1, blade);
+    }
 }
 
 void SCOM_ACHIEV_INC::createFightComboFinish(GF_OBJ_HANDLE* handle) {
@@ -3037,12 +3060,12 @@ void SCOM_FIELD_VOICE::createArtsSetIra(unsigned int blade) {
     createDriverForIra(blade, names);
 }
 
-void SCOM_FIELD_VOICE::createSkillGetIra(unsigned int blade) {
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createSkillGetIra(unsigned int blade) {
     SCOM_FIELD_VOICE::VoiceList names;
     names.push_back("710101");
     names.push_back("710102");
     names.push_back("710103");
-    createDriverForIra(blade, names);
+    return createDriverForIra(blade, names);
 }
 
 unsigned long SCOM_ADD_ETHER::create(int a0) {
@@ -3572,10 +3595,45 @@ void SCOM_PARTY_ADD::removeBlade(unsigned int driver, int slot, bool flag) {
     }
 }
 
+void SCOM_PARTY_ADD::removeBladeForMenu(unsigned int driver, int slot, bool flag) {
+    DataParamAcc acc(3, driver, GimmickType(0));
+    if (!acc.isValid()) {
+        return;
+    }
+    removeBlade(acc.getBlade(slot, false), flag, false);
+    if (GfGameManager::isClearGame()) {
+        unsigned int blade = acc.getBlade(slot, false);
+        if (blade == 1001) {
+            removeBlade(1002, flag, false);
+            removeBlade(1003, flag, false);
+        } else if (blade == 1002) {
+            removeBlade(1001, flag, false);
+            removeBlade(1003, flag, false);
+        }
+    }
+}
+
 void SCOM_PARTY_ADD::removeDriver(unsigned int driver, bool flag) {
     Info info = {0, driver, -1, flag, false, false, true, 4};
     s_info.push_back(info);
     create();
+}
+
+void SCOM_PARTY_ADD::setCurrentBlade(unsigned int blade) {
+    mm::mtl::FixedQueue<Info, 16>::iterator it = s_info.begin(), end = s_info.end();
+    for (; it != end; ++it) {
+        if ((*it).m_kind == 1 && (*it).m_blade == blade) {
+            (*it).m_isCurrent = true;
+            return;
+        }
+    }
+    // the walk moved: changes are queued, so this one waits for them
+    if (it != s_info.begin()) {
+        Info info = {blade, 0, -1, true, false, false, true, 5};
+        s_info.push_back(info);
+    } else {
+        SCOM_EXEC_CURRENT_BLADE::create(blade);
+    }
 }
 
 void SCOM_PARTY_ADD::removeBlade(unsigned int blade, bool flag, bool checkClear) {

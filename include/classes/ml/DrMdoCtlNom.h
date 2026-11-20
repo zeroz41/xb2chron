@@ -4,6 +4,7 @@
 #include "classes/ml/DrMdlObj.h"
 #include "ml/DrMdoNomClone.h"
 
+namespace ml { class DrCalcViewWork; }
 namespace ml { class DrMdlObj; }
 namespace ml { class DrPixlShadowCacheObj; }
 namespace ml { class DrResMdoMeshObj; }
@@ -71,6 +72,9 @@ public:
     void createShadowRenderList(bool);
     void updateRimBloomCalcUniformBlock();
     void updateMdlUniformBlock();
+    // the screen area the bound box (m_center +- m_extent, at least 1) covers through view's matrix, into
+    // m_outLineDist
+    void calcScreenShare(DrCalcViewWork* view);
 
     // What m_alphaSort points to: setupWorkMdl places it in the work buffer (0x30 bytes) and fills each sort object
     // and its per-MdoWrkMatRes::m_mdlTopNum check-list table when the model has that alpha pass. The type and field

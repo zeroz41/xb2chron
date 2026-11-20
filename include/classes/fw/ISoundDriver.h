@@ -54,7 +54,8 @@ public:
     virtual bool stopVoice(unsigned int, float) = 0;  // slot 23
     virtual unsigned int playSe(char const*, fw::SoundPack*, float, fw::SoundCategory) = 0;  // slot 24
     virtual unsigned int playSe(unsigned int, fw::SoundPack*, float, fw::SoundCategory) = 0;  // slot 25
-    virtual void playSeEx(fw::SoundPlayInfo const&, fw::SoundResult&) = 0;  // slot 26
+    // the handle it played (SoundSsdDriver::playSeEx returns result's handle)
+    virtual unsigned int playSeEx(fw::SoundPlayInfo const&, fw::SoundResult&) = 0;  // slot 26
     virtual bool stopSe(unsigned int, float) = 0;  // slot 27
     virtual bool isValid(unsigned int) const = 0;  // slot 28
     virtual bool isPlaying(unsigned int) const = 0;  // slot 29

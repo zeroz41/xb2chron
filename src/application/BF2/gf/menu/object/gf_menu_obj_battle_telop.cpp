@@ -6,12 +6,16 @@
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
 #include "ui/EventData.h"
+#include "classes/gf/GfMenuObjBattleTelop/UniteComboListener.h"
+#include "classes/gf/GfMenuReferenceAdapter.h"
+#include "classes/ui/UIEventManager.h"
+#include "mm/mtl/FixStr.h"
 
 namespace gf {
 
 namespace {
 // lbl_7100B5FD58: MainListener's telop layouts by the open event's index (0: none). The name is not the original's
-const char* const s_telopLayouts[] = {nullptr, "TXT_unit"};
+const char* const s_telopLayouts[] = {nullptr, "TXT_unite_combo_finish"};
 }  // namespace
 
 GfMenuObjBattleTelop::GfMenuObjBattleTelop(unsigned int handle)
@@ -53,6 +57,38 @@ void GfMenuObjBattleTelop::openUniteCombo(const OpenUniteParam& param) {
             GfMenuObject::sendEvent(root.searchChild("LAY_fusion_combo"), event, 0.0f);
         }
     }
+}
+
+void GfMenuObjBattleTelop::initialize() {
+    ui::UIObjectAcc main(m_handle, "LAY_main");
+    {
+#line 139
+        MainListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) MainListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(main.searchChild("LAY_telop"), listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    {
+#line 142
+        UniteComboListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) UniteComboListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(main.searchChild("LAY_fusion_combo"), listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    GfMenuObject::attachExternalCall(0x4E, main.m_handle);
+    {
+        ui::UIObjectAcc bonus(main.m_handle, "LAY_fusion_bonus");
+        mm::mtl::FixStr<32> name;
+        for (int i = 0; i < 3; i++) {
+            name.format("TXT_fusion_bonus_param@%02d", i + 1);
+            GfMenuReferenceAdapter::create(bonus.searchChild(name.m_str), m_numbers[i], false);
+        }
+    }
+    GfMenuObject::initialize();
 }
 
 void GfMenuObjBattleTelop::finalize() {

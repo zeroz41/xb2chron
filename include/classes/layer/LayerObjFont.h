@@ -7,6 +7,7 @@
 namespace layer { class LayerFontIconObj; }
 namespace layer { class LayerFontResObj; }
 namespace layer { class LayerFontStyleObj; }
+namespace layer { class LayerResViewPortInfo; }
 
 namespace layer {
 // a font layer object. Derived from LayerObj: LayerAccFontObj hands its layer object to these methods unadjusted, and
@@ -31,7 +32,9 @@ public:
     LayerFontDrawBuffer::Work* m_work;
     LayerFontDrawBuffer::Work* m_newWork[2];  // 0x258
     LayerFontDrawBuffer::Work* m_oldWork;  // 0x268
-    unsigned char pad_270[0x8];
+    // 0x270: LayerObjTopFont::finalRender sets it as the viewport when no mask object applies (as
+    // LayerObjTopTexObj::m_viewData; the name is not the original's)
+    LayerResViewPortInfo* m_viewData;
     // what setMsg(text) draws with (named after setMsg's parameters)
     const LayerFontResObj* m_font;
     const LayerFontStyleObj* m_style;

@@ -47,6 +47,7 @@ public:
         float pad_4;
     };
     const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
+    const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     GmkSe() {}  // inline: construct_n<GmkSe> constructs in place with these stores
     virtual ~GmkSe();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
@@ -54,6 +55,8 @@ public:
     virtual void update(float);  // slot 6
     // its step while in TGmkActiveList<GmkSe> (GmkManager::seqUpdate calls it for each)
     void updateInActiveList(float);
+    // its sound started at the row's volumeMIN (stopped first when one plays); TGmkActiveList<GmkSe> takes it then
+    void createInst();
     virtual void debugDraw() const;  // slot 7
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(15);
@@ -66,8 +69,8 @@ public:
     unsigned char pad_f1 = 0;
     unsigned char pad_f2[0x2];
     unsigned m_seHandle = 0;  // 0xf4: the playing sound (dispose stops it; the name is not the original's)
-    int pad_f8 = 0;
-    int pad_fc = 0;
+    float pad_f8 = 0.0f;  // createInst clears it; updateInActiveList adds dt and sets the volume from 1.0 on
+    float pad_fc = 0.0f;  // updateInActiveList stores the player's distance here
     bool pad_100 = false;
     // 0x101..0x110: tail padding (not copied); size from TGmkList::getInst's stride (0x110)
 };

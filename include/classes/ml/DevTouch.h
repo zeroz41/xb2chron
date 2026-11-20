@@ -30,6 +30,8 @@ public:
     };
 
     // inline: the original keeps its copies in the weak tail (wkUpdate is the key function)
+    // inline: DevTouchNx's constructor runs it (the original has no out-of-line copy)
+    DevTouch(const char* name, WorkObj* parent) : WorkObj(name, parent, 0) {}
     virtual ~DevTouch() {}  // slot 0
     virtual void wkUpdate();  // slot 9
     virtual bool wkStandbyLogin();  // slot 14

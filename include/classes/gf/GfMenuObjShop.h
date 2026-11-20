@@ -104,6 +104,23 @@ public:
     void sendExitEvent(unsigned int handle);
     // event 0x22 to that object, or to the main layer when it is 0
     void sendCloseEvent(unsigned int handle);
+    // event 0x21 with parameter 0 to that object, or to the main layer when it is 0
+    void sendOpenEvent(unsigned int handle, int param);
+    // event 0x42 with parameter 0 to that object when it is set
+    void sendReturnEvent(unsigned int handle, int param);
+    // update redraws the item lists (refreshItemList) and "LAY_stock_num" (1.0.0's sets the first flag only)
+    void reqRefreshItemList();
+    // GfMenuItemUtil::canCreateOrb's error as its common window: 0xB0 for 2, 0xAF for 1
+    void openOrbError(unsigned int error);
+    // whether the shop sells blade weapons (ShopType 0 with ShopIcon 0x1AE): StoreListListener opens
+    // GfMenuObjBlWeapon2 for it
+    static bool isShopWeapon(unsigned int shop);
+    // the mode's action layer under that object: LAY_store_action, LAY_exc_task_list, LAY_inn_action, LAY_orb_item_list
+    // (0 for another mode; 1.0.0's symbols name it)
+    unsigned int getShopSubActLayer(unsigned int handle);
+    // event 0x21 to "LAY_num_select" for an item (0x280, 0x1E0, sell); caller goes in pad_D0, entry in m_sellHandle
+    // (2.0.0's symbols give the parameter types; their names are not the original's)
+    void openNumSelect(unsigned int caller, unsigned int item, GfItemHandle entry, bool sell);
 
     // sequence jobs (m_seq): each returns true when done
     // "TXT_store_sell_index" shows the current filter's name (BDAT 0x11D, list 0x14B's entry filter + 1)
@@ -152,7 +169,7 @@ public:
     bool m_stockNumDirty;  // 0x5A
     unsigned char pad_5B[0x60 - 0x5B];
     // the item filters and the current one (setFilterIndex, refreshStock; the names are not the original's)
-    mm::mtl::FixedVector<unsigned int, 22> m_filters;  // 0x60
+    mm::mtl::FixedVector<unsigned int, 21> m_filters;  // 0x60 capacity 21: StoreActListener::reciveEvent push_back compares size with 21
     unsigned int m_filterIndex;  // 0xC0
     unsigned char pad_C4[0xC8 - 0xC4];
     // the inn action list's cursor ("LAY_inn_action_cursor"): InnActListener creates it on event 0x40 and

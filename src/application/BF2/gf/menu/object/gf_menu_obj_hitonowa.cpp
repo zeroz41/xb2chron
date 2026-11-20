@@ -37,6 +37,7 @@
 #include "classes/gf/GfBdatMsg.h"
 #include "gf/GfQuestUtil.h"
 #include "classes/ui/UIShapeRing.h"
+#include "classes/gf/GfMenuObjMainMenu2.h"
 
 namespace gf {
 
@@ -648,11 +649,10 @@ void GfMenuObjHitonowa::setupEvent() {
 
 void GfMenuObjHitonowa::refreshNew() {
     for (int i = 0; i < 3; i++) {
-        unsigned int kind = s_newIconKinds[i];
-        GfMenuIDList* ids = m_idLists[kind];
+        GfMenuIDList* ids = m_idLists[s_newIconKinds[i]];
         for (unsigned int j = 0; j < ids->getSize(); j++) {
             unsigned int id = ids->getContents(j).m_id;
-            ui::UIObjectAcc icon(m_selectLists[kind]->getObject(j), "TXT_icon_new");
+            ui::UIObjectAcc icon(m_selectLists[s_newIconKinds[i]]->getObject(j), "TXT_icon_new");
             icon.setAlpha(GfDataNpc::isHitonowaNewFlag(id) ? 0.0f : 1.0f);
         }
     }
@@ -790,6 +790,75 @@ void GfMenuObjHitonowa::ConfirmListener::reciveEvent(const ui::EventData& event,
         }
     } else {
         UIObjectListener::reciveEvent(event, handle);
+    }
+}
+
+void GfMenuObjHitonowa::ImageListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    case 0x101:
+        GfMenuObjMainMenu2::setCloseKeyEnable(true);
+        GfMenuObject::enableInput(acc.m_handle);
+        GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 3:
+        if (event.m_param0 >= 2u) {
+            ui::UIObjectAcc image(acc.m_handle, "IMG_image@01");
+            image.setImageIndex(0);
+        }
+        break;
+    case 8:
+        if (event.m_param1 == 2) {
+            GfMenuObjMainMenu2::setCloseKeyEnable(false);
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+            if (m_openMode == 0) {
+                ui::EventData back;
+                back.m_type = 0x101;
+                GfMenuObject::sendEvent(acc.getParentHandle(), back, 0.0f);
+                GfMenuObjUtil::playSECommonCancel();
+            } else {
+                m_owner->m_resultDone = true;
+                GfMenuObjUtil::playSECommonCancel();
+            }
+        }
+        break;
+    case 0x21: {
+        int mode = event.m_param0;
+        ui::UIObjectAcc image(acc.m_handle, "IMG_image@01");
+        image.setImageIndex(1);
+        m_owner->m_seq2.clear();
+        if (mode == 0) {
+            m_owner->m_seq2.addJob(&GfMenuObjHitonowa::seqWaitStreamingImg);
+            m_owner->m_seq2.addJob(&GfMenuObjHitonowa::seqCtrlWait);
+            m_owner->m_seq2.addJob(&GfMenuObjHitonowa::seqStartImage);
+        } else {
+            m_owner->m_seq2.addJob(&GfMenuObjHitonowa::seqWaitStreamingImgFirst);
+            m_owner->m_seq2.addWait(15);
+            m_owner->m_seq2.addJob(&GfMenuObjHitonowa::seqImageVoiceA);
+            m_owner->m_seq2.addWait(75);
+            m_owner->m_seq2.addJob(&GfMenuObjHitonowa::seqImageVoiceB);
+            m_owner->m_seq2.addWait(40);
+            m_owner->m_seq2.addJob(&GfMenuObjHitonowa::seqImageVoiceC);
+            m_owner->m_seq2.addWait(40);
+            m_owner->m_seq2.addJob(&GfMenuObjHitonowa::seqImageVoiceD);
+            m_owner->m_seq2.addJob(&GfMenuObjHitonowa::seqVoiceWait);
+            m_owner->m_seq2.addJob(&GfMenuObjHitonowa::seqStartImage);
+        }
+        m_openMode = mode;
+        break;
+    }
+    case 0x22:
+        GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 2, 0);
+        break;
     }
 }
 

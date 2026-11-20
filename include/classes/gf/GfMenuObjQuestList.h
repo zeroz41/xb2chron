@@ -72,7 +72,10 @@ public:
     GfMenuSequence<GfMenuObjQuestList, 8> m_seq;  // run by update
     unsigned int m_quest;                      // seqActivateSelect makes it the current quest
     unsigned int m_closeHandle;                // seqEnd sends 0x103 to it (LAY_main's when 0) and clears it
-    mm::mtl::IntrusivePtr<GfMenuReferenceQuest> m_references[2];
+    // initializeSub creates both: the quest the detail window's adapters show (its listeners set it) and a number
+    // reference next to it (the names are not the original's)
+    mm::mtl::IntrusivePtr<GfMenuReferenceQuest> m_detailQuest;
+    mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_detailNumber;
     GfMenuItemList* m_itemList;                // TaskListener fills it; released by the destructor
     // set by the constructor, cleared by MainListener on 0x24; while set, MainListener closes (2, 0x22) with a fade
     // preset instead of requesting event 3 at once (the name is not the original's)

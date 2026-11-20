@@ -2,6 +2,7 @@
 #define CLASSES_FW_TRANSFORMMANAGER_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "mm/mtl/FixedArray.h"
 #include "mm/mtl/IntrusiveList.h"
 #include "classes/fw/TransformUpdater.h"
 
@@ -23,7 +24,10 @@ public:
 
     // one list per layer (update walks all 32 against its mask; GfComTransform links its updater into its layer's;
     // the name is not the original's)
-    mm::mtl::IntrusiveList<TransformUpdater> m_layers[32];
+    // (the symbols name mm::mtl::FixedArray<fw::TransformManager::Group, 32>: Framework::createManager's
+    // value-initialized new calls its out-of-line constructor)
+    class Group : public ::mm::mtl::IntrusiveList<TransformUpdater> {};
+    mm::mtl::FixedArray<Group, 32> m_layers;
 };
 }  // namespace fw
 

@@ -544,9 +544,9 @@ void SystemManager::updateKizunaPos(int index, KizunaWork& work) {
     if (manager == nullptr) {
         return;
     }
-    KizunaWork& dst = *(manager->m_kizunaWorks[manager->m_flip] + index);
+    ptlib::emitter::EmitterManager::KizunaWork& dst = *(manager->m_kizunaWorks[manager->m_flip].m_data + index);
     for (int i = 0; i < 20; i++) {
-        dst.m_points[i] = work.m_points[i];
+        dst.m_points.m_data[i] = work.m_points[i];
     }
     dst.pad_154 = work.pad_154;
     dst.pad_158 = work.pad_158;
@@ -570,12 +570,12 @@ void SystemManager::updateKizunaPos(int index, KizunaWork& work) {
     dst.m_scrollB = scrollB;
     dst.pad_16c = work.pad_16c;
     for (int i = 0; i < 4; i++) {
-        dst.pad_148[i][0] = work.pad_148[i][0];
+        dst.pad_148[i * 2] = work.pad_148[i][0];
     }
     for (int i = 0; i < 4; i++) {
-        dst.pad_148[i][1] = work.pad_148[i][1];
+        dst.pad_148[i * 2 + 1] = work.pad_148[i][1];
     }
-    dst.pad_150 = work.pad_150;
+    dst.pad_148[8] = work.pad_150;
     dst.pad_140 = work.pad_140;
     dst.pad_151 = work.pad_151;
     dst.pad_152 = work.pad_152;

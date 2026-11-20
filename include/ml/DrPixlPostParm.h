@@ -148,9 +148,13 @@ public:
     bool pad_16D;
     unsigned char pad_16E[0x6];
     bool m_ssao;  // 0x174, DrPixlPostObjTSSAO::render_beforeTemporal runs its passes only while set (name inferred)
-    unsigned char pad_175[0x13];
+    unsigned char pad_175[0x7];
+    float pad_17C;  // 0x17C, DrPixlPostObjTSSAO::passUpScaleToMiddle's gParam.x
+    unsigned char pad_180[0x4];
+    float pad_184;  // 0x184, DrPixlPostObjTSSAO::passUpScaleToMiddle's gParam.w
     float m_ssaoBlurAfter;  // 0x188, DrPixlPostObjTSSAO::render_afterTemporal's passBlur_Sub value (name inferred)
-    unsigned char pad_18C[0x8];
+    unsigned char pad_18C[0x4];
+    float pad_190;  // 0x190, DrPixlPostObjTSSAO::passUpScaleToMiddle clamps 1 - it into gParam.z
     bool pad_194;  // 0x194: updateSpec copies it from DrIniSys's parameters (spec 1 clears it)
     unsigned char pad_195[0x35];
     bool m_motBlur;  // 0x1CA
@@ -213,7 +217,13 @@ public:
     // 0x2A8: DrIniSys::setupDlcIni sets it from lib_dlc_nx.ini's toonShadowAlphaDLC key, on DrIniSys::m_postParm and
     // DrMan::m_postParm[0] (name inferred from the key)
     float m_toonShadowAlpha;
-    unsigned char pad_2AC[0x18];
+    unsigned char pad_2AC[0x8];
+    // 0x2B4: DrCalcViewWork::unitoon_rim_lgt scales the rim light by it (the name is not the original's)
+    bool m_toonRimOn;
+    unsigned char pad_2B5[0x3];
+    // 0x2B8: the angles in degrees DrCalcViewWork::unitoon_rim_mat rotates by (the name is not the original's)
+    float m_toonRimAngle[2];
+    unsigned char pad_2C0[0x4];
     // 0x2C4-0x2D0: DrMdoMat::matCall_OutLineVal's outline width and fade distances (names inferred)
     float m_outLineScale;
     unsigned char pad_2C8[0x4];
@@ -236,7 +246,9 @@ public:
     bool m_dbgGBuff;  // 0x488, DrPixlMan::fastDeferredRender calls debugGBuffRender while set (name inferred)
     unsigned char pad_489[0x1];
     bool m_ssr;  // 0x48A, getSSROn (name inferred)
-    unsigned char pad_48B[0x45];
+    unsigned char pad_48B[0x35];
+    // 0x4C0: DrCalcViewWork::unitoon_rim_lgt's colour (xyz) and intensity (w) (the name is not the original's)
+    float m_toonRimColor[4];
     bool m_glassBr;  // 0x4D0
     unsigned char pad_4D1[0x7];
     float m_glassBrParm[15];  // 0x4D8, setGlassBrk's values (their meanings are not known)
@@ -272,7 +284,10 @@ public:
     // the original's)
     int m_iblColorMode;
     int pad_FE8;  // 0xFE8: updateSpec clears it
-    unsigned char pad_FEC[0x30];
+    unsigned char pad_FEC[0x24];
+    // 0x1010: DrPixlShadowRaytrace::temporalFiltering passes 1 / it as gParam.z (blurPassSub half of it; unnamed so far)
+    float pad_1010;
+    unsigned char pad_1014[0x8];
     // 0x101C, DrPixlPostObjUnbranchToDepth::renderQuater passes it as gParam.x (the name is not the original's)
     float m_unbranchQuaterParam;
     unsigned char pad_1020[0x4];

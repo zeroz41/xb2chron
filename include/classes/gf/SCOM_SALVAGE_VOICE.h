@@ -1,7 +1,7 @@
 #ifndef CLASSES_GF_SCOM_SALVAGE_VOICE_H
 #define CLASSES_GF_SCOM_SALVAGE_VOICE_H
 
-namespace gf { class GF_OBJ_HANDLE; class GAME_VOICE_HANDLE; enum CV_SALVAGE : int; enum CV_SALVAGE_RESULT : int; }
+namespace gf { class GF_OBJ_HANDLE; class GAME_VOICE_HANDLE; enum CV_SALVAGE : unsigned int; enum CV_SALVAGE_RESULT : int; }
 
 namespace gf {
 // no table in 3.0.1: GfGameSalvage plays its voices through these statics (GfSalvageVoice's forwards)

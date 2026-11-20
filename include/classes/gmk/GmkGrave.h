@@ -55,8 +55,9 @@ public:
     // its game object (dispose clears its user data, destroys it and stores -1; the name is not the original's)
     gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     // 0x58: an access (Vector<GmkGrave>::resize inlines GmkAcc's constructor here; the name is not the original's)
-    GmkAcc m_acc;
-    unsigned char pad_98 = 0;
+    // (mutable: the const reqPopEnemy<T> creates it and sets pad_98)
+    mutable GmkAcc m_acc;
+    mutable unsigned char pad_98 = 0;
     unsigned char pad_99 = 1;  // (0x9a..0x9f: tail padding; the size: TGmkList::getInst's stride)
 };
 }  // namespace gmk

@@ -82,6 +82,28 @@ void GfMenuItemList::filterFavoriteType(const FiltertInfo& filter) {
     }
 }
 
+void GfMenuItemList::filterIraAccWpn(const FiltertInfo& filter) {
+    if (!GfMenuObjUtil::isValidExpansion(3)) {
+        return;
+    }
+    for (unsigned int i = 0; i < getSize();) {
+        MenuItemInfo item = getContents(i);
+        ItemProperty property;
+        GfItemUtil::getProperty(property, item.m_id, 0);
+        if (property.m_type != 2) {
+            decItem(item, false);
+        } else if (filter.m_armorTypeMode == 0 && GfBdatItem::sys()->getPcEquipArmorType(item.m_id) == 2) {
+            decItem(item, false);
+        } else if (filter.m_armorTypeMode == 1 && GfBdatItem::sys()->getPcEquipArmorType(item.m_id) != 2) {
+            decItem(item, false);
+        } else if (filter.m_armorTypeMode == 1 && GfBdatItem::sys()->getPcEquipIcon(item.m_id) != filter.m_equipIcon) {
+            decItem(item, false);
+        } else {
+            ++i;
+        }
+    }
+}
+
 void GfMenuItemList::updateCount() {
     for (unsigned int i = 0; i < getSize(); ++i) {
         MenuItemInfo& item = getContents(i);
@@ -927,6 +949,39 @@ void GfMenuItemList::sortFromEnhance(unsigned int order) {
         return keyA < keyB;
     });
     delete[] keys;
+}
+
+unsigned int GfMenuItemList::getEnhanceSortCat(const MenuItemInfo& item) {
+    auto getCat = [](const ItemProperty& prop) -> unsigned int {
+        if (prop.m_enhance2 == 0) {
+            return 24;
+        }
+        GfBdatBtl* btl = GfBdatBtl::sys();
+        unsigned int effect = btl->getBTL_EnhanceEnhanceEffect(prop.m_enhance2);
+        if (effect == 0) {
+            return 24;
+        }
+        unsigned int cat = btl->getBTL_EnhanceEffSortCat(effect);
+        return cat == s_PrioEnhanceSortCat ? 0 : cat;
+    };
+    // prop in its own scope: the types the switch does not list return 24 after it ends, through the block the
+    // two "no effect" returns share (the original's layout)
+    {
+        ItemProperty prop;
+        GfItemUtil::getProperty(prop, item.m_id, 0);
+        switch (item.m_type) {
+        case 2:
+        case 3:
+            return getCat(prop);
+        case 9:
+            GfItemUtil::getProperty(prop, prop.m_enhance, 0);
+            return getCat(prop);
+        case 18:
+        case 20:
+            return getCat(prop);
+        }
+    }
+    return 24;
 }
 
 }  // namespace gf

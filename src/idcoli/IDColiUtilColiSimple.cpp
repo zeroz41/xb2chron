@@ -1,3 +1,4 @@
+#define MM_LIB_FROM_IDCOLI
 #include <string.h>
 
 #include "idcoli/IDColiUtilColi.h"
@@ -5,6 +6,7 @@
 #include "idcoli/IDColiInputUtil.h"
 #include "idcoli/IDColiPrimitive.h"
 #include "idcoli/IDColiShapeWork.h"
+#include "idcoli/IDColiGrandMesh.h"
 #include "classes/idcoli/IDColiObjGrdChar.h"
 #include "idcoli/IDColiResult.h"
 #include "classes/fw/ColiCheckCallback.h"
@@ -467,6 +469,91 @@ void IDColiPrimitive::calcBoxAaBb(CLBoxWork* box) {
     }
     box->m_max += box->m_center;
     box->m_min += box->m_center;
+}
+
+void IDColiPrimitive::calcBaseBoxSetup(CLBoxWork* box, const mm::Mat44& matrix, const mm::Vec3& size) {
+    mm::Vec3 axis(matrix.m[0][0] + matrix.m[1][0] + matrix.m[2][0], matrix.m[0][1] + matrix.m[1][1] + matrix.m[2][1],
+                  matrix.m[0][2] + matrix.m[1][2] + matrix.m[2][2]);
+    float scale = axis.length() * IDColiObj::OBJ_CALC_RADIUS;
+    box->m_size = size;
+    box->m_scale = scale;
+    box->m_invScale = 1.0f / scale;
+    box->m_center = matrix.getTrans();
+    box->m_axes[0].x = matrix.m[0][0];
+    box->m_axes[0].y = matrix.m[1][0];
+    box->m_axes[0].z = matrix.m[2][0];
+    box->m_axes[1].x = matrix.m[0][1];
+    box->m_axes[1].y = matrix.m[1][1];
+    box->m_axes[1].z = matrix.m[2][1];
+    box->m_axes[2].x = matrix.m[0][2];
+    box->m_axes[2].y = matrix.m[1][2];
+    box->m_axes[2].z = matrix.m[2][2];
+    mm::Mat44 inv(matrix);
+    inv.setTransRow(mm::Vec3(0.0f, 0.0f, 0.0f));
+    inv.inverse();
+    box->m_invAxes[0].x = inv.m[0][0];
+    box->m_invAxes[0].y = inv.m[1][0];
+    box->m_invAxes[0].z = inv.m[2][0];
+    box->m_invAxes[1].x = inv.m[0][1];
+    box->m_invAxes[1].y = inv.m[1][1];
+    box->m_invAxes[1].z = inv.m[2][1];
+    box->m_invAxes[2].x = inv.m[0][2];
+    box->m_invAxes[2].y = inv.m[1][2];
+    box->m_invAxes[2].z = inv.m[2][2];
+    calcBoxAaBb(box);
+}
+
+void IDColiPrimitive::calcPosDataSetup(IDCmfPosData* posData, const mm::Mat44& matrix, const mm::Vec3& corner0,
+                                       const mm::Vec3& corner1) {
+    mm::Vec3 trans = matrix.getTrans();
+    posData->m_matrix.m[0][0] = matrix.m[0][0];
+    posData->m_matrix.m[0][1] = matrix.m[1][0];
+    posData->m_matrix.m[0][2] = matrix.m[2][0];
+    posData->m_matrix.m[1][0] = matrix.m[0][1];
+    posData->m_matrix.m[1][1] = matrix.m[1][1];
+    posData->m_matrix.m[1][2] = matrix.m[2][1];
+    posData->m_matrix.m[2][0] = matrix.m[0][2];
+    posData->m_matrix.m[2][1] = matrix.m[1][2];
+    posData->m_matrix.m[2][2] = matrix.m[2][2];
+    posData->m_matrix.m[0][3] = trans.x;
+    posData->m_matrix.m[1][3] = trans.y;
+    posData->m_matrix.m[2][3] = trans.z;
+    mm::Mat44 inv(matrix);
+    inv.setTransRow(mm::Vec3(0.0f, 0.0f, 0.0f));
+    inv.inverse();
+    posData->m_invMatrix.m[0][0] = inv.m[0][0];
+    posData->m_invMatrix.m[0][1] = inv.m[1][0];
+    posData->m_invMatrix.m[0][2] = inv.m[2][0];
+    posData->m_invMatrix.m[1][0] = inv.m[0][1];
+    posData->m_invMatrix.m[1][1] = inv.m[1][1];
+    posData->m_invMatrix.m[1][2] = inv.m[2][1];
+    posData->m_invMatrix.m[2][0] = inv.m[0][2];
+    posData->m_invMatrix.m[2][1] = inv.m[1][2];
+    posData->m_invMatrix.m[2][2] = inv.m[2][2];
+    mm::Vec3 corners[8] = {
+        mm::Vec3(corner0.x, corner0.y, corner0.z), mm::Vec3(corner0.x, corner0.y, corner1.z),
+        mm::Vec3(corner1.x, corner0.y, corner0.z), mm::Vec3(corner1.x, corner0.y, corner1.z),
+        mm::Vec3(corner0.x, corner1.y, corner0.z), mm::Vec3(corner0.x, corner1.y, corner1.z),
+        mm::Vec3(corner1.x, corner1.y, corner0.z), mm::Vec3(corner1.x, corner1.y, corner1.z),
+    };
+    posData->m_max.x = posData->m_max.y = posData->m_max.z = -100000.0f;
+    posData->m_min.x = posData->m_min.y = posData->m_min.z = 100000.0f;
+    for (int i = 0; i < 8; i++) {
+        mm::Vec3 pos(corners[i].x * posData->m_matrix.m[0][0] + corners[i].y * posData->m_matrix.m[0][1] +
+                         corners[i].z * posData->m_matrix.m[0][2],
+                     corners[i].x * posData->m_matrix.m[1][0] + corners[i].y * posData->m_matrix.m[1][1] +
+                         corners[i].z * posData->m_matrix.m[1][2],
+                     corners[i].x * posData->m_matrix.m[2][0] + corners[i].y * posData->m_matrix.m[2][1] +
+                         corners[i].z * posData->m_matrix.m[2][2]);
+        if (posData->m_max.x < pos.x) posData->m_max.x = pos.x;
+        if (posData->m_min.x > pos.x) posData->m_min.x = pos.x;
+        if (posData->m_max.y < pos.y) posData->m_max.y = pos.y;
+        if (posData->m_min.y > pos.y) posData->m_min.y = pos.y;
+        if (posData->m_max.z < pos.z) posData->m_max.z = pos.z;
+        if (posData->m_min.z > pos.z) posData->m_min.z = pos.z;
+    }
+    posData->m_max += trans;
+    posData->m_min += trans;
 }
 
 void IDColiPrimitive::createSubBaseCharacter(void* base, IDColiBaseType& type, const mm::Mat44& matrix,

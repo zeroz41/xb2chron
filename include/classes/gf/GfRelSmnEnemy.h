@@ -31,16 +31,14 @@ public:
         unsigned short enemyId;  // the row's EnemyID
     };
     struct PopInfo {
-        PopInfo() : actType(0), chestHeight(0.0f), pos(mm::Vec3::zero), popped(0), pad_24(0) {}
+        PopInfo() : actType(0), chestHeight(0.0f), pos(mm::Vec3::zero), popped(0) {}
         EnemyInfo enemy;
         unsigned char actType;   // its resource's ActType
         unsigned char pad_5[0x3];
         float chestHeight;       // its resource's ChestHeight, in metres
         mm::Vec3 pos;            // the row's position for it, in metres
         unsigned char popped;  // 1 once its enemy is created (updatePopEnemy)
-        unsigned char pad_21[0x3];
-        unsigned int pad_24;
-        unsigned char pad_28[0x8];
+        // 0x21..0x30: tail padding (Vector<PopInfo>::push_back/expand copy nothing past popped)
     };
 
     GfRelSmnEnemy()

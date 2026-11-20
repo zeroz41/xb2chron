@@ -85,7 +85,7 @@ public:
     virtual bool stopVoice(unsigned int, float);  // slot 23
     virtual unsigned int playSe(char const*, fw::SoundPack*, float, fw::SoundCategory);  // slot 24
     virtual unsigned int playSe(unsigned int, fw::SoundPack*, float, fw::SoundCategory);  // slot 25
-    virtual void playSeEx(fw::SoundPlayInfo const&, fw::SoundResult&);  // slot 26
+    virtual unsigned int playSeEx(fw::SoundPlayInfo const&, fw::SoundResult&);  // slot 26
     virtual bool stopSe(unsigned int, float);  // slot 27
     virtual bool isValid(unsigned int) const;  // slot 28
     virtual bool isPlaying(unsigned int) const;  // slot 29
@@ -212,6 +212,9 @@ public:
     ssd::Result SoundHandleDelegate(ssd::Delegate::Handle* delegate, ssd::SoundHandle* handle,
                                     ssd::SoundHandle::Notify::Type type);
     void releaseHandle(ssd::SoundHandle* handle);
+    // plays a pack's source as a sound effect: its handle, 0 when nothing played (playSe and playSeEx find the source)
+    unsigned int playSeLocal(mm::mtl::IntrusivePtr<SoundSsdSource> source, SoundPack* pack, float volume,
+                             fw::SoundCategory category);
     // releases the pools whose detach finished (each list entry it erases skips the next one)
     void updatePoolMemory();
     // loads m_bgmVolumes: sound/ira_vol.csvb when the argument (SoundManager's m_dlc when negative) is set, else

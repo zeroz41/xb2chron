@@ -6,6 +6,8 @@
 #include "classes/gf/FootIkControllerPlugin.h"
 #include "mm/mtl/Delegate.h"
 #include "mm/Col4.h"
+#include "mm/Math.h"
+#include "math.h"
 #include "classes/gf/GfComponent.h"
 #include "classes/gf/GfAllocator.h"
 #include "fw/Allocator.h"
@@ -174,6 +176,17 @@ void GfComBehaviorEvent::execTurnCmd(float rotY, float speed, float threshold, f
     m_turnCmd.create(info);
 }
 
+bool GfComBehaviorEvent::recieveMessage(fw::MessageObject*, fw::Message& msg) {
+    if (msg.m_id == 0x1000049) {
+        if (GfComPropertyEvent* property = m_owner->getComponent<GfComPropertyEvent>(5)) {
+            GfObj* owner = static_cast<GfObj*>(m_owner);
+            property->recieveMessage(owner, msg);
+        }
+        return true;
+    }
+    return false;
+}
+
 GfComBehaviorEvent::~GfComBehaviorEvent() {}
 
 template <typename T>
@@ -201,6 +214,30 @@ bool TFieldExecCmd<T>::execCmd(T& com, const char* name) const {
 
 // TFieldExecCmd<GfComEvtAnim>::update's (not written yet)
 template bool TFieldExecCmd<GfComEvtAnim>::execCmd(GfComEvtAnim& com, const char* name) const;
+
+// turns the object by at most the turn's step this frame toward m_info.pad_8 (about the y axis)
+template <typename T>
+void TFieldExecCmdTurn<T>::applyDeltaRotY(GfComTransform& transform, float dt) {
+    float step = m_info.pad_14 * (pad_58 / pad_64 * dt);
+    mm::Vec3 front = transform.getRotation().rotate(mm::Vec3::unitZ);
+    float cur = atan2f(front.x, front.z);
+    float diff = mm::normalizeRadian(m_info.pad_8 - cur);
+    float delta = fabsf(diff) < fabsf(step) ? diff : step;
+    mm::Quat rot = transform.getRotation();
+    float half = delta * 0.5f;
+    float s = sinf(half);
+    float c = cosf(half);
+    float x = s * rot.z + c * rot.x;
+    float y = s * rot.w + c * rot.y;
+    rot.z = c * rot.z - s * rot.x;
+    rot.w = c * rot.w - s * rot.y;
+    rot.x = x;
+    rot.y = y;
+    transform.setRotation(rot);
+}
+
+// TFieldExecCmdTurn<GfComEvtAnim>::update's (not written yet)
+template void TFieldExecCmdTurn<GfComEvtAnim>::applyDeltaRotY(GfComTransform& transform, float dt);
 
 mm::mtl::RTTI GfComBehaviorEvent::m_rtti("GfComBehaviorEvent", &GfComBehavior::m_rtti, nullptr);
 

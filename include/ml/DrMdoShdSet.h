@@ -56,6 +56,9 @@ public:
     void shwShd_InstT(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list);
     void shwShd_ObjT(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list);
     void shwShd_InstMot(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list);
+    void shwShd_Mot(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list);
+    void shwShd_MotT(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list);
+    void shwShd_InstMotT(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list);
     // matIdx indexes the model's flag wave blocks (MdoFlagWaveRes::m_pData)
     void shwShd_Fw(int shd, const MdsMatInfoHeader* info, int triIdx, int matIdx, DrShdDataList* list);
     void shwShd_Spt_Inst(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list);

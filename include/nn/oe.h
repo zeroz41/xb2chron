@@ -9,6 +9,15 @@ namespace nn { namespace oe {
 enum FocusState {};
 // the SDK's performance mode: -1 invalid, 0 normal (handheld), 1 boost (docked)
 enum PerformanceMode {};
+// the SDK's operation mode: 0 handheld, 1 console
+enum OperationMode {};
+OperationMode GetOperationMode();
+PerformanceMode GetPerformanceMode();
+// the notifications ml::DevPerfNx's constructor turns on
+void SetOperationModeChangedNotificationEnabled(bool enabled);
+void SetPerformanceModeChangedNotificationEnabled(bool enabled);
+void SetResumeNotificationEnabled(bool enabled);
+void EnterExitRequestHandlingSection();
 
 // the SDK's application environment setup (ml::DeviceNx::initializeSDK calls it first)
 void Initialize();

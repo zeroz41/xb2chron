@@ -6,6 +6,7 @@
 #include "classes/ml/DrCalcClipWorkShadowPlane.h"
 #include "classes/ml/DrLightObjLocalIBL.h"
 #include "classes/ml/DrMan.h"
+#include "classes/ml/DrPixlMemMan.h"
 #include "classes/ml/DrShdLgtClustered.h"
 #include "classes/ml/DrShdLgtHybrid.h"
 #include "classes/ml/DrShdLgtTileBasedDr.h"
@@ -36,6 +37,7 @@
 #include "ml/DrCalcViewWork.h"
 #include "ml/DrIniSys.h"
 #include "ml/DrLightObjGlobalIBL.h"
+#include "ml/DrPixlFormat.h"
 #include "ml/DrPixlMan.h"
 #include "ml/DrPixlPostMan.h"
 #include "ml/DrPixlPostParm.h"
@@ -56,6 +58,7 @@
 #include "ml/DrShdDataObj.h"
 #include "ml/DrShdLgtMan.h"
 #include "ml/DrShdMan.h"
+#include "ml/MTRand.h"
 #include "navi/NvmshAcMan.h"
 
 namespace ml {
@@ -606,6 +609,34 @@ DrPixlPostObjSSR::DrPixlPostObjSSR(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostM
     resetColorBuff();
 }
 
+const float DrPixlPostObjSSR::RAYMARCH_BUFFER_SCALE = 0.25f;
+const float DrPixlPostObjSSR::TEMPORAL_BUFFER_SCALE = 0.5f;
+
+void DrPixlPostObjSSR::resetColorBuff() {
+    float width = m_drMan->m_curViewInfo->m_width;
+    float height = m_drMan->m_curViewInfo->m_height;
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    if (parm->m_iblColorMode == 3) {
+        for (unsigned int i = 0; i < 2; i++) {
+            m_reflectionBuff[i]->setTextureInfo(width * TEMPORAL_BUFFER_SCALE, height * TEMPORAL_BUFFER_SCALE,
+                                                DrPixlFormat::s_SsrFormat, true,
+                                                DrPixlMemMan::get()->getSSROfs(i));
+        }
+    } else {
+        unsigned int idx = DrMan::s_nDblIdx;
+        m_reflectionBuff[idx]->setTextureInfo(width * TEMPORAL_BUFFER_SCALE, height * TEMPORAL_BUFFER_SCALE,
+                                              DrPixlFormat::s_SsrFormat, true,
+                                              DrPixlMemMan::get()->getSSROfs(idx));
+    }
+    if (parm->m_iblColorMode == 2) {
+        return;
+    }
+    m_buffFirst->setTextureInfo(width * RAYMARCH_BUFFER_SCALE, height * RAYMARCH_BUFFER_SCALE, DrPixlFormat::s_SsrFormat, true,
+                                DrPixlMemMan::get()->getSSROfs(2));
+    m_buffLast->setTextureInfo(width * RAYMARCH_BUFFER_SCALE, height * RAYMARCH_BUFFER_SCALE, DrPixlFormat::s_DepthBufferFormat,
+                               true, DrPixlMemMan::get()->getSSROfs(3));
+}
+
 DrPixlPostObjSSR::~DrPixlPostObjSSR() {
     for (int i = 0; i < 2; i++) {
         if (m_reflectionBuff[i]) {
@@ -653,6 +684,25 @@ DrPixlPostObjTMAA::DrPixlPostObjTMAA(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPos
         m_bloomBuff[i] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
     }
     m_flags |= 1;
+}
+
+void DrPixlPostObjTMAA::resetColorBuff() {
+    float width = m_drMan->m_curViewInfo->m_width;
+    float height = m_drMan->m_curViewInfo->m_height;
+    if (m_drMan->m_postParm[m_drMan->m_postParmIdx]->m_iblColorMode == 3) {
+        for (unsigned int i = 0; i < 2; i++) {
+            m_colorBuff[i]->setTextureInfo(width, height, DrPixlFormat::s_TMAAFormat, true,
+                                           DrPixlMemMan::get()->getTMAAOfs(i * 2));
+            m_bloomBuff[i]->setTextureInfo(width, height, DrPixlFormat::s_TMAAFormat, true,
+                                           DrPixlMemMan::get()->getTMAAOfs(i * 2 + 1));
+        }
+    } else {
+        unsigned int idx = DrMan::s_nDblIdx;
+        m_colorBuff[idx]->setTextureInfo(width, height, DrPixlFormat::s_TMAAFormat, true,
+                                         DrPixlMemMan::get()->getTMAAOfs(idx * 2));
+        m_bloomBuff[idx]->setTextureInfo(width, height, DrPixlFormat::s_TMAAFormat, true,
+                                         DrPixlMemMan::get()->getTMAAOfs(idx * 2 + 1));
+    }
 }
 
 DrPixlPostObjTMAA::~DrPixlPostObjTMAA() {
@@ -719,6 +769,47 @@ DrPixlPostObjTSSAO::DrPixlPostObjTSSAO(DrMan* drMan, DrPixlMan* pixlMan, DrPixlP
     m_blurBuffB = new (drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(drMan);
     m_outBuff = new (drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(drMan);
     resetColorBuff(true);
+}
+
+const float DrPixlPostObjTSSAO::RAW_SSAO_SCALE = 0.25f;
+const float DrPixlPostObjTSSAO::HISTORY_SCALE = 0.25f;
+const float DrPixlPostObjTSSAO::BLUR_SCALE_LOW = 0.25f;
+const float DrPixlPostObjTSSAO::UPSCALE_MIDDLE = 0.5f;
+
+void DrPixlPostObjTSSAO::resetColorBuff(bool force) {
+    float width = m_drMan->m_curViewInfo->m_width;
+    float height = m_drMan->m_curViewInfo->m_height;
+    m_frame = 0;
+    float ssaoWidth = width * RAW_SSAO_SCALE;
+    float ssaoHeight = height * RAW_SSAO_SCALE;
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    if (parm->m_iblColorMode == 3 || force) {
+        m_flags |= 2;
+        for (unsigned int i = 0; i < 2; i++) {
+            m_ssaoBuff[i]->setTextureInfo(ssaoWidth, ssaoHeight, DrPixlFormat::s_SSAOWorkFormat, true,
+                                          DrPixlMemMan::get()->getSSAOOfs(i));
+            m_historyBuff[i]->setTextureInfo(width * HISTORY_SCALE, height * HISTORY_SCALE, DrPixlFormat::s_SSAOWorkFormat, true,
+                                             DrPixlMemMan::get()->getSSAOOfs(2 + i));
+        }
+    } else {
+        m_ssaoBuff[DrMan::s_nDblIdx]->setTextureInfo(ssaoWidth, ssaoHeight, DrPixlFormat::s_SSAOWorkFormat,
+                                                     true, DrPixlMemMan::get()->getSSAOOfs(DrMan::s_nDblIdx));
+        m_historyBuff[DrMan::s_nDblIdx]->setTextureInfo(width * HISTORY_SCALE, height * HISTORY_SCALE, DrPixlFormat::s_SSAOWorkFormat,
+                                                        true, DrPixlMemMan::get()->getSSAOOfs(DrMan::s_nDblIdx + 2));
+        if (parm->m_iblColorMode == 2) {
+            return;
+        }
+    }
+    float midWidth = width * UPSCALE_MIDDLE;
+    float midHeight = height * UPSCALE_MIDDLE;
+    m_workBuff->setTextureInfo(width * BLUR_SCALE_LOW, height * BLUR_SCALE_LOW, DrPixlFormat::s_SSAOWorkFormat, true,
+                               DrPixlMemMan::get()->getSSAOOfs(4));
+    m_blurBuffA->setTextureInfo(width * BLUR_SCALE_LOW, height * BLUR_SCALE_LOW, DrPixlFormat::s_SSAOWorkFormat, true,
+                                DrPixlMemMan::get()->getSSAOOfs(5));
+    m_blurBuffB->setTextureInfo(width * BLUR_SCALE_LOW, height * BLUR_SCALE_LOW, DrPixlFormat::s_SSAOWorkFormat, true,
+                                DrPixlMemMan::get()->getSSAOOfs(6));
+    m_outBuff->setTextureInfo(midWidth, midHeight, DrPixlFormat::s_SSAOOutFormat, true,
+                              DrPixlMemMan::get()->getSSAOOfs(7));
 }
 
 DrPixlPostObjTSSAO::~DrPixlPostObjTSSAO() {
@@ -788,6 +879,112 @@ void DrPixlPostObjTSSAO::render_afterTemporal() {
         passBlur_Sub(BLUR_AXIS_2, blur, m_blurBuffA, buff, false);
         passUpScaleToMiddle();
     }
+}
+
+void DrPixlPostObjTSSAO::passBlur_Sub(BlurAxis axis, float blur, DrPixlRenderTarget* src, DrPixlRenderTarget* dst,
+                                      bool depthTest) {
+    grlib::CGLibColorCtl::setBlendOffControl(static_cast<GrlLogicType>(3));
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getPostShdObj(0x2D);
+    unsigned int branchLess = depthTest ? 1 : 2;
+    obj->setDeclarationIdx(obj->getDeclarationOfs("BRANCH_LESS"), branchLess);
+    obj->setDeclarationIdx(obj->getDeclarationOfs("TAP_AXIS"), axis);
+    list->bindQuadsTex();
+    obj->setupShader(0u);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    unsigned int paramOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gParam");
+    unsigned int gbuvOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gCoordToGBUV");
+    unsigned int uvOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gCoordToUV");
+    unsigned int sourceLocation = obj->getCurrentShader().getTextureLocation("gTSource");
+    unsigned int depthLocation = obj->getCurrentShader().getTextureLocation("gTDepth");
+    unsigned int similarityLocation = obj->getCurrentShader().getTextureLocation("gTSimilarity");
+    unsigned int prevSimilarityLocation = obj->getCurrentShader().getTextureLocation("gTPrevSimilarity");
+    grlib::CGLibRenderTarget* depth = m_postMan->getDownDepth();
+    mm::Vec4 param;
+    param.x = blur;
+    param.y = m_frame;
+    param.z = mtRand(0, dst->m_width);
+    param.w = mtRand(0, dst->m_height);
+    uniform.setF32SetVec4(paramOfs, &param.x);
+    mm::Vec4 gbuv;
+    gbuv.x = 1.0f / dst->m_width;
+    gbuv.y = 1.0f / dst->m_height;
+    gbuv.z = 0.5f / dst->m_width;
+    gbuv.w = 0.5f / dst->m_height;
+    uniform.setF32SetVec4(gbuvOfs, &gbuv.x);
+    mm::Vec4 uv;
+    uv.x = 1.0f / dst->m_width;
+    uv.y = 1.0f / dst->m_height;
+    uv.z = -0.5f / depth->m_width;
+    uv.w = -0.5f / depth->m_height;
+    uniform.setF32SetVec4(uvOfs, &uv.x);
+    DrAPCache* cache = m_drMan->m_apCache;
+    cache->beginTexSampling(2, 1);
+    cache->setTexture(*src->m_pTexture, sourceLocation);
+    cache->setTexture(*depth->m_pTexture, depthLocation);
+    cache->beginBorderWhite();
+    cache->setTexture(*m_blurBuffB->m_pTexture, similarityLocation);
+    cache->setTexture(*m_historyBuff[DrMan::s_nDblStockIdx]->m_pTexture, prevSimilarityLocation);
+    if (depthTest) {
+        dst->setRenderTarget(*m_pixlMan->m_objTbl->m_quaterDepth->m_pDepthBuffer);
+        grlib::CGLibDepthCtl::setDepthControl(1, 0, static_cast<GrlCompare>(3));
+    } else {
+        dst->setRenderTarget();
+    }
+    uniform.updateData();
+    uniform.setUniformBlock();
+    list->renderQuads();
+    dst->setColorInvalidate();
+}
+
+void DrPixlPostObjTSSAO::passUpScaleToMiddle() {
+    DrPixlRenderTarget* dst = m_outBuff;
+    grlib::CGLibColorCtl::setBlendOffControl(static_cast<GrlLogicType>(3));
+    m_postMan->getDownDepth();
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getPostShdObj(0x4A);
+    list->bindQuadsTex();
+    obj->setupShader(0u);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    unsigned int sampleOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gSampleOffset");
+    unsigned int paramOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gParam");
+    unsigned int fragOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gFragCoordToGBUV");
+    unsigned int taoLocation = obj->getCurrentShader().getTextureLocation("gTAO");
+    unsigned int depthLocation = obj->getCurrentShader().getTextureLocation("gTDepth");
+    unsigned int halfDepthLocation = obj->getCurrentShader().getTextureLocation("gTHalfDepth");
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    DrPixlRenderTarget* src = m_ssaoBuff[DrMan::s_nDblIdx];
+    mm::Vec4 sampleOffset;
+    sampleOffset.x = 1.5f / dst->m_width;
+    sampleOffset.y = 1.5f / dst->m_height;
+    sampleOffset.z = 0.0f;
+    sampleOffset.w = 0.0f;
+    uniform.setF32SetVec4(sampleOfs, &sampleOffset.x);
+    mm::Vec4 param;
+    param.x = parm->pad_17C;
+    param.y = (float)src->m_width / (float)dst->m_width;
+    param.z = mm::clamp(1.0f - parm->pad_190, 0.0f, 1.0f);
+    param.w = parm->pad_184;
+    uniform.setF32SetVec4(paramOfs, &param.x);
+    mm::Vec4 frag;
+    frag.x = 1.0f / src->m_width;
+    frag.y = 1.0f / src->m_height;
+    frag.z = (0.5f - m_frame) / src->m_width;
+    frag.w = (0.5f - m_frame) / src->m_height;
+    uniform.setF32SetVec4(fragOfs, &frag.x);
+    DrAPCache* cache = m_drMan->m_apCache;
+    cache->beginBorderDepthMax();
+    cache->setTexture(*m_postMan->getDownDepth()->m_pTexture, depthLocation);
+    cache->setTexture(*m_postMan->getOldDownDepth()->m_pTexture, halfDepthLocation);
+    cache->beginTexSampling(2, 1);
+    cache->setTexture(*src->m_pTexture, taoLocation);
+    uniform.updateData();
+    uniform.setUniformBlock();
+    dst->setRenderTarget();
+    list->renderQuads();
+    dst->setColorInvalidate();
 }
 
 DrPixlPostObjUnbranchToDepth::DrPixlPostObjUnbranchToDepth(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
@@ -903,6 +1100,76 @@ void DrPixlShadowRaytrace::render_beforeTemporal() {
     if (!parm->isShwRaytraceTemporalWithOthers()) {
         temporalFiltering();
     }
+}
+
+void DrPixlShadowRaytrace::temporalFiltering() {
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    DrPixlRenderTarget* dst = m_temporalBuff[DrMan::s_nDblIdx];
+    grlib::CGLibColorCtl::setBlendOffControl(static_cast<GrlLogicType>(3));
+    DrShdDataList* list = m_drMan->m_shdMan->m_dataList;
+    DrShdDataObj* obj = list->getShadowShdObj(5);
+    // lbl_71015E9C34; the name is not the original's: the first call clears, later ones blend with the history
+    static bool s_hasHistory;
+    unsigned int execClear = s_hasHistory ? 2 : 1;
+    obj->setDeclarationIdx(obj->getDeclarationOfs("EXEC_CLEAR"), execClear);
+    if (!s_hasHistory) {
+        s_hasHistory = true;
+    }
+    list->bindTriangle();
+    obj->setupShader(0u);
+    grlib::CGLibUniformEtcUtility uniform(obj);
+    uniform.setUseUniformBlock("U_POST");
+    unsigned int fragCoordToUVOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gFragCoordToUV");
+    unsigned int uvToScreenOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gUVToScreen");
+    unsigned int screenToUVOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gScreenToUV");
+    unsigned int screenToViewPosOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gScreenToViewPos");
+    unsigned int invViewOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gInvView");
+    unsigned int prevViewOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gPrevView");
+    unsigned int projOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gProj");
+    unsigned int paramOfs = uniform.m_pDecShader->getCurrentShader().getUniformBlockValOfs(uniform.m_location, "gParam");
+    unsigned int shadowLocation = obj->getCurrentShader().getTextureLocation("gTShadow");
+    unsigned int depthLocation = obj->getCurrentShader().getTextureLocation("gTDepth");
+    unsigned int prevShadowLocation = obj->getCurrentShader().getTextureLocation("gTPrevShadow");
+    unsigned int prevDepthLocation = obj->getCurrentShader().getTextureLocation("gTPrevDepth");
+    unsigned int velocityLocation = obj->getCurrentShader().getTextureLocation("gTVelocity");
+    DrCalcViewWork* viewWork = m_drMan->m_calcMan->m_pViewWork;
+    mm::Vec4 fragCoordToUV(1.0f / dst->m_width, 1.0f / dst->m_height, 0.0f, 0.0f);
+    uniform.setF32SetVec4(fragCoordToUVOfs, &fragCoordToUV.x);
+    mm::Vec4 uvToScreen(2.0f, 2.0f, -1.0f, -1.0f);
+    uniform.setF32SetVec4(uvToScreenOfs, &uvToScreen.x);
+    mm::Vec4 screenToUV(0.5f, 0.5f, 0.5f, 0.5f);
+    uniform.setF32SetVec4(screenToUVOfs, &screenToUV.x);
+    mm::Vec4 screenToViewPos;
+    screenToViewPos.y = tanf(viewWork->m_fovY * 0.5f);
+    screenToViewPos.x = screenToViewPos.y * viewWork->pad_4C0;
+    screenToViewPos.z = 0.0f;
+    screenToViewPos.w = 0.0f;
+    uniform.setF32SetVec4(screenToViewPosOfs, &screenToViewPos.x);
+    uniform.setMat44SetMat44(invViewOfs, viewWork->m_invView);
+    uniform.setMat44SetMat44(prevViewOfs, viewWork->m_oldView);
+    uniform.setMat44SetMat44(projOfs, viewWork->m_projNonJitter);
+    mm::Vec4 param;
+    param.x = 0.7388f;
+    param.y = 0.71f;
+    param.z = 1.0f / parm->pad_1010;
+    param.w = 0.0f;
+    uniform.setF32SetVec4(paramOfs, &param.x);
+    DrPixlRenderTarget* src = m_blurOn ? m_buffLast : m_buffFirst;
+    DrPixlPostMan* postMan = m_drMan->m_pixlMan->m_objTbl->m_postMan;
+    DrAPCache* cache = m_drMan->m_apCache;
+    cache->beginTexSampling(3, 0);
+    cache->beginBorderWhite();
+    cache->setTexture(*postMan->getDownDepth()->m_pTexture, depthLocation);
+    cache->setTexture(*postMan->getOldDownDepth()->m_pTexture, prevDepthLocation);
+    cache->beginTexSampling(2, 0);
+    cache->setTexture(*src->m_pTexture, shadowLocation);
+    cache->setTexture(*m_temporalBuff[DrMan::s_nDblStockIdx]->m_pTexture, prevShadowLocation);
+    cache->setTexture(*m_drMan->m_pixlMan->getPixlObj(3)->m_pTexture, velocityLocation);
+    dst->setRenderTarget();
+    uniform.updateData();
+    uniform.setUniformBlock();
+    list->renderQuads();
+    dst->setColorInvalidate();
 }
 
 grlib::CGLibTextureBuffer* DrPixlShadowRaytrace::getScreenSpaceShadow() const {

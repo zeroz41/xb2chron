@@ -10,6 +10,18 @@ namespace ml {
 // table 0x7100B7CEE8
 class DrPixlShadowObjSpt : public ::ml::DrPixlShadowObj {
 public:
+    // inline (no symbol): DrPixlShadowMan::createSptShadow builds it in place
+    DrPixlShadowObjSpt(DrMan* drMan) : DrPixlShadowObj(drMan, 1) {
+        m_sptParmTbl[3] = 1.0f;
+        m_sptParmTbl[2] = 1.0f;
+        m_sptParmTbl[1] = 1.0f;
+        m_sptParmTbl[0] = 1.0f;
+        m_calcMax[0] = 1.0f;
+        m_calcMax[1] = 1.0f;
+        m_calcMin[0] = -1.0f;
+        m_calcMin[1] = -1.0f;
+        m_clipRange = 4.0f;
+    }
     virtual ~DrPixlShadowObjSpt();  // slot 0
     virtual void update();  // slot 2
     virtual void afterUpdate();  // slot 3

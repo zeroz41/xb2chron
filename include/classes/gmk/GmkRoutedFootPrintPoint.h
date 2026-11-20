@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKROUTEDFOOTPRINTPOINT_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "mm/Vec3NA.h"
 #include "plugin/Bdat.h"
 
 namespace gmk {
@@ -21,6 +22,12 @@ public:
     virtual void dispose();  // slot 5
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x37);
+    // its data: where it is (updateConcrete measures the interest position's distance from it,
+    // GmkRoutedFootPrint::debugDrawRoute draws its route through it; the name is not the original's)
+    struct Data {
+        mm::Vec3NA m_pos;  // 0x0 (GmkRoutedFootPrint::debugDrawRoute's copies of it are not 8-byte aligned loads)
+    };
+    const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     // 2.0.0's symbols name the next two (GmkRoutedFootPrint::update calls updateConcrete with one of its effects)
     void updateConcrete(void* effect, float dt);
     void applyEffectParam(bool) const;

@@ -29,6 +29,9 @@
 #include "gf/MsgUnk_1000022.h"
 #include "float.h"
 #include "string.h"
+#include "fw/MessageObjectPost.h"
+#include "classes/gf/GfGameMoverSwitcher.h"
+#include "gf/MsgUnk_1000032.h"
 
 namespace gf { namespace pc {
 
@@ -49,6 +52,20 @@ void StateUtilField::notifySkillAct(gf::GfComBehaviorPc& behavior, bool act) {
 
 bool StateUtilField::execAsmCmd(gf::GfComAsm& comAsm, ASM_CMD_ID_FIELD id) {
     return comAsm.execCmd(getASMCmdNameField(id), gf::AnimLayer(0));
+}
+
+bool StateUtilField::requestBattleStart(gf::GfComPropertyPc& property) {
+    if (property.m_battleStartKind != 2) {
+        return false;
+    }
+    if (GfGameRide::testRideOn()) {
+        GfGameRide* ride = GfGameRide::sys();
+        static_cast<GfObj*>(property.m_owner)->postMessage(ride, MsgGameRideEvent(1), 0.0f);
+    } else {
+        GfGameMoverSwitcher* switcher = GfGameMoverSwitcher::sys();
+        static_cast<GfObj*>(property.m_owner)->postMessage(switcher, MsgUnk_1000032(1), 0.0f);
+    }
+    return true;
 }
 
 void StateUtilField::notifyRiderEvent(gf::GfComBehaviorPc& behavior, VehicleEvent event) {
@@ -259,6 +276,22 @@ bool StateUtilField::isEndSlipPosuture(gf::GfComBehaviorPc& behavior) {
     return property->pad_d0.dot(velocity) <= param->m_landSpeed;
 }
 
+bool StateUtilField::isSlideSlope(gf::GfComPropertyPc& property) {
+    const EnviromentSensor* sensor = property.getEnvSensor();
+    bool slope = false;
+    bool inRange;
+    if ((sensor->m_flags & 1) && (sensor->m_vertical.m_ground.m_attr & 0x20)) {
+        const GfComPropertyPc::SlideParam* param = property.getParamAdapter(4).get<GfComPropertyPc::SlideParam>();
+        float cosine = mm::clamp(sensor->m_vertical.m_ground.m_plane.normal.dot(mm::Vec3::unitY), -1.0f, 1.0f);
+        if (mm::acos(cosine) * 57.2957764f > param->m_slopeAngle) {
+            slope = true;
+            float height = property.m_pos.y - sensor->m_vertical.m_ground.m_pos.y;
+            inRange = height >= -0.001f && height <= param->m_slopeHeight;
+        }
+    }
+    return slope && inRange;
+}
+
 void StateUtilField::onLandSliding(gf::GfComBehaviorPc& behavior) {
     GfComPropertyPc* property = behavior.m_owner->getComponent<GfComPropertyPc>(5);
     const GfComPropertyPc::SlideParam* param = property->getParam<GfComPropertyPc::SlideParam>(4);
@@ -377,6 +410,29 @@ const GfPropertyField::WallInfo* StateUtilField::getWallInfoBase(gf::GfComProper
         }
     }
     return info;
+}
+
+GfPropertyField::WALL_MOVE_MODE StateUtilField::decideWallMoveMode(gf::GfComPropertyPc& property) {
+    if (!property.existInputXY()) {
+        return GfPropertyField::WALL_MOVE_MODE(-1);
+    }
+    const GfPropertyField::WallInfo* wall;
+    if ((property.m_stateFlags & 0x400) && (wall = property.m_field.getWallInfo()) != nullptr && (wall->m_flags & 0x80)) {
+        float x = property.m_inputDir.x;
+        float y = property.m_inputDir.y;
+        float scale = 1.0f / ::sqrtf(x * x + y * y);
+        mm::Vec2 dir(x * scale, y * scale);
+        return GfPropertyField::WALL_MOVE_MODE(mm::Vec2::unitY.x * dir.x + dir.y * mm::Vec2::unitY.y >= 0.0f ? 0 : 4);
+    }
+    float x = property.m_inputDir.x;
+    float y = property.m_inputDir.y;
+    float scale = 1.0f / ::sqrtf(x * x + y * y);
+    mm::Vec2 dir(x * scale, y * scale);
+    float angle = mm::acos(mm::clamp(mm::Vec2::unitY.x * dir.x + dir.y * mm::Vec2::unitY.y, -1.0f, 1.0f));
+    angle = dir.x >= 0.0f ? angle : -angle;
+    angle += 0.392699093f;
+    angle = angle >= 0.0f ? angle : angle + 6.28318548f;
+    return GfPropertyField::WALL_MOVE_MODE(static_cast<unsigned int>(angle / 0.785398185f));
 }
 
 bool StateUtilField::isWallUpMove(GfPropertyField::WALL_MOVE_MODE mode) {
@@ -522,6 +578,22 @@ void StateUtilField::resetCameraForWall(gf::GfComBehaviorPc& behavior, Timing ti
     if (property->m_stateFlags & 0x400) {
         GfGamePlayerCamera::resetCameraClimb(TIMINGS[timing]);
     }
+}
+
+bool StateUtilField::isSlideGroundLanding(gf::GfComPropertyPc& property) {
+    if (!(property.m_stateFlags & 0x10)) {
+        return false;
+    }
+    const EnviromentSensor* sensor = property.getEnvSensor();
+    if (!(sensor->m_flags & 1)) {
+        return false;
+    }
+    if (!(sensor->m_vertical.m_ground.m_attr & 0x20)) {
+        return false;
+    }
+    const GfComPropertyPc::SlideParam* param = property.getParamAdapter(4).get<GfComPropertyPc::SlideParam>();
+    float cosine = mm::clamp(sensor->m_vertical.m_ground.m_plane.normal.dot(mm::Vec3::unitY), -1.0f, 1.0f);
+    return mm::acos(cosine) * 57.2957764f > param->m_slopeAngle;
 }
 
 bool StateUtilField::isFallFromSlideState(gf::GfComPropertyPc& property) {

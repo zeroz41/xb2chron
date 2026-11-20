@@ -17,6 +17,9 @@ public:
     void create(const char* name, unsigned int param);
     void genelate();
     void kill();
+    // 1.0.0's EffectCtrl::dead (0x71000DA5F0; 3.0.1 inlines it: EffectPlayEff::update): ends the effect and every
+    // handle through fw::EffectManager::dead (kill's stream-mode counterpart)
+    void dead();
     void update();
     void setCaster(IAttachActor* caster);
     void setMount(IAttachActor* actor, const char* name, const mm::Vec3& pos, bool flag, EVT_attachtype type);

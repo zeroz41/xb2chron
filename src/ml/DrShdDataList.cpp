@@ -13,6 +13,10 @@
 #include "ml/DrShdDataList.h"
 #include "ml/DrShdMdoDecExtTbl.h"
 #include "ml/MdsMatTechnique.h"
+#include "ml/MdsMatTextureInfo.h"
+#include "ml/DrResMdoSampler.h"
+#include "grlib/CGLibTextureBuffer.h"
+#include "grlib/CGLibSampler.h"
 #include "ml/MdsMpfMatTopHeader.h"
 #include "ml/MdsMatVertexInfo.h"
 #include "ml/DrResMdoVertex.h"
@@ -268,6 +272,15 @@ void DrShdLgtMan::stockEnd() {
     m_pClustered->stockEnd();
 }
 
+void DrShdLgtMan::renderDebugPnt(DrLightObjPnt* light) {
+    renderDebug(static_cast<RENDER_DEBUG_TYPE>(0), light->m_pos, mm::Quat::identity, mm::Vec3::unit * light->m_lightParam2,
+                light->m_color);
+}
+
+DrShdLgtTileBasedDr::DrShdLgtTileBasedDr(DrMan* drMan) : m_pDrMan(drMan) {
+    createWork();
+}
+
 void DrShdLgtTileBasedDr::createWork() {
     for (int i = 0; i < 4; i++) {
         int lightNum = i == 0 ? 0x100 : 0x10;
@@ -325,9 +338,9 @@ void DrShdLgtTileBasedDr::stockPntList(DrLightObjPnt* light) {
         entry->pos[1] = py;
         entry->pos[2] = pz;
         entry->size = light->m_size;
-        entry->color[0] = light->m_color[0];
-        entry->color[1] = light->m_color[1];
-        entry->color[2] = light->m_color[2];
+        entry->color[0] = light->m_color.r;
+        entry->color[1] = light->m_color.g;
+        entry->color[2] = light->m_color.b;
         entry->param2 = light->m_lightParam2;
         entry->invSize = 1.0f / light->m_size;
         entry->zero = 0.0f;
@@ -547,6 +560,18 @@ int DrShdMdoExtTblObj::getDecWorkSize(int valNum, const unsigned char* pac) {
 unsigned int DrShdMdoDecExtTbl::getValGlobalParam(int idx) { return m_pValGlobalParam[idx]; }
 
 void DrShdMdoDecExtTbl::bindShader() { DrAPCache::s_pIns->setupShader(this, &m_pRes->m_pFetchObj->m_fetch); }
+
+void DrShdMdoDecExtTbl::setTextureList(const MdsMatTextureInfo* info, grlib::CGLibTextureBuffer** textures,
+                                       DrResMdoSampler* sampler) {
+    int num = m_texNum;
+    DrAPCache* cache = DrAPCache::s_pIns;
+    for (int i = 0; i < num; i++) {
+        grlib::CGLibTextureBuffer* tex = textures[info[i].m_texIdx];
+        const grlib::CGLibSampler& smp = tex->getMipmap() <= 1 ? sampler->m_samplers[info[i].m_samplerIdx]
+                                                                : sampler->m_samplers[info[i].m_mipSamplerIdx];
+        cache->setTexture(*tex, smp, m_pTexLocation[i]);
+    }
+}
 
 void DrShdUniformBlockMan::createUniformBoneObj(grlib::CGLibTriUniformBlock* block, int num) {
     new (block) grlib::CGLibTriUniformBlock;

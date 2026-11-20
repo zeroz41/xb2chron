@@ -7,11 +7,11 @@ namespace ml {
 // table none (its derived classes')
 // The constructor and destructor are inline: DrShdLgtHybrid's, DrShdLgtClustered's constructors store m_cateIdx = 0
 // first, then their own m_pDrMan, and no base destructor is called (the field names are not the original's).
+// m_pDrMan (0x10) is each derived class's first member, not this class's: DrShdLgtTileBasedDr's constructor stores
+// it after loading its own table, as a member initialised after the table store.
 class DrShdLgtDynamic {
 public:
     DrShdLgtDynamic() : m_cateIdx(0) {}
-    // DrShdLgtClustered's constructor stores m_cateIdx and m_pDrMan before its own table and members
-    explicit DrShdLgtDynamic(DrMan* drMan) : m_cateIdx(0), m_pDrMan(drMan) {}
     virtual ~DrShdLgtDynamic() {}  // slot 0
     virtual void stockBegin() = 0;  // slot 2
     virtual void stockEnd() = 0;  // slot 3
@@ -22,7 +22,6 @@ public:
 
     int m_cateIdx;  // 0x8, setupCate stores it
     unsigned char pad_c[0x4];
-    DrMan* m_pDrMan;  // 0x10, the constructor's renderer
 };
 }  // namespace ml
 

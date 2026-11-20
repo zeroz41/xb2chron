@@ -19,6 +19,9 @@ public:
     void temporalSuperSampling2();
     // the current frame's reflection buffer (DrShdLgtGlobalIBL::renderByLinkList reads it)
     DrPixlRenderTarget* getReflectionTexture() const;
+    // the buffer scales (DrPixlMan reads them too): m_buffFirst/m_buffLast and m_reflectionBuff
+    static const float RAYMARCH_BUFFER_SCALE;
+    static const float TEMPORAL_BUFFER_SCALE;
 
     unsigned int m_flags;  // 0x18, the constructor clears it
     unsigned char pad_1c[0x4];

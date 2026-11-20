@@ -240,7 +240,12 @@ struct MdoFlagWaveRes {
 // The material block of a seam instance map's data (MdsSeamInstMapHead::m_dataOfs[2]); the names are not the
 // original's
 struct MdsSeamInstMatBlock {
-    unsigned char pad_0[0x14];
+    unsigned char pad_0[0x4];
+    // 0x4: the MdsFixAnmRange table; 0xC: the MdsFixAnmCate array (DrMdoAnim::updateAnimEnd/updateAnimFast)
+    unsigned int m_rangeOfs;
+    unsigned char pad_8[0x4];
+    unsigned int m_cateOfs;
+    unsigned char pad_10[0x4];
     unsigned int m_ofs0;  // 0x14
     unsigned char pad_18[0x4];
     unsigned int m_ofs1;  // 0x1C

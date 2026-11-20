@@ -25,7 +25,9 @@ public:
     virtual void onActivate();  // slot 6
     virtual void update(fw::UpdateInfo const&);  // slot 8
 
-    static mm::mtl::IntrusivePtr<FusionComboCamera> create(GF_OBJ_HANDLE*, GF_OBJ_HANDLE*, Mode);
+    // the new camera as a fw::Camera reference: btl::BattleGlobal::StartUniteComboDirection passes the result
+    // straight to CameraLayer::push
+    static mm::mtl::IntrusivePtr<::fw::Camera> create(GF_OBJ_HANDLE*, GF_OBJ_HANDLE*, Mode);
     bool isPlayEnd() const;
     void getAxis(const mm::Vec3& from, const mm::Vec3& to, mm::Vec3& axis);
     float getYaw(const mm::Vec3& from, const mm::Vec3& to);

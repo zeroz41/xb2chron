@@ -9,6 +9,8 @@ namespace ml {
 class DrPixlFormat {
 public:
     static GrlSurfaceFormat s_MrtFormat[19];
+    // the shadow depth targets' format (DrPixlShadowMan::createDirCacheShadow/createSptShadow); a .data constant
+    static GrlDepthFormat s_ShadowFormat;
     static GrlSurfaceFormat s_SeparateCol;
     static GrlSurfaceFormat s_ResponsiveAAMask;
     static GrlSurfaceFormat s_BackFaceDepth;

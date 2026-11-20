@@ -32,6 +32,10 @@
 #include "gf/SDataEnemy.h"
 #include "classes/gf/DataParamAcc.h"
 #include "classes/gf/GfAssetManager.h"
+#include "classes/gf/GfComBehaviorEnemy.h"
+#include "classes/gf/GfBdatRsc.h"
+#include "fw/ColiCheck.h"
+#include "fw/Transform.h"
 #include <math.h>
 
 namespace gf {
@@ -434,6 +438,39 @@ void GfGameObj::setupLeaveGameObjMount(GF_OBJ_HANDLE* handle, GFATTACH attach, f
     }
 }
 
+void GfGameObjEnemy::enterEnemyObj(GF_OBJ_HANDLE* handle) {
+    DataParamAcc param(handle);
+    if (param.getObjType() == 5 && param.isLinkGenus()) {
+        GfObjAcc acc(handle);
+        if (!acc.isEnemyBlade()) {
+            if (pad_670.find(handle) == pad_670.end()) {
+                pad_670.push_back(handle);
+                unsigned int genus = param.getGenus();
+                mm::mtl::FixedList<GINFO, 64>::iterator info =
+                    pad_8.find_if([genus](const GINFO& entry) { return entry.pad_0 == genus; });
+                if (info == pad_8.end()) {
+                    mm::mtl::FixedList<GF_OBJ_HANDLE*, 64>* list =
+#line 1761
+                        new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) mm::mtl::FixedList<GF_OBJ_HANDLE*, 64>();
+                    list->push_back(handle);
+                    GINFO entry = {genus, list};
+                    pad_8.push_back(entry);
+                } else {
+                    mm::mtl::FixedList<GF_OBJ_HANDLE*, 64>* list = info->pad_8;
+                    for (mm::mtl::FixedList<GF_OBJ_HANDLE*, 64>::iterator it = list->begin(); it != list->end(); ++it) {
+                        GF_OBJ_HANDLE* other = *it;
+                        if (pad_2ab0.full()) {
+                            break;
+                        }
+                        pad_2ab0.push_back(Pair(handle, other));
+                    }
+                    info->pad_8->push_back(handle);
+                }
+            }
+        }
+    }
+}
+
 void GfGameObj::enterStayObject(GF_OBJ_HANDLE* handle) {
     GfObjManager::enterStayObject(handle);
 }
@@ -602,13 +639,57 @@ int GfGameObj::getObjNumberByEnArrangeId(unsigned int arrangeId) {
 }
 }  // namespace gf
 
+namespace gf {
+
+void GfGameObjEnemy::leaveEnemyObj(GF_OBJ_HANDLE* handle) {
+    DataParamAcc param(handle);
+    if (param.getObjType() == 5 && param.isLinkGenus()) {
+        GfObjAcc acc(handle);
+        if (!acc.isEnemyBlade()) {
+            mm::mtl::FixedList<GF_OBJ_HANDLE*, 256>::iterator it = pad_670.find(handle);
+            if (it != pad_670.end()) {
+                pad_670.erase(it);
+            }
+            it = pad_1890.find(handle);
+            if (it != pad_1890.end()) {
+                pad_1890.erase(it);
+            }
+            unsigned int genus = param.getGenus();
+            mm::mtl::FixedList<GINFO, 64>::iterator info =
+                pad_8.find_if([genus](const GINFO& entry) { return entry.pad_0 == genus; });
+            if (pad_8.end() != info) {
+                mm::mtl::FixedList<GF_OBJ_HANDLE*, 64>::iterator member = info->pad_8->find(handle);
+                if (info->pad_8->end() != member) {
+                    info->pad_8->erase(member);
+                    if (info->pad_8->empty()) {
+                        if (info->pad_8 != nullptr) {
+                            delete info->pad_8;
+                            info->pad_8 = nullptr;
+                        }
+                        pad_8.erase(info);
+                    }
+                    mm::mtl::FixedQueue<Pair, 1024>::iterator last = pad_2ab0.end();
+                    for (mm::mtl::FixedQueue<Pair, 1024>::iterator pair = pad_2ab0.begin(); pair != last; ++pair) {
+                        if ((*pair).pad_0 == handle || (*pair).pad_8 == handle) {
+                            (*pair).pad_0 = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+                            (*pair).pad_8 = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+}  // namespace gf
+
 // instantiated for gf::GfGameObjEnemy::leaveEnemyObj, gf::GfObjManager::checkTerminate (not written yet)
 template mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 256>::iterator mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 256>::erase(mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 256>::iterator);
 
-// instantiated for gf::GfGameObjEnemy::leaveEnemyObj (not written yet)
+// instantiated for gf::GfGameObjEnemy::leaveEnemyObj
 template mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 64>::iterator mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 64>::erase(mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 64>::iterator);
 
-// instantiated for gf::GfGameObjEnemy::leaveEnemyObj (not written yet)
+// instantiated for gf::GfGameObjEnemy::leaveEnemyObj
 template mm::mtl::FixedList<gf::GfGameObjEnemy::GINFO, 64>::iterator mm::mtl::FixedList<gf::GfGameObjEnemy::GINFO, 64>::erase(mm::mtl::FixedList<gf::GfGameObjEnemy::GINFO, 64>::iterator);
 
 namespace gf {
@@ -629,6 +710,69 @@ bool GfGameObjEnemy::isGenusLink(GF_OBJ_HANDLE* handle) {
         return false;
     }
     return self->pad_1890.find(handle) != self->pad_1890.end();
+}
+
+void GfGameObjEnemy::calcGenusLink(Pair& pair) {
+    bool wasLinked = pair.pad_10;
+    pair.pad_10 = false;
+    GfObjAcc first(pair.pad_0);
+    GfObjAcc second(pair.pad_8);
+    if (first.m_obj == nullptr || second.m_obj == nullptr) {
+        return;
+    }
+    if (first.isBattle() == second.isBattle()) {
+        return;
+    }
+    if (GfObj* obj = GfObjUtil::getObj(pair.pad_0)) {
+        GfComBehaviorEnemy* behavior = obj->getComponent<GfComBehaviorEnemy>(6);
+        if (behavior != nullptr && behavior->pad_54e4) {
+            return;
+        }
+    }
+    if (GfObj* obj = GfObjUtil::getObj(pair.pad_8)) {
+        GfComBehaviorEnemy* behavior = obj->getComponent<GfComBehaviorEnemy>(6);
+        if (behavior != nullptr && behavior->pad_54e4) {
+            return;
+        }
+    }
+    DataParamAcc firstParam(pair.pad_0);
+    DataParamAcc secondParam(pair.pad_8);
+    if (firstParam.getHp() == 0 || secondParam.getHp() == 0) {
+        return;
+    }
+    float radius = firstParam.getLinkRadius();
+    if (radius * radius <= 1e-6f) {
+        return;
+    }
+    const mm::Vec3& to = second.getWorldTransform().position;
+    const mm::Vec3& from = first.getWorldTransform().position;
+    mm::Vec3 diff = to - from;
+    if (diff.x * diff.x + diff.y * diff.y + diff.z * diff.z < radius * radius) {
+        GfBdatRsc* bdat = GfBdatRsc::sys();
+        if (pair.pad_12 == -1) {
+            pair.pad_12 = first.getBoneIdx(bdat->getRscEnSearchBaseBone(first.getEnRscId()));
+        }
+        if (pair.pad_14 == -1) {
+            pair.pad_14 = second.getBoneIdx(bdat->getRscEnSearchBaseBone(second.getEnRscId()));
+        }
+        fw::Transform firstBone;
+        fw::Transform secondBone;
+        if (first.getBoneTransform(firstBone, pair.pad_12) && second.getBoneTransform(secondBone, pair.pad_14)) {
+            fw::TColiCheckResult<256> result;
+            fw::ColiCheckConfig config;
+            config.m_mask = ~0u;
+            config.m_mode = 1;
+            config.m_option = false;
+            config.m_flags = 9;
+            pair.pad_10 = !fw::ColiCheck::testLine(result, firstBone.position, secondBone.position, config);
+        }
+    }
+    if (!wasLinked && pair.pad_10) {
+        GF_OBJ_HANDLE* handle = first.isBattle() ? pair.pad_8 : pair.pad_0;
+        if (pad_1890.end() == pad_1890.find(handle)) {
+            pad_1890.push_back(handle);
+        }
+    }
 }
 
 static bool fn_71002B5A34(float angle, mm::Vec3& pos, const GfObjSetupEnemy* setup) {

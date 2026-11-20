@@ -63,6 +63,9 @@ public:
     // GfDataStore's initOptionData (inline in 3.0.1's GfDataStore::clear and constructor) (the name is not the
     // original's)
     void clear();
+    // clear() but the version (inline: 1.0.0's GfMenuObjOption::initOptionData and both builds'
+    // TitleStateMainScreen::loadSaveDataForTitle clear an option without storing it; the name is not the original's)
+    void clearSettings();
 
     // 0x3A15B as made, as SDataSystem's (the name is not the original's)
     unsigned int m_version;
@@ -76,6 +79,10 @@ public:
 
 inline void SDataOption::clear() {
     m_version = 0x3A15B;
+    clearSettings();
+}
+
+inline void SDataOption::clearSettings() {
     m_settings[6] = 0;
     m_settings[4] = 0;
     m_settings[5] = 0;

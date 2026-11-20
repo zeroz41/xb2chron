@@ -46,6 +46,7 @@
 #include "gf/GfMenuBdat.h"
 #include "gf/GfGameUtil.h"
 #include "math.h"
+#include "mm/Math.h"
 #include "classes/fw/Camera.h"
 #include "btl/siren_battle_manager.h"
 #include "classes/gmk/GmkSet.h"
@@ -65,10 +66,30 @@
 #include "classes/fw/ParamList.h"
 #include "classes/gf/GfComPropertyEnemy.h"
 #include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfComAsm.h"
 
 namespace gf {
 
 mm::mtl::RTTI GfComBehaviorEnemy::m_rtti("GfComBehaviorEnemy", &GfComBehavior::m_rtti, nullptr);
+
+void GfFieldEnemySensor::createBy_CHR_EnArrange() {
+    unsigned char* fp = GfDataBdat::getFP(0x8B);
+    int id = pad_54;
+    if (pad_60 & 1) {
+        int range = Bdat::getValCheckU16(fp, "SearchRange", id);
+        if (range != 0) {
+            m_rangeSq = range * range;
+            float angle = Bdat::getValCheckU16(fp, "SearchAngle", id) * 0.0174532924f;
+            m_cosHalfAngle = cosf(angle * 0.5f);
+        }
+    }
+    if (pad_60 & 2) {
+        int radius = Bdat::getValCheckU8(fp, "SearchRadius", id);
+        if (radius != 0) {
+            m_radiusSq = radius * radius;
+        }
+    }
+}
 
 fw::ColiMoveObject* GfBehaviorEnemyField::getColiObject() const {
     GfObjAcc acc(m_handle);
@@ -204,6 +225,19 @@ void GfBehaviorEnemyField::update(float dt) {
     }
 }
 
+void GfBehaviorEnemyField::updateNaviMeshObj(float dt) {
+    if (pad_40 != nullptr && (pad_40->m_flags & 2) && m_moveSpeed.m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) &&
+        !isArrivedToGoal()) {
+        const mm::Vec3& pos = m_owner->getTransform().position;
+        pad_40->setBeginPos(pos);
+        pad_40->setEndPos(m_goalPos);
+        float speed = m_moveSpeed.m_speed * 0.2777778f;
+        pad_40->setMoveSpd(speed * dt);
+        mm::Vec3 dir;
+        getMoveDir(dir);
+    }
+}
+
 bool GfBehaviorEnemyField::isArrivedToGoal() const {
     if (m_localSteer.isTimeOutCollide()) {
         return true;
@@ -262,6 +296,37 @@ void GfBehaviorEnemyField::moveToGoal(float) {
             float half = mm::normalizeRadian(cur + diff * 0.1f - goal) * 0.5f;
             mm::Quat rot(0.0f, sinf(half), 0.0f, cosf(half));
             m_velocity = rot.rotate(m_velocity);
+        }
+    }
+}
+
+void GfBehaviorEnemyField::applyLinearVelocityAndRotY(float dt) {
+    if (!(dt <= 1e-6f)) {
+        if (fw::ColiMoveObject* coli = getColiObject()) {
+            if (m_velocity.y < 0.0f) {
+                mm::mtl::IntrusivePtr<fw::ParamList> list = fw::ParamManager::sys()->m_paramLists[8];
+                if (const FallParam* param = list->getAdapter(0).get<FallParam>()) {
+                    float limit = -(param->pad_4 - 0.1f);
+                    if (m_velocity.y * dt < limit) {
+                        m_velocity.y = limit / dt;
+                    }
+                }
+            }
+            coli->setDir(m_velocity * dt);
+        }
+        GfObjAcc acc(m_handle);
+        if (GfObj* obj = acc.getObj()) {
+            GfComTransform* transform = obj->getComponent<GfComTransform>(0);
+            mm::Quat& q = transform->getFrame()->getWorldTransformForWrite().rotation;
+            float half = pad_b0 * 0.5f;
+            float s = ::sinf(half);
+            float c = ::cosf(half);
+            float x = s * q.z + c * q.x;
+            float y = s * q.w + c * q.y;
+            q.z = c * q.z - s * q.x;
+            q.w = c * q.w - s * q.y;
+            q.x = x;
+            q.y = y;
         }
     }
 }
@@ -613,6 +678,20 @@ void GfComBehaviorEnemy::moveProc(mm::Vec3& dir) {
     }
 }
 
+void GfComBehaviorEnemy::rotProc(float rotY) {
+    GfComTransform* transform = static_cast<GfObj*>(m_owner)->getComponent<GfComTransform>(0);
+    mm::Quat& q = transform->getFrame()->getWorldTransformForWrite().rotation;
+    float half = rotY * 0.5f;
+    float s = ::sinf(half);
+    float c = ::cosf(half);
+    float x = s * q.z + c * q.x;
+    float y = s * q.w + c * q.y;
+    q.z = c * q.z - s * q.x;
+    q.w = c * q.w - s * q.y;
+    q.x = x;
+    q.y = y;
+}
+
 void GfComBehaviorEnemy::execTurnCmd(float rotY) {
     getTransform();
     TFieldExecCmdTurn<GfComAsm>::CreateInfo info;
@@ -708,6 +787,66 @@ void GfComBehaviorEnemy::updateField(const fw::UpdateInfo& info) {
     if (getStateId() != 13 && m_field.pad_52a9) {
         m_hfsm.setState(13);
     }
+}
+
+void GfComBehaviorEnemy::updateInvincible() {
+    bool invincible;
+    bool target;
+    {
+        DataParamAcc acc(static_cast<GfObj*>(m_owner)->m_handle);
+        if (!acc.isEnbaleTarget()) {
+            target = false;
+            invincible = true;
+        } else {
+            switch (getStateId()) {
+            case 6:
+            case 7:
+            case 13:
+                target = false;
+                invincible = true;
+                break;
+            default: {
+                gmk::AGmkBase* gmk = gmk::getBindedGmkInst(static_cast<GfObj*>(m_owner)->m_handle);
+                if (gmk == nullptr) {
+                    target = true;
+                    invincible = false;
+                    break;
+                }
+                switch (gmk->getGmkType()) {
+                case gmk::GmkEnemy::TYPE: {
+                    int lockId = m_field.m_sensor.pad_58;
+                    int lockIndex = m_field.m_sensor.pad_5c;
+                    if (lockId >= 0 && lockIndex >= 0 && !pad_550c) {
+                        target = true;
+                        invincible = true;
+                    } else {
+                        invincible = static_cast<gmk::GmkEnemy*>(gmk)->m_insts.m_bdatInfo.isInvincibleCondMatched();
+                        target = !invincible;
+                    }
+                    break;
+                }
+                case gmk::GmkRoutedEnemy::TYPE:
+                    invincible = static_cast<gmk::GmkRoutedEnemy*>(gmk)->m_insts.m_bdatInfo.isInvincibleCondMatched();
+                    target = !invincible;
+                    break;
+                default:
+                    target = true;
+                    invincible = false;
+                    break;
+                }
+                break;
+            }
+            }
+        }
+    }
+    GfObj* obj = static_cast<GfObj*>(m_owner);
+    if (target) {
+        obj->pad_110 |= 4;
+    } else {
+        obj->pad_110 &= ~4;
+    }
+    m_field.pad_52a8 = target;
+    GfObjUtil::setInvincible(static_cast<GfObj*>(m_owner)->m_handle, invincible, false);
 }
 
 void GfComBehaviorEnemy::setStateId(enemy::STATE_ID state) {
@@ -875,6 +1014,30 @@ void GfComBehaviorEnemy::procAnimCallback(GfComAsm* asmCom, const CallBackCache&
 void GfComBehaviorEnemy::Listener::onWkStandbyLogout() {
     m_owner->pad_54e8 = nullptr;
 }
+// turns the object by at most the turn's step this frame toward m_info.pad_8 (about the y axis)
+template <typename T>
+void TFieldExecCmdTurn<T>::applyDeltaRotY(GfComTransform& transform, float dt) {
+    float step = m_info.pad_14 * (pad_58 / pad_64 * dt);
+    mm::Vec3 front = transform.getRotation().rotate(mm::Vec3::unitZ);
+    float cur = atan2f(front.x, front.z);
+    float diff = mm::normalizeRadian(m_info.pad_8 - cur);
+    float delta = fabsf(diff) < fabsf(step) ? diff : step;
+    mm::Quat rot = transform.getRotation();
+    float half = delta * 0.5f;
+    float s = sinf(half);
+    float c = cosf(half);
+    float x = s * rot.z + c * rot.x;
+    float y = s * rot.w + c * rot.y;
+    rot.z = c * rot.z - s * rot.x;
+    rot.w = c * rot.w - s * rot.y;
+    rot.x = x;
+    rot.y = y;
+    transform.setRotation(rot);
+}
+
+// TFieldExecCmdTurn<GfComAsm>::update's (not written yet)
+template void TFieldExecCmdTurn<GfComAsm>::applyDeltaRotY(GfComTransform& transform, float dt);
+
 }  // namespace gf
 
 // the steer filter's operator (its table is GfBehaviorEnemyField's, which GfComBehaviorEnemy's constructor installs)

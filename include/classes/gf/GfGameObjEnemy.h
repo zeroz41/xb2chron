@@ -15,9 +15,11 @@ namespace gf {
 class GfGameObjEnemy : public ::mm::mtl::PtrSingleton< ::gf::GfGameObjEnemy> {
 public:
     // 16 bytes, 8-aligned (FixedList<GINFO, 64>::erase is this unit's: its nodes are 24 bytes)
+    // leaveEnemyObj finds a genus's entry by DataParamAcc::getGenus and erases the handle from its heap list,
+    // deleting the list once it is empty
     struct GINFO {
-        unsigned long pad_0;
-        unsigned long pad_8;
+        unsigned int pad_0;  // the genus (DataParamAcc::getGenus)
+        mm::mtl::FixedList<GF_OBJ_HANDLE*, 64>* pad_8;
     };
     // two enemies whose genus link calcGenusLink works out (24 bytes; update queues them)
     struct Pair {

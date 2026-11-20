@@ -299,6 +299,26 @@ bool (LayerActLayout::*LayerActLayout::s_pCallActCmd[14])(const unsigned char*& 
     &LayerActBase::actcmd_wait,     &LayerActLayout::actcmd_notcmd02, &LayerActLayout::actcmd_notcmd01,
     &LayerActBase::actcmd_ctrlspd,
 };
+void LayerActBase::setupAction(unsigned char* work, const unsigned char* data) {
+    const ActionHeader* header = reinterpret_cast<const ActionHeader*>(data);
+    m_actionData = reinterpret_cast<ActionWork*>(work);
+    m_actionData->m_data = data;
+    m_actionData->m_cmdWork = reinterpret_cast<int*>(work + sizeof(ActionWork));
+    m_actionData->m_actionMax = header->m_actionNum;
+    m_actionData->m_actions = reinterpret_cast<const LyrActionData*>(data + header->m_actionOfs);
+    m_actionData->m_runningSec = 0.0f;
+    m_actionData->m_runningIdx = 0;
+    m_actionData->m_flags = 0;
+    if (header->m_cmdWorkNum != 0) {
+        memset(m_actionData->m_cmdWork, 0, header->m_cmdWorkNum * sizeof(int));
+    }
+    if (header->m_flags & ActionHeader::FLAG_AUTO_START) {
+        startAction();
+        m_actionData->m_runningIdx = header->m_startIdx;
+        m_actionData->m_flags |= ActionWork::FLAG_CMD_START;
+        m_actionData->m_runningSec = 0.0f;
+    }
+}
 void LayerActBase::actionIdx(unsigned int index) {
     int stkIdx = LayerManager::s_nStkIdx;
     onFlag(stkIdx, FLAG_ACTION_RUNNING);
@@ -1156,6 +1176,75 @@ void LayerObjTopFont::setDrawList(LayerSortMan* sortMan, bool use3D) {
 void LayerObjTopFont::applyParams(const LayerRenderView* view, const LayerResMatrix& matrix, const LayerResColor& color) {
     updateShaderParms(view, matrix, color);
 }
+void LayerObjTopFont::finalRender() {
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    const LayerObjTopMaskObj* maskObj = static_cast<const LayerObjTopMaskObj*>(m_curMaskObj);
+    if (maskObj != nullptr && !(maskObj->m_stateFlags & STATE_NO_DRAW)) {
+        if (maskObj->m_dispInfo.m_minX <= 0.0f || maskObj->m_dispInfo.m_minY <= 0.0f ||
+            maskObj->m_dispInfo.m_maxX >= 1.0f || maskObj->m_dispInfo.m_maxY >= 1.0f) {
+            return;
+        }
+        shdManager->setShaderMaskMode(maskObj);
+    } else if (m_viewData != nullptr) {
+        shdManager->setViewPort(m_viewData);
+    } else {
+        shdManager->setShaderMaskOff();
+        shdManager->resetViewPort();
+    }
+    unsigned int blend = LayerShdManager::s_resDefBlend[m_curBlendType];
+    if (shdManager->m_curBlend != blend) {
+        LayerShdManager::s_CallBlend[blend]();
+        shdManager->m_curBlend = blend;
+    }
+    if (!(m_stateFlags & STATE_3D_SPACE)) {
+        shdManager->setDepthBufferCheckOff();
+    } else if (!(m_stateFlags & STATE_RAW_POS)) {
+        shdManager->setDepthBufferCheckOn();
+    } else {
+        shdManager->set3DSpaceMode(m_defUniform);
+    }
+    shdManager->setupVertex(static_cast<LayerDefVertType>(2));
+    if (m_work->m_charNum != 0) {
+        if (m_borderWeightDef > mm::mtl::PtrSingleton<LayerManager>::sys()->m_timeScale) {
+            shdManager->m_select.m_iconType = 5;
+            shdManager->m_select.m_shaderType = 2;
+            shdManager->setupShader(m_work->m_uniform);
+            shdManager->setupInstaceVertex(*m_work->m_instans, LayerFontTag::FONT_INSTANCE_SIZE, 0);
+            shdManager->setupTexture(*m_work->m_font->m_texture, static_cast<LayerSamplerType>(m_texFilterType), 0);
+            shdManager->renderInstaceQuadsIndex(m_work->m_charNum);
+            shdManager->m_select.m_iconType = m_colorMap != nullptr ? 4 : 3;
+            shdManager->m_select.m_shaderType = 2;
+            shdManager->setupShader(m_work->m_uniform);
+            shdManager->setupInstaceVertex(*m_work->m_instans, LayerFontTag::FONT_INSTANCE_SIZE, 0);
+            shdManager->setupTexture(*m_work->m_font->m_texture, static_cast<LayerSamplerType>(m_texFilterType), 0);
+            if (m_colorMap != nullptr) {
+                const LayerTextureObj* colorMap = m_colorMap->m_texture;
+                shdManager->setupTexture(*colorMap->getTexture(0), static_cast<LayerSamplerType>(m_texFilterType), 1);
+            }
+            shdManager->renderInstaceQuadsIndex(m_work->m_charNum);
+        } else {
+            shdManager->m_select.m_iconType = m_colorMap != nullptr ? 2 : 1;
+            shdManager->m_select.m_shaderType = 2;
+            shdManager->setupShader(m_work->m_uniform);
+            shdManager->setupInstaceVertex(*m_work->m_instans, LayerFontTag::FONT_INSTANCE_SIZE, 0);
+            shdManager->setupTexture(*m_work->m_font->m_texture, static_cast<LayerSamplerType>(m_texFilterType), 0);
+            if (m_colorMap != nullptr) {
+                const LayerTextureObj* colorMap = m_colorMap->m_texture;
+                shdManager->setupTexture(*colorMap->getTexture(0), static_cast<LayerSamplerType>(m_texFilterType), 1);
+            }
+            shdManager->renderInstaceQuadsIndex(m_work->m_charNum);
+        }
+    }
+    if (m_work->m_iconNum != 0) {
+        shdManager->m_select.m_iconType = 6;
+        shdManager->m_select.m_shaderType = 2;
+        shdManager->setupShader(m_work->m_uniform);
+        shdManager->setupInstaceVertex(*m_work->m_instans, LayerFontTag::FONT_INSTANCE_SIZE, m_work->m_iconOffset);
+        const LayerTextureObj* icon = m_icon->m_texture;
+        shdManager->setupTexture(*icon->getTexture(0), static_cast<LayerSamplerType>(m_texFilterType), 0);
+        shdManager->renderInstaceQuadsIndex(m_work->m_iconNum);
+    }
+}
 LayerObjTopLayout::~LayerObjTopLayout() {
     baseRelease();
     workLayoutRelease();
@@ -1618,6 +1707,39 @@ void LayerObjTopPolyObj::setDrawList(LayerSortMan* sortMan, bool use3D) {
     } else {
         set2DSpace(sortMan, &m_sortObj);
     }
+}
+bool LayerObjResTex::updateTexutre(grlib::CGLibTextureBuffer** textures, LayerTextureObj* textureObj) {
+    bool changed = false;
+    unsigned int index = LayerManager::s_nDebIdx;
+    LayerLinkList<LayerResAddTexObj>& addList = m_addLists[index];
+    for (LayerResAddTexObj* obj = m_list.m_head; obj != nullptr;) {
+        LayerResAddTexObj* next = obj->m_next;
+        if ((1 << LayerManager::s_nDebIdx) & obj->m_flags) {
+            if (textures != nullptr) {
+                textures[obj->m_index] = textureObj->getTexture(obj->m_index);
+                changed = true;
+            }
+            m_list.deleteList(obj);
+        }
+        obj = next;
+    }
+    if (addList.m_head != nullptr) {
+        for (LayerResAddTexObj* obj = addList.m_head; obj != nullptr;) {
+            LayerResAddTexObj* next = obj->m_next;
+            addList.removeList(obj);
+            obj->setupResource();
+            if (textures != nullptr) {
+                textures[obj->m_index] = obj->getTexObj(0);
+                changed = true;
+            }
+            m_list.addListNotNull(obj);
+            obj = next;
+        }
+        addList.m_num = 0;
+        addList.m_head = nullptr;
+        addList.m_tail = nullptr;
+    }
+    return changed;
 }
 void LayerObjTopPolyObj::applyPartsSetup() { updateVertexBuffer(); }
 void LayerObjTopPolyObj::finalRender() {

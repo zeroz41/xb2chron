@@ -105,16 +105,17 @@ struct ARTS_DATA {
         unsigned char pad_4[0x2];
     };
     HIT m_hits[16];
-    unsigned char pad_90[0x4];
-    // an enhance of the arts (CheckHealArts reads entry index - 1; the count is not recovered, the names are not the
-    // original's)
-    struct ENHANCE {
-        unsigned short id;
-        unsigned char pad_2[0x4];
+    // one level's values: DataManager::CacheArtsData reads the BDAT columns "DmgMgn", "Recast" and "Enhance" into
+    // the first and copies it to the other five (the names are not the original's)
+    struct LEVEL {
+        unsigned short m_dmgMgn;
+        // the recast time (the Initialize/InitializeArtsPalette functions copy it to ARTS_SLOT_DATA::m_recastTime)
+        unsigned short m_recast;
+        // an enhance of the arts (CheckHealArts reads level index - 1, GfMenuObjUtil::getArtsIconInfo levels 1-5)
+        unsigned short m_enhance;
     };
-    // (GfMenuObjUtil::getArtsIconInfo reads entries 0-4 by level)
-    ENHANCE m_enhances[5];
-    unsigned char pad_b2[0x36];
+    LEVEL m_levels[6];
+    unsigned char pad_b4[0x34];
 };
 
 // an enemy group: RegisterEnemyGroup fills a free one with its two objects, ReleaseEnemyGroup marks each released
@@ -183,6 +184,10 @@ public:
     // GROUP_DATA::GetBladeDataConst of every blade (0-4) of the three groups at +0x12E30, +0x12F50 and +0x13070, or,
     // with engagedOnly, only on each group's engaged blade (index -1).
     void SetKizunaStage(int stage, bool engagedOnly);
+    // the symbols name it. What it does: an enemy (Misc::GetPartyID -1) gets a new EnemyParameter in the first free
+    // m_enemyParameters slot (id 1000 + slot); a party character reuses its parameter (keeping its id) or the first
+    // m_playerParameters entry without a handle (id = index); Initialize(handle) on it. The id, -1 when full
+    int RegisterCharacterParameter(gf::GF_OBJ_HANDLE* handle);
     void UnregisterCharacterParameter(int id);
     void RegisterUpdateAttackParam(bool players, bool enemies);
     bool IsExistRequestPermit() const;
@@ -190,25 +195,21 @@ public:
     // counts each party group's pouch buff timer (m_params[12]) up while params 4 or 9 are set, in 30-unit steps
     void UpdatePouchBuff(float dt);
 
-    // an arts cache: the indices of the used entries in m_ids, the entries in m_data (layout from UpdateCacheID and
-    // ClearCache; the names are not the original's)
+    // an arts cache's helper: ids holds the indices of the used entries of entries; ages every used entry younger
+    // than data and makes data the youngest (UpdateCacheID's loop, the same for each cache; age is data's; the name is
+    // not the original's)
     template <unsigned long N>
-    struct ARTS_CACHE {
-        // ages every used entry younger than data and makes data the youngest (UpdateCacheID's loop, the same for
-        // each cache; age is data's; the name is not the original's)
-        void UpdateAge(const ARTS_DATA* data, unsigned char age) {
-            for (unsigned char id : m_ids) {
-                ARTS_DATA& entry = m_data[id];
-                if (&entry == data) {
-                    entry.m_cacheAge = 0;
-                } else if (entry.m_cacheAge < age) {
-                    entry.m_cacheAge++;
-                }
+    static void UpdateAge(const ::mm::mtl::FixedVector<unsigned char, N>& ids, ARTS_DATA* entries, const ARTS_DATA* data,
+                          unsigned char age) {
+        for (unsigned char id : ids) {
+            ARTS_DATA& entry = entries[id];
+            if (&entry == data) {
+                entry.m_cacheAge = 0;
+            } else if (entry.m_cacheAge < age) {
+                entry.m_cacheAge++;
             }
         }
-        ::mm::mtl::FixedVector<unsigned char, N> m_ids;
-        ARTS_DATA m_data[N];
-    };
+    }
 
     // the symbols name it (the return type is inferred: GetArtsData passes it on to CacheArtsData; the cached entry
     // for type and id, else null)
@@ -223,11 +224,18 @@ public:
     PlayerParameter m_playerParameters[18];
     // GetCharacterParameterConst answers ids from 1000 from here (the name is not the original's)
     CharacterParameter* m_enemyParameters[70];
-    // the arts caches by type (pad_0_22): 1, 2, 3, and every other type (the names are not the original's)
-    mutable ARTS_CACHE<100> m_artsCache;
-    mutable ARTS_CACHE<45> m_artsCache1;
-    mutable ARTS_CACHE<30> m_artsCache2;
-    mutable ARTS_CACHE<30> m_artsCache3;
+    // the arts caches by type (pad_0_22): 1, 2, 3, and every other type; each the indices of its used entries, kept
+    // sorted by the entries' ids (GetCacheArtsDataConst's binary search), and the entries. Separate members, not a
+    // struct: GetCacheArtsDataConst addresses both from the DataManager. The indices are not mutable: the const
+    // GetCacheArtsDataConst reads them through FixedVector's const operator[] (the names are not the original's)
+    ::mm::mtl::FixedVector<unsigned char, 100> m_artsCacheIDs;
+    mutable ARTS_DATA m_artsCache[100];
+    ::mm::mtl::FixedVector<unsigned char, 45> m_artsCacheIDs1;
+    mutable ARTS_DATA m_artsCache1[45];
+    ::mm::mtl::FixedVector<unsigned char, 30> m_artsCacheIDs2;
+    mutable ARTS_DATA m_artsCache2[30];
+    ::mm::mtl::FixedVector<unsigned char, 30> m_artsCacheIDs3;
+    mutable ARTS_DATA m_artsCache3[30];
     GROUP_DATA m_groups[38];  // BattleCharacter::GetGroupDataConst indexes it by group (the name is not the original's)
     ENEMY_GROUP m_enemyGroups[35];   // the name is not the original's
     POUCH_BUFF m_pouchBuffs[3];      // indexed by group (the name is not the original's)

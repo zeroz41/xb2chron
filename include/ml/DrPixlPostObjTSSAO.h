@@ -25,6 +25,11 @@ public:
     void render_afterTemporal();
     void passUpScaleToMiddle();
     void passBlur_Sub(BlurAxis axis, float blur, DrPixlRenderTarget* src, DrPixlRenderTarget* dst, bool);
+    // the buffer scales (DrPixlMan reads them too)
+    static const float RAW_SSAO_SCALE;
+    static const float HISTORY_SCALE;
+    static const float BLUR_SCALE_LOW;
+    static const float UPSCALE_MIDDLE;
 
     unsigned int m_flags;  // 0x18, resetColorBuff sets bit 1 when it rebuilds the double buffers
     unsigned char pad_1c[0x4];
@@ -35,7 +40,7 @@ public:
     DrPixlRenderTarget* m_blurBuffB;  // 0x48
     DrPixlRenderTarget* m_historyBuff[2];  // 0x50, by DrMan::s_nDblIdx
     DrPixlRenderTarget* m_extraBuff[2];  // 0x60, the constructor clears them
-    unsigned int m_frame;  // 0x70, resetColorBuff clears it
+    int m_frame;  // 0x70, resetColorBuff clears it; passUpScaleToMiddle converts it signed (scvtf)
 };
 }  // namespace ml
 

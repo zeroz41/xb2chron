@@ -10,7 +10,7 @@ namespace gf {
 // table 0x7100B614E8
 class GfMenuObjCommonText::DialogListener : public ::ui::UIObjectListener {
 public:
-    DialogListener(GfMenuObjCommonText* owner) : m_state(0), pad_10(), m_shown(0), pad_1C(), m_owner(owner) {}
+    DialogListener(GfMenuObjCommonText* owner) : m_state(0), pad_10(), m_shown(0), m_owner(owner) {}
     virtual ~DialogListener() {}  // slot 0: weak in the original, and its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const& event, unsigned int handle);  // slot 2
     // the dialog's kind from the open event (0x21): 0 ok only, 1 ok/cancel, 2 the long ok/ok/cancel (the name is

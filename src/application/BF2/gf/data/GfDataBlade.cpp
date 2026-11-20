@@ -650,6 +650,26 @@ bool GfDataBladeArts::getEnhanceCaption(unsigned char*& bdat, unsigned int& id, 
     return id != 0;
 }
 
+bool GfDataDriverSkill::getSkillEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver) {
+    GfBdatBtl* btl = GfBdatBtl::get();
+    for (long line = 0; line < 5; line++) {
+        for (unsigned int level = 0; level < 3; level++) {
+            for (int round = 0; round < 2; round++) {
+                unsigned int skill = getSkill(driver, line, level + 1, round != 0);
+                if (skill == 0) {
+                    continue;
+                }
+                unsigned int enhance = btl->getBTL_Skill_DrEnhance(skill);
+                if (enhance == 0) {
+                    continue;
+                }
+                enhances.push_back(enhance);
+            }
+        }
+    }
+    return !enhances.empty();
+}
+
 unsigned int GfDataBladeSkill::getEnhance(unsigned int skill, unsigned int index) {
     return GfBdatBtl::get()->getBTL_Skill_BlEnhance(skill, index - 1);
 }
@@ -1157,6 +1177,94 @@ QuestID GfDataQuest::getScenario() {
 
 QuestID GfDataQuest::getSelect() {
     return GfDataManager::getDataGame()->m_select;
+}
+
+AchievQuest* GfDataQuest::getAchievQuest(QuestID id) {
+    unsigned int achieveId = id.m_achieveId;
+    if (achieveId == 0) {
+        return nullptr;
+    }
+    // the original looks the PRT quest up here without using it
+    getListPRTQuestID(id);
+    unsigned int blade = m_achieve2blade[achieveId];
+    if (blade == 0) {
+        return nullptr;
+    }
+    unsigned int bladeIndex = GfDataBlade::getBladeIndex(blade);
+    SDataGame* game = GfDataManager::getDataGame();
+    SDataBlade& data = game->m_blades[bladeIndex];
+    unsigned int index = (achieveId - 1) % 50;
+    unsigned int line = index / 5;
+    unsigned int level = index % 5;
+    switch (line) {
+    case 0:
+    case 1:
+    case 2:
+        return &data.m_artsAchievement[line].m_quests[level];
+    case 3:
+    case 4:
+    case 5:
+        return &data.m_skillAchievement[line - 3].m_quests[level];
+    case 6:
+    case 7:
+    case 8:
+        return &data.m_fieldSkillAchievement[line - 6].m_quests[level];
+    case 9:
+        return &data.m_keyAchievement.m_quests[level];
+    default:
+        return nullptr;
+    }
+}
+
+bool GfDataQuest::getHanyouFlg(unsigned int& type, unsigned int& flag, unsigned int& count, unsigned int& limit,
+                               const QuestTaskParam& param) {
+    QuestListAcc* acc = QuestListAcc::get();
+    unsigned int purpose = param.m_purposeId;
+    if (purpose == 0) {
+        // the original looks the purpose up here and returns without using it
+        getListPurposeID(param.m_questId);
+        return false;
+    }
+    GfBdatCond* bdat = GfBdatCond::get();
+    if (acc->getTaskTaskType(purpose, param.m_task) != 10) {
+        return false;
+    }
+    unsigned int cond = acc->getConditionConditionID(acc->getTaskTaskID(purpose, param.m_task));
+    if (cond == 0) {
+        return false;
+    }
+    for (unsigned int i = 0; i < 8; i++) {
+        if (bdat->getConditionListConditionType(cond, i) != 4) {
+            continue;
+        }
+        unsigned int flagCond = bdat->getConditionListCondition(cond, i);
+        if (flagCond == 0) {
+            return false;
+        }
+        type = bdat->getConditionFlagFlagType(flagCond);
+        flag = bdat->getConditionFlagFlagID(flagCond);
+        bool hanyou = false;
+        switch (type) {
+        case 16:
+            if (flag - 1550 >= 10) {
+                break;
+            }
+            hanyou = true;
+            break;
+        case 8:
+            if (flag - 2224 >= 1500) {
+                break;
+            }
+            hanyou = true;
+            break;
+        }
+        if (hanyou) {
+            count = bdat->getConditionFlagFlagMin(flagCond);
+            limit = bdat->getConditionFlagFlagMax(flagCond);
+            return true;
+        }
+    }
+    return false;
 }
 
 unsigned int GfDataUtil::getSkipTravelID() {
@@ -1806,6 +1914,34 @@ bool GfDataAchievement::isWaitControllFreeStats(unsigned int stats) {
     return false;
 }
 
+void GfDataAchievement::setupTotalCount(AchievQuest& quest) {
+    if ((unsigned int)(quest.m_stats - 184) < 30) {
+        unsigned int count = GfGameFlag::getLocal(8, quest.m_stats + 3834);
+        if (count == 0) {
+            return;
+        }
+        if ((quest.m_count & 0x3FFFFFFF) != 0) {
+            return;
+        }
+        quest.setCount(count);
+        return;
+    }
+    if (getAchievementTotalFlgIndex32(quest.m_stats) < 0) {
+        return;
+    }
+    int index = getAchievementTotalFlgIndex32(quest.m_stats);
+    if (index < 0) {
+        return;
+    }
+    if (GfGameFlag::getLocal(32, index) == 0) {
+        return;
+    }
+    if ((quest.m_count & 0x3FFFFFFF) != 0) {
+        return;
+    }
+    quest.setCount(getTotalCount(quest.m_stats));
+}
+
 void GfDataAchievement::clearTotalCount(unsigned int type) {
     int index = getAchievementTotalFlgIndex8(type);
     if (index >= 0) {
@@ -2202,6 +2338,76 @@ bool GfDataAchievement::getAchievementType(ACHIEVEMENT_TYPE& type, unsigned int&
     return false;
 }
 
+bool GfDataBlade::getTaskSkillMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line) {
+    id = 0;
+    ACHIEVEMENT_TYPE type;
+    unsigned int index;
+    if (GfDataAchievement::getAchievementType(type, index, line)) {
+        unsigned int bladeIndex = getBladeIndex(blade);
+        SDataGame* game = GfDataManager::getDataGame();
+        SDataBlade& data = game->m_blades[bladeIndex];
+        switch (type) {
+        case 3:
+            id = 1;
+            bdat = GfBdatMsg::getFpAchievement();
+            break;
+        case 1: {
+            unsigned int skill = data.m_skills[index].m_id;
+            id = GfBdatBtl::get()->getBTL_Skill_BlName(skill);
+            bdat = GfBdatMsg::getFpBlSkill();
+            break;
+        }
+        case 2: {
+            unsigned short skill = data.m_fieldSkills[index].m_id;
+            if (skill == 0) {
+                break;
+            }
+            id = QuestListAcc::get()->getFLD_FieldSkillListName(skill);
+            bdat = GfBdatMsg::getFpFieldSkill();
+            break;
+        }
+        default: {
+            unsigned int arts = data.m_arts[index].m_id;
+            id = GfBdatBtl::get()->getArtsBlName(arts);
+            bdat = GfBdatMsg::getFpBlArtsMs();
+            break;
+        }
+        }
+    }
+    return id != 0;
+}
+
+bool GfDataBlade::getTaskTitleMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line,
+                                      unsigned int level) {
+    AchievInfo* info = getAchievInfo(blade, line);
+    QuestID& quest = info->m_quests[level - 1].m_questId;
+    if (quest.empty()) {
+        return false;
+    }
+    QuestID next = GfDataQuest::getListNextQuestA(quest);
+    if (next.empty()) {
+        return false;
+    }
+    if (GfDataQuest::getListPurposeID(next) == 0) {
+        return false;
+    }
+    id = QuestListAcc::get()->getTaskTaskLog(GfDataQuest::getListPurposeID(next), 0);
+    bdat = GfBdatMsg::getFpQuest(next);
+    return id != 0;
+}
+
+bool GfDataBlade::getTaskResultMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line,
+                                       unsigned int level) {
+    AchievInfo* info = getAchievInfo(blade, line);
+    QuestID& quest = info->m_quests[level - 1].m_questId;
+    if (quest.empty()) {
+        return false;
+    }
+    id = QuestListAcc::get()->getListResultA(quest);
+    bdat = GfBdatMsg::getFpQuest(quest);
+    return id != 0;
+}
+
 float GfDataBlade::getWpnScale(unsigned int blade) {
     if (blade == 0) {
         return 1.0f;
@@ -2325,6 +2531,44 @@ unsigned int GfDataBlade::getCreateEvent(unsigned int blade) {
 unsigned int GfDataBlade::getNormalTalk(unsigned int blade) {
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
     return data.m_normalTalk;
+}
+
+unsigned int GfDataBlade::getBladeByWeaponType(unsigned int weaponType, unsigned int driver, bool) {
+    if (weaponType == 0) {
+        return 0;
+    }
+    if (driver - 17 < 9) {
+        return GfBdatChrDr::get()->getChrDrDefBlade1(driver);
+    }
+    switch (weaponType) {
+    case 17:
+        return 1012;
+    case 4:
+        return 1005;
+    case 5:
+        return 1006;
+    case 6:
+        return 1007;
+    case 18:
+        if (driver == 9) {
+            return 1073;
+        }
+        if (driver == 12) {
+            return 1110;
+        }
+        return 1013;
+    }
+    for (unsigned int i = 0; i < 422; i++) {
+        unsigned int blade = getBladeID(i);
+        if (blade == 0) {
+            continue;
+        }
+        SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+        if (data.m_weaponType == weaponType) {
+            return blade;
+        }
+    }
+    return 0;
 }
 
 unsigned int GfDataBlade::getTrustPoint(unsigned int blade) {
@@ -2815,6 +3059,16 @@ bool GfDataDriver::getName(unsigned char*& bdat, unsigned int& id, unsigned int 
     id = GfBdatChrDr::get()->getChrDrName(row);
     bdat = GfBdatMsg::getFpChrDr();
     return id != 0;
+}
+
+unsigned int GfDataDriver::getDriverRelativeID(unsigned int driver) {
+    if (driver >= 0x11 && driver <= 0x19) {
+        return driver - 0x11;
+    }
+    if (driver >= 1 && driver <= 0x10) {
+        return driver - 1;
+    }
+    return 1;
 }
 
 bool GfDataDriverArts::getEnableArts(mm::mtl::FixedArray<unsigned int, 4>& list, unsigned int driver,
@@ -4243,8 +4497,8 @@ void GfDataDriver::addSkillPoint(SDataDriver& data, int point) {
     }
 }
 
-void GfDataDriver::getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver) {
-    getValidEnhance(enhances, getSDataDriver(driver));
+bool GfDataDriver::getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver) {
+    return getValidEnhance(enhances, getSDataDriver(driver));
 }
 
 bool GfDataDriver::getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataIra& data) {
@@ -6205,6 +6459,24 @@ unsigned int GfDataDriver::getBlade(const SDataDriver& data, int slot) {
 
 unsigned int GfDataParty::getFixedHandleForBlade(unsigned int driver, int index) {
     return driver * 5 + 3 + index;
+}
+
+unsigned int GfDataParty::getFixedHandleForWeapon(unsigned int handle, int slot, unsigned int index, unsigned int driver) {
+    if (driver >= 0x11 && driver <= 0x19) {
+        do {
+            unsigned int type = fn_710024BCEC(driver);
+            if (type == 1) {
+                driver = GfDataDriver::getIraFront(driver);
+                slot = 1;
+            } else if (type == 2) {
+                driver = GfDataDriver::getIraFront(driver);
+                slot = 2;
+            } else {
+                break;
+            }
+        } while (driver - 0x11 < 9);
+    }
+    return handle * 40 + index + slot * 8 + 18;
 }
 
 bool GfDataParty::isNiaByakko(unsigned int id) {
@@ -8258,6 +8530,42 @@ bool GfDataItem::isHomuraCookItem(unsigned int id) {
         return true;
     default:
         return false;
+    }
+}
+
+void GfDataBlade::fn_7100234FF8(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int blade, bool keep) {
+    unsigned int weapon = 0;
+    if (blade != 0) {
+        weapon = getSDataBlade(blade)->m_equipWeapon;
+    }
+    unsigned int enhance = GfBdatItem::get()->getPcWpnEnhance1(weapon);
+    if (enhance != 0) {
+        mm::mtl::FixedVector<unsigned short, 64> list;
+        list.push_back(enhance);
+        fn_710024121C(list, keep);
+        for (unsigned short* it = list.begin(); it != list.end(); ++it) {
+            enhances.push_back(*it);
+        }
+    }
+}
+
+void GfDataBlade::fn_710023510C(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int blade, bool keep) {
+    GfBdatBtl* btl = GfBdatBtl::get();
+    mm::mtl::FixedVector<unsigned short, 64> list;
+    for (int i = 0; i < 3; i++) {
+        SDataGame* game = GfDataManager::getDataGame();
+        SDataBlade& data = game->m_blades[getBladeIndex(blade)];
+        unsigned int level = data.m_skills[i].m_level;
+        if (level != 0 && data.m_skills[i].m_id != 0) {
+            unsigned int enhance = btl->getBTL_Skill_BlEnhance(data.m_skills[i].m_id, level - 1);
+            if (enhance != 0) {
+                list.push_back(enhance);
+            }
+        }
+    }
+    fn_710024121C(list, keep);
+    for (unsigned short* it = list.begin(); it != list.end(); ++it) {
+        enhances.push_back(*it);
     }
 }
 

@@ -21,20 +21,24 @@ public:
     static UIObjectFitPlugin* create(unsigned int handle, unsigned int target, unsigned short marginWidth,
                                      unsigned short marginHeight);
     static mm::mtl::RTTI m_rtti;
-    // execute's switches (GfMenuObjUtil::createFitPlugin sets them from its FitOption)
-    struct Flags {
-        unsigned int addHalfSize : 1;  // the margins grow by half the object's own size
-        unsigned int keepScaleX : 1;   // execute leaves the object's x scale alone
-        unsigned int keepScaleY : 1;   // and its y scale
-        unsigned int pad : 29;
+    // execute's switches, the bits of m_flags (GfMenuObjUtil::createFitPlugin sets them from its FitOption; the
+    // names are not the original's)
+    enum Flag {
+        FLAG_ADD_HALF_SIZE = 1 << 0,  // the margins grow by half the object's own size
+        FLAG_KEEP_SCALE_X = 1 << 1,   // execute leaves the object's x scale alone
+        FLAG_KEEP_SCALE_Y = 1 << 2,   // and its y scale
     };
+    // sets or clears flags: createFitPlugin rewrites the whole word through a select (and of the mask's complement,
+    // or of the mask) for each option; the name is not the original's
+    void setFlag(unsigned int flag, bool on) { m_flags = !on ? (m_flags & ~flag) : (m_flags | flag); }
+    bool isFlag(unsigned int flag) const { return (m_flags & flag) != 0; }  // the name is not the original's
     unsigned short m_marginWidth;   // create's: the target's rectangle grows by this on each side
     unsigned short m_marginHeight;
     short m_offsetWidth;            // added to the fitted size (the center moves by half of it)
     short m_offsetHeight;
     unsigned short m_minWidth;      // the fitted rectangle grows about its center to at least this
     unsigned short m_minHeight;
-    Flags m_flags;
+    unsigned int m_flags;  // Flag bits
     unsigned int m_target;          // create's: the handle of the object it fits over
 };
 }  // namespace ui

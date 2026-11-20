@@ -1,6 +1,7 @@
 #include "classes/tl/TitleMain.h"
 #include "classes/gf/GfMenuObjTitle.h"
 #include "classes/gf/GfMenuCallContext.h"
+#include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfMenuIDList.h"
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfMenuMsgList.h"
@@ -222,6 +223,188 @@ bool GfMenuObjTitle::isEnableEventsTheater() {
     return !s_NoSaveData;
 }
 
+void GfMenuObjTitle::ListListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        {
+            ui::UIObjectAcc cursor(acc.m_handle, "LAY_keywait_cursor");
+            GfMenuObjUtil::setDockPos(cursor.m_handle, acc.searchChild("TXT_keywait"), 0, true);
+        }
+        setDispMode(handle, 0);
+        setInputMode(handle, 0);
+        m_state = 0;
+        if (m_owner->m_iraAddOn) {
+            ui::UIObjectAcc base(acc.m_handle, "IMG_game_change_base");
+            base.startAnimation(GfGameManager::isGameTypeIra() ? "original" : "ira", false);
+            acc.setDispChild(true, "LAY_game_change");
+        }
+        acc.setDisp(true);
+        break;
+    case 2:
+        GfMenuObject::termCallContext(handle);
+        acc.setTerm();
+        break;
+    case 6:
+        if (m_state == 1 && event.m_param0 != -1) {
+            int index = event.m_param0;
+            int prev = event.m_param1;
+            if (!m_owner->m_iraAddOn) {
+                if (prev != -1) {
+                    ui::UIObjectAcc item(m_owner->m_list->getObject(prev));
+                    item.loadDefColor();
+                    item.setBorderWeight(2.0f);
+                }
+                m_owner->moveCursor(handle, index);
+                {
+                    ui::UIObjectAcc item(m_owner->m_list->getObject(index));
+                    GfMenuObjUtil::setColMulandAdd(item.m_handle, "txt_title_sel");
+                    item.setBorderWeight(2.0f);
+                }
+                if (index != prev) {
+                    GfMenuObjUtil::playSECommonCursor();
+                }
+            } else {
+                if (prev != -1) {
+                    if (prev == m_owner->m_list->getSize()) {
+                        ui::UIObjectAcc base(acc.m_handle, "IMG_game_change_base");
+                        base.startAnimation(GfGameManager::isGameTypeIra() ? "original" : "ira", false);
+                    } else {
+                        ui::UIObjectAcc item(m_owner->m_list->getObject(prev));
+                        item.loadDefColor();
+                        item.setBorderWeight(2.0f);
+                    }
+                }
+                if (index == m_owner->m_list->getSize()) {
+                    ui::UIObjectAcc base(acc.m_handle, "IMG_game_change_base");
+                    base.startAnimation(GfGameManager::isGameTypeIra() ? "original_sel" : "ira_sel", false);
+                    acc.setDispChild(false, "LAY_Cursor");
+                } else {
+                    acc.setDispChild(true, "LAY_Cursor");
+                    m_owner->moveCursor(handle, index);
+                    ui::UIObjectAcc item(m_owner->m_list->getObject(index));
+                    GfMenuObjUtil::setColMulandAdd(item.m_handle, "txt_title_sel");
+                    item.setBorderWeight(2.0f);
+                }
+                if (index != prev) {
+                    GfMenuObjUtil::playSECommonCursor();
+                }
+            }
+        }
+        break;
+    case 8: {
+        int state = m_state;
+        if (event.m_param1 == 1) {
+            if (state == 1) {
+                if (m_owner->m_iraAddOn && m_owner->m_list->getSize() == event.m_param0) {
+                    tl::TitleMain::sys()->m_reqChangeGameType = true;
+                    GfMenuObject::disableInput(acc.m_handle);
+                    GfMenuObjUtil::playSECommonDecide();
+                    break;
+                }
+                unsigned int item = m_owner->m_items[event.m_param0];
+                if (!s_NoSaveData && (item == 0 || item == 4)) {
+                    if (item == 4) {
+                        GfMenuManager::isOnlyIra();  // its answer is not used
+                        if (!tl::TitleMain::sys()->isValidAocVersion()) {
+                            m_owner->m_confirmOpen = false;
+                            m_owner->m_seq.clear();
+                            m_owner->m_seq.addJob(&GfMenuObjTitle::seqAocError);
+                        } else {
+                            if (m_owner->m_onlyIra) {
+                                GfMenuObject::sendOpenEvent(acc.searchChild("LAY_announce"), 0, 0.0f);
+                            } else {
+                                GfMenuObject::sendOpenEvent(acc.searchChild("LAY_ang_info"), 0, 0.0f);
+                            }
+                        }
+                    } else if (item == 0) {
+                        m_owner->m_confirmOpen = false;
+                        m_owner->m_seq.clear();
+                        m_owner->m_seq.addJob(&GfMenuObjTitle::seqConfirmNewGame);
+                    }
+                } else if (item == 0 || item == 4) {
+                    m_owner->m_confirmOpen = false;
+                    m_owner->m_seq.clear();
+                    m_owner->m_seq.addJob(&GfMenuObjTitle::seqSelectDifficulity);
+                } else {
+                    if (item == 1 || item == 3) {
+                        GfMenuManager::isOnlyIra();  // its answer is not used
+                        if (!tl::TitleMain::sys()->isValidAocVersion()) {
+                            m_owner->m_confirmOpen = false;
+                            m_owner->m_seq.clear();
+                            m_owner->m_seq.addJob(&GfMenuObjTitle::seqAocError);
+                            goto decided;
+                        }
+                    }
+                    GfMenuObject::addResultCallContext(handle, item, 0);
+                }
+            decided:
+                m_owner->m_index = item;
+                m_state = 2;
+                GfMenuObject::disableInput(acc.m_handle);
+            }
+        } else if (event.m_param1 == 2) {
+            if (state == 1) {
+                setDispMode(handle, 0);
+                setInputMode(handle, 0);
+                m_state = 0;
+            }
+        } else if (state == 0) {
+            setDispMode(handle, 1);
+            setInputMode(handle, 1);
+            m_state = 1;
+            unsigned int cursor = 0;
+            for (unsigned int i = 0; i < m_owner->m_items.size(); i++) {
+                if (m_owner->m_items[i] == 1) {
+                    cursor = i;
+                    break;
+                }
+            }
+            if (m_owner->m_iraAddOn) {
+                GfMenuObject::setupInputSelection(acc.searchChild("LAY_list"), cursor,
+                                                  static_cast<unsigned int>(m_owner->m_items.size()) + 1);
+            } else {
+                GfMenuObject::setupInputSelection(acc.searchChild("LAY_list"), cursor,
+                                                  static_cast<unsigned int>(m_owner->m_items.size()));
+            }
+        }
+        if (state != m_state) {
+            if (m_state == 1) {
+                GfMenuObjUtil::playSECommonDecide();
+            } else {
+                GfMenuObjUtil::playSECommonFromInput(event.m_param1);
+            }
+        }
+        break;
+    }
+    case 0x101:
+        m_state = 1;
+        GfMenuObject::enableInput(acc.m_handle);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjTitle::setDispMode(unsigned int handle, int mode) {
+    GfMenuObjUtil::setChildDisp(handle, "LAY_keywait", mode == 0);
+    GfMenuObjUtil::setChildDisp(handle, "LAY_list", mode == 1);
+}
+
+void GfMenuObjTitle::setInputMode(unsigned int handle, int mode) {
+    ui::UIObjectAcc acc(handle);
+    if (acc.m_object != nullptr) {
+        if (mode == 0) {
+            GfMenuObject::enableInput(acc.searchChild("LAY_keywait"));
+            GfMenuObject::disableInput(acc.searchChild("LAY_list"));
+        } else if (mode == 1) {
+            GfMenuObject::enableInput(acc.searchChild("LAY_list"));
+            GfMenuObject::disableInput(acc.searchChild("LAY_keywait"));
+        }
+    }
+}
+
 void GfMenuObjTitle::moveCursor(unsigned int handle, int index) {
     ui::UIObjectAcc item(handle, s_titleItems[m_items[index]].m_name);
     ui::UIObjectAcc cursor(handle, "LAY_Cursor");
@@ -273,6 +456,119 @@ bool GfMenuObjTitle::seqConfirmNewGame() {
     return true;
 }
 
+void GfMenuObjTitle::InfoListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+            GfMenuObjOperationInfo::open(acc.m_handle, 0, 0, 0);
+            GfMenuObjOperationInfo::setGuideDisp(false);
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 1, false);
+        } else if (event.m_param0 == 2) {
+            if (!m_owner->m_onlyIra) {
+                ui::UIObjectAcc main(m_owner->m_handle, "LAY_main");
+                ui::EventData close;
+                close.m_type = 0x101;
+                close.m_param0 = m_result;
+                GfMenuObject::sendEvent(main.m_handle, close, 0.0f);
+            }
+        }
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            m_owner->m_confirmOpen = false;
+            m_owner->m_seq.clear();
+            m_owner->m_seq.addJob(&GfMenuObjTitle::seqConfirmAdvancedNewGame);
+            GfMenuObject::disableInput(acc.m_handle);
+        } else if (event.m_param1 == 2) {
+            if (m_page == 0) {
+                GfMenuObjUtil::playSECommonCancel();
+                GfMenuObject::disableInput(acc.m_handle);
+                if (m_owner->m_onlyIra) {
+                    GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_announce"), 0, 0.0f);
+                } else {
+                    GfMenuObjOperationInfo::close();
+                }
+                GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 2, 0);
+            } else {
+                m_owner->m_infoPage = m_page - 1;
+                m_owner->m_infoDir = 1;
+                m_owner->m_confirmOpen = false;
+                m_owner->m_seq.clear();
+                m_owner->m_seq.addJob(&GfMenuObjTitle::seqInfoFadeOut);
+                m_owner->m_seq.addJob(&GfMenuObjTitle::seqInfoFadeIn);
+                GfMenuObject::disableInput(acc.m_handle);
+                m_page--;
+                m_owner->m_number->setValue(m_page);
+                GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 1, false);
+                GfMenuObjUtil::playSE(0xD);
+            }
+        } else if (event.m_param1 == 9) {
+            if (m_page + 1 < m_owner->m_numberMax->m_value) {
+                int page = m_page + 1;
+                m_owner->m_infoPage = page;
+                m_owner->m_infoDir = 0;
+                m_owner->m_confirmOpen = false;
+                m_owner->m_seq.clear();
+                m_owner->m_seq.addJob(&GfMenuObjTitle::seqInfoFadeOut);
+                m_owner->m_seq.addJob(&GfMenuObjTitle::seqInfoFadeIn);
+                GfMenuObject::disableInput(acc.m_handle);
+                m_page = page;
+                m_owner->m_number->setValue(m_page);
+                GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 1, page + 1 == m_owner->m_numberMax->m_value);
+                GfMenuObjUtil::playSE(0xD);
+            }
+        }
+        break;
+    case 0x21:
+        m_owner->updateInfoPage(0);
+        m_owner->refreshInfo(0);
+        m_page = 0;
+        m_result = 0;
+        GfMenuObjUtil::setCommonFadeIn(acc.m_handle, 1, 0);
+        break;
+    case 0x22:
+        GfMenuObject::disableInput(acc.m_handle);
+        GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 2, 0);
+        GfMenuObjOperationInfo::close();
+        break;
+    }
+}
+
+void GfMenuObjTitle::updateInfoPage(unsigned int page) {
+    unsigned char* fp = GfDataBdat::getFP(GfMenuObjUtil::isValidExpansion(3) ? 0x16B : 0x16A);
+    if (fp == nullptr) {
+        return;
+    }
+    int rowSize = m_msgList->getPageRowSize();
+    int top = Bdat::getIdTop(fp);
+    m_msgList->clear();
+    for (unsigned int i = 0; i < m_msgList->getPageRowSize() + 1; i++) {
+        unsigned int list = GfMenuObjUtil::isValidExpansion(3) ? 0x16B : 0x16A;
+        unsigned int id = top + page * rowSize + page + i;
+        unsigned short msg = GfMenuObjUtil::getMsgIDFromList(list, id);
+        if (msg == 0) {
+            continue;
+        }
+        if (i == 0) {
+            ui::UIStr str(GfDataBdat::getFP(0x13A), msg);
+            m_str.copy(str);
+        } else {
+            MsgID content;
+            content.m_id = id;
+            content.m_sortKey = 0;
+            m_msgList->addContents(MsgID(content));
+        }
+    }
+}
+
 void GfMenuObjTitle::refreshInfo(unsigned int) {
     ui::UIStr str;
     mm::mtl::FixStr<32> name;
@@ -320,6 +616,44 @@ bool GfMenuObjTitle::seqConfirmAdvancedNewGame() {
     }
     m_confirmOpen = false;
     return true;
+}
+
+bool GfMenuObjTitle::seqInfoFadeOut() {
+    ui::UIObjectAcc list(m_handle, "LAY_ang_info_list");
+    bool done = false;
+    if (!m_confirmOpen) {
+        if (m_infoDir == 0) {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_time = 0.3f;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_r";
+            param.m_setDefault = true;
+            GfMenuObjUtil::startCtrl(list.m_handle, param, nullptr);
+        } else {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_time = 0.3f;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_l";
+            param.m_setDefault = true;
+            GfMenuObjUtil::startCtrl(list.m_handle, param, nullptr);
+        }
+        {
+            ui::UIObjectAcc title(m_handle, "TXT_ang_info_title");
+            GfMenuObjUtil::CtrlParam param;
+            param.m_time = 0.3f;
+            param.m_methods = 2;
+            GfMenuObjUtil::startCtrl(title.m_handle, param, nullptr);
+        }
+        m_confirmOpen = true;
+    } else if (!GfMenuObjUtil::isBusyCtrl(GfMenuObjUtil::getCtrlID(list.m_handle))) {
+        updateInfoPage(m_infoPage);
+        refreshInfo(m_infoPage);
+        m_confirmOpen = false;
+        done = true;
+    }
+    return done;
 }
 
 bool GfMenuObjTitle::seqInfoFadeIn() {

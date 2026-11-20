@@ -37,6 +37,7 @@
 #include "classes/ml/FileResTh.h"
 #include "classes/ml/irrvol/MemHandlebaseAllocator.h"
 #include "grlib/CGLibCtl.h"
+#include "grlib/CGLibTexture.h"
 #include "math.h"
 #include "ml/CriticalSection.h"
 #include "ml/DrAPGxType.h"
@@ -48,6 +49,7 @@
 #include "ml/DrEnvironmentMan.h"
 #include "ml/DrFogMan.h"
 #include "ml/DrIBLColiAcc.h"
+#include "ml/DrIBLMan.h"
 #include "ml/DrIBLObj.h"
 #include "ml/DrIniSys.h"
 #include "ml/DrIrrVolMan.h"
@@ -531,9 +533,9 @@ void DrEnvironmentObjLgt::setupPoint(DrEnvironmentLgtList* list, DrLightObjPnt* 
     float b = col.b * data->m_intensity;
     const LgtParamData* param =
         reinterpret_cast<const LgtParamData*>(static_cast<const char*>(m_resource) + data->m_paramOfs);
-    light->m_color[0] = r;
-    light->m_color[1] = g;
-    light->m_color[2] = b;
+    light->m_color.r = r;
+    light->m_color.g = g;
+    light->m_color.b = b;
     light->setMat(pos->m_mat);
     light->m_speIntensity = param->m_speIntensity;
     light->m_size = pos->m_range;
@@ -559,9 +561,9 @@ void DrEnvironmentObjLgt::setupSpot(DrEnvironmentLgtList* list, DrLightObjSpt* l
     float b = col.b * data->m_intensity;
     const LgtParamData* param =
         reinterpret_cast<const LgtParamData*>(static_cast<const char*>(m_resource) + data->m_paramOfs);
-    light->m_color[0] = r;
-    light->m_color[1] = g;
-    light->m_color[2] = b;
+    light->m_color.r = r;
+    light->m_color.g = g;
+    light->m_color.b = b;
     light->setMat(pos->m_mat);
     light->m_size = pos->m_range;
     light->m_angle = param->m_angle;
@@ -1385,6 +1387,7 @@ void DrLightObjGlobalIBL::beginOccQuery() {
 void DrLightObjGlobalIBL::endOccQuery() {
     m_meshes[m_bindIndex].m_query->end();
 }
+
 }  // namespace ml
 
 // instantiated for ml::DrLightObjGlobalIBL::initializeFromBuffer, ml::DrLightObjGlobalIBL::~DrLightObjGlobalIBL (not written yet)
@@ -1536,11 +1539,11 @@ void DrLightMan::updateAfterPnt() {
         light->update(this);
         light->m_flags &= ~DrLightObj::FLAG_CULL;
         if (light->m_flags & DrLightObj::FLAG_SUBTRACT) {
-            if (light->m_color[0] >= 1.0f && light->m_color[1] >= 1.0f && light->m_color[2] >= 1.0f) {
+            if (light->m_color.r >= 1.0f && light->m_color.g >= 1.0f && light->m_color.b >= 1.0f) {
                 light->m_flags |= DrLightObj::FLAG_CULL;
             }
         } else {
-            if (light->m_color[0] <= 0.0f && light->m_color[1] <= 0.0f && light->m_color[2] <= 0.0f) {
+            if (light->m_color.r <= 0.0f && light->m_color.g <= 0.0f && light->m_color.b <= 0.0f) {
                 light->m_flags |= DrLightObj::FLAG_CULL;
             }
         }
@@ -1588,11 +1591,11 @@ void DrLightMan::updateAfterSpt() {
         light->update(this);
         light->m_flags &= ~DrLightObj::FLAG_CULL;
         if (light->m_flags & DrLightObj::FLAG_SUBTRACT) {
-            if (light->m_color[0] >= 1.0f && light->m_color[1] >= 1.0f && light->m_color[2] >= 1.0f) {
+            if (light->m_color.r >= 1.0f && light->m_color.g >= 1.0f && light->m_color.b >= 1.0f) {
                 light->m_flags |= DrLightObj::FLAG_CULL;
             }
         } else {
-            if (light->m_color[0] <= 0.0f && light->m_color[1] <= 0.0f && light->m_color[2] <= 0.0f) {
+            if (light->m_color.r <= 0.0f && light->m_color.g <= 0.0f && light->m_color.b <= 0.0f) {
                 light->m_flags |= DrLightObj::FLAG_CULL;
             }
         }
@@ -1698,6 +1701,61 @@ void DrLightObjDir::update(DrLightMan*) {
 }
 
 // --- DrIBLColiAcc ---
+void DrIBLColiAcc::testTreeInvalidColi(const _EnvColiListTreeData* tree, const mm::Vec3& pos, float range) {
+    if (tree->max[0] + range < pos.x || tree->min[0] - range > pos.x || tree->max[2] + range < pos.z ||
+        tree->min[2] - range > pos.z || tree->max[1] + range < pos.y || tree->min[1] - range > pos.y) {
+        return;
+    }
+    int childNum = tree->childNum;
+    if (childNum != 0) {
+        const unsigned short* children = reinterpret_cast<const unsigned short*>(m_res + tree->childOfs);
+        for (int i = 0; i < childNum; i++) {
+            testTreeInvalidColi(m_invalidTree + children[i], pos, range);
+        }
+    }
+    int primNum = tree->primNum;
+    if (primNum != 0) {
+        const unsigned short* prims = reinterpret_cast<const unsigned short*>(m_res + tree->primOfs);
+        for (int i = 0; i < primNum; i++) {
+            const _IBLPrimHeader* prim = m_prims + prims[i];
+            if ((this->*s_pColiTest[prim->type])(m_res + prim->dataOfs, pos, range)) {
+                m_bits.setLocal(prim->bit, true);
+            }
+        }
+    }
+}
+
+bool DrIBLColiAcc::testTreeColi(const _EnvColiListTreeData* tree, const mm::Vec3& pos, float range,
+                                const _IBLPrimHeader*& hit) {
+    if (tree->max[0] + range < pos.x || tree->min[0] - range > pos.x || tree->max[2] + range < pos.z ||
+        tree->min[2] - range > pos.z || tree->max[1] + range < pos.y || tree->min[1] - range > pos.y) {
+        return false;
+    }
+    bool result = false;
+    int childNum = tree->childNum;
+    if (childNum != 0) {
+        const unsigned short* children = reinterpret_cast<const unsigned short*>(m_res + tree->childOfs);
+        for (int i = 0; i < childNum; i++) {
+            result |= testTreeColi(m_tree + children[i], pos, range, hit);
+        }
+    }
+    int primNum = tree->primNum;
+    if (primNum != 0) {
+        const unsigned short* prims = reinterpret_cast<const unsigned short*>(m_res + tree->primOfs);
+        for (int i = 0; i < primNum; i++) {
+            const _IBLPrimHeader* prim = m_prims + prims[i];
+            if (!m_bits.getLocal(prim->bit) && m_priority < prim->priority) {
+                if ((this->*s_pColiTest[prim->type])(m_res + prim->dataOfs, pos, range)) {
+                    m_priority = prim->priority;
+                    hit = prim;
+                    result = true;
+                }
+            }
+        }
+    }
+    return result;
+}
+
 bool DrIBLColiAcc::envcoli_box(const unsigned char* data, const mm::Vec3& pos, float range) {
     const float* d = reinterpret_cast<const float*>(data);
     float dx = pos.x - d[12];
@@ -1766,6 +1824,10 @@ bool DrIBLColiAcc::envcoli_notrot_cylinder(const unsigned char* data, const mm::
     float r = d[3] + range;
     return dx * dx + dz * dz <= r * r;
 }
+
+DrIBLMan::DrIBLMan(DrMan* drMan, int view) : m_drMan(drMan), m_view(view) {
+    m_curObj = nullptr;
+}
 }  // namespace ml
 
 // instantiated for ml::DrIBLMan::update (not written yet)
@@ -1777,6 +1839,29 @@ bool (DrIBLColiAcc::*DrIBLColiAcc::s_pColiTest[5])(const unsigned char*, const m
     &DrIBLColiAcc::envcoli_box,        &DrIBLColiAcc::envcoli_sphere,          &DrIBLColiAcc::envcoli_cylinder,
     &DrIBLColiAcc::envcoli_notrot_box, &DrIBLColiAcc::envcoli_notrot_cylinder,
 };
+
+void DrIBLObj::initialize(DrMan* drMan) {
+    const ResHeader* header = static_cast<const ResHeader*>(m_data);
+    if (header->magic != RES_MAGIC || header->version != RES_VERSION) {
+        return;
+    }
+    const unsigned char* data = static_cast<const unsigned char*>(m_data);
+    m_texEntry = reinterpret_cast<const TexEntry*>(data + header->texOfs);
+    m_prims = reinterpret_cast<const _IBLPrimHeader*>(data + header->primOfs);
+    m_tree = reinterpret_cast<const _EnvColiListTreeData*>(data + header->treeOfs);
+    m_texNum = header->num;
+    m_texA = new (drMan->m_resHandle, nullptr, 0, 4, false) grlib::CGLibTextureBuffer[m_texNum];
+    m_texB = new (drMan->m_resHandle, nullptr, 0, 4, false) grlib::CGLibTextureBuffer[m_texNum];
+    for (unsigned int i = 0; i < m_texNum; i++) {
+        const TexEntry* tex = m_texEntry + i;
+        grlib::CGLibTexture::createTextureImagePtrs(m_texA[i], static_cast<const unsigned char*>(m_data) + tex->ofsA,
+                                                    tex->sizeA, true, nullptr, true);
+        grlib::CGLibTexture::createTextureImagePtrs(m_texB[i], static_cast<const unsigned char*>(m_data) + tex->ofsB,
+                                                    tex->sizeB, false, nullptr, true);
+    }
+    m_coliAcc = new (drMan->m_resHandle, nullptr, 0, 4, false) DrIBLColiAcc(m_data, drMan->m_resHandle);
+    m_flags |= 1;
+}
 
 DrIBLObj::~DrIBLObj() {
     if (m_coliAcc != nullptr) {

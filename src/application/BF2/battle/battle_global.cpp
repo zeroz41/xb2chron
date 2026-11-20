@@ -34,6 +34,10 @@
 #include "classes/gf/GfSound.h"
 #include "ml/MTRand.h"
 #include "classes/fw/ParamManager.h"
+#include "classes/gf/FusionComboCamera.h"
+#include <math.h>
+#include "mm/Math.h"
+#include "classes/btl/BtlSystemBalanceAccess.h"
 
 namespace btl {
 
@@ -72,7 +76,7 @@ int ARTS_DATA::CheckHealArts(int index) const {
         return 1;
     }
     if (index >= 1) {
-        unsigned short enhance = m_enhances[index - 1].id;
+        unsigned short enhance = m_levels[index - 1].m_enhance;
         if (enhance != 0) {
             ENHANCE_EFFECT_DATA data;
             if (DataManager::GetEnhanceData(enhance, data, false) && data.m_effect == 0x182) {
@@ -178,6 +182,76 @@ unsigned int ARTS_PALETTE_DATA::GetFightComboFlag(float recast, int first, int l
     return mask;
 }
 
+void BattleGlobal::SetupDifficultyData(BTL_DIFFICULTY difficulty) {
+    if (pad_bit1) {
+        return;
+    }
+    if (pad_5c54 == difficulty) {
+        if (difficulty != 4) {
+            return;
+        }
+        if (++pad_5c55 < 37) {
+            return;
+        }
+    }
+    pad_5c54 = difficulty;
+    pad_5c04 = gf::GfGameManager::getBtlDifParam(1) * 0.01f;
+    pad_5c08 = gf::GfGameManager::getBtlDifParam(2) * 0.01f;
+    pad_5c0c = gf::GfGameManager::getBtlDifParam(3) * 0.01f;
+    pad_5c10 = gf::GfGameManager::getBtlDifParam(4) * 0.01f;
+    pad_5c14 = gf::GfGameManager::getBtlDifParam(5) * 0.01f;
+    pad_5c18 = gf::GfGameManager::getBtlDifParam(11) * 0.01f;
+    pad_5c56 = gf::GfGameManager::getBtlDifParam(12) > 1;
+    m_partyGaugeRate = gf::GfGameManager::getBtlDifParam(6) * 0.01f;
+    pad_5c20 = gf::GfGameManager::getBtlDifParam(7) * 0.01f;
+    pad_5c24 = gf::GfGameManager::getBtlDifParam(8) * 0.01f;
+    pad_5c28 = gf::GfGameManager::getBtlDifParam(9) * 0.01f;
+    pad_5c2c = gf::GfGameManager::getBtlDifParam(10);
+    switch (difficulty) {
+    case 0:
+        pad_5c50 = BtlSystemBalanceAccess::sys()->pad_118 * 0.01f;
+        break;
+    case 2:
+        pad_5c50 = BtlSystemBalanceAccess::sys()->pad_11a * 0.01f;
+        break;
+    case 3:
+        pad_5c50 = BtlSystemBalanceAccess::sys()->pad_11c * 0.01f;
+        break;
+    default:
+        pad_5c50 = 1.0f;
+        break;
+    }
+    pad_5c14 = pad_5c14 <= 1e-06f ? 0.0f : 1.0f / pad_5c14;
+    pad_5c18 = pad_5c18 <= 1e-06f ? 0.0f : 1.0f / pad_5c18;
+    pad_5c57 = pad_5c04 < 1.0f;
+    pad_5c58 = pad_5c04 <= 1.0f;
+    if (pad_5c04 < 1.0f) {
+        pad_5c30 = 1.0f;
+        pad_5c34 = 0.0f;
+        pad_5c38 = 0.0f;
+        pad_5c3c = 0.0f;
+        pad_5c40 = 1.0f;
+        pad_5c44 = 1.0f;
+        pad_5c48 = 1.0f;
+        m_statusEnhanceRate = 1.0f;
+    } else {
+        float rate = pad_5c04;
+        pad_5c30 = rate > 2.0f ? 2.0f : rate;
+        pad_5c34 = ::mm::clamp(200.0f * rate * rate * rate, 200.0f, 1500.0f);
+        pad_5c38 = ::mm::clamp(0.3f * rate * rate, 0.3f, 0.72f);
+        float over = rate - 1.0f;
+        pad_5c3c = 0.3f * over * over + 0.35f;
+        pad_5c40 = 0.962f / powf(rate, 0.03f);
+        pad_5c44 = ::mm::clamp(-0.2f * pad_5c04 + 1.0f, 0.5f, 0.8f);
+        pad_5c48 = -0.175f * over + 1.0f;
+        m_statusEnhanceRate = 1.0f;
+        if (!pad_5c58) {
+            m_statusEnhanceRate = 0.1f * pad_5c04 + 1.0f;
+        }
+    }
+    pad_5c55 = 0;
+}
+
 void BattleGlobal::PreUpdate(const fw::UpdateInfo& info) {
     sys()->PreUpdateProc(info);
 }
@@ -202,6 +276,128 @@ void BattleGlobal::Update(const fw::UpdateInfo& info) {
     sys()->UpdateProc(info);
 }
 
+void BattleGlobal::UpdateUniteComboDirection(const fw::UpdateInfo& info) {
+    if (pad_5d08 == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    if (!pad_5d3f) {
+        if (pad_bit12) {
+            return;
+        }
+        if (m_elementalCombo.m_camera) {
+            return;
+        }
+        pad_5d2c += info.m_deltaTime;
+        if (pad_5d2c >= 6.0f) {
+            StartUniteComboDirection();
+        }
+        return;
+    }
+    pad_5d24 += info.m_frameTime * 30.0f;
+    unsigned char* fp = gf::GfDataBdat::getFP(0x44);
+    unsigned char row = pad_5d3d;
+    float frames[3] = {static_cast<float>(Bdat::getValCheckU8(fp, "UIStartf", row)),
+                       static_cast<float>(Bdat::getValCheckU8(fp, "UIEndf", row)),
+                       static_cast<float>(Bdat::getValCheckU8(fp, "Voicef", row))};
+    frames[1] += frames[0];
+    for (int i = 0; i < 3; i++) {
+        unsigned char bit = 1 << i;
+        if (bit & pad_5d3e) {
+            continue;
+        }
+        if (pad_5d24 < frames[i]) {
+            continue;
+        }
+        if (i == 0) {
+            if (Bdat::getValCheckU8(fp, "Camera", row) == 0) {
+                if (BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(pad_5d08)) {
+                    if (const CharacterParameter* param = chr->GetCharacterParameterConst(true)) {
+                        mm::Vec3 pos;
+                        Misc::GetObjectTransform(pad_5d08, pos, Misc::TRANS_TYPE_POS);
+                        pos.y += param->pad_38;
+                        UIManager::sys()->DispUniteComboUI(pos, pad_5d3a, pad_5d3b);
+                    }
+                }
+            } else {
+                UIManager::sys()->DispUniteComboUI(pad_5d3a, pad_5d3b, pad_5d32, pad_5d34, pad_5d36, pad_5d38_0,
+                                                   pad_5d38_5, pad_5d38_10);
+            }
+        } else if (i == 2) {
+            TalkManager::sys()->PlayNarrationVoice(static_cast<TalkManager::NARRATION_TYPE>(1), pad_5d3b, pad_5d3a);
+        }
+        pad_5d3e |= bit;
+    }
+    if (m_uniteComboCamera) {
+        gf::FusionComboCamera* camera = ::mm::mtl::rttiCast<gf::FusionComboCamera>(m_uniteComboCamera.get());
+        if (!camera->isPlayEnd()) {
+            return;
+        }
+        pad_5d28 -= info.m_frameTime;
+        if (!(pad_5d28 <= 0.0f)) {
+            return;
+        }
+    } else if (GetSlowProcData(pad_5d20) != nullptr) {
+        return;
+    }
+    if (pad_5d3c >= 3) {
+        Utility::SomebodyPraise(pad_5d30, false, false);
+    }
+    DeleteUniteComboDirection();
+}
+
+void BattleGlobal::StartUniteComboDirection() {
+    if (pad_5d3f) {
+        return;
+    }
+    BattleCharacter* chara = CharacterManager::sys()->GetCharacterConst(pad_5d30);
+    if (chara == nullptr) {
+        DeleteUniteComboDirection();
+        return;
+    }
+    DeleteElementalComboCamera();
+    unsigned char* fp = gf::GfDataBdat::getFP(0x44);
+    unsigned char row = pad_5d3d;
+    gf::GF_OBJ_HANDLE* from;
+    gf::GF_OBJ_HANDLE* target;
+    gf::FusionComboCamera::Mode mode;
+    bool camera = true;
+    unsigned char type = Bdat::getValCheckU8(fp, "Camera", row);
+    if (type == 1) {
+        from = chara->m_handle;
+        target = pad_5d08;
+        mode = static_cast<gf::FusionComboCamera::Mode>(0);
+    } else if (type == 2) {
+        from = pad_5d08;
+        target = pad_5d08;
+        mode = static_cast<gf::FusionComboCamera::Mode>(1);
+    } else {
+        camera = false;
+    }
+    if (camera) {
+        ::mm::mtl::IntrusivePtr<fw::Camera> cam = gf::FusionComboCamera::create(from, target, mode);
+        if (cam) {
+            fw::CameraManager::get()->m_layers[0].push(cam, 0.0f);
+            m_uniteComboCamera = cam;
+            pad_5d28 = Bdat::getValCheckU8(fp, "Waitf", row) * (1.0f / 30.0f);
+            if (BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(target)) {
+                chr->pad_EF5_0 = true;
+                pad_5d10 = target;
+            }
+        }
+    }
+    float rate = fmaxf(Bdat::getValCheckU8(fp, "Slow", row) * 0.01f, 0.01f);
+    int frames = Bdat::getValCheckU8(fp, "Slowf", row);
+    if (frames == 0 && !m_uniteComboCamera) {
+        frames = Bdat::getValCheckU8(fp, "Waitf", row);
+    }
+    float time = -1.0f;
+    if (frames != 0) {
+        time = frames * (1.0f / 30.0f);
+    }
+    pad_5d20 = RegisterSlow(rate, time, 0.0f);
+    pad_5d3f = 1;
+}
+
 void BattleGlobal::DeleteUniteComboDirection() {
     if (m_uniteComboCamera) {
         fw::CameraManager::get()->m_layers[0].pop(m_uniteComboCamera, 0.0f);
@@ -220,11 +416,17 @@ void BattleGlobal::DeleteUniteComboDirection() {
     pad_5d24 = 0;
     pad_5d28 = 0;
     pad_5d2c = 0;
-    pad_5d30 = 0xFFFF;
+    pad_5d30 = -1;
+    pad_5d32 = 0;
     pad_5d34 = 0;
+    pad_5d36 = 0;
     pad_5d38_0 = 0;
+    pad_5d38_5 = 0;
+    pad_5d38_10 = 0;
     pad_5d3a = 0;
+    pad_5d3b = 0;
     pad_5d3c = 0;
+    pad_5d3d = 0;
     pad_5d3e = 0;
     pad_5d3f = 0;
 }
@@ -356,6 +558,32 @@ void BattleGlobal::DeleteElementalComboCamera() {
 
 bool BattleGlobal::IsValidAutoMode() const {
     return pad_bit49;
+}
+
+unsigned int BattleGlobal::CreateAttackData(gf::GF_OBJ_HANDLE* handle) {
+    unsigned int id = m_nextAttackId;
+    m_nextAttackId++;
+    for (;;) {
+        if (m_nextAttackId == 0xFFFFFFFF) {
+            m_nextAttackId++;
+        } else if (m_nextAttackId == 0) {
+            m_nextAttackId++;
+        } else {
+            break;
+        }
+    }
+    AddAttackDamage(handle, id, 0, true);
+    AttackDamageData* data = findAttackData(id);
+    if (data != nullptr) {
+        int index = CharacterManager::sys()->SearchCharacter(handle);
+        if (index >= 0) {
+            data->charaIndex = index;
+        }
+        bool chain = ChainAttackManager::sys()->IsProc(true);
+        data->resistantBreakDamageEnd = !chain;
+        data->chainAttack = chain;
+    }
+    return id;
 }
 
 void BattleGlobal::UpdateAttackData(unsigned int id) {
@@ -851,15 +1079,35 @@ void BattleGlobal::GetFutureViewArtsData(ARTS_DATA& data) const {
     DataManager::sys()->GetArtsData(static_cast<ARTS_DATA::DATA_TYPE>(pad_5d68 & 7), pad_5d68 >> 3, data);
 }
 
+const BattleGlobal::MapRev* BattleGlobal::GetMapDriverRevData(const BattleCharacter* chara, const BattleCharacter* driver) const {
+    if (m_challengeAnySuccess || chara == nullptr) {
+        return nullptr;
+    }
+    if (!chara->m_isPlayer) {
+        return nullptr;
+    }
+    bool apply = true;
+    if (driver != nullptr) {
+        const CharacterParameter* param = driver->GetCharacterParameterConst(true);
+        if (param != nullptr) {
+            apply = param->IsApplyMapRev();
+        }
+    }
+    if (!chara->IsDriver(true)) {
+        return nullptr;
+    }
+    return GetMapDriverRevDataByBdatID(chara->m_bdatID, apply);
+}
+
 const BattleGlobal::MapRev* BattleGlobal::GetMapDriverRevDataByBdatID(int chara, bool apply) const {
     static const MapRev s_default;  // the name is not the original's
     if (!apply) {
         return &s_default;
     }
-    if (chara < 1 || chara > 12) {
-        return nullptr;
+    if (chara >= 1 && chara <= 12) {
+        return &m_mapRev[chara - 1];
     }
-    return &m_mapRev[chara - 1];
+    return nullptr;
 }
 
 bool BattleGlobal::IsKakuseiFinished() const {
@@ -1451,6 +1699,33 @@ void BattleGlobal::RegisterFutureView(gf::GF_OBJ_HANDLE* handle, float time, uns
     pad_5d68 = (type & 7) | (arts << 3);
     pad_5d6a = value;
     SetPause(5, true);
+}
+
+bool BattleGlobal::InputLeverGachaStick(float angle) {
+    // counts when there is no angle yet, or the stick moved far enough (a sixth of a turn from the latest angle, a
+    // third from the one that counted; both across the wrap at +-pi)
+    bool count = true;
+    if (m_leverGachaStickAngle != 0xFFFF) {
+        bool near = true;
+        if (m_leverGachaStickLastAngle != 0xFFFF) {
+            float last = m_leverGachaStickLastAngle * 0.0001f;
+            near = !(::fabsf(angle - last) >= 1.0471976f &&
+                     ::fabsf(angle - (last + (last < angle ? 6.2831855f : -6.2831855f))) >= 1.0471976f);
+        }
+        if (near) {
+            float prev = m_leverGachaStickAngle * 0.0001f;
+            count = ::fabsf(angle - prev) >= 2.0943952f &&
+                    ::fabsf(angle - (prev + (prev < angle ? 6.2831855f : -6.2831855f))) >= 2.0943952f;
+        }
+    }
+    m_leverGachaStickLastAngle = angle * 10000.0f;
+    if (!count) {
+        return false;
+    }
+    m_leverGachaStickAngle = m_leverGachaStickLastAngle;
+    m_leverGachaCount++;
+    m_leverGachaInput = true;
+    return true;
 }
 
 bool BattleGlobal::InputLeverGachaButton(LEVER_GACHA_DATA::BUTTON button) {

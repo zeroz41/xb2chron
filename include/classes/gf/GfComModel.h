@@ -40,6 +40,10 @@ public:
     };
     // what setup takes (the field names are not the original's)
     struct SetupInfo {
+        // the defaults fn_71005418C4 (gf_obj_factory) stores before it fills the info
+        SetupInfo()
+            : m_skeleton(nullptr), m_boneFrameCount(1), m_arg(0), m_handle(reinterpret_cast<GF_ASSET_HANDLE*>(-1)),
+              pad_20(false), m_keepScale(false), m_scale(1.0f) {}
         GfFileIdx m_file;  // the model's file in the asset (GfAssetManager::getResource's)
         const anm::Skeleton* m_skeleton;  // no pose, extra truck buffer or modifiers without one
         unsigned int m_boneFrameCount;  // the room both bone frame vectors get

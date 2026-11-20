@@ -18,6 +18,8 @@ namespace btl { class ShakeCameraManager; struct ARTS_DATA; class BattleCharacte
 namespace btl {
 // The tutorial condition BattleGlobal::Tutorial takes (the type's name is the symbol's; its values are not named).
 enum BTL_TUTORIAL_COND {};
+// the battle difficulty (SetupDifficultyData: 0, 2, 3 pick balance rates, 4 repeats); enumerators not known
+enum BTL_DIFFICULTY {};
 
 // table 0x7100B3A3E0
 class BattleGlobal : public ::mm::mtl::PtrSingleton< ::btl::BattleGlobal> {
@@ -52,6 +54,16 @@ public:
     bool IsEnableBattle() const;
     void SetElementalComboImmortal(gf::GF_OBJ_HANDLE* handle);
     void DeleteUniteComboDirection();
+    // starts the unite combo direction registered for pad_5d30's character (Bdat 0x44 row pad_5d3d): its camera
+    // ("Camera" 1/2, pushed while "Waitf") and its slow motion ("Slow", "Slowf"); once (pad_5d3f)
+    void StartUniteComboDirection();
+    // the unite combo direction's frame: waits pad_5d2c (6 s) to start it, then shows its UI and voice at the row's
+    // "UIStartf"/"UIEndf"/"Voicef" frames (pad_5d3e bits) and deletes it once the camera has played and pad_5d28 ran
+    // out (or, without camera, once its slow motion ended)
+    void UpdateUniteComboDirection(const fw::UpdateInfo& info);
+    // sets the difficulty's rates (pad_5c04-pad_5c58) unless pad_bit1 is set or nothing changed (difficulty 4 again:
+    // every 37th call)
+    void SetupDifficultyData(BTL_DIFFICULTY difficulty);
     void SetPause(int kind, bool pause);
     void DeleteSlow(unsigned int id);
     // deletes every slow-motion request's effect on its character (on a copy of the requests)
@@ -419,23 +431,38 @@ public:
     unsigned char pad_5c03[0x1];
     // EnemyParameter::SetResistantAttr adds (it - 1) * 0.08 to a nonzero elemental awake chance unless pad_5c58 is
     // set (meaning unknown)
-    float pad_5c04;
-    unsigned char pad_5c08[0x14];
-    // DataManager::AddPartyGauge multiplies every gain by it (the name is not the original's)
+    // SetupDifficultyData sets the next ones from GfGameManager::getBtlDifParam(1-12), percentages as rates
+    float pad_5c04;  // param 1
+    float pad_5c08;  // param 2
+    float pad_5c0c;  // param 3
+    float pad_5c10;  // param 4
+    float pad_5c14;  // 1 / param 5 (0 when that is not above 1e-6)
+    float pad_5c18;  // 1 / param 11 (likewise)
+    // DataManager::AddPartyGauge multiplies every gain by it (the name is not the original's); param 6
     float m_partyGaugeRate;
-    unsigned char pad_5c20[0x14];
+    float pad_5c20;  // param 7
+    float pad_5c24;  // param 8
+    float pad_5c28;  // param 9
+    float pad_5c2c;  // param 10, as is
+    // SetupDifficultyData derives the next ones from pad_5c04 (constants when it is below 1)
+    float pad_5c30;
     // EnemyParameter::AddEnhanceBallHateCallback: the least hate it adds, the rate of the hate gap to the hate
     // target it adds, and the recast it adds to random palette slots (meanings inferred, not the original's names)
     float pad_5c34;
     float pad_5c38;
     float pad_5c3c;
-    unsigned char pad_5c40[0xC];
+    float pad_5c40;
+    float pad_5c44;
+    float pad_5c48;
     // EnemyParameter::ApplyStatusEnhanceAndDifficulty scales every enhanced value by it (the name is not the
     // original's)
     float m_statusEnhanceRate;
     // the challenge battle unit's GetDropEtherCubeRate returns it; meaning unknown
     float pad_5c50;
-    unsigned char pad_5c54[0x4];
+    unsigned char pad_5c54;  // SetupDifficultyData's difficulty
+    unsigned char pad_5c55;  // SetupDifficultyData's count of repeated calls for difficulty 4
+    bool pad_5c56;  // getBtlDifParam(12) above 1
+    bool pad_5c57;  // pad_5c04 below 1
     bool pad_5c58;  // EnemyParameter::SetResistantAttr skips its pad_5c04 term while it is set (meaning unknown)
     unsigned char pad_5c59[0x3];
     // the lever gacha's input state (the fields of LEVER_GACHA_DATA, declared above; field names are not the original's)
@@ -507,17 +534,25 @@ public:
     ::mm::mtl::IntrusivePtr<fw::Camera> m_uniteComboCamera;
     // the next ones are what DeleteUniteComboDirection resets (meanings unknown)
     unsigned int pad_5d20;  // a slow-motion request id (DeleteUniteComboDirection deletes it)
-    int pad_5d24;
-    int pad_5d28;
-    int pad_5d2c;
-    unsigned int pad_5d30;  // 0xFFFF when reset
-    int pad_5d34;
-    unsigned short pad_5d38_0 : 15;
+    float pad_5d24;  // UpdateUniteComboDirection's frame count (30 per second) since the start
+    float pad_5d28;  // StartUniteComboDirection: the camera's "Waitf" frames in seconds
+    float pad_5d2c;  // UpdateUniteComboDirection's time before the start (6 s)
+    // RegisterUniteComboDirection stores the next four (u16 stores); pad_5d30 is a character index (-1 when reset)
+    short pad_5d30;
+    unsigned short pad_5d32;
+    unsigned short pad_5d34;
+    unsigned short pad_5d36;
+    // UpdateUniteComboDirection hands the next three to UIManager::DispUniteComboUI
+    unsigned short pad_5d38_0 : 5;
+    unsigned short pad_5d38_5 : 5;
+    unsigned short pad_5d38_10 : 5;
     unsigned short pad_5d38_15 : 1;
-    unsigned short pad_5d3a;
-    unsigned short pad_5d3c;
-    unsigned char pad_5d3e;
-    unsigned char pad_5d3f;  // see pad_5d08
+    unsigned char pad_5d3a;  // DispUniteComboUI's first two arguments
+    unsigned char pad_5d3b;
+    unsigned char pad_5d3c;  // SomebodyPraise follows the direction from 3 up
+    unsigned char pad_5d3d;  // StartUniteComboDirection's Bdat 0x44 row
+    unsigned char pad_5d3e;  // UpdateUniteComboDirection's done steps (bits 0-2)
+    unsigned char pad_5d3f;  // see pad_5d08; StartUniteComboDirection sets it once started
     // a vision menu's context, released by hand as m_ocgContext is (NotifyMapChange; the name is not the original's)
     gf::GfMenuCallContext* m_visionContext;
     // IsFutureViewEnemy compares its handle with it while pad_5d54 is non-zero
@@ -584,7 +619,11 @@ public:
     unsigned char pad_83c3_0 : 1;
     unsigned char pad_83c3_1 : 1;
     unsigned char pad_83c3_2 : 6;
-    unsigned char pad_83c4[0x4];
+    unsigned char pad_83c4[0x2];
+    // the blade change type BattleCharacter::CheckForceExit hands to BladeChangeManager::StartBladeChange (3 while
+    // pad_bit36 is set; meaning unknown)
+    signed char pad_83c6;
+    unsigned char pad_83c7;
     // the highest level of an enemy that joined through a link, +15 for a named one (NotifyLinkJoinBattle; the name
     // is not the original's)
     unsigned char m_linkJoinLevel;
@@ -647,7 +686,8 @@ public:
     bool m_killChild : 1;
     unsigned char : 1;
     bool pad_bit35 : 1;  // IsButtonChallengeAutoSuccess holds while it is set
-    unsigned char : 2;
+    bool pad_bit36 : 1;  // while set, BattleCharacter::CheckForceExit starts its blade change with type 3 (meaning unknown)
+    unsigned char : 1;
     // EnemyParameter::BattleStart sets it for an enemy whose ChrEnArrange row has the Hikari flag; meaning unknown
     bool pad_bit38 : 1;
     // EnemyParameter::BattleStart sets it for an enemy with m_isInvalidWarp; meaning unknown

@@ -27,6 +27,9 @@
 #include "plugin/Bdat.h"
 #include "gf/MsgFxComboBuff.h"
 #include "gf/MsgUnk_1000050.h"
+#include "gf/MsgObjectDamage.h"
+#include "gf/MsgObjectNotifyDead.h"
+#include "gf/MsgUnk_100003A.h"
 #include "btl/Utility.h"
 #include "classes/btl/TalkManager.h"
 #include "gf/GfObjAcc.h"
@@ -815,7 +818,8 @@ void BattleCharacter::ManagerUpdate_Attack() {
         pad_1098 -= time;
         if (pad_1098 <= 0.0f) {
             pad_1098 = 0.0f;
-            pad_10B8 = 0;
+            pad_10B8_0 = 0;
+            pad_10B8_4 = 0;
         }
     }
     pad_109C += time;
@@ -1007,6 +1011,71 @@ void BattleCharacter::LeverReduceProc(ACTION_ID id) {
     global->pad_5c70 = 0;
     global->m_leverGachaCount = 0;
     global->m_leverGachaInput = false;
+}
+
+bool BattleCharacter::CheckForceExit(ACTION_ID id) {
+    if (!m_exitBattle || !m_exitBattleFlag) {
+        return false;
+    }
+    gf::GF_OBJ_HANDLE* handle = m_handle;
+    if (BladeChangeManager::sys()->IsRegister(handle)) {
+        if (BladeChangeManager::sys()->IsProcDisableCancel(handle)) {
+            return false;
+        }
+        BladeChangeManager::sys()->FinishBladeChange(handle);
+    }
+    FormationChangeManager::sys()->ForceExit(handle);
+    CharacterParameter* param = GetCharacterParameter(false);
+    if (param != nullptr && param->IsBlade(true) && m_bdatID == 0x3EB) {
+        if (!BladeChangeManager::sys()->IsRegister(handle)) {
+            gf::GF_OBJ_HANDLE* driver = GetCharacterParameter(false)->m_driverHandle;
+            BattleGlobal* global = mm::mtl::PtrSingleton<BattleGlobal>::sys();
+            int type = global->pad_bit36 ? 3 : global->pad_83c6;
+            BladeChangeManager::sys()->StartBladeChange(driver, handle, type, 5, false);
+        }
+        return true;
+    }
+    // the actions 1-4, 6, 7, 9, 10, 13-22 and 24
+    if (((1 << id) & 0x17FE6DE) == 0) {
+        CharacterParameter* param = GetCharacterParameter(false);
+        if (param == nullptr || !param->IsDriver(true) || id != ACTION_BLADE_CHANGE) {
+            return false;
+        }
+    }
+    m_isRunHold = true;
+    return true;
+}
+
+void BattleCharacter::BattleEndInitialize() {
+    pad_F07_3 = false;
+    pad_F07_4 = false;
+    pad_F07_5 = false;
+    pad_F07_6 = false;
+    pad_F00_2 = true;
+    pad_10B6 = 0;
+    pad_107C = -1.0f;
+    pad_1094 = 0.0f;
+    pad_1098 = 0.0f;
+    pad_108C = 0.0f;
+    m_superArmorTime = 0.0f;
+    pad_109C = 0.7f;
+    pad_10A2 = 0;
+    pad_10B2 = 0;
+    pad_10B3 = 0;
+    pad_10B4 = 0;
+    pad_10B5 = 0;
+    pad_10B8_0 = 0;
+    pad_10B8_4 = 0;
+    pad_10B9_5 = false;
+    if (CharacterParameter* param = GetCharacterParameter(false)) {
+        param->BattleEndInitialize();
+    }
+    if (IsControlCharacter()) {
+        mm::mtl::PtrSingleton<TalkManager>::sys()->pad_1a2f = 0;
+    }
+    if (m_isPlayer) {
+        gf::GfObjUtil::setInvincible(m_handle, false, false);
+    }
 }
 
 gf::GF_OBJ_HANDLE* BattleCharacter::GetWeaponObjectHandle(bool second) const {
@@ -1479,6 +1548,78 @@ float BattleCharacter::GetArtsAttackDistance(const ARTS_DATA& arts) const {
     return distance;
 }
 
+bool BattleCharacter::ProgressActionState(ACTION_ID id, int step, bool test) {
+    if (m_state != id) {
+        return false;
+    }
+    switch (id) {
+    case ACTION_BLADE_CHANGE:
+        if (step == 1 && m_actionID == 8) {
+            CharacterParameter* param = GetCharacterParameter(false);
+            if (param != nullptr && param->IsDriver(false)) {
+                if (!test) {
+                    m_actionID = 9;
+                }
+                return true;
+            }
+        }
+        break;
+    case 10:
+        switch (step) {
+        case 1: {
+            CharacterParameter* param = GetCharacterParameter(false);
+            if (param != nullptr && param->IsDriver(false) && m_actionID == 3) {
+                if (!test) {
+                    m_actionID = 4;
+                }
+                return true;
+            }
+            break;
+        }
+        case 2: {
+            CharacterParameter* param = GetCharacterParameter(false);
+            if (param != nullptr && param->IsBlade(false) && m_actionID == 9) {
+                if (!test) {
+                    m_actionID = 10;
+                }
+                return true;
+            }
+            break;
+        }
+        }
+        break;
+    case 12:
+        switch (step) {
+        case 1:
+            if (m_actionID == 2) {
+                if (!test) {
+                    m_actionID = 3;
+                }
+                return true;
+            }
+            break;
+        case 2:
+            if (m_actionID == 0xB) {
+                if (!test) {
+                    m_actionID = 0xC;
+                }
+                return true;
+            }
+            break;
+        case 3:
+            if (m_actionID == 8) {
+                if (!test) {
+                    m_actionID = 9;
+                }
+                return true;
+            }
+            break;
+        }
+        break;
+    }
+    return false;
+}
+
 void BattleCharacter::ReviveHeal(BattleCharacter* rescuer) {
     float rate = mm::mtl::PtrSingleton<BtlSystemBalanceAccess>::sys()->m_reviveHealRate * 0.01f;
     rate += SatisfyEnhanceCondition(0xA8, 0, 0.0f, nullptr, true);
@@ -1645,6 +1786,75 @@ void BattleCharacter::HealFriendHpRate(float rate, int type, BattleCharacter* at
     for (unsigned char index : list) {
         manager->GetCharacterConst(index)->HealHpRate(rate, type, attacker);
     }
+}
+
+void BattleCharacter::NotifySufferDamage(const gf::MsgObjectNotifyDamage& msg) {
+    if (msg.m_damage->pad_2c[2]) {
+        pad_10B9_3 = true;
+    } else if (m_isBattle) {
+        pad_F08_1 = true;
+    }
+    const gf::MsgObjectDamage* damage = msg.m_damage;
+    if (damage->m_id != 0x1000035) {
+        return;
+    }
+    if (!m_isPlayer && !m_isBattle) {
+        auto isHigher = [](int id, int cur) -> bool {
+            if (cur == id) {
+                return cur == 1 || cur == 2;
+            }
+            unsigned char* fp = gf::GfDataBdat::getFP(0x3A);
+            int priority = id != 0 ? Bdat::getValCheckU8(fp, "Priority", id) : 0;
+            unsigned char curPriority = cur != 0 ? Bdat::getValCheckU8(fp, "Priority", cur) : 0;
+            return priority >= curPriority;
+        };
+        if (pad_10B8_0 == 0 || isHigher(damage->m_battleStartType, pad_10B8_0) ||
+            (pad_10B8_0 == damage->m_battleStartType && damage->m_battleStartParam > pad_10B8_4)) {
+            pad_1098 = 1.0f;
+            pad_10B8_0 = damage->m_battleStartType;
+            pad_10B8_4 = damage->m_battleStartParam;
+        }
+    }
+    if (damage->m_type == 1) {
+        if (const CharacterParameter* param = GetCharacterParameter(false)) {
+            unsigned int maxHp = param->GetMaxHP();
+            if (damage->m_damage >= maxHp) {
+                pad_F06_5 = true;
+            }
+        }
+    }
+    if (pad_F07_5) {
+        const CharacterParameter* param = GetCharacterParameter(false);
+        if (param != nullptr && param->GetHP() == 1) {
+            pad_F07_6 = true;
+        }
+    }
+}
+
+void BattleCharacter::NotifyDead(const gf::MsgObjectNotifyDead& msg) {
+    if (IsControlCharacter()) {
+        BattleGlobal* global = BattleGlobal::sys();
+        if (!global->pad_bit1) {
+            mm::mtl::PtrSingleton<DataManager>::sys()->SetPartyGauge(0, true);
+        } else {
+            switch (msg.m_deadType) {
+            case 4:
+                global->m_controlCharacterDead = true;
+                break;
+            case 3:
+                if (msg.m_cause && msg.m_cause->m_id == 0x1000035) {
+                    if (const CharacterParameter* param = GetCharacterParameter(false)) {
+                        unsigned int maxHp = param->GetMaxHP();
+                        if (static_cast<const gf::MsgObjectDamage*>(msg.m_cause)->m_damage >= maxHp) {
+                            BattleGlobal::sys()->m_controlCharacterDead = true;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+    pad_10B9_6 = true;
 }
 
 void BattleCharacter::ResetAllEffect() {
@@ -2020,6 +2230,86 @@ void BattleCharacter::NotifyChangeAttr(gf::GF_OBJ_HANDLE* handle, unsigned int a
     }
     mm::mtl::PtrSingleton<TalkManager>::sys()->NotifyTrigger(m_voiceIndex, static_cast<TalkManager::TRIGGER>(0x15),
                                                               attr, 0);
+}
+
+int BattleCharacter::GetBuffEffectIndex(int buff) const {
+    auto isNotBlade = [&]() -> bool {
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        return param != nullptr && param->m_isNotBlade;
+    };
+    auto isEnable = [&]() -> bool {
+        if (Utility::IsBladeArtsBuff(buff)) {
+            return isNotBlade();
+        }
+        if (BattleGlobal::sys()->m_challengeAnySuccess) {
+            switch (buff) {
+            case 11:
+                return isNotBlade();
+            case 12:
+                return isNotBlade();
+            case 13: {
+                const CharacterParameter* param = GetCharacterParameterConst(false);
+                return param != nullptr && param->IsDriver(false);
+            }
+            case 14: {
+                const CharacterParameter* param = GetCharacterParameterConst(false);
+                return param != nullptr && param->IsBlade(false);
+            }
+            case 15:
+                return isNotBlade();
+            case 16:
+                return isNotBlade();
+            case 17:
+                return isNotBlade();
+            case 30:
+                return !m_isPlayer && isNotBlade();
+            }
+            return false;
+        }
+        switch (buff) {
+        case 11:
+            return isNotBlade();
+        case 12:
+            return isNotBlade();
+        case 13:
+            return isNotBlade();
+        case 14: {
+            const CharacterParameter* param = GetCharacterParameterConst(false);
+            return param != nullptr && !param->m_isNotBlade;
+        }
+        case 15:
+            return isNotBlade();
+        case 16:
+            return isNotBlade();
+        case 17:
+            return isNotBlade();
+        }
+        return false;
+    };
+    if (!isEnable()) {
+        return -1;
+    }
+    if (Utility::IsBladeArtsBuff(buff)) {
+        return 10;
+    }
+    switch (buff) {
+    case 11:
+        return 11;
+    case 12:
+        return 12;
+    case 13:
+    case 14:
+        return 13;
+    case 15:
+        return 15;
+    case 16:
+        return 16;
+    case 17:
+        return 10;
+    case 30:
+        return 14;
+    }
+    return -1;
 }
 
 void BattleCharacter::UpdateBuffEffect(int id) {

@@ -1,7 +1,7 @@
 #ifndef GF_GFREQCOMMAND_H
 #define GF_GFREQCOMMAND_H
 
-namespace gf { class GF_OBJ_HANDLE; class GfMapjumpInfo; class GfReqParam; class RQ_SETUP_PARTY; enum SAVESLOT : int; }
+namespace gf { class GF_OBJ_HANDLE; class GfMapjumpInfo; class GfReqParam; class RQ_SETUP_PARTY; class RQ_SETUP_PARTY_DRIVER; enum SAVESLOT : int; }
 namespace gf {
 // the requests GfReqManager queues (GfReqManager's table comment names them gf::GfReqCommand's): only the ones
 // called so far are declared
@@ -34,10 +34,16 @@ public:
     // a party change request (execChangeParty runs it): returns its handle (SCOM_EXEC_CURRENT_BLADE::exec passes
     // the party GfGameParty::getCurrentPartyInfo fills after GfGameUtil::setBladeSelect)
     static unsigned int reqChangeParty(const RQ_SETUP_PARTY& party);
+    // the drivers alone (GfMenuObjUtil::setupPartyDriver passes the party GfGameParty::getCurrentPartyInfo fills
+    // with its drivers): returns the request's handle
+    static unsigned int reqChangeParty(const RQ_SETUP_PARTY_DRIVER& party);
     // Placeholder name: new in 3.0.1. A member because it sits between reqChangeParty and reqChangeBladeWithSetId
     // and queues execChangeParty. What it does: queues a party change built from GfGameParty::getCurrentPartyInfo,
     // passed through fn_710055509C first.
     static unsigned int fn_710055570C();
+    // Placeholder name: a member because it sits between reqChangeParty and execChangeParty, which hand it their
+    // party. What it does: moves the party's drivers (an Ira game: each party's members) forward over empty slots.
+    static void fn_710055509C(RQ_SETUP_PARTY& party);
 
     // Placeholder name: 1.0.0 has the same function after execMapjump, unnamed too (fn_71005BE790). A member
     // because execChangeBladeWithSetId tail-calls it with its request's slot and set id. What it does: changes the

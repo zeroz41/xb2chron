@@ -11,10 +11,12 @@ namespace gf {
 class GfMenuObjOption::SubMenuListener : public ::ui::UIObjectListener {
 public:
     // initialize news it (0x28 bytes) with the menu object as its owner
-    SubMenuListener(GfMenuObjOption* owner) : pad_0C(), m_owner(owner) {}
+    SubMenuListener(GfMenuObjOption* owner) : m_termOnClose(), pad_10(), m_owner(owner) {}
     virtual ~SubMenuListener() {}  // slot 0: weak in the original (its D0 is in the unit's tail)
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
-    unsigned char pad_0C[0x10];
+    // 1: the end of the fade-out (event 3) terminates the object; event 1 clears it (the name is not the original's)
+    int m_termOnClose;
+    unsigned char pad_10[0xC];
     GfMenuObjOption* m_owner;
 };
 }  // namespace gf

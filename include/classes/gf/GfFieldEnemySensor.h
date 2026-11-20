@@ -58,9 +58,13 @@ public:
 
     unsigned char pad_8[0x4c];
     unsigned int pad_54;  // its CHR_EnArrange row (createBy_CHR_EnArrange)
-    unsigned char pad_58[0x8];
+    // its CreateInfo's m_lockId and m_lockIndex (both 0 or more: the enemy is in a battle lock; updateInvincible)
+    int pad_58;
+    int pad_5c;
     unsigned char pad_60;  // bit 0: it searches by range and angle, bit 1: by radius (createBy_CHR_EnArrange)
-    unsigned char pad_61[0x27];
+    unsigned char pad_61[0x1f];
+    bool pad_80;  // one of the flags GfComBehaviorEnemy::canChangeBattleWithoutDelay counts as a find
+    unsigned char pad_81[0x7];
     // the collision objects whose events it watches; enter sets, leave clears the flag that follows each
     // (create releases both; the names are not the original's)
     fw::ColiObject* m_coli;

@@ -25,11 +25,10 @@ public:
     void sort(std::function<bool(const T0&, const T0&)> compare);
     // the content at an index, m_dummy past the end; the name is not the original's (1.0.0 has addContents)
     T0& getContents(unsigned int index) {
-        T0* contents = &m_dummy;
-        if (index < m_list.size()) {
-            contents = &m_list[index];
+        if (index >= m_list.size()) {
+            return m_dummy;
         }
-        return *contents;
+        return m_list[index];
     }
     // the same on a const list (GfMenuObjCommonText::openGetItem copies a const list's contents)
     const T0& getContents(unsigned int index) const {

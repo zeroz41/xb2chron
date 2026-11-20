@@ -35,8 +35,9 @@ public:
     static void clear();
     static void setupGame();
     // 2.0.0's symbols name it. What it does: calls GfFobjManager::rebuildForGameType on GfFobjManager's instance when
-    // there is one; tl::TitleStateChangeGameType's update calls it.
-    static void rebuildForGameType();
+    // there is one; tl::TitleStateChangeGameType's update calls it on the instance (x0 is the instance it tested), so
+    // a member, not static.
+    void rebuildForGameType();
     void setSuspendGame(bool suspend);
     static bool isExistObj();
     // SCOM_DESTROY_FIELD_OBJ's request

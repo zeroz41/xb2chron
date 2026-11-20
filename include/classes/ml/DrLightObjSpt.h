@@ -2,6 +2,7 @@
 #define CLASSES_ML_DRLIGHTOBJSPT_H
 
 #include "classes/ml/DrLightObj.h"
+#include "mm/Col3.h"
 #include "mm/Mat44.h"
 #include "mm/Vec3.h"
 
@@ -25,7 +26,9 @@ public:
     unsigned char pad_80[0x10];
     mm::Vec3 m_dir;  // 0x90, setMat's -z axis, normalized
     unsigned char pad_a0[0x10];
-    float m_color[3];  // 0xB0, set by fw::EffectManager::setLgtParam (the name is not the original's)
+    // 0xB0, set by fw::EffectManager::setLgtParam; DrShdLgtMan::renderDebugSpt passes it as renderDebug's mm::Col3
+    // (the name is not the original's)
+    mm::Col3 m_color;
     float m_angle;  // 0xBC, set by DrEnvironmentAnim::envlgt_spt_angle (the name is not the original's)
     float m_size;  // 0xC0, set by DrEnvironmentAnim::envlgt_spt_size (the name is not the original's)
     unsigned char pad_c4[0x4];

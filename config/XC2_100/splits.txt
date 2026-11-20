@@ -3344,8 +3344,12 @@ idcoli/IDColiObjData.cpp:
 	.data        start:0x011B6E70 end:0x011B7370
 
 idcoli/IDColiGrandMesh.cpp:
-	.text        start:0x008D75AC end:0x008E88F8
-	.data        start:0x011B7370 end:0x011B74D0
+	.text        start:0x008D75AC end:0x008E8284
+	.data        start:0x011B7370 end:0x011B7440
+
+navi/NvmshManager.cpp:
+	.text        start:0x008E8284 end:0x008E88F8
+	.data        start:0x011B7440 end:0x011B74D0
 	.bss         start:0x01BD7548 end:0x01BD7550
 
 navi/NvmshAcObjBase.cpp:

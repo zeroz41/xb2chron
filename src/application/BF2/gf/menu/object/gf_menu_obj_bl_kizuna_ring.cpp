@@ -502,9 +502,9 @@ bool GfMenuObjBlKizunaRing::seqAchieve() {
                 GfKizunaringBlade::releaseAchievement(blade, line, level);
                 GfMenuObjPopup::OpenParam param;
                 param.m_type = 4;
-                param.m_value[0] = blade;
-                param.m_value[1] = line;
-                param.m_value[2] = level;
+                param.m_value0 = blade;
+                param.m_value1 = line;
+                param.m_value2 = level;
                 GfMenuObjPopup::remove(param);
             } else {
                 GfKizunaringBlade::orderAchievement(blade, line, level);

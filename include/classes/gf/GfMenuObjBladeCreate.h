@@ -8,6 +8,7 @@
 #include "classes/gf/GfBladeCreateInfo.h"  // classes/gf/GfBladeCreateInfo.h (new; same folder)
 
 namespace mm { namespace mtl { class ReferenceObject; } }
+namespace ui { class UISelectObjList; }
 
 namespace gf {
 class GfMenuCallContext;
@@ -58,7 +59,10 @@ public:
         // 0x68: the driver list (seqCreateStartDriver and seqCreateWaitDriver find the selected driver's model by
         // its id)
         GfMenuDriverList* m_driverList;
-        mm::mtl::ReferenceObject* pad_48;  // 0x70: finalize releases it
+        // 0x70: the core crystal list (initialize creates it with GfMenuItemList::create and hands it to the crystal
+        // page's GfMenuItemAdapters; DriverSelectListener sets it up with the box's type 0xB items); finalize
+        // releases it
+        GfMenuItemList* pad_48;
         // 0x78: the booster list: BoosterNumListener's open caps the number at its selected item's count
         GfMenuItemList* m_boosterList;
         GfBladeCreate m_bladeCreate;  // 0x80
@@ -186,9 +190,13 @@ public:
     unsigned int pad_1148;
     unsigned int pad_114C;  // seqCreateCtrlBlade's step 0 sets 15
     // reference-counted objects the destructor releases (in the order 0x1160, 0x1168, 0x1150, 0x1158, 0x11A8)
-    mm::mtl::ReferenceObject* pad_1150;
+    // the crystal page's selection objects (initialize: ui::UISelectObjList::create, "LAY_core_select_base@%02d";
+    // its size is the rows the crystal list shows)
+    ui::UISelectObjList* pad_1150;
     mm::mtl::ReferenceObject* pad_1158;
-    mm::mtl::ReferenceObject* pad_1160;
+    // the booster page's selection objects (initialize: ui::UISelectObjList::create; its size is the rows the booster
+    // list shows)
+    ui::UISelectObjList* pad_1160;
     mm::mtl::ReferenceObject* pad_1168;
     unsigned int pad_1170;
     // the number updateIdea keeps for a booster when asked (by the booster list's selected index; BoosterNumListener
@@ -199,7 +207,7 @@ public:
     mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_number;  // the constructor creates it (the name is not the original's)
     GfMenuBladeCreateCamera* m_camera;  // the constructor creates it (the name is not the original's)
     int pad_1198;  // the constructor sets -1
-    unsigned char pad_119C[4];
+    float pad_119C;  // the driver carousel's angle per driver: DriverSelectListener turns the camera to index times it
     unsigned int pad_11A0;
     unsigned char pad_11A4[4];
     mm::mtl::ReferenceObject* pad_11A8;

@@ -17,7 +17,8 @@ public:
     static unsigned int getBtlDifficult();
     static bool isEnableAutoSave();
     static void* getUseSoundUiOption();
-    static void getBtlDifParam(unsigned int value);
+    // the value (btl::BattleGlobal::SetupDifficultyData scales it)
+    static unsigned int getBtlDifParam(unsigned int value);
     // 2.0.0's symbols name it. What it does: calls GfDataBtlDif::setOptionGameDifficult with type on the same
     // SSoundUiOption GfGameUtilDiff::getUseSoundUiOption returns (GfArenaBattle::execBattleSequence calls it).
     static void setOptionGameDifficult(GFDIFF type);

@@ -113,6 +113,10 @@ public:
     // (GfMenuObjSaveLoad2::refreshSave shows the save's party with it)
     static unsigned int getFaceIconID(const SDataGame& game, unsigned int type, unsigned int id);
     static bool getMenuCondition(unsigned int condition);  // whether a menu's condition is met
+    // the party change request's handle (GfReqCommand::reqChangeParty), 0 for an empty list. 1.0.0's symbol spells
+    // FixedVector<unsigned short, 16>, but its body (the count at 0x40) and GfMenuObjPartyForm3::MainListener's list
+    // (asserted against 32) hold 32
+    static unsigned int setupPartyDriver(const mm::mtl::FixedVector<unsigned short, 32>& drivers);
     static bool checkCCStart(GfMenuCallContext* context);  // a context that is not running yet
     static bool checkCCNext(GfMenuCallContext* context, unsigned int id);  // a context running on that id
     static void setDockPos(unsigned int handle, unsigned int target, unsigned char pos, bool);
@@ -206,6 +210,8 @@ public:
     // sets param up as that preset's fade-in control, with slot as its m_slot (GfMenuObjHitonowa::dispLevel passes
     // 3 and -1)
     static void setPresetCtrl_Fadein(unsigned int preset, CtrlParam& param, int slot);
+    // the same for the preset's fade-out control (m_startFlags bit 1 instead of m_setDefault)
+    static void setPresetCtrl_Fadeout(unsigned int preset, CtrlParam& param, int slot);
     // the colour ui::UIColorLibrary names (r, g, b; black without one), in a function-local static
     static const mm::Col3& getPresetColor(const char* name);
     // a world position in view space (out = GfInfo::m_viewMat applied to in)
@@ -247,7 +253,8 @@ public:
     static unsigned int getBladeIDFromDriverSlot(unsigned int driver, int slot);
     // how many blade slots a driver has: 1, 2 once local flag 0x89FF is 1, 3 once 0x8A00 is 1 (1.0.0's
     // getBladeFromDriver calls getBladeSlotMax at the same place; 1.0.0's body is the same)
-    static unsigned int getBladeSlotMax();
+    // (int: getSetBladeID compares it with a slot as signed)
+    static int getBladeSlotMax();
     // a combo's effect text, and its effect (3.0.1's always 1) (GfMenuElementComboAdapter's update_*)
     static ui::UIStr getElementComboEffectName(unsigned int combo);
     static unsigned char getElementComboEffect(unsigned int combo);

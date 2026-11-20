@@ -8,6 +8,7 @@ namespace ml { class DrMan; }
 namespace ml { class DrPixlMan; }
 namespace ml { class DrPixlShadowObj; }
 namespace ml { class DrPixlShadowObjDir; }
+namespace ml { class DrLightObj; }
 
 namespace ml {
 // wkPixlManRes::m_shadowMan. Only what the light objects call is declared.
@@ -26,6 +27,11 @@ public:
     DrPixlShadowMan(DrMan* drMan, DrPixlMan* pixlMan);
     ~DrPixlShadowMan();
     void releaseTexWork();
+    // a directional (createDirCacheShadow) or spot (createSptShadow) shadow object for the light, on a pooled depth
+    // target of the size sizeType selects (1..6: 128..2048, else 64), shared with objects of the same kind and size;
+    // nullptr when the pool is full
+    DrPixlShadowObj* createDirCacheShadow(DrLightObj* light, int sizeType);
+    DrPixlShadowObj* createSptShadow(DrLightObj* light, int sizeType);
     void releaseShadow(DrPixlShadowObj* obj);
     void shadowRender();
     bool setAddObjPos(mm::Vec3 const& pos, float radius);

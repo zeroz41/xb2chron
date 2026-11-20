@@ -30,7 +30,10 @@ struct MdsMatInfoHeader {
     unsigned char pad_28[0x2];
     // 0x2A: the DrApCullType DrMdoCtl's parts passes give DrAPCache::setupCulling (name inferred)
     unsigned char m_cullType;
-    unsigned char pad_2B[0x15];
+    unsigned char pad_2B[0x5];
+    // 0x30: by fixed animation kind, the material's MdsFixAnmRange; kind k runs while m_shdFlags bit 16 + k is set
+    // (DrMdoAnim::updateAnimEnd runs kinds 0 and 2, updateAnimFast 3 and 1; name inferred)
+    unsigned int m_fixAnmRange[4];
     unsigned int m_uniformOfs;  // 0x40, this material's first slot in MdoWrkMatRes::m_pUniformVal
     unsigned char pad_44[0x8];
     // 0x4C, from MdoWrkMatRes::m_pMatData: this material's TechEntry (DrMdoSetup::createUniformBlock; name inferred)
@@ -40,7 +43,10 @@ struct MdsMatInfoHeader {
     unsigned short m_avatarMapIdx;
     unsigned short m_callBackIdx;  // 0x58, first (callback, slot) pair of the material's list
     unsigned short m_callBackNum;  // 0x5A, number of pairs
-    unsigned char pad_5C[0x6];
+    // 0x5C, from MdoWrkMatRes::m_pMatData: the texture list DrMdoSetup::setShader binds instead of m_texEntryOfs's
+    // for materials with m_shdFlags bit 2 or 7 outside render techniques 0, 2 and 7 (name inferred)
+    unsigned int m_altTexEntryOfs;
+    unsigned char pad_60[0x2];
     // 0x62, the texture entry DrMdoShdSet::setOneTexShaderSet binds (name inferred)
     unsigned short m_texEntryIdx;
     unsigned short m_timeSlot;  // 0x64, uniform slot (from m_uniformOfs) of the time the *Time callbacks scale by

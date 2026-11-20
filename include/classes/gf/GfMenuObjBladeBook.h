@@ -4,10 +4,11 @@
 #include "classes/gf/GfMenuObject.h"
 #include "gf/GfMenuSequence.h"
 #include "mm/Pnt.h"
+#include "mm/Rect.h"
 #include "mm/Vec2.h"
 
 namespace gf { class GfMenuBladeList; struct GAME_VOICE_HANDLE; }
-namespace ui { class UICtrlCursorSelect; class UISelectObjList; }
+namespace ui { class UICtrlCursorSelect; class UIObjectAcc; class UISelectObjList; }
 
 namespace gf {
 // blades unlocked so far, for the blade book (refreshBladeList greys a blade it says true for)
@@ -30,20 +31,25 @@ public:
     bool seqOpenImage();
     void getScreenOverSize(unsigned int handle, float scale, short& width, short& height);
     void setPreviewScale(unsigned int step);
+    // 2.0.0's symbols name these two; 3.0.1 has no caller left and its linker strips them, but their strings stay in
+    // the unit's .rodata (LAY_list_bl_info@%02d, IMG_bl_img_booster)
+    void refreshBladeInfo(ui::UIObjectAcc& acc, unsigned int mode);
+    bool seqEffReleaseC();
 
     GfMenuBladeList* m_bladeList;        // 0x28: the book's blades (setupFromBook)
     ui::UISelectObjList* m_selectList;   // 0x30: LAY_list_bl@NN
     ui::UICtrlCursorSelect* m_cursor;    // 0x38: IMG_list_bl_cursor's
     GfMenuSequence<GfMenuObjBladeBook, 8> m_seq;  // 0x40
-    bool m_unknownFlag;                  // 0x2D0: the constructor clears it; no 3.0.1 code reads it
+    bool m_unknownFlag;                  // 0x2D0: the constructor clears it; only 2.0.0 code (seqEffRelease*) reads it
     GAME_VOICE_HANDLE* m_voice;          // 0x2D8: the blade voice the preview plays
     mm::Pnt<short> m_pointerPos;         // 0x2E0: the preview's pointer position (setPreviewScale)
     int m_zoomStep;                      // 0x2E4: the preview's zoom step (0-4; setPreviewScale's argument)
     mm::Pnt<short> m_previewCenter;      // 0x2E8: IMG_prev_bl_img's centre at initialize
     unsigned char pad_2EC[4];
     mm::Vec2 m_baseScale;                // 0x2F0: IMG_prev_bl_img's scale at initialize (mm::Vec2 takes 0x10)
-    mm::Pnt<short> m_scrollOrigin;       // 0x300: setPreviewScale's pointer selection origin
-    mm::Pnt<short> m_overSize;           // 0x304: getScreenOverSize's for the current scale
+    // 0x300: setPreviewScale's pointer selection region (its size is getScreenOverSize's for the current scale;
+    // setPreviewScale stores it in one 8-byte store)
+    mm::Rect<short> m_scrollRect;
     float m_previewScale;                // 0x308: the scale setPreviewScale last set
     unsigned char pad_30C[4];
 };

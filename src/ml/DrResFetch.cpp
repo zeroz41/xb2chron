@@ -1,3 +1,4 @@
+#define MM_LIB_FROM_XBRD
 #include "classes/ml/DrResMdoInstPartsAnm.h"
 #include "classes/ml/DrResMdoInstPartsGlbID.h"
 #include "classes/ml/DrResMdoSeamColi.h"
@@ -84,6 +85,7 @@
 #include "ml/DrResMdoSeamWrkPosMpf.h"
 #include "ml/DrResMdoMeshObj.h"
 #include "ml/DrResMdoShdObj.h"
+#include "ml/DrShdMdoDecExtTbl.h"
 #include "ml/DrResMdoMorpObj.h"
 #include "classes/ml/DrMan.h"
 #include "classes/ml/DrResMdoInstPartsObj.h"
@@ -320,6 +322,59 @@ unsigned int DrResMdoMeshObj::setup(const unsigned char* mdo, unsigned char* wor
     return size;
 }
 
+bool DrResMdoMeshObj::updateDisplayCheck(bool disp) {
+    bool changed = false;
+    for (unsigned int i = 0; i < m_num; i++) {
+        DrResMdoMeshParts& part = m_parts[i];
+        if (part.m_flags & 0x100) {
+            part.m_flags &= ~0x100;
+            part.m_flags |= 1;
+            changed = true;
+        }
+        if (part.m_flags & 0x200) {
+            part.m_flags &= ~0x200;
+            part.m_flags &= ~1;
+            changed = true;
+        }
+        if (m_parts[i].m_flags & 0x10) {
+            if (disp) {
+                m_parts[i].m_flags |= 8;
+            } else {
+                m_parts[i].m_flags &= ~8;
+            }
+        }
+        int idx = DrMan::s_nDblIdx;
+        if (part.m_flags & (2 << idx)) {
+            part.m_flags &= ~(2 << idx);
+            part.m_alpha[2] = part.m_alpha[idx];
+        }
+        float alpha = (part.m_flags & 8) ? 0.0f : part.m_alpha[2];
+        if (alpha <= 0.02f) {
+            if (part.m_flags & 0x8000) {
+                part.m_flags &= ~0x8000;
+                changed = true;
+            }
+        } else {
+            if (!(part.m_flags & 0x8000)) {
+                part.m_flags |= 0x8000;
+                changed = true;
+            }
+        }
+        if (alpha < 0.98f) {
+            if (part.m_flags & 0x10000) {
+                part.m_flags &= ~0x10000;
+                changed = true;
+            }
+        } else {
+            if (!(part.m_flags & 0x10000)) {
+                part.m_flags |= 0x10000;
+                changed = true;
+            }
+        }
+    }
+    return changed;
+}
+
 int DrResMdoMeshObj::getIdx(const char* name) const {
     for (unsigned int i = 0; i < m_num; i++) {
         if (strcmp(m_parts[i].m_name, name) == 0) {
@@ -367,6 +422,44 @@ void DrResMdoMeshObj::release(DrResMdoMeshObj*& obj) {
     if (obj != nullptr) {
         obj = nullptr;
     }
+}
+
+void DrResMdoShdObj::bindShader(DrShdMdoExtTblObj* tbl) {
+    const ShdHeader* header = m_header;
+    const ShdData* data =
+        reinterpret_cast<const ShdData*>(reinterpret_cast<const unsigned char*>(header) + header->m_dataOfs);
+    for (int i = 0; i < header->m_num; i++, data++) {
+        const unsigned char* base = reinterpret_cast<const unsigned char*>(m_header);
+        const char* name = reinterpret_cast<const char*>(base) + data->m_nameOfs;
+        unsigned char* work = m_entries[i].m_work;
+        unsigned int extIdxOfs = data->m_extIdxOfs;
+        for (int j = 0; j < data->m_workNum; j++) {
+            const unsigned short* extIdx = reinterpret_cast<const unsigned short*>(base + extIdxOfs);
+            work[j] = (tbl->m_pExtTbl + extIdx[j])->m_pDecShader->getDeclarationOfs(name);
+        }
+    }
+}
+
+bool DrResMdoShdObj::update(DrShdMdoExtTblObj* tbl) {
+    bool changed = false;
+    const ShdData* data =
+        reinterpret_cast<const ShdData*>(reinterpret_cast<const unsigned char*>(m_header) + m_header->m_dataOfs);
+    for (unsigned int i = 0; i < m_num; i++, data++) {
+        Entry& entry = m_entries[i];
+        unsigned int parm = entry.m_decShdParm;
+        if (parm != entry.m_curDecShdParm) {
+            entry.m_curDecShdParm = parm;
+            const unsigned char* base = reinterpret_cast<const unsigned char*>(m_header);
+            unsigned char* work = m_entries[i].m_work;
+            unsigned int extIdxOfs = data->m_extIdxOfs;
+            for (int j = 0; j < data->m_workNum; j++) {
+                const unsigned short* extIdx = reinterpret_cast<const unsigned short*>(base + extIdxOfs);
+                (tbl->m_pExtTbl + extIdx[j])->setDeclarationIdx(work[j], parm);
+            }
+            changed = true;
+        }
+    }
+    return changed;
 }
 
 int DrResMdoShdObj::getDecShdIdx(const char* name) const {
@@ -944,6 +1037,12 @@ void DrResWrkClipList::update(DrCalcClipMan* clipMan) {
         }
     }
 }
+
+unsigned short* DrResMdoSeamWrkPosInst::s_pVertexTbl;
+unsigned short* DrResMdoSeamWrkPosInst::s_pTextureTbl;
+DrResMdoSeamVertex* DrResMdoSeamWrkPosInst::s_pSeamVertex;
+DrResMdoSeamTexture* DrResMdoSeamWrkPosInst::s_pSeamTexture;
+DrResMdoSeamParmRead* DrResMdoSeamWrkPosInst::s_pParmRead;
 
 void DrResMdoSeamWrkPosMpf::setupMpfBasePos(const unsigned char* data) {
     const MpfHeader* header = reinterpret_cast<const MpfHeader*>(data);
@@ -1646,6 +1745,14 @@ void DrResShdStreamOut::setDecNum(unsigned int idx) {
 void DrResShdStreamOut::stmShdset_Weight() {
     m_shaderSel[0] = 1;
     m_shaderSel[1] = 0;
+}
+
+void DrResShdStreamOut::stmShdset_WetVtx() {
+    m_shaderSel[0] = 1;
+    m_shaderSel[1] = 0;
+    DrShdDataObj* data = m_data;
+    m_shaderSel[2] = 2;
+    m_wetNumOfs = data->getDeclarationOfs("WET_NUM");
 }
 
 void DrResShdStreamOut::stmShdset_MofSet() {
@@ -4334,9 +4441,86 @@ void DrResUseQueryObj::begin(DrPixlOccQuery* occ) {
     query->begin();
 }
 
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_71009B5700). The min filter of each
+// DrPixlMdlSampler setting (setupSampler and setup).
+static const unsigned char s_mdlMinFilter[4] = {2, 3, 4, 5};
+
 DrResMdoSampler::DrResMdoSampler(const unsigned char* data)
     : m_pPrev(nullptr), m_pNext(nullptr), m_data(data), pad_18(1), m_samplerBuf(nullptr), m_samplerNum(0) {
     setupSampler(data);
+}
+
+void DrResMdoSampler::setupSampler(const unsigned char* data) {
+    if (m_samplerBuf != nullptr) {
+        for (int i = 0; i < m_samplerNum; i++) {
+            m_samplers[i].~CGLibSampler();
+        }
+        if (m_samplerBuf != nullptr) {
+            mtl::MemManager::deallocate(m_samplerBuf, 0, false);
+            m_samplerBuf = nullptr;
+        }
+    }
+    DrPixlMdlSampler* mdl = DrMan::get()->m_pMdlSampler;
+    const Data* head = reinterpret_cast<const Data*>(data);
+    const Entry* entry = reinterpret_cast<const Entry*>(data + head->m_ofs);
+    m_samplerNum = head->m_num;
+    void* buf = mtl::MemManager::allocate(DrMan::getIns()->m_resHandle, m_samplerNum * sizeof(grlib::CGLibSampler), 4,
+                                          false, "no name", 0);
+    m_samplerBuf = buf;
+    m_samplers = static_cast<grlib::CGLibSampler*>(buf);
+    for (int i = 0; i < m_samplerNum; i++, entry++) {
+        new (&m_samplers[i]) grlib::CGLibSampler();
+        unsigned int flags = entry->m_flags;
+        if (flags & 0x80) {
+            m_samplers[i].initSampler(static_cast<GrlTexClamp>(2), static_cast<GrlTexMagFilterType>(1));
+            m_samplers[i].setClamp(static_cast<GrlTexClamp>(0), static_cast<GrlTexClamp>(0), static_cast<GrlTexClamp>(0));
+        } else if (flags & 0x20) {
+            m_samplers[i].initSampler(static_cast<GrlTexClamp>(2), static_cast<GrlTexMagFilterType>(1));
+            m_samplers[i].setClamp(static_cast<GrlTexClamp>(2), static_cast<GrlTexClamp>(2), static_cast<GrlTexClamp>(2));
+        } else {
+            m_samplers[i].initSampler(static_cast<GrlTexClamp>(2), static_cast<GrlTexMagFilterType>(1));
+            GrlTexClamp clampS;
+            if (entry->m_flags & 1) {
+                clampS = static_cast<GrlTexClamp>(0);
+            } else if (entry->m_flags & 4) {
+                clampS = static_cast<GrlTexClamp>(1);
+            } else {
+                clampS = static_cast<GrlTexClamp>(2);
+            }
+            GrlTexClamp clampT;
+            if (entry->m_flags & 2) {
+                clampT = static_cast<GrlTexClamp>(0);
+            } else if (entry->m_flags & 8) {
+                clampT = static_cast<GrlTexClamp>(1);
+            } else {
+                clampT = static_cast<GrlTexClamp>(2);
+            }
+            m_samplers[i].setClamp(clampS, clampT, static_cast<GrlTexClamp>(2));
+            if (entry->m_flags & 0x40) {
+                if (entry->m_flags & 0x10) {
+                    m_samplers[i].setFilter(static_cast<GrlTexMagFilterType>(0), static_cast<GrlTexMinFilterType>(0),
+                                            static_cast<GrlTexTexAnisoRatio>(0));
+                } else {
+                    m_samplers[i].setFilter(static_cast<GrlTexMagFilterType>(1), static_cast<GrlTexMinFilterType>(1),
+                                            static_cast<GrlTexTexAnisoRatio>(0));
+                }
+            } else {
+                if (entry->m_flags & 0x10) {
+                    m_samplers[i].setFilter(static_cast<GrlTexMagFilterType>(0), static_cast<GrlTexMinFilterType>(2),
+                                            static_cast<GrlTexTexAnisoRatio>(0));
+                } else {
+                    m_samplers[i].setFilter(static_cast<GrlTexMagFilterType>(1),
+                                            static_cast<GrlTexMinFilterType>(s_mdlMinFilter[mdl->m_cur.m_value1]),
+                                            static_cast<GrlTexTexAnisoRatio>(mdl->m_cur.m_value0));
+                }
+                if (mdl->m_cur.m_flag) {
+                    int lod = entry->m_lod * 2.001f;
+                    m_samplers[i].setLOD(lod * 0.5f);
+                }
+            }
+        }
+        m_samplers[i].updateData();
+    }
 }
 
 DrResMdoSampler::~DrResMdoSampler() {
@@ -4350,10 +4534,6 @@ DrResMdoSampler::~DrResMdoSampler() {
         }
     }
 }
-
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_71009B5700). The min filter of each
-// DrPixlMdlSampler setting (setupSampler and setup).
-static const unsigned char s_mdlMinFilter[4] = {2, 3, 4, 5};
 
 void DrResMdoSampler::setup() {
     DrPixlMdlSampler* mdl = DrMan::get()->m_pMdlSampler;
@@ -4812,6 +4992,38 @@ DrResFilterData::~DrResFilterData() {
     }
 }
 
+void DrResFilterData::setFilterData(const void* data) {
+    if (m_texNum != 0) {
+        for (int i = 0; i < m_texNum; i++) {
+            m_texture[i].~CGLibTextureBuffer();
+        }
+        if (m_texture != nullptr) {
+            mtl::MemManager::deallocate(m_texture, 0, false);
+            m_texture = nullptr;
+        }
+        m_texNum = 0;
+    }
+    const Data* head = static_cast<const Data*>(data);
+    unsigned int size = head->m_texNum * sizeof(grlib::CGLibTextureBuffer);
+    m_texture = static_cast<grlib::CGLibTextureBuffer*>(
+        mtl::MemManager::allocate(m_drMan->m_allocHandle, size, 0x10, false, "no name", 0));
+    m_texNum = head->m_texNum;
+    const Entry* entry = reinterpret_cast<const Entry*>(static_cast<const unsigned char*>(data) + head->m_texOfs);
+    m_entries = entry;
+    for (int i = 0; i < head->m_texNum; i++) {
+        new (&m_texture[i]) grlib::CGLibTextureBuffer();
+        grlib::CGLibTexture::createTextureImagePtrs(m_texture[i], static_cast<const unsigned char*>(data) + entry->m_imageOfs,
+                                                    entry->m_imageSize, false, nullptr, true);
+        entry++;
+    }
+    for (int i = 0; i < 4; i++) {
+        m_filter[i] = Filter();
+        for (int j = 0; j < 4; j++) {
+            m_filter[i].m_tex[j] = m_texture;
+        }
+    }
+}
+
 grlib::CGLibTextureBuffer* DrResFilterData::findFilterTexture(unsigned int id) const {
     for (int i = 0; i < m_texNum; i++) {
         if (m_entries[i].m_id == id) {
@@ -4961,9 +5173,9 @@ void DrResMdoLight::lgtCreate() {
             DrLightObjPnt* pnt = man->createInstantPntLight();
             mm::Vec3 col(lgt->m_color[0], lgt->m_color[1], lgt->m_color[2]);
             col = col * lgt->m_intensity;
-            pnt->m_color[0] = col.x;
-            pnt->m_color[1] = col.y;
-            pnt->m_color[2] = col.z;
+            pnt->m_color.r = col.x;
+            pnt->m_color.g = col.y;
+            pnt->m_color.b = col.z;
             pnt->m_lightParam = lgt->m_param == 0.0f ? 1.0f : lgt->m_param;
             if (lgt->m_flags & 2) {
                 pnt->setSubtractOn(true);
@@ -4979,9 +5191,9 @@ void DrResMdoLight::lgtCreate() {
             DrLightObjSpt* spt = man->createInstantSptLight();
             mm::Vec3 col(lgt->m_color[0], lgt->m_color[1], lgt->m_color[2]);
             col = col * lgt->m_intensity;
-            spt->m_color[0] = col.x;
-            spt->m_color[1] = col.y;
-            spt->m_color[2] = col.z;
+            spt->m_color.r = col.x;
+            spt->m_color.g = col.y;
+            spt->m_color.b = col.z;
             spt->m_lightParam = lgt->m_param == 0.0f ? 1.0f : lgt->m_param;
             if (lgt->m_size != 0.0f) {
                 spt->m_size = lgt->m_size;
@@ -5121,6 +5333,17 @@ void DrResMdoInstAnmObj::update() {
     }
 }
 
+unsigned int DrResMdoInstAnmObj::getWorkSize(const unsigned char* data) {
+    const Header* header = reinterpret_cast<const Header*>(data);
+    unsigned int size = header->partsMax * sizeof(DrResMdoInstPartsObj*);
+    size += header->linkTopB * sizeof(DrResMdoInstPartsAnm);
+    size += (header->linkNumB + header->num34) * 0x30;
+    size += header->linkTopA * 0x28;
+    size += (0x10 - size % 0x10) % 0x10;
+    size += header->linkTopA * 0x160;
+    return size;
+}
+
 void DrResMdoInstAnmObj::setupLink(DrResMdoPos* pos) const {
     if (m_header) {
         for (int i = 0, idx = m_header->linkTopA; i < m_header->linkNumA; i++, idx++) {
@@ -5153,20 +5376,20 @@ void DrResMdoSeamParmRead::begin(wkSeamReadPacDataInf* pac) {
     m_heightLvTexCnt = 0;
     pad_5FE[0] = 0;
     m_mpfPoliMaxId = 0;
-    pad_5EA[6] = 0;
-    pad_5EA[4] = 0;
-    pad_5EA[2] = 0;
-    pad_5EA[0] = 0;
+    pad_5F2[2] = 0;
+    pad_5F2[0] = 0;
+    m_texMaxId = 0;
+    m_vtxMaxId = 0;
     pad_5FE[2] = 0;
     pad_5FE[3] = 0;
     pad_5FE[4] = 0;
     m_stockMpfPoliCnt = 0;
     pad_5FE[1] = 0xFFFF;
     m_mpfPoliMinId = 0xFFFF;
-    pad_5EA[7] = 0xFFFF;
-    pad_5EA[5] = 0xFFFF;
-    pad_5EA[3] = 0xFFFF;
-    pad_5EA[1] = 0xFFFF;
+    pad_5F2[3] = 0xFFFF;
+    pad_5F2[1] = 0xFFFF;
+    m_texMinId = 0xFFFF;
+    m_vtxMinId = 0xFFFF;
     m_pacData = pac;
     memset(pac->m_buf, 0, pac->m_bufSize);
     m_posCnt = 0;
@@ -5279,6 +5502,55 @@ void DrResMdoSeamWrkEnv::setDispState() { m_flags |= 1 << DrMan::s_nDblNowIdx; }
 
 
 
+void DrResMdoInstMdlInfo::update(DrResMdlInstMdlArg& arg) {
+    if ((m_deleteFlags & ((2 << DrMan::s_nDblIdx) | 1)) != 0) {
+        m_deleteFlags |= 1;
+        return;
+    }
+    const Data* data = reinterpret_cast<const Data*>(m_data);
+    arg.m_name = &m_name;
+    arg.m_data = m_data;
+    arg.m_group = reinterpret_cast<const DrResMdoInstMdlGroup*>(m_data + data->m_groupOfs);
+    for (int i = 0; i < data->m_groupNum; i++) {
+        arg.m_groupData4 = m_data + arg.m_group->m_ofs4;
+        arg.m_groupData0 = m_data + arg.m_group->m_ofs0;
+        arg.m_pos = reinterpret_cast<const mm::Vec3NA*>(m_data + data->m_posOfs) + arg.m_group->m_top;
+        arg.m_mtx = reinterpret_cast<const mm::Mat44*>(m_data + data->m_mtxOfs) + arg.m_group->m_top;
+        for (int j = 0; j < arg.m_group->m_num; j++) {
+            m_list[j + arg.m_group->m_top].update(arg);
+            arg.m_mtx++;
+            arg.m_pos++;
+        }
+        arg.m_group++;
+    }
+}
+
+unsigned int DrResMdoInstMdlInfo::setup(unsigned char* work, const unsigned char* data, const char* name) {
+    m_data = data;
+    m_num = reinterpret_cast<const Data*>(data)->m_num;
+    m_name = name;
+    int pos = m_name.findLast('/');
+    if (pos == -1) {
+        pos = m_name.findLast('\\');
+        if (pos != -1 && m_name.m_nLen > pos) {
+            m_name.m_str[pos] = '\0';
+            m_name.m_nLen = pos;
+        }
+    } else if (m_name.m_nLen > pos) {
+        m_name.m_str[pos] = '\0';
+        m_name.m_nLen = pos;
+    }
+    m_name += "/";
+    m_list = reinterpret_cast<DrResMdoInstMdlObj*>(work);
+    unsigned int size = m_num * sizeof(DrResMdoInstMdlObj);
+    for (int i = 0; i < m_num; i++) {
+        DrResMdoInstMdlObj& obj = m_list[i];
+        obj.m_mdl = nullptr;
+        obj.pad_8 = 0;
+    }
+    return size + sizeof(DrResMdoInstMdlInfo);
+}
+
 unsigned int DrResMdoInstMdlInfo::calcWorkSize(const unsigned char* data) {
     return reinterpret_cast<const Data*>(data)->m_num * 0x10 + sizeof(DrResMdoInstMdlInfo);
 }
@@ -5287,8 +5559,7 @@ unsigned int DrResMdoInstMdlInfo::create(unsigned char* work, DrResMdoInstMdlInf
                                          const char* name) {
     DrResMdoInstMdlInfo* info = reinterpret_cast<DrResMdoInstMdlInfo*>(work);
     out = info;
-    info->m_name[0] = '\0';
-    info->pad_110 = 0;
+    info->m_name.clear();
     info->m_deleteFlags = 0;
     info->m_num = 0;
     info->m_list = nullptr;
@@ -5309,7 +5580,7 @@ void DrResMdoInstMdlInfo::releaseCall() {
 void DrResMdoInstMdlInfo::release(DrResMdoInstMdlInfo*& info) {
     DrResMdoInstMdlInfo* obj = info;
     for (int i = 0; i < obj->m_num; i++) {
-        Entry& entry = obj->m_list[i];
+        DrResMdoInstMdlObj& entry = obj->m_list[i];
         if (entry.m_mdl != nullptr) {
             entry.m_mdl->setDeleteCall(DrMan::s_nDblStockIdx);
             entry.m_mdl = nullptr;
@@ -5534,8 +5805,8 @@ bool DrResMdoSeamRead::read(int& idx, unsigned int ofs, unsigned int size, DrRes
     m_readWaitBits |= bit;
     int readSize = (int)size + ((int)size % 0x40 != 0 ? 0x40 - (int)size % 0x40 : 0);
     DevFileParamTh param;
-    param.pad_4c = ofs;
-    param.pad_50 = readSize;
+    param.m_offset = ofs;
+    param.m_readSize = readSize;
     param.m_buffer = obj->m_pData;
     param.m_size = obj->m_size;
     param.m_prio = DrMan::get()->m_seamReadPrio;
@@ -5958,9 +6229,9 @@ void DrResMdoSeamWrkInst::changeMemCall() {
     if (data->m_subOfs != 0) {
         const DrResMdoSeamWrkPosInst::SubTbl* sub = reinterpret_cast<const DrResMdoSeamWrkPosInst::SubTbl*>(p + data->m_subOfs);
         pos->m_sub = sub;
-        pos->m_subTbl10 = p + sub->m_ofs10;
-        pos->m_subTbl0 = p + sub->m_ofs0;
-        pos->m_subTbl8 = p + sub->m_ofs8;
+        pos->m_subTbl10 = reinterpret_cast<const MdsPosReadTreeData*>(p + sub->m_ofs10);
+        pos->m_subTbl0 = reinterpret_cast<const unsigned short*>(p + sub->m_ofs0);
+        pos->m_subTbl8 = reinterpret_cast<const unsigned short*>(p + sub->m_ofs8);
     }
     [](DrResMdoSeamWrkPosInst* p) {
         for (int j = 0; j < p->m_entryNum; j++) {
@@ -5989,9 +6260,9 @@ void DrResMdoSeamWrkInst::calcCacheInfo() {
             if (data->m_subOfs != 0) {
                 const DrResMdoSeamWrkPosInst::SubTbl* sub = reinterpret_cast<const DrResMdoSeamWrkPosInst::SubTbl*>(p + data->m_subOfs);
                 pos->m_sub = sub;
-                pos->m_subTbl10 = p + sub->m_ofs10;
-                pos->m_subTbl0 = p + sub->m_ofs0;
-                pos->m_subTbl8 = p + sub->m_ofs8;
+                pos->m_subTbl10 = reinterpret_cast<const MdsPosReadTreeData*>(p + sub->m_ofs10);
+                pos->m_subTbl0 = reinterpret_cast<const unsigned short*>(p + sub->m_ofs0);
+                pos->m_subTbl8 = reinterpret_cast<const unsigned short*>(p + sub->m_ofs8);
             }
             [](DrResMdoSeamWrkPosInst* p) {
                 for (int j = 0; j < p->m_entryNum; j++) {
@@ -6073,6 +6344,20 @@ void DrResMdoSeamWrkLight::setupWork(const MdsSeamLgtMapData* data) {
     pad_38 = 0;
     pad_3A = 0;
     m_id = data->id;
+}
+
+DrResMdoSeamWrkLow::DrResMdoSeamWrkLow() {
+    m_instans = nullptr;
+    m_buf2 = nullptr;
+    m_matRes = nullptr;
+    m_memObj = nullptr;
+    pad_B4 = 0;
+    pad_AC = 0;
+    m_readSize = 0;
+    m_renderCnt = 0;
+    pad_A8 = 0;
+    m_cacheFlags = 0;
+    m_dataIdx = 0;
 }
 
 DrResMdoSeamWrkLow::~DrResMdoSeamWrkLow() { release(); }

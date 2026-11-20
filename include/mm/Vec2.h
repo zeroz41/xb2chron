@@ -13,6 +13,7 @@ public:
     // trivial: an assignment copies the 8 data bytes at once (UICtrlMethodScale::setup, UICtrlMethodMotion::setup)
     Vec2& operator=(const Vec2& v) = default;
     static const Vec2 zero;  // AgentUtilField::calcFollowWallInput starts its input from it
+    static const Vec2 unitY;  // StateUtilField::decideWallMoveMode measures the stick's angle from it
     float x;
     float y;
 } __attribute__((aligned(16)));

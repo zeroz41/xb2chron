@@ -45,6 +45,8 @@
 #include "algorithm"
 #include "classes/gf/GfDataManager.h"
 #include "classes/gf/GfGameObj.h"
+#include "classes/gf/GfGamePlayerFormation.h"
+#include "gf/MsgPcFieldWarp.h"
 
 namespace gf {
 
@@ -252,6 +254,16 @@ void GfGameParty::setPartyGauge(unsigned short gauge) {
     GfDataParty::getSDataParty()->m_partyGauge = gauge;
 }
 
+void GfGameParty::createPartyStatusProperty(unsigned int index, unsigned int, unsigned int hp) {
+    GfGameParty* party = get();
+    if (party != nullptr) {
+        mm::mtl::IntrusivePtr<GfStatusProperty>& property = party->m_members[index].m_statusProperty;
+#line 1529
+        mm::mtl::IntrusivePtr<GfStatusProperty>(new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfStatusProperty(hp))
+            .swap(property);
+    }
+}
+
 GfStatusProperty* GfGameParty::getPartyStatusProperty(unsigned int index) {
     GfGameParty* party = get();
     if (party == nullptr) {
@@ -260,12 +272,88 @@ GfStatusProperty* GfGameParty::getPartyStatusProperty(unsigned int index) {
     return party->m_members[index].m_statusProperty.get();
 }
 
+void GfGameParty::setupRequestDataIra(const RQ_SETUP_PARTY& info) {
+    mm::mtl::FixedVector<unsigned int, 3>& hierarchy = get()->m_hierarchy;
+    mm::mtl::FixedVector<unsigned short, 32> drivers;
+    for (unsigned int i = 0; i < 10; ++i) {
+        for (unsigned int& party : hierarchy) {
+            unsigned short driver = info.m_iraDrivers[i][party];
+            if (driver != 0) {
+                GfDataDriver::setActivateParty(driver, i, static_cast<PTPOS>(party));
+                GfDataParty::setDriver(i, driver, static_cast<PTPOS>(party));
+                drivers.push_back(driver);
+            } else {
+                GfDataParty::setDriver(i, 0, static_cast<PTPOS>(party));
+            }
+        }
+    }
+    for (unsigned int driver = 0x11; driver < 0x1A; ++driver) {
+        if (std::find(drivers.begin(), drivers.end(), driver) == drivers.end()) {
+            if (!GfDataDriver::isActivateUnuse(driver)) {
+                GfDataDriver::setActivateUnuse(driver);
+            }
+        }
+    }
+    SDataParty* data = GfDataParty::getSDataParty();
+    data->m_leader = info.m_extras[0].m_id;
+    data->pad_48 = info.m_extras[1].m_id;
+    data->m_leaderType = info.m_extras[0].m_type;
+    data->pad_44 = info.m_extras[0].m_type;
+    if (data->m_leader == 0) {
+        for (unsigned int i = 0; i < 3; ++i) {
+            unsigned short driver = info.m_iraDrivers[i][0];
+            if (driver != 0) {
+                data->m_leaderType = 3;
+                data->m_leader = driver;
+                break;
+            }
+        }
+    }
+    recalcHierarchy();
+}
+
 bool GfGameParty::isBtlLeaderDirver() {
     return GfObjUtil::isBattle(getHandleDriver(getPartyId(getLeader()), static_cast<PTPOS>(0)));
 }
 
 GF_OBJ_HANDLE* GfGameParty::getLeaderDriver() {
     return getHandleDriver(getPartyId(getLeader()), static_cast<PTPOS>(0));
+}
+
+void GfGameParty::judgeRandomTalkWarp() {
+    GfGamePlayerFormation* formation = GfGamePlayerFormation::get();
+    if (formation == nullptr) {
+        return;
+    }
+    bool far[9] = {};
+    GF_OBJ_HANDLE* leader = formation->m_players[0].m_handle;
+    for (unsigned int i = 1; i < 9; ++i) {
+        GfGamePlayerFormation::Player& player = formation->m_players[i];
+        if (player.m_followIndex == static_cast<unsigned int>(-1)) {
+            continue;
+        }
+        if (formation->m_players[player.m_followIndex].m_handle == leader) {
+            far[i] = formation->isFarRandomTalk(player.m_handle);
+        } else {
+            far[i] = far[player.m_followIndex];
+        }
+    }
+    for (unsigned int i = 1; i < 9; ++i) {
+        const mm::Vec3& pos = formation->m_formationPos[i];
+        if (!far[i]) {
+            continue;
+        }
+        GfGamePlayerFormation::Player& player = formation->m_players[i];
+        GfObj* obj = GfObjUtil::getObj(player.m_handle);
+        if (obj == nullptr) {
+            continue;
+        }
+        MsgPcFieldWarp warp;
+        warp.m_transform = formation->getFollowTransform(player.m_followIndex);
+        warp.m_transform.position = pos;
+        warp.m_immediate = false;
+        obj->sendMessage(obj, warp);
+    }
 }
 
 bool GfGameParty::isLeaderBlade() {
@@ -869,6 +957,35 @@ void GfGameParty::recalcHierarchyIra() {
             }
         }
     }
+}
+
+void GfGameParty::setupNewGameParty() {
+    RQ_SETUP_PARTY info;
+    if (GfGameManager::isGameTypeIra()) {
+        info.m_iraDrivers[0][0] = 0x11;
+        info.m_iraDrivers[0][1] = 0x14;
+        info.m_iraDrivers[0][2] = 0;
+    } else {
+        unsigned int driver = GfGameManager::isGameTypeIra() ? 0x11 : 1;
+        info.m_drivers[0].m_driver = driver;
+        info.m_drivers[0].m_blades[0] = GfGameManager::isGameTypeIra() ? GfDataDriver::getDefaultBlade(driver, 0) : 0x3F4;
+        info.m_drivers[0].m_activeIndex = 0;
+    }
+    setupRequestData(info);
+}
+
+void GfGameParty::setupPoweredNewGameParty() {
+    if (GfGameManager::isGameTypeIra()) {
+        return;
+    }
+    RQ_SETUP_PARTY info;
+    info.m_drivers[0].m_driver = 1;
+    int num = GfDataDriver::getMaxSetBladeNum(1);
+    for (int i = 0; i < num; ++i) {
+        info.m_drivers[0].m_blades[i] = GfDataDriver::getBlade(1, i);
+    }
+    info.m_drivers[0].m_activeIndex = GfDataDriver::getBladeSet(1);
+    setupRequestData(info);
 }
 
 bool GfGameParty::isExistMismatchScenarioMask(unsigned int index) {

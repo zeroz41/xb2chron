@@ -17,8 +17,10 @@ public:
     class ListListener;
     // what open shows (1.0.0's open(OpenParam const&) names the type; the field names are not the original's)
     struct OpenParam {
-        // user-provided (its body is not known): the copies stop at the data's end (0x1C), not the struct's
-        OpenParam() {}
+        // user-provided: the copies stop at the data's end (0x1C), not the struct's. It zeroes every field:
+        // GfGameScene::gevDriverLevel stores zeros under the fields it then sets, and ExpGetInfo's construction
+        // (default then assigned) splits the copy at m_object in myOpen
+        OpenParam() : m_type(0), m_value(0), m_bonus(false), m_object(nullptr), m_extra(0) {}
         int m_type;  // 0 experience, 1 SP, 2 WP, 3 a level up
         int m_value;  // the amount got: myOpen shows nothing for 0
         bool m_bonus;  // shows the type's IMG_*_bonus

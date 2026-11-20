@@ -10,6 +10,7 @@
 class CBdatWrapper;
 #include "classes/mm/mtl/ReferenceObject.h"
 #include "classes/gmk/GmkSquad.h"
+#include "classes/gmk/GmkEnemyInstsWaveExtension.h"
 #include "mm/mtl/Vector.h"
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gmk { class AGmkBase; }
@@ -300,13 +301,8 @@ public:
     unsigned char pad_180 = 0;  // canDepopGobInst: no depop while set (a byte)
     unsigned char pad_181 = 0;
     unsigned char pad_182[0x2];
-    // 0x184: flag bits the enemy wave gimmick (GmkEnemyWave) sets: 0x2 and 0x1 in its create, 0x4 cleared by its
-    // seqWaitToValidLinkGmkList (the name is not the original's)
-    unsigned char m_waveFlags = 0;
-    // the constructor clears 0x184..0x188 with one 4-byte store (the types are not known)
-    unsigned char pad_185 = 0;
-    unsigned char pad_186 = 0;
-    unsigned char pad_187 = 0;
+    // 0x184: validatePopPos calls its members with the insts plus 0x184 as this (the name is not the original's)
+    GmkEnemyInstsWaveExtension m_waveExt;
 };
 }  // namespace gmk
 

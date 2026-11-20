@@ -11,8 +11,10 @@ class DrResMdoSeamWrkMpf;
 struct wkSeamReadPacDataInf {
     unsigned int m_bufSize;  // 0x0: begin clears m_bufSize bytes at m_buf
     unsigned char pad_4[0x4];
-    void* m_buf;             // 0x8
-    unsigned char pad_10[0x18];
+    // 0x8: the buffer's head, one bit per seam vertex id to read (DrResMdoSeamWrkPosInst::chankReadTreeMdl)
+    unsigned int* m_buf;
+    unsigned int* m_texBits;  // 0x10: one bit per seam texture id to read (chankReadTreeMdl)
+    unsigned char pad_18[0x10];
     unsigned int* m_mpfPoliBits;  // 0x28: one bit per mpf polygon cache id to read
 };
 struct _wkSeamReadWait;
@@ -83,8 +85,12 @@ public:
     unsigned short m_stockLightCnt;                      // 0x5D8
     unsigned short pad_5DA[7];                           // 0x5DA: begin clears them
     unsigned short m_heightLvTexCnt;                     // 0x5E8 (resetHeightLvTexture clears it)
-    // 0x5EA: begin resets four more (0, 0xFFFF) pairs like m_mpfPoliMaxId/m_mpfPoliMinId
-    unsigned short pad_5EA[8];
+    // 0x5EA: begin resets these and two more (0, 0xFFFF) pairs like m_mpfPoliMaxId/m_mpfPoliMinId
+    unsigned short m_vtxMaxId;  // 0x5EA: the largest vertex id chankReadTreeMdl asked for
+    unsigned short m_vtxMinId;  // 0x5EC: the smallest one
+    unsigned short m_texMaxId;  // 0x5EE: the largest texture id chankReadTreeMdl asked for
+    unsigned short m_texMinId;  // 0x5F0: the smallest one
+    unsigned short pad_5F2[4];
     unsigned short m_mpfPoliMaxId;                       // 0x5FA: the largest id seachMpfPoliPos stocked
     unsigned short m_mpfPoliMinId;                       // 0x5FC: the smallest one
     unsigned short pad_5FE[5];                           // 0x5FE: begin sets 0, 0xFFFF, 0, 0, 0

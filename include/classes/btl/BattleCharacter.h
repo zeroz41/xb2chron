@@ -342,6 +342,8 @@ public:
     void ResetAlphaRate(int id);
     void RegisterAlphaAnimation(ALPHA_PROC_ID id, float rate, float time, bool all);
     void AlphaAnimation(ALPHA_PROC_ID id);
+    // ChainAttackManager::ModifyPositionBackward calls it with true on character 0x451's blade
+    void InitializeHanaBusterAlpha(bool);
     // 2.0.0's symbols name it. Mounts the weapon (gf::GfMountManager::execMount) by pad_EE8_6 and keeps the mount
     // state in pad_F05_4; called from PostManagerUpdate.
     void WeaponMountProc();
@@ -360,6 +362,10 @@ public:
     // the lever gacha's input while the action is 16 and the fight combo's id is 2 or 3 (left stick, buttons of
     // the control pad's m_down), else its state is reset
     void LeverReduceProc(ACTION_ID id);
+    // while both SetExitBattle flags are set: ends the character's blade change (unless it cannot be cancelled) and
+    // its formation change; a blade of BDAT id 0x3EB starts a blade change back to its driver; answers true (and sets
+    // m_isRunHold) for that blade, for actions in a fixed set and for a driver's action 9
+    bool CheckForceExit(ACTION_ID id);
     // sends the character's effect caster the elemental combo effect (BDAT 0x23 "Effect"; MsgUnk_1000050) and plays
     // its "SE"; answers the effect handle (0: none)
     int CreateElementalComboEffect(int id);
@@ -546,6 +552,16 @@ public:
     void ForceDeleteEffect();
     void ResetAllEffect();
     void SetWarpPostureByDir(const mm::Vec3& dir);
+    // what GetBladeMovePos places a blade by (ChainAttackManager::ModifyPositionBackward fills one on the stack; the
+    // field names are inferred, not the original's)
+    struct CALC_BLADE_MOVE_POS_PARAM {
+        BattleCharacter* m_driver;
+        BattleCharacter* m_blade;
+        const mm::Vec3* m_dir;  // the driver's direction to the target
+        bool pad_18;
+    };
+    // the position for the blade by param in pos; false when there is none
+    bool GetBladeMovePos(mm::Vec3& pos, const CALC_BLADE_MOVE_POS_PARAM* param) const;
     // moves the character to the position (with none, to its parameter's driver's object) and turns it the
     // driver's pad_60 way
     void RegisterWarp(const mm::Vec3* pos);
@@ -591,6 +607,9 @@ public:
     int IsEnableArts(int, int slot, int, gf::GF_OBJ_HANDLE* target) const;
     void SetSpAttackRecastByLevel(int level, bool);
     float GetArtsAttackDistance(const ARTS_DATA& arts) const;
+    // while m_state is the action id, moves m_actionID on by one for the step asked (id 12: 2, 0xB or 8; id 10: a
+    // blade's 9 or a driver's 3; id 9: a driver's 8); answers whether it could, and with test set leaves it as is
+    bool ProgressActionState(ACTION_ID id, int step, bool test);
     void TurnDirection(const mm::Vec3& dir, bool, bool);
     void SetAnimation(ANIM_ID id, bool, int, int, bool, bool);
     // 1.0.0's UpdateBuffEffect(int) (0x7100036A18, right before UpdateTargetLockArrow as here): one buff id
@@ -689,7 +708,10 @@ public:
     // SirenModifySetting sets them to 3 and 18 degrees in radians (meaning unknown)
     float pad_DA4;
     float pad_DA8;
-    unsigned char pad_DAC[0x2C];
+    unsigned char pad_DAC[0x28];
+    // Utility::AI_CheckState's state 9 is whether it is non-negative (meaning unknown)
+    signed char pad_DD4;
+    unsigned char pad_DD5[0x3];
     // what GetIKData hands out while m_ikType is set (the names are not the original's)
     float m_ikValue0;
     float m_ikValue1;
@@ -769,7 +791,10 @@ public:
     // SpAttackManager::DeleteCamera clears it for its camera characters (the name is not the original's)
     unsigned char m_spAttackCamera : 1;
     unsigned char pad_EF5_3 : 5;
-    unsigned char pad_EF6[0x8];
+    unsigned char pad_EF6[0x2];
+    // Utility::AI_CheckState's state 11 is whether it is above 0x98 (meaning unknown)
+    unsigned char pad_EF8;
+    unsigned char pad_EF9[0x5];
     // one 16-byte bitfield run (StartBackHome loads and stores 0xEFE and 0xF06 as two 8-byte halves)
     unsigned int pad_EFE : 5;
     // SetWeaponType keeps the "VoiceType" of its weapon type's row in BDAT 0x96 here (the name is not the original's)
@@ -788,7 +813,8 @@ public:
     unsigned int m_isPlayer : 1;
     // IsBattle returns it (the name is not the original's)
     unsigned int m_isBattle : 1;
-    unsigned int pad_F00_1 : 2;
+    unsigned int pad_F00_1 : 1;
+    unsigned int pad_F00_2 : 1;  // BattleEndInitialize sets it (run bit 18; meaning unknown)
     // CharacterManager::IsExistBattlePlayer passes over a player in battle while it is set (run bit 19; meaning
     // unknown)
     unsigned int pad_F00_3 : 1;
@@ -858,8 +884,16 @@ public:
     unsigned int pad_F07_0 : 1;
     // the name is not the original's: IsEnableRescueTarget treats the character as out of battle while it is set
     unsigned int m_isBattleIgnore : 1;
-    unsigned int pad_F07_2 : 6;
-    unsigned int pad_F08 : 2;
+    unsigned int pad_F07_2 : 1;
+    // BattleEndInitialize clears run bits 75-78 (meanings unknown)
+    unsigned int pad_F07_3 : 1;
+    unsigned int pad_F07_4 : 1;
+    // while it is set, NotifySufferDamage sets pad_F07_6 when a damage leaves 1 HP (run bit 77; meaning unknown)
+    unsigned int pad_F07_5 : 1;
+    unsigned int pad_F07_6 : 1;  // NotifySufferDamage sets it (run bit 78; meaning unknown)
+    unsigned int pad_F07_7 : 1;
+    unsigned int pad_F08_0 : 1;
+    unsigned int pad_F08_1 : 1;  // NotifySufferDamage sets it for a damage while m_isBattle is set (run bit 81)
     // whether DispBladeLine eased the blade's "S_skinline" animation in (run bit 74; the name is not the original's)
     unsigned int m_dispBladeLine : 1;
     // whether SetBattleFace eased the battle eye animation in (the name is not the original's)
@@ -962,15 +996,28 @@ public:
     unsigned char pad_10B0;
     // SetAttackTarget keeps CheckAttackPosition's answer for its target here, 0 for none (the name is not the original's)
     unsigned char m_attackPosition;
-    unsigned char pad_10B2[0x3];
+    // BattleEndInitialize clears 0x10B2-0x10B5 and 0x10B6 (meanings unknown)
+    unsigned char pad_10B2;
+    unsigned char pad_10B3;
+    unsigned char pad_10B4;
     // TakeOverChangeIra copies it from the character it takes over from (meaning unknown)
     unsigned char pad_10B5;
-    unsigned char pad_10B6[0x2];
+    unsigned char pad_10B6;
+    unsigned char pad_10B7;
     // a 32-bit bitfield run (CheckWeaponDistance stores bit 22 as a word)
-    unsigned int pad_10B8 : 8;
+    // NotifySufferDamage keeps the damage's battle start type and param (m_battleStartType/m_battleStartParam) here
+    // for one second (pad_1098) when it outranks the kept one; ManagerUpdate_Attack clears both when pad_1098 runs
+    // out (meanings unknown)
+    unsigned int pad_10B8_0 : 4;
+    unsigned int pad_10B8_4 : 4;
     // Utility::AI_GetAutoAttackState answers m_autoAttackStep only while it is set (the name is not the original's)
     unsigned int m_isAutoAttack : 1;
-    unsigned int pad_10B9_1 : 8;
+    unsigned int pad_10B9_1 : 2;
+    unsigned int pad_10B9_3 : 1;  // NotifySufferDamage sets it for a damage with MsgObjectDamage's pad_2e set (meaning unknown)
+    unsigned int pad_10B9_4 : 1;
+    unsigned int pad_10B9_5 : 1;  // BattleEndInitialize clears it (run bit 13; meaning unknown)
+    unsigned int pad_10B9_6 : 1;  // NotifyDead sets it (run bit 14; meaning unknown)
+    unsigned int pad_10B9_7 : 2;
     // ActionCommandArts turns the character only while it is set (run bit 17; meaning unknown)
     unsigned int pad_10BA_1 : 1;
     unsigned int pad_10BA_2 : 4;

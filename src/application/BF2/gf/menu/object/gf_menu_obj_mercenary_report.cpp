@@ -78,7 +78,7 @@ void GfMenuObjMercenaryReport::initialize() {
     {
         ui::UIObjectAcc reward(acc.m_handle, "LAY_reward");
         GfMenuObjQuestReward::OpenParam param;
-        param.pad_10 = m_number;
+        param.m_number = m_number;
         param.m_handle = reward.searchChild("LAY_reward_info");
         param.pad_C = 1;
         GfMenuObjQuestReward::create(m_rewardContext, param, false);
@@ -208,9 +208,9 @@ bool GfMenuObjMercenaryReport::seqStart() {
     GfMenuObjQuestReward::open(m_rewardContext, false);
     GfMenuObjPopup::OpenParam param;
     param.m_type = 8;
-    param.m_value[0] = GfDataMercenaries::getMissionMapID(mission);
-    param.m_value[1] = m_teamId;
-    param.m_value[2] = GfDataMercenaries::getTeamLeader(m_teamId);
+    param.m_value0 = GfDataMercenaries::getMissionMapID(mission);
+    param.m_value1 = m_teamId;
+    param.m_value2 = GfDataMercenaries::getTeamLeader(m_teamId);
     GfMenuObjPopup::remove(param);
     return true;
 }

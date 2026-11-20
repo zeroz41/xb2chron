@@ -7,6 +7,7 @@
 #include "btl/formation_change_manager.h"
 #include "classes/btl/BattleCharacter.h"
 #include "classes/btl/BattleGlobal.h"
+#include "classes/btl/BladeChangeManager.h"
 #include "classes/btl/BladeArtsManager.h"
 #include "classes/btl/BtlSystemBalanceAccess.h"
 #include "classes/btl/ChainAttackManager.h"
@@ -219,7 +220,7 @@ void Utility::GetArtsData(ARTS_DATA::DATA_TYPE type, int id, ARTS_DATA& data) {
 }
 
 unsigned short Utility::GetArtsEnhance(const ARTS_DATA& data, int index) {
-    return data.m_enhances[index - 1].id;
+    return data.m_levels[index - 1].m_enhance;
 }
 
 int Utility::GetSeType(const char* name) {
@@ -1177,6 +1178,53 @@ bool Utility::AI_MoveStop(gf::GF_OBJ_HANDLE* handle, bool flag) {
 }
 
 bool Utility::AI_IsDestruct(gf::GF_OBJ_HANDLE* handle) {
+    return false;
+}
+
+bool Utility::AI_CheckState(gf::GF_OBJ_HANDLE* handle, CHECK_STATE state, int arg) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    switch (state) {
+    case 0:
+        return chr->IsBattle();
+    case 1:
+        return chr->m_state == 7;
+    case 2:
+        return arg > 0 ? chr->m_reactionID == arg : chr->m_reactionID != 0;
+    case 3:
+        return chr->IsDead(0);
+    case 4:
+        return BladeChangeManager::sys()->IsRegister(handle);
+    case 5:
+        return chr->m_state == 9;
+    case 6:
+        return chr->m_state == 12;
+    case 7:
+        return chr->IsRescue();
+    case 8:
+        return ChainAttackManager::sys()->IsProc(false);
+    case 9:
+        return chr->pad_DD4 >= 0;
+    case 10:
+        return chr->IsMove();
+    case 11:
+        return chr->pad_EF8 > 0x98;
+    case 12: {
+        const mm::Vec3& pos = chr->m_pos;
+        const CharacterParameter* param = chr->GetCharacterParameterConst(true);
+        return Misc::IsInWater(pos, param ? param->pad_30 * 1.5f : 3.0f);
+    }
+    case 13:
+        return chr->pad_107C > 0.0f;
+    case 14:
+        return chr->IsProcAI(false);
+    case 15:
+        return chr->IsScout();
+    case 16:
+        return chr->IsElementalAwake();
+    }
     return false;
 }
 

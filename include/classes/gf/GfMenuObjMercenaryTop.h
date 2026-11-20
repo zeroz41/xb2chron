@@ -40,6 +40,10 @@ public:
     bool seqUnitBreak();
     bool seqCanNotOrder();
     bool seqExit();
+    // sends the open event (0x21, its first parameter param) to handle, or to LAY_main when the handle is 0 (the
+    // Zone listener's decide to LAY_mis_sel, the Mission listener's cancel to LAY_zone). Inlined in the original:
+    // its allocas sit in the listeners' top slots. The name is not the original's
+    void sendOpenOrMain(unsigned int handle, int param);
 
     unsigned char pad_24[4];
     // 0x28-0x98: created by the constructor or initialize, released by the destructor (the names are not the

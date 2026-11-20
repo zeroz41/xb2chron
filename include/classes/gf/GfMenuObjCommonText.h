@@ -4,6 +4,8 @@
 #include "classes/gf/GfMenuObject.h"
 #include "classes/gf/GfMenuReferenceNumber.h"
 #include "mm/mtl/IntrusivePtr.h"
+#include "classes/ui/UIManager.h"
+#include "ui/EventData.h"
 
 namespace gf { class GfMenuBladeList; }
 namespace gf { class GfMenuDriverList; }
@@ -45,6 +47,15 @@ public:
     static void close();
     // the dialog layout's plugins: both window images fit the text, the cursor follows its base
     static void setupDialog(unsigned int handle);
+    // sends `type` with `param` as its first word after `frames` frames: inline (the Dialog and NumSelect listeners'
+    // events take a stack slot ahead of the listener's own, as an inlined callee's local does; the menu objects' same
+    // helper, e.g. GfMenuObjItemList2::sendEvent; the name is not the original's)
+    static void sendEvent(unsigned int handle, unsigned int type, unsigned int param, unsigned int frames) {
+        ui::EventData event;
+        event.m_type = type;
+        event.m_param0 = param;
+        ui::UIManager::get()->requestObjectEvent(handle, event, frames * (1.0f / 30.0f));
+    }
     // an error text: row `error` of table 0x149 ("name" in table 0x11F), with `value` as the window's pad_44
     static void openError(GfMenuCallContext* context, unsigned int error, unsigned int value);
     // a text of table 0xF6 sent straight to the window (aborts the call context when the row has no text)

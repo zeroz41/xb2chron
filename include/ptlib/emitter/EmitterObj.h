@@ -68,16 +68,30 @@ public:
         mm::Vec3 m_noise;  // 0x40: ParticleObj::calcNoise sums its turbulence here (the name is not the original's)
         unsigned char pad_50[0x40];
         mm::Vec3 m_newton;  // 0x90: ParticleObj::calcNewton's pull, added to the speed (the name is not the original's)
-        unsigned char pad_a0[0x68];
-        void* m_pLgt;  // 0x108: the light ParticleManager::deleteLgt deletes (the name is not the original's)
-        // the particle's model or, with a light, the light's id (the names are not the original's)
+        unsigned char pad_a0[0x20];
+        // 0xC0..0xF7: values RenderGrObj::draw_common_atr_normal copies into the vertex (pairs at 0xC0, 0xC8, 0xE4 and
+        // 0xEC, single floats at 0xD0 and 0xF4, four floats at 0xD4 for draw type 14); what each means is not known
+        // (the name is not the original's)
+        float m_drawAttr[0xE];
+        // 0xF8: the draw_common_atr_* size: strips and weapon tails divide it by the screen width and height (the name
+        // is not the original's)
+        float m_drawSize;
+        unsigned char pad_fc[0xC];
         union {
-            void* m_pMdl;  // 0x110: the model the DrFunc hooks drive (ParticleManager::update_model_spd)
-            unsigned char m_lgtId;
+            struct {
+                void* m_pLgt;  // 0x108: the light ParticleManager::deleteLgt deletes (the name is not the original's)
+                // the particle's model or, with a light, the light's id (the names are not the original's)
+                union {
+                    void* m_pMdl;  // 0x110: the model the DrFunc hooks drive (ParticleManager::update_model_spd)
+                    unsigned char m_lgtId;
+                };
+                void* pad_118;
+                void* pad_120;
+            };
+            // 0x108..0x127 as floats: draw_common_atr_normal's values for draw types 10 and 15 (the name is not the
+            // original's)
+            float m_drawAttr2[8];
         };
-        void* pad_118;
-        void* pad_120;
-        unsigned char pad_128[0x8];
         // 0x130, 0x140: the particle's two colours ParticleObj::calcExternalColor tints by the emitter's colour (the
         // names are not the original's)
         mm::Vec3 m_color;
@@ -99,6 +113,10 @@ public:
         short m_sizeKeyIndex;
         short m_rotKeyIndex;
         short m_vecKeyIndex;  // 0x21A: EmitterArg::get_kf's key index for m_vecKey (the name is not the original's)
+        unsigned char pad_21c[0x10];
+        // 0x22C: draw_common_atr_normal's second size for draw types 4, 5 and 7 and the weapon tail's for 2 and 5 (the
+        // name is not the original's)
+        float m_drawSize2;
     };
     // deletes the particle's model or light and clears its work
     void particle_clear_union();
@@ -129,7 +147,7 @@ public:
     // numbers the particle and resets its state (EmitterManager::particleAlloc inlines it; idCounter is its static)
     void initUtilObj() {
         static unsigned int idCounter;
-        pad_14c = 0;
+        m_drawRotOfs = 0.0f;
         pad_13f = 0;
         m_id = idCounter++;
         if (idCounter > 10000) {
@@ -143,8 +161,11 @@ public:
     mm::Vec3 m_prevPos;
     mm::Vec3 m_goal;  // 0x30: calc_start2goal01's goal (EmitterManager::createCommon; the name is not the original's)
     mm::Vec3 pad_40;  // createCommon zeroes it
-    mm::Vec3 pad_50;  // createCommon zeroes it
-    unsigned char pad_60[0x10];
+    // 0x50: createCommon zeroes it; draw_common_atr_normal draws the particle at m_pos plus it (the name is not the
+    // original's)
+    mm::Vec3 m_drawOfs;
+    // 0x60: four floats the draw_common_atr_* functions copy into the vertex whole (the name is not the original's)
+    float m_drawVec[4];
     // 0x70: the particle's size: calcParSize's base or keyed size, scaled (the name is not the original's)
     mm::Vec3NA m_size;
     mm::Vec3NA m_baseSize;   // 0x7C: calcParSize's size without key frames (the name is not the original's)
@@ -170,7 +191,9 @@ public:
     // original's)
     unsigned char m_delay;
     float m_sizeRate;  // 0xC4: calcParSize's scale of the emitter's (the name is not the original's)
-    unsigned char pad_c8[0x4];
+    // 0xC8: copied into the vertex; below -2.5 draw_common_atr_strip draws with the vectors it is given instead of
+    // m_rot and m_drawVec (the name is not the original's)
+    float m_drawParam;
     // 0xCC: calcParSize's last scale, used only when every component is valid (the name is not the original's)
     mm::Vec3NA m_sizeMul;
     // 0xD8, 0xE0, 0xE8: EmitterArg::get_kf's key data for the speed, size and rotation (the names are not the original's)
@@ -187,8 +210,13 @@ public:
     unsigned char pad_140[0x4];
     bool m_hasLgt;  // 0x144: m_pWork holds a light (the name is not the original's)
     unsigned char pad_145;  // initUtilObj sets it to 2
-    unsigned char pad_146[0x6];
-    unsigned int pad_14c;  // initUtilObj clears it
+    unsigned char pad_146[0x2];
+    // 0x148: the draw_common_atr_* functions store it as the vertex's fourth word (an integer; the name is not the
+    // original's)
+    unsigned short m_drawIndex;
+    unsigned char pad_14a[0x2];
+    // 0x14C: initUtilObj clears it; draw_common_atr_normal adds it to m_rot.z (the name is not the original's)
+    float m_drawRotOfs;
 };
 
 // what an emitter was made from (EmitterObj::m_pData: move01_common_keyframe calls EmitterArg::get_kf on it; the size
@@ -226,7 +254,10 @@ public:
     unsigned char m_constParam2;
     unsigned char pad_e1[0x1];
     unsigned short m_vecKfCount;  // 0xE2: move01_common_keyframe's get_kf count (the name is not the original's)
-    unsigned char pad_e4[0x19];
+    unsigned char pad_e4[0x18];
+    // 0xFC: RenderGrObj::prioritySort draws the emitters with 0 here first among those of one priority (the name is
+    // not the original's)
+    unsigned char m_sortType;
     unsigned char m_hashValue;  // 0xFD: HashManager::build records it with the handle (the name is not the original's)
     unsigned char pad_fe[0x2];
     // 0x100: the shader number RenderManager::setEmitterDraw picks the emitter's shader and blend by for m_type 0 and
@@ -381,7 +412,8 @@ public:
     float m_alpha;  // emitter_set_alpha's
     unsigned char pad_130[0x1C];
     float m_casScale;  // emitter_set_casname's scale
-    unsigned char pad_150[0x1];
+    // 0x150: RenderGrObj::prioritySort adds it to m_drawLayer for the draw priority (the name is not the original's)
+    signed char m_drawLayerOfs;
     unsigned char m_disp;    // emitter_set_disp's
     unsigned char m_nowait;  // emitter_set_nowait's
     // 0x153: emitter_set_casname's last argument, set with its model (the name is not the original's)

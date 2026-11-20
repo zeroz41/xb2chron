@@ -7,6 +7,7 @@
 namespace grlib { class CGLibEtcUniformBlock; }
 
 namespace ml { struct MdsMatInfoHeader; }
+namespace ml { struct MdsMatTechnique; }
 namespace ml { struct MdsMatValShaderCate; }
 namespace ml { struct MdsMatVariableTbl; }
 namespace ml { class DrResMdoMat; }
@@ -22,13 +23,19 @@ public:
     explicit DrMdoSetup(int viewNum)
         : DrMdoMat(viewNum), m_scale(1.0f), pad_EC(0), m_gpuRender(false), m_renderPass(0), m_stateFlags(0),
           m_ctlFlags(0), m_ctlFlags2(0), m_aabbMax(0.5f, 0.5f, 0.5f), m_aabbMin(-0.5f, -0.5f, -0.5f),
-          m_center(0.0f, 0.0f, 0.0f), pad_140(1.0f, 1.0f, 1.0f), pad_150(0.0f, 0.0f, 0.0f), m_length(0.0f), pad_164(0),
+          m_center(0.0f, 0.0f, 0.0f), m_extent(1.0f, 1.0f, 1.0f), pad_150(0.0f, 0.0f, 0.0f), m_length(0.0f), pad_164(0),
           m_mdlFlags(0), pad_16A(0), pad_16B(0), m_nodeMax(0), pad_182(0), m_rimBloomFade(0), pad_188(0) {}
 
     void updateMpfMatUniformBlock();
     // Writes the material's stock variables (s_pStockMaterial) into its uniform block and sets m_renderPass from
     // its technique type.
     void createUniformBlock(const MdsMatInfoHeader* info, DrResMdoMat* mat);
+    // Binds the technique's uniform blocks (s_pUniBkMat), then, while m_bindFlags[0] bit 0 or 4 is set, the
+    // material's texture list, static textures (s_pStaticTexture) and static images (s_pStaticImage).
+    void setShader(DrResMdoMat* mat, const MdsMatInfoHeader* info, const MdsMatTechnique* tech, unsigned int matIdx,
+                   int mdlIdx, unsigned int texIdx);
+    // setShader calls it first while m_bindFlags[0] bit 4 is set
+    void setupMaterial(const MdsMatInfoHeader* info);
 
     // Static texture callbacks: s_pStaticTexture[id] binds texture id at the shader location.
     void varStTex_ColorTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
@@ -149,7 +156,9 @@ public:
     mm::Vec3 m_aabbMax;  // 0x110, (0.5, 0.5, 0.5) from the constructor
     mm::Vec3 m_aabbMin;  // 0x120, (-0.5, -0.5, -0.5) from the constructor
     mm::Vec3 m_center;  // 0x130
-    mm::Vec3 pad_140;  // 0x140, (1, 1, 1) from the constructor
+    // 0x140, (1, 1, 1) from the constructor: the bound box's half size around m_center (DrMdoCtlNom::calcScreenShare
+    // projects m_center +- it; the name is not the original's)
+    mm::Vec3 m_extent;
     mm::Vec3 pad_150;  // 0x150, zeroed by the constructor
     float m_length;  // 0x160
     unsigned int pad_164;

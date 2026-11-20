@@ -19,6 +19,8 @@ public:
     // field names are not the original's)
     class InitResult {
     public:
+        // inline: StateFieldWalk::seqWaitTakeOffEnd stores these before init (position zero, direction +z)
+        InitResult() : m_pos(0.0f, 0.0f, 0.0f), m_dir(0.0f, 0.0f, 1.0f) {}
         mm::Vec3 m_pos;  // 0x0
         mm::Vec3 m_dir;  // 0x10
     };

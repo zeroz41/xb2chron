@@ -32,9 +32,10 @@ public:
         unsigned char m_collectionKey;  // filterCollectionType keeps type 7 items of this ItemProperty key
         unsigned char m_favoriteKey;    // filterFavoriteType keeps type 10 items of this ItemProperty key
         // more than 8 bytes: GfMenuObjPouch2::updateItemList keeps it below its ItemBoxSetup, not in the 8-byte hole
-        // by its callee-saved register (no reader of these bytes known)
-        unsigned char pad_07;
-        unsigned int pad_08;
+        // by its callee-saved register
+        unsigned char m_armorTypeMode;  // filterIraAccWpn: 0 drops armor type 2, 1 keeps only armor type 2 of m_equipIcon
+        unsigned char m_equipIcon;      // filterIraAccWpn keeps the items of this GfBdatItem::getPcEquipIcon
+        unsigned char pad_09[3];
     };
     // what setupFromBox lists: the items of one type in the item box (the names are not the original's)
     struct ItemBoxSetup {
@@ -68,14 +69,25 @@ public:
     // what setupFromQuestReward lists: a reward id's items (GfMenuObjShop::getExcTaskReward; the names are not the
     // original's)
     struct QuestRewardSetup {
+        // GfMenuObjQuestReward::RewardListener's clears the reward id (stored before calls that set it)
+        QuestRewardSetup() : m_reward(0) {}
         ui::UIListInfoBase::SetupParam m_setup;  // the list's
         unsigned int m_reward;                   // the reward id
     };
-    struct MissionRewardSetup;
+    // what setupFromMissionReward lists: GfMenuObjQuestReward::RewardListener fills one with its number
+    // reference's value (the names are not the original's)
+    struct MissionRewardSetup {
+        MissionRewardSetup() : m_reward(0) {}
+        ui::UIListInfoBase::SetupParam m_setup;  // the list's
+        unsigned int m_reward;                   // the number reference's value
+    };
     // what setupFromHanaParts lists (the field names are not the original's)
     struct HanaPartsSetup {
+        // inline: GfMenuObjHanaPartsMake::updateItemList's stores zero 0x18-0x27
+        HanaPartsSetup() : m_type(0), pad_18() {}
         ui::UIListInfoBase::SetupParam m_setup;  // the list's
         unsigned int m_type;  // the parts' ItemType::Type (16-20; their BDAT file is GfDataBdat's type + 0x40)
+        unsigned char pad_18[0x10];
     };
     GfMenuItemList();
     virtual ~GfMenuItemList();  // slot 0
@@ -84,11 +96,14 @@ public:
     void addItem(const MenuItemInfo& item, bool flag);
     void setupFromBox(const ItemBoxSetup& setup);
     void setupFromQuestReward(const QuestRewardSetup& setup);
+    void setupFromMissionReward(const MissionRewardSetup& setup);
     void addListFromBox(const ItemBoxSetup& setup);  // setupFromBox's items added to the list
     void filterRarity(const FiltertInfo& filter);
     void filterRarityMore(const FiltertInfo& filter);
     void filterCollectionType(const FiltertInfo& filter);
     void filterFavoriteType(const FiltertInfo& filter);
+    // 2.0.0's symbols name it. What it does: with expansion 3, keeps the type 2 items m_armorTypeMode/m_equipIcon pick
+    void filterIraAccWpn(const FiltertInfo& filter);
     void updateCount();
     void setupFromHanaParts(const HanaPartsSetup& setup);  // every part of the type that needs ether  // the stackable items' counts from the item box
     void decItem(const MenuItemInfo& item, bool);

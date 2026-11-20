@@ -23,6 +23,13 @@ public:
             }
         }
     }
+    // gmk linked last unless it is in the active list already (the gimmicks' createInst inline it; the name is not the
+    // original's)
+    static void addGmk(T0* gmk) {
+        if (TGmkActiveList::sys()->m_list.end() == TGmkActiveList::sys()->m_list.find(gmk)) {
+            TGmkActiveList::sys()->m_list.push_back(*gmk);
+        }
+    }
     // 0x8: the active gimmicks (the name is not the original's)
     mm::mtl::IntrusiveList<T0> m_list;
     bool pad_20;

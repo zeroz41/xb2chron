@@ -111,10 +111,10 @@ void GfMenuObjPopup::update() {
 inline void GfMenuObjPopup::sendOpen(unsigned int handle, const PopupInfo& info) {
     ui::EventData event;
     event.m_type = 0x21;
-    event.m_param0 = info.m_param.m_type;
-    event.m_param1 = info.m_param.m_value[0];
-    event.m_param2 = info.m_param.m_value[1];
-    event.m_param3 = info.m_param.m_value[2];
+    event.m_params[0] = info.m_param.m_type;
+    event.m_params[1] = info.m_param.m_value0;
+    event.m_params[2] = info.m_param.m_value1;
+    event.m_params[3] = info.m_param.m_value2;
     ui::UIManager::get()->requestObjectEvent(handle, event, 0.0f);
 }
 
@@ -122,6 +122,18 @@ bool GfMenuObjPopup::seqGiftOut() {
     ui::UIObjectAcc icon(m_handle, "IMG_gift_icon");
     m_giftSeq.addAnimJob(icon.m_handle, "out");
     m_giftSeq.addJob(&GfMenuObjPopup::seqGiftEnd);
+    return true;
+}
+
+bool GfMenuObjPopup::seqExecContinue() {
+    ui::UIObjectAcc acc(m_handle);
+    ui::UIObjectAcc main(acc.searchChild("LAY_main"));
+    mm::mtl::Queue<PopupInfo>* queue = GfMenuManyObjects::getQueue<PopupInfo>(7);
+    GfMenuManyObjects::get()->m_hold[7] = false;
+    if (queue != nullptr && !queue->empty()) {
+        PopupInfo info = queue->front();
+        sendOpen(main.m_handle, info);
+    }
     return true;
 }
 
@@ -159,7 +171,7 @@ unsigned int GfMenuObjPopup::open(const OpenParam& param) {
             mm::mtl::Queue<PopupInfo>* popups = GfMenuManyObjects::getQueue<PopupInfo>(7);
             if (popups != nullptr && !popups->empty()) {
                 const OpenParam& queued = (*popups)[i].m_param;
-                if (queued.m_type == 9 && queued.m_value[0] == param.m_value[0]) {
+                if (queued.m_type == 9 && queued.m_value0 == param.m_value0) {
                     return 0;
                 }
             }
@@ -259,7 +271,7 @@ bool GfMenuObjPopup::removeBlade(unsigned int value) {
             bool removed = false;
             for (unsigned int i = 0; i < count; ++i) {
                 OpenParam queued;
-                if (getParam(i, queued) && (queued.m_type & ~1u) == 4 && queued.m_value[0] == value) {
+                if (getParam(i, queued) && (queued.m_type & ~1u) == 4 && queued.m_value0 == value) {
                     GfMenuManyObjects::removeIndex<PopupInfo>(7, i);
                     removed = true;
                 }

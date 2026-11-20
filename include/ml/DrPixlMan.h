@@ -2,6 +2,7 @@
 #define ML_DRPIXLMAN_H
 
 #include "grlib/CGLibRenderTarget.h"
+#include "ml/DrPixlRenderTarget.h"
 
 namespace grlib { class CGLibTextureBuffer; }
 namespace ml { class DrPixlDeferred; }
@@ -47,7 +48,8 @@ struct wkPixlManRes {
     // 0x1C0, DrPixlPostObjUnbranchToDepth::renderQuater makes it the render target (name inferred)
     grlib::CGLibDepthTarget* m_quaterDepth;
     unsigned char pad_1C8[0x8];
-    grlib::CGLibRenderTarget* m_capture;  // 0x1D0, renderEnd invalidates its colour
+    // 0x1D0, renderEnd invalidates its colour; resetColorBuff(true) creates it, (false) deletes it
+    DrPixlRenderTarget* m_capture;
     unsigned int m_flags;  // 0x1D8, updateShadowDisplayList clears 0x20
     unsigned char pad_1DC[0x1C];
     };

@@ -4,9 +4,15 @@
 #include "classes/ml/DevSetting.h"
 
 namespace ml {
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100ECA000). th_dev_file_nx.cpp's .bss
+// byte: which language DevSettingNx::getLang reports, 0 the device's, 1 Japanese (Framework::initialize: when
+// "bdat/jp.bin" is there), 2 (Framework::initialize: the config's flag at 0x3C).
+extern unsigned char g_devLangMode;
 // table 0x7100B769C8
 class DevSettingNx {
 public:
+    // inline: ml::DeviceNx::createDevice builds it (the original has no out-of-line copy); it resets the language mode
+    DevSettingNx() { g_devLangMode = 0; }
     virtual ~DevSettingNx();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
@@ -27,10 +33,6 @@ public:
         const char* m_code;
     };
 };
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100ECA000). th_dev_file_nx.cpp's .bss
-// byte: which language DevSettingNx::getLang reports, 0 the device's, 1 Japanese (Framework::initialize: when
-// "bdat/jp.bin" is there), 2 (Framework::initialize: the config's flag at 0x3C).
-extern unsigned char g_devLangMode;
 }  // namespace ml
 
 #endif

@@ -24,9 +24,10 @@ namespace gf {
 // constructor and disposeMobInfos out of line)
 class GfMobSlotManager {
 public:
-    // one mob slot and its squared distance (createMobInfos pushes them; the names are not the original's)
+    // one mob's game object and its squared distance from the interest position (createMobInfos pushes them;
+    // the names are not the original's)
     struct MobInfo {
-        GF_SLOT_HANDLE* m_handle;
+        GF_OBJ_HANDLE* m_handle;
         float m_distSq;
     };
 

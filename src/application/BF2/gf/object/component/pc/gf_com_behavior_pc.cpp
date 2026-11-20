@@ -251,7 +251,8 @@ void GfComBehaviorPc::onWarpNormal(GfComPropertyPc& property) {
     m_owner->getComponent<GfComEnvSensor>(11)->flushEnv(world);
     property.flush();
     GfComAsm* asmCom = m_owner->getComponent<GfComAsm>(2);
-    if (!((property.m_field.m_statusFlags & 0x8000) != 0 && (property.m_stateFlags & 0x800) == 0)) {
+    const unsigned int& stateFlags = property.m_stateFlags;
+    if (!((property.m_field.m_statusFlags & 0x8000) != 0 && (stateFlags & 0x800) != 0)) {
         if (property.m_waterLevel == 3) {
             if (asmCom && asmCom->setState("S_wateridle", AnimLayer(0))) {
                 m_hfsm.setState(0x14);

@@ -265,6 +265,21 @@ public:
     GfMenuObjHitonowa* m_owner;
 };
 
+// LAY_image's listener: its open event (0x21) queues the image jobs on m_seq2
+class GfMenuObjHitonowa::ImageListener : public ::ui::UIObjectListener {
+public:
+    // initialize zeroes 0xC-0x1B after storing its table, as for ConfirmListener
+    ImageListener(GfMenuObjHitonowa* owner) : m_openMode(), pad_10(), m_owner(owner) {}
+    virtual ~ImageListener() {}  // slot 0: weak in the original, and its D1 slot is the base's destructor
+    virtual void reciveEvent(const ui::EventData& event, unsigned int handle);  // slot 2 (the key function)
+    // the open event's (0x21) first parameter: 0 queues the plain image jobs, else the first-time ones with the
+    // voices; the cancel event then sends 0x101 to the parent (0) or sets m_resultDone (the name is not the
+    // original's)
+    int m_openMode;
+    unsigned char pad_10[0xC];
+    GfMenuObjHitonowa* m_owner;
+};
+
 class GfMenuObjHitonowa::BgListener : public ::ui::UIObjectListener {
 public:
     BgListener(GfMenuObjHitonowa* owner) : pad_0C(), m_owner(owner) {}

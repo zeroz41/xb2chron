@@ -102,8 +102,8 @@ public:
                         return nullptr;
                     }
                     obj->m_size = size;
-                    split->m_size = rest;
                     split->m_data = obj->m_data + size;
+                    split->m_size = rest;
                     m_freeList.erase(split);
                     split->m_flags = 0;
                     split->m_prev = nullptr;

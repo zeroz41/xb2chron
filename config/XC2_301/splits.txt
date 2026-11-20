@@ -4375,10 +4375,14 @@ idcoli/IDColiUtilColiSimple.cpp:
 	.data        start:0x00B7F560 end:0x00B7F5A0
 
 idcoli/IDColiGrandMesh.cpp:
-	.text        start:0x00812968 end:0x008190E0
-	.rodata      start:0x009AD549 end:0x009AD5B1
+	.text        start:0x00812968 end:0x00818C10
 	.rodata      start:0x009B574C end:0x009B5750
-	.data        start:0x00B7F5A0 end:0x00B7F6C0
+	.data        start:0x00B7F5A0 end:0x00B7F630
+
+navi/NvmshManager.cpp:
+	.text        start:0x00818C10 end:0x008190E0
+	.rodata      start:0x009AD549 end:0x009AD5B1
+	.data        start:0x00B7F630 end:0x00B7F6C0
 	.bss         start:0x015E9C78 end:0x015E9CB0
 
 navi/NvmshAcObjBase.cpp:

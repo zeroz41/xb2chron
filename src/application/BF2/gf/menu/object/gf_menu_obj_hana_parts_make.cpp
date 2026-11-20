@@ -19,6 +19,7 @@
 #include "classes/gf/GfMenuHanaPartsAdapter.h"
 #include "classes/gf/GfMenuReferenceAdapter.h"
 #include "classes/gf/GfMenuObjCharSelect.h"
+#include "classes/gf/GfMenuObjCommonText.h"
 #include "classes/gf/GfMenuObjHanaCustom.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
@@ -34,6 +35,8 @@
 #include "classes/ui/UIManager.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UISelectObjList.h"
+#include "gf/GfDataHana.h"
+#include "gf/GfGameUtilHana.h"
 #include "gf/GfItemUtil.h"
 #include "gf/GfMenuObjUtil.h"
 #include "mm/mtl/FixStr.h"
@@ -358,6 +361,222 @@ void GfMenuObjHanaPartsMake::makeCategoryItemList(GfMenuIDList* parts, GfMenuIte
     }
 }
 
+void GfMenuObjHanaPartsMake::refreshItemList(ui::UIObjectAcc& acc, GfMenuItemList* list, ui::UISelectObjList* select,
+                                             unsigned int parts, unsigned int mode) {
+    // the blade id is read but not used; mode 0 lists the parts to make, the others the crystal parts
+    unsigned int hana = GfMenuReference::getReferenceBladeID(0);
+    {
+        ui::UIObjectAcc baseMake(acc.searchChild("IMG_melist_base_make"));
+        ui::UIObjectAcc baseCrystal(acc.searchChild("IMG_melist_base_crystal"));
+        ui::UIObjectAcc titleMake(acc.searchChild("TXT_melist_title_make"));
+        ui::UIObjectAcc titleCrystal(acc.searchChild("TXT_melist_title_crystal"));
+        ui::UIObjectAcc colMake(acc.searchChild("TXT_melist_col_make"));
+        ui::UIObjectAcc colCrystal(acc.searchChild("TXT_melist_col_crystal"));
+        bool make = mode == 0;
+        baseMake.setDisp(make);
+        baseCrystal.setDisp(!make);
+        titleMake.setDisp(make);
+        titleCrystal.setDisp(!make);
+        colMake.setDisp(make);
+        colCrystal.setDisp(!make);
+        for (int i = 1; i < 10; i++) {
+            mm::mtl::FixStr<32> name;
+            name.format("LAY_sbparts_make@%02d", i);
+            ui::UIObjectAcc partsMake(acc.searchChild(name.m_str));
+            partsMake.setDisp(make);
+            name.format("LAY_sbparts_crystal@%02d", i);
+            ui::UIObjectAcc partsCrystal(acc.searchChild(name.m_str));
+            partsCrystal.setDisp(!make);
+        }
+    }
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < static_cast<unsigned int>(select->getSize());) {
+        MenuItemInfo item = list->getContents(list->getPageIndex(i));
+        ui::UIObjectAcc obj(select->getObject(i));
+        i++;
+        name.format("TXT_sbpartsname@%02d", i);
+        ui::UIObjectAcc text(obj.searchChild(name.m_str));
+        RESULT_HANA result;
+        bool enable;
+        if (mode == 0) {
+            enable = GfMenuHanaAdapter::isMakeParts(parts, item.m_id, result);
+        } else {
+            enable = GfMenuHanaAdapter::isCrystalParts(parts, item.m_id, result);
+        }
+        const char* color = enable ? "txt_normal2" : "txt_disable";
+        GfMenuObjUtil::setColMulandAdd(text.m_handle, color);
+    }
+    unsigned int type = GfMenuReference::getReferenceItemType();
+    bool stock = (type >= 0x11 && type <= 0x14) || type == 0x10;
+    ui::UIObjectAcc parent(acc.getParentHandle());
+    parent.setDispChild(stock, "LAY_stock");
+}
+
+void GfMenuObjHanaPartsMake::ItemListListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc ownerAcc(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    GfMenuReference::getReferenceBladeID(0);
+    switch (event.m_type) {
+    case 1: {
+        m_owner->m_itemSelect->clear();
+        m_owner->m_itemSelect->pickupObject(acc.m_handle, "LAY_hpsub_tag@%02d", 1);
+        setupItemList(acc, m_owner->m_itemList, m_owner->m_itemSelect);
+        ui::UICtrlCursorColor::CursorSetting setting;
+        setting.m_normalColor = "txt_normal2";
+        setting.m_selectColor = "txt_normal2";
+        setting.m_dispName = "IMG_hpsub_sltag@%02d";
+        setting.m_colorName = "TXT_sbpartsname@%02d";
+        m_owner->m_itemCursor = ui::UICtrlCursorColor::create(handle, setting, m_owner->m_itemSelect);
+        m_owner->m_itemCursor->setDisp(false);
+        GfMenuObjUtil::createVScrollBarPlugin(acc.searchChild("IMG_hpsub_scr_point"), m_owner->m_itemList,
+                                              "IMG_hpsub_scr_line", true);
+        m_owner->m_sortIndex = 0;
+        makeCategoryItemList(m_owner->m_partsList, m_owner->m_itemList, m_owner->m_listMode, m_owner->m_sortIndex);
+        GfMenuIDList* parts = m_owner->m_partsList;
+        unsigned int category = parts->getContents(parts->getIndex(false)).m_id;
+        refreshItemList(acc, m_owner->m_itemList, m_owner->m_itemSelect, category, m_owner->m_listMode);
+        GfMenuObjHanaCustom::refreshItemInfo(acc, m_owner->m_itemList, category, 1);
+        GfMenuObject::disableInput(handle);
+        GfMenuObjSort::setSortLabelText(GfMenuObjSort::getSortID(0x17, 0), ownerAcc.searchChild("TXT_item_sort_label"));
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(ownerAcc.searchChild("LAY_partsmake_window"));
+        }
+        break;
+    case 6: {
+        unsigned int index = event.m_param0;
+        int previous = event.m_param1;
+        m_owner->m_itemList->setIndex(index);
+        unsigned int selected = m_owner->m_itemList->getIndex(true);
+        if (m_owner->m_itemCursor->inputChange(selected)) {
+            GfMenuIDList* parts = m_owner->m_partsList;
+            unsigned int category = parts->getContents(parts->getIndex(false)).m_id;
+            refreshItemList(acc, m_owner->m_itemList, m_owner->m_itemSelect, category, m_owner->m_listMode);
+            GfMenuObjHanaCustom::refreshItemInfo(acc, m_owner->m_itemList, category, 1);
+            if (previous != -1 && index != previous) {
+                GfMenuObjUtil::playSECommonCursor();
+            }
+        }
+        break;
+    }
+    case 8:
+        switch (event.m_param1) {
+        case 1: {
+            GfMenuItemList* items = m_owner->m_itemList;
+            unsigned int item = items->getContents(items->getIndex(false)).m_id;
+            GfMenuIDList* parts = m_owner->m_partsList;
+            unsigned int mode = m_owner->m_listMode;
+            unsigned int category = parts->getContents(parts->getIndex(false)).m_id;
+            RESULT_HANA result;
+            unsigned int error;
+            if (mode != 0) {
+                if (GfMenuHanaAdapter::isCrystalParts(category, item, result)) {
+                    {
+                        ui::EventData close;
+                        close.m_type = 0x102;
+                        ui::UIManager::get()->requestObjectEvent(handle, close, 0.0f);
+                    }
+                    sendEvent(ownerAcc.searchChild("LAY_make_diarog"), 0x101, 0);
+                    break;
+                }
+                error = result == static_cast<RESULT_HANA>(7) ? 0xF : 0xC;
+            } else {
+                if (GfMenuHanaAdapter::isMakeParts(category, item, result)) {
+                    {
+                        ui::EventData close;
+                        close.m_type = 0x102;
+                        ui::UIManager::get()->requestObjectEvent(handle, close, 0.0f);
+                    }
+                    sendEvent(ownerAcc.searchChild("LAY_make_diarog"), 0x101, 0);
+                    GfMenuObjUtil::playSECommonDecide();
+                    break;
+                }
+                switch (result) {
+                case 5:
+                    error = 0xE;
+                    break;
+                case 7:
+                    error = 0xF;
+                    break;
+                default:
+                    error = 0xC;
+                    break;
+                }
+            }
+            GfMenuObjCommonText::openError(m_owner->m_context, error, 0);
+            GfMenuObjUtil::playSECommon(2);
+            break;
+        }
+        case 2:
+            {
+                ui::EventData close;
+                close.m_type = 0x102;
+                ui::UIManager::get()->requestObjectEvent(handle, close, 0.0f);
+            }
+            sendEvent(ownerAcc.searchChild("LAY_partsmake_window"), 0x101, 0);
+            GfMenuObjUtil::playSECommonCancel();
+            break;
+        case 0x11: {
+            GfMenuIDList* parts = m_owner->m_partsList;
+            unsigned short table = getFirstSortTableId(parts->getContents(parts->getIndex(false)).m_id, m_owner->m_listMode);
+            if (table != 0) {
+                GfMenuObjSort::open(acc.m_handle, ownerAcc.searchChild("TXT_item_sort_label"), table,
+                                    m_owner->m_sortIndex);
+                GfMenuObject::disableInput(handle);
+                GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+            }
+            break;
+        }
+        }
+        break;
+    case 0x101:
+        GfMenuObjOperationInfo::add(handle, 0, 0, 0);
+        GfMenuObject::setupInputSelectionFromList(handle, *m_owner->m_itemList);
+        GfMenuObject::enableInput(handle);
+        break;
+    case 0x102: {
+        GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+        m_owner->m_itemCursor->setDisp(false);
+        GfMenuIDList* parts = m_owner->m_partsList;
+        unsigned int category = parts->getContents(parts->getIndex(false)).m_id;
+        refreshItemList(acc, m_owner->m_itemList, m_owner->m_itemSelect, category, m_owner->m_listMode);
+        GfMenuObject::disableInput(handle);
+        break;
+    }
+    case 0x103:
+    case 0x104: {
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_r_early";
+        param.m_eventId = 1;
+        param.m_startFlags = 8;
+        GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::startCtrl(handle, param, nullptr));
+        break;
+    }
+    case 0x148:
+        GfMenuObject::enableInput(handle);
+        GfMenuObjOperationInfo::add(handle, 0, 0, 0);
+        if (m_owner->m_sortIndex != event.m_param0) {
+            GfMenuIDList* parts = m_owner->m_partsList;
+            unsigned int category = parts->getContents(parts->getIndex(false)).m_id;
+            unsigned short table = getFirstSortTableId(category, m_owner->m_listMode);
+            if (table != 0) {
+                unsigned short sortId = GfMenuObjSort::getSortID(table, event.m_param0);
+                m_owner->m_itemList->sort(sortId, false);
+                m_owner->m_sortIndex = event.m_param0;
+                refreshItemList(acc, m_owner->m_itemList, m_owner->m_itemSelect, category, m_owner->m_listMode);
+            }
+        }
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjHanaPartsMake::setupItemList(ui::UIObjectAcc& acc, GfMenuItemList* list, ui::UISelectObjList* select) {
     mm::mtl::FixStr<32> name;
     for (unsigned int i = 0; i < static_cast<unsigned int>(select->getSize()); i++) {
@@ -379,10 +598,233 @@ void GfMenuObjHanaPartsMake::setupItemList(ui::UIObjectAcc& acc, GfMenuItemList*
     GfMenuObjHanaCustom::setupItemInfo(acc, list);
 }
 
+void GfMenuObjHanaPartsMake::NumSelectListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc ownerAcc(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    GfMenuReference::getReferenceBladeID(0);
+    switch (event.m_type) {
+    case 1:
+        setupNumSelect(acc, m_owner->m_count, m_owner->m_price);
+        acc.setDisp(false);
+        break;
+    case 6: {
+        int count = event.m_param0;
+        int previous = event.m_param1;
+        m_owner->m_count->m_value = count;
+        GfMenuItemList* items = m_owner->m_itemList;
+        unsigned int item = items->getContents(items->getIndex(false)).m_id;
+        ItemProperty property;
+        GfItemUtil::getProperty(property, item, 0);
+        m_owner->m_price->m_value = (m_owner->m_listMode == 0 ? property.m_needEther : property.m_dustEther) * count;
+        if (previous != -1 && count != previous) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 8:
+        switch (event.m_param1) {
+        case 1: {
+            GfMenuIDList* parts = m_owner->m_partsList;
+            unsigned int category = parts->getContents(parts->getIndex(false)).m_id;
+            GfMenuItemList* items = m_owner->m_itemList;
+            unsigned int item = items->getContents(items->getIndex(false)).m_id;
+            unsigned int count = m_owner->m_count->m_value;
+            if (count == 0) {
+                break;
+            }
+            for (unsigned int i = 0; i < count; i++) {
+                if (m_owner->m_listMode == 0) {
+                    switch (category) {
+                    case 1:
+                        GfGameUtilHana::exchangeRoleParts(item);
+                        break;
+                    case 2:
+                        GfGameUtilHana::exchangeAttributeParts(item);
+                        break;
+                    case 3:
+                        GfGameUtilHana::exchangeNArtsParts(item);
+                        break;
+                    case 9:
+                        GfGameUtilHana::exchangeArtsParts(item);
+                        break;
+                    case 6:
+                        GfGameUtilHana::exchangeCondenserParts(item);
+                        break;
+                    }
+                } else {
+                    switch (category) {
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 9:
+                    case 6:
+                        GfGameUtilHana::execConvertToEther(item);
+                        break;
+                    }
+                }
+            }
+            if (m_owner->m_listMode == 0) {
+                GfMenuObjUtil::playSE(0x14);
+            } else {
+                GfMenuObjUtil::playSE(0x15);
+            }
+            GfMenuItemList* list = m_owner->m_itemList;
+            unsigned int mode = m_owner->m_listMode;
+            MenuItemInfo& info = list->getContents(list->getIndex(false));
+            if (mode != 0) {
+                MenuItemInfo dec = info;
+                dec.m_count = count;
+                m_owner->m_itemList->decItem(dec, false);
+                GfMenuIDList* partsList = m_owner->m_partsList;
+                unsigned int partsId = partsList->getContents(partsList->getIndex(false)).m_id;
+                refreshItemList(acc, m_owner->m_itemList, m_owner->m_itemSelect, partsId, m_owner->m_listMode);
+                if (m_owner->m_itemList->getSize() == 0) {
+                    {
+                        ui::EventData close;
+                        close.m_type = 0x102;
+                        ui::UIManager::get()->requestObjectEvent(handle, close, 0.0f);
+                    }
+                    sendEvent(ownerAcc.searchChild("LAY_partsmake_window"), 0x101, 0);
+                    break;
+                }
+            } else {
+                info.m_count += count;
+            }
+            {
+                ui::EventData close;
+                close.m_type = 0x102;
+                ui::UIManager::get()->requestObjectEvent(handle, close, 0.0f);
+            }
+            sendEvent(ownerAcc.searchChild("LAY_metl_window"), 0x101, 0);
+            break;
+        }
+        case 2:
+            {
+                ui::EventData close;
+                close.m_type = 0x102;
+                ui::UIManager::get()->requestObjectEvent(handle, close, 0.0f);
+            }
+            sendEvent(ownerAcc.searchChild("LAY_metl_window"), 0x101, 0);
+            GfMenuObjUtil::playSECommonCancel();
+            break;
+        }
+        break;
+    case 0x101: {
+        GfMenuObjOperationInfo::add(handle, 0, 0, 0);
+        GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::setCommonFadeIn(handle, 1, 0));
+        GfMenuItemList* items = m_owner->m_itemList;
+        unsigned int item = items->getContents(items->getIndex(false)).m_id;
+        unsigned int mode = m_owner->m_listMode;
+        ui::UIObjectAcc(acc.searchChild("LAY_select_make")).setDisp(mode == 0);
+        ui::UIObjectAcc(acc.searchChild("LAY_select_crystal")).setDisp(mode != 0);
+        unsigned int max;
+        if (m_owner->m_listMode != 0) {
+            max = GfGameUtilHana::getConvertToEther(item);
+        } else {
+            // how many can be made: what the ether pays for, at most the box's room. An inlined helper in the
+            // original (its property takes the frame's top slot); the lambda stands in for it
+            max = [&]() -> unsigned int {
+                ItemProperty property;
+                GfItemUtil::getProperty(property, item, 0);
+                unsigned int need = property.m_needEther;
+                unsigned int afford = GfDataHana::getEther() / need;
+                unsigned int empty = GfGameUtilHana::getEmptyParts(item);
+                return empty < afford ? empty : afford;
+            }();
+        }
+        GfMenuObject::setupInputSelection(handle, 0, max + 1);
+        GfMenuObject::enableInput(handle);
+        m_owner->m_count->m_max = max;
+        break;
+    }
+    case 0x102:
+        GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+        GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::setCommonFadeOut(handle, 2, 0));
+        GfMenuObject::disableInput(handle);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjHanaPartsMake::setupNumSelect(ui::UIObjectAcc& acc, mm::mtl::IntrusivePtr<GfMenuReferenceNumber> count,
                                             mm::mtl::IntrusivePtr<GfMenuReferenceNumber> price) {
     GfMenuReferenceAdapter::create(acc.searchChild("TXT_num_select_value"), count, true);
     GfMenuReferenceAdapter::create(acc.searchChild("TXT_num_select_total_price"), price, true);
+}
+
+void GfMenuObjHanaPartsMake::updateItemList(GfMenuItemList* list, ItemType::Type type, unsigned int mode) {
+    list->clear();
+    if (mode != 0) {
+        GfMenuItemList::ItemBoxSetup setup;
+        setup.m_setup.m_pageRowSize = 9;
+        setup.m_setup.m_pageScroll = true;
+        setup.m_type = type;
+        setup.pad_28 = 0;
+        setup.pad_29 = 0;
+        list->setupFromBox(setup);
+        if (list->getSize() != 0) {
+            // the parts a blade has equipped are not listed
+            for (unsigned int i = 0; i < static_cast<unsigned int>(list->getSize());) {
+                MenuItemInfo item = list->getContents(i);
+                unsigned int category = 0;
+                switch (item.m_type) {
+                case 0x10:
+                    category = 1;
+                    break;
+                case 0x11:
+                    category = 2;
+                    break;
+                case 0x12:
+                    category = 9;
+                    break;
+                case 0x13:
+                    category = 3;
+                    break;
+                case 0x14:
+                    category = 6;
+                    break;
+                default:
+                    break;
+                }
+                // not a part: i stays (as in the original)
+                if (category == 0) {
+                    continue;
+                }
+                if (GfMenuItemUtil::searchEquipHanaParts(category, item.m_id, item.m_entry) != 0) {
+                    list->m_list.erase(list->m_list.begin() + i);
+                    list->subSize(1);
+                    list->m_changed = true;
+                } else {
+                    i++;
+                }
+            }
+            // the same part twice: one entry with the counts added up
+            if (list->getSize() != 0) {
+                for (unsigned int i = 0; i < static_cast<unsigned int>(list->getSize()) - 1; i++) {
+                    MenuItemInfo item = list->getContents(i);
+                    for (unsigned int j = i + 1; j < static_cast<unsigned int>(list->getSize());) {
+                        MenuItemInfo& other = list->getContents(j);
+                        if (item.m_type == other.m_type && item.m_id == other.m_id) {
+                            list->getContents(i).m_count++;
+                            list->m_list.erase(list->m_list.begin() + j);
+                            list->subSize(1);
+                            list->m_changed = true;
+                        } else {
+                            j++;
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        GfMenuItemList::HanaPartsSetup setup;
+        setup.m_setup.m_pageRowSize = 9;
+        setup.m_setup.m_pageScroll = true;
+        setup.m_type = type;
+        list->setupFromHanaParts(setup);
+    }
 }
 
 }  // namespace gf

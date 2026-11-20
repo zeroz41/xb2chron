@@ -29,6 +29,10 @@ public:
     // the thread's next job in job: the first one (m_transferJob too), or with search the first whose 0x3C is set;
     // whether there was one (the parameter names are not the original's)
     bool getJobThread(TJOB*& job, bool search);
+    // the jobs of list entered in the thread's under its lock: with mode 1 those for any CPU (0x30 is 0), with 2
+    // those for this thread's CPU, else all; whether any was (WorkCpu::wakeup; the parameter names are not the
+    // original's)
+    bool addJobThreadList(reslist<TJOB*>* list, unsigned int mode);
 
     // 0x1A8 the CPU the thread runs on (WorkCpu::getCurrentCPUID and getThreadId compare it; the name is not the
     // original's)
@@ -63,7 +67,10 @@ public:
     // 0x660 to 0x678 (create allocates 0x678 bytes): the constructor zeroes them
     unsigned long pad_660;
     unsigned long pad_668;
-    unsigned short pad_670;
+    unsigned char pad_670;
+    // 0x671 threadFunc stops taking jobs once it is set
+    unsigned char pad_671;
+    // 0x672 threadFunc ends once it is set (wkStandbyLogout sets it)
     unsigned char pad_672;
     unsigned char pad_673[0x5];
 };

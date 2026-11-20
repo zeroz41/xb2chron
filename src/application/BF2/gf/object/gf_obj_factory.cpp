@@ -75,8 +75,17 @@
 #include "classes/gf/GfAssetPack.h"
 #include "classes/gf/GfComEffectCaster.h"
 #include "classes/gf/GfComTransform.h"
+#include "classes/gf/GfComBehaviorWeapon.h"
 #include "classes/gf/GfComDynamics.h"
 #include "skd/DynamicsImporter.h"
+#include "anm/AsmImporter.h"
+#include "classes/gf/GfBdatItem.h"
+#include "anm/Factory.h"
+#include "classes/fw/AnimResAsmResolver.h"
+#include "classes/gf/GfComModel.h"
+#include "classes/fw/EffectResData.h"
+#include "mm/mtl/Hash.h"
+#include <algorithm>
 #include <math.h>
 #include <string.h>
 
@@ -116,6 +125,17 @@ inline T* getSetupOf(GFOBJ_INFO* info, int type) {
     return nullptr;
 }
 
+// the create types 2, 3 and 11, whose drivers get their extra model in fn_71005260B8 (the name is not the original's)
+inline bool isExtraModelCreateType(int type) {
+    switch (type) {
+    case 2:
+    case 3:
+    case 11:
+        return true;
+    default:
+        return false;
+    }
+}
 // the create types 10 to 13 (the name is not the original's)
 inline bool isEventActCreateType(int type) {
     return type >= 10 && type <= 13;
@@ -163,6 +183,104 @@ bool checkSoundTriggerPlayer(GfComSound* sound, const fw::ResSoundTriggerInfo& i
     return true;
 }
 
+void fn_71005260B8(GfInitParamDriver& param, GF_OBJ_HANDLE* handle) {
+    if (GfGameManager::isGameTypeIra()) {
+        DataParamAcc acc(handle);
+        unsigned int weapon = acc.getEquipWeapon(-1, false);
+        unsigned int driver = acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0;
+        unsigned int blade = GfDataDriver::getBlade(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0, -1);
+        GfAppendUtil::setupPartyBlade(GFATTACH(0), handle, weapon, driver, blade);
+    } else {
+        DataParamAcc acc(handle);
+        if (param.isAllWeapon()) {
+            unsigned int weapon = param.pad_90;
+            if (weapon == 0) {
+                unsigned int type = param.pad_1a4;
+                if (type == 0) {
+                    type = GfDataBlade::getBladeWpnType(acc.getBlade(-1, false));
+                    if (type == 0) {
+                        if (!param.pad_98.empty()) {
+                            GfObjSetup* setup = GfObjUtil::getObjSetup(handle);
+                            setup->pad_58 = param.pad_98.begin()->m_bladeId;
+                            type = param.pad_98.begin()->m_weaponId;
+                        } else {
+                            type = 0;
+                        }
+                    }
+                }
+                GfBdatItem* item = mm::mtl::PtrSingleton<GfBdatItem>::sys();
+                weapon = 0;
+                for (unsigned int i = item->getPcWpnStart(); i < item->getPcWpnEnd(); i++) {
+                    if (type == item->getPcWpnWpnType(i)) {
+                        param.pad_90 = i;
+                        weapon = i;
+                        break;
+                    }
+                }
+            }
+            unsigned int driver = acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0;
+            GfAppendUtil::setupActViewer(GFATTACH(0), handle, weapon, driver, param.pad_98.begin()->m_bladeId);
+        } else {
+            int type = param.m_createType;
+            if (type == 7 || type == 1) {
+                unsigned int weapon = acc.getEquipWeapon(-1, false);
+                unsigned int driver = acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0;
+                GfAppendUtil::setupPartyBlade(GFATTACH(0), handle, weapon, driver, acc.getBlade(-1, false));
+            } else if (!isExtraModelCreateType(type)) {
+                return;
+            }
+            if (!param.pad_1a2) {
+                GfAppendUtil::setupExtraModel(handle, handle);
+            }
+        }
+    }
+}
+
+void fn_710052691C(GF_OBJ_HANDLE* handle, unsigned int weapon) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    GfObjSetupDriver* setup = nullptr;
+    if (info != nullptr && info->m_setup != nullptr && info->m_setup->m_type == info->m_obj->m_type &&
+        info->m_obj->m_type == 3) {
+        setup = mm::mtl::rttiCast<GfObjSetupDriver>(info->m_setup);
+    }
+    unsigned int type = mm::mtl::PtrSingleton<GfBdatItem>::sys()->getPcWpnWpnType(weapon);
+    unsigned int blade = 0;
+    if (weapon != 0) {
+        GfBdatItem* item = mm::mtl::PtrSingleton<GfBdatItem>::sys();
+        GfBdatChrBl* bl = mm::mtl::PtrSingleton<GfBdatChrBl>::sys();
+        unsigned int wpnType = item->getPcWpnWpnType(weapon);
+        for (unsigned int i = bl->getChrBlStart(); i < bl->getChrBlEnd(); i++) {
+            if (bl->getChrBlWeaponType(i) == wpnType) {
+                blade = i;
+                break;
+            }
+        }
+    }
+    for (unsigned int i = 0; i < setup->m_param.pad_98.size(); i++) {
+        if (setup->m_param.pad_98[i].m_weaponId == type) {
+            blade = setup->m_param.pad_98[i].m_bladeId;
+        }
+    }
+    if (GfDataDriver::isIra(setup->m_bdatId)) {
+        blade = GfDataDriver::getIraBlade(setup->m_bdatId, -1);
+        type = GfDataBlade::getBladeWpnType(blade);
+        weapon = GfDataBlade::getBladeWeapon(blade);
+    }
+    if (blade != 0 && setup->m_isAllWeapon) {
+        setup->pad_58 = blade;
+    }
+    if (GfObjUtil::getMountHandle(handle, GFATTACH(0)) == reinterpret_cast<GF_MOUNT_HANDLE*>(-1)) {
+        GfMountManager::addMountHandle(GfMountManager::createMount(handle, handle, GFATTACH(0), OPTMNT(2)), handle);
+    }
+    GfInitParamWeapon param;
+    param.m_createType = 10;
+    param.m_objId = weapon;
+    param.pad_90 = false;
+    param.pad_30 = handle;
+    param.pad_38 = handle;
+    GfObjFactory::createDriverWeapon(param);
+}
+
 void fn_7100526BD8(GF_OBJ_HANDLE* handle) {
     DataParamAcc acc(handle);
     unsigned int weapon = acc.getEquipWeapon(-1, false);
@@ -184,6 +302,64 @@ void fn_7100526BD8(GF_OBJ_HANDLE* handle) {
         param.pad_38 = handle;
         GfObjFactory::createDriverWeapon(param);
     }
+}
+
+bool GfObjFactory::createUiWeapon(GF_OBJ_HANDLE* handle, unsigned int id) {
+    DataParamAcc acc(handle);
+    if (acc.getObjType() != 3) {
+        return false;
+    }
+    if (GfObjUtil::getAppendInfo(handle, GFATTACH(0)) == nullptr) {
+        return false;
+    }
+    GfObjSetup* setup = GfObjUtil::getObjSetup(handle);
+    if (GfAppendHandles* handles = GfMountManager::getAppendHandles(handle, GFATTACH(0))) {
+        handles->setAlpha(0.0f);
+        handles->destroy();
+    }
+    setup->pad_58 = 0;
+    GfMountManager::getMountType(handle, GFATTACH(0));
+    GfMountManager::resetMountType(handle, GFATTACH(0));
+    GfMountManager::setMountType(handle, GFATTACH(0), OPTMNT(1));
+    unsigned int weapon = acc.getEquipWeapon(-1, false);
+    GfInitParamDriver param;
+    unsigned int driver = acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0;
+    param.m_createType = 10;
+    param.m_objId = driver;
+    param.pad_90 = weapon;
+    param.m_isAllWeapon = true;
+    fn_71005260B8(param, handle);
+    if (id != 0) {
+        GfObjSetup* driverSetup = GfObjUtil::getObjSetup(handle);
+        driverSetup->pad_58 = id;
+        if (GfObjUtil::getMountHandle(handle, GFATTACH(0)) == reinterpret_cast<GF_MOUNT_HANDLE*>(-1)) {
+            GfMountManager::addMountHandle(GfMountManager::createMount(handle, handle, GFATTACH(0), OPTMNT(1)), handle);
+        }
+        // the original's stack places these above the function's own locals: an inlined helper's (written as a
+        // lambda; no name of it survives)
+        [&] {
+            DataParamAcc driverAcc(handle);
+            unsigned int equip = driverAcc.getEquipWeapon(-1, false);
+            GfInitParamWeapon weaponParam;
+            unsigned int value = driverSetup->pad_18;
+            weaponParam.m_createType = 6;
+            weaponParam.m_objId = equip;
+            weaponParam.pad_38 = handle;
+            weaponParam.pad_30 = handle;
+            weaponParam.pad_24 = value;
+            weaponParam.pad_90 = false;
+            weaponParam.pad_40 = 12;
+            weaponParam.pad_81 = false;
+            createDriverWeapon(weaponParam);
+        }();
+        GfObj* obj = GfObjUtil::getObj(handle);
+        if (fw::ComponentObject* com = obj->m_components[2]) {
+            if (com->getRTTI()->isKindOf(&GfComAsm::m_rtti)) {
+                static_cast<GfComAsm*>(com)->setVariable("V_weaponselect", static_cast<int>(acc.getWeaponType(-1, false)));
+            }
+        }
+    }
+    return true;
 }
 
 void fn_7100527120(GfInitParamDriver& driver, GF_OBJ_HANDLE* handle) {
@@ -213,6 +389,33 @@ void fn_7100527120(GfInitParamDriver& driver, GF_OBJ_HANDLE* handle) {
             param.pad_83 = true;
         }
         GfObjFactory::createDriverWeapon(param);
+    }
+}
+
+void fn_7100528684(GF_OBJ_HANDLE* handle, unsigned int a, unsigned int b, unsigned int c, unsigned int d) {
+    if (b == 0) {
+        return;
+    }
+    GfAppendUtil::setupBelonging(handle, a, b, c, d);
+    GfAppendInfo* info = GfObjUtil::getAppendInfo(handle, GFATTACH(2));
+    if (info->m_appends[info->m_list].size() == 0) {
+        return;
+    }
+    GF_MOUNT_HANDLE* mount = GfMountManager::createMount(handle, GFATTACH(2), OPTMNT(2));
+    GfMountManager::addMountHandle(mount, handle);
+    GfAppendHandles* handles = GfMountManager::getAppendHandles(handle, GFATTACH(2));
+    GfInitParamBelonging param;
+    param.pad_38 = handle;
+    param.m_belongingValues[0] = a;
+    param.m_belongingValues[1] = b;
+    param.m_belongingValues[2] = c;
+    param.m_belongingValues[3] = d;
+    for (unsigned int i = 0; i < static_cast<unsigned int>(info->m_appends[info->m_list].size()); i++) {
+        param.m_objId = info->m_appends[info->m_list][i]->getRscID();
+        param.m_append = *info->m_appends[info->m_list][i];
+        GF_OBJ_HANDLE* obj = GfObjFactory::createBelonging(param);
+        (handles->m_useSecond ? handles->m_secondHandles : handles->m_handles)[i] = obj;
+        GfMountManager::addMountHandle(mount, obj);
     }
 }
 
@@ -582,6 +785,26 @@ GF_OBJ_HANDLE* GfObjFactory::createFieldObj(const GfInitParamFobj& param) {
     return handle;
 }
 
+void fn_710052A760(GfAppendHandles& handles, GfInitParamWeapon& param, GfAppendInfo& info) {
+    if (param.pad_1e0) {
+        if (static_cast<unsigned int>(info.m_appends[info.m_list].size()) != 0) {
+            param.pad_98 = *info.m_appends[info.m_list][0];
+            GF_OBJ_HANDLE* handle = fn_710052AD9C(param, param.pad_120, param.pad_30);
+            (handles.m_useSecond ? handles.m_secondHandles : handles.m_handles)[0] = handle;
+        }
+    } else if (!param.pad_1e1) {
+        for (unsigned int i = 0; i < static_cast<unsigned int>(info.m_appends[info.m_list].size()); i++) {
+            param.pad_98 = *info.m_appends[info.m_list][i];
+            GF_OBJ_HANDLE* handle = fn_710052AD9C(param, param.pad_120, param.pad_30);
+            (handles.m_useSecond ? handles.m_secondHandles : handles.m_handles)[i] = handle;
+        }
+    } else if (static_cast<unsigned int>(info.m_appends[info.m_list].size()) > 1) {
+        param.pad_98 = *info.m_appends[info.m_list][1];
+        GF_OBJ_HANDLE* handle = fn_710052AD9C(param, param.pad_120, param.pad_30);
+        (handles.m_useSecond ? handles.m_secondHandles : handles.m_handles)[1] = handle;
+    }
+}
+
 GfAppendHandles* GfObjFactory::createDriverWeapon(GfInitParamWeapon& param) {
     GfAppendInfo info;
     DataParamAcc acc(param.pad_120);
@@ -909,6 +1132,51 @@ unsigned int GfInitParamEnWeapon::getEnArrangeID() const {
     return m_enArrangeId;
 }
 
+void fn_710054056C(GF_OBJ_HANDLE* handle) {
+    GfObj* obj = GfObjUtil::getObj(handle);
+    if (obj == nullptr) {
+        return;
+    }
+    GfObjUtil::unmountFromBone(handle);
+    if (obj->m_components[10] != nullptr && obj->m_components[10]->getRTTI()->isKindOf(&GfComSound::m_rtti)) {
+        obj->getComponent<GfComSound>(10)->cleanup();
+    }
+    if (obj->m_components[7] != nullptr && obj->m_components[7]->getRTTI()->isKindOf(&GfComEffectCaster::m_rtti)) {
+        obj->getComponent<GfComEffectCaster>(7)->cleanup();
+    }
+    if (obj->m_components[2] != nullptr && obj->m_components[2]->getRTTI()->isKindOf(&GfComAsm::m_rtti)) {
+        obj->getComponent<GfComAsm>(2)->cleanup();
+    }
+    if (obj->m_components[1] != nullptr && obj->m_components[1]->getRTTI()->isKindOf(&GfComModel::m_rtti)) {
+        obj->getComponent<GfComModel>(1)->cleanup();
+    }
+    if (obj->m_components[0] != nullptr && obj->m_components[0]->getRTTI()->isKindOf(&GfComTransform::m_rtti)) {
+        obj->getComponent<GfComTransform>(0)->cleanup();
+    }
+    if (obj->m_components[10] != nullptr && obj->m_components[10]->getRTTI()->isKindOf(&GfComSound::m_rtti)) {
+        obj->removeComponentLocal(10);
+    }
+    if (obj->m_components[5] != nullptr && obj->m_components[5]->getRTTI()->isKindOf(&GfComProperty::m_rtti)) {
+        obj->removeComponentLocal(5);
+    }
+    if (obj->m_components[1] != nullptr && obj->m_components[1]->getRTTI()->isKindOf(&GfComModel::m_rtti)) {
+        obj->removeComponentLocal(1);
+    }
+    if (obj->m_components[0] != nullptr && obj->m_components[0]->getRTTI()->isKindOf(&GfComTransform::m_rtti)) {
+        obj->removeComponentLocal(0);
+    }
+    if (obj->m_components[2] != nullptr && obj->m_components[2]->getRTTI()->isKindOf(&GfComAsm::m_rtti)) {
+        obj->removeComponentLocal(2);
+    }
+    if (obj->m_components[7] != nullptr && obj->m_components[7]->getRTTI()->isKindOf(&GfComEffectCaster::m_rtti)) {
+        obj->removeComponentLocal(7);
+    }
+    if (obj->m_components[6] != nullptr &&
+        obj->m_components[6]->getRTTI()->isKindOf(&GfComBehaviorWeapon::m_rtti)) {
+        obj->removeComponentLocal(6);
+    }
+}
+
 anm::Skeleton* fn_7100540BB4(GF_ASSET_HANDLE* asset) {
     GfAssetResource* resource = GfAssetManager::getResource(asset, static_cast<GfFileIdx>(0x44), static_cast<GfAssetType>(0));
     if (resource == nullptr) {
@@ -922,22 +1190,90 @@ anm::Skeleton* fn_7100540BB4(GF_ASSET_HANDLE* asset) {
     return anm::SkeletonImporter::import(arc.getFileAdr((name + ".skl").m_str));
 }
 
+GfExtendPacking* fn_7100540CC4(GF_ASSET_HANDLE* asset, const char* name, GfFileIdx skeletonFile,
+                               const char* skeletonName, unsigned int count, const GfFileIdx* files,
+                               const anm::Skeleton* srcSkeleton) {
+    GfExtendPacking* packing = new (getAllocator(ALLOCATOR(0)), GF_OBJ_FACTORY_PATH, 3331, 8) GfExtendPacking();
+    GfAssetManager::setExtendResource(asset, 0, packing);
+    arc::CArcData arcs[4];
+    for (unsigned int i = 0; i < count; i++) {
+        if (GfAssetResource* resource = GfAssetManager::getResource(asset, files[i], static_cast<GfAssetType>(0))) {
+            arcs[i] = arc::CArcData(resource->getAssetData());
+        }
+    }
+    anm::Skeleton* skeleton = fn_710054113C(asset, skeletonFile, skeletonName);
+    if (skeleton != nullptr && arcs[0].m_data != nullptr) {
+        if (anm::ResStateArray* states = anm::AsmImporter::import(arcs[0].getFileAdr(name))) {
+            fw::AnimResAsmResolver resolver(*getAllocator(ALLOCATOR(0)));
+            resolver.resolvePackFiles(*states, count, arcs);
+            resolver.bindSkeleton(skeleton, srcSkeleton);
+            anm::Factory::createASMResource(*states, resolver, *getAllocator(ALLOCATOR(11)), &packing->m_pResASM);
+            return packing;
+        }
+    }
+    return nullptr;
+}
+
+void fn_7100540E78(GF_OBJ_HANDLE* handle, GfExtendPacking* packing) {
+    if (packing == nullptr) {
+        return;
+    }
+    GfAssetResource* eab = GfObjUtil::getResourceEab(handle);
+    fw::EffectResData::SetupInfo info;
+    info.m_allocator = getAllocator(ALLOCATOR(0));
+    if (eab != nullptr && eab->getAssetData() != nullptr && eab->getAssetSize() != 0) {
+        fw::EffectResData::SetupInfo::Table table = {static_cast<fw::EffectAnnotationTbl*>(eab->getAssetData()),
+                                                     eab->getAssetSize()};
+        info.m_tables.push_back(table);
+    }
+    mm::mtl::FixedVector<unsigned int, 256> hashes;
+    mm::mtl::FixedVector<const char*, 128> files;
+    GF_ASSET_HANDLE* asset = GfObjUtil::getAssetHandle(handle);
+    GfAssetManager::getFileNameByExt(files, asset, ".wieab");
+    for (const char* name : files) {
+        GfAssetResource* res = GfAssetManager::getResource(asset, name);
+        if (res == nullptr) {
+            continue;
+        }
+        unsigned int hash = mm::mtl::hashStrCrc(res->getAssetName());
+        if (std::find(hashes.begin(), hashes.end(), hash) != hashes.end()) {
+            continue;
+        }
+        hashes.push_back(hash);
+        if (eab != nullptr && res != nullptr && strcmp(eab->getAssetName(), res->getAssetName()) == 0) {
+            res = nullptr;
+        }
+        if (eab != nullptr && res != nullptr) {
+            if (eab->getAssetName()[0xb] != res->getAssetName()[0xb] ||
+                eab->getAssetName()[0xc] != res->getAssetName()[0xc]) {
+                res = nullptr;
+            }
+        }
+        if (res != nullptr && res->getAssetData() != nullptr && res->getAssetSize() != 0) {
+            fw::EffectResData::SetupInfo::Table table = {static_cast<fw::EffectAnnotationTbl*>(res->getAssetData()),
+                                                         res->getAssetSize()};
+            info.m_tables.push_back(table);
+        }
+    }
+    if (info.m_tables.size() != 0) {
+        packing->m_pEffectResData = fw::EffectResData::createEffectResData(info);
+    }
+}
+
 anm::Skeleton* fn_710054113C(GF_ASSET_HANDLE* asset, GfFileIdx file, const char* name) {
     GfAssetResource* resource = GfAssetManager::getResource(asset, file, static_cast<GfAssetType>(0));
     if (resource == nullptr) {
         return nullptr;
     }
     arc::CArcData arc(resource->getAssetData());
-    void* data;
     if (name != nullptr && arc.m_data != nullptr) {
-        data = arc.getFileAdr(name);
+        void* data = arc.getFileAdr(name);
         if (data == nullptr) {
             return nullptr;
         }
-    } else {
-        data = resource->getAssetData();
+        return anm::SkeletonImporter::import(data);
     }
-    return anm::SkeletonImporter::import(data);
+    return anm::SkeletonImporter::import(resource->getAssetData());
 }
 
 anm::Skeleton* fn_7100541780(GF_ASSET_HANDLE* asset, GfFileIdx file) {
@@ -949,6 +1285,26 @@ anm::Skeleton* fn_7100541780(GF_ASSET_HANDLE* asset, GfFileIdx file) {
     arc::CArcData arc(resource->getAssetData());
     mm::mtl::FixStr<32> name = pack->pad_258;
     return anm::SkeletonImporter::import(arc.getFileAdr((name + ".skl").m_str));
+}
+
+void fn_71005418C4(GF_OBJ_HANDLE* handle, GfFileIdx file, GfFileIdx skeletonFile, const char* name, float scale,
+                   bool flag) {
+    GfObjAcc acc(handle);
+    GfComModel* model = acc.getObj()->getComponent<GfComModel>(1);
+    GfComModel::SetupInfo info;
+    info.m_file = file;
+    info.m_skeleton = skeletonFile >= 0 ? fn_710054113C(acc.getAssetHandle(), skeletonFile, name) : nullptr;
+    info.m_handle = acc.getAssetHandle();
+    info.m_arg = acc.getView();
+    info.m_scale = scale;
+    info.pad_20 = flag;
+    model->setup(info);
+    if (acc.testFlag(0x16)) {
+        acc.setRenderCameraFade(true);
+    }
+    if (acc.testFlag(0x17)) {
+        acc.setEnableCollideModelClip(true);
+    }
 }
 
 void fn_7100541A00(GfObj* obj, const mm::Vec3& pos, const mm::Vec3& rot) {

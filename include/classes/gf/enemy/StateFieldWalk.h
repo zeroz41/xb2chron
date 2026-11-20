@@ -17,7 +17,7 @@ class StateFieldWalk : public ::gf::GfStateBase {
 public:
     // a step of the state: the sequence update runs, none when null
     typedef void (StateFieldWalk::*Seq)(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
-    StateFieldWalk() : pad_18(false), pad_19(false), pad_1c(0), m_seq(nullptr), pad_68(0), pad_70(mm::Vec3::zero), pad_80(-1), pad_84(-1), m_hasPointRotY(false), m_pointRotY(0.0f), pad_90(0), pad_94(0.0f), pad_98(5.0f), pad_9c(0.0f) {}
+    StateFieldWalk() : pad_18(0), pad_19(false), pad_1c(0), m_seq(nullptr), pad_68(0), pad_70(mm::Vec3::zero), pad_80(-1), pad_84(-1), m_hasPointRotY(false), m_pointRotY(0.0f), pad_90(0), pad_94(0.0f), pad_98(5.0f), pad_9c(0.0f) {}
     // what GfComBehaviorEnemy::createFsm registers with its Hfsm: the state made in a state buffer
     static ai::State* create(void* buffer) { return new (buffer) StateFieldWalk; }
     virtual ~StateFieldWalk() {}  // slot 0: inline (emitted with the table by the registering unit)
@@ -47,7 +47,8 @@ public:
     void seqWaitTakeOffEnd(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
     // whether the enemy may take this state (GfComBehaviorEnemy asks before requesting it)
     static bool isCondMatch(const GfComBehaviorEnemy& owner);
-    bool pad_18;
+    // its actMove row's actMove_Atr (enter reads it; bit 5: the walk speed follows the pitch)
+    unsigned char pad_18;
     bool pad_19;
     unsigned int pad_1c;
     TFieldExecCmd<GfComAsm> m_execCmd;

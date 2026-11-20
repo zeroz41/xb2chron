@@ -16,6 +16,7 @@
 #include "classes/gf/GfMenuObjCommonText.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
+#include "classes/gf/GfMenuObjPartyStatus.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
 #include "gf/GfMenuTypes.h"
@@ -140,6 +141,77 @@ void GfMenuObjPartyForm3::finalize() {
 void GfMenuObjPartyForm3::update() {
     m_seq.update();
     GfMenuObject::update();
+}
+
+void GfMenuObjPartyForm3::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    switch (event.m_type) {
+    case 1: {
+        m_owner->m_seq.clear();
+        if (m_owner->m_openType == 0) {
+            GfMenuObjOperationInfo::add(owner.searchChild("LAY_dr_select"), 0, 0, 0);
+            m_owner->refreshRemoveAddOperation(owner.searchChild("LAY_dr_select"), 0);
+            acc.setDispChild(false, "LAY_index");
+            GfMenuObjMainMenu2::setSubIndexText(4);
+            GfMenuObjMainMenu2::cancelEnableMainMenu(false);
+            GfMenuObjOperationInfo::setGuideText(0xB, 0);
+        } else {
+            GfMenuObjOperationInfo::open(owner.searchChild("LAY_dr_select"), 0, 0, 0);
+            m_owner->refreshRemoveAddOperation(owner.searchChild("LAY_dr_select"), 0);
+            m_owner->m_seq.addJob(&GfMenuObjPartyForm3::seqAnnounceChange);
+            GfMenuObjOperationInfo::setGuideText(0xB, 2);
+        }
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            GfMenuObjOperationInfo::setActionEnable(owner.searchChild("LAY_dr_select"), 10, m_owner->m_openType != 0);
+            if (m_owner->m_openType != 0) {
+                GfMenuObjMainMenu2::setSubIndexText(4);
+                GfMenuObjOperationInfo::setGuideText(0xB, 0);
+                GfMenuObjMainMenu2::lockCloseKey(true);
+            }
+        }
+        GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::setCommonFadeIn(handle, 1, 0));
+        break;
+    }
+    case 2:
+        if (m_owner->m_moving) {
+            mm::mtl::FixedVector<unsigned short, 32> party;
+            for (unsigned int i = 0; i < 3; i++) {
+                party.push_back(i < m_owner->m_partyCount ? m_owner->m_driverList->getContents(i).m_driver : 0);
+            }
+            for (unsigned int i = m_owner->m_partyCount;
+                 i < static_cast<unsigned int>(m_owner->m_driverList->getSize()); i++) {
+                party.push_back(m_owner->m_driverList->getContents(i).m_driver);
+            }
+            GfMenuObjPartyStatus::memberChange(1, party[0]);
+            GfMenuObjPartyStatus::memberChange(2, party[1]);
+            GfMenuObjPartyStatus::memberChange(3, party[2]);
+            GfMenuObjUtil::setupPartyDriver(party);
+        }
+        if (!GfMenuObjUtil::isValidExpansion(3) && m_owner->m_openType != 0) {
+            GfMenuObjOperationInfo::close();
+        } else {
+            GfMenuObjOperationInfo::remove(owner.searchChild("LAY_dr_select"), 0, 0, 0);
+        }
+        GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::setCommonFadeOut(handle, 2, 0));
+        break;
+    case 3:
+        if (event.m_param0 == 2) {
+            acc.setTerm();
+        } else if (event.m_param0 == 1) {
+            m_owner->m_seq.addJob(&GfMenuObjPartyForm3::seqWaitOpenEnd);
+        }
+        break;
+    case 0x21:
+        acc.setDisp(true);
+        break;
+    case 0x22:
+        acc.setDisp(false);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 void GfMenuObjPartyForm3::refreshRemoveAddOperation(unsigned int handle, int count) {

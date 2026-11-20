@@ -170,6 +170,8 @@
 #include "classes/event/AgelogManager.h"
 #include "ml/DateName.h"
 #include "classes/event/AttachActorGf.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/event/SeqManager.h"
 #include "classes/event/BlurManager.h"
 #include "classes/event/BouRect.h"
 #include "classes/event/CamField.h"
@@ -1264,8 +1266,51 @@ void EffectEvaPlayer::play(EffectCtrl* ctrl, void* data) {
     pad_18 = 0;
 }
 
+int EffectPlayEff::update(const ICmd::Param& param) {
+    if (m_ctrl == nullptr) {
+        return 1;
+    }
+    float step = static_cast<EffectObj*>(param.m_param.val(0).getUserdata())->pad_fbc;
+    if (param.m_frame <= 0) {
+        float time = param.m_param.val(1).getF32();
+        float a = param.m_param.val(2).getF32();
+        float b = param.m_param.val(3).getF32();
+        int c = param.m_param.val(4).getS32();
+        if (!(mm::mtl::Singleton<EffectManager>::getPtr()->m_flags & 1)) {
+            m_ctrl->genelate();
+            m_ctrl->pad_1a0 = a;
+            m_ctrl->pad_1a4 = b;
+            m_ctrl->pad_1a8 = c;
+        } else {
+            m_ctrl->pad_1a8 = c;
+        }
+        m_time = time;
+        if (gf::GfGameManager::isGameTypeIra() && SeqManager::getPtr()->m_info.pad_54 == 2) {
+            if (time <= 0.0f) {
+                m_flags |= 1;
+            } else {
+                m_flags &= ~1;
+            }
+        } else {
+            m_flags &= ~1;
+        }
+    }
+    if (!(m_flags & 1)) {
+        m_time -= step;
+        if (m_time < 0.0f) {
+            if (!(mm::mtl::Singleton<EffectManager>::getPtr()->m_flags & 1)) {
+                m_ctrl->dead();
+            } else {
+                m_ctrl->kill();
+            }
+            return 1;
+        }
+    }
+    return 2;
+}
+
 void EffectPlayEff::term() {
-    pad_20 = -1.0f;
+    m_time = -1.0f;
 }
 
 // a cubic bezier between p0 and p3 with control values p1, p2 (the helper's name is not the original's)
@@ -6081,6 +6126,15 @@ void EffectCtrl::update() {
 void EffectCtrl::genelate() {
     m_effect = fw::EffectManager::sys()->create(m_name.m_str, EffectManager::getPtr()->getResPack(), true);
     fw::EffectManager::sys()->setCategory(m_effect, static_cast<fw::EF_CATEGORY>(3));
+}
+
+inline void EffectCtrl::dead() {
+    if (m_effect) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(m_effect);
+    }
+    for (unsigned long i = 0; i < m_handles.size(); i++) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(m_handles[i]);
+    }
 }
 
 void EffectCtrl::kill() {

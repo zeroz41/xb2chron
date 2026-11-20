@@ -18,6 +18,8 @@ namespace ml {
 // table 0x7100B761B0
 class DevSetting : public ::mm::mtl::PtrSingleton< ::ml::DevSetting> {
 public:
+    // inline: ml::DeviceNx::createDevice builds it (the original has no out-of-line copy)
+    DevSetting() : m_impl(nullptr) {}
     virtual ~DevSetting();  // slot 0
     static LangType getLang();  // the device's language
     // the languages there are; returns list (the null-object path returns it, the other its impl's answer)

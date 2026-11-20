@@ -35,7 +35,9 @@ public:
     // 16-aligned (0x48..0x4f: a hole, not stored or copied)
     GmkCollision m_collision;
     unsigned int m_effectHandle = 0;  // 0xc0: dispose removes the effect it names (the name is not the original's)
-    unsigned int pad_c4 = 0;  // (0xc8..0xcf: tail padding; the size: TGmkList::getInst's stride)
+    // the enemies counted inside it (GfComBehaviorEnemy's update counts in and out; signed: update makes its
+    // collision while it is 1 or more and drops it below)
+    int pad_c4 = 0;  // (0xc8..0xcf: tail padding; the size: TGmkList::getInst's stride)
 };
 }  // namespace gmk
 

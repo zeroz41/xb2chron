@@ -2,6 +2,8 @@
 #define ML_DRRESMDOSHDOBJ_H
 
 namespace ml {
+class DrShdMdoExtTblObj;
+
 // A model's shaders, built in a work buffer (create): one 0x18-byte entry per shader of the model (mdo) data's
 // shader resource. Only the fields getDecShdIdx and setDecShdParm use are declared; field and struct names are not
 // the original's.
@@ -19,7 +21,10 @@ public:
     };
     struct ShdData {
         unsigned int m_nameOfs;  // 0x0: the shader's name, from the ShdHeader
-        unsigned char pad_4[0xC];
+        unsigned char pad_4[0x8];
+        // 0xC: m_workNum extension table indices (unsigned short), from the ShdHeader; bindShader/update set the
+        // declaration of the table each names
+        unsigned int m_extIdxOfs;
         int m_workNum;  // 0x10: bytes of the shader's work (one declaration index per byte)
     };
     struct Entry {
@@ -33,6 +38,10 @@ public:
     // builds the object in work; returns the bytes it used
     static unsigned int create(unsigned char* work, const unsigned char* mdo);
     // the index of the shader named name, -1 if none
+    // stores each shader's declaration offsets (its name) of the extension tables it uses in its work
+    void bindShader(DrShdMdoExtTblObj* tbl);
+    // applies the shaders whose m_decShdParm changed to their extension tables; true when one did
+    bool update(DrShdMdoExtTblObj* tbl);
     int getDecShdIdx(const char* name) const;
     void setDecShdParm(unsigned int idx, unsigned int parm);
 

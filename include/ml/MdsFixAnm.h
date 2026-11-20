@@ -28,11 +28,23 @@ struct MdsFixAnmInf {
     unsigned short m_endFrame;    // 0xE
 };
 
-// A material's run of MdsFixAnmInf (the type name is the symbols'; the field names are not the original's).
+// A material's run of MdsFixAnmInf, 0xC bytes: DrMdoAnim::updateAnimEnd/updateAnimFast step through an array of
+// them (the type name is the symbols'; the field names are not the original's).
 struct MdsFixAnmCate {
     unsigned short pad_0;
     unsigned short m_infIdx;  // 0x2: first MdsFixAnmInf, and its frame in MdoWrkMatRes::m_pFixAnmFrame
     unsigned short m_infNum;  // 0x4
+    // 0x6: the run's first float in the material's MdoWrkMatRes::m_pUniformVal (and m_pMatVal) slots
+    unsigned short m_valOfs;
+    // 0x8: updateAnimFast's nine plane parameters in MdoWrkMatRes::m_pSeamMatData, in floats
+    unsigned int m_planeOfs;
+};
+
+// One material's run of MdsFixAnmCate in a seam instance map's material block (MdsSeamInstMatBlock::m_rangeOfs,
+// indexed by MdsMatInfoHeader::m_fixAnmRange). The type and field names are not the original's.
+struct MdsFixAnmRange {
+    unsigned short m_cateIdx;  // 0x0: first MdsFixAnmCate at MdsSeamInstMatBlock::m_cateOfs
+    unsigned short m_cateNum;  // 0x2
 };
 }  // namespace ml
 

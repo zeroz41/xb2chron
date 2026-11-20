@@ -134,7 +134,9 @@ public:
     mm::Col4 pad_250;                // white from the constructor
     mm::Col4 pad_260;                // white from the constructor
     bool pad_270;                    // false from the constructor
-    unsigned char pad_271[0x5F];
+    unsigned char pad_271[0xF];
+    mm::Mat44 m_mdlMtx;              // 0x280 end uploads it as the U_MDL uniform block (the name is not the original's)
+    unsigned char pad_2c0[0x10];
     grlib::CGLibVtxVertex* m_vtx;    // 0x2D0 thInitialize's vertex buffer (the name is not the original's)
     unsigned int pad_2d8;            // 0x2D8 the frame's first byte offset (fastSetup)
     unsigned int m_ofs;              // 0x2DC byte offset of the cursor (the name is not the original's)

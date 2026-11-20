@@ -18,7 +18,8 @@ public:
             m_farNum = 0;
             m_rate = 1.0f;
         }
-        unsigned char pad_0[0x20];
+        // 0x0: setFilterData points them all at its first texture (the name is not the original's)
+        grlib::CGLibTextureBuffer* m_tex[4];
         // 0x20-0x28: the constructor clears them (one 8-byte store)
         unsigned int pad_20;
         // 0x24/0x26: the filter numbers DrPixlPostObjDepthofField::update compares with DrPixlPostParm's
@@ -31,10 +32,18 @@ public:
         float m_rate;     // 0x34: the constructor sets 1
     };
     // an entry of the filter data (0x1C bytes); the name is not the original's
+    // one texture of setFilterData's data (the names are not the original's)
     struct Entry {
-        unsigned char pad_0[0x8];
+        unsigned int m_imageOfs;   // 0x0: the image's offset from the data
+        unsigned int m_imageSize;  // 0x4
         unsigned int m_id;  // 0x8: findFilterTexture's key
         unsigned char pad_C[0x10];
+    };
+    // setFilterData's data (the names are not the original's)
+    struct Data {
+        unsigned char pad_0[0x8];
+        int m_texNum;           // 0x8: the textures
+        unsigned int m_texOfs;  // 0xC: offset of the textures' Entry list from the data
     };
     DrResFilterData(DrMan* drMan);
     ~DrResFilterData();

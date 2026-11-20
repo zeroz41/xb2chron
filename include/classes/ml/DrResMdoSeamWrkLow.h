@@ -1,6 +1,8 @@
 #ifndef CLASSES_ML_DRRESMDOSEAMWRKLOW_H
 #define CLASSES_ML_DRRESMDOSEAMWRKLOW_H
 
+#include "ml/DrResMdoSeamMemMan.h"
+
 namespace grlib { class CGLibVtxInstans; }
 namespace grlib { class CGLibTriUniformArray; }
 namespace mtl { class ALLOC_HANDLE; }
@@ -20,8 +22,9 @@ struct MdsSeamLowMapHead {
 };
 
 // table 0x7100B7DB98
-// The field names are not the original's.
-class DrResMdoSeamWrkLow {
+// The field names are not the original's. Its list links (m_prev at 0x08, m_next at 0x10) come from the Node base:
+// the constructor zeroes them before its other fields, as the other seam works' do.
+class DrResMdoSeamWrkLow : public DrResChankList<DrResMdoSeamWrkLow>::Node {
 public:
     // a render list entry (0xC bytes; DrMdoCtlSeamLowMap::createLowZPrePassDisplayList); names are not the original's
     struct RenderEntry {
@@ -41,8 +44,6 @@ public:
     void setupWork(MdoWrkMatRes* matRes, grlib::CGLibTriUniformArray* triArray, mtl::ALLOC_HANDLE handle,
                    const MdsSeamLowMapHead* head, const MdsSeamLowData* data, unsigned int num);
 
-    DrResMdoSeamWrkLow* m_prev;           // 0x08: list links, zeroed by the constructor
-    DrResMdoSeamWrkLow* m_next;           // 0x10
     unsigned char pad_18[0x10];
     // 0x28: the low map's material, deallocated by release; DrMdoCtlSeamLowMap::releaseFreeSeamLow releases it
     // with DrMdoMat::releaseBaseMapSeamMat first (the name is not the original's)

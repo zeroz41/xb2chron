@@ -1,7 +1,11 @@
 #ifndef CLASSES_ML_DEVPADNX_H
 #define CLASSES_ML_DEVPADNX_H
 
+#include <stddef.h>
+#include <string.h>
+
 #include "classes/ml/DevPad.h"
+#include "ml/WorkUtil.h"
 #include "mm/mtl/Delegate.h"
 #include "mm/mtl/FixedArray.h"
 #include "mm/mtl/UniquePtr.h"
@@ -17,6 +21,16 @@ public:
     // the original's)
     class Impl {
     public:
+        // 0x71006AD2AC, inline (the original keeps only its base-object copy, the one DevPadNx's constructor calls)
+        Impl();
+        // one vibration device of a pad (initializeVibration fills it; the names are not the original's): the SDK's
+        // handle and info, a value reset to 0, the resting vibration value
+        struct VibDevice {
+            nn::hid::VibrationDeviceHandle m_handle;  // 0x00
+            nn::hid::VibrationDeviceInfo m_info;      // 0x04
+            int pad_c;                                // 0x0C (initializeVibration clears it)
+            nn::hid::VibrationValue m_value;          // 0x10
+        };
         // one pad's state (0x180 bytes; FixedArray<PadData, 4> names it)
         struct PadData {
             unsigned int m_btn;        // 0x0 (getLocalBtn)
@@ -27,10 +41,13 @@ public:
             bool m_connect;            // 0x14 (isLocalConnect)
             unsigned char pad_15[3];
             int m_style;               // 0x18 (getLocalStyle)
-            unsigned char pad_1c[0x44];
+            // the vibration devices initializeVibration found (GetVibrationDeviceHandles' count; the names are not
+            // the original's)
+            int m_vibDeviceCount;      // 0x1C
+            VibDevice m_vibDevices[2];  // 0x20
             // 0x60.. the vibration stopLocalVibration stops and resets (the names are not the original's): the
             // player id (1..63, an index into m_players), a state (3 once stopped), four scales (1.0 once stopped),
-            // a value (0 once stopped), two flags (playing, 0x7D unknown)
+            // a value (0 once stopped), two flags (playing, devices set up: initializeVibration sets it once)
             unsigned int m_vibId;      // 0x60
             int m_vibState;            // 0x64
             float m_vibScale0;         // 0x68
@@ -39,7 +56,7 @@ public:
             float m_vibScale3;         // 0x74
             int m_vibValue;            // 0x78
             bool m_vibOn;              // 0x7C
-            bool m_vib7d;              // 0x7D
+            bool m_vibInit;            // 0x7D
             unsigned char pad_7e[2];
             // the two vibration targets the connections link (DevPadNx's destructor destroys them; the names are
             // not the original's)
@@ -130,16 +147,52 @@ public:
                         pad.m_vibId = 0;
                         pad.m_vibState = 3;
                         pad.m_vibScale0 = 1.0f;
-                        pad.m_vibScale1 = 1.0f;
                         pad.m_vibScale2 = 1.0f;
+                        pad.m_vibScale1 = 1.0f;
                         pad.m_vibScale3 = 1.0f;
                         pad.m_vibValue = 0;
                         pad.m_vibOn = false;
-                        pad.m_vib7d = false;
+                        pad.m_vibInit = false;
                     }
                 }
             }
         }
+        // a connected pad whose style changed or that went away, once stopVibration ran: resets the vibration and
+        // clears the input up to the connect flag (updateNpad's inline work; the name is not the original's)
+        void resetPad(PadData& pad) {
+            pad.m_vibId = 0;
+            pad.m_vibState = 3;
+            pad.m_vibScale0 = 1.0f;
+            pad.m_vibScale2 = 1.0f;
+            pad.m_vibScale1 = 1.0f;
+            pad.m_vibScale3 = 1.0f;
+            pad.m_vibValue = 0;
+            pad.m_vibOn = false;
+            pad.m_vibInit = false;
+            pad.m_style = 0;
+            memset(&pad, 0, offsetof(PadData, m_connect) + sizeof(pad.m_connect));
+        }
+
+        // the pad styles initializeVibration sets up (named by its instantiations; their members are not the
+        // original's): how many vibration devices it asks for, and the style it asks them for
+        struct PadFullKeyState {
+            static const int VibrationDeviceCount = 2;
+            typedef nn::hid::NpadStyleFullKey Style;
+        };
+        struct PadHandheldState {
+            static const int VibrationDeviceCount = 2;
+            typedef nn::hid::NpadStyleHandheld Style;
+        };
+        struct PadJoyDualState {
+            static const int VibrationDeviceCount = 1;
+            typedef nn::hid::NpadStyleJoyDual Style;
+        };
+        // named by the symbols: sets up a pad's vibration devices once (updateNpad calls it for a new or changed pad)
+        template <typename T>
+        void initializeVibration(unsigned int id, PadData& pad);
+        // named by the symbols: reads a pad's input from its npad state (0x71006AC804, 0x71006ACB08, 0x71006ACE0C)
+        template <typename T>
+        void updateTpad(PadData& pad, const T& state);
 
         mm::mtl::Delegate<void(float)> m_state;   // 0x0 (updateDevice calls it; the name is not the original's)
         int m_stateId;                              // 0x20 (stateUpdate updates the npads in state 2)
@@ -158,9 +211,13 @@ public:
         int m_userSelectController;                 // 0x4544 (setUserSelectControllerID stores the matching index)
         int m_selectPadId;                          // 0x4548
         int m_connectPadCount;                      // 0x454C (getLocalConnectPadCount returns it; the name is not the original's)
+        unsigned char pad_4550[0x8];                // DeviceNx::createDevice allocates 0x4558 bytes
     };
 
     // the key function: its body is empty, the Impl (m_impl) and the bases are destroyed inline
+    // inline: ml::DeviceNx::createDevice builds it (the original has no out-of-line copy)
+    DevPadNx(const char* name, WorkObj* parent)
+        : DevPad(name, parent), m_impl(new (WorkUtil::getWorkMem(), nullptr, 0, 8, false) Impl()) {}
     virtual ~DevPadNx();  // slot 0
     virtual bool isLocalConnect(int) const;  // slot 17
     virtual int getLocalStyle(int) const;  // slot 18

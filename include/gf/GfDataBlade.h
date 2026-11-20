@@ -86,6 +86,8 @@ public:
     static unsigned int getMenuIlustName(unsigned int blade);
     // the blade's menu voice file name in voice slot slot (GfBdatChrBl::getChrBlMnuVoice; GfMenuObjBladeBook's preview)
     static const char* getMenuVoiceName(unsigned int blade, unsigned int slot);
+    // how many blades the crystal can still create (CrystalSelectListener refuses one at 0)
+    static unsigned int getEnableCountForCreateBlade(unsigned int crystal);
     // 2.0.0's symbols name it. What it does: false for blade 0, else whether the short at 0x5A2C of the blade's game
     // data slot (getDataGame + slot * 0x8A4, the slot mapping isBladeLock uses) is 2;
     // GfGameUtil::execActivateMercenaryTeamForBlade does nothing when it holds.
@@ -190,6 +192,13 @@ public:
     // GfDataEnemy::getValidEnhance carries it inline with keep set; GfDataDriver::getValidEnhance and the weapon
     // and skill enhance helpers call it.
     static void fn_710024121C(mm::mtl::FixedVector<unsigned short, 64>& enhances, bool keep);
+    // no symbol in any build (between GfDataEnemy::getValidEnhance and setupSDataBladeAchievement): appends the
+    // GfBdatItem enhance of the blade's equipped weapon (weapon 0 for blade 0), filtered by fn_710024121C(keep).
+    // Callers: GfDataEnemy::getValidEnhance, GfDataDriver::getValidEnhance.
+    static void fn_7100234FF8(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int blade, bool keep);
+    // no symbol in any build (follows fn_7100234FF8): appends the BTL skill enhances of the blade's three skills at
+    // their levels, filtered by fn_710024121C(keep). Callers: the three getValidEnhance functions.
+    static void fn_710023510C(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int blade, bool keep);
     // the blade's physical and ether defense bonus (Hana's from her role part); 0 for no blade
     static unsigned int getParmor(unsigned int blade);
     static unsigned int getEarmor(unsigned int blade);

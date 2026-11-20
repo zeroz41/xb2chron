@@ -216,8 +216,10 @@ void DevFileDictionary<Key, Allocator, EmptyKey, DeletedKey, Flag>::reallocArray
         p = static_cast<T*>(mtl::MemManager::reallocate(old, size, false));
     }
     static const T T0 = T();
-    for (T *q = p + sizeP, *const r = p + sizeN; q != r; ++q) {
-        *q = T0;
+    T* q = p + sizeP;
+    T* const r = p + sizeN;
+    while (q != r) {
+        *q++ = T0;
     }
 }
 

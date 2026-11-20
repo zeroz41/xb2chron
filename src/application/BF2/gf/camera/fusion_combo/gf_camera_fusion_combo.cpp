@@ -8,7 +8,7 @@ namespace gf {
 
 FusionComboCamera::~FusionComboCamera() {}
 
-mm::mtl::IntrusivePtr<FusionComboCamera> FusionComboCamera::create(GF_OBJ_HANDLE* a, GF_OBJ_HANDLE* b, Mode mode) {
+mm::mtl::IntrusivePtr<::fw::Camera> FusionComboCamera::create(GF_OBJ_HANDLE* a, GF_OBJ_HANDLE* b, Mode mode) {
 #line 319 "D:/Monolithsoft/BF2/prog/application/BF2/gf/camera/fusion_combo/gf_camera_fusion_combo.cpp"
     return new (fw::Framework::getAllocator(), 16, __FILE__, __LINE__) FusionComboCamera(a, b, mode);
 }

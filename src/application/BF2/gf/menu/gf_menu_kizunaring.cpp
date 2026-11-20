@@ -159,7 +159,7 @@ unsigned short GfMenuItemUtil::searchEquipAcc(unsigned int item, GfItemHandle ha
     return 0;
 }
 
-unsigned short GfMenuItemUtil::searchEquipOrb(unsigned int item, GfItemHandle handle, unsigned int* slot) {
+unsigned int GfMenuItemUtil::searchEquipOrb(unsigned int item, GfItemHandle handle, unsigned int* slot) {
     ::mm::mtl::FixedVector<unsigned short, 422> blades;
     if (!GfMenuObjUtil::isValidExpansion(3)) {
         GfDataBlade::getListRegular(blades);

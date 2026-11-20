@@ -32,6 +32,9 @@ public:
     // field names are not the original's)
     struct Data {
         float m_randomWalkRadius;
+        // the pop finder snaps its objects on the ground when it is set (PopXformFinder::isYSnap returns it; the
+        // name is not the original's)
+        bool m_ySnap;
     };
     const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     // whether pos lies within the random walk radius of its position (1.0.0 name)

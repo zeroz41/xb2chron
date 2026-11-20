@@ -58,6 +58,9 @@ public:
 
     // its tags' names: "System:Color", "System:Ruby" and two more (callTagStart, callTagEnd)
     static const char* s_resTagTbl[4];
+    // the stride LayerObjTopFont::finalRender passes setupInstaceVertex for the character instances (a 2-byte
+    // constant in .rodata the code loads)
+    static const unsigned short FONT_INSTANCE_SIZE;
 
     // The field names are not the original's.
     const LayerFontStyleObj* m_styleObj;  // 0x8

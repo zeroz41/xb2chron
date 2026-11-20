@@ -3,6 +3,7 @@
 
 #include "classes/ml/DrMdoNode.h"
 #include "mm/Vec3.h"
+namespace mm { class Mat44; }
 namespace ml { class DrResMdoMat; }
 namespace ml { class DrResEtcPamObj; }
 namespace ml { struct MdsFixAnmCate; }
@@ -22,6 +23,9 @@ public:
     // takes an etc-param), then calls its s_pCallAnim callback on mat and work.
     void calcAnim(const MdsFixAnmCate* cate, DrResMdoMat* mat, DrResEtcPamObj* pamObj, float* work, float rate);
     float getHermiteAttr(const MdsFixAnmInf* inf, float frame);
+    void updateAnimEnd(float rate, const unsigned int* dispBits, DrResEtcPamObj* pamObj);
+    void updateAnimFast(float rate, DrResEtcPamObj* pamObj);
+    void calcPlaneMatrix(mm::Mat44* mtx, const float* param);
 
     static void animcall_UV_Scr_U(DrResMdoMat*, float*, float);
     static void animcall_UV_Scr_V(DrResMdoMat*, float*, float);

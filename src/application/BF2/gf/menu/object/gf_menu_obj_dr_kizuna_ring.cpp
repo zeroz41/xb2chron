@@ -34,6 +34,12 @@
 #include "classes/gf/DataParamAcc.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfMenuObjCommonText.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfItemUtil.h"
+#include "gf/GfKizunaringUtil.h"
+#include "gf/GfQuestReward.h"
+#include "gf/GfQuestUtil.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
 
 namespace gmo_dr_kizuna_ring {
 float rateTbl[2] = {1.0f, 0.5f};
@@ -156,6 +162,34 @@ void GfMenuObjDrKizunaRing::update() {
         m_voice = nullptr;
     }
     GfMenuObject::update();
+}
+
+void GfMenuObjDrKizunaRing::setupRing(ui::UIObjectAcc& acc) {
+    mm::mtl::FixStr<32> name;
+    GfMenuAdapterManager::beginAddAfter();
+    for (int level = 0; level < 3; level++) {
+        for (int line = 0; line < 5; line++) {
+            int index = line * 3 + level + 1;
+            name.format("IMG_node_icon@%02d", index);
+            unsigned int icon = acc.searchChild(name.m_str);
+            if (icon == 0) continue;
+            GfMenuSkillAdapter::createFromReferenceDriver(icon, 3, 0, line, level + 1, 2, true);
+            name.format("IMG_node_base@%02d", index);
+            unsigned int base = acc.searchChild(name.m_str);
+            if (base == 0) continue;
+            GfMenuSkillAdapter::createFromReferenceDriver(base, 5, 0, line, level + 1, 2, true);
+        }
+    }
+    {
+        ui::UIObjectAcc image(acc.m_handle, "IMG_dr_image");
+        GfMenuCharDataAdapter::createFromReferenceDriver(image.m_handle, 3, 0, false);
+    }
+    for (int level = 1; level <= 3; level++) {
+        mm::mtl::FixStr<32> lock;
+        lock.format("IMG_lock_icon@%02d", level);
+        GfMenuSkillAdapter::createFromReferenceDriver(acc.searchChild(lock.m_str), 7, 0, 0, level, 2, true);
+    }
+    GfMenuAdapterManager::endAddAfter();
 }
 
 void GfMenuObjDrKizunaRing::setupRingList(ui::UIObjectAcc& acc, ui::UISelectObjList* list) {
@@ -406,6 +440,63 @@ bool GfMenuObjDrKizunaRing::seqWait() {
     ui::UIObjectAcc scale(acc.searchChild("LAY_scale"));
     GfMenuObject::enableInput(scale.m_handle);
     return true;
+}
+
+bool GfMenuObjDrKizunaRing::seqSkillAnime() {
+    ui::UIObjectAcc acc(m_handle);
+    ui::UIObjectAcc main(acc.searchChild("LAY_dr_main"));
+    ui::UIObjectAcc open(main.searchChild("IMG_skill_open"));
+    int level = GfMenuReference::getReferenceNumber(0);
+    int line = GfMenuReference::getReferenceNumber(1);
+    if (m_step == 0) {
+        mm::mtl::FixStr<32> name;
+        name.format("skillspot2_R%1dL%1d", level + 1, line);
+        mm::Rect<short> rect;
+        main.getLayoutRect(name.m_str, rect);
+        mm::Pnt<short> pos;
+        pos.x = rect.x + rect.w / 2;
+        pos.y = rect.y + rect.h / 2;
+        open.setPosCenter(pos);
+        open.startAnimation("skill_learn", false);
+        open.setDisp(true);
+        GfMenuObjUtil::playSE(0xF);
+        bool round = GfMenuReference::getReferenceNumber(2) != 0;
+        unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            m_voice = SCOM_FIELD_VOICE::createSkillGetIra(driver);
+        } else {
+            m_voice = SCOM_FIELD_VOICE::createDriverKizuna(driver);
+        }
+        bool unlock1 = GfDataDriverSkill::isSkillLevelUnlock(driver, 1, round);
+        bool unlock2 = GfDataDriverSkill::isSkillLevelUnlock(driver, 2, round);
+        bool unlock3 = GfDataDriverSkill::isSkillLevelUnlock(driver, 3, round);
+        unsigned int unlock = 1;
+        if (unlock1) {
+            unlock = 2;
+        }
+        if (unlock2) {
+            unlock = 3;
+        }
+        if (unlock3) {
+            unlock = 4;
+        }
+        if (GfDataDriverSkill::getSkillLevelUnlockNum(driver, unlock, round) == 1) {
+            m_seq.addJob(&GfMenuObjDrKizunaRing::seqUnlockAnime);
+            m_seq.addJob(&GfMenuObjDrKizunaRing::seqCircleAnime);
+            m_seq.addJob(&GfMenuObjDrKizunaRing::seqOpenAnime);
+        }
+        m_seq.addJob(&GfMenuObjDrKizunaRing::seqExecSkill);
+        m_seq.addJob(&GfMenuObjDrKizunaRing::seqComplete);
+        m_seq.addJob(&GfMenuObjDrKizunaRing::seqEndAnime);
+        m_step++;
+        return false;
+    }
+    if (!open.isPlayingAnimation()) {
+        m_step = 0;
+        refreshRing(main);
+        return true;
+    }
+    return false;
 }
 
 void GfMenuObjDrKizunaRing::setupSkillDetail(ui::UIObjectAcc& acc) {
@@ -705,6 +796,70 @@ bool GfMenuObjDrKizunaRing::seqExecSkill() {
     GfGameUtil::execDriverSkillLevelUp(GfMenuReference::getReferenceDriverID(0), GfMenuReference::getReferenceNumber(0),
                                        GfMenuReference::getReferenceNumber(1), GfMenuReference::getReferenceNumber(2) != 0);
     return true;
+}
+
+bool GfMenuObjDrKizunaRing::seqComplete() {
+    unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+    bool round = GfMenuReference::getReferenceNumber(2) != 0;
+    if (GfDataDriver::isKizunaringComplete(driver, round)) {
+        return true;
+    }
+    if (GfDataDriverSkill::getValidSkillNum(driver, round) < 15) {
+        return true;
+    }
+    ui::UIObjectAcc root(m_handle);
+    ui::UIObjectAcc complete(root.searchChild("LAY_complete"));
+    switch (m_step) {
+    case 0: {
+        complete.setDisp(true);
+        ui::UIObjectAcc image(complete.searchChild("IMG_complete"));
+        image.startAnimation("fade_in", false);
+        ui::UIObjectAcc text(complete.searchChild("TXT_complete"));
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "mnu89_complete_telop";
+        param.m_motion = "fade_in";
+        param.m_startFlags = 10;
+        GfMenuObjUtil::startCtrl(text.m_handle, param, nullptr);
+        GfMenuObjUtil::playJingle(0x10);
+        m_step++;
+        break;
+    }
+    case 1: {
+        ui::UIObjectAcc image(complete.searchChild("IMG_complete"));
+        if (!image.isPlayingAnimation()) {
+            complete.setDisp(false);
+            m_itemList->clear();
+            GfQuestReward reward;
+            if (!GfKizunaringUtil::getCompleteKizunaringRewardForDriver(reward, driver, round)) {
+                return true;
+            }
+            for (int i = 8; i < 12; i++) {
+                unsigned short id = reward.m_items[i].m_low;
+                if (id != 0) {
+                    MenuItemInfo info;
+                    info.m_type = GfItemUtil::getType(id);
+                    info.m_id = id;
+                    info.m_count = reward.m_items[i].m_high;
+                    m_itemList->addContents(info);
+                }
+            }
+            GfQuestUtil::execReward(reward);
+            m_callContext->reset();
+            GfMenuObjCommonText::openGetItem(m_callContext, m_itemList);
+            m_step++;
+        }
+        break;
+    }
+    case 2:
+        if (m_callContext->isTerm()) {
+            GfDataDriver::setKizunaringComplete(driver, round);
+            m_step = 0;
+            return true;
+        }
+        break;
+    }
+    return false;
 }
 
 void GfMenuObjDrKizunaRing::SkillDetailListener::reciveEvent(ui::EventData const& event, unsigned int handle) {

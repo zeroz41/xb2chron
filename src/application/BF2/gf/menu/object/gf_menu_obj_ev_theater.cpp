@@ -4,6 +4,9 @@
 #include "classes/gf/GfMenuObjEvTheater/SubListener.h"
 #include "classes/gf/GfMenuObjEvTheater/ItemSettingListener.h"
 #include "classes/gf/GfMenuObjEvTheater/PreviewListener.h"
+#include "classes/gf/GfMenuObjEvTheater/MainListener.h"
+#include "classes/gf/GfMenuObjEvTheater/ItemListListener.h"
+#include "classes/gf/GfMenuObjCommonText.h"
 #include "classes/gf/GfMenuMsgList.h"
 #include "classes/gf/GfMenuIDList.h"
 #include "classes/ui/UISelectObjList.h"
@@ -26,6 +29,10 @@
 #include "classes/tl/TitleMain.h"
 #include "gf/SDataSaveIra.h"
 #include "classes/ui/UICtrlCursorSelect.h"
+#include "classes/gf/GfDataStore.h"
+#include "gf/GfGameUtilSaveData.h"
+#include "classes/ui/UIInputManager.h"
+#include "ui/UIUtil.h"
 
 namespace gf {
 
@@ -35,6 +42,12 @@ static const int s_capRows[3] = {1, 2, 9};
 static const unsigned int s_timezoneImages[3] = {0, 2, 3};
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009C10D0). updateCommonElem's element icons.
 static const int s_elementIcons[7] = {0x9F, 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA6};
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_71009C10EC). MainListener's hour of each
+// timezone setting (noon, evening, night).
+static const unsigned int s_timezoneHours[3] = {0xC, 0x12, 0x16};
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_71009C10F8). MainListener's element of each
+// element setting (s_elementIcons' order).
+static const unsigned int s_elementTypes[7] = {1, 2, 3, 4, 5, 6, 8};
 
 // a 0..255 volume on a level scale of 0..max, rounded (0xFF: max); getDefaultLevel and convOptionDataToLevelList (the name is not
 // the original's)
@@ -214,6 +227,140 @@ void GfMenuObjEvTheater::refreshSelctList() {
         name.format("IMG_select_frame@%02d", i + 1);
         ui::UIObjectAcc frame(m_selectObjList->getObject(i), name.m_str);
         frame.startAnimation(selected == i ? "select" : "non", false);
+    }
+}
+
+void GfMenuObjEvTheater::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        ui::UIObjectAcc image(acc.m_handle, "IMG_bg");
+        image.startAnimation("start", false);
+        GfMenuObject::hookAnimationEvent(acc.m_handle, image.m_handle, 0);
+        GfMenuObjOperationInfo::open(0, 0, 0, 0);
+        GfMenuObjOperationInfo::setGuideDisp(false);
+        break;
+    }
+    case 2:
+        GfMenuObjOperationInfo::close();
+        GfMenuObject::termCallContext(acc.m_handle);
+        acc.setTerm();
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            ui::UIInputManager* input = ui::UIInputManager::get();
+            input->m_minimumLayerHandle = ui::UIUtil::getGroupPriority(3);
+            GfMenuObject::enableFSInput(2);
+            GfMenuObjOperationInfo::open(GfMenuObject::getFSInputObject(2), 0, 0, 0);
+            GfMenuObjOperationInfo::setGuideDisp(false);
+            GfMenuObjOperationInfo::setActionEnable(GfMenuObject::getFSInputObject(2), 0x10, false);
+            bool hasSetting = false;
+            if (m_owner->m_title == 2) {
+                hasSetting = m_owner->m_settingObjList->getSize() != 0;
+            }
+            GfMenuObjOperationInfo::changeText(GfMenuObject::getFSInputObject(2), 0xE, hasSetting);
+        } else if (event.m_param0 == 3) {
+            ui::UIInputManager::get()->m_minimumLayerHandle = 0;
+        }
+        break;
+    case 0xC: {
+        ui::UIObjectAcc image(acc.m_handle, "IMG_bg");
+        image.startAnimation("loop", false);
+        break;
+    }
+    case 0x100: {
+        unsigned int result = event.m_param0;
+        unsigned short id = m_owner->m_selectIdList->getContents(m_owner->m_selectIdList->getIndex(false)).m_id;
+        if (GfMenuObjUtil::isValidExpansion(3)) {
+            GfMenuManager::setTheaterNonTelop(id == 0x3E9 || id == 0x413);
+        } else {
+            GfMenuManager::setTheaterNonTelop(id == 2 || id == 0xD7);
+        }
+        GfMenuObject::addResultCallContext(acc.m_handle, result, 0);
+        tl::TitleMain::EventRequest request;
+        if (m_owner->m_title == 1 || m_owner->m_title == 2) {
+            if (m_owner->m_settings[0].m_count == 1) {
+                switch (id) {
+                case 0x100:
+                case 0x112:
+                case 0x113:
+                    request.pad_4 = 0xC;
+                    break;
+                case 0xE6:
+                    request.pad_4 = 5;
+                    break;
+                }
+            } else if (m_owner->m_timezoneFromList) {
+                request.pad_4 = m_owner->pad_170;
+            } else {
+                request.pad_4 = s_timezoneHours[m_owner->m_settings[0].m_value];
+            }
+            request.pad_6 = m_owner->m_weathers[m_owner->m_settings[1].m_value].m_weather;
+            if (m_owner->m_settings.size() > 2) {
+                request.pad_5 = m_owner->m_settings[2].m_value;
+            }
+            unsigned int flags = m_owner->pad_190;
+            int count = 0;
+            if (flags & 1) {
+                request.pad_A[0] = 5;
+                count++;
+            }
+            if (flags & 2) {
+                if (count == 0) {
+                    request.pad_A[0] = 6;
+                } else {
+                    request.pad_A[1] = 6;
+                }
+                count++;
+            }
+            if (flags & 4) {
+                if (count == 1) {
+                    request.pad_A[1] = 3;
+                } else if (count == 0) {
+                    request.pad_A[0] = 3;
+                }
+            }
+            request.pad_E = m_owner->pad_194;
+        } else if (m_owner->m_title == 3 && id >= 0x159 && id <= 0x16E) {
+            request.pad_7 = s_elementTypes[m_owner->m_settings[0].m_value];
+            request.pad_8 = m_owner->m_settings[1].m_value;
+            request.pad_9 = m_owner->m_settings[2].m_value;
+        }
+        tl::TitleMain::sys()->m_eventTemplate = request;
+        GfMenuObjOperationInfo::close();
+        tl::TitleMain::sys()->stopTitleBGM(2.0f);
+        *GfGameUtilSaveData::getValidOptionData() = m_owner->m_appliedOption;
+        break;
+    }
+    case 0x101: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 1;
+        param.m_eventId = 3;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        break;
+    }
+    case 0x102: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 0;
+        param.m_eventId = 1;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        if (m_owner->m_title == 3) {
+            ui::UIObjectAcc view(acc.searchSibiling("LAY_mdl_view"));
+            view.setDisp(false);
+        }
+        GfMenuManager::setTheaterNonTelop(false);
+        SDataOption* option = GfGameUtilSaveData::getValidOptionData();
+        *option = m_owner->m_option;
+        GfDataStore::setupOptionData(*option);
+        GfGameUtilSaveData::flushOptionSaveData();
+        tl::TitleMain::sys()->playTitleBGM();
+        break;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
     }
 }
 
@@ -467,6 +614,184 @@ void GfMenuObjEvTheater::HeaderListener::reciveEvent(const ui::EventData& event,
     }
 }
 
+void GfMenuObjEvTheater::ItemListListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    // shows (1.0) or hides (0.0) the base image of a row of the list (GfMenuObjOption::dispItemBase's "snd" case)
+    auto dispItemBase = [](GfMenuObjEvTheater* owner, unsigned int index, bool disp) {
+        mm::mtl::FixStr<32> name;
+        name.format("IMG_snd_item_base@%02d", index + 1);
+        ui::UIObjectAcc base(owner->m_handle, name.m_str);
+        base.setAlpha(disp ? 1.0f : 0.0f);
+    };
+    switch (event.m_type) {
+    case 3:
+        if (event.m_param0 == 0) {
+            break;
+        }
+        if (event.m_param0 == 1) {
+            if (m_owner->m_cursor != nullptr) {
+                GfMenuObject::resetInputSelection(acc.m_handle);
+                GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_levelObjList);
+                m_owner->m_cursor->setDisp(true);
+            }
+            GfMenuObject::enableFSInput(3);
+            break;
+        }
+        // fall through: any other step hides the list
+    case 1:
+        acc.setDisp(false);
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        if (index != -1 && m_owner->m_levelObjList->getSize() != 0) {
+            m_owner->m_levelObjList->setIndex(index);
+            if (prev != -1) {
+                dispItemBase(m_owner, prev, true);
+                dispItemBase(m_owner, index, false);
+                m_owner->updateInfo(index);
+                if (index != prev) {
+                    GfMenuObjUtil::playSECommonCursor();
+                }
+            } else {
+                dispItemBase(m_owner, index, false);
+                m_owner->updateInfo(index);
+            }
+        }
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 8: {
+        int index = event.m_param0;
+        switch (event.m_param1) {
+        case 2: {
+            convLevelListToOptionData(pad_0C, m_owner->m_levels, m_owner->m_appliedOption);
+            m_owner->m_volumeBase = m_owner->m_appliedOption.m_soundUi.m_volume[1];
+            GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+            ui::EventData select;
+            select.m_type = 0x102;
+            GfMenuObject::sendEvent(acc.searchSibiling("LAY_select"), select, 0.0f);
+            GfMenuObject::disableFSInput();
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            GfMenuObject::sendCloseEvent(m_owner->m_levelHandle, 0, 0.0f);
+            GfMenuObjUtil::playSECommonCancel();
+            m_owner->applySoundOption();
+            break;
+        }
+        case 9: {
+            if (index >= 0 && index < m_owner->m_levels.size()) {
+                Level& level = m_owner->m_levels[index];
+                int value = level.m_level + 1;
+                if (value > level.m_max) {
+                    if (level.m_max != 2) {
+                        level.m_level = level.m_max;
+                        m_owner->refreshLevel(pad_0C);
+                        GfMenuObjUtil::playSECommon(2);
+                        break;
+                    }
+                    value = 1;
+                }
+                level.m_level = value;
+                m_owner->refreshLevel(pad_0C);
+                GfMenuObjUtil::playSE(0x19);
+            }
+            break;
+        }
+        case 10: {
+            if (index >= 0 && index < m_owner->m_levels.size()) {
+                Level& level = m_owner->m_levels[index];
+                int value = level.m_level - 1;
+                if (value < 1) {
+                    if (level.m_max != 2) {
+                        level.m_level = 1;
+                        m_owner->refreshLevel(pad_0C);
+                        GfMenuObjUtil::playSECommon(2);
+                        break;
+                    }
+                    value = 2;
+                }
+                level.m_level = value;
+                m_owner->refreshLevel(pad_0C);
+                GfMenuObjUtil::playSE(0x19);
+            }
+            break;
+        }
+        case 0xB:
+            m_owner->m_callContext->reset();
+            GfMenuObjCommonText::open(m_owner->m_callContext, 0xA8, 0);
+            GfMenuObject::setCallContextEventHandler(m_owner->m_callContext, acc.m_handle);
+            break;
+        }
+        break;
+    }
+    case 0x21: {
+        GfMenuObjUtil::setCommonFadeIn(acc.m_handle, 1, 2);
+        if (m_owner->m_cursor != nullptr) {
+            m_owner->m_cursor->release();
+            m_owner->m_cursor = nullptr;
+        }
+        m_owner->m_appliedOption.m_soundUi.m_volume[1] = m_owner->m_volumeBase;
+        m_owner->convOptionDataToLevelList(pad_0C, m_owner->m_appliedOption);
+        unsigned int cursor = acc.searchChild("LAY_snd_item_cursor");
+        m_owner->m_levelObjList->clear();
+        m_owner->m_levelObjList->pickupObject(acc.m_handle, "LAY_snd_item@%02d", 1);
+        if (!GfMenuManager::isEnableVoiceChange()) {
+            unsigned int last = m_owner->m_levelObjList->getSize() - 1;
+            ui::UIObjectAcc(m_owner->m_levelObjList->getContents(last)).setDisp(false);
+            ui::UISelectObjList* list = m_owner->m_levelObjList;
+            list->m_list.erase(list->m_list.begin() + last);
+            list->subSize(1);
+            list->m_changed = true;
+        }
+        m_owner->m_capBdat = GfDataBdat::getFP(0x104);
+        m_owner->m_capHandle = acc.searchChild("TXT_snd_info");
+        m_owner->m_levelHandle = acc.searchSibiling("LAY_snd_setting");
+        if (cursor == 0) {
+            GfMenuObject::setupInputSelection(acc.m_handle, 0, 1);
+        } else {
+            ui::UICtrlCursorSelect::CursorSetting setting;
+            setting.setType(0);
+            setting.m_dockType = 0;
+            m_owner->m_cursor = ui::UICtrlCursorSelect::create(cursor, setting, m_owner->m_levelObjList);
+        }
+        if (m_owner->m_capBdat != nullptr && m_owner->m_capHandle != 0) {
+            m_owner->updateInfo(0);
+        }
+        m_owner->refreshLevel(pad_0C);
+        GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        GfMenuObject::sendOpenEvent(m_owner->m_levelHandle, 0, 0.0f);
+        break;
+    }
+    case 0x22:
+        if (m_owner->m_cursor != nullptr) {
+            dispItemBase(m_owner, m_owner->m_levelObjList->getIndex(false), true);
+            m_owner->m_cursor->setDisp(false);
+            if (m_owner->m_cursor != nullptr) {
+                m_owner->m_cursor->release();
+                m_owner->m_cursor = nullptr;
+            }
+        }
+        GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 2, 2);
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    case 0x41: {
+        unsigned int id = event.m_param0;
+        // the dialog's answer (both parameters 0)
+        bool answered = event.m_param2 == 0 && event.m_param3 == 0;
+        if (answered && m_owner->m_callContext->m_id == id) {
+            m_owner->getDefaultLevel(pad_0C, m_owner->m_levels);
+            m_owner->refreshLevel(pad_0C);
+        }
+        break;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjEvTheater::convOptionDataToLevelList(unsigned int category, const SDataOption& option) {
     m_levels.clear();
     getDefaultLevel(category, m_levels);
@@ -511,6 +836,22 @@ void GfMenuObjEvTheater::refreshLevel(unsigned int) {
                 GfMenuObjUtil::placeObjectHRatio(base.m_handle, point.m_handle, mm::clamp(ratio, 0.0f, 1.0f), -4);
             }
         }
+    }
+}
+
+void GfMenuObjEvTheater::convLevelListToOptionData(unsigned int, const mm::mtl::FixedVector<Level, 32>& levels,
+                                                   SDataOption& option) {
+    unsigned int top = Bdat::getIdTop(GfDataBdat::getFP(0x104));
+    option.m_soundUi.m_eventSubtitle = levels[1 - top].m_level == 1;
+    unsigned char level = levels[2 - top].m_level;
+    float rate = 1.0f / levels[2 - top].m_max;
+    float volume = level * rate;
+    if (volume > 1.0f) {
+        volume = 1.0f;
+    }
+    option.m_soundUi.m_volume[1] = static_cast<int>(volume * 255.0f);
+    if (GfMenuManager::isEnableVoiceChange()) {
+        option.m_soundUi.m_byte1E = levels[3 - top].m_level == 2;
     }
 }
 

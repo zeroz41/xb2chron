@@ -39,7 +39,10 @@ public:
     EffectLinearPos m_linearPos;  // 0x9d0
     EffectLinearRot m_linearRot;  // 0xbd0
     EffectLinearCol m_linearCol;  // 0xdd0
-    unsigned long pad_fb8;
+    unsigned int pad_fb8;
+    // EffectPlayEff::update counts its time down by it (the EffectObj is the command's userdata, as for
+    // EffectPlayEva and m_step)
+    float pad_fbc;
     unsigned int pad_fc0;
     // the step the linear commands advance their curves by each update; the name is not the original's
     float m_step;  // 0xfc4

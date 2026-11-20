@@ -157,6 +157,218 @@ static inline int getEnhanceColumn(unsigned int type) {
     return column;
 }
 
+void GfMenuObjSort::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 6: {
+        int index = event.m_param0;
+        if (index != -1) {
+            int previous = event.m_param1;
+            m_owner->m_idList->setIndex(index);
+            m_owner->refreshItem();
+            if (previous != -1 && index != previous) {
+                GfMenuObjUtil::playSECommonCursor();
+            }
+        }
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+        }
+        break;
+    case 8: {
+        int index = event.m_param0;
+        int input = event.m_param1;
+        ui::UIObjectAcc caller(m_owner->m_callerHandle);
+        switch (input) {
+        case 1:
+            if (m_openIndex != index) {
+                GfMenuIDList* list = m_owner->m_idList;
+                setSortLabelText(list->getContents(list->getIndex(false)).m_id, caller.m_handle);
+            }
+            GfMenuObjUtil::playSECommonDecide();
+            break;
+        case 2:
+            index = m_openIndex;
+            GfMenuObjUtil::playSECommonCancel();
+            break;
+        default:
+            return;
+        }
+        ui::EventData result;
+        result.m_type = 0x148;
+        result.m_param0 = index;
+        result.m_param1 = input == 1;
+        GfMenuObject::sendEvent(m_owner->m_resultHandle, result, 0.0f);
+        {
+            ui::UIObjectAcc cursor(acc.m_handle, "LAY_cur");
+            cursor.setAlpha(0.0f);
+            caller.setDisp(true);
+        }
+        close();
+        break;
+    }
+    case 0x22: {
+        {
+            ui::UIObjectAcc base(acc.m_handle, "IMG_base");
+            int ctrl = GfMenuObjUtil::getCtrlID(base.m_handle);
+            if (ctrl != 0) {
+                GfMenuObjUtil::stopCtrl(ctrl);
+            }
+        }
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 2;
+        param.m_time = 0.2f;
+        param.m_eventId = 2;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        GfMenuObject::disableInput(acc.m_handle);
+        m_owner->m_resultHandle = 0;
+        m_owner->m_callerHandle = 0;
+        m_owner->m_menu = 0;
+        GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+        break;
+    }
+    case 0x21: {
+        unsigned int resultHandle = event.m_param0;
+        unsigned int callerHandle = event.m_param1;
+        unsigned short menu = event.m_paramShort[4];
+        unsigned short index = event.m_paramShort[5];
+        ui::UIObjectAcc caller(callerHandle);
+        m_owner->m_idList->clear();
+        {
+            unsigned char* bdat = GfDataBdat::getFP(0x16D);
+            mm::mtl::FixStr<32> name;
+            for (unsigned int i = 0; i < s_sortTypeCount; i++) {
+                name.format("sort_type%d", i + 1);
+                if (Bdat::getMember(bdat, name.m_str) == nullptr) {
+                    continue;
+                }
+                unsigned short type = Bdat::getVal(bdat, name.m_str, menu);
+                if (type == 0) {
+                    continue;
+                }
+                int listed = 0;
+                int enhance = getEnhanceColumn(type);
+                if (enhance != 0) {
+                    unsigned char* table = GfDataBdat::getFP(0x16E);
+                    name.format("enhance%d", enhance);
+                    if (Bdat::getMember(table, name.m_str) != nullptr) {
+                        for (int j = 0; j < Bdat::getIdCount(table); j++) {
+                            unsigned short value = Bdat::getVal(table, name.m_str, Bdat::getIdTop(table) + j);
+                            if (value != 0) {
+                                m_owner->m_idList->addContents(MenuID{value + 0x20u, 0});
+                            }
+                        }
+                    }
+                    listed = 1;
+                }
+                if (type == 0x15) {
+                    unsigned char* table = GfDataBdat::getFP(0x16F);
+                    name.format("buff%d", 1);
+                    if (Bdat::getMember(table, name.m_str) != nullptr) {
+                        for (int j = 0; j < Bdat::getIdCount(table); j++) {
+                            unsigned short value = Bdat::getVal(table, name.m_str, Bdat::getIdTop(table) + j);
+                            if (value != 0) {
+                                m_owner->m_idList->addContents(MenuID{value + 0x50u, 0});
+                            }
+                        }
+                    }
+                    listed = 1;
+                }
+                if (type == 0x14) {
+                    unsigned char* table = GfDataBdat::getFP(0x170);
+                    name.format("role%d", 1);
+                    if (Bdat::getMember(table, name.m_str) != nullptr) {
+                        for (int j = 0; j < Bdat::getIdCount(table); j++) {
+                            unsigned short value = Bdat::getVal(table, name.m_str, Bdat::getIdTop(table) + j);
+                            if (value != 0) {
+                                m_owner->m_idList->addContents(MenuID{value + 0x40u, 0});
+                            }
+                        }
+                    }
+                    listed = 1;
+                }
+                if (type == 0x18) {
+                    unsigned char* table = GfDataBdat::getFP(0x171);
+                    name.format("fs%d", 1);
+                    if (Bdat::getMember(table, name.m_str) != nullptr) {
+                        for (int j = 0; j < Bdat::getIdCount(table); j++) {
+                            unsigned short value = Bdat::getVal(table, name.m_str, Bdat::getIdTop(table) + j);
+                            if (value != 0) {
+                                m_owner->m_idList->addContents(MenuID{value + 100u, 0});
+                            }
+                        }
+                    }
+                    listed = 1;
+                }
+                if (!listed) {
+                    m_owner->m_idList->addContents(MenuID{type, 0});
+                }
+            }
+        }
+        {
+            ui::UIObjectAcc current(acc.m_handle, "TXT_cur_name");
+            ui::UIStr text;
+            caller.getText(text);
+            current.setText(text);
+        }
+        {
+            ui::UIObjectAcc current(acc.m_handle, "TXT_cur_name");
+            mm::Rect<short> rect;
+            caller.getRect(rect, 3);
+            current.setPosCenter(mm::Pnt<short>(rect.x + rect.w / 2, rect.y + rect.h / 2));
+        }
+        {
+            ui::UIObjectAcc cursor(acc.m_handle, "LAY_cur");
+            cursor.setAlpha(1.0f);
+        }
+        if (index >= static_cast<unsigned int>(m_owner->m_idList->getSize())) {
+            index = m_owner->m_idList->getSize() - 1;
+        }
+        m_owner->m_idList->setIndex(index);
+        caller.setDisp(false);
+        int ctrl = GfMenuObjUtil::getCtrlID(acc.m_handle);
+        if (ctrl != -1) {
+            GfMenuObjUtil::stopCtrl(ctrl);
+        }
+        acc.setDisp(true);
+        acc.setAlpha(1.0f);
+        ui::UIObjectAcc list(acc.m_handle, "LAY_list");
+        ui::UIObjectAcc base(acc.m_handle, "IMG_base");
+        list.setAlpha(1.0f);
+        base.setAlpha(1.0f);
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 1;
+        param.m_time = 0.2f;
+        param.m_eventId = 1;
+        GfMenuObjUtil::startCtrl(list.m_handle, param, nullptr);
+        ctrl = GfMenuObjUtil::startCtrl(base.m_handle, param, nullptr);
+        if (ctrl == -1) {
+            GfMenuObject::enableInput(acc.m_handle);
+        } else {
+            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        }
+        m_owner->m_resultHandle = resultHandle;
+        m_owner->m_callerHandle = callerHandle;
+        m_owner->m_menu = menu;
+        GfMenuObject::resetInputSelection(acc.m_handle);
+        GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_idList);
+        m_owner->refreshItem();
+        GfMenuObjOperationInfo::add(handle, 0, 0, 0);
+        GfMenuObjUtil::playSECommonSort();
+        m_openIndex = m_owner->m_idList->getIndex(false);
+        break;
+    }
+    }
+}
+
 void GfMenuObjSort::open(unsigned int handle, unsigned int caller, unsigned short menu, unsigned short index) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x83));
     if (acc.m_object != nullptr) {

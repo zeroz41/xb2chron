@@ -11,12 +11,14 @@
 #include "classes/gf/GfBdatChrEnArrange.h"
 #include "classes/gf/GfBdatRsc.h"
 #include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfMenuCharDataAdapter.h"
 #include "classes/gf/GfMenuIDList.h"
 #include "classes/gf/GfMenuModelView.h"
 #include "classes/gf/GfMenuMsgList.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/ui/UICtrlCursorSelect.h"
+#include "classes/ui/UIEventManager.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UISelectObjList.h"
 #include "gf/GfDataEnBook.h"
@@ -82,6 +84,189 @@ GfMenuObjEnBook::~GfMenuObjEnBook() {
         pad_30->release();
         pad_30 = nullptr;
     }
+}
+
+void GfMenuObjEnBook::initialize() {
+    ui::UIObjectAcc main(m_handle, "LAY_main");
+    {
+#line 102
+        MainListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) MainListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(main.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+#line 105
+    m_modelView = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfMenuModelView(main.searchChild("SCR_mdl_view"), 2);
+    {
+        ui::UIObjectAcc top(main.m_handle, "LAY_top");
+        {
+            mm::mtl::IAllocator* allocator = getAllocator(ALLOCATOR(0));
+            ui::UISelectObjList::CreateParam create;
+            create.m_allocator = allocator;
+            pad_30 = ui::UISelectObjList::create(create);
+        }
+        pad_30->pickupObject(top.m_handle, "LAY_top_item@%02d", 1);
+        {
+            ui::UICtrlCursorSelect::CursorSetting setting;
+            setting.setType(0);
+            setting.m_dockType = 0;
+            pad_38 = ui::UICtrlCursorSelect::create(top.searchChild("IMG_top_cursor"), setting, pad_30);
+        }
+        {
+#line 126
+            TopListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TopListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(top.m_handle, listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        GfMenuObject::setFSInputObject(0, top.m_handle);
+    }
+    {
+        ui::UIObjectAcc index(main.m_handle, "LAY_index");
+#line 136
+        IndexListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) IndexListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(index.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    {
+        ui::UIObjectAcc type(main.m_handle, "LAY_type_select");
+        {
+            mm::mtl::IAllocator* allocator = getAllocator(ALLOCATOR(0));
+            ui::UISelectObjList::CreateParam create;
+            create.m_allocator = allocator;
+            pad_48 = ui::UISelectObjList::create(create);
+        }
+        pad_48->pickupObject(type.m_handle, "LAY_type_sel_cate_item@%02d", 1);
+        {
+            mm::mtl::IAllocator* allocator = getAllocator(ALLOCATOR(0));
+            ui::UISelectObjList::CreateParam create;
+            create.m_allocator = allocator;
+            pad_58 = ui::UISelectObjList::create(create);
+        }
+        pad_58->pickupObject(type.m_handle, "LAY_type_sel_fam_item@%02d", 1);
+        {
+#line 153
+            FamilySelListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) FamilySelListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(type.searchChild("LAY_type_sel_cate"), listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        GfMenuObject::setFSInputObject(1, type.searchChild("LAY_type_sel_cate"));
+        {
+#line 156
+            GenusSelListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GenusSelListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(type.searchChild("LAY_type_sel_family"), listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        GfMenuObject::setFSInputObject(2, type.searchChild("LAY_type_sel_family"));
+        GfMenuObjUtil::createVScrollBarPlugin(type.searchChild("IMG_type_sel_fam_scroll_bar"), m_genusList,
+                                              "IMG_type_sel_fam_scroll_base", false);
+        m_familyList->setBdat(0x157, 0x130);
+        m_genusList->setBdat(0, 0x19A);
+        setupFamilyMsgList();
+    }
+    {
+        ui::UIObjectAcc location(main.m_handle, "LAY_location_select");
+#line 179
+        LocationSelListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) LocationSelListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(location.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+        GfMenuObject::setFSInputObject(3, location.m_handle);
+    }
+    {
+        ui::UIObjectAcc list(main.m_handle, "LAY_en_list");
+        mm::mtl::FixStr<32> name;
+        {
+            mm::mtl::IAllocator* allocator = getAllocator(ALLOCATOR(0));
+            ui::UISelectObjList::CreateParam create;
+            create.m_allocator = allocator;
+            pad_70 = ui::UISelectObjList::create(create);
+        }
+        pad_70->pickupObject(list.m_handle, "LAY_en_list_item@%02d", 1);
+        {
+            ui::UIListInfoBase::SetupParam param;
+            param.m_pageRowSize = pad_70->getSize();
+            param.m_pageScroll = true;
+            m_enBookList->setup(getAllocator(ALLOCATOR(0)), param);
+        }
+        for (unsigned int i = 0; i < pad_70->getSize(); i++) {
+            name.format("TXT_en_list_item_name@%02d", i + 1);
+            GfMenuCharDataAdapter::createFromEnBookList(list.searchChild(name.m_str), 2, m_enBookList, i, false);
+            name.format("TXT_en_list_item_id@%02d", i + 1);
+            GfMenuCharDataAdapter::createFromEnBookList(list.searchChild(name.m_str), 0x5B, m_enBookList, i, false);
+        }
+        GfMenuObjUtil::createVScrollBarPlugin(list.searchChild("IMG_en_list_scroll_bar"), m_enBookList,
+                                              "IMG_en_list_scroll_base", false);
+        {
+#line 217
+            EnListListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) EnListListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(list.m_handle, listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        GfMenuObject::setFSInputObject(4, list.m_handle);
+    }
+    {
+        ui::UIObjectAcc detail(main.m_handle, "LAY_detail");
+        {
+            mm::mtl::IAllocator* allocator = getAllocator(ALLOCATOR(0));
+            ui::UISelectObjList::CreateParam create;
+            create.m_allocator = allocator;
+            pad_78 = ui::UISelectObjList::create(create);
+        }
+        pad_78->addObject(detail.searchChild("LAY_detail_chr"));
+        pad_78->addObject(detail.searchChild("LAY_detail_btl"));
+        pad_78->addObject(detail.searchChild("LAY_detail_drp"));
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_name"), 2, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_name_id"), 0x5B, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_chr_prm@01"), 0x5D, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_chr_prm@02"), 0x5E, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_chr_prm@03"), 1, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_chr_prm@04"), 0, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_chr_prm@05"), 0x5F, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_chr_prm@06"), 0x60, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_btl_prm@01"), 0xD, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_btl_prm@02"), 0xE, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_btl_prm@03"), 0xF, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_btl_prm@04"), 0x10, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_btl_prm@05"), 0x11, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_btl_prm@06"), 4, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_btl_prm@07"), 5, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_btl_prm@08"), 0x12, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_btl_prm@09"), 0x12, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_btl_prm@10"), 8, m_enBookList, -1, false);
+        GfMenuCharDataAdapter::createFromEnBookList(detail.searchChild("TXT_detail_btl_prm@11"), 6, m_enBookList, -1, false);
+        {
+#line 290
+            DetailListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) DetailListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(detail.m_handle, listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        GfMenuObject::setFSInputObject(5, detail.m_handle);
+    }
+    m_seq.addJob(&GfMenuObjEnBook::seqWaitLoading);
+    m_seq.addJob(&GfMenuObjEnBook::seqStartTop);
+    GfMenuObject::initialize();
 }
 
 void GfMenuObjEnBook::setupFamilyMsgList() {
@@ -248,6 +433,51 @@ void GfMenuObjEnBook::setupEnBookIDList() {
         }
         break;
     }
+    }
+}
+
+void GfMenuObjEnBook::refreshEnBookList() {
+    ui::UIStr text;
+    mm::mtl::FixStr<32> name;
+    unsigned int index = m_enBookList->getIndex(true);
+    GfDataBdat::getFP(0x28);
+    for (unsigned int i = 0; i < pad_70->getSize(); i++) {
+        ui::UIObjectAcc acc(pad_70->getObject(i));
+        if (i < m_enBookList->getSize()) {
+            unsigned int id = m_enBookList->getContents(i).m_id;
+            bool attack = false;
+            unsigned char* bdat = GfDataBdat::getFP(0x28);
+            if (bdat != nullptr) {
+                unsigned short enemy = Bdat::getVal(bdat, "BaseEnemyID", id);
+                attack = GfDataEnBook::isAttackFlag(enemy);
+            }
+            bool mask = !attack;  // shows TXT_en_list_item_mask (the names are not the original's)
+            acc.setDisp(true);
+            name.format("TXT_en_list_item_name@%02d", i + 1);
+            {
+                ui::UIObjectAcc child(acc.m_handle, name.m_str);
+                if (i == index) {
+                    GfMenuObjUtil::setColMulandAdd(child.m_handle, "txt_highlight");
+                } else {
+                    child.loadDefColor();
+                }
+            }
+            name.format("LAY_en_list_item_name@%02d", i + 1);
+            acc.setDispChild(attack, name.m_str);
+            name.format("TXT_en_list_item_mask@%02d", i + 1);
+            acc.setDispChild(mask, name.m_str);
+            name.format("IMG_en_list_item_icon@%02d", i + 1);
+            ui::UIObjectAcc icon(acc.m_handle, name.m_str);
+            bool defeated = false;
+            bdat = GfDataBdat::getFP(0x28);
+            if (bdat != nullptr) {
+                unsigned short enemy = Bdat::getVal(bdat, "BaseEnemyID", id);
+                defeated = GfDataEnBook::getDefeatNum(enemy) != 0;
+            }
+            icon.setImageIndex(defeated);
+        } else {
+            acc.setDisp(false);
+        }
     }
 }
 
@@ -514,6 +744,99 @@ void GfMenuObjEnBook::LocationSelListener::reciveEvent(const ui::EventData& even
         GfMenuObjUtil::PresetCtrlParam param;
         param.m_preset = 6;
         param.m_out = 1;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjEnBook::EnListListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableFSInput(4);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+            GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_enBookList);
+        }
+        break;
+    case 6:
+        if (event.m_param0 != -1) {
+            m_owner->m_enBookList->setIndex(event.m_param0);
+            m_owner->refreshEnBookList();
+            GfMenuIDList* list = m_owner->m_enBookList;
+            unsigned int id = list->getContents(list->getIndex(false)).m_id;
+            m_owner->m_seq.clear();
+            m_owner->m_seq.addJob(&GfMenuObjEnBook::seqDeleteEnmey);
+            unsigned char* bdat = GfDataBdat::getFP(0x28);
+            if (bdat != nullptr) {
+                unsigned short enemy = Bdat::getVal(bdat, "BaseEnemyID", id);
+                if (GfDataEnBook::isAttackFlag(enemy)) {
+                    m_owner->m_seq.addWait(10);
+                    m_owner->m_seq.addJob(&GfMenuObjEnBook::seqCreateEnmey);
+                }
+            }
+        }
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            GfMenuIDList* list = m_owner->m_enBookList;
+            unsigned int id = list->getContents(list->getIndex(false)).m_id;
+            unsigned char* bdat = GfDataBdat::getFP(0x28);
+            if (bdat == nullptr) {
+                break;
+            }
+            unsigned short enemy = Bdat::getVal(bdat, "BaseEnemyID", id);
+            if (!GfDataEnBook::isAttackFlag(enemy)) {
+                break;
+            }
+            GfMenuObject::sendOpenEvent(GfMenuObject::getFSInputObject(5), 0, 0.0f);
+        } else if (event.m_param1 == 2) {
+            GfMenuObject::sendOpenEvent(GfMenuObject::getFSInputObject(m_state), 4, 0.0f);
+            if (m_state == 2) {
+                GfMenuObject::sendOpenEvent(GfMenuObject::getFSInputObject(1), 4, 0.0f);
+            }
+            m_owner->m_seq.addJob(&GfMenuObjEnBook::seqFadeOutEnmey);
+            m_owner->m_seq.addJob(&GfMenuObjEnBook::seqDeleteEnmey);
+            GfMenuObjOperationInfo::setGuideText(0x3A, 0);
+        } else {
+            break;
+        }
+        GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+        GfMenuObject::disableFSInput();
+        GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+        break;
+    case 0x21: {
+        int from = event.m_param0;  // the name is not the original's
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 0;
+        param.m_eventId = 1;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        m_owner->setupEnBookIDList();
+        m_owner->refreshEnBookList();
+        m_state = from;
+        GfMenuObjOperationInfo::setGuideText(0x3B, 0);
+        break;
+    }
+    case 0x22: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 1;
+        param.m_eventId = 2;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        break;
+    }
+    case 0x100: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 0;
+        param.m_eventId = 1;
         GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
         break;
     }

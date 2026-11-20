@@ -35,7 +35,11 @@ public:
     float m_height;              // 0x194, CloudMan::setHeight/getHeight
     float m_flowParam;           // 0x198, CloudObjFlow::update sends it twice
     unsigned int m_cldNum;       // 0x19C, CloudMan::setCldNum (0 or 1)/getCldNum
-    unsigned char pad_1A0[0x18];
+    unsigned char pad_1A0[0x4];
+    // CloudUniform::createBlurUniform's tap step is 1 / (this * the reduction target's width / height)
+    float m_blurScaleX;          // 0x1A4
+    float m_blurScaleY;          // 0x1A8
+    unsigned char pad_1AC[0xC];
     mm::Col3 m_planeCol[2];      // 0x1B8, CloudMan::getPlaneCol (0 picks the first)
     unsigned char pad_1D0[0x12C];
     float m_skyCol0[3];          // 0x2FC, the sky uniform sends both with alpha 1
@@ -73,19 +77,23 @@ public:
     grlib::CGLibDepthTarget* m_pDepthTarget0;  // 0x428, CloudObjReduction's counter/stencil renders draw to it
     grlib::CGLibDepthTarget* m_pDepthTarget1;  // 0x430, CloudObjReduction reads its sub texture
     grlib::CGLibDepthBuffer* m_pDepth;    // 0x438, CloudObjMan::alphaRender sets it with m_pTarget
-    unsigned char pad_440[0x20];
+    // CloudObjPlane::renderLastPoli draws to m_pTarget with these as more targets (the second only for plane 1) and
+    // samples the first as "dept" (names not the original's)
+    grlib::CGLibRenderTarget* m_pDeptTarget;  // 0x440
+    unsigned char pad_448[0x10];
+    grlib::CGLibRenderTarget* m_pMrtTarget;   // 0x458
     CloudUniform m_uniform;               // 0x460, CLOUD_UNIFORM_CALC
-    // CloudObjReduction::alphaFastRender sets the GPU's tiled cache from m_tiledCache[m_tiledIdx] (names not the
-    // original's)
+    // the GPU's tiled cache settings by m_tiledIdx and pass: CloudObjReduction::alphaFastRender uses [idx][0],
+    // CloudObjMdl::renderLastPoli [idx][2] (stride 0xC, three per index; names not the original's)
     struct TiledCache {
         unsigned int m_width;   // 0x0
         unsigned int m_height;  // 0x4
         bool m_isEnable;        // 0x8
-        unsigned char pad_9[0x1B];
+        unsigned char pad_9[0x3];
     };
     unsigned short m_tiledIdx;          // 0x498
     unsigned char pad_49a[0x2];
-    TiledCache m_tiledCache[2];         // 0x49C
+    TiledCache m_tiledCache[2][3];      // 0x49C
     unsigned char pad_4e4[0xC];
 };
 }  // namespace cloud
