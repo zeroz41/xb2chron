@@ -2702,6 +2702,17 @@ bool DevFileNxTh::initialize() {
     return true;
 }
 
+unsigned int DevFileNxTh::thFileLoader(void* arg) {
+    DevFileNxTh* owner = static_cast<DevFileNxTh*>(static_cast<OpenReadParam*>(arg)->m_owner);
+    __atomic_fetch_add(&owner->m_impl->pad_17FC, 1, __ATOMIC_SEQ_CST);
+    while (!DevFileTh::isInitialized()) {
+        nn::os::SleepThread(nn::TimeSpan::FromMilliSeconds(100));
+    }
+    owner->thUpdate(arg);
+    __atomic_fetch_sub(&owner->m_impl->pad_17FC, 1, __ATOMIC_SEQ_CST);
+    return 0;
+}
+
 bool DevFileNxTh::finalize() {
     switch (pad_18) {
     case 1:
@@ -2926,6 +2937,52 @@ void DevFileNxTh::tail() {
             }
             param->pad_118 = nullptr;
         }
+    }
+}
+
+void DevFileNxTh::thUpdate(void* arg) {
+    OpenReadParam* param = static_cast<OpenReadParam*>(arg);
+    DevFileNxTh* owner = static_cast<DevFileNxTh*>(param->m_owner);
+    mm::threading::ReadWriteLock& channelLock = param->m_lock;
+    FileHandleTh*& request = param->pad_118;
+    while (!__atomic_load_n(&owner->m_impl->pad_17F8, __ATOMIC_SEQ_CST)) {
+        param->m_thread->waitSignalEvent();
+        if (__atomic_load_n(&owner->m_impl->pad_17F8, __ATOMIC_SEQ_CST)) {
+            break;
+        }
+        void* buffer;
+        unsigned int offset;
+        unsigned int size;
+        bool canceled;
+        {
+            mm::threading::ReadLockGuard lock(channelLock);
+            offset = param->pad_158.pad_14;
+            buffer = param->pad_158.pad_8;
+            size = param->pad_158.pad_18;
+            if (param->pad_10D) {
+                canceled = __atomic_load_n(&request->m_canceled, __ATOMIC_SEQ_CST);
+            } else {
+                canceled = true;
+            }
+        }
+        if (canceled) {
+            continue;
+        }
+        FileReadResult result;
+        param->pad_10F = true;
+        if (DevFileUtilNx::readFile(request, param->m_handle, size, offset, buffer, size, result)) {
+            mm::threading::WriteLockGuard lock(channelLock);
+            if (FileHandleTh* handle = request) {
+                int length = result.m_size;
+                if (result.m_whole) {
+                    handle->m_size = length;
+                    handle->m_readSize = length;
+                } else {
+                    handle->m_readSize += length;
+                }
+            }
+        }
+        param->pad_10F = false;
     }
 }
 
@@ -3306,6 +3363,54 @@ void DevFileArchiveNx::tail() {
             }
             param->pad_118 = nullptr;
         }
+    }
+}
+
+void DevFileArchiveNx::thUpdate(void* arg) {
+    OpenReadParam* param = static_cast<OpenReadParam*>(arg);
+    DevFileArchiveNx* owner = static_cast<DevFileArchiveNx*>(param->m_owner);
+    mm::threading::ReadWriteLock& channelLock = param->m_lock;
+    FileHandleTh*& request = param->pad_118;
+    while (!__atomic_load_n(&owner->m_impl->pad_17F8, __ATOMIC_SEQ_CST)) {
+        param->m_thread->waitSignalEvent();
+        if (__atomic_load_n(&owner->m_impl->pad_17F8, __ATOMIC_SEQ_CST)) {
+            break;
+        }
+        void* buffer;
+        unsigned int offset;
+        unsigned int size;
+        unsigned long base;
+        bool canceled;
+        {
+            mm::threading::ReadLockGuard lock(channelLock);
+            offset = param->pad_158.pad_14;
+            buffer = param->pad_158.pad_8;
+            size = param->pad_158.pad_18;
+            base = param->pad_190;
+            if (param->pad_10D) {
+                canceled = __atomic_load_n(&request->m_canceled, __ATOMIC_SEQ_CST);
+            } else {
+                canceled = true;
+            }
+        }
+        if (canceled) {
+            continue;
+        }
+        FileReadResult result;
+        param->pad_10F = true;
+        if (DevFileUtilNx::readFile(request, param->m_handle, size, base + offset, buffer, size, result)) {
+            mm::threading::WriteLockGuard lock(channelLock);
+            if (FileHandleTh* handle = request) {
+                int length = result.m_size;
+                if (result.m_whole) {
+                    handle->m_size = length;
+                    handle->m_readSize = length;
+                } else {
+                    handle->m_readSize += length;
+                }
+            }
+        }
+        param->pad_10F = false;
     }
 }
 
@@ -4505,6 +4610,34 @@ GraphQue* DevGraphQue::createQue(unsigned int size) {
     GraphQue* que = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) GraphQue(this, size);
     m_ques.push_back(que);
     return que;
+}
+
+bool DevGraph::wkStandbyLogout() {
+    if (m_child.size() == 0 && mm::mtl::PtrSingleton<WinProcRoot>::get() == nullptr &&
+        mm::mtl::PtrSingleton<WinViewRoot>::get() == nullptr && mm::mtl::PtrSingleton<DevPad>::get() == nullptr) {
+        if (!ErrViewer::destroy()) {
+            return false;
+        }
+        reslist<GraphQue*>& ques = m_que->m_ques;
+        GraphQue* que = m_work.m_que;
+        for (reslist<GraphQue*>::iterator it = ques.begin(); it != ques.end(); ++it) {
+            if (*it == que) {
+                delete *it;
+                ques.erase(it);
+                break;
+            }
+        }
+        memset(&m_work, 0, sizeof(m_work));
+        if (m_que != nullptr) {
+            delete m_que;
+            m_que = nullptr;
+        }
+        if (!grlib::CGLibManager::isReleaseOk()) {
+            return true;
+        }
+        return WorkObj::wkStandbyLogout();
+    }
+    return false;
 }
 
 void DevGraph::renderSync() {
